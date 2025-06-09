@@ -168,6 +168,11 @@ export class SchemaFactoryAlpha<
 	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
 	 */
 	public static readonly identifier = schemaStatics.identifier;
@@ -191,6 +196,11 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStatics.optionalRecursive}
 	 */
 	public override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
