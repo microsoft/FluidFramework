@@ -11,14 +11,14 @@ testClassMethod(testParameter: string): Promise<string>;
 ### Parameters {#testclassmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testParameter | string | A string |
 
 ### Returns {#testclassmethod-returns}
 
 A Promise
 
-**Return type**: Promise&lt;string&gt;
+**Return type**: Promise\<string\>
 
 ### Throws {#testclassmethod-throws}
 

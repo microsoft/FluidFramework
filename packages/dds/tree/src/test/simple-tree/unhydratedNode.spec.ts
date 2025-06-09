@@ -27,6 +27,11 @@ import { TreeStatus } from "../../feature-libraries/index.js";
 import { validateUsageError } from "../utils.js";
 // eslint-disable-next-line import/no-internal-modules
 import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+import { singleJsonCursor } from "../json/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactory("undefined");
@@ -279,10 +284,24 @@ describe("Unhydrated nodes", () => {
 		assertArray();
 	});
 
+	it("flexTreeFromCursor", () => {
+		const tree = unhydratedFlexTreeFromCursor(
+			getUnhydratedContext(SchemaFactory.number),
+			singleJsonCursor(1),
+		);
+
+		assert.equal(tree.value, 1);
+	});
+
 	it("read constant defaulted properties", () => {
 		const defaultValue = 3;
-		const constantProvider: ConstantFieldProvider = () => {
-			return defaultValue;
+		const constantProvider: ConstantFieldProvider = (): UnhydratedFlexTreeNode[] => {
+			return [
+				unhydratedFlexTreeFromCursor(
+					getUnhydratedContext(SchemaFactory.number),
+					singleJsonCursor(defaultValue),
+				),
+			];
 		};
 		class HasDefault extends schemaFactory.object("DefaultingLeaf", {
 			value: schemaFactory.optional(
@@ -294,12 +313,16 @@ describe("Unhydrated nodes", () => {
 		assert.equal(defaultingLeaf.value, defaultValue);
 	});
 
-	// TODO: Fail instead of returning undefined, as is the case for identifiers.
 	it("read undefined for contextual defaulted properties", () => {
 		const defaultValue = 3;
 		const contextualProvider: ContextualFieldProvider = (context: unknown) => {
-			assert.notEqual(context, undefined);
-			return defaultValue;
+			assert.equal(context, "UseGlobalContext");
+			return [
+				unhydratedFlexTreeFromCursor(
+					getUnhydratedContext(SchemaFactory.number),
+					singleJsonCursor(defaultValue),
+				),
+			];
 		};
 		class HasDefault extends schemaFactory.object("DefaultingLeaf", {
 			value: schemaFactory.optional(
@@ -308,7 +331,7 @@ describe("Unhydrated nodes", () => {
 			),
 		}) {}
 		const defaultingLeaf = new HasDefault({ value: undefined });
-		assert.equal(defaultingLeaf.value, undefined);
+		assert.equal(defaultingLeaf.value, defaultValue);
 	});
 
 	it("read manually provided identifiers", () => {
@@ -338,7 +361,11 @@ describe("Unhydrated nodes", () => {
 
 		const id = "my identifier";
 		const object = new TestObjectWithId({ id, autoId: undefined });
-		assert.deepEqual(Object.entries(object), [["id", id]]);
+		assert.deepEqual(Object.entries(object), [
+			["id", id],
+			["autoId", object.autoId],
+		]);
+		assert(isStableId(object.autoId));
 	});
 
 	it("cannot be used twice in the same tree", () => {

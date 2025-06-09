@@ -207,7 +207,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										]),
 									),
 								],
-								HeadingNode.createFromPlainText("Type Parameters"),
+								new HeadingNode("Type Parameters"),
 							),
 						],
 						{
@@ -325,12 +325,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 						[
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									LinkNode.createFromPlainText(
+									new LinkNode(
 										"testOptionalInterfaceProperty",
 										"/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
 									),
 								]),
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("optional")]),
+								new TableBodyCellNode([new CodeSpanNode("optional")]),
 								TableBodyCellNode.createFromPlainText("0"),
 								new TableBodyCellNode([SpanNode.createFromPlainText("number")]),
 								TableBodyCellNode.createFromPlainText("Test optional property"),
@@ -441,26 +441,20 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Table row for `bar`
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									LinkNode.createFromPlainText(
-										"bar",
-										"/test-package/testnamespace-namespace/#bar-variable",
-									),
+									new LinkNode("bar", "/test-package/testnamespace-namespace/#bar-variable"),
 								]),
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("Beta")]), // Alert
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]), // Modifier
+								new TableBodyCellNode([new CodeSpanNode("Beta")]), // Alert
+								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// Table row for `foo`
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									LinkNode.createFromPlainText(
-										"foo",
-										"/test-package/testnamespace-namespace/#foo-variable",
-									),
+									new LinkNode("foo", "/test-package/testnamespace-namespace/#foo-variable"),
 								]),
 								TableBodyCellNode.Empty, // No alert for `@public`
-								new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]), // Modifier
+								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -549,9 +543,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								LinkNode.createFromPlainText("Packages", "/"),
+								new LinkNode("Packages", "/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "/test-package/"),
+								new LinkNode("test-package", "/test-package/"),
 							]),
 						]),
 
@@ -559,20 +553,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 						new SectionNode(
 							[
 								new UnorderedListNode([
-									LinkNode.createFromPlainText(
-										"entry-point-a",
-										"/test-package/entry-point-a-entrypoint",
-									),
-									LinkNode.createFromPlainText(
-										"entry-point-b",
-										"/test-package/entry-point-b-entrypoint",
-									),
+									new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
+									new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
 								]),
 							],
-							HeadingNode.createFromPlainText("Entry Points"),
+							new HeadingNode("Entry Points"),
 						),
 					],
-					HeadingNode.createFromPlainText("test-package"),
+					new HeadingNode("test-package"),
 				),
 			],
 		});
@@ -587,14 +575,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								LinkNode.createFromPlainText("Packages", "/"),
+								new LinkNode("Packages", "/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "/test-package/"),
+								new LinkNode("test-package", "/test-package/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText(
-									"entry-point-a",
-									"/test-package/entry-point-a-entrypoint",
-								),
+								new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
 							]),
 						]),
 
@@ -605,9 +590,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												LinkNode.createFromPlainText("hello", "/test-package/#hello-variable"),
+												new LinkNode("hello", "/test-package/#hello-variable"),
 											]),
-											new TableBodyCellNode([CodeSpanNode.createFromPlainText("readonly")]),
+											new TableBodyCellNode([new CodeSpanNode("readonly")]),
 											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
 										]),
@@ -620,7 +605,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									]),
 								),
 							],
-							HeadingNode.createFromPlainText("Variables"),
+							new HeadingNode("Variables"),
 						),
 
 						// Variables details
@@ -639,16 +624,16 @@ describe("ApiItem to Documentation transformation tests", () => {
 													"typescript",
 												),
 											],
-											HeadingNode.createFromPlainText("Signature", "hello-signature"),
+											new HeadingNode("Signature", "hello-signature"),
 										),
 									],
-									HeadingNode.createFromPlainText("hello", "hello-variable"),
+									new HeadingNode("hello", "hello-variable"),
 								),
 							],
-							HeadingNode.createFromPlainText("Variable Details"),
+							new HeadingNode("Variable Details"),
 						),
 					],
-					HeadingNode.createFromPlainText("entry-point-a"),
+					new HeadingNode("entry-point-a"),
 				),
 			],
 		});
@@ -663,14 +648,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								LinkNode.createFromPlainText("Packages", "/"),
+								new LinkNode("Packages", "/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText("test-package", "/test-package/"),
+								new LinkNode("test-package", "/test-package/"),
 								new PlainTextNode(" > "),
-								LinkNode.createFromPlainText(
-									"entry-point-b",
-									"/test-package/entry-point-b-entrypoint",
-								),
+								new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
 							]),
 						]),
 
@@ -681,7 +663,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												LinkNode.createFromPlainText("world", "/test-package/#world-variable"),
+												new LinkNode("world", "/test-package/#world-variable"),
 											]),
 											TableBodyCellNode.Empty, // Type
 											TableBodyCellNode.createFromPlainText("Test Constant"),
@@ -694,7 +676,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 									]),
 								),
 							],
-							HeadingNode.createFromPlainText("Variables"),
+							new HeadingNode("Variables"),
 						),
 
 						// Variables details
@@ -713,16 +695,16 @@ describe("ApiItem to Documentation transformation tests", () => {
 													"typescript",
 												),
 											],
-											HeadingNode.createFromPlainText("Signature", "world-signature"),
+											new HeadingNode("Signature", "world-signature"),
 										),
 									],
-									HeadingNode.createFromPlainText("world", "world-variable"),
+									new HeadingNode("world", "world-variable"),
 								),
 							],
-							HeadingNode.createFromPlainText("Variable Details"),
+							new HeadingNode("Variable Details"),
 						),
 					],
-					HeadingNode.createFromPlainText("entry-point-b"),
+					new HeadingNode("entry-point-b"),
 				),
 			],
 		});

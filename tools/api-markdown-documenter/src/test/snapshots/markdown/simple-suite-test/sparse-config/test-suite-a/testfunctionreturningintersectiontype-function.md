@@ -16,4 +16,4 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type**: [TestEmptyInterface](docs/test-suite-a/testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)&lt;number&gt;
+**Return type**: [TestEmptyInterface](docs/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)\<number\>

@@ -2110,7 +2110,18 @@ export class ContainerRuntime
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
 		) {
-			this._idCompressor = this.createIdCompressorFn();
+			PerformanceEvent.timedExec(
+				this.mc.logger,
+				{ eventName: "CreateIdCompressorOnBoot" },
+				(event) => {
+					this._idCompressor = this.createIdCompressorFn();
+					event.end({
+						details: {
+							idCompressorMode: this.sessionSchema.idCompressorMode,
+						},
+					});
+				},
+			);
 			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
@@ -2712,13 +2723,27 @@ export class ContainerRuntime
 			this._idCompressor === undefined &&
 			this.sessionSchema.idCompressorMode !== undefined
 		) {
-			this._idCompressor = this.createIdCompressorFn();
-			// Finalize any ranges we received while the compressor was turned off.
-			const ops = this.pendingIdCompressorOps;
-			this.pendingIdCompressorOps = [];
-			for (const range of ops) {
-				this._idCompressor.finalizeCreationRange(range);
-			}
+			PerformanceEvent.timedExec(
+				this.mc.logger,
+				{ eventName: "CreateIdCompressorOnDelayedLoad" },
+				(event) => {
+					this._idCompressor = this.createIdCompressorFn();
+					// Finalize any ranges we received while the compressor was turned off.
+					const ops = this.pendingIdCompressorOps;
+					this.pendingIdCompressorOps = [];
+					const trace = Trace.start();
+					for (const range of ops) {
+						this._idCompressor.finalizeCreationRange(range);
+					}
+					event.end({
+						details: {
+							finalizeCreationRangeDuration: trace.trace().duration,
+							idCompressorMode: this.sessionSchema.idCompressorMode,
+							pendingIdCompressorOps: ops.length,
+						},
+					});
+				},
+			);
 			assert(this.pendingIdCompressorOps.length === 0, 0x976 /* No new ops added */);
 		}
 	}
@@ -4527,7 +4552,7 @@ export class ContainerRuntime
 
 			assert(
 				!staged || canStageMessageOfType(type),
-				"Unexpected message type submitted in Staging Mode",
+				0xbba /* Unexpected message type submitted in Staging Mode */,
 			);
 
 			// Before submitting any non-staged change, submit the ID Allocation op to cover any compressed IDs included in the op.
@@ -4699,7 +4724,7 @@ export class ContainerRuntime
 		const message = resubmitData.runtimeOp;
 		assert(
 			canStageMessageOfType(message.type),
-			"Expected message type to be compatible with staging",
+			0xbbb /* Expected message type to be compatible with staging */,
 		);
 		switch (message.type) {
 			case ContainerMessageType.FluidDataStoreOp: {
@@ -4790,7 +4815,7 @@ export class ContainerRuntime
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
-		assert(canStageMessageOfType(type), "Unexpected message type to be rolled back");
+		assert(canStageMessageOfType(type), 0xbbc /* Unexpected message type to be rolled back */);
 
 		switch (type) {
 			case ContainerMessageType.FluidDataStoreOp: {
