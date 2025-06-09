@@ -19,6 +19,7 @@ import * as nconf from "nconf";
 import {
 	DriverVersionHeaderName,
 	CallingServiceHeaderName,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
@@ -30,8 +31,13 @@ import {
 	BaseTelemetryProperties,
 	CommonProperties,
 	HttpProperties,
+	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import {
+	RestLessServer,
+	createHealthCheckEndpoints,
+	handleResponse,
+} from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
 import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
@@ -111,6 +117,40 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
+
+	// verify token length early to avoid unnecessary processing for invalid tokens
+	app.use((req, res, next) => {
+		try {
+			const authorization = req.get("Authorization");
+			if (!authorization) {
+				throw new NetworkError(403, "Authorization header is missing.");
+			}
+
+			if (!authorization.startsWith("Basic ")) {
+				throw new NetworkError(403, "Malformed authorization token");
+			}
+			const base64TokenMatch = authorization.replace("Basic ", "");
+			const decoded = Buffer.from(base64TokenMatch, "base64").toString();
+
+			const tokenMatch = decoded.split(":");
+
+			if (tokenMatch.length !== 2) {
+				throw new NetworkError(403, "Malformed authorization token");
+			}
+
+			const token = tokenMatch[1];
+
+			if (token.length > 1000) {
+				// Prevent attempted token length attacks.
+				Lumberjack.error("Invalid token length detected");
+				throw new NetworkError(403, "Invalid token. Token is too long.");
+			}
+
+			next();
+		} catch (error) {
+			handleResponse(Promise.reject(error), res);
+		}
+	});
 
 	app.use(json({ limit: requestSize }));
 	app.use(urlencoded({ limit: requestSize, extended: false }));
