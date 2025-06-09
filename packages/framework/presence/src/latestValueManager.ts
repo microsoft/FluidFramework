@@ -193,7 +193,6 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @param value - The object to clone
  * @returns A shallow clone of the input value
- * @internal
  */
 export function shallowCloneNullableObject<T extends object | null>(value: T): T {
 	return value === null ? value : shallowCloneObject(value);
@@ -208,6 +207,10 @@ export function shallowCloneNullableObject<T extends object | null>(value: T): T
 export interface LatestArguments<T extends object | null> {
 	/**
 	 * The initial value of the local state.
+	 *
+	 * @remarks
+	 * `latest` assumes ownership of the value and its references.
+	 * Make a deep clone before passing, if needed.
 	 */
 	local: JsonSerializable<T>;
 

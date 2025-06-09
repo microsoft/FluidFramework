@@ -23,7 +23,7 @@ export namespace InternalTypes {
 	}
 
 	/**
-	 * `ValueRequiredState` is used to represent a state that may have a value.
+	 * Represents a state that may have a value.
 	 * And it includes standard metadata.
 	 *
 	 * @remarks
@@ -36,7 +36,7 @@ export namespace InternalTypes {
 	}
 
 	/**
-	 * `ValueRequiredState` is used to represent a state that must have a value.
+	 * Represents a state that must have a value.
 	 * And it includes standard metadata.
 	 *
 	 * @remarks

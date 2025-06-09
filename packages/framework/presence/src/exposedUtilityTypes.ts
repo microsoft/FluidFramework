@@ -19,7 +19,7 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
 	/**
-	 * `IfListener` iff the given type is an acceptable shape for a notification.
+	 * Yields `IfListener` when the given type is an acceptable shape for a notification.
 	 * `Else` otherwise.
 	 *
 	 * @system
