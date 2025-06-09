@@ -38,6 +38,7 @@ import { v4 as uuid } from "uuid";
 import { computeStickinessFromSide } from "../intervalCollection.js";
 
 import {
+	// eslint-disable-next-line import/no-deprecated
 	ISerializableInterval,
 	ISerializedInterval,
 	IntervalStickiness,
@@ -128,6 +129,7 @@ export function getSerializedProperties(
  * @alpha
  * @legacy
  */
+// eslint-disable-next-line import/no-deprecated
 export interface SequenceInterval extends ISerializableInterval {
 	readonly start: LocalReferencePosition;
 	/**
@@ -139,6 +141,9 @@ export interface SequenceInterval extends ISerializableInterval {
 	readonly startSide: Side;
 	readonly endSide: Side;
 	readonly stickiness: IntervalStickiness;
+
+	/** Serializable bag of properties associated with the interval. */
+	properties: PropertySet;
 
 	/**
 	 * @returns a new interval object with identical semantics.
@@ -186,6 +191,7 @@ export interface SequenceInterval extends ISerializableInterval {
 	 * Unions this interval with `b`, returning a new interval.
 	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
 	 * intermediate values between the two intervals.
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	union(b: SequenceInterval): SequenceInterval;
 
@@ -208,9 +214,17 @@ export interface SequenceInterval extends ISerializableInterval {
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	overlapsPos(bstart: number, bend: number): boolean;
+
+	/**
+	 * Gets the id associated with this interval.
+	 * When the interval is used as part of an interval collection, this id can be used to modify or remove the
+	 * interval.
+	 */
+	getIntervalId(): string;
 }
 
-export class SequenceIntervalClass implements SequenceInterval {
+// eslint-disable-next-line import/no-deprecated
+export class SequenceIntervalClass implements SequenceInterval, ISerializableInterval {
 	readonly #props: {
 		propertyManager?: PropertiesManager;
 		properties: PropertySet;
@@ -442,7 +456,7 @@ export class SequenceIntervalClass implements SequenceInterval {
 	/**
 	 * {@inheritDoc IInterval.union}
 	 */
-	public union(b: SequenceInterval) {
+	public union(b: SequenceIntervalClass) {
 		const newStart = minReferencePosition(this.start, b.start);
 		const newEnd = maxReferencePosition(this.end, b.end);
 

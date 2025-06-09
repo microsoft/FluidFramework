@@ -41,6 +41,7 @@ export interface IInterval {
     modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
+    // @deprecated
     union(b: IInterval): IInterval;
 }
 
@@ -176,7 +177,7 @@ export interface ISequenceOverlappingIntervalsIndex extends SequenceIntervalInde
     gatherIterationResults(results: SequenceInterval[], iteratesForward: boolean, start?: SequencePlace, end?: SequencePlace): void;
 }
 
-// @alpha @legacy (undocumented)
+// @alpha @deprecated @legacy (undocumented)
 export interface ISerializableInterval extends IInterval {
     getIntervalId(): string;
     properties: PropertySet;
@@ -313,6 +314,7 @@ export interface SequenceInterval extends ISerializableInterval {
     readonly end: LocalReferencePosition;
     // (undocumented)
     readonly endSide: Side;
+    getIntervalId(): string;
     // (undocumented)
     readonly intervalType: IntervalType;
     // @deprecated
@@ -321,6 +323,7 @@ export interface SequenceInterval extends ISerializableInterval {
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
+    properties: PropertySet;
     // @deprecated
     removePositionChangeListeners(): void;
     // (undocumented)
@@ -329,6 +332,7 @@ export interface SequenceInterval extends ISerializableInterval {
     readonly startSide: Side;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
+    // @deprecated
     union(b: SequenceInterval): SequenceInterval;
 }
 

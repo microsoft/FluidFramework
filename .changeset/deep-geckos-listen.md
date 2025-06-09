@@ -7,9 +7,12 @@ Deprecate unnecessary and internal APIs in `ISequenceIntervalCollection` and rel
 The following APIs are now deprecated and will be removed in a future release:
 - `IInterval.clone`
 - `IInterval.modify`
-- `ISerializableInterval.serialize`
+- `IInterval.union`
+- `ISerializableInterval`
 - `SequenceInterval.clone`
 - `SequenceInterval.modify`
+- `SequenceInterval.union`
+- `SequenceInterval.serialize`
 - `SequenceInterval.addPositionChangeListeners`
 - `SequenceInterval.removePositionChangeListeners`
 
