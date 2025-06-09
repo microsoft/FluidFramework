@@ -258,7 +258,7 @@ export interface LatestArguments<T extends object | null> {
 	/**
 	 * See {@link StateSchemaValidator}.
 	 */
-	validator?: StateSchemaValidator<T> | undefined;
+	validator?: StateSchemaValidator<T>;
 }
 
 /**
@@ -267,7 +267,7 @@ export interface LatestArguments<T extends object | null> {
  * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArguments<T> & { validator: StateSchemaValidator<T> },
+	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 /**
@@ -276,7 +276,7 @@ export function latest<T extends object | null, Key extends string = string>(
  * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(
-	args: Omit<LatestArguments<T>, "validator">,
+	args: LatestArguments<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 
 /* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
