@@ -459,7 +459,10 @@ export class UnhydratedOptionalField
 	public readonly editor = {
 		set: (newContent: FlexibleNodeContent | undefined): void => {
 			if (newContent !== undefined) {
-				assert(newContent instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
+				assert(
+					newContent instanceof UnhydratedFlexTreeNode,
+					0xbb7 /* Expected unhydrated node */,
+				);
 			}
 
 			this.edit((mapTrees) => {
@@ -508,7 +511,7 @@ export class UnhydratedSequenceField
 		insert: (index, newContent): void => {
 			for (const c of newContent) {
 				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
-				assert(c instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
+				assert(c instanceof UnhydratedFlexTreeNode, 0xbb8 /* Expected unhydrated node */);
 			}
 			const newContentChecked = newContent as readonly UnhydratedFlexTreeNode[];
 			this.edit((mapTrees) => {
