@@ -54,7 +54,10 @@ import {
 	type UnannotateSchemaRecord,
 } from "../../schemaTypes.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
-import { mapTreeFromNodeData, type InsertableContent } from "../../toMapTree.js";
+import {
+	unhydratedFlexTreeFromInsertable,
+	type InsertableContent,
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 
 /**
@@ -453,7 +456,7 @@ export function objectSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return mapTreeFromNodeData(input as object, this as Output);
+			return unhydratedFlexTreeFromInsertable(input as object, this as Output);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;

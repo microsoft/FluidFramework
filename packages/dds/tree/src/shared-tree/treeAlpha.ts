@@ -44,7 +44,7 @@ import {
 	getPropertyKeyFromStoredKey,
 	treeNodeApi,
 	getIdentifierFromNode,
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
 	getOrCreateInnerNode,
 	NodeKind,
@@ -428,7 +428,10 @@ export const TreeAlpha: TreeAlpha = {
 			? TreeFieldFromImplicitField<TSchema>
 			: TreeNode | TreeLeafValue | undefined
 	> {
-		const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
+		const mapTree = unhydratedFlexTreeFromInsertable(
+			data as InsertableField<UnsafeUnknownSchema>,
+			schema,
+		);
 		const result = mapTree === undefined ? undefined : getOrCreateNodeFromInnerNode(mapTree);
 		return result as Unhydrated<
 			TSchema extends ImplicitFieldSchema
