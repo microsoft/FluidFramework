@@ -50,6 +50,7 @@ export type {
 	latestMap,
 	LatestMap,
 	LatestMapArguments,
+	LatestMapArgumentsRaw,
 	LatestMapClientData,
 	LatestMapEvents,
 	LatestMapItemRemovedClientData,

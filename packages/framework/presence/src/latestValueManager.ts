@@ -210,7 +210,7 @@ class LatestValueManagerImpl<T, Key extends string>
 }
 
 /**
- * Arguments that are passed to the {@link StateFactory.latest} function.
+ * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link LatestRaw} state manager.
  *
  * @beta
  */
@@ -225,15 +225,10 @@ export interface LatestArgumentsRaw<T extends object | null> {
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
-
-	/**
-	 * Validator is not allowed on raw arguments.
-	 */
-	// validator?: never;
 }
 
 /**
- * Arguments that are passed to the {@link StateFactory.latest} function.
+ * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link Latest} state manager.
  *
  * @beta
  */

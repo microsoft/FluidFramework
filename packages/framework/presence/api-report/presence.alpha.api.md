@@ -203,25 +203,27 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
     readonly presence: Presence;
 }
 
-// @beta (undocumented)
-export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: undefined): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
-
 // @beta
-export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys> & {
-    validator: StateSchemaValidator<T>;
-}): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
 // @beta
-export interface LatestMapArguments<T, Keys extends string | number = string | number> {
-    local?: {
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+
+// @beta
+export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
+    // (undocumented)
+    validator: StateSchemaValidator<T>;
+}
+
+// @beta
+export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
+    local: {
         [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
     };
-    settings?: BroadcastControlSettings | undefined;
-    // (undocumented)
-    validator?: StateSchemaValidator<T> | undefined;
+    settings?: BroadcastControlSettings;
 }
 
 // @beta @sealed

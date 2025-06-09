@@ -557,39 +557,38 @@ class LatestMapValueManagerImpl<
  *
  * @beta
  */
-export interface LatestMapArguments<T, Keys extends string | number = string | number> {
+export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
 	/**
 	 * The initial value of the local state.
 	 */
-	local?: {
+	local: {
 		[K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
 	};
 
 	/**
 	 * See {@link BroadcastControlSettings}.
 	 */
-	settings?: BroadcastControlSettings | undefined;
-	validator?: StateSchemaValidator<T> | undefined;
+	settings?: BroadcastControlSettings;
 }
 
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Arguments that are passed to the {@link StateFactory.latestMap} function.
+ *
  * @beta
  */
-export function latestMap<
-	T,
-	Keys extends string | number = string | number,
-	RegistrationKey extends string = string,
->(
-	args?: undefined,
-): InternalTypes.ManagerFactory<
-	RegistrationKey,
-	InternalTypes.MapValueState<T, Keys>,
-	LatestMapRaw<T, Keys>
->;
+export interface LatestMapArguments<T, Keys extends string | number = string | number>
+	extends LatestMapArgumentsRaw<T, Keys> {
+	validator: StateSchemaValidator<T>;
+}
+
+// #region function overloads
+// Overloads should be ordered from most specific to least specific.
 
 /**
  * Factory for creating a {@link LatestMap} State object.
+ *
+ * @remarks
+ * This overload is used when called with {@link LatestMapArguments}. That is, if a validator function is provided.
  *
  * @beta
  */
@@ -598,7 +597,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args?: LatestMapArguments<T, Keys> & { validator: StateSchemaValidator<T> },
+	args: LatestMapArguments<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
@@ -607,6 +606,10 @@ export function latestMap<
 
 /**
  * Factory for creating a {@link LatestMapRaw} State object.
+ *
+ * @remarks
+ * This overload is used when called with {@link LatestMapArgumentsRaw}. That is, if a validator function is
+ * _not_provided.
  *
  * @beta
  */
@@ -621,6 +624,26 @@ export function latestMap<
 	InternalTypes.MapValueState<T, Keys>,
 	LatestMapRaw<T, Keys>
 >;
+
+/**
+ * Factory for creating a {@link LatestMapRaw} State object.
+ *
+ * @remarks
+ * This overload is used when called with no arguments.
+ *
+ * @beta
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMapRaw<T, Keys>
+>;
+
+// #endregion
 
 /**
  * @beta
