@@ -207,11 +207,11 @@ export {
 	createUnknownOptionalFieldPolicy,
 } from "./node-kinds/index.js";
 export {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable as mapTreeFromNodeData,
 	type InsertableContent,
 	type FactoryContent,
 	type FactoryContentObject,
-} from "./toMapTree.js";
+} from "./unhydratedFlexTreeFromInsertable.js";
 export {
 	prepareForInsertion,
 	prepareForInsertionContextless,

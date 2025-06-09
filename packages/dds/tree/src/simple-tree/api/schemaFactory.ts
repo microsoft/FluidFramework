@@ -70,7 +70,7 @@ import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
-import { mapTreeFromNodeData } from "../toMapTree.js";
+import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -1134,7 +1134,7 @@ export class SchemaFactory<
 								context.nodeKeyManager.generateLocalNodeIdentifier(),
 							);
 
-				return [mapTreeFromNodeData(id, this.string)];
+				return [unhydratedFlexTreeFromInsertable(id, this.string)];
 			},
 		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {
