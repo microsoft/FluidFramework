@@ -142,7 +142,7 @@ stages:
           inputs:
             targetType: 'filePath'
             workingDirectory: $(Build.SourcesDirectory)/docs
-            filePath: './validateHashes.sh'
+            filePath: '$(Build.SourcesDirectory)/docs/validateHashes.sh'
 
         # Run the tests
         - task: Npm@1
