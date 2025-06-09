@@ -32,11 +32,13 @@ Get all child nodes / values of a `TreeNode`, keyed by their property keys.
 class MyObject extends schemaFactory.object("MyObject", {
 	foo: schemaFactory.string;
 	bar: schemaFactory.optional(schemaFactory.string);
+	baz: schemaFactory.optional(schemaFactory.number);
 }) {}
 
 const myObject = new MyObject({
-	foo: "Hello world!"
+	foo: "Hello world!",
+	baz: 42,
 });
 
-const children = TreeAlpha.children(myObject); // [["foo", "Hello world!"]]
+const children = TreeAlpha.children(myObject); // [["foo", "Hello world!"], ["baz", 42]]
 ```
