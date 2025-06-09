@@ -1069,7 +1069,7 @@ export namespace InternalUtilityTypes {
 	 * like recursive types.
 	 *
 	 * @remarks
-	 * If no modification is needed (`T` is exactly deserilizable), `T` will
+	 * If no modification is needed (`T` is exactly deserializable), `T` will
 	 * be the result.
 	 *
 	 * Upon recursion with `T` that requires modification, `T` is wrapped in
