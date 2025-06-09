@@ -13,5 +13,5 @@ constructor(testClassProperty: string);
 ## Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testClassProperty | string | See [testClassProperty](/test-suite-a/testclass-class/testclassproperty-property) |

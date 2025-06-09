@@ -5,5 +5,5 @@
 ## Interfaces
 
 | Interface | Description |
-| --- | --- |
+| - | - |
 | [Foo](/test-suite-b/foo-interface) | Bar |

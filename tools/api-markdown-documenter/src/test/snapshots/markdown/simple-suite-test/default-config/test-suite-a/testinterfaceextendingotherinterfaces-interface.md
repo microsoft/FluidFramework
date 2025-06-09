@@ -19,7 +19,7 @@ Here are some remarks about the interface
 ## Methods
 
 | Method | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface#testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 ## Method Details
@@ -41,7 +41,7 @@ Here are some remarks about the method
 #### Parameters {#testmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | input | string | A string |
 
 #### Returns {#testmethod-returns}

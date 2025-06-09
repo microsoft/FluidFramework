@@ -59,9 +59,7 @@ function renderTableWithMarkdownSyntax(
 		renderNode(
 			new TableBodyRowNode(
 				// eslint-disable-next-line unicorn/new-for-builtins
-				Array<TableCellNode>(headerCellCount).fill(
-					TableBodyCellNode.createFromPlainText("---"),
-				),
+				Array<TableCellNode>(headerCellCount).fill(TableBodyCellNode.createFromPlainText("-")),
 			),
 			writer,
 			{

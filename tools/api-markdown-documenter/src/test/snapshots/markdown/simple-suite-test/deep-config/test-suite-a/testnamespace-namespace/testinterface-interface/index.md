@@ -17,11 +17,11 @@ interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ## Properties
 
 | Property | Alerts | Type | Description |
-| --- | --- | --- | --- |
+| - | - | - | - |
 | [testInterfaceProperty](/test-suite-a/testnamespace-namespace/testinterface-interface/testinterfaceproperty-propertysignature) | `Alpha` | boolean | Test interface property |
 
 ## Methods
 
 | Method | Alerts | Return Type | Description |
-| --- | --- | --- | --- |
+| - | - | - | - |
 | [testInterfaceMethod()](/test-suite-a/testnamespace-namespace/testinterface-interface/testinterfacemethod-methodsignature) | `Alpha` | void | Test interface method |
