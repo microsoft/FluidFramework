@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
-import { eq, gt } from "semver-ts";
+import { eq, gt, parse } from "semver-ts";
 
 import type { SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
@@ -588,13 +588,21 @@ export class DocumentsSchemaController {
 		const existingMinVersionForCollab = documentMetadataSchema?.info?.minVersionForCollab;
 		if (
 			existingMinVersionForCollab !== undefined &&
-			gt(existingMinVersionForCollab, pkgVersion)
+			gt(existingMinVersionForCollab, pkgVersion) &&
+			// We also want to avoid sending the telemetry warning for dev builds, since they currently are formatted as
+			// `0.0.0-#####-test`. This will cause the telemetry warning to constantly fire.
+			// TODO: This can be removed after ADO:41351
+			!isDevBuild(pkgVersion)
 		) {
-			const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
-			logger.sendTelemetryEvent({
-				eventName: "MinVersionForCollabWarning",
-				message: warnMsg,
-			});
+			const parsed = parse(pkgVersion);
+			if (parsed === null || !parsed.prerelease.includes("test")) {
+				// We only
+				const warnMsg = `WARNING: The version of Fluid Framework used by this client (${pkgVersion}) is not supported by this document! Please upgrade to version ${existingMinVersionForCollab} or later to ensure compatibility.`;
+				logger.sendTelemetryEvent({
+					eventName: "MinVersionForCollabWarning",
+					message: warnMsg,
+				});
+			}
 		}
 
 		// Desired schema by this session - almost all props are coming from arguments
@@ -793,6 +801,14 @@ export class DocumentsSchemaController {
 	public pendingOpNotAcked(): void {
 		this.opPending = false;
 	}
+}
+
+/**
+ * Determines if a given version is a dev-build (i.e. `0.0.0-#####-test`).
+ */
+function isDevBuild(version: string): boolean {
+	const parsed = parse(version);
+	return parsed !== null && parsed.prerelease.includes("test");
 }
 
 /* eslint-enable jsdoc/check-indentation */
