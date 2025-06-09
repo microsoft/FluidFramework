@@ -37,7 +37,6 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -45,6 +44,7 @@ import {
 	type FlexTreeUnknownUnboxed,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
+	type HydratedFlexTreeNode,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -161,7 +161,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return this.schema === kind.identifier;
 	}
 
-	public get parent(): FlexTreeNode | undefined {
+	public get parent(): HydratedFlexTreeNode | undefined {
 		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
@@ -195,7 +195,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeNode | undefined {
+	public boxedAt(index: number): HydratedFlexTreeNode | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
@@ -209,7 +209,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return Array.from(this, callbackfn);
 	}
 
-	public boxedIterator(): IterableIterator<FlexTreeNode> {
+	public boxedIterator(): IterableIterator<HydratedFlexTreeNode> {
 		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 

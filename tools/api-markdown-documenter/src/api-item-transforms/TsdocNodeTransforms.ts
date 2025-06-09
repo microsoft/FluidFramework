@@ -285,7 +285,7 @@ function transformTsdocCodeSpan(
 	node: DocCodeSpan,
 	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
-	return CodeSpanNode.createFromPlainText(node.code.trim());
+	return new CodeSpanNode(node.code.trim());
 }
 
 /**
@@ -360,7 +360,7 @@ function transformTsdocLinkTag(
 		} else {
 			const linkText = input.linkText?.trim() ?? link.text;
 			const linkTarget = link.target;
-			return LinkNode.createFromPlainText(linkText, linkTarget);
+			return new LinkNode(linkText, linkTarget);
 		}
 	}
 
@@ -368,7 +368,7 @@ function transformTsdocLinkTag(
 		// If link text was not provided, use the name of the referenced element.
 		const linkText = input.linkText ?? input.urlDestination;
 
-		return LinkNode.createFromPlainText(linkText, input.urlDestination);
+		return new LinkNode(linkText, input.urlDestination);
 	}
 
 	throw new Error(
