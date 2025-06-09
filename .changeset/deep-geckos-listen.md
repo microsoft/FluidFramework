@@ -10,5 +10,8 @@ The following APIs are now deprecated and will be removed in a future release:
 - `ISerializableInterval.serialize`
 - `SequenceInterval.clone`
 - `SequenceInterval.modify`
+- `SequenceInterval.addPositionChangeListeners`
+- `SequenceInterval.removePositionChangeListeners`
+
 
 These APIs were never intended for public use. There is no migration path, and any usage is strongly discouraged, as it may result in severe errors or data corruption. Please remove any dependencies on these APIs as soon as possible.
