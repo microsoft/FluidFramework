@@ -57,7 +57,7 @@ export class EscapedTextNode extends DocumentationLiteralNodeBase<string> {
 		super(text);
 
 		if (text.includes("\n")) {
-			throw new Error("Invalid value: Plain text nodes may not contain newline characters");
+			throw new Error("Invalid value: Text nodes may not contain newline characters");
 		}
 	}
 }
