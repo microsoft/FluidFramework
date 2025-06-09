@@ -124,10 +124,7 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode(
-				[table],
-				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-			);
+		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
 }
 
 /**
@@ -676,7 +673,7 @@ export function createModifiersCell(
 		if (needsComma) {
 			contents.push(new PlainTextNode(", "));
 		}
-		contents.push(CodeSpanNode.createFromPlainText(modifier));
+		contents.push(new CodeSpanNode(modifier));
 		needsComma = true;
 	}
 
@@ -711,9 +708,7 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: PhrasingContent[] = alerts.map((alert) =>
-		CodeSpanNode.createFromPlainText(alert),
-	);
+	const alertNodes: PhrasingContent[] = alerts.map((alert) => new CodeSpanNode(alert));
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
