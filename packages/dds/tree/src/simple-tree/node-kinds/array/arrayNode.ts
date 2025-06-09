@@ -1141,10 +1141,7 @@ export function arraySchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(
-				input as object,
-				this as unknown as ImplicitAllowedTypes,
-			);
+			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
