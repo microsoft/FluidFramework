@@ -18,6 +18,8 @@ export {
 	type MinimalMapTreeNodeView,
 	mapTreeFieldsWithField,
 	mapTreeWithField,
+	type MapTreeFieldViewGeneric,
+	type MapTreeNodeViewGeneric,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
 export {
