@@ -20,7 +20,9 @@ import {
 	type ValueSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import type { FieldSchema } from "../../simple-tree/index.js";
+import { isMapNodeSchema, MapNodeSchema, normalizeFieldSchema, type FieldSchema, type TreeNodeSchema } from "../../simple-tree/index.js";
+import { type AllowedTypeMetadata, ObjectFieldSchema } from "../../simple-tree/schemaTypes.js";
+import { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
 
 // TODO:
 // The comparisons in this file seem redundant with those in comparison.ts.
@@ -101,11 +103,11 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	/**
 	 * List of allowed type identifiers in viewed schema which are not allowed in stored schema
 	 */
-	view: TreeNodeSchemaIdentifier[];
+	view: ReadonlyMap<TreeNodeSchemaIdentifier, AllowedTypeMetadata>;
 	/**
 	 * List of allowed type identifiers in stored schema which are not allowed in view schema
 	 */
-	stored: TreeNodeSchemaIdentifier[];
+	stored: ReadonlyMap<TreeNodeSchemaIdentifier, AllowedTypeMetadata>;
 }
 
 export interface FieldKindDiscrepancy extends FieldDiscrepancyLocation {
@@ -136,12 +138,23 @@ export interface NodeFieldsDiscrepancy {
 
 type SchemaFactoryNodeKind = "object" | "leaf" | "map";
 
-function getNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeKind {
+function getStoredNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeKind {
 	if (nodeSchema instanceof ObjectNodeStoredSchema) {
 		return "object";
 	} else if (nodeSchema instanceof MapNodeStoredSchema) {
 		return "map";
 	} else if (nodeSchema instanceof LeafNodeStoredSchema) {
+		return "leaf";
+	}
+	throwUnsupportedNodeType(nodeSchema.constructor.name);
+}
+
+function getViewNodeSchemaType(nodeSchema: TreeNodeSchema): SchemaFactoryNodeKind {
+	if (nodeSchema instanceof ObjectFieldSchema) {
+		return "object";
+	} else if (isMapNodeSchema(nodeSchema)) {
+		return "map";
+	} else if (nodeSchema instanceof LeafNodeSchema) {
 		return "leaf";
 	}
 	throwUnsupportedNodeType(nodeSchema.constructor.name);
@@ -170,45 +183,58 @@ export function* getAllowedContentDiscrepancies(
 		undefined,
 	);
 
-	for (const result of compareMaps(view.nodeSchema, stored.nodeSchema)) {
-		switch (result.type) {
-			case "aExtra": {
-				const viewType = getNodeSchemaType(result.value);
-				yield {
-					identifier: result.key,
-					mismatch: "nodeKind",
-					view: viewType,
-					stored: undefined,
-				};
-				break;
-			}
-			case "bExtra": {
-				const storedType = getNodeSchemaType(result.value);
-				yield {
-					identifier: result.key,
-					mismatch: "nodeKind",
-					view: undefined,
-					stored: storedType,
-				};
-				break;
-			}
-			case "both": {
-				yield* getNodeDiscrepancies(result.key, result.valueA, result.valueB);
-				break;
-			}
-			default:
-				break;
+	// TODO is this actually the allowed types? why is the mismatch called nodeKind
+	const annotatedAllowedTypes = normalizeFieldSchema(view).annotatedAllowedTypeSet;
+	const storedAllowedTypes = stored.nodeSchema;
+
+	const viewAllowedTypes = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
+	for (const [viewSchema, annotations] of annotatedAllowedTypes) {
+		// map view schema identifiers to the field schemas to make access in the stored schema pass more efficient
+		// TODO should this be a map on field schema?
+		const identifier: TreeNodeSchemaIdentifier = brand(viewSchema.identifier);
+		viewAllowedTypes.set(identifier, viewSchema);
+
+		const storedSchema = storedAllowedTypes.get(identifier);
+
+		// if the view schema has an allowed type that's not in the stored schema
+		if (storedSchema === undefined) {
+			// TODO
+			const viewType = getViewNodeSchemaType(viewSchema);
+			yield {
+				identifier,
+				// TODO why is this a node kind mismatch and not an allowed types one?
+				mismatch: "nodeKind",
+				view: viewType,
+				stored: undefined,
+			};
+			break;
+		} else {
+			yield* getNodeDiscrepancies(identifier, viewSchema, annotations, storedSchema);
+			break;
+		}
+	}
+
+	for (const [identifier, storedSchema] of storedAllowedTypes) {
+		if (!viewAllowedTypes.has(identifier)) {
+			const storedType = getStoredNodeSchemaType(storedSchema);
+			yield {
+				identifier,
+				mismatch: "nodeKind",
+				view: undefined,
+				stored: storedType,
+			};
+			break;
 		}
 	}
 }
 
 function* getNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
-	view: TreeNodeStoredSchema,
+	view: TreeNodeSchema,
 	stored: TreeNodeStoredSchema,
 ): Iterable<Discrepancy> {
-	const viewType = getNodeSchemaType(view);
-	const storedType = getNodeSchemaType(stored);
+	const viewType = getViewNodeSchemaType(view);
+	const storedType = getStoredNodeSchemaType(stored);
 	if (viewType !== storedType) {
 		yield {
 			identifier,
@@ -264,7 +290,7 @@ function* getNodeDiscrepancies(
 }
 
 /**
- * The function to track the discrepancies between two field stored schemas.
+ * The function to track the discrepancies between a field view schema and a stored schema.
  *
  * @param keyOrRoot - If the key is missing, it indicates that this is the root field schema.
  */
@@ -274,17 +300,19 @@ function* getFieldDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey | undefined,
 ): Iterable<FieldDiscrepancy> {
+	const normalizedView = normalizeFieldSchema(view);
+
 	// Only track the symmetric differences of two sets.
 	const findSetDiscrepancies = (
-		a: TreeTypeSet,
+		a: ReadonlySet<string>,
 		b: TreeTypeSet,
 	): [TreeNodeSchemaIdentifier[], TreeNodeSchemaIdentifier[]] => {
-		const aDiff = [...a].filter((value) => !b.has(value));
+		const aDiff = [...a].filter((value) => !b.has(brand(value)));
 		const bDiff = [...b].filter((value) => !a.has(value));
-		return [aDiff, bDiff];
+		return [aDiff.map((value) => brand(value)), bDiff];
 	};
 
-	const [viewExtra, storedExtra] = findSetDiscrepancies(view.types, stored.types);
+	const [viewExtra, storedExtra] = findSetDiscrepancies(normalizedView.allowedTypesIdentifiers, stored.types);
 	if (viewExtra.length > 0 || storedExtra.length > 0) {
 		yield {
 			identifier,
@@ -308,7 +336,7 @@ function* getFieldDiscrepancies(
 
 function* trackObjectNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
-	view: ObjectNodeStoredSchema,
+	view: ObjectFieldSchema,
 	stored: ObjectNodeStoredSchema,
 ): Iterable<FieldDiscrepancy> {
 	/**
@@ -402,7 +430,7 @@ function* compareMaps<K, V1, V2>(
  * `isRepoSuperset` will determine that a can never be the superset of b. In contrast, `allowsRepoSuperset` will continue
  * validating internal fields.
  */
-export function isRepoSuperset(view: TreeStoredSchema, stored: TreeStoredSchema): boolean {
+export function isRepoSuperset(view: FieldSchema, stored: TreeStoredSchema): boolean {
 	const discrepancies = getAllowedContentDiscrepancies(view, stored);
 
 	for (const discrepancy of discrepancies) {

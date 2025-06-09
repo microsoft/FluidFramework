@@ -89,8 +89,9 @@ export class SchemaCompatibilityTester {
 							(identifier) =>
 								!isNeverTree(
 									this.policy,
-									this.viewSchemaAsStored,
-									this.viewSchemaAsStored.nodeSchema.get(identifier),
+									// TODO do I need a new version of this for view schema?
+									this.viewSchemaRoot,
+									this.viewSchemaRoot.,
 								),
 						)
 					) {
@@ -144,7 +145,7 @@ export class SchemaCompatibilityTester {
 		};
 
 		for (const discrepancy of getAllowedContentDiscrepancies(
-			this.viewSchemaAsStored,
+			this.viewSchemaRoot,
 			stored,
 		)) {
 			if (!canView && !canUpgrade) {
