@@ -49,6 +49,9 @@ export interface ContainerRuntimeOptions {
     readonly summaryOptions: ISummaryRuntimeOptions;
 }
 
+// @alpha @legacy
+export const defaultMinVersionForCollab: "1.999.0";
+
 // @alpha @legacy (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
@@ -346,8 +349,8 @@ export interface LoadContainerRuntimeParams {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @alpha @legacy
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+// @alpha @legacy @input
+export type MinimumVersionForCollab = `1.0.0` | `1.4.0` | typeof defaultMinVersionForCollab | `2.${bigint}.0`;
 
 // @alpha @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;

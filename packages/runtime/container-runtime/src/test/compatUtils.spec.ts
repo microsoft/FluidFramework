@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import {
+	defaultMinVersionForCollab,
 	getConfigsForMinVersionForCollab,
 	getValidationForRuntimeOptions,
 	type ConfigMap,
@@ -33,9 +34,11 @@ describe("compatUtils", () => {
 				"2.0.0": "a2",
 				"8.0.0": "a4",
 				"5.0.0": "a3",
+				"1.0.0": "a0",
 			},
 			featureB: {
-				"0.0.0-defaults": "b1",
+				"1.0.0": "b0",
+				[defaultMinVersionForCollab]: "b1",
 				"3.0.0": "b2",
 				"9.0.0": "b4",
 				"6.0.0": "b3",
@@ -51,14 +54,17 @@ describe("compatUtils", () => {
 				"0.1.0": "d1",
 				"2.5.0": "d2",
 				"8.5.0": "d4",
+				"1.0.0": "d0",
 			},
 			featureE: {
 				"3.5.0": "e2",
 				"9.5.0": "e4",
 				"6.5.0": "e3",
 				"0.9.0": "e1",
+				"1.0.0": "e1.5",
 			},
 			featureF: {
+				"1.0.0": "f0",
 				"4.5.0": "f2",
 				"1.5.0": "f1",
 				"10.5.0": "f4",
@@ -75,10 +81,10 @@ describe("compatUtils", () => {
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
-					// featureC: undefined,
+					featureC: "c0",
 					featureD: "d1",
-					// featureE: undefined,
-					// featureF: undefined,
+					featureE: undefined,
+					featureF: undefined,
 				},
 			},
 			{

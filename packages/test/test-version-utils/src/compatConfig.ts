@@ -63,12 +63,33 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
+/**
+ * What versions to test for compatibility by default.
+ * @remarks
+ * TODO:
+ * This seems like an overcomplicated way to specify the current version and 1.X.
+ * Specifying via two different mechanisms to test compat with 1.X and no mention of not testing older 2.X minors seems concerning.
+ *
+ * It seems like it would make more sense to test:
+ *
+ * 1. The current version.
+ * 2. The previous patch (if current is not 0). Would be expressed via exact X.Y.Z version. This would catch regressions on release branches when patching.
+ * 3. The previous minor (if current is not 0). Would be resolved from ~X.Y.0 style version. This would catch regressions from feature work. Maybe only do this is patch version is 0.
+ * 4. All previous majors greater than 0 which are still maintained. Would be resolved from ^X.0.0 style version. This ensures that LTS versions are tested,
+ * but also any particularly recent still supported non LTS majors if those ever become a thing.
+ */
 const defaultCompatVersions = {
-	// N and N - 1
+	/**
+	 * Major versions relative to the current package major version.
+	 * @remarks
+	 * Currently N and N - 1 (the current and previous major versions).
+	 */
 	currentVersionDeltas: [0, -1],
-	// we are currently supporting 1.3.X long-term
+	// we are currently supporting 1.X long-term (This will resolve to the newest version of 1.X)
+	// TODO: we don't really have a definition of what an LTS means.
+	// Currently all majors greater than 1 are planned to get 3 years support, and no minors or patches are planned to be supported after the release from the same major.
 	ltsVersions: [resolveVersion("^1.3", false)],
-};
+} as const;
 
 // This indicates the number of versions above 2.0.0.internal.1.y.z that we want to support for back compat.
 // Currently we only want to support 2.0.0.internal.3.y.z. and above

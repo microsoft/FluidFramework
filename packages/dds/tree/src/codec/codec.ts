@@ -385,7 +385,7 @@ export function withSchemaValidation<
  * a more complex scheme may be needed to allow safely opting into incompatible features in those cases:
  * such a system can be added if/when its needed since it will be opt in and thus non-breaking.
  *
- * TODO: this should likely be defined higher in the stack and specified when creating the container, possibly as part of its schema.
+ * TODO: this should be unified with {@link @fluidframework/container-runtime#MinimumVersionForCollab}.
  * TODO: compatibility requirements for how this enum can and cannot be changed should be clarified when/if it's used across multiple layers in the stack.
  * For example, if needed, would adding more leading zeros to the minor version break things.
  * @alpha
