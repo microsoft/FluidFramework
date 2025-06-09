@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      dompurify:
-        specifier: ^3.2.6
-        version: 3.2.6
     devDependencies:
       '@azure/static-web-apps-cli':
         specifier: ^2.0.1
@@ -96,6 +92,9 @@ importers:
       docusaurus-plugin-sass:
         specifier: ^0.2.5
         version: 0.2.5(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@18.3.12)(react@18.3.1))(acorn@8.14.0)(eslint@8.55.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(sass@1.81.0)(webpack@5.96.1)
+      dompurify:
+        specifier: ^3.2.6
+        version: 3.2.6
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
