@@ -5,7 +5,6 @@
 
 import {
 	type AnchorNode,
-	type ExclusiveMapTree,
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
@@ -20,6 +19,7 @@ import type {
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
 } from "../default-schema/index.js";
+import type { MinimalMapTreeNodeView } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { FlexTreeContext } from "./context.js";
@@ -287,7 +287,7 @@ export type FlexibleFieldContent = readonly FlexibleNodeContent[];
 /**
  * Tree for inserting as a node.
  */
-export type FlexibleNodeContent = ExclusiveMapTree;
+export type FlexibleNodeContent = MinimalMapTreeNodeView;
 
 /**
  * {@link FlexTreeField} that stores a sequence of children.
