@@ -10,10 +10,15 @@
 import { expect } from "chai";
 import type { Text as MdastText } from "mdast";
 
-import { DocumentationLiteralNodeBase } from "../../documentation-domain/index.js";
-import type { TransformationContext } from "../TransformationContext.js";
-
-import { testTransformation } from "./Utilities.js";
+import {
+	DocumentationLiteralNodeBase,
+	type PhrasingContent,
+} from "../../documentation-domain/index.js";
+import { phrasingContentToMarkdown } from "../ToMarkdown.js";
+import {
+	createTransformationContext,
+	type TransformationContext,
+} from "../TransformationContext.js";
 
 /**
  * Mock custom {@link DocumentationNode} for use in the tests below.
@@ -42,20 +47,29 @@ function customDocumentationNodeToMarkdown(
 // Assuming an appropriate renderer is supplied, the system should be able to handle them correctly.
 describe("Custom node HTML rendering tests", () => {
 	it("Can render a custom node type when given a renderer", () => {
-		const input = new CustomDocumentationNode("foo");
-		const result = testTransformation(input, {
+		const context = createTransformationContext({
 			customTransformations: {
-				// @ts-expect-error - Extending the set of supported node types within this package causes issues.
-				// So rather than extending `PhrasingContentMap` with our custom node, we'll just ignore TypeScript's complaints here.
+				// @ts-expect-error - Using our standard extensibility model within the package causes issues.
 				custom: customDocumentationNodeToMarkdown,
 			},
 		});
 
-		expect(result).to.deep.equal([{ type: "text", value: "foo!" }]);
+		const input = new CustomDocumentationNode("foo");
+
+		// Using our standard extensibility model within the package causes issues, hence the cast here.
+		const output = phrasingContentToMarkdown(input as unknown as PhrasingContent, context);
+
+		expect(output).to.deep.equal([{ type: "text", value: "foo!" }]);
 	});
 
 	it("Throws rendering a custom node type when no renderer is provided for it", () => {
+		const context = createTransformationContext({});
+
 		const input = new CustomDocumentationNode("foo");
-		expect(() => testTransformation(input)).to.throw();
+
+		expect(() =>
+			// Using our standard extensibility model within the package causes issues, hence the cast here.
+			phrasingContentToMarkdown(input as unknown as PhrasingContent, context),
+		).to.throw();
 	});
 });

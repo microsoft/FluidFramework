@@ -12,7 +12,6 @@ import type {
 
 import type {
 	BlockContent,
-	DocumentationNode,
 	DocumentNode,
 	PhrasingContent,
 	SectionContent,
@@ -22,11 +21,7 @@ import {
 	createTransformationContext,
 	type TransformationContext,
 } from "./TransformationContext.js";
-import type {
-	Transformation,
-	TransformationConfiguration,
-	Transformations,
-} from "./configuration/index.js";
+import type { Transformation, TransformationConfiguration } from "./configuration/index.js";
 
 /**
  * Generates a Markdown AST from the provided {@link DocumentNode}.
@@ -123,23 +118,4 @@ export function phrasingContentToMarkdown(
 		throw new Error(`No transformation defined for node type: ${node.type}`);
 	}
 	return transformation(node, context);
-}
-
-/**
- * TODO
- */
-export function documentationNodeToMarkdown<TNode extends DocumentationNode>(
-	node: TNode,
-	context: TransformationContext,
-): TNode["type"] extends keyof Transformations
-	? ReturnType<Transformations[TNode["type"]]>
-	: never {
-	if (context.transformations[node.type] === undefined) {
-		throw new Error(
-			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: "${node.type}". Please provide a transformation for this type.`,
-		);
-	}
-
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call
-	return context.transformations[node.type](node, context);
 }
