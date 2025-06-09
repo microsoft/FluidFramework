@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/)
 
 Test class
 
@@ -33,7 +33,7 @@ Here are some remarks about the class
 
 | Property | Type | Description |
 | - | - | - |
-| [testClassStaticProperty](/test-suite-a/testclass-class/testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
+| [testClassStaticProperty](/test-suite-a/testclass-class/testclassstaticproperty-property) | (foo: number) =\> string | Test static class property |
 
 ## Static Methods
 
@@ -45,7 +45,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
+| [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property) | `readonly` | () =\> void | Test class event property |
 
 ## Properties
 

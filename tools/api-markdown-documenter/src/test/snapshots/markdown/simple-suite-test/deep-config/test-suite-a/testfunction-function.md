@@ -1,6 +1,6 @@
 # testFunction
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function)
 
 Test function
 
