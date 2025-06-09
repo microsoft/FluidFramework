@@ -69,7 +69,6 @@ export type {
 	LatestClientData,
 	LatestMetadata,
 	StateSchemaValidator,
-	StateSchemaValidatorMetadata,
 	ProxiedValueAccessor,
 	RawValueAccessor,
 	ValueAccessor,

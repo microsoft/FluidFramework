@@ -371,13 +371,7 @@ export interface StateMap<K extends string | number, V> {
 
 // @beta
 export type StateSchemaValidator<T> = (
-unvalidatedData: unknown,
-metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
-
-// @beta
-export interface StateSchemaValidatorMetadata {
-    key?: string | number;
-}
+unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
