@@ -13,6 +13,11 @@ String literal types makes typing much simpler to reason about, and more inline 
 Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
 Support for `LineBreakNode`s in `BlockContent` contexts has been removed.
 
+### `BlockQuoteNode` was removed
+
+This `DocumentationNode` implementation was not used by the library.
+If this type is required, it can be re-introduced via the Documentation Domain's [extensibility model](#new-extensibility-model).
+
 ## 0.20.0
 
 ### Add stronger type restrictions to Documentation Domain

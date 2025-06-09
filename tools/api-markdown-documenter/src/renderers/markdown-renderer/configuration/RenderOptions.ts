@@ -4,7 +4,6 @@
  */
 
 import type {
-	BlockQuoteNode,
 	CodeSpanNode,
 	DocumentationNode,
 	FencedCodeBlockNode,
@@ -25,7 +24,6 @@ import type {
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import type { RenderContext } from "../RenderContext.js";
 import {
-	renderBlockQuote,
 	renderCodeSpan,
 	renderFencedCodeBlock,
 	renderHeading,
@@ -75,8 +73,6 @@ export interface Renderers {
  * Default Markdown rendering configuration.
  */
 export const defaultRenderers: Renderers = {
-	blockQuote: (node, writer, context): void =>
-		renderBlockQuote(node as BlockQuoteNode, writer, context),
 	codeSpan: (node, writer, context): void =>
 		renderCodeSpan(node as CodeSpanNode, writer, context),
 	fencedCode: (node, writer, context): void =>

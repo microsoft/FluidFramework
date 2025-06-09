@@ -162,8 +162,6 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    blockQuote: BlockQuoteNode;
-    // (undocumented)
     fencedCode: FencedCodeBlockNode;
     // (undocumented)
     horizontalRule: HorizontalRuleNode;
@@ -175,15 +173,6 @@ export interface BlockContentMap {
     table: TableNode;
     // (undocumented)
     unorderedList: UnorderedListNode;
-}
-
-// @public @sealed
-export class BlockQuoteNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainText(text: string): BlockQuoteNode;
-    static readonly Empty: BlockQuoteNode;
-    get singleLine(): false;
-    readonly type = "blockQuote";
 }
 
 // @public @sealed
