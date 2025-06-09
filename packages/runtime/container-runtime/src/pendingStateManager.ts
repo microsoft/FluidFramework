@@ -23,6 +23,7 @@ import {
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
+	EmptyGroupedBatch,
 	LocalBatchMessage,
 	getEffectiveBatchId,
 	BatchStartInfo,
@@ -49,7 +50,7 @@ export interface IPendingMessage {
 	 * The original runtime op that was submitted to the ContainerRuntime
 	 * Unless this pending message came from stashed content, in which case this was roundtripped through string
 	 */
-	runtimeOp?: LocalContainerRuntimeMessage | undefined; // Undefined for empty batches and initial messages before parsing
+	runtimeOp?: LocalContainerRuntimeMessage | EmptyGroupedBatch | undefined; // Undefined for initial messages before parsing
 	/**
 	 * Local Op Metadata that was passed to the ContainerRuntime when the op was submitted.
 	 * This contains state needed when processing the ack, or to resubmit or rollback the op.
@@ -146,9 +147,7 @@ export interface IRuntimeStateHandler {
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	const content = JSON.parse(message.content);
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+	const content = JSON.parse(message.content) as Partial<EmptyGroupedBatch>;
 	return content.type === "groupedBatch" && content.contents?.length === 0;
 }
 
@@ -300,8 +299,11 @@ export class PendingStateManager implements IDisposable {
 	public hasPendingUserChanges(): boolean {
 		for (let i = 0; i < this.pendingMessages.length; i++) {
 			const element = this.pendingMessages.get(i);
-			// Missing runtimeOp implies not dirtyable: This only happens for empty batches
-			if (element?.runtimeOp !== undefined && isContainerMessageDirtyable(element.runtimeOp)) {
+			if (
+				element?.runtimeOp !== undefined &&
+				isNotEmptyGroupedBatch(element) &&
+				isContainerMessageDirtyable(element.runtimeOp)
+			) {
 				return true;
 			}
 		}
@@ -385,12 +387,7 @@ export class PendingStateManager implements IDisposable {
 		clientSequenceNumber: number | undefined,
 		staged: boolean,
 	): void {
-		// We have to cast because runtimeOp doesn't apply for empty batches and is missing on LocalEmptyBatchPlaceholder
-		this.onFlushBatch(
-			[placeholder satisfies Omit<LocalBatchMessage, "runtimeOp"> as LocalBatchMessage],
-			clientSequenceNumber,
-			staged,
-		);
+		this.onFlushBatch([placeholder], clientSequenceNumber, staged);
 	}
 
 	/**
@@ -403,7 +400,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
-		batch: LocalBatchMessage[],
+		batch: LocalBatchMessage[] | [LocalEmptyBatchPlaceholder],
 		clientSequenceNumber: number | undefined,
 		staged: boolean,
 		ignoreBatchId?: boolean,
@@ -469,7 +466,9 @@ export class PendingStateManager implements IDisposable {
 			// We still need to track it for resubmission.
 			try {
 				if (isEmptyBatchPendingMessage(nextMessage)) {
-					nextMessage.localOpMetadata = { emptyBatch: true }; // equivalent to applyStashedOp for empty batch
+					nextMessage.localOpMetadata = {
+						emptyBatch: true,
+					} satisfies LocalEmptyBatchPlaceholder["localOpMetadata"]; // equivalent to applyStashedOp for empty batch
 					patchbatchInfo(nextMessage); // Back compat
 					this.pendingMessages.push(nextMessage);
 					continue;
@@ -795,7 +794,9 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId = getEffectiveBatchId(pendingMessage);
+			const batchId = pendingMessage.batchInfo.ignoreBatchId
+				? undefined
+				: getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 
@@ -806,7 +807,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			assert(
-				pendingMessage.runtimeOp !== undefined,
+				pendingMessage.runtimeOp !== undefined && isNotEmptyGroupedBatch(pendingMessage),
 				0xb87 /* viableOp is only undefined for empty batches */,
 			);
 
@@ -842,7 +843,7 @@ export class PendingStateManager implements IDisposable {
 			// check is >= because batch end may be last pending message
 			while (remainingPendingMessagesCount >= 0) {
 				assert(
-					pendingMessage.runtimeOp !== undefined,
+					pendingMessage.runtimeOp !== undefined && isNotEmptyGroupedBatch(pendingMessage),
 					0xb88 /* viableOp is only undefined for empty batches */,
 				);
 				batch.push({
@@ -885,14 +886,20 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Pops all staged batches, invoking the callback on each one in order (LIFO)
+	 * Pops all staged batches, invoking the callback on each constituent op in order (LIFO)
 	 */
-	public popStagedBatches(callback: (stagedMessage: IPendingMessage) => void): void {
+	public popStagedBatches(
+		callback: (
+			stagedMessage: IPendingMessage & { runtimeOp?: LocalContainerRuntimeMessage }, // exclude empty grouped batches
+		) => void,
+	): void {
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
 			if (stagedMessage?.batchInfo.staged === true) {
-				callback(stagedMessage);
-				this.pendingMessages.pop();
+				if (isNotEmptyGroupedBatch(stagedMessage)) {
+					callback(stagedMessage);
+					this.pendingMessages.pop();
+				}
 			} else {
 				break; // no more staged messages
 			}
@@ -915,4 +922,10 @@ function patchbatchInfo(
 		// Using uuid guarantees uniqueness, retaining existing behavior
 		message.batchInfo = { clientId: uuid(), batchStartCsn: -1, length: -1, staged: false };
 	}
+}
+
+function isNotEmptyGroupedBatch(
+	message: IPendingMessage,
+): message is IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage } {
+	return message.runtimeOp !== undefined && message.runtimeOp.type !== "groupedBatch";
 }
