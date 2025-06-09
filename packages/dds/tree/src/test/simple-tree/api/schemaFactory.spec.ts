@@ -414,7 +414,7 @@ describe("schemaFactory", () => {
 		});
 
 		it("Node schema persisted metadata", () => {
-			const factory = new SchemaFactoryAlpha("");
+			const factory = new SchemaFactoryAlpha("com.example");
 
 			const fooMetadata = {
 				persistedMetadata: { "a": 2 },

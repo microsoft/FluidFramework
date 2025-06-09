@@ -831,8 +831,33 @@ function areMetadataEqual(
 	return (
 		a?.custom === b?.custom &&
 		a?.description === b?.description &&
-		a?.persistedMetadata === b?.persistedMetadata
+		arePersistedMetadataEqual(a?.persistedMetadata, b?.persistedMetadata)
 	);
+}
+
+/**
+ * Returns true if the given persisted metadata fields are equivalent, otherwise false.
+ * @remarks
+ * Currently only handles shallow equality in the case where the keys are in the same order. This is acceptable for current use cases.
+ */
+function arePersistedMetadataEqual(
+	a: JsonCompatibleReadOnlyObject | undefined,
+	b: JsonCompatibleReadOnlyObject | undefined,
+): boolean {
+	if (a === b) {
+		return true;
+	}
+
+	if (a === undefined || b === undefined) {
+		return false;
+	}
+
+	// Note that the key order matters. If `a` and `b` have the same content but the keys are in a different order,
+	// this method will return false.
+	const aStringified = JSON.stringify(a);
+	const bStringified = JSON.stringify(b);
+
+	return aStringified === bStringified;
 }
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();
