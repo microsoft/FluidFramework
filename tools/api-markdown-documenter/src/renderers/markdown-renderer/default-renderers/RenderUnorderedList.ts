@@ -40,8 +40,14 @@ function renderUnorderedListWithMarkdownSyntax(
 	writer.ensureSkippedLine(); // Lists require leading blank line
 	writer.increaseIndent("- ");
 	for (const child of node.children) {
-		renderNode(child, writer, context);
-		writer.ensureNewLine(); // Ensure newline after previous list item
+		if (child.singleLine) {
+			renderNode(child, writer, context);
+			writer.ensureNewLine(); // Ensure newline after previous list item
+		} else {
+			// If the contents of a child node cannot fit on a single line using Markdown syntax,
+			// we will fall back to HTML syntax.
+			renderNodeWithHtmlSyntax(child, writer, context);
+		}
 	}
 	writer.decreaseIndent();
 	writer.ensureSkippedLine(); // Ensure blank line after list

@@ -86,7 +86,7 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 	/**
 	 * Removes any custom metadata from all changesets and writes the resulting changes back to the source files. This
 	 * metadata needs to be removed prior to running `changeset version` from the \@changesets/cli package. If it is not,
-	 * then the custom metadata is interpreted as part of the content and the changelogs end up with the metadata in them.
+	 * then the custom metadata is interpreted as change metadata and the changeset tools fail.
 	 *
 	 * For more information about the custom metadata we use in our changesets, see
 	 * https://github.com/microsoft/FluidFramework/wiki/Changesets#custom-metadata
@@ -113,10 +113,12 @@ export default class GenerateChangeLogCommand extends BaseCommand<
 
 		const toWrite: Promise<void>[] = [];
 		for (const changeset of changesets) {
-			const metadata = Object.entries(changeset.metadata).map((entry) => {
-				const [packageName, bump] = entry;
-				return `"${packageName}": ${bump}`;
-			});
+			// Filter out properties that start with __
+			const metadata = Object.entries(changeset.metadata)
+				.filter(([key]) => !key.startsWith("__"))
+				.map(([packageName, bump]) => {
+					return `"${packageName}": ${bump}`;
+				});
 			const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
 			this.info(`Writing canonical changeset: ${changeset.sourceFile}`);
 			toWrite.push(writeFile(changeset.sourceFile, output));

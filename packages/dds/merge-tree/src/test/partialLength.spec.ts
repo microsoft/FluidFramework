@@ -3,15 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { UnassignedSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeDeltaType } from "../ops.js";
+import type { OperationStamp } from "../stamps.js";
 import { TextSegment } from "../textSegment.js";
 
 import {
-	insertSegments,
-	insertText,
-	markRangeRemoved,
+	makeRemoteClient,
 	useStrictPartialLengthChecks,
 	validatePartialLengths,
 } from "./testUtils.js";
@@ -22,19 +20,24 @@ describe("partial lengths", () => {
 	const remoteClientId = 18;
 	const refSeq = 0;
 
+	const ackedLocalClientStamp = (seq: number): OperationStamp => ({
+		seq,
+		clientId: localClientId,
+	});
+
+	const remoteClient1 = makeRemoteClient({ clientId: 18 });
+
 	useStrictPartialLengthChecks();
 
 	beforeEach(() => {
 		mergeTree = new MergeTree();
-		insertSegments({
-			mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("hello world!")],
-			refSeq,
-			clientId: localClientId,
-			seq: 0,
-			opArgs: undefined,
-		});
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("hello world!")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 
 		mergeTree.startCollaboration(localClientId, /* minSeq: */ 0, /* currentSeq: */ 0);
 	});
@@ -45,58 +48,46 @@ describe("partial lengths", () => {
 
 	describe("a single inserted element", () => {
 		it("includes length of local insert for local view", () => {
-			insertText({
-				mergeTree,
-				pos: 0,
-				refSeq,
-				clientId: localClientId,
-				seq: refSeq + 1,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("more ")],
+				mergeTree.localPerspective,
+				ackedLocalClientStamp(refSeq + 1),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 17 }]);
 		});
 		it("includes length of local insert for remote view", () => {
-			insertText({
-				mergeTree,
-				pos: 0,
-				refSeq,
-				clientId: localClientId,
-				seq: refSeq + 1,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("more ")],
+				mergeTree.localPerspective,
+				ackedLocalClientStamp(refSeq + 1),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 17 }]);
 		});
 		it("includes length of remote insert for local view", () => {
-			insertText({
-				mergeTree,
-				pos: 0,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 1,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("more ")],
+				remoteClient1.perspectiveAt({ refSeq }),
+				remoteClient1.stampAt({ seq: refSeq + 1 }),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 17 }]);
 		});
 		it("includes length of remote insert for remote view", () => {
-			insertText({
-				mergeTree,
-				pos: 0,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 1,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("more ")],
+				remoteClient1.perspectiveAt({ refSeq }),
+				remoteClient1.stampAt({ seq: refSeq + 1 }),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 17 }]);
 		});
@@ -104,58 +95,46 @@ describe("partial lengths", () => {
 
 	describe("a single removed segment", () => {
 		it("includes result of local delete for local view", () => {
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 12,
-				refSeq,
-				clientId: localClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				0,
+				12,
+				mergeTree.localPerspective,
+				ackedLocalClientStamp(refSeq + 1),
+				undefined as never,
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 0 }]);
 		});
 		it("includes result of local delete for remote view", () => {
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 12,
-				refSeq,
-				clientId: localClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				0,
+				12,
+				mergeTree.localPerspective,
+				ackedLocalClientStamp(refSeq + 1),
+				undefined as never,
+			);
 
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 0 }]);
 		});
 		it("includes result of remote delete for local view", () => {
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 12,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				0,
+				12,
+				remoteClient1.perspectiveAt({ refSeq }),
+				ackedLocalClientStamp(refSeq + 1),
+				undefined as never,
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 0 }]);
 		});
 		it("includes result of remote delete for remote view", () => {
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 12,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				0,
+				12,
+				remoteClient1.perspectiveAt({ refSeq }),
+				ackedLocalClientStamp(refSeq + 1),
+				undefined as never,
+			);
 
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 0 }]);
 		});
@@ -163,42 +142,34 @@ describe("partial lengths", () => {
 
 	describe("aggregation", () => {
 		it("includes lengths from multiple permutations in single tree", () => {
-			insertSegments({
-				mergeTree,
-				pos: 0,
-				segments: [TextSegment.make("1")],
-				refSeq,
-				clientId: localClientId,
-				seq: refSeq + 1,
-				opArgs: undefined,
-			});
-			insertSegments({
-				mergeTree,
-				pos: 0,
-				segments: [TextSegment.make("2")],
-				refSeq: refSeq + 1,
-				clientId: remoteClientId,
-				seq: refSeq + 2,
-				opArgs: undefined,
-			});
-			insertSegments({
-				mergeTree,
-				pos: 0,
-				segments: [TextSegment.make("3")],
-				refSeq: refSeq + 2,
-				clientId: localClientId,
-				seq: refSeq + 3,
-				opArgs: undefined,
-			});
-			insertSegments({
-				mergeTree,
-				pos: 0,
-				segments: [TextSegment.make("4")],
-				refSeq: refSeq + 3,
-				clientId: remoteClientId,
-				seq: refSeq + 4,
-				opArgs: undefined,
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("1")],
+				mergeTree.localPerspective,
+				ackedLocalClientStamp(refSeq + 1),
+				undefined,
+			);
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("2")],
+				remoteClient1.perspectiveAt({ refSeq: refSeq + 1 }),
+				remoteClient1.stampAt({ seq: refSeq + 2 }),
+				undefined,
+			);
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("3")],
+				mergeTree.localPerspective,
+				ackedLocalClientStamp(refSeq + 3),
+				undefined,
+			);
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("4")],
+				remoteClient1.perspectiveAt({ refSeq: refSeq + 3 }),
+				remoteClient1.stampAt({ seq: refSeq + 4 }),
+				undefined,
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 4, len: 16 }]);
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 4, len: 16 }]);
@@ -206,16 +177,13 @@ describe("partial lengths", () => {
 
 		it("is correct for different heights", () => {
 			for (let i = 0; i < 100; i++) {
-				insertText({
-					mergeTree,
-					pos: 0,
-					refSeq: i,
-					clientId: localClientId,
-					seq: i + 1,
-					text: "a",
-					props: undefined,
-					opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-				});
+				mergeTree.insertSegments(
+					0,
+					[TextSegment.make("a")],
+					mergeTree.localPerspective,
+					ackedLocalClientStamp(i + 1),
+					undefined,
+				);
 
 				validatePartialLengths(localClientId, mergeTree, [{ seq: i + 1, len: i + 13 }]);
 				validatePartialLengths(remoteClientId, mergeTree, [{ seq: i + 1, len: i + 13 }]);
@@ -228,75 +196,61 @@ describe("partial lengths", () => {
 
 	describe("concurrent, overlapping deletes", () => {
 		it("concurrent remote changes are visible to local", () => {
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 10,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 10,
-				refSeq,
-				clientId: remoteClientId + 1,
-				seq: refSeq + 2,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			const remoteClient2 = makeRemoteClient({ clientId: 19 });
+
+			mergeTree.markRangeRemoved(
+				0,
+				10,
+				remoteClient1.perspectiveAt({ refSeq }),
+				remoteClient1.stampAt({ seq: refSeq + 1 }),
+				undefined as never,
+			);
+			mergeTree.markRangeRemoved(
+				0,
+				10,
+				remoteClient2.perspectiveAt({ refSeq }),
+				remoteClient2.stampAt({ seq: refSeq + 2 }),
+				undefined as never,
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 2 }]);
+			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 2 }]);
+			validatePartialLengths(remoteClientId + 1, mergeTree, [{ seq: 1, len: 2 }]);
 		});
 		it("concurrent local and remote changes are visible", () => {
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 10,
-				refSeq,
-				clientId: localClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 10,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 2,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				0,
+				10,
+				mergeTree.localPerspective,
+				ackedLocalClientStamp(refSeq + 1),
+				undefined as never,
+			);
+			mergeTree.markRangeRemoved(
+				0,
+				10,
+				remoteClient1.perspectiveAt({ refSeq }),
+				remoteClient1.stampAt({ seq: refSeq + 2 }),
+				undefined as never,
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 2 }]);
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 2 }]);
 		});
 		it("concurrent remote and unsequenced local changes are visible", () => {
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 10,
-				refSeq,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
-			markRangeRemoved({
-				mergeTree,
-				start: 0,
-				end: 10,
-				refSeq,
-				clientId: remoteClientId,
-				seq: refSeq + 1,
-				overwrite: false,
-				opArgs: undefined as never,
-			});
+			mergeTree.markRangeRemoved(
+				0,
+				10,
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				undefined as never,
+			);
+			mergeTree.markRangeRemoved(
+				0,
+				10,
+				remoteClient1.perspectiveAt({ refSeq }),
+				remoteClient1.stampAt({ seq: refSeq + 1 }),
+				undefined as never,
+			);
 
 			validatePartialLengths(localClientId, mergeTree, [{ seq: 1, len: 2 }]);
 			validatePartialLengths(remoteClientId, mergeTree, [{ seq: 1, len: 2 }]);

@@ -361,9 +361,6 @@ export interface ForestNode extends NodeData<NodeId> {
     readonly traits: ReadonlyMap<TraitLabel, readonly NodeId[]>;
 }
 
-export { getSerializedUploadedEditChunkContents }
-export { getSerializedUploadedEditChunkContents as getUploadedEditChunkContents }
-
 // @alpha
 export interface HasTraits<TChild> {
     // (undocumented)
@@ -496,6 +493,7 @@ export interface OrderedEditSet<TChange = unknown> {
     getIdAtIndex(index: number): EditId;
     // (undocumented)
     getIndexOfId(editId: EditId): number;
+    getLocalEdits(): Iterable<Edit<TChange>>;
     readonly length: number;
     // @deprecated (undocumented)
     tryGetEdit(editId: EditId): Promise<Edit<TChange> | undefined>;
@@ -688,7 +686,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 // @alpha
 export type SharedTreeArgs<WF extends WriteFormat = WriteFormat> = [writeFormat: WF, options?: SharedTreeOptions<WF>];
 
-// @alpha
+// @alpha @legacy
 export const SharedTreeAttributes: IChannelAttributes;
 
 // @alpha
@@ -714,7 +712,7 @@ export class SharedTreeFactory implements IChannelFactory {
     get type(): string;
 }
 
-// @alpha
+// @alpha @legacy
 export const SharedTreeFactoryType = "SharedTree";
 
 // @alpha

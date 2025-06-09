@@ -3,60 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
-import { ISharedObjectEvents } from "@fluidframework/shared-object-base/internal";
 
-import type { IntervalCollection } from "./intervalCollection.js";
+import type {
+	IntervalCollection,
+	ISerializedIntervalCollectionV1,
+	ISerializedIntervalCollectionV2,
+} from "./intervalCollection.js";
 import {
-	type ISerializableInterval,
 	ISerializedInterval,
 	IntervalDeltaOpType,
-	IntervalOpType,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
-/**
- * Type of "valueChanged" event parameter.
- */
-export interface IValueChanged {
-	/**
-	 * The key storing the value that changed.
-	 */
-	key: string;
-
-	/**
-	 * The value that was stored at the key prior to the change.
-	 */
-	previousValue: any;
-}
-
-/**
- * Value types are given an IValueOpEmitter to emit their ops through the container type that holds them.
- * @internal
- */
-export interface IValueOpEmitter {
-	/**
-	 * Called by the value type to emit a value type operation through the container type holding it.
-	 * @param opName - Name of the emitted operation
-	 * @param previousValue - JSONable previous value as defined by the value type @deprecated unused
-	 * @param params - JSONable params for the operation as defined by the value type
-	 * @param localOpMetadata - JSONable local metadata which should be submitted with the op
-	 */
-	emit(
-		opName: IntervalOpType,
-		previousValue: undefined,
-		params: SerializedIntervalDelta,
-		localOpMetadata: IMapMessageLocalMetadata,
-	): void;
-}
-
-/**
- * @internal
- */
 export interface IMapMessageLocalMetadata {
 	localSeq: number;
+	previous?: ISerializedInterval;
 }
 
 /**
@@ -85,42 +48,18 @@ export interface SequenceOptions
 	 * The default value is false.
 	 */
 	intervalStickinessEnabled: boolean;
-}
-
-/**
- * A value factory is used to serialize/deserialize value types to a map
- * @legacy
- * @alpha
- */
-export interface IIntervalCollectionFactory<T extends ISerializableInterval> {
-	/**
-	 * Create a new value type.  Used both in creation of new value types, as well as in loading existing ones
-	 * from remote.
-	 * @param emitter - Emitter object that the created value type will use to emit operations
-	 * @param raw - Initialization parameters as defined by the value type
-	 * @returns The new value type
-	 */
-	load(
-		emitter: IValueOpEmitter,
-		raw: any,
-		options?: Partial<SequenceOptions>,
-	): IntervalCollection<T>;
 
 	/**
-	 * Given a value type, provides a JSONable form of its data to be used for snapshotting.  This data must be
-	 * loadable using the load method of its factory.
-	 * @param value - The value type to serialize
-	 * @returns The JSONable form of the value type
+	 * This is for testing, and allows us to output intervals in the older formats.
 	 */
-	store(value: IntervalCollection<T>): any;
+	intervalSerializationFormat: "1" | "2";
 }
 
 /**
  * Defines an operation that a value type is able to handle.
- * @legacy
- * @alpha
+ *
  */
-export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
+export interface IIntervalCollectionOperation {
 	/**
 	 * Performs the actual processing on the incoming operation.
 	 * @param value - The current value stored at the given key, which should be the value type
@@ -130,57 +69,11 @@ export interface IIntervalCollectionOperation<T extends ISerializableInterval> {
 	 * @param localOpMetadata - any local metadata submitted by `IValueOpEmitter.emit`.
 	 */
 	process(
-		value: IntervalCollection<T>,
+		value: IntervalCollection,
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
 		localOpMetadata: IMapMessageLocalMetadata | undefined,
-	): void;
-
-	/**
-	 * Rebases an `op` on `value` from its original perspective (ref/local seq) to the current
-	 * perspective. Should be invoked on reconnection.
-	 * @param value - The current value stored at the given key, which should be the value type.
-	 * @param op - The op to be rebased.
-	 * @param localOpMetadata - Any local metadata that was originally submitted with the op.
-	 * @returns A rebased version of the op and any local metadata that should be submitted with it.
-	 */
-	rebase(
-		value: IntervalCollection<T>,
-		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IMapMessageLocalMetadata,
-	):
-		| {
-				rebasedOp: IIntervalCollectionTypeOperationValue;
-				rebasedLocalOpMetadata: IMapMessageLocalMetadata;
-		  }
-		| undefined;
-}
-
-/**
- * Defines a value type that can be registered on a container type.
- */
-export interface IIntervalCollectionType<T extends ISerializableInterval> {
-	/**
-	 * Name of the value type.
-	 */
-	name: string;
-
-	/**
-	 * Factory method used to convert to/from a JSON form of the type.
-	 */
-	factory: IIntervalCollectionFactory<T>;
-
-	/**
-	 * Operations that can be applied to the value type.
-	 */
-	ops: Map<IntervalOpType, IIntervalCollectionOperation<T>>;
-}
-
-export interface ISharedDefaultMapEvents extends ISharedObjectEvents {
-	(
-		event: "valueChanged" | "create",
-		listener: (changed: IValueChanged, local: boolean, target: IEventThisPlaceHolder) => void,
 	): void;
 }
 
@@ -199,12 +92,12 @@ export interface ISerializableIntervalCollection {
 	/**
 	 * A type annotation to help indicate how the value serializes.
 	 */
-	type: string;
+	type: "sharedStringIntervalCollection";
 
 	/**
 	 * The JSONable representation of the value.
 	 */
-	value: any;
+	value: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2;
 }
 
 export interface ISerializedIntervalCollection {
@@ -226,17 +119,38 @@ export interface ISerializedIntervalCollection {
  * value is whatever params the ValueType needs to complete that operation.  Similar to ISerializableValue, it is
  * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
  * it just describes an operation to be applied to an already-in-memory value.
- * @legacy
- * @alpha
  */
-export interface IIntervalCollectionTypeOperationValue {
-	/**
-	 * The name of the operation.
-	 */
-	opName: IntervalDeltaOpType;
+export type IIntervalCollectionTypeOperationValue =
+	| {
+			/**
+			 * The name of the operation.
+			 */
+			opName: typeof IntervalDeltaOpType.ADD;
 
-	/**
-	 * The payload that is submitted along with the operation.
-	 */
-	value: SerializedIntervalDelta;
-}
+			/**
+			 * The payload that is submitted along with the operation.
+			 */
+			value: ISerializedInterval;
+	  }
+	| {
+			/**
+			 * The name of the operation.
+			 */
+			opName: typeof IntervalDeltaOpType.CHANGE;
+
+			/**
+			 * The payload that is submitted along with the operation.
+			 */
+			value: SerializedIntervalDelta;
+	  }
+	| {
+			/**
+			 * The name of the operation.
+			 */
+			opName: typeof IntervalDeltaOpType.DELETE;
+
+			/**
+			 * The payload that is submitted along with the operation.
+			 */
+			value: SerializedIntervalDelta;
+	  };

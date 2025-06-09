@@ -10,8 +10,10 @@ import {
 	isNetworkError,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { IRepositoryManager, type IFileSystemManager } from "./definitions";
 import { GitRestLumberEventName } from "./gitrestTelemetryDefinitions";
+import { getSoftDeletedMarkerPath } from "./helpers";
 import {
 	Constants,
 	ISummaryWriteFeatureFlags,
@@ -22,7 +24,6 @@ import {
 	writeChannelSummary,
 	writeContainerSummary,
 } from "./wholeSummary";
-import { getSoftDeletedMarkerPath } from "./helpers";
 
 const DefaultSummaryWriteFeatureFlags: ISummaryWriteFeatureFlags = {
 	enableLowIoWrite: false,

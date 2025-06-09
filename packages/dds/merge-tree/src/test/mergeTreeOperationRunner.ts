@@ -14,7 +14,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
 import { ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import { IMergeTreeOp, MergeTreeDeltaType, ReferenceType } from "../ops.js";
-import { toMoveInfo, toRemovalInfo } from "../segmentInfos.js";
+import { toRemovalInfo } from "../segmentInfos.js";
 import { Side } from "../sequencePlace.js";
 import { TextSegment } from "../textSegment.js";
 
@@ -112,11 +112,11 @@ export const insertAtRefPos: TestOperation = (
 	if (segs.length > 0) {
 		const text = client.longClientId!.repeat(random.integer(1, 3));
 		const seg = random.pick(segs);
-		const movedOrRemoved = toRemovalInfo(seg) ?? toMoveInfo(seg);
+		const removed = toRemovalInfo(seg);
 		const lref = client.createLocalReferencePosition(
 			seg,
-			movedOrRemoved ? 0 : random.integer(0, seg.cachedLength - 1),
-			movedOrRemoved
+			removed ? 0 : random.integer(0, seg.cachedLength - 1),
+			removed
 				? ReferenceType.SlideOnRemove
 				: random.pick([
 						ReferenceType.Simple,

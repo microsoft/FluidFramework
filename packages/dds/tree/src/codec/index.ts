@@ -8,6 +8,7 @@ export {
 	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
+	type CodecWriteOptions,
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,
@@ -19,6 +20,7 @@ export {
 	withDefaultBinaryEncoding,
 	withSchemaValidation,
 	FluidClientVersion,
+	currentVersion,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,

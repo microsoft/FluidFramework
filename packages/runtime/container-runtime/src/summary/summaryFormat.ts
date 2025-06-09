@@ -18,10 +18,8 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
-// eslint-disable-next-line import/no-deprecated
 import { IGCMetadata } from "../gc/index.js";
 
-// eslint-disable-next-line import/no-deprecated
 import { IDocumentSchema } from "./documentSchema.js";
 
 /**
@@ -129,7 +127,7 @@ export function hasIsolatedChannels(attributes: ReadFluidDataStoreAttributes): b
 /**
  * @internal
  */
-// eslint-disable-next-line import/no-deprecated
+
 export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGCMetadata {
 	readonly summaryFormatVersion: 1;
 	/**
@@ -153,7 +151,6 @@ export interface IContainerRuntimeMetadata extends ICreateContainerMetadata, IGC
 	 */
 	readonly telemetryDocumentId?: string;
 
-	// eslint-disable-next-line import/no-deprecated
 	readonly documentSchema?: IDocumentSchema;
 }
 

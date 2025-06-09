@@ -4,7 +4,9 @@
  */
 
 import cluster from "cluster";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+
+import { Deferred } from "@fluidframework/common-utils";
+import { IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	ICache,
 	IClusterDrainingChecker,
@@ -21,13 +23,14 @@ import {
 	IRevokedTokenChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
-import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+
 import * as app from "./app";
 import { IDocumentDeleteService } from "./services";
 
@@ -57,11 +60,13 @@ export class AlfredRunner implements IRunner {
 		private readonly startupCheck: IReadinessCheck,
 		private readonly tokenRevocationManager?: ITokenRevocationManager,
 		private readonly revokedTokenChecker?: IRevokedTokenChecker,
-		private readonly collaborationSessionEventEmitter?: TypedEventEmitter<ICollaborationSessionEvents>,
+		private readonly collaborationSessionEventEmitter?: RedisEmitter,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly enableClientIPLogging?: boolean,
 		private readonly readinessCheck?: IReadinessCheck,
 		private readonly fluidAccessTokenGenerator?: IFluidAccessTokenGenerator,
+		private readonly redisCacheForGetSession?: ICache,
+		private readonly denyList?: IDenyList,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -94,6 +99,8 @@ export class AlfredRunner implements IRunner {
 				this.enableClientIPLogging,
 				this.readinessCheck,
 				this.fluidAccessTokenGenerator,
+				this.redisCacheForGetSession,
+				this.denyList,
 			);
 			alfred.set("port", this.port);
 			this.server = this.serverFactory.create(alfred);

@@ -47,9 +47,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 
 export const clone = structuredClone;
 
-// TODO: update usages of this to use @fluidframework/core-utils/internal directly.
-export { fail } from "@fluidframework/core-utils/internal";
-
 /**
  * Checks whether or not the given object is a `readonly` array.
  *

@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-services-core": major
+"__section": feature
 ---
 
 `.off()` instance method added to IProducer and IOrdererConnection types

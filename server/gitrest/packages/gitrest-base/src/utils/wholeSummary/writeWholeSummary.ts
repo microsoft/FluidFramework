@@ -11,14 +11,16 @@ import {
 	WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { GitRestLumberEventName } from "../gitrestTelemetryDefinitions";
-import { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+
 import { convertFullGitTreeToFullSummaryTree } from "./conversions";
-import { computeLowIoSummaryTreeEntries } from "./lowIoWriteUtils";
 import {
 	IWriteSummaryTreeOptions,
 	writeSummaryTree as writeSummaryTreeCore,
 } from "./coreWriteUtils";
+import { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+import { computeLowIoSummaryTreeEntries } from "./lowIoWriteUtils";
 
 /**
  * Feature flags for writing summaries.

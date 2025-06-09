@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-routerlicious-base": major
+"__section": feature
 ---
 
 Now Riddler supports using private keys to sign server access tokens

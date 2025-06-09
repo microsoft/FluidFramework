@@ -12,8 +12,7 @@ import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/i
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type {
-	IIntervalCollection,
-	SequenceInterval,
+	ISequenceIntervalCollection,
 	SharedString,
 } from "@fluidframework/sequence/internal";
 import {
@@ -32,7 +31,7 @@ const collectionId = "collectionKey";
 
 const assertIntervals = (
 	sharedString: SharedString,
-	intervalCollection: IIntervalCollection<SequenceInterval>,
+	intervalCollection: ISequenceIntervalCollection,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
 ) => {
@@ -100,8 +99,8 @@ describeCompat(
 		let sharedString2: SharedString;
 		let dataObject1: ITestFluidObject;
 		let dataObject2: ITestFluidObject;
-		let collection1: IIntervalCollection<SequenceInterval>;
-		let collection2: IIntervalCollection<SequenceInterval>;
+		let collection1: ISequenceIntervalCollection;
+		let collection2: ISequenceIntervalCollection;
 		let loader: IHostLoader;
 		let url;
 

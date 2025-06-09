@@ -7,7 +7,7 @@ import type {
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/presence/internal/core-interfaces";
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Collection of utility types that are not intended to be used/imported
@@ -18,15 +18,6 @@ import type {
  */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
-	/**
-	 * Recursively/deeply makes all properties of a type readonly.
-	 *
-	 * @system
-	 */
-	export type FullyReadonly<T> = {
-		readonly [K in keyof T]: FullyReadonly<T[K]>;
-	};
-
 	/**
 	 * `true` iff the given type is an acceptable shape for a notification.
 	 *

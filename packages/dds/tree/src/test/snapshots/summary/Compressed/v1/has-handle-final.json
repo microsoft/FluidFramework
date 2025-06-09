@@ -76,7 +76,7 @@
                                     0,
                                     {
                                       "type": "__fluid_handle__",
-                                      "url": "/test/TestSharedTree"
+                                      "url": "/test/tree-0"
                                     }
                                   ]
                                 ]
@@ -179,7 +179,7 @@
                         [
                           {
                             "type": "__fluid_handle__",
-                            "url": "/test/TestSharedTree"
+                            "url": "/test/tree-0"
                           }
                         ]
                       ]

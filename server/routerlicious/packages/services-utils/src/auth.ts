@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { decode, sign } from "jsonwebtoken";
-import { v4 as uuid } from "uuid";
 import {
 	NetworkError,
 	isNetworkError,
@@ -25,13 +20,19 @@ import {
 	type IRevokedTokenChecker,
 	type ITenantManager,
 } from "@fluidframework/server-services-core";
-import type { RequestHandler, Request, Response } from "express";
-import type { Provider } from "nconf";
 import {
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import type { RequestHandler, Request, Response } from "express";
+// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
+// eslint-disable-next-line import/no-unresolved
+import { Params } from "express-serve-static-core";
+import { decode, sign } from "jsonwebtoken";
+import type { Provider } from "nconf";
+import { v4 as uuid, validate } from "uuid";
+
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
 interface IKeylessTokenClaims extends ITokenClaims {
@@ -466,4 +467,16 @@ export function validateTokenScopeClaims(expectedScopes: string): RequestHandler
  */
 export function getParam(params: Params, key: string) {
 	return Array.isArray(params) ? undefined : params[key];
+}
+
+export function getJtiClaimFromAccessToken(token: string): string | undefined {
+	try {
+		const claims = decode(token) as ITokenClaims;
+		if (claims?.jti && validate(claims.jti)) {
+			return claims.jti;
+		}
+	} catch (error) {
+		Lumberjack.error("Error decoding token", undefined, error);
+	}
+	return undefined;
 }

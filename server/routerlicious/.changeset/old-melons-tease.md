@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-routerlicious": major
+"__section": other
 ---
 
 Socket Latency Telemetry strategy changed to per-socket-connection

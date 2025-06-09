@@ -6,13 +6,16 @@
 import { strict as assert } from "assert";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { PropertySet, type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
-import { v4 as uuid } from "uuid";
+import { type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
+import type { TestClient } from "@fluidframework/merge-tree/internal/test";
 
-import { Interval, IntervalStickiness, type SequenceInterval } from "../intervals/index.js";
+import {
+	createSequenceInterval,
+	IntervalStickiness,
+	IntervalType,
+	type SequenceInterval,
+} from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
-
-const reservedIntervalIdKey = "intervalId";
 
 export interface RandomIntervalOptions {
 	random: IRandom;
@@ -26,29 +29,50 @@ export interface RandomIntervalOptions {
  * @param results - The generated intervals to compare.
  * @param expectedEndpoints - The expected start and end points or intervals.
  */
-export function assertPlainNumberIntervals(
-	results: Interval[],
-	expectedEndpoints: { start: number; end: number }[] | Interval[],
+export function assertOrderedSequenceIntervals(
+	client: TestClient,
+	results: SequenceInterval[],
+	expectedEndpoints: { start: number; end: number }[] | SequenceInterval[],
 ): void {
 	assert.equal(results.length, expectedEndpoints.length, "Mismatched result count");
 	for (let i = 0; i < results.length; ++i) {
 		assert(results[i]);
-		assert.equal(results[i].start, expectedEndpoints[i].start, "mismatched start");
-		assert.equal(results[i].end, expectedEndpoints[i].end, "mismatched end");
+		const { start, end } = expectedEndpoints[i];
+		assert.strictEqual(
+			typeof start === "number"
+				? client.localReferencePositionToPosition(results[i].start)
+				: results[i].start,
+			start,
+			"mismatched start",
+		);
+		assert.strictEqual(
+			typeof end === "number"
+				? client.localReferencePositionToPosition(results[i].end)
+				: results[i].end,
+			end,
+			"mismatched end",
+		);
 	}
 }
 
+let currentId = 0;
 /**
  * Creates a new (regular) Interval object with the specified start and end values.
  * @param start - The start value of the interval.
  * @param end - The end value of the interval.
  * @returns The created Interval object.
  */
-export function createTestInterval(start: number, end: number): Interval {
-	const props: PropertySet = {};
-	props[reservedIntervalIdKey] = [uuid()];
-
-	return new Interval(start, end, props);
+export function createTestSequenceInterval(client: TestClient, p1: number, p2: number) {
+	const id = `${currentId++}`;
+	const interval = createSequenceInterval(
+		"test",
+		id,
+		p1,
+		p2,
+		client,
+		IntervalType.SlideOnRemove,
+	);
+	return interval;
 }
 
 /**
@@ -56,14 +80,14 @@ export function createTestInterval(start: number, end: number): Interval {
  * @param options - The options for generating random intervals.
  * @returns An array of generated Interval objects.
  */
-export function generateRandomIntervals(options: RandomIntervalOptions) {
-	const intervals: Interval[] = [];
+export function generateRandomIntervals(client: TestClient, options: RandomIntervalOptions) {
+	const intervals: SequenceInterval[] = [];
 	const { random, count, min, max } = options;
 
 	for (let i = 0; i < count; ++i) {
-		const start = random.integer(min, max);
-		const end = random.integer(start, max);
-		const interval = createTestInterval(start, end);
+		const start = random.integer(Math.max(min, 0), Math.min(max, client.getLength() - 1));
+		const end = random.integer(start, Math.min(max, client.getLength() - 1));
+		const interval = createTestSequenceInterval(client, start, end);
 		intervals.push(interval);
 	}
 

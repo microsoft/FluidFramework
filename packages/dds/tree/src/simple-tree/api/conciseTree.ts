@@ -6,17 +6,23 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { ITreeCursor } from "../../core/index.js";
-import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
 import type { TreeNodeSchema } from "../core/index.js";
-import { customFromCursor, type EncodeOptions } from "./customTree.js";
 import { getUnhydratedContext } from "../createContext.js";
+import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
+
+import {
+	customFromCursor,
+	replaceHandles,
+	type TreeEncodingOptions,
+	type HandleConverter,
+} from "./customTree.js";
 
 /**
  * Concise encoding of a {@link TreeNode} or {@link TreeLeafValue}.
  * @remarks
  * This is "concise" meaning that explicit type information is omitted.
  * If the schema is compatible with {@link ITreeConfigurationOptions.preventAmbiguity},
- * types will be lossless and compatible with {@link TreeAlpha.create} (unless the options are used to customize it).
+ * types will be lossless and compatible with {@link (TreeAlpha:interface).create} (unless the options are used to customize it).
  *
  * Every {@link TreeNode} is an array or object.
  * Any IFluidHandle values have been replaced by `THandle`.
@@ -36,12 +42,12 @@ export type ConciseTree<THandle = IFluidHandle> =
 /**
  * Used to read a node cursor as a ConciseTree.
  */
-export function conciseFromCursor<TCustom>(
+export function conciseFromCursor(
 	reader: ITreeCursor,
 	rootSchema: ImplicitAllowedTypes,
-	options: EncodeOptions<TCustom>,
-): ConciseTree<TCustom> {
-	const config: Required<EncodeOptions<TCustom>> = {
+	options: TreeEncodingOptions,
+): ConciseTree {
+	const config: Required<TreeEncodingOptions> = {
 		useStoredKeys: false,
 		...options,
 	};
@@ -50,10 +56,22 @@ export function conciseFromCursor<TCustom>(
 	return conciseFromCursorInner(reader, config, schemaMap);
 }
 
-function conciseFromCursorInner<TCustom>(
+function conciseFromCursorInner(
 	reader: ITreeCursor,
-	options: Required<EncodeOptions<TCustom>>,
+	options: Required<TreeEncodingOptions>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
-): ConciseTree<TCustom> {
+): ConciseTree {
 	return customFromCursor(reader, options, schema, conciseFromCursorInner);
+}
+
+/**
+ * Clones tree, replacing any handles.
+ * @remarks A strongly typed version of {@link replaceHandles}.
+ * @alpha
+ */
+export function replaceConciseTreeHandles<T>(
+	tree: ConciseTree,
+	replacer: HandleConverter<T>,
+): ConciseTree<T> {
+	return replaceHandles(tree, replacer) as ConciseTree<T>;
 }

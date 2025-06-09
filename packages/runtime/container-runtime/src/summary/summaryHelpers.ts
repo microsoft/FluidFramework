@@ -9,12 +9,12 @@ import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { summarizerClientType } from "./summarizerClientElection.js";
-import type {
-	ISummarizer,
-	ISummaryConfiguration,
-	ISummaryConfigurationDisableSummarizer,
-	ISummaryConfigurationHeuristics,
+import {
+	summarizerClientType,
+	type ISummarizer,
+	type ISummaryConfiguration,
+	type ISummaryConfigurationDisableSummarizer,
+	type ISummaryConfigurationHeuristics,
 } from "./summarizerTypes.js";
 
 export const summarizerRequestUrl = "_summarizer";

@@ -5,7 +5,9 @@
 
 import { EventEmitter } from "events";
 import { inspect } from "util";
+
 import { toUtf8 } from "@fluidframework/common-utils";
+import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
 	ICheckpointService,
 	IClientManager,
@@ -25,16 +27,17 @@ import {
 	MongoManager,
 	requestWithRetry,
 } from "@fluidframework/server-services-core";
-import { defaultHash, IGitManager } from "@fluidframework/server-services-client";
 import {
 	Lumber,
 	LumberEventName,
 	Lumberjack,
 	getLumberBaseProperties,
 } from "@fluidframework/server-services-telemetry";
+
 import { NoOpLambda, createSessionMetric, isDocumentValid, isDocumentSessionValid } from "../utils";
-import { DeliLambda } from "./lambda";
+
 import { createDeliCheckpointManagerFromCollection } from "./checkpointManager";
+import { DeliLambda } from "./lambda";
 
 const getDefaultCheckpoint = (): IDeliState => {
 	return {
@@ -68,6 +71,7 @@ export class DeliLambdaFactory
 		private readonly reverseProducer: IProducer,
 		private readonly serviceConfiguration: IServiceConfiguration,
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker | undefined,
+		private readonly ephemeralDocumentTTLSec?: number,
 	) {
 		super();
 	}
@@ -227,14 +231,27 @@ export class DeliLambdaFactory
 				) {
 					if (document?.isEphemeralContainer) {
 						if (this.serviceConfiguration.deli.enableEphemeralContainerSummaryCleanup) {
-							// Call to historian to delete summaries
-							await requestWithRetry(
-								async () => gitManager.deleteSummary(false),
-								"deliLambda_onClose" /* callName */,
-								baseLumberjackProperties /* telemetryProperties */,
-								(error) => true /* shouldRetry */,
-								3 /* maxRetries */,
-							);
+							if (this.isEphemeralDocumentWithinTtl(document)) {
+								// Call to historian to delete summaries
+								await requestWithRetry(
+									async () => gitManager.deleteSummary(false),
+									"deliLambda_onClose" /* callName */,
+									baseLumberjackProperties /* telemetryProperties */,
+									undefined /* shouldRetry */, // The default retry function will ensure NetworkErrors are retried only if canRetry is true and isFatal is false
+									3 /* maxRetries */,
+								);
+							} else {
+								Lumberjack.info(
+									"Ephemeral container TTL has expired, not calling deleteSummary",
+									{
+										...baseLumberjackProperties,
+										documentCreationTime: document.createTime,
+										documentExpirationTime:
+											document.createTime +
+											(this.ephemeralDocumentTTLSec ?? 0) * 1000,
+									},
+								);
+							}
 						}
 
 						// Delete the document metadata, soft or hard depending on the configuration
@@ -284,7 +301,9 @@ export class DeliLambdaFactory
 					if (this.clusterDrainingChecker) {
 						try {
 							const isClusterDraining =
-								await this.clusterDrainingChecker.isClusterDraining();
+								await this.clusterDrainingChecker.isClusterDraining({
+									tenantId,
+								});
 							if (isClusterDraining) {
 								Lumberjack.info(
 									"Cluster is in draining, set skip session stickiness to be true",
@@ -321,7 +340,9 @@ export class DeliLambdaFactory
 			const handler = async (): Promise<void> => {
 				// Set activity timer to reduce session grace period for ephemeral containers if cluster is in draining
 				if (document?.isEphemeralContainer && this.clusterDrainingChecker) {
-					const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining();
+					const isClusterDraining = await this.clusterDrainingChecker.isClusterDraining({
+						tenantId,
+					});
 					if (isClusterDraining) {
 						Lumberjack.info(
 							"Cluster is under draining and NoClient event is received",
@@ -386,6 +407,19 @@ export class DeliLambdaFactory
 			signalProducerClosedP,
 			reverseProducerClosedP,
 		]);
+	}
+
+	private isEphemeralDocumentWithinTtl(document: IDocument): boolean {
+		if (this.ephemeralDocumentTTLSec === undefined) {
+			// If we do not have a TTL value available, then we assume that the document is within TTL
+			// to keep the behavior consistent with the existing implementation.
+			return true;
+		}
+
+		const currentTime = Date.now();
+		const documentExpirationTime = document.createTime + this.ephemeralDocumentTTLSec * 1000;
+
+		return currentTime <= documentExpirationTime;
 	}
 
 	// Fetches last durable deli state from summary. Returns undefined if not present.

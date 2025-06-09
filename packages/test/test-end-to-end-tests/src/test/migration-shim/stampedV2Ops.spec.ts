@@ -16,7 +16,6 @@ import {
 	StablePlace,
 	type TraitLabel,
 } from "@fluid-experimental/tree";
-import { type EditLog } from "@fluid-experimental/tree/test/EditLog";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
@@ -126,12 +125,11 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	// V1 of the registry -----------------------------------------
 	// V1 of the code: Registry setup to create the old document
 	const oldChannelFactory = LegacySharedTree.getFactory();
-	const dataObjectFactory1 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[oldChannelFactory],
-		{},
-	);
+	const dataObjectFactory1 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [oldChannelFactory],
+	});
 
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory1 = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -151,7 +149,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		(legacyTree, newTree) => {
 			// Migration code that the customer writes
 			// Revert local edits - otherwise we will be eventually inconsistent
-			const edits = legacyTree.edits as EditLog;
+			const edits = legacyTree.edits;
 			const localEdits = [...edits.getLocalEdits()].reverse();
 			for (const edit of localEdits) {
 				legacyTree.revert(edit.id);
@@ -166,12 +164,11 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	const sharedTreeShimFactory = new SharedTreeShimFactory(newSharedTreeFactory);
 
-	const dataObjectFactory2 = new DataObjectFactory(
-		"TestDataObject",
-		TestDataObject,
-		[migrationShimFactory, sharedTreeShimFactory], // Use the migrationShimFactory instead of the LegacySharedTreeFactory
-		{},
-	);
+	const dataObjectFactory2 = new DataObjectFactory({
+		type: "TestDataObject",
+		ctor: TestDataObject,
+		sharedObjects: [migrationShimFactory, sharedTreeShimFactory],
+	});
 
 	// The 2nd runtime factory, V2 of the code
 	const runtimeFactory2 = new ContainerRuntimeFactoryWithDefaultDataStore({

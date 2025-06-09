@@ -11,6 +11,9 @@ export {
 	AnchorSet,
 	type DetachedField,
 	type UpPath,
+	type NormalizedUpPath,
+	type INormalizedUpPath,
+	type NormalizedFieldUpPath,
 	type Range,
 	type RangeUpPath,
 	type PlaceUpPath,
@@ -71,6 +74,7 @@ export {
 	type AnchorNode,
 	anchorSlot,
 	type UpPathDefault,
+	isDetachedUpPath,
 	inCursorField,
 	inCursorNode,
 	type AnchorEvents,
@@ -83,7 +87,6 @@ export {
 	getDetachedFieldContainingPath,
 	aboveRootPlaceholder,
 	type DeltaRoot,
-	type DeltaProtoNode,
 	type DeltaMark,
 	type DeltaDetachedNodeId,
 	type DeltaFieldMap,
@@ -134,18 +137,17 @@ export {
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
-	schemaFormat,
+	schemaFormatV1,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
-	toTreeNodeSchemaDataFormat,
 	decodeFieldSchema,
 	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
-	type ErasedTreeNodeSchemaDataFormat,
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
+	SchemaVersion,
 } from "./schema-stored/index.js";
 
 export {
@@ -207,7 +209,6 @@ export {
 	type Adapters,
 	AdaptedViewSchema,
 	type TreeAdapter,
-	AllowedUpdateType,
 } from "./schema-view/index.js";
 
 export {

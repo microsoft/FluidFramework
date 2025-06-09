@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+
 import {
 	ICollection,
 	IContext,
@@ -11,6 +12,7 @@ import {
 	IPartitionLambdaFactory,
 	MongoManager,
 } from "@fluidframework/server-services-core";
+
 import { CopierLambda } from "./lambda";
 
 /**

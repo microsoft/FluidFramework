@@ -4,6 +4,7 @@
 "@fluidframework/server-routerlicious-base": major
 "@fluidframework/server-services-ordering-kafkanode": major
 "@fluidframework/server-test-utils": major
+"__section": feature
 ---
 
 `.off()` instance method added to IProducer and IOrdererConnection implementations

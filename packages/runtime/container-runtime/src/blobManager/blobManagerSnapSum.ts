@@ -58,21 +58,21 @@ const loadV1 = async (
 };
 
 export const toRedirectTable = (
-	snapshot: IBlobManagerLoadInfo,
+	blobManagerLoadInfo: IBlobManagerLoadInfo,
 	logger: ITelemetryLoggerExt,
 	attachState: AttachState,
 ): Map<string, string | undefined> => {
 	logger.sendTelemetryEvent({
 		eventName: "AttachmentBlobsLoaded",
-		count: snapshot.ids?.length ?? 0,
-		redirectTable: snapshot.redirectTable?.length,
+		count: blobManagerLoadInfo.ids?.length ?? 0,
+		redirectTable: blobManagerLoadInfo.redirectTable?.length,
 	});
-	const redirectTable = new Map<string, string | undefined>(snapshot.redirectTable);
+	const redirectTable = new Map<string, string | undefined>(blobManagerLoadInfo.redirectTable);
 	const detached = attachState !== AttachState.Attached;
-	if (snapshot.ids) {
+	if (blobManagerLoadInfo.ids) {
 		// If we are detached, we don't have storage IDs yet, so set to undefined
 		// Otherwise, set identity (id -> id) entries.
-		for (const entry of snapshot.ids) {
+		for (const entry of blobManagerLoadInfo.ids) {
 			redirectTable.set(entry, detached ? undefined : entry);
 		}
 	}

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationLiteralNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
+import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
@@ -19,12 +16,10 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  * To include line breaks in your text, use {@link LineBreakNode} in a container node like
  * {@link SpanNode} or {@link ParagraphNode}.
  *
+ * @sealed
  * @public
  */
-export class PlainTextNode
-	extends DocumentationLiteralNodeBase<string>
-	implements SingleLineDocumentationNode
-{
+export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * Static singleton representing an empty Plain Text node.
 	 */

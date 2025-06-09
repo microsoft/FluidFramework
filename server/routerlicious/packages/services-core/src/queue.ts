@@ -4,6 +4,7 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
+
 import { ITicketedMessage } from "./messages";
 
 /**
@@ -74,6 +75,12 @@ export interface IConsumer {
 	 * May return undefined if a consumer is not tracking this
 	 */
 	getLatestMessageOffset(partitionId: number): number | undefined;
+
+	/**
+	 * Returns the error codes that should be ignored and the checkpoint should be skipped
+	 * We increment counter for such errors and restart when they reach a threshold
+	 */
+	getIgnoreAndSkipCheckpointOnKafkaErrorCodes?(): number[];
 
 	/**
 	 * Event handlers

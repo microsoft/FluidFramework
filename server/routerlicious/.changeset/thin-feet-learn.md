@@ -1,5 +1,6 @@
 ---
 "@fluidframework/server-routerlicious-base": major
+"__section": feature
 ---
 
 Riddler now has a new API to sign access tokens

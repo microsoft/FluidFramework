@@ -20,12 +20,6 @@ import type {
 
 import type { IDiceRoller, IDiceRollerEvents } from "./interface.js";
 
-const mapId = "dice-map";
-const mapFactory = new MapFactory();
-const diceRollerSharedObjectRegistry = new Map<string, IChannelFactory>([
-	[mapFactory.type, mapFactory],
-]);
-
 // This key is where we store the value in the ISharedMap.
 const diceValueKey = "dice-value";
 
@@ -57,6 +51,12 @@ class DiceRoller implements IDiceRoller {
 		this.map.set(diceValueKey, rollValue);
 	};
 }
+
+const mapId = "dice-map";
+const mapFactory = new MapFactory();
+const diceRollerSharedObjectRegistry = new Map<string, IChannelFactory>([
+	[mapFactory.type, mapFactory],
+]);
 
 export class DiceRollerFactory implements IFluidDataStoreFactory {
 	public get type(): string {

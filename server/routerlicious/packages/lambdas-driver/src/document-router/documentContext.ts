@@ -5,6 +5,7 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
+
 import {
 	IContext,
 	IQueuedMessage,
@@ -13,6 +14,13 @@ import {
 	IRoutingKey,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
+const InitialOffset: IQueuedMessage = {
+	offset: -1,
+	partition: -1,
+	topic: "",
+	value: undefined,
+};
 
 /**
  * @internal
@@ -32,7 +40,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 	// Below flag is used to track whether head has been updated after a pause/resume event.
 	// This is to allow moving out of order once during resume.
 	// Value = true means it is in a paused state and waiting to be updated during resume.
-	public headPaused = false;
+	private headPaused = false;
 
 	constructor(
 		private readonly routingKey: IRoutingKey,
@@ -51,6 +59,25 @@ export class DocumentContext extends EventEmitter implements IContext {
 		this.headInternal = head;
 		this.tailInternal = this.getLatestTail();
 		this.lastSuccessfulOffsetInternal = this.tailInternal.offset; // will be -1 at creation
+
+		// If docContext is created while contentManager's tailPaused == true, then this.getLatestTail() would return the old tail
+		// which would be inaccurate and higher than the headInternal offset.
+		// In that case, set tailInternal to InitialOffset, and set lastSuccessfulOffsetInternal to head.offset - 1
+		if (
+			!this.getContextManagerPauseState().headPaused &&
+			this.getContextManagerPauseState().tailPaused
+		) {
+			this.tailInternal = InitialOffset;
+			this.lastSuccessfulOffsetInternal = this.head.offset - 1;
+			Lumberjack.info(
+				"Resetting documentContext's tail and lastSuccessfulOffset since the contextManager's tail is not yet updated after resume",
+				{
+					headOffset: this.head.offset,
+					tailOffset: this.tail.offset,
+					lastSuccessfulOffset: this.lastSuccessfulOffset,
+				},
+			);
+		}
 	}
 
 	public get head(): IQueuedMessage {
@@ -63,6 +90,10 @@ export class DocumentContext extends EventEmitter implements IContext {
 
 	public get lastSuccessfulOffset(): number {
 		return this.lastSuccessfulOffsetInternal;
+	}
+
+	public get documentId(): string {
+		return this.routingKey.documentId;
 	}
 
 	/**
@@ -100,12 +131,13 @@ export class DocumentContext extends EventEmitter implements IContext {
 		// If head is moving backwards
 		if (head.offset <= this.head.offset) {
 			if (head.offset <= this.tail.offset) {
-				Lumberjack.info(
+				Lumberjack.verbose(
 					"Not updating documentContext head since new head's offset is <= last checkpoint offset (tail), returning early",
 					{
 						newHeadOffset: head.offset,
 						currentHeadOffset: this.head.offset,
 						currentTailOffset: this.tail.offset,
+						lastSuccessfulOffset: this.lastSuccessfulOffset,
 						documentId: this.routingKey.documentId,
 					},
 				);
@@ -119,6 +151,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 					newHeadOffset: head.offset,
 					currentHeadOffset: this.head.offset,
 					currentTailOffset: this.tail.offset,
+					lastSuccessfulOffset: this.lastSuccessfulOffset,
 					headPaused: this.headPaused,
 					documentId: this.routingKey.documentId,
 				},
@@ -136,6 +169,7 @@ export class DocumentContext extends EventEmitter implements IContext {
 				newHeadOffset: head.offset,
 				currentHeadOffset: this.head.offset,
 				currentTailOffset: this.tail.offset,
+				lastSuccessfulOffset: this.lastSuccessfulOffset,
 				documentId: this.routingKey.documentId,
 			});
 			this.headPaused = false;

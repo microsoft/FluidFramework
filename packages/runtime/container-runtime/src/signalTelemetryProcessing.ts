@@ -9,22 +9,75 @@ import type {
 	TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import type { IPerfSignalReport } from "./connectionTelemetry.js";
-
 const defaultTelemetrySignalSampleCount = 100;
 
+/**
+ * Set of stats/values used to keep track of telemetry related to signals.
+ */
+interface ISignalTelemetryTracking {
+	/**
+	 * Accumulates the total number of broadcast signals sent during the current signal latency measurement window.
+	 * This value represents the total number of signals sent since the latency measurement began and is used
+	 * logged in telemetry when the latency measurement completes.
+	 */
+	totalSignalsSentInLatencyWindow: number;
+
+	/**
+	 * Counts the number of broadcast signals sent since the last latency measurement was initiated.
+	 * This counter increments with each broadcast signal sent. When a new latency measurement starts,
+	 * this counter is added to `totalSignalsSentInLatencyWindow` and then reset to zero.
+	 */
+	signalsSentSinceLastLatencyMeasurement: number;
+
+	/**
+	 * Number of signals that were expected but not received.
+	 */
+	signalsLost: number;
+
+	/**
+	 * Number of signals received out of order/non-sequentially.
+	 */
+	signalsOutOfOrder: number;
+
+	/**
+	 * Timestamp before submitting the signal we will trace.
+	 */
+	signalTimestamp: number;
+
+	/**
+	 * Signal we will trace for roundtrip latency.
+	 */
+	roundTripSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Next expected signal sequence number to be received.
+	 */
+	trackingSignalSequenceNumber: number | undefined;
+
+	/**
+	 * Inclusive lower bound of signal monitoring window.
+	 * Used by the logic that checks if signals are received out of order.
+	 */
+	minimumTrackingSignalSequenceNumber: number | undefined;
+}
+
 export class SignalTelemetryManager {
-	private readonly signalTracking: IPerfSignalReport = {
+	private readonly signalTracking: ISignalTelemetryTracking = {
 		totalSignalsSentInLatencyWindow: 0,
 		signalsLost: 0,
 		signalsOutOfOrder: 0,
 		signalsSentSinceLastLatencyMeasurement: 0,
-		broadcastSignalSequenceNumber: 0,
 		signalTimestamp: 0,
 		roundTripSignalSequenceNumber: undefined,
 		trackingSignalSequenceNumber: undefined,
 		minimumTrackingSignalSequenceNumber: undefined,
 	};
+
+	/**
+	 * Identifier to track broadcast signals being submitted in order to
+	 * allow collection of data around the roundtrip of signal messages.
+	 */
+	private broadcastSignalSequenceNumber: number = 0;
 
 	/**
 	 * Resets the signal tracking state in the {@link SignalTelemetryManager}.
@@ -41,9 +94,12 @@ export class SignalTelemetryManager {
 	}
 
 	/**
-	 * Processes incoming signals for telemetry tracking.
+	 * Perform telemetry-related processing of incoming signals.
+	 * @param envelope - The signal envelope to process.
+	 * @param logger - The telemetry logger to use for emitting telemetry events.
+	 * @param consecutiveReconnects - The number of consecutive reconnects that have occurred. Only used for logging.
 	 */
-	public processSignalForTelemetry(
+	public trackReceivedSignal(
 		envelope: ISignalEnvelope,
 		logger: ITelemetryLoggerExt,
 		consecutiveReconnects: number,
@@ -58,6 +114,7 @@ export class SignalTelemetryManager {
 			return undefined;
 		}
 
+		// If no tracking window has been set, nothing to do
 		if (
 			this.signalTracking.trackingSignalSequenceNumber === undefined ||
 			this.signalTracking.minimumTrackingSignalSequenceNumber === undefined
@@ -137,43 +194,40 @@ export class SignalTelemetryManager {
 		}
 	}
 
-	public applyTrackingToSignalEnvelope(
-		envelope: ISignalEnvelope,
-		targetClientId?: string,
-	): void {
-		const isBroadcastSignal = targetClientId === undefined;
+	/**
+	 * Updates tracking state for broadcast signals based on the provided signal envelope, and updates the
+	 * envelope with additional information that the signal needs to have stamped on it.
+	 * @remarks Do not call this for non-broadcast signals.
+	 * @param envelope - The signal envelope to process.
+	 */
+	public applyTrackingToBroadcastSignalEnvelope(envelope: ISignalEnvelope): void {
+		const broadcastSignalSequenceNumber = ++this.broadcastSignalSequenceNumber;
 
-		if (isBroadcastSignal) {
-			const clientBroadcastSignalSequenceNumber = ++this.signalTracking
-				.broadcastSignalSequenceNumber;
-			// Stamp with the broadcast signal sequence number.
-			envelope.clientBroadcastSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
+		// Stamp with the broadcast signal sequence number.
+		envelope.clientBroadcastSignalSequenceNumber = broadcastSignalSequenceNumber;
 
-			this.signalTracking.signalsSentSinceLastLatencyMeasurement++;
+		this.signalTracking.signalsSentSinceLastLatencyMeasurement++;
 
-			if (
-				this.signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
-				this.signalTracking.trackingSignalSequenceNumber === undefined
-			) {
-				// Signal monitoring window is undefined
-				// Initialize tracking to expect the next signal sent by the connected client.
-				this.signalTracking.minimumTrackingSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this.signalTracking.trackingSignalSequenceNumber = clientBroadcastSignalSequenceNumber;
-			}
+		// If we don't have a signal monitoring window yet,
+		// initialize tracking to expect the next signal sent by the connected client.
+		if (
+			this.signalTracking.minimumTrackingSignalSequenceNumber === undefined ||
+			this.signalTracking.trackingSignalSequenceNumber === undefined
+		) {
+			this.signalTracking.minimumTrackingSignalSequenceNumber = broadcastSignalSequenceNumber;
+			this.signalTracking.trackingSignalSequenceNumber = broadcastSignalSequenceNumber;
+		}
 
-			// We should not track the round trip of a new signal in the case we are already tracking one.
-			if (
-				clientBroadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1 &&
-				this.signalTracking.roundTripSignalSequenceNumber === undefined
-			) {
-				this.signalTracking.signalTimestamp = Date.now();
-				this.signalTracking.roundTripSignalSequenceNumber =
-					clientBroadcastSignalSequenceNumber;
-				this.signalTracking.totalSignalsSentInLatencyWindow +=
-					this.signalTracking.signalsSentSinceLastLatencyMeasurement;
-				this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
-			}
+		// Start tracking roundtrip for a new signal only if we are not tracking one already (and sampling logic is met)
+		if (
+			this.signalTracking.roundTripSignalSequenceNumber === undefined &&
+			broadcastSignalSequenceNumber % defaultTelemetrySignalSampleCount === 1
+		) {
+			this.signalTracking.signalTimestamp = Date.now();
+			this.signalTracking.roundTripSignalSequenceNumber = broadcastSignalSequenceNumber;
+			this.signalTracking.totalSignalsSentInLatencyWindow +=
+				this.signalTracking.signalsSentSinceLastLatencyMeasurement;
+			this.signalTracking.signalsSentSinceLastLatencyMeasurement = 0;
 		}
 	}
 }

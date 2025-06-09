@@ -5,17 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	LocalClientId,
-	UnassignedSequenceNumber,
-	UniversalSequenceNumber,
-} from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
+import { Marker } from "../mergeTreeNodes.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
-import { countOperations, insertMarker, insertSegments, insertText } from "./testUtils.js";
+import { countOperations, makeRemoteClient } from "./testUtils.js";
 
 describe("MergeTree", () => {
 	let mergeTree: MergeTree;
@@ -23,15 +19,13 @@ describe("MergeTree", () => {
 	let currentSequenceNumber: number;
 	beforeEach(() => {
 		mergeTree = new MergeTree();
-		insertSegments({
-			mergeTree,
-			pos: 0,
-			segments: [TextSegment.make("hello world!")],
-			refSeq: UniversalSequenceNumber,
-			clientId: LocalClientId,
-			seq: UniversalSequenceNumber,
-			opArgs: undefined,
-		});
+		mergeTree.insertSegments(
+			0,
+			[TextSegment.make("hello world!")],
+			mergeTree.localPerspective,
+			mergeTree.collabWindow.mintNextLocalOperationStamp(),
+			undefined,
+		);
 
 		currentSequenceNumber = 0;
 		mergeTree.startCollaboration(
@@ -49,38 +43,32 @@ describe("MergeTree", () => {
 				eventCalled++;
 			};
 
-			insertText({
-				mergeTree,
-				pos: 0,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("more ")],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			assert.equal(eventCalled, 1);
 		});
 
 		it("Insert ending text", () => {
-			const textLength = mergeTree.getLength(currentSequenceNumber, localClientId);
+			const textLength = mergeTree.getLength(mergeTree.localPerspective);
 			let eventCalled: number = 0;
 
 			mergeTree.mergeTreeDeltaCallback = (opArgs, deltaArgs): void => {
 				eventCalled++;
 			};
 
-			insertText({
-				mergeTree,
-				pos: textLength,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				textLength,
+				[TextSegment.make("more ")],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			assert.equal(eventCalled, 1);
 		});
@@ -88,16 +76,13 @@ describe("MergeTree", () => {
 		it("Insert middle text", () => {
 			const count = countOperations(mergeTree);
 
-			insertText({
-				mergeTree,
-				pos: 4,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				4,
+				[TextSegment.make("more ")],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			assert.deepStrictEqual(count, {
 				[MergeTreeDeltaType.INSERT]: 1,
@@ -106,21 +91,18 @@ describe("MergeTree", () => {
 		});
 
 		it("Insert text remote", () => {
-			const remoteClientId: number = 35;
+			const remoteClient = makeRemoteClient({ clientId: 35 });
 			let remoteSequenceNumber = currentSequenceNumber;
 
 			const count = countOperations(mergeTree);
 
-			insertText({
-				mergeTree,
-				pos: 0,
-				refSeq: currentSequenceNumber,
-				clientId: remoteClientId,
-				seq: ++remoteSequenceNumber,
-				text: "more ",
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				0,
+				[TextSegment.make("more ")],
+				remoteClient.perspectiveAt({ refSeq: currentSequenceNumber }),
+				remoteClient.stampAt({ seq: ++remoteSequenceNumber }),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			assert.deepStrictEqual(count, {
 				[MergeTreeDeltaType.INSERT]: 1,
@@ -131,16 +113,13 @@ describe("MergeTree", () => {
 		it("Insert marker", () => {
 			const count = countOperations(mergeTree);
 
-			insertMarker({
-				mergeTree,
-				pos: 4,
-				refSeq: currentSequenceNumber,
-				clientId: localClientId,
-				seq: UnassignedSequenceNumber,
-				behaviors: ReferenceType.Simple,
-				props: undefined,
-				opArgs: { op: { type: MergeTreeDeltaType.INSERT } },
-			});
+			mergeTree.insertSegments(
+				4,
+				[Marker.make(ReferenceType.Simple)],
+				mergeTree.localPerspective,
+				mergeTree.collabWindow.mintNextLocalOperationStamp(),
+				{ op: { type: MergeTreeDeltaType.INSERT } },
+			);
 
 			assert.deepStrictEqual(count, {
 				[MergeTreeDeltaType.INSERT]: 1,

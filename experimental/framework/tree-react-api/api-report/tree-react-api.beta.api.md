@@ -5,16 +5,14 @@
 ```ts
 
 // @public
-export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> extends ITreeDataObject<TSchema> {
+export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
+    readonly config: TreeViewConfiguration<TSchema>;
+    readonly treeView: TreeView<TSchema>;
     readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => React_2.JSX.Element;
 }
 
 // @public
-export interface ITreeDataObject<TSchema extends ImplicitFieldSchema> {
-    readonly config: TreeViewConfiguration<TSchema>;
-    readonly key: string;
-    readonly tree: TreeView<TSchema>;
-}
+export function objectIdNumber(object: object): number;
 
 // @public
 export interface SchemaIncompatibleProps {
@@ -23,7 +21,7 @@ export interface SchemaIncompatibleProps {
 }
 
 // @public
-export function treeDataObject<TSchema extends ImplicitFieldSchema>(key: string, treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
+export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfiguration: TreeViewConfiguration<TSchema>, createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable>;
 
 // @public
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {

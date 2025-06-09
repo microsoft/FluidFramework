@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 import { assert } from "@fluidframework/core-utils/internal";
+import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	type DeltaRoot,
@@ -29,13 +29,13 @@ import {
  */
 export function initializeForest(
 	forest: IEditableForest,
-	content: readonly ITreeCursorSynchronous[],
+	content: ITreeCursorSynchronous,
 	revisionTagCodec: RevisionTagCodec,
 	idCompressor: IIdCompressor,
 	visitAnchors = false,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const delta: DeltaRoot = deltaForRootInitialization(content);
+	const delta: DeltaRoot = deltaForRootInitialization(forest.chunkField(content));
 	let visitor = forest.acquireVisitor();
 	if (visitAnchors) {
 		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);

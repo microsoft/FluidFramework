@@ -8,7 +8,6 @@ import {
 	IDeltaConnection,
 	IDeltaHandler,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
@@ -17,7 +16,7 @@ import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 
 const stashedOpMetadataMark = Symbol();
 
-type StashedOpMetadata = { contents: any; metadata: unknown }[] &
+type StashedOpMetadata = { contents: unknown; metadata: unknown }[] &
 	Record<typeof stashedOpMetadataMark, typeof stashedOpMetadataMark>;
 
 function createStashedOpMetadata(): StashedOpMetadata {
@@ -27,7 +26,7 @@ function createStashedOpMetadata(): StashedOpMetadata {
 		writable: false,
 		enumerable: true,
 	});
-	return arr as any as StashedOpMetadata;
+	return arr as unknown as StashedOpMetadata;
 }
 
 function isStashedOpMetadata(md: unknown): md is StashedOpMetadata {
@@ -39,12 +38,12 @@ function isStashedOpMetadata(md: unknown): md is StashedOpMetadata {
 }
 
 function processWithStashedOpMetadataHandling(
-	content: any,
+	content: unknown,
 	localOpMetaData: unknown,
-	func: (contents: any, metadata: unknown) => void,
-) {
+	func: (contents: unknown, metadata: unknown) => void,
+): void {
 	if (isStashedOpMetadata(localOpMetaData)) {
-		localOpMetaData.forEach(({ contents, metadata }) => func(contents, metadata));
+		for (const { contents, metadata } of localOpMetaData) func(contents, metadata);
 	} else {
 		func(content, localOpMetaData);
 	}
@@ -52,17 +51,17 @@ function processWithStashedOpMetadataHandling(
 
 function getContentsWithStashedOpHandling(
 	messagesContent: readonly IRuntimeMessagesContent[],
-) {
+): IRuntimeMessagesContent[] {
 	const newMessageContents: IRuntimeMessagesContent[] = [];
 	for (const messageContent of messagesContent) {
 		if (isStashedOpMetadata(messageContent.localOpMetadata)) {
-			messageContent.localOpMetadata.forEach(({ contents, metadata }) => {
+			for (const { contents, metadata } of messageContent.localOpMetadata) {
 				newMessageContents.push({
 					contents,
 					localOpMetadata: metadata,
 					clientSequenceNumber: messageContent.clientSequenceNumber,
 				});
-			});
+			}
 		} else {
 			newMessageContents.push(messageContent);
 		}
@@ -84,59 +83,47 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 
 	constructor(
 		private _connected: boolean,
-		private readonly submitFn: (content: any, localOpMetadata: unknown) => void,
+		private readonly submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		public readonly dirty: () => void,
 		private readonly isAttachedAndVisible: () => boolean,
 	) {}
 
-	public attach(handler: IDeltaHandler) {
+	public attach(handler: IDeltaHandler): void {
 		assert(this._handler === undefined, 0x178 /* "Missing delta handler on attach" */);
 		this._handler = handler;
 	}
 
-	public setConnectionState(connected: boolean) {
+	public setConnectionState(connected: boolean): void {
 		this._connected = connected;
 		this.handler.setConnectionState(connected);
 	}
 
 	public processMessages(messageCollection: IRuntimeMessageCollection): void {
-		const { envelope, messagesContent, local } = messageCollection;
 		// catches as data processing error whether or not they come from async pending queues
 		try {
-			const newMessagesContent = getContentsWithStashedOpHandling(messagesContent);
-			if (this.handler.processMessages !== undefined) {
-				this.handler.processMessages({
-					...messageCollection,
-					messagesContent: newMessagesContent,
-				});
-			} else {
-				for (const { contents, localOpMetadata, clientSequenceNumber } of newMessagesContent) {
-					const compatMessage: ISequencedDocumentMessage = {
-						...envelope,
-						contents,
-						clientSequenceNumber,
-					};
-					this.handler.process(compatMessage, local, localOpMetadata);
-				}
-			}
+			const newMessagesContent = getContentsWithStashedOpHandling(
+				messageCollection.messagesContent,
+			);
+			this.handler.processMessages({
+				...messageCollection,
+				messagesContent: newMessagesContent,
+			});
 		} catch (error) {
 			throw DataProcessingError.wrapIfUnrecognized(
 				error,
 				"channelDeltaConnectionFailedToProcessMessages",
-				envelope,
+				messageCollection.envelope,
 			);
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
-		processWithStashedOpMetadataHandling(
-			content,
-			localOpMetadata,
-			this.handler.reSubmit.bind(this.handler),
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
+		processWithStashedOpMetadataHandling(content, localOpMetadata, (contents, metadata) =>
+			this.handler.reSubmit(contents, metadata, squash),
 		);
 	}
 
-	public rollback(content: any, localOpMetadata: unknown) {
+	public rollback(content: unknown, localOpMetadata: unknown): void {
 		if (this.handler.rollback === undefined) {
 			throw new Error("Handler doesn't support rollback");
 		}
@@ -147,7 +134,7 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		);
 	}
 
-	public applyStashedOp(content: any): unknown {
+	public applyStashedOp(content: unknown): unknown {
 		try {
 			this.stashedOpMd = this.isAttachedAndVisible() ? createStashedOpMetadata() : undefined;
 			this.handler.applyStashedOp(content);
@@ -157,11 +144,11 @@ export class ChannelDeltaConnection implements IDeltaConnection {
 		}
 	}
 
-	public submit(contents: any, metadata: unknown): void {
-		if (this.stashedOpMd !== undefined) {
-			this.stashedOpMd.push({ contents, metadata });
-		} else {
+	public submit(contents: unknown, metadata: unknown): void {
+		if (this.stashedOpMd === undefined) {
 			this.submitFn(contents, metadata);
+		} else {
+			this.stashedOpMd.push({ contents, metadata });
 		}
 	}
 }

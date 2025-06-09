@@ -800,6 +800,7 @@ declare type current_as_old_for_Interface_ISummaryUploadManager = requireAssigna
  * typeValidation.broken:
  * "Interface_ITimeoutContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITimeoutContext = requireAssignableTo<TypeOnly<old.ITimeoutContext>, TypeOnly<current.ITimeoutContext>>
 
 /*

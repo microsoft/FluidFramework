@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
+
+import type { MinimalMapTreeNodeView } from "../../feature-libraries/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { NodeData } from "./types.js";
@@ -36,17 +39,32 @@ export interface ExclusiveMapTree extends NodeData, MapTree {
  * @privateRemarks This is implemented iteratively (rather than recursively, which is much simpler)
  * to avoid the possibility of a stack overflow for very deep trees.
  */
-export function deepCopyMapTree(mapTree: MapTree): ExclusiveMapTree {
-	type Next = [fields: ExclusiveMapTree["fields"], sourceFields: MapTree["fields"]];
+export function deepCopyMapTree(mapTree: MinimalMapTreeNodeView): ExclusiveMapTree {
+	type Next = [
+		fields: ExclusiveMapTree["fields"],
+		sourceFields: MinimalMapTreeNodeView["fields"],
+	];
+	function create(
+		child: MinimalMapTreeNodeView,
+		fields: ExclusiveMapTree["fields"],
+	): ExclusiveMapTree {
+		return {
+			type: child.type,
+			...(child.value !== undefined ? { value: child.value } : {}),
+			fields,
+		};
+	}
+
 	const rootFields: ExclusiveMapTree["fields"] = new Map();
 	const nexts: Next[] = [[rootFields, mapTree.fields]];
 	for (let next = nexts.pop(); next !== undefined; next = nexts.pop()) {
 		const [fields, sourceFields] = next;
 		for (const [key, field] of sourceFields) {
+			assert(field.length > 0, "invalid map tree: empty field");
 			if (field.length > 0) {
 				const newField: ExclusiveMapTree[] = [];
 				for (const child of field) {
-					const childClone: ExclusiveMapTree = { ...child, fields: new Map() };
+					const childClone = create(child, new Map());
 					newField.push(childClone);
 					nexts.push([childClone.fields, child.fields]);
 				}
@@ -55,8 +73,5 @@ export function deepCopyMapTree(mapTree: MapTree): ExclusiveMapTree {
 		}
 	}
 
-	return {
-		...mapTree,
-		fields: rootFields,
-	};
+	return create(mapTree, rootFields);
 }

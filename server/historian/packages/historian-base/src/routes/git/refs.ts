@@ -13,13 +13,18 @@ import {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
+import {
+	denyListMiddleware,
+	IThrottleMiddlewareOptions,
+	throttle,
+} from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 
@@ -58,7 +63,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getRefs();
@@ -77,7 +81,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getRef(ref);
@@ -96,7 +99,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
 		});
@@ -117,7 +119,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
 		});
@@ -137,7 +138,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.deleteRef(ref);
@@ -148,6 +148,7 @@ export function create(
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
 			utils.handleResponse(refsP, response, false);
@@ -174,6 +175,7 @@ export function create(
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = createRef(
 				request.params.tenantId,
@@ -189,6 +191,7 @@ export function create(
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = updateRef(
 				request.params.tenantId,
@@ -205,6 +208,8 @@ export function create(
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		// Skip documentDenyListCheck, as it is not needed for delete operations
+		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {
 			const refP = deleteRef(
 				request.params.tenantId,

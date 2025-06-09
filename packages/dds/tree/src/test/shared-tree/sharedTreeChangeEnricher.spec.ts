@@ -16,7 +16,7 @@ import {
 	rootFieldKey,
 	tagChange,
 } from "../../core/index.js";
-import { cursorToJsonObject, singleJsonCursor } from "../json/index.js";
+import { cursorToJsonObject, fieldJsonCursor } from "../json/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { optional } from "../../feature-libraries/default-schema/defaultFieldKinds.js";
@@ -26,7 +26,6 @@ import {
 	type ModularChangeset,
 	ModularEditBuilder,
 	type TreeChunk,
-	buildForest,
 	fieldKinds,
 	initializeForest,
 } from "../../feature-libraries/index.js";
@@ -47,12 +46,15 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
 import {
+	buildTestForest,
 	failCodecFamily,
 	jsonTreeFromForest,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
+import { FluidClientVersion } from "../../codec/index.js";
+import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
 
 const content: JsonCompatible = { x: 42 };
 
@@ -91,16 +93,11 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: typeboxValidator },
+		{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
 	);
-	const forest = buildForest();
-	initializeForest(
-		forest,
-		[singleJsonCursor(content)],
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
-	const schema = new TreeStoredSchemaRepository();
+	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
+	const forest = buildTestForest({ additionalAsserts: true, schema });
+	initializeForest(forest, fieldJsonCursor([content]), testRevisionTagCodec, testIdCompressor);
 	const enricher = new SharedTreeReadonlyChangeEnricher(
 		forest,
 		schema,

@@ -18,15 +18,14 @@ import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
-	cursorForJsonableTreeNode,
 } from "../../feature-libraries/index.js";
 import {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
 	onForkTransitive,
 } from "../../shared-tree-core/index.js";
-import { brand, fail } from "../../util/index.js";
-import { failCodecFamily, mintRevisionTag } from "../utils.js";
+import { brand } from "../../util/index.js";
+import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 
@@ -108,7 +107,7 @@ describe("Branches", () => {
 		// Rebase the child onto the parent up to the first new commit
 		const parentCommit1 =
 			findAncestor(parent.getHead(), (c) => c.revision === tag1) ??
-			fail("Expected to find commit");
+			assert.fail("Expected to find commit");
 
 		child.rebaseOnto(parent, parentCommit1);
 		// Ensure that the changes are now present on the child
@@ -395,8 +394,8 @@ describe("Branches", () => {
 
 	/** Apply an arbitrary but unique change to the given branch and return the tag for the new commit */
 	function change(branch: DefaultBranch): RevisionTag {
-		const cursor = cursorForJsonableTreeNode({ type: brand("TestValue"), value: changeValue });
-		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(cursor);
+		const content = chunkFromJsonableTrees([{ type: brand("TestValue"), value: changeValue }]);
+		branch.editor.valueField({ parent: undefined, field: rootFieldKey }).set(content);
 		return branch.getHead().revision;
 	}
 

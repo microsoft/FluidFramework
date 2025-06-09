@@ -126,7 +126,9 @@ describe("Makes TS type strings from schema", () => {
 			z: testSf.optional(testSf.null),
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+			getPromptFriendlyTreeSchema(
+				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+			),
 			"interface Foo { x: number; y: string; z: null | undefined; }",
 		);
 	});
@@ -138,7 +140,9 @@ describe("Makes TS type strings from schema", () => {
 			y: testSf.identifier,
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+			getPromptFriendlyTreeSchema(
+				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+			),
 			"interface Foo { y: string; }",
 		);
 	});
@@ -152,8 +156,10 @@ describe("Makes TS type strings from schema", () => {
 			y: demoSf.required([demoSf.number, demoSf.string, Bar]),
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
-			"interface Foo { y: number | string | Bar; } interface Bar { z: number; }",
+			getPromptFriendlyTreeSchema(
+				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+			),
+			"interface Bar { z: number; } interface Foo { y: number | string | Bar; }",
 		);
 	});
 
@@ -163,7 +169,9 @@ describe("Makes TS type strings from schema", () => {
 			y: demoSf.array(demoSf.number),
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+			getPromptFriendlyTreeSchema(
+				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+			),
 			"interface Foo { y: number[]; }",
 		);
 	});
@@ -177,15 +185,19 @@ describe("Makes TS type strings from schema", () => {
 			]),
 		}) {}
 		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(Foo)),
+			getPromptFriendlyTreeSchema(
+				getJsonSchema(Foo, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+			),
 			"interface Foo { y: (number | (number | string[])[])[]; }",
 		);
 	});
 
 	it("for objects in the demo schema", () => {
 		assert.equal(
-			getPromptFriendlyTreeSchema(getJsonSchema(RootObject)),
-			"interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; } interface Vector { x: number; y: number; z: number | undefined; }",
+			getPromptFriendlyTreeSchema(
+				getJsonSchema(RootObject, { requireFieldsWithDefaults: false, useStoredKeys: false }),
+			),
+			"interface Vector { x: number; y: number; z: number | undefined; } interface RootObject { str: string; vectors: Vector[]; bools: boolean[]; }",
 		);
 	});
 });

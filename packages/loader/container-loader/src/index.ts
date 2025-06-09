@@ -16,9 +16,7 @@ export {
 } from "./createAndLoadContainerUtils.js";
 export {
 	ICodeDetailsLoader,
-	IDetachedBlobStorage,
 	IFluidModuleWithDetails,
-	ILoaderOptions,
 	ILoaderProps,
 	ILoaderServices,
 	Loader,

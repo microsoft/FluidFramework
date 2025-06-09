@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict } from "node:assert";
-import { assert } from "@fluidframework/core-utils/internal";
+import { strict as assert } from "node:assert";
 import {
 	type ChangeAtomIdMap,
 	type RevisionTag,
@@ -22,7 +21,6 @@ import type {
 	ToDelta,
 } from "../feature-libraries/index.js";
 import {
-	fail,
 	forEachInNestedMap,
 	nestedMapFromFlatList,
 	nestedMapToFlatList,
@@ -130,7 +128,7 @@ function compose<T>(
 		const id =
 			taggedOptAtomId(id1, change1.revision) ??
 			taggedOptAtomId(id2, change2.revision) ??
-			fail("Should not compose two undefined nodes");
+			assert.fail("Should not compose two undefined nodes");
 
 		setInNestedMap(composedNodes, id.revision, id.localId, composedNode);
 		return id;
@@ -223,5 +221,5 @@ function assertEqual<T>(
 	assertFieldsEqual: (actual: T, expected: T) => void,
 ): void {
 	assertFieldsEqual(actual.fieldChange, expected.fieldChange);
-	strict.deepEqual(actual.nodes, expected.nodes);
+	assert.deepEqual(actual.nodes, expected.nodes);
 }

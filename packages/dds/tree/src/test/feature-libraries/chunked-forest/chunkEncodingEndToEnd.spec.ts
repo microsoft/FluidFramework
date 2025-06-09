@@ -43,26 +43,25 @@ import {
 	fieldKindConfigurations,
 	makeFieldBatchCodec,
 	makeModularChangeCodecFamily,
-	MockNodeKeyManager,
+	MockNodeIdentifierManager,
 	jsonableTreeFromCursor,
 	cursorForJsonableTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
-	type TreeStoredContent,
 	type ISharedTreeEditor,
 	Tree,
 	ForestTypeOptimized,
+	type ITreePrivate,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
 	checkoutWithContent,
 	forestWithContent,
+	getView,
 	mintRevisionTag,
 	testIdCompressor,
-	type SharedTreeWithConnectionStateSetter,
 } from "../../utils.js";
 import {
-	cursorFromInsertable,
 	numberSchema,
 	SchemaFactory,
 	stringSchema,
@@ -73,8 +72,11 @@ import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { EncodedFieldBatch } from "../../../feature-libraries/chunked-forest/index.js";
+import type {
+	EncodedFieldBatch,
+	FieldBatchEncodingContext,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { brand } from "../../../util/index.js";
@@ -82,11 +84,12 @@ import { brand } from "../../../util/index.js";
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree } from "../../../treeFactory.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
-const options = {
+const options: CodecWriteOptions = {
 	jsonValidator: typeboxValidator,
-	forest: ForestTypeOptimized,
-	summaryEncodeType: TreeCompressionStrategy.Compressed,
+	oldestCompatibleClient: FluidClientVersion.v2_0,
 };
 
 const fieldBatchCodec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, 1);
@@ -94,8 +97,8 @@ const sessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
 const idCompressor = createIdCompressor(sessionId);
 const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
-const context = {
-	encodeType: options.summaryEncodeType,
+const context: FieldBatchEncodingContext = {
+	encodeType: TreeCompressionStrategy.Compressed,
 	idCompressor,
 	originatorId: idCompressor.localSessionId,
 	schema: { schema: jsonSequenceRootSchema, policy: defaultSchemaPolicy },
@@ -107,20 +110,13 @@ class HasIdentifier extends schemaFactory.object("parent", {
 }) {}
 
 function getIdentifierEncodingContext(id: string) {
-	const initialTree = cursorFromInsertable(
-		HasIdentifier,
-		new HasIdentifier({ identifier: id }),
-		new MockNodeKeyManager(),
-	);
+	const view = getView(new TreeViewConfiguration({ schema: HasIdentifier }));
+	view.initialize({ identifier: id });
 	const flexSchema = toStoredSchema(HasIdentifier);
-	const flexConfig: TreeStoredContent = {
-		schema: flexSchema,
-		initialTree,
-	};
-	const checkout = checkoutWithContent(flexConfig);
+	const checkout = view.checkout;
 
-	const encoderContext = {
-		encodeType: options.summaryEncodeType,
+	const encoderContext: FieldBatchEncodingContext = {
+		encodeType: TreeCompressionStrategy.Compressed,
 		idCompressor: testIdCompressor,
 		originatorId: testIdCompressor.localSessionId,
 		schema: {
@@ -166,9 +162,7 @@ describe("End to end chunked encoding", () => {
 		const checkout = new MockTreeCheckout(forest, {
 			editor: dummyEditor as unknown as ISharedTreeEditor,
 		});
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 		// Check that inserted change contains chunk which is reference equal to the original chunk.
 		const { change: insertedChange, revision } = changeLog[0];
 		assert(insertedChange.builds !== undefined);
@@ -188,9 +182,7 @@ describe("End to end chunked encoding", () => {
 			initialTree: [],
 		});
 
-		checkout.editor
-			.sequenceField({ field: rootFieldKey, parent: undefined })
-			.insert(0, chunk.cursor());
+		checkout.editor.sequenceField({ field: rootFieldKey, parent: undefined }).insert(0, chunk);
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
@@ -276,8 +268,10 @@ describe("End to end chunked encoding", () => {
 
 		it("is the uncompressed value when it is an unknown  identifier", () => {
 			// generate an id from a different id compressor.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const id = nodeKeyManager.stabilizeNodeKey(nodeKeyManager.generateLocalNodeKey());
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const id = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
 
 			const { encoderContext, checkout } = getIdentifierEncodingContext(id);
 
@@ -353,8 +347,8 @@ describe("End to end chunked encoding", () => {
 			const id = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 
 			// Create a stable id from a different source.
-			const nodeKeyManager = new MockNodeKeyManager();
-			const unknownStableId = nodeKeyManager.generateStableNodeKey();
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const unknownStableId = nodeKeyManager.generateStableNodeIdentifier();
 
 			const initialTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
@@ -404,10 +398,7 @@ describe("End to end chunked encoding", () => {
 				id: "test",
 				idCompressor: testIdCompressor,
 			});
-			const tree = factory.create(
-				runtime,
-				"TestSharedTree",
-			) as SharedTreeWithConnectionStateSetter;
+			const tree = factory.create(runtime, "TestSharedTree") as ITreePrivate & IChannel;
 
 			const stableId = testIdCompressor.decompress(testIdCompressor.generateCompressedId());
 

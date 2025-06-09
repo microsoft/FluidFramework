@@ -1,5 +1,5 @@
 ---
-Generated on: 2024-12-04T19:14:12.288Z
+Generated on: 2025-03-26T17:03:01.505Z
 description: This is a snapshot file utilized for testing purposes.
 Test Suite Title: Prompt Generation Regression Tests
 Test Title: Editing System Prompt with no plan and empty edit log has no regression
@@ -20,7 +20,7 @@ interface Modify {
     type: "modify";
     explanation: string; // A description of what this edit is meant to accomplish in human readable English
     target: ObjectTarget; // A pointer to a specific object node in the tree, identified by the target object's Id.
-    field: "title" | "description" | "completed";
+    field: "title" | "completed" | "description";
     modification: any; // Domain-specific content here
 }
 
@@ -73,7 +73,7 @@ interface EditWrapper {
 }
 
 
-	The tree is a JSON object with the following schema: interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; } interface Todo { title: string; completed: boolean; }
+	The tree is a JSON object with the following schema: interface Todo { title: string; completed: boolean; } interface TestTodoAppSchema { title: string; description: string; todos: Todo[]; }
 	
 	
 	The current state of the tree is: {"__fluid_objectId":"TestTodoAppSchema1","title":"My First Todo List","description":"This is a list of todos","todos":[{"__fluid_objectId":"Todo1","title":"Task 1","completed":true},{"__fluid_objectId":"Todo2","title":"Task 2","completed":true}]}.

@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type NodeFromSchema,
@@ -15,14 +14,14 @@ import {
 	type TreeView,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
+	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
 	enumFromStrings,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
-import { TreeFactory } from "../../../treeFactory.js";
-import { testIdCompressor, validateUsageError } from "../../utils.js";
+import { getView, validateUsageError } from "../../utils.js";
 import {
 	unsafeArrayToTuple,
 	type areSafelyAssignable,
@@ -39,12 +38,7 @@ describe("schemaCreationUtilities", () => {
 		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}
 		const config = new TreeViewConfiguration({ schema: Parent });
 
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-		const view: TreeView<typeof Parent> = tree.viewWith(config);
+		const view: TreeView<typeof Parent> = getView(config);
 		view.initialize(
 			new Parent({
 				mode: new Mode.Bonus(),
@@ -81,13 +75,9 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enumFromStrings - construction tests", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 
-		const ModeNodes = enumFromStrings(new SchemaFactory(`${schemaFactory.scope}.Mode`), [
-			"A",
-			"B",
-			"C",
-		]);
+		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B", "C"]);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		type I0 = NodeFromSchema<(typeof ModeNodes.schema)[0]>;
@@ -121,14 +111,14 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum example from docs", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		// An enum for use in the tree. Must have string keys.
 		enum Mode {
 			a = "A",
 			b = "B",
 		}
 		// Define the schema for each member of the enum using a nested scope to group them together.
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		// Defined the types of the nodes which correspond to this the schema.
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 		// An example schema which has an enum as a child.
@@ -150,13 +140,13 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum - numbers", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = 1,
 			b = "b",
 			c = 6.3,
 		}
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
@@ -191,14 +181,14 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum - construction tests", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = "A",
 			b = "B",
 			c = "C",
 		}
 		// Uses a nested schema factory, as recommended by adaptEnum's docs to ensure that pattern works.
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
@@ -296,8 +286,6 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enum interop - enumFromStrings", () => {
-		const factory = new TreeFactory({});
-
 		enum Day {
 			Today = "Today",
 			Tomorrow = "Tomorrow",
@@ -305,14 +293,9 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = enumFromStrings(schema, unsafeArrayToTuple(Object.values(Day)));
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-
 		const day = Day.Today;
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(day));
 
 		switch (view.root.value) {
@@ -329,8 +312,6 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enum interop - adaptEnum", () => {
-		const factory = new TreeFactory({});
-
 		enum Day {
 			Today = "today",
 			Tomorrow = "tomorrow",
@@ -338,18 +319,13 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = adaptEnum(schema, Day);
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-
 		// Can convert enum to unhydrated node:
 		const x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today();
 		const z: Day.Today = y.value;
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {
@@ -374,8 +350,6 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enum interop - adaptEnum numeric", () => {
-		const factory = new TreeFactory({});
-
 		enum Day {
 			Today = 2,
 			Tomorrow = 3,
@@ -383,18 +357,13 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = adaptEnum(schema, Day);
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-
 		// Can convert enum to unhydrated node:
 		const x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today();
 		const z: Day.Today = y.value;
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {

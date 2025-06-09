@@ -112,7 +112,7 @@ export function removeSectionContent(options: { heading: string | RegExp }): (
 	tree: Root,
 ) => void {
 	return function (tree: Root) {
-		headingRange(tree, options.heading, (start, nodes, end, info) => {
+		headingRange(tree, options.heading, (start, _nodes, end, _info) => {
 			return [
 				start,
 				// No child nodes - effectively empties the section.

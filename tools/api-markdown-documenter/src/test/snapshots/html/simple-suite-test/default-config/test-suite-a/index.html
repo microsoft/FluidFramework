@@ -14,26 +14,22 @@
       </section>
       <section>
         <h2 id="test-suite-a-remarks">Remarks</h2>
-        <p>
-          <p>This remarks block includes a bulleted list!</p>
-          <p>- Bullet 1</p>
-          <p>- Bullet 2</p>
-          <p>And an ordered list for good measure!</p>
-          <p>1. List item 1</p>
-          <p>2. List item 2</p>
-          <p>3. List item 3</p>
-          <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
-          <p>- Good link (no alias): <a href="/test-suite-a/testclass-class">TestClass</a></p>
-          <p>- Good link (with alias): <a href="/test-suite-a/#testfunction-function">function alias text</a></p>
-          <p>- Bad link (no alias): <span><i>InvalidItem</i></span></p>
-          <p>- Bad link (with alias): <span><i>even though I link to an invalid item, I would still like this text to be rendered</i></span></p>
-        </p>
+        <p>This remarks block includes a bulleted list!</p>
+        <p>- Bullet 1</p>
+        <p>- Bullet 2</p>
+        <p>And an ordered list for good measure!</p>
+        <p>1. List item 1</p>
+        <p>2. List item 2</p>
+        <p>3. List item 3</p>
+        <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
+        <p>- Good link (no alias): <a href="/test-suite-a/testclass-class">TestClass</a></p>
+        <p>- Good link (with alias): <a href="/test-suite-a/#testfunction-function">function alias text</a></p>
+        <p>- Bad link (no alias): <span><i>InvalidItem</i></span></p>
+        <p>- Bad link (with alias): <span><i>even though I link to an invalid item, I would still like this text to be rendered</i></span></p>
       </section>
       <section>
         <h2 id="test-suite-a-example">Example</h2>
-        <p>
-          <p>A test example</p><code>const foo = bar;</code>
-        </p>
+        <p>A test example</p><code>const foo = bar;</code>
       </section>
       <section>
         <h2>Interfaces</h2>
@@ -232,32 +228,32 @@
           <section>
             <p>Test function</p>
           </section>
-          <section><span><b>WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.</b></span></section>
+          <section>
+            <p><span><b>WARNING: This API is provided as an alpha preview and may change without notice. Use at your own risk.</b></span></p>
+          </section>
           <section>
             <h4 id="testfunction-signature">Signature</h4><code>export declare function testFunction&#x3C;TTypeParameter extends TestInterface = TestInterface>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;</code>
-            <p>
-              <section>
-                <h5>Type Parameters</h5>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Parameter</th>
-                      <th>Constraint</th>
-                      <th>Default</th>
-                      <th>Description</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>TTypeParameter</td>
-                      <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
-                      <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
-                      <td>A test type parameter</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </section>
-            </p>
+            <section>
+              <h5>Type Parameters</h5>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Parameter</th>
+                    <th>Constraint</th>
+                    <th>Default</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>TTypeParameter</td>
+                    <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
+                    <td><span><a href="/test-suite-a/testinterface-interface">TestInterface</a></span></td>
+                    <td>A test type parameter</td>
+                  </tr>
+                </tbody>
+              </table>
+            </section>
           </section>
           <section>
             <h4 id="testfunction-remarks">Remarks</h4>
@@ -320,7 +316,8 @@
             <p>Test function that returns an inline type</p>
           </section>
           <section>
-            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span><p><i>This is a test deprecation notice. Here is a </i><a href="/test-suite-a/#testfunctionreturninguniontype-function"><i>link</i></a><i> to something else!</i></p></span></p>
+            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span></p>
+            <p>This is a test deprecation notice. Here is a <a href="/test-suite-a/#testfunctionreturninguniontype-function">link</a> to something else!</p>
           </section>
           <section>
             <h4 id="testfunctionreturningintersectiontype-signature">Signature</h4><code>export declare function testFunctionReturningIntersectionType(): TestEmptyInterface &#x26; TestInterfaceWithTypeParameter&#x3C;number>;</code>
@@ -353,7 +350,9 @@
           <section>
             <p>Test Constant</p>
           </section>
-          <section><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></section>
+          <section>
+            <p><span><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></span></p>
+          </section>
           <section>
             <h4 id="testconst-signature">Signature</h4><code>testConst = 42</code>
           </section>
@@ -368,7 +367,7 @@
             <p>I have a <code>@deprecated</code> tag with an empty comment block.</p>
           </section>
           <section>
-            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span><br><span><p></p></span></p>
+            <p><span><b>WARNING: This API is deprecated and will be removed in a future release.</b></span></p>
           </section>
           <section>
             <h4 id="testconstwithemptydeprecatedblock-signature">Signature</h4><code>testConstWithEmptyDeprecatedBlock: string</code>

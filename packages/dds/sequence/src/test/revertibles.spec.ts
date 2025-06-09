@@ -13,8 +13,8 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { IIntervalCollection } from "../intervalCollection.js";
-import { IntervalStickiness, SequenceInterval } from "../intervals/index.js";
+import { ISequenceIntervalCollection } from "../intervalCollection.js";
+import { IntervalStickiness } from "../intervals/index.js";
 import {
 	SharedStringRevertible,
 	appendAddIntervalToRevertibles,
@@ -32,7 +32,7 @@ import { assertSequenceIntervals } from "./intervalTestUtils.js";
 describe("Sequence.Revertibles with Local Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
-	let collection: IIntervalCollection<SequenceInterval>;
+	let collection: ISequenceIntervalCollection;
 	let revertibles: SharedStringRevertible[];
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	const stringFactory = new SharedStringFactory();
@@ -314,8 +314,8 @@ describe("Sequence.Revertibles with Local Edits", () => {
 describe("Sequence.Revertibles with Remote Edits", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
-	let collection: IIntervalCollection<SequenceInterval>;
-	let collection2: IIntervalCollection<SequenceInterval>;
+	let collection: ISequenceIntervalCollection;
+	let collection2: ISequenceIntervalCollection;
 	let revertibles: SharedStringRevertible[];
 
 	let sharedString2: SharedString;
@@ -641,7 +641,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
-	let collection: IIntervalCollection<SequenceInterval>;
+	let collection: ISequenceIntervalCollection;
 	let revertibles: SharedStringRevertible[];
 
 	beforeEach(() => {
@@ -669,7 +669,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 
 	describe("with remote ops", () => {
 		let sharedString2: SharedString;
-		let collection2: IIntervalCollection<SequenceInterval>;
+		let collection2: ISequenceIntervalCollection;
 
 		beforeEach(() => {
 			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({ clientId: "2" });
@@ -1146,7 +1146,7 @@ describe("Undo/redo for string remove containing intervals", () => {
 describe("Sequence.Revertibles with stickiness", () => {
 	let sharedString: SharedString;
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
-	let collection: IIntervalCollection<SequenceInterval>;
+	let collection: ISequenceIntervalCollection;
 	let revertibles: SharedStringRevertible[];
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	const stringFactory = new SharedStringFactory();

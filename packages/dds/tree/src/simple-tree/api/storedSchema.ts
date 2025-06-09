@@ -3,29 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import type { ICodecOptions } from "../../codec/index.js";
-import type { TreeStoredSchema } from "../../core/index.js";
+import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
+import { SchemaVersion } from "../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	encodeTreeSchema,
 	makeSchemaCodec,
 } from "../../feature-libraries/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../feature-libraries/schema-index/index.js";
+import {
+	clientVersionToSchemaVersion,
+	type Format,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
-import type { ImplicitFieldSchema } from "../schemaTypes.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
+import type { SimpleTreeSchema } from "../simpleSchema.js";
+import { simpleToStoredSchema } from "../toStoredSchema.js";
+
+import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
-import { ViewSchema } from "./view.js";
 
 /**
- * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable, but unspecified format.
+ * Dumps the "persisted" schema subset of the provided `schema` into a deterministic JSON-compatible, semi-human-readable format.
+ *
+ * @param schema - The schema to dump.
  *
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
- *
- * This format may change across major versions of this package: such changes are considered breaking.
- * Beyond that, no compatibility guarantee is provided for this format: it should never be relied upon to load data, it should only be used for comparing outputs from this function.
+ * This format is also compatible with {@link ViewContent.schema}, {@link comparePersistedSchema} and {@link persistedToSimpleSchema}.
  *
  * This only includes the "persisted" subset of schema information, which means the portion which gets included in documents.
  * It thus uses "persisted" keys, see {@link FieldProps.key}.
@@ -38,7 +43,7 @@ import { ViewSchema } from "./view.js";
  * An application could use this API to generate a `schema.json` file when it first releases,
  * then test that the schema is sill compatible with documents from that version with a test like :
  * ```typescript
- * assert.deepEqual(extractPersistedSchema(MySchema), require("./schema.json"));
+ * assert.deepEqual(extractPersistedSchema(MySchema, FluidClientVersion.v2_0), require("./schema.json"));
  * ```
  *
  * @privateRemarks
@@ -48,9 +53,13 @@ import { ViewSchema } from "./view.js";
  * Public API surface uses "persisted" terminology while internally we use "stored".
  * @alpha
  */
-export function extractPersistedSchema(schema: ImplicitFieldSchema): JsonCompatible {
-	const stored = toStoredSchema(schema);
-	return encodeTreeSchema(stored);
+export function extractPersistedSchema(
+	schema: SimpleTreeSchema,
+	oldestCompatibleClient: FluidClientVersion,
+): JsonCompatible {
+	const stored = simpleToStoredSchema(schema);
+	const writeVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
+	return encodeTreeSchema(stored, writeVersion);
 }
 
 /**
@@ -87,25 +96,15 @@ export function comparePersistedSchema(
 	persisted: JsonCompatible,
 	view: ImplicitFieldSchema,
 	options: ICodecOptions,
-	canInitialize: boolean,
-): SchemaCompatibilityStatus {
-	const schemaCodec = makeSchemaCodec(options);
+): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+	// Any version can be passed down to makeSchemaCodec here.
+	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as Format);
-	const viewSchema = new ViewSchema(defaultSchemaPolicy, {}, view);
-	return comparePersistedSchemaInternal(stored, viewSchema, canInitialize);
-}
-
-/**
- * Compute compatibility for viewing a document with `stored` schema using `viewSchema`.
- * `canInitialize` is passed through to the return value unchanged and otherwise unused.
- */
-export function comparePersistedSchemaInternal(
-	stored: TreeStoredSchema,
-	viewSchema: ViewSchema,
-	canInitialize: boolean,
-): SchemaCompatibilityStatus {
-	return {
-		...viewSchema.checkCompatibility(stored),
-		canInitialize,
-	};
+	const viewSchema = new SchemaCompatibilityTester(
+		defaultSchemaPolicy,
+		{},
+		normalizeFieldSchema(view),
+	);
+	return viewSchema.checkCompatibility(stored);
 }

@@ -146,9 +146,8 @@ export class InventoryList extends DataObject implements IInventoryList {
  * scenario, the fourth argument is not used.
  * @internal
  */
-export const InventoryListInstantiationFactory = new DataObjectFactory<InventoryList>(
-	"inventory-list",
-	InventoryList,
-	[SharedCell.getFactory(), SharedString.getFactory()],
-	{},
-);
+export const InventoryListInstantiationFactory = new DataObjectFactory({
+	type: "inventory-list",
+	ctor: InventoryList,
+	sharedObjects: [SharedCell.getFactory(), SharedString.getFactory()],
+});

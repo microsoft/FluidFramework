@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { Listenable } from "@fluidframework/core-interfaces";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
 	AnchorSet,
 	type AnnouncedVisitor,
 	type CursorLocationType,
+	type DeltaDetachedNodeId,
 	type DeltaVisitor,
 	type DetachedField,
 	type FieldAnchor,
@@ -26,8 +27,9 @@ import {
 	type MapTree,
 	type PathRootPrefix,
 	type PlaceIndex,
-	type ProtoNodes,
 	type Range,
+	type TreeChunk,
+	type TreeFieldStoredSchema,
 	TreeNavigationResult,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchemaSubscription,
@@ -36,16 +38,26 @@ import {
 	aboveRootPlaceholder,
 	combineVisitors,
 	deepCopyMapTree,
+	rootFieldKey,
 } from "../../core/index.js";
 import {
 	assertNonNegativeSafeInteger,
 	assertValidIndex,
 	assertValidRange,
 	brand,
-	fail,
+	breakingMethod,
+	type Breakable,
+	type WithBreakable,
 } from "../../util/index.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
+import {
+	defaultSchemaPolicy,
+	FieldKinds,
+	inSchemaOrThrow,
+	isFieldInSchema,
+} from "../default-schema/index.js";
 
 /** A `MapTree` with mutable fields */
 interface MutableMapTree extends MapTree {
@@ -70,7 +82,7 @@ function getOrCreateField(mapTree: MutableMapTree, key: FieldKey): MutableMapTre
  * This implementation focuses on correctness and simplicity, not performance.
  * It does not use compressed chunks: instead nodes are implemented using objects.
  */
-export class ObjectForest implements IEditableForest {
+export class ObjectForest implements IEditableForest, WithBreakable {
 	private activeVisitor?: DeltaVisitor;
 
 	// All cursors that are in the "Current" state. Must be empty when editing.
@@ -86,6 +98,11 @@ export class ObjectForest implements IEditableForest {
 	}
 
 	public constructor(
+		public readonly breaker: Breakable,
+		/**
+		 * If provided, may be used for validation, but otherwise unused.
+		 */
+		public readonly schema: TreeStoredSchemaSubscription | undefined,
 		public readonly anchors: AnchorSet = new AnchorSet(),
 		public readonly additionalAsserts: boolean = false,
 		roots?: MapTree,
@@ -97,18 +114,54 @@ export class ObjectForest implements IEditableForest {
 						type: aboveRootPlaceholder,
 						fields: new Map(),
 					};
+
+		if (additionalAsserts) {
+			this.checkSchema();
+		}
 	}
 
 	public get isEmpty(): boolean {
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(_: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
-		return new ObjectForest(anchors, this.additionalAsserts, this.roots);
+	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ObjectForest {
+		return new ObjectForest(this.breaker, schema, anchors, this.additionalAsserts, this.roots);
+	}
+
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
+		return chunkFieldSingle(cursor, { idCompressor: undefined, policy: defaultChunkPolicy });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
 		this.anchors.forget(anchor);
+	}
+
+	/**
+	 * Throw (and break) if content does not match schema.
+	 */
+	@breakingMethod
+	public checkSchema(): void {
+		const schema = this.schema;
+		if (schema !== undefined) {
+			const roots = new Set([...this.roots.fields.keys(), rootFieldKey]);
+			for (const key of roots) {
+				const documentRoot = this.roots.fields.get(key) ?? [];
+				const fieldSchema: TreeFieldStoredSchema =
+					key === rootFieldKey
+						? schema.rootFieldSchema
+						: // TODO: someday we should have schema for detached fields, and use that instead of generating one here.
+							{
+								// Some detached fields may have multiple nodes, so we must treat them as sequences:
+								kind: FieldKinds.sequence.identifier,
+								types: new Set(documentRoot.map((node) => node.type)),
+							};
+				const maybeError = isFieldInSchema(documentRoot, fieldSchema, {
+					schema,
+					policy: defaultSchemaPolicy,
+				});
+				inSchemaOrThrow(maybeError);
+			}
+		}
 	}
 
 	public acquireVisitor(): DeltaVisitor {
@@ -158,12 +211,17 @@ export class ObjectForest implements IEditableForest {
 					0x76d /* Multiple free calls for same visitor */,
 				);
 				this.forest.activeVisitor = undefined;
+				if (this.forest.additionalAsserts) {
+					// Schema validation:
+					// When doing "additionalAsserts", validate the content against the schema after every batch of edits.
+					this.forest.checkSchema();
+				}
 			}
 			public destroy(detachedField: FieldKey, count: number): void {
 				preEdit();
 				this.forest.delete(detachedField);
 			}
-			public create(content: ProtoNodes, destination: FieldKey): void {
+			public create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
 				preEdit();
 				this.forest.add(content, destination);
 				this.forest.#events.emit("afterRootFieldCreated", destination);
@@ -172,7 +230,7 @@ export class ObjectForest implements IEditableForest {
 				preEdit();
 				this.attachEdit(source, count, destination);
 			}
-			public detach(source: Range, destination: FieldKey): void {
+			public detach(source: Range, destination: FieldKey, id: DeltaDetachedNodeId): void {
 				preEdit();
 				this.detachEdit(source, destination);
 			}
@@ -231,19 +289,6 @@ export class ObjectForest implements IEditableForest {
 					parent.fields.delete(key);
 				}
 			}
-			public replace(
-				newContentSource: FieldKey,
-				range: Range,
-				oldContentDestination: FieldKey,
-			): void {
-				preEdit();
-				assert(
-					newContentSource !== oldContentDestination,
-					0x7ba /* Replace detached source field and detached destination field must be different */,
-				);
-				this.detachEdit(range, oldContentDestination);
-				this.attachEdit(newContentSource, range.end - range.start, range.start);
-			}
 			public enterNode(index: number): void {
 				cursor.enterNode(index);
 			}
@@ -261,10 +306,7 @@ export class ObjectForest implements IEditableForest {
 		const forestVisitor = new Visitor(this);
 		const announcedVisitors: AnnouncedVisitor[] = [];
 		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
-		const combinedVisitor = combineVisitors(
-			[forestVisitor, ...announcedVisitors],
-			announcedVisitors,
-		);
+		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;
 	}
@@ -553,11 +595,16 @@ class Cursor extends SynchronousCursor implements ITreeSubscriptionCursor {
 // When other forest implementations are created (ex: optimized ones),
 // this function should likely be moved and updated to (at least conditionally) use them.
 /**
- * @returns an implementation of {@link IEditableForest} with no data or schema.
+ * Returns an implementation of {@link IEditableForest} with no content.
+ * @privateRemarks
+ * TODO:
+ * refactor to remove this function, and instead place `ForestTypeReference` and `ForestTypeExpensiveDebug` here as a better way to encapsulate ObjectForest.
  */
 export function buildForest(
+	breaker: Breakable,
+	schema?: TreeStoredSchemaSubscription,
 	anchors?: AnchorSet,
 	additionalAsserts: boolean = false,
 ): ObjectForest {
-	return new ObjectForest(anchors, additionalAsserts);
+	return new ObjectForest(breaker, schema, anchors, additionalAsserts);
 }

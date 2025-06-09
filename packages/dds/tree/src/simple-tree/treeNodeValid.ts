@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -18,10 +21,6 @@ import {
 	type Context,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { fail } from "../util/index.js";
-
 import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
 import { markEager } from "./flexList.js";
 
@@ -64,6 +63,8 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	/**
 	 * Schema classes can override to provide a callback that is called once when the first node is constructed.
 	 * This is a good place to perform extra validation and cache schema derived data needed for the implementation of the node.
+	 * @remarks
+	 * It is valid to dereference LazyItem schema references in this function (or anything that runs after it).
 	 */
 	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): Context {
 		fail(0xae5 /* Missing oneTimeSetup */);
@@ -146,7 +147,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	}
 
 	/**
-	 * @see {@link TreeNodeSchemaCore.createFromInsertable}.
+	 * See {@link TreeNodeSchemaCore.createFromInsertable}.
 	 */
 	public static createFromInsertable<TInput, TOut, TThis extends new (args: TInput) => TOut>(
 		this: TThis,
@@ -155,18 +156,27 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		return new this(input);
 	}
 
+	/**
+	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
+	 */
+	public static oneTimeInitialize(
+		this: typeof TreeNodeValid & TreeNodeSchema,
+	): Required<MostDerivedData> {
+		const cache = this.markMostDerived();
+		cache.oneTimeInitialized ??= this.oneTimeSetup();
+		// TypeScript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
+		return cache as MostDerivedData & { oneTimeInitialized: Context };
+	}
+
 	public constructor(input: TInput | InternalTreeNode) {
 		super(privateToken);
 		const schema = this.constructor as typeof TreeNodeValid & TreeNodeSchema;
-		const cache = schema.markMostDerived();
-		if (cache.oneTimeInitialized === undefined) {
-			cache.oneTimeInitialized = schema.oneTimeSetup();
-		}
+		const cache = schema.oneTimeInitialize();
 
 		if (isTreeNode(input)) {
-			// TODO: update this once we have better support for deep-copying and move operations.
+			// TODO: update this once TreeBeta.clone is stable.
 			throw new UsageError(
-				"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
+				"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). `TreeBeta.clone` can be used to do this.",
 			);
 		}
 

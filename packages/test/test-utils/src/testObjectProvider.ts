@@ -15,7 +15,10 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
+import {
+	type IContainerRuntimeOptionsInternal,
+	type MinimumVersionForCollab,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
 	ITelemetryBaseEvent,
@@ -52,13 +55,32 @@ const defaultCodeDetails: IFluidCodeDetails = {
 };
 
 /**
+ * Exposes fine-grained control over the Container's inbound and outbound op queues
+ *
  * @legacy
  * @alpha
  */
 export interface IOpProcessingController {
+	/**
+	 * Process all ops sitting in the inbound queue, leaving the inbound queue paused afterwards
+	 * @param containers - optional subset of all open containers
+	 */
 	processIncoming(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all ops sitting in the outbound queue, leaving the inbound queue paused afterwards.
+	 * Also waits for the outbound ops to arrive in the inbound queue.
+	 * @param containers - optional subset of all open containers
+	 */
 	processOutgoing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Process all queue activities, to prepare for fine-grained control via processIncoming and processOutgoing
+	 * @param containers - optional subset of all open containers
+	 */
 	pauseProcessing(...containers: IContainer[]): Promise<void>;
+	/**
+	 * Resume all queue activities for normal operation of the container
+	 * @param containers - optional subset of all open containers
+	 */
 	resumeProcessing(...containers: IContainer[]): void;
 }
 
@@ -124,7 +146,7 @@ export interface ITestObjectProvider {
 	 *
 	 * @param packageEntries - list of code details and fluidEntryPoint pairs.
 	 * @param loaderProps - Optional loader properties
-	 * @param forceUseCreateVersion - For Cross-Version compat testing, create a loader based on the create version
+	 * @param forceUseCreateVersion - For Cross-Client compat testing, create a loader based on the create version
 	 */
 	createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
@@ -241,11 +263,17 @@ export interface ITestContainerConfig {
 	/** Whether this runtime should be instantiated using a mixed-in attributor class */
 	enableAttribution?: boolean;
 
-	/** For Cross-Version compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
+	/** For Cross-Client compat testing, load using the create version (e.g. use this to get a Summarizer on the create version) */
 	forceUseCreateVersion?: true;
 
 	/** Loader options for the loader used to create containers */
 	loaderProps?: Partial<ILoaderProps>;
+
+	/**
+	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 */
+	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**

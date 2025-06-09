@@ -15,7 +15,7 @@ describe("CodeSpan Markdown rendering tests", () => {
 	});
 
 	it("Simple CodeSpan", () => {
-		const codeSpanNode = new CodeSpanNode([new PlainTextNode("console.log('hello world');")]);
+		const codeSpanNode = new CodeSpanNode(new PlainTextNode("console.log('hello world');"));
 		const result = testRender(codeSpanNode);
 
 		const expected = "`console.log('hello world');`";

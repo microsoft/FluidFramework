@@ -10,8 +10,8 @@ import {
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import {
+	ContainerRuntime,
 	loadContainerRuntime,
-	RuntimeHeaders,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 // eslint-disable-next-line import/no-deprecated
@@ -22,9 +22,23 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannel,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidDataStoreRuntimeExperimental,
+} from "@fluidframework/datastore-definitions/internal";
+// Valid export as per package.json export map
+// eslint-disable-next-line import/no-internal-modules
+import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
 import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
-import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type {
+	// eslint-disable-next-line import/no-deprecated
+	IContainerRuntimeBaseExperimental,
+	// eslint-disable-next-line import/no-deprecated
+	StageControlsExperimental,
+} from "@fluidframework/runtime-definitions/internal";
+import { RuntimeHeaders, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import { timeoutAwait } from "@fluidframework/test-utils/internal";
 
 import { ddsModelMap } from "./ddsModels.js";
 import { makeUnreachableCodePathProxy } from "./utils.js";
@@ -45,16 +59,33 @@ export interface CreateChannel {
 	tag: `channel-${number}`;
 }
 
-export type StressDataObjectOperations = UploadBlob | CreateDataStore | CreateChannel;
+export interface EnterStagingMode {
+	type: "enterStagingMode";
+}
+export interface ExitStagingMode {
+	type: "exitStagingMode";
+	commit: boolean;
+}
+
+export type StressDataObjectOperations =
+	| UploadBlob
+	| CreateDataStore
+	| CreateChannel
+	| EnterStagingMode
+	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
-	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
-		"StressDataObject",
-		StressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[["StressDataObject", new LazyPromise(async () => StressDataObject.factory)]],
-	);
+	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
+		type: "StressDataObject",
+		ctor: StressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+		registryEntries: [
+			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
+		],
+		policies: {
+			readonlyInStagingMode: false,
+		},
+	});
 
 	get StressDataObject() {
 		return this;
@@ -95,7 +126,9 @@ export class StressDataObject extends DataObject {
 			// to get all channel each time, as we have no way to
 			// observer when a channel moves from detached to attached,
 			// especially on remove clients/
-			const channel = await this.runtime.getChannel(name).catch(() => undefined);
+			const channel = await timeoutAwait(this.runtime.getChannel(name), {
+				errorMsg: `Timed out waiting for channel: ${name}`,
+			}).catch(() => undefined);
 			if (channel !== undefined) {
 				channels.push(channel);
 			}
@@ -145,7 +178,17 @@ export class StressDataObject extends DataObject {
 			stressDataObject: maybe.StressDataObject,
 		});
 	}
+
+	public orderSequentially(act: () => void) {
+		this.context.containerRuntime.orderSequentially(act);
+	}
+
+	public get isDirty(): boolean | undefined {
+		// eslint-disable-next-line import/no-deprecated
+		return (this.runtime as IFluidDataStoreRuntimeExperimental).isDirty;
+	}
 }
+
 export type ContainerObjects =
 	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
 	| {
@@ -183,10 +226,15 @@ export class DefaultStressDataObject extends StressDataObject {
 			// Due to the both the above, we need to always try
 			// to resolve each object, and just ignore those which can't
 			// be found.
-			const resp = await containerRuntime.resolveHandle({
-				url,
-				headers: { [RuntimeHeaders.wait]: false },
-			});
+			const resp = await timeoutAwait(
+				containerRuntime.resolveHandle({
+					url,
+					headers: { [RuntimeHeaders.wait]: false },
+				}),
+				{
+					errorMsg: `Timed out waiting for client to resolveHandle: ${url}`,
+				},
+			);
 			if (resp.status === 200) {
 				const maybe: FluidObject<IFluidLoadable & StressDataObject> | undefined = resp.value;
 				const handle = maybe?.IFluidLoadable?.handle;
@@ -256,16 +304,47 @@ export class DefaultStressDataObject extends StressDataObject {
 		}
 		this._locallyCreatedObjects.push(obj);
 	}
+
+	// eslint-disable-next-line import/no-deprecated
+	private stageControls: StageControlsExperimental | undefined;
+	// eslint-disable-next-line import/no-deprecated
+	private readonly containerRuntimeExp: IContainerRuntimeBaseExperimental =
+		this.context.containerRuntime;
+	public enterStagingMode() {
+		assert(
+			this.containerRuntimeExp.enterStagingMode !== undefined,
+			"enterStagingMode must be defined",
+		);
+		this.stageControls = this.containerRuntimeExp.enterStagingMode();
+	}
+
+	public inStagingMode(): boolean {
+		assert(
+			this.containerRuntimeExp.inStagingMode !== undefined,
+			"inStagingMode must be defined",
+		);
+		return this.containerRuntimeExp.inStagingMode;
+	}
+
+	public exitStagingMode(commit: boolean) {
+		assert(this.stageControls !== undefined, "must have staging mode controls");
+		if (commit) {
+			this.stageControls.commitChanges();
+		} else {
+			this.stageControls.discardChanges();
+		}
+		this.stageControls = undefined;
+	}
 }
 
 export const createRuntimeFactory = (): IRuntimeFactory => {
-	const defaultStressDataObjectFactory = new DataObjectFactory(
-		"DefaultStressDataObject",
-		DefaultStressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[[StressDataObject.factory.type, StressDataObject.factory]],
-	);
+	const defaultStressDataObjectFactory = new DataObjectFactory({
+		type: "DefaultStressDataObject",
+		ctor: DefaultStressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+
+		registryEntries: [[StressDataObject.factory.type, StressDataObject.factory]],
+	});
 
 	const runtimeOptions: IContainerRuntimeOptionsInternal = {
 		summaryOptions: {
@@ -274,6 +353,8 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 				initialSummarizerDelayMs: 0,
 			} as any,
 		},
+		enableRuntimeIdCompressor: "on",
+		createBlobPayloadPending: true,
 	};
 
 	return {
@@ -301,6 +382,17 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					return aliasedDefault.get();
 				},
 			});
+			// id compressor isn't made available via the interface right now.
+			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
+			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
+			assert(runtime instanceof ContainerRuntime, "Expected to create a ContainerRuntime");
+			assert(
+				runtime.idCompressor !== undefined,
+				"IdCompressor should be enabled by stress test options.",
+			);
+			// Forcing the cluster size to a low value makes it more likely to generate staging mode scenarios with more
+			// interesting interleaving of id allocation ops and normal ops.
+			modifyClusterSize(runtime.idCompressor, 2);
 
 			if (!existing) {
 				const ds = await runtime.createDataStore(defaultStressDataObjectFactory.type);

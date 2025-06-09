@@ -53,6 +53,7 @@ export enum TableRowKind {
  *
  * - {@link TableCellNode}
  *
+ * @sealed
  * @public
  */
 export abstract class TableRowNode extends DocumentationParentNodeBase<TableCellNode> {
@@ -75,6 +76,7 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
 /**
  * A {@link TableRowNode} that represents the header row of a {@link TableNode}.
  *
+ * @sealed
  * @public
  */
 export class TableHeaderRowNode extends TableRowNode {
@@ -91,6 +93,7 @@ export class TableHeaderRowNode extends TableRowNode {
 /**
  * A {@link TableRowNode} that lives in the body of a {@link TableNode}.
  *
+ * @sealed
  * @public
  */
 export class TableBodyRowNode extends TableRowNode {

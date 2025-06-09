@@ -18,6 +18,10 @@ import { applyFormatting } from "./Utilities.js";
  * @param context - See {@link TransformationContext}.
  */
 export function codeSpanToHtml(node: CodeSpanNode, context: TransformationContext): HastTree {
-	const transformed = transformChildrenUnderTag({ name: "code" }, node.children, context);
+	const transformed = transformChildrenUnderTag(
+		{ name: "code" },
+		node.isEmpty ? [] : [node.value],
+		context,
+	);
 	return applyFormatting(transformed, context);
 }
