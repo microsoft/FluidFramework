@@ -9,6 +9,7 @@ import { h } from "hastscript";
 import type {
 	DocumentationNode,
 	CodeSpanNode,
+	EscapedTextNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
@@ -21,11 +22,11 @@ import type {
 	TableNode,
 	TableRowNode,
 	UnorderedListNode,
-	EscapedTextNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
 	codeSpanToHtml,
+	escapedTextToHtml,
 	fencedCodeBlockToHtml,
 	headingToHtml,
 	sectionToHtml,
@@ -38,7 +39,6 @@ import {
 	tableCellToHtml,
 	tableRowToHtml,
 	unorderedListToHtml,
-	escapedTextToHtml,
 } from "../default-transformations/index.js";
 
 /**
