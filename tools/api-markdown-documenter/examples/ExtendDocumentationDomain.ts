@@ -5,15 +5,19 @@
 
 import {
 	DocumentationParentNodeBase,
+	DocumentNode,
+	documentToMarkdown,
 	HeadingNode,
+	phrasingContentToMarkdown,
 	PlainTextNode,
 	SectionNode,
 	type PhrasingContent,
 } from "@fluid-tools/api-markdown-documenter";
+import type { PhrasingContent as MdastPhrasingContent } from "mdast";
 
 // Define custom node type
 export class CustomDocumentationNode extends DocumentationParentNodeBase<PhrasingContent> {
-	public readonly type = "custom-node";
+	public readonly type = "customNode";
 
 	constructor(children) {
 		super(children);
@@ -23,7 +27,7 @@ export class CustomDocumentationNode extends DocumentationParentNodeBase<Phrasin
 // Extend the `BlockContentMap` interface to include our custom node kind, so it can be used in `SectionNode`s.
 declare module "@fluid-tools/api-markdown-documenter" {
 	interface BlockContentMap {
-		"custom-node": CustomDocumentationNode;
+		customNode: CustomDocumentationNode;
 	}
 }
 
@@ -33,6 +37,28 @@ const sectionNode: SectionNode = new SectionNode(
 	HeadingNode.createFromPlainText("Section with custom children!"),
 );
 
+const document = new DocumentNode({
+	children: [sectionNode],
+	documentPath: "./test.md",
+});
+
+const markdown = documentToMarkdown(document, {
+	customTransformations: {
+		customNode: (node, context) => {
+			const transformedChildren: MdastPhrasingContent[] = [];
+			for (const child of node.children) {
+				transformedChildren.push(...phrasingContentToMarkdown(child, context));
+			}
+			return [
+				{
+					type: "paragraph",
+					children: transformedChildren,
+				},
+			];
+		},
+	},
+});
+
 // Allow otherwise unused variable above.
 // This code is only compiled, not run.
-console.log(sectionNode);
+console.log(markdown);
