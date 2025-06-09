@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { renderBlockQuote } from "./RenderBlockQuote.js";
 export { renderCodeSpan } from "./RenderCodeSpan.js";
 export { renderFencedCodeBlock } from "./RenderFencedCodeBlock.js";
 export { renderHeading } from "./RenderHeading.js";

@@ -33,15 +33,15 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 	type Context,
-	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
+	type UnhydratedFlexTreeNode,
 } from "../../core/index.js";
 import {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
-} from "../../toMapTree.js";
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { brand, count, type RestrictiveStringRecord } from "../../../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
@@ -271,10 +271,7 @@ export function mapSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as FactoryContent, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {

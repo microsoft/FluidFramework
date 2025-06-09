@@ -151,7 +151,7 @@ import {
 	type ITree,
 	type UnsafeUnknownSchema,
 	type InsertableField,
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -1483,6 +1483,9 @@ export function fieldCursorFromInsertable<
 		: TSchema & ImplicitFieldSchema,
 	data: InsertableField<TSchema>,
 ): ITreeCursorSynchronous {
-	const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
+	const mapTree = unhydratedFlexTreeFromInsertable(
+		data as InsertableField<UnsafeUnknownSchema>,
+		schema,
+	);
 	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
 }

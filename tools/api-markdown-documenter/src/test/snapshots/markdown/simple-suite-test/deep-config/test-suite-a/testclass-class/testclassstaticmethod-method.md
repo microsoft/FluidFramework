@@ -1,6 +1,6 @@
 # testClassStaticMethod
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class/) &gt; [testClassStaticMethod(foo)](/test-suite-a/testclass-class/testclassstaticmethod-method)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/) \> [testClassStaticMethod(foo)](/test-suite-a/testclass-class/testclassstaticmethod-method)
 
 Test class static method
 
@@ -13,7 +13,7 @@ static testClassStaticMethod(foo: number): string;
 ## Parameters {#testclassstaticmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | foo | number | Some number |
 
 ## Returns {#testclassstaticmethod-returns}
