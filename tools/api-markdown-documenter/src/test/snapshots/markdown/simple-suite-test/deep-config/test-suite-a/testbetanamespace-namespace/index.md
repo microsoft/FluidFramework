@@ -19,7 +19,7 @@ Tests release level inheritance.
 ## Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
-| --- | --- | --- | --- | --- |
+| - | - | - | - | - |
 | [alphaMember](/test-suite-a/testbetanamespace-namespace/alphamember-variable) | `Alpha` | `readonly` |  |  |
 | [betaMember](/test-suite-a/testbetanamespace-namespace/betamember-variable) | `Beta` | `readonly` |  |  |
 | [publicMember](/test-suite-a/testbetanamespace-namespace/publicmember-variable) | `Beta` | `readonly` |  |  |

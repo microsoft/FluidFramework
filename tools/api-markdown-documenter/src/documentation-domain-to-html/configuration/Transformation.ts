@@ -9,7 +9,6 @@ import { h } from "hastscript";
 import {
 	DocumentationNodeType,
 	type DocumentationNode,
-	type BlockQuoteNode,
 	type CodeSpanNode,
 	type FencedCodeBlockNode,
 	type HeadingNode,
@@ -26,7 +25,6 @@ import {
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
-	blockQuoteToHtml,
 	codeSpanToHtml,
 	fencedCodeBlockToHtml,
 	headingToHtml,
@@ -85,8 +83,6 @@ const hastHorizontalRule = h("hr");
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	[DocumentationNodeType.BlockQuote]: (node, context) =>
-		blockQuoteToHtml(node as BlockQuoteNode, context),
 	[DocumentationNodeType.CodeSpan]: (node, context) =>
 		codeSpanToHtml(node as CodeSpanNode, context),
 	[DocumentationNodeType.FencedCode]: (node, context) =>

@@ -13,7 +13,7 @@ enum TestEnum
 ## Flags
 
 | Flag | Description |
-| --- | --- |
+| - | - |
 | [TestEnumValue1](/test-suite-a/testnamespace-namespace/testenum-enum/testenumvalue1-enummember) | Test enum value 1 |
 | [TestEnumValue2](/test-suite-a/testnamespace-namespace/testenum-enum/testenumvalue2-enummember) | Test enum value 2 |
 

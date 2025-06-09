@@ -14,6 +14,11 @@ These have been updated to accept `string`s instead, which greatly simplifies th
 
 Their `createFromPlainText` static factory functions have also been removed, as they are now redundant with their constructors.
 
+### `BlockQuoteNode` was removed
+
+This `DocumentationNode` implementation was not used by the library.
+If this type is required, it can be re-introduced via the Documentation Domain's [extensibility model](#new-extensibility-model).
+
 ## 0.20.0
 
 ### Add stronger type restrictions to Documentation Domain
