@@ -817,6 +817,70 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(rebased, expected);
 		});
 
+		it("remove over move to detached tree and reattach of detached root", () => {
+			const moveId: ChangeAtomId = { revision: tag2, localId: brand(0) };
+			const oldRootId: ChangeAtomId = { revision: tag1, localId: brand(0) };
+			const newRootId: ChangeAtomId = { revision: tag2, localId: brand(1) };
+			const nodeId: ChangeAtomId = { revision: tag2, localId: brand(3) };
+			const moveToReattached = Change.build(
+				{
+					family,
+					maxId: 3,
+					revisions: [{ revision: tag2 }],
+					roots: [
+						{
+							detachId: { revision: tag1, localId: brand(0) },
+							change: Change.nodeWithId(
+								0,
+								nodeId,
+								Change.field(fieldB, sequence.identifier, [MarkMaker.insert(1, moveId)]),
+							),
+						},
+					],
+					renames: [{ oldId: oldRootId, newId: newRootId, count: 1 }],
+				},
+				Change.field(fieldA, sequence.identifier, [MarkMaker.remove(1, moveId)]),
+				Change.field(fieldC, sequence.identifier, [
+					MarkMaker.insert(1, oldRootId, {
+						revision: newRootId.revision,
+						id: newRootId.localId,
+					}),
+				]),
+			);
+
+			const removeId: ChangeAtomId = { revision: tag3, localId: brand(4) };
+			const remove = Change.build(
+				{ family, maxId: 4, revisions: [{ revision: tag3 }] },
+				Change.field(fieldA, sequence.identifier, [MarkMaker.remove(1, removeId)]),
+			);
+
+			const rebased = family.rebase(
+				tagChange(remove, tag3),
+				tagChange(moveToReattached, tag2),
+				revisionMetadataSourceFromInfo([{ revision: tag2 }, { revision: tag3 }]),
+			);
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 4,
+					revisions: [{ revision: tag3 }],
+				},
+				Change.field(
+					fieldC,
+					sequence.identifier,
+					[],
+					Change.nodeWithId(
+						0,
+						nodeId,
+						Change.field(fieldB, sequence.identifier, [MarkMaker.remove(1, removeId)]),
+					),
+				),
+			);
+
+			assertEqual(rebased, expected);
+		});
+
 		it("prunes its output", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);

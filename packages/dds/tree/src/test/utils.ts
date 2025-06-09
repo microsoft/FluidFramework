@@ -174,6 +174,7 @@ import type {
 	ISharedObjectKind,
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
+import { assertStructuralEquality } from "./objMerge.js";
 
 // Testing utilities
 
@@ -719,6 +720,11 @@ export function validateSnapshotConsistency(
 	treeB: SharedTreeContentSnapshot,
 	idDifferentiator: string | undefined = undefined,
 ): void {
+	assertStructuralEquality(
+		prepareTreeForCompare(treeA.tree),
+		prepareTreeForCompare(treeB.tree),
+	);
+
 	assert.deepEqual(
 		prepareTreeForCompare(treeA.tree),
 		prepareTreeForCompare(treeB.tree),
