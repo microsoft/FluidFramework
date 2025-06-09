@@ -2275,7 +2275,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	// Note: this is basically a more e2e version of some tests for `unhydratedFlexTreeFromInsertable`.
+	// Note: this is basically a more end-to-end version of some tests for `unhydratedFlexTreeFromInsertable`.
 	it("throws when an invalid type is inserted at runtime", () => {
 		const provider = new TestTreeProviderLite(1);
 		const [sharedTree] = provider.trees;
