@@ -2014,6 +2014,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
 		this.throwIfDisposed();
+		this.registerEventsOnSubDirectory(newSubDir, subdirName);
 		this._subdirectories.set(subdirName, newSubDir);
 	}
 
@@ -2459,7 +2460,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.logger,
 			);
 			/**
-			 * Store the sequnce numbers of newly created subdirectory to the proper creation tracker, based
+			 * Store the sequence numbers of newly created subdirectory to the proper creation tracker, based
 			 * on whether the creation behavior has been ack'd or not
 			 */
 			if (isAcknowledgedOrDetached(seqData)) {

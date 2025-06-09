@@ -13,7 +13,7 @@ export interface TestInterfaceWithIndexSignature
 ## Index Signatures
 
 | IndexSignature | Description |
-| --- | --- |
+| - | - |
 | [\[foo: number\]: { bar: string; }](/test-suite-a/testinterfacewithindexsignature-interface#_indexer_-indexsignature) | Test index signature. |
 
 ## Index Signature Details

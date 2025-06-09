@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { blockQuoteToHtml } from "./BlockQuoteToHtml.js";
 export { codeSpanToHtml } from "./CodeSpanToHtml.js";
 export { escapedTextToHtml } from "./EscapedTextToHtml.js";
 export { fencedCodeBlockToHtml } from "./FencedCodeBlockToHtml.js";
