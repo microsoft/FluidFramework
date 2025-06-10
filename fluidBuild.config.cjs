@@ -346,6 +346,9 @@ module.exports = {
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
+				// minified DOMPurify is not a source file, so it doesn't need a header.
+				"docs/static/dompurify/purify.min.js",
+
 				// Type test files can be excluded since they're generated and known to have the correct header.
 				// This can be removed once the whole repo uses build-tools v0.35.0+.
 				/.*\/validate.*\.generated\.ts/,
