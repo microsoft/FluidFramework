@@ -58,8 +58,8 @@ export function extractPersistedSchema(
 	oldestCompatibleClient: FluidClientVersion,
 ): JsonCompatible {
 	const stored = simpleToStoredSchema(schema);
-	const writeVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
-	return encodeTreeSchema(stored, writeVersion);
+	const schemaWriteVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
+	return encodeTreeSchema(stored, schemaWriteVersion);
 }
 
 /**
