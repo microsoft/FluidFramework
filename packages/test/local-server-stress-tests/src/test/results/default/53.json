@@ -1,0 +1,1324 @@
+[
+    {
+        "seed": 1908209955586786,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": "GrjC"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7708712990313289,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir1",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5642157705700863,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2625673852421107,
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "tag": "channel-1",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5928408244880195,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addText",
+            "index": 0,
+            "content": "Jc"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 6550770348853995,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir1",
+            "value": ""
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5082393916781958,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addInterval",
+            "collectionName": "comments",
+            "id": "a8368353-1c63-4737-b8be-19f8b680a90d",
+            "start": 1,
+            "end": {
+                "pos": 1,
+                "side": 0
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 6740500436264605,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "removeRange",
+            "start": 1,
+            "end": 2
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 4267794863579974,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir1",
+            "value": "Bu"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2809593017660425,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "changeInterval",
+            "properties": {
+                "prop3": "SEknU"
+            },
+            "id": "a8368353-1c63-4737-b8be-19f8b680a90d",
+            "collectionName": "comments"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 3487774786988171,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/dir1"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 863726300272705,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": "n"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 3913434459018180,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/dir1"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 1232841972684454,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/dir1"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 1310118034682418,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "changeInterval",
+            "start": {
+                "pos": 0,
+                "side": 0
+            },
+            "end": 0,
+            "id": "a8368353-1c63-4737-b8be-19f8b680a90d",
+            "collectionName": "comments"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 5649725147662982,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addInterval",
+            "collectionName": "comments",
+            "id": "594ae867-3f50-45b1-9d32-5faa532d2e40",
+            "start": {
+                "pos": 0,
+                "side": 0
+            },
+            "end": 0
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 6075542927000187,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteInterval",
+            "id": "594ae867-3f50-45b1-9d32-5faa532d2e40",
+            "collectionName": "comments"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 7331051523291542,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir1/dir2",
+            "value": "m"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 9006603911038586,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": "8"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 4234153184478354,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop1",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5277219856374091,
+        "type": "attach"
+    },
+    {
+        "seed": 8984342073722532,
+        "type": "addClient",
+        "clientTag": "client-2"
+    },
+    {
+        "seed": 3717076754201791,
+        "type": "addClient",
+        "clientTag": "client-3"
+    },
+    {
+        "seed": 3505579661964232,
+        "type": "addClient",
+        "clientTag": "client-4"
+    },
+    {
+        "seed": 596839637139031,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 1699510455376247,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir1",
+            "path": "/dir3"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2308517917067846,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": "EN6z"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8318714322072370,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": ""
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 1331529079833107,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": {
+                "tag": "root",
+                "absolutePath": "/A/root",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8938223149125398,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addText",
+            "index": 1,
+            "content": "x"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 2039094278313349,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop1",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2024740641020020,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "changeInterval",
+            "start": {
+                "pos": 0,
+                "side": 1
+            },
+            "end": {
+                "pos": 1,
+                "side": 0
+            },
+            "properties": {
+                "prop1": "dKBod"
+            },
+            "id": "a8368353-1c63-4737-b8be-19f8b680a90d",
+            "collectionName": "comments"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 5203779053566492,
+        "type": "uploadBlob",
+        "tag": "blob-1",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 3823769802471672,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": "JZbk"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7811744609037795,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": {
+                "tag": "datastore-0",
+                "absolutePath": "/A",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 354781728304303,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir1",
+            "path": "/dir1/dir2"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2220282739900393,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": {
+                "tag": "datastore-0",
+                "absolutePath": "/A",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 329929863293748,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2968194774760553,
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/map",
+        "tag": "channel-2",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2149767123620705,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addText",
+            "index": 1,
+            "content": "s3K8fbgnu1"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 8910772303390131,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "setKey",
+            "key": "12",
+            "value": 29
+        },
+        "channelType": "https://graph.microsoft.com/types/map",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "seed": 4644515946247799,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": "F7"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8747309173545877,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 6539297071950653,
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "tag": "channel-3",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5497464086322504,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "removeRange",
+            "start": 1,
+            "end": 11
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 2558810320900457,
+        "type": "enterStagingMode",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 5483818453410979,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteSubDirectory",
+            "name": "dir2",
+            "path": "/dir1"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 292117880949837,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/dir1",
+            "value": "v"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 1829842763671564,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteSubDirectory",
+            "name": "dir1",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8786203669897653,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": {
+                "tag": "datastore-0",
+                "absolutePath": "/A",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8330723858420543,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 3577858088353930,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "insertCols",
+            "start": 0,
+            "count": 1
+        },
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 5604810027809495,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "setKey",
+            "key": "14",
+            "value": "AvZ"
+        },
+        "channelType": "https://graph.microsoft.com/types/map",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "seed": 5204393399325103,
+        "type": "synchronize"
+    },
+    {
+        "seed": 6338421239528870,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/dir1/dir2"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7660960917306512,
+        "type": "exitStagingMode",
+        "commit": true,
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8035223524979046,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "insertCols",
+            "start": 1,
+            "count": 2
+        },
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 613461772759900,
+        "type": "synchronize"
+    },
+    {
+        "seed": 3135771523387947,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteKey",
+            "key": "17"
+        },
+        "channelType": "https://graph.microsoft.com/types/map",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "seed": 162241236740035,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": "Yi"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 1310740997738882,
+        "type": "enterStagingMode",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 2239027388304907,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "removeCols",
+            "start": 2,
+            "count": 1
+        },
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 4420840327549578,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "removeCols",
+            "start": 0,
+            "count": 1
+        },
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 4131247713728141,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "setKey",
+            "key": "11",
+            "value": "zhtK"
+        },
+        "channelType": "https://graph.microsoft.com/types/map",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "seed": 2952749725318030,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "changeInterval",
+            "id": "a8368353-1c63-4737-b8be-19f8b680a90d",
+            "collectionName": "comments"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 4319161345410308,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "insertRows",
+            "start": 0,
+            "count": 1
+        },
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 826609458624186,
+        "type": "synchronize"
+    },
+    {
+        "seed": 2569029853347606,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop2",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7790328786242715,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5343515906716386,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteKey",
+            "key": "1"
+        },
+        "channelType": "https://graph.microsoft.com/types/map",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-2"
+    },
+    {
+        "seed": 4587672391464847,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "row": 0,
+            "col": 0,
+            "value": 32
+        },
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 3078492085243680,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": "j"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 3012662018854325,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": ""
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 3584112288876655,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "delete",
+            "key": "prop3",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8940473849538742,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir1",
+            "path": "/dir2"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 6811191712367040,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/dir2"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 8888381441108514,
+        "type": "exitStagingMode",
+        "commit": false,
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 6353143948940056,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "removeCols",
+            "start": 0,
+            "count": 1
+        },
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 5677481851584061,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/",
+            "value": {
+                "tag": "channel-1",
+                "absolutePath": "/A/channel-1",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2039539850682594,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": {
+                "tag": "datastore-0",
+                "absolutePath": "/A",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5171388797178880,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "annotateRange",
+            "start": 0,
+            "end": 1,
+            "props": [
+                {
+                    "key": "prop3",
+                    "value": {
+                        "tag": "root",
+                        "absolutePath": "/A/root",
+                        "isAttached": true
+                    }
+                }
+            ]
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 6199293573479933,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "removeRange",
+            "start": 1,
+            "end": 2
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 2101381416852304,
+        "type": "synchronize"
+    },
+    {
+        "seed": 824762392599813,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "changeInterval",
+            "start": {
+                "pos": 0,
+                "side": 1
+            },
+            "end": {
+                "pos": 0,
+                "side": 0
+            },
+            "properties": {
+                "prop2": "LGr9a"
+            },
+            "id": "a8368353-1c63-4737-b8be-19f8b680a90d",
+            "collectionName": "comments"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 5323775668640853,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "clear",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5225453489195515,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/dir3/dir1"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7627668505428579,
+        "type": "synchronize"
+    },
+    {
+        "seed": 5243457539817480,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 6862452644776191,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/dir3",
+            "value": "SL"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 932076763881070,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "deleteSubDirectory",
+            "name": "dir3",
+            "path": "/"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7550460548680539,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir3",
+            "path": "/dir3"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 6787858842471398,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "changeInterval",
+            "start": {
+                "pos": 0,
+                "side": 1
+            },
+            "end": {
+                "pos": 0,
+                "side": 0
+            },
+            "properties": {
+                "prop1": "t5rQf"
+            },
+            "id": "a8368353-1c63-4737-b8be-19f8b680a90d",
+            "collectionName": "comments"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 2151009305019431,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/dir3",
+            "value": {
+                "tag": "channel-1",
+                "absolutePath": "/A/channel-1",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 3902591688162074,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addInterval",
+            "collectionName": "comments",
+            "id": "51b6e691-b137-4357-9f06-697347f2ff17",
+            "start": {
+                "pos": 0,
+                "side": 1
+            },
+            "end": {
+                "pos": 0,
+                "side": 1
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 7462310464589810,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "annotateRange",
+            "start": 0,
+            "end": 1,
+            "props": [
+                {
+                    "key": "prop2",
+                    "value": null
+                }
+            ]
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 121634723160700,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop2",
+            "path": "/dir2/dir1",
+            "value": {
+                "tag": "channel-1",
+                "absolutePath": "/A/channel-1",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5052148108606799,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": {
+                "tag": "blob-1",
+                "absolutePath": "/_blobs/bfb21f59-23f4-4b26-ae1a-feb4d4ce2c53",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-3",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 2224730076709416,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "createSubDirectory",
+            "name": "dir2",
+            "path": "/dir2"
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-4",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 7351553643935067,
+        "type": "enterStagingMode",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 3345446972984225,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop3",
+            "path": "/",
+            "value": ""
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-1",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 825498894365601,
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/sharedmatrix",
+        "tag": "channel-4",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-1"
+    },
+    {
+        "seed": 4732070297926585,
+        "type": "synchronize"
+    }
+]

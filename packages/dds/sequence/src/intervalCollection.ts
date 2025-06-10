@@ -709,6 +709,7 @@ export class IntervalCollection
 			string,
 			{
 				local: IntervalMessageLocalMetadata[];
+				endpointChanges?: IntervalChangeLocalMetadata[];
 				consensus?: SequenceIntervalClass | undefined;
 			}
 		>
@@ -720,10 +721,6 @@ export class IntervalCollection
 			original: ISerializedInterval | SerializedIntervalDelta;
 			rebased?: ISerializedInterval | SerializedIntervalDelta;
 		}
-	>();
-	private readonly pendingChanges: Map<string, ISerializedIntervalCollectionV1> = new Map<
-		string,
-		ISerializedIntervalCollectionV1
 	>();
 
 	public get attached(): boolean {
@@ -753,6 +750,10 @@ export class IntervalCollection
 			}
 			if (op.opName !== IntervalDeltaOpType.DELETE) {
 				this.localSeqToSerializedInterval.set(md.localSeq, { original: op.value });
+			}
+			if (md.type === IntervalDeltaOpType.CHANGE && op.value.start !== undefined) {
+				const endpointChanges = (pending.endpointChanges ??= []);
+				endpointChanges.push(md);
 			}
 			submitDelta(op, md);
 		};
@@ -843,7 +844,10 @@ export class IntervalCollection
 					rollback: true,
 				});
 				if (endpointsChanged) {
-					this.removePendingChange(value);
+					assert(
+						localOpMetadata === pending.endpointChanges?.pop(),
+						"endpoint change must match",
+					);
 				}
 				break;
 			}
@@ -929,8 +933,12 @@ export class IntervalCollection
 
 		const { intervalId, localSeq } = localOpMetadata;
 
+		// Bug bug: partial resubmit
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		this.pending[intervalId]?.local.shift();
+		if (this.pending[intervalId]?.endpointChanges?.[0] === localOpMetadata) {
+			this.pending[intervalId]?.endpointChanges?.shift();
+		}
 
 		const rebasedValue =
 			opName === "delete" ? value : this.rebaseLocalInterval(opName, value, localOpMetadata);
@@ -1343,8 +1351,6 @@ export class IntervalCollection
 				).serializeDelta({ props, includeEndpoints: changeEndpoints });
 				const localSeq = this.getNextLocalSeq();
 
-				this.addPendingChange(id, serializedInterval);
-
 				this.submitDelta(
 					{
 						opName: "change",
@@ -1385,44 +1391,8 @@ export class IntervalCollection
 		return this.client?.getCollabWindow().collaborating ?? false;
 	}
 
-	private addPendingChange(id: string, serializedInterval: SerializedIntervalDelta) {
-		if (!this.isCollaborating) {
-			return;
-		}
-		assert(
-			(serializedInterval.start === undefined) === (serializedInterval.end === undefined),
-			0xbb0 /* both start and end must be set or unset */,
-		);
-		if (serializedInterval.start !== undefined || serializedInterval.end !== undefined) {
-			const entries = this.pendingChanges.get(id) ?? [];
-			this.pendingChanges.set(id, entries);
-			entries.push(serializedInterval as any);
-		}
-	}
-
-	private removePendingChange(serializedInterval: SerializedIntervalDelta) {
-		// Change ops always have an ID.
-		const { id } = getSerializedProperties(serializedInterval);
-		if (serializedInterval.start !== undefined) {
-			const entries = this.pendingChanges.get(id);
-			if (entries) {
-				const pendingChange = entries.shift();
-				if (entries.length === 0) {
-					this.pendingChanges.delete(id);
-				}
-				if (
-					pendingChange?.start !== serializedInterval.start ||
-					pendingChange?.end !== serializedInterval.end
-				) {
-					throw new LoggingError("Mismatch in pending changes");
-				}
-			}
-		}
-	}
-
-	private hasPendingChanges(id: string) {
-		const entries = this.pendingChanges.get(id);
-		return entries && entries.length !== 0;
+	private hasPendingEndpointChanges(id: string) {
+		return (this.pending[id]?.endpointChanges?.length ?? 0) > 0;
 	}
 
 	public ackChange(
@@ -1447,8 +1417,10 @@ export class IntervalCollection
 				localOpMetadata !== undefined,
 				0x552 /* op metadata should be defined for local op */,
 			);
-			// This is an ack from the server. Remove the pending change.
-			this.removePendingChange(serializedInterval);
+
+			if (this.pending[id]?.endpointChanges?.[0] === localOpMetadata) {
+				this.pending[id]?.endpointChanges?.shift();
+			}
 		}
 
 		if (!interval) {
@@ -1466,7 +1438,7 @@ export class IntervalCollection
 			let start: number | "start" | "end" | undefined;
 			let end: number | "start" | "end" | undefined;
 			// Track pending start/end independently of one another.
-			if (!this.hasPendingChanges(id)) {
+			if (!this.hasPendingEndpointChanges(id)) {
 				start = serializedInterval.start;
 				end = serializedInterval.end;
 			}
@@ -1559,15 +1531,6 @@ export class IntervalCollection
 			endSide,
 		};
 
-		if (
-			opName === "change" &&
-			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- ?? is not logically equivalent when .hasPendingChangeStart returns false.
-			this.hasPendingChanges(id)
-		) {
-			this.removePendingChange(serializedInterval);
-			this.addPendingChange(id, rebased);
-		}
-
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
 		if (
 			!this.options.mergeTreeReferencesCanSlideToEndpoint &&
@@ -1639,7 +1602,7 @@ export class IntervalCollection
 		);
 
 		const id = interval.getIntervalId();
-		const hasPendingChange = this.hasPendingChanges(id);
+		const hasPendingChange = this.hasPendingEndpointChanges(id);
 
 		if (!hasPendingChange) {
 			setSlideOnRemove(interval.start);
