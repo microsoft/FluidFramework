@@ -4,7 +4,6 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { TableCellNode, TableHeaderCellNode } from "./TableCellNode.js";
 
 /**
@@ -60,7 +59,7 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.TableRow;
+	public readonly type = "tableRow";
 
 	/**
 	 * The kind of row this node represents.

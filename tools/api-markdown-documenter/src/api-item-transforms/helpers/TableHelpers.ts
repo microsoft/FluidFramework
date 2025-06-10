@@ -19,7 +19,6 @@ import type { DocSection } from "@microsoft/tsdoc";
 
 import {
 	CodeSpanNode,
-	DocumentationNodeType,
 	HeadingNode,
 	LinkNode,
 	type PhrasingContent,
@@ -124,10 +123,7 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode(
-				[table],
-				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-			);
+		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
 }
 
 /**
@@ -676,7 +672,7 @@ export function createModifiersCell(
 		if (needsComma) {
 			contents.push(new PlainTextNode(", "));
 		}
-		contents.push(CodeSpanNode.createFromPlainText(modifier));
+		contents.push(new CodeSpanNode(modifier));
 		needsComma = true;
 	}
 
@@ -711,9 +707,7 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: PhrasingContent[] = alerts.map((alert) =>
-		CodeSpanNode.createFromPlainText(alert),
-	);
+	const alertNodes: PhrasingContent[] = alerts.map((alert) => new CodeSpanNode(alert));
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
@@ -853,7 +847,7 @@ function transformTsdocSectionForTableCell(
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.
-	if (transformed.length === 1 && transformed[0].type === DocumentationNodeType.Paragraph) {
+	if (transformed.length === 1 && transformed[0].type === "paragraph") {
 		return transformed[0].children;
 	}
 

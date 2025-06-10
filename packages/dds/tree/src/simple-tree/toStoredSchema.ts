@@ -93,7 +93,10 @@ export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
 	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
 
-const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
+/**
+ * A map that converts {@link FieldKind} to {@link FlexFieldKind}.
+ */
+export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
 	FieldKind,
 	FlexFieldKind
 >([

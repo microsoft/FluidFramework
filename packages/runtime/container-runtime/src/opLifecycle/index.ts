@@ -43,6 +43,7 @@ export {
 	unpackRuntimeMessage,
 } from "./remoteMessageProcessor.js";
 export {
+	EmptyGroupedBatch,
 	OpGroupingManager,
 	OpGroupingManagerConfig,
 	isGroupedBatch,

@@ -4,8 +4,6 @@
  */
 
 import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
  * Represents a simple, single-line code span.
@@ -25,16 +23,16 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * @sealed
  * @public
  */
-export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
+export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * Static singleton representing an empty Code Span node.
 	 */
-	public static readonly Empty: CodeSpanNode = new CodeSpanNode(PlainTextNode.Empty);
+	public static readonly Empty: CodeSpanNode = new CodeSpanNode("");
 
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.CodeSpan;
+	public readonly type = "codeSpan";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
@@ -45,10 +43,10 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {
-		return this.value.isEmpty;
+		return this.value.length === 0;
 	}
 
-	public constructor(value: PlainTextNode) {
+	public constructor(value: string) {
 		super(value);
 	}
 
@@ -57,6 +55,6 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
 	 * @param text - The node contents. Note: this must not contain newline characters.
 	 */
 	public static createFromPlainText(text: string): CodeSpanNode {
-		return new CodeSpanNode(new PlainTextNode(text));
+		return new CodeSpanNode(text);
 	}
 }

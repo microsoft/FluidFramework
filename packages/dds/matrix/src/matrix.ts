@@ -839,13 +839,13 @@ export class SharedMatrix<T = any>
 			this.cols.removeLocalReferencePosition(colsRef);
 
 			const pendingCell = this.pending.getCell(rowHandle, colHandle);
-			assert(pendingCell !== undefined, "local operation must have a pending array");
+			assert(pendingCell !== undefined, 0xba4 /* local operation must have a pending array */);
 			const { local } = pendingCell;
-			assert(local !== undefined, "local operation must have a pending array");
+			assert(local !== undefined, 0xba5 /* local operation must have a pending array */);
 			const localSeqIndex = local.findIndex((p) => p.localSeq === localSeq);
-			assert(localSeqIndex >= 0, "local operation must have a pending entry");
+			assert(localSeqIndex >= 0, 0xba6 /* local operation must have a pending entry */);
 			const [change] = local.splice(localSeqIndex, 1);
-			assert(change.localSeq === localSeq, "must match");
+			assert(change.localSeq === localSeq, 0xba7 /* must match */);
 
 			if (
 				row !== undefined &&
@@ -897,14 +897,14 @@ export class SharedMatrix<T = any>
 				break;
 			}
 			case undefined: {
-				assert(contents.type === MatrixOp.set, "only sets supported");
+				assert(contents.type === MatrixOp.set, 0xba8 /* only sets supported */);
 				const setMetadata = localOpMetadata as ISetOpMetadata;
 
 				const pendingCell = this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle);
-				assert(pendingCell !== undefined, "must have pending");
+				assert(pendingCell !== undefined, 0xba9 /* must have pending */);
 
 				const change = pendingCell.local.pop();
-				assert(change?.localSeq === setMetadata.localSeq, "must have change");
+				assert(change?.localSeq === setMetadata.localSeq, 0xbaa /* must have change */);
 
 				const previous =
 					pendingCell.local.length > 0
@@ -1057,7 +1057,7 @@ export class SharedMatrix<T = any>
 
 					const pendingCell = this.pending.getCell(rowHandle, colHandle);
 					const ackedChange = pendingCell?.local.shift();
-					assert(ackedChange?.localSeq === localSeq, "must match");
+					assert(ackedChange?.localSeq === localSeq, 0xbab /* must match */);
 					if (pendingCell?.local.length === 0) {
 						this.pending.setCell(rowHandle, colHandle, undefined);
 					}

@@ -1,4 +1,4 @@
-## (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any
+## (event: 'testCallSignature', listener: (input: unknown) =\> void): any
 
 Test interface event call signature
 
