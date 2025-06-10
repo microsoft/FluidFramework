@@ -89,13 +89,20 @@ let testLogger: FluidTestRunLogger;
  * @internal
  */
 export const mochaHooks = {
-	beforeAll() {
-		// Code in our tests will call the global `getTestLogger` function to get a logger to use.
-
+	async beforeAll() {
+		// Code in our tests will call the global `createTestLogger` function to get a logger to use.
 		// First we call the version of that function that was (potentially) injected dynamicaly to get the logger that it
 		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
 		// through it. See the documentation on `FluidTestRunLogger` for details.
-		const originalLogger = _global.getTestLogger?.() ?? nullLogger;
+		let originalLogger: ITelemetryBufferedLogger;
+		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
+			// We expect that the specified package provides a createTestLogger function.
+			const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+			originalLogger = createTestLogger();
+		} else {
+			originalLogger = nullLogger;
+		}
+
 		testLogger = new FluidTestRunLogger(originalLogger);
 
 		// Then we redefine `getTestLogger` so it returns the wrapper logger.
