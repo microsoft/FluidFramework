@@ -824,7 +824,7 @@ export class IntervalCollection
 				break;
 			}
 			case "change": {
-				const { previous } = localOpMetadata;
+				const { previous } = current;
 				assert(previous !== undefined, 0xb7c /* must have previous for change */);
 
 				const endpointsChanged = value.start !== undefined && value.end !== undefined;
@@ -1241,9 +1241,7 @@ export class IntervalCollection
 					{
 						type: "delete",
 						localSeq: this.getNextLocalSeq(),
-						previous: interval.serialize(),
 						intervalId,
-						interval: undefined,
 					},
 				);
 			} else {
