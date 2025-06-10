@@ -794,12 +794,23 @@ export class IntervalCollection
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
 		const { localSeq, previous } = localOpMetadata;
+
+		const pending = this.pending[localOpMetadata.intervalId];
+		assert(pending !== undefined, "pending must exist for rollback");
+		const current = pending.local.pop();
+		assert(current === localOpMetadata, "local op metadata must match");
+		if (pending.local.length === 0) {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete this.pending[localOpMetadata.intervalId];
+		}
+
 		switch (opName) {
 			case "add": {
-				const interval = this.getIntervalById(id);
-				if (interval) {
-					this.deleteExistingInterval({ interval, local: true, rollback: true });
-				}
+				this.deleteExistingInterval({
+					interval: current.interval,
+					local: true,
+					rollback: true,
+				});
 				break;
 			}
 			case "change": {
