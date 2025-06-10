@@ -20,7 +20,7 @@ import {
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchemaV1,
+	encodeFieldSchema,
 	type schemaFormatV1,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
@@ -74,7 +74,7 @@ export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStore
 export function encodeRepo(repo: TreeStoredSchema, version: SchemaVersion): JsonCompatible {
 	switch (version) {
 		case SchemaVersion.v1:
-			return encodeRepoV1(repo) as JsonCompatible;
+			return encodeRepoV1(repo);
 		default:
 			unreachableCase(version);
 	}
@@ -83,14 +83,14 @@ export function encodeRepo(repo: TreeStoredSchema, version: SchemaVersion): Json
 function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	const nodeSchema: Record<string, schemaFormatV1.TreeNodeSchemaDataFormat> =
 		Object.create(null);
-	const rootFieldSchema = encodeFieldSchemaV1(repo.rootFieldSchema);
+	const rootFieldSchema = encodeFieldSchema(repo.rootFieldSchema);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
 		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
 		Object.defineProperty(nodeSchema, name, {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: schema.encodeV1(),
+			value: schema.encode(),
 		});
 	}
 	return {
@@ -100,7 +100,7 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	};
 }
 
-function decodeV1(f: FormatV1): TreeStoredSchema {
+function decode(f: FormatV1): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [key, schema] of Object.entries(f.nodes)) {
 		nodeSchema.set(brand(key), storedSchemaDecodeDispatcher.dispatch(schema));
@@ -119,6 +119,6 @@ function decodeV1(f: FormatV1): TreeStoredSchema {
 function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
 	return makeVersionedValidatedCodec(options, new Set([SchemaVersion.v1]), FormatV1, {
 		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-		decode: (data: FormatV1) => decodeV1(data),
+		decode: (data: FormatV1) => decode(data),
 	});
 }

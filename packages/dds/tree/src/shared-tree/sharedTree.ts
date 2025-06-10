@@ -63,6 +63,8 @@ import {
 	makeSchemaCodec,
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { Format } from "../feature-libraries/schema-index/index.js";
 import {
 	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
@@ -90,6 +92,12 @@ import {
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
 } from "../simple-tree/index.js";
+import {
+	type Breakable,
+	breakingClass,
+	type JsonCompatible,
+	throwIfBroken,
+} from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
@@ -97,14 +105,6 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
-import {
-	type Breakable,
-	breakingClass,
-	type JsonCompatible,
-	throwIfBroken,
-} from "../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -511,7 +511,7 @@ export function persistedToSimpleSchema(
 	options: ICodecOptions,
 ): SimpleTreeSchema {
 	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const stored = schemaCodec.decode(persisted as Format);
 	return exportSimpleSchema(stored);
 }
 

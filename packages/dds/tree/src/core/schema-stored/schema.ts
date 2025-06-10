@@ -16,9 +16,9 @@ import {
 import {
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldSchemaFormat as FieldSchemaFormatV1,
+	type FieldSchemaFormat,
 	PersistedValueSchema,
-	type TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV1,
+	type TreeNodeSchemaDataFormat,
 	type TreeNodeSchemaIdentifier,
 } from "./formatV1.js";
 import type { Multiplicity } from "./multiplicity.js";
@@ -190,9 +190,12 @@ export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
 
 	/**
-	 * Encode in the v1 schema format.
+	 * @privateRemarks
+	 * Returns TreeNodeSchemaDataFormat.
+	 * This is uses an opaque type to avoid leaking these types out of the package,
+	 * and is runtime validated by the codec.
 	 */
-	public abstract encodeV1(): TreeNodeSchemaDataFormatV1;
+	public abstract encode(): TreeNodeSchemaDataFormat;
 
 	/**
 	 * Returns the schema for the provided field.
@@ -217,8 +220,8 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
-		const fieldsObject: Record<string, FieldSchemaFormatV1> = Object.create(null);
+	public override encode(): TreeNodeSchemaDataFormat {
+		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
@@ -226,7 +229,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				enumerable: true,
 				configurable: true,
 				writable: true,
-				value: encodeFieldSchemaV1(
+				value: encodeFieldSchema(
 					this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
 				),
 			});
@@ -256,8 +259,10 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
-		return { map: encodeFieldSchemaV1(this.mapFields) };
+	public override encode(): TreeNodeSchemaDataFormat {
+		return {
+			map: encodeFieldSchema(this.mapFields),
+		};
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -284,7 +289,7 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		super();
 	}
 
-	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
+	public override encode(): TreeNodeSchemaDataFormat {
 		return {
 			leaf: encodeValueSchema(this.leafValue),
 		};
@@ -296,13 +301,13 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 }
 
 export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
-	TreeNodeSchemaDataFormatV1,
+	TreeNodeSchemaDataFormat,
 	[],
 	TreeNodeStoredSchema
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
 	object: (
-		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormatV1>,
+		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
 	): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
@@ -310,7 +315,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 		}
 		return new ObjectNodeStoredSchema(map);
 	},
-	map: (data: FieldSchemaFormatV1) => new MapNodeStoredSchema(decodeFieldSchema(data)),
+	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
 });
 
 const valueSchemaEncode = new Map([
@@ -331,7 +336,7 @@ function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
 	return valueSchemaDecode.get(inMemory) ?? fail(0xae9 /* missing ValueSchema */);
 }
 
-export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaFormatV1 {
+export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
 	return {
 		kind: schema.kind,
 		// Types are sorted by identifier to improve stability of persisted data to increase chance of schema blob reuse.
@@ -339,7 +344,7 @@ export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaF
 	};
 }
 
-export function decodeFieldSchema(schema: FieldSchemaFormatV1): TreeFieldStoredSchema {
+export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSchema {
 	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,

@@ -18,7 +18,7 @@ export {
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchemaV1,
+	encodeFieldSchema,
 	storedSchemaDecodeDispatcher,
 	type SchemaAndPolicy,
 	type SchemaPolicy,
