@@ -7,7 +7,6 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
-	type DocEscapedText,
 	type DocFencedCode,
 	type DocLinkTag,
 	type DocNode,
@@ -26,7 +25,6 @@ import {
 	type BlockContent,
 	CodeSpanNode,
 	DocumentationNodeType,
-	EscapedTextNode,
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
@@ -47,7 +45,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends LoggingConfiguration {
+export interface TsdocNodeTransformOptions extends Required<LoggingConfiguration> {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -237,9 +235,6 @@ function transformTsdocParagraphContent(
 		case DocNodeKind.CodeSpan: {
 			return [transformTsdocCodeSpan(node as DocCodeSpan, options)];
 		}
-		case DocNodeKind.EscapedText: {
-			return [transformTsdocEscapedText(node as DocEscapedText, options)];
-		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
 			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
@@ -318,16 +313,6 @@ function transformTsdocPlainText(
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.text);
-}
-
-/**
- * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
- */
-function transformTsdocEscapedText(
-	node: DocEscapedText,
-	options: TsdocNodeTransformOptions,
-): EscapedTextNode {
-	return new EscapedTextNode(node.encodedText);
 }
 
 /**

@@ -28,7 +28,6 @@ export {
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
 export { DocumentationNodeType } from "./DocumentationNodeType.js";
-export { EscapedTextNode } from "./EscapedTextNode.js";
 export { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 export { HeadingNode } from "./HeadingNode.js";
 export { HorizontalRuleNode } from "./HorizontalRuleNode.js";
@@ -39,7 +38,7 @@ export { ParagraphNode } from "./ParagraphNode.js";
 export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
-export { SpanNode, type SpanContent } from "./SpanNode.js";
+export { SpanNode } from "./SpanNode.js";
 export {
 	type TableCellContent,
 	TableCellNode,

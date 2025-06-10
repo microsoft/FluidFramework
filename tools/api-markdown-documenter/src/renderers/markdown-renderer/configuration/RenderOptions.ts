@@ -7,7 +7,6 @@ import {
 	type CodeSpanNode,
 	type DocumentationNode,
 	DocumentationNodeType,
-	type EscapedTextNode,
 	type FencedCodeBlockNode,
 	type HeadingNode,
 	type HorizontalRuleNode,
@@ -27,7 +26,6 @@ import type { DocumentWriter } from "../../DocumentWriter.js";
 import type { RenderContext } from "../RenderContext.js";
 import {
 	renderCodeSpan,
-	renderEscapedText,
 	renderFencedCodeBlock,
 	renderHeading,
 	renderHierarchicalSection,
@@ -78,8 +76,6 @@ export interface Renderers {
 export const defaultRenderers: Renderers = {
 	[DocumentationNodeType.CodeSpan]: (node, writer, context): void =>
 		renderCodeSpan(node as CodeSpanNode, writer, context),
-	escapedText: (node, writer, context): void =>
-		renderEscapedText(node as EscapedTextNode, writer, context),
 	[DocumentationNodeType.FencedCode]: (node, writer, context): void =>
 		renderFencedCodeBlock(node as FencedCodeBlockNode, writer, context),
 	[DocumentationNodeType.Heading]: (node, writer, context): void =>

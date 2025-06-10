@@ -5,7 +5,6 @@
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import type { EscapedTextNode } from "./EscapedTextNode.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import type { TextFormatting } from "./TextFormatting.js";
 import { createNodesFromPlainText } from "./Utilities.js";
@@ -14,15 +13,6 @@ import { createNodesFromPlainText } from "./Utilities.js";
 // It just groups child nodes with formatting we want applied to them.
 // It also probably makes sense to not wrap the output in a `<span> tag in HTML, since the formatting tags already
 // group the child content.
-
-/**
- * The types of child nodes that can be contained within a {@link SpanNode}.
- *
- * @remarks Formatted spans do not support {@link EscapedTextNode} children.
- *
- * @public
- */
-export type SpanContent = Exclude<PhrasingContent, EscapedTextNode>;
 
 /**
  * A grouping of text, potentially spanning multiple lines, which may have some {@link TextFormatting}.
