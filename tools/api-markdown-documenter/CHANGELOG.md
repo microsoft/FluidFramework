@@ -24,6 +24,12 @@ Their `createFromPlainText` static factory functions have also been removed, as 
 This `DocumentationNode` implementation was not used by the library.
 If this type is required, it can be re-introduced via the Documentation Domain's [extensibility model](#new-extensibility-model).
 
+### `DocumentationNodeType` removed
+
+The `DocumentationNodeType` enum has been removed.
+Enumerations of supported node kinds in various contexts is now handled via type unions like `BlockContent` and `PhrasingContent`.
+String literal types makes typing much simpler to reason about, and more inline with `unist` patterns.
+
 ## 0.20.0
 
 ### Add stronger type restrictions to Documentation Domain
