@@ -70,15 +70,15 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
-| [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
+| [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number\> | Test function that returns an inline type |
-| [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
+| [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
 
 # Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
 | - | - | - | - | - |
-| [testConst](docs/test-suite-a#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [testConst](docs/test-suite-a#testconst-variable) | `Beta` | `readonly` | | Test Constant |
 | [testConstWithEmptyDeprecatedBlock](docs/test-suite-a#testconstwithemptydeprecatedblock-variable) | `Deprecated` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 # Namespaces
@@ -86,8 +86,8 @@ const foo = bar;
 | Namespace | Alerts | Description |
 | - | - | - |
 | [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | A namespace tagged as `@beta`. |
-| [TestModule](docs/test-suite-a#testmodule-namespace) |  |  |
-| [TestNamespace](docs/test-suite-a#testnamespace-namespace) |  | Test Namespace |
+| [TestModule](docs/test-suite-a#testmodule-namespace) | | |
+| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | | Test Namespace |
 
 # Interface Details
 
@@ -131,10 +131,10 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Default Value | Type | Description |
 | - | - | - | - | - |
-| [getterProperty](docs/test-suite-a#testinterface-getterproperty-property) | `readonly` |  | boolean | A test getter-only interface property. |
-| [propertyWithBadInheritDocTarget](docs/test-suite-a#testinterface-propertywithbadinheritdoctarget-propertysignature) |  |  | boolean |  |
-| [setterProperty](docs/test-suite-a#testinterface-setterproperty-property) |  |  | boolean | A test property with a getter and a setter. |
-| [testInterfaceProperty](docs/test-suite-a#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+| [getterProperty](docs/test-suite-a#testinterface-getterproperty-property) | `readonly` | | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](docs/test-suite-a#testinterface-propertywithbadinheritdoctarget-propertysignature) | | | boolean | |
+| [setterProperty](docs/test-suite-a#testinterface-setterproperty-property) | | | boolean | A test property with a getter and a setter. |
+| [testInterfaceProperty](docs/test-suite-a#testinterface-testinterfaceproperty-propertysignature) | | | number | Test interface property |
 | [testOptionalInterfaceProperty](docs/test-suite-a#testinterface-testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
 
 ### Methods
@@ -466,7 +466,7 @@ export declare abstract class TestAbstractClass
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](docs/test-suite-a#testabstractclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](docs/test-suite-a#testabstractclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [sealedMethod()](docs/test-suite-a#testabstractclass-sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
 | [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method) | `virtual` | number | A test `@virtual` method. |
 
@@ -486,8 +486,8 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 
 | Parameter | Type | Description |
 | - | - | - |
-| privateProperty | number |  |
-| protectedProperty | [TestEnum](docs/test-suite-a#testenum-enum) |  |
+| privateProperty | number | |
+| protectedProperty | [TestEnum](docs/test-suite-a#testenum-enum) | |
 
 ### Property Details
 
@@ -620,9 +620,9 @@ Here are some remarks about the class
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](docs/test-suite-a#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](docs/test-suite-a#testclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](docs/test-suite-a#testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](docs/test-suite-a#testclass-virtualmethod-method) |  | number | Overrides [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method). |
+| [virtualMethod()](docs/test-suite-a#testclass-virtualmethod-method) | | number | Overrides [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method). |
 
 ### Constructor Details
 
@@ -758,7 +758,7 @@ Here are some remarks about the method
 
 | Parameter | Type | Description |
 | - | - | - |
-| input | TTypeParameterA |  |
+| input | TTypeParameterA | |
 
 ##### Returns {#testclassmethod-returns}
 
@@ -1038,8 +1038,8 @@ Tests release level inheritance.
 
 | Variable | Alerts | Modifiers | Type | Description |
 | - | - | - | - | - |
-| [betaMember](docs/test-suite-a#testbetanamespace-betamember-variable) | `Beta` | `readonly` |  |  |
-| [publicMember](docs/test-suite-a#testbetanamespace-publicmember-variable) | `Beta` | `readonly` |  |  |
+| [betaMember](docs/test-suite-a#testbetanamespace-betamember-variable) | `Beta` | `readonly` | | |
+| [publicMember](docs/test-suite-a#testbetanamespace-publicmember-variable) | `Beta` | `readonly` | | |
 
 ### Variable Details
 
@@ -1069,7 +1069,7 @@ publicMember = "public"
 
 | Variable | Modifiers | Type | Description |
 | - | - | - | - |
-| [foo](docs/test-suite-a#testmodule-foo-variable) | `readonly` |  | Test constant in module. |
+| [foo](docs/test-suite-a#testmodule-foo-variable) | `readonly` | | Test constant in module. |
 
 ### Variable Details
 
@@ -1145,7 +1145,7 @@ const foo = {
 
 | Variable | Alerts | Modifiers | Type | Description |
 | - | - | - | - | - |
-| [TestConst](docs/test-suite-a#testnamespace-testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [TestConst](docs/test-suite-a#testnamespace-testconst-variable) | `Beta` | `readonly` | | Test Constant |
 
 ### Namespaces
 
@@ -1323,7 +1323,7 @@ function testFunction(testParameter: number): number;
 
 | Parameter | Type | Description |
 | - | - | - |
-| testParameter | number |  |
+| testParameter | number | |
 
 ##### Returns {#testfunction-returns}
 
