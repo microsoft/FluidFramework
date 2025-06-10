@@ -565,6 +565,7 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processSomeMessages(2);
 
+					// TODO: Consider AB#411
 					assert.equal(valuesChanged.length, 3);
 					assert.equal(valuesChanged[0].key, "map1Key");
 					assert.equal(valuesChanged[0].previousValue, undefined);
