@@ -19,17 +19,28 @@ export function escapedTextToMarkdown(
 	node: EscapedTextNode,
 	context: TransformationContext,
 ): MdastPhrasingContent[] {
+	if (node.isEmpty) {
+		return [];
+	}
+
 	const parsed = fromMarkdown(node.value);
+	if (parsed.children.length === 0) {
+		return [];
+	}
+
 	if (parsed.children.length !== 1) {
 		throw new Error(
 			`Expected a single node at the root of parsed escaped text, but got ${parsed.children.length}.`,
 		);
 	}
-	if (parsed.children[0].type !== "paragraph") {
+
+	const container = parsed.children[0];
+	if (container.type !== "paragraph") {
 		throw new Error(
-			`Expected a paragraph at the root of parsed escaped text, but got "${parsed.type}".`,
+			`Expected a paragraph at the root of parsed escaped text, but got "${container.type}".\nFull tree: ${JSON.stringify(container)}`,
 		);
 	}
 
-	return parsed.children[0].children;
+	// TODO: strip positioning data from result before returning.
+	return container.children;
 }

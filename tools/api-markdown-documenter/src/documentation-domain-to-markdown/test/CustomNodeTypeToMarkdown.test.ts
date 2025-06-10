@@ -45,8 +45,8 @@ function customDocumentationNodeToMarkdown(
 
 // The following are testing our support for custom DocumentationNode implementations.
 // Assuming an appropriate renderer is supplied, the system should be able to handle them correctly.
-describe("Custom node HTML rendering tests", () => {
-	it("Can render a custom node type when given a renderer", () => {
+describe("Custom node Markdown transformation tests", () => {
+	it("Can transform a custom node type when a transform is specified for that kind of node", () => {
 		const context = createTransformationContext({
 			customTransformations: {
 				// @ts-expect-error - Using our standard extensibility model within the package causes issues.
@@ -62,7 +62,7 @@ describe("Custom node HTML rendering tests", () => {
 		expect(output).to.deep.equal([{ type: "text", value: "foo!" }]);
 	});
 
-	it("Throws rendering a custom node type when no renderer is provided for it", () => {
+	it("Throws while transforming a custom node type when no transform is specified for that kind of node", () => {
 		const context = createTransformationContext({});
 
 		const input = new CustomDocumentationNode("foo");

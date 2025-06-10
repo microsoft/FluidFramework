@@ -17,7 +17,7 @@ import {
 import { documentToMarkdown } from "../ToMarkdown.js";
 
 describe("documentToMarkdown tests", () => {
-	it("Renders a simple document", () => {
+	it("Transforms a simple document", () => {
 		const document = new DocumentNode({
 			children: [
 				new SectionNode(
