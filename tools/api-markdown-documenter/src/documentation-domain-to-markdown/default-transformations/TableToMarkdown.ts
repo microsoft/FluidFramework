@@ -8,8 +8,6 @@ import type { Table as MdastTable, TableRow as MdastTableRow } from "mdast";
 import type { TableNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
-// TODO: transform as HTML when in table context
-
 /**
  * Transform a {@link TableNode} to Markdown.
  *
