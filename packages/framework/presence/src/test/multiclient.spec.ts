@@ -422,13 +422,15 @@ describe(`Presence with TinyliciousClient`, () => {
 					presence2.attendees.getMyself(),
 				];
 
+				const stateManager = StateFactory.latestMap<TestMapData, string>({
+					local: { key1: { num: 0 }, key2: { num: 0 } } satisfies TestMapData,
+					validator: validatorFunction1,
+					settings: { allowableUpdateLatencyMs: 0 },
+				});
+
 				// Configure a state workspace on client 1
 				stateWorkspace1 = presence1.states.getWorkspace("name:testStateWorkspace", {
-					testData: StateFactory.latestMap({
-						local: { key1: { num: 0 }, key2: { num: 0 } } satisfies TestMapData,
-						validator: validatorFunction1,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
+					testData: stateManager,
 				});
 
 				// Wait for client 2 to receive the workspaceActivated event

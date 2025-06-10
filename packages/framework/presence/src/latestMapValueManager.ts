@@ -599,7 +599,7 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 	/**
 	 * The initial value of the local state.
 	 */
-	local?: {
+	local: {
 		[K in Keys]: JsonSerializable<T>;
 	};
 
@@ -616,12 +616,6 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 	 * ```
 	 */
 	settings?: BroadcastControlSettings | undefined;
-
-	/**
-	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
-	 * recommended. See {@link StateSchemaValidator}.
-	 */
-	validator?: StateSchemaValidator<T> | undefined;
 }
 
 /**
@@ -632,8 +626,8 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 export interface LatestMapArguments<T, Keys extends string | number = string | number>
 	extends LatestMapArgumentsRaw<T, Keys> {
 	/**
-	 * A validator function that will be called to do runtime validation of the custom data stored in a presence state
-	 * workspace.
+	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
+	 * recommended. See {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
 }
@@ -675,7 +669,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args: LatestMapArgumentsRaw<T, Keys>,
+	args: LatestMapArgumentsRaw<T, Keys> & { validator: never },
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,

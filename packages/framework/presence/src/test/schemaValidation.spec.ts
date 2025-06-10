@@ -9,6 +9,7 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
+import type { LatestMapArguments } from "../latestMapValueManager.js";
 import type { StateSchemaValidator } from "../latestValueTypes.js";
 import type { AttendeeId } from "../presence.js";
 import type { createPresenceManager } from "../presenceManager.js";
@@ -295,7 +296,7 @@ describe("Presence", () => {
 						local: { "key1": { num: 0 } },
 						validator: validatorFunction,
 						settings: { allowableUpdateLatencyMs: 0 },
-					}),
+					} satisfies LatestMapArguments<{ num: number }, string>),
 				});
 
 				const { count } = stateWorkspace.states;

@@ -185,7 +185,9 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
 // @beta
-export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArgumentsRaw<T, Keys> & {
+    validator: never;
+}): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
@@ -202,11 +204,10 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 
 // @beta @input
 export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
-    local?: {
+    local: {
         [K in Keys]: JsonSerializable<T>;
     };
     settings?: BroadcastControlSettings | undefined;
-    validator?: StateSchemaValidator<T> | undefined;
 }
 
 // @beta @sealed
