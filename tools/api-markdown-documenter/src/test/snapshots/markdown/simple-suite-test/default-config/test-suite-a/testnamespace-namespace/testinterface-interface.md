@@ -12,7 +12,7 @@ Test interface
 interface TestInterface extends TestInterfaceWithTypeParameter<TestEnum>
 ```
 
-**Extends:** [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum)\>
+**Extends**: [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<[TestEnum](/test-suite-a/testnamespace-namespace/testenum-enum)\>
 
 ## Properties
 
@@ -40,7 +40,7 @@ Test interface property
 testInterfaceProperty: boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 ## Method Details
 

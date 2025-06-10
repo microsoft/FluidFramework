@@ -7,7 +7,6 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
-	type DocEscapedText,
 	type DocFencedCode,
 	type DocLinkTag,
 	type DocNode,
@@ -46,7 +45,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends LoggingConfiguration {
+export interface TsdocNodeTransformOptions extends Required<LoggingConfiguration> {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -195,10 +194,7 @@ function transformTsdocParagraph(
 	if (transformedChildren.length > 0) {
 		if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
 			const plainTextNode = transformedChildren[0];
-			transformedChildren[0] = new PlainTextNode(
-				plainTextNode.value.trimStart(),
-				plainTextNode.escaped,
-			);
+			transformedChildren[0] = new PlainTextNode(plainTextNode.value.trimStart());
 		}
 		if (
 			transformedChildren[transformedChildren.length - 1].type ===
@@ -209,7 +205,6 @@ function transformTsdocParagraph(
 			] as PlainTextNode;
 			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
 				plainTextNode.value.trimEnd(),
-				plainTextNode.escaped,
 			);
 		}
 	}
@@ -239,9 +234,6 @@ function transformTsdocParagraphContent(
 	switch (node.kind) {
 		case DocNodeKind.CodeSpan: {
 			return [transformTsdocCodeSpan(node as DocCodeSpan, options)];
-		}
-		case DocNodeKind.EscapedText: {
-			return [transformTsdocEscapedText(node as DocEscapedText, options)];
 		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
@@ -285,7 +277,7 @@ function transformTsdocCodeSpan(
 	node: DocCodeSpan,
 	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
-	return CodeSpanNode.createFromPlainText(node.code.trim());
+	return new CodeSpanNode(node.code.trim());
 }
 
 /**
@@ -324,16 +316,6 @@ function transformTsdocPlainText(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
- */
-function transformTsdocEscapedText(
-	node: DocEscapedText,
-	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	return new PlainTextNode(node.encodedText, /* escaped: */ true);
-}
-
-/**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
 function transformTsdocFencedCode(
@@ -360,7 +342,7 @@ function transformTsdocLinkTag(
 		} else {
 			const linkText = input.linkText?.trim() ?? link.text;
 			const linkTarget = link.target;
-			return LinkNode.createFromPlainText(linkText, linkTarget);
+			return new LinkNode(linkText, linkTarget);
 		}
 	}
 
@@ -368,7 +350,7 @@ function transformTsdocLinkTag(
 		// If link text was not provided, use the name of the referenced element.
 		const linkText = input.linkText ?? input.urlDestination;
 
-		return LinkNode.createFromPlainText(linkText, input.urlDestination);
+		return new LinkNode(linkText, input.urlDestination);
 	}
 
 	throw new Error(

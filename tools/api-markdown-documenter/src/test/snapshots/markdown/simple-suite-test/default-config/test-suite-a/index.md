@@ -127,7 +127,7 @@ This is a test [link](/test-suite-a/testinterface-interface) to another API memb
 
 The provided parameter
 
-**Return type:** TTypeParameter
+**Return type**: TTypeParameter
 
 #### Throws {#testfunction-throws}
 
@@ -150,7 +150,7 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
-**Return type:** {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); }
+**Return type**: {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); }
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
@@ -170,7 +170,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type:** [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number\>
+**Return type**: [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number\>
 
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
@@ -186,7 +186,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type:** string \| [TestInterface](/test-suite-a/testinterface-interface)
+**Return type**: string \| [TestInterface](/test-suite-a/testinterface-interface)
 
 ## Variable Details
 
@@ -218,4 +218,4 @@ I have a `@deprecated` tag with an empty comment block.
 testConstWithEmptyDeprecatedBlock: string
 ```
 
-**Type:** string
+**Type**: string

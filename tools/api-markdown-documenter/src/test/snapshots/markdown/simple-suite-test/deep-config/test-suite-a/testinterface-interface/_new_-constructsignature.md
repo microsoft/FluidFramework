@@ -12,4 +12,4 @@ new (): TestInterface;
 
 ## Returns {#\_new\_-returns}
 
-**Return type:** [TestInterface](/test-suite-a/testinterface-interface/)
+**Return type**: [TestInterface](/test-suite-a/testinterface-interface/)
