@@ -735,6 +735,8 @@ describe("Map", () => {
 				 *
 				 * This merge outcome might be undesirable: this test case is mostly here to document Map's behavior.
 				 * Please communicate any concerns about the merge outcome to the DDS team.
+				 *
+				 * TODO: I early-exit instead of sending delete ops that would have no local effect, which I think is preferable?
 				 */
 				it("Can remotely delete a key which should be unknown to the local client", () => {
 					map1.set("foo", 1);

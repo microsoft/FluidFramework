@@ -214,6 +214,7 @@ export class MapKernel {
 				) {
 					// TODO: clean up
 					// Skip iterating if we would have would have iterated it as part of the sequenced data.
+					// eslint-disable-next-line unicorn/no-lonely-if
 					if (
 						!this.sequencedData.has(pendingLifetime.key) ||
 						this.pendingData.some(
@@ -587,7 +588,6 @@ export class MapKernel {
 	 * @param op - The operation to rollback
 	 * @param localOpMetadata - The local metadata associated with the op.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public rollback(op: IMapOperation, localOpMetadata: unknown): void {
 		assert(typeof localOpMetadata === "number", "Expect localOpMetadata to be a number");
 
@@ -597,7 +597,7 @@ export class MapKernel {
 				pendingClear !== undefined && pendingClear === localOpMetadata,
 				"Unexpected clear rollback",
 			);
-			// for each now-visible value in the map, emit a "set" event
+			// TODO: for each now-visible value in the map, emit a "set" event
 		} else {
 			const pendingLifetime = findLast(
 				this.pendingData,
@@ -610,7 +610,7 @@ export class MapKernel {
 					pendingKeyChange.pendingMessageId === localOpMetadata,
 				"Unexpected rollback for key",
 			);
-			// raise a set or delete event
+			// TODO: raise a set or delete event
 		}
 	}
 
