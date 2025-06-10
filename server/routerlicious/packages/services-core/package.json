@@ -108,6 +108,9 @@
 			},
 			"Interface_ITenantManager": {
 				"forwardCompat": false
+			},
+			"Interface_IEncryptedTenantKeys": {
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "public"
