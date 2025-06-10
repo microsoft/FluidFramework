@@ -30,7 +30,7 @@ import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/intern
 import { v4 as uuid } from "uuid";
 
 import {
-	IMapMessageLocalMetadata,
+	IntervalMessageLocalMetadata,
 	SequenceOptions,
 	type IIntervalCollectionTypeOperationValue,
 } from "./intervalCollectionMapInterfaces.js";
@@ -702,7 +702,7 @@ export class IntervalCollection
 		Record<
 			string,
 			{
-				local: IMapMessageLocalMetadata[];
+				local: IntervalMessageLocalMetadata[];
 				consensus?: SequenceIntervalClass | undefined;
 			}
 		>
@@ -727,13 +727,13 @@ export class IntervalCollection
 
 	private readonly submitDelta: (
 		op: IIntervalCollectionTypeOperationValue,
-		md: IMapMessageLocalMetadata,
+		md: IntervalMessageLocalMetadata,
 	) => void;
 
 	constructor(
 		submitDelta: (
 			op: IIntervalCollectionTypeOperationValue,
-			md: IMapMessageLocalMetadata,
+			md: IntervalMessageLocalMetadata,
 		) => void,
 		serializedIntervals: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
 		private readonly options: Partial<SequenceOptions> = {},
@@ -789,7 +789,7 @@ export class IntervalCollection
 
 	public rollback(
 		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IMapMessageLocalMetadata,
+		localOpMetadata: IntervalMessageLocalMetadata,
 	) {
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
@@ -855,7 +855,7 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		local: boolean,
 		message: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalMessageLocalMetadata | undefined,
 	) {
 		const { opName, value } = op;
 		switch (opName) {
@@ -899,7 +899,7 @@ export class IntervalCollection
 
 	public resubmitMessage(
 		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IMapMessageLocalMetadata,
+		localOpMetadata: IntervalMessageLocalMetadata,
 	): void {
 		const { opName, value } = op;
 		const rebasedValue =
@@ -1397,7 +1397,7 @@ export class IntervalCollection
 		serializedInterval: SerializedIntervalDelta,
 		local: boolean,
 		op: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalMessageLocalMetadata | undefined,
 	) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1496,7 +1496,7 @@ export class IntervalCollection
 	public rebaseLocalInterval(
 		opName: string,
 		serializedInterval: SerializedIntervalDelta,
-		localOpMetadata: IMapMessageLocalMetadata,
+		localOpMetadata: IntervalMessageLocalMetadata,
 	): SerializedIntervalDelta | undefined {
 		if (!this.client) {
 			// If there's no associated mergeTree client, the originally submitted op is still correct.
@@ -1682,7 +1682,7 @@ export class IntervalCollection
 		serializedInterval: ISerializedInterval,
 		local: boolean,
 		op: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalMessageLocalMetadata | undefined,
 	) {
 		const { id, properties } = getSerializedProperties(serializedInterval);
 

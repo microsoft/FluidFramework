@@ -18,7 +18,7 @@ import {
 	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
-export interface IMapMessageLocalMetadata {
+export interface IntervalMessageLocalMetadata {
 	localSeq: number;
 	previous?: ISerializedInterval;
 	intervalId: string;
@@ -76,7 +76,7 @@ export interface IIntervalCollectionOperation {
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalMessageLocalMetadata | undefined,
 	): void;
 }
 
