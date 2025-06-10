@@ -9,6 +9,7 @@ import {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+import { lt } from "semver-ts";
 
 import { defaultMinVersionForCollab, type SemanticVersion } from "../compatUtils.js";
 import { pkgVersion } from "../packageVersion.js";
@@ -417,52 +418,80 @@ describe("Runtime", () => {
 		});
 	});
 
-	it("Can update minVersionForCollab when the initial schema's info property is undefined", () => {
+	it("New DocumentSchemaController will produce schema update message when the initial schema's info property is undefined", () => {
 		testMinVersionForCollabUpdateProcess({
 			description:
-				"Can update minVersionForCollab when the initial schema's info property is undefined",
-			initialSchema: { ...validConfig, info: undefined },
+				"New DocumentSchemaController will produce schema update message when the initial schema's info property is undefined",
+			initialSchema: {
+				version: validConfig.version,
+				refSeq: validConfig.refSeq,
+				runtime: validConfig.runtime,
+				info: undefined,
+			},
 			newMinVersionForCollab: "2.20.0",
 			expectedFinalMinVersionForCollab: "2.20.0",
 			expectSchemaChangeMessage: true,
 		});
 	});
 
-	it("Can update an existing schema's minVersionForCollab multiple times", () => {
-		const schema1 = testMinVersionForCollabUpdateProcess({
-			description: "Stage 1: Can update an existing schema's minVersionForCollab",
+	it("New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's default minVersionForCollab", () => {
+		testMinVersionForCollabUpdateProcess({
+			description:
+				"New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's default minVersionForCollab",
 			initialSchema: validConfig,
 			newMinVersionForCollab: "2.20.0",
 			expectedFinalMinVersionForCollab: "2.20.0",
 			expectSchemaChangeMessage: true,
 		});
+	});
+
+	it("New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's non-default minVersionForCollab", () => {
 		testMinVersionForCollabUpdateProcess({
 			description:
-				"Stage 2: Can update an existing schema's minVersionForCollab a second time",
-			initialSchema: schema1,
+				"New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's non-default minVersionForCollab",
+			initialSchema: {
+				version: validConfig.version,
+				refSeq: validConfig.refSeq,
+				runtime: validConfig.runtime,
+				info: { minVersionForCollab: "2.20.0" },
+			},
 			newMinVersionForCollab: "2.30.0",
 			expectedFinalMinVersionForCollab: "2.30.0",
 			expectSchemaChangeMessage: true,
 		});
 	});
 
-	it("Only updates minVersionForCollab when it's higher than the existing schema's minVersionForCollab", () => {
+	it("New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is lower than the initial schema's minVersionForCollab", () => {
 		// It should stay at 2.20.0 since 2.0.0 is lower than the existing minVersionForCollab (2.20.0)
-		const schema2 = testMinVersionForCollabUpdateProcess({
+		testMinVersionForCollabUpdateProcess({
 			description:
-				"Stage 1: Does NOT update the existing schema's minVersionForCollab with a lower minVersionForCollab",
-			initialSchema: { ...validConfig, info: { minVersionForCollab: "2.20.0" } },
+				"New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is lower than the initial schema's minVersionForCollab",
+			initialSchema: {
+				version: validConfig.version,
+				refSeq: validConfig.refSeq,
+				runtime: validConfig.runtime,
+				info: { minVersionForCollab: "2.20.0" },
+			},
 			newMinVersionForCollab: "2.0.0",
 			expectedFinalMinVersionForCollab: "2.20.0",
 			expectSchemaChangeMessage: false,
 		});
+	});
+
+	it("New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is equal to the initial schema's minVersionForCollab", () => {
+		// It should stay at 2.20.0 since 2.0.0 is lower than the existing minVersionForCollab (2.20.0)
 		testMinVersionForCollabUpdateProcess({
 			description:
-				"Stage 2: Updates the existing schema's minVersionForCollab with a higher minVersionForCollab",
-			initialSchema: schema2,
-			newMinVersionForCollab: "2.30.0",
-			expectedFinalMinVersionForCollab: "2.30.0",
-			expectSchemaChangeMessage: true,
+				"New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is equal to the initial schema's minVersionForCollab",
+			initialSchema: {
+				version: validConfig.version,
+				refSeq: validConfig.refSeq,
+				runtime: validConfig.runtime,
+				info: { minVersionForCollab: "2.20.0" },
+			},
+			newMinVersionForCollab: "2.20.0",
+			expectedFinalMinVersionForCollab: "2.20.0",
+			expectSchemaChangeMessage: false,
 		});
 	});
 
@@ -669,7 +698,7 @@ describe("Runtime", () => {
 		assert.deepEqual(schema, schema2, "same summaries");
 	});
 
-	it("does not send telemetry warning if minVersionForCollab is less than or equal to pkgVersion", () => {
+	it("Does not send telemetry warning if minVersionForCollab is less than or equal to pkgVersion", () => {
 		// Document's minVersionForCollab is less than pkgVersion
 		const documentMinVersionForCollab = "2.0.0";
 		new DocumentsSchemaController(
@@ -698,8 +727,12 @@ describe("Runtime", () => {
 		assert.strictEqual(event2, undefined, "telemetry warning event should not be logged");
 	});
 
-	it("properly sends telemetry warning if minVersionForCollab is greater than pkgVersion", () => {
+	it("Sends telemetry warning if minVersionForCollab is greater than pkgVersion", () => {
 		const documentMinVersionForCollab = "100.0.0";
+		assert(
+			lt(pkgVersion, documentMinVersionForCollab),
+			"pkgVersion must be less than documentMinVersionForCollab",
+		);
 		new DocumentsSchemaController(
 			true, // existing,
 			0, // snapshotSequenceNumber
