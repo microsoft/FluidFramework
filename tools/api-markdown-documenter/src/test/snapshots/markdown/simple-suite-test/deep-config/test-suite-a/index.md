@@ -73,9 +73,9 @@ const foo = bar;
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
 | [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function) | `Alpha` | TTypeParameter | Test function |
-| [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function) | | {     foo: number;     bar:  | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](/test-suite-a/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface/) | Test function that returns an inline type |
-| [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function) | | string \|  | Test function that returns an inline type |
+| [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum/); } | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](/test-suite-a/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface/) & [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface/)\<number> | Test function that returns an inline type |
+| [testFunctionReturningUnionType()](/test-suite-a/testfunctionreturninguniontype-function) | | string \| [TestInterface](/test-suite-a/testinterface-interface/) | Test function that returns an inline type |
 
 ## Variables
 

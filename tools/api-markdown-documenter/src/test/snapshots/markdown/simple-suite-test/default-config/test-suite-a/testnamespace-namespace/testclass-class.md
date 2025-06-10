@@ -26,7 +26,7 @@ class TestClass
 
 | Method | Return Type | Description |
 | - | - | - |
-| [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class#testclassmethod-method) | Promise | Test class method |
+| [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class#testclassmethod-method) | Promise\<string> | Test class method |
 
 ## Constructor Details
 
