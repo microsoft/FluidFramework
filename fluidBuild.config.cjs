@@ -370,6 +370,7 @@ module.exports = {
 				"docs/local-api-rollup.js",
 				// Avoids MIME-type issues in the browser.
 				"docs/static/trusted-types-policy.js",
+				"docs/static/dompurify/purify.min.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
