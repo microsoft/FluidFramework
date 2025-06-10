@@ -68,7 +68,7 @@ const foo = {
 
 | Variable | Alerts | Modifiers | Type | Description |
 | - | - | - | - | - |
-| [TestConst](/test-suite-a/testnamespace-namespace/testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [TestConst](/test-suite-a/testnamespace-namespace/testconst-variable) | `Beta` | `readonly` | | Test Constant |
 
 ## Namespaces
 

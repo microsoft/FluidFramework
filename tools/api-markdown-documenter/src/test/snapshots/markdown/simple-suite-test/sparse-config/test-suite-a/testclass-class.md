@@ -57,9 +57,9 @@ Here are some remarks about the class
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](docs/test-suite-a/testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](docs/test-suite-a/testclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](docs/test-suite-a/testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](docs/test-suite-a/testclass-virtualmethod-method) |  | number | Overrides [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method). |
+| [virtualMethod()](docs/test-suite-a/testclass-virtualmethod-method) | | number | Overrides [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method). |
 
 ### See Also {#testclass-see-also}
 

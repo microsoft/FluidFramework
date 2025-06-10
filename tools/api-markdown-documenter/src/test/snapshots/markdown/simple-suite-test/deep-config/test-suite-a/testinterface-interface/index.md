@@ -30,10 +30,10 @@ Here are some remarks about the interface
 
 | Property | Modifiers | Default Value | Type | Description |
 | - | - | - | - | - |
-| [getterProperty](/test-suite-a/testinterface-interface/getterproperty-property) | `readonly` |  | boolean | A test getter-only interface property. |
-| [propertyWithBadInheritDocTarget](/test-suite-a/testinterface-interface/propertywithbadinheritdoctarget-propertysignature) |  |  | boolean |  |
-| [setterProperty](/test-suite-a/testinterface-interface/setterproperty-property) |  |  | boolean | A test property with a getter and a setter. |
-| [testInterfaceProperty](/test-suite-a/testinterface-interface/testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+| [getterProperty](/test-suite-a/testinterface-interface/getterproperty-property) | `readonly` | | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](/test-suite-a/testinterface-interface/propertywithbadinheritdoctarget-propertysignature) | | | boolean | |
+| [setterProperty](/test-suite-a/testinterface-interface/setterproperty-property) | | | boolean | A test property with a getter and a setter. |
+| [testInterfaceProperty](/test-suite-a/testinterface-interface/testinterfaceproperty-propertysignature) | | | number | Test interface property |
 | [testOptionalInterfaceProperty](/test-suite-a/testinterface-interface/testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
 
 ## Methods

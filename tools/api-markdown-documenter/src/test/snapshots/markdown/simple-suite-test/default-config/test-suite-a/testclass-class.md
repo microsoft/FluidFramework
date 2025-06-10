@@ -59,9 +59,9 @@ Here are some remarks about the class
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](/test-suite-a/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](/test-suite-a/testclass-class#publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](/test-suite-a/testclass-class#testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](/test-suite-a/testclass-class#virtualmethod-method) |  | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method). |
+| [virtualMethod()](/test-suite-a/testclass-class#virtualmethod-method) | | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method). |
 
 ## Constructor Details
 
@@ -197,7 +197,7 @@ Here are some remarks about the method
 
 | Parameter | Type | Description |
 | - | - | - |
-| input | TTypeParameterA |  |
+| input | TTypeParameterA | |
 
 #### Returns {#testclassmethod-returns}
 
