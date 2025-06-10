@@ -175,7 +175,7 @@ export class MapKernel {
 			if (this.pendingClearMessageIds.length === 0) {
 				let nextSequencedVal = sequencedDataIterator.next();
 				while (!nextSequencedVal.done) {
-					const key = nextSequencedVal.value[0];
+					const [key] = nextSequencedVal.value;
 					// If we have any pending deletes, then we won't iterate to this key yet (if at all).
 					// Either it is optimistically deleted and will not be part of the iteration, or it was
 					// re-added later and we'll iterate to it when we get to the pending data.
@@ -199,20 +199,32 @@ export class MapKernel {
 			}
 
 			let nextPendingVal = pendingDataIterator.next();
-			// TODO: Don't double iterate pending items with multiple lifetimes
 			while (!nextPendingVal.done) {
 				const pendingLifetime = nextPendingVal.value;
-				const pendingValue =
+				const latestPendingValue =
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					pendingLifetime.keyChanges[pendingLifetime.keyChanges.length - 1]!;
 				const latestPendingClearMessageId =
 					this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
+				// Skip iterating for lifetimes that have been terminated with a delete.
 				if (
-					pendingValue.type !== "delete" &&
+					latestPendingValue.type !== "delete" &&
 					(latestPendingClearMessageId === undefined ||
-						latestPendingClearMessageId < pendingValue.pendingMessageId)
+						latestPendingClearMessageId < latestPendingValue.pendingMessageId)
 				) {
-					return { value: [pendingLifetime.key, pendingValue.value], done: false };
+					// TODO: clean up
+					// Skip iterating if we would have would have iterated it as part of the sequenced data.
+					if (
+						!this.sequencedData.has(pendingLifetime.key) ||
+						this.pendingData.some(
+							(lifetime) =>
+								lifetime.key === pendingLifetime.key &&
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								lifetime.keyChanges[lifetime.keyChanges.length - 1]!.type === "delete",
+						)
+					) {
+						return { value: [pendingLifetime.key, latestPendingValue.value], done: false };
+					}
 				}
 				nextPendingVal = pendingDataIterator.next();
 			}
