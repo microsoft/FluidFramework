@@ -21,9 +21,10 @@ import {
  * @alpha
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	private readonly providers = new Map<keyof TMap, FluidObjectProvider<any>>();
 	private readonly parents: IFluidDependencySynthesizer[];
-	public get IFluidDependencySynthesizer() {
+	public get IFluidDependencySynthesizer(): IFluidDependencySynthesizer {
 		return this;
 	}
 
@@ -67,7 +68,8 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		optionalTypes: FluidObjectSymbolProvider<O>,
 		requiredTypes: Required<FluidObjectSymbolProvider<R>>,
 	): AsyncFluidObjectProvider<O, R> {
-		const base: AsyncFluidObjectProvider<O, R> = {} as any;
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		const base: AsyncFluidObjectProvider<O, R> = {} as AsyncFluidObjectProvider<O, R>;
 		this.generateRequired<R>(base, requiredTypes);
 		this.generateOptional<O>(base, optionalTypes);
 		Object.defineProperty(base, IFluidDependencySynthesizer, { get: () => this });
@@ -88,9 +90,11 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 		return false;
 	}
 	/**
+	 * Get a provider for the given type.
+	 * @param provider - The name of the provider to get
 	 * @deprecated Needed for backwards compatability.
 	 */
-	private getProvider(provider: string & keyof TMap) {
+	private getProvider(provider: string & keyof TMap): PropertyDescriptor | undefined {
 		// this was removed, but some partners have trouble with back compat where they
 		// use invalid patterns with FluidObject and IFluidDependencySynthesizer
 		// this is just for back compat until those are removed
@@ -103,7 +107,9 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 					return parent.getProvider(provider);
 				} else {
 					// older implementations of the IFluidDependencySynthesizer exposed getProvider
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 					const maybeGetProvider: { getProvider?(provider: string & keyof TMap) } =
+						// eslint-disable-next-line @typescript-eslint/no-explicit-any
 						parent as any;
 					if (maybeGetProvider?.getProvider !== undefined) {
 						return maybeGetProvider.getProvider(provider);
@@ -116,7 +122,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	private generateRequired<T>(
 		base: AsyncRequiredFluidObjectProvider<T>,
 		types: Required<FluidObjectSymbolProvider<T>>,
-	) {
+	): void {
 		if (types === undefined) {
 			return;
 		}
@@ -134,7 +140,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 	private generateOptional<T>(
 		base: AsyncOptionalFluidObjectProvider<T>,
 		types: FluidObjectSymbolProvider<T>,
-	) {
+	): void {
 		if (types === undefined) {
 			return;
 		}
@@ -149,6 +155,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 
 	private resolveProvider<T extends keyof TMap>(t: T): PropertyDescriptor | undefined {
 		// If we have the provider return it
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const provider = this.providers.get(t);
 		if (provider === undefined) {
 			for (const parent of this.parents) {
@@ -169,9 +176,13 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 				// eslint-disable-next-line @typescript-eslint/promise-function-async
 				get() {
 					if (provider && typeof provider === "function") {
-						return Promise.resolve(this[IFluidDependencySynthesizer])
-							.then(async (fds): Promise<any> => provider(fds))
-							.then((p) => p?.[t]);
+						return (
+							Promise.resolve(this[IFluidDependencySynthesizer])
+								// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+								.then(async (fds): Promise<any> => provider(fds))
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+								.then((p) => p?.[t])
+						);
 					}
 				},
 			};
@@ -182,6 +193,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 					return new LazyPromise(async () => {
 						return Promise.resolve(provider).then((p) => {
 							if (p) {
+								// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 								return p[t];
 							}
 						});

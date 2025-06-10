@@ -31,6 +31,7 @@ declare type old_as_current_for_Class_DependencyContainer = requireAssignableTo<
  * typeValidation.broken:
  * "Class_DependencyContainer": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_DependencyContainer = requireAssignableTo<TypeOnly<current.DependencyContainer<never>>, TypeOnly<old.DependencyContainer<never>>>
 
 /*
@@ -40,6 +41,7 @@ declare type current_as_old_for_Class_DependencyContainer = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_DependencyContainer": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_DependencyContainer = requireAssignableTo<TypeOnly<typeof current.DependencyContainer>, TypeOnly<typeof old.DependencyContainer>>
 
 /*

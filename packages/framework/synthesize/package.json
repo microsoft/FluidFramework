@@ -142,7 +142,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_DependencyContainer": {
+				"backCompat": false
+			},
+			"ClassStatics_DependencyContainer": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
