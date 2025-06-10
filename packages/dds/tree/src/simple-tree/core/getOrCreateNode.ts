@@ -10,6 +10,7 @@ import {
 	type InnerNode,
 	simpleTreeNodeSlot,
 	createTreeNodeFromInner,
+	splitInnerNodeType,
 } from "./treeNodeKernel.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
@@ -20,6 +21,8 @@ import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
  * This supports both hydrated and unhydrated nodes.
  */
 export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | TreeValue {
+	splitInnerNodeType(flexNode);
+
 	const cached =
 		flexNode instanceof UnhydratedFlexTreeNode
 			? flexNode.treeNode

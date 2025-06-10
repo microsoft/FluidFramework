@@ -63,7 +63,7 @@ new (): TestInterface;
 
 #### Returns {#\_new\_-returns}
 
-**Return type:** [TestInterface](/test-suite-a/testinterface-interface)
+**Return type**: [TestInterface](/test-suite-a/testinterface-interface)
 
 ## Event Details
 
@@ -77,7 +77,7 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =\> void
+**Type**: () =\> void
 
 #### Remarks {#testclasseventproperty-remarks}
 
@@ -95,7 +95,7 @@ A test getter-only interface property.
 get getterProperty(): boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 ### propertyWithBadInheritDocTarget {#propertywithbadinheritdoctarget-propertysignature}
 
@@ -105,7 +105,7 @@ get getterProperty(): boolean;
 propertyWithBadInheritDocTarget: boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 ### setterProperty {#setterproperty-property}
 
@@ -118,7 +118,7 @@ get setterProperty(): boolean;
 set setterProperty(newValue: boolean);
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 ### testInterfaceProperty {#testinterfaceproperty-propertysignature}
 
@@ -130,7 +130,7 @@ Test interface property
 testInterfaceProperty: number;
 ```
 
-**Type:** number
+**Type**: number
 
 #### Remarks {#testinterfaceproperty-remarks}
 
@@ -146,7 +146,7 @@ Test optional property
 testOptionalInterfaceProperty?: number;
 ```
 
-**Type:** number
+**Type**: number
 
 ## Method Details
 
