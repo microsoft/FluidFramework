@@ -1,6 +1,6 @@
 # TestInterfaceExtendingOtherInterfaces
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterfaceExtendingOtherInterfaces](/test-suite-a/testinterfaceextendingotherinterfaces-interface)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterfaceExtendingOtherInterfaces](/test-suite-a/testinterfaceextendingotherinterfaces-interface)
 
 Test interface that extends other interfaces
 
@@ -10,7 +10,7 @@ Test interface that extends other interfaces
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 
-**Extends:** [TestInterface](/test-suite-a/testinterface-interface), [TestMappedType](/test-suite-a/testmappedtype-typealias), [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number\>
+**Extends**: [TestInterface](/test-suite-a/testinterface-interface), [TestMappedType](/test-suite-a/testmappedtype-typealias), [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number>
 
 ## Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
@@ -48,7 +48,7 @@ Here are some remarks about the method
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ## See Also {#testinterfaceextendingotherinterfaces-see-also}
 

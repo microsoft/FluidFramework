@@ -34,7 +34,6 @@ import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
 	type DocumentationNode,
-	DocumentationNodeType,
 	type DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
@@ -216,10 +215,13 @@ function createTypeSpan(
 	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (!excerpt.isEmpty) {
-		const renderedLabel = SpanNode.createFromPlainText(`Type: `, { bold: true });
 		const renderedExcerpt = createExcerptSpanWithHyperlinks(excerpt, config);
 		if (renderedExcerpt !== undefined) {
-			return new SpanNode([renderedLabel, renderedExcerpt]);
+			return new SpanNode([
+				SpanNode.createFromPlainText("Type", { bold: true }),
+				new PlainTextNode(": "),
+				renderedExcerpt,
+			]);
 		}
 	}
 	return undefined;
@@ -240,8 +242,6 @@ function createHeritageTypeListSpan(
 	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (heritageTypes.length > 0) {
-		const renderedLabel = SpanNode.createFromPlainText(`${label}: `, { bold: true });
-
 		// Build up array of excerpt entries
 		const renderedHeritageTypes: SpanNode[] = [];
 		for (const heritageType of heritageTypes) {
@@ -256,7 +256,11 @@ function createHeritageTypeListSpan(
 			new PlainTextNode(", "),
 		);
 
-		return new SpanNode([renderedLabel, ...renderedList]);
+		return new SpanNode([
+			SpanNode.createFromPlainText(label, { bold: true }),
+			new PlainTextNode(": "),
+			...renderedList,
+		]);
 	}
 	return undefined;
 }
@@ -826,15 +830,12 @@ function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 	}
 
 	if (firstChild.isLiteral) {
-		if (firstChild.type === DocumentationNodeType.PlainText) {
+		if (firstChild.type === "text") {
 			const text = (firstChild as PlainTextNode).text;
 			if (text === title) {
 				// Remove from children, and remove any trailing line breaks
 				const newChildren = children.slice(1);
-				while (
-					newChildren.length > 0 &&
-					newChildren[0].type === DocumentationNodeType.LineBreak
-				) {
+				while (newChildren.length > 0 && newChildren[0].type === "lineBreak") {
 					newChildren.shift();
 				}
 				return {
@@ -936,7 +937,8 @@ export function createReturnsSection(
 			if (typeExcerptSpan !== undefined) {
 				children.push(
 					new ParagraphNode([
-						SpanNode.createFromPlainText("Return type: ", { bold: true }),
+						SpanNode.createFromPlainText("Return type", { bold: true }),
+						new PlainTextNode(": "),
 						typeExcerptSpan,
 					]),
 				);

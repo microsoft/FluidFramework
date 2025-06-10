@@ -7,7 +7,6 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
-	type DocEscapedText,
 	type DocFencedCode,
 	type DocLinkTag,
 	type DocNode,
@@ -25,7 +24,6 @@ import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
 	type BlockContent,
 	CodeSpanNode,
-	DocumentationNodeType,
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
@@ -46,7 +44,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends LoggingConfiguration {
+export interface TsdocNodeTransformOptions extends Required<LoggingConfiguration> {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -193,23 +191,16 @@ function transformTsdocParagraph(
 	// Trim leading whitespace from first child if it is plain text,
 	// and trim trailing whitespace from last child if it is plain text.
 	if (transformedChildren.length > 0) {
-		if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
+		if (transformedChildren[0].type === "text") {
 			const plainTextNode = transformedChildren[0];
-			transformedChildren[0] = new PlainTextNode(
-				plainTextNode.value.trimStart(),
-				plainTextNode.escaped,
-			);
+			transformedChildren[0] = new PlainTextNode(plainTextNode.value.trimStart());
 		}
-		if (
-			transformedChildren[transformedChildren.length - 1].type ===
-			DocumentationNodeType.PlainText
-		) {
+		if (transformedChildren[transformedChildren.length - 1].type === "text") {
 			const plainTextNode = transformedChildren[
 				transformedChildren.length - 1
 			] as PlainTextNode;
 			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
 				plainTextNode.value.trimEnd(),
-				plainTextNode.escaped,
 			);
 		}
 	}
@@ -239,9 +230,6 @@ function transformTsdocParagraphContent(
 	switch (node.kind) {
 		case DocNodeKind.CodeSpan: {
 			return [transformTsdocCodeSpan(node as DocCodeSpan, options)];
-		}
-		case DocNodeKind.EscapedText: {
-			return [transformTsdocEscapedText(node as DocEscapedText, options)];
 		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
@@ -321,16 +309,6 @@ function transformTsdocPlainText(
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.text);
-}
-
-/**
- * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
- */
-function transformTsdocEscapedText(
-	node: DocEscapedText,
-	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	return new PlainTextNode(node.encodedText, /* escaped: */ true);
 }
 
 /**
@@ -419,7 +397,7 @@ function collapseAdjacentLineBreaks(nodes: readonly PhrasingContent[]): Phrasing
 	const result: PhrasingContent[] = [];
 	let onNewline = false;
 	for (const node of nodes) {
-		if (node.type === DocumentationNodeType.LineBreak) {
+		if (node.type === "lineBreak") {
 			if (onNewline) {
 				continue;
 			} else {
@@ -452,7 +430,7 @@ function trimLeadingAndTrailingLineBreaks(
 	let endIndex = nodes.length - 1;
 
 	for (const node of nodes) {
-		if (node.type === DocumentationNodeType.LineBreak) {
+		if (node.type === "lineBreak") {
 			startIndex++;
 		} else {
 			break;
@@ -460,7 +438,7 @@ function trimLeadingAndTrailingLineBreaks(
 	}
 
 	for (let i = nodes.length - 1; i > startIndex; i--) {
-		if (nodes[i].type === DocumentationNodeType.LineBreak) {
+		if (nodes[i].type === "lineBreak") {
 			endIndex--;
 		} else {
 			break;

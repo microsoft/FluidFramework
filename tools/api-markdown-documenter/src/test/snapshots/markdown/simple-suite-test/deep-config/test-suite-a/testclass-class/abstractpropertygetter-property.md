@@ -1,6 +1,6 @@
 # abstractPropertyGetter
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/) \> [abstractPropertyGetter](/test-suite-a/testclass-class/abstractpropertygetter-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [abstractPropertyGetter](/test-suite-a/testclass-class/abstractpropertygetter-property)
 
 A test abstract getter property.
 
@@ -10,4 +10,4 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](/test-suite-a/testmappedtype-typealias/)
+**Type**: [TestMappedType](/test-suite-a/testmappedtype-typealias/)

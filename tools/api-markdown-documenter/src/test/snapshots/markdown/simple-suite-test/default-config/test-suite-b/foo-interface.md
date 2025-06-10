@@ -1,6 +1,6 @@
 # Foo
 
-[Packages](/) \> [test-suite-b](/test-suite-b/) \> [Foo](/test-suite-b/foo-interface)
+[Packages](/) > [test-suite-b](/test-suite-b/) > [Foo](/test-suite-b/foo-interface)
 
 Bar
 
@@ -28,7 +28,7 @@ Test Enum
 bar: TestEnum;
 ```
 
-**Type:** [TestEnum](/test-suite-a/testenum-enum)
+**Type**: [TestEnum](/test-suite-a/testenum-enum)
 
 #### Remarks {#bar-remarks}
 
