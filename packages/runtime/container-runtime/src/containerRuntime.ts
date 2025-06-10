@@ -3481,7 +3481,8 @@ export class ContainerRuntime
 		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
 			try {
 				// Final flush of any last staged changes
-				this.flush();
+				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
+				this.outbox.flush();
 
 				this.stageControls = undefined;
 
