@@ -87,7 +87,7 @@ export function renderPlainText(
 /**
  * {@link splitLeadingAndTrailingWhitespace} output.
  */
-export interface SplitTextResult {
+interface SplitTextResult {
 	leadingWhitespace: string;
 	body: string;
 	trailingWhitespace: string;
@@ -96,7 +96,7 @@ export interface SplitTextResult {
 /**
  * Splits the input string to extract leading and trailing whitespace.
  */
-export function splitLeadingAndTrailingWhitespace(text: string): SplitTextResult {
+function splitLeadingAndTrailingWhitespace(text: string): SplitTextResult {
 	// split out the [ leading whitespace, body, trailing whitespace ]
 	const [, leadingWhitespace, body, trailingWhitespace]: string[] =
 		text.match(/^(\s*)(.*?)(\s*)$/) ?? [];
