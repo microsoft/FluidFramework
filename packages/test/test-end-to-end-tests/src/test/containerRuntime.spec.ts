@@ -123,6 +123,7 @@ describeCompat(
 					enableGroupedBatching: compression, // Compression w/o grouping is not supported
 					chunkSizeInBytes: chunking ? 200 : Infinity,
 				},
+				minVersionForCollab: "2.0.0",
 			};
 			const container = await provider.makeTestContainer(options);
 			entry = await getEntryPoint(container);
