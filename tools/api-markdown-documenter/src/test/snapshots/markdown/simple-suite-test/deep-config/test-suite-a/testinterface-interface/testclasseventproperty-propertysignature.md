@@ -1,6 +1,6 @@
 # testClassEventProperty
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterface](/test-suite-a/testinterface-interface/) \> [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [testClassEventProperty](/test-suite-a/testinterface-interface/testclasseventproperty-propertysignature)
 
 Test interface event property
 
@@ -10,7 +10,7 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type**: () =\> void
+**Type**: () => void
 
 ## Remarks {#testclasseventproperty-remarks}
 

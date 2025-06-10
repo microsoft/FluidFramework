@@ -1,6 +1,6 @@
 # protectedProperty
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestAbstractClass](/test-suite-a/testabstractclass-class/) \> [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestAbstractClass](/test-suite-a/testabstractclass-class/) > [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property)
 
 A test protected property.
 

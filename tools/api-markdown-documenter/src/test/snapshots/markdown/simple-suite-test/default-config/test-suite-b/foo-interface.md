@@ -1,6 +1,6 @@
 # Foo
 
-[Packages](/) \> [test-suite-b](/test-suite-b/) \> [Foo](/test-suite-b/foo-interface)
+[Packages](/) > [test-suite-b](/test-suite-b/) > [Foo](/test-suite-b/foo-interface)
 
 Bar
 
