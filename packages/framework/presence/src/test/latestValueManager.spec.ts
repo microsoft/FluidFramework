@@ -216,21 +216,23 @@ export function checkCompiles(): void {
 		logClientValue({ attendee, value });
 	}
 
-	// get one of the remote attendees
-	const attendee2 = [...cursor.getStateAttendees()]
-		.filter((attendee) => attendee !== presence.attendees.getMyself())
-		.at(0);
+	// Get a reference to one of the remote attendees
+	const attendee2 = [...cursor.getStateAttendees()].find(
+		(attendee) => attendee !== presence.attendees.getMyself(),
+	);
 	assert(attendee2 !== undefined);
+
+	// Get a remote raw value
 	const remoteCursor = cursor.getRemote(attendee2);
 	logClientValue({ attendee: attendee2, value: remoteCursor.value });
 
-	// Validated value
-	const latestData = props.validated.getRemote(presence.attendees.getMyself());
+	// Get a remote validated value
+	const latestData = props.validated.getRemote(attendee2);
 
-	// @ts-expect-error Type 'Latest<{ num: number; }, "proxied">' is not assignable to type 'LatestRaw<{ num: number; }>'.
+	// @ts-expect-error Type 'Latest<{ num: number; }, ProxiedValueAccessor<{ num: number; }>>' is not assignable to type 'LatestRaw<{ num: number; }>'.
 	const raw: LatestRaw<{ num: number }> = props.validated;
 
-	// @ts-expect-error Type 'LatestRaw<{ x: number; y: number; }>' is not assignable to type 'Latest<{ x: number; y: number; }, "proxied">'.
+	// @ts-expect-error Type 'LatestRaw<{ x: number; y: number; }>' is not assignable to type 'Latest<{ x: number; y: number; }, ProxiedValueAccessor<{ x: number; y: number; }>>'.
 	const validated: Latest<{ x: number; y: number }> = props.cursor;
 
 	// The next line correctly does not compile because the value argument must be a RawValueAccessor
