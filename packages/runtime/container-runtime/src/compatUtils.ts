@@ -345,7 +345,7 @@ export function configValueToMinVersionForCollab<
 		] of configValueToRequiredVersionMap.entries()) {
 			assert(
 				typeof possibleConfigValue == "object",
-				"possibleConfigValue should be an object",
+				0xbb9 /* possibleConfigValue should be an object */,
 			);
 			// Check if `possibleConfigValue` and the input `configValue` share at least one
 			// common key-value pair. If they do, the `versionRequired` for this `possibleConfigValue`

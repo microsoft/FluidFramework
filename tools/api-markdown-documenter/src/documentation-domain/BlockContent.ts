@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { BlockQuoteNode } from "./BlockQuoteNode.js";
 import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
 import type { OrderedListNode } from "./OrderedListNode.js";
@@ -35,7 +34,6 @@ import type { UnorderedListNode } from "./UnorderedListNode.js";
  * @public
  */
 export interface BlockContentMap {
-	blockquote: BlockQuoteNode;
 	fencedCodeBlock: FencedCodeBlockNode;
 	horizontalRule: HorizontalRuleNode;
 	orderedList: OrderedListNode;
