@@ -697,6 +697,17 @@ export class IntervalCollection
 	private localCollection: LocalIntervalCollection | undefined;
 	private onDeserialize: DeserializeCallback | undefined;
 	private client: Client | undefined;
+
+	private readonly pending: Partial<
+		Record<
+			string,
+			{
+				local: IMapMessageLocalMetadata[];
+				consensus?: SequenceIntervalClass | undefined;
+			}
+		>
+	> = {};
+
 	private readonly localSeqToSerializedInterval = new Map<
 		number,
 		ISerializedInterval | SerializedIntervalDelta
@@ -714,8 +725,13 @@ export class IntervalCollection
 		return !!this.localCollection;
 	}
 
+	private readonly submitDelta: (
+		op: IIntervalCollectionTypeOperationValue,
+		md: IMapMessageLocalMetadata,
+	) => void;
+
 	constructor(
-		private readonly submitDelta: (
+		submitDelta: (
 			op: IIntervalCollectionTypeOperationValue,
 			md: IMapMessageLocalMetadata,
 		) => void,
@@ -723,6 +739,12 @@ export class IntervalCollection
 		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
+
+		this.submitDelta = (op, md) => {
+			const pending = (this.pending[md.intervalId] ??= { local: [] });
+			pending.local.push(md);
+			submitDelta(op, md);
+		};
 
 		this.savedSerializedIntervals = Array.isArray(serializedIntervals)
 			? serializedIntervals
@@ -822,7 +844,7 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		local: boolean,
 		message: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata,
+		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	) {
 		const { opName, value } = op;
 		switch (opName) {
@@ -842,6 +864,23 @@ export class IntervalCollection
 			}
 			default:
 				unreachableCase(opName);
+		}
+		const { id } = getSerializedProperties(value);
+
+		const pending = this.pending[id];
+		if (pending !== undefined) {
+			if (local) {
+				const acked = pending.local.shift();
+				if (pending.local.length === 0) {
+					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+					delete this.pending[id];
+				} else {
+					// need to clean up old consensus
+					pending.consensus = acked?.interval;
+				}
+			} else {
+				pending.consensus = this.getIntervalById(id);
+			}
 		}
 	}
 
@@ -1134,6 +1173,7 @@ export class IntervalCollection
 					{
 						localSeq,
 						intervalId,
+						interval,
 					},
 				);
 			}
@@ -1173,6 +1213,7 @@ export class IntervalCollection
 						localSeq: this.getNextLocalSeq(),
 						previous: interval.serialize(),
 						intervalId: interval.getIntervalId(),
+						interval,
 					},
 				);
 			} else {
@@ -1269,6 +1310,7 @@ export class IntervalCollection
 						localSeq,
 						previous: interval.serialize(),
 						intervalId: id,
+						interval: newInterval ?? interval,
 					},
 				);
 			}
