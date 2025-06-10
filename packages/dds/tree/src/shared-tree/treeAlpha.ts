@@ -49,7 +49,7 @@ import {
 	getOrCreateInnerNode,
 	NodeKind,
 	tryGetTreeNodeForField,
-	FieldSchema,
+	isObjectNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -547,7 +547,10 @@ export const TreeAlpha: TreeAlpha = {
 		return getPropertyKeyFromStoredKey(parentSchema, storedKey);
 	},
 
-	child: (node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined => {
+	child: (
+		node: TreeNode,
+		propertyKey: string | number,
+	): TreeNode | TreeLeafValue | undefined => {
 		const flexNode = getOrCreateInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
@@ -564,7 +567,10 @@ export const TreeAlpha: TreeAlpha = {
 					return undefined;
 				}
 
-				const index = typeof key === "number" ? key : asIndex(key, Number.POSITIVE_INFINITY);
+				const index =
+					typeof propertyKey === "number"
+						? propertyKey
+						: asIndex(propertyKey, Number.POSITIVE_INFINITY);
 
 				// If the key is not a valid index, then there is no corresponding child.
 				if (index === undefined) {
@@ -582,19 +588,14 @@ export const TreeAlpha: TreeAlpha = {
 			}
 			case NodeKind.Map:
 			case NodeKind.Object: {
-				let storedKey: string | number = key;
-				if (schema.kind === NodeKind.Object) {
-					const fields = schema.info as Record<string, ImplicitFieldSchema>;
-
-					const fieldSchema = fields[key];
+				let storedKey: string | number = propertyKey;
+				if (isObjectNodeSchema(schema)) {
+					const fieldSchema = schema.fields.get(String(propertyKey));
 					if (fieldSchema === undefined) {
 						return undefined;
 					}
 
-					storedKey =
-						fieldSchema instanceof FieldSchema && fieldSchema.props?.key !== undefined
-							? fieldSchema.props.key
-							: key;
+					storedKey = fieldSchema.storedKey;
 				}
 
 				const field = flexNode.tryGetField(brand(String(storedKey)));

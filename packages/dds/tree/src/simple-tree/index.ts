@@ -202,6 +202,7 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	isObjectNodeSchema,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
