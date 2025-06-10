@@ -6,13 +6,7 @@
 import { mixinAttributor } from "@fluid-experimental/attributor";
 import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
-import {
-	DefaultSummaryConfiguration,
-	CompressionAlgorithms,
-	disabledCompressionConfig,
-	ICompressionRuntimeOptions,
-	type IContainerRuntimeOptionsInternal,
-} from "@fluidframework/container-runtime/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
@@ -52,98 +46,37 @@ import { getRequestedVersion } from "./versionUtils.js";
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
 /**
- * This function modifies container runtime options according to a version of runtime used.
- * If a version of runtime does not support some options, they are removed.
- * If a version runtime supports some options, such options are enabled to increase a chance of
- * hitting feature set controlled by such options, and thus increase chances of finding product bugs.
+ * Determines the minimumVersionForCollab that should be used for cross-client compatibility scenarios.
+ * We will use the lesser of the containerRuntimeVersion and containerRuntimeForLoadingVersion
  *
- * @param version - a version of container runtime to be used in test
- * @param optionsArg - input runtime options (optional)
- * @returns - runtime options that should be used with a given version of container runtime
- * @internal
+ * Note: The MinimumVersionForCollab returned will only be used if a minVersionForCollab was not provided
+ * in the ITestContainerConfig object.
  */
-function filterRuntimeOptionsForVersion(
-	version: string,
-	optionsArg: IContainerRuntimeOptionsInternal = {
-		summaryOptions: {
-			summaryConfigOverrides: {
-				...DefaultSummaryConfiguration,
-				...{
-					initialSummarizerDelayMs: 0,
-				},
-			},
-		},
-	},
-	driverType: TestDriverTypes,
-) {
-	let options = { ...optionsArg };
-
-	// No test fails with this option, it allows us to validate properly expectations and
-	// implementation of services
-	options.loadSequenceNumberVerification = "close";
-
-	const compressorDisabled: ICompressionRuntimeOptions = {
-		minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-		compressionAlgorithm: CompressionAlgorithms.lz4,
-	};
-
-	// These is the "maximum" config.
-	const {
-		compressionOptions = options.enableGroupedBatching === false
-			? disabledCompressionConfig
-			: {
-					minimumBatchSizeInBytes: 200,
-					compressionAlgorithm: CompressionAlgorithms.lz4,
-				},
-		enableGroupedBatching = true,
-		enableRuntimeIdCompressor = "on",
-		// Some t9s tests timeout with small settings. This is likely due to too many ops going through.
-		// Reduce chunking cut-off for such tests.
-		chunkSizeInBytes = driverType === "local" ? 200 : 1000,
-	} = options;
-
-	if (version.startsWith("1.")) {
-		options = {
-			// None of these features are supported by 1.3
-			compressionOptions: disabledCompressionConfig,
-			enableGroupedBatching: false,
-			enableRuntimeIdCompressor: undefined,
-			// Enable chunking.
-			// We need to ensure that 1.x documents (that use chunking) can still be opened by 2.x.
-			// This options does nothing for 2.x builds as chunking is only enabled if compression is enabled.
-			chunkSizeInBytes,
-			...options,
-		};
-	} else if (version.startsWith("2.0.0-rc.1.")) {
-		options = {
-			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
-			enableGroupedBatching,
-			enableRuntimeIdCompressor: undefined, // it was boolean in RC1, switched to enum in RC2
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
-			...options,
-		};
-	} else if (version.startsWith("2.0.0-rc.2.")) {
-		options = {
-			compressionOptions: compressorDisabled, // Can't use compression, need https://github.com/microsoft/FluidFramework/pull/20111 fix
-			enableGroupedBatching,
-			// control over schema was generalized in RC3 - see https://github.com/microsoft/FluidFramework/pull/20174
-			// IdCompressor settings moved around - can't enable them across versions without tripping on asserts
-			enableRuntimeIdCompressor: undefined,
-			chunkSizeInBytes: Number.POSITIVE_INFINITY, // disabled, need https://github.com/microsoft/FluidFramework/pull/20115 fix
-			...options,
-		};
-	} else {
-		// "2.0.0-rc.3." ++
-		options = {
-			compressionOptions,
-			enableGroupedBatching,
-			chunkSizeInBytes,
-			enableRuntimeIdCompressor,
-			...options,
-		};
+function getMinVersionForCollab(
+	containerRuntimeVersion: string,
+	containerRuntimeForLoadingVersion: string | undefined,
+): MinimumVersionForCollab {
+	isMinimumVersionForCollab(containerRuntimeVersion);
+	if (containerRuntimeForLoadingVersion === undefined) {
+		// If `containerRuntimeForLoading` is not defined, then this is not a cross-client compat scenario.
+		// In this case, we can use the `containerRuntimeVersion` as the default minVersionForCollab.
+		return containerRuntimeVersion;
 	}
+	isMinimumVersionForCollab(containerRuntimeForLoadingVersion);
+	// If `containerRuntimeForLoading` is defined, we will use the lower of the two versions to ensure
+	// compatibility between the two runtimes.
+	return semver.compare(containerRuntimeVersion, containerRuntimeForLoadingVersion) <= 0
+		? containerRuntimeVersion
+		: containerRuntimeForLoadingVersion;
+}
 
-	return options;
+/**
+ * Asserts the given version is valid semver and is type MinimumVersionForCollab.
+ */
+function isMinimumVersionForCollab(
+	version: string,
+): asserts version is MinimumVersionForCollab {
+	assert(semver.valid(version) !== null, "version must be valid semver");
 }
 
 /**
@@ -246,12 +179,12 @@ export async function getVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(
-				apis.containerRuntime.version,
-				containerOptions?.runtimeOptions,
-				type,
-			),
-			containerOptions?.minVersionForCollab,
+			containerOptions?.runtimeOptions,
+			containerOptions?.minVersionForCollab ??
+				getMinVersionForCollab(
+					apis.containerRuntime.version,
+					apis.containerRuntimeForLoading?.version,
+				),
 		);
 	};
 
@@ -359,12 +292,12 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(
-				minVersion,
-				containerOptions?.runtimeOptions,
-				driverConfig.type,
-			),
-			containerOptions?.minVersionForCollab,
+			containerOptions?.runtimeOptions,
+			containerOptions?.minVersionForCollab ??
+				getMinVersionForCollab(
+					apis.containerRuntime.version,
+					apis.containerRuntimeForLoading?.version,
+				),
 			[innerRequestHandler],
 		);
 	};
@@ -384,12 +317,12 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 		return new factoryCtor(
 			TestDataObjectType,
 			dataStoreFactory,
-			filterRuntimeOptionsForVersion(
-				minVersion,
-				containerOptions?.runtimeOptions,
-				driverConfig.type,
-			),
-			containerOptions?.minVersionForCollab,
+			containerOptions?.runtimeOptions,
+			containerOptions?.minVersionForCollab ??
+				getMinVersionForCollab(
+					apis.containerRuntime.version,
+					apis.containerRuntimeForLoading.version,
+				),
 			[innerRequestHandler],
 		);
 	};
