@@ -216,10 +216,13 @@ function createTypeSpan(
 	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (!excerpt.isEmpty) {
-		const renderedLabel = SpanNode.createFromPlainText(`Type: `, { bold: true });
 		const renderedExcerpt = createExcerptSpanWithHyperlinks(excerpt, config);
 		if (renderedExcerpt !== undefined) {
-			return new SpanNode([renderedLabel, renderedExcerpt]);
+			return new SpanNode([
+				SpanNode.createFromPlainText("Type", { bold: true }),
+				new PlainTextNode(": "),
+				renderedExcerpt,
+			]);
 		}
 	}
 	return undefined;
@@ -240,8 +243,6 @@ function createHeritageTypeListSpan(
 	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (heritageTypes.length > 0) {
-		const renderedLabel = SpanNode.createFromPlainText(`${label}: `, { bold: true });
-
 		// Build up array of excerpt entries
 		const renderedHeritageTypes: SpanNode[] = [];
 		for (const heritageType of heritageTypes) {
@@ -256,7 +257,11 @@ function createHeritageTypeListSpan(
 			new PlainTextNode(", "),
 		);
 
-		return new SpanNode([renderedLabel, ...renderedList]);
+		return new SpanNode([
+			SpanNode.createFromPlainText(label, { bold: true }),
+			new PlainTextNode(": "),
+			...renderedList,
+		]);
 	}
 	return undefined;
 }
@@ -936,7 +941,8 @@ export function createReturnsSection(
 			if (typeExcerptSpan !== undefined) {
 				children.push(
 					new ParagraphNode([
-						SpanNode.createFromPlainText("Return type: ", { bold: true }),
+						SpanNode.createFromPlainText("Return type", { bold: true }),
+						new PlainTextNode(": "),
 						typeExcerptSpan,
 					]),
 				);

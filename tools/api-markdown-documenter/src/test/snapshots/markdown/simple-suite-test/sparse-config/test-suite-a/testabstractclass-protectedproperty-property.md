@@ -8,4 +8,4 @@ A test protected property.
 protected readonly protectedProperty: TestEnum;
 ```
 
-**Type:** [TestEnum](docs/test-suite-a/testenum-enum)
+**Type**: [TestEnum](docs/test-suite-a/testenum-enum)
