@@ -16,7 +16,6 @@ import type {
 	LatestClientData,
 	LatestRaw,
 	Presence,
-	RawValueAccessor,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
 
@@ -165,7 +164,8 @@ export function checkCompiles(): void {
 	function logClientValue<T>({
 		attendee,
 		value,
-	}: Pick<LatestClientData<T, RawValueAccessor<T>>, "attendee" | "value">): void {
+		// FIXME: This should require RawValueAccessor<T> -- bare string should not work.
+	}: Pick<LatestClientData<T, "raw">, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
 	}
 
