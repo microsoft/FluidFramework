@@ -2,7 +2,7 @@
 "@fluidframework/sequence": minor
 "__section": deprecation
 ---
-Deprecate unnecessary and internal APIs in `ISequenceIntervalCollection` and related interval types.
+Deprecate unnecessary and internal APIs in `ISequenceIntervalCollection` and related interval types
 
 The following APIs are now deprecated and will be removed in a future release:
 - `IInterval.clone`
