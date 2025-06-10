@@ -92,12 +92,6 @@ import {
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
 } from "../simple-tree/index.js";
-import {
-	type Breakable,
-	breakingClass,
-	type JsonCompatible,
-	throwIfBroken,
-} from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
@@ -105,6 +99,12 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
+import {
+	type Breakable,
+	breakingClass,
+	type JsonCompatible,
+	throwIfBroken,
+} from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.

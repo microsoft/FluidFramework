@@ -13,7 +13,7 @@ import {
 	type FieldKindIdentifier,
 	type FieldSchemaFormat as FieldSchemaFormatV1,
 	PersistedValueSchema,
-	type TreeNodeSchemaDataFormat,
+	type TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV1,
 	type TreeNodeSchemaIdentifier,
 } from "./formatV1.js";
 import type {
@@ -194,7 +194,7 @@ export abstract class TreeNodeStoredSchema {
 	/**
 	 * Encode in the v1 schema format.
 	 */
-	public abstract encodeV1(): TreeNodeSchemaDataFormat;
+	public abstract encodeV1(): TreeNodeSchemaDataFormatV1;
 
 	/**
 	 * Encode in the v2 schema format.
@@ -226,7 +226,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 		super(metadata);
 	}
 
-	public override encodeV1(): TreeNodeSchemaDataFormat {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
@@ -291,7 +291,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 		super(metadata);
 	}
 
-	public override encodeV1(): TreeNodeSchemaDataFormat {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
 		return {
 			map: encodeFieldSchemaV1(this.mapFields),
 		};
@@ -327,7 +327,7 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 		super(undefined);
 	}
 
-	public override encodeV1(): TreeNodeSchemaDataFormat {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
 		return {
 			leaf: encodeValueSchema(this.leafValue),
 		};
