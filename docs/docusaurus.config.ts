@@ -193,7 +193,7 @@ const config: Config = {
 	scripts: [
 		{
 			src: "/dompurify/purify.min.js",
-			async: false
+			async: false,
 		},
 		{
 			src: "/trusted-types-policy.js",
