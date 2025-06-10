@@ -567,8 +567,17 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 
 	/**
 	 * See {@link BroadcastControlSettings}.
+	 *
+	 * @remarks
+	 * Without the `| undefined` type, TypeScript emits the following error:
+	 *
+	 * ```text
+	 * Types of property 'settings' are incompatible.
+	 *    Type 'BroadcastControlSettings | undefined' is not assignable to type 'BroadcastControlSettings'.
+	 *      Type 'undefined' is not assignable to type 'BroadcastControlSettings'.
+	 * ```
 	 */
-	settings?: BroadcastControlSettings;
+	settings?: BroadcastControlSettings | undefined;
 }
 
 /**
@@ -578,6 +587,10 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number>
 	extends LatestMapArgumentsRaw<T, Keys> {
+		/**
+		 * A validator function that will be called to do runtime validation of the custom data stored in a presence state
+		 * workspace.
+		 */
 	validator: StateSchemaValidator<T>;
 }
 
@@ -618,7 +631,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args?: LatestMapArguments<T, Keys>,
+	args: LatestMapArgumentsRaw<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
@@ -654,7 +667,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args?: LatestMapArguments<T, Keys>,
+	args?: LatestMapArguments<T, Keys> | LatestMapArgumentsRaw<T, Keys>,
 ):
 	| InternalTypes.ManagerFactory<
 			RegistrationKey,
@@ -668,7 +681,11 @@ export function latestMap<
 	  > {
 	const settings = args?.settings;
 	const initialValues = args?.local;
-	const validator = args?.validator;
+
+	const validator =
+		args !== undefined && "validator" in args && args.validator !== undefined
+			? args.validator
+			: undefined;
 
 	if (validator !== undefined) {
 		throw new Error(`Validators are not yet implemented.`);
