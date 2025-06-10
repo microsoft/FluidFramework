@@ -83,18 +83,30 @@ export function parseToken(
 ): string | undefined {
 	let token: string | undefined;
 	if (authorization) {
-		const base64TokenMatch = authorization.match(/Basic (.+)/);
-		if (!base64TokenMatch) {
+		if (!authorization.startsWith("Basic ")) {
 			throw new NetworkError(403, "Malformed authorization token");
 		}
-		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+		const base64TokenMatch = authorization.replace("Basic ", "");
+		const decoded = Buffer.from(base64TokenMatch, "base64").toString();
 
-		const tokenMatch = encoded.match(/(.+):(.+)/);
-		if (!tokenMatch || tenantId !== tokenMatch[1]) {
+		const tokenMatch = decoded.split(":");
+		if (tokenMatch.length !== 2 || tenantId !== tokenMatch[0]) {
 			throw new NetworkError(403, "Malformed authorization token");
 		}
 
-		token = tokenMatch[2];
+		token = tokenMatch[1];
+		// const base64TokenMatch = authorization.match(/Basic (.+)/);
+		// if (!base64TokenMatch) {
+		// 	throw new NetworkError(403, "Malformed authorization token");
+		// }
+		// const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+
+		// const tokenMatch = encoded.match(/(.+):(.+)/);
+		// if (!tokenMatch || tenantId !== tokenMatch[1]) {
+		// 	throw new NetworkError(403, "Malformed authorization token");
+		// }
+
+		// token = tokenMatch[2];
 	}
 
 	return token;

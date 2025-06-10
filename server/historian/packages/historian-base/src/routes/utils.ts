@@ -355,6 +355,10 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 			if (!token) {
 				throw new NetworkError(403, "Authorization token is missing.");
 			}
+			if (token.length > 1000) {
+				Lumberjack.error(`Invalid token length detected, ${token.length}`);
+				throw new NetworkError(403, "Invalid token. Token is too long.");
+			}
 			const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
 			const documentId = claims.documentId;
 			const tenantId = claims.tenantId;

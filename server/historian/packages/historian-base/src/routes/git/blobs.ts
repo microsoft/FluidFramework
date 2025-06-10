@@ -104,7 +104,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker), // added the length check
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const blobP = createBlob(
