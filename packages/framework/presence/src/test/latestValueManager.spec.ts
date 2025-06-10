@@ -216,14 +216,19 @@ export function checkCompiles(): void {
 		logClientValue({ attendee, value });
 	}
 
-	const remoteCursor = cursor.getRemote(presence.attendees.getMyself());
-	logClientValue({ attendee: presence.attendees.getMyself(), value: remoteCursor.value });
+	// get one of the remote attendees
+	const attendee2 = [...cursor.getStateAttendees()]
+		.filter((attendee) => attendee !== presence.attendees.getMyself())
+		.at(0);
+	assert(attendee2 !== undefined);
+	const remoteCursor = cursor.getRemote(attendee2);
+	logClientValue({ attendee: attendee2, value: remoteCursor.value });
 
 	// Validated value
 	const latestData = props.validated.getRemote(presence.attendees.getMyself());
 
 	// @ts-expect-error Type 'Latest<{ num: number; }, "proxied">' is not assignable to type 'LatestRaw<{ num: number; }>'.
-	const raw: LatestRaw<{ num: number }> = props.validated; // Latest<{num: number}>
+	const raw: LatestRaw<{ num: number }> = props.validated;
 
 	// @ts-expect-error Type 'LatestRaw<{ x: number; y: number; }>' is not assignable to type 'Latest<{ x: number; y: number; }, "proxied">'.
 	const validated: Latest<{ x: number; y: number }> = props.cursor;
