@@ -66,9 +66,9 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 export type Accessor<
 	V,
 	TAccessor extends ValueAccessor<V>,
-> = TAccessor extends ProxiedValueAccessor<infer V>
+> = TAccessor extends ProxiedValueAccessor<V>
 	? () => DeepReadonly<JsonDeserialized<V>> | undefined
-	: TAccessor extends RawValueAccessor<infer V>
+	: TAccessor extends RawValueAccessor<V>
 		? DeepReadonly<JsonDeserialized<V>>
 		: never;
 
@@ -84,14 +84,21 @@ export type Accessor<
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	/**
 	 * The value of the state.
-	 * @remarks This is a deeply readonly value, meaning it cannot be modified.
+	 *
+	 * @remarks
+	 *
+	 * This is a deeply readonly value, meaning it cannot be modified.
+	 *
+	 * @privateRemarks
+	 *
+	 * Ideally this type would be `Accessor<T, TValueAccessor>`, but using that instead of this exact definition causes
+	 * TypeScript compilation to crash with an out-of-memory error.
 	 */
-	// value: TValueAccessor extends ProxiedValueAccessor<T>
-	// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
-	// 	: TValueAccessor extends RawValueAccessor<T>
-	// 		? DeepReadonly<JsonDeserialized<T>>
-	// 		: never;
-	value: Accessor<T, TValueAccessor>;
+	value: TValueAccessor extends ProxiedValueAccessor<T>
+		? () => DeepReadonly<JsonDeserialized<T>> | undefined
+		: TValueAccessor extends RawValueAccessor<T>
+			? DeepReadonly<JsonDeserialized<T>>
+			: never;
 
 	/**
 	 * Metadata associated with the value.
