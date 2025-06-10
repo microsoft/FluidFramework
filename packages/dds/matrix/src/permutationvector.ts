@@ -208,7 +208,7 @@ export class PermutationVector extends Client {
 
 		assert(
 			segment !== undefined && offset !== undefined,
-			"segment must be available for operations in the collab window",
+			0xbac /* segment must be available for operations in the collab window */,
 		);
 
 		if (segmentIsRemoved(segment)) {

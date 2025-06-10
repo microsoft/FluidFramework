@@ -86,7 +86,7 @@ export namespace InternalTypes {
     // @system (undocumented)
     export interface NotificationType {
         // (undocumented)
-        args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+        args: unknown[];
         // (undocumented)
         name: string;
     }
@@ -109,15 +109,15 @@ export namespace InternalTypes {
     }
     // @system (undocumented)
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
-    // @system (undocumented)
+    // @system
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value?: JsonDeserialized<TValue>;
+        value?: OpaqueJsonDeserialized<TValue>;
     }
-    // @system (undocumented)
+    // @system
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value: JsonDeserialized<TValue>;
+        value: OpaqueJsonDeserialized<TValue>;
     }
     // @system (undocumented)
     export interface ValueStateMetadata {
@@ -131,14 +131,14 @@ export namespace InternalTypes {
 // @alpha @system
 export namespace InternalUtilityTypes {
     // @system
-    export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
+    export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P>, IfListener, Else> : Else;
     // @system
-    export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
+    export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
     // @system
-    export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
+    export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
     // @system
     export type NotificationListeners<E> = {
-        [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
+        [P in keyof E as IfNotificationListener<E[P], P, never>]: E[P];
     };
 }
 
@@ -150,7 +150,7 @@ export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedVal
     getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
     getStateAttendees(): Attendee[];
     get local(): DeepReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
+    set local(value: JsonSerializable<T>);
     readonly presence: Presence;
 }
 
@@ -165,9 +165,9 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
     validator: StateSchemaValidator<T>;
 }
 
-// @beta
+// @beta @input
 export interface LatestArgumentsRaw<T extends object | null> {
-    local: JsonSerializable<T> & JsonDeserialized<T> & (object | null);
+    local: JsonSerializable<T>;
     settings?: BroadcastControlSettings | undefined;
 }
 
@@ -186,7 +186,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> {
     // @eventProperty
     localUpdated: (update: {
-        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T>>;
     }) => void;
     // @eventProperty
     remoteUpdated: (update: LatestClientData<T, TRemoteValueAccessor>) => void;
@@ -217,10 +217,10 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
     validator: StateSchemaValidator<T>;
 }
 
-// @beta
+// @beta @input
 export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
-    local: {
-        [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
+    local?: {
+        [K in Keys]: JsonSerializable<T>;
     };
     settings?: BroadcastControlSettings | undefined;
 }
@@ -239,7 +239,7 @@ export interface LatestMapEvents<T, K extends string | number, TRemoteValueAcces
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: DeepReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T>>;
         key: K;
     }) => void;
     // @eventProperty
@@ -276,8 +276,8 @@ export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
 
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
-    broadcast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
-    unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetAttendee: Attendee, ...args: Parameters<E[K]>): void;
+    broadcast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
+    unicast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetAttendee: Attendee, ...args: Parameters<E[K]>): void;
 }
 
 // @alpha @sealed
@@ -380,7 +380,7 @@ export interface StateMap<K extends string | number, V> {
     get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
     has(key: K): boolean;
     keys(): IterableIterator<K>;
-    set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
+    set(key: K, value: JsonSerializable<V>): this;
     readonly size: number;
 }
 

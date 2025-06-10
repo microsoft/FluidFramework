@@ -17,7 +17,7 @@ import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
  *
  * ```md
  * | Header A | Header CB | Header C |
- * | --- | --- | --- |
+ * | - | - | - |
  * | Foo | Bar | Baz |
  * | A | B | C |
  * | 1 | 2| 3 |

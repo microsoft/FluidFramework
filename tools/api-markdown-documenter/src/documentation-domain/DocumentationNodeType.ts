@@ -13,11 +13,6 @@
  */
 export enum DocumentationNodeType {
 	/**
-	 * See {@link BlockQuoteNode}
-	 */
-	BlockQuote = "BlockQuote",
-
-	/**
 	 * See {@link CodeSpanNode}
 	 */
 	CodeSpan = "CodeSpan",
