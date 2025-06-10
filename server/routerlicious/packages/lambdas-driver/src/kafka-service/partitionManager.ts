@@ -203,8 +203,6 @@ export class PartitionManager extends EventEmitter {
 	 * May contain partitions that have been previously assigned to this consumer
 	 */
 	private rebalanced(partitions: IPartition[]) {
-		// FIXME
-		Lumberjack.info(`Rebalanced partitions: ${JSON.stringify(partitions)}`);
 		if (this.stopped) {
 			return;
 		}
@@ -283,8 +281,6 @@ export class PartitionManager extends EventEmitter {
 	}
 
 	private cooperativeRebalancingAssign(partitions: IPartition[]) {
-		// FIXME
-		Lumberjack.info(`Cooperative rebalancing assign: ${JSON.stringify(partitions)}`);
 		if (this.stopped) {
 			return;
 		}
@@ -337,8 +333,6 @@ export class PartitionManager extends EventEmitter {
 	}
 
 	private cooperativeRebalancingRevoke(partitions: IPartition[]) {
-		// FIXME
-		Lumberjack.info(`Cooperative rebalancing revoke: ${JSON.stringify(partitions)}`);
 		if (this.stopped) {
 			return;
 		}

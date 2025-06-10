@@ -61,7 +61,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly pausedOffsets: Map<number, number> = new Map();
 	private readonly apiCounter = new InMemoryApiCounters();
 	private readonly failedApiCounterSuffix = ".Failed";
-	private readonly isCooperativeRebalancingStrategy: boolean;
+	private readonly isCoopRebalanceStrategyEnabled: boolean;
 	private consecutiveFailedCount = 0;
 	private apiCounterInterval: NodeJS.Timeout | undefined;
 
@@ -111,7 +111,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 
 		// Check if the consumer is using cooperative-sticky assignment strategy
-		this.isCooperativeRebalancingStrategy =
+		this.isCoopRebalanceStrategyEnabled =
 			options?.additionalOptions?.["partition.assignment.strategy"]?.toLowerCase() ===
 			"cooperative-sticky";
 	}
@@ -227,6 +227,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			...this.sslOptions,
 		};
 
+		if (this.isCoopRebalanceStrategyEnabled) {
+			Lumberjack.info(`Cooperative rebalance strategy is enabled for topic '${this.topic}'`);
+		}
+
 		consumer = this.consumer = new this.kafka.KafkaConsumer(options, {
 			"auto.offset.reset": "latest",
 		});
@@ -331,13 +335,12 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS
 			) {
-				if (this.isCooperativeRebalancingStrategy) {
-					Lumberjack.info("Cooperative rebalance in progress");
+				if (this.isCoopRebalanceStrategyEnabled) {
+					Lumberjack.debug("Cooperative rebalance in progress", {
+						currentAssignments: Array.from(this.assignedPartitions),
+					});
 					this.cooperativeRebalanceHandler(err, topicPartitions);
 				} else {
-					Lumberjack.info(
-						`Eager rebalance in progress, protocol: "${consumer.rebalanceProtocol()}", isConnected: ${consumer.isConnected()}`,
-					);
 					this.eagerRebalanceHandler(err, topicPartitions);
 				}
 			} else {
@@ -680,21 +683,17 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				}
 
-				if (this.isCooperativeRebalancingStrategy) {
-					// FIXME
-					Lumberjack.info("cooperative rebalance reassign: ", assignments);
+				if (this.isCoopRebalanceStrategyEnabled) {
+					Lumberjack.debug("cooperative rebalance incremental assign: ", assignments);
 					consumer.incrementalAssign(assignments);
 				} else {
-					Lumberjack.info("eager rebalance assign: ", assignments);
 					consumer.assign(assignments);
 				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				if (this.isCooperativeRebalancingStrategy) {
-					// FIXME
-					Lumberjack.info("cooperative rebalance revoke: ", assignments);
+				if (this.isCoopRebalanceStrategyEnabled) {
+					Lumberjack.debug("cooperative rebalance revoke: ", assignments);
 					consumer.incrementalUnassign(assignments);
 				} else {
-					Lumberjack.info("eager rebalance unassign: ", assignments);
 					consumer.unassign();
 				}
 			}
@@ -705,6 +704,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 	}
 
+	/**
+	 * Handles the eager rebalancing protocol events from Kafka
+	 * This is default partition assignment strategy.
+	 *
+	 * @param err - The Kafka error object containing the rebalance event type
+	 * @param topicPartitions - Array of topic partitions involved in the rebalance
+	 */
 	private eagerRebalanceHandler(
 		err: kafkaTypes.LibrdKafkaError,
 		topicPartitions: kafkaTypes.TopicPartition[],
@@ -779,30 +785,45 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}
 	}
 
+	/**
+	 * Handles the cooperative rebalancing protocol events from Kafka
+	 * This is called when using the "cooperative-sticky" partition assignment strategy
+	 *
+	 * @param err - The Kafka error object containing the rebalance event type
+	 * @param topicPartitions - Array of topic partitions involved in the rebalance
+	 * @remarks
+	 * Cooperative rebalancing allows consumers to gradually transfer partition ownership
+	 * instead of stopping all consumers during a rebalance, leading to improved stability and efficiency.
+	 */
 	private cooperativeRebalanceHandler(
 		err: kafkaTypes.LibrdKafkaError,
-		partitions: kafkaTypes.TopicPartition[],
+		topicPartitions: kafkaTypes.TopicPartition[],
 	) {
-		if (partitions.length === 0) {
-			// FIXME
-			Lumberjack.info("cooperative rebalance: no partitions assigned");
+		if (topicPartitions.length === 0) {
+			// According to Kafka's cooperative rebalancing protocol, there can be multiple rebalancing rounds.
+			// During these rounds, there might be intermediate states where a consumer receives an empty partition list as part of the protocol.
+			Lumberjack.debug("cooperative rebalance: no partitions assigned");
 			return;
 		}
 
 		this.isRebalancing = true;
 		try {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
-				partitions.forEach((p) => this.assignedPartitions.add(p.partition));
-				// FIXME
-				Lumberjack.info("cooperative rebalance assign: ", partitions);
-				this.emit("coop.rebalance.assign", this.convertPartitions(partitions), err.code);
+				topicPartitions.forEach((tp) => this.assignedPartitions.add(tp.partition));
+				this.emit(
+					"coop.rebalance.assign",
+					this.convertPartitions(topicPartitions),
+					err.code,
+				);
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				// FIXME
-				Lumberjack.info("cooperative rebalance revoke: ", partitions);
-				this.emit("coop.rebalance.revoke", this.convertPartitions(partitions), err.code);
+				this.emit(
+					"coop.rebalance.revoke",
+					this.convertPartitions(topicPartitions),
+					err.code,
+				);
 
 				// clean up things left over from the lost partitions
-				partitions.forEach((tp) => {
+				topicPartitions.forEach((tp) => {
 					const partition = tp.partition;
 					this.assignedPartitions.delete(partition);
 					// clear the latest offset
@@ -836,9 +857,8 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				}
 			}
 		} catch (ex) {
-			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:cooperative" });
-		} finally {
 			this.isRebalancing = false;
+			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:cooperative" });
 		}
 	}
 }
