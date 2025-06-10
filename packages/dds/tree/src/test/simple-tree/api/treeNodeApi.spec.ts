@@ -947,7 +947,12 @@ describe("treeNodeApi", () => {
 			view.dispose();
 
 			assert.throws(
-				() => TreeAlpha.children(tree),
+				() => {
+					const children = TreeAlpha.children(tree);
+					for (const [key, child] of children) {
+						// Accessing the first child should result in an error
+					}
+				},
 				validateUsageError(/Cannot access a deleted node/),
 			);
 		});
