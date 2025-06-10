@@ -1,9 +1,9 @@
-[Packages](docs/) &gt; [test-suite-b](docs/test-suite-b)
+[Packages](docs/) \> [test-suite-b](docs/test-suite-b)
 
 # Interfaces
 
 | Interface | Description |
-| --- | --- |
+| - | - |
 | [Foo](docs/test-suite-b#foo-interface) | Bar |
 
 # Interface Details
@@ -21,7 +21,7 @@ export interface Foo
 ### Properties
 
 | Property | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [bar](docs/test-suite-b#foo-bar-propertysignature) | [TestEnum](docs/test-suite-a#testenum-enum) | Test Enum |
 
 ### Property Details
@@ -36,7 +36,7 @@ Test Enum
 bar: TestEnum;
 ```
 
-**Type:** [TestEnum](docs/test-suite-a#testenum-enum)
+**Type**: [TestEnum](docs/test-suite-a#testenum-enum)
 
 ##### Remarks {#bar-remarks}
 

@@ -1,6 +1,6 @@
 # testInterfaceProperty
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestInterface](/test-suite-a/testnamespace-namespace/testinterface-interface/) &gt; [testInterfaceProperty](/test-suite-a/testnamespace-namespace/testinterface-interface/testinterfaceproperty-propertysignature)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestNamespace](/test-suite-a/testnamespace-namespace/) \> [TestInterface](/test-suite-a/testnamespace-namespace/testinterface-interface/) \> [testInterfaceProperty](/test-suite-a/testnamespace-namespace/testinterface-interface/testinterfaceproperty-propertysignature)
 
 Test interface property
 
@@ -12,4 +12,4 @@ Test interface property
 testInterfaceProperty: boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean

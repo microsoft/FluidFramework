@@ -790,15 +790,23 @@ export namespace InternalUtilityTypes {
 		AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
 			? Options["AllowExtensionOf"]
 			: never;
-		// There Substitute type could be extracted to helper type, but are kept explicit here
-		// to make JsonTypeWith show explicitly in results for users, rather
-		// than either the helper type name or a partially unrolled version.
-		DegenerateSubstitute: JsonTypeWith<
-			| (Options extends { AllowExactly: unknown[] }
-					? TupleToUnion<Options["AllowExactly"]>
-					: never)
-			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
-		>;
+		// The Substitute type could be extracted to helper type, but is kept explicit here
+		// to make JsonTypeWith and OpaqueJsonSerializable show explicitly in results for
+		// users, rather than either the helper type name or a partially unrolled version.
+		DegenerateSubstitute:
+			| JsonTypeWith<
+					| (Options extends { AllowExactly: unknown[] }
+							? TupleToUnion<Options["AllowExactly"]>
+							: never)
+					| (Options extends { AllowExtensionOf: unknown }
+							? Options["AllowExtensionOf"]
+							: never)
+			  >
+			| OpaqueJsonSerializable<
+					unknown,
+					Options extends { AllowExactly: unknown[] } ? Options["AllowExactly"] : [],
+					Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never
+			  >;
 	} extends infer Controls
 		? /* Controls should always satisfy FilterControlsWithSubstitution, but Typescript wants a check */
 			Controls extends FilterControlsWithSubstitution
@@ -851,8 +859,11 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @remarks
 	 * {@link OpaqueJsonSerializable} and {@link OpaqueJsonDeserialized} instances
-	 * are limited to `Controls` given context supports. Further, the data type
-	 * is filtered through {@link JsonSerializable} with those `Controls`.
+	 * are limited to `Controls` given context supports.
+	 * `T` from the original Opaque type is preserved. In the case that this now
+	 * produces an improper type such as a `bigint` being let through that is no
+	 * longer supported, then the variance of `Controls` is expected to raise
+	 * the incompatibility error.
 	 *
 	 * @privateRemarks
 	 * Additional intersections beyond {@link OpaqueJsonSerializable},
@@ -870,25 +881,13 @@ export namespace InternalUtilityTypes {
 		| OpaqueJsonDeserialized<infer TData, any, unknown>
 		? T extends OpaqueJsonSerializable<TData, any, unknown> &
 				OpaqueJsonDeserialized<TData, any, unknown>
-			? OpaqueJsonSerializable<
-					JsonSerializableImpl<TData, Controls>,
-					Controls["AllowExactly"],
-					Controls["AllowExtensionOf"]
-				> &
-					OpaqueJsonDeserialized<
-						JsonSerializableImpl<TData, Controls>,
-						Controls["AllowExactly"],
-						Controls["AllowExtensionOf"]
-					>
+			? OpaqueJsonSerializable<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]> &
+					OpaqueJsonDeserialized<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
 			: T extends OpaqueJsonSerializable<TData, any, unknown>
-				? OpaqueJsonSerializable<
-						JsonSerializableImpl<TData, Controls>,
-						Controls["AllowExactly"],
-						Controls["AllowExtensionOf"]
-					>
+				? OpaqueJsonSerializable<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
 				: T extends OpaqueJsonDeserialized<TData, any, unknown>
 					? OpaqueJsonDeserialized<
-							JsonSerializableImpl<TData, Controls>,
+							TData,
 							Controls["AllowExactly"],
 							Controls["AllowExtensionOf"]
 						>
@@ -1091,7 +1090,7 @@ export namespace InternalUtilityTypes {
 		AllowExtensionOf: Options extends { AllowExtensionOf: unknown }
 			? Options["AllowExtensionOf"]
 			: never;
-		// There Substitute types could be extracted to helper type, but are kept explicit here
+		// The Substitute types could be extracted to helper type, but are kept explicit here
 		// to make JsonTypeWith/NonNullJsonObjectWith show explicitly in results for users, rather
 		// than either the helper type name or a partially unrolled version.
 		DegenerateSubstitute: JsonTypeWith<

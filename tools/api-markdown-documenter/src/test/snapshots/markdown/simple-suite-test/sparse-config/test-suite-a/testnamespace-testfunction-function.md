@@ -11,14 +11,14 @@ function testFunction(testParameter: number): number;
 ### Parameters {#testfunction-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testParameter | number |  |
 
 ### Returns {#testfunction-returns}
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ### Throws {#testfunction-throws}
 

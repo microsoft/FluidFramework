@@ -4,7 +4,6 @@
  */
 
 import type { DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * An explicit line break in a document.
@@ -16,13 +15,14 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  * To build up a grouping of text including line breaks, use this type alongside text nodes within a
  * container type like {@link ParagraphNode} or {@link SpanNode}.
  *
+ * @sealed
  * @public
  */
 export class LineBreakNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.LineBreak;
+	public readonly type = "lineBreak";
 
 	/**
 	 * {@inheritDoc DocumentationNode.isLiteral}
