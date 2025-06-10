@@ -613,7 +613,7 @@ export class MapKernel {
 				(lifetime) => lifetime.key === op.key,
 			);
 			assert(pendingLifetime !== undefined, "Unexpected rollback for key");
-			const previousValue = this.getOptimisticLocalValue(op.key);
+			const previousLocalValue = this.getOptimisticLocalValue(op.key);
 			const pendingKeyChange = pendingLifetime.keyChanges.pop();
 			assert(
 				pendingKeyChange !== undefined &&
@@ -622,7 +622,7 @@ export class MapKernel {
 			);
 			this.eventEmitter.emit(
 				"valueChanged",
-				{ key: op.key, previousValue },
+				{ key: op.key, previousValue: previousLocalValue?.value as unknown },
 				true,
 				this.eventEmitter,
 			);
