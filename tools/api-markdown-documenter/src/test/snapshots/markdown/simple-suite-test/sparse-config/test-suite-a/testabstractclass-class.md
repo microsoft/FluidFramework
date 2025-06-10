@@ -25,6 +25,6 @@ export declare abstract class TestAbstractClass
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](docs/test-suite-a/testabstractclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](docs/test-suite-a/testabstractclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [sealedMethod()](docs/test-suite-a/testabstractclass-sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
 | [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method) | `virtual` | number | A test `@virtual` method. |

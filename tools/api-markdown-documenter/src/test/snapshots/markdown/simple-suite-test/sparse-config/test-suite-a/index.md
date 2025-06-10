@@ -70,9 +70,9 @@ const foo = bar;
 
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
-| [testFunctionReturningInlineType()](docs/test-suite-a/testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/test-suite-a/testenum-enum); } | Test function that returns an inline type |
+| [testFunctionReturningInlineType()](docs/test-suite-a/testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a/testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](docs/test-suite-a/testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)\<number\> | Test function that returns an inline type |
-| [testFunctionReturningUnionType()](docs/test-suite-a/testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/test-suite-a/testinterface-interface) | Test function that returns an inline type |
+| [testFunctionReturningUnionType()](docs/test-suite-a/testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a/testinterface-interface) | Test function that returns an inline type |
 
 ### Variables
 
@@ -84,5 +84,5 @@ const foo = bar;
 
 | Namespace | Description |
 | - | - |
-| [TestModule](docs/test-suite-a/testmodule-namespace) |  |
+| [TestModule](docs/test-suite-a/testmodule-namespace) | |
 | [TestNamespace](docs/test-suite-a/testnamespace-namespace) | Test Namespace |

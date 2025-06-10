@@ -19,7 +19,7 @@ Here are some remarks about the method
 
 | Parameter | Type | Description |
 | - | - | - |
-| input | TTypeParameterA |  |
+| input | TTypeParameterA | |
 
 ## Returns {#testclassmethod-returns}
 
