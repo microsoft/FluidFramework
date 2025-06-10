@@ -887,21 +887,20 @@ export class IntervalCollection
 		const { id } = getSerializedProperties(value);
 
 		const pending = this.pending[id];
-		if (pending !== undefined) {
-			if (local) {
-				const acked = pending.local.shift();
-				assert(acked !== undefined, "local change must exist");
-				this.localSeqToSerializedInterval.delete(acked.localSeq);
-				if (pending.local.length === 0) {
-					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-					delete this.pending[id];
-				} else {
-					// need to clean up old consensus
-					pending.consensus = acked?.interval;
-				}
+		if (local) {
+			assert(pending !== undefined, "pending must exist");
+			const acked = pending.local.shift();
+			assert(acked === localOpMetadata && acked !== undefined, "local change must exist");
+			this.localSeqToSerializedInterval.delete(acked.localSeq);
+			if (pending.local.length === 0) {
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete this.pending[id];
 			} else {
-				pending.consensus = this.getIntervalById(id);
+				// need to clean up old consensus
+				pending.consensus = acked?.interval;
 			}
+		} else if (pending !== undefined) {
+			pending.consensus = this.getIntervalById(id);
 		}
 	}
 
@@ -910,9 +909,16 @@ export class IntervalCollection
 		localOpMetadata: IntervalMessageLocalMetadata,
 	): void {
 		const { opName, value } = op;
+
+		const { intervalId, localSeq } = localOpMetadata;
+
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		this.pending[intervalId]?.local.shift();
+
 		const rebasedValue =
 			opName === "delete" ? value : this.rebaseLocalInterval(opName, value, localOpMetadata);
 		if (rebasedValue === undefined) {
+			this.localSeqToSerializedInterval.delete(localSeq);
 			return undefined;
 		}
 
