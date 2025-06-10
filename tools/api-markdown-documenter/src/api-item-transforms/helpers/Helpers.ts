@@ -215,11 +215,13 @@ function createTypeSpan(
 	config: ApiItemTransformationConfiguration,
 ): SpanNode | undefined {
 	if (!excerpt.isEmpty) {
-		const renderedLabel = SpanNode.createFromPlainText("Type", { bold: true });
-		const delimiter = new PlainTextNode(": ");
 		const renderedExcerpt = createExcerptSpanWithHyperlinks(excerpt, config);
 		if (renderedExcerpt !== undefined) {
-			return new SpanNode([renderedLabel, delimiter, renderedExcerpt]);
+			return new SpanNode([
+				SpanNode.createFromPlainText("Type", { bold: true }),
+				new PlainTextNode(": "),
+				renderedExcerpt,
+			]);
 		}
 	}
 	return undefined;

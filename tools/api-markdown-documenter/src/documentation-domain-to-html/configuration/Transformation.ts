@@ -82,21 +82,19 @@ const hastHorizontalRule = h("hr");
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	["codeSpan"]: (node, context) => codeSpanToHtml(node as CodeSpanNode, context),
-	["fencedCode"]: (node, context) =>
-		fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
-	["heading"]: (node, context) => headingToHtml(node as HeadingNode, context),
-	["lineBreak"]: () => hastLineBreak,
-	["link"]: (node, context) => linkToHtml(node as LinkNode, context),
-	["section"]: (node, context) => sectionToHtml(node as SectionNode, context),
-	["horizontalRule"]: () => hastHorizontalRule,
-	["orderedList"]: (node, context) => orderedListToHtml(node as OrderedListNode, context),
-	["paragraph"]: (node, context) => paragraphToHtml(node as ParagraphNode, context),
-	["text"]: (node, context) => plainTextToHtml(node as PlainTextNode, context),
-	["span"]: (node, context) => spanToHtml(node as SpanNode, context),
-	["table"]: (node, context) => tableToHtml(node as TableNode, context),
-	["tableCell"]: (node, context) => tableCellToHtml(node as TableCellNode, context),
-	["tableRow"]: (node, context) => tableRowToHtml(node as TableRowNode, context),
-	["unorderedList"]: (node, context) =>
-		unorderedListToHtml(node as UnorderedListNode, context),
+	codeSpan: (node, context) => codeSpanToHtml(node as CodeSpanNode, context),
+	fencedCode: (node, context) => fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
+	heading: (node, context) => headingToHtml(node as HeadingNode, context),
+	lineBreak: () => hastLineBreak,
+	link: (node, context) => linkToHtml(node as LinkNode, context),
+	section: (node, context) => sectionToHtml(node as SectionNode, context),
+	horizontalRule: () => hastHorizontalRule,
+	orderedList: (node, context) => orderedListToHtml(node as OrderedListNode, context),
+	paragraph: (node, context) => paragraphToHtml(node as ParagraphNode, context),
+	text: (node, context) => plainTextToHtml(node as PlainTextNode, context),
+	span: (node, context) => spanToHtml(node as SpanNode, context),
+	table: (node, context) => tableToHtml(node as TableNode, context),
+	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
+	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),
+	unorderedList: (node, context) => unorderedListToHtml(node as UnorderedListNode, context),
 };
