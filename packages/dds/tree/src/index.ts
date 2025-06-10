@@ -253,14 +253,15 @@ export {
 export { SharedTreeAttributes, SharedTreeFactoryType } from "./sharedTreeAttributes.js";
 export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
-export {
-	type ICodecOptions,
-	type CodecWriteOptions,
-	type JsonValidator,
-	type SchemaValidationFunction,
-	FluidClientVersion,
+export type {
+	ICodecOptions,
+	CodecWriteOptions,
+	JsonValidator,
+	SchemaValidationFunction,
+	FormatVersion,
+	CodecName,
 } from "./codec/index.js";
-export { noopValidator } from "./codec/index.js";
+export { noopValidator, FluidClientVersion } from "./codec/index.js";
 export { typeboxValidator } from "./external-utilities/index.js";
 
 export type {

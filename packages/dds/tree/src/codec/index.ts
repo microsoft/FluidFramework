@@ -21,6 +21,7 @@ export {
 	withSchemaValidation,
 	FluidClientVersion,
 	currentVersion,
+	type CodecName,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,
@@ -33,4 +34,6 @@ export {
 	makeVersionedCodec,
 	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
+	ClientVersionDispatchingCodecBuilder,
+	type CodecVersion,
 } from "./versioned/index.js";
