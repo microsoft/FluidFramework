@@ -587,10 +587,10 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number>
 	extends LatestMapArgumentsRaw<T, Keys> {
-		/**
-		 * A validator function that will be called to do runtime validation of the custom data stored in a presence state
-		 * workspace.
-		 */
+	/**
+	 * A validator function that will be called to do runtime validation of the custom data stored in a presence state
+	 * workspace.
+	 */
 	validator: StateSchemaValidator<T>;
 }
 

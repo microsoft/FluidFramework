@@ -214,7 +214,6 @@ export function latestMap<T, Keys extends string | number = string | number, Reg
 
 // @beta
 export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
-    // (undocumented)
     validator: StateSchemaValidator<T>;
 }
 
