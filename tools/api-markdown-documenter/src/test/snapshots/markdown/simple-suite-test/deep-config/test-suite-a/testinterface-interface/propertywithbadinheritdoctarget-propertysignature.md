@@ -8,4 +8,4 @@
 propertyWithBadInheritDocTarget: boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean

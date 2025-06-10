@@ -2,11 +2,10 @@
 
 ## 0.21.0
 
-### `DocumentationNodeType` removed
+### `PlainTextNode` no longer supports unsafe "escaped" text
 
-The `DocumentationNodeType` enum has been removed.
-Enumerations of supported node kinds in various contexts is now handled via type unions like `BlockContent` and `PhrasingContent`.
-String literal types makes typing much simpler to reason about, and more inline with `unist` patterns.
+This type previously supported an unsafe escape hatch for text escaping.
+This support is no longer needed and has been removed.
 
 ### `LineBreakNode` removed from `BlockContent`
 
@@ -24,6 +23,12 @@ Their `createFromPlainText` static factory functions have also been removed, as 
 
 This `DocumentationNode` implementation was not used by the library.
 If this type is required, it can be re-introduced via the Documentation Domain's [extensibility model](#new-extensibility-model).
+
+### `DocumentationNodeType` removed
+
+The `DocumentationNodeType` enum has been removed.
+Enumerations of supported node kinds in various contexts is now handled via type unions like `BlockContent` and `PhrasingContent`.
+String literal types makes typing much simpler to reason about, and more inline with `unist` patterns.
 
 ## 0.20.0
 

@@ -62,7 +62,7 @@ A test abstract getter property.
 abstract get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](/test-suite-a/testmappedtype-typealias)
+**Type**: [TestMappedType](/test-suite-a/testmappedtype-typealias)
 
 ### protectedProperty {#protectedproperty-property}
 
@@ -74,7 +74,7 @@ A test protected property.
 protected readonly protectedProperty: TestEnum;
 ```
 
-**Type:** [TestEnum](/test-suite-a/testenum-enum)
+**Type**: [TestEnum](/test-suite-a/testenum-enum)
 
 ## Method Details
 
@@ -103,7 +103,7 @@ protected sealedMethod(): string;
 
 A string!
 
-**Return type:** string
+**Return type**: string
 
 ### virtualMethod {#virtualmethod-method}
 
@@ -120,4 +120,4 @@ protected virtualMethod(): number;
 
 A number!
 
-**Return type:** number
+**Return type**: number

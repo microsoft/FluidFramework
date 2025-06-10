@@ -253,7 +253,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 						[
 							ParagraphNode.createFromPlainText("The provided parameter"),
 							new ParagraphNode([
-								SpanNode.createFromPlainText("Return type: ", { bold: true }),
+								SpanNode.createFromPlainText("Return type", { bold: true }),
+								new PlainTextNode(": "),
 								SpanNode.createFromPlainText("TTypeParameter"),
 							]),
 						],
@@ -363,7 +364,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 									),
 									new ParagraphNode([
 										new SpanNode([
-											SpanNode.createFromPlainText("Type: ", { bold: true }),
+											SpanNode.createFromPlainText("Type", { bold: true }),
+											new PlainTextNode(": "),
 											SpanNode.createFromPlainText("number"),
 										]),
 									]),

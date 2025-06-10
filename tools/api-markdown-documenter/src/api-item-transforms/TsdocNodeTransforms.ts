@@ -7,7 +7,6 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
-	type DocEscapedText,
 	type DocFencedCode,
 	type DocLinkTag,
 	type DocNode,
@@ -45,7 +44,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends LoggingConfiguration {
+export interface TsdocNodeTransformOptions extends Required<LoggingConfiguration> {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -194,10 +193,7 @@ function transformTsdocParagraph(
 	if (transformedChildren.length > 0) {
 		if (transformedChildren[0].type === "text") {
 			const plainTextNode = transformedChildren[0];
-			transformedChildren[0] = new PlainTextNode(
-				plainTextNode.value.trimStart(),
-				plainTextNode.escaped,
-			);
+			transformedChildren[0] = new PlainTextNode(plainTextNode.value.trimStart());
 		}
 		if (transformedChildren[transformedChildren.length - 1].type === "text") {
 			const plainTextNode = transformedChildren[
@@ -205,7 +201,6 @@ function transformTsdocParagraph(
 			] as PlainTextNode;
 			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
 				plainTextNode.value.trimEnd(),
-				plainTextNode.escaped,
 			);
 		}
 	}
@@ -235,9 +230,6 @@ function transformTsdocParagraphContent(
 	switch (node.kind) {
 		case DocNodeKind.CodeSpan: {
 			return [transformTsdocCodeSpan(node as DocCodeSpan, options)];
-		}
-		case DocNodeKind.EscapedText: {
-			return [transformTsdocEscapedText(node as DocEscapedText, options)];
 		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
@@ -317,16 +309,6 @@ function transformTsdocPlainText(
 	options: TsdocNodeTransformOptions,
 ): PlainTextNode {
 	return new PlainTextNode(node.text);
-}
-
-/**
- * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
- */
-function transformTsdocEscapedText(
-	node: DocEscapedText,
-	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	return new PlainTextNode(node.encodedText, /* escaped: */ true);
 }
 
 /**
