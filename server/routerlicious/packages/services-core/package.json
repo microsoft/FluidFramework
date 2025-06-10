@@ -110,7 +110,10 @@
 				"forwardCompat": false
 			},
 			"Interface_IEncryptedTenantKeys": {
-				"forwardCompat": false
+				"backCompat": false
+			},
+			"Enum_EncryptionKeyVersion": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"
