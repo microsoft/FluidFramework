@@ -792,6 +792,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		this.isRebalancing = true;
 		try {
 			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
+				partitions.forEach((p) => this.assignedPartitions.add(p.partition));
 				// FIXME
 				Lumberjack.info("cooperative rebalance assign: ", partitions);
 				this.emit("coop.rebalance.assign", this.convertPartitions(partitions), err.code);
@@ -803,6 +804,7 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				// clean up things left over from the lost partitions
 				partitions.forEach((tp) => {
 					const partition = tp.partition;
+					this.assignedPartitions.delete(partition);
 					// clear the latest offset
 					this.latestOffsets.delete(partition);
 
@@ -834,8 +836,9 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				}
 			}
 		} catch (ex) {
-			this.isRebalancing = false;
 			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:cooperative" });
+		} finally {
+			this.isRebalancing = false;
 		}
 	}
 }
