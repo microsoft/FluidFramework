@@ -111,7 +111,7 @@ export enum EncryptionKeyVersion {
 	key2023 = "2023",
 	key2024 = "2024",
 	key2025 = "2025",
-	key2026 = "2026"
+	key2026 = "2026",
 }
 
 /**
