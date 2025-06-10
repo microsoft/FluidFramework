@@ -165,7 +165,6 @@ export function checkCompiles(): void {
 	function logClientValue<T>({
 		attendee,
 		value,
-		// FIXME: This should require RawValueAccessor<T> -- bare string should not work.
 	}: Pick<LatestClientData<T, RawValueAccessor<T>>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
 	}
