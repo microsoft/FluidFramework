@@ -3,10 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// Required for use of "raw" element.
-// eslint-disable-next-line import/no-unassigned-import
-import "hast-util-raw";
-
 import type { Nodes as HastTree } from "hast";
 
 import type { PlainTextNode } from "../../documentation-domain/index.js";
