@@ -9,7 +9,6 @@ import { h } from "hastscript";
 import type {
 	DocumentationNode,
 	CodeSpanNode,
-	EscapedTextNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
@@ -26,7 +25,6 @@ import type {
 import type { TransformationContext } from "../TransformationContext.js";
 import {
 	codeSpanToHtml,
-	escapedTextToHtml,
 	fencedCodeBlockToHtml,
 	headingToHtml,
 	sectionToHtml,
@@ -85,7 +83,6 @@ const hastHorizontalRule = h("hr");
  */
 export const defaultTransformations: Transformations = {
 	["codeSpan"]: (node, context) => codeSpanToHtml(node as CodeSpanNode, context),
-	escapedText: (node, context) => escapedTextToHtml(node as EscapedTextNode, context),
 	["fencedCode"]: (node, context) =>
 		fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
 	["heading"]: (node, context) => headingToHtml(node as HeadingNode, context),

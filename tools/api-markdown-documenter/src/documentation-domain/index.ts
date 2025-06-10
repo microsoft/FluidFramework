@@ -27,7 +27,6 @@ export {
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
-export { EscapedTextNode } from "./EscapedTextNode.js";
 export {
 	FencedCodeBlockNode,
 	type FencedCodeBlockNodeContent,
@@ -44,7 +43,7 @@ export {
 } from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
-export { SpanNode, type SpanContent } from "./SpanNode.js";
+export { SpanNode } from "./SpanNode.js";
 export {
 	type TableCellContent,
 	TableCellNode,

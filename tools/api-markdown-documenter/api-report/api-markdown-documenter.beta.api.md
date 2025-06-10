@@ -381,16 +381,6 @@ export namespace DocumentWriter {
 }
 
 // @public @sealed
-export class EscapedTextNode extends DocumentationLiteralNodeBase<string> {
-    constructor(text: string);
-    static readonly Empty: EscapedTextNode;
-    get isEmpty(): boolean;
-    readonly singleLine = true;
-    get text(): string;
-    readonly type = "escapedText";
-}
-
-// @public @sealed
 export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
     constructor(children: FencedCodeBlockNodeContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
@@ -704,8 +694,6 @@ export interface PhrasingContentMap {
     // (undocumented)
     codeSpan: CodeSpanNode;
     // (undocumented)
-    escapedText: EscapedTextNode;
-    // (undocumented)
     lineBreak: LineBreakNode;
     // (undocumented)
     link: LinkNode;
@@ -803,9 +791,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
-
-// @public
-export type SpanContent = Exclude<PhrasingContent, EscapedTextNode>;
 
 // @public
 export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {

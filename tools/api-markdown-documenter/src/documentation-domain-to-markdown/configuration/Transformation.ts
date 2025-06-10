@@ -38,7 +38,6 @@ import {
 	tableCellToMarkdown,
 	tableRowToMarkdown,
 	unorderedListToMarkdown,
-	escapedTextToMarkdown,
 } from "../default-transformations/index.js";
 
 /**
@@ -96,7 +95,6 @@ export type Transformation<
  */
 export const defaultTransformations: Transformations = {
 	codeSpan: codeSpanToMarkdown,
-	escapedText: escapedTextToMarkdown,
 	fencedCode: fencedCodeBlockToMarkdown,
 	heading: headingToMarkdown,
 	lineBreak: lineBreakToMarkdown,

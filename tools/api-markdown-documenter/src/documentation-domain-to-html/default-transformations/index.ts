@@ -4,7 +4,6 @@
  */
 
 export { codeSpanToHtml } from "./CodeSpanToHtml.js";
-export { escapedTextToHtml } from "./EscapedTextToHtml.js";
 export { fencedCodeBlockToHtml } from "./FencedCodeBlockToHtml.js";
 export { headingToHtml } from "./HeadingToHtml.js";
 export { sectionToHtml } from "./SectionToHtml.js";

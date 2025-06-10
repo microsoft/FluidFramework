@@ -24,7 +24,6 @@ import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
 	type BlockContent,
 	CodeSpanNode,
-	EscapedTextNode,
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
