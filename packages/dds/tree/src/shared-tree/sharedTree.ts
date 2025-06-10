@@ -64,7 +64,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/index.js";
+import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
@@ -191,6 +191,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 	[
 		4,
 		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+	],
+	[
+		5,
+		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
 ]);
 
@@ -511,7 +515,7 @@ export function persistedToSimpleSchema(
 	options: ICodecOptions,
 ): SimpleTreeSchema {
 	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-	const stored = schemaCodec.decode(persisted as Format);
+	const stored = schemaCodec.decode(persisted as FormatV1);
 	return exportSimpleSchema(stored);
 }
 
@@ -572,6 +576,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v3: 3,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v5: 5,
 } as const;
 
 /**
@@ -758,11 +767,6 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 	};
 }
 
-/**
- * Export a {@link SimpleNodeSchema} from a {@link TreeNodeStoredSchema}.
- * @privateRemarks
- * TODO: Persist node metadata once schema FormatV2 is supported.
- */
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
@@ -770,7 +774,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Array,
 			allowedTypesIdentifiers: arrayTypes,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
@@ -778,7 +782,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: undefined };
+		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: schema.metadata };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
@@ -789,7 +793,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Map,
 			allowedTypesIdentifiers: schema.mapFields.types,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
@@ -797,7 +801,7 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Leaf,
 			leafKind: schema.leafValue,
 			metadata: {},
-			persistedMetadata: undefined,
+			persistedMetadata: schema.metadata,
 		};
 	}
 	fail(0xacb /* invalid schema kind */);
