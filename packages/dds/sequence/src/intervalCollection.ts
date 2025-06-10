@@ -33,6 +33,8 @@ import {
 	IntervalMessageLocalMetadata,
 	SequenceOptions,
 	type IIntervalCollectionTypeOperationValue,
+	type IntervalAddLocalMetadata,
+	type IntervalChangeLocalMetadata,
 } from "./intervalCollectionMapInterfaces.js";
 import {
 	createIdIntervalIndex,
@@ -801,7 +803,6 @@ export class IntervalCollection
 		localOpMetadata: IntervalMessageLocalMetadata,
 	) {
 		const { opName, value } = op;
-		const { id, properties } = getSerializedProperties(value);
 		const { localSeq } = localOpMetadata;
 		this.localSeqToSerializedInterval.delete(localSeq);
 
@@ -826,6 +827,7 @@ export class IntervalCollection
 			case "change": {
 				const { previous } = current;
 				assert(previous !== undefined, 0xb7c /* must have previous for change */);
+				const { id, properties } = getSerializedProperties(value);
 
 				const endpointsChanged = value.start !== undefined && value.end !== undefined;
 				const start = endpointsChanged
@@ -868,16 +870,31 @@ export class IntervalCollection
 		const { opName, value } = op;
 		switch (opName) {
 			case "add": {
+				assert(
+					(local === false && localOpMetadata === undefined) ||
+						op.opName === localOpMetadata?.type,
+					"must be same type",
+				);
 				this.ackAdd(value, local, message, localOpMetadata);
 				break;
 			}
 
 			case "delete": {
+				assert(
+					(local === false && localOpMetadata === undefined) ||
+						op.opName === localOpMetadata?.type,
+					"must be same type",
+				);
 				this.ackDelete(value, local, message);
 				break;
 			}
 
 			case "change": {
+				assert(
+					(local === false && localOpMetadata === undefined) ||
+						op.opName === localOpMetadata?.type,
+					"must be same type",
+				);
 				this.ackChange(value, local, message, localOpMetadata);
 				break;
 			}
@@ -1412,7 +1429,7 @@ export class IntervalCollection
 		serializedInterval: SerializedIntervalDelta,
 		local: boolean,
 		op: ISequencedDocumentMessage,
-		localOpMetadata: IntervalMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalChangeLocalMetadata | undefined,
 	) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1699,7 +1716,7 @@ export class IntervalCollection
 		serializedInterval: ISerializedInterval,
 		local: boolean,
 		op: ISequencedDocumentMessage,
-		localOpMetadata: IntervalMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalAddLocalMetadata | undefined,
 	) {
 		const { id, properties } = getSerializedProperties(serializedInterval);
 
