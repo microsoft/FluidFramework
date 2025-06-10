@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import { fromOpaqueJson } from "./internalUtils.js";
+import { revealOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
@@ -131,11 +131,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		/**
 		 * Remote datastore typed to match {@link PresenceStatesInternal.processUpdate}'s
 		 * `ValueUpdateRecord` type that uses {@link InternalTypes.ValueRequiredState}
-		 * and expects and Opaque JSON type. (We get away with a non-`unknown` value type
+		 * and expects an Opaque JSON type. (We get away with a non-`unknown` value type
 		 * per TypeScript's method parameter bivariance.) Proper type would be
 		 * {@link ConnectionValueState} directly.
 		 * {@link ClientConnectionId} use for index is also a deviation, but conveniently
-		 * the accurate {@link AttendeeId} type is just a brand string, and
+		 * the accurate {@link AttendeeId} type is just a branded string, and
 		 * {@link ClientConnectionId} is just `string`.
 		 */
 		remoteDatastore: {
@@ -150,9 +150,9 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		const audienceMembers = this.audience.getMembers();
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
-			remoteDatastore.clientToSessionId,
+			revealOpaqueJson(remoteDatastore.clientToSessionId),
 		)) {
-			const attendeeId = fromOpaqueJson(value.value);
+			const attendeeId = value.value;
 			const { attendee, isJoining } = this.ensureAttendee(
 				attendeeId,
 				clientConnectionId,

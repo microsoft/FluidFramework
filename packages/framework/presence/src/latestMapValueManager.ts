@@ -595,7 +595,7 @@ class LatestMapValueManagerImpl<
  * @input
  * @beta
  */
-export interface LatestMapArguments<T, Keys extends string | number = string | number> {
+export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
 	/**
 	 * The initial value of the local state.
 	 */
@@ -605,6 +605,15 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 
 	/**
 	 * See {@link BroadcastControlSettings}.
+	 *
+	 * @remarks
+	 * Without the `| undefined` type, TypeScript emits the following error:
+	 *
+	 * ```text
+	 * Types of property 'settings' are incompatible.
+	 *    Type 'BroadcastControlSettings | undefined' is not assignable to type 'BroadcastControlSettings'.
+	 *      Type 'undefined' is not assignable to type 'BroadcastControlSettings'.
+	 * ```
 	 */
 	settings?: BroadcastControlSettings | undefined;
 
@@ -615,8 +624,29 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	validator?: StateSchemaValidator<T> | undefined;
 }
 
-// eslint-disable-next-line jsdoc/require-description
 /**
+ * Arguments that are passed to the {@link StateFactory.latestMap} function.
+ *
+ * @beta
+ */
+export interface LatestMapArguments<T, Keys extends string | number = string | number>
+	extends LatestMapArgumentsRaw<T, Keys> {
+	/**
+	 * A validator function that will be called to do runtime validation of the custom data stored in a presence state
+	 * workspace.
+	 */
+	validator: StateSchemaValidator<T>;
+}
+
+// #region function overloads
+// Overloads should be ordered from most specific to least specific.
+
+/**
+ * Factory for creating a {@link LatestMapRaw} State object with no arguments.
+ *
+ * @remarks
+ * This overload is used when called with {@link LatestMapArguments}. That is, if a validator function is provided.
+ *
  * @beta
  */
 export function latestMap<
@@ -624,7 +654,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args?: undefined,
+	args: LatestMapArguments<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
@@ -632,7 +662,31 @@ export function latestMap<
 >;
 
 /**
- * Factory for creating a {@link LatestMapRaw} State object with no arguments.
+ * Factory for creating a {@link LatestMapRaw} State object.
+ *
+ * @remarks
+ * This overload is used when called with {@link LatestMapArgumentsRaw}. That is, if a validator function is
+ * _not_provided.
+ *
+ * @beta
+ */
+export function latestMap<
+	T,
+	Keys extends string | number = string | number,
+	RegistrationKey extends string = string,
+>(
+	args: LatestMapArgumentsRaw<T, Keys>,
+): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMapRaw<T, Keys>
+>;
+
+/**
+ * Factory for creating a {@link LatestMapRaw} State object.
+ *
+ * @remarks
+ * This overload is used when called with no arguments.
  *
  * @beta
  */
@@ -646,26 +700,9 @@ export function latestMap<
 	LatestMapRaw<T, Keys>
 >;
 
-/**
- * Factory for creating a {@link LatestMapRaw} State object.
- *
- * @beta
- */
-export function latestMap<
-	T,
-	Keys extends string | number = string | number,
-	RegistrationKey extends string = string,
->(
-	args: Omit<LatestMapArguments<T, Keys>, "validator">,
-): InternalTypes.ManagerFactory<
-	RegistrationKey,
-	InternalTypes.MapValueState<T, Keys>,
-	LatestMapRaw<T, Keys>
->;
+// #endregion
 
 /**
- * Factory for creating a {@link LatestMap} State object.
- *
  * @beta
  */
 export function latestMap<
@@ -686,7 +723,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	inputArgs?: LatestMapArguments<T, Keys>,
+	args?: LatestMapArguments<T, Keys> | LatestMapArgumentsRaw<T, Keys>,
 ):
 	| InternalTypes.ManagerFactory<
 			RegistrationKey,
@@ -698,10 +735,13 @@ export function latestMap<
 			InternalTypes.MapValueState<T, Keys>,
 			LatestMapRaw<T, Keys>
 	  > {
-	const args = inputArgs as LatestMapArguments<T, Keys>;
 	const settings = args?.settings;
 	const initialValues = args?.local;
-	const validator = args?.validator;
+
+	const validator =
+		args !== undefined && "validator" in args && args.validator !== undefined
+			? args.validator
+			: undefined;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<

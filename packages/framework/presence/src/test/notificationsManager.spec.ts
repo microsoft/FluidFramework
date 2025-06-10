@@ -85,7 +85,8 @@ describe("Presence", () => {
 			notificationsWorkspace.add(
 				"testEvents",
 				Notifications<
-					// Below explicit generic specification should not be required.
+					// Below explicit generic specification should not be required
+					// when default handler is specified.
 					{
 						newId: (id: number) => void;
 					},

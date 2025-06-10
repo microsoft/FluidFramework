@@ -10,7 +10,7 @@ import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { InternalUtilityTypes } from "./exposedUtilityTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
-import { fromOpaqueJson, toOpaqueJson } from "./internalUtils.js";
+import { revealOpaqueJson, toOpaqueJson } from "./internalUtils.js";
 import type { Attendee, PresenceWithNotifications as Presence } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
@@ -244,7 +244,7 @@ class NotificationsManagerImpl<
 		updateValue: InternalTypes.ValueRequiredState<InternalTypes.NotificationType>,
 	): PostUpdateAction[] {
 		const postUpdateActions: PostUpdateAction[] = [];
-		const value = fromOpaqueJson(updateValue.value);
+		const value = revealOpaqueJson(updateValue.value);
 		const eventName = value.name as keyof Listeners<NotificationSubscriptions<T>>;
 		if (this.notificationsInternal.hasListeners(eventName)) {
 			// Without schema validation, we don't know that the args are the correct type.

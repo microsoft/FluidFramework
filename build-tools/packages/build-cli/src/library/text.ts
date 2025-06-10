@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
 /**
  * Indent text by prepending spaces.
@@ -27,4 +27,19 @@ export async function readLines(filePath: string): Promise<string[]> {
 	const content = await readFile(filePath, "utf8");
 	const lines = content.split(/\r?\n/);
 	return lines.filter((line) => line.trim() !== "");
+}
+
+/**
+ * Writes to a file, replacing any CRLF line-endings with LF. If the file data is not a string, this function behaves
+ * the same as writeFile.
+ */
+export async function writeFileWithLineFeeds(
+	...args: Parameters<typeof writeFile>
+): Promise<void> {
+	const [filePath, data, options] = args; // Destructure positional arguments
+	return writeFile(
+		filePath,
+		typeof data === "string" ? data.replace(/\r\n/g, "\n") : data,
+		options,
+	);
 }

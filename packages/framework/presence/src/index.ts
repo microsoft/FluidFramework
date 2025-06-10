@@ -50,6 +50,7 @@ export type {
 	latestMap,
 	LatestMap,
 	LatestMapArguments,
+	LatestMapArgumentsRaw,
 	LatestMapClientData,
 	LatestMapEvents,
 	LatestMapItemRemovedClientData,
@@ -61,6 +62,7 @@ export type {
 	latest,
 	Latest,
 	LatestArguments,
+	LatestArgumentsRaw,
 	LatestEvents,
 	LatestRaw,
 } from "./latestValueManager.js";
@@ -69,7 +71,6 @@ export type {
 	LatestClientData,
 	LatestMetadata,
 	StateSchemaValidator,
-	StateSchemaValidatorMetadata,
 	ProxiedValueAccessor,
 	RawValueAccessor,
 	ValueAccessor,

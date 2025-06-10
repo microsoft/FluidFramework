@@ -4,7 +4,6 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import type { TextFormatting } from "./TextFormatting.js";
 import { createNodesFromPlainText } from "./Utilities.js";
@@ -50,7 +49,7 @@ export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Span;
+	public readonly type = "span";
 
 	/**
 	 * Formatting to apply to all {@link DocumentationParentNode.children}.

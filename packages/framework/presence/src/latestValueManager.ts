@@ -232,21 +232,24 @@ class LatestValueManagerImpl<T, Key extends string>
  *
  * @param value - The object to clone
  * @returns A shallow clone of the input value
- * @internal
  */
 export function shallowCloneNullableObject<T extends object | null>(value: T): T {
 	return value === null ? value : shallowCloneObject(value);
 }
 
 /**
- * Arguments that are passed to the {@link StateFactory.latest} function.
+ * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link LatestRaw} state manager.
  *
  * @input
  * @beta
  */
-export interface LatestArguments<T extends object | null> {
+export interface LatestArgumentsRaw<T extends object | null> {
 	/**
 	 * The initial value of the local state.
+	 *
+	 * @remarks
+	 * `latest` assumes ownership of the value and its references.
+	 * Make a deep clone before passing, if needed.
 	 */
 	local: JsonSerializable<T>;
 
@@ -254,15 +257,28 @@ export interface LatestArguments<T extends object | null> {
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
-
-	/**
-	 * See {@link StateSchemaValidator}.
-	 */
-	validator?: StateSchemaValidator<T>;
 }
 
 /**
+ * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link Latest} state manager.
+ *
+ * @beta
+ */
+export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
+	/**
+	 * See {@link StateSchemaValidator}.
+	 */
+	validator: StateSchemaValidator<T>;
+}
+
+// #region function overloads
+// Overloads should be ordered from most specific to least specific.
+
+/**
  * Factory for creating a {@link Latest} State object.
+ *
+ * @remarks
+ * This overload is used when called with {@link LatestArguments}. That is, if a validator function is provided.
  *
  * @beta
  */
@@ -273,19 +289,30 @@ export function latest<T extends object | null, Key extends string = string>(
 /**
  * Factory for creating a {@link LatestRaw} State object.
  *
+ * @remarks
+ * This overload is used when called with {@link LatestArgumentsRaw}. That is, if a validator function is _not_
+ * provided.
+ *
  * @beta
  */
 export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArguments<T>,
+	args: LatestArgumentsRaw<T>,
 ): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+
+// #endregion
 
 /* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
 export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArguments<T>,
+	args: LatestArguments<T> | LatestArgumentsRaw<T>,
 ):
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
-	const { local, settings, validator } = args;
+	const { local, settings } = args;
+
+	const validator =
+		args !== undefined && "validator" in args && args.validator !== undefined
+			? args.validator
+			: undefined;
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.

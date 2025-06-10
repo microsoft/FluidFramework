@@ -16,7 +16,6 @@ import type {
 	LatestClientData,
 	LatestRaw,
 	Presence,
-	ProxiedValueAccessor,
 	RawValueAccessor,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
@@ -189,7 +188,7 @@ export function checkCompiles(): void {
 	function logRemoteValue<T>({
 		attendee,
 		value,
-	}: Pick<LatestClientData<T, ProxiedValueAccessor<T>>, "attendee" | "value">): void {
+	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value());
 	}
 
@@ -217,16 +216,23 @@ export function checkCompiles(): void {
 		logClientValue({ attendee, value });
 	}
 
-	const remoteCursor = cursor.getRemote(presence.attendees.getMyself());
-	logClientValue({ attendee: presence.attendees.getMyself(), value: remoteCursor.value });
+	// Get a reference to one of the remote attendees
+	const attendee2 = [...cursor.getStateAttendees()].find(
+		(attendee) => attendee !== presence.attendees.getMyself(),
+	);
+	assert(attendee2 !== undefined);
 
-	// Validated value
-	const latestData = props.validated.getRemote(presence.attendees.getMyself());
+	// Get a remote raw value
+	const remoteCursor = cursor.getRemote(attendee2);
+	logClientValue({ attendee: attendee2, value: remoteCursor.value });
 
-	// @ts-expect-error Type 'Latest<{ num: number; }, "proxied">' is not assignable to type 'LatestRaw<{ num: number; }>'.
-	const raw: LatestRaw<{ num: number }> = props.validated; // Latest<{num: number}>
+	// Get a remote validated value
+	const latestData = props.validated.getRemote(attendee2);
 
-	// @ts-expect-error Type 'LatestRaw<{ x: number; y: number; }>' is not assignable to type 'Latest<{ x: number; y: number; }, "proxied">'.
+	// @ts-expect-error Type 'Latest<{ num: number; }, ProxiedValueAccessor<{ num: number; }>>' is not assignable to type 'LatestRaw<{ num: number; }>'.
+	const raw: LatestRaw<{ num: number }> = props.validated;
+
+	// @ts-expect-error Type 'LatestRaw<{ x: number; y: number; }>' is not assignable to type 'Latest<{ x: number; y: number; }, ProxiedValueAccessor<{ x: number; y: number; }>>'.
 	const validated: Latest<{ x: number; y: number }> = props.cursor;
 
 	// The next line correctly does not compile because the value argument must be a RawValueAccessor

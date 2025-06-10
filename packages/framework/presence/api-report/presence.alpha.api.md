@@ -163,21 +163,25 @@ export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedVal
 export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
 
 // @beta
-export function latest<T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+export function latest<T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+
+// @beta
+export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
+    validator: StateSchemaValidator<T>;
+}
 
 // @beta @input
-export interface LatestArguments<T extends object | null> {
+export interface LatestArgumentsRaw<T extends object | null> {
     local: JsonSerializable<T>;
     settings?: BroadcastControlSettings | undefined;
-    validator?: StateSchemaValidator<T>;
 }
 
 // @beta @sealed
-export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T>> extends LatestData<T, TValueAccessor> {
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> extends LatestData<T, TValueAccessor> {
     attendee: Attendee;
 }
 
-// @beta @sealed
+// @beta @system
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     metadata: LatestMetadata;
     value: TValueAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
@@ -204,22 +208,27 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
     readonly presence: Presence;
 }
 
-// @beta (undocumented)
-export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: undefined): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+// @beta
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+
+// @beta
+export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
-// @beta
-export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: Omit<LatestMapArguments<T, Keys>, "validator">): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
-
-// @beta
+// @beta (undocumented)
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys> & {
     validator: StateSchemaValidator<T>;
 }): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
 
+// @beta
+export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
+    validator: StateSchemaValidator<T>;
+}
+
 // @beta @input
-export interface LatestMapArguments<T, Keys extends string | number = string | number> {
+export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
     local?: {
         [K in Keys]: JsonSerializable<T>;
     };
@@ -352,11 +361,21 @@ export interface PresenceWithNotifications extends Presence {
     };
 }
 
-// @beta @sealed
-export type ProxiedValueAccessor<_T> = "proxied";
+// @beta @system
+export interface ProxiedValueAccessor<T> {
+    // (undocumented)
+    readonly data: T;
+    // (undocumented)
+    readonly kind: "proxied";
+}
 
-// @beta @sealed
-export type RawValueAccessor<_T> = "raw";
+// @beta @system
+export interface RawValueAccessor<T> {
+    // (undocumented)
+    readonly data: T;
+    // (undocumented)
+    readonly kind: "raw";
+}
 
 // @beta
 export const StateFactory: {
@@ -378,13 +397,7 @@ export interface StateMap<K extends string | number, V> {
 
 // @beta
 export type StateSchemaValidator<T> = (
-unvalidatedData: unknown,
-metadata?: StateSchemaValidatorMetadata) => JsonDeserialized<T> | undefined;
-
-// @beta
-export interface StateSchemaValidatorMetadata {
-    key?: string | number;
-}
+unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
 
 // @beta @sealed
 export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
@@ -410,7 +423,7 @@ export interface StatesWorkspaceSchema {
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
-// @beta @sealed
+// @beta @system
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 // @beta

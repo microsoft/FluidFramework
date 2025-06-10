@@ -114,7 +114,6 @@ type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
 	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
 
 /**
- * No-effect helper to reveal the JSON type from a value's opaque JSON type.
  * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
  * types throughout a structure.
  *
@@ -122,7 +121,7 @@ type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
  * {@link OpaqueJsonDeserialized} instances will be replaced shallowly such
  * that nested instances are retained.
  */
-export function fromOpaqueJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
+export function revealOpaqueJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
 	return value as RevealOpaqueJsonDeserialized<T>;
 }
 

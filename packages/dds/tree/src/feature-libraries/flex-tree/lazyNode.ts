@@ -28,7 +28,7 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeNode,
+	type HydratedFlexTreeNode,
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
@@ -63,7 +63,7 @@ function cleanupTree(anchor: AnchorNode): void {
 /**
  * Lazy implementation of {@link FlexTreeNode}.
  */
-export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
+export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTreeNode {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
 		return FlexTreeEntityKind.Node;
 	}
@@ -86,6 +86,10 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);
+	}
+
+	public isHydrated(): this is HydratedFlexTreeNode {
+		return true;
 	}
 
 	public borrowCursor(): ITreeCursorSynchronous {
