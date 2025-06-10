@@ -719,8 +719,17 @@ describe("Runtime", () => {
 	});
 
 	/**
-	 * Helper function for testing if info.minVersionForCollab properly updates
-	 * when a new DocumentsSchemaController is created.
+	 * Helper function for testing {@link DocumentsSchemaController} instantiation with
+	 * an existing schema and requested `minVersionForCollab` through to update
+	 * generation and final result under uninterrupted action sequence.
+	 * After instantiation, checks that {@link DocumentsSchemaController.maybeGenerateSchemaMessage}
+	 * produces a message or not according to caller expectations. When a message is
+	 * expected and produced, a simulated "local" version of the message will be sent to
+	 * {@link DocumentsSchemaController.processDocumentSchemaMessages} and the call is
+	 * expected to succeed (return `true`).
+	 * Finally, `schema.info.minVersionForCollab` is checked by call to
+	 * {@link DocumentsSchemaController.summarizeDocumentSchema} to ensure it reflects
+	 * the given expected value.
 	 */
 	function testMinVersionForCollabUpdateProcess({
 		description,
