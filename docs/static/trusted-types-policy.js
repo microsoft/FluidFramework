@@ -12,7 +12,6 @@ if (
 	  typeof window.trustedTypes.getPolicy !== "function" ||
 	  !window.trustedTypes.getPolicy("default")
 	) {
-	  console.log("Creating default Trusted Types policy");
 	  const createHTML = (input) => {
 		try {
 		  if (typeof DOMPurify !== "undefined") {
