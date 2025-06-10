@@ -426,6 +426,11 @@ function or(
 	};
 }
 
+/**
+ * Determines if two schemas are the "same".
+ * Schemas are considered **not** the same if a schema change op is required to make
+ * the properties of `persistedSchema` match to the properties of `providedSchema`.
+ */
 function same(
 	persistedSchema: IDocumentSchemaCurrentIncoming,
 	providedSchema: IDocumentSchemaCurrent,
@@ -435,7 +440,7 @@ function same(
 		lt(persistedSchema.info.minVersionForCollab, providedSchema.info.minVersionForCollab)
 	) {
 		// If the persisted schema's minVersionForCollab is undefined or less than the provided schema's
-		// minVersionForCollab, then we consider the schemas to be different and we should send a schema change op.
+		// minVersionForCollab, then we should send a schema change op to update the minVersionForCollab.
 		return false;
 	}
 	for (const key of new Set([
