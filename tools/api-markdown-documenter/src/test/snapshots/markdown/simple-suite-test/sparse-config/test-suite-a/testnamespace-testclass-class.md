@@ -24,4 +24,4 @@ class TestClass
 
 | Method | Return Type | Description |
 | - | - | - |
-| [testClassMethod(testParameter)](docs/test-suite-a/testnamespace-testclass-testclassmethod-method) | Promise\<string\> | Test class method |
+| [testClassMethod(testParameter)](docs/test-suite-a/testnamespace-testclass-testclassmethod-method) | Promise\<string> | Test class method |
