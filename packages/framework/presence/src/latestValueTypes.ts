@@ -63,10 +63,13 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
  *
  * @beta
  */
-export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
-	? () => DeepReadonly<JsonDeserialized<U>> | undefined
-	: T extends RawValueAccessor<infer U>
-		? DeepReadonly<JsonDeserialized<U>>
+export type Accessor<
+	V,
+	TAccessor extends ValueAccessor<V>,
+> = TAccessor extends ProxiedValueAccessor<infer V>
+	? () => DeepReadonly<JsonDeserialized<V>> | undefined
+	: TAccessor extends RawValueAccessor<infer V>
+		? DeepReadonly<JsonDeserialized<V>>
 		: never;
 
 /**
@@ -83,11 +86,12 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	 * The value of the state.
 	 * @remarks This is a deeply readonly value, meaning it cannot be modified.
 	 */
-	value: TValueAccessor extends ProxiedValueAccessor<T>
-		? () => DeepReadonly<JsonDeserialized<T>> | undefined
-		: TValueAccessor extends RawValueAccessor<T>
-			? DeepReadonly<JsonDeserialized<T>>
-			: never;
+	// value: TValueAccessor extends ProxiedValueAccessor<T>
+	// 	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	// 	: TValueAccessor extends RawValueAccessor<T>
+	// 		? DeepReadonly<JsonDeserialized<T>>
+	// 		: never;
+	value: Accessor<T, TValueAccessor>;
 
 	/**
 	 * Metadata associated with the value.
