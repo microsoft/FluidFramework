@@ -612,7 +612,7 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	*children(node: TreeNode): Generator<[string | number, TreeNode | TreeLeafValue]> {
+	children(node: TreeNode): [string | number, TreeNode | TreeLeafValue][] {
 		const flexNode = getOrCreateInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
@@ -620,6 +620,7 @@ export const TreeAlpha: TreeAlpha = {
 
 		const schema = treeNodeApi.schema(node);
 
+		const result: [string | number, TreeNode | TreeLeafValue][] = [];
 		switch (schema.kind) {
 			case NodeKind.Array: {
 				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
@@ -631,7 +632,7 @@ export const TreeAlpha: TreeAlpha = {
 					const childFlexTree = sequence.at(index);
 					assert(childFlexTree !== undefined, "Sequence child was undefined.");
 					const childTree = nodeFromInnerUnboxedNode(childFlexTree);
-					yield [index, childTree];
+					result.push([index, childTree]);
 				}
 				break;
 			}
@@ -642,7 +643,7 @@ export const TreeAlpha: TreeAlpha = {
 						flexNode.tryGetField(fieldKey) ?? fail("Field not found for reported key.");
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
-						yield [fieldKey, childTreeNode];
+						result.push([fieldKey, childTreeNode]);
 					}
 				}
 				break;
@@ -654,6 +655,7 @@ export const TreeAlpha: TreeAlpha = {
 				unreachableCase(schema.kind);
 			}
 		}
+		return result;
 	},
 };
 
