@@ -15,11 +15,11 @@
 	"exports": {
 		".": {
 			"import": "./lib/index.js",
-			"types": "./lib/public.d.ts"
+			"types": "./lib/api-markdown-documenter.d.ts"
 		},
 		"./beta": {
 			"import": "./lib/index.js",
-			"types": "./lib/beta.d.ts"
+			"types": "./lib/api-markdown-documenter-public-beta.d.ts"
 		}
 	},
 	"scripts": {
