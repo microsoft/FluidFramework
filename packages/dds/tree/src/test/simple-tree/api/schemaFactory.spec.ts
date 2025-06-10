@@ -432,13 +432,14 @@ describe("schemaFactory", () => {
 			const fooMetadata = { "a": 2 };
 
 			class Foo extends schemaFactory.objectAlpha("Foo", {
-				bar: schemaFactory.requiredAlpha(schemaFactory.number, {
+				// TODO: Wire up SchemaFactoryAlpha so that we can call the alpha methods on the schemaFactory instance.
+				bar: SchemaFactoryAlpha.required(schemaFactory.number, {
 					persistedMetadata: fooMetadata,
 				}),
-				baz: schemaFactory.optionalAlpha(schemaFactory.string, {
+				baz: SchemaFactoryAlpha.optional(schemaFactory.string, {
 					persistedMetadata: fooMetadata,
 				}),
-				qux: schemaFactory.optionalRecursiveAlpha(
+				qux: SchemaFactoryAlpha.optionalRecursive(
 					schemaFactory.objectAlpha("Qux", { quux: schemaFactory.string }),
 					{ persistedMetadata: fooMetadata },
 				),

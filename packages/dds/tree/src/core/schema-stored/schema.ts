@@ -31,8 +31,6 @@ export enum SchemaVersion {
 	v1 = 1,
 }
 
-type FieldSchemaFormat = FieldSchemaFormatV1;
-
 /**
  * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
  * @privateRemarks
@@ -220,7 +218,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
-		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
+		const fieldsObject: Record<string, FieldSchemaFormatV1> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
 		for (const key of [...this.objectNodeFields.keys()].sort()) {
@@ -304,7 +302,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 > = new DiscriminatedUnionDispatcher({
 	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
 	object: (
-		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
+		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormatV1>,
 	): TreeNodeStoredSchema => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
@@ -312,7 +310,7 @@ export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
 		}
 		return new ObjectNodeStoredSchema(map);
 	},
-	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
+	map: (data: FieldSchemaFormatV1) => new MapNodeStoredSchema(decodeFieldSchema(data)),
 });
 
 const valueSchemaEncode = new Map([

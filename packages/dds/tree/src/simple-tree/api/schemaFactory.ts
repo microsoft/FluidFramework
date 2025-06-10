@@ -63,6 +63,7 @@ import {
 	type UnannotateSchemaRecord,
 	type NodeSchemaOptionsAlpha,
 	normalizeAllowedTypes,
+	type FieldPropsAlpha,
 } from "../schemaTypes.js";
 
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
@@ -308,7 +309,7 @@ export const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() =>
 
 function optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
 
 function optional<
@@ -316,7 +317,7 @@ function optional<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
 
 function optional<
@@ -324,7 +325,7 @@ function optional<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
 	return createFieldSchema(FieldKind.Optional, t, {
 		defaultProvider: defaultOptionalProvider,
@@ -334,7 +335,7 @@ function optional<
 
 function required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata>;
 
 function required<
@@ -342,7 +343,7 @@ function required<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
 
 function required<
@@ -350,7 +351,7 @@ function required<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
 	return createFieldSchema(FieldKind.Required, t, props);
 }
@@ -378,7 +379,7 @@ export const schemaStaticsBase = {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, {
 			defaultProvider: defaultOptionalProvider,
@@ -391,7 +392,7 @@ export const schemaStaticsBase = {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	},
