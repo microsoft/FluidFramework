@@ -1,4 +1,4 @@
-[Packages](docs/) &gt; [test-suite-a](docs/test-suite-a)
+[Packages](docs/) \> [test-suite-a](docs/test-suite-a)
 
 Test package
 
@@ -39,7 +39,7 @@ const foo = bar;
 # Interfaces
 
 | Interface | Description |
-| --- | --- |
+| - | - |
 | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) | An empty interface |
 | [TestInterface](docs/test-suite-a#testinterface-interface) | Test interface |
 | [TestInterfaceExtendingOtherInterfaces](docs/test-suite-a#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
@@ -49,45 +49,45 @@ const foo = bar;
 # Classes
 
 | Class | Description |
-| --- | --- |
+| - | - |
 | [TestAbstractClass](docs/test-suite-a#testabstractclass-class) | A test abstract class. |
 | [TestClass](docs/test-suite-a#testclass-class) | Test class |
 
 # Enumerations
 
 | Enum | Description |
-| --- | --- |
+| - | - |
 | [TestEnum](docs/test-suite-a#testenum-enum) | Test Enum |
 
 # Types
 
 | TypeAlias | Description |
-| --- | --- |
+| - | - |
 | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/test-suite-a#testenum-enum) |
 | [TypeAlias](docs/test-suite-a#typealias-typealias) | Test Type-Alias |
 
 # Functions
 
 | Function | Alerts | Return Type | Description |
-| --- | --- | --- | --- |
-| [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)&lt;number&gt; | Test function that returns an inline type |
-| [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) |  | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
+| - | - | - | - |
+| [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number\> | Test function that returns an inline type |
+| [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
 
 # Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
-| --- | --- | --- | --- | --- |
-| [testConst](docs/test-suite-a#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| - | - | - | - | - |
+| [testConst](docs/test-suite-a#testconst-variable) | `Beta` | `readonly` | | Test Constant |
 | [testConstWithEmptyDeprecatedBlock](docs/test-suite-a#testconstwithemptydeprecatedblock-variable) | `Deprecated` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 # Namespaces
 
 | Namespace | Alerts | Description |
-| --- | --- | --- |
+| - | - | - |
 | [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | A namespace tagged as `@beta`. |
-| [TestModule](docs/test-suite-a#testmodule-namespace) |  |  |
-| [TestNamespace](docs/test-suite-a#testnamespace-namespace) |  | Test Namespace |
+| [TestModule](docs/test-suite-a#testmodule-namespace) | | |
+| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | | Test Namespace |
 
 # Interface Details
 
@@ -118,37 +118,37 @@ Here are some remarks about the interface
 ### Constructors
 
 | Constructor | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [new (): TestInterface](docs/test-suite-a#testinterface-_new_-constructsignature) | [TestInterface](docs/test-suite-a#testinterface-interface) | Test construct signature. |
 
 ### Events
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
-| [testClassEventProperty](docs/test-suite-a#testinterface-testclasseventproperty-propertysignature) | `readonly` | () =&gt; void | Test interface event property |
+| - | - | - | - |
+| [testClassEventProperty](docs/test-suite-a#testinterface-testclasseventproperty-propertysignature) | `readonly` | () =\> void | Test interface event property |
 
 ### Properties
 
 | Property | Modifiers | Default Value | Type | Description |
-| --- | --- | --- | --- | --- |
-| [getterProperty](docs/test-suite-a#testinterface-getterproperty-property) | `readonly` |  | boolean | A test getter-only interface property. |
-| [propertyWithBadInheritDocTarget](docs/test-suite-a#testinterface-propertywithbadinheritdoctarget-propertysignature) |  |  | boolean |  |
-| [setterProperty](docs/test-suite-a#testinterface-setterproperty-property) |  |  | boolean | A test property with a getter and a setter. |
-| [testInterfaceProperty](docs/test-suite-a#testinterface-testinterfaceproperty-propertysignature) |  |  | number | Test interface property |
+| - | - | - | - | - |
+| [getterProperty](docs/test-suite-a#testinterface-getterproperty-property) | `readonly` | | boolean | A test getter-only interface property. |
+| [propertyWithBadInheritDocTarget](docs/test-suite-a#testinterface-propertywithbadinheritdoctarget-propertysignature) | | | boolean | |
+| [setterProperty](docs/test-suite-a#testinterface-setterproperty-property) | | | boolean | A test property with a getter and a setter. |
+| [testInterfaceProperty](docs/test-suite-a#testinterface-testinterfaceproperty-propertysignature) | | | number | Test interface property |
 | [testOptionalInterfaceProperty](docs/test-suite-a#testinterface-testoptionalinterfaceproperty-propertysignature) | `optional` | 0 | number | Test optional property |
 
 ### Methods
 
 | Method | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testInterfaceMethod()](docs/test-suite-a#testinterface-testinterfacemethod-methodsignature) | void | Test interface method |
 
 ### Call Signatures
 
 | CallSignature | Description |
-| --- | --- |
-| [(event: 'testCallSignature', listener: (input: unknown) =&gt; void): any](docs/test-suite-a#testinterface-_call_-callsignature) | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | Another example call signature |
+| - | - |
+| [(event: 'testCallSignature', listener: (input: unknown) =\> void): any](docs/test-suite-a#testinterface-_call_-callsignature) | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) =\> string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | Another example call signature |
 
 ### Constructor Details
 
@@ -164,7 +164,7 @@ new (): TestInterface;
 
 ##### Returns {#\_new\_-returns}
 
-**Return type:** [TestInterface](docs/test-suite-a#testinterface-interface)
+**Return type**: [TestInterface](docs/test-suite-a#testinterface-interface)
 
 ### Event Details
 
@@ -178,7 +178,7 @@ Test interface event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () =\> void
 
 ##### Remarks {#testclasseventproperty-remarks}
 
@@ -196,7 +196,7 @@ A test getter-only interface property.
 get getterProperty(): boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 #### propertyWithBadInheritDocTarget {#testinterface-propertywithbadinheritdoctarget-propertysignature}
 
@@ -206,7 +206,7 @@ get getterProperty(): boolean;
 propertyWithBadInheritDocTarget: boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 #### setterProperty {#testinterface-setterproperty-property}
 
@@ -219,7 +219,7 @@ get setterProperty(): boolean;
 set setterProperty(newValue: boolean);
 ```
 
-**Type:** boolean
+**Type**: boolean
 
 #### testInterfaceProperty {#testinterface-testinterfaceproperty-propertysignature}
 
@@ -231,7 +231,7 @@ Test interface property
 testInterfaceProperty: number;
 ```
 
-**Type:** number
+**Type**: number
 
 ##### Remarks {#testinterfaceproperty-remarks}
 
@@ -247,7 +247,7 @@ Test optional property
 testOptionalInterfaceProperty?: number;
 ```
 
-**Type:** number
+**Type**: number
 
 ### Method Details
 
@@ -267,7 +267,7 @@ Here are some remarks about the method
 
 ### Call Signature Details
 
-#### (event: 'testCallSignature', listener: (input: unknown) =&gt; void): any {#testinterface-\_call\_-callsignature}
+#### (event: 'testCallSignature', listener: (input: unknown) =\> void): any {#testinterface-\_call\_-callsignature}
 
 Test interface event call signature
 
@@ -281,7 +281,7 @@ Test interface event call signature
 
 Here are some remarks about the event call signature
 
-#### (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number {#testinterface-\_call\_\_1-callsignature}
+#### (event: 'anotherTestCallSignature', listener: (input: number) =\> string): number {#testinterface-\_call\_\_1-callsignature}
 
 Another example call signature
 
@@ -315,7 +315,7 @@ Test interface that extends other interfaces
 export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter<number>
 ```
 
-**Extends:** [TestInterface](docs/test-suite-a#testinterface-interface), [TestMappedType](docs/test-suite-a#testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)&lt;number&gt;
+**Extends**: [TestInterface](docs/test-suite-a#testinterface-interface), [TestMappedType](docs/test-suite-a#testmappedtype-typealias), [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number\>
 
 ### Remarks {#testinterfaceextendingotherinterfaces-remarks}
 
@@ -324,7 +324,7 @@ Here are some remarks about the interface
 ### Methods
 
 | Method | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testMethod(input)](docs/test-suite-a#testinterfaceextendingotherinterfaces-testmethod-methodsignature) | number | Test interface method accepting a string and returning a number. |
 
 ### Method Details
@@ -346,14 +346,14 @@ Here are some remarks about the method
 ##### Parameters {#testmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | input | string | A string |
 
 ##### Returns {#testmethod-returns}
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ### See Also {#testinterfaceextendingotherinterfaces-see-also}
 
@@ -376,7 +376,7 @@ export interface TestInterfaceWithIndexSignature
 ### Index Signatures
 
 | IndexSignature | Description |
-| --- | --- |
+| - | - |
 | [\[foo: number\]: { bar: string; }](docs/test-suite-a#testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
 
 ### Index Signature Details
@@ -406,7 +406,7 @@ export interface TestInterfaceWithTypeParameter<T>
 #### Type Parameters
 
 | Parameter | Description |
-| --- | --- |
+| - | - |
 | T | A type parameter |
 
 ### Remarks {#testinterfacewithtypeparameter-remarks}
@@ -416,7 +416,7 @@ Here are some remarks about the interface
 ### Properties
 
 | Property | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testProperty](docs/test-suite-a#testinterfacewithtypeparameter-testproperty-propertysignature) | T | A test interface property using generic type parameter |
 
 ### Property Details
@@ -431,7 +431,7 @@ A test interface property using generic type parameter
 testProperty: T;
 ```
 
-**Type:** T
+**Type**: T
 
 ##### Remarks {#testproperty-remarks}
 
@@ -452,21 +452,21 @@ export declare abstract class TestAbstractClass
 ### Constructors
 
 | Constructor | Description |
-| --- | --- |
+| - | - |
 | [(constructor)(privateProperty, protectedProperty)](docs/test-suite-a#testabstractclass-_constructor_-constructor) | This is a _{@customTag constructor}_. |
 
 ### Properties
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
+| - | - | - | - |
 | [abstractPropertyGetter](docs/test-suite-a#testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
 | [protectedProperty](docs/test-suite-a#testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/test-suite-a#testenum-enum) | A test protected property. |
 
 ### Methods
 
 | Method | Modifiers | Return Type | Description |
-| --- | --- | --- | --- |
-| [publicAbstractMethod()](docs/test-suite-a#testabstractclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+| - | - | - | - |
+| [publicAbstractMethod()](docs/test-suite-a#testabstractclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [sealedMethod()](docs/test-suite-a#testabstractclass-sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
 | [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method) | `virtual` | number | A test `@virtual` method. |
 
@@ -485,9 +485,9 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 ##### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
-| privateProperty | number |  |
-| protectedProperty | [TestEnum](docs/test-suite-a#testenum-enum) |  |
+| - | - | - |
+| privateProperty | number | |
+| protectedProperty | [TestEnum](docs/test-suite-a#testenum-enum) | |
 
 ### Property Details
 
@@ -501,7 +501,7 @@ A test abstract getter property.
 abstract get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
+**Type**: [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
 #### protectedProperty {#testabstractclass-protectedproperty-property}
 
@@ -513,7 +513,7 @@ A test protected property.
 protected readonly protectedProperty: TestEnum;
 ```
 
-**Type:** [TestEnum](docs/test-suite-a#testenum-enum)
+**Type**: [TestEnum](docs/test-suite-a#testenum-enum)
 
 ### Method Details
 
@@ -542,7 +542,7 @@ protected sealedMethod(): string;
 
 A string!
 
-**Return type:** string
+**Return type**: string
 
 #### virtualMethod {#testabstractclass-virtualmethod-method}
 
@@ -559,7 +559,7 @@ protected virtualMethod(): number;
 
 A number!
 
-**Return type:** number
+**Return type**: number
 
 ## TestClass {#testclass-class}
 
@@ -571,12 +571,12 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](docs/test-suite-a#testabstractclass-class)
+**Extends**: [TestAbstractClass](docs/test-suite-a#testabstractclass-class)
 
 #### Type Parameters
 
 | Parameter | Description |
-| --- | --- |
+| - | - |
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
@@ -587,31 +587,31 @@ Here are some remarks about the class
 ### Constructors
 
 | Constructor | Description |
-| --- | --- |
+| - | - |
 | [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](docs/test-suite-a#testclass-_constructor_-constructor) | Test class constructor |
 
 ### Static Properties
 
 | Property | Type | Description |
-| --- | --- | --- |
-| [testClassStaticProperty](docs/test-suite-a#testclass-testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
+| - | - | - |
+| [testClassStaticProperty](docs/test-suite-a#testclass-testclassstaticproperty-property) | (foo: number) =\> string | Test static class property |
 
 ### Static Methods
 
 | Method | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testClassStaticMethod(foo)](docs/test-suite-a#testclass-testclassstaticmethod-method) | string | Test class static method |
 
 ### Events
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
-| [testClassEventProperty](docs/test-suite-a#testclass-testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
+| - | - | - | - |
+| [testClassEventProperty](docs/test-suite-a#testclass-testclasseventproperty-property) | `readonly` | () =\> void | Test class event property |
 
 ### Properties
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
+| - | - | - | - |
 | [abstractPropertyGetter](docs/test-suite-a#testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
 | [testClassGetterProperty](docs/test-suite-a#testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](docs/test-suite-a#testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
@@ -619,10 +619,10 @@ Here are some remarks about the class
 ### Methods
 
 | Method | Modifiers | Return Type | Description |
-| --- | --- | --- | --- |
-| [publicAbstractMethod()](docs/test-suite-a#testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+| - | - | - | - |
+| [publicAbstractMethod()](docs/test-suite-a#testclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](docs/test-suite-a#testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](docs/test-suite-a#testclass-virtualmethod-method) |  | number | Overrides [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method). |
+| [virtualMethod()](docs/test-suite-a#testclass-virtualmethod-method) | | number | Overrides [virtualMethod()](docs/test-suite-a#testabstractclass-virtualmethod-method). |
 
 ### Constructor Details
 
@@ -643,11 +643,11 @@ Here are some remarks about the constructor
 ##### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | privateProperty | number | See [TestAbstractClass](docs/test-suite-a#testabstractclass-class)'s constructor. |
 | protectedProperty | [TestEnum](docs/test-suite-a#testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="docs/test-suite-a#testabstractclass-protectedproperty-property">protectedProperty</a>.</p> |
 | testClassProperty | TTypeParameterB | See [testClassProperty](docs/test-suite-a#testclass-testclassproperty-property). |
-| testClassEventProperty | () =&gt; void | See [testClassEventProperty](docs/test-suite-a#testclass-testclasseventproperty-property). |
+| testClassEventProperty | () =\> void | See [testClassEventProperty](docs/test-suite-a#testclass-testclasseventproperty-property). |
 
 ### Event Details
 
@@ -661,7 +661,7 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () =\> void
 
 ##### Remarks {#testclasseventproperty-remarks}
 
@@ -679,7 +679,7 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
+**Type**: [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
 #### testClassGetterProperty {#testclass-testclassgetterproperty-property}
 
@@ -693,7 +693,7 @@ get testClassGetterProperty(): number;
 set testClassGetterProperty(newValue: number);
 ```
 
-**Type:** number
+**Type**: number
 
 ##### Remarks {#testclassgetterproperty-remarks}
 
@@ -709,7 +709,7 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
-**Type:** TTypeParameterB
+**Type**: TTypeParameterB
 
 ##### Remarks {#testclassproperty-remarks}
 
@@ -725,7 +725,7 @@ Test static class property
 static testClassStaticProperty: (foo: number) => string;
 ```
 
-**Type:** (foo: number) =&gt; string
+**Type**: (foo: number) =\> string
 
 ### Method Details
 
@@ -757,12 +757,12 @@ Here are some remarks about the method
 ##### Parameters {#testclassmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
-| input | TTypeParameterA |  |
+| - | - | - |
+| input | TTypeParameterA | |
 
 ##### Returns {#testclassmethod-returns}
 
-**Return type:** TTypeParameterA
+**Return type**: TTypeParameterA
 
 ##### Throws {#testclassmethod-throws}
 
@@ -783,14 +783,14 @@ static testClassStaticMethod(foo: number): string;
 ##### Parameters {#testclassstaticmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | foo | number | Some number |
 
 ##### Returns {#testclassstaticmethod-returns}
 
 - Some string
 
-**Return type:** string
+**Return type**: string
 
 #### virtualMethod {#testclass-virtualmethod-method}
 
@@ -805,7 +805,7 @@ protected virtualMethod(): number;
 
 ##### Returns {#virtualmethod-returns}
 
-**Return type:** number
+**Return type**: number
 
 ### See Also {#testclass-see-also}
 
@@ -848,7 +848,7 @@ const bar = TestEnum.TestEnumValue2
 ### Flags
 
 | Flag | Description |
-| --- | --- |
+| - | - |
 | [TestEnumValue1](docs/test-suite-a#testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
 | [TestEnumValue2](docs/test-suite-a#testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
 | [TestEnumValue3](docs/test-suite-a#testenum-testenumvalue3-enummember) | Test enum value 3 (default) |
@@ -946,7 +946,7 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
-**Return type:** {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); }
+**Return type**: {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); }
 
 ## testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
@@ -954,7 +954,7 @@ Test function that returns an inline type
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-_This is a test deprecation notice. Here is a_ [_link_](docs/test-suite-a#testfunctionreturninguniontype-function)<!-- --> _to something else!_
+This is a test deprecation notice. Here is a [link](docs/test-suite-a#testfunctionreturninguniontype-function) to something else!
 
 ### Signature {#testfunctionreturningintersectiontype-signature}
 
@@ -966,7 +966,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type:** [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) &amp; [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)&lt;number&gt;
+**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number\>
 
 ## testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
@@ -982,7 +982,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type:** string \| [TestInterface](docs/test-suite-a#testinterface-interface)
+**Return type**: string \| [TestInterface](docs/test-suite-a#testinterface-interface)
 
 # Variable Details
 
@@ -1014,7 +1014,7 @@ I have a `@deprecated` tag with an empty comment block.
 testConstWithEmptyDeprecatedBlock: string
 ```
 
-**Type:** string
+**Type**: string
 
 # Namespace Details
 
@@ -1037,9 +1037,9 @@ Tests release level inheritance.
 ### Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
-| --- | --- | --- | --- | --- |
-| [betaMember](docs/test-suite-a#testbetanamespace-betamember-variable) | `Beta` | `readonly` |  |  |
-| [publicMember](docs/test-suite-a#testbetanamespace-publicmember-variable) | `Beta` | `readonly` |  |  |
+| - | - | - | - | - |
+| [betaMember](docs/test-suite-a#testbetanamespace-betamember-variable) | `Beta` | `readonly` | | |
+| [publicMember](docs/test-suite-a#testbetanamespace-publicmember-variable) | `Beta` | `readonly` | | |
 
 ### Variable Details
 
@@ -1068,8 +1068,8 @@ publicMember = "public"
 ### Variables
 
 | Variable | Modifiers | Type | Description |
-| --- | --- | --- | --- |
-| [foo](docs/test-suite-a#testmodule-foo-variable) | `readonly` |  | Test constant in module. |
+| - | - | - | - |
+| [foo](docs/test-suite-a#testmodule-foo-variable) | `readonly` | | Test constant in module. |
 
 ### Variable Details
 
@@ -1120,37 +1120,37 @@ const foo = {
 ### Classes
 
 | Class | Description |
-| --- | --- |
+| - | - |
 | [TestClass](docs/test-suite-a#testnamespace-testclass-class) | Test class |
 
 ### Enumerations
 
 | Enum | Description |
-| --- | --- |
+| - | - |
 | [TestEnum](docs/test-suite-a#testnamespace-testenum-enum) | Test Enum |
 
 ### Types
 
 | TypeAlias | Description |
-| --- | --- |
+| - | - |
 | [TestTypeAlias](docs/test-suite-a#testnamespace-testtypealias-typealias) | Test Type-Alias |
 
 ### Functions
 
 | Function | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testFunction(testParameter)](docs/test-suite-a#testnamespace-testfunction-function) | number | Test function |
 
 ### Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
-| --- | --- | --- | --- | --- |
-| [TestConst](docs/test-suite-a#testnamespace-testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| - | - | - | - | - |
+| [TestConst](docs/test-suite-a#testnamespace-testconst-variable) | `Beta` | `readonly` | | Test Constant |
 
 ### Namespaces
 
 | Namespace | Description |
-| --- | --- |
+| - | - |
 | [TestSubNamespace](docs/test-suite-a#testnamespace-testsubnamespace-namespace) | Test sub-namespace |
 
 ### Class Details
@@ -1168,20 +1168,20 @@ class TestClass
 ##### Constructors
 
 | Constructor | Description |
-| --- | --- |
+| - | - |
 | [(constructor)(testClassProperty)](docs/test-suite-a#testnamespace-testclass-_constructor_-constructor) | Test class constructor |
 
 ##### Properties
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
+| - | - | - | - |
 | [testClassProperty](docs/test-suite-a#testnamespace-testclass-testclassproperty-property) | `readonly` | string | Test interface property |
 
 ##### Methods
 
 | Method | Return Type | Description |
-| --- | --- | --- |
-| [testClassMethod(testParameter)](docs/test-suite-a#testnamespace-testclass-testclassmethod-method) | Promise&lt;string&gt; | Test class method |
+| - | - | - |
+| [testClassMethod(testParameter)](docs/test-suite-a#testnamespace-testclass-testclassmethod-method) | Promise\<string\> | Test class method |
 
 ##### Constructor Details
 
@@ -1200,7 +1200,7 @@ constructor(testClassProperty: string);
 **Parameters**
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testClassProperty | string | See [testClassProperty](docs/test-suite-a#testclass-testclassproperty-property) |
 
 ##### Property Details
@@ -1216,7 +1216,7 @@ Test interface property
 readonly testClassProperty: string;
 ```
 
-**Type:** string
+**Type**: string
 
 ##### Method Details
 
@@ -1235,7 +1235,7 @@ testClassMethod(testParameter: string): Promise<string>;
 **Parameters**
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testParameter | string | A string |
 
 <a id="testclassmethod-returns"></a>
@@ -1243,7 +1243,7 @@ testClassMethod(testParameter: string): Promise<string>;
 
 A Promise
 
-**Return type:** Promise&lt;string&gt;
+**Return type**: Promise\<string\>
 
 <a id="testclassmethod-throws"></a>
 **Throws**
@@ -1269,7 +1269,7 @@ enum TestEnum
 ##### Flags
 
 | Flag | Description |
-| --- | --- |
+| - | - |
 | [TestEnumValue1](docs/test-suite-a#testnamespace-testenum-testenumvalue1-enummember) | Test enum value 1 |
 | [TestEnumValue2](docs/test-suite-a#testnamespace-testenum-testenumvalue2-enummember) | Test enum value 2 |
 
@@ -1322,14 +1322,14 @@ function testFunction(testParameter: number): number;
 ##### Parameters {#testfunction-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
-| testParameter | number |  |
+| - | - | - |
+| testParameter | number | |
 
 ##### Returns {#testfunction-returns}
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ##### Throws {#testfunction-throws}
 

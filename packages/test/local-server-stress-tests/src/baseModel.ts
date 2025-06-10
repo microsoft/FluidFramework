@@ -99,6 +99,7 @@ export function makeGenerator<T extends BaseOperation>(
 }
 export const saveFailures = { directory: path.join(_dirname, "../src/test/results") };
 export const saveSuccesses = { directory: path.join(_dirname, "../src/test/results") };
+export const saveFluidOps = { directory: path.join(_dirname, "../src/test/results") };
 
 export const ddsModelMinimizers: MinimizationTransform<BaseOperation>[] = [
 	...ddsModelMap.entries(),

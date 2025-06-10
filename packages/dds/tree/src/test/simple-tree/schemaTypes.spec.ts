@@ -64,7 +64,7 @@ import type {
 	UnionToIntersection,
 } from "../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { objectSchema } from "../../simple-tree/objectNode.js";
+import { objectSchema } from "../../simple-tree/node-kinds/index.js";
 import { validateUsageError } from "../utils.js";
 import { TreeAlpha } from "../../shared-tree/index.js";
 

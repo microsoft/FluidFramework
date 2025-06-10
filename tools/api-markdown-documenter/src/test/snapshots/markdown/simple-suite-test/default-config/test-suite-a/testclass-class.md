@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestClass](/test-suite-a/testclass-class)
+[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class)
 
 Test class
 
@@ -10,12 +10,12 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](/test-suite-a/testabstractclass-class)
+**Extends**: [TestAbstractClass](/test-suite-a/testabstractclass-class)
 
 ### Type Parameters
 
 | Parameter | Description |
-| --- | --- |
+| - | - |
 | TTypeParameterA | A type parameter |
 | TTypeParameterB | Another type parameter |
 
@@ -26,31 +26,31 @@ Here are some remarks about the class
 ## Constructors
 
 | Constructor | Description |
-| --- | --- |
+| - | - |
 | [(constructor)(privateProperty, protectedProperty, testClassProperty, testClassEventProperty)](/test-suite-a/testclass-class#_constructor_-constructor) | Test class constructor |
 
 ## Static Properties
 
 | Property | Type | Description |
-| --- | --- | --- |
-| [testClassStaticProperty](/test-suite-a/testclass-class#testclassstaticproperty-property) | (foo: number) =&gt; string | Test static class property |
+| - | - | - |
+| [testClassStaticProperty](/test-suite-a/testclass-class#testclassstaticproperty-property) | (foo: number) =\> string | Test static class property |
 
 ## Static Methods
 
 | Method | Return Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | [testClassStaticMethod(foo)](/test-suite-a/testclass-class#testclassstaticmethod-method) | string | Test class static method |
 
 ## Events
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
-| [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property) | `readonly` | () =&gt; void | Test class event property |
+| - | - | - | - |
+| [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property) | `readonly` | () =\> void | Test class event property |
 
 ## Properties
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
+| - | - | - | - |
 | [abstractPropertyGetter](/test-suite-a/testclass-class#abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias) | A test abstract getter property. |
 | [testClassGetterProperty](/test-suite-a/testclass-class#testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
@@ -58,10 +58,10 @@ Here are some remarks about the class
 ## Methods
 
 | Method | Modifiers | Return Type | Description |
-| --- | --- | --- | --- |
-| [publicAbstractMethod()](/test-suite-a/testclass-class#publicabstractmethod-method) |  | void | A test public abstract method. |
+| - | - | - | - |
+| [publicAbstractMethod()](/test-suite-a/testclass-class#publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](/test-suite-a/testclass-class#testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](/test-suite-a/testclass-class#virtualmethod-method) |  | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method). |
+| [virtualMethod()](/test-suite-a/testclass-class#virtualmethod-method) | | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class#virtualmethod-method). |
 
 ## Constructor Details
 
@@ -82,11 +82,11 @@ Here are some remarks about the constructor
 #### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | privateProperty | number | See [TestAbstractClass](/test-suite-a/testabstractclass-class)'s constructor. |
 | protectedProperty | [TestEnum](/test-suite-a/testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="/test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p> |
 | testClassProperty | TTypeParameterB | See [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property). |
-| testClassEventProperty | () =&gt; void | See [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property). |
+| testClassEventProperty | () =\> void | See [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property). |
 
 ## Event Details
 
@@ -100,7 +100,7 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type:** () =&gt; void
+**Type**: () =\> void
 
 #### Remarks {#testclasseventproperty-remarks}
 
@@ -118,7 +118,7 @@ A test abstract getter property.
 get abstractPropertyGetter(): TestMappedType;
 ```
 
-**Type:** [TestMappedType](/test-suite-a/testmappedtype-typealias)
+**Type**: [TestMappedType](/test-suite-a/testmappedtype-typealias)
 
 ### testClassGetterProperty {#testclassgetterproperty-property}
 
@@ -132,7 +132,7 @@ get testClassGetterProperty(): number;
 set testClassGetterProperty(newValue: number);
 ```
 
-**Type:** number
+**Type**: number
 
 #### Remarks {#testclassgetterproperty-remarks}
 
@@ -148,7 +148,7 @@ Test class property
 readonly testClassProperty: TTypeParameterB;
 ```
 
-**Type:** TTypeParameterB
+**Type**: TTypeParameterB
 
 #### Remarks {#testclassproperty-remarks}
 
@@ -164,7 +164,7 @@ Test static class property
 static testClassStaticProperty: (foo: number) => string;
 ```
 
-**Type:** (foo: number) =&gt; string
+**Type**: (foo: number) =\> string
 
 ## Method Details
 
@@ -196,12 +196,12 @@ Here are some remarks about the method
 #### Parameters {#testclassmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
-| input | TTypeParameterA |  |
+| - | - | - |
+| input | TTypeParameterA | |
 
 #### Returns {#testclassmethod-returns}
 
-**Return type:** TTypeParameterA
+**Return type**: TTypeParameterA
 
 #### Throws {#testclassmethod-throws}
 
@@ -222,14 +222,14 @@ static testClassStaticMethod(foo: number): string;
 #### Parameters {#testclassstaticmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | foo | number | Some number |
 
 #### Returns {#testclassstaticmethod-returns}
 
 - Some string
 
-**Return type:** string
+**Return type**: string
 
 ### virtualMethod {#virtualmethod-method}
 
@@ -244,7 +244,7 @@ protected virtualMethod(): number;
 
 #### Returns {#virtualmethod-returns}
 
-**Return type:** number
+**Return type**: number
 
 ## See Also {#testclass-see-also}
 

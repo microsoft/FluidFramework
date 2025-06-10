@@ -222,7 +222,7 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 		const indexInternal: number = this.findInternalDeletionIndex(index);
 
 		const entry = this.sharedArray[indexInternal];
-		assert(entry !== undefined, "Invalid index");
+		assert(entry !== undefined, 0xb90 /* Invalid index */);
 		const entryId = entry.entryId;
 		this.deleteCore(indexInternal);
 
@@ -247,7 +247,7 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 			// Can skip searching first <toIndex> indices, as they contain elements we already moved.
 			for (let fromIndex = toIndex; fromIndex < this.sharedArray.length; fromIndex += 1) {
 				const item = this.sharedArray[fromIndex];
-				assert(item !== undefined, "Invalid index");
+				assert(item !== undefined, 0xb91 /* Invalid index */);
 				if (item.value !== value) {
 					continue;
 				}
@@ -298,7 +298,7 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 		const insertAfterEntryId =
 			toIndexInternal >= 1 ? this.sharedArray[toIndexInternal - 1]?.entryId : undefined;
 		const entryId = this.sharedArray[fromIndexInternal]?.entryId;
-		assert(entryId !== undefined, "Invalid index");
+		assert(entryId !== undefined, 0xb92 /* Invalid index */);
 		const changedToEntryId = this.createMoveEntry(fromIndexInternal, toIndexInternal);
 
 		const op: IMoveOperation = {
@@ -590,7 +590,7 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 		let entriesIterator = 0;
 		for (; entriesIterator < this.sharedArray.length; entriesIterator = entriesIterator + 1) {
 			const entry = this.sharedArray[entriesIterator];
-			assert(entry !== undefined, "Invalid index");
+			assert(entry !== undefined, 0xb93 /* Invalid index */);
 			if (entry.isDeleted === false) {
 				if (countDown === 0) {
 					return entriesIterator;
@@ -639,7 +639,7 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 
 	private deleteCore(index: number): void {
 		const entry = this.sharedArray[index];
-		assert(entry !== undefined, "Invalid index");
+		assert(entry !== undefined, 0xb94 /* Invalid index */);
 
 		if (entry.isDeleted) {
 			throw new Error("Entry already deleted.");
@@ -652,7 +652,7 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 
 	private createMoveEntry(oldIndex: number, newIndex: number): string {
 		const oldEntry = this.sharedArray[oldIndex];
-		assert(oldEntry !== undefined, "Invalid index");
+		assert(oldEntry !== undefined, 0xb95 /* Invalid index */);
 		const newEntry = this.createNewEntry<SerializableTypeForSharedArray>(
 			uuid(),
 			oldEntry.value,
@@ -715,7 +715,7 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 			localOpsIterator = localOpsIterator + 1
 		) {
 			const entry = this.sharedArray[localOpsIterator];
-			assert(entry !== undefined, "Invalid index");
+			assert(entry !== undefined, 0xb96 /* Invalid index */);
 			if (!entry.isAckPending) {
 				break;
 			}
@@ -756,12 +756,12 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 		const nextIndex = this.findIndexOfEntryId(entry.nextEntryId);
 		if (prevIndex !== -1) {
 			const prevEntry = this.sharedArray[prevIndex];
-			assert(prevEntry !== undefined, "Invalid index");
+			assert(prevEntry !== undefined, 0xb97 /* Invalid index */);
 			prevEntry.nextEntryId = entry.nextEntryId;
 		}
 		if (nextIndex !== -1) {
 			const nextEntry = this.sharedArray[nextIndex];
-			assert(nextEntry !== undefined, "Invalid index");
+			assert(nextEntry !== undefined, 0xb98 /* Invalid index */);
 			nextEntry.prevEntryId = entry.prevEntryId;
 		}
 		entry.prevEntryId = undefined;

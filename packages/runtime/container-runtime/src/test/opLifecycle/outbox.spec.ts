@@ -192,7 +192,8 @@ describe("Outbox", () => {
 		message: LocalBatchMessage | OutboundBatchMessage,
 		batchMarker: boolean | undefined = undefined,
 	): IBatchMessage => ({
-		contents: "runtimeOp" in message ? serializeOp(message.runtimeOp) : message.contents,
+		contents:
+			message.runtimeOp === undefined ? message.contents : serializeOp(message.runtimeOp),
 		metadata:
 			batchMarker === undefined
 				? message.metadata
@@ -1215,6 +1216,90 @@ describe("Outbox", () => {
 			outbox.flush();
 
 			validateCounts(2, 1, 0);
+		});
+	});
+
+	describe("containsUserChanges", () => {
+		it("returns false when all batches are empty", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			assert.equal(
+				outbox.containsUserChanges(),
+				false,
+				"Should be false when all batches are empty",
+			);
+		});
+
+		it("returns true when mainBatch has user changes", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const dirtyableMessage: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: { address: "", contents: {} },
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submit(dirtyableMessage);
+			assert.equal(
+				outbox.containsUserChanges(),
+				true,
+				"Should be true when mainBatch has user changes",
+			);
+		});
+
+		it("returns false when mainBatch has only non-user changes", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const dirtyableMessage: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.GC,
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submit(dirtyableMessage);
+			assert.equal(
+				outbox.containsUserChanges(),
+				false,
+				"Should be false when mainBatch has only non-user changes",
+			);
+		});
+
+		it("returns true when blobAttachBatch has user changes", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const blobAttachOp: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.BlobAttach,
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submitBlobAttach(blobAttachOp);
+			assert.equal(
+				outbox.containsUserChanges(),
+				true,
+				"Should be true when blobAttachBatch has user changes",
+			);
+		});
+
+		it("returns false when only idAllocationBatch has ops", () => {
+			const outbox = getOutbox({ context: getMockContext() });
+			const idAllocationOp: LocalBatchMessage = {
+				runtimeOp: {
+					type: ContainerMessageType.IdAllocation,
+				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+				referenceSequenceNumber: 1,
+				metadata: undefined,
+				localOpMetadata: {},
+			};
+			outbox.submitIdAllocation(idAllocationOp);
+			assert.equal(
+				outbox.containsUserChanges(),
+				false,
+				"Should be false when only idAllocationBatch has ops",
+			);
 		});
 	});
 });

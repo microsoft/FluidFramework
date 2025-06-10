@@ -27,7 +27,7 @@ import type {
 	InsertableObjectFromAnnotatedSchemaRecord,
 	ObjectFromSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/objectNode.js";
+} from "../../simple-tree/node-kinds/object/index.js";
 import { describeHydration, hydrate, pretty } from "./utils.js";
 import type {
 	areSafelyAssignable,

@@ -79,7 +79,7 @@ async function assertEventualConsistencyCore(
 		first.countSubDirectory(),
 		second.countSubDirectory(),
 		`Number of subDirectories not same: Number of subdirectory in ` +
-			`first at path ${first.absolutePath}: ${first.countSubDirectory()} and in second` +
+			`first at path ${first.absolutePath}: ${first.countSubDirectory()} and in second ` +
 			`at path ${second.absolutePath}: ${second.countSubDirectory()}`,
 	);
 

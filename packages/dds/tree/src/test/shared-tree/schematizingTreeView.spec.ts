@@ -13,7 +13,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
-	cursorFromInsertable,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -29,6 +28,7 @@ import {
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
+	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
 	validateUsageError,
@@ -58,12 +58,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
-	nodeKeyManager = new MockNodeIdentifierManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
+	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
-		nodeKeyManager,
 	);
 	const treeContent: TreeStoredContent = {
 		schema: toStoredSchema(viewConfig.schema),
@@ -121,7 +119,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 					const root = new Root({ content: 5 });
 
-					const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
+					const inner = getKernel(root).getOrCreateInnerNode();
 					const field = inner.getBoxed(brand("content"));
 					const child = field.boxedAt(0) ?? assert.fail("Expected child");
 					assert(child instanceof UnhydratedFlexTreeNode);
@@ -131,7 +129,7 @@ describe("SchematizingSimpleTreeView", () => {
 					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
 					// In production cases this extra validation exists to help prevent corruption when bugs
 					// allow invalid data through the public API.
-					(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
+					(child.data as Mutable<typeof child.data>).value = "invalid value";
 
 					// Attempt to initialize with invalid content
 					if (enableSchemaValidation || additionalAsserts) {
@@ -573,7 +571,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
 			const stringArrayContent = {
 				schema: stringArrayStoredSchema,
-				initialTree: cursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
+				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
 			};
 			const checkout = checkoutWithContent(stringArrayContent);
 			const main = new SchematizingSimpleTreeView(

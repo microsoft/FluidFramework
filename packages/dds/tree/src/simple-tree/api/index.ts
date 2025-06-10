@@ -52,12 +52,7 @@ export {
 	getPropertyKeyFromStoredKey,
 	getIdentifierFromNode,
 } from "./treeNodeApi.js";
-export {
-	createFromInsertable,
-	cursorFromInsertable,
-	createFromCursor,
-	createFromMapTree,
-} from "./create.js";
+export { createFromCursor } from "./create.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
