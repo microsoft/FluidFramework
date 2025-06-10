@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class)
 
 Test class
 
@@ -33,7 +33,7 @@ Here are some remarks about the class
 
 | Property | Type | Description |
 | - | - | - |
-| [testClassStaticProperty](/test-suite-a/testclass-class#testclassstaticproperty-property) | (foo: number) =\> string | Test static class property |
+| [testClassStaticProperty](/test-suite-a/testclass-class#testclassstaticproperty-property) | (foo: number) => string | Test static class property |
 
 ## Static Methods
 
@@ -45,7 +45,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property) | `readonly` | () =\> void | Test class event property |
+| [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property) | `readonly` | () => void | Test class event property |
 
 ## Properties
 
@@ -86,7 +86,7 @@ Here are some remarks about the constructor
 | privateProperty | number | See [TestAbstractClass](/test-suite-a/testabstractclass-class)'s constructor. |
 | protectedProperty | [TestEnum](/test-suite-a/testenum-enum) | <p>Some notes about the parameter.</p><p>See <a href="/test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a>.</p> |
 | testClassProperty | TTypeParameterB | See [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property). |
-| testClassEventProperty | () =\> void | See [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property). |
+| testClassEventProperty | () => void | See [testClassEventProperty](/test-suite-a/testclass-class#testclasseventproperty-property). |
 
 ## Event Details
 
@@ -100,7 +100,7 @@ Test class event property
 readonly testClassEventProperty: () => void;
 ```
 
-**Type**: () =\> void
+**Type**: () => void
 
 #### Remarks {#testclasseventproperty-remarks}
 
@@ -164,7 +164,7 @@ Test static class property
 static testClassStaticProperty: (foo: number) => string;
 ```
 
-**Type**: (foo: number) =\> string
+**Type**: (foo: number) => string
 
 ## Method Details
 

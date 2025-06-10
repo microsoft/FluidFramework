@@ -1,6 +1,6 @@
 # testMethod
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterfaceExtendingOtherInterfaces](/test-suite-a/testinterfaceextendingotherinterfaces-interface/) \> [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface/testmethod-methodsignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterfaceExtendingOtherInterfaces](/test-suite-a/testinterfaceextendingotherinterfaces-interface/) > [testMethod(input)](/test-suite-a/testinterfaceextendingotherinterfaces-interface/testmethod-methodsignature)
 
 Test interface method accepting a string and returning a number.
 

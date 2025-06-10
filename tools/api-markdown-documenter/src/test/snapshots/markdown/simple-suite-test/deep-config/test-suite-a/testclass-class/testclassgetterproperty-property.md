@@ -1,6 +1,6 @@
 # testClassGetterProperty
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/) \> [testClassGetterProperty](/test-suite-a/testclass-class/testclassgetterproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [testClassGetterProperty](/test-suite-a/testclass-class/testclassgetterproperty-property)
 
 Test class property with both a getter and a setter.
 
