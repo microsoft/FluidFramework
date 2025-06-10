@@ -597,20 +597,35 @@ export class MapKernel {
 				pendingClear !== undefined && pendingClear === localOpMetadata,
 				"Unexpected clear rollback",
 			);
-			// TODO: for each now-visible value in the map, emit a "set" event
+			for (const [key] of this.internalIterator()) {
+				// TODO: Consider if it's weird that all the values are immediately visible when the first
+				// event is emitted, rather than becoming visible one-by-one as the event is raised.
+				this.eventEmitter.emit(
+					"valueChanged",
+					{ key, previousValue: undefined },
+					true,
+					this.eventEmitter,
+				);
+			}
 		} else {
 			const pendingLifetime = findLast(
 				this.pendingData,
 				(lifetime) => lifetime.key === op.key,
 			);
 			assert(pendingLifetime !== undefined, "Unexpected rollback for key");
+			const previousValue = this.getOptimisticLocalValue(op.key);
 			const pendingKeyChange = pendingLifetime.keyChanges.pop();
 			assert(
 				pendingKeyChange !== undefined &&
 					pendingKeyChange.pendingMessageId === localOpMetadata,
 				"Unexpected rollback for key",
 			);
-			// TODO: raise a set or delete event
+			this.eventEmitter.emit(
+				"valueChanged",
+				{ key: op.key, previousValue },
+				true,
+				this.eventEmitter,
+			);
 		}
 	}
 
