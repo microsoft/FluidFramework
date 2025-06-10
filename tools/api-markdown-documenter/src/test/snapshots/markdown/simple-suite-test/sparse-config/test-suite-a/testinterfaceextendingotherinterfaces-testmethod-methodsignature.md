@@ -22,4 +22,4 @@ Here are some remarks about the method
 
 A number
 
-**Return type:** number
+**Return type**: number

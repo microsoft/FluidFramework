@@ -133,6 +133,7 @@ describe("tree indexes", () => {
 							key,
 							nodes.map((f) => {
 								const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+								assert(flexNode.isHydrated());
 								return getOrCreate(
 									anchorIds,
 									flexNode.anchorNode,
@@ -300,6 +301,7 @@ describe("tree indexes", () => {
 								key,
 								nodes.map((f) => {
 									const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+									assert(flexNode.isHydrated());
 									return getOrCreate(
 										anchorIds,
 										flexNode.anchorNode,

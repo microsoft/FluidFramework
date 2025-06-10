@@ -201,18 +201,16 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(object.parentField.parent.parent, undefined);
 	});
 
-	describe("cannot", () => {
-		it("get their context", () => {
-			assert.equal(map.context.isHydrated(), false);
-			assert.equal(arrayNode.context.isHydrated(), false);
-			assert.equal(object.context.isHydrated(), false);
-		});
+	it("get their context", () => {
+		assert.equal(map.context.isHydrated(), false);
+		assert.equal(arrayNode.context.isHydrated(), false);
+		assert.equal(object.context.isHydrated(), false);
+	});
 
-		it("get their anchor node", () => {
-			assert.throws(() => map.anchorNode);
-			assert.throws(() => arrayNode.anchorNode);
-			assert.throws(() => object.anchorNode);
-		});
+	it("is unhydrated", () => {
+		assert(map.isHydrated() === false);
+		assert(arrayNode.isHydrated() === false);
+		assert(object.isHydrated() === false);
 	});
 
 	describe("can mutate", () => {

@@ -176,8 +176,8 @@ export interface BlockContentMap {
 }
 
 // @public @sealed
-export class CodeSpanNode extends DocumentationLiteralNodeBase<PlainTextNode> {
-    constructor(value: PlainTextNode);
+export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
+    constructor(value: string);
     static createFromPlainText(text: string): CodeSpanNode;
     static readonly Empty: CodeSpanNode;
     get isEmpty(): boolean;
@@ -471,18 +471,17 @@ export interface Heading {
 }
 
 // @public @sealed
-export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
+export class HeadingNode implements DocumentationNode, Heading {
     constructor(
-    title: PlainTextNode,
+    title: string,
     id?: string | undefined);
-    static createFromPlainText(title: string, id?: string): HeadingNode;
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = false;
     readonly singleLine = true;
-    readonly title: PlainTextNode;
+    readonly title: string;
     readonly type = DocumentationNodeType.Heading;
 }
 
@@ -591,18 +590,17 @@ export interface Link {
 }
 
 // @public @sealed
-export class LinkNode implements DocumentationNode {
+export class LinkNode implements DocumentationNode, Link {
     constructor(
-    text: PlainTextNode,
+    text: string,
     target: UrlTarget);
-    static createFromPlainText(text: string, target: UrlTarget): LinkNode;
     static createFromPlainTextLink(link: Link): LinkNode;
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = false;
     readonly singleLine = true;
     readonly target: UrlTarget;
-    readonly text: PlainTextNode;
+    readonly text: string;
     readonly type = DocumentationNodeType.Link;
 }
 
@@ -724,9 +722,8 @@ export interface PhrasingContentMap {
 
 // @public @sealed
 export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
-    constructor(text: string, escaped?: boolean);
+    constructor(text: string);
     static readonly Empty: PlainTextNode;
-    readonly escaped: boolean;
     get isEmpty(): boolean;
     readonly singleLine = true;
     get text(): string;
