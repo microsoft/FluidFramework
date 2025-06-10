@@ -149,7 +149,7 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = P
     attendee: Attendee;
 }
 
-// @beta @sealed
+// @beta @system
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     metadata: LatestMetadata;
     value: TValueAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
@@ -268,11 +268,21 @@ export interface PresenceEvents {
     workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
-// @beta @sealed
-export type ProxiedValueAccessor<_T> = "proxied";
+// @beta @system
+export interface ProxiedValueAccessor<T> {
+    // (undocumented)
+    readonly data: T;
+    // (undocumented)
+    readonly kind: "proxied";
+}
 
-// @beta @sealed
-export type RawValueAccessor<_T> = "raw";
+// @beta @system
+export interface RawValueAccessor<T> {
+    // (undocumented)
+    readonly data: T;
+    // (undocumented)
+    readonly kind: "raw";
+}
 
 // @beta
 export const StateFactory: {
@@ -320,7 +330,7 @@ export interface StatesWorkspaceSchema {
     [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
-// @beta @sealed
+// @beta @system
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
 // @beta

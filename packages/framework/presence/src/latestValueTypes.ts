@@ -31,23 +31,29 @@ export interface LatestMetadata {
 /**
  * Represents a value that is accessed directly.
  *
- * @sealed
+ * @system
  * @beta
  */
-export type RawValueAccessor<_T> = "raw";
+export interface RawValueAccessor<T> {
+	readonly kind: "raw";
+	readonly data: T;
+}
 
 /**
  * Represents a value that is accessed via a function call, which may result in no value.
  *
- * @sealed
+ * @system
  * @beta
  */
-export type ProxiedValueAccessor<_T> = "proxied";
+export interface ProxiedValueAccessor<T> {
+	readonly kind: "proxied";
+	readonly data: T;
+}
 
 /**
  * Union of possible accessor types for a value.
  *
- * @sealed
+ * @system
  * @beta
  */
 export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
@@ -69,7 +75,7 @@ export type Accessor<T> = T extends ProxiedValueAccessor<infer U>
  * @privateRemarks
  * Set `value` to just `TValueAccessor` with above `*ValueAccessor` changes to break tsc.
  *
- * @sealed
+ * @system
  * @beta
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
