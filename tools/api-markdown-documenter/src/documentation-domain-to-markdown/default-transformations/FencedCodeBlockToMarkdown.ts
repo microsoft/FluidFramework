@@ -22,22 +22,19 @@ export function fencedCodeBlockToMarkdown(
 	// This is odd, and makes the transformation strategy a bit different from the others.
 	// Fortunately, since `FencedCodeBlockNode`s may only contain plain text and line breaks,
 	// we don't need any complex transformation / rendering logic here to convert to a single text value.
-	const lines: string[] = [];
-	let currentLine = "";
+	const text: string[] = [];
 	for (const child of node.children) {
 		if (child.type === "text") {
-			currentLine = `${currentLine}${child.value}`;
+			text.push(child.value);
 		} else if (child.type === "lineBreak") {
-			lines.push(currentLine);
-			currentLine = "";
+			text.push("\n");
 		}
 	}
-	lines.push(currentLine);
 
 	return [
 		{
 			type: "code",
-			value: lines.join("\n"),
+			value: text.join(""),
 			lang: node.language,
 		},
 	];
