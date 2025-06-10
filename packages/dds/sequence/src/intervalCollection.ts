@@ -771,7 +771,7 @@ export class IntervalCollection
 	) {
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
-		const { localSeq, previous } = localOpMetadata;
+		const { previous } = localOpMetadata;
 		switch (opName) {
 			case "add": {
 				const interval = this.getIntervalById(id);
@@ -796,7 +796,6 @@ export class IntervalCollection
 					props: Object.keys(properties).length > 0 ? properties : undefined,
 					rollback: true,
 				});
-				this.localSeqToSerializedInterval.delete(localSeq);
 				if (endpointsChanged) {
 					this.removePendingChange(value);
 				}
@@ -822,7 +821,7 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		local: boolean,
 		message: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata,
+		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	) {
 		const { opName, value } = op;
 		switch (opName) {
@@ -842,6 +841,10 @@ export class IntervalCollection
 			}
 			default:
 				unreachableCase(opName);
+		}
+		if (localOpMetadata !== undefined) {
+			this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
+			this.localSeqToRebasedInterval.delete(localOpMetadata.localSeq);
 		}
 	}
 
@@ -1361,7 +1364,6 @@ export class IntervalCollection
 				0x552 /* op metadata should be defined for local op */,
 			);
 			// This is an ack from the server. Remove the pending change.
-			this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
 			this.removePendingChange(serializedInterval);
 		}
 
@@ -1637,7 +1639,6 @@ export class IntervalCollection
 				localOpMetadata !== undefined,
 				0x553 /* op metadata should be defined for local op */,
 			);
-			this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
 			const localInterval = this.getIntervalById(id);
 			if (localInterval) {
 				this.ackInterval(localInterval, op);
