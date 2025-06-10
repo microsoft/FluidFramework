@@ -15,6 +15,8 @@ import {
 	OpGroupingManager,
 	isGroupedBatch,
 	type OutboundBatch,
+	type EmptyGroupedBatch,
+	type LocalEmptyBatchPlaceholder,
 } from "../../opLifecycle/index.js";
 
 describe("OpGroupingManager", () => {
@@ -102,12 +104,17 @@ describe("OpGroupingManager", () => {
 		});
 
 		it("create empty batch", () => {
+			const emptyGroupedBatch: EmptyGroupedBatch = {
+				type: "groupedBatch",
+				contents: [],
+			};
 			const batchId = "batchId";
-			const expectedPlaceholderMessage: OutboundBatchMessage = {
+			const expectedOutboundMessage: OutboundBatchMessage = {
 				contents: '{"type":"groupedBatch","contents":[]}',
 				metadata: { batchId },
 				localOpMetadata: { emptyBatch: true },
 				referenceSequenceNumber: 0,
+				runtimeOp: undefined,
 			};
 
 			const result = new OpGroupingManager(
@@ -117,10 +124,14 @@ describe("OpGroupingManager", () => {
 				mockLogger,
 			).createEmptyGroupedBatch(batchId, 0);
 
-			assert.deepStrictEqual(result.outboundBatch.messages, [expectedPlaceholderMessage]);
+			assert.deepStrictEqual(result.outboundBatch.messages, [expectedOutboundMessage]);
 
-			// contents not included on the returned placeholder message
-			delete expectedPlaceholderMessage.contents;
+			const expectedPlaceholderMessage: LocalEmptyBatchPlaceholder = {
+				runtimeOp: emptyGroupedBatch,
+				metadata: { batchId },
+				localOpMetadata: { emptyBatch: true },
+				referenceSequenceNumber: 0,
+			};
 			assert.deepStrictEqual(result.placeholderMessage, expectedPlaceholderMessage);
 		});
 

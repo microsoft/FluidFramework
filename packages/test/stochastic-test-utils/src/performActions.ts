@@ -118,7 +118,7 @@ export async function performFuzzActionsAsync<
 		| AsyncReducer<TOperation, TState>
 		| { [K in TOperation["type"]]: AsyncReducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false, saveFluidOps: false },
 	forceGlobalSeed?: boolean,
 ): Promise<TState> {
 	const operations: TOperation[] = [];
@@ -194,10 +194,7 @@ export async function performFuzzActionsAsync<
  *
  * @internal
  */
-export async function saveOpsToFile(
-	filepath: string,
-	operations: { type: string | number }[],
-) {
+export async function saveOpsToFile(filepath: string, operations: unknown[]) {
 	await fs.mkdir(path.dirname(filepath), { recursive: true });
 	await fs.writeFile(filepath, JSON.stringify(operations, undefined, 4));
 }
@@ -280,7 +277,7 @@ export function performFuzzActions<
 		| Reducer<TOperation, TState>
 		| { [K in TOperation["type"]]: Reducer<Extract<TOperation, { type: K }>, TState> },
 	initialState: TState,
-	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false },
+	saveInfo: SaveInfo = { saveOnFailure: false, saveOnSuccess: false, saveFluidOps: false },
 ): TState {
 	const operations: TOperation[] = [];
 	let state: TState = initialState;

@@ -21,10 +21,22 @@ describe("simple-tree create", () => {
 			createFromCursor(SchemaFactory.string, cursor);
 		});
 
-		it("Failure", () => {
+		it("Failure: unknown schema", () => {
 			const cursor = singleJsonCursor("Hello world");
 			assert.throws(
 				() => createFromCursor(SchemaFactory.number, cursor),
+				validateUsageError(
+					`Failed to parse tree due to occurrence of type "com.fluidframework.leaf.string" which is not defined in this context.`,
+				),
+			);
+		});
+
+		it("Failure: out of schema", () => {
+			const factory = new SchemaFactory("test");
+			class Obj extends factory.object("Obj", { x: SchemaFactory.string }) {}
+			const cursor = singleJsonCursor("Hello world");
+			assert.throws(
+				() => createFromCursor(Obj, cursor),
 				validateUsageError(/does not conform to schema/),
 			);
 		});
