@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { AnnotatedAllowedSchema, TreeNodeSchema } from "./treeNodeSchema.js";
+import type {
+	AnnotatedAllowedSchema,
+	TreeNodeSchema,
+	TreeNodeSchemaAlpha,
+} from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
@@ -18,7 +22,12 @@ export function walkNodeSchema(
 	}
 	visitedSet.add(schema);
 
-	walkAllowedTypes(schema.childAnnotatedAllowedTypes, visitor, visitedSet);
+	walkAllowedTypes(
+		(schema as TreeNodeSchemaAlpha).childAnnotatedAllowedTypes ??
+			Array.from(schema.childTypes).map((type) => ({ type })),
+		visitor,
+		visitedSet,
+	);
 
 	// This visit is done at the end so the traversal order is most inner types first.
 	// This was picked since when fixing errors,
@@ -35,6 +44,10 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
+	if (annotatedAllowedTypes[Symbol.iterator]().next().done === true) {
+		return;
+	}
+
 	for (const annotatedAllowedType of annotatedAllowedTypes) {
 		walkNodeSchema(annotatedAllowedType.type, visitor, visitedSet);
 	}

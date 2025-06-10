@@ -63,6 +63,27 @@ export type TreeNodeSchema<
 	  >;
 
 /**
+ * Alpha APIs for {@link TreeNodeSchema}s.
+ */
+export type TreeNodeSchemaAlpha = TreeNodeSchema & {
+	/**
+	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
+	 * with a particular schema.
+	 *
+	 * TODO
+	 * @remarks
+	 * TODO
+	 *
+	 * @privateRemarks
+	 * Currently there isn't much use for this in the public API,
+	 * and it's possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
+	 * To keep options option, this is marked `@system` for now.
+	 * @system
+	 */
+	readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedSchema>;
+};
+
+/**
  * Schema which is not a class.
  * @remarks
  * This is used for schema which cannot have their instances constructed using constructors, like leaf schema.
@@ -311,22 +332,6 @@ export interface TreeNodeSchemaCore<
 	 * @system
 	 */
 	readonly childTypes: ReadonlySet<TreeNodeSchema>;
-
-	/**
-	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
-	 * with a particular schema.
-	 *
-	 * TODO
-	 * @remarks
-	 * TODO
-	 *
-	 * @privateRemarks
-	 * Currently there isn't much use for this in the public API,
-	 * and it's possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
-	 * To keep options option, this is marked `@system` for now.
-	 * @system
-	 */
-	readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedSchema>;
 
 	/**
 	 * Constructs an instance of this node type.

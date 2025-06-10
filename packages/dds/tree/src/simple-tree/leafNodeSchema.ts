@@ -12,10 +12,14 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 
-import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaNonClass } from "./core/index.js";
+import {
+	NodeKind,
+	type AnnotatedAllowedSchema,
+	type TreeNodeSchema,
+	type TreeNodeSchemaNonClass,
+} from "./core/index.js";
 import type { NodeSchemaMetadata, TreeLeafValue } from "./schemaTypes.js";
 import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
-import type { AnnotatedAllowedSchema } from "./core/treeNodeSchema.js";
 
 /**
  * Instances of this class are schema for leaf nodes.

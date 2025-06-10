@@ -42,6 +42,7 @@ import {
 	getKernel,
 	type UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
+	type AnnotatedAllowedSchema,
 } from "../../core/index.js";
 import {
 	type InsertableContent,
@@ -55,7 +56,6 @@ import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 } from "./arrayNodeTypes.js";
-import type { AnnotatedAllowedSchema } from "../../core/treeNodeSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
