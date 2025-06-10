@@ -640,12 +640,10 @@ export const TreeAlpha: TreeAlpha = {
 			}
 			case NodeKind.Map:
 			case NodeKind.Object: {
-				for (const fieldKey of flexNode.keys()) {
-					const flexField =
-						flexNode.tryGetField(fieldKey) ?? fail("Field not found for reported key.");
+				for (const flexField of flexNode.boxedIterator()) {
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
-						result.push([fieldKey, childTreeNode]);
+						result.push([flexField.key, childTreeNode]);
 					}
 				}
 				break;
