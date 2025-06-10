@@ -386,17 +386,18 @@ export interface TreeAlpha {
 	 * @param node - The node whose children are being requested.
 	 *
 	 * @returns
-	 * An array of pairs of the form `[key, child]`, where `key` is the "property key" of the node's field, and `child`
-	 * is the child node or leaf value under that field.
+	 * An array of pairs of the form `[propertyKey, child]`.
 	 *
-	 * For Array nodes, the key is the index of the child in the array.
+	 * For Array nodes, the `propertyKey` is the index of the child in the array.
 	 *
-	 * For Object nodes, the returned keys are the developer-facing "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 * For Object nodes, the returned `propertyKey`s are the developer-facing "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeNodeApi:interface).parent}
 	 */
-	children(node: TreeNode): Iterable<[string | number, TreeNode | TreeLeafValue]>;
+	children(
+		node: TreeNode,
+	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
 }
 
 /**
@@ -612,7 +613,7 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	children(node: TreeNode): [string | number, TreeNode | TreeLeafValue][] {
+	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
 		const flexNode = getOrCreateInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
