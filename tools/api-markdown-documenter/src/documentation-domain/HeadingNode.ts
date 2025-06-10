@@ -6,7 +6,6 @@
 import type { Heading } from "../Heading.js";
 
 import type { DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * A document heading.
@@ -34,7 +33,7 @@ export class HeadingNode implements DocumentationNode, Heading {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Heading;
+	public readonly type = "heading";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}

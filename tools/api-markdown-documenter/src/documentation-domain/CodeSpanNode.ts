@@ -4,7 +4,6 @@
  */
 
 import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * Represents a simple, single-line code span.
@@ -33,7 +32,7 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.CodeSpan;
+	public readonly type = "codeSpan";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
