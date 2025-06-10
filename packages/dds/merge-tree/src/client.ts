@@ -1005,7 +1005,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						(lastRemove.type === "sliceRemove" &&
 							lastRemove.localSeq === segmentGroup.localSeq) ||
 							opstampUtils.isSquashedOp(lastRemove),
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xbad /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 
 					// The original obliterate affected this segment, but it has since been removed.
@@ -1082,7 +1082,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						(lastRemove.type === "sliceRemove" &&
 							lastRemove.localSeq === segmentGroup.localSeq) ||
 							opstampUtils.isSquashedOp(lastRemove),
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xbae /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 
 					if (!opstampUtils.isSquashedOp(lastRemove)) {
@@ -1192,7 +1192,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						assert(
 							removeInfo.removes.length === 1 ||
 								opstampUtils.isAcked(removeInfo.removes[removeInfo.removes.length - 2]),
-							"Expected only one local remove",
+							0xbaf /* Expected only one local remove */,
 						);
 						this.squashInsertion(segment);
 						break;

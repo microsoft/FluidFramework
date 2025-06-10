@@ -84,7 +84,7 @@ export function unhydratedFlexTreeFromCursor(
 	context: Context,
 	cursor: ITreeCursorSynchronous,
 ): UnhydratedFlexTreeNode {
-	assert(cursor.mode === CursorLocationType.Nodes, "Expected nodes cursor");
+	assert(cursor.mode === CursorLocationType.Nodes, 0xbb4 /* Expected nodes cursor */);
 	const schema = context.schema.get(cursor.type) ?? unknownTypeError(cursor.type);
 	const storedSchema = getStoredSchema(
 		schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,

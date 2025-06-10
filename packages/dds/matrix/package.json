@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/matrix",
-	"version": "2.42.0",
+	"version": "2.43.0",
 	"description": "Distributed matrix",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -98,6 +98,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"pack:tests": "tar -cf ./matrix.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
+		"test:benchmark:report": "mocha --config src/test/time/.mocharc.cjs",
 		"test:coverage": "c8 npm test",
 		"test:memory": "mocha --config src/test/memory/.mocharc.cjs",
 		"test:memory-profiling:report": "mocha --config src/test/memory/.mocharc.cjs",
