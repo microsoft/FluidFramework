@@ -700,9 +700,8 @@ export interface PhrasingContentMap {
 
 // @public @sealed
 export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
-    constructor(text: string, escaped?: boolean);
+    constructor(text: string);
     static readonly Empty: PlainTextNode;
-    readonly escaped: boolean;
     get isEmpty(): boolean;
     readonly singleLine = true;
     get text(): string;

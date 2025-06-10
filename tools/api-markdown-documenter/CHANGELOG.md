@@ -2,6 +2,11 @@
 
 ## 0.21.0
 
+### `PlainTextNode` no longer supports unsafe "escaped" text
+
+This type previously supported an unsafe escape hatch for text escaping.
+This support is no longer needed and has been removed.
+
 ### `LineBreakNode` removed from `BlockContent`
 
 Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
