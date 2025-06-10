@@ -18,12 +18,21 @@ import {
 	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
-export interface IntervalMessageLocalMetadata {
-	localSeq: number;
-	previous?: ISerializedInterval;
-	intervalId: string;
-	interval: SequenceIntervalClass;
-}
+export type IntervalMessageLocalMetadata =
+	| {
+			type: typeof IntervalDeltaOpType.ADD | typeof IntervalDeltaOpType.CHANGE;
+			localSeq: number;
+			previous?: ISerializedInterval;
+			intervalId: string;
+			interval: SequenceIntervalClass;
+	  }
+	| {
+			type: typeof IntervalDeltaOpType.DELETE;
+			localSeq: number;
+			previous?: ISerializedInterval;
+			intervalId: string;
+			interval: undefined;
+	  };
 
 /**
  * Optional flags that configure options for sequence DDSs

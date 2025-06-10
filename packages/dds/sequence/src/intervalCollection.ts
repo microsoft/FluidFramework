@@ -742,7 +742,10 @@ export class IntervalCollection
 
 		this.submitDelta = (op, md) => {
 			const pending = (this.pending[md.intervalId] ??= { local: [] });
-			pending.local.push(md);
+			// hack, support initialization elsewhere
+			if (pending.local[pending.local.length - 1] !== md) {
+				pending.local.push(md);
+			}
 			submitDelta(op, md);
 		};
 
@@ -793,7 +796,7 @@ export class IntervalCollection
 	) {
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
-		const { localSeq, previous } = localOpMetadata;
+		const { localSeq } = localOpMetadata;
 		this.localSeqToSerializedInterval.delete(localSeq);
 
 		const pending = this.pending[localOpMetadata.intervalId];
@@ -805,7 +808,7 @@ export class IntervalCollection
 			delete this.pending[localOpMetadata.intervalId];
 		}
 
-		switch (opName) {
+		switch (current.type) {
 			case "add": {
 				this.deleteExistingInterval({
 					interval: current.interval,
@@ -815,6 +818,7 @@ export class IntervalCollection
 				break;
 			}
 			case "change": {
+				const { previous } = localOpMetadata;
 				assert(previous !== undefined, 0xb7c /* must have previous for change */);
 
 				const endpointsChanged = value.start !== undefined && value.end !== undefined;
@@ -836,18 +840,16 @@ export class IntervalCollection
 				break;
 			}
 			case "delete": {
+				const previous =
+					pending.local.length > 0
+						? pending.local[pending.local.length - 1].interval
+						: pending.consensus;
 				assert(previous !== undefined, 0xb7d /* must have previous for delete */);
-				this.add({
-					id,
-					start: toSequencePlace(previous.start, previous.startSide),
-					end: toSequencePlace(previous.end, previous.endSide),
-					props: Object.keys(properties).length > 0 ? properties : undefined,
-					rollback: true,
-				});
+				this.localCollection?.add(previous);
 				break;
 			}
 			default:
-				unreachableCase(opName);
+				throw new LoggingError(`Unknown op type: ${opName}`);
 		}
 	}
 
@@ -1184,6 +1186,7 @@ export class IntervalCollection
 						value: serializedInterval,
 					},
 					{
+						type: "add",
 						localSeq,
 						intervalId,
 						interval,
@@ -1217,16 +1220,20 @@ export class IntervalCollection
 		if (interval) {
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (local && rollback !== true) {
+				const intervalId = interval.getIntervalId();
+				this.pending[intervalId] ??= { local: [], consensus: interval };
+
 				this.submitDelta(
 					{
 						opName: "delete",
 						value: interval.serialize(),
 					},
 					{
+						type: "delete",
 						localSeq: this.getNextLocalSeq(),
 						previous: interval.serialize(),
-						intervalId: interval.getIntervalId(),
-						interval,
+						intervalId,
+						interval: undefined,
 					},
 				);
 			} else {
@@ -1320,6 +1327,7 @@ export class IntervalCollection
 						value: serializedInterval,
 					},
 					{
+						type: "change",
 						localSeq,
 						previous: interval.serialize(),
 						intervalId: id,
