@@ -1,6 +1,6 @@
 # getterProperty
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterface](/test-suite-a/testinterface-interface/) \> [getterProperty](/test-suite-a/testinterface-interface/getterproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [getterProperty](/test-suite-a/testinterface-interface/getterproperty-property)
 
 A test getter-only interface property.
 

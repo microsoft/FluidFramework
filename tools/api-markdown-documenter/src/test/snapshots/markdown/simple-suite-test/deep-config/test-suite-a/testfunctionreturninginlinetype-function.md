@@ -1,6 +1,6 @@
 # testFunctionReturningInlineType
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [testFunctionReturningInlineType()](/test-suite-a/testfunctionreturninginlinetype-function)
 
 Test function that returns an inline type
 

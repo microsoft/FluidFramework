@@ -12,7 +12,7 @@ function testFunction(testParameter: number): number;
 
 | Parameter | Type | Description |
 | - | - | - |
-| testParameter | number |  |
+| testParameter | number | |
 
 ### Returns {#testfunction-returns}
 
