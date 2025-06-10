@@ -297,12 +297,12 @@ export interface FieldProps<TCustomMetadata = unknown> {
 }
 
 /**
- * Additional information to provide to a {@link FieldSchema}. Includes fields for alpha features.
+ * {@link FieldProps} extended with additional `alpha` options.
  *
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
  * See {@link FieldSchemaMetadata.custom}.
  *
- * @alpha
+ * @alpha @input
  */
 export interface FieldPropsAlpha<TCustomMetadata = unknown>
 	extends FieldProps<TCustomMetadata> {
