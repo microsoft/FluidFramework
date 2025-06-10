@@ -614,7 +614,9 @@ export const TreeAlpha: TreeAlpha = {
 
 	*children(node: TreeNode): Generator<[string | number, TreeNode | TreeLeafValue]> {
 		const flexNode = getOrCreateInnerNode(node);
-		debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
+		debugAssert(
+			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+		);
 
 		const schema = treeNodeApi.schema(node);
 
