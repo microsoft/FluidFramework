@@ -107,8 +107,8 @@ export interface ITreeConfigurationOptions {
 	 *
 	 * To make this more permissive in the future we can:
 	 *
-	 * - Make toMapTree more permissive (ex: allow disambiguation based on leaf type)
-	 * - Update this check to more tightly match toMapTree
+	 * - Make unhydratedFlexTreeFromInsertable more permissive (ex: allow disambiguation based on leaf type)
+	 * - Update this check to more tightly match unhydratedFlexTreeFromInsertable
 	 * - Add options to help schema authors disambiguate their types, such as "constant fields" which are not persisted, and always have a constant value.
 	 *
 	 * The above examples exist in executable form in this files tests, and should be updated there then copied back here.
@@ -348,7 +348,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 			// Allow using the type of the field to disambiguate, at least for leaf types.
 			// Add "constant" fields which can be used to disambiguate even more cases without adding persisted data: maybe make them optional in constructor?
 			// Consider separating unambiguous implicit construction format from constructor arguments at type level, allowing constructor to superset the implicit construction options (ex: optional constant fields).
-			// The policy here however must remain at least as conservative as shallowCompatibilityTest in src/simple-tree/toMapTree.ts.
+			// The policy here however must remain at least as conservative as shallowCompatibilityTest in src/simple-tree/unhydratedFlexTreeFromInsertable.ts.
 
 			errors.push(
 				`The required fields of ${JSON.stringify(schema.identifier)} are insufficient to differentiate it from the following types: ${formatTypes(possiblyAmbiguous)}. For objects to be considered unambiguous, each must have required fields that do not all occur on any other object in the union.`,

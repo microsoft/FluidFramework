@@ -47,6 +47,9 @@ export type StatesWorkspaceEntry<
  * @beta
  */
 export interface StatesWorkspaceSchema {
+	/**
+	 * Key-value pairs of State objects registered with the {@link StatesWorkspace}.
+	 */
 	[key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
@@ -178,8 +181,6 @@ export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSc
 
 /**
  * `AnyWorkspace` is a superset of {@link StatesWorkspace} and {@link NotificationsWorkspace}.
- *
- * @internal
  */
 export interface AnyWorkspace<
 	TSchema extends StatesWorkspaceSchema,

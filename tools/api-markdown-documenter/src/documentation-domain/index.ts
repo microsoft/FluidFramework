@@ -14,7 +14,7 @@
  * transformations, or by writing your own!
  */
 
-export { BlockQuoteNode } from "./BlockQuoteNode.js";
+export type { BlockContent, BlockContentMap } from "./BlockContent.js";
 export { CodeSpanNode } from "./CodeSpanNode.js";
 export {
 	DocumentNode,
@@ -35,10 +35,12 @@ export { LineBreakNode } from "./LineBreakNode.js";
 export { LinkNode } from "./LinkNode.js";
 export { OrderedListNode } from "./OrderedListNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
+export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";
-export { SectionNode } from "./SectionNode.js";
+export { type SectionContent, SectionNode } from "./SectionNode.js";
 export { SpanNode } from "./SpanNode.js";
 export {
+	type TableCellContent,
 	TableCellNode,
 	TableBodyCellNode,
 	TableHeaderCellNode,

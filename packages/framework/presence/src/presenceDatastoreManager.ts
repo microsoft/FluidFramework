@@ -14,7 +14,6 @@ import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
-	Attendee,
 	PresenceWithNotifications as Presence,
 	PresenceEvents,
 } from "./presence.js";
@@ -33,11 +32,16 @@ import type {
 	GeneralDatastoreMessageContent,
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
+	InternalWorkspaceAddress,
 	OutboundDatastoreUpdateMessage,
 	SignalMessages,
 	SystemDatastore,
 } from "./protocol.js";
-import { datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
+import {
+	acknowledgementMessageType,
+	datastoreUpdateMessageType,
+	joinMessageType,
+} from "./protocol.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -55,17 +59,19 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 }
 
 type PresenceDatastore = SystemDatastore & {
-	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
+	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
-
-type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
 
 const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
 	s: "States",
 	n: "Notifications",
 } as const;
 
-const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType]);
+const knownMessageTypes = new Set([
+	joinMessageType,
+	datastoreUpdateMessageType,
+	acknowledgementMessageType,
+]);
 function isPresenceMessage(
 	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
@@ -73,7 +79,7 @@ function isPresenceMessage(
 }
 
 /**
- * @internal
+ * High-level contract for manager of singleton Presence datastore
  */
 export interface PresenceDatastoreManager {
 	joinSession(clientId: ClientConnectionId): void;
@@ -102,7 +108,7 @@ function mergeGeneralDatastoreMessageContent(
 
 	// Merge the current data with the existing data, if any exists.
 	// Iterate over the current message data; individual items are workspaces.
-	for (const [workspaceName, workspaceData] of Object.entries(newData)) {
+	for (const [workspaceName, workspaceData] of objectEntries(newData)) {
 		// Initialize the merged data as the queued datastore entry for the workspace.
 		// Since the key might not exist, create an empty object in that case. It will
 		// be set explicitly after the loop.
@@ -138,11 +144,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
+	private readonly targetedSignalSupport: boolean;
 
 	public constructor(
 		private readonly attendeeId: AttendeeId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly lookupClient: (clientId: AttendeeId) => Attendee,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		private readonly events: IEmitter<PresenceEvents>,
 		private readonly presence: Presence,
@@ -152,6 +158,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
+		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
 
 	public joinSession(clientId: ClientConnectionId): void {
@@ -217,7 +224,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			{
 				presence: this.presence,
 				attendeeId: this.attendeeId,
-				lookupClient: this.lookupClient,
 				localUpdate,
 			},
 			workspaceDatastore,
@@ -347,6 +353,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			assert(optional, "Unrecognized message type in critical message");
 			return;
 		}
+
 		if (local) {
 			const deliveryDelta = received - message.content.sendTimestamp;
 			// Limit returnedMessages count to 256 such that newest message
@@ -377,10 +384,22 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
 			}
+			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
+			if (message.content.acknowledgementId !== undefined) {
+				assert(
+					this.targetedSignalSupport,
+					"Acknowledgment message was requested while targeted signal capability is not supported",
+				);
+				this.runtime.submitSignal({
+					type: acknowledgementMessageType,
+					content: { id: message.content.acknowledgementId },
+					targetClientId: message.clientId,
+				});
+			}
 		}
 
 		// Handle activation of unregistered workspaces before processing updates.
-		for (const [workspaceAddress] of Object.entries(message.content.data)) {
+		for (const [workspaceAddress] of objectEntries(message.content.data)) {
 			// The first part of OR condition checks if workspace is already registered.
 			// The second part checks if the workspace has already been seen before.
 			// In either case we can skip emitting 'workspaceActivated' event.
@@ -409,7 +428,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// While the system workspace is processed here too, it is declared as
 		// conforming to the general schema. So drop its override.
 		const data = message.content.data as Omit<typeof message.content.data, "system:presence">;
-		for (const [workspaceAddress, remoteDatastore] of Object.entries(data)) {
+		for (const [workspaceAddress, remoteDatastore] of objectEntries(data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {

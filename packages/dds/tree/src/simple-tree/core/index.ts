@@ -10,7 +10,6 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
-	unhydratedFlexTreeNodeToTreeNode,
 	getOrCreateInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
@@ -39,7 +38,7 @@ export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
 export {
 	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
-	tryUnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
 	UnhydratedContext,
+	createField,
 } from "./unhydratedFlexTree.js";

@@ -80,6 +80,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		connected: [],
 		disconnected: [],
 	};
+
 	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
 		return event in this.listeners;
 	}
@@ -184,6 +185,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		const expected = this.signalsExpected.shift();
 		assert.deepStrictEqual(args, expected, "Unexpected signal");
 	};
+
+	public supportedFeatures: ReadonlySet<string> = new Set(["submit_signals_v2"]);
 
 	// #endregion
 }

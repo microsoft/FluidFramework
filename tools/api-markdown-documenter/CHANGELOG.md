@@ -1,6 +1,64 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.21.0
+
+### `LineBreakNode` removed from `BlockContent`
+
+Block Content items are implicitly separated by a line break, so allowing `LineBreakNode`s in that context is redundant.
+Support for `LineBreakNode`s in `BlockContent` contexts has been removed.
+
+### Update `LinkNode`, `HeadingNode`, and `CodeSpanNode` to take `string`s rather than `PlainTextNode`s
+
+Each of the above types accepted only a single `PlainTextNode` as a child value.
+These have been updated to accept `string`s instead, which greatly simplifies their use.
+
+Their `createFromPlainText` static factory functions have also been removed, as they are now redundant with their constructors.
+
+### `BlockQuoteNode` was removed
+
+This `DocumentationNode` implementation was not used by the library.
+If this type is required, it can be re-introduced via the Documentation Domain's [extensibility model](#new-extensibility-model).
+
 ## 0.20.0
+
+### Add stronger type restrictions to Documentation Domain
+
+The Documentation Domain has been updated to be more restrictive about what kinds of content can appear under specific kinds of nodes.
+Most node kinds in the domain have been updated to better align with Markdown.
+
+System node implementations have also been marked as `@sealed` - we do not support user derivations of these types.
+If something similar to one of these types is required, a custom `DocumentationNode` implementation may be created instead.
+
+#### New extensibility model
+
+A new extensibility model has been added to the Documentation Domain to ensure users can continue to specify custom node kinds.
+Depending on the context(s) in which a custom node is intended to be used, the corresponding type-map can be updated.
+
+##### Example
+
+```typescript
+// Define custom node type
+export class CustomDocumentationNode extends DocumentationParentNodeBase<PhrasingContent> {
+	public readonly type = "custom-node";
+
+	constructor(children) {
+		super(children);
+	}
+}
+
+// Extend the `BlockContentMap` interface to include our custom node kind, so it can be used in `SectionNode`s.
+declare module "@fluid-tools/api-markdown-documenter" {
+	interface BlockContentMap {
+		"custom-node": CustomDocumentationNode;
+	}
+}
+
+// Use the custom node!
+const sectionNode: SectionNode = new SectionNode(
+	[new CustomDocumentationNode([new PlainTextNode("Hello world!")])],
+	HeadingNode.createFromPlainText("Section with custom children!"),
+);
+```
 
 ### Rename "Construct Signature" headings to "Constructor" for interface API items.
 

@@ -40,8 +40,6 @@ import type {
 
 /**
  * Portion of the container extension requirements ({@link ContainerExtension}) that are delegated to presence manager.
- *
- * @internal
  */
 export type PresenceExtensionInterface = Required<
 	Pick<ContainerExtension<ExtensionRuntimeProperties>, "processSignal">
@@ -173,7 +171,6 @@ function setupSubComponents(
 	const datastoreManager = new PresenceDatastoreManagerImpl(
 		attendeeId,
 		runtime,
-		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
 		logger,
 		events,
 		presence,
@@ -185,8 +182,6 @@ function setupSubComponents(
 
 /**
  * Instantiates Presence Manager
- *
- * @internal
  */
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,

@@ -12,6 +12,7 @@ import {
 	saveFailures,
 	type StressOperations,
 } from "../baseModel.js";
+import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
 import { validateConsistencyOfAllDDS } from "../ddsOperations";
 import {
 	createLocalServerStressSuite,
@@ -23,7 +24,10 @@ describe("Local Server Stress", () => {
 		workloadName: "default",
 		generatorFactory: () => takeAsync(100, makeGenerator()),
 		reducer,
-		validateConsistency: validateConsistencyOfAllDDS,
+		validateConsistency: async (...clients) => {
+			await validateAllDataStoresSaved(...clients);
+			await validateConsistencyOfAllDDS(...clients);
+		},
 		minimizationTransforms: ddsModelMinimizers,
 	};
 

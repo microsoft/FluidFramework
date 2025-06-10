@@ -109,13 +109,13 @@ export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
 /**
  * Utility type limiting to a specific attendee. (A attendee with
  * a specific session ID - not just any session ID.)
- *
- * @internal
  */
 export type SpecificAttendee<SpecificAttendeeId extends AttendeeId> =
 	string extends SpecificAttendeeId ? never : Attendee<SpecificAttendeeId>;
 
 /**
+ * Events from {@link Presence.attendees}.
+ *
  * @sealed
  * @beta
  */
@@ -136,6 +136,8 @@ export interface AttendeesEvents {
 }
 
 /**
+ * Events from {@link Presence}.
+ *
  * @sealed
  * @beta
  */
@@ -202,12 +204,12 @@ export interface Presence {
 
 	readonly states: {
 		/**
-		 * Acquires a StatesWorkspace from store or adds new one.
+		 * Acquires a {@link StatesWorkspace} from store or adds new one.
 		 *
-		 * @param workspaceAddress - Address of the requested StatesWorkspace
+		 * @param workspaceAddress - Address of the requested {@link StatesWorkspace}
 		 * @param requestedStates - Requested states for the workspace
 		 * @param controls - Optional settings for default broadcast controls
-		 * @returns A StatesWorkspace
+		 * @returns A {@link StatesWorkspace}
 		 */
 		getWorkspace<StatesSchema extends StatesWorkspaceSchema>(
 			workspaceAddress: WorkspaceAddress,
