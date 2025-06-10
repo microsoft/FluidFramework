@@ -417,51 +417,50 @@ describe("Runtime", () => {
 		});
 	});
 
-	it("Existing document with existing schema, no existing minVersionForCollab", () => {
+	it("Can update minVersionForCollab when the initial schema's info property is undefined", () => {
 		testMinVersionForCollabUpdateProcess({
-			description: "Existing document with existing schema, no existing minVersionForCollab",
-			initialSchema: { ...validConfig, info: undefined },
-			targetMinVersionForCollab: "2.20.0",
-			expectedFinalMinVersionForCollab: "2.20.0",
-			expectSchemaChangeMessage: true,
-		});
-	});
-
-	it("Existing document with existing schema, change to minVersionForCollab", () => {
-		testMinVersionForCollabUpdateProcess({
-			description: "Existing document with existing schema, change to minVersionForCollab",
-			initialSchema: validConfig,
-			targetMinVersionForCollab: "2.20.0",
-			expectedFinalMinVersionForCollab: "2.20.0",
-			expectSchemaChangeMessage: true,
-		});
-	});
-
-	it("Existing document with existing schema, multiple changes to minVersionForCollab", () => {
-		const schema1 = testMinVersionForCollabUpdateProcess({
 			description:
-				"Stage 1: Existing document with existing schema, multiple changes to minVersionForCollab",
-			initialSchema: validConfig,
-			targetMinVersionForCollab: "2.20.0",
+				"Can update minVersionForCollab when the initial schema's info property is undefined",
+			initialSchema: { ...validConfig, info: undefined },
+			newMinVersionForCollab: "2.20.0",
 			expectedFinalMinVersionForCollab: "2.20.0",
 			expectSchemaChangeMessage: true,
 		});
+	});
 
+	it("Can update an existing schema's minVersionForCollab multiple times", () => {
+		const schema1 = testMinVersionForCollabUpdateProcess({
+			description: "Stage 1: Can update an existing schema's minVersionForCollab",
+			initialSchema: validConfig,
+			newMinVersionForCollab: "2.20.0",
+			expectedFinalMinVersionForCollab: "2.20.0",
+			expectSchemaChangeMessage: true,
+		});
+		testMinVersionForCollabUpdateProcess({
+			description:
+				"Stage 2: Can update an existing schema's minVersionForCollab a second time",
+			initialSchema: schema1,
+			newMinVersionForCollab: "2.30.0",
+			expectedFinalMinVersionForCollab: "2.30.0",
+			expectSchemaChangeMessage: true,
+		});
+	});
+
+	it("Only updates minVersionForCollab when it's higher than the existing schema's minVersionForCollab", () => {
 		// It should stay at 2.20.0 since 2.0.0 is lower than the existing minVersionForCollab (2.20.0)
 		const schema2 = testMinVersionForCollabUpdateProcess({
 			description:
-				"Stage 2: Existing document with existing schema, multiple changes to minVersionForCollab",
-			initialSchema: schema1,
-			targetMinVersionForCollab: "2.0.0",
+				"Stage 1: Does NOT update the existing schema's minVersionForCollab with a lower minVersionForCollab",
+			initialSchema: { ...validConfig, info: { minVersionForCollab: "2.20.0" } },
+			newMinVersionForCollab: "2.0.0",
 			expectedFinalMinVersionForCollab: "2.20.0",
 			expectSchemaChangeMessage: false,
 		});
-
 		testMinVersionForCollabUpdateProcess({
 			description:
-				"Stage 3: Existing document with existing schema, multiple changes to minVersionForCollab",
+				"Stage 2: Updates the existing schema's minVersionForCollab with a higher minVersionForCollab",
 			initialSchema: schema2,
-			targetMinVersionForCollab: "2.30.0",
+			newMinVersionForCollab: "2.30.0",
 			expectedFinalMinVersionForCollab: "2.30.0",
 			expectSchemaChangeMessage: true,
 		});
@@ -720,18 +719,19 @@ describe("Runtime", () => {
 	});
 
 	/**
-	 * Helper function for testing minVersionForCollab updates.
+	 * Helper function for testing if info.minVersionForCollab properly updates
+	 * when a new DocumentsSchemaController is created.
 	 */
 	function testMinVersionForCollabUpdateProcess({
 		description,
 		initialSchema,
-		targetMinVersionForCollab,
+		newMinVersionForCollab,
 		expectedFinalMinVersionForCollab,
 		expectSchemaChangeMessage,
 	}: {
 		description: string;
 		initialSchema: IDocumentSchema;
-		targetMinVersionForCollab: SemanticVersion;
+		newMinVersionForCollab: SemanticVersion;
 		expectedFinalMinVersionForCollab: SemanticVersion;
 		expectSchemaChangeMessage: boolean;
 	}): IDocumentSchema | IDocumentSchemaCurrent {
@@ -749,7 +749,7 @@ describe("Runtime", () => {
 			initialSchema,
 			features,
 			onSchemaChange,
-			{ minVersionForCollab: targetMinVersionForCollab },
+			{ minVersionForCollab: newMinVersionForCollab },
 			logger,
 		);
 
@@ -761,8 +761,8 @@ describe("Runtime", () => {
 			);
 			assert.strictEqual(
 				message.info?.minVersionForCollab,
-				targetMinVersionForCollab,
-				`${description}: Message should contain the target minVersionForCollab (${targetMinVersionForCollab})`,
+				newMinVersionForCollab,
+				`${description}: Message should contain the target minVersionForCollab (${newMinVersionForCollab})`,
 			);
 			assert(
 				controller.processDocumentSchemaMessages(
