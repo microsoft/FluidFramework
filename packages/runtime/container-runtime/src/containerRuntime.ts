@@ -1368,7 +1368,6 @@ export class ContainerRuntime
 	}
 
 	private lastEmittedDirty: boolean;
-	private emitDirtyDocumentEvent = true;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
@@ -2631,30 +2630,18 @@ export class ContainerRuntime
 			return;
 		}
 
-		// Replaying is an internal operation and we don't want to generate noise while doing it.
-		// So temporarily disable dirty state change events, and save the old state.
-		// When we're done, we'll emit the event if the state changed.
-		const oldState = this.lastEmittedDirty;
-		assert(this.emitDirtyDocumentEvent, 0x127 /* "dirty document event not set on replay" */);
-		this.emitDirtyDocumentEvent = false;
+		// Any ID Allocation ops that failed to submit after the pending state was queued need to have
+		// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
+		// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
+		// before staging mode so we can simply say staged: false.
+		this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
+		this.scheduleFlush();
 
-		try {
-			// Any ID Allocation ops that failed to submit after the pending state was queued need to have
-			// the corresponding ranges resubmitted (note this call replaces the typical resubmit flow).
-			// Since we don't submit ID Allocation ops when staged, any outstanding ranges would be from
-			// before staging mode so we can simply say staged: false.
-			this.submitIdAllocationOpIfNeeded({ resubmitOutstandingRanges: true, staged: false });
-			this.scheduleFlush();
+		// replay the ops
+		this.pendingStateManager.replayPendingStates();
 
-			// replay the ops
-			this.pendingStateManager.replayPendingStates();
-		} finally {
-			// Restore the old state, re-enable event emit
-			this.lastEmittedDirty = oldState;
-			this.emitDirtyDocumentEvent = true;
-		}
-
-		// This will emit an event if the state changed relative to before replay
+		// It's possible that in rebasing pending ops during replay, there was nothing to submit,
+		// in which case we need to transition to "saved" state here.
 		this.updateDocumentDirtyState();
 	}
 
@@ -2949,6 +2936,9 @@ export class ContainerRuntime
 				localOpMetadata?: unknown;
 			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
 
+			// This message could have been the last pending local (dirtyable) message, in which case we need to update dirty state to "saved"
+			this.updateDocumentDirtyState();
+
 			if (inboundResult.type !== "fullBatch") {
 				assert(
 					messagesWithPendingState.length === 1,
@@ -3041,9 +3031,6 @@ export class ContainerRuntime
 		runtimeBatch: boolean,
 		groupedBatch: boolean,
 	): void {
-		// This message could have been the last pending local (dirtyable) message, in which case we need to update dirty state to "saved"
-		this.updateDocumentDirtyState();
-
 		if (locationInBatch.batchStart) {
 			const firstMessage = messagesWithMetadata[0]?.message;
 			assert(firstMessage !== undefined, 0xa31 /* Batch must have at least one message */);
@@ -4458,9 +4445,7 @@ export class ContainerRuntime
 		}
 
 		this.lastEmittedDirty = dirty;
-		if (this.emitDirtyDocumentEvent) {
-			this.emit(dirty ? "dirty" : "saved");
-		}
+		this.emit(dirty ? "dirty" : "saved");
 	}
 
 	public submitMessage(
