@@ -794,6 +794,7 @@ export class IntervalCollection
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
 		const { localSeq, previous } = localOpMetadata;
+		this.localSeqToSerializedInterval.delete(localSeq);
 
 		const pending = this.pending[localOpMetadata.intervalId];
 		assert(pending !== undefined, "pending must exist for rollback");
@@ -829,7 +830,6 @@ export class IntervalCollection
 					props: Object.keys(properties).length > 0 ? properties : undefined,
 					rollback: true,
 				});
-				this.localSeqToSerializedInterval.delete(localSeq);
 				if (endpointsChanged) {
 					this.removePendingChange(value);
 				}
@@ -882,6 +882,8 @@ export class IntervalCollection
 		if (pending !== undefined) {
 			if (local) {
 				const acked = pending.local.shift();
+				assert(acked !== undefined, "local change must exist");
+				this.localSeqToSerializedInterval.delete(acked.localSeq);
 				if (pending.local.length === 0) {
 					// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 					delete this.pending[id];
@@ -1414,7 +1416,6 @@ export class IntervalCollection
 				0x552 /* op metadata should be defined for local op */,
 			);
 			// This is an ack from the server. Remove the pending change.
-			this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
 			this.removePendingChange(serializedInterval);
 		}
 
@@ -1690,7 +1691,6 @@ export class IntervalCollection
 				localOpMetadata !== undefined,
 				0x553 /* op metadata should be defined for local op */,
 			);
-			this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
 			const localInterval = this.getIntervalById(id);
 			if (localInterval) {
 				this.ackInterval(localInterval, op);

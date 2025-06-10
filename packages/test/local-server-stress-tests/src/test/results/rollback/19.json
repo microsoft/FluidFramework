@@ -1,0 +1,104 @@
+[
+    {
+        "seed": 8560880732685507,
+        "type": "attach"
+    },
+    {
+        "seed": 7004407721424273,
+        "type": "addClient",
+        "clientTag": "client-2"
+    },
+    {
+        "seed": 4668192655753084,
+        "type": "createChannel",
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "tag": "channel-3",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 4484399914154556,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addText",
+            "index": 0,
+            "content": "TGwDCFt"
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 5533182209724243,
+        "type": "synchronize"
+    },
+    {
+        "seed": 5643065985326512,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "set",
+            "key": "prop1",
+            "path": "/",
+            "value": {
+                "tag": "channel-3",
+                "absolutePath": "/A/channel-3",
+                "isAttached": true
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/directory",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "root"
+    },
+    {
+        "seed": 5073126909430794,
+        "type": "DDSModelOp",
+        "op": {
+            "type": "addInterval",
+            "collectionName": "comments",
+            "id": "a2f70267-c847-482f-8848-e51dd460798d",
+            "start": {
+                "pos": 0,
+                "side": 0
+            },
+            "end": {
+                "pos": 0,
+                "side": 0
+            }
+        },
+        "channelType": "https://graph.microsoft.com/types/mergeTree",
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 8122083075027967,
+        "type": "orderSequentially",
+        "operations": [
+            {
+                "type": "DDSModelOp",
+                "op": {
+                    "type": "changeInterval",
+                    "start": 6,
+                    "end": {
+                        "pos": 6,
+                        "side": 0
+                    },
+                    "id": "a2f70267-c847-482f-8848-e51dd460798d",
+                    "collectionName": "comments"
+                },
+                "channelType": "https://graph.microsoft.com/types/mergeTree"
+            }
+        ],
+        "rollback": true,
+        "clientTag": "client-2",
+        "datastoreTag": "datastore-0",
+        "channelTag": "channel-3"
+    },
+    {
+        "seed": 8548386568326202,
+        "type": "FinalSynchronization"
+    }
+]
