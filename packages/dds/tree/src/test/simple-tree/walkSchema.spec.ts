@@ -26,30 +26,32 @@ function makeAnnotated(type: TreeNodeSchema): AnnotatedAllowedSchema {
 	};
 }
 
-describe("walk schema", () => {
-	let visitedNodes: TreeNodeSchema[];
-	let visitedAllowedTypes: Iterable<AnnotatedAllowedSchema>[];
+function mockWalkAllowedTypes(
+	annotatedAllowedTypes: Iterable<AnnotatedAllowedSchema>,
+): [TreeNodeSchema[], AnnotatedAllowedSchema[][]] {
+	const visitedNodes: TreeNodeSchema[] = [];
+	const visitedAllowedTypes: AnnotatedAllowedSchema[][] = [];
 
 	const mockVisitor: SchemaVisitor = {
 		node: (schema) => visitedNodes.push(schema),
-		allowedTypes: (types) => visitedAllowedTypes.push(types),
+		allowedTypes: (types) => visitedAllowedTypes.push(Array.from(types)),
 	};
 
-	const sf = new SchemaFactoryAlpha("walk schema tests");
+	walkAllowedTypes(annotatedAllowedTypes, mockVisitor);
 
-	beforeEach(() => {
-		visitedNodes = [];
-		visitedAllowedTypes = [];
-	});
+	return [visitedNodes, visitedAllowedTypes];
+}
+
+describe("walk schema", () => {
+	const sf = new SchemaFactoryAlpha("walk schema tests");
 
 	it("calls visitor on single allowed type", () => {
 		const annotated = makeAnnotated(sf.string);
 
-		walkAllowedTypes([annotated], mockVisitor);
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([annotated]);
 
 		assert.deepEqual(visitedNodes, [annotated.type]);
-		assert.equal(visitedAllowedTypes.length, 1);
-		assert.deepEqual(Array.from(visitedAllowedTypes[0]), [annotated]);
+		assert.deepEqual(visitedAllowedTypes, [[annotated]]);
 	});
 
 	it("calls visitor on nested allowed types", () => {
@@ -59,13 +61,16 @@ describe("walk schema", () => {
 		);
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
-		walkAllowedTypes(normalizeFieldSchema(schema).annotatedAllowedTypeSet, mockVisitor);
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+			normalizeFieldSchema(schema).annotatedAllowedTypeSet,
+		);
 
 		assert.deepEqual(visitedNodes, [annotatedString.type, annotatedObject.type, schema]);
-		assert.equal(visitedAllowedTypes.length, 3);
-		assert.deepEqual(Array.from(visitedAllowedTypes[0]), [annotatedString]);
-		assert.deepEqual(Array.from(visitedAllowedTypes[0])[0].metadata.custom, "test");
-		assert.deepEqual(Array.from(visitedAllowedTypes[1])[0].metadata.custom, "test");
+		assert.deepEqual(visitedAllowedTypes, [
+			[annotatedString],
+			[annotatedObject],
+			[{ metadata: {}, type: schema }],
+		]);
 	});
 
 	it("calls visitor on all child allowed types", () => {
@@ -73,22 +78,30 @@ describe("walk schema", () => {
 		const annotatedNumber = makeAnnotated(sf.number);
 		const schema = sf.arrayAlpha("schema", [annotatedNumber, annotatedString]);
 
-		walkAllowedTypes(normalizeFieldSchema(schema).annotatedAllowedTypeSet, mockVisitor);
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+			normalizeFieldSchema(schema).annotatedAllowedTypeSet,
+		);
 
 		assert.deepEqual(visitedNodes, [annotatedNumber.type, annotatedString.type, schema]);
-		assert.equal(visitedAllowedTypes.length, 2);
-		assert.deepEqual(Array.from(visitedAllowedTypes[0]), [annotatedNumber, annotatedString]);
-		assert.deepEqual(Array.from(visitedAllowedTypes[0])[0].metadata.custom, "test");
-		assert.deepEqual(Array.from(visitedAllowedTypes[0])[1].metadata.custom, "test");
+		assert.deepEqual(visitedAllowedTypes, [
+			[annotatedNumber, annotatedString],
+			[{ metadata: {}, type: schema }],
+		]);
+	});
+
+	it("handles empty allowed types", () => {
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([]);
+
+		assert.deepEqual(visitedNodes, []);
+		assert.deepEqual(visitedAllowedTypes, []);
 	});
 
 	it("does not revisit the same schema", () => {
 		const annotated = makeAnnotated(sf.string);
-		walkAllowedTypes([annotated, annotated], mockVisitor);
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([annotated, annotated]);
 
-		assert.equal(visitedNodes.length, 1);
-		assert.equal(visitedAllowedTypes.length, 1);
-		assert.equal(Array.from(visitedAllowedTypes[0]).length, 2);
+		assert.deepEqual(visitedNodes, [annotated.type]);
+		assert.deepEqual(visitedAllowedTypes, [[annotated, annotated]]);
 	});
 
 	it("does not fail if visitor has no callbacks", () => {
