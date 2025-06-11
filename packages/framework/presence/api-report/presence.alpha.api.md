@@ -4,6 +4,9 @@
 
 ```ts
 
+// @beta @system
+export type Accessor<T, BaseAccessor extends ValueAccessor<T>> = BaseAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : BaseAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
+
 // @beta @sealed
 export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
     readonly attendeeId: SpecificAttendeeId;
@@ -184,7 +187,7 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = P
 // @beta @system
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     metadata: LatestMetadata;
-    value: TValueAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : TValueAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
+    value: Accessor<T, TValueAccessor>;
 }
 
 // @beta @sealed

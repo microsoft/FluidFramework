@@ -64,44 +64,36 @@ export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 /**
  * Utility type that conditionally represents an accessor type based on the base accessor type.
  *
+ * @system
  * @beta
  */
 export type Accessor<
-	V,
-	TAccessor extends ValueAccessor<V>,
-> = TAccessor extends ProxiedValueAccessor<V>
-	? () => DeepReadonly<JsonDeserialized<V>> | undefined
-	: TAccessor extends RawValueAccessor<V>
-		? DeepReadonly<JsonDeserialized<V>>
+	T,
+	BaseAccessor extends ValueAccessor<T>,
+> = BaseAccessor extends ProxiedValueAccessor<T>
+	? () => DeepReadonly<JsonDeserialized<T>> | undefined
+	: BaseAccessor extends RawValueAccessor<T>
+		? DeepReadonly<JsonDeserialized<T>>
 		: never;
 
 /**
  * State of a value and its metadata.
- *
- * @privateRemarks
- * Set `value` to just `TValueAccessor` with above `*ValueAccessor` changes to break tsc.
  *
  * @system
  * @beta
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	/**
-	 * The value of the state. This will either be a value or a function that can be called to retrieve the value.
+	 * The value of the state. The type of this property will either be a direct value or a function that must be called
+	 * to retrieve the value. If the state manager was created with a {@link StateSchemaValidator}, then the type will be
+	 * {@link ProxiedValueAccessor}. If it was created without a validator, then the type will be
+	 * {@link RawValueAccessor}.
 	 *
 	 * @remarks
 	 *
 	 * This is a deeply readonly value, meaning it cannot be modified.
-	 *
-	 * @privateRemarks
-	 *
-	 * Ideally this type would be `Accessor<T, TValueAccessor>`, but using that instead of this exact definition causes
-	 * TypeScript compilation to crash with an out-of-memory error.
 	 */
-	value: TValueAccessor extends ProxiedValueAccessor<T>
-		? () => DeepReadonly<JsonDeserialized<T>> | undefined
-		: TValueAccessor extends RawValueAccessor<T>
-			? DeepReadonly<JsonDeserialized<T>>
-			: never;
+	value: Accessor<T, TValueAccessor>;
 
 	/**
 	 * Metadata associated with the value.
