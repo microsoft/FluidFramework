@@ -697,11 +697,34 @@ type PendingChanges = Partial<
 	Record<
 		string,
 		{
+			/**
+			 * The local metadatas are stores in order of submission, FIFO.
+			 * This matches how ops are ordered, and should maintained
+			 * across, submit, process, resubmit, and rollback.
+			 */
 			local: DoublyLinkedList<IntervalMessageLocalMetadata>;
+			/**
+			 * The endpointChanges are unordered, and are used to determine
+			 * if any local changes also change the endpoints. The nodes of the
+			 * list are also stored in the individual change op metadatas, and
+			 * are removed as those metadatas are handled.
+			 */
 			endpointChanges?: DoublyLinkedList<IntervalChangeLocalMetadata>;
 		}
 	>
 >;
+
+function removeMetadataFromPendingChanges(
+	localOpMetadataNode: ListNode<IntervalMessageLocalMetadata> | unknown,
+): IntervalMessageLocalMetadata {
+	const acked = (localOpMetadataNode as ListNode<IntervalMessageLocalMetadata>)?.remove()
+		?.data;
+	assert(acked !== undefined, "local change must exist");
+	if (acked.type === "change") {
+		acked.endpointChangesNode?.remove();
+	}
+	return acked;
+}
 
 function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
 	const pending = pendingChanges[id];
@@ -749,6 +772,10 @@ export class IntervalCollection
 		this.submitDelta = (op, md) => {
 			const { id } = getSerializedProperties(op.value);
 			const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
+			if (md.type === "change" && op.value.start !== undefined) {
+				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
+				md.endpointChangesNode = endpointChanges.push(md).last;
+			}
 			submitDelta(op, pending.local.push(md).last);
 		};
 
@@ -794,9 +821,7 @@ export class IntervalCollection
 	}
 
 	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetadata: unknown) {
-		const localOpMetadataNode = maybeMetadata as ListNode<IntervalMessageLocalMetadata>;
-		localOpMetadataNode.remove();
-		const localOpMetadata = localOpMetadataNode?.data;
+		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
 		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
 		const { type } = localOpMetadata;
@@ -823,12 +848,6 @@ export class IntervalCollection
 					props: Object.keys(properties).length > 0 ? properties : undefined,
 					rollback: true,
 				});
-				if (endpointsChanged) {
-					assert(
-						localOpMetadata === localOpMetadata.endpointChangesNode?.remove()?.data,
-						"endpoint change must match",
-					);
-				}
 				break;
 			}
 			case "delete": {
@@ -855,10 +874,9 @@ export class IntervalCollection
 		message: ISequencedDocumentMessage,
 		maybeMetadata: unknown,
 	) {
-		const localOpMetadataNode = local
-			? (maybeMetadata as ListNode<IntervalMessageLocalMetadata>)
+		const localOpMetadata = local
+			? removeMetadataFromPendingChanges(maybeMetadata)
 			: undefined;
-		const localOpMetadata = localOpMetadataNode?.data;
 
 		const { opName, value } = op;
 		assert(
@@ -885,11 +903,6 @@ export class IntervalCollection
 		}
 
 		if (local) {
-			const acked = localOpMetadataNode?.remove()?.data;
-			assert(acked === localOpMetadata && acked !== undefined, "local change must exist");
-			if (acked.type === "change") {
-				acked.endpointChangesNode?.remove();
-			}
 			const { id } = getSerializedProperties(value);
 			clearEmptyPendingEntry(this.pending, id);
 		}
@@ -901,20 +914,12 @@ export class IntervalCollection
 	): void {
 		const { opName, value } = op;
 
-		const localOpMetaDataNode = maybeMetadata as ListNode<IntervalMessageLocalMetadata>;
-		const localOpMetadata = localOpMetaDataNode.data;
+		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
 
 		const rebasedValue =
 			localOpMetadata.type === "delete" ? value : this.rebaseLocalInterval(localOpMetadata);
 
-		localOpMetaDataNode.remove();
 		if (rebasedValue === undefined) {
-			// only remove if we can't rebase, as otherwise
-			// the endpointChangesNode is reused with the
-			// reused localOpMetadata
-			if (localOpMetadata.type === "change") {
-				localOpMetadata.endpointChangesNode?.remove();
-			}
 			const { id } = getSerializedProperties(value);
 			clearEmptyPendingEntry(this.pending, id);
 			return;
@@ -1329,12 +1334,6 @@ export class IntervalCollection
 					previous: interval.serialize(),
 					original: serializedInterval,
 				};
-
-				if (changeEndpoints) {
-					const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
-					const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
-					metadata.endpointChangesNode = endpointChanges.push(metadata).last;
-				}
 
 				this.submitDelta(
 					{
