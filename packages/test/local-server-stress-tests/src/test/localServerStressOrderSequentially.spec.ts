@@ -101,7 +101,6 @@ describe("Local Server Stress with rollback", () => {
 		skip: [
 			...[12, 28, 30], // Key not found or value not matching key
 			...[15, 38, 51, 63], // Number of keys not same (directory)
-			...[24], // have different number of keys (map)
 			...[25], // Number of subDirectories not same
 			...[53], // SubDirectory with name ... not present in second directory
 			...[65], // closed or disposed: 0x2f5
