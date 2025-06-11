@@ -54,7 +54,7 @@ services:
   riddler:
     image: ${REGISTRY_URL:-mcr.microsoft.com}/fluidframework/routerlicious/server:${ALFRED_IMAGE_TAG:-latest}
     ports:
-      - "5000:5000"
+      - "5757:5757"
     command: node packages/routerlicious/dist/riddler/www.js
     environment:
       - DEBUG=fluid:*

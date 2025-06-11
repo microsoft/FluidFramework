@@ -81,7 +81,11 @@ export function parseToken(
 	authorization: string | undefined,
 ): string | undefined {
 	let token: string | undefined;
-	if (authorization) {
+	if (!authorization) {
+		return undefined;
+	}
+
+	if (authorization.startsWith("Basic ")) {
 		const base64TokenMatch = authorization.match(/Basic (.+)/);
 		if (!base64TokenMatch) {
 			throw new NetworkError(403, "Malformed authorization token");
@@ -94,6 +98,10 @@ export function parseToken(
 		}
 
 		token = tokenMatch[2];
+	}
+
+	if (authorization.startsWith("Bearer ")) {
+		token = authorization.slice("Bearer ".length).trim();
 	}
 
 	return token;
