@@ -20,6 +20,17 @@ echo "$scriptContent" | tr -d '\n'| openssl dgst -sha256 -binary | openssl base6
 fi
 done
 
+# Also hash external script files referenced by <script src="...">
+grep -oE '<script[^>]+src="[^"]+"' "$indexFile" | sed -E 's/.*src="([^"]+)".*/\1/' | while read -r srcPath; do
+  localFile="build$srcPath"
+  if [[ -f "$localFile" ]]; then
+    echo "Hashing external script: $localFile"
+    openssl dgst -sha256 -binary "$localFile" | openssl base64 | sed 's/^/sha256-/' >> "$generatedHashes"
+  else
+    echo "⚠️  External script not found on disk: $localFile"
+  fi
+done
+
 echo "Extracted Hashes:"
 cat "$generatedHashes"
 
