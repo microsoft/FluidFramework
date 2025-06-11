@@ -7,7 +7,6 @@ import type { Parent as UnistParent } from "unist";
 
 import type { ApiItem } from "../index.js";
 
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { SectionNode } from "./SectionNode.js";
 
 /**
@@ -51,7 +50,7 @@ export class DocumentNode implements UnistParent<SectionNode>, DocumentNodePrope
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Document;
+	public readonly type = "document";
 
 	/**
 	 * {@inheritDoc DocumentNodeProps.apiItem}
