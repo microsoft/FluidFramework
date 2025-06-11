@@ -50,7 +50,6 @@ import {
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
-	isMapNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -640,7 +639,6 @@ export const TreeAlpha: TreeAlpha = {
 				break;
 			}
 			case NodeKind.Map: {
-				assert(isMapNodeSchema(schema), "Expected map schema.");
 				for (const flexField of flexNode.boxedIterator()) {
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
