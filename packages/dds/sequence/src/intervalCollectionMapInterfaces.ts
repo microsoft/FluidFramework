@@ -23,6 +23,8 @@ export interface IntervalAddLocalMetadata {
 	localSeq: number;
 	intervalId: string;
 	interval: SequenceIntervalClass;
+	rebased?: ISerializedInterval | SerializedIntervalDelta;
+	original: SerializedIntervalDelta;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
@@ -31,6 +33,8 @@ export interface IntervalChangeLocalMetadata {
 	intervalId: string;
 	interval: SequenceIntervalClass;
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata>;
+	rebased?: ISerializedInterval | SerializedIntervalDelta;
+	original: SerializedIntervalDelta;
 }
 export interface IntervalDeleteLocalMetadata {
 	type: typeof IntervalDeltaOpType.DELETE;

@@ -717,14 +717,6 @@ export class IntervalCollection
 		>
 	> = {};
 
-	private readonly localSeqToSerializedInterval = new Map<
-		number,
-		{
-			original: ISerializedInterval | SerializedIntervalDelta;
-			rebased?: ISerializedInterval | SerializedIntervalDelta;
-		}
-	>();
-
 	public get attached(): boolean {
 		return !!this.localCollection;
 	}
@@ -745,9 +737,6 @@ export class IntervalCollection
 			const pending = (this.pending[md.intervalId] ??= { local: new DoublyLinkedList() });
 			// hack, support initialization elsewhere
 			pending.local.push(md);
-			if (op.opName !== IntervalDeltaOpType.DELETE) {
-				this.localSeqToSerializedInterval.set(md.localSeq, { original: op.value });
-			}
 			if (md.type === IntervalDeltaOpType.CHANGE && op.value.start !== undefined) {
 				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
 				md.endpointChangesNode = endpointChanges.push(md).first;
@@ -800,9 +789,6 @@ export class IntervalCollection
 		const localOpMetadataNode = maybeMetaData as ListNode<IntervalMessageLocalMetadata>;
 		const localOpMetadata = localOpMetadataNode?.data;
 		const { opName, value } = op;
-		const { localSeq } = localOpMetadata;
-		this.localSeqToSerializedInterval.delete(localSeq);
-
 		const pending = this.pending[localOpMetadata.intervalId];
 		assert(pending !== undefined, "pending must exist for rollback");
 		const current = pending.local.pop()?.data;
@@ -911,7 +897,6 @@ export class IntervalCollection
 			assert(pending !== undefined, "pending must exist");
 			const acked = localOpMetadataNode?.remove()?.data;
 			assert(acked === localOpMetadata && acked !== undefined, "local change must exist");
-			this.localSeqToSerializedInterval.delete(acked.localSeq);
 			if (acked.type === "change") {
 				acked.endpointChangesNode?.remove();
 			}
@@ -936,7 +921,6 @@ export class IntervalCollection
 
 		const localOpMetaDataNode = maybeMetadata as ListNode<IntervalMessageLocalMetadata>;
 		const localOpMetadata = localOpMetaDataNode.data;
-		const { localSeq } = localOpMetadata;
 
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		localOpMetaDataNode.remove();
@@ -945,10 +929,10 @@ export class IntervalCollection
 		}
 
 		const rebasedValue =
-			opName === "delete" ? value : this.rebaseLocalInterval(opName, value, localOpMetadata);
+			localOpMetadata.type === "delete" ? value : this.rebaseLocalInterval(localOpMetadata);
+
 		if (rebasedValue === undefined) {
-			this.localSeqToSerializedInterval.delete(localSeq);
-			return undefined;
+			return;
 		}
 
 		this.submitDelta({ opName, value: rebasedValue as any }, localOpMetadata);
@@ -1032,17 +1016,13 @@ export class IntervalCollection
 	}
 
 	private computeRebasedPositions(
-		localSeq: number,
+		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
 	): ISerializedInterval | SerializedIntervalDelta {
 		assert(
 			this.client !== undefined,
 			0x550 /* Client should be defined when computing rebased position */,
 		);
-		const { original } = this.localSeqToSerializedInterval.get(localSeq) ?? {};
-		assert(
-			original !== undefined,
-			0x551 /* Failed to store pending serialized interval info for this localSeq. */,
-		);
+		const { localSeq, original } = localOpMetadata;
 		const rebased = { ...original };
 		const { start, end, sequenceNumber } = original;
 		if (start !== undefined) {
@@ -1067,8 +1047,14 @@ export class IntervalCollection
 		this.client = client;
 		if (client) {
 			client.on("normalize", () => {
-				for (const [localSeq, value] of this.localSeqToSerializedInterval.entries()) {
-					value.rebased = this.computeRebasedPositions(localSeq);
+				for (const pending of Object.values(this.pending)) {
+					if (pending !== undefined) {
+						for (const local of pending.local) {
+							if (local.data.type !== "delete") {
+								local.data.rebased = this.computeRebasedPositions(local.data);
+							}
+						}
+					}
 				}
 			});
 		}
@@ -1229,6 +1215,7 @@ export class IntervalCollection
 						localSeq,
 						intervalId,
 						interval,
+						original: serializedInterval,
 					},
 				);
 			}
@@ -1366,6 +1353,7 @@ export class IntervalCollection
 						previous: interval.serialize(),
 						intervalId: id,
 						interval: newInterval ?? interval,
+						original: serializedInterval,
 					},
 				);
 			}
@@ -1499,25 +1487,22 @@ export class IntervalCollection
 	 *
 	 */
 	public rebaseLocalInterval(
-		opName: string,
-		serializedInterval: SerializedIntervalDelta,
-		localOpMetadata: IntervalMessageLocalMetadata,
+		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
 	): SerializedIntervalDelta | undefined {
+		const original = localOpMetadata.original;
 		if (!this.client) {
 			// If there's no associated mergeTree client, the originally submitted op is still correct.
-			return serializedInterval;
+			return original;
 		}
 		if (!this.attached) {
 			throw new LoggingError("attachSequence must be called");
 		}
 
 		const { localSeq } = localOpMetadata;
-		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
-		const { id } = getSerializedProperties(serializedInterval);
-		const localSeqEntry = this.localSeqToSerializedInterval.get(localSeq);
-		assert(localSeqEntry !== undefined, "localSeq entry must exist for rebase");
-		const { start: startRebased, end: endRebased } = (localSeqEntry.rebased ??=
-			this.computeRebasedPositions(localSeq));
+		const { intervalType, properties, stickiness, startSide, endSide } = original;
+		const { id } = getSerializedProperties(original);
+		const { start: startRebased, end: endRebased } = (localOpMetadata.rebased ??=
+			this.computeRebasedPositions(localOpMetadata));
 
 		const localInterval = this.localCollection?.idIntervalIndex.getIntervalById(id);
 
