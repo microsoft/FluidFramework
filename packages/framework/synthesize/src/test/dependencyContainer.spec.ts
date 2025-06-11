@@ -479,8 +479,10 @@ describe("someObjectlicious", () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const testGetProvider = (deps: IFluidDependencySynthesizer, scenario: string): any => {
+				const testGetProvider = (
+					deps: IFluidDependencySynthesizer,
+					scenario: string,
+				): void => {
 					const old = deps as unknown as {
 						getProvider(
 							key: "IFluidLoadable",
@@ -488,7 +490,6 @@ describe("someObjectlicious", () => {
 					};
 					const provider = old.getProvider("IFluidLoadable");
 					assert.equal(provider, loadableMock, scenario);
-					return provider;
 				};
 				testGetProvider(dc, "direct");
 				testGetProvider(new DependencyContainer(dc), "parent");

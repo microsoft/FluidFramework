@@ -14,7 +14,7 @@ export type AsyncOptionalFluidObjectProvider<T> = T extends undefined ? Record<s
 
 // @alpha @legacy
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined ? Record<string, never> : {
-    [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined>>>;
+    [P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
 };
 
 // @alpha @legacy
