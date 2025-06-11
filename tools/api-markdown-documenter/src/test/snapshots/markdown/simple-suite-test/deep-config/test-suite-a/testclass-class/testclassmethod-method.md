@@ -1,6 +1,6 @@
 # testClassMethod
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/) \> [testClassMethod(input)](/test-suite-a/testclass-class/testclassmethod-method)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/) > [testClassMethod(input)](/test-suite-a/testclass-class/testclassmethod-method)
 
 Test class method
 
@@ -19,7 +19,7 @@ Here are some remarks about the method
 
 | Parameter | Type | Description |
 | - | - | - |
-| input | TTypeParameterA |  |
+| input | TTypeParameterA | |
 
 ## Returns {#testclassmethod-returns}
 
