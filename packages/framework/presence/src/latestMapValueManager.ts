@@ -630,7 +630,7 @@ export function latestMap<
  *
  * @remarks
  * This overload is used when called with {@link LatestMapArgumentsRaw}. That is, if a validator function is
- * _not_provided.
+ * _not_ provided.
  *
  * @beta
  */
