@@ -35,6 +35,7 @@ import {
 
 /**
  * {@link BaseContainerRuntimeFactory} construction properties.
+ * @input
  * @legacy
  * @alpha
  */

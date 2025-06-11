@@ -30,61 +30,107 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * Further to distinguish unspecified `minVersionForCollab` from a specified
  * version and allow `enableExplicitSchemaControl` to default to `true` for
- * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
+ * any 2.0.0+ version, we will use a special value of `1.999.0`, which
  * is semantically less than 2.0.0.
- */
-export const defaultMinVersionForCollab =
-	"2.0.0-defaults" as const satisfies MinimumVersionForCollab;
-
-/**
- * We don't want allow a version before the major public release of the LTS version.
- * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
- * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
- * with our policy and allow all 1.x versions to be compatible with 2.x.
- */
-const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
-
-/**
- * String in a valid semver format specifying bottom of a minor version
- * or special "defaults" prerelease of a major.
- * @remarks Only 2.0.0-defaults is expected, but index signatures cannot be a
- * literal; so, just allow any major -defaults prerelease.
- */
-export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0.0-defaults`;
-
-/**
- * String in a valid semver format of a specific version at least specifying minor.
  *
  * @legacy
  * @alpha
  */
+export const defaultMinVersionForCollab = "1.999.0" as const satisfies SemanticVersion;
+
+/**
+ * The lowest supported value of {@link MinimumVersionForCollab}.
+ * @remarks
+ * In each new major version, this may be bumped to indicate which version of the Fluid Framework client libraries are no longer supported for collaboration.
+ * @privateRemarks
+ * At the time this was defined (and also at the time 2.0 was released), all version of 1.x below 1.4 were no longer supported.
+ * Therefor it makes sense to not support any version below 1.4.0.
+ * Supporting 1.4 is sufficient to support all 1.x versions which are still maintained were maintained when this constant could have been first used.
+ *
+ * Future major versions will have to decide which versions of 1.x (if any) they want to support:
+ * continuing to support what ever version of 1.x is the oldest supported one at the time of the major release, would make sense for 3.0.
+ *
+ * We don't want allow a version before the major public release of the LTS version.
+ * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
+ * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
+ * with our policy and allow all 1.x versions to be compatible with 2.x.
+ *
+ * @legacy
+ * @alpha
+ */
+export const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
+
+/**
+ * String in a valid semver format specifying the a version such that all greater or equal versions support something.
+ * @remarks
+ * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.
+ * For example, if a feature is added in 2.1.0, then back ported to 1.5.0, it could be problematic.
+ * While the feature might be supported in 1.5.0, setting a `MinimumSemanticVersion` of `1.5.0` would be invalid since incorrectly imply it was supported in `2.0.0`.
+ * In this case the `MinimumSemanticVersion` must be set to `2.1.0` to avoid the issue.
+ *
+ * The same issue can occur with features fixed in patches after the next minor has been released: avoiding this complication is why patch versions are currently forced to 0.
+ */
+export type MinimumSemanticVersion = `${bigint}.${bigint}.0`;
+
+/**
+ * Oldest version of Fluid Framework client packages to support collaborating with.
+ * @remarks
+ * String in a semver format of indicating a specific version of the Fluid Framework client package, or the special case of {@link defaultMinVersionForCollab}.
+ *
+ * When specifying a given `MinimumVersionForCollab`, any version which is greater then or equal to the specified version will be considered compatible.
+ *
+ * Must be at least {@link lowestMinVersionForCollab} and cannot exceed the current version.
+ *
+ * @privateRemarks
+ * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.
+ * See remarks for {@link MinimumSemanticVersion} for more details.
+ *
+ * Since this type is marked with `@input`, it can be generalized to allow more cases in the future as a non-breaking change.
+ *
+ * @input
+ * @legacy
+ * @alpha
+ */
 export type MinimumVersionForCollab =
-	| `${1 | 2}.${bigint}.${bigint}`
-	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+	| `1.0.0`
+	| `1.4.0`
+	| typeof defaultMinVersionForCollab
+	| `2.${bigint}.0`;
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
  * Unlike {@link MinimumVersionForCollab}, this type allows any bigint for the major version.
  * Used as a more generic type that allows major versions other than 1 or 2.
  */
-export type SemanticVersion =
-	| `${bigint}.${bigint}.${bigint}`
-	| `${bigint}.${bigint}.${bigint}-${string}`;
+export type SemanticVersion = `${bigint}.${bigint}.${bigint}`;
 
 /**
- * Generic type for runtimeOptionsAffectingDocSchemaConfigMap
+ * Converts a record into a configuration map that associates each key with with an instance of its value type that based on a {@link MinimumSemanticVersion}.
+ * @remarks
+ * For a given input {@link MinimumVersionForCollab},
+ * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumSemanticVersion}
+ * that does not exceed the given {@link MinimumVersionForCollab}.
+ *
+ * Use {@link getConfigsForCompatMode} to retrieve the configuration for a given a {@link MinimumVersionForCollab}.
+ *
+ * See the remarks on {@link MinimumSemanticVersion} for some limitation on how ConfigMaps must handle versioning.
  */
 export type ConfigMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: {
-		[version: MinimumMinorSemanticVersion]: T[K];
-	};
+	readonly [K in keyof T]-?: ConfigMapEntry<T[K]>;
 };
+
+export interface ConfigMapEntry<T> {
+	[version: MinimumSemanticVersion]: T;
+	// Require an entry for the defaultMinVersionForCollab:
+	// this ensures that all versions of lowestMinVersionForCollab or later have a specified value in the ConfigMap.
+	[lowestMinVersionForCollab]: T;
+}
 
 /**
  * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
  */
 export type ConfigValidationMap<T extends Record<string, unknown>> = {
-	[K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
+	readonly [K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
 };
 
 /**
@@ -124,92 +170,95 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
  * default value for `enableGroupedBatching` will be true because clients running 2.0 or later will be able to understand the format changes associated
  * with the batching feature.
  */
-const runtimeOptionsAffectingDocSchemaConfigMap = {
-	enableGroupedBatching: {
-		"1.0.0": false,
-		"2.0.0-defaults": true,
-	},
-	compressionOptions: {
-		"1.0.0": disabledCompressionConfig,
-		"2.0.0-defaults": enabledCompressionConfig,
-	},
-	enableRuntimeIdCompressor: {
-		// For IdCompressorMode, `undefined` represents a logical state (off).
-		// However, to satisfy the Required<> constraint while
-		// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
-		// to have it defined, so we trick the type checker here.
-		"1.0.0": undefined,
-		// We do not yet want to enable idCompressor by default since it will
-		// increase bundle sizes, and not all customers will benefit from it.
-		// Therefore, we will require customers to explicitly enable it. We
-		// are keeping it as a DocSchema affecting option for now as this may
-		// change in the future.
-	},
-	explicitSchemaControl: {
-		"1.0.0": false,
-		// This option's intention is to prevent 1.x clients from joining sessions
-		// when enabled. This is set to true when the minVersionForCollab is set
-		// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
-		// because it was not enabled by default prior to the implementation of
-		// `minVersionForCollab`.
-		// `defaultMinVersionForCollab` is set to "2.0.0-defaults" which "2.0.0"
-		// does not satisfy to avoiding enabling this option by default as of
-		// `minVersionForCollab` introduction, which could be unexpected.
-		// Only enable as a default when `minVersionForCollab` is specified at
-		// 2.0.0+.
-		"2.0.0": true,
-	},
-	flushMode: {
-		// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
-		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
-		// fewer messages will be included per flush.
-		"1.0.0": FlushMode.Immediate,
-		"2.0.0-defaults": FlushMode.TurnBased,
-	},
-	gcOptions: {
-		"1.0.0": {},
-		// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
-		"3.0.0": { enableGCSweep: true },
-	},
-	createBlobPayloadPending: {
-		// This feature is new and disabled by default. In the future we will enable it by default, but we have not
-		// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
-		// exposed on the `@public` API surface.
-		"1.0.0": undefined,
-	},
-} as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
+const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffectingDocSchema> =
+	{
+		enableGroupedBatching: {
+			"1.0.0": false,
+			[defaultMinVersionForCollab]: true,
+		},
+		compressionOptions: {
+			"1.0.0": disabledCompressionConfig,
+			[defaultMinVersionForCollab]: enabledCompressionConfig,
+		},
+		enableRuntimeIdCompressor: {
+			// For IdCompressorMode, `undefined` represents a logical state (off).
+			// However, to satisfy the Required<> constraint while
+			// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
+			// to have it defined, so we trick the type checker here.
+			"1.0.0": undefined,
+			// We do not yet want to enable idCompressor by default since it will
+			// increase bundle sizes, and not all customers will benefit from it.
+			// Therefore, we will require customers to explicitly enable it. We
+			// are keeping it as a DocSchema affecting option for now as this may
+			// change in the future.
+		},
+		explicitSchemaControl: {
+			"1.0.0": false,
+			// This option's intention is to prevent 1.x clients from joining sessions
+			// when enabled. This is set to true when the minVersionForCollab is set
+			// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
+			// because it was not enabled by default prior to the implementation of
+			// `minVersionForCollab`.
+			// `defaultMinVersionForCollab` is set to defaultMinVersionForCollab which "2.0.0"
+			// does not satisfy to avoiding enabling this option by default as of
+			// `minVersionForCollab` introduction, which could be unexpected.
+			// Only enable as a default when `minVersionForCollab` is specified at
+			// 2.0.0+.
+			"2.0.0": true,
+		},
+		flushMode: {
+			// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
+			// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
+			// fewer messages will be included per flush.
+			"1.0.0": FlushMode.Immediate,
+			[defaultMinVersionForCollab]: FlushMode.TurnBased,
+		},
+		gcOptions: {
+			"1.0.0": {},
+			// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
+			"3.0.0": { enableGCSweep: true },
+		},
+		createBlobPayloadPending: {
+			// This feature is new and disabled by default. In the future we will enable it by default, but we have not
+			// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
+			// exposed on the `@public` API surface.
+			"1.0.0": undefined,
+		},
+	};
 
-const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
-	enableGroupedBatching: configValueToMinVersionForCollab([
-		[false, "1.0.0"],
-		[true, "2.0.0-defaults"],
-	]),
-	compressionOptions: configValueToMinVersionForCollab([
-		[{ ...disabledCompressionConfig }, "1.0.0"],
-		[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
-	]),
-	enableRuntimeIdCompressor: configValueToMinVersionForCollab([
-		[undefined, "1.0.0"],
-		["on", "2.0.0-defaults"],
-		["delayed", "2.0.0-defaults"],
-	]),
-	explicitSchemaControl: configValueToMinVersionForCollab([
-		[false, "1.0.0"],
-		[true, "2.0.0-defaults"],
-	]),
-	flushMode: configValueToMinVersionForCollab([
-		[FlushMode.Immediate, "1.0.0"],
-		[FlushMode.TurnBased, "2.0.0-defaults"],
-	]),
-	gcOptions: configValueToMinVersionForCollab([
-		[{ enableGCSweep: undefined }, "1.0.0"],
-		[{ enableGCSweep: true }, "2.0.0-defaults"],
-	]),
-	createBlobPayloadPending: configValueToMinVersionForCollab([
-		[undefined, "1.0.0"],
-		[true, "2.40.0"],
-	]),
-} as const satisfies ConfigValidationMap<RuntimeOptionsAffectingDocSchema>;
+// A lot of the information in this seems redundant with whats defined above. Might be nice to combine them somehow.
+const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<RuntimeOptionsAffectingDocSchema> =
+	{
+		enableGroupedBatching: configValueToMinVersionForCollab([
+			[false, "1.0.0"],
+			[true, defaultMinVersionForCollab],
+		]),
+		compressionOptions: configValueToMinVersionForCollab([
+			[disabledCompressionConfig, "1.0.0"],
+			[enabledCompressionConfig, defaultMinVersionForCollab],
+		]),
+		enableRuntimeIdCompressor: configValueToMinVersionForCollab([
+			[undefined, "1.0.0"],
+			["on", defaultMinVersionForCollab],
+			["delayed", defaultMinVersionForCollab],
+		]),
+		explicitSchemaControl: configValueToMinVersionForCollab([
+			[false, "1.0.0"],
+			[true, defaultMinVersionForCollab],
+		]),
+		flushMode: configValueToMinVersionForCollab([
+			[FlushMode.Immediate, "1.0.0"],
+			[FlushMode.TurnBased, defaultMinVersionForCollab],
+		]),
+		gcOptions: configValueToMinVersionForCollab([
+			[{ enableGCSweep: undefined }, "1.0.0"],
+			[{ enableGCSweep: true }, defaultMinVersionForCollab],
+		]),
+		createBlobPayloadPending: configValueToMinVersionForCollab([
+			[undefined, "1.0.0"],
+			[true, "2.40.0"],
+		]),
+	};
 
 /**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
@@ -230,28 +279,26 @@ export function getMinVersionForCollabDefaults(
  */
 export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
 	minVersionForCollab: SemanticVersion,
-	configMap: ConfigMap<T>,
+	configMap: ConfigMap<T> & Record<string, ConfigMapEntry<T[keyof T]>>,
 ): Partial<T> {
 	const defaultConfigs: Partial<T> = {};
 	// Iterate over configMap to get default values for each option.
-	for (const key of Object.keys(configMap)) {
-		const config = configMap[key as keyof T];
-		// Sort the versions in ascending order so we can short circuit the loop.
-		const versions = Object.keys(config).sort(compare);
+	for (const [key, config] of Object.entries(configMap)) {
+		// Sort the versions in descending order to find the largest compatible entry.
+		const versions = (Object.entries(config) as [MinimumSemanticVersion, unknown][]).sort(
+			(a, b) => compare(b[0], a[0]),
+		);
 		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
-		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
-		// value that is compatible with the version specified as the minVersionForCollab.
-		for (const version of versions) {
+		// If so, we set it as the default value for the option.
+		for (const [version, value] of versions) {
 			if (gte(minVersionForCollab, version)) {
-				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
-			} else {
-				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
-				// any later versions.
+				defaultConfigs[key] = value;
 				break;
 			}
 		}
+		assert(key in defaultConfigs, "missing config map entry");
 	}
-	return defaultConfigs;
+	return defaultConfigs as T;
 }
 
 /**
