@@ -10,6 +10,7 @@ export interface ListNode<T> {
 	readonly data: T;
 	readonly next: ListNode<T> | undefined;
 	readonly prev: ListNode<T> | undefined;
+	remove(): ListNode<T> | undefined;
 }
 
 export interface ListNodeRange<T> {
@@ -49,6 +50,9 @@ class DataNode<T> extends HeadNode<T> implements ListNode<T> {
 	) {
 		super(undefined);
 		this.headNode = headNode;
+	}
+	remove(): ListNode<T> | undefined {
+		return this.list?.remove(this);
 	}
 }
 

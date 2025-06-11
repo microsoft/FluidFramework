@@ -25,6 +25,8 @@ import {
 	endpointPosAndSide,
 	type ISegmentInternal,
 	createLocalReconnectingPerspective,
+	DoublyLinkedList,
+	type ListNode,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -708,8 +710,8 @@ export class IntervalCollection
 		Record<
 			string,
 			{
-				local: IntervalMessageLocalMetadata[];
-				endpointChanges?: IntervalChangeLocalMetadata[];
+				local: DoublyLinkedList<IntervalMessageLocalMetadata>;
+				endpointChanges?: DoublyLinkedList<IntervalChangeLocalMetadata>;
 				consensus?: SequenceIntervalClass | undefined;
 			}
 		>
@@ -733,29 +735,24 @@ export class IntervalCollection
 	) => void;
 
 	constructor(
-		submitDelta: (
-			op: IIntervalCollectionTypeOperationValue,
-			md: IntervalMessageLocalMetadata,
-		) => void,
+		submitDelta: (op: IIntervalCollectionTypeOperationValue, md: unknown) => void,
 		serializedIntervals: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
 		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
 
 		this.submitDelta = (op, md) => {
-			const pending = (this.pending[md.intervalId] ??= { local: [] });
+			const pending = (this.pending[md.intervalId] ??= { local: new DoublyLinkedList() });
 			// hack, support initialization elsewhere
-			if (pending.local[pending.local.length - 1] !== md) {
-				pending.local.push(md);
-			}
+			pending.local.push(md);
 			if (op.opName !== IntervalDeltaOpType.DELETE) {
 				this.localSeqToSerializedInterval.set(md.localSeq, { original: op.value });
 			}
 			if (md.type === IntervalDeltaOpType.CHANGE && op.value.start !== undefined) {
-				const endpointChanges = (pending.endpointChanges ??= []);
-				endpointChanges.push(md);
+				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
+				md.endpointChangesNode = endpointChanges.push(md).first;
 			}
-			submitDelta(op, md);
+			submitDelta(op, pending.local.last);
 		};
 
 		this.savedSerializedIntervals = Array.isArray(serializedIntervals)
@@ -799,19 +796,18 @@ export class IntervalCollection
 		return true;
 	}
 
-	public rollback(
-		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IntervalMessageLocalMetadata,
-	) {
+	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetaData: unknown) {
+		const localOpMetadataNode = maybeMetaData as ListNode<IntervalMessageLocalMetadata>;
+		const localOpMetadata = localOpMetadataNode?.data;
 		const { opName, value } = op;
 		const { localSeq } = localOpMetadata;
 		this.localSeqToSerializedInterval.delete(localSeq);
 
 		const pending = this.pending[localOpMetadata.intervalId];
 		assert(pending !== undefined, "pending must exist for rollback");
-		const current = pending.local.pop();
+		const current = pending.local.pop()?.data;
 		assert(current === localOpMetadata, "local op metadata must match");
-		if (pending.local.length === 0) {
+		if (pending.local.empty) {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete this.pending[localOpMetadata.intervalId];
 		}
@@ -845,17 +841,16 @@ export class IntervalCollection
 				});
 				if (endpointsChanged) {
 					assert(
-						localOpMetadata === pending.endpointChanges?.pop(),
+						localOpMetadata === current.endpointChangesNode?.remove()?.data,
 						"endpoint change must match",
 					);
 				}
 				break;
 			}
 			case "delete": {
-				const previous =
-					pending.local.length > 0
-						? pending.local[pending.local.length - 1].interval
-						: pending.consensus;
+				const previous = !pending.local.empty
+					? pending.local.last?.data.interval
+					: pending.consensus;
 				assert(previous !== undefined, 0xb7d /* must have previous for delete */);
 				this.localCollection?.add(previous);
 				break;
@@ -869,8 +864,13 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		local: boolean,
 		message: ISequencedDocumentMessage,
-		localOpMetadata: IntervalMessageLocalMetadata | undefined,
+		maybeMetaData: unknown,
 	) {
+		const localOpMetadataNode = local
+			? (maybeMetaData as ListNode<IntervalMessageLocalMetadata>)
+			: undefined;
+		const localOpMetadata = localOpMetadataNode?.data;
+
 		const { opName, value } = op;
 		switch (opName) {
 			case "add": {
@@ -906,14 +906,17 @@ export class IntervalCollection
 				unreachableCase(opName);
 		}
 		const { id } = getSerializedProperties(value);
-
 		const pending = this.pending[id];
 		if (local) {
 			assert(pending !== undefined, "pending must exist");
-			const acked = pending.local.shift();
+			const acked = localOpMetadataNode?.remove()?.data;
 			assert(acked === localOpMetadata && acked !== undefined, "local change must exist");
 			this.localSeqToSerializedInterval.delete(acked.localSeq);
-			if (pending.local.length === 0) {
+			if (acked.type === "change") {
+				acked.endpointChangesNode?.remove();
+			}
+
+			if (pending.local.empty) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete this.pending[id];
 			} else {
@@ -927,17 +930,18 @@ export class IntervalCollection
 
 	public resubmitMessage(
 		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IntervalMessageLocalMetadata,
+		maybeMetadata: unknown,
 	): void {
 		const { opName, value } = op;
 
-		const { intervalId, localSeq } = localOpMetadata;
+		const localOpMetaDataNode = maybeMetadata as ListNode<IntervalMessageLocalMetadata>;
+		const localOpMetadata = localOpMetaDataNode.data;
+		const { localSeq } = localOpMetadata;
 
-		// Bug bug: partial resubmit
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		this.pending[intervalId]?.local.shift();
-		if (this.pending[intervalId]?.endpointChanges?.[0] === localOpMetadata) {
-			this.pending[intervalId]?.endpointChanges?.shift();
+		localOpMetaDataNode.remove();
+		if (localOpMetadata.type === "change") {
+			localOpMetadata.endpointChangesNode?.remove();
 		}
 
 		const rebasedValue =
@@ -1256,7 +1260,7 @@ export class IntervalCollection
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (local && rollback !== true) {
 				const intervalId = interval.getIntervalId();
-				this.pending[intervalId] ??= { local: [], consensus: interval };
+				this.pending[intervalId] ??= { local: new DoublyLinkedList(), consensus: interval };
 
 				this.submitDelta(
 					{
@@ -1392,7 +1396,7 @@ export class IntervalCollection
 	}
 
 	private hasPendingEndpointChanges(id: string) {
-		return (this.pending[id]?.endpointChanges?.length ?? 0) > 0;
+		return this.pending[id]?.endpointChanges?.empty === false;
 	}
 
 	public ackChange(
@@ -1417,10 +1421,7 @@ export class IntervalCollection
 				localOpMetadata !== undefined,
 				0x552 /* op metadata should be defined for local op */,
 			);
-
-			if (this.pending[id]?.endpointChanges?.[0] === localOpMetadata) {
-				this.pending[id]?.endpointChanges?.shift();
-			}
+			localOpMetadata.endpointChangesNode?.remove();
 		}
 
 		if (!interval) {

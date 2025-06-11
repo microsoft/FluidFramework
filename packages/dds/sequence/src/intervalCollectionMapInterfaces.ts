@@ -4,7 +4,7 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeOptions, ListNode } from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
@@ -30,6 +30,7 @@ export interface IntervalChangeLocalMetadata {
 	previous?: ISerializedInterval;
 	intervalId: string;
 	interval: SequenceIntervalClass;
+	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata>;
 }
 export interface IntervalDeleteLocalMetadata {
 	type: typeof IntervalDeltaOpType.DELETE;
