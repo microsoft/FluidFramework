@@ -739,6 +739,10 @@ function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
 	}
 }
 
+function hasEndpointChanges(serialized: SerializedIntervalDelta) {
+	return serialized.start !== undefined && serialized.end !== undefined;
+}
+
 /**
  * {@inheritdoc IIntervalCollection}
  */
@@ -772,7 +776,7 @@ export class IntervalCollection
 		this.submitDelta = (op, md) => {
 			const { id } = getSerializedProperties(op.value);
 			const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
-			if (md.type === "change" && op.value.start !== undefined) {
+			if (md.type === "change" && hasEndpointChanges(op.value)) {
 				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
 				md.endpointChangesNode = endpointChanges.push(md).last;
 			}
@@ -835,7 +839,7 @@ export class IntervalCollection
 			}
 			case "change": {
 				const { previous } = localOpMetadata;
-				const endpointsChanged = value.start !== undefined && value.end !== undefined;
+				const endpointsChanged = hasEndpointChanges(value);
 				const start = endpointsChanged
 					? toOptionalSequencePlace(previous.start, previous.startSide)
 					: undefined;
@@ -885,7 +889,14 @@ export class IntervalCollection
 		);
 		switch (opName) {
 			case "add": {
-				this.ackAdd(value, local, message, localOpMetadata as IntervalAddLocalMetadata);
+				this.ackAdd(
+					value,
+					local,
+					message,
+					// this cast is safe because of the above assert which
+					// validates the op and metadata types match for local changes
+					localOpMetadata as IntervalAddLocalMetadata | undefined,
+				);
 				break;
 			}
 
@@ -895,7 +906,7 @@ export class IntervalCollection
 			}
 
 			case "change": {
-				this.ackChange(value, local, message, localOpMetadata as IntervalChangeLocalMetadata);
+				this.ackChange(value, local, message);
 				break;
 			}
 			default:
@@ -1377,7 +1388,6 @@ export class IntervalCollection
 		serializedInterval: SerializedIntervalDelta,
 		local: boolean,
 		op: ISequencedDocumentMessage,
-		localOpMetadata: IntervalChangeLocalMetadata | undefined,
 	) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1389,14 +1399,6 @@ export class IntervalCollection
 		const { id, properties } = getSerializedProperties(serializedInterval);
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
 		const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
-
-		if (local) {
-			assert(
-				localOpMetadata !== undefined,
-				0x552 /* op metadata should be defined for local op */,
-			);
-			localOpMetadata.endpointChangesNode?.remove();
-		}
 
 		if (!interval) {
 			// The interval has been removed locally; no-op.
