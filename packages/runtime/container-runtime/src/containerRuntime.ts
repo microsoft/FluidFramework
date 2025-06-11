@@ -1189,6 +1189,14 @@ export class ContainerRuntime
 		return this._getClientId();
 	}
 
+	private readonly _getConnected: () => boolean;
+	/**
+	 * Returns whether the client is connected to the service.
+	 */
+	public get connectedToService(): boolean {
+		return this._getConnected();
+	}
+
 	public readonly clientDetails: IClientDetails;
 
 	private readonly isSummarizerClient: boolean;
@@ -1604,6 +1612,8 @@ export class ContainerRuntime
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
+		// eslint-disable-next-line unicorn/consistent-destructuring
+		this._getConnected = () => context.connected;
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
@@ -5116,7 +5126,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connected,
+				isConnected: () => this.connectedToService,
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
