@@ -224,7 +224,7 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			);
 
-			const nonDurableRedeem = odspResolvedUrl.shareLinkInfo?.nonDurableRedeem ?? false;
+			const nonDurableRedeem = odspResolvedUrl.shareLinkInfo?.isNonDurableRedeem ?? false;
 
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
@@ -729,7 +729,7 @@ export const downloadSnapshot = mockify(
 		const queryString = getQueryString(queryParams);
 		const url = `${snapshotUrl}/trees/latest${queryString}`;
 		const method = "POST";
-		const nonDurableRedeem = odspResolvedUrl.shareLinkInfo?.nonDurableRedeem ?? false;
+		const nonDurableRedeem = odspResolvedUrl.shareLinkInfo?.isNonDurableRedeem ?? false;
 		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 		// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing

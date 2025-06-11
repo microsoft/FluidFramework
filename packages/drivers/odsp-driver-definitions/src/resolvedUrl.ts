@@ -99,7 +99,7 @@ export interface ShareLinkInfoType {
 	/**
 	 * If the sharing link to redeem is a non-durable link, this flag will be set to true.
 	 */
-	nonDurableRedeem?: boolean;
+	isNonDurableRedeem?: boolean;
 }
 /**
  * @legacy
