@@ -447,14 +447,14 @@ export interface Summarizable {
 	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
 	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
-	 * @param fullTree - flag indicating whether the attempt should generate a full
+	 * @param fullTree - A flag indicating whether the attempt should generate a full
 	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
-	 * a summary from the entire container.
+	 * a summary from the entire container. The default value is false.
 	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
 	 * of an object did not change since last successful summary, an
 	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
 	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
-	 * send an `ISummaryHandle`, since you are not expected to track state.
+	 * send an `ISummaryHandle`, since you are not expected to track state. The default value is true.
 	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
 	 * @param incrementalSummaryContext - See {@link @fluidframework/runtime-definitions#IExperimentalIncrementalSummaryContext}.
 	 */
