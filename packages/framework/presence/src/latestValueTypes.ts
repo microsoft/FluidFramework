@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { DeepReadonly, JsonDeserialized } from "@fluidframework/core-interfaces/internal";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import {

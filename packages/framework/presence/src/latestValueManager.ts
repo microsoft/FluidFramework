@@ -9,7 +9,7 @@ import type {
 	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 import { shallowCloneObject } from "@fluidframework/core-utils/internal";
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
