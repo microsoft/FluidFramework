@@ -1,6 +1,6 @@
 # setterProperty
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterface](/test-suite-a/testinterface-interface/) \> [setterProperty](/test-suite-a/testinterface-interface/setterproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [setterProperty](/test-suite-a/testinterface-interface/setterproperty-property)
 
 A test property with a getter and a setter.
 

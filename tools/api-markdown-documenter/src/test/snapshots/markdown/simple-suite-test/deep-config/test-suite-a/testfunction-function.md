@@ -1,6 +1,6 @@
 # testFunction
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [testFunction(testParameter, testOptionalParameter)](/test-suite-a/testfunction-function)
 
 Test function
 
@@ -26,8 +26,8 @@ This is a test [link](/test-suite-a/testinterface-interface/) to another API mem
 
 | Parameter | Modifiers | Type | Description |
 | - | - | - | - |
-| testParameter |  | TTypeParameter | A test parameter |
-| testOptionalParameter | optional | TTypeParameter |  |
+| testParameter | | TTypeParameter | A test parameter |
+| testOptionalParameter | optional | TTypeParameter | |
 
 ## Returns {#testfunction-returns}
 

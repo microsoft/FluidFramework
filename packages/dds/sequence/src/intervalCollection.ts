@@ -734,7 +734,8 @@ export class IntervalCollection
 		super();
 
 		this.submitDelta = (op, md) => {
-			const pending = (this.pending[md.intervalId] ??= { local: new DoublyLinkedList() });
+			const { id } = getSerializedProperties(op.value);
+			const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
 			// hack, support initialization elsewhere
 			pending.local.push(md);
 			if (md.type === IntervalDeltaOpType.CHANGE && op.value.start !== undefined) {
@@ -788,17 +789,18 @@ export class IntervalCollection
 	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetaData: unknown) {
 		const localOpMetadataNode = maybeMetaData as ListNode<IntervalMessageLocalMetadata>;
 		const localOpMetadata = localOpMetadataNode?.data;
-		const { opName, value } = op;
-		const pending = this.pending[localOpMetadata.intervalId];
+		const { value } = op;
+		const { id, properties } = getSerializedProperties(value);
+		const pending = this.pending[id];
 		assert(pending !== undefined, "pending must exist for rollback");
 		const current = pending.local.pop()?.data;
 		assert(current === localOpMetadata, "local op metadata must match");
 		if (pending.local.empty) {
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete this.pending[localOpMetadata.intervalId];
+			delete this.pending[id];
 		}
-
-		switch (current.type) {
+		const { type } = current;
+		switch (type) {
 			case "add": {
 				this.deleteExistingInterval({
 					interval: current.interval,
@@ -810,7 +812,6 @@ export class IntervalCollection
 			case "change": {
 				const { previous } = current;
 				assert(previous !== undefined, 0xb7c /* must have previous for change */);
-				const { id, properties } = getSerializedProperties(value);
 
 				const endpointsChanged = value.start !== undefined && value.end !== undefined;
 				const start = endpointsChanged
@@ -842,7 +843,7 @@ export class IntervalCollection
 				break;
 			}
 			default:
-				throw new LoggingError(`Unknown op type: ${opName}`);
+				unreachableCase(type);
 		}
 	}
 
@@ -1213,7 +1214,6 @@ export class IntervalCollection
 					{
 						type: "add",
 						localSeq,
-						intervalId,
 						interval,
 						original: serializedInterval,
 					},
@@ -1257,7 +1257,6 @@ export class IntervalCollection
 					{
 						type: "delete",
 						localSeq: this.getNextLocalSeq(),
-						intervalId,
 					},
 				);
 			} else {
@@ -1351,7 +1350,6 @@ export class IntervalCollection
 						type: "change",
 						localSeq,
 						previous: interval.serialize(),
-						intervalId: id,
 						interval: newInterval ?? interval,
 						original: serializedInterval,
 					},
