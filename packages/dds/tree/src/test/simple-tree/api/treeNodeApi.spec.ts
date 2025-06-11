@@ -58,7 +58,7 @@ const schema = new SchemaFactoryAlpha("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-describe("treeNodeApi", () => {
+describe.only("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
@@ -327,6 +327,18 @@ describe("treeNodeApi", () => {
 				const tree: TestObject = new TestObject({});
 
 				assert(TreeAlpha.child(tree, "id") !== undefined);
+			});
+
+			it("Fields are accessed by property key and not stored key", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: SchemaFactory.optional(schema.string, { key: "bar" }),
+				}) {}
+				const tree: TestObject = new TestObject({
+					foo: "Hello world!",
+				});
+
+				assert(TreeAlpha.child(tree, "foo") === "Hello world!");
+				assert(TreeAlpha.child(tree, "bar") === undefined);
 			});
 
 			it("Extra optional properties not considered", () => {
@@ -678,6 +690,20 @@ describe("treeNodeApi", () => {
 				assert(children.length === 1);
 				assert(children[0][0] === "id");
 				assert(children[0][1] !== undefined);
+			});
+
+			it("Fields with stored keys are returned with their property keys", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: SchemaFactory.optional(schema.string, { key: "bar" }),
+				}) {}
+				const tree: TestObject = new TestObject({
+					foo: "Hello world!",
+				});
+
+				const children = [...TreeAlpha.children(tree)];
+				assert(children.length === 1);
+				assert(children[0][0] === "foo");
+				assert(children[0][1] === "Hello world!");
 			});
 
 			it("Subclass properties are not included", () => {
