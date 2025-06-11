@@ -158,16 +158,6 @@ export class MapKernel {
 		this.messageHandlers = this.getMessageHandlers();
 	}
 
-	/**
-	 * Get an iterator over the keys in this map.
-	 * @returns The iterator
-	 */
-	public keys(): IterableIterator<string> {
-		// TODO: Real implementation that doesn't snapshot the data
-		const tempMap = new Map(this.internalIterator());
-		return tempMap.keys();
-	}
-
 	private readonly internalIterator = (): IterableIterator<[string, ILocalValue]> => {
 		const sequencedDataIterator = this.sequencedData.entries();
 		const pendingDataIterator = this.pendingData.values();
@@ -251,8 +241,7 @@ export class MapKernel {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public entries(): IterableIterator<[string, any]> {
 		const internalIterator = this.internalIterator();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const next = (): IteratorResult<[string, any]> => {
+		const next = (): IteratorResult<[string, unknown]> => {
 			const nextResult = internalIterator.next();
 			if (nextResult.done) {
 				return { value: undefined, done: true };
@@ -273,15 +262,51 @@ export class MapKernel {
 	}
 
 	/**
+	 * Get an iterator over the keys in this map.
+	 * @returns The iterator
+	 */
+	public keys(): IterableIterator<string> {
+		const internalIterator = this.internalIterator();
+		const next = (): IteratorResult<string> => {
+			const nextResult = internalIterator.next();
+			if (nextResult.done) {
+				return { value: undefined, done: true };
+			}
+			const [key] = nextResult.value;
+			return { value: key, done: false };
+		};
+		const iterator = {
+			next,
+			[Symbol.iterator](): IterableIterator<string> {
+				return this;
+			},
+		};
+		return iterator;
+	}
+
+	/**
 	 * Get an iterator over the values in this map.
 	 * @returns The iterator
 	 */
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public values(): IterableIterator<any> {
-		// TODO: Real implementation that doesn't snapshot the data
-		const tempMap = new Map(this.internalIterator());
-		return tempMap.values();
+		const internalIterator = this.internalIterator();
+		const next = (): IteratorResult<unknown> => {
+			const nextResult = internalIterator.next();
+			if (nextResult.done) {
+				return { value: undefined, done: true };
+			}
+			const [, value] = nextResult.value;
+			return { value, done: false };
+		};
+		const iterator = {
+			next,
+			[Symbol.iterator](): IterableIterator<unknown> {
+				return this;
+			},
+		};
+		return iterator;
 	}
 
 	/**
@@ -301,7 +326,10 @@ export class MapKernel {
 	public forEach(
 		callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void,
 	): void {
-		// TODO: Real implementation that doesn't snapshot the data
+		// TODO: Would be better to iterate over the data without a temp map.  However,
+		// we don't have a valid map to pass for the third argument here (really, it should probably should
+		// be a reference to the SharedMap). This is already kind of a bug since we leak access to this.data
+		// in the current implementation.
 		const tempMap = new Map(this.internalIterator());
 		// eslint-disable-next-line unicorn/no-array-for-each
 		tempMap.forEach((localValue, key, m) => {
