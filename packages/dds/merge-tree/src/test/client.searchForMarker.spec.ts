@@ -596,14 +596,14 @@ describe("TestClient", () => {
 
 		it("Should return undefined when trying to find a removed marker", () => {
 			client.insertTextLocal(0, "abc");
-			client.insertMarkerLocal(0, ReferenceType.Tile, {
+			client.insertMarkerLocal(1, ReferenceType.Tile, {
 				[reservedMarkerIdKey]: "marker",
 				[reservedTileLabelsKey]: ["Eop"],
 			});
 
 			assert.equal(client.getLength(), 4, "length not expected");
 
-			client.removeRangeLocal(0, 1);
+			client.removeRangeLocal(1, 2);
 
 			assert.equal(client.getLength(), 3, "length not expected");
 
