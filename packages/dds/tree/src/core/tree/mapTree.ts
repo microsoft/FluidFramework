@@ -60,7 +60,7 @@ export function deepCopyMapTree(mapTree: MinimalMapTreeNodeView): ExclusiveMapTr
 	for (let next = nexts.pop(); next !== undefined; next = nexts.pop()) {
 		const [fields, sourceFields] = next;
 		for (const [key, field] of sourceFields) {
-			assert(field.length > 0, "invalid map tree: empty field");
+			assert(field.length > 0, 0xbb3 /* invalid map tree: empty field */);
 			if (field.length > 0) {
 				const newField: ExclusiveMapTree[] = [];
 				for (const child of field) {
