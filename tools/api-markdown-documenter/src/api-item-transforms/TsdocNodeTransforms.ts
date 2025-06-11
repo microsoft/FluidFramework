@@ -175,11 +175,6 @@ function transformTsdocParagraph(
 		transformedChildren.push(...transformTsdocParagraphContent(child, options));
 	}
 
-	// Filter out `undefined` values resulting from transformation errors.
-	transformedChildren = transformedChildren.filter(
-		(child) => child !== undefined && !child.isEmpty,
-	);
-
 	// Collapse groups of adjacent line breaks to reduce unnecessary clutter in the output.
 	transformedChildren = collapseAdjacentLineBreaks(transformedChildren);
 
