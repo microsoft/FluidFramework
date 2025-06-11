@@ -509,7 +509,7 @@ export class FieldSchemaAlpha<
 	implements SimpleFieldSchema
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
-	private readonly lazyAnnotatedTypes: Lazy<ReadonlySet<AnnotatedAllowedSchema>>;
+	private readonly lazyAnnotatedTypes: Lazy<readonly AnnotatedAllowedSchema[]>;
 
 	/**
 	 * Metadata on the types of tree nodes allowed on this field.
@@ -561,7 +561,7 @@ export class FieldSchemaAlpha<
 	 * What types of tree nodes are allowed in this field and their annotations.
 	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
 	 */
-	public get annotatedAllowedTypeSet(): ReadonlySet<AnnotatedAllowedSchema> {
+	public get annotatedAllowedTypeSet(): readonly AnnotatedAllowedSchema[] {
 		return this.lazyAnnotatedTypes.value;
 	}
 }
@@ -649,28 +649,28 @@ export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
  */
 export function normalizeAnnotatedAllowedTypes(
 	types: ImplicitAnnotatedAllowedTypes,
-): ReadonlySet<AnnotatedAllowedSchema> {
+): readonly AnnotatedAllowedSchema[] {
 	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
-	const annotations = new Set<AnnotatedAllowedSchema>();
+	const annotations: AnnotatedAllowedSchema[] = [];
 	if (isReadonlyArray(typesWithoutAnnotation)) {
 		for (const annotatedType of typesWithoutAnnotation) {
 			if (isAnnotatedAllowedType(annotatedType)) {
-				annotations.add({
+				annotations.push({
 					type: evaluateLazySchema(annotatedType.type),
 					metadata: annotatedType.metadata,
 				});
 			} else {
-				annotations.add({ type: evaluateLazySchema(annotatedType), metadata: {} });
+				annotations.push({ type: evaluateLazySchema(annotatedType), metadata: {} });
 			}
 		}
 	} else {
 		if (isAnnotatedAllowedType(typesWithoutAnnotation)) {
-			annotations.add({
+			annotations.push({
 				type: evaluateLazySchema(typesWithoutAnnotation.type),
 				metadata: typesWithoutAnnotation.metadata,
 			});
 		} else {
-			annotations.add({ type: evaluateLazySchema(typesWithoutAnnotation), metadata: {} });
+			annotations.push({ type: evaluateLazySchema(typesWithoutAnnotation), metadata: {} });
 		}
 	}
 

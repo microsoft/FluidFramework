@@ -215,7 +215,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     readonly allowedTypesMetadata: AllowedTypesMetadata;
     // (undocumented)
     readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes;
-    get annotatedAllowedTypeSet(): ReadonlySet<AnnotatedAllowedSchema>;
+    get annotatedAllowedTypeSet(): readonly AnnotatedAllowedSchema[];
 }
 
 // @alpha @sealed @system

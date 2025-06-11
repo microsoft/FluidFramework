@@ -38,7 +38,7 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 	public readonly info: T;
 	public readonly implicitlyConstructable = true as const;
 	public readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-	public readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedSchema> = new Set();
+	public readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[] = [];
 
 	public create(data: TreeValue<T> | FlexTreeNode): TreeValue<T> {
 		if (isFlexTreeNode(data)) {

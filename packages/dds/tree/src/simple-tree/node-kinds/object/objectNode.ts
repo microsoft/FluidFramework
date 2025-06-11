@@ -386,13 +386,10 @@ export function objectSchema<
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
-	const lazyAnnotatedTypes = new Lazy(
-		() =>
-			new Set(
-				Array.from(Object.values(info), (f) => [
-					...normalizeFieldSchema(f).annotatedAllowedTypeSet,
-				]).flat(),
-			),
+	const lazyAnnotatedTypes = new Lazy(() =>
+		Array.from(Object.values(info), (f) => [
+			...normalizeFieldSchema(f).annotatedAllowedTypeSet,
+		]).flat(),
 	);
 
 	let handler: ProxyHandler<object>;
@@ -512,7 +509,7 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): ReadonlySet<AnnotatedAllowedSchema> {
+		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedSchema[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};

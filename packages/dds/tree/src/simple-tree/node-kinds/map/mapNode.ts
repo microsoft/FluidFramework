@@ -296,7 +296,7 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): ReadonlySet<AnnotatedAllowedSchema> {
+		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedSchema[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
