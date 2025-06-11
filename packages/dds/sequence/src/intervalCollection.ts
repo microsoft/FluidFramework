@@ -693,6 +693,29 @@ export interface ISequenceIntervalCollection
 	nextInterval(pos: number): SequenceInterval | undefined;
 }
 
+type PendingChanges = Partial<
+	Record<
+		string,
+		{
+			local: DoublyLinkedList<IntervalMessageLocalMetadata>;
+			endpointChanges?: DoublyLinkedList<IntervalChangeLocalMetadata>;
+		}
+	>
+>;
+
+function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
+	const pending = pendingChanges[id];
+	assert(pending !== undefined, "pending must exist for local process");
+	if (pending.local.empty) {
+		assert(
+			pending.endpointChanges?.empty !== false,
+			"endpointChanges must be empty if not pending changes",
+		);
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete pendingChanges[id];
+	}
+}
+
 /**
  * {@inheritdoc IIntervalCollection}
  */
@@ -705,15 +728,7 @@ export class IntervalCollection
 	private onDeserialize: DeserializeCallback | undefined;
 	private client: Client | undefined;
 
-	private readonly pending: Partial<
-		Record<
-			string,
-			{
-				local: DoublyLinkedList<IntervalMessageLocalMetadata>;
-				endpointChanges?: DoublyLinkedList<IntervalChangeLocalMetadata>;
-			}
-		>
-	> = {};
+	private readonly pending: PendingChanges = {};
 
 	public get attached(): boolean {
 		return !!this.localCollection;
@@ -780,17 +795,11 @@ export class IntervalCollection
 
 	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetaData: unknown) {
 		const localOpMetadataNode = maybeMetaData as ListNode<IntervalMessageLocalMetadata>;
+		localOpMetadataNode.remove();
 		const localOpMetadata = localOpMetadataNode?.data;
 		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
-		const pending = this.pending[id];
-		assert(pending !== undefined, "pending must exist for rollback");
-		const current = pending.local.pop()?.data;
-		assert(current === localOpMetadata, "local op metadata must match");
-		if (pending.local.empty) {
-			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-			delete this.pending[id];
-		}
+
 		const { type } = localOpMetadata;
 		switch (type) {
 			case "add": {
@@ -837,6 +846,8 @@ export class IntervalCollection
 			default:
 				unreachableCase(type);
 		}
+
+		clearEmptyPendingEntry(this.pending, id);
 	}
 
 	public process(
@@ -875,19 +886,13 @@ export class IntervalCollection
 		}
 
 		if (local) {
-			const { id } = getSerializedProperties(value);
-			const pending = this.pending[id];
-			assert(pending !== undefined, "pending must exist");
 			const acked = localOpMetadataNode?.remove()?.data;
 			assert(acked === localOpMetadata && acked !== undefined, "local change must exist");
 			if (acked.type === "change") {
 				acked.endpointChangesNode?.remove();
 			}
-
-			if (pending.local.empty) {
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-				delete this.pending[id];
-			}
+			const { id } = getSerializedProperties(value);
+			clearEmptyPendingEntry(this.pending, id);
 		}
 	}
 
@@ -910,6 +915,8 @@ export class IntervalCollection
 			localOpMetadata.type === "delete" ? value : this.rebaseLocalInterval(localOpMetadata);
 
 		if (rebasedValue === undefined) {
+			const { id } = getSerializedProperties(value);
+			clearEmptyPendingEntry(this.pending, id);
 			return;
 		}
 
