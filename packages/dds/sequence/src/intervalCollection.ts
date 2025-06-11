@@ -46,6 +46,7 @@ import {
 import {
 	CompressedSerializedInterval,
 	ISerializedInterval,
+	IntervalDeltaOpType,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
@@ -600,6 +601,9 @@ export interface ISequenceIntervalCollection
 		{ start, end, props }: { start?: SequencePlace; end?: SequencePlace; props?: PropertySet },
 	): SequenceInterval | undefined;
 
+	/**
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 */
 	attachDeserializer(onDeserialize: DeserializeCallback): void;
 	/**
 	 * @returns an iterator over all intervals in this collection.
@@ -699,11 +703,10 @@ export class IntervalCollection
 	private client: Client | undefined;
 	private readonly localSeqToSerializedInterval = new Map<
 		number,
-		ISerializedInterval | SerializedIntervalDelta
-	>();
-	private readonly localSeqToRebasedInterval = new Map<
-		number,
-		ISerializedInterval | SerializedIntervalDelta
+		{
+			original: ISerializedInterval | SerializedIntervalDelta;
+			rebased?: ISerializedInterval | SerializedIntervalDelta;
+		}
 	>();
 	private readonly pendingChanges: Map<string, ISerializedIntervalCollectionV1> = new Map<
 		string,
@@ -714,8 +717,13 @@ export class IntervalCollection
 		return !!this.localCollection;
 	}
 
+	private readonly submitDelta: (
+		op: IIntervalCollectionTypeOperationValue,
+		md: IMapMessageLocalMetadata,
+	) => void;
+
 	constructor(
-		private readonly submitDelta: (
+		submitDelta: (
 			op: IIntervalCollectionTypeOperationValue,
 			md: IMapMessageLocalMetadata,
 		) => void,
@@ -723,6 +731,13 @@ export class IntervalCollection
 		private readonly options: Partial<SequenceOptions> = {},
 	) {
 		super();
+
+		this.submitDelta = (op, md) => {
+			if (op.opName !== IntervalDeltaOpType.DELETE) {
+				this.localSeqToSerializedInterval.set(md.localSeq, { original: op.value });
+			}
+			submitDelta(op, md);
+		};
 
 		this.savedSerializedIntervals = Array.isArray(serializedIntervals)
 			? serializedIntervals
@@ -771,7 +786,7 @@ export class IntervalCollection
 	) {
 		const { opName, value } = op;
 		const { id, properties } = getSerializedProperties(value);
-		const { localSeq, previous } = localOpMetadata;
+		const { previous } = localOpMetadata;
 		switch (opName) {
 			case "add": {
 				const interval = this.getIntervalById(id);
@@ -796,7 +811,6 @@ export class IntervalCollection
 					props: Object.keys(properties).length > 0 ? properties : undefined,
 					rollback: true,
 				});
-				this.localSeqToSerializedInterval.delete(localSeq);
 				if (endpointsChanged) {
 					this.removePendingChange(value);
 				}
@@ -822,7 +836,7 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		local: boolean,
 		message: ISequencedDocumentMessage,
-		localOpMetadata: IMapMessageLocalMetadata,
+		localOpMetadata: IMapMessageLocalMetadata | undefined,
 	) {
 		const { opName, value } = op;
 		switch (opName) {
@@ -842,6 +856,9 @@ export class IntervalCollection
 			}
 			default:
 				unreachableCase(opName);
+		}
+		if (localOpMetadata !== undefined) {
+			this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
 		}
 	}
 
@@ -943,7 +960,7 @@ export class IntervalCollection
 			this.client !== undefined,
 			0x550 /* Client should be defined when computing rebased position */,
 		);
-		const original = this.localSeqToSerializedInterval.get(localSeq);
+		const { original } = this.localSeqToSerializedInterval.get(localSeq) ?? {};
 		assert(
 			original !== undefined,
 			0x551 /* Failed to store pending serialized interval info for this localSeq. */,
@@ -972,8 +989,8 @@ export class IntervalCollection
 		this.client = client;
 		if (client) {
 			client.on("normalize", () => {
-				for (const localSeq of this.localSeqToSerializedInterval.keys()) {
-					this.localSeqToRebasedInterval.set(localSeq, this.computeRebasedPositions(localSeq));
+				for (const [localSeq, value] of this.localSeqToSerializedInterval.entries()) {
+					value.rebased = this.computeRebasedPositions(localSeq);
 				}
 			});
 		}
@@ -1124,8 +1141,6 @@ export class IntervalCollection
 			const serializedInterval: ISerializedInterval = interval.serialize();
 			const localSeq = this.getNextLocalSeq();
 			if (this.isCollaborating && rollback !== true) {
-				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
-
 				this.submitDelta(
 					{
 						opName: "add",
@@ -1257,7 +1272,6 @@ export class IntervalCollection
 				).serializeDelta({ props, includeEndpoints: changeEndpoints });
 				const localSeq = this.getNextLocalSeq();
 
-				this.localSeqToSerializedInterval.set(localSeq, serializedInterval);
 				this.addPendingChange(id, serializedInterval);
 
 				this.submitDelta(
@@ -1304,7 +1318,7 @@ export class IntervalCollection
 		}
 		assert(
 			(serializedInterval.start === undefined) === (serializedInterval.end === undefined),
-			"both start and end must be set or unset",
+			0xbb0 /* both start and end must be set or unset */,
 		);
 		if (serializedInterval.start !== undefined || serializedInterval.end !== undefined) {
 			const entries = this.pendingChanges.get(id) ?? [];
@@ -1361,7 +1375,6 @@ export class IntervalCollection
 				0x552 /* op metadata should be defined for local op */,
 			);
 			// This is an ack from the server. Remove the pending change.
-			this.localSeqToSerializedInterval.delete(localOpMetadata?.localSeq);
 			this.removePendingChange(serializedInterval);
 		}
 
@@ -1455,8 +1468,10 @@ export class IntervalCollection
 		const { localSeq } = localOpMetadata;
 		const { intervalType, properties, stickiness, startSide, endSide } = serializedInterval;
 		const { id } = getSerializedProperties(serializedInterval);
-		const { start: startRebased, end: endRebased } =
-			this.localSeqToRebasedInterval.get(localSeq) ?? this.computeRebasedPositions(localSeq);
+		const localSeqEntry = this.localSeqToSerializedInterval.get(localSeq);
+		assert(localSeqEntry !== undefined, "localSeq entry must exist for rebase");
+		const { start: startRebased, end: endRebased } = (localSeqEntry.rebased ??=
+			this.computeRebasedPositions(localSeq));
 
 		const localInterval = this.localCollection?.idIntervalIndex.getIntervalById(id);
 
@@ -1637,7 +1652,6 @@ export class IntervalCollection
 				localOpMetadata !== undefined,
 				0x553 /* op metadata should be defined for local op */,
 			);
-			this.localSeqToSerializedInterval.delete(localOpMetadata.localSeq);
 			const localInterval = this.getIntervalById(id);
 			if (localInterval) {
 				this.ackInterval(localInterval, op);

@@ -9,7 +9,7 @@
  */
 import type { Element as HastElement } from "hast";
 
-import type { LinkNode } from "../../documentation-domain/index.js";
+import { PlainTextNode, type LinkNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
 
@@ -22,7 +22,7 @@ import { transformChildrenUnderTag } from "../Utilities.js";
 export function linkToHtml(node: LinkNode, context: TransformationContext): HastElement {
 	return transformChildrenUnderTag(
 		{ name: "a", attributes: { href: node.target } },
-		[node.text],
+		[new PlainTextNode(node.text)],
 		context,
 	);
 }

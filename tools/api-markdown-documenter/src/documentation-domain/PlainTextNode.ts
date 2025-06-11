@@ -4,7 +4,6 @@
  */
 
 import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * Plain text.
@@ -28,7 +27,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.PlainText;
+	public readonly type = "text";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
@@ -43,11 +42,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	}
 
 	/**
-	 * Whether or not the text content has already been escaped.
-	 */
-	public readonly escaped: boolean;
-
-	/**
 	 * The text to display.
 	 *
 	 * @remarks Must not contain newline characters.
@@ -56,13 +50,11 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 		return this.value;
 	}
 
-	public constructor(text: string, escaped?: boolean) {
+	public constructor(text: string) {
 		super(text);
 
 		if (text.includes("\n")) {
 			throw new Error("Invalid value: Plain text nodes may not contain newline characters");
 		}
-
-		this.escaped = escaped ?? false;
 	}
 }

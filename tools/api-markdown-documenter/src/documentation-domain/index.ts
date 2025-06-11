@@ -15,7 +15,6 @@
  */
 
 export type { BlockContent, BlockContentMap } from "./BlockContent.js";
-export { BlockQuoteNode } from "./BlockQuoteNode.js";
 export { CodeSpanNode } from "./CodeSpanNode.js";
 export {
 	DocumentNode,
@@ -28,7 +27,6 @@ export {
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
-export { DocumentationNodeType } from "./DocumentationNodeType.js";
 export { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 export { HeadingNode } from "./HeadingNode.js";
 export { HorizontalRuleNode } from "./HorizontalRuleNode.js";
