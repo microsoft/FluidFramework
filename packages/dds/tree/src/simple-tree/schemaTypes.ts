@@ -1392,7 +1392,6 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
- * @sealed
  * @alpha
  */
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>

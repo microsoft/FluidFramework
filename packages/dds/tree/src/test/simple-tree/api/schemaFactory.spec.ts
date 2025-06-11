@@ -431,18 +431,22 @@ describe("schemaFactory", () => {
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
 			const fooMetadata = { "a": 2 };
 
-			class Foo extends schemaFactory.objectAlpha("Foo", {
-				bar: schemaFactory.required(schemaFactory.number, {
-					persistedMetadata: fooMetadata,
-				}),
-				baz: schemaFactory.optional(schemaFactory.string, {
-					persistedMetadata: fooMetadata,
-				}),
-				qux: schemaFactory.optionalRecursive(
-					schemaFactory.objectAlpha("Qux", { quux: schemaFactory.string }),
-					{ persistedMetadata: fooMetadata },
-				),
-			}) {}
+			class Foo extends schemaFactory.objectAlpha(
+				"Foo",
+				{
+					bar: schemaFactory.required(schemaFactory.number, {
+						persistedMetadata: fooMetadata,
+					}),
+					baz: schemaFactory.optional(schemaFactory.string, {
+						persistedMetadata: fooMetadata,
+					}),
+					qux: schemaFactory.optionalRecursive(
+						schemaFactory.objectAlpha("Qux", { quux: schemaFactory.string }),
+						{ persistedMetadata: fooMetadata },
+					),
+				},
+				{ persistedMetadata: fooMetadata },
+			) {}
 
 			const foo = hydrate(Foo, {
 				bar: 37,

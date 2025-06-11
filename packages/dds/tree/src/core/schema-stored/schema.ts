@@ -7,7 +7,7 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
-	JsonCompatibleReadOnlySchema,
+	type JsonCompatibleReadOnlyObject,
 	type MakeNominal,
 	brand,
 	invertMap,
@@ -22,7 +22,6 @@ import {
 	type TreeNodeSchemaIdentifier,
 } from "./formatV1.js";
 import type { Multiplicity } from "./multiplicity.js";
-import { Type, type Static } from "@sinclair/typebox";
 
 /**
  * The format version for the schema.
@@ -123,16 +122,6 @@ export interface SchemaPolicy {
 }
 
 /**
- * In-memory format for persisted schema metadata.
- *
- * @privateRemarks
- * TODO: Move to schema FormatV2 once it has been defined.
- */
-export const PersistedMetadataFormat = Type.Optional(JsonCompatibleReadOnlySchema);
-
-export type PersistedMetadataFormat = Static<typeof PersistedMetadataFormat>;
-
-/**
  * Schema for a field.
  * Object implementing this interface should never be modified.
  */
@@ -152,7 +141,7 @@ export interface TreeFieldStoredSchema {
 	 * @privateRemarks
 	 * This field corresponds to the `metadata` field in the persisted schema format.
 	 */
-	readonly persistedMetadata: PersistedMetadataFormat | undefined;
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
