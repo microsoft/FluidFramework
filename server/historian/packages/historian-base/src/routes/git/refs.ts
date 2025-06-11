@@ -147,7 +147,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, "doc:read"),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refsP = getRefs(request.params.tenantId, request.get("Authorization"));

@@ -342,50 +342,57 @@ export function queryParamToString(value: any): string | undefined {
 	return value;
 }
 
-export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefined): RequestHandler {
-	// eslint-disable-next-line @typescript-eslint/no-misused-promises
-	return async (request, response, next) => {
-		try {
-			const reqTenantId = request.params.tenantId;
-			const authorization = request.get("Authorization");
-			if (!authorization) {
-				throw new NetworkError(403, "Authorization header is missing.");
-			}
-			const token = parseToken(reqTenantId, authorization);
-			if (!token) {
-				throw new NetworkError(403, "Authorization token is missing.");
-			}
-			const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
-			const documentId = claims.documentId;
-			const tenantId = claims.tenantId;
-			if (containsPathTraversal(documentId)) {
-				// Prevent attempted directory traversal.
-				throw new NetworkError(400, `Invalid document id: ${documentId}`);
-			}
-			// Verify token not revoked if JTI claim is present
-			if (revokedTokenChecker && claims.jti) {
-				const isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
-					tenantId,
-					claims.documentId,
-					claims.jti,
-				);
+export function verifyToken(
+  revokedTokenChecker: IRevokedTokenChecker | undefined,
+  requiredScopes?: string | string[],
+): RequestHandler {
+  return async (request, response, next) => {
+    try {
+      const reqTenantId = request.params.tenantId;
+      const authorization = request.get("Authorization");
+      if (!authorization) {
+        throw new NetworkError(403, "Authorization header is missing.");
+      }
+      const token = parseToken(reqTenantId, authorization);
+      if (!token) {
+        throw new NetworkError(403, "Authorization token is missing.");
+      }
+      const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
+	  const documentId = claims.documentId;
+	  const tenantId = claims.tenantId;
+	  const scope = claims.scopes;
+      // Check for path traversal etc. as before
+      if (containsPathTraversal(documentId)) {
+        throw new NetworkError(400, `Invalid document id: ${documentId}`);
+      }
 
-				if (isTokenRevoked) {
-					throw new NetworkError(
-						403,
-						"Permission denied. Token has been revoked.",
-						false /* canRetry */,
-						true /* isFatal */,
-					);
-				}
-			}
-			// eslint-disable-next-line @typescript-eslint/return-await
-			return getGlobalTelemetryContext().bindPropertiesAsync(
-				{ tenantId, documentId },
-				async () => next(),
-			);
-		} catch (error) {
-			return handleResponse(Promise.reject(error), response);
-		}
-	};
+      // Token revoked check
+      if (revokedTokenChecker && claims.jti) {
+        const isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
+          tenantId,
+          documentId,
+          claims.jti,
+        );
+        if (isTokenRevoked) {
+          throw new NetworkError(403, "Permission denied. Token has been revoked.", false, true);
+        }
+      }
+
+      if (requiredScopes) {
+        const scopes = (typeof scope === "string" ? scope.split(" ") : scope) || [];
+        const requiredScopeArray = Array.isArray(requiredScopes) ? requiredScopes : [requiredScopes];
+        const hasRequiredScope = requiredScopeArray.some(scope => scopes.includes(scope));
+        if (!hasRequiredScope) {
+          throw new NetworkError(403, `Insufficient scope. Requires one of: ${requiredScopeArray.join(", ")}`);
+        }
+      }
+
+      return getGlobalTelemetryContext().bindPropertiesAsync(
+        { tenantId, documentId },
+        async () => next(),
+      );
+    } catch (error) {
+      return handleResponse(Promise.reject(error), response);
+    }
+  };
 }
