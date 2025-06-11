@@ -22,7 +22,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
     constructor(...parents: (IFluidDependencySynthesizer | undefined)[]);
     has(type: string, excludeParents?: boolean): boolean;
     // (undocumented)
-    get IFluidDependencySynthesizer(): IFluidDependencySynthesizer;
+    get IFluidDependencySynthesizer(): this;
     register<T extends keyof TMap = keyof TMap>(type: T, provider: FluidObjectProvider<Pick<TMap, T>>): void;
     synthesize<O, R = undefined | Record<string, never>>(optionalTypes: FluidObjectSymbolProvider<O>, requiredTypes: Required<FluidObjectSymbolProvider<R>>): AsyncFluidObjectProvider<O, R>;
     unregister(type: keyof TMap): void;

@@ -21,10 +21,10 @@ import {
  * @alpha
  */
 export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real type here
 	private readonly providers = new Map<keyof TMap, FluidObjectProvider<any>>();
 	private readonly parents: IFluidDependencySynthesizer[];
-	public get IFluidDependencySynthesizer(): IFluidDependencySynthesizer {
+	public get IFluidDependencySynthesizer(): this {
 		return this;
 	}
 
@@ -108,9 +108,7 @@ export class DependencyContainer<TMap> implements IFluidDependencySynthesizer {
 				} else {
 					// older implementations of the IFluidDependencySynthesizer exposed getProvider
 					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					const maybeGetProvider: { getProvider?(provider: string & keyof TMap) } =
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						parent as any;
+					const maybeGetProvider = parent as { getProvider?(provider: string & keyof TMap) };
 					if (maybeGetProvider?.getProvider !== undefined) {
 						return maybeGetProvider.getProvider(provider);
 					}
