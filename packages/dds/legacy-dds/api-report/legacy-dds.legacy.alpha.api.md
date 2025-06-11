@@ -130,6 +130,9 @@ export type SerializableTypeForSharedSignal = boolean | number | string | IFluid
 export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> & SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>;
 
 // @alpha @legacy
+export const SharedArrayBuilder: <T extends SerializableTypeForSharedArray>() => ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>>;
+
+// @alpha @legacy
 export const SharedSignal: ISharedObjectKind<ISharedSignal<any>> & SharedObjectKind<ISharedSignal<any>>;
 
 // (No @packageDocumentation comment for this package)

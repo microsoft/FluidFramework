@@ -74,3 +74,15 @@ export class SharedArrayFactory<T extends SerializableTypeForSharedArray>
 export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> &
 	SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> =
 	createSharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>(SharedArrayFactory);
+
+/**
+ * Entrypoint for {@link ISharedArray} creation.
+ * @legacy
+ * @alpha
+ */
+export const SharedArrayBuilder = <
+	T extends SerializableTypeForSharedArray,
+>(): ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>> => {
+	const factory = SharedArrayFactory<T>;
+	return createSharedObjectKind<ISharedArray<T>>(factory);
+};

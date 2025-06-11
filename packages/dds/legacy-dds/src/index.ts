@@ -11,7 +11,7 @@ export type {
 } from "./signal/index.js";
 export { SharedSignal } from "./signal/index.js";
 export { SharedSignalFactory } from "./signal/index.js";
-export { SharedArray } from "./array/index.js";
+export { SharedArray, SharedArrayBuilder } from "./array/index.js";
 export { SharedArrayFactory } from "./array/index.js";
 export { SharedArrayRevertible } from "./array/index.js";
 export type {
