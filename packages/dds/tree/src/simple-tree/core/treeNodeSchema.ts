@@ -70,18 +70,42 @@ export type TreeNodeSchemaAlpha = TreeNodeSchema & {
 	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
 	 * with a particular schema.
 	 *
-	 * TODO
+	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
+	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
+	 * This property is simply re-exposing that information in an easier to traverse format consistent across all node kinds.
 	 * @remarks
-	 * TODO
+	 * Some kinds of nodes may have additional restrictions on children:
+	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this set.
 	 *
 	 * @privateRemarks
 	 * Currently there isn't much use for this in the public API,
 	 * and it's possible this will want to be tweaked or renamed as part of a larger schema reflection API surface that might be added later.
 	 * To keep options option, this is marked `@system` for now.
+	 *
+	 * This is meant to replace the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
 	readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedSchema>;
 };
+
+/**
+ * Stores annotations for an individual allowed type that has been evaluated.
+ * @alpha
+ */
+export interface AnnotatedAllowedSchema {
+	/**
+	 * Annotations for the allowed type.
+	 */
+	readonly metadata: AllowedTypeMetadata;
+	/**
+	 * The allowed type the annotations apply to in a particular schema.
+	 */
+	type: TreeNodeSchema;
+}
 
 /**
  * Schema which is not a class.
@@ -249,21 +273,6 @@ export type TreeNodeSchemaBoth<
 		TConstructorExtra,
 		TCustomMetadata
 	>;
-
-/**
- * TODO
- * @alpha
- */
-export interface AnnotatedAllowedSchema {
-	/**
-	 * TODO
-	 */
-	metadata: AllowedTypeMetadata;
-	/**
-	 * TODO
-	 */
-	type: TreeNodeSchema;
-}
 
 /**
  * Data common to all tree node schema.

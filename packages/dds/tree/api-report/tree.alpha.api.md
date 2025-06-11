@@ -33,7 +33,7 @@ export function allowUnused<T>(t?: T): void;
 
 // @alpha
 export interface AnnotatedAllowedSchema {
-    metadata: AllowedTypeMetadata;
+    readonly metadata: AllowedTypeMetadata;
     type: TreeNodeSchema;
 }
 

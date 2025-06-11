@@ -48,6 +48,7 @@ import {
 	areImplicitFieldSchemaEqual,
 	createFieldSchema,
 	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
 	unannotateImplicitAllowedTypes,
 	unannotateSchemaRecord,
@@ -955,38 +956,48 @@ describe("schemaTypes", () => {
 		});
 	});
 
-	// TODO change to normalize
-	// describe("extractAnnotationsFromAllowedTypes", () => {
-	// 	const stringSchema = schema.string;
-	// 	const numberSchema = schema.number;
-	// 	const lazyString = () => stringSchema;
-	// 	const lazyNumber = () => numberSchema;
+	describe("normalizeAnnotatedAllowedTypes", () => {
+		const stringSchema = schema.string;
+		const numberSchema = schema.number;
+		const lazyString = () => stringSchema;
+		const lazyNumber = () => numberSchema;
 
-	// 	it("extracts metadata from AnnotatedAllowedType array", () => {
-	// 		const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
-	// 		const result = extractAnnotationsFromAllowedTypes(input);
-	// 		assert.strictEqual(result.get(stringSchema)?.custom, undefined);
-	// 		assert.deepStrictEqual(result.get(numberSchema), { custom: true });
-	// 	});
+		it("adds metadata when it doesn't already exist", () => {
+			const result = normalizeAnnotatedAllowedTypes(stringSchema);
+			assert.deepStrictEqual(result, new Set([{ metadata: {}, type: stringSchema }]));
+		});
 
-	// 	it("handles AnnotatedAllowedTypes object", () => {
-	// 		const input: AnnotatedAllowedTypes = {
-	// 			metadata: {},
-	// 			types: [{ metadata: { custom: 1 }, type: lazyString }],
-	// 		};
-	// 		const result = extractAnnotationsFromAllowedTypes(input);
-	// 		assert.deepStrictEqual(result.get(stringSchema), { custom: 1 });
-	// 	});
+		it("evaluates any lazy allowed types", () => {
+			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
+			const result = normalizeAnnotatedAllowedTypes(input);
+			assert.deepStrictEqual(
+				result,
+				new Set([
+					{ metadata: {}, type: stringSchema },
+					{ metadata: { custom: true }, type: numberSchema },
+				]),
+			);
+		});
 
-	// 	it("handles single AnnotatedAllowedType", () => {
-	// 		const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
-	// 		const result = extractAnnotationsFromAllowedTypes(input);
-	// 		assert.deepStrictEqual(result.get(stringSchema), { custom: 1 });
-	// 	});
+		it("handles single AnnotatedAllowedType", () => {
+			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
+			const result = normalizeAnnotatedAllowedTypes(input);
+			assert.deepStrictEqual(
+				result,
+				new Set([{ metadata: { custom: 1 }, type: stringSchema }]),
+			);
+		});
 
-	// 	it("handles single TreeNodeSchema", () => {
-	// 		const result = extractAnnotationsFromAllowedTypes(stringSchema);
-	// 		assert.deepStrictEqual(result.get(stringSchema), {});
-	// 	});
-	// });
+		it("removes top level metadata from AnnotatedAllowedTypes object", () => {
+			const input: AnnotatedAllowedTypes = {
+				metadata: {},
+				types: [{ metadata: { custom: 1 }, type: lazyString }],
+			};
+			const result = normalizeAnnotatedAllowedTypes(input);
+			assert.deepStrictEqual(
+				result,
+				new Set([{ metadata: { custom: 1 }, type: stringSchema }]),
+			);
+		});
+	});
 });

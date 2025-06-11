@@ -56,7 +56,6 @@ export class Context {
 		public readonly flexContext: FlexTreeContext,
 	) {
 		const schema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
-		// TODO the call to normalize here causes a circular dependency
 		walkAllowedTypes(rootSchema, {
 			node(nodeSchema) {
 				schema.set(brand(nodeSchema.identifier), nodeSchema);

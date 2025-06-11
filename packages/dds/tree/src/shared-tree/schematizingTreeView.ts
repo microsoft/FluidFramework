@@ -353,7 +353,10 @@ export class SchematizingSimpleTreeView<
 			);
 			this.checkout.forest.anchors.slots.set(
 				SimpleContextSlot,
-				new HydratedContext(normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypeSet, view.context),
+				new HydratedContext(
+					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypeSet,
+					view.context,
+				),
 			);
 
 			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
