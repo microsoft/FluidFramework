@@ -16,6 +16,7 @@ import type {
 	LatestMapItemUpdatedClientData,
 	Presence,
 	RawValueAccessor,
+	LatestMap,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
 
@@ -102,6 +103,10 @@ describe("Presence", () => {
 
 // ---- test (example) code ----
 
+type TestMapData =
+	| { x: number; y: number; ref?: never; someId?: never }
+	| { ref: string; someId: number; x?: never; y?: never };
+
 /**
  * Check that the code compiles.
  */
@@ -116,6 +121,13 @@ export function checkCompiles(): void {
 					key1: { x: 0, y: 0 },
 					key2: { ref: "default", someId: 0 },
 				},
+			}),
+			validatedMap: StateFactory.latestMap({
+				local: {
+					key1: { x: 0, y: 0 },
+					key2: { ref: "default", someId: 0 },
+				},
+				validator: (data) => data as TestMapData,
 			}),
 		},
 	);
@@ -140,6 +152,38 @@ export function checkCompiles(): void {
 		const value = props.fixedMap.local.get(key);
 		console.log(key, value);
 	}
+
+	// Get a reference to one of the remote attendees
+	const attendee2 = [...props.validatedMap.getStateAttendees()].find(
+		(attendee) => attendee !== presence.attendees.getMyself(),
+	);
+	assert(attendee2 !== undefined);
+
+	// Get a remote validated value
+	const latestMapData = props.validatedMap.getRemote(attendee2);
+
+	// @ts-expect-error Type 'Latest<{ num: number; }, ProxiedValueAccessor<{ num: number; }>>' is not assignable to type 'LatestRaw<{ num: number; }>'.
+	const _raw: LatestMapRaw<TestMapData> = props.validatedMap;
+
+	// @ts-expect-error 'LatestMapRaw<{ x: number; y: number; ref?: never; someId?: never; } | { ref: string; someId: number; x?: never; y?: never; }, "key1" | "key2">' is not assignable to type 'LatestMapRaw<{ num: number; }>'.
+	const _validated: LatestMap<TestMapData> = props.fixedMap;
+
+	// Get a value from the validated map
+	const validatedKeyValue = latestMapData.get("key2")?.value;
+	assert(validatedKeyValue !== undefined);
+
+	// The next line correctly does not compile because the value argument must be a RawValueAccessor
+	// @ts-expect-error '() => { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref: string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined' is not assignable to type 'never'..
+	logClientValue({ attendee: attendee2, key: "key2", value: validatedKeyValue });
+
+	// The key value should be a function that returns a value.
+	assert(typeof validatedKeyValue === "function");
+	const value = validatedKeyValue();
+	assert(typeof value !== "function");
+
+	const ref = value?.ref;
+	assert(ref !== undefined);
+	assert(ref === "default");
 
 	// ----------------------------------
 	// pointers data
