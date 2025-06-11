@@ -192,7 +192,10 @@ export class IntervalCollectionMap {
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(content: unknown, localOpMetadata: unknown): boolean {
+	public tryResubmitMessage(
+		content: unknown,
+		localOpMetadata: IntervalMessageLocalMetadata,
+	): boolean {
 		if (isMapOperation(content)) {
 			const { value, key } = content;
 			const localValue = this.data.get(key);

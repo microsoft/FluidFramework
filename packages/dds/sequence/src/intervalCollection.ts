@@ -863,7 +863,7 @@ export class IntervalCollection
 
 	public resubmitMessage(
 		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: unknown,
+		localOpMetadata: IntervalMessageLocalMetadata,
 	): void {
 		const { opName, value } = op;
 		const rebasedValue =
