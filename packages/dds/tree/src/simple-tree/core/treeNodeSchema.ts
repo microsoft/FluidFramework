@@ -94,7 +94,7 @@ export type TreeNodeSchemaAlpha = TreeNodeSchema & {
 
 /**
  * Stores annotations for an individual allowed type that has been evaluated.
- * @alpha
+ * @alpha @sealed
  */
 export interface AnnotatedAllowedSchema {
 	/**
