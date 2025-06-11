@@ -518,11 +518,5 @@ describe("LazyField", () => {
 			const mapResult = sequence.map((value) => (value as number) * 2);
 			assert.deepEqual(mapResult, [2, 4]);
 		});
-
-		it("asArray", () => {
-			const sequence = testSequence([37, 42]);
-			const array = [...sequence];
-			assert.deepEqual(array, [37, 42]);
-		});
 	});
 });

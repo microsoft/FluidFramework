@@ -1,6 +1,6 @@
 # TestBetaNamespace
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestBetaNamespace](/test-suite-a/testbetanamespace-namespace/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestBetaNamespace](/test-suite-a/testbetanamespace-namespace/)
 
 A namespace tagged as `@beta`.
 
@@ -20,9 +20,9 @@ Tests release level inheritance.
 
 | Variable | Alerts | Modifiers | Type | Description |
 | - | - | - | - | - |
-| [alphaMember](/test-suite-a/testbetanamespace-namespace/#alphamember-variable) | `Alpha` | `readonly` |  |  |
-| [betaMember](/test-suite-a/testbetanamespace-namespace/#betamember-variable) | `Beta` | `readonly` |  |  |
-| [publicMember](/test-suite-a/testbetanamespace-namespace/#publicmember-variable) | `Beta` | `readonly` |  |  |
+| [alphaMember](/test-suite-a/testbetanamespace-namespace/#alphamember-variable) | `Alpha` | `readonly` | | |
+| [betaMember](/test-suite-a/testbetanamespace-namespace/#betamember-variable) | `Beta` | `readonly` | | |
+| [publicMember](/test-suite-a/testbetanamespace-namespace/#publicmember-variable) | `Beta` | `readonly` | | |
 
 ## Variable Details
 

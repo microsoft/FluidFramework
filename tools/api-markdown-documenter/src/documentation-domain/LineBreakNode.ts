@@ -4,7 +4,6 @@
  */
 
 import type { DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * An explicit line break in a document.
@@ -23,7 +22,7 @@ export class LineBreakNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.LineBreak;
+	public readonly type = "lineBreak";
 
 	/**
 	 * {@inheritDoc DocumentationNode.isLiteral}

@@ -1,4 +1,4 @@
-[Packages](docs/) \> [test-suite-b](docs/test-suite-b)
+[Packages](docs/) > [test-suite-b](docs/test-suite-b)
 
 # Interfaces
 
