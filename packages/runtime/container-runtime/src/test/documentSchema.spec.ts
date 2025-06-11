@@ -426,7 +426,6 @@ describe("Runtime", () => {
 				version: validConfig.version,
 				refSeq: validConfig.refSeq,
 				runtime: validConfig.runtime,
-				info: undefined,
 			},
 			newMinVersionForCollab: "2.20.0",
 			expectedFinalMinVersionForCollab: "2.20.0",
