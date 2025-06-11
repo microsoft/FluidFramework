@@ -157,7 +157,7 @@ export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = P
     attendee: Attendee;
 }
 
-// @beta @system
+// @beta @sealed
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
     metadata: LatestMetadata;
     value: Accessor<T, TValueAccessor>;
