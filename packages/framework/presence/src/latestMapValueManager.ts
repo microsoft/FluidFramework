@@ -636,7 +636,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 // Overloads should be ordered from most specific to least specific.
 
 /**
- * Factory for creating a {@link LatestMapRaw} State object with no arguments.
+ * Factory for creating a {@link LatestMap} State object.
  *
  * @remarks
  * This overload is used when called with {@link LatestMapArguments}. That is, if a validator function is provided.
@@ -652,7 +652,7 @@ export function latestMap<
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
-	LatestMapRaw<T, Keys>
+	LatestMap<T, Keys>
 >;
 
 /**
@@ -660,7 +660,7 @@ export function latestMap<
  *
  * @remarks
  * This overload is used when called with {@link LatestMapArgumentsRaw}. That is, if a validator function is
- * _not_provided.
+ * _not_ provided.
  *
  * @beta
  */
@@ -669,7 +669,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args: LatestMapArgumentsRaw<T, Keys> & { validator: never },
+	args: LatestMapArgumentsRaw<T, Keys>,
 ): InternalTypes.ManagerFactory<
 	RegistrationKey,
 	InternalTypes.MapValueState<T, Keys>,
@@ -677,7 +677,7 @@ export function latestMap<
 >;
 
 /**
- * Factory for creating a {@link LatestMapRaw} State object.
+ * Factory for creating a {@link LatestMapRaw} State object with no arguments.
  *
  * @remarks
  * This overload is used when called with no arguments.
@@ -695,21 +695,6 @@ export function latestMap<
 >;
 
 // #endregion
-
-/**
- * @beta
- */
-export function latestMap<
-	T,
-	Keys extends string | number = string | number,
-	RegistrationKey extends string = string,
->(
-	args: LatestMapArguments<T, Keys> & { validator: StateSchemaValidator<T> },
-): InternalTypes.ManagerFactory<
-	RegistrationKey,
-	InternalTypes.MapValueState<T, Keys>,
-	LatestMap<T, Keys>
->;
 
 /* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
 export function latestMap<
