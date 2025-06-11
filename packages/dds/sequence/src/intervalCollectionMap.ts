@@ -18,7 +18,7 @@ import {
 } from "./intervalCollection.js";
 import {
 	IIntervalCollectionTypeOperationValue,
-	IMapMessageLocalMetadata,
+	IntervalMessageLocalMetadata,
 	ISerializableIntervalCollection,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
@@ -96,7 +96,7 @@ export class IntervalCollectionMap {
 		private readonly handle: IFluidHandle,
 		private readonly submitMessage: (
 			op: IMapOperation,
-			localOpMetadata: IMapMessageLocalMetadata,
+			localOpMetadata: IntervalMessageLocalMetadata,
 		) => void,
 		private readonly options?: Partial<SequenceOptions>,
 	) {}
@@ -194,7 +194,7 @@ export class IntervalCollectionMap {
 	 */
 	public tryResubmitMessage(
 		content: unknown,
-		localOpMetadata: IMapMessageLocalMetadata,
+		localOpMetadata: IntervalMessageLocalMetadata,
 	): boolean {
 		if (isMapOperation(content)) {
 			const { value, key } = content;
@@ -212,7 +212,7 @@ export class IntervalCollectionMap {
 
 			assert(localValue !== undefined, 0xb7e /* Local value expected on rollback */);
 
-			localValue.rollback(content.value, localOpMetadata as IMapMessageLocalMetadata);
+			localValue.rollback(content.value, localOpMetadata as IntervalMessageLocalMetadata);
 
 			return true;
 		}
@@ -254,7 +254,12 @@ export class IntervalCollectionMap {
 		if (isMapOperation(content)) {
 			const { value, key } = content;
 			const localValue = this.data.get(key) ?? this.createCore(key, local);
-			localValue.process(value, local, message, localOpMetadata as IMapMessageLocalMetadata);
+			localValue.process(
+				value,
+				local,
+				message,
+				localOpMetadata as IntervalMessageLocalMetadata,
+			);
 			return true;
 		}
 		return false;

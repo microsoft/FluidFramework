@@ -72,7 +72,7 @@ import Deque from "double-ended-queue";
 import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
 import {
-	IMapMessageLocalMetadata,
+	type IntervalMessageLocalMetadata,
 	type SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
 import {
@@ -786,7 +786,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			if (
 				!this.intervalCollections.tryResubmitMessage(
 					content,
-					localOpMetadata as IMapMessageLocalMetadata,
+					localOpMetadata as IntervalMessageLocalMetadata,
 				)
 			) {
 				this.submitSequenceMessage(
