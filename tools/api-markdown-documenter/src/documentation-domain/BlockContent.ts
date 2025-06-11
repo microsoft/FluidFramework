@@ -34,7 +34,7 @@ import type { UnorderedListNode } from "./UnorderedListNode.js";
  * @public
  */
 export interface BlockContentMap {
-	fencedCodeBlock: FencedCodeBlockNode;
+	fencedCode: FencedCodeBlockNode;
 	horizontalRule: HorizontalRuleNode;
 	orderedList: OrderedListNode;
 	paragraph: ParagraphNode;

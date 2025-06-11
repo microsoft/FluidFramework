@@ -265,7 +265,7 @@ export function readWideFlexTree(tree: CheckoutFlexTreeView): {
 	const field = (root.content as FlexTreeNode).getBoxed(EmptyKey);
 	assert(field.length !== 0);
 	assert(field.is(FieldKinds.sequence));
-	for (const currentNode of field.boxedIterator()) {
+	for (const currentNode of field) {
 		sum += currentNode.value as number;
 		nodesCount += 1;
 	}

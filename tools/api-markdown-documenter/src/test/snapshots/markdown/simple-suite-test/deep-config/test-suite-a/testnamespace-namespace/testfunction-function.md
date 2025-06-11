@@ -1,6 +1,6 @@
 # testFunction
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestNamespace](/test-suite-a/testnamespace-namespace/) \> [testFunction(testParameter)](/test-suite-a/testnamespace-namespace/testfunction-function)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [testFunction(testParameter)](/test-suite-a/testnamespace-namespace/testfunction-function)
 
 Test function
 
@@ -14,13 +14,13 @@ function testFunction(testParameter: number): number;
 
 | Parameter | Type | Description |
 | - | - | - |
-| testParameter | number |  |
+| testParameter | number | |
 
 ## Returns {#testfunction-returns}
 
 A number
 
-**Return type:** number
+**Return type**: number
 
 ## Throws {#testfunction-throws}
 

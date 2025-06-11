@@ -4,7 +4,6 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -44,7 +43,7 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Paragraph;
+	public readonly type = "paragraph";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
