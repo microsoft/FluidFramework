@@ -149,7 +149,8 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 }
 
 /**
- * Omit parameters that are not relevant for common use cases.
+ * Default options for Object node schema creation.
+ * @remarks Omits parameters that are not relevant for common use cases.
  */
 export const defaultSchemaFactoryObjectOptions: Required<
 	Omit<SchemaFactoryObjectOptions, "metadata" | "persistedMetadata">
