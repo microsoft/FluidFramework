@@ -154,36 +154,50 @@ export function checkCompiles(): void {
 	}
 
 	// Get a reference to one of the remote attendees
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const attendee2 = [...props.validatedMap.getStateAttendees()].find(
 		(attendee) => attendee !== presence.attendees.getMyself(),
-	);
-	assert(attendee2 !== undefined);
+	)!;
 
 	// Get a remote validated value
 	const latestMapData = props.validatedMap.getRemote(attendee2);
 
-	// @ts-expect-error Type 'Latest<{ num: number; }, ProxiedValueAccessor<{ num: number; }>>' is not assignable to type 'LatestRaw<{ num: number; }>'.
+	// @ts-expect-error LatestMap is not assignable to LatestMapRaw
+	// Type 'Latest<{ num: number; }, ProxiedValueAccessor<{ num: number; }>>' is not assignable to type
+	// 'LatestRaw<{ num: number; }>'.
 	const _raw: LatestMapRaw<TestMapData> = props.validatedMap;
 
-	// @ts-expect-error 'LatestMapRaw<{ x: number; y: number; ref?: never; someId?: never; } | { ref: string; someId: number; x?: never; y?: never; }, "key1" | "key2">' is not assignable to type 'LatestMapRaw<{ num: number; }>'.
+	// @ts-expect-error LatestMapRaw is not assignable to LatestMap
+	// 'LatestMapRaw<{ x: number; y: number; ref?: never; someId?: never; }
+	// | { ref: string; someId: number; x?: never; y?: never; }, "key1" | "key2">'
+	// is not assignable to type 'LatestMapRaw<{ num: number; }>'.
 	const _validated: LatestMap<TestMapData> = props.fixedMap;
 
 	// Get a value from the validated map
 	const validatedKeyValue = latestMapData.get("key2")?.value;
-	assert(validatedKeyValue !== undefined);
+	if (validatedKeyValue !== undefined) {
+		// @ts-expect-error because the value argument must be a RawValueAccessor
+		// Type '() =>
+		// { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref:
+		// string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined' is not assignable to type
+		// 'never'..
+		logClientValue({ attendee: attendee2, key: "key2", value: validatedKeyValue });
 
-	// The next line correctly does not compile because the value argument must be a RawValueAccessor
-	// @ts-expect-error '() => { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref: string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined' is not assignable to type 'never'..
-	logClientValue({ attendee: attendee2, key: "key2", value: validatedKeyValue });
+		// @ts-expect-error because validatedKeyValue is an accessor, not a value
+		// Type '() =>
+		// { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref:
+		// string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined'
+		// is not assignable to type 'TestMapData | undefined'.
+		const _wrongValue: TestMapData | undefined = validatedKeyValue;
 
-	// The key value should be a function that returns a value.
-	assert(typeof validatedKeyValue === "function");
-	const validatedValue = validatedKeyValue();
-	assert(typeof validatedValue !== "function");
+		// The key value should be a function that returns a value.
+		const validatedValue: TestMapData | undefined = validatedKeyValue();
 
-	const ref = validatedValue?.ref;
-	assert(ref !== undefined);
-	assert(ref === "default");
+		if( validatedValue===undefined) {
+			throw new Error("Value is not valid according to the validator function.");
+		}
+		logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
+	}
 
 	// ----------------------------------
 	// pointers data
