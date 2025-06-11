@@ -734,8 +734,7 @@ export class IntervalCollection
 		this.submitDelta = (op, md) => {
 			const { id } = getSerializedProperties(op.value);
 			const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
-			pending.local.push(md);
-			submitDelta(op, pending.local.last);
+			submitDelta(op, pending.local.push(md).last);
 		};
 
 		this.savedSerializedIntervals = Array.isArray(serializedIntervals)
@@ -779,10 +778,9 @@ export class IntervalCollection
 		return true;
 	}
 
-	public rollback(
-		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IntervalMessageLocalMetadata,
-	) {
+	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetaData: unknown) {
+		const localOpMetadataNode = maybeMetaData as ListNode<IntervalMessageLocalMetadata>;
+		const localOpMetadata = localOpMetadataNode?.data;
 		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
 		const pending = this.pending[id];

@@ -18,7 +18,6 @@ import {
 } from "./intervalCollection.js";
 import {
 	IIntervalCollectionTypeOperationValue,
-	IntervalMessageLocalMetadata,
 	ISerializableIntervalCollection,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
@@ -206,7 +205,7 @@ export class IntervalCollectionMap {
 
 			assert(localValue !== undefined, 0xb7e /* Local value expected on rollback */);
 
-			localValue.rollback(content.value, localOpMetadata as IntervalMessageLocalMetadata);
+			localValue.rollback(content.value, localOpMetadata);
 
 			return true;
 		}
