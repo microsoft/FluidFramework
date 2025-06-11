@@ -341,7 +341,7 @@ describe.only("treeNodeApi", () => {
 				assert(TreeAlpha.child(tree, "bar") === undefined);
 			});
 
-			it("Extra optional properties not considered", () => {
+			it("Unknown optional fields not considered", () => {
 				class TestObject extends schema.objectAlpha(
 					"TestObject",
 					{
@@ -652,7 +652,7 @@ describe.only("treeNodeApi", () => {
 				assert.equal(children.get("0"), 42);
 			});
 
-			it("Extra optional properties not included", () => {
+			it("Unknown optional fields not included", () => {
 				class TestObject extends schema.objectAlpha(
 					"TestObject",
 					{
