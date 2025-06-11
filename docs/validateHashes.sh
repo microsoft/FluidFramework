@@ -24,8 +24,9 @@ done
 grep -oE '<script[^>]+src="[^"]+"' "$indexFile" | sed -E 's/.*src="([^"]+)".*/\1/' | while read -r srcPath; do
   localFile="build$srcPath"
   if [[ -f "$localFile" ]]; then
-    echo "Hashing external script: $localFile"
-    openssl dgst -sha256 -binary "$localFile" | openssl base64 | sed 's/^/sha256-/' >> "$generatedHashes"
+	hash=$(openssl dgst -sha256 -binary "$localFile" | openssl base64 | sed 's/^/sha256-/')
+	echo "Hashing external script: $localFile to $hash"
+	echo $hash >> "$generatedHashes"
   else
     echo "⚠️  External script not found on disk: $localFile"
   fi
