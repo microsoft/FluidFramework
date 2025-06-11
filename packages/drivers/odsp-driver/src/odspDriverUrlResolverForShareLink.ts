@@ -137,6 +137,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		const requestToBeResolved = { headers: request.headers, url: request.url };
 		const isSharingLinkToRedeem =
 			requestToBeResolved.headers?.[SharingLinkHeader.isSharingLinkToRedeem];
+		const isNonDurableRedeem =
+			requestToBeResolved.headers?.[SharingLinkHeader.nonDurableRedeem];
 		try {
 			const url = new URL(request.url);
 
@@ -167,6 +169,11 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			// the eligible length.
 			odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {}, {
 				sharingLinkToRedeem: this.removeNavParam(request.url),
+			});
+		}
+		if (isNonDurableRedeem) {
+			odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {}, {
+				nonDurableRedeem: true,
 			});
 		}
 		if (odspResolvedUrl.itemId) {

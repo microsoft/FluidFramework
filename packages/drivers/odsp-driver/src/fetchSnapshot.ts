@@ -224,6 +224,9 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			);
 
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			const nonDurableRedeem = odspResolvedUrl.shareLinkInfo?.nonDurableRedeem ?? false;
+
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
@@ -241,6 +244,9 @@ async function redeemSharingLink(
 					);
 					const headers = getHeadersWithAuth(authHeader);
 					headers.prefer = "redeemSharingLink";
+					if (nonDurableRedeem) {
+						headers.prefer = "nonDurableRedeem";
+					}
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
 			}
