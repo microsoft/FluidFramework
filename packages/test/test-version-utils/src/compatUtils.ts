@@ -46,28 +46,39 @@ import { getRequestedVersion } from "./versionUtils.js";
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
 /**
- * Determines the minimumVersionForCollab that should be used for cross-client compatibility scenarios.
- * We will use the lesser of the containerRuntimeVersion and containerRuntimeForLoadingVersion
+ * Determines the MinimumVersionForCollab that should be used for cross-client compatibility tests.
+ *
+ * In cross-client compat tests, a different version of the runtime is being used to create and load
+ * containers. The MinimumVersionForCollab returned will be the lesser of the two versions:
+ * - runtimeVersion: The version of the runtime that is being used to create the container.
+ * - runtimeVersionForLoading: The version of the runtime that is being used to load the container.
+ * Additionally, runtimeVersionForLoading is only defined in cross-client compat tests, so if it's undefined
+ * we will just use runtimeVersion.
  *
  * Note: The MinimumVersionForCollab returned will only be used if a minVersionForCollab was not provided
  * in the ITestContainerConfig object.
+ *
+ * For example, if we are running a cross-client compat test with the following versions:
+ * - runtimeVersion: "2.42.0"
+ * - runtimeVersionForLoading: "1.4.0"
+ * We will return "1.4.0" since it's the lower of the two versions.
  */
 function getMinVersionForCollab(
-	containerRuntimeVersion: string,
-	containerRuntimeForLoadingVersion: string | undefined,
+	runtimeVersion: string,
+	runtimeVersionForLoading: string | undefined,
 ): MinimumVersionForCollab {
-	isMinimumVersionForCollab(containerRuntimeVersion);
-	if (containerRuntimeForLoadingVersion === undefined) {
+	isMinimumVersionForCollab(runtimeVersion);
+	if (runtimeVersionForLoading === undefined) {
 		// If `containerRuntimeForLoading` is not defined, then this is not a cross-client compat scenario.
-		// In this case, we can use the `containerRuntimeVersion` as the default minVersionForCollab.
-		return containerRuntimeVersion;
+		// In this case, we can use the `runtimeVersion` as the default minVersionForCollab.
+		return runtimeVersion;
 	}
-	isMinimumVersionForCollab(containerRuntimeForLoadingVersion);
+	isMinimumVersionForCollab(runtimeVersionForLoading);
 	// If `containerRuntimeForLoading` is defined, we will use the lower of the two versions to ensure
 	// compatibility between the two runtimes.
-	return semver.compare(containerRuntimeVersion, containerRuntimeForLoadingVersion) <= 0
-		? containerRuntimeVersion
-		: containerRuntimeForLoadingVersion;
+	return semver.compare(runtimeVersion, runtimeVersionForLoading) <= 0
+		? runtimeVersion
+		: runtimeVersionForLoading;
 }
 
 /**
