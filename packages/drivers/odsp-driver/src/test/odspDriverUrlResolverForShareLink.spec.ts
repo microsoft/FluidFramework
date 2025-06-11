@@ -356,6 +356,41 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		);
 	});
 
+	it("isNonDurableRedeem should be set when isNonDurableRedeem header is set", async () => {
+		const url = new URL(sharelink);
+		const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
+			storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
+			return urlResolverWithShareLinkFetcher.resolve({
+				url: url.toString(),
+				headers: {
+					[SharingLinkHeader.isSharingLinkToRedeem]: true,
+					[SharingLinkHeader.isNonDurableRedeem]: true,
+				},
+			});
+		});
+		assert(
+			resolvedUrl.shareLinkInfo?.isNonDurableRedeem === true,
+			"Sharing link should be set in resolved url",
+		);
+	});
+
+	it("isNonDurableRedeem should not be set when isSharingLinkToRedeem header is not set", async () => {
+		const url = new URL(sharelink);
+		const resolvedUrl = await mockGetFileLink(Promise.resolve(sharelink), async () => {
+			storeLocatorInOdspUrl(url, { siteUrl, driveId, itemId, dataStorePath });
+			return urlResolverWithShareLinkFetcher.resolve({
+				url: url.toString(),
+				headers: {
+					[SharingLinkHeader.isNonDurableRedeem]: true,
+				},
+			});
+		});
+		assert(
+			resolvedUrl.shareLinkInfo?.isNonDurableRedeem === undefined,
+			"Sharing link should not be set in resolved url",
+		);
+	});
+
 	it("Encode and decode nav param", async () => {
 		const encodedUrl = new URL(sharelink);
 		storeLocatorInOdspUrl(encodedUrl, {

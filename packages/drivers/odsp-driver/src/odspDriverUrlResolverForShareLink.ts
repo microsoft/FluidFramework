@@ -171,7 +171,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 				sharingLinkToRedeem: this.removeNavParam(request.url),
 			});
 		}
-		if (isNonDurableRedeem) {
+		if (isNonDurableRedeem && isSharingLinkToRedeem) {
 			odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {}, {
 				isNonDurableRedeem: true,
 			});
