@@ -21,7 +21,6 @@ export const IMousePosition = Type.Object({
 export const IMousePositionValidator: StateSchemaValidator<IMousePosition> = (
 	maybeValid,
 ): IMousePosition | undefined => {
-	window.alert("Validator called");
 	console.debug(`Validator called with`, maybeValid);
 	// const isValid = Value.Parse(IMousePosition, maybeValid);
 

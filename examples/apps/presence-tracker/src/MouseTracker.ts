@@ -75,8 +75,8 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		window.addEventListener("mousemove", (e) => {
 			// Alert all connected clients that there has been a change to this client's mouse position
 			this.cursor.local = {
-				x: { value: `${e.clientX}` } as unknown as number,
-				y: { value: `${e.clientY}` } as unknown as number,
+				x: e.clientX, // { value: `${e.clientX}` } as unknown as number,
+				y: e.clientY, // { value: `${e.clientY}` } as unknown as number,
 			};
 			this.emit("mousePositionChanged");
 		});
