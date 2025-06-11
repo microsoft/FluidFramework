@@ -89,7 +89,7 @@ export type TreeNodeSchemaAlpha = TreeNodeSchema & {
 	 * This is meant to replace the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: ReadonlySet<AnnotatedAllowedSchema>;
+	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[];
 };
 
 /**
