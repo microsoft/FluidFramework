@@ -178,10 +178,10 @@ export function checkCompiles(): void {
 
 	// The key value should be a function that returns a value.
 	assert(typeof validatedKeyValue === "function");
-	const value = validatedKeyValue();
-	assert(typeof value !== "function");
+	const validatedValue = validatedKeyValue();
+	assert(typeof validatedValue !== "function");
 
-	const ref = value?.ref;
+	const ref = validatedValue?.ref;
 	assert(ref !== undefined);
 	assert(ref === "default");
 
@@ -224,7 +224,9 @@ export function checkCompiles(): void {
 	}
 
 	for (const { attendee, items } of pointers.getRemotes()) {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	}
 
 	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
@@ -232,7 +234,9 @@ export function checkCompiles(): void {
 	);
 
 	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	});
 
 	// ----------------------------------
@@ -271,4 +275,10 @@ export function checkCompiles(): void {
 	localPrimitiveMap.set("key3", "value");
 	// @ts-expect-error value of type value is not assignable
 	localPrimitiveMap.set("null", { value: "value" });
+	// latestMap infers that only `true` is a valid value without use of `false` or explicit specification.
+	// This happened under PR #24752 unexpectedly. Presumably from some additional inference complication.
+	// This is a better inferred result; so it can stand, but would not be terrible if the behavior changes.
+	// Caller can always use explicit generic specification to be completely clear about the types.
+	// @ts-expect-error See description above.
+	localPrimitiveMap.set("true", false);
 }
