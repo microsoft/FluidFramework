@@ -100,12 +100,12 @@ describe("unhydratedFlexTree", () => {
 	});
 
 	it("can get their schema", () => {
-		assert.equal(map.schema, mapSchemaSimple.identifier);
-		assert.equal(arrayNode.schema, arrayNodeSchemaSimple.identifier);
-		assert.equal(object.schema, objectSchemaSimple.identifier);
-		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.schema, schemaFactory.string.identifier);
+		assert.equal(map.type, mapSchemaSimple.identifier);
+		assert.equal(arrayNode.type, arrayNodeSchemaSimple.identifier);
+		assert.equal(object.type, objectSchemaSimple.identifier);
+		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.type, schemaFactory.string.identifier);
 		assert.equal(
-			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema,
+			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.type,
 			schemaFactory.string.identifier,
 		);
 	});
@@ -117,8 +117,8 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(map.getBoxed(mapKey).length, 1);
 		assert.equal(map.tryGetField(brand("unknown key")), undefined);
 		assert.equal(map.getBoxed("unknown key").length, 0);
-		assert.equal([...map.boxedIterator()].length, 1);
-		assert.equal([...map.boxedIterator()][0].boxedAt(0)?.value, childValue);
+		assert.equal([...map].length, 1);
+		assert.equal([...map][0].boxedAt(0)?.value, childValue);
 		assert.deepEqual([...map.keys()], [mapKey]);
 	});
 
@@ -135,8 +135,8 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(field.at(-1), childValue);
 		assert.equal(field.at(0), childValue);
 		assert.equal(field.at(1), undefined);
-		assert.equal([...arrayNode.boxedIterator()].length, 1);
-		assert.equal([...arrayNode.boxedIterator()][0].boxedAt(0)?.value, childValue);
+		assert.equal([...arrayNode].length, 1);
+		assert.equal([...arrayNode][0].boxedAt(0)?.value, childValue);
 	});
 
 	it("can get the children of object nodes", () => {
@@ -159,7 +159,7 @@ describe("unhydratedFlexTree", () => {
 		);
 		assert.equal(object.tryGetField(brand("unknown key")), undefined);
 		assert.equal(object.getBoxed("unknown key").length, 0);
-		assert.equal([...object.boxedIterator()].length, 2);
+		assert.equal([...object].length, 2);
 	});
 
 	it("cannot be multiparented", () => {
@@ -192,7 +192,7 @@ describe("unhydratedFlexTree", () => {
 	it("can get their parent index", () => {
 		assert.equal(map.parentField.index, 0);
 		assert.equal(arrayNode.parentField.index, 0);
-		assert.equal(object.parentField.index, -1);
+		assert.equal(object.parentField.index, 0);
 	});
 
 	it("can get their parent node", () => {
@@ -267,7 +267,7 @@ describe("unhydratedFlexTree", () => {
 				);
 				const field = mutableFieldNode.getBoxed(EmptyKey);
 				assert(field.is(FieldKinds.sequence));
-				const values = (): Value[] => Array.from(field.boxedIterator(), (n): Value => n.value);
+				const values = (): Value[] => Array.from(field, (n): Value => n.value);
 				assert.deepEqual(values(), [childValue]);
 				const treeC: MapTree = { ...mapChildMapTree, value: "c" };
 				const treeD: MapTree = { ...mapChildMapTree, value: "d" };
@@ -305,7 +305,7 @@ describe("unhydratedFlexTree", () => {
 				field.editor.insert(0, newContent);
 				assert.equal(field.length, newContent.length);
 				assert.deepEqual(
-					Array.from(field.boxedIterator(), (n) => n.value),
+					Array.from(field, (n) => n.value),
 					newContent.map((c) => c.value),
 				);
 			});
