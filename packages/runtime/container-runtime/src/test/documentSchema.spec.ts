@@ -420,8 +420,6 @@ describe("Runtime", () => {
 
 	it("New DocumentSchemaController will produce schema update message when the initial schema's info property is undefined", () => {
 		testMinVersionForCollabUpdateProcess({
-			description:
-				"New DocumentSchemaController will produce schema update message when the initial schema's info property is undefined",
 			initialSchema: {
 				version: validConfig.version,
 				refSeq: validConfig.refSeq,
@@ -435,8 +433,6 @@ describe("Runtime", () => {
 
 	it("New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's default minVersionForCollab", () => {
 		testMinVersionForCollabUpdateProcess({
-			description:
-				"New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's default minVersionForCollab",
 			initialSchema: validConfig,
 			newMinVersionForCollab: "2.20.0",
 			expectedFinalMinVersionForCollab: "2.20.0",
@@ -446,8 +442,6 @@ describe("Runtime", () => {
 
 	it("New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's non-default minVersionForCollab", () => {
 		testMinVersionForCollabUpdateProcess({
-			description:
-				"New DocumentSchemaController will produce schema update message when the provided minVersionForCollab is higher than the initial schema's non-default minVersionForCollab",
 			initialSchema: {
 				version: validConfig.version,
 				refSeq: validConfig.refSeq,
@@ -463,8 +457,6 @@ describe("Runtime", () => {
 	it("New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is lower than the initial schema's minVersionForCollab", () => {
 		// It should stay at 2.20.0 since 2.0.0 is lower than the existing minVersionForCollab (2.20.0)
 		testMinVersionForCollabUpdateProcess({
-			description:
-				"New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is lower than the initial schema's minVersionForCollab",
 			initialSchema: {
 				version: validConfig.version,
 				refSeq: validConfig.refSeq,
@@ -480,8 +472,6 @@ describe("Runtime", () => {
 	it("New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is equal to the initial schema's minVersionForCollab", () => {
 		// It should stay at 2.20.0 since 2.0.0 is lower than the existing minVersionForCollab (2.20.0)
 		testMinVersionForCollabUpdateProcess({
-			description:
-				"New DocumentSchemaController will NOT produce schema update message when the provided minVersionForCollab is equal to the initial schema's minVersionForCollab",
 			initialSchema: {
 				version: validConfig.version,
 				refSeq: validConfig.refSeq,
@@ -764,13 +754,11 @@ describe("Runtime", () => {
 	 * the given expected value.
 	 */
 	function testMinVersionForCollabUpdateProcess({
-		description,
 		initialSchema,
 		newMinVersionForCollab,
 		expectedFinalMinVersionForCollab,
 		expectSchemaChangeMessage,
 	}: {
-		description: string;
 		initialSchema: IDocumentSchema;
 		newMinVersionForCollab: SemanticVersion;
 		expectedFinalMinVersionForCollab: SemanticVersion;
@@ -796,14 +784,11 @@ describe("Runtime", () => {
 
 		const message = controller.maybeGenerateSchemaMessage();
 		if (expectSchemaChangeMessage) {
-			assert(
-				message !== undefined,
-				`${description}: Schema change message should be generated`,
-			);
+			assert(message !== undefined, "Schema change message should be generated");
 			assert.strictEqual(
 				message.info?.minVersionForCollab,
 				newMinVersionForCollab,
-				`${description}: Message should contain the target minVersionForCollab (${newMinVersionForCollab})`,
+				`Message should contain the target minVersionForCollab (${newMinVersionForCollab})`,
 			);
 			assert(
 				controller.processDocumentSchemaMessages(
@@ -811,37 +796,28 @@ describe("Runtime", () => {
 					true, // local
 					messageProcessingSeqNumIfGenerated,
 				) === true,
-				`${description}: Processing schema message should succeed`,
+				"Processing schema message should succeed",
 			);
 		} else {
-			assert(
-				message === undefined,
-				`${description}: Schema change message should not be generated`,
-			);
+			assert(message === undefined, "Schema change message should not be generated");
 		}
 
 		if (expectSchemaChangeMessage) {
-			assert(schemaChangedCalled, `${description}: onSchemaChange should have been called`);
+			assert(schemaChangedCalled, "onSchemaChange should have been called");
 		} else {
-			assert(
-				!schemaChangedCalled,
-				`${description}: onSchemaChange should NOT have been called`,
-			);
+			assert(!schemaChangedCalled, "onSchemaChange should NOT have been called");
 		}
 
 		const resultingSchema = controller.summarizeDocumentSchema(summarySeqNum);
-		assert(
-			resultingSchema !== undefined,
-			`${description}: Resulting schema should be defined`,
-		);
+		assert(resultingSchema !== undefined, "Resulting schema should be defined");
 		assert(
 			resultingSchema.info?.minVersionForCollab !== undefined,
-			`${description}: Resulting schema should have minVersionForCollab defined`,
+			"Resulting schema should have minVersionForCollab defined",
 		);
 		assert.strictEqual(
 			resultingSchema.info?.minVersionForCollab,
 			expectedFinalMinVersionForCollab,
-			`${description}: Resulting schema's minVersionForCollab should be ${expectedFinalMinVersionForCollab}, but was ${resultingSchema.info.minVersionForCollab}`,
+			`Resulting schema's minVersionForCollab should be ${expectedFinalMinVersionForCollab}, but was ${resultingSchema.info.minVersionForCollab}`,
 		);
 		return resultingSchema;
 	}
