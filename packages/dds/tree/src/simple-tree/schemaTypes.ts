@@ -830,7 +830,7 @@ function areMetadataEqual(
 	}
 
 	return (
-		a?.custom === b?.custom &&
+		Object.is(a?.custom, b?.custom) &&
 		a?.description === b?.description &&
 		arePersistedMetadataEqual(a?.persistedMetadata, b?.persistedMetadata)
 	);
@@ -845,7 +845,7 @@ function arePersistedMetadataEqual(
 	a: JsonCompatibleReadOnlyObject | undefined,
 	b: JsonCompatibleReadOnlyObject | undefined,
 ): boolean {
-	if (a === b) {
+	if (Object.is(a, b)) {
 		return true;
 	}
 

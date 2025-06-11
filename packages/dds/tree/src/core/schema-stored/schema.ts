@@ -138,8 +138,6 @@ export interface TreeFieldStoredSchema {
 	 * Portion of the metadata which can be persisted.
 	 * @remarks
 	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
-	 * @privateRemarks
-	 * This field corresponds to the `metadata` field in the persisted schema format.
 	 */
 	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
