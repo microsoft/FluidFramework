@@ -18,7 +18,7 @@ export type {
 	IDeleteOperation,
 	IMoveOperation,
 	ISharedArrayRevertibleOperation,
-	OperationType,
 	IToggleMoveOperation,
 	IToggleOperation,
 } from "./sharedArrayOperations.js";
+export { OperationType } from "./sharedArrayOperations.js";

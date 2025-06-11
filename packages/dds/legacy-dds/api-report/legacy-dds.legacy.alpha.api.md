@@ -53,6 +53,8 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray> extends 
     // (undocumented)
     insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
     // (undocumented)
+    insertBulkAfter<TWrite>(ref: T | undefined, values: (Serializable<TWrite> & T)[]): void;
+    // (undocumented)
     move(oldIndex: number, newIndex: number): void;
     // (undocumented)
     toggle(entryId: string): void;
