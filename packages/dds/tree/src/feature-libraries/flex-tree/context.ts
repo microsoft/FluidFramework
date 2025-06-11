@@ -54,22 +54,32 @@ export interface FlexTreeContext {
 }
 
 /**
- * A common context of a "forest" of FlexTrees.
- * It handles group operations like transforming cursors into anchors for edits.
+ * Subset of a hydrated context which can be used in more cases (like before the root and events are set up).
  */
-export interface FlexTreeHydratedContext extends FlexTreeContext {
-	readonly events: Listenable<ForestEvents>;
+export interface FlexTreeHydratedContextMinimal {
 	/**
-	 * Gets the root field of the tree.
+	 * The {@link NodeIdentifierManager} responsible for allocating and compressing identifiers for nodes in this context.
 	 */
-	get root(): FlexTreeField;
-
 	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
 	 * The checkout object associated with this context.
 	 */
 	readonly checkout: ITreeCheckout;
+}
+
+/**
+ * A common context of a "forest" of FlexTrees.
+ * It handles group operations like transforming cursors into anchors for edits.
+ */
+export interface FlexTreeHydratedContext
+	extends FlexTreeContext,
+		FlexTreeHydratedContextMinimal {
+	readonly events: Listenable<ForestEvents>;
+	/**
+	 * Gets the root field of the tree.
+	 */
+	get root(): FlexTreeField;
 }
 
 /**

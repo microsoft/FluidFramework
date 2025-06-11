@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { DeepReadonly } from "@fluidframework/core-interfaces/internal";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+	JsonSerializable,
+	OpaqueJsonDeserialized,
+	OpaqueJsonSerializable,
+} from "@fluidframework/core-interfaces/internal";
 
 /**
  * Returns union of types of values in a record.
@@ -29,8 +35,6 @@ type RequiredAndNotUndefined<T> = {
  * The is a defect in this utility when a string index appears in the object.
  * In such a case, the only result is `[string, T]`, where `T` is the type
  * of the string index entry.
- *
- * @internal
  */
 export const objectEntries = Object.entries as <const T>(o: T) => KeyValuePairs<T>;
 
@@ -41,8 +45,6 @@ export const objectEntries = Object.entries as <const T>(o: T) => KeyValuePairs<
  * Given `T` should not contain `undefined` values. If it does, use
  * {@link objectEntries} instead. Without `undefined` values, this
  * typing provides best handling of objects with optional properties.
- *
- * @internal
  */
 export const objectEntriesWithoutUndefined = Object.entries as <const T>(
 	o: T,
@@ -50,8 +52,6 @@ export const objectEntriesWithoutUndefined = Object.entries as <const T>(
 
 /**
  * Object.keys retyped to preserve known keys and their types.
- *
- * @internal
  */
 export const objectKeys = Object.keys as <const T>(
 	o: T,
@@ -81,8 +81,55 @@ export function getOrCreateRecord<const K extends string | number | symbol, cons
 }
 
 /**
- * Do nothing helper to apply deep immutability to a value's type.
+ * No-runtime-effect helper to apply deep immutability to a value's type.
  */
 export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
 	return value as DeepReadonly<T>;
+}
+
+export function asDeeplyReadonlyDeserializedJson<T>(
+	value: OpaqueJsonDeserialized<T>,
+): DeepReadonly<JsonDeserialized<T>>;
+export function asDeeplyReadonlyDeserializedJson<T>(
+	value: OpaqueJsonDeserialized<T> | undefined,
+): DeepReadonly<JsonDeserialized<T>> | undefined;
+/**
+ * No-runtime-effect helper to apply deep immutability to a value's opaque JSON
+ * type, revealing the JSON type.
+ */
+export function asDeeplyReadonlyDeserializedJson<T>(
+	value: OpaqueJsonDeserialized<T> | undefined,
+): DeepReadonly<JsonDeserialized<T>> | undefined {
+	return value as DeepReadonly<JsonDeserialized<T>> | undefined;
+}
+
+type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
+	? JsonDeserialized<U>
+	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
+
+/**
+ * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
+ * types throughout a structure.
+ *
+ * @remarks
+ * {@link OpaqueJsonDeserialized} instances will be replaced shallowly such
+ * that nested instances are retained.
+ */
+export function revealOpaqueJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
+	return value as RevealOpaqueJsonDeserialized<T>;
+}
+
+/**
+ * No-runtime-effect helper to automatically cast JSON type to Opaque JSON type
+ * at outermost scope.
+ *
+ * @remarks
+ * Types that satisfy {@link JsonSerializable} may also be deserialized. Thus,
+ * the return type is both {@link OpaqueJsonSerializable} and
+ * {@link OpaqueJsonDeserialized}.
+ */
+export function toOpaqueJson<const T>(
+	value: JsonSerializable<T>,
+): OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T> {
+	return value as OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T>;
 }

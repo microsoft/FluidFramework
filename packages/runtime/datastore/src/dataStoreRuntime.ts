@@ -160,7 +160,7 @@ function initializePendingOpCount(): { value: number } {
 			return value;
 		},
 		set value(newValue: number) {
-			assert(newValue >= 0, "pendingOpCount must be non-negative");
+			assert(newValue >= 0, 0xbbd /* pendingOpCount must be non-negative */);
 			value = newValue;
 		},
 	};
@@ -453,7 +453,7 @@ export class FluidDataStoreRuntime
 		return (
 			// eslint-disable-next-line import/no-deprecated
 			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
-				.inStagingMode
+				?.inStagingMode
 		);
 	}
 

@@ -31,7 +31,6 @@ export {
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,
 	isObjectNodeSchema,
-	lazilyAllocateIdentifier,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
 	objectSchema,

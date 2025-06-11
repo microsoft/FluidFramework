@@ -6,6 +6,7 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	aboveRootPlaceholder,
@@ -14,7 +15,6 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
-	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import type {
@@ -40,6 +40,7 @@ import { isObjectNodeSchema } from "../node-kinds/index.js";
 import {
 	customFromCursor,
 	replaceHandles,
+	unknownTypeError,
 	type CustomTreeNode,
 	type HandleConverter,
 	type SchemalessParseOptions,
@@ -153,12 +154,14 @@ export function applySchemaToParserOptions(
 						return key;
 					},
 					parse: (type, inputKey): FieldKey => {
-						const simpleNodeSchema =
-							context.schema.get(brand(type)) ?? fail(0xb3a /* missing schema */);
+						const simpleNodeSchema = context.schema.get(brand(type)) ?? unknownTypeError(type);
 						if (isObjectNodeSchema(simpleNodeSchema)) {
-							const info =
-								simpleNodeSchema.flexKeyMap.get(inputKey) ??
-								fail(0xb3b /* missing field info */);
+							const info = simpleNodeSchema.flexKeyMap.get(inputKey);
+							if (info === undefined) {
+								throw new UsageError(
+									`Failed to parse VerboseTree due to unexpected key ${JSON.stringify(inputKey)} on type ${JSON.stringify(type)}.`,
+								);
+							}
 							return info.storedKey;
 						}
 						return brand(inputKey);
@@ -203,19 +206,19 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
 		type: (node: VerboseTree) => {
 			switch (typeof node) {
 				case "number":
-					return numberSchema.identifier as TreeNodeSchemaIdentifier;
+					return brand(numberSchema.identifier);
 				case "string":
-					return stringSchema.identifier as TreeNodeSchemaIdentifier;
+					return brand(stringSchema.identifier);
 				case "boolean":
-					return booleanSchema.identifier as TreeNodeSchemaIdentifier;
+					return brand(booleanSchema.identifier);
 				default:
 					if (node === null) {
-						return nullSchema.identifier as TreeNodeSchemaIdentifier;
+						return brand(nullSchema.identifier);
 					}
 					if (isFluidHandle(node)) {
-						return handleSchema.identifier as TreeNodeSchemaIdentifier;
+						return brand(handleSchema.identifier);
 					}
-					return node.type as TreeNodeSchemaIdentifier;
+					return brand(node.type);
 			}
 		},
 		keysFromNode: (node: VerboseTree): readonly FieldKey[] => {

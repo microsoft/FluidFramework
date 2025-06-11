@@ -94,6 +94,11 @@ export function cloneWithReplacements(root: unknown, rootKey: string, replacer: 
     value: unknown;
 }): unknown;
 
+// @alpha @input
+export interface CodecWriteOptions extends ICodecOptions {
+    readonly oldestCompatibleClient: FluidClientVersion;
+}
+
 // @public
 export enum CommitKind {
     Default = 0,
@@ -274,7 +279,7 @@ export function getSimpleSchema(schema: ImplicitFieldSchema): SimpleTreeSchema;
 // @alpha
 export type HandleConverter<TCustom> = (data: IFluidHandle) => TCustom;
 
-// @alpha
+// @alpha @input
 export interface ICodecOptions {
     readonly jsonValidator: JsonValidator;
 }
@@ -501,7 +506,7 @@ export type JsonTreeSchema = JsonFieldSchema & {
     readonly $defs: Record<JsonSchemaId, JsonNodeSchema>;
 };
 
-// @alpha
+// @alpha @input
 export interface JsonValidator {
     compile<Schema extends TSchema>(schema: Schema): SchemaValidationFunction<Schema>;
 }
@@ -760,6 +765,7 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     arrayRecursive<const Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): ArrayNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     static readonly identifier: <const TCustomMetadata = unknown>(props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlpha_2<FieldKind_2.Identifier, LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, TCustomMetadata>;
     static readonly leaves: readonly [LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, LeafSchema_2<"number", number> & SimpleLeafNodeSchema_2, LeafSchema_2<"boolean", boolean> & SimpleLeafNodeSchema_2, LeafSchema_2<"null", null> & SimpleLeafNodeSchema_2, LeafSchema_2<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema_2];
+    readonly leaves: readonly [LeafSchema_2<"string", string> & SimpleLeafNodeSchema_2, LeafSchema_2<"number", number> & SimpleLeafNodeSchema_2, LeafSchema_2<"boolean", boolean> & SimpleLeafNodeSchema_2, LeafSchema_2<"null", null> & SimpleLeafNodeSchema_2, LeafSchema_2<"handle", IFluidHandle<unknown>> & SimpleLeafNodeSchema_2];
     mapAlpha<Name extends TName, const T extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata>;
     mapRecursive<Name extends TName, const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>): MapNodeCustomizableSchemaUnsafe<ScopedSchemaName<TScope, Name>, T, TCustomMetadata>;
     objectAlpha<const Name extends TName, const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>, const TCustomMetadata = unknown>(name: Name, fields: T, options?: SchemaFactoryObjectOptions<TCustomMetadata>): ObjectNodeSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> & {
@@ -770,11 +776,22 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
         <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Optional, T, TCustomMetadata>;
         <const T_1 extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata_1 = unknown>(t: T_1, props?: Omit<FieldProps_2<TCustomMetadata_1>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Optional, UnannotateImplicitAllowedTypes_2<T_1>, TCustomMetadata_1>;
     };
+    readonly optional: {
+        <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Optional, T, TCustomMetadata>;
+        <const T_1 extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata_1 = unknown>(t: T_1, props?: Omit<FieldProps_2<TCustomMetadata_1>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Optional, UnannotateImplicitAllowedTypes_2<T_1>, TCustomMetadata_1>;
+    };
     static readonly optionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Optional, T, TCustomMetadata>;
+    readonly optionalRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Optional, T, TCustomMetadata>;
     static readonly required: {
         <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Required, T, TCustomMetadata>;
         <const T_1 extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata_1 = unknown>(t: T_1, props?: Omit<FieldProps_2<TCustomMetadata_1>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Required, UnannotateImplicitAllowedTypes_2<T_1>, TCustomMetadata_1>;
     };
+    readonly required: {
+        <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Required, T, TCustomMetadata>;
+        <const T_1 extends ImplicitAnnotatedAllowedTypes, const TCustomMetadata_1 = unknown>(t: T_1, props?: Omit<FieldProps_2<TCustomMetadata_1>, "defaultProvider"> | undefined): FieldSchemaAlpha_2<FieldKind_2.Required, UnannotateImplicitAllowedTypes_2<T_1>, TCustomMetadata_1>;
+    };
+    static readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Required, T, TCustomMetadata>;
+    readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Required, T, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
 }
 
@@ -803,7 +820,7 @@ export interface SchemaStatics {
     readonly string: LeafSchema<"string", string>;
 }
 
-// @alpha
+// @alpha @input
 export interface SchemaValidationFunction<Schema extends TSchema> {
     check(data: unknown): data is Static<Schema>;
 }
@@ -828,7 +845,7 @@ export const SharedTreeFormatVersion: {
 export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
 
 // @alpha @input
-export type SharedTreeOptions = Partial<ICodecOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
+export type SharedTreeOptions = Partial<CodecWriteOptions> & Partial<SharedTreeFormatOptions> & ForestOptions;
 
 // @alpha @sealed
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown> extends SimpleNodeSchemaBase<NodeKind.Array, TCustomMetadata> {
@@ -915,7 +932,7 @@ export namespace System_TableSchema {
     }), true, {
         readonly props: TPropsSchema;
         readonly id: FieldSchema_2<FieldKind_3.Identifier, LeafSchema_3<"string", string>, unknown>;
-        readonly cells: FieldSchema_2<FieldKind_3.Required, TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Map, TreeMapNode_2<TCellSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCellSchema>, true, TCellSchema, undefined>, unknown>;
+        readonly cells: FieldSchemaAlpha_3<FieldKind_3.Required, TreeNodeSchemaClass<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Map, TreeMapNode_2<TCellSchema> & WithType<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Row.cells">, NodeKind.Map, unknown>, MapNodeInsertableData_2<TCellSchema>, true, TCellSchema, undefined>, unknown>;
     }>;
     // @system
     export function createTableSchema<const TInputScope extends string | undefined, const TCellSchema extends ImplicitAllowedTypes, const TColumnSchema extends ColumnSchemaBase<TInputScope, TCellSchema>, const TRowSchema extends RowSchemaBase<TInputScope, TCellSchema>>(inputSchemaFactory: SchemaFactoryAlpha<TInputScope>, _cellSchema: TCellSchema, columnSchema: TColumnSchema, rowSchema: TRowSchema): TreeNodeSchemaCore_2<ScopedSchemaName<ScopedSchemaName<TInputScope, "table">, "Table">, NodeKind.Object, true, {
@@ -1175,9 +1192,8 @@ export interface TreeAlpha {
     branch(node: TreeNode): TreeBranch | undefined;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
-        oldestCompatibleClient: FluidClientVersion;
         idCompressor?: IIdCompressor;
-    }): JsonCompatible<IFluidHandle>;
+    } & Pick<CodecWriteOptions, "oldestCompatibleClient">): JsonCompatible<IFluidHandle>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;

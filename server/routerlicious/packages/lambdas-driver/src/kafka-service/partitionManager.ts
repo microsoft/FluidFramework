@@ -53,6 +53,14 @@ export class PartitionManager extends EventEmitter {
 			this.rebalanced(partitions);
 		});
 
+		this.consumer.on("coop.rebalance.assign", (partitions: IPartition[]) => {
+			this.cooperativeRebalancingAssign(partitions);
+		});
+
+		this.consumer.on("coop.rebalance.revoke", (partitions: IPartition[]) => {
+			this.cooperativeRebalancingRevoke(partitions);
+		});
+
 		if (listenForConsumerErrors) {
 			this.consumer.on("error", (error, errorData: IContextErrorData) => {
 				if (this.stopped) {
@@ -270,5 +278,76 @@ export class PartitionManager extends EventEmitter {
 
 	private getRandomInt(range: number) {
 		return Math.floor(Math.random() * range);
+	}
+
+	private cooperativeRebalancingAssign(partitions: IPartition[]) {
+		if (this.stopped) {
+			return;
+		}
+
+		this.isRebalancing = false;
+
+		partitions.forEach((partition) => {
+			if (!this.partitions.has(partition.partition)) {
+				this.logger?.info(
+					`Creating ${partition.topic}: Partition ${partition.partition}, Offset ${partition.offset} due to cooperative rebalance`,
+				);
+				Lumberjack.info(
+					`Creating ${partition.topic}: Partition ${partition.partition}, Offset ${partition.offset} due to cooperative rebalance`,
+				);
+
+				const newPartition = new Partition(
+					partition.partition,
+					this.factory,
+					this.consumer,
+					this.logger,
+					this.config,
+				);
+
+				// Listen for error events to know when the partition has stopped processing due to an error
+				newPartition.on("error", (error, errorData: IContextErrorData) => {
+					if (this.stopped) {
+						Lumberjack.info(
+							"Partition.onError: PartitionManager already stopped, not emitting error again",
+							{ error, ...errorData },
+						);
+						return;
+					}
+					Lumberjack.verbose(
+						"Emitting error from partitionManager, partition error event",
+					);
+					this.emit("error", error, errorData);
+				});
+
+				newPartition.on("pause", (partitionId: number, offset: number, reason?: any) => {
+					this.emit("pause", partitionId, offset, reason);
+				});
+
+				newPartition.on("resume", (partitionId: number) => {
+					this.emit("resume", partitionId);
+				});
+
+				this.partitions.set(partition.partition, newPartition);
+			}
+		});
+	}
+
+	private cooperativeRebalancingRevoke(partitions: IPartition[]) {
+		if (this.stopped) {
+			return;
+		}
+
+		this.isRebalancing = false;
+
+		partitions.forEach((partition) => {
+			const id = partition.partition;
+			const partitionOpt = this.partitions.get(id);
+			if (partitionOpt !== undefined) {
+				this.logger?.info(`Closing partition ${id} due to cooperative rebalancing`);
+				Lumberjack.info(`Closing partition ${id} due to cooperative rebalancing`);
+				partitionOpt.close(LambdaCloseType.Rebalance);
+				this.partitions.delete(id);
+			}
+		});
 	}
 }
