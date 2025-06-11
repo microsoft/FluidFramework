@@ -23,7 +23,7 @@ import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
 	type BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
-	encodeShapesAndIdentifiers,
+	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
@@ -55,7 +55,7 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, cache, buffer);
 		batchBuffer.push(buffer);
 	}
-	return encodeShapesAndIdentifiers(version, batchBuffer);
+	return updateShapesAndIdentifiersEncoding(version, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -175,7 +175,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		return { d: encodedAnyShape };
 	}
 
-	public discoverReferencedShapesAndCount(
+	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape) => void,
 	): void {}
@@ -332,7 +332,7 @@ export class InlineArrayShape
 		};
 	}
 
-	public discoverReferencedShapesAndCount(
+	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape) => void,
 	): void {
@@ -393,7 +393,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 		};
 	}
 
-	public discoverReferencedShapesAndCount(
+	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape) => void,
 	): void {

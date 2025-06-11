@@ -34,7 +34,7 @@ describe("nodeShape", () => {
 		it("empty node", () => {
 			const shape = new NodeShape(undefined, false, [], undefined);
 			const identifierCounter = new Counter<string>();
-			shape.discoverReferencedShapesAndCount(identifierCounter, () => fail());
+			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
 			assert(identifierCounter.buildTable().indexToValue.length === 0);
 
 			const cache = new EncoderCache(
@@ -54,7 +54,7 @@ describe("nodeShape", () => {
 			const shape = new NodeShape(brand("foo"), true, [], undefined);
 
 			const identifierCounter = new Counter<string>();
-			shape.discoverReferencedShapesAndCount(identifierCounter, () => fail());
+			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),

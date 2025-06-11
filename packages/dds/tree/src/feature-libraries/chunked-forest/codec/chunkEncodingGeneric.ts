@@ -43,13 +43,14 @@ export type BufferFormat<TEncodedShape> = (
 )[];
 
 /**
- * Encodes shapes and identifiers in buffer and any nested arrays.
+ * Takes already encoded content in `buffer` and deeply searches, replacing each `IdentifierToken` and `Shape`
+ * with references to their encodings in the returned `EncodedFieldBatchGeneric`.
  *
  * This looks inside nested arrays (including transitively) but not inside objects.
  *
  * Note that this modifies `buffer` to avoid having to copy it.
  */
-export function encodeShapesAndIdentifiers<TEncodedShape>(
+export function updateShapesAndIdentifiersEncoding<TEncodedShape>(
 	version: number,
 	buffer: BufferFormat<TEncodedShape>[],
 	identifierFilter: CounterFilter<string> = jsonMinimizingFilter,
@@ -68,21 +69,24 @@ export function encodeShapesAndIdentifiers<TEncodedShape>(
 		}
 	};
 
-	const dataBufferArray: BufferFormat<TEncodedShape>[] = [buffer];
-	for (const dataBuffer of dataBufferArray) {
-		for (const data of dataBuffer) {
-			if (data instanceof IdentifierToken) {
-				identifiers.add(data.identifier);
-			} else if (data instanceof Shape) {
-				shapeDiscovered(data);
-			} else if (Array.isArray(data)) {
+	// A collection of all arrays transitively reachable (via arrays) from buffer.
+	// These are all the arrays whose contents are searched for shapes and identifiers which are then replaced
+	// with references. This uses a breadth first traversal, but the actual order is not important.
+	const arrays: BufferFormat<TEncodedShape>[] = [buffer];
+	for (const array of arrays) {
+		for (const item of array) {
+			if (item instanceof IdentifierToken) {
+				identifiers.add(item.identifier);
+			} else if (item instanceof Shape) {
+				shapeDiscovered(item);
+			} else if (Array.isArray(item)) {
 				// In JS it is legal to push items to an array which is being iterated,
 				// and they will be visited in order.
-				dataBufferArray.push(data);
+				arrays.push(item);
 			} else if (
-				data !== null &&
-				typeof data === "object" &&
-				(data as Record<string, unknown>).shape instanceof Shape
+				item !== null &&
+				typeof item === "object" &&
+				(item as Record<string, unknown>).shape instanceof Shape
 			) {
 				// because "serializable" is allowed in buffer and it has type `any`, its very easy to mess up including of shapes in the buffer.
 				// This catches the easiest way to get it wrong.
@@ -95,7 +99,7 @@ export function encodeShapesAndIdentifiers<TEncodedShape>(
 	{
 		let shape: Shape<TEncodedShape> | undefined;
 		while ((shape = shapeToCount.pop()) !== undefined) {
-			shape.discoverReferencedShapesAndCount(identifiers, shapeDiscovered);
+			shape.countReferencedShapesAndIdentifiers(identifiers, shapeDiscovered);
 		}
 	}
 
@@ -103,15 +107,13 @@ export function encodeShapesAndIdentifiers<TEncodedShape>(
 	const identifierTable = identifiers.buildTable(identifierFilter);
 	const shapeTable = shapes.buildTable();
 
-	for (const dataBuffer of dataBufferArray) {
-		for (let index = 0; index < dataBuffer.length; index++) {
-			const data = dataBuffer[index];
-			if (data instanceof IdentifierToken) {
-				dataBuffer[index] =
-					identifierTable.valueToIndex.get(data.identifier) ?? data.identifier;
-			} else if (data instanceof Shape) {
-				dataBuffer[index] =
-					shapeTable.valueToIndex.get(data) ?? fail(0xb4c /* missing shape */);
+	for (const array of arrays) {
+		for (let index = 0; index < array.length; index++) {
+			const item = array[index];
+			if (item instanceof IdentifierToken) {
+				array[index] = identifierTable.valueToIndex.get(item.identifier) ?? item.identifier;
+			} else if (item instanceof Shape) {
+				array[index] = shapeTable.valueToIndex.get(item) ?? fail(0xb4c /* missing shape */);
 			}
 		}
 	}
@@ -145,8 +147,8 @@ export function encodeShapesAndIdentifiers<TEncodedShape>(
  * Comparison by content would be difficult due to shape containing references to other shapes.
  *
  * @privateRemarks
- * Unlike with identifiers, conversion from the initial form (this class / IdentifierToken) is done by the `encodeShape` method, not by general purpose logic in `encodeShapesAndIdentifiers`.
- * For `encodeShapesAndIdentifiers` to do the conversion without help from `encodeShape`,
+ * Unlike with identifiers, conversion from the initial form (this class / IdentifierToken) is done by the `encodeShape` method, not by general purpose logic in `updateShapesAndIdentifiersEncoding`.
+ * For `updateShapesAndIdentifiersEncoding` to do the conversion without help from `encodeShape`,
  * instances of this Shape class would have to either be or output an object that is identical to the `TEncodedShape` format except with all shape references as object references instead of indexes.
  * Those objects would have to be deeply traversed looking for shape objects to replace with reference indexes.
  * This is possible, but making it type safe would involve generating derived types from the `TEncodedShape` deeply replacing any shape references, as well as requiring deep traversal of all objects in the encoded output.
@@ -154,7 +156,8 @@ export function encodeShapesAndIdentifiers<TEncodedShape>(
  */
 export abstract class Shape<TEncodedShape> {
 	/**
-	 * Discover referenced shapes and call the provided callback for each discovered shape. Also, count this shape's contents.
+	 * Enumerate all contents of this shape that can get replaced with references (for better compression/deduplication) during encoding.
+	 * This currently includes shapes and identifiers.
 	 *
 	 * Used to discover referenced shapes (to ensure they are included in the `shapes` passed to `encodeShape`),
 	 * as well as count usages of shapes and identifiers for more efficient dictionary encoding. See {@link Counter}.
@@ -163,7 +166,7 @@ export abstract class Shape<TEncodedShape> {
 	 * Can be invoked multiple times if a shape is referenced more than once for more efficient dictionary encoding.
 	 * Should not be invoked with `this` unless this shape references itself.
 	 */
-	public abstract discoverReferencedShapesAndCount(
+	public abstract countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape<TEncodedShape>) => void,
 	): void;

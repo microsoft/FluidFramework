@@ -121,7 +121,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		};
 	}
 
-	public discoverReferencedShapesAndCount(
+	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
 		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 	): void {
