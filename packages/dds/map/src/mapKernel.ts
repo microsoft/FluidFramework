@@ -608,13 +608,17 @@ export class MapKernel {
 				);
 			}
 		} else {
-			const pendingLifetime = findLast(
+			const pendingLifetimeIndex = findLastIndex(
 				this.pendingData,
 				(lifetime) => lifetime.key === op.key,
 			);
+			const pendingLifetime = this.pendingData[pendingLifetimeIndex];
 			assert(pendingLifetime !== undefined, "Unexpected rollback for key");
 			const previousLocalValue = this.getOptimisticLocalValue(op.key);
 			const pendingKeyChange = pendingLifetime.keyChanges.pop();
+			if (pendingLifetime.keyChanges.length === 0) {
+				this.pendingData.splice(pendingLifetimeIndex, 1);
+			}
 			assert(
 				pendingKeyChange !== undefined &&
 					pendingKeyChange.pendingMessageId === localOpMetadata,
