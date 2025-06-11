@@ -233,6 +233,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
  *
  * @param base - base schema type to extend.
  * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
