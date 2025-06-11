@@ -50,6 +50,7 @@ import {
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
+	isMapNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -638,12 +639,25 @@ export const TreeAlpha: TreeAlpha = {
 				}
 				break;
 			}
-			case NodeKind.Map:
-			case NodeKind.Object: {
+			case NodeKind.Map: {
+				assert(isMapNodeSchema(schema), "Expected map schema.");
 				for (const flexField of flexNode.boxedIterator()) {
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
 						result.push([flexField.key, childTreeNode]);
+					}
+				}
+				break;
+			}
+			case NodeKind.Object: {
+				assert(isObjectNodeSchema(schema), "Expected object schema.");
+				for (const [propertyKey, fieldSchema] of schema.fields) {
+					const storedKey = fieldSchema.storedKey;
+					const flexField = flexNode.tryGetField(brand(String(storedKey)));
+					if (flexField !== undefined) {
+						const childTreeNode = tryGetTreeNodeForField(flexField);
+						assert(childTreeNode !== undefined, "Expected child tree node for field.");
+						result.push([propertyKey, childTreeNode]);
 					}
 				}
 				break;
