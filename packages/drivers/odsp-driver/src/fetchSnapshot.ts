@@ -224,7 +224,6 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			);
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			const nonDurableRedeem = odspResolvedUrl.shareLinkInfo?.nonDurableRedeem ?? false;
 
 			let redeemUrl: string | undefined;
@@ -730,11 +729,14 @@ export const downloadSnapshot = mockify(
 		const queryString = getQueryString(queryParams);
 		const url = `${snapshotUrl}/trees/latest${queryString}`;
 		const method = "POST";
+		const nonDurableRedeem = odspResolvedUrl.shareLinkInfo?.nonDurableRedeem ?? false;
 		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 		// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
-		const header = { prefer: "manualredirect" };
+		const header = nonDurableRedeem
+			? { prefer: "manualredirect, nonDurableRedeem" }
+			: { prefer: "manualredirect" };
 		const authHeader = await getAuthHeader(
 			{ ...tokenFetchOptions, request: { url, method } },
 			"downloadSnapshot",
