@@ -793,13 +793,12 @@ export class IntervalCollection
 		return true;
 	}
 
-	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetaData: unknown) {
-		const localOpMetadataNode = maybeMetaData as ListNode<IntervalMessageLocalMetadata>;
+	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetadata: unknown) {
+		const localOpMetadataNode = maybeMetadata as ListNode<IntervalMessageLocalMetadata>;
 		localOpMetadataNode.remove();
 		const localOpMetadata = localOpMetadataNode?.data;
 		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
-
 		const { type } = localOpMetadata;
 		switch (type) {
 			case "add": {
@@ -854,10 +853,10 @@ export class IntervalCollection
 		op: IIntervalCollectionTypeOperationValue,
 		local: boolean,
 		message: ISequencedDocumentMessage,
-		maybeMetaData: unknown,
+		maybeMetadata: unknown,
 	) {
 		const localOpMetadataNode = local
-			? (maybeMetaData as ListNode<IntervalMessageLocalMetadata>)
+			? (maybeMetadata as ListNode<IntervalMessageLocalMetadata>)
 			: undefined;
 		const localOpMetadata = localOpMetadataNode?.data;
 
@@ -905,16 +904,17 @@ export class IntervalCollection
 		const localOpMetaDataNode = maybeMetadata as ListNode<IntervalMessageLocalMetadata>;
 		const localOpMetadata = localOpMetaDataNode.data;
 
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		localOpMetaDataNode.remove();
-		if (localOpMetadata.type === "change") {
-			localOpMetadata.endpointChangesNode?.remove();
-		}
-
 		const rebasedValue =
 			localOpMetadata.type === "delete" ? value : this.rebaseLocalInterval(localOpMetadata);
 
+		localOpMetaDataNode.remove();
 		if (rebasedValue === undefined) {
+			// only remove if we can't rebase, as otherwise
+			// the endpointChangesNode is reused with the
+			// reused localOpMetadata
+			if (localOpMetadata.type === "change") {
+				localOpMetadata.endpointChangesNode?.remove();
+			}
 			const { id } = getSerializedProperties(value);
 			clearEmptyPendingEntry(this.pending, id);
 			return;
@@ -1333,7 +1333,7 @@ export class IntervalCollection
 				if (changeEndpoints) {
 					const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
 					const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
-					metadata.endpointChangesNode = endpointChanges.push(metadata).first;
+					metadata.endpointChangesNode = endpointChanges.push(metadata).last;
 				}
 
 				this.submitDelta(
