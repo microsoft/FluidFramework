@@ -517,7 +517,7 @@ describe(`Presence with TinyliciousClient`, () => {
 					assert.equal(validatorSpy1.callCount, 2);
 				});
 
-				// FIXME: Should this test pass?
+				// FIXME: This test should pass.
 				it.skip("does not call validator when a different key is changed", async () => {
 					// Get the remote data and read it, verify that the validator is called once.
 					mapData = client1.getRemote(attendee2);

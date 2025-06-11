@@ -176,7 +176,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				// @ts-expect-error -- FIXME
+				// @ts-expect-error -- FIXME - Type 'PresenceDatastore' is not assignable to type '{ [x: `s:${string}:${string}`]: { [x: string]: { [x: string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58"; } & { readonly AttendeeId: "AttendeeId"; }]: { ...; } | { ...; }; }; }; [x: `n:${string}:${string}`]: { ...; }; "system:presence...'.
+				// '`s:${string}:${string}`' index signatures are incompatible.
 				data: this.datastore,
 				updateProviders,
 			},
@@ -337,7 +338,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				// @ts-expect-error -- FIXME
+				// @ts-expect-error -- FIXME - Type 'PresenceDatastore' is not assignable to type '{ [x: `s:${string}:${string}`]: { [x: string]: { [x: string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58"; } & { readonly AttendeeId: "AttendeeId"; }]: { ...; } | { ...; }; }; }; [x: `n:${string}:${string}`]: { ...; }; "system:presence...'.
+				// '`s:${string}:${string}`' index signatures are incompatible.
 				data: this.datastore,
 			},
 		});
