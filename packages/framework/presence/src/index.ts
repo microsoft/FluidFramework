@@ -67,6 +67,7 @@ export type {
 	LatestRaw,
 } from "./latestValueManager.js";
 export type {
+	Accessor,
 	LatestData,
 	LatestClientData,
 	LatestMetadata,
