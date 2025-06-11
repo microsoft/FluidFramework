@@ -178,10 +178,10 @@ export function checkCompiles(): void {
 
 	// The key value should be a function that returns a value.
 	assert(typeof validatedKeyValue === "function");
-	const value = validatedKeyValue();
-	assert(typeof value !== "function");
+	const validatedValue = validatedKeyValue();
+	assert(typeof validatedValue !== "function");
 
-	const ref = value?.ref;
+	const ref = validatedValue?.ref;
 	assert(ref !== undefined);
 	assert(ref === "default");
 
