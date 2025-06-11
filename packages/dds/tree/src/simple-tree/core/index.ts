@@ -26,7 +26,7 @@ export {
 } from "./treeNode.js";
 export {
 	type TreeNodeSchema,
-	type TreeNodeSchemaAlpha,
+	type TreeNodeSchemaCorePrivate,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,

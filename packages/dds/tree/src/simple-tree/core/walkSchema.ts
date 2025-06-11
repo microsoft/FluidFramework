@@ -6,7 +6,7 @@
 import type {
 	AnnotatedAllowedSchema,
 	TreeNodeSchema,
-	TreeNodeSchemaAlpha,
+	TreeNodeSchemaCorePrivate,
 } from "./treeNodeSchema.js";
 
 /**
@@ -23,7 +23,7 @@ export function walkNodeSchema(
 	visitedSet.add(schema);
 
 	walkAllowedTypes(
-		(schema as TreeNodeSchemaAlpha).childAnnotatedAllowedTypes ??
+		(schema as unknown as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes ??
 			Array.from(schema.childTypes).map((type) => ({ type })),
 		visitor,
 		visitedSet,
