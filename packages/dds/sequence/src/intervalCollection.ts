@@ -50,7 +50,6 @@ import {
 import {
 	CompressedSerializedInterval,
 	ISerializedInterval,
-	IntervalDeltaOpType,
 	IntervalStickiness,
 	IntervalType,
 	SequenceInterval,
@@ -712,7 +711,6 @@ export class IntervalCollection
 			{
 				local: DoublyLinkedList<IntervalMessageLocalMetadata>;
 				endpointChanges?: DoublyLinkedList<IntervalChangeLocalMetadata>;
-				consensus?: SequenceIntervalClass | undefined;
 			}
 		>
 	> = {};
@@ -736,12 +734,7 @@ export class IntervalCollection
 		this.submitDelta = (op, md) => {
 			const { id } = getSerializedProperties(op.value);
 			const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
-			// hack, support initialization elsewhere
 			pending.local.push(md);
-			if (md.type === IntervalDeltaOpType.CHANGE && op.value.start !== undefined) {
-				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
-				md.endpointChangesNode = endpointChanges.push(md).first;
-			}
 			submitDelta(op, pending.local.last);
 		};
 
@@ -786,9 +779,10 @@ export class IntervalCollection
 		return true;
 	}
 
-	public rollback(op: IIntervalCollectionTypeOperationValue, maybeMetaData: unknown) {
-		const localOpMetadataNode = maybeMetaData as ListNode<IntervalMessageLocalMetadata>;
-		const localOpMetadata = localOpMetadataNode?.data;
+	public rollback(
+		op: IIntervalCollectionTypeOperationValue,
+		localOpMetadata: IntervalMessageLocalMetadata,
+	) {
 		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
 		const pending = this.pending[id];
@@ -799,20 +793,17 @@ export class IntervalCollection
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 			delete this.pending[id];
 		}
-		const { type } = current;
+		const { type } = localOpMetadata;
 		switch (type) {
 			case "add": {
-				this.deleteExistingInterval({
-					interval: current.interval,
-					local: true,
-					rollback: true,
-				});
+				const interval = this.getIntervalById(id);
+				if (interval) {
+					this.deleteExistingInterval({ interval, local: true, rollback: true });
+				}
 				break;
 			}
 			case "change": {
-				const { previous } = current;
-				assert(previous !== undefined, 0xb7c /* must have previous for change */);
-
+				const { previous } = localOpMetadata;
 				const endpointsChanged = value.start !== undefined && value.end !== undefined;
 				const start = endpointsChanged
 					? toOptionalSequencePlace(previous.start, previous.startSide)
@@ -828,18 +819,21 @@ export class IntervalCollection
 				});
 				if (endpointsChanged) {
 					assert(
-						localOpMetadata === current.endpointChangesNode?.remove()?.data,
+						localOpMetadata === localOpMetadata.endpointChangesNode?.remove()?.data,
 						"endpoint change must match",
 					);
 				}
 				break;
 			}
 			case "delete": {
-				const previous = !pending.local.empty
-					? pending.local.last?.data.interval
-					: pending.consensus;
-				assert(previous !== undefined, 0xb7d /* must have previous for delete */);
-				this.localCollection?.add(previous);
+				const { previous } = localOpMetadata;
+				this.add({
+					id,
+					start: toSequencePlace(previous.start, previous.startSide),
+					end: toSequencePlace(previous.end, previous.endSide),
+					props: Object.keys(properties).length > 0 ? properties : undefined,
+					rollback: true,
+				});
 				break;
 			}
 			default:
@@ -859,42 +853,32 @@ export class IntervalCollection
 		const localOpMetadata = localOpMetadataNode?.data;
 
 		const { opName, value } = op;
+		assert(
+			(local === false && localOpMetadata === undefined) || opName === localOpMetadata?.type,
+			"must be same type",
+		);
 		switch (opName) {
 			case "add": {
-				assert(
-					(local === false && localOpMetadata === undefined) ||
-						op.opName === localOpMetadata?.type,
-					"must be same type",
-				);
-				this.ackAdd(value, local, message, localOpMetadata);
+				this.ackAdd(value, local, message, localOpMetadata as IntervalAddLocalMetadata);
 				break;
 			}
 
 			case "delete": {
-				assert(
-					(local === false && localOpMetadata === undefined) ||
-						op.opName === localOpMetadata?.type,
-					"must be same type",
-				);
 				this.ackDelete(value, local, message);
 				break;
 			}
 
 			case "change": {
-				assert(
-					(local === false && localOpMetadata === undefined) ||
-						op.opName === localOpMetadata?.type,
-					"must be same type",
-				);
-				this.ackChange(value, local, message, localOpMetadata);
+				this.ackChange(value, local, message, localOpMetadata as IntervalChangeLocalMetadata);
 				break;
 			}
 			default:
 				unreachableCase(opName);
 		}
-		const { id } = getSerializedProperties(value);
-		const pending = this.pending[id];
+
 		if (local) {
+			const { id } = getSerializedProperties(value);
+			const pending = this.pending[id];
 			assert(pending !== undefined, "pending must exist");
 			const acked = localOpMetadataNode?.remove()?.data;
 			assert(acked === localOpMetadata && acked !== undefined, "local change must exist");
@@ -905,12 +889,7 @@ export class IntervalCollection
 			if (pending.local.empty) {
 				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 				delete this.pending[id];
-			} else {
-				// need to clean up old consensus
-				pending.consensus = acked?.interval;
 			}
-		} else if (pending !== undefined) {
-			pending.consensus = this.getIntervalById(id);
 		}
 	}
 
@@ -1214,7 +1193,6 @@ export class IntervalCollection
 					{
 						type: "add",
 						localSeq,
-						interval,
 						original: serializedInterval,
 					},
 				);
@@ -1246,17 +1224,16 @@ export class IntervalCollection
 		if (interval) {
 			// Local ops get submitted to the server. Remote ops have the deserializer run.
 			if (local && rollback !== true) {
-				const intervalId = interval.getIntervalId();
-				this.pending[intervalId] ??= { local: new DoublyLinkedList(), consensus: interval };
-
+				const value = interval.serialize();
 				this.submitDelta(
 					{
 						opName: "delete",
-						value: interval.serialize(),
+						value,
 					},
 					{
 						type: "delete",
 						localSeq: this.getNextLocalSeq(),
+						previous: value,
 					},
 				);
 			} else {
@@ -1341,18 +1318,25 @@ export class IntervalCollection
 				).serializeDelta({ props, includeEndpoints: changeEndpoints });
 				const localSeq = this.getNextLocalSeq();
 
+				const metadata: IntervalChangeLocalMetadata = {
+					type: "change",
+					localSeq,
+					previous: interval.serialize(),
+					original: serializedInterval,
+				};
+
+				if (changeEndpoints) {
+					const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
+					const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
+					metadata.endpointChangesNode = endpointChanges.push(metadata).first;
+				}
+
 				this.submitDelta(
 					{
 						opName: "change",
 						value: serializedInterval,
 					},
-					{
-						type: "change",
-						localSeq,
-						previous: interval.serialize(),
-						interval: newInterval ?? interval,
-						original: serializedInterval,
-					},
+					metadata,
 				);
 			}
 			if (deltaProps !== undefined) {

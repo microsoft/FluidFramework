@@ -15,29 +15,26 @@ import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	SerializedIntervalDelta,
-	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
 export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
-	interval: SequenceIntervalClass;
-	rebased?: ISerializedInterval | SerializedIntervalDelta;
-	original: SerializedIntervalDelta;
+	rebased?: ISerializedInterval;
+	original: ISerializedInterval;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
 	localSeq: number;
 	previous: ISerializedInterval;
-	interval: SequenceIntervalClass;
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata>;
-	rebased?: ISerializedInterval | SerializedIntervalDelta;
+	rebased?: SerializedIntervalDelta;
 	original: SerializedIntervalDelta;
 }
 export interface IntervalDeleteLocalMetadata {
 	type: typeof IntervalDeltaOpType.DELETE;
 	localSeq: number;
-	interval?: undefined;
+	previous: ISerializedInterval;
 }
 export type IntervalMessageLocalMetadata =
 	| IntervalAddLocalMetadata
