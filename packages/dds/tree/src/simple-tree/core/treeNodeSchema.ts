@@ -104,7 +104,7 @@ export interface AnnotatedAllowedSchema {
 	/**
 	 * The allowed type the annotations apply to in a particular schema.
 	 */
-	type: TreeNodeSchema;
+	readonly type: TreeNodeSchema;
 }
 
 /**
