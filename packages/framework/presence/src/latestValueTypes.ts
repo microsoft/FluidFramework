@@ -76,7 +76,7 @@ export type Accessor<
 /**
  * State of a value and its metadata.
  *
- * @system
+ * @sealed
  * @beta
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
