@@ -777,7 +777,6 @@ export class IntervalCollection
 			const { id } = getSerializedProperties(op.value);
 			const pending = (this.pending[id] ??= {
 				local: new DoublyLinkedList(),
-				endpointChanges: new DoublyLinkedList(),
 			});
 			if (md.type === "add" || (md.type === "change" && hasEndpointChanges(op.value))) {
 				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
