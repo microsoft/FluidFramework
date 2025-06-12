@@ -10,6 +10,7 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "commonjs",
 	"main": "./src/index.js",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
