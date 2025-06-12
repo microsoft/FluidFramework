@@ -1004,9 +1004,10 @@ export class ConnectionManager implements IConnectionManager {
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
 	private reconnectOnError(requestedMode: ConnectionMode, error?: IAnyDriverError): void {
-		this.reconnect(requestedMode, { text: error?.message ?? "Clean disconnect", error }).catch(
-			this.props.closeHandler,
-		);
+		this.reconnect(requestedMode, {
+			text: error?.message ?? "Client closing delta connection",
+			error,
+		}).catch(this.props.closeHandler);
 	}
 
 	/**
