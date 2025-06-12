@@ -7,8 +7,8 @@ import { expect } from "chai";
 
 import {
 	LineBreakNode,
+	ListItemNode,
 	PlainTextNode,
-	SpanNode,
 	UnorderedListNode,
 } from "../../../documentation-domain/index.js";
 
@@ -34,7 +34,7 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 		});
 
 		it("Multi-line list item", () => {
-			const item = new SpanNode([
+			const item = new ListItemNode([
 				new PlainTextNode("Hello"),
 				LineBreakNode.Singleton,
 				new PlainTextNode("world"),
@@ -43,7 +43,7 @@ describe("UnorderedListNode Markdown rendering tests", () => {
 			const input = new UnorderedListNode([item]);
 			const result = testRender(input);
 
-			const expected = ["", `- <span>Hello<br>world</span>`, "", ""].join("\n");
+			const expected = ["", `- Hello<br>world`, "", ""].join("\n");
 
 			expect(result).to.equal(expected);
 		});

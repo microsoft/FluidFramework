@@ -38,6 +38,7 @@ import {
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
+	ListItemNode,
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
@@ -1045,8 +1046,11 @@ export function createEntryPointList(
 	}
 
 	return new UnorderedListNode(
-		apiEntryPoints.map((entryPoint) =>
-			LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+		apiEntryPoints.map(
+			(entryPoint) =>
+				new ListItemNode([
+					LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+				]),
 		),
 	);
 }

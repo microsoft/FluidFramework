@@ -21,6 +21,7 @@ import type {
 	TableNode,
 	TableRowNode,
 	UnorderedListNode,
+	ListItemNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -37,6 +38,7 @@ import {
 	tableCellToHtml,
 	tableRowToHtml,
 	unorderedListToHtml,
+	listItemToHtml,
 } from "../default-transformations/index.js";
 
 /**
@@ -87,6 +89,7 @@ export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
 	lineBreak: () => hastLineBreak,
 	link: (node, context) => linkToHtml(node as LinkNode, context),
+	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
 	horizontalRule: () => hastHorizontalRule,
 	orderedList: (node, context) => orderedListToHtml(node as OrderedListNode, context),

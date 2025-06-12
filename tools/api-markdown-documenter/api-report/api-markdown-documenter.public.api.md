@@ -584,6 +584,15 @@ export class LinkNode implements DocumentationNode, Link {
     readonly type = "link";
 }
 
+// @public @sealed
+export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
+    constructor(children: PhrasingContent[]);
+    static createFromPlainText(text: string): ListItemNode;
+    static readonly Empty: ListItemNode;
+    get singleLine(): false;
+    readonly type = "listItem";
+}
+
 // @public
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
@@ -644,8 +653,8 @@ export interface MarkdownRenderers {
 export { NewlineKind }
 
 // @public @sealed
-export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
+export class OrderedListNode extends DocumentationParentNodeBase<ListItemNode> {
+    constructor(children: ListItemNode[]);
     static createFromPlainTextEntries(entries: string[]): OrderedListNode;
     static readonly Empty: OrderedListNode;
     get singleLine(): false;
@@ -867,8 +876,8 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
 
 // @public @sealed
-export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
+export class UnorderedListNode extends DocumentationParentNodeBase<ListItemNode> {
+    constructor(children: ListItemNode[]);
     static createFromPlainTextEntries(entries: string[]): UnorderedListNode;
     static readonly Empty: UnorderedListNode;
     get singleLine(): false;

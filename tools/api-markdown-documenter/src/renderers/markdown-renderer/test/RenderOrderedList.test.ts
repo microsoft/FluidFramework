@@ -7,9 +7,9 @@ import { expect } from "chai";
 
 import {
 	LineBreakNode,
+	ListItemNode,
 	OrderedListNode,
 	PlainTextNode,
-	SpanNode,
 } from "../../../documentation-domain/index.js";
 
 import { testRender } from "./Utilities.js";
@@ -34,7 +34,7 @@ describe("OrderedListNode Markdown rendering tests", () => {
 		});
 
 		it("Multi-line list item", () => {
-			const item = new SpanNode([
+			const item = new ListItemNode([
 				new PlainTextNode("Hello"),
 				LineBreakNode.Singleton,
 				new PlainTextNode("world"),
@@ -43,7 +43,7 @@ describe("OrderedListNode Markdown rendering tests", () => {
 			const input = new OrderedListNode([item]);
 			const result = testRender(input);
 
-			const expected = ["", `1. <span>Hello<br>world</span>`, "", ""].join("\n");
+			const expected = ["", `1. Hello<br>world`, "", ""].join("\n");
 
 			expect(result).to.equal(expected);
 		});
@@ -65,13 +65,13 @@ describe("OrderedListNode Markdown rendering tests", () => {
 			const expected = [
 				"<ol>",
 				"<li>",
-				`${text1}`,
+				text1,
 				"</li>",
 				"<li>",
-				`${text2}`,
+				text2,
 				"</li>",
 				"<li>",
-				`${text3}`,
+				text3,
 				"</li>",
 				"</ol>",
 			].join("");

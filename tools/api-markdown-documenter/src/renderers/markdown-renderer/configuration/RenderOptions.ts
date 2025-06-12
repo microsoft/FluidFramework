@@ -11,6 +11,7 @@ import type {
 	HorizontalRuleNode,
 	LineBreakNode,
 	LinkNode,
+	ListItemNode,
 	OrderedListNode,
 	ParagraphNode,
 	PlainTextNode,
@@ -31,6 +32,7 @@ import {
 	renderHorizontalRule,
 	renderLineBreak,
 	renderLink,
+	renderListItem,
 	renderOrderedList,
 	renderParagraph,
 	renderPlainText,
@@ -82,6 +84,8 @@ export const defaultRenderers: Renderers = {
 	lineBreak: (node, writer, context): void =>
 		renderLineBreak(node as LineBreakNode, writer, context),
 	link: (node, writer, context): void => renderLink(node as LinkNode, writer, context),
+	listItem: (node, writer, context): void =>
+		renderListItem(node as ListItemNode, writer, context),
 	section: (node, writer, context): void =>
 		renderHierarchicalSection(node as SectionNode, writer, context),
 	horizontalRule: (node, writer, context): void =>

@@ -10,6 +10,7 @@ export { renderSection as renderHierarchicalSection } from "./RenderSection.js";
 export { renderHorizontalRule } from "./RenderHorizontalRule.js";
 export { renderLineBreak } from "./RenderLineBreak.js";
 export { renderLink } from "./RenderLink.js";
+export { renderListItem } from "./RenderListItem.js";
 export { renderOrderedList } from "./RenderOrderedList.js";
 export { renderParagraph } from "./RenderParagraph.js";
 export { renderPlainText } from "./RenderPlainText.js";

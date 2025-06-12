@@ -8,6 +8,7 @@ export { fencedCodeBlockToHtml } from "./FencedCodeBlockToHtml.js";
 export { headingToHtml } from "./HeadingToHtml.js";
 export { sectionToHtml } from "./SectionToHtml.js";
 export { linkToHtml } from "./LinkToHtml.js";
+export { listItemToHtml } from "./ListItemToHtml.js";
 export { orderedListToHtml } from "./OrderedListToHtml.js";
 export { paragraphToHtml } from "./ParagraphToHtml.js";
 export { plainTextToHtml } from "./PlainTextToHtml.js";

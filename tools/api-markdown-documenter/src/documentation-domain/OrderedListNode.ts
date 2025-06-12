@@ -4,11 +4,7 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import type { PhrasingContent } from "./PhrasingContent.js";
-import { PlainTextNode } from "./PlainTextNode.js";
-
-// TODOs:
-// - Add support for nested lists
+import { ListItemNode } from "./ListItemNode.js";
 
 /**
  * An ordered (numbered) list of child contents.
@@ -34,7 +30,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * @sealed
  * @public
  */
-export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
+export class OrderedListNode extends DocumentationParentNodeBase<ListItemNode> {
 	/**
 	 * Static singleton representing an empty Ordered List node.
 	 */
@@ -52,7 +48,7 @@ export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent
 		return false;
 	}
 
-	public constructor(children: PhrasingContent[]) {
+	public constructor(children: ListItemNode[]) {
 		super(children);
 	}
 
@@ -60,6 +56,8 @@ export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent
 	 * Creates an {@link OrderedListNode} from a list of single-line string entries.
 	 */
 	public static createFromPlainTextEntries(entries: string[]): OrderedListNode {
-		return new OrderedListNode(entries.map((entry) => new PlainTextNode(entry)));
+		return new OrderedListNode(
+			entries.map((entry) => ListItemNode.createFromPlainText(entry)),
+		);
 	}
 }

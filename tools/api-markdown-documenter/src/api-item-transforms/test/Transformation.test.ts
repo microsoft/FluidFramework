@@ -25,6 +25,7 @@ import {
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
+	ListItemNode,
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
@@ -553,8 +554,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 						new SectionNode(
 							[
 								new UnorderedListNode([
-									new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
-									new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
+									new ListItemNode([
+										new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
+									]),
+									new ListItemNode([
+										new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
+									]),
 								]),
 							],
 							new HeadingNode("Entry Points"),

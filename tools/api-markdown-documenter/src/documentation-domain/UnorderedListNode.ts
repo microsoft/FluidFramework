@@ -4,11 +4,7 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import type { PhrasingContent } from "./PhrasingContent.js";
-import { PlainTextNode } from "./PlainTextNode.js";
-
-// TODOs:
-// - Support for nested lists
+import { ListItemNode } from "./ListItemNode.js";
 
 /**
  * An unordered (bulleted) list.
@@ -34,7 +30,7 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * @sealed
  * @public
  */
-export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
+export class UnorderedListNode extends DocumentationParentNodeBase<ListItemNode> {
 	/**
 	 * Static singleton representing an empty Unordered List node.
 	 */
@@ -52,7 +48,7 @@ export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingConte
 		return false;
 	}
 
-	public constructor(children: PhrasingContent[]) {
+	public constructor(children: ListItemNode[]) {
 		super(children);
 	}
 
@@ -60,6 +56,8 @@ export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingConte
 	 * Creates an {@link UnorderedListNode} from a list of single-line string entries.
 	 */
 	public static createFromPlainTextEntries(entries: string[]): UnorderedListNode {
-		return new UnorderedListNode(entries.map((entry) => new PlainTextNode(entry)));
+		return new UnorderedListNode(
+			entries.map((entry) => ListItemNode.createFromPlainText(entry)),
+		);
 	}
 }
