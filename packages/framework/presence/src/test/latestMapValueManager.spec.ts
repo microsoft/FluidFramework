@@ -9,12 +9,15 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
 	LatestMapRaw,
 	LatestMapItemUpdatedClientData,
 	Presence,
+	RawValueAccessor,
+	LatestMap,
 } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
 
@@ -101,6 +104,10 @@ describe("Presence", () => {
 
 // ---- test (example) code ----
 
+type TestMapData =
+	| { x: number; y: number; ref?: never; someId?: never }
+	| { ref: string; someId: number; x?: never; y?: never };
+
 /**
  * Check that the code compiles.
  */
@@ -115,6 +122,13 @@ export function checkCompiles(): void {
 					key1: { x: 0, y: 0 },
 					key2: { ref: "default", someId: 0 },
 				},
+			}),
+			validatedMap: StateFactory.latestMap({
+				local: {
+					key1: { x: 0, y: 0 },
+					key2: { ref: "default", someId: 0 },
+				},
+				validator: (data) => data as TestMapData,
 			}),
 		},
 	);
@@ -140,6 +154,43 @@ export function checkCompiles(): void {
 		console.log(key, value);
 	}
 
+	assertIdenticalTypes(
+		props.validatedMap,
+		createInstanceOf<LatestMap<TestMapData, "key1" | "key2">>(),
+	);
+
+	assertIdenticalTypes(
+		props.fixedMap,
+		createInstanceOf<LatestMapRaw<TestMapData, "key1" | "key2">>(),
+	);
+
+	// Get a reference to one of the remote attendees
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	const attendee2 = [...props.validatedMap.getStateAttendees()].find(
+		(attendee) => attendee !== presence.attendees.getMyself(),
+	)!;
+
+	// Get a remote validated value
+	const latestMapData = props.validatedMap.getRemote(attendee2);
+
+	// Get a value from the validated map
+	const validatedKeyValue = latestMapData.get("key2")?.value;
+
+	// @ts-expect-error because validatedKeyValue is an accessor, not a value
+	// Type '() =>
+	// { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref:
+	// string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined'
+	// is not assignable to type 'TestMapData | undefined'.
+	assertIdenticalTypes(validatedKeyValue, createInstanceOf<TestMapData | undefined>());
+
+	// The key value should be a function that returns a value.
+	const validatedValue: TestMapData | undefined = validatedKeyValue?.();
+
+	if (validatedValue === undefined) {
+		throw new Error("Value is not valid according to the validator function.");
+	}
+	logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
+
 	// ----------------------------------
 	// pointers data
 
@@ -160,7 +211,7 @@ export function checkCompiles(): void {
 		key,
 		value,
 	}: Pick<
-		LatestMapItemUpdatedClientData<T, string | number>,
+		LatestMapItemUpdatedClientData<T, string | number, RawValueAccessor<T>>,
 		"attendee" | "key" | "value"
 	>): void {
 		console.log(attendee.attendeeId, key, value);
@@ -179,7 +230,9 @@ export function checkCompiles(): void {
 	}
 
 	for (const { attendee, items } of pointers.getRemotes()) {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	}
 
 	pointers.events.on("remoteItemRemoved", ({ attendee, key }) =>
@@ -187,7 +240,9 @@ export function checkCompiles(): void {
 	);
 
 	pointers.events.on("remoteUpdated", ({ attendee, items }) => {
-		for (const [key, { value }] of items.entries()) logClientValue({ attendee, key, value });
+		for (const [key, { value }] of items.entries()) {
+			logClientValue({ attendee, key, value });
+		}
 	});
 
 	// ----------------------------------
