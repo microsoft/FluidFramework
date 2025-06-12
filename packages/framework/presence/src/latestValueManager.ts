@@ -257,6 +257,11 @@ export interface LatestArgumentsRaw<T extends object | null> {
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
+
+	/**
+	 * Optional validator. See {@link StateSchemaValidator}.
+	 */
+	validator?: StateSchemaValidator<T>;
 }
 
 /**
@@ -310,10 +315,7 @@ export function latest<T extends object | null, Key extends string = string>(
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
 	const { local, settings } = args;
 
-	const validator =
-		args !== undefined && "validator" in args && args.validator !== undefined
-			? args.validator
-			: undefined;
+	const validator = args.validator;
 
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
