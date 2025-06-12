@@ -147,7 +147,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"sinon": "^18.0.1",
-				"typescript": "~5.4.5",
+		"typescript": "~5.4.5",
 		"uuid": "^9.0.0"
 	},
 	"fluidBuild": {
