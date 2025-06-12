@@ -54,10 +54,6 @@ export class PresenceManager {
 			// The new value of the userInfo property
 			const remoteUserInfo = update.value;
 
-			if (remoteUserInfo === undefined) {
-				throw new Error(`Invalid remote user info: ${remoteUserInfo}`);
-			}
-
 			// Update the userInfoMap with the new value
 			this.userInfoMap.set(remoteSessionClient, remoteUserInfo);
 			// Notify the app about the updated userInfoMap
@@ -106,9 +102,6 @@ export class PresenceManager {
 			// If local user or remote user is connected, then only add it to the list
 			try {
 				const userInfo = this.usersState.states.onlineUsers.getRemote(sessionClient).value;
-				if (userInfo === undefined) {
-					throw new Error("userInfo is undefined");
-				}
 				// If the user is local user, then add it to the beginning of the list
 				if (sessionClient.attendeeId === this.presence.attendees.getMyself().attendeeId) {
 					userInfoList.push(userInfo);

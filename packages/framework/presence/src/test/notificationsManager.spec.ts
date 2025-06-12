@@ -133,11 +133,7 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": attendeeId2,
-									},
+									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -190,11 +186,7 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId2]: {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": attendeeId2,
-									},
+									[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -273,11 +265,7 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": attendeeId3,
-									},
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -355,11 +343,7 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": attendeeId3,
-									},
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -425,11 +409,7 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": attendeeId3,
-									},
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {
@@ -501,11 +481,7 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								"clientToSessionId": {
-									[connectionId3]: {
-										"rev": 0,
-										"timestamp": 1000,
-										"value": attendeeId3,
-									},
+									[connectionId3]: { "rev": 0, "timestamp": 1000, "value": attendeeId3 },
 								},
 							},
 							"n:name:testNotificationWorkspace": {

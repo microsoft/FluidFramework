@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import type {
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/core-interfaces/internal";
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalTypes } from "../exposedInternalTypes.js";
 import type { Presence } from "../presence.js";
