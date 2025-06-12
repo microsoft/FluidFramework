@@ -17,7 +17,7 @@ import { createPresenceManager } from "../presenceManager.js";
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import { StateFactory } from "@fluidframework/presence/alpha";
+import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -43,7 +43,7 @@ describe("Presence", () => {
 });
 
 declare function createValueManager<T, Key extends string>(
-	initial: JsonSerializable<T> & JsonDeserialized<T>,
+	initial: JsonSerializable<T>,
 ): { instanceBase: new () => unknown } & ((
 	key: Key,
 	datastoreHandle: InternalTypes.StateDatastoreHandle<

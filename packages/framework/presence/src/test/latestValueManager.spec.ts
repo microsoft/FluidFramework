@@ -14,8 +14,8 @@ import type {
 	BroadcastControlSettings,
 	LatestClientData,
 	Presence,
-} from "@fluidframework/presence/alpha";
-import { StateFactory } from "@fluidframework/presence/alpha";
+} from "@fluidframework/presence/beta";
+import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -82,6 +82,22 @@ describe("Presence", () => {
 					nullable: StateFactory.latest({ local: null }),
 				});
 				assert.deepStrictEqual(workspace.states.nullable.local, null);
+			});
+
+			it("can set and get inferred nullable type as initial value", () => {
+				// Setup
+				// Use a function to generate the initial value so that TypeScript
+				// can't statically infer the type as exactly null.
+				function generateInitialValue(): { x: number; y: number } | null {
+					return { x: 0, y: 0 };
+				}
+				const initialValue = generateInitialValue();
+				// Act
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					nullable: StateFactory.latest({ local: initialValue }),
+				});
+				// Verify
+				assert.deepStrictEqual(workspace.states.nullable.local, initialValue);
 			});
 
 			it(".presence provides Presence it was created under", () => {

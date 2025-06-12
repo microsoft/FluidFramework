@@ -5,7 +5,7 @@
 
 "use client";
 
-import { getPresence } from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/beta";
 import {
 	Box,
 	Button,

@@ -22,8 +22,13 @@ export function getSaveDirectory(directory: string, model: HasWorkloadName): str
 	return path.join(directory, workloadFriendly);
 }
 
-function getSavePath(directory: string, model: HasWorkloadName, seed: number): string {
-	return path.join(getSaveDirectory(directory, model), `${seed}.json`);
+function getSavePath(
+	directory: string,
+	model: HasWorkloadName,
+	seed: number,
+	suffix: string = "",
+): string {
+	return path.join(getSaveDirectory(directory, model), `${seed}${suffix}.json`);
 }
 
 /**
@@ -32,6 +37,7 @@ function getSavePath(directory: string, model: HasWorkloadName, seed: number): s
 export interface SaveOptions {
 	saveFailures?: undefined | false | { directory: string };
 	saveSuccesses?: undefined | false | { directory: string };
+	saveFluidOps?: undefined | false | { directory: string };
 }
 
 /**
@@ -50,6 +56,10 @@ export function getSaveInfo(
 		saveOnSuccess:
 			options.saveSuccesses !== undefined && options.saveSuccesses !== false
 				? { path: getSavePath(options.saveSuccesses.directory, model, seed) }
+				: false,
+		saveFluidOps:
+			options.saveFluidOps !== undefined && options.saveFluidOps !== false
+				? { path: getSavePath(options.saveFluidOps.directory, model, seed, "-fluid-ops") }
 				: false,
 	};
 }

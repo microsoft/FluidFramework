@@ -156,17 +156,16 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 		 * and then reuse the per dds validators to ensure eventual consistency.
 		 */
 		const channelMap = new Map<string, IChannel>();
-		for (const entry of (await client.entryPoint.getContainerObjects()).map((v) =>
-			v.type === "stressDataObject" ? v : undefined,
+		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
+			(v) => v.type === "stressDataObject",
 		)) {
-			if (entry !== undefined) {
-				const stressDataObject = entry?.stressDataObject;
-				if (stressDataObject?.attached === true) {
-					const channels = await stressDataObject.getChannels();
-					for (const channel of channels) {
-						if (channel.isAttached()) {
-							channelMap.set(`${entry.tag}/${channel.id}`, channel);
-						}
+			assert(entry.type === "stressDataObject", "type narrowing");
+			const stressDataObject = entry.stressDataObject;
+			if (stressDataObject.attached === true) {
+				const channels = await stressDataObject.getChannels();
+				for (const channel of channels) {
+					if (channel.isAttached()) {
+						channelMap.set(`${entry.tag}/${channel.id}`, channel);
 					}
 				}
 			}

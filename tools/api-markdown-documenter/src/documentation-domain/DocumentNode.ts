@@ -7,7 +7,6 @@ import type { Parent as UnistParent } from "unist";
 
 import type { ApiItem } from "../index.js";
 
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { SectionNode } from "./SectionNode.js";
 
 /**
@@ -44,13 +43,14 @@ export interface DocumentNodeProperties {
  * Note that this node is special.
  * It forms the root of a Documentation tree, and cannot be parented under other {@link DocumentationNode}s.
  *
+ * @sealed
  * @public
  */
 export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProperties {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Document;
+	public readonly type = "document";
 
 	/**
 	 * {@inheritDoc DocumentNodeProps.apiItem}

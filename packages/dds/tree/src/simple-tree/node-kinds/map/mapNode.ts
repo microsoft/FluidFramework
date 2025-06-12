@@ -5,6 +5,7 @@
 
 import { Lazy } from "@fluidframework/core-utils/internal";
 import type {
+	FlexibleNodeContent,
 	FlexTreeNode,
 	FlexTreeOptionalField,
 	OptionalFieldEditBuilder,
@@ -32,19 +33,18 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 	type Context,
-	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
+	type UnhydratedFlexTreeNode,
 } from "../../core/index.js";
 import {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
-} from "../../toMapTree.js";
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { brand, count, type RestrictiveStringRecord } from "../../../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
-import type { ExclusiveMapTree } from "../../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
 
@@ -158,7 +158,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		return getOrCreateInnerNode(this);
 	}
 
-	private editor(key: string): OptionalFieldEditBuilder<ExclusiveMapTree> {
+	private editor(key: string): OptionalFieldEditBuilder<FlexibleNodeContent> {
 		const field = this.innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 		return field.editor;
 	}
@@ -215,7 +215,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getOrCreateInnerNode(this).boxedIterator()) {
+		for (const field of getOrCreateInnerNode(this)) {
 			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
@@ -271,10 +271,7 @@ export function mapSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as FactoryContent, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {

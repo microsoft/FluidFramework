@@ -12,6 +12,7 @@ import {
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import {
 	FluidDataStoreRegistry,
+	type IContainerRuntimeOptions,
 	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type {
@@ -21,6 +22,7 @@ import type {
 import type {
 	FluidObject,
 	FluidObjectKeys,
+	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -140,9 +142,6 @@ class RootDataObject
 		await Promise.all(loadInitialObjectsP);
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.initialObjects}
-	 */
 	public get initialObjects(): LoadableObjectRecord {
 		if (Object.keys(this._initialObjects).length === 0) {
 			throw new Error("Initial Objects were not correctly initialized");
@@ -150,9 +149,6 @@ class RootDataObject
 		return this._initialObjects;
 	}
 
-	/**
-	 * {@inheritDoc IRootDataObject.create}
-	 */
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
 		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
 		if (isDataObjectKind(internal)) {
@@ -161,6 +157,10 @@ class RootDataObject
 			return this.createSharedObject(internal);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
+	}
+
+	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
+		return this.runtime.uploadBlob(blob);
 	}
 
 	private async createDataObject<T extends IFluidLoadable>(
@@ -206,6 +206,18 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 * If not provided, one will be created based on the schema.
 	 */
 	rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	/**
+	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 */
+	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+	/**
+	 * Optional override for minimum version for collab.
+	 * If not provided, the default for the given compatibilityMode will be used.
+	 * @remarks
+	 * This is useful when runtime options are overridden and change the minimum version for collab.
+	 */
+	minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
 	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
@@ -214,6 +226,10 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		props.schema,
 		props.compatibilityMode,
 		new RootDataObjectFactory(sharedObjects, registry),
+		{
+			runtimeOptions: props.runtimeOptionOverrides,
+			minVersionForCollab: props.minVersionForCollabOverride,
+		},
 	);
 }
 
@@ -233,7 +249,7 @@ async function provideEntryPoint(
 	}
 	const rootDataObject = ((await entryPoint.get()) as FluidObject<RootDataObject>)
 		.RootDataObject;
-	assert(rootDataObject !== undefined, "entryPoint must be of type RootDataObject");
+	assert(rootDataObject !== undefined, 0xb9f /* entryPoint must be of type RootDataObject */);
 	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject,
@@ -278,20 +294,26 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 			RootDataObject,
 			{ InitialState: RootDataObjectProps }
 		>,
+		overrides?: Partial<{
+			runtimeOptions: Partial<IContainerRuntimeOptions>;
+			minVersionForCollab: MinimumVersionForCollab;
+		}>,
 	) {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
-			runtimeOptions: compatibilityModeRuntimeOptions[compatibilityMode],
+			runtimeOptions: {
+				...compatibilityModeRuntimeOptions[compatibilityMode],
+				...overrides?.runtimeOptions,
+			},
 			provideEntryPoint,
-			minVersionForCollab: compatibilityModeToMinVersionForCollab[compatibilityMode],
+			minVersionForCollab:
+				overrides?.minVersionForCollab ??
+				compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/aqueduct#BaseContainerRuntimeFactory.containerInitializingFirstTime}
-	 */
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		// The first time we create the container we create the RootDataObject
 		await this.rootDataObjectFactory.createRootInstance(rootDataStoreId, runtime, {
