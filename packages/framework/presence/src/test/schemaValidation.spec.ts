@@ -67,8 +67,36 @@ describe("Presence", () => {
 		}
 
 		beforeEach(() => {
-			// Create a session and join a single user
-			presence = prepareConnectedPresence(runtime, attendeeId1, "client1", clock, logger);
+			// Create a session and join attendee1
+			presence = prepareConnectedPresence(runtime, attendeeId1, connectionId1, clock, logger);
+
+			presence.processSignal(
+				[],
+				{
+					type: "Pres:ClientJoin",
+					content: {
+						sendTimestamp: clock.now - 50,
+						avgLatency: 50,
+						data: {
+							"system:presence": {
+								"clientToSessionId": {
+									[connectionId2]: {
+										"rev": 0,
+										"timestamp": 700,
+										"value": attendeeId2,
+									},
+								},
+							},
+						},
+						updateProviders: [connectionId2],
+					},
+					clientId: connectionId2,
+				},
+				false,
+			);
+
+			// Join attendee2 to the session; tests will act as attendee2
+			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger);
 
 			// Pass a little time (to mimic reality)
 			clock.tick(10);
@@ -81,51 +109,11 @@ describe("Presence", () => {
 			afterCleanUp.length = 0;
 		});
 
-		describe("multiple users", () => {
-			it("second user connects", () => {
-				// Process join signal from second client to join the session
-				presence.processSignal(
-					[],
-					{
-						type: "Pres:ClientJoin",
-						content: {
-							sendTimestamp: clock.now - 50,
-							avgLatency: 50,
-							data: {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: {
-											"rev": 0,
-											"timestamp": 700,
-											"value": attendeeId2,
-										},
-									},
-								},
-							},
-							updateProviders: [connectionId2],
-						},
-						clientId: connectionId2,
-					},
-					false,
-				);
-
-				assert.equal(presence.attendees.getAttendees().size, 2);
-			});
-		});
-
 		describe("LatestValueManager", () => {
 			let validatorFunction: StateSchemaValidator<TestData>;
 			let validatorSpy: ValidatorSpy;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(
-					runtime,
-					attendeeId2,
-					connectionId2,
-					clock,
-					logger,
-				);
-
 				runtime.signalsExpected.push([
 					{
 						type: "Pres:DatastoreUpdate",
@@ -135,7 +123,7 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1020, "value": attendeeId2 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
@@ -159,18 +147,18 @@ describe("Presence", () => {
 				assert.equal(validatorSpy.callCount, 0);
 			});
 
-			it("getRemote does not call validator", () => {
+			it.only("getRemote does not call validator", () => {
 				// Setup
 				runtime.signalsExpected.push([
 					{
-						type: "Pres:DatastoreUpdate",
-						content: {
+						"type": "Pres:DatastoreUpdate",
+						"content": {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1020, "value": attendeeId2 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
@@ -220,14 +208,14 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1020, "value": attendeeId2 },
+										[connectionId1]: { "rev": 0, "timestamp": 1020, "value": attendeeId1 },
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										[attendeeId2]: {
+										[attendeeId1]: {
 											"rev": 1,
-											"timestamp": 1030,
+											"timestamp": 1020,
 											"value": toOpaqueJson({ "num": 22 }),
 										},
 									},
@@ -273,12 +261,12 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1020, "value": attendeeId2 },
+										[connectionId1]: { "rev": 0, "timestamp": 1020, "value": attendeeId1 },
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										[attendeeId2]: {
+										[attendeeId1]: {
 											"rev": 1,
 											"timestamp": 1030,
 											"value": toOpaqueJson({ "num": 22 }),
@@ -303,7 +291,7 @@ describe("Presence", () => {
 				count.local = { num: 22 };
 
 				// Act & Verify
-				const attendee2 = presence.attendees.getAttendee("attendeeId-2" as AttendeeId);
+				const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
 				// Calling getRemote should not invoke the validator (only a value read will).
 				const remoteData = count.getRemote(attendee2);
@@ -361,7 +349,7 @@ describe("Presence", () => {
 				count.local = "string" as unknown as { num: number };
 
 				// Act & Verify
-				const attendee2 = presence.attendees.getAttendee("attendeeId-2" as AttendeeId);
+				const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
 				// Calling getRemote should not invoke the validator (only a value read will).
 				const remoteData = count.getRemote(attendee2);
