@@ -239,7 +239,7 @@ export interface IDocumentServiceEvents extends IEvent {
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	(event: "nack", listener: (documentId: string, message: INack[]) => void);
 	/**
-	 * @deprecated The `reason` parameter will become optional in a future release to support clean disconnections.
+	 * @param The `reason` parameter will become optional in a future release to support clean disconnections.
 	 * Signature will change from `(reason: IAnyDriverError) => void` to `(reason?: IAnyDriverError) => void`.
 	 * Update your listener implementations to handle cases where `reason` is undefined.
 	 */
