@@ -1613,11 +1613,11 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
 		this._getClientId = () => context.clientId;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
 		this._hasConnection = () => context.connected;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
 			// eslint-disable-next-line unicorn/consistent-destructuring
