@@ -476,9 +476,11 @@ describe("treeNodeApi", () => {
 				const tree = view.root;
 
 				assert.equal(TreeAlpha.child(tree, "foo"), "Hello");
-				assert.equal(TreeAlpha.child(tree, 0), "World");
+				assert.equal(TreeAlpha.child(tree, "0"), "World");
+				assert.equal(TreeAlpha.child(tree, 0), undefined); // Numeric keys are not supported by Map nodes
 
 				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+				assert.equal(TreeAlpha.child(tree, "1"), undefined);
 				assert.equal(TreeAlpha.child(tree, 1), undefined);
 			});
 
