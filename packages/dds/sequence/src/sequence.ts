@@ -586,7 +586,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		return this.client.getContainingSegment<T>(pos);
+		return (
+			this.client.getContainingSegment<T>(pos) ?? { segment: undefined, offset: undefined }
+		);
 	}
 
 	public getLength(): number {
