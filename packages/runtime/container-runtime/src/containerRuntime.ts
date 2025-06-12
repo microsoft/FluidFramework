@@ -1189,12 +1189,15 @@ export class ContainerRuntime
 		return this._getClientId();
 	}
 
-	private readonly _getConnected: () => boolean;
+	private readonly _hasConnection: () => boolean;
 	/**
 	 * Returns whether the client is connected to the service.
+	 *
+	 * This reflects only the raw connection status. In contrast, {@link connected} also checks
+	 * that the client is not in read-only mode and is therefore able to send ops.
 	 */
-	public get connectedToService(): boolean {
-		return this._getConnected();
+	public get hasConnection(): boolean {
+		return this._hasConnection();
 	}
 
 	public readonly clientDetails: IClientDetails;
@@ -1613,7 +1616,7 @@ export class ContainerRuntime
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getClientId = () => context.clientId;
 		// eslint-disable-next-line unicorn/consistent-destructuring
-		this._getConnected = () => context.connected;
+		this._hasConnection = () => context.connected;
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
@@ -5126,7 +5129,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connectedToService,
+				isConnected: () => this.hasConnection,
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
