@@ -8,7 +8,10 @@ import { strict as assert } from "node:assert";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { Off } from "@fluidframework/core-interfaces";
-import type { DeepReadonly, JsonDeserialized } from "@fluidframework/core-interfaces/internal";
+import type {
+	DeepReadonly,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 import type { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
@@ -106,8 +109,7 @@ const event = {
 		await timeoutPromise<DeepReadonly<JsonDeserialized<T>>>(
 			(resolve) =>
 				latestData.events.on("localUpdated", (data) => {
-					// console.log(`${tag}localUpdated: ${JSON.stringify(data, undefined, 2)}`);
-
+					// FIXME
 					// @ts-expect-error Type 'null' is not assignable to type 'DeepReadonly<JsonDeserialized<T>> | PromiseLike<DeepReadonly<JsonDeserialized<T>>>'.
 					resolve(data.value);
 				}),
