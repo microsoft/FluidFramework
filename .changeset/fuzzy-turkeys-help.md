@@ -6,8 +6,6 @@
 ---
 The reason parameter on the disconnect event is now optional to allow for clean, non-error disconnections.
 
-### Breaking Change: `disconnect` event `reason` parameter will become optional
-
 To enable better handling of intentional disconnects (e.g. [`Container.dispose()`](https://fluidframework.com/docs/api/container-loader/container/dispose)), the `reason` parameter of the `disconnect` event on [`IDocumentDeltaConnectionEvents`](https://fluidframework.com/docs/api/driver-definitions/idocumentdeltaconnectionevents) is being deprecated as a required parameter.
 
 In a future release, the `reason` parameter will become optional.
