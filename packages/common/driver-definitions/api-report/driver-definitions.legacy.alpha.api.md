@@ -226,7 +226,7 @@ export interface IDocumentDeltaConnection extends IDisposable, IEventProvider<ID
 export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
     // (undocumented)
     (event: "nack", listener: (documentId: string, message: INack[]) => void): any;
-    // (undocumented)
+    // @deprecated (undocumented)
     (event: "disconnect", listener: (reason: IAnyDriverError) => void): any;
     // (undocumented)
     (event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void): any;
