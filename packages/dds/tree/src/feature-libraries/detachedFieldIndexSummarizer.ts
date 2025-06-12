@@ -6,6 +6,7 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type {
+	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -32,23 +33,15 @@ export class DetachedFieldIndexSummarizer implements Summarizable {
 
 	public constructor(private readonly detachedFieldIndex: DetachedFieldIndex) {}
 
-	public getAttachSummary(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats {
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
 		const data = this.detachedFieldIndex.encode();
-		return createSingleBlobSummary(detachedFieldIndexBlobKey, stringify(data));
-	}
-
-	public async summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummaryTreeWithStats> {
-		return this.getAttachSummary(stringify, fullTree, trackState, telemetryContext);
+		return createSingleBlobSummary(detachedFieldIndexBlobKey, props.stringify(data));
 	}
 
 	public async load(
