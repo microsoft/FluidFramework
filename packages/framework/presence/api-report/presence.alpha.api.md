@@ -177,6 +177,7 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 export interface LatestArgumentsRaw<T extends object | null> {
     local: JsonSerializable<T>;
     settings?: BroadcastControlSettings | undefined;
+    validator?: StateSchemaValidator<T>;
 }
 
 // @beta @sealed
