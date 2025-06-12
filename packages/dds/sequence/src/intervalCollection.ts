@@ -709,7 +709,9 @@ type PendingChanges = Partial<
 			 * list are also stored in the individual change op metadatas, and
 			 * are removed as those metadatas are handled.
 			 */
-			endpointChanges?: DoublyLinkedList<IntervalChangeLocalMetadata>;
+			endpointChanges?: DoublyLinkedList<
+				IntervalAddLocalMetadata | IntervalChangeLocalMetadata
+			>;
 		}
 	>
 >;
@@ -720,9 +722,7 @@ function removeMetadataFromPendingChanges(
 	const acked = (localOpMetadataNode as ListNode<IntervalMessageLocalMetadata>)?.remove()
 		?.data;
 	assert(acked !== undefined, "local change must exist");
-	if (acked.type === "change") {
-		acked.endpointChangesNode?.remove();
-	}
+	acked.endpointChangesNode?.remove();
 	return acked;
 }
 
@@ -775,8 +775,11 @@ export class IntervalCollection
 
 		this.submitDelta = (op, md) => {
 			const { id } = getSerializedProperties(op.value);
-			const pending = (this.pending[id] ??= { local: new DoublyLinkedList() });
-			if (md.type === "change" && hasEndpointChanges(op.value)) {
+			const pending = (this.pending[id] ??= {
+				local: new DoublyLinkedList(),
+				endpointChanges: new DoublyLinkedList(),
+			});
+			if (md.type === "add" || (md.type === "change" && hasEndpointChanges(op.value))) {
 				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
 				md.endpointChangesNode = endpointChanges.push(md).last;
 			}
@@ -928,7 +931,9 @@ export class IntervalCollection
 		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
 
 		const rebasedValue =
-			localOpMetadata.type === "delete" ? value : this.rebaseLocalInterval(localOpMetadata);
+			localOpMetadata.endpointChangesNode === undefined
+				? value
+				: this.rebaseLocalInterval(localOpMetadata);
 
 		if (rebasedValue === undefined) {
 			const { id } = getSerializedProperties(value);
@@ -1049,11 +1054,9 @@ export class IntervalCollection
 		if (client) {
 			client.on("normalize", () => {
 				for (const pending of Object.values(this.pending)) {
-					if (pending !== undefined) {
-						for (const local of pending.local) {
-							if (local.data.type !== "delete") {
-								local.data.rebased = this.computeRebasedPositions(local.data);
-							}
+					if (pending?.endpointChanges !== undefined) {
+						for (const local of pending.endpointChanges) {
+							local.data.rebased = this.computeRebasedPositions(local.data);
 						}
 					}
 				}
