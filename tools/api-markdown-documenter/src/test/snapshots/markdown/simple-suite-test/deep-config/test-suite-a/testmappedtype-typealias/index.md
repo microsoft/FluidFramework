@@ -1,6 +1,6 @@
 # TestMappedType
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestMappedType](/test-suite-a/testmappedtype-typealias/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestMappedType](/test-suite-a/testmappedtype-typealias/)
 
 Test Mapped Type, using [TestEnum](/test-suite-a/testenum-enum/)
 

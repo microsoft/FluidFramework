@@ -108,6 +108,12 @@
 			},
 			"Interface_ITenantManager": {
 				"forwardCompat": false
+			},
+			"Interface_IEncryptedTenantKeys": {
+				"backCompat": false
+			},
+			"Enum_EncryptionKeyVersion": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "public"

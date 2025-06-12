@@ -12,5 +12,5 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 
 | Parameter | Type | Description |
 | - | - | - |
-| privateProperty | number |  |
-| protectedProperty | [TestEnum](docs/test-suite-a/testenum-enum) |  |
+| privateProperty | number | |
+| protectedProperty | [TestEnum](docs/test-suite-a/testenum-enum) | |

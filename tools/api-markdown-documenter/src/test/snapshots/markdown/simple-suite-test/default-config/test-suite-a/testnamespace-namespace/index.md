@@ -1,6 +1,6 @@
 # TestNamespace
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestNamespace](/test-suite-a/testnamespace-namespace/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/)
 
 Test Namespace
 
@@ -68,7 +68,7 @@ const foo = {
 
 | Variable | Alerts | Modifiers | Type | Description |
 | - | - | - | - | - |
-| [TestConst](/test-suite-a/testnamespace-namespace/#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [TestConst](/test-suite-a/testnamespace-namespace/#testconst-variable) | `Beta` | `readonly` | | Test Constant |
 
 ## Namespaces
 
@@ -92,7 +92,7 @@ function testFunction(testParameter: number): number;
 
 | Parameter | Type | Description |
 | - | - | - |
-| testParameter | number |  |
+| testParameter | number | |
 
 #### Returns {#testfunction-returns}
 
