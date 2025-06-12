@@ -367,7 +367,7 @@ stages:
             script: |
               set -eu -o pipefail
 
-              npx --package=@ff-internal/trips-setup@0.0.2 -- trips-setup $SYSTEM_ACCESSTOKEN
+              npx --package=@ff-internal/trips-setup@0.0.3 -- trips-setup $SYSTEM_ACCESSTOKEN
 
         # run the test
         - task: Npm@1
@@ -449,7 +449,7 @@ stages:
             script: |
               set -eu -o pipefail
 
-              npx --package=@ff-internal/trips-setup@0.0.2 -- trips-cleanup $(stringBearerToken)
+              npx --package=@ff-internal/trips-setup@0.0.3 -- trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
