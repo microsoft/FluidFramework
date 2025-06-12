@@ -16,6 +16,7 @@ In a future release, the `reason` parameter will become optional.
 **New signature:**
 `listener: (reason?: IAnyDriverError) => void`
 
-Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`. This indicates a clean disconnect, which should not be treated as an error.
+Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`.
+This indicates a clean disconnect, which should not be treated as an error.
 
 The breaking change is scheduled to be released in version **2.60**.
