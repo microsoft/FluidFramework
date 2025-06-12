@@ -17,11 +17,26 @@ import {
 	SerializedIntervalDelta,
 } from "./intervals/index.js";
 
-export interface IMapMessageLocalMetadata {
+export interface IntervalAddLocalMetadata {
+	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
-	previous?: ISerializedInterval;
+}
+export interface IntervalChangeLocalMetadata {
+	type: typeof IntervalDeltaOpType.CHANGE;
+	localSeq: number;
+	previous: ISerializedInterval;
 }
 
+export interface IntervalDeleteLocalMetadata {
+	type: typeof IntervalDeltaOpType.DELETE;
+	localSeq: number;
+	previous: ISerializedInterval;
+}
+
+export type IntervalMessageLocalMetadata =
+	| IntervalAddLocalMetadata
+	| IntervalChangeLocalMetadata
+	| IntervalDeleteLocalMetadata;
 /**
  * Optional flags that configure options for sequence DDSs
  * @internal
@@ -73,7 +88,7 @@ export interface IIntervalCollectionOperation {
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalMessageLocalMetadata | undefined,
 	): void;
 }
 

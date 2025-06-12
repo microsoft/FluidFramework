@@ -675,6 +675,51 @@ describe("Directory", () => {
 				assert.equal(nestedSubDir.get("deepKey1"), "deepValue1");
 				assert.equal(nestedSubDir.get("long2"), logWord2);
 			});
+
+			it("Should register subdirectory events on load", async () => {
+				directory.createSubDirectory("child");
+
+				const summarizeResult = directory.getAttachSummary();
+				const summaryTree = summarizeResult.summary;
+				assert.strictEqual(summaryTree.type, SummaryType.Tree, "summary should be a tree");
+
+				const storage = MockSharedObjectServices.createFromSummary(summarizeResult.summary);
+				const factory = SharedDirectory.getFactory();
+
+				const loadedDirectory = await factory.load(
+					dataStoreRuntime,
+					"test",
+					storage,
+					factory.attributes,
+				);
+				const subdir = loadedDirectory.getSubDirectory("child");
+				assert(subdir, "child subdirectory should exist");
+
+				let subDirectoryCreatedEventCounts = 0;
+				loadedDirectory.on("subDirectoryCreated", (path, _local, _target) => {
+					subDirectoryCreatedEventCounts++;
+					assert.equal(path, "child/grandchild", "created path should match");
+				});
+				let subDirectoryDeletedEventCounts = 0;
+				loadedDirectory.on("subDirectoryDeleted", (path, _local, _target) => {
+					subDirectoryDeletedEventCounts++;
+					assert.equal(path, "child/grandchild", "deleted path should match");
+				});
+
+				subdir.createSubDirectory("grandchild");
+				subdir.deleteSubDirectory("grandchild");
+
+				assert.equal(
+					subDirectoryCreatedEventCounts,
+					1,
+					"Sub directory created event should fire once for grandchild",
+				);
+				assert.equal(
+					subDirectoryDeletedEventCounts,
+					1,
+					"Sub directory deleted event should fire once for grandchild",
+				);
+			});
 		});
 
 		describe("Op processing", () => {
