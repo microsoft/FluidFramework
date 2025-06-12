@@ -5,13 +5,13 @@
 
 import { h } from "hastscript";
 
-import { UnorderedListNode } from "../../documentation-domain/index.js";
+import { ListNode } from "../../documentation-domain/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
 describe("UnorderedListNode HTML rendering tests", () => {
 	it("Empty list", () => {
-		assertTransformation(UnorderedListNode.Empty, h("ul"));
+		assertTransformation(new ListNode([], false), h("ul"));
 	});
 
 	it("Simple list", () => {
@@ -19,7 +19,7 @@ describe("UnorderedListNode HTML rendering tests", () => {
 		const text2 = "Item 2";
 		const text3 = "Item 3";
 
-		const input = UnorderedListNode.createFromPlainTextEntries([text1, text2, text3]);
+		const input = ListNode.createFromPlainTextEntries([text1, text2, text3], false);
 
 		const expected = h("ul", [h("li", text1), h("li", text2), h("li", text3)]);
 

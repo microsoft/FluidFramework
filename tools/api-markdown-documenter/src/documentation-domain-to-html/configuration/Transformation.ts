@@ -13,15 +13,14 @@ import type {
 	HeadingNode,
 	LinkNode,
 	SectionNode,
-	OrderedListNode,
 	ParagraphNode,
 	PlainTextNode,
 	SpanNode,
 	TableCellNode,
 	TableNode,
 	TableRowNode,
-	UnorderedListNode,
 	ListItemNode,
+	ListNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -30,15 +29,14 @@ import {
 	headingToHtml,
 	sectionToHtml,
 	linkToHtml,
-	orderedListToHtml,
 	paragraphToHtml,
 	plainTextToHtml,
 	spanToHtml,
 	tableToHtml,
 	tableCellToHtml,
 	tableRowToHtml,
-	unorderedListToHtml,
 	listItemToHtml,
+	listToHtml,
 } from "../default-transformations/index.js";
 
 /**
@@ -92,12 +90,11 @@ export const defaultTransformations: Transformations = {
 	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
 	horizontalRule: () => hastHorizontalRule,
-	orderedList: (node, context) => orderedListToHtml(node as OrderedListNode, context),
+	list: (node, context) => listToHtml(node as ListNode, context),
 	paragraph: (node, context) => paragraphToHtml(node as ParagraphNode, context),
 	text: (node, context) => plainTextToHtml(node as PlainTextNode, context),
 	span: (node, context) => spanToHtml(node as SpanNode, context),
 	table: (node, context) => tableToHtml(node as TableNode, context),
 	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
 	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),
-	unorderedList: (node, context) => unorderedListToHtml(node as UnorderedListNode, context),
 };

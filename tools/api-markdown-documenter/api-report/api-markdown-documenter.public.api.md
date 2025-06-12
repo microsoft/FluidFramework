@@ -166,13 +166,11 @@ export interface BlockContentMap {
     // (undocumented)
     horizontalRule: HorizontalRuleNode;
     // (undocumented)
-    orderedList: OrderedListNode;
+    list: ListNode;
     // (undocumented)
     paragraph: ParagraphNode;
     // (undocumented)
     table: TableNode;
-    // (undocumented)
-    unorderedList: UnorderedListNode;
 }
 
 // @public @sealed
@@ -593,6 +591,15 @@ export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
     readonly type = "listItem";
 }
 
+// @public @sealed
+export class ListNode extends DocumentationParentNodeBase<ListItemNode> {
+    constructor(children: ListItemNode[], ordered: boolean);
+    static createFromPlainTextEntries(entries: string[], ordered: boolean): ListNode;
+    readonly ordered: boolean;
+    get singleLine(): false;
+    readonly type = "list";
+}
+
 // @public
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
@@ -651,15 +658,6 @@ export interface MarkdownRenderers {
 }
 
 export { NewlineKind }
-
-// @public @sealed
-export class OrderedListNode extends DocumentationParentNodeBase<ListItemNode> {
-    constructor(children: ListItemNode[]);
-    static createFromPlainTextEntries(entries: string[]): OrderedListNode;
-    static readonly Empty: OrderedListNode;
-    get singleLine(): false;
-    readonly type = "orderedList";
-}
 
 // @public @sealed
 export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
@@ -874,15 +872,6 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
-
-// @public @sealed
-export class UnorderedListNode extends DocumentationParentNodeBase<ListItemNode> {
-    constructor(children: ListItemNode[]);
-    static createFromPlainTextEntries(entries: string[]): UnorderedListNode;
-    static readonly Empty: UnorderedListNode;
-    get singleLine(): false;
-    readonly type = "unorderedList";
-}
 
 // @public
 export type UrlTarget = string;

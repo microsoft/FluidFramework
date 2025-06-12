@@ -5,19 +5,20 @@
 
 import type { Element as HastElement } from "hast";
 
-import type { OrderedListNode } from "../../documentation-domain/index.js";
+import type { ListNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
- * Transform a {@link OrderedListNode} to HTML.
+ * Transform a {@link ListNode} to HTML.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function orderedListToHtml(
-	node: OrderedListNode,
-	context: TransformationContext,
-): HastElement {
-	return transformChildrenUnderTag({ name: "ol" }, node.children, context);
+export function listToHtml(node: ListNode, context: TransformationContext): HastElement {
+	return transformChildrenUnderTag(
+		{ name: node.ordered ? "ol" : "ul" },
+		node.children,
+		context,
+	);
 }

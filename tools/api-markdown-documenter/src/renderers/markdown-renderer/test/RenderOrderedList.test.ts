@@ -8,7 +8,7 @@ import { expect } from "chai";
 import {
 	LineBreakNode,
 	ListItemNode,
-	OrderedListNode,
+	ListNode,
 	PlainTextNode,
 } from "../../../documentation-domain/index.js";
 
@@ -17,7 +17,7 @@ import { testRender } from "./Utilities.js";
 describe("OrderedListNode Markdown rendering tests", () => {
 	describe("Standard context", () => {
 		it("Empty list", () => {
-			expect(testRender(OrderedListNode.Empty)).to.equal("\n");
+			expect(testRender(new ListNode([], true))).to.equal("\n");
 		});
 
 		it("Simple list", () => {
@@ -25,7 +25,7 @@ describe("OrderedListNode Markdown rendering tests", () => {
 			const text2 = "Item 2";
 			const text3 = "Item 3";
 
-			const input = OrderedListNode.createFromPlainTextEntries([text1, text2, text3]);
+			const input = ListNode.createFromPlainTextEntries([text1, text2, text3], true);
 			const result = testRender(input);
 
 			const expected = ["", `1. ${text1}`, `1. ${text2}`, `1. ${text3}`, "", ""].join("\n");
@@ -40,7 +40,7 @@ describe("OrderedListNode Markdown rendering tests", () => {
 				new PlainTextNode("world"),
 			]);
 
-			const input = new OrderedListNode([item]);
+			const input = new ListNode([item], true);
 			const result = testRender(input);
 
 			const expected = ["", `1. Hello<br>world`, "", ""].join("\n");
@@ -51,7 +51,7 @@ describe("OrderedListNode Markdown rendering tests", () => {
 
 	describe("Table context", () => {
 		it("Empty list", () => {
-			expect(testRender(OrderedListNode.Empty, { insideTable: true })).to.equal("<ol></ol>");
+			expect(testRender(new ListNode([], true), { insideTable: true })).to.equal("<ol></ol>");
 		});
 
 		it("Simple list", () => {
@@ -59,7 +59,7 @@ describe("OrderedListNode Markdown rendering tests", () => {
 			const text2 = "Item 2";
 			const text3 = "Item 3";
 
-			const input = OrderedListNode.createFromPlainTextEntries([text1, text2, text3]);
+			const input = ListNode.createFromPlainTextEntries([text1, text2, text3], true);
 			const result = testRender(input, { insideTable: true });
 
 			const expected = [

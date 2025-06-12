@@ -12,7 +12,7 @@ import type {
 	LineBreakNode,
 	LinkNode,
 	ListItemNode,
-	OrderedListNode,
+	ListNode,
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
@@ -20,7 +20,6 @@ import type {
 	TableCellNode,
 	TableNode,
 	TableRowNode,
-	UnorderedListNode,
 } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import type { RenderContext } from "../RenderContext.js";
@@ -33,14 +32,13 @@ import {
 	renderLineBreak,
 	renderLink,
 	renderListItem,
-	renderOrderedList,
+	renderList,
 	renderParagraph,
 	renderPlainText,
 	renderSpan,
 	renderTable,
 	renderTableCell,
 	renderTableRow,
-	renderUnorderedList,
 } from "../default-renderers/index.js";
 
 /**
@@ -90,8 +88,7 @@ export const defaultRenderers: Renderers = {
 		renderHierarchicalSection(node as SectionNode, writer, context),
 	horizontalRule: (node, writer, context): void =>
 		renderHorizontalRule(node as HorizontalRuleNode, writer, context),
-	orderedList: (node, writer, context): void =>
-		renderOrderedList(node as OrderedListNode, writer, context),
+	list: (node, writer, context): void => renderList(node as ListNode, writer, context),
 	paragraph: (node, writer, context): void =>
 		renderParagraph(node as ParagraphNode, writer, context),
 	text: (node, writer, context): void =>
@@ -102,6 +99,4 @@ export const defaultRenderers: Renderers = {
 		renderTableCell(node as TableCellNode, writer, context),
 	tableRow: (node, writer, context): void =>
 		renderTableRow(node as TableRowNode, writer, context),
-	unorderedList: (node, writer, context): void =>
-		renderUnorderedList(node as UnorderedListNode, writer, context),
 };

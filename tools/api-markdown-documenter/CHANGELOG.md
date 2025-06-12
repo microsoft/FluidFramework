@@ -19,6 +19,10 @@ These have been updated to accept `string`s instead, which greatly simplifies th
 
 Their `createFromPlainText` static factory functions have also been removed, as they are now redundant with their constructors.
 
+### Replace `OrderedListNode` and `UnorderedListNode` with a single `ListNode` type
+
+Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
+
 ### `BlockQuoteNode` was removed
 
 This `DocumentationNode` implementation was not used by the library.

@@ -39,13 +39,13 @@ import {
 	HeadingNode,
 	LinkNode,
 	ListItemNode,
+	ListNode,
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
 	type SectionContent,
 	SectionNode,
 	SpanNode,
-	UnorderedListNode,
 } from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
@@ -1040,17 +1040,18 @@ export function wrapInSection(nodes: SectionContent[], heading?: Heading): Secti
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): UnorderedListNode | undefined {
+): ListNode | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;
 	}
 
-	return new UnorderedListNode(
+	return new ListNode(
 		apiEntryPoints.map(
 			(entryPoint) =>
 				new ListItemNode([
 					LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
 				]),
 		),
+		/* ordered */ false,
 	);
 }

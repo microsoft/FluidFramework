@@ -33,7 +33,7 @@ export { HorizontalRuleNode } from "./HorizontalRuleNode.js";
 export { LineBreakNode } from "./LineBreakNode.js";
 export { LinkNode } from "./LinkNode.js";
 export { ListItemNode } from "./ListItemNode.js";
-export { OrderedListNode } from "./OrderedListNode.js";
+export { ListNode } from "./ListNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
 export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";
@@ -54,4 +54,3 @@ export {
 } from "./TableRowNode.js";
 export { TableNode } from "./TableNode.js";
 export type { TextFormatting } from "./TextFormatting.js";
-export { UnorderedListNode } from "./UnorderedListNode.js";
