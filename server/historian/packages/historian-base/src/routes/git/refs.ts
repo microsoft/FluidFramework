@@ -159,7 +159,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, "doc:read"),
 		(request, response, next) => {
 			const refP = getRef(
 				request.params.tenantId,
@@ -190,7 +190,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, ["doc:read", "doc:write"]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = updateRef(
@@ -207,7 +207,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, ["doc:read", "doc:write"]),
 		// Skip documentDenyListCheck, as it is not needed for delete operations
 		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {

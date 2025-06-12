@@ -89,7 +89,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, "doc:write"),
+		utils.verifyToken(revokedTokenChecker, ["doc:write", "doc:read"]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const commitP = createCommit(
