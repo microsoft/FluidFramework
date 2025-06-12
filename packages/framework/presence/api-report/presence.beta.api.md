@@ -102,10 +102,14 @@ export namespace InternalTypes {
     // @system
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
+        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+        // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+        // (undocumented)
+        validatedValue?: OpaqueJsonDeserialized<TValue>;
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
@@ -115,6 +119,7 @@ export namespace InternalTypes {
         rev: number;
         // (undocumented)
         timestamp: number;
+        validated?: boolean;
     }
 }
 
@@ -145,6 +150,7 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 export interface LatestArgumentsRaw<T extends object | null> {
     local: JsonSerializable<T>;
     settings?: BroadcastControlSettings | undefined;
+    validator?: StateSchemaValidator<T>;
 }
 
 // @beta @sealed
@@ -195,7 +201,11 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 
 // @beta @input
 export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
+<<<<<<< HEAD
     local?: {
+=======
+    local: {
+>>>>>>> origin/presence-validation-2
         [K in Keys]: JsonSerializable<T>;
     };
     settings?: BroadcastControlSettings | undefined;

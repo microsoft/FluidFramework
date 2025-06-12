@@ -1037,6 +1037,9 @@ importers:
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
+      '@sinclair/typebox':
+        specifier: ^0.34.13
+        version: 0.34.13
       emoji-picker-element:
         specifier: ^1.26.1
         version: 1.26.1
@@ -11630,6 +11633,9 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      microdiff:
+        specifier: ^1.5.0
+        version: 1.5.0
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11642,6 +11648,9 @@ importers:
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
       tinylicious:
         specifier: ^5.0.0
         version: 5.0.0
@@ -24046,6 +24055,9 @@ packages:
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
+
+  microdiff@1.5.0:
+    resolution: {integrity: sha512-Drq+/THMvDdzRYrK0oxJmOKiC24ayUV8ahrt8l3oRK51PWt6gdtrIGrlIH3pT/lFh1z93FbAcidtsHcWbnRz8Q==}
 
   micromark-core-commonmark@2.0.2:
     resolution: {integrity: sha512-FKjQKbxd1cibWMM1P9N+H8TwlgGgSkWZMmfuVucLCHaYqeSvJ0hFeHsIa65pA2nYbes0f8LDHPMrd9X7Ujxg9w==}
@@ -39485,6 +39497,8 @@ snapshots:
   merge2@1.4.1: {}
 
   methods@1.1.2: {}
+
+  microdiff@1.5.0: {}
 
   micromark-core-commonmark@2.0.2:
     dependencies:

@@ -47,6 +47,7 @@ export {
 } from "./datastorePresenceManagerFactory.js";
 
 export type {
+	// `latestMap` is exported as a type only because it is exposed on the StateFactory object
 	latestMap,
 	LatestMap,
 	LatestMapArguments,
@@ -59,6 +60,7 @@ export type {
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
+	// `latest` is exported as a type only because it is exposed on the StateFactory object
 	latest,
 	Latest,
 	LatestArguments,

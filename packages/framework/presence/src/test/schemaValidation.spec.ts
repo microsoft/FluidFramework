@@ -26,7 +26,7 @@ import {
 	type ValidatorSpy,
 } from "./testUtils.js";
 
-describe.skip("Presence", () => {
+describe("Presence", () => {
 	let runtime: MockEphemeralRuntime;
 	let logger: EventAndErrorTrackingLogger;
 	const initialTime = 1000;

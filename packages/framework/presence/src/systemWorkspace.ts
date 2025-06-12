@@ -169,9 +169,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
-				this.datastore.clientToSessionId[clientConnectionId] = value;
+				this.datastore.clientToSessionId[clientConnectionId] =
+					// FIXME: Why is the roundtrip through unknown needed?
+					value as unknown as ConnectionValueState;
 			} else {
-				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
+				assert(knownSessionId.value === attendeeId, 0xa5a /* Mismatched SessionId */);
 			}
 		}
 
