@@ -14,12 +14,12 @@ import {
 import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ISharedArray } from "../../index.js";
-import { SharedArray } from "../../index.js";
+import { SharedArrayBuilder } from "../../index.js";
 import { verifyEntries, fillEntries, getRandomInt } from "../utilities.js";
 
 describe("SharedArray", () => {
 	let sharedArray: ISharedArray<number>;
-	let factory: IChannelFactory;
+	let factory: IChannelFactory<ISharedArray<number>>;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testDataOne: number[];
 	let testDataTwo: number[];
@@ -28,7 +28,7 @@ describe("SharedArray", () => {
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArray.getFactory();
+		factory = SharedArrayBuilder<number>().getFactory();
 		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testDataOne = [1, 2];
 		testDataTwo = [3, 4];
@@ -62,10 +62,7 @@ describe("SharedArray", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			remoteSharedArray = factory.create(
-				dataStoreRuntime2,
-				"remoteSharedArray",
-			) as ISharedArray<number>;
+			remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArray");
 			remoteSharedArray.connect(services2);
 		});
 

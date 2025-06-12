@@ -31,7 +31,7 @@ import {
 
 describe("SharedArray", () => {
 	let sharedArray: ISharedArray<number>;
-	let factory: IChannelFactory;
+	let factory: IChannelFactory<ISharedArray<number>>;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testData: number[];
 	let expectedSharedArray: number[];
@@ -39,7 +39,7 @@ describe("SharedArray", () => {
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		factory = SharedArrayBuilder<number>().getFactory();
-		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as ISharedArray<number>;
+		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
 	});
@@ -70,10 +70,7 @@ describe("SharedArray", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			remoteSharedArray = factory.create(
-				dataStoreRuntime2,
-				"remoteSharedArray",
-			) as ISharedArray<number>;
+			remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArray");
 			remoteSharedArray.connect(services2);
 		});
 
@@ -558,7 +555,7 @@ describe("SharedArray", () => {
 });
 
 describe("SharedArray in connected state with a remote SharedArray with IFluidHandle", () => {
-	let factory: IChannelFactory;
+	let factory: IChannelFactory<ISharedArray<IFluidHandle>>;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let localSharedArray: ISharedArray<IFluidHandle>;
 	let remoteSharedArray: ISharedArray<IFluidHandle>;
@@ -577,10 +574,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 			deltaConnection: containerRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
-		localSharedArray = factory.create(
-			dataStoreRuntime,
-			"sharedArrayIFluidHandle",
-		) as ISharedArray<IFluidHandle>;
+		localSharedArray = factory.create(dataStoreRuntime, "sharedArrayIFluidHandle");
 		localSharedArray.connect(services1);
 
 		// Create and connect a second SharedArray.
@@ -592,10 +586,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 			objectStorage: new MockStorage(),
 		};
 
-		remoteSharedArray = factory.create(
-			dataStoreRuntime2,
-			"remoteSharedArrayId",
-		) as ISharedArray<IFluidHandle>;
+		remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArrayId");
 		remoteSharedArray.connect(services2);
 	});
 

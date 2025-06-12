@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type {
-	IChannel,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockHandle,
@@ -25,7 +22,7 @@ import {
 } from "../utilities.js";
 
 describe("SharedArray", () => {
-	let sharedArray: ISharedArray<number> & IChannel;
+	let sharedArray: ISharedArray<number>;
 	let factory: IChannelFactory<ISharedArray<number>>;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testData: number[];
@@ -150,12 +147,12 @@ describe("SharedArray", () => {
 					type: factory.type,
 					snapshotFormatVersion: factory.attributes.snapshotFormatVersion,
 				};
-				const sharedArrayTwo = (await factory.load(
+				const sharedArrayTwo = await factory.load(
 					dataStoreRuntime,
 					"sharedArrayTwo",
 					services,
 					attributes,
-				)) as ISharedArray<number>;
+				);
 
 				// Verify that the new SharedArray has the correct values and length.
 				const actualSharedArray: readonly number[] = sharedArrayTwo.get();
@@ -202,12 +199,12 @@ describe("SharedArray", () => {
 					type: factory.type,
 					snapshotFormatVersion: factory.attributes.snapshotFormatVersion,
 				};
-				const sharedArrayTwo = (await handleFactory.load(
+				const sharedArrayTwo = await handleFactory.load(
 					dataStoreRuntime,
 					"sharedArrayTwo",
 					services,
 					attributes,
-				)) as ISharedArray<IFluidHandle>;
+				);
 
 				// Verify that the new SharedArray has the correct values and length.
 				const actualSharedArray = sharedArrayTwo.get();
