@@ -13,10 +13,14 @@ To enable better handling of intentional disconnects (e.g. [`Container.dispose()
 In a future release, the `reason` parameter will become optional.
 
 **Old signature:**
-`listener: (reason: IAnyDriverError) => void`
+```typescript
+listener: (reason: IAnyDriverError) => void
+```
 
 **New signature:**
-`listener: (reason?: IAnyDriverError) => void`
+```typescript
+listener: (reason?: IAnyDriverError) => void
+```
 
 Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`.
 This indicates a clean disconnect, which should not be treated as an error.
