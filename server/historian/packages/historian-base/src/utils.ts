@@ -77,6 +77,7 @@ export function getDocumentIdFromRequest(tenantId: string, authorization: string
 	}
 }
 
+// check token lifetime sec
 export function parseToken(
 	tenantId: string,
 	authorization: string | undefined,
