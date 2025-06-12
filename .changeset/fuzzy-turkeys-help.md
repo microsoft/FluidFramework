@@ -6,7 +6,6 @@
 ---
 The `reason` parameter on the `disconnect` event is now optional to allow for clean, non-error disconnections.
 
-
 ### Breaking Change: `disconnect` event `reason` parameter will become optional
 
 To enable better handling of clean, intentional disconnects (e.g. `Container.dispose()`), the `reason` parameter of the `disconnect` event on `IDocumentDeltaConnectionEvents` is being deprecated as a required parameter.
