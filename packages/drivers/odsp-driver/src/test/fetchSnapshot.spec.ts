@@ -568,7 +568,7 @@ describe("Tests1 for snapshot fetch", () => {
 		);
 	});
 
-	it.only("RedeemFallback behavior when fallback succeeds sets the nonDurableRedeem header", async () => {
+	it("RedeemFallback behavior when fallback succeeds sets the nonDurableRedeem header", async () => {
 		resolved.shareLinkInfo = {
 			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
 			isNonDurableRedeem: true,
