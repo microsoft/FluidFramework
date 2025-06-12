@@ -8,10 +8,7 @@ import type { PhrasingContent } from "./PhrasingContent.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
- * An item within a list.
- *
- * @see {@link ListItemNode} for an ordered (numbered) list of child contents.
- * @see {@link UnorderedListNode} for an unordered (bulleted) list of child contents.
+ * An item within a {@link ListNode}.
  *
  * @sealed
  * @public
