@@ -17,11 +17,13 @@ import {
 	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
 import {
+	type InsertableField,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	isTreeNode,
 	type NodeFromSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	toStoredSchema,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -31,7 +33,9 @@ import {
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 import {
+	checkoutWithContent,
 	chunkFromJsonableTrees,
+	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
 	validateUsageError,
@@ -52,13 +56,18 @@ import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
+import {
+	SchematizingSimpleTreeView,
+	TreeAlpha,
+	type TreeCheckout,
+	type TreeStoredContent,
+} from "../../../shared-tree/index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
-describe.only("treeNodeApi", () => {
+describe("treeNodeApi", () => {
 	describe("is", () => {
 		it("is", () => {
 			const config = new TreeViewConfiguration({ schema: [Point, schema.number] });
@@ -342,7 +351,7 @@ describe.only("treeNodeApi", () => {
 			});
 
 			it("Unknown optional fields not considered", () => {
-				class TestObject extends schema.objectAlpha(
+				class TestObjectOld extends schema.objectAlpha(
 					"TestObject",
 					{
 						foo: schema.string,
@@ -351,15 +360,35 @@ describe.only("treeNodeApi", () => {
 						allowUnknownOptionalFields: true,
 					},
 				) {}
-				const config = new TreeViewConfiguration({ schema: TestObject });
-				const view = getView(config);
-				view.initialize({
-					foo: "test",
-					bar: "extra", // extra optional property
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				} as any);
-				const tree = view.root;
 
+				class TestObjectNew extends schema.objectAlpha("TestObject", {
+					foo: schema.string,
+					bar: schema.optional(schema.string),
+				}) {}
+
+				const oldViewConfig = new TreeViewConfiguration({
+					schema: TestObjectOld,
+				});
+				const newViewConfig = new TreeViewConfiguration({
+					schema: TestObjectNew,
+				});
+
+				const checkoutWithNewSchema = checkoutWithInitialTree(
+					newViewConfig,
+					new TestObjectNew({ foo: "Hello", bar: "World" }),
+				);
+
+				const viewWithOldSchema = new SchematizingSimpleTreeView(
+					checkoutWithNewSchema,
+					oldViewConfig,
+					new MockNodeIdentifierManager(),
+				);
+
+				assert(viewWithOldSchema.compatibility.canView);
+
+				const tree = viewWithOldSchema.root;
+
+				assert.equal(TreeAlpha.child(tree, "foo"), "Hello");
 				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
 			});
 
@@ -653,30 +682,45 @@ describe.only("treeNodeApi", () => {
 			});
 
 			it("Unknown optional fields not included", () => {
-				class TestObject extends schema.objectAlpha(
+				class TestObjectOld extends schema.objectAlpha(
 					"TestObject",
 					{
-						foo: schema.optional(schema.string),
-						"0": SchemaFactory.optional(schema.number),
+						foo: schema.string,
 					},
 					{
 						allowUnknownOptionalFields: true,
 					},
 				) {}
-				const config = new TreeViewConfiguration({ schema: TestObject });
-				const view = getView(config);
-				view.initialize({
-					foo: "test",
-					0: 42,
-					bar: "extra", // extra optional property
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				} as any);
-				const tree = view.root;
+
+				class TestObjectNew extends schema.objectAlpha("TestObject", {
+					foo: schema.string,
+					bar: schema.optional(schema.string),
+				}) {}
+
+				const checkoutWithNewSchema = checkoutWithInitialTree(
+					new TreeViewConfiguration({
+						schema: TestObjectNew,
+					}),
+					new TestObjectNew({ foo: "Hello", bar: "World" }),
+				);
+
+				const viewWithOldSchema = new SchematizingSimpleTreeView(
+					checkoutWithNewSchema,
+					new TreeViewConfiguration({
+						schema: TestObjectOld,
+					}),
+					new MockNodeIdentifierManager(),
+				);
+
+				assert(viewWithOldSchema.compatibility.canView);
+
+				const tree = viewWithOldSchema.root;
 
 				const children = new Map<string | number, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
-				assert.equal(children.size, 2);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("foo"), "Hello");
 				assert.equal(children.get("bar"), undefined); // The extra property should not be included
 			});
 
@@ -2721,6 +2765,21 @@ describe.only("treeNodeApi", () => {
 		});
 	});
 });
+
+function checkoutWithInitialTree(
+	viewConfig: TreeViewConfiguration,
+	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
+): TreeCheckout {
+	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
+		viewConfig.schema,
+		unhydratedInitialTree,
+	);
+	const treeContent: TreeStoredContent = {
+		schema: toStoredSchema(viewConfig.schema),
+		initialTree,
+	};
+	return checkoutWithContent(treeContent);
+}
 
 function expectTreesEqual(
 	a: TreeNode | TreeLeafValue | undefined,
