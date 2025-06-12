@@ -1191,8 +1191,7 @@ export class ContainerRuntime
 	/**
 	 * Returns whether the client is connected to the service.
 	 *
-	 * This reflects only the raw connection status. In contrast, connected() also checks
-	 * that the client is not in read-only mode and is therefore able to send ops.
+	 * Unlike {@link ContainerRuntime.connected}, this reflects only the raw connection status.
 	 */
 	private readonly isConnected: () => boolean;
 
