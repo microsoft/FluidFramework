@@ -26,7 +26,7 @@ export enum SharingLinkHeader {
 	isSharingLinkToRedeem = "isSharingLinkToRedeem",
 	// When isSharingLinkToRedeem is true, this header can be used to tell the server that the sharing link
 	// is a non-durable link
-	isNonDurableRedeem = "isNonDurableRedeem",
+	NonDurableRedeem = "NonDurableRedeem",
 }
 
 /**
@@ -34,7 +34,7 @@ export enum SharingLinkHeader {
  */
 export interface ISharingLinkHeader {
 	[SharingLinkHeader.isSharingLinkToRedeem]: boolean;
-	[SharingLinkHeader.isNonDurableRedeem]: boolean;
+	[SharingLinkHeader.NonDurableRedeem]: boolean;
 }
 /**
  * @internal

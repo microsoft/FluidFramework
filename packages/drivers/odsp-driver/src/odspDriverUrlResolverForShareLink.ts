@@ -138,7 +138,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		const isSharingLinkToRedeem =
 			requestToBeResolved.headers?.[SharingLinkHeader.isSharingLinkToRedeem];
 		const isNonDurableRedeem =
-			requestToBeResolved.headers?.[SharingLinkHeader.isNonDurableRedeem];
+			requestToBeResolved.headers?.[SharingLinkHeader.NonDurableRedeem];
 		try {
 			const url = new URL(request.url);
 
