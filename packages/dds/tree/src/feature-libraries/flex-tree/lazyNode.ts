@@ -10,7 +10,6 @@ import {
 	type AnchorNode,
 	CursorLocationType,
 	type FieldKey,
-	type ITreeCursorSynchronous,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
@@ -75,14 +74,14 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	public constructor(
 		context: Context,
-		public readonly schema: TreeNodeSchemaIdentifier,
+		public readonly type: TreeNodeSchemaIdentifier,
 		cursor: ITreeSubscriptionCursor,
 		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
 		super(context, cursor, anchor);
 		this.storedSchema =
-			context.schema.nodeSchema.get(this.schema) ?? fail(0xb14 /* missing schema */);
+			context.schema.nodeSchema.get(this.type) ?? fail(0xb14 /* missing schema */);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);
@@ -90,10 +89,6 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 
 	public isHydrated(): this is HydratedFlexTreeNode {
 		return true;
-	}
-
-	public borrowCursor(): ITreeCursorSynchronous {
-		return this.cursor as ITreeCursorSynchronous;
 	}
 
 	protected override tryMoveCursorToAnchor(
@@ -115,6 +110,20 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		return this.cursor.value;
 	}
 
+	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
+		{
+			get: (key: FieldKey): FlexTreeField | undefined => this.tryGetField(key),
+			[Symbol.iterator]: (): IterableIterator<[FieldKey, FlexTreeField]> =>
+				mapCursorFields(this.cursor, (cursor) => {
+					const key: FieldKey = cursor.getFieldKey();
+					const pair: [FieldKey, FlexTreeField] = [
+						key,
+						makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
+					];
+					return pair;
+				}).values(),
+		};
+
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
 		const schema = this.storedSchema.getFieldSchema(fieldKey);
 		return inCursorField(this.cursor, fieldKey, (cursor) => {
@@ -132,7 +141,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 		});
 	}
 
-	public boxedIterator(): IterableIterator<FlexTreeField> {
+	public [Symbol.iterator](): IterableIterator<FlexTreeField> {
 		return mapCursorFields(this.cursor, (cursor) =>
 			makeField(
 				this.context,
