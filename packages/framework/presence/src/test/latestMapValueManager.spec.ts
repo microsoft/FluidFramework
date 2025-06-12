@@ -9,6 +9,7 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -153,37 +154,42 @@ export function checkCompiles(): void {
 		console.log(key, value);
 	}
 
+	assertIdenticalTypes(
+		props.validatedMap,
+		createInstanceOf<LatestMap<TestMapData, "key1" | "key2">>(),
+	);
+
+	assertIdenticalTypes(
+		props.fixedMap,
+		createInstanceOf<LatestMapRaw<TestMapData, "key1" | "key2">>(),
+	);
+
 	// Get a reference to one of the remote attendees
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const attendee2 = [...props.validatedMap.getStateAttendees()].find(
 		(attendee) => attendee !== presence.attendees.getMyself(),
-	);
-	assert(attendee2 !== undefined);
+	)!;
 
 	// Get a remote validated value
 	const latestMapData = props.validatedMap.getRemote(attendee2);
 
-	// @ts-expect-error Type 'Latest<{ num: number; }, ProxiedValueAccessor<{ num: number; }>>' is not assignable to type 'LatestRaw<{ num: number; }>'.
-	const _raw: LatestMapRaw<TestMapData> = props.validatedMap;
-
-	// @ts-expect-error 'LatestMapRaw<{ x: number; y: number; ref?: never; someId?: never; } | { ref: string; someId: number; x?: never; y?: never; }, "key1" | "key2">' is not assignable to type 'LatestMapRaw<{ num: number; }>'.
-	const _validated: LatestMap<TestMapData> = props.fixedMap;
-
 	// Get a value from the validated map
 	const validatedKeyValue = latestMapData.get("key2")?.value;
-	assert(validatedKeyValue !== undefined);
 
-	// The next line correctly does not compile because the value argument must be a RawValueAccessor
-	// @ts-expect-error '() => { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref: string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined' is not assignable to type 'never'..
-	logClientValue({ attendee: attendee2, key: "key2", value: validatedKeyValue });
+	// @ts-expect-error because validatedKeyValue is an accessor, not a value
+	// Type '() =>
+	// { readonly x: number; readonly y: number; readonly ref?: never; readonly someId?: never; } | { readonly ref:
+	// string; readonly someId: number; readonly x?: never; readonly y?: never; } | undefined'
+	// is not assignable to type 'TestMapData | undefined'.
+	assertIdenticalTypes(validatedKeyValue, createInstanceOf<TestMapData | undefined>());
 
 	// The key value should be a function that returns a value.
-	assert(typeof validatedKeyValue === "function");
-	const validatedValue = validatedKeyValue();
-	assert(typeof validatedValue !== "function");
+	const validatedValue: TestMapData | undefined = validatedKeyValue?.();
 
-	const ref = validatedValue?.ref;
-	assert(ref !== undefined);
-	assert(ref === "default");
+	if (validatedValue === undefined) {
+		throw new Error("Value is not valid according to the validator function.");
+	}
+	logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
 
 	// ----------------------------------
 	// pointers data
@@ -275,10 +281,4 @@ export function checkCompiles(): void {
 	localPrimitiveMap.set("key3", "value");
 	// @ts-expect-error value of type value is not assignable
 	localPrimitiveMap.set("null", { value: "value" });
-	// latestMap infers that only `true` is a valid value without use of `false` or explicit specification.
-	// This happened under PR #24752 unexpectedly. Presumably from some additional inference complication.
-	// This is a better inferred result; so it can stand, but would not be terrible if the behavior changes.
-	// Caller can always use explicit generic specification to be completely clear about the types.
-	// @ts-expect-error See description above.
-	localPrimitiveMap.set("true", false);
 }

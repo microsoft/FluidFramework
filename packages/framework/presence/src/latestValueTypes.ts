@@ -87,14 +87,14 @@ export type Accessor<
  */
 export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 	/**
-	 * The value of the state. The type of this property will either be a direct value or a function that must be called
-	 * to retrieve the value. If the state manager was created with a {@link StateSchemaValidator}, then the type will be
-	 * {@link ProxiedValueAccessor}. If it was created without a validator, then the type will be
-	 * {@link RawValueAccessor}.
+	 * The value of the state or an accessor function.
 	 *
 	 * @remarks
+	 * If the State object was created with a {@link StateSchemaValidator}, then the `value`
+	 * will be a function returning a validated, deeply readonly `T` or `undefined`.
+	 * Without a validator, `value` will be an unvalidated, deeply readonly `T`.
 	 *
-	 * This is a deeply readonly value, meaning it cannot be modified.
+	 * Any `T` is always deeply readonly, meaning it cannot be modified.
 	 */
 	value: Accessor<T, TValueAccessor>;
 
@@ -122,7 +122,7 @@ export interface LatestClientData<
 
 /**
  * A validator function that can optionally be provided to do runtime validation of the custom data stored in a
- * presence workspace and managed by a value manager.
+ * presence workspace and managed by a state object.
  *
  * @param unvalidatedData - The unknown data that should be validated. **This data should not be mutated.**
  *

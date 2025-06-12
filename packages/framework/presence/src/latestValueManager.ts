@@ -238,7 +238,7 @@ export function shallowCloneNullableObject<T extends object | null>(value: T): T
 }
 
 /**
- * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link LatestRaw} state manager.
+ * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link LatestRaw} State object.
  *
  * @input
  * @beta
@@ -260,8 +260,9 @@ export interface LatestArgumentsRaw<T extends object | null> {
 }
 
 /**
- * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link Latest} state manager.
+ * Arguments that are passed to the {@link StateFactory.latest} function to create a {@link Latest} State object.
  *
+ * @input
  * @beta
  */
 export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {

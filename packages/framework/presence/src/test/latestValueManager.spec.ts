@@ -9,6 +9,7 @@ import { createPresenceManager } from "../presenceManager.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
@@ -226,26 +227,18 @@ export function checkCompiles(): void {
 	const remoteCursor = cursor.getRemote(attendee2);
 	logClientValue({ attendee: attendee2, value: remoteCursor.value });
 
+	assertIdenticalTypes(props.cursor, createInstanceOf<LatestRaw<{ x: number; y: number }>>());
+	assertIdenticalTypes(props.validated, createInstanceOf<Latest<{ num: number }>>());
+
 	// Get a remote validated value
 	const latestData = props.validated.getRemote(attendee2);
 
-	// @ts-expect-error Type 'Latest<{ num: number; }, ProxiedValueAccessor<{ num: number; }>>' is not assignable to type 'LatestRaw<{ num: number; }>'.
-	const raw: LatestRaw<{ num: number }> = props.validated;
-
-	// @ts-expect-error Type 'LatestRaw<{ x: number; y: number; }>' is not assignable to type 'Latest<{ x: number; y: number; }, ProxiedValueAccessor<{ x: number; y: number; }>>'.
-	const validated: Latest<{ x: number; y: number }> = props.cursor;
-
 	// The next line correctly does not compile because the value argument must be a RawValueAccessor
 	// @ts-expect-error Type '() => { readonly num: number; } | undefined' is not assignable to type 'never'.
-	logClientValue({ attendee: presence.attendees.getMyself(), value: latestData.value });
+	logClientValue({ attendee: attendee2, value: latestData.value });
 
 	// This line correctly compiles because logRemoteValue expects a ProxiedValueAccessor
-	logRemoteValue({ attendee: presence.attendees.getMyself(), value: latestData.value });
-
-	assert(typeof latestData.value === "function");
-	const remoteValue = latestData.value();
-	assert(remoteValue !== undefined);
-	assert(remoteValue.num === 22);
+	logRemoteValue({ attendee: attendee2, value: latestData.value });
 }
 
 /* eslint-enable unicorn/no-null */
