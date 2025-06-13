@@ -2,6 +2,13 @@
 
 ## 0.21.0
 
+### `DocumentationNode.singleLine` has been removed
+
+This flag was never more than a hack to make our custom Markdown rendering work out correctly.
+It doesn't make sense in the context of a general-purpose documentation domain, as it is specifically in terms of whether or not the associated content could be rendered on a single line in *Markdown*.
+
+It has been removed and is no longer used by the system.
+
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
 This type previously supported an unsafe escape hatch for text escaping.
