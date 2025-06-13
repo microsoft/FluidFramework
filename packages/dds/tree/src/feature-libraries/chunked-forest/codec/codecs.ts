@@ -18,7 +18,7 @@ import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions } from "./format.js";
+import { EncodedFieldBatch, validVersions, type EncodedFieldBatchFormat } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
 
@@ -27,6 +27,14 @@ export interface FieldBatchEncodingContext {
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * The data for fields that support incremental encoding during encoding should be stored here.
+	 */
+	readonly outputIncrementalFieldsBatch?: Map<string, EncodedFieldBatchFormat>;
+	/**
+	 * The data for fields that support incremental encoding during decoding should be retrieved from here.
+	 */
+	readonly getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch;
 }
 /**
  * @remarks
@@ -86,6 +94,7 @@ export function makeFieldBatchCodec(
 							context.schema.policy,
 							data,
 							context.idCompressor,
+							context.outputIncrementalFieldsBatch,
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
@@ -102,10 +111,14 @@ export function makeFieldBatchCodec(
 		},
 		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data, {
-				idCompressor: context.idCompressor,
-				originatorId: context.originatorId,
-			}).map((chunk) => chunk.cursor());
+			return decode(
+				data,
+				{
+					idCompressor: context.idCompressor,
+					originatorId: context.originatorId,
+				},
+				context.getIncrementalFieldBatch,
+			).map((chunk) => chunk.cursor());
 		},
 	});
 }

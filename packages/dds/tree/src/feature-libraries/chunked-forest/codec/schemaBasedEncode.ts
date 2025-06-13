@@ -31,7 +31,12 @@ import {
 	compressedEncode,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
+import {
+	type EncodedFieldBatch,
+	type EncodedFieldBatchFormat,
+	type EncodedValueShape,
+	SpecialField,
+} from "./format.js";
 import { NodeShape } from "./nodeShape.js";
 
 /**
@@ -45,10 +50,17 @@ export function schemaCompressedEncode(
 	policy: FullSchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
+	outputIncrementalFieldsBatch?: Map<string, EncodedFieldBatchFormat>,
 ): EncodedFieldBatch {
 	return compressedEncode(
 		fieldBatch,
-		buildCache(schema, policy, idCompressor, false /* encodeIncrementally */),
+		buildCache(
+			schema,
+			policy,
+			idCompressor,
+			outputIncrementalFieldsBatch !== undefined /* encodeIncrementally */,
+		),
+		outputIncrementalFieldsBatch,
 	);
 }
 
