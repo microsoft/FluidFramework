@@ -24,6 +24,7 @@ import type {
 	ImplicitAnnotatedFieldSchema,
 	ImplicitFieldSchema,
 	NodeSchemaOptions,
+	NodeSchemaOptionsAlpha,
 } from "../schemaTypes.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
@@ -88,6 +89,7 @@ export class SchemaFactoryAlpha<
 			options?.allowUnknownOptionalFields ??
 				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 			options?.metadata,
+			options?.persistedMetadata,
 		);
 	}
 
@@ -223,9 +225,16 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		allowedTypes: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return mapSchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return mapSchema(
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+			options?.persistedMetadata,
+		);
 	}
 
 	/**
@@ -267,9 +276,16 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		allowedTypes: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return arraySchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return arraySchema(
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+			options?.persistedMetadata,
+		);
 	}
 
 	/**
