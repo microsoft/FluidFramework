@@ -1307,7 +1307,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// Create a local value and serialize it.
-		const localValue = this.directory.localValueMaker.fromInMemory(value);
+		const localValue: ILocalValue = { value };
 		bindHandles(localValue, this.serializer, this.directory.handle);
 
 		// Set the value locally.

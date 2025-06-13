@@ -110,13 +110,4 @@ export class LocalValueMaker {
 
 		return new PlainLocalValue(serializable.value);
 	}
-
-	/**
-	 * Create a new local value containing a given plain object.
-	 * @param value - The value to store
-	 * @returns An ILocalValue containing the value
-	 */
-	public fromInMemory(value: unknown): ILocalValue {
-		return new PlainLocalValue(value);
-	}
 }

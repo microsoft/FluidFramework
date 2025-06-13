@@ -288,11 +288,8 @@ export class MapKernel {
 			throw new Error("Undefined and null keys are not supported");
 		}
 
-		// Create a local value and serialize it.
-		const localValue = this.localValueMaker.fromInMemory(value);
-
 		// Set the value locally.
-		const previousValue = this.setCore(key, localValue, true);
+		const previousValue = this.setCore(key, { value }, true);
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -302,7 +299,7 @@ export class MapKernel {
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
-			value: { type: ValueType[ValueType.Plain], value: localValue.value as unknown },
+			value: { type: ValueType[ValueType.Plain], value },
 		};
 		this.submitMapKeyMessage(op, previousValue);
 	}
