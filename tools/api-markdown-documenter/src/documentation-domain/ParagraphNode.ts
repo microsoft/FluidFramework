@@ -45,13 +45,6 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
 	 */
 	public readonly type = "paragraph";
 
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
 	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}
