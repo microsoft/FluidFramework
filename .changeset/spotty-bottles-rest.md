@@ -32,9 +32,9 @@ const tree = configuredSharedTree({
 }).create(runtime);
 
 export const MyContainerSchema = {
-  initialObjects: {
-    appData: tree,
-  },
+    initialObjects: {
+        appData: tree,
+    },
 } satisfies ContainerSchema;
 ```
 
