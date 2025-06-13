@@ -1177,7 +1177,10 @@ describe("Pending State Manager", () => {
 		>;
 	};
 
-	describe("PendingStateManager.replayPendingStates", () => {
+	//* ONLY
+	//* ONLY
+	//* ONLY
+	describe.only("PendingStateManager.replayPendingStates", () => {
 		const sandbox = Sinon.createSandbox();
 		function getStateHandlerStub(): StubbedRuntimeStateHandler {
 			const stubs: StubbedRuntimeStateHandler = {
@@ -1245,10 +1248,17 @@ describe("Pending State Manager", () => {
 				reSubmittedBatches.push({ batch: b, metadata });
 			});
 
-			// Add pending messages
-			for (const msg of inputBatch) {
-				pendingStateManager.pendingMessages.push(msg);
-			}
+			// Add pending messages using onFlushBatch
+			pendingStateManager.onFlushBatch(
+				inputBatch.map((msg) => ({
+					runtimeOp: msg.runtimeOp as LocalContainerRuntimeMessage,
+					referenceSequenceNumber: msg.referenceSequenceNumber,
+					metadata: undefined,
+					localOpMetadata: msg.localOpMetadata ?? {},
+				})),
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(reSubmittedBatches.length, 1, "Should resubmit one batch");
 			assert.strictEqual(
@@ -1307,8 +1317,30 @@ describe("Pending State Manager", () => {
 			stubs.reSubmitBatch.callsFake((batch, metadata) => {
 				reSubmittedBatches.push({ batch, metadata });
 			});
-			pendingStateManager.pendingMessages.push(batch1);
-			pendingStateManager.pendingMessages.push(batch2);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: batch1.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: batch1.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: batch1.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: batch2.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: batch2.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: batch2.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(reSubmittedBatches.length, 2, "Should resubmit two batches");
 			assert.deepStrictEqual(reSubmittedBatches[0].batch[0].localOpMetadata, { foo: "bar" });
@@ -1361,8 +1393,30 @@ describe("Pending State Manager", () => {
 			stubs.reSubmitBatch.callsFake((batch, metadata) => {
 				reSubmittedBatches.push({ batch, metadata });
 			});
-			pendingStateManager.pendingMessages.push(unstagedBatch);
-			pendingStateManager.pendingMessages.push(stagedBatch);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: unstagedBatch.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: unstagedBatch.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: unstagedBatch.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: stagedBatch.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: stagedBatch.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: stagedBatch.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
 			pendingStateManager.replayPendingStates({
 				committingStagedBatches: true,
 				squash: false,
@@ -1419,7 +1473,18 @@ describe("Pending State Manager", () => {
 			stubs.reSubmitBatch.callsFake((batch, metadata) => {
 				reSubmittedBatches.push({ batch, metadata });
 			});
-			pendingStateManager.pendingMessages.push(stagedBatch);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: stagedBatch.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: stagedBatch.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: stagedBatch.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
 			pendingStateManager.replayPendingStates({
 				committingStagedBatches: true,
 				squash: false,
@@ -1460,10 +1525,32 @@ describe("Pending State Manager", () => {
 			stubs.reSubmitBatch.callsFake((batch, metadata) => {
 				reSubmittedBatches.push({ batch, metadata });
 			});
-			pendingStateManager.pendingMessages.push(inputBatch);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: inputBatch.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: inputBatch.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: inputBatch.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
 			pendingStateManager.replayPendingStates();
 			// Add another batch to allow replay again
-			pendingStateManager.pendingMessages.push(inputBatch);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: inputBatch.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: inputBatch.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: inputBatch.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
 			assert.throws(
 				() => pendingStateManager.replayPendingStates(),
 				/0x173/,
@@ -1496,7 +1583,18 @@ describe("Pending State Manager", () => {
 			stubs.reSubmitBatch.callsFake((batch, metadata) => {
 				reSubmittedBatches.push({ batch, metadata });
 			});
-			pendingStateManager.pendingMessages.push(inputBatch);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: inputBatch.runtimeOp as LocalContainerRuntimeMessage,
+						referenceSequenceNumber: inputBatch.referenceSequenceNumber,
+						metadata: undefined,
+						localOpMetadata: inputBatch.localOpMetadata ?? {},
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
 			pendingStateManager.replayPendingStates({
 				squash: true,
 				committingStagedBatches: false,
