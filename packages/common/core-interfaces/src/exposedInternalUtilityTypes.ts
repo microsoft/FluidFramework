@@ -827,7 +827,6 @@ export namespace InternalUtilityTypes {
 										| string
 										// Add in OpaqueJson* types
 										| AnyOpaqueJsonType;
-									DegenerateSubstitute: Controls["DegenerateSubstitute"];
 								},
 								"found non-publics",
 								"only publics"
