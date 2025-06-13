@@ -583,7 +583,7 @@ export const TreeAlpha: TreeAlpha = {
 					return undefined;
 				}
 
-				return nodeFromInnerUnboxedNode(childFlexTree);
+				return getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 			}
 			case NodeKind.Map:
 				if (typeof propertyKey !== "string") {

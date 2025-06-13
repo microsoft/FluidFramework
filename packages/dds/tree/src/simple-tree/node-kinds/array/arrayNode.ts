@@ -7,11 +7,10 @@ import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../../../core/index.js";
-import {
-	type FlexibleFieldContent,
-	type FlexTreeNode,
-	type FlexTreeSequenceField,
-	isFlexTreeNode,
+import type {
+	FlexibleFieldContent,
+	FlexTreeNode,
+	FlexTreeSequenceField,
 } from "../../../feature-libraries/index.js";
 import {
 	normalizeAllowedTypes,
@@ -41,6 +40,7 @@ import {
 	getKernel,
 	type UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
+	getOrCreateNodeFromInnerUnboxedNode,
 } from "../../core/index.js";
 import {
 	type InsertableContent,
@@ -734,9 +734,9 @@ function createArrayNodeProxy(
 			}
 
 			const maybeContent = field.at(maybeIndex);
-			return isFlexTreeNode(maybeContent)
-				? getOrCreateNodeFromInnerNode(maybeContent)
-				: maybeContent;
+			return maybeContent === undefined
+				? undefined
+				: getOrCreateNodeFromInnerUnboxedNode(maybeContent);
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -795,7 +795,7 @@ function createArrayNodeProxy(
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					value: isFlexTreeNode(val) ? getOrCreateNodeFromInnerNode(val) : val,
+					value: val === undefined ? undefined : getOrCreateNodeFromInnerUnboxedNode(val),
 					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
