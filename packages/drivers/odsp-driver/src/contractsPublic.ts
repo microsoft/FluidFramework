@@ -24,9 +24,9 @@ export enum SharingLinkHeader {
 	// Can be used in request made to resolver, to tell the resolver that the passed in URL is a sharing link
 	// which can be redeemed at server to get permissions.
 	isSharingLinkToRedeem = "isSharingLinkToRedeem",
-	// When isSharingLinkToRedeem is true, this header can be used to tell the server that the sharing link
-	// is a non-durable link
-	NonDurableRedeem = "NonDurableRedeem",
+	// When isSharingLinkToRedeem is true, this header can be used to tell the server that the redeem of the sharing link
+	// is meant to be non-durable.
+	doNonDurableRedeem = "doNonDurableRedeem",
 }
 
 /**
@@ -34,7 +34,7 @@ export enum SharingLinkHeader {
  */
 export interface ISharingLinkHeader {
 	[SharingLinkHeader.isSharingLinkToRedeem]: boolean;
-	[SharingLinkHeader.NonDurableRedeem]: boolean;
+	[SharingLinkHeader.doNonDurableRedeem]: boolean;
 }
 /**
  * @internal

@@ -364,12 +364,12 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 				url: url.toString(),
 				headers: {
 					[SharingLinkHeader.isSharingLinkToRedeem]: true,
-					[SharingLinkHeader.NonDurableRedeem]: true,
+					[SharingLinkHeader.doNonDurableRedeem]: true,
 				},
 			});
 		});
 		assert(
-			resolvedUrl.shareLinkInfo?.isNonDurableRedeem === true,
+			resolvedUrl.shareLinkInfo?.doNonDurableRedeem === true,
 			"Sharing link should be set in resolved url",
 		);
 	});
@@ -381,12 +381,12 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 			return urlResolverWithShareLinkFetcher.resolve({
 				url: url.toString(),
 				headers: {
-					[SharingLinkHeader.NonDurableRedeem]: true,
+					[SharingLinkHeader.doNonDurableRedeem]: true,
 				},
 			});
 		});
 		assert(
-			resolvedUrl.shareLinkInfo?.isNonDurableRedeem === undefined,
+			resolvedUrl.shareLinkInfo?.doNonDurableRedeem === undefined,
 			"Sharing link should not be set in resolved url",
 		);
 	});

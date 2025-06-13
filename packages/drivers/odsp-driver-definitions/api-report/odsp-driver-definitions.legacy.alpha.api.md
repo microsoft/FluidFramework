@@ -241,7 +241,7 @@ export interface ShareLinkInfoType {
         error?: any;
         shareId?: string;
     };
-    isNonDurableRedeem?: boolean;
+    doNonDurableRedeem?: boolean;
     sharingLinkToRedeem?: string;
 }
 

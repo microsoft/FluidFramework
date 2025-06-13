@@ -224,11 +224,10 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			);
 
-			const isNonDurableRedeem: boolean =
-				odspResolvedUrl.shareLinkInfo?.isNonDurableRedeem === true;
+			const doNonDurableRedeem: boolean =
+				odspResolvedUrl.shareLinkInfo?.doNonDurableRedeem === true;
 
 			let redeemUrl: string | undefined;
-			let setNDRHeader = false;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 					// IMPORTANT: Note that redeemUrl has '/driveItem' in it. Technically it is not required for executing redeem operation.
@@ -244,11 +243,7 @@ async function redeemSharingLink(
 						"RedeemShareLink",
 					);
 					const headers = getHeadersWithAuth(authHeader);
-					headers.prefer = "redeemSharingLink";
-					if (isNonDurableRedeem) {
-						headers.prefer = "nonDurableRedeem";
-						setNDRHeader = true;
-					}
+					headers.prefer = doNonDurableRedeem ? "nonDurableRedeem" : "redeemSharingLink";
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
 			}
@@ -265,9 +260,9 @@ async function redeemSharingLink(
 			// construct the url for /shares using tenant domain. We get tenant domain by getting origin of the siteUrl.
 			try {
 				await callSharesAPI(new URL(odspResolvedUrl.siteUrl).origin);
-				event.end({ details , setNDRHeader});
+				event.end({ details, doNonDurableRedeem });
 			} catch (error) {
-				event.cancel({ details }, error);
+				event.cancel({ details, doNonDurableRedeem }, error);
 				throw error;
 			}
 		},
@@ -732,14 +727,14 @@ export const downloadSnapshot = mockify(
 		const queryString = getQueryString(queryParams);
 		const url = `${snapshotUrl}/trees/latest${queryString}`;
 		const method = "POST";
-		const isNonDurableRedeem: boolean =
-			odspResolvedUrl.shareLinkInfo?.isNonDurableRedeem === true;
+		const doNonDurableRedeem: boolean =
+			odspResolvedUrl.shareLinkInfo?.doNonDurableRedeem === true;
 		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 		// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 		// If the share link is non-durable, we will add the nonDurableRedeem header to the header.prefer.
-		const header = isNonDurableRedeem
+		const header = doNonDurableRedeem
 			? { prefer: "manualredirect, nonDurableRedeem" }
 			: { prefer: "manualredirect" };
 		const authHeader = await getAuthHeader(
