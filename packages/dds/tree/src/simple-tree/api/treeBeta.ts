@@ -11,10 +11,11 @@ import {
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import { treeNodeApi } from "./treeNodeApi.js";
-import { createFromCursor } from "./create.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+
+import { createFromCursor } from "./create.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
+import { treeNodeApi } from "./treeNodeApi.js";
 
 // Tests for this file are grouped with those for treeNodeApi.ts as that is where this functionality will eventually land,
 // and where most of the actual implementation is for much of it.

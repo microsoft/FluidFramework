@@ -28,7 +28,7 @@ import type {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaClass,
 } from "../core/index.js";
-import type { TreeArrayNode } from "../arrayNode.js";
+import type { TreeArrayNode } from "../node-kinds/index.js";
 import type { FlexListToUnion, LazyItem } from "../flexList.js";
 import type { SimpleArrayNodeSchema, SimpleMapNodeSchema } from "../simpleSchema.js";
 

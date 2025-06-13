@@ -3,9 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import events_pkg from "events_pkg";
-const { EventEmitter } = events_pkg;
-
 import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	ICommittedProposal,
@@ -16,6 +13,8 @@ import {
 	ISequencedDocumentMessage,
 	ISequencedProposal,
 } from "@fluidframework/protocol-definitions";
+import events_pkg from "events_pkg";
+const { EventEmitter } = events_pkg;
 
 /**
  * Throws if condition is false.

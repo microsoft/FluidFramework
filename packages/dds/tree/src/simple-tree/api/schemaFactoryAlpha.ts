@@ -4,6 +4,14 @@
  */
 
 import {
+	type ArrayNodeCustomizableSchema,
+	arraySchema,
+	type MapNodeCustomizableSchema,
+	mapSchema,
+	type ObjectNodeSchema,
+	objectSchema,
+} from "../node-kinds/index.js";
+import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	schemaStatics,
@@ -17,7 +25,6 @@ import type {
 	ImplicitFieldSchema,
 	NodeSchemaOptions,
 } from "../schemaTypes.js";
-import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
@@ -25,12 +32,7 @@ import type {
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 } from "./typesUnsafe.js";
-import { mapSchema } from "../mapNode.js";
-import { arraySchema } from "../arrayNode.js";
-import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
-import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
-import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -146,7 +148,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritDoc SchemaStatics.optional}
+	 * {@inheritDoc SchemaStatics.leaves}
 	 */
 	public static override readonly leaves = schemaStatics.leaves;
 
@@ -166,9 +168,39 @@ export class SchemaFactoryAlpha<
 	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
 	 */
 	public static readonly identifier = schemaStatics.identifier;
+
+	/**
+	 * {@inheritDoc SchemaStatics.leaves}
+	 */
+	public override readonly leaves = schemaStatics.leaves;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optional}
+	 */
+	public override readonly optional = schemaStatics.optional;
+
+	/**
+	 * {@inheritDoc SchemaStatics.required}
+	 */
+	public override readonly required = schemaStatics.required;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.

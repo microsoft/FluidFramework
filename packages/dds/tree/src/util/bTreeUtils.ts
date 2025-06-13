@@ -4,6 +4,7 @@
  */
 
 import { BTree } from "@tylerbu/sorted-btree-es6";
+
 import { brand, type Brand } from "./brand.js";
 
 export type TupleBTree<K, V> = Brand<BTree<K, V>, "TupleBTree">;

@@ -71,10 +71,7 @@ import Deque from "double-ended-queue";
 
 import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import {
-	IMapMessageLocalMetadata,
-	type SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
+import { type SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 import {
 	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
@@ -776,24 +773,23 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected reSubmitCore(content: any, localOpMetadata: unknown, squash: boolean = false) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
 			0x8bb /* Expected a recorded refSeq when resubmitting an op */,
 		);
 		this.useResubmitRefSeq(originalRefSeq, () => {
-			if (
-				!this.intervalCollections.tryResubmitMessage(
-					content,
-					localOpMetadata as IMapMessageLocalMetadata,
-				)
-			) {
+			if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata)) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata),
+					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata, squash),
 				);
 			}
 		});
+	}
+
+	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata, true);
 	}
 
 	/**

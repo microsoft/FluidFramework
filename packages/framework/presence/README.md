@@ -31,6 +31,8 @@ For more information on the related support guarantees, see [API Support Levels]
 
 To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/presence` like normal.
 
+To access the `beta` APIs, import via `@fluidframework/presence/beta`.
+
 To access the `alpha` APIs, import via `@fluidframework/presence/alpha`.
 
 ## API Documentation
@@ -80,20 +82,14 @@ Notifications are special case where no data is retained during a session and al
 
 ## Onboarding
 
-While this package is developing and other Fluid Framework internals are being updated to accommodate it, a temporary Shared Object must be added within container to gain access.
+To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 
 ```typescript
-import { getPresenceViaDataObject, ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
+import { getPresence } from "@fluidframework/presence/beta";
 
-const containerSchema = {
-	initialObjects: {
-        presence: ExperimentalPresenceManager
-    }
-} satisfies ContainerSchema;
-
-const presence = await getPresenceViaDataObject(container.initialObjects.presence);
+function usePresence(container: IFluidContainer): void {
+   const presence = await getPresence(container);
 ```
-
 
 ## Limitations
 

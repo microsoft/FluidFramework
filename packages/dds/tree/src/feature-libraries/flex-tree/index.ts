@@ -17,21 +17,17 @@ export {
 	FlexTreeEntityKind,
 	isFlexTreeNode,
 	flexTreeSlot,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type HydratedFlexTreeNode,
 } from "./flexTreeTypes.js";
-
-export {
-	visitBipartiteIterableTree,
-	Skip,
-	visitBipartiteIterableTreeWithState,
-	visitIterableTree,
-	visitIterableTreeWithState,
-} from "./navigation.js";
 
 export {
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	Context,
 	ContextSlot,
+	type FlexTreeHydratedContextMinimal,
 } from "./context.js";
 
 export { type FlexTreeNodeEvents } from "./treeEvents.js";

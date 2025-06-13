@@ -4,9 +4,9 @@
  */
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type MapTree,
 	type TreeFieldStoredSchema,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
@@ -15,7 +15,8 @@ import {
 	type SchemaAndPolicy,
 } from "../../core/index.js";
 import { allowsValue } from "../valueUtilities.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import type { MapTreeFieldViewGeneric, MinimalMapTreeNodeView } from "../mapTreeCursor.js";
+import { iterableHasSome, mapIterable } from "../../util/index.js";
 
 export enum SchemaValidationError {
 	Field_KindNotInSchemaPolicy,
@@ -45,7 +46,7 @@ export function inSchemaOrThrow(maybeError: SchemaValidationError | undefined): 
  * Deeply checks that the provided node complies with the schema based on its identifier.
  */
 export function isNodeInSchema(
-	node: MapTree,
+	node: MinimalMapTreeNodeView,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationError | undefined {
 	// Validate the schema declared by the node exists
@@ -57,7 +58,7 @@ export function isNodeInSchema(
 	// Validate the node is well formed according to its schema
 
 	if (schema instanceof LeafNodeStoredSchema) {
-		if (node.fields.size !== 0) {
+		if (iterableHasSome(node.fields)) {
 			return SchemaValidationError.LeafNode_FieldsNotAllowed;
 		}
 		if (!allowsValue(schema.leafValue, node.value)) {
@@ -69,7 +70,7 @@ export function isNodeInSchema(
 		}
 
 		if (schema instanceof ObjectNodeStoredSchema) {
-			const uncheckedFieldsFromNode = new Set(node.fields.keys());
+			const uncheckedFieldsFromNode = new Set(mapIterable(node.fields, ([key, field]) => key));
 			for (const [fieldKey, fieldSchema] of schema.objectNodeFields) {
 				const nodeField = node.fields.get(fieldKey) ?? [];
 				const fieldInSchemaResult = isFieldInSchema(nodeField, fieldSchema, schemaAndPolicy);
@@ -86,7 +87,7 @@ export function isNodeInSchema(
 				return SchemaValidationError.ObjectNode_FieldNotInSchema;
 			}
 		} else if (schema instanceof MapNodeStoredSchema) {
-			for (const field of node.fields.values()) {
+			for (const [_key, field] of node.fields) {
 				const fieldInSchemaResult = isFieldInSchema(field, schema.mapFields, schemaAndPolicy);
 				if (fieldInSchemaResult !== undefined) {
 					return fieldInSchemaResult;
@@ -104,7 +105,7 @@ export function isNodeInSchema(
  * Deeply checks that the nodes comply with the field schema and included schema.
  */
 export function isFieldInSchema(
-	childNodes: readonly MapTree[],
+	childNodes: MapTreeFieldViewGeneric<MinimalMapTreeNodeView>,
 	schema: TreeFieldStoredSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 ): SchemaValidationError | undefined {

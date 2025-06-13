@@ -103,6 +103,7 @@ export interface SaveDestination {
 export interface SaveInfo {
 	saveOnFailure: false | SaveDestination;
 	saveOnSuccess: false | SaveDestination;
+	saveFluidOps: false | SaveDestination;
 }
 
 /**

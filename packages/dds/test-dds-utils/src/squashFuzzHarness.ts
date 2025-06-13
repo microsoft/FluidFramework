@@ -42,7 +42,7 @@ import {
 	ReducerPreconditionError,
 	normalizeSeedOption,
 } from "./ddsFuzzHarness.js";
-import { makeUnreachableCodePathProxy } from "./utils.js";
+import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";
 
 /**
  * @internal
@@ -219,7 +219,7 @@ export function mixinStagingMode<
 			}
 			if (newStatus === "off") {
 				model.validatePoisonedContentRemoved(state.client);
-				state.client.containerRuntime.connected = true;
+				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
 			} else if (newStatus === "staging") {
 				state.client.containerRuntime.connected = false;
 			}

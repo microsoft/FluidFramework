@@ -22,6 +22,7 @@ export {
 	HydratedContext,
 	SimpleContextSlot,
 	getOrCreateInnerNode,
+	getOrCreateNodeFromInnerNode,
 	getKernel,
 } from "./core/index.js";
 export {
@@ -43,13 +44,8 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
-	test_RecursiveObject,
-	test_RecursiveObject_base,
-	test_RecursiveObjectPojoMode,
 	treeNodeApi,
 	type TreeNodeApi,
-	cursorFromInsertable,
-	createFromInsertable,
 	type NodeChangedData,
 	TreeBeta,
 	type TreeChangeEventsBeta,
@@ -125,7 +121,6 @@ export {
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
 	type TreeChangeEvents,
-	createFromMapTree,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -189,37 +184,34 @@ export {
 } from "./schemaTypes.js";
 export { getTreeNodeForField } from "./getTreeNodeForField.js";
 export {
-	TreeArrayNode,
+	type ArrayNodeCustomizableSchema,
+	type ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
+	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
-} from "./arrayNode.js";
-export type {
-	ArrayNodeCustomizableSchema,
-	ArrayNodePojoEmulationSchema,
-} from "./arrayNodeTypes.js";
-export { ArrayNodeSchema, isArrayNodeSchema } from "./arrayNodeTypes.js";
-export type {
-	MapNodeCustomizableSchema,
-	MapNodePojoEmulationSchema,
-} from "./mapNodeTypes.js";
-export { MapNodeSchema, isMapNodeSchema } from "./mapNodeTypes.js";
-export {
+	TreeArrayNode,
+	type MapNodeCustomizableSchema,
+	type MapNodePojoEmulationSchema,
+	MapNodeSchema,
+	isMapNodeSchema,
+	type TreeMapNode,
+	type MapNodeInsertableData,
 	type FieldHasDefault,
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
+	ObjectNodeSchema,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
-} from "./objectNode.js";
-export { ObjectNodeSchema } from "./objectNodeTypes.js";
-export type { TreeMapNode, MapNodeInsertableData } from "./mapNode.js";
+} from "./node-kinds/index.js";
 export {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
 	type FactoryContent,
 	type FactoryContentObject,
-} from "./toMapTree.js";
+} from "./unhydratedFlexTreeFromInsertable.js";
 export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
