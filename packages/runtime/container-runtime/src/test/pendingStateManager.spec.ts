@@ -29,7 +29,7 @@ import {
 	BatchManager,
 	LocalBatchMessage,
 	OpGroupingManager,
-	// type EmptyGroupedBatch,
+	type EmptyGroupedBatch,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
@@ -1213,11 +1213,8 @@ describe("Pending State Manager", () => {
 			) as unknown as PendingStateManager_WithPrivates;
 		}
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		it.only("should replay all pending states as batches", () => {
-			const batch1: IPendingMessage[] = [
+		it("should replay all pending states as batches", () => {
+			const inputBatch: IPendingMessage[] = [
 				{
 					type: "message",
 					referenceSequenceNumber: 10,
@@ -1244,12 +1241,12 @@ describe("Pending State Manager", () => {
 				batch: PendingMessageResubmitData[];
 				metadata: PendingBatchResubmitMetadata;
 			}[] = [];
-			stubs.reSubmitBatch.callsFake((batch, metadata) => {
-				reSubmittedBatches.push({ batch, metadata });
+			stubs.reSubmitBatch.callsFake((b, metadata) => {
+				reSubmittedBatches.push({ batch: b, metadata });
 			});
 
 			// Add pending messages
-			for (const msg of batch1) {
+			for (const msg of inputBatch) {
 				pendingStateManager.pendingMessages.push(msg);
 			}
 			pendingStateManager.replayPendingStates();
@@ -1264,237 +1261,285 @@ describe("Pending State Manager", () => {
 			assert.strictEqual(reSubmittedBatches[0].metadata.squash, false);
 		});
 
-		// it("should replay multiple batches in order", () => {
-		// 	const batch1: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 10,
-		// 		content: '{"type":"component"}',
-		// 		runtimeOp: {
-		// 			type: ContainerMessageType.FluidDataStoreOp,
-		// 			contents: {} as IEnvelope,
-		// 		},
-		// 		localOpMetadata: { foo: "bar" },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 1,
-		// 			length: 1,
-		// 			staged: false,
-		// 		},
-		// 	};
-		// 	const batch2: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 11,
-		// 		content: '{"type":"component"}',
-		// 		runtimeOp: {
-		// 			type: ContainerMessageType.FluidDataStoreOp,
-		// 			contents: {} as IEnvelope,
-		// 		},
-		// 		localOpMetadata: { foo: "baz" },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 2,
-		// 			length: 1,
-		// 			staged: false,
-		// 		},
-		// 	};
-		// 	pendingStateManager = createPendingStateManager([batch1, batch2]);
-		// 	pendingStateManager.pendingMessages.push(batch1);
-		// 	pendingStateManager.pendingMessages.push(batch2);
-		// 	pendingStateManager.replayPendingStates();
-		// 	assert.strictEqual(reSubmittedBatches.length, 2, "Should resubmit two batches");
-		// 	assert.deepStrictEqual(reSubmittedBatches[0].batch[0].localOpMetadata, { foo: "bar" });
-		// 	assert.deepStrictEqual(reSubmittedBatches[1].batch[0].localOpMetadata, { foo: "baz" });
-		// });
+		it("should replay multiple batches in order", () => {
+			const batch1: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 10,
+				content: '{"type":"component"}',
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {} as IEnvelope,
+				},
+				localOpMetadata: { foo: "bar" },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 1,
+					length: 1,
+					staged: false,
+				},
+			};
+			const batch2: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 11,
+				content: '{"type":"component"}',
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {} as IEnvelope,
+				},
+				localOpMetadata: { foo: "baz" },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 2,
+					length: 1,
+					staged: false,
+				},
+			};
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = createPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+			pendingStateManager.pendingMessages.push(batch1);
+			pendingStateManager.pendingMessages.push(batch2);
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(reSubmittedBatches.length, 2, "Should resubmit two batches");
+			assert.deepStrictEqual(reSubmittedBatches[0].batch[0].localOpMetadata, { foo: "bar" });
+			assert.deepStrictEqual(reSubmittedBatches[1].batch[0].localOpMetadata, { foo: "baz" });
+		});
 
-		// it("should replay only staged batches when committingStagedBatches is true", () => {
-		// 	const stagedBatch: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 12,
-		// 		content: '{"type":"component"}',
-		// 		runtimeOp: {
-		// 			type: ContainerMessageType.FluidDataStoreOp,
-		// 			contents: {} as IEnvelope,
-		// 		},
-		// 		localOpMetadata: { foo: "staged" },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 3,
-		// 			length: 1,
-		// 			staged: true,
-		// 		},
-		// 	};
-		// 	const unstagedBatch: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 13,
-		// 		content: '{"type":"component"}',
-		// 		runtimeOp: {
-		// 			type: ContainerMessageType.FluidDataStoreOp,
-		// 			contents: {} as IEnvelope,
-		// 		},
-		// 		localOpMetadata: { foo: "unstaged" },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 4,
-		// 			length: 1,
-		// 			staged: false,
-		// 		},
-		// 	};
-		// 	pendingStateManager = createPendingStateManager([unstagedBatch, stagedBatch]);
-		// 	pendingStateManager.pendingMessages.push(unstagedBatch);
-		// 	pendingStateManager.pendingMessages.push(stagedBatch);
-		// 	pendingStateManager.replayPendingStates({
-		// 		committingStagedBatches: true,
-		// 		squash: false,
-		// 	});
-		// 	assert.strictEqual(
-		// 		reSubmittedBatches.length,
-		// 		1,
-		// 		"Should only resubmit the staged batch when committingStagedBatches is true",
-		// 	);
-		// 	assert.deepStrictEqual(
-		// 		reSubmittedBatches[0].batch[0].localOpMetadata,
-		// 		{ foo: "staged" },
-		// 		"Should resubmit the staged batch",
-		// 	);
-		// 	// The unstaged batch should remain in the pendingMessages queue
-		// 	assert.strictEqual(
-		// 		pendingStateManager.pendingMessages.length,
-		// 		1,
-		// 		"Unstaged batch should remain in the queue",
-		// 	);
-		// 	assert.deepStrictEqual(
-		// 		pendingStateManager.pendingMessages.peekFront()?.localOpMetadata,
-		// 		{
-		// 			foo: "unstaged",
-		// 		},
-		// 	);
-		// });
+		it("should replay only staged batches when committingStagedBatches is true", () => {
+			const stagedBatch: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 12,
+				content: '{"type":"component"}',
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {} as IEnvelope,
+				},
+				localOpMetadata: { foo: "staged" },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 3,
+					length: 1,
+					staged: true,
+				},
+			};
+			const unstagedBatch: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 13,
+				content: '{"type":"component"}',
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {} as IEnvelope,
+				},
+				localOpMetadata: { foo: "unstaged" },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 4,
+					length: 1,
+					staged: false,
+				},
+			};
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = createPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+			pendingStateManager.pendingMessages.push(unstagedBatch);
+			pendingStateManager.pendingMessages.push(stagedBatch);
+			pendingStateManager.replayPendingStates({
+				committingStagedBatches: true,
+				squash: false,
+			});
+			assert.strictEqual(
+				reSubmittedBatches.length,
+				1,
+				"Should only resubmit the staged batch when committingStagedBatches is true",
+			);
+			assert.deepStrictEqual(
+				reSubmittedBatches[0].batch[0].localOpMetadata,
+				{ foo: "staged" },
+				"Should resubmit the staged batch",
+			);
+			// The unstaged batch should remain in the pendingMessages queue
+			assert.strictEqual(
+				pendingStateManager.pendingMessages.length,
+				1,
+				"Unstaged batch should remain in the queue",
+			);
+			assert.deepStrictEqual(
+				pendingStateManager.pendingMessages.peekFront()?.localOpMetadata,
+				{
+					foo: "unstaged",
+				},
+			);
+		});
 
-		// it("should clear staged flag on staged batches when committingStagedBatches is true", () => {
-		// 	const stagedBatch: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 14,
-		// 		content: '{"type":"component"}',
-		// 		runtimeOp: {
-		// 			type: ContainerMessageType.FluidDataStoreOp,
-		// 			contents: {} as IEnvelope,
-		// 		},
-		// 		localOpMetadata: { foo: "staged" },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 5,
-		// 			length: 1,
-		// 			staged: true,
-		// 		},
-		// 	};
-		// 	pendingStateManager = createPendingStateManager([stagedBatch]);
-		// 	pendingStateManager.pendingMessages.push(stagedBatch);
-		// 	pendingStateManager.replayPendingStates({
-		// 		committingStagedBatches: true,
-		// 		squash: false,
-		// 	});
-		// 	assert.strictEqual(reSubmittedBatches.length, 1, "Should resubmit the staged batch");
-		// 	assert.strictEqual(
-		// 		reSubmittedBatches[0].metadata.staged,
-		// 		false,
-		// 		"Staged flag should be cleared on resubmission",
-		// 	);
-		// });
+		it("should clear staged flag on staged batches when committingStagedBatches is true", () => {
+			const stagedBatch: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 14,
+				content: '{"type":"component"}',
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {} as IEnvelope,
+				},
+				localOpMetadata: { foo: "staged" },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 5,
+					length: 1,
+					staged: true,
+				},
+			};
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = createPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+			pendingStateManager.pendingMessages.push(stagedBatch);
+			pendingStateManager.replayPendingStates({
+				committingStagedBatches: true,
+				squash: false,
+			});
+			assert.strictEqual(reSubmittedBatches.length, 1, "Should resubmit the staged batch");
+			assert.strictEqual(
+				reSubmittedBatches[0].metadata.staged,
+				false,
+				"Staged flag should be cleared on resubmission",
+			);
+		});
 
-		// it("should throw if replayPendingStates is called twice for same clientId without committingStagedBatches", () => {
-		// 	const batch: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 15,
-		// 		content: '{"type":"component"}',
-		// 		runtimeOp: {
-		// 			type: ContainerMessageType.FluidDataStoreOp,
-		// 			contents: {} as IEnvelope,
-		// 		},
-		// 		localOpMetadata: { foo: "bar" },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 6,
-		// 			length: 1,
-		// 			staged: false,
-		// 		},
-		// 	};
-		// 	pendingStateManager = createPendingStateManager([batch]);
-		// 	pendingStateManager.pendingMessages.push(batch);
-		// 	pendingStateManager.replayPendingStates();
-		// 	// Add another batch to allow replay again
-		// 	pendingStateManager.pendingMessages.push(batch);
-		// 	assert.throws(
-		// 		() => pendingStateManager.replayPendingStates(),
-		// 		/0x173/,
-		// 		"Should throw if replayPendingStates is called twice for same clientId",
-		// 	);
-		// });
+		it("should throw if replayPendingStates is called twice for same clientId without committingStagedBatches", () => {
+			const inputBatch: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 15,
+				content: '{"type":"component"}',
+				runtimeOp: {
+					type: ContainerMessageType.FluidDataStoreOp,
+					contents: {} as IEnvelope,
+				},
+				localOpMetadata: { foo: "bar" },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 6,
+					length: 1,
+					staged: false,
+				},
+			};
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = createPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+			pendingStateManager.pendingMessages.push(inputBatch);
+			pendingStateManager.replayPendingStates();
+			// Add another batch to allow replay again
+			pendingStateManager.pendingMessages.push(inputBatch);
+			assert.throws(
+				() => pendingStateManager.replayPendingStates(),
+				/0x173/,
+				"Should throw if replayPendingStates is called twice for same clientId",
+			);
+		});
 
-		// it("should set squash flag when replayPendingStates is called with squash: true", () => {
-		// 	const batch: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 16,
-		// 		content: '{"type":"component"}',
-		// 		runtimeOp: { type: ContainerMessageType.FluidDataStoreOp, contents: {} as IEnvelope },
-		// 		localOpMetadata: { foo: "bar" },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 7,
-		// 			length: 1,
-		// 			staged: false,
-		// 		},
-		// 	};
-		// 	pendingStateManager = createPendingStateManager([batch]);
-		// 	pendingStateManager.pendingMessages.push(batch);
-		// 	pendingStateManager.replayPendingStates({
-		// 		squash: true,
-		// 		committingStagedBatches: false,
-		// 	});
-		// 	assert.strictEqual(
-		// 		reSubmittedBatches[0].metadata.squash,
-		// 		true,
-		// 		"Squash flag should be set to true",
-		// 	);
-		// });
+		it("should set squash flag when replayPendingStates is called with squash: true", () => {
+			const inputBatch: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 16,
+				content: '{"type":"component"}',
+				runtimeOp: { type: ContainerMessageType.FluidDataStoreOp, contents: {} as IEnvelope },
+				localOpMetadata: { foo: "bar" },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 7,
+					length: 1,
+					staged: false,
+				},
+			};
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = createPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+			pendingStateManager.pendingMessages.push(inputBatch);
+			pendingStateManager.replayPendingStates({
+				squash: true,
+				committingStagedBatches: false,
+			});
+			assert.strictEqual(
+				reSubmittedBatches[0].metadata.squash,
+				true,
+				"Squash flag should be set to true",
+			);
+		});
 
-		// it.only("should resubmit empty batch as empty array", () => {
-		// 	const emptyBatch: IPendingMessage = {
-		// 		type: "message",
-		// 		referenceSequenceNumber: 17,
-		// 		content: '{"type":"groupedBatch","contents":[]}',
-		// 		runtimeOp: { type: "groupedBatch", contents: [] } as EmptyGroupedBatch,
-		// 		localOpMetadata: { emptyBatch: true },
-		// 		opMetadata: undefined,
-		// 		sequenceNumber: undefined,
-		// 		batchInfo: {
-		// 			clientId,
-		// 			batchStartCsn: 8,
-		// 			length: 1,
-		// 			staged: false,
-		// 		},
-		// 	};
-		// 	pendingStateManager = createPendingStateManager([emptyBatch]);
-		// 	pendingStateManager.pendingMessages.push(emptyBatch);
-		// 	pendingStateManager.replayPendingStates();
-		// 	assert.strictEqual(
-		// 		reSubmittedBatches[0].batch.length,
-		// 		0,
-		// 		"Empty batch should be resubmitted as empty array",
-		// 	);
-		// });
+		it("should resubmit empty batch as empty array", () => {
+			const emptyBatch: IPendingMessage = {
+				type: "message",
+				referenceSequenceNumber: 17,
+				content: '{"type":"groupedBatch","contents":[]}',
+				runtimeOp: { type: "groupedBatch", contents: [] } as EmptyGroupedBatch,
+				localOpMetadata: { emptyBatch: true },
+				opMetadata: undefined,
+				sequenceNumber: undefined,
+				batchInfo: {
+					clientId,
+					batchStartCsn: 8,
+					length: 1,
+					staged: false,
+				},
+			};
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = createPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+			pendingStateManager.pendingMessages.push(emptyBatch);
+			pendingStateManager.replayPendingStates();
+			assert.strictEqual(
+				reSubmittedBatches[0].batch.length,
+				0,
+				"Empty batch should be resubmitted as empty array",
+			);
+		});
 	});
 });
