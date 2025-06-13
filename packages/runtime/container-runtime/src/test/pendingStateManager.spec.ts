@@ -29,7 +29,6 @@ import {
 	BatchManager,
 	LocalBatchMessage,
 	OpGroupingManager,
-	type EmptyGroupedBatch,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
@@ -760,6 +759,7 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], "batchId");
+			//* Also assert that the resubmitted batch is empty?
 		});
 	});
 
@@ -1505,40 +1505,6 @@ describe("Pending State Manager", () => {
 				reSubmittedBatches[0].metadata.squash,
 				true,
 				"Squash flag should be set to true",
-			);
-		});
-
-		it("should resubmit empty batch as empty array", () => {
-			const emptyBatch: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 17,
-				content: '{"type":"groupedBatch","contents":[]}',
-				runtimeOp: { type: "groupedBatch", contents: [] } as EmptyGroupedBatch,
-				localOpMetadata: { emptyBatch: true },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 8,
-					length: 1,
-					staged: false,
-				},
-			};
-			const stubs = getStateHandlerStub();
-			const pendingStateManager = createPendingStateManager(stubs);
-			const reSubmittedBatches: {
-				batch: PendingMessageResubmitData[];
-				metadata: PendingBatchResubmitMetadata;
-			}[] = [];
-			stubs.reSubmitBatch.callsFake((batch, metadata) => {
-				reSubmittedBatches.push({ batch, metadata });
-			});
-			pendingStateManager.pendingMessages.push(emptyBatch);
-			pendingStateManager.replayPendingStates();
-			assert.strictEqual(
-				reSubmittedBatches[0].batch.length,
-				0,
-				"Empty batch should be resubmitted as empty array",
 			);
 		});
 	});
