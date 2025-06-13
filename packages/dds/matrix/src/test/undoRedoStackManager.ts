@@ -49,6 +49,9 @@ class Stack<T> {
 		}
 	}
 
+	/**
+	 * Returns the number of redo/undo events in the stack.
+	 */
 	public get length(): number {
 		let length = 0;
 		for (const item of this.items) {
@@ -197,10 +200,16 @@ export class UndoRedoStackManager {
 		}
 	}
 
+	/**
+	 * Returns the length of the undo stack.
+	 */
 	public get undoStackLength(): number {
 		return this.undoStack.length;
 	}
 
+	/**
+	 * Returns the length of the redo stack.
+	 */
 	public get redoStackLength(): number {
 		return this.redoStack.length;
 	}

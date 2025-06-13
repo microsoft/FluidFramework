@@ -21,16 +21,16 @@ import { createLocalMatrix } from "../utils.js";
 function createUndoBenchmark({
 	title,
 	matrixSize,
-	initialValue,
+	cellValue,
 	operationCount,
-	stackCount,
+	editsPerOperation,
 	operation,
 }: {
 	title: string;
 	matrixSize: number;
-	initialValue: string;
+	cellValue: string;
 	operationCount: number;
-	stackCount: number;
+	editsPerOperation: number;
 	operation: (matrix: SharedMatrix, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
@@ -40,8 +40,8 @@ function createUndoBenchmark({
 
 		async run(): Promise<void> {
 			assert(this.undoStack !== undefined, "undoStack is not initialized");
-			assert.equal(this.undoStack.undoStackLength, stackCount);
-			for (let i = 0; i < stackCount; i++) {
+			assert.equal(this.undoStack.undoStackLength, operationCount * editsPerOperation);
+			for (let i = 0; i < operationCount * editsPerOperation; i++) {
 				this.undoStack.undoOperation();
 			}
 		}
@@ -50,7 +50,7 @@ function createUndoBenchmark({
 			this.localMatrix = createLocalMatrix({
 				id: "testLocalMatrix",
 				size: matrixSize,
-				initialValue,
+				initialValue: cellValue,
 			});
 			this.undoStack = new UndoRedoStackManager();
 			this.localMatrix.openUndo(this.undoStack);
@@ -65,16 +65,16 @@ function createUndoBenchmark({
 function createRedoBenchmark({
 	title,
 	matrixSize,
-	initialValue,
+	cellValue,
 	operationCount,
-	stackCount,
+	editsPerOperation,
 	operation,
 }: {
 	title: string;
 	matrixSize: number;
-	initialValue: string;
+	cellValue: string;
 	operationCount: number;
-	stackCount: number;
+	editsPerOperation: number;
 	operation: (matrix: SharedMatrix, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
@@ -84,8 +84,8 @@ function createRedoBenchmark({
 
 		async run(): Promise<void> {
 			assert(this.redoStack !== undefined, "redoStack is not initialized");
-			assert.equal(this.redoStack.redoStackLength, stackCount);
-			for (let i = 0; i < stackCount; i++) {
+			assert.equal(this.redoStack.redoStackLength, operationCount * editsPerOperation);
+			for (let i = 0; i < operationCount * editsPerOperation; i++) {
 				this.redoStack.redoOperation();
 			}
 		}
@@ -94,13 +94,13 @@ function createRedoBenchmark({
 			this.localMatrix = createLocalMatrix({
 				id: "testLocalMatrix",
 				size: matrixSize,
-				initialValue,
+				initialValue: cellValue,
 			});
 			this.redoStack = new UndoRedoStackManager();
 			this.localMatrix.openUndo(this.redoStack);
 			operation(this.localMatrix, operationCount);
-			assert.equal(this.redoStack.undoStackLength, stackCount);
-			for (let i = 0; i < stackCount; i++) {
+			assert.equal(this.redoStack.undoStackLength, operationCount * editsPerOperation);
+			for (let i = 0; i < operationCount * editsPerOperation; i++) {
 				this.redoStack.undoOperation();
 			}
 		}
@@ -178,9 +178,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert column in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -194,9 +194,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert column in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -235,9 +235,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert row in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
@@ -251,9 +251,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert row in the middle ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
@@ -293,9 +293,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: 2 * count,
+							editsPerOperation: 2,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -310,9 +310,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: 2 * count,
+							editsPerOperation: 2,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -360,9 +360,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: 4 * count,
+							editsPerOperation: 4,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -379,9 +379,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: 4 * count,
+							editsPerOperation: 4,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -426,9 +426,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove the middle column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -442,9 +442,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove the middle column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -483,9 +483,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove the middle row ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
@@ -499,9 +499,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove the middle row ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
@@ -541,9 +541,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: 2 * count,
+							editsPerOperation: 2,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -558,9 +558,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo remove a row and a column ${count} times`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: 2 * count,
+							editsPerOperation: 2,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -600,9 +600,9 @@ describe("SharedMatrix memory usage", () => {
 						createUndoBenchmark({
 							title: `Undo setting a 3-character string in ${count} cells`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.setCell(i, i, "abc");
@@ -616,9 +616,9 @@ describe("SharedMatrix memory usage", () => {
 						createRedoBenchmark({
 							title: `Redo setting a 3-character string in ${count} cells`,
 							matrixSize,
-							initialValue: matrixValue,
+							cellValue: matrixValue,
 							operationCount: count,
-							stackCount: count,
+							editsPerOperation: 1,
 							operation: (matrix, operationCount) => {
 								for (let i = 0; i < operationCount; i++) {
 									matrix.setCell(i, i, "abc");
