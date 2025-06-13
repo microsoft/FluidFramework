@@ -88,6 +88,10 @@ export namespace InternalTypes {
     // @system
     export class StateValueBrand<T> {
     }
+    // @system
+    export interface ValidatedValueState<TValue> {
+        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+    }
     // @system (undocumented)
     export interface ValueDirectory<T> {
         // (undocumented)
@@ -100,16 +104,12 @@ export namespace InternalTypes {
     // @system (undocumented)
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system
-    export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+    export interface ValueOptionalState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system
-    export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        validatedValue?: OpaqueJsonDeserialized<TValue>;
+    export interface ValueRequiredState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
