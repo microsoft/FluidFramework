@@ -61,7 +61,7 @@ export function fail(message: string | number, debugMessageBuilder?: () => strin
 		typeof message === "number" ? `0x${message.toString(16).padStart(3, "0")}` : message;
 	skipInProduction(() => {
 		if (debugMessageBuilder !== undefined) {
-			messageString = `${messageString}\nDebug Message:${debugMessageBuilder()}`;
+			messageString = `${messageString}\nDebug Message: ${debugMessageBuilder()}`;
 		}
 		console.error(`Bug in Fluid Framework: Failed Assertion: ${messageString}`);
 	});
