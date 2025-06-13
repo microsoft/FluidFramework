@@ -1,7 +1,7 @@
 {
 	"globalHeaders": {
 		"cache-control": "must-revalidate, max-age=3600",
-		"Content-Security-Policy-Report-Only": "script-src 'self' 'sha256-faMHt+UAWeoFU7ZBnPhfAu9zOnnNUwL4RYp09gSUEjU=' 'sha256-O8zYuOjyuzUZDv3fub7DKfAs5TEd1dG+fz+hCSCFmQA=' 'sha256-fd8PaHQgKg1/SNfCLTu1n0o8pKUigP867TZiWr5NYtU=' 'sha256-dGD3FKK81csDrEhQT4cyi6vTQ7h5P5bq4sJOY1Btb5w=' 'sha256-9B4uzGZj0ISjdPwwyAmR+Lci1Y4WIkbroFP63r0e7kg=' 'sha256-cwVTr+ZyBzKe5diz1+yyhT+CcNJEqwLTneD8H4TIrvA=' 'unsafe-inline' 'unsafe-eval' https:; base-uri 'self'; object-src 'none'; require-trusted-types-for 'script'; trusted-types default dompurify ff#webpack; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
+		"Content-Security-Policy": "script-src 'self' 'sha256-faMHt+UAWeoFU7ZBnPhfAu9zOnnNUwL4RYp09gSUEjU=' 'sha256-O8zYuOjyuzUZDv3fub7DKfAs5TEd1dG+fz+hCSCFmQA=' 'sha256-fd8PaHQgKg1/SNfCLTu1n0o8pKUigP867TZiWr5NYtU=' 'sha256-dGD3FKK81csDrEhQT4cyi6vTQ7h5P5bq4sJOY1Btb5w=' 'sha256-9B4uzGZj0ISjdPwwyAmR+Lci1Y4WIkbroFP63r0e7kg=' 'sha256-cwVTr+ZyBzKe5diz1+yyhT+CcNJEqwLTneD8H4TIrvA=' 'unsafe-inline' 'unsafe-eval' https:; base-uri 'self'; object-src 'none'; require-trusted-types-for 'script'; trusted-types default dompurify ff#webpack; report-uri https://csp.microsoft.com/report/FluidFramework-WW"
 	},
 	"navigationFallback": {
 		"rewrite": "/api/fallback"
