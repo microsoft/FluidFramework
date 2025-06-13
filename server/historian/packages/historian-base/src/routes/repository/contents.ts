@@ -38,7 +38,7 @@ export function create(
 ): Router {
 	const router: Router = Router();
 
-	const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec");
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,

@@ -43,83 +43,6 @@ export const Constants = Object.freeze({
 	invalidTokenCachePrefix: "invalidTokenCache",
 });
 
-// check this function
-export function getTokenLifetimeInSec(token: string): number | undefined {
-	const claims = decode(token) as ITokenClaims;
-	if (claims?.exp) {
-		return claims.exp - Math.round(new Date().getTime() / 1000);
-	}
-	return undefined;
-}
-
-/**
- * Validates token claims' iat and exp properties to ensure valid token expiration.
- * Throws NetworkError if expiry is invalid.
- * @returns token lifetime in milliseconds.
- * @internal
- */
-export function validateTokenClaimsExpiration(
-	claims: ITokenClaims,
-	maxTokenLifetimeSec: number,
-): number {
-	if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
-		throw new NetworkError(403, "Invalid token expiry");
-	}
-	const lifeTimeMSec = claims.exp * 1000 - new Date().getTime();
-	if (lifeTimeMSec < 0) {
-		throw new NetworkError(401, "Expired token");
-	}
-	return lifeTimeMSec;
-}
-
-// export async function checkToken(
-// 	token: string | null,
-// 	tenantId: string,
-// 	documentId: string,
-// ): Promise<ITokenClaims> {
-// 	if (!token) {
-// 		throw new NetworkError(403, "Must provide an authorization token");
-// 	}
-// 	const claims = validateTokenClaims(token, documentId, tenantId);
-// 	try {
-// 		if (revokedTokenChecker && claims.jti) {
-// 			const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
-// 				claims.tenantId,
-// 				claims.documentId,
-// 				claims.jti,
-// 			);
-// 			if (isTokenRevoked) {
-// 				const error = createFluidServiceNetworkError(403, {
-// 					message: "Permission denied. Token has been revoked",
-// 					internalErrorCode: InternalErrorCode.TokenRevoked,
-// 					canRetry: false,
-// 					isFatal: true,
-// 				});
-// 				throw error;
-// 			}
-// 		}
-// 		await tenantManager.verifyToken(claims.tenantId, token);
-// 		return claims;
-// 	} catch (error: any) {
-// 		if (isNetworkError(error)) {
-// 			throw error;
-// 		}
-// 		// We don't understand the error, so it is likely an internal service error.
-// 		const errMsg = `Could not verify connect document token. Error: ${safeStringify(
-// 			error,
-// 			undefined,
-// 			2,
-// 		)}`;
-// 		throw handleServerErrorAndConvertToNetworkError(
-// 			logger,
-// 			errMsg,
-// 			claims.documentId,
-// 			claims.tenantId,
-// 			error,
-// 		);
-// 	}
-// }
-
 export function getTenantIdFromRequest(params: Params) {
 	const tenantId = getParam(params, "tenantId");
 	if (tenantId !== undefined) {
@@ -146,7 +69,6 @@ export function getDocumentIdFromRequest(tenantId: string, authorization: string
 	}
 }
 
-// check token lifetime sec
 export function parseToken(
 	tenantId: string,
 	authorization: string | undefined,

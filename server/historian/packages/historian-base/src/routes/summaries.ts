@@ -44,7 +44,7 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
-	const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec");
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
