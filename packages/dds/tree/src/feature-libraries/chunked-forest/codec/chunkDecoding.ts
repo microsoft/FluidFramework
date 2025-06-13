@@ -41,6 +41,7 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
 	type EncodedFieldBatch,
+	type EncodedIncrementalShape,
 	type EncodedInlineArray,
 	type EncodedNestedArray,
 	type EncodedTreeShape,
@@ -61,12 +62,14 @@ export interface IdDecodingContext {
 export function decode(
 	chunk: EncodedFieldBatch,
 	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+	getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
 ): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
 		new DecoderContext(chunk.identifiers, chunk.shapes, idDecodingContext),
 		chunk,
 		anyDecoder,
+		getIncrementalFieldBatch,
 	);
 }
 
@@ -86,6 +89,9 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	},
 	d(shape: EncodedAnyShape): ChunkDecoder {
 		return anyDecoder;
+	},
+	e(shape: EncodedIncrementalShape, cache): ChunkDecoder {
+		return new IncrementalFieldDecoder(shape, cache);
 	},
 });
 
@@ -184,7 +190,11 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
  */
 export class NestedArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedNestedArray) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+		getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
+	): TreeChunk {
 		const decoder = decoders[this.shape] ?? oob();
 
 		// TODO: uniform chunk fast path
@@ -195,7 +205,7 @@ export class NestedArrayDecoder implements ChunkDecoder {
 			// This case means that the array contained only 0-sized items, and was thus encoded as the length of the array.
 			const inner = { data: [], offset: 0 };
 			for (let index = 0; index < data; index++) {
-				chunks.push(decoder.decode(decoders, inner));
+				chunks.push(decoder.decode(decoders, inner, getIncrementalFieldBatch));
 			}
 		} else {
 			assert(
@@ -204,7 +214,7 @@ export class NestedArrayDecoder implements ChunkDecoder {
 			);
 			const inner = { data, offset: 0 };
 			while (inner.offset !== inner.data.length) {
-				chunks.push(decoder.decode(decoders, inner));
+				chunks.push(decoder.decode(decoders, inner, getIncrementalFieldBatch));
 			}
 		}
 
@@ -217,13 +227,56 @@ export class NestedArrayDecoder implements ChunkDecoder {
  */
 export class InlineArrayDecoder implements ChunkDecoder {
 	public constructor(private readonly shape: EncodedInlineArray) {}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+		getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
+	): TreeChunk {
 		const length = this.shape.length;
 		const decoder = decoders[this.shape.shape] ?? oob();
 		const chunks: TreeChunk[] = [];
 		for (let index = 0; index < length; index++) {
-			chunks.push(decoder.decode(decoders, stream));
+			chunks.push(decoder.decode(decoders, stream, getIncrementalFieldBatch));
 		}
+		return aggregateChunks(chunks);
+	}
+}
+
+/**
+ * Decoder for {@link EncodedIncrementalShape}s.
+ */
+export class IncrementalFieldDecoder implements ChunkDecoder {
+	public constructor(
+		private readonly shape: EncodedIncrementalShape,
+		private readonly cache: DecoderContext<EncodedChunkShape>,
+	) {}
+	public decode(
+		_: readonly ChunkDecoder[],
+		stream: StreamCursor,
+		getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
+	): TreeChunk {
+		const data = readStream(stream);
+		if (typeof data === "number") {
+			assert(data === 0, "expected 0 for empty incremental blob");
+			return emptyChunk;
+		}
+
+		assert(typeof data === "string", "expected incremental blob id");
+		const batch = getIncrementalFieldBatch?.(data);
+		assert(batch !== undefined, `Can't find incremental field batch for field ${data}`);
+
+		const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, this.cache));
+		const chunks: TreeChunk[] = [];
+		for (const field of batch.data) {
+			const innerStream = { data: field, offset: 0 };
+			const result = anyDecoder.decode(decoders, innerStream);
+			assert(
+				innerStream.offset === innerStream.data.length,
+				0x73a /* expected decode to consume full stream */,
+			);
+			chunks.push(result);
+		}
+
 		return aggregateChunks(chunks);
 	}
 }
@@ -232,10 +285,14 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedAnyShape}s.
  */
 export const anyDecoder: ChunkDecoder = {
-	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+		getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
+	): TreeChunk {
 		const shapeIndex = readStreamNumber(stream);
 		const decoder = getChecked(decoders, shapeIndex);
-		return decoder.decode(decoders, stream);
+		return decoder.decode(decoders, stream, getIncrementalFieldBatch);
 	},
 };
 
@@ -245,6 +302,7 @@ export const anyDecoder: ChunkDecoder = {
 type BasicFieldDecoder = (
 	decoders: readonly ChunkDecoder[],
 	stream: StreamCursor,
+	getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
 ) => [FieldKey, TreeChunk];
 
 /**
@@ -256,9 +314,9 @@ function fieldDecoder(
 	shape: number,
 ): BasicFieldDecoder {
 	assertValidIndex(shape, cache.shapes);
-	return (decoders, stream) => {
+	return (decoders, stream, getIncrementalFieldBatch) => {
 		const decoder = decoders[shape] ?? oob();
-		return [key, decoder.decode(decoders, stream)];
+		return [key, decoder.decode(decoders, stream, getIncrementalFieldBatch)];
 	};
 }
 
@@ -281,7 +339,11 @@ export class TreeDecoder implements ChunkDecoder {
 		}
 		this.fieldDecoders = fieldDecoders;
 	}
-	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+	public decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+		getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
+	): TreeChunk {
 		const type: TreeNodeSchemaIdentifier =
 			this.type ?? readStreamIdentifier(stream, this.cache);
 		// TODO: Consider typechecking against stored schema in here somewhere.
@@ -300,8 +362,8 @@ export class TreeDecoder implements ChunkDecoder {
 			}
 		}
 
-		for (const field of this.fieldDecoders) {
-			const [key, content] = field(decoders, stream);
+		for (const decoder of this.fieldDecoders) {
+			const [key, content] = decoder(decoders, stream, getIncrementalFieldBatch);
 			addField(key, content);
 		}
 
@@ -310,7 +372,7 @@ export class TreeDecoder implements ChunkDecoder {
 			const inner = readStreamStream(stream);
 			while (inner.offset !== inner.data.length) {
 				const key: FieldKey = readStreamIdentifier(inner, this.cache);
-				addField(key, decoder.decode(decoders, inner));
+				addField(key, decoder.decode(decoders, inner, getIncrementalFieldBatch));
 			}
 		}
 

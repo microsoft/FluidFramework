@@ -14,6 +14,9 @@ import {
 	ShapeIndex,
 } from "./formatGeneric.js";
 
+export const FieldUnchanged = "unchanged";
+export type FieldUnchanged = typeof FieldUnchanged;
+
 export const version = 1;
 
 // Compatible versions used for format/version validation.
@@ -63,6 +66,12 @@ export const EncodedFieldShape = Type.Tuple([
 ]);
 
 export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
+
+/**
+ * Encoded shape for types that can be incrementally encoded, i.e., their content will be in a separate buffer.
+ * This can be used for incrementally summarizing these fields.
+ */
+export const EncodedIncrementalShape = Type.Literal(0);
 
 enum CounterRelativeTo {
 	// Relative to previous node of same type in depth first pre-order traversal.
@@ -179,6 +188,10 @@ export const EncodedChunkShape = Type.Object(
 		 * {@link EncodedAnyShape} union member.
 		 */
 		d: Type.Optional(EncodedAnyShape),
+		/**
+		 * {@link EncodedIncrementalShape} union member.
+		 */
+		e: Type.Optional(EncodedIncrementalShape),
 	},
 	unionOptions,
 );
@@ -189,6 +202,24 @@ export type EncodedNestedArray = Static<typeof EncodedNestedArray>;
 export type EncodedInlineArray = Static<typeof EncodedInlineArray>;
 export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
+export type EncodedIncrementalShape = Static<typeof EncodedIncrementalShape>;
 
+/**
+ * Format for encoding a tree field.
+ */
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;
+
+/**
+ * Format for encoding a tree field where its children fields that support incremental encoding are added to
+ * a separate map. It consists of a main field batch and a map for each of its fields that can be incrementally
+ * summarized.
+ *
+ * @remarks This is currently used during summarization to store the data for fields that support incremental encoding
+ * in separate summary trees / blobs such that they can be incrementally summarized.
+ */
+export interface EncodedFieldBatchIncremental {
+	fieldBatch: EncodedFieldBatch;
+	incrementalFieldsBatch: Map<string, EncodedFieldBatchFormat>;
+}
+export type EncodedFieldBatchFormat = EncodedFieldBatchIncremental | FieldUnchanged;

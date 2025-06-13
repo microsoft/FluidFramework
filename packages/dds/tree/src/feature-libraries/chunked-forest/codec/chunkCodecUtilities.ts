@@ -8,6 +8,7 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import type { TreeValue, TreeChunk } from "../../../core/index.js";
 import { assertValidIndex } from "../../../util/index.js";
 import { type FluidSerializableReadOnly, assertAllowedValue } from "../../valueUtilities.js";
+import type { EncodedFieldBatch } from "./format.js";
 
 /**
  * Utilities related to chunk encoding and decoding that do not depend on specific chunk types or formats.
@@ -176,8 +177,14 @@ export interface ChunkDecoder {
 	/**
 	 * Read from stream, updating the offset.
 	 *
+	 * For fields that support incremental encoding, the encoded data can be retrieved via `getIncrementalFieldBatch`.
+	 *
 	 * @returns a TreeChunk made from the data from `stream`.
 	 * This chunk is allowed to reference/take ownership of content it reads from the stream.
 	 */
-	decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk;
+	decode(
+		decoders: readonly ChunkDecoder[],
+		stream: StreamCursor,
+		getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
+	): TreeChunk;
 }

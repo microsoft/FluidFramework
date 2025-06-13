@@ -226,6 +226,16 @@ class WrapperChunk extends ReferenceCountedBase implements TreeChunk {
 		chunk.referenceAdded();
 	}
 
+	private _summaryRefId: string | undefined;
+
+	public get summaryRefId(): string | undefined {
+		return this._summaryRefId;
+	}
+
+	public addSummaryRefId(summaryRefId: string): void {
+		this._summaryRefId = summaryRefId;
+	}
+
 	protected onUnreferenced(): void {
 		this.chunk.referenceRemoved();
 	}
