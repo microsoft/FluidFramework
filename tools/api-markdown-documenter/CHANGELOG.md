@@ -27,6 +27,13 @@ const markdownDocuments = documents.map((document) => documentToMarkdown(documen
 // Use the resulting HTML documents with your favorite mdast-compatible library!
 ```
 
+### `DocumentationNode.singleLine` has been removed
+
+This flag was never more than a hack to make our custom Markdown rendering work out correctly.
+It doesn't make sense in the context of a general-purpose documentation domain, as it is specifically in terms of whether or not the associated content could be rendered on a single line in *Markdown*.
+
+It has been removed and is no longer used by the system.
+
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
 This type previously supported an unsafe escape hatch for text escaping.
@@ -43,6 +50,10 @@ Each of the above types accepted only a single `PlainTextNode` as a child value.
 These have been updated to accept `string`s instead, which greatly simplifies their use.
 
 Their `createFromPlainText` static factory functions have also been removed, as they are now redundant with their constructors.
+
+### Replace `OrderedListNode` and `UnorderedListNode` with a single `ListNode` type
+
+Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
 
 ### `BlockQuoteNode` was removed
 

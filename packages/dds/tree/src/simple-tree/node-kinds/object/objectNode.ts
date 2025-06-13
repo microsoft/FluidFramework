@@ -14,7 +14,11 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../../../feature-libraries/index.js";
-import type { RestrictiveStringRecord, FlattenKeys } from "../../../util/index.js";
+import type {
+	RestrictiveStringRecord,
+	FlattenKeys,
+	JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -349,6 +353,7 @@ abstract class CustomObjectNodeBase<
  *
  * @param name - Unique identifier for this schema within this factory's scope.
  * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 export function objectSchema<
 	TName extends string,
@@ -361,6 +366,7 @@ export function objectSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
 	// Field set can't be modified after this since derived data is stored in maps.
@@ -504,6 +510,8 @@ export function objectSchema<
 			return lazyChildTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
