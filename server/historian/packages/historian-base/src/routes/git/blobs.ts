@@ -23,6 +23,7 @@ import winston from "winston";
 import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -104,7 +105,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, ["doc:write", "doc:read"]),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const blobP = createBlob(

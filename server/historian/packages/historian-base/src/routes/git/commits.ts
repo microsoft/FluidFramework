@@ -17,6 +17,7 @@ import {
 	throttle,
 } from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
@@ -89,7 +90,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, ["doc:write", "doc:read"]),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const commitP = createCommit(

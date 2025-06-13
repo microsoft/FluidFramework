@@ -384,11 +384,13 @@ export function verifyToken(
 			}
 
 			if (requiredScopes) {
-				const hasRequiredScope = requiredScopes.some((scope) => claims.scopes.includes(scope));
-				if (!hasRequiredScope) {
+				const hasAllRequiredScopes = requiredScopes.every((scope) =>
+					claims.scopes.includes(scope),
+				);
+				if (!hasAllRequiredScopes) {
 					throw new NetworkError(
 						403,
-						`Permission denied. Insufficient scope. Required scopes: ${requiredScopes}`,
+						`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
 					);
 				}
 			}

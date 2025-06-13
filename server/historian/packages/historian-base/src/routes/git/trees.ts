@@ -23,6 +23,7 @@ import winston from "winston";
 import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -89,7 +90,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, ["doc:read", "doc:write"]),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const treeP = createTree(

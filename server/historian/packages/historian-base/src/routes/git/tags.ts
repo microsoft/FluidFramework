@@ -23,6 +23,7 @@ import winston from "winston";
 import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -104,7 +105,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/tags/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, ["doc:read"]),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const tagP = getTag(
