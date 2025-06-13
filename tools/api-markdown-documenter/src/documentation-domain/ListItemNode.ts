@@ -24,13 +24,6 @@ export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
 	 */
 	public readonly type = "listItem";
 
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
 	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}

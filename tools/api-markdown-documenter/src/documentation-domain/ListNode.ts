@@ -55,13 +55,6 @@ export class ListNode extends DocumentationParentNodeBase<ListItemNode> {
 	public readonly type = "list";
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
-	/**
 	 * Whether the list is ordered (numbered) or unordered (bulleted).
 	 */
 	public readonly ordered: boolean;

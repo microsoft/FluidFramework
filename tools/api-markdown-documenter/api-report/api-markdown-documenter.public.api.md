@@ -179,7 +179,6 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
     static createFromPlainText(text: string): CodeSpanNode;
     static readonly Empty: CodeSpanNode;
     get isEmpty(): boolean;
-    readonly singleLine = true;
     readonly type = "codeSpan";
 }
 
@@ -253,7 +252,6 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements 
     abstract get isEmpty(): boolean;
     readonly isLiteral = true;
     readonly isParent = false;
-    abstract get singleLine(): boolean;
     abstract type: string;
     readonly value: TValue;
 }
@@ -263,7 +261,6 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly isEmpty: boolean;
     readonly isLiteral: boolean;
     readonly isParent: boolean;
-    readonly singleLine: boolean;
     readonly type: string;
 }
 
@@ -296,7 +293,6 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = true;
-    get singleLine(): boolean;
     abstract type: string;
 }
 
@@ -365,7 +361,6 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingCon
     constructor(children: PhrasingContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
     readonly language?: string;
-    get singleLine(): false;
     readonly type = "fencedCode";
 }
 
@@ -458,7 +453,6 @@ export class HeadingNode implements DocumentationNode, Heading {
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = false;
-    readonly singleLine = true;
     readonly title: string;
     readonly type = "heading";
 }
@@ -504,7 +498,6 @@ export class HorizontalRuleNode implements DocumentationNode {
     readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
-    readonly singleLine = false;
     static readonly Singleton: HorizontalRuleNode;
     readonly type = "horizontalRule";
 }
@@ -556,7 +549,6 @@ export class LineBreakNode implements DocumentationNode {
     readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
-    readonly singleLine = false;
     static readonly Singleton: LineBreakNode;
     readonly type = "lineBreak";
 }
@@ -576,7 +568,6 @@ export class LinkNode implements DocumentationNode, Link {
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = false;
-    readonly singleLine = true;
     readonly target: UrlTarget;
     readonly text: string;
     readonly type = "link";
@@ -587,7 +578,6 @@ export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[]);
     static createFromPlainText(text: string): ListItemNode;
     static readonly Empty: ListItemNode;
-    get singleLine(): false;
     readonly type = "listItem";
 }
 
@@ -596,7 +586,6 @@ export class ListNode extends DocumentationParentNodeBase<ListItemNode> {
     constructor(children: ListItemNode[], ordered: boolean);
     static createFromPlainTextEntries(entries: string[], ordered: boolean): ListNode;
     readonly ordered: boolean;
-    get singleLine(): false;
     readonly type = "list";
 }
 
@@ -664,7 +653,6 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
     constructor(children: PhrasingContent[]);
     static createFromPlainText(text: string): ParagraphNode;
     static readonly Empty: ParagraphNode;
-    get singleLine(): false;
     readonly type = "paragraph";
 }
 
@@ -690,7 +678,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
     constructor(text: string);
     static readonly Empty: PlainTextNode;
     get isEmpty(): boolean;
-    readonly singleLine = true;
     get text(): string;
     readonly type = "text";
 }
@@ -751,7 +738,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
     constructor(children: SectionContent[], heading?: HeadingNode);
     static readonly Empty: SectionNode;
     readonly heading?: HeadingNode;
-    get singleLine(): false;
     readonly type = "section";
 }
 
@@ -814,7 +800,6 @@ export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
     constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode);
     static readonly Empty: TableNode;
     readonly headerRow?: TableHeaderRowNode;
-    get singleLine(): false;
     readonly type = "table";
 }
 
