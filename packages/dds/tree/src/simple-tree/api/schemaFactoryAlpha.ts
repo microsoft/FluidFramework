@@ -23,7 +23,6 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	ImplicitAnnotatedFieldSchema,
 	ImplicitFieldSchema,
-	NodeSchemaOptions,
 	NodeSchemaOptionsAlpha,
 } from "../schemaTypes.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
@@ -245,7 +244,7 @@ export class SchemaFactoryAlpha<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.mapAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -296,7 +295,7 @@ export class SchemaFactoryAlpha<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.arrayAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
