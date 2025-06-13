@@ -159,7 +159,7 @@ export class MapKernel {
 	/**
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
 	 */
-	private pendingMessageId: number = -1;
+	private nextPendingMessageId: number = 0;
 
 	/**
 	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
@@ -685,7 +685,7 @@ export class MapKernel {
 	}
 
 	private getMapClearMessageId(): number {
-		const pendingMessageId = ++this.pendingMessageId;
+		const pendingMessageId = this.nextPendingMessageId++;
 		this.pendingClearMessageIds.push(pendingMessageId);
 		return pendingMessageId;
 	}
@@ -703,7 +703,7 @@ export class MapKernel {
 	}
 
 	private getMapKeyMessageId(op: IMapKeyOperation): number {
-		const pendingMessageId = ++this.pendingMessageId;
+		const pendingMessageId = this.nextPendingMessageId++;
 		const pendingMessageIds = this.pendingKeys.get(op.key);
 		if (pendingMessageIds === undefined) {
 			this.pendingKeys.set(op.key, [pendingMessageId]);
