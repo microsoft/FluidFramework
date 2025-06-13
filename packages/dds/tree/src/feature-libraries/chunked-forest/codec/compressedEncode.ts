@@ -54,10 +54,9 @@ import {
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	cache: EncoderCache,
+	outputIncrementalFieldsBatch?: Map<string, EncodedFieldBatchFormat>,
 ): EncodedFieldBatch {
-	const encodeIncrementally = false; // TODO: Support incremental encoding.
-	const outputIncrementalFieldBatch: Map<string, EncodedFieldBatchFormat> = new Map();
-
+	const encodeIncrementally = outputIncrementalFieldsBatch !== undefined;
 	const batchBuffer: BufferFormat[] = [];
 	const incrementalFieldBuffers: Map<string, FieldBufferFormat> | undefined =
 		encodeIncrementally ? new Map() : undefined;
@@ -75,7 +74,7 @@ export function compressedEncode(
 
 	const encodeShapes = (
 		incrementalBuffer: BufferFormatIncremental,
-		incrementalFieldBatch: Map<string, EncodedFieldBatchFormat>,
+		incrementalFieldsBatch: Map<string, EncodedFieldBatchFormat>,
 	): EncodedFieldBatch => {
 		const encodedFieldBatch = updateShapesAndIdentifiersEncoding(
 			version,
@@ -85,14 +84,14 @@ export function compressedEncode(
 			assert(encodeIncrementally, "expected incremental encoding");
 			incrementalBuffer.incrementalFieldBuffers.forEach((fieldBufferFormat, summaryRefId) => {
 				if (fieldBufferFormat === FieldUnchanged) {
-					incrementalFieldBatch.set(summaryRefId, fieldBufferFormat);
+					incrementalFieldsBatch.set(summaryRefId, fieldBufferFormat);
 				} else {
 					const innerFieldBufferFormats: Map<string, EncodedFieldBatchFormat> = new Map();
 					const innerEncodedFieldBatch = encodeShapes(
 						fieldBufferFormat,
 						innerFieldBufferFormats,
 					);
-					incrementalFieldBatch.set(summaryRefId, {
+					incrementalFieldsBatch.set(summaryRefId, {
 						fieldBatch: innerEncodedFieldBatch,
 						incrementalFieldsBatch: innerFieldBufferFormats,
 					});
@@ -104,7 +103,7 @@ export function compressedEncode(
 
 	return encodeShapes(
 		{ mainBuffer: batchBuffer, incrementalFieldBuffers },
-		encodeIncrementally ? outputIncrementalFieldBatch : new Map(),
+		encodeIncrementally ? outputIncrementalFieldsBatch : new Map(),
 	);
 }
 
