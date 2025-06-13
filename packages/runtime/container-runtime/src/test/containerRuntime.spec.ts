@@ -71,13 +71,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
-import Sinon, {
-	SinonFakeTimers,
-	createSandbox,
-	useFakeTimers,
-	match,
-	createStubInstance,
-} from "sinon";
+import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
 import { defaultMinVersionForCollab } from "../compatUtils.js";
@@ -178,14 +172,13 @@ function isSignalEnvelope(
 
 let sandbox: Sinon.SinonSandbox;
 
-function stubChannelCollectionForResubmit(
+function stubChannelCollection(
 	containerRuntime: ContainerRuntime_WithPrivates,
 ): Sinon.SinonStubbedInstance<ChannelCollection> {
 	// Pass data store op right back to ContainerRuntime
 	const reSubmitFake = sandbox
 		.stub<[type: string, content: unknown, localOpMetadata: unknown, squash: boolean], void>()
 		.callsFake((type: string, content: unknown, localOpMetadata: unknown, squash: boolean) => {
-			// content is expected to be an IEnvelope, but the stub expects 'unknown'
 			const envelope = content as IEnvelope;
 			submitDataStoreOp(
 				containerRuntime,
@@ -195,9 +188,10 @@ function stubChannelCollectionForResubmit(
 			);
 		});
 
-	const stub = createStubInstance(ChannelCollection, {
+	const stub = Sinon.createStubInstance(ChannelCollection, {
 		setConnectionState: sandbox.stub(),
 		reSubmit: reSubmitFake,
+		rollback: sandbox.stub(),
 		notifyStagingMode: sandbox.stub(),
 		dispose: sandbox.stub(),
 	});
@@ -218,14 +212,14 @@ describe("Runtime", () => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = Sinon.useFakeTimers();
 	});
 
 	beforeEach(() => {
 		submittedOps = [];
 		opFakeSequenceNumber = 1;
 		submittedSignals = [];
-		sandbox = createSandbox();
+		sandbox = Sinon.createSandbox();
 	});
 
 	afterEach(() => {
@@ -438,7 +432,7 @@ describe("Runtime", () => {
 						provideEntryPoint: mockProvideEntryPoint,
 					})) as unknown as ContainerRuntime_WithPrivates;
 
-					stubChannelCollectionForResubmit(containerRuntime);
+					stubChannelCollection(containerRuntime);
 
 					changeConnectionState(containerRuntime, false, mockClientId);
 
@@ -810,7 +804,7 @@ describe("Runtime", () => {
 					});
 
 					it("Resubmitting batch preserves original batches", async () => {
-						stubChannelCollectionForResubmit(containerRuntime);
+						stubChannelCollection(containerRuntime);
 
 						changeConnectionState(containerRuntime, false, fakeClientId);
 
@@ -933,7 +927,7 @@ describe("Runtime", () => {
 					});
 
 					it("orderSequentially while in StagingMode works", async () => {
-						stubChannelCollectionForResubmit(containerRuntime);
+						stubChannelCollection(containerRuntime);
 
 						const stageControls = containerRuntime.enterStagingMode();
 
@@ -955,30 +949,33 @@ describe("Runtime", () => {
 						);
 					});
 
-					it("Exiting staging mode (commit) under orderSequentially fails (exact behavior unspecified)", async () => {
-						stubChannelCollectionForResubmit(containerRuntime);
+					// The purpose of these tests is to illustrate the current behavior of this unspecified scenario
+					describe("Exiting staging mode under orderSequentially - expected behavior has not been specified", () => {
+						it("commitChanges under orderSequentially (happens to fail)", async () => {
+							stubChannelCollection(containerRuntime);
 
-						const stageControls = containerRuntime.enterStagingMode();
+							const stageControls = containerRuntime.enterStagingMode();
 
-						assert.throws(() => {
-							containerRuntime.orderSequentially(() => {
-								submitDataStoreOp(containerRuntime, "1", "test");
-								stageControls.commitChanges();
+							assert.throws(() => {
+								containerRuntime.orderSequentially(() => {
+									submitDataStoreOp(containerRuntime, "1", "test");
+									stageControls.commitChanges();
+								});
 							});
-						}, "Exiting existing Staging Mode under orderSequentially should throw");
-					});
+						});
 
-					it("Exiting staging mode (discard) under orderSequentially fails (exact behavior unspecified)", async () => {
-						stubChannelCollectionForResubmit(containerRuntime);
+						it("discardChanges under orderSequentially (does not happen to fail)", async () => {
+							stubChannelCollection(containerRuntime);
 
-						const stageControls = containerRuntime.enterStagingMode();
+							const stageControls = containerRuntime.enterStagingMode();
 
-						assert.throws(() => {
-							containerRuntime.orderSequentially(() => {
-								submitDataStoreOp(containerRuntime, "1", "test");
-								stageControls.discardChanges();
+							assert.doesNotThrow(() => {
+								containerRuntime.orderSequentially(() => {
+									submitDataStoreOp(containerRuntime, "1", "test");
+									stageControls.discardChanges();
+								});
 							});
-						}, "Exiting existing Staging Mode under orderSequentially should throw");
+						});
 					});
 
 					it("Entering Staging Mode under orderSequentially not supported", async () => {
@@ -3248,7 +3245,7 @@ describe("Runtime", () => {
 			it("ignores signals sent before disconnect and resets stats on reconnect", () => {
 				// Define resubmit and setConnectionState on channel collection
 				// This is needed to submit test data store ops
-				stubChannelCollectionForResubmit(containerRuntime);
+				stubChannelCollection(containerRuntime);
 
 				sendSignals(4);
 
@@ -3304,7 +3301,7 @@ describe("Runtime", () => {
 				// SETUP - define resubmit and setConnectionState on channel collection.
 				// This is needed to submit test data store ops. Once defined, submit a test data store op
 				// so that message is queued in PendingStateManager and reconnect count is increased.
-				stubChannelCollectionForResubmit(containerRuntime);
+				stubChannelCollection(containerRuntime);
 				// Send and process an initial signal to prime the system.
 				submitDataStoreOp(containerRuntime, "1", "test");
 				sendSignals(1); // 1st signal (#1)
@@ -4191,10 +4188,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		//* ONLY
-		//* ONLY
-		//* ONLY
-		describe.only("Staging Mode", () => {
+		describe("Staging Mode", () => {
 			let containerRuntime: ContainerRuntime_WithPrivates;
 
 			beforeEach("init", async () => {
@@ -4299,11 +4293,11 @@ describe("Runtime", () => {
 				);
 			});
 
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			it.only("commitChanges submits staged ops", () => {
-				const channelCollectionStub = stubChannelCollectionForResubmit(containerRuntime);
+			it("commitChanges submits staged ops", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+
+				// Won't be resubmitted when exiting staging mode
+				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
 
 				const controls = containerRuntime.enterStagingMode();
 				assert(
@@ -4311,22 +4305,27 @@ describe("Runtime", () => {
 					"Expected notifyStagingMode to be called with true",
 				);
 
-				submitDataStoreOp(containerRuntime, "1", "staged-op");
-				// staged ops should not yet have hit submitFn
-				assert.equal(submittedOps.length, 0, "No ops expected while staged");
+				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
+				// but not the staged op (even with flush)
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				containerRuntime.flush();
+				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
 
-				// No args - squash should be false by default
 				controls.commitChanges();
 
-				//* Also test where true is passed?
 				assert(
-					channelCollectionStub.reSubmit.calledOnceWith(
-						match.any,
-						match.any,
-						match.any,
-						false,
+					channelCollectionStub.reSubmit.calledOnce,
+					"Expected reSubmit to be called once. Prestaging op should not be resubmitted",
+				);
+				assert(
+					channelCollectionStub.reSubmit.calledWithExactly(
+						"component",
+						{ address: "2", contents: "staged-op" },
+						"LOCAL_OP_METADATA",
+						/* squash: */ false, // False by default on commitChanges
 					),
-					"Expected squash to be false by default",
+					"Unexpected args for reSubmit",
 				);
 				assert(
 					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
@@ -4335,21 +4334,40 @@ describe("Runtime", () => {
 
 				assert.equal(
 					submittedOps.length,
-					1,
+					2,
 					"Staged op should be resubmitted after commitChanges",
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				assert.equal(submittedOps[0].contents.address, "1");
+				assert.equal(submittedOps[1].contents.address, "2", "Unexpected staged op address");
 			});
 
 			it("discardChanges drops staged ops", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+
 				const controls = containerRuntime.enterStagingMode();
 
-				submitDataStoreOp(containerRuntime, "2", "staged-op");
+				submitDataStoreOp(containerRuntime, "1", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				containerRuntime.flush();
 				assert.equal(submittedOps.length, 0, "No ops expected while staged");
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty");
 
 				controls.discardChanges();
-				containerRuntime.flush();
+
+				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
+				assert.deepEqual(
+					channelCollectionStub.rollback.getCalls().map((call) => call.args),
+					[
+						// LIFO order for rolling back
+						["component", { address: "2", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+						["component", { address: "1", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+					],
+					"Unexpected args for rollback",
+				);
+				assert(
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
+					"Expected notifyStagingMode to be called with false on the second call",
+				);
 
 				assert.equal(
 					submittedOps.length,
