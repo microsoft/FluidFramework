@@ -11,33 +11,34 @@ import type { Off } from "@fluidframework/core-interfaces";
 import type {
 	DeepReadonly,
 	JsonDeserialized,
+	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 import type { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+// eslint-disable-next-line import/no-internal-modules
+import { getPresence, StateFactory } from "@fluidframework/presence/beta";
+import type {
+	Attendee,
+	InternalTypes,
+	Latest,
+	LatestClientData,
+	LatestData,
+	LatestMap,
+	LatestMapClientData,
+	Presence,
+	ProxiedValueAccessor,
+	StateSchemaValidator,
+	StatesWorkspace,
+	WorkspaceAddress,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/presence/beta";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type {
 	TinyliciousClient,
 	TinyliciousContainerServices,
 	TinyliciousUser,
 } from "@fluidframework/tinylicious-client";
-
-import {
-	ExperimentalPresenceManager,
-	getPresenceViaDataObject,
-	type ExperimentalPresenceDO,
-} from "../datastorePresenceManagerFactory.js";
-import type { InternalTypes } from "../exposedInternalTypes.js";
-import type { LatestMap, LatestMapClientData } from "../latestMapValueManager.js";
-import type { Latest } from "../latestValueManager.js";
-import type {
-	LatestClientData,
-	LatestData,
-	ProxiedValueAccessor,
-	StateSchemaValidator,
-} from "../latestValueTypes.js";
-import type { Attendee, Presence } from "../presence.js";
-import { StateFactory } from "../stateFactory.js";
-import type { StatesWorkspace, WorkspaceAddress } from "../types.js";
+import { SharedTree } from "fluid-framework";
 
 import { createTinyliciousClient } from "./TinyliciousClientFactory.js";
 import { type ValidatorSpy, createSpiedValidator, createNullValidator } from "./testUtils.js";
@@ -200,7 +201,7 @@ describe(`Presence with TinyliciousClient`, () => {
 		const client = createTinyliciousClient(user.id, user.name, scopes);
 		const schema: ContainerSchema = {
 			initialObjects: {
-				presence: ExperimentalPresenceManager,
+				appState: SharedTree,
 			},
 		};
 		let container: IFluidContainer;
@@ -229,9 +230,7 @@ describe(`Presence with TinyliciousClient`, () => {
 			"Container is not attached after attach is called",
 		);
 
-		const presence = getPresenceViaDataObject(
-			container.initialObjects.presence as ExperimentalPresenceDO,
-		);
+		const presence = getPresence(container);
 		return {
 			client,
 			container,

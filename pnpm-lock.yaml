@@ -13294,12 +13294,6 @@ importers:
       '@fluidframework/aqueduct':
         specifier: workspace:~
         version: link:../../../framework/aqueduct
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../azure-client
-      '@fluidframework/azure-client-legacy':
-        specifier: npm:@fluidframework/azure-client@^1.2.0
-        version: '@fluidframework/azure-client@1.2.0(encoding@0.1.13)'
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../../common/container-definitions
@@ -13309,51 +13303,33 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../../common/core-interfaces
-      '@fluidframework/counter':
+      '@fluidframework/driver-definitions':
         specifier: workspace:~
-        version: link:../../../dds/counter
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../runtime/datastore-definitions
+        version: link:../../../common/driver-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../framework/fluid-static
-      '@fluidframework/map':
-        specifier: workspace:~
-        version: link:../../../dds/map
-      '@fluidframework/map-legacy':
-        specifier: npm:@fluidframework/map@^1.4.0
-        version: '@fluidframework/map@1.4.0'
-      '@fluidframework/matrix':
-        specifier: workspace:~
-        version: link:../../../dds/matrix
       '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../framework/presence
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../../runtime/runtime-definitions
-      '@fluidframework/sequence':
-        specifier: workspace:~
-        version: link:../../../dds/sequence
-      '@fluidframework/telemetry-utils':
-        specifier: workspace:~
-        version: link:../../../utils/telemetry-utils
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../runtime/test-runtime-utils
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../../test/test-utils
-      '@fluidframework/tree':
+      '@fluidframework/tinylicious-client':
         specifier: workspace:~
-        version: link:../../../dds/tree
-      axios:
-        specifier: ^1.8.4
-        version: 1.8.4(debug@4.4.0)
+        version: link:../../tinylicious-client
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../framework/fluid-framework
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -13382,18 +13358,12 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.55.0
         version: 0.55.0(@types/node@18.19.67)
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../common/driver-definitions
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.4
         version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
-      '@types/nock':
-        specifier: ^9.3.0
-        version: 9.3.1
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
@@ -13409,9 +13379,6 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      nock:
-        specifier: ^13.3.3
-        version: 13.5.6
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
