@@ -174,6 +174,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
@@ -190,11 +191,13 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.redoOperation();
 							}
@@ -228,6 +231,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
@@ -244,11 +248,13 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.redoOperation();
 							}
@@ -284,6 +290,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								stack.undoOperation();
 							}
@@ -306,6 +313,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								stack.redoOperation();
 							}
@@ -342,6 +350,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
@@ -358,11 +367,13 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.redoOperation();
 							}
@@ -396,6 +407,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
@@ -412,11 +424,13 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.redoOperation();
 							}
@@ -452,6 +466,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								stack.undoOperation();
 							}
@@ -469,12 +484,13 @@ describe("SharedMatrix execution time", () => {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-
+							assert.equal(stack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								stack.undoOperation();
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								stack.redoOperation();
 							}
@@ -505,7 +521,7 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
 						initialValue: matrixValue,
-						setupOperation: (matrix, stack) => {
+						setupOperation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -514,6 +530,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
 								stack.undoOperation();
 							}
@@ -533,12 +550,13 @@ describe("SharedMatrix execution time", () => {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-
+							assert.equal(stack.undoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
 								stack.undoOperation();
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
 								stack.redoOperation();
 							}
@@ -572,6 +590,7 @@ describe("SharedMatrix execution time", () => {
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
@@ -588,11 +607,13 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
 							}
+							assert.equal(stack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.undoOperation();
 							}
 						},
 						stackOperation: (stack) => {
+							assert.equal(stack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								stack.redoOperation();
 							}
