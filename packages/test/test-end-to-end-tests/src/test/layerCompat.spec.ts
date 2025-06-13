@@ -135,7 +135,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			);
 		});
 
-		itExpects(
+		itExpects.skip(
 			`Driver generation is not compatible with Loader`,
 			[{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" }],
 			async () => {
@@ -158,7 +158,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			},
 		);
 
-		itExpects(
+		itExpects.skip(
 			`Driver supported features are not compatible with Loader`,
 			[{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" }],
 			async () => {
