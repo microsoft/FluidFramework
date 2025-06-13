@@ -18,12 +18,12 @@ import {
 	attendeeId1,
 } from "./testUtils.js";
 
+import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 import type {
 	LatestRaw,
 	LatestMapRaw,
 	NotificationsManager,
 } from "@fluidframework/presence/alpha";
-import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
 

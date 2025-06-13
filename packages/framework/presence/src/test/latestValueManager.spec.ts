@@ -11,6 +11,7 @@ import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
+import { StateFactory } from "@fluidframework/presence/beta";
 import type {
 	BroadcastControlSettings,
 	Latest,
@@ -19,7 +20,6 @@ import type {
 	Presence,
 	RawValueAccessor,
 } from "@fluidframework/presence/beta";
-import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 

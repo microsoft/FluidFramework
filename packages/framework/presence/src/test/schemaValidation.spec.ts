@@ -9,11 +9,14 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
+import type { InternalTypes } from "../exposedInternalTypes.js";
 import { toOpaqueJson } from "../internalUtils.js";
-import type { LatestMap, LatestMapArguments } from "../latestMapValueManager.js";
+import type { LatestMap } from "../latestMapValueManager.js";
+import type { Latest } from "../latestValueManager.js";
 import type { ProxiedValueAccessor, StateSchemaValidator } from "../latestValueTypes.js";
 import type { createPresenceManager } from "../presenceManager.js";
 import { StateFactory } from "../stateFactory.js";
+import type { StatesWorkspace } from "../types.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
@@ -27,9 +30,6 @@ import {
 	prepareConnectedPresence,
 	type ValidatorSpy,
 } from "./testUtils.js";
-import type { InternalTypes } from "../exposedInternalTypes.js";
-import type { StatesWorkspace } from "../types.js";
-import type { Latest } from "../latestValueManager.js";
 
 const systemWorkspace = {
 	"system:presence": {
