@@ -79,6 +79,8 @@ export class FieldKindWithEditor<
 			isNeverField(policy, originalData, {
 				kind: this.identifier,
 				types: originalTypes,
+				// Metadata is not used for this check.
+				persistedMetadata: undefined,
 			})
 		) {
 			return true;

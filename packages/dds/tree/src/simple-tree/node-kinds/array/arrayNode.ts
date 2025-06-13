@@ -54,6 +54,7 @@ import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 } from "./arrayNodeTypes.js";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -1082,6 +1083,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
  * @param name - Unique identifier for this schema including the factory's scope.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
@@ -1095,6 +1097,7 @@ export function arraySchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ) {
 	type Output = ArrayNodeCustomizableSchema<
 		TName,
@@ -1190,6 +1193,8 @@ export function arraySchema<
 			return lazyChildTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
