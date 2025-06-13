@@ -32,7 +32,7 @@ Additionally, the structure of `ListNode` has been updated to utilize `ListItemN
 
 ### `FencedCodeBlockNode` updated to only allow plain text and line breaks
 
-This matches the requirements for fenced code in Markdown, and is all that was required by the system.
+This matches the requirements for fenced code in Markdown and is all that was required by the system.
 
 ### `BlockQuoteNode` was removed
 
