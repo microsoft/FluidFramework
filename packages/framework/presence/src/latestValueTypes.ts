@@ -168,7 +168,7 @@ export function createValidatedGetter<T>(
 			validator === undefined
 				? // No validator, so use the raw value
 					clientState.value
-				: clientState.validated === true
+				: "validatedValue" in clientState
 					? // Stored value has been validated, so return it without revalidating
 						clientState.validatedValue
 					: // Use false to signal that value needs to be validated
@@ -185,7 +185,6 @@ export function createValidatedGetter<T>(
 		const validData: T | undefined = validator!(
 			clientState.value === undefined ? undefined : revealOpaqueJson(clientState.value),
 		);
-		clientState.validated = true;
 		clientState.validatedValue =
 			// @ts-expect-error Argument of type 'T & ({} | null)' is not assignable to parameter of type
 			validData === undefined ? undefined : toOpaqueJson(validData);

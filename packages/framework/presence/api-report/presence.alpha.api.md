@@ -132,7 +132,6 @@ export namespace InternalTypes {
         rev: number;
         // (undocumented)
         timestamp: number;
-        validated?: boolean;
     }
 }
 

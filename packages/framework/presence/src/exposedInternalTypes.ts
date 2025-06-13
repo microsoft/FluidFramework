@@ -20,11 +20,6 @@ export namespace InternalTypes {
 	export interface ValueStateMetadata {
 		rev: number;
 		timestamp: number;
-
-		/**
-		 * Will be true if the value has been validated.
-		 */
-		validated?: boolean;
 	}
 
 	/**
