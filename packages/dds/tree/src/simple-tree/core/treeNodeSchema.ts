@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeLeafValue } from "../schemaTypes.js";
+import type { AllowedTypeMetadata, TreeLeafValue } from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
 import type { TreeNode } from "./treeNode.js";
@@ -61,6 +61,21 @@ export type TreeNodeSchema<
 			never,
 			TCustomMetadata
 	  >;
+
+/**
+ * Stores annotations for an individual allowed type that has been evaluated.
+ * @alpha @sealed
+ */
+export interface AnnotatedAllowedSchema {
+	/**
+	 * Annotations for the allowed type.
+	 */
+	readonly metadata: AllowedTypeMetadata;
+	/**
+	 * The allowed type the annotations apply to in a particular schema.
+	 */
+	readonly type: TreeNodeSchema;
+}
 
 /**
  * Schema which is not a class.
@@ -314,6 +329,46 @@ export interface TreeNodeSchemaCore<
 	 * @sealed @system
 	 */
 	createFromInsertable(data: TInsertable): Unhydrated<TreeNode | TreeLeafValue>;
+}
+
+/**
+ * {@link TreeNodeSchemaCore} extended with some non-exported APIs.
+ */
+export interface TreeNodeSchemaCorePrivate<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TCustomMetadata = unknown,
+> extends TreeNodeSchemaCore<
+		Name,
+		Kind,
+		ImplicitlyConstructable,
+		Info,
+		TInsertable,
+		TCustomMetadata
+	> {
+	/**
+	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
+	 * with a particular schema.
+	 *
+	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
+	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
+	 * This property is simply re-exposing that information in an easier to traverse format consistent across all node kinds.
+	 * @remarks
+	 * Some kinds of nodes may have additional restrictions on children:
+	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this set.
+	 *
+	 * @privateRemarks
+	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
+	 * @system
+	 */
+	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[];
 }
 
 /**

@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type {
+	AnnotatedAllowedSchema,
+	TreeNodeSchema,
+	TreeNodeSchemaCorePrivate,
+} from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
@@ -18,7 +22,12 @@ export function walkNodeSchema(
 	}
 	visitedSet.add(schema);
 
-	walkAllowedTypes(schema.childTypes, visitor, visitedSet);
+	walkAllowedTypes(
+		(schema as unknown as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes ??
+			Array.from(schema.childTypes).map((type) => ({ type })),
+		visitor,
+		visitedSet,
+	);
 
 	// This visit is done at the end so the traversal order is most inner types first.
 	// This was picked since when fixing errors,
@@ -31,14 +40,18 @@ export function walkNodeSchema(
  * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
  */
 export function walkAllowedTypes(
-	allowedTypes: Iterable<TreeNodeSchema>,
+	annotatedAllowedTypes: Iterable<AnnotatedAllowedSchema>,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const childType of allowedTypes) {
-		walkNodeSchema(childType, visitor, visitedSet);
+	if (annotatedAllowedTypes[Symbol.iterator]().next().done === true) {
+		return;
 	}
-	visitor.allowedTypes?.(allowedTypes);
+
+	for (const annotatedAllowedType of annotatedAllowedTypes) {
+		walkNodeSchema(annotatedAllowedType.type, visitor, visitedSet);
+	}
+	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
 
 /**
@@ -55,5 +68,5 @@ export interface SchemaVisitor {
 	 *
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
-	allowedTypes?: (allowedTypes: Iterable<TreeNodeSchema>) => void;
+	allowedTypes?: (allowedTypes: Iterable<AnnotatedAllowedSchema>) => void;
 }

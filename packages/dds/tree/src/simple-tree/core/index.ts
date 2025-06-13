@@ -26,11 +26,13 @@ export {
 } from "./treeNode.js";
 export {
 	type TreeNodeSchema,
+	type TreeNodeSchemaCorePrivate,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
+	type AnnotatedAllowedSchema,
 } from "./treeNodeSchema.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";

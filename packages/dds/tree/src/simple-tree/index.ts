@@ -8,6 +8,7 @@ export {
 	typeSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
+	type AnnotatedAllowedSchema,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,

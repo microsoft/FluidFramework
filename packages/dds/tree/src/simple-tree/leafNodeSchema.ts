@@ -12,7 +12,12 @@ import {
 	valueSchemaAllows,
 } from "../feature-libraries/index.js";
 
-import { NodeKind, type TreeNodeSchema, type TreeNodeSchemaNonClass } from "./core/index.js";
+import {
+	NodeKind,
+	type AnnotatedAllowedSchema,
+	type TreeNodeSchema,
+	type TreeNodeSchemaNonClass,
+} from "./core/index.js";
 import type { NodeSchemaMetadata, TreeLeafValue } from "./schemaTypes.js";
 import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 
@@ -33,6 +38,7 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 	public readonly info: T;
 	public readonly implicitlyConstructable = true as const;
 	public readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+	public readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[] = [];
 
 	public create(data: TreeValue<T> | FlexTreeNode): TreeValue<T> {
 		if (isFlexTreeNode(data)) {
