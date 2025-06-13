@@ -2254,6 +2254,7 @@ describe("Runtime", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2302,6 +2303,7 @@ describe("Runtime", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2376,6 +2378,7 @@ describe("Runtime", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,

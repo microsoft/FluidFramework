@@ -767,6 +767,7 @@ describe("Pending State Manager", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
 				},
 				{
 					type: "message",
@@ -775,6 +776,7 @@ describe("Pending State Manager", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					runtimeOp: undefined,
 				},
 			];
 
@@ -960,6 +962,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 			{
 				type: "message",
@@ -968,6 +971,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 			{
 				type: "message",
@@ -976,6 +980,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 			{
 				type: "message",
@@ -984,6 +989,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 		];
 		const forFlushedMessages = forInitialMessages.map<LocalBatchMessage>(
