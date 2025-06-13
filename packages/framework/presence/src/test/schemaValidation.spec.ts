@@ -147,7 +147,7 @@ describe("Presence", () => {
 				assert.equal(validatorSpy.callCount, 0);
 			});
 
-			it.only("getRemote does not call validator", () => {
+			it("getRemote does not call validator", () => {
 				// Setup
 				runtime.signalsExpected.push([
 					{
@@ -208,15 +208,15 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId1]: { "rev": 0, "timestamp": 1020, "value": attendeeId1 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										[attendeeId1]: {
+										[attendeeId2]: {
 											"rev": 1,
-											"timestamp": 1020,
-											"value": toOpaqueJson({ "num": 22 }),
+											"timestamp": 1030,
+											"value": toOpaqueJson({ "num": 11 }),
 										},
 									},
 								},
@@ -237,7 +237,7 @@ describe("Presence", () => {
 				const { count } = stateWorkspace.states;
 
 				// Act & Verify
-				count.local = { num: 22 };
+				count.local = { num: 11 };
 
 				const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
@@ -246,7 +246,7 @@ describe("Presence", () => {
 				const value = remoteData.value();
 
 				// Reading the data should cause the validator to get called once.
-				assert.equal(value?.num, 22);
+				assert.equal(value?.num, 11);
 				assert.equal(validatorSpy.callCount, 1);
 			});
 
@@ -254,22 +254,22 @@ describe("Presence", () => {
 				// Setup
 				runtime.signalsExpected.push([
 					{
-						type: "Pres:DatastoreUpdate",
-						content: {
+						"type": "Pres:DatastoreUpdate",
+						"content": {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId1]: { "rev": 0, "timestamp": 1020, "value": attendeeId1 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
 									"count": {
-										[attendeeId1]: {
+										[attendeeId2]: {
 											"rev": 1,
 											"timestamp": 1030,
-											"value": toOpaqueJson({ "num": 22 }),
+											"value": toOpaqueJson({ "num": 11 }),
 										},
 									},
 								},
@@ -288,7 +288,7 @@ describe("Presence", () => {
 				});
 
 				const { count } = stateWorkspace.states;
-				count.local = { num: 22 };
+				count.local = { num: 11 };
 
 				// Act & Verify
 				const attendee2 = presence.attendees.getAttendee(attendeeId2);
@@ -297,11 +297,11 @@ describe("Presence", () => {
 				const remoteData = count.getRemote(attendee2);
 
 				// Reading the data should cause the validator to get called once.
-				assert.equal(remoteData.value()?.num, 22);
+				assert.equal(remoteData.value()?.num, 11);
 				assert.equal(validatorSpy.callCount, 1);
 
 				// Subsequent reads should not call the validator when there is no new data.
-				assert.equal(remoteData.value()?.num, 22);
+				assert.equal(remoteData.value()?.num, 11);
 				assert.equal(validatorSpy.callCount, 1);
 			});
 
@@ -316,7 +316,7 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1020, "value": attendeeId2 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
