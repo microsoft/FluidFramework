@@ -1680,7 +1680,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public processSetMessage(
 		msg: ISequencedDocumentMessage,
 		op: IDirectorySetOperation,
-		context: ILocalValue | undefined,
+		localValue: ILocalValue | undefined,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
@@ -1695,9 +1695,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// needProcessStorageOperation should have returned false if local is true
-		// so we can assume context is not undefined
+		// so we can assume localValue is not undefined
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.setCore(op.key, context!, local);
+		this.setCore(op.key, localValue!, local);
 	}
 
 	/**
