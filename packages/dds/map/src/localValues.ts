@@ -33,8 +33,6 @@ export const makeSerialized = (
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): ISerializedValue => {
-	// Stringify to convert to the serialized handle values - and then parse in order to create
-	// a POJO for the op
 	const serializedValue = serializeHandles(value, serializer, bind);
 
 	return {
