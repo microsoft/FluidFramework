@@ -32,11 +32,6 @@ export class LinkNode implements DocumentationNode, Link {
 	public readonly type = "link";
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = true;
-
-	/**
 	 * {@inheritDoc DocumentationNode.isLiteral}
 	 */
 	public readonly isLiteral = false;

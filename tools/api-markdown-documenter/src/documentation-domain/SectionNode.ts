@@ -61,13 +61,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 	 */
 	public static readonly Empty = new SectionNode([]);
 
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
 	public constructor(children: SectionContent[], heading?: HeadingNode) {
 		super(children);
 
