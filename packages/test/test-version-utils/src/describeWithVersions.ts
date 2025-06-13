@@ -3,15 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getUnexpectedLogErrorException,
-	ITestObjectProvider,
-	TestObjectProvider,
-} from "@fluidframework/test-utils/internal";
+import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 import { driver, odspEndpointName, r11sEndpointName, tenantIndex } from "./compatOptions.js";
 import { getVersionedTestObjectProvider } from "./compatUtils.js";
-import { ITestObjectProviderOptions } from "./describeCompat.js";
+import {
+	createTestObjectProviderLifecycleHooks,
+	ITestObjectProviderOptions,
+} from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
 
@@ -74,13 +73,11 @@ function createTestSuiteWithInstalledVersion(
 	timeoutMs: number = defaultTimeoutMs,
 ) {
 	return function (this: Mocha.Suite) {
-		let provider: TestObjectProvider | undefined;
-		let resetAfterEach: boolean;
-		before("Create TestObjectProvider", async function () {
-			this.timeout(Math.max(defaultTimeoutMs, timeoutMs));
-
+		const providerFactory = async (): Promise<ITestObjectProvider> => {
 			await installRequiredVersions(requiredVersions);
-			provider = await getVersionedTestObjectProvider(
+			// Awaiting the return gives a clearer stack trace.
+			// eslint-disable-next-line @typescript-eslint/return-await
+			return await getVersionedTestObjectProvider(
 				pkgVersion, // baseVersion
 				pkgVersion, // loaderVersion
 				{
@@ -94,62 +91,23 @@ function createTestSuiteWithInstalledVersion(
 				pkgVersion, // runtimeVersion
 				pkgVersion, // dataRuntimeVersion
 			);
+		};
 
-			Object.defineProperty(this, "__fluidTestProvider", {
-				get: () => provider,
-				configurable: true,
-			});
-		});
+		let resetAfterEach: boolean = true;
+		const getProvider = createTestObjectProviderLifecycleHooks(
+			providerFactory,
+			() => resetAfterEach,
+			Math.max(defaultTimeoutMs, timeoutMs),
+		);
 
 		tests.bind(this)((options?: ITestObjectProviderOptions) => {
 			resetAfterEach = options?.resetAfterEach ?? true;
-			if (provider === undefined) {
-				throw new Error("Expected provider to be set up by before hook");
-			}
-
+			const provider = getProvider();
 			if (options?.syncSummarizer === true) {
 				provider.resetLoaderContainerTracker(true /* syncSummarizerClients */);
 			}
 
 			return provider;
-		});
-
-		afterEach("Reset TestObjectProvider", () => {
-			if (provider === undefined) {
-				throw new Error("Expected provider to be set up by before hook");
-			}
-			if (resetAfterEach) {
-				provider.reset();
-			}
-		});
-
-		afterEach("Verify Container Telemetry", function (done: Mocha.Done) {
-			if (provider === undefined) {
-				throw new Error("Expected provider to be set up by before hook");
-			}
-			const logErrors = getUnexpectedLogErrorException(provider.tracker);
-			// if the test failed for another reason
-			// then we don't need to check errors
-			// and fail the after each as well
-			if (this.currentTest?.state === "passed") {
-				done(logErrors);
-			} else {
-				done();
-			}
-		});
-
-		// See remarks in `createCompatSuite` for cleanup justification + tips on debugging memory leaks
-		after("Cleanup TestObjectProvider", function () {
-			if (provider === undefined) {
-				throw new Error("Expected provider to be set up by before hook");
-			}
-			provider.driver.dispose?.();
-			provider = undefined;
-			Object.defineProperty(this, "__fluidTestProvider", {
-				get: () => {
-					throw new Error("Attempted to use __fluidTestProvider after test suite disposed.");
-				},
-			});
 		});
 	};
 }
