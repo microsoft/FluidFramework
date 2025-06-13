@@ -12,7 +12,6 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 import { toOpaqueJson } from "../internalUtils.js";
 import type { LatestMapArguments } from "../latestMapValueManager.js";
 import type { StateSchemaValidator } from "../latestValueTypes.js";
-import type { AttendeeId } from "../presence.js";
 import type { createPresenceManager } from "../presenceManager.js";
 import { StateFactory } from "../stateFactory.js";
 
@@ -366,8 +365,36 @@ describe("Presence", () => {
 			let validatorSpy: ValidatorSpy;
 
 			beforeEach(() => {
-				// Ignore submitted signals
-				runtime.submitSignal = () => {};
+				runtime.signalsExpected.push([
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							"sendTimestamp": 1030,
+							"avgLatency": 10,
+							"data": {
+								"system:presence": {
+									"clientToSessionId": {
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
+									},
+								},
+								"s:name:testStateWorkspace": {
+									count: {
+										[attendeeId2]: {
+											rev: 0,
+											items: {
+												key1: {
+													rev: 0,
+													timestamp: 1030,
+													value: toOpaqueJson({ "num": 0 }),
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				]);
 
 				[validatorFunction, validatorSpy] = createSpiedValidator<{ num: number }>(
 					createNullValidator(),
@@ -387,15 +414,20 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId1]: { "rev": 0, "timestamp": 1020, "value": attendeeId1 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId1]: {
-											"rev": 0,
-											"timestamp": 1030,
-											"value": toOpaqueJson({ "key1": { "num": 84 } }),
+									count: {
+										[attendeeId2]: {
+											rev: 1,
+											items: {
+												key1: {
+													rev: 1,
+													timestamp: 1030,
+													value: toOpaqueJson({ "num": 84 }),
+												},
+											},
 										},
 									},
 								},
@@ -439,15 +471,20 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId1]: { "rev": 0, "timestamp": 1020, "value": attendeeId1 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId1]: {
-											"rev": 0,
-											"timestamp": 1030,
-											"value": toOpaqueJson({ "key1": { "num": 22 } }),
+									count: {
+										[attendeeId2]: {
+											rev: 1,
+											items: {
+												key1: {
+													rev: 1,
+													timestamp: 1030,
+													value: toOpaqueJson({ "num": 84 }),
+												},
+											},
 										},
 									},
 								},
@@ -468,13 +505,13 @@ describe("Presence", () => {
 				const { count } = stateWorkspace.states;
 
 				// Act & Verify
-				count.local.set("key1", { num: 22 });
+				count.local.set("key1", { num: 84 });
 
 				const attendee2 = presence.attendees.getAttendee(attendeeId2);
 				const mapData = count.getRemote(attendee2);
 
 				// Reading an individual map item's value should cause the validator to get called once.
-				assert.equal(mapData.get("key1")?.value()?.num, 22);
+				assert.equal(mapData.get("key1")?.value()?.num, 84);
 				assert.equal(validatorSpy.callCount, 1);
 			});
 
@@ -489,15 +526,20 @@ describe("Presence", () => {
 							"data": {
 								"system:presence": {
 									"clientToSessionId": {
-										[connectionId1]: { "rev": 0, "timestamp": 1020, "value": attendeeId1 },
+										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
 									},
 								},
 								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId1]: {
-											"rev": 0,
-											"timestamp": 1030,
-											"value": toOpaqueJson({ "key1": { "num": 11 } }),
+									count: {
+										[attendeeId2]: {
+											rev: 1,
+											items: {
+												key1: {
+													rev: 1,
+													timestamp: 1030,
+													value: toOpaqueJson({ "num": 84 }),
+												},
+											},
 										},
 									},
 								},
@@ -516,7 +558,7 @@ describe("Presence", () => {
 				});
 
 				const { count } = stateWorkspace.states;
-				count.local.set("key1", { num: 11 });
+				count.local.set("key1", { num: 84 });
 
 				const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
@@ -531,7 +573,7 @@ describe("Presence", () => {
 				keyData = remoteData.get("key1")?.value();
 				keyData = remoteData.get("key1")?.value();
 				assert.equal(validatorSpy.callCount, 1);
-				assert.equal(keyData?.num, 11);
+				assert.equal(keyData?.num, 84);
 			});
 		});
 	});
