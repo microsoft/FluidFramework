@@ -352,7 +352,7 @@ export class MapKernel {
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializableMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = makeSerialized(localValue, serializer, this.handle);
+			serializableMapData[key] = makeSerialized(localValue.value, serializer, this.handle);
 		}
 		return serializableMapData;
 	}

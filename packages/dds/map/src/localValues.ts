@@ -40,7 +40,7 @@ export function makeSerializable(
 	bind: IFluidHandle,
 	// eslint-disable-next-line import/no-deprecated
 ): ISerializableValue {
-	const value = makeSerialized(localValue, serializer, bind);
+	const value = makeSerialized(localValue.value, serializer, bind);
 	return {
 		type: value.type,
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -52,13 +52,13 @@ export function makeSerializable(
  * Convert a local value to its serialized form.
  */
 export const makeSerialized = (
-	value: ILocalValue,
+	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
 ): ISerializedValue => {
 	// Stringify to convert to the serialized handle values - and then parse in order to create
 	// a POJO for the op
-	const serializedValue = serializeHandles(value.value, serializer, bind);
+	const serializedValue = serializeHandles(value, serializer, bind);
 
 	return {
 		type: ValueType[ValueType.Plain],

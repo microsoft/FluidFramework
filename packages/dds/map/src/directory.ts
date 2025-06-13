@@ -1955,7 +1955,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): Generator<[string, ISerializedValue], void> {
 		this.throwIfDisposed();
 		for (const [key, localValue] of this._storage) {
-			const value = makeSerialized(localValue, serializer, this.directory.handle);
+			const value = makeSerialized(localValue.value, serializer, this.directory.handle);
 			const res: [string, ISerializedValue] = [key, value];
 			yield res;
 		}
