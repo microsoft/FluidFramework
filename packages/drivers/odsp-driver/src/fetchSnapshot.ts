@@ -246,6 +246,9 @@ async function redeemSharingLink(
 					headers.prefer = "redeemSharingLink";
 					if (isNonDurableRedeem) {
 						headers.prefer = "nonDurableRedeem";
+						logger.sendTelemetryEvent({
+							eventName: "NonDurableRedeemFallback",
+						});
 					}
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
