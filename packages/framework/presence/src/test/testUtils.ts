@@ -61,6 +61,10 @@ export const attendeeId2 = createSpecificAttendeeId("attendeeId-2");
 /**
  * Mock {@link ClientConnectionId}.
  */
+export const connectionId1 = "client1" as const satisfies ClientConnectionId;
+/**
+ * Mock {@link ClientConnectionId}.
+ */
 export const connectionId2 = "client2" as const satisfies ClientConnectionId;
 
 /**
