@@ -28,6 +28,14 @@ import {
 	type ValidatorSpy,
 } from "./testUtils.js";
 
+const systemWorkspace = {
+	"system:presence": {
+		"clientToSessionId": {
+			[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
+		},
+	},
+};
+
 describe("Presence", () => {
 	let runtime: MockEphemeralRuntime;
 	let logger: EventAndErrorTrackingLogger;
@@ -77,15 +85,7 @@ describe("Presence", () => {
 						sendTimestamp: clock.now - 50,
 						avgLatency: 50,
 						data: {
-							"system:presence": {
-								"clientToSessionId": {
-									[connectionId2]: {
-										"rev": 0,
-										"timestamp": 700,
-										"value": attendeeId2,
-									},
-								},
-							},
+							...systemWorkspace,
 						},
 						updateProviders: [connectionId2],
 					},
@@ -117,14 +117,10 @@ describe("Presence", () => {
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+							sendTimestamp: 1030,
+							avgLatency: 10,
+							data: {
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									"count": {
 										[attendeeId2]: {
@@ -155,11 +151,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									"count": {
 										[attendeeId2]: {
@@ -205,11 +197,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									"count": {
 										[attendeeId2]: {
@@ -258,11 +246,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									"count": {
 										[attendeeId2]: {
@@ -313,11 +297,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									"count": {
 										[attendeeId2]: {
@@ -363,7 +343,6 @@ describe("Presence", () => {
 		describe("LatestMapValueManager", () => {
 			let validatorFunction: StateSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
-
 			beforeEach(() => {
 				runtime.signalsExpected.push([
 					{
@@ -372,11 +351,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									count: {
 										[attendeeId2]: {
@@ -412,11 +387,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									count: {
 										[attendeeId2]: {
@@ -469,11 +440,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									count: {
 										[attendeeId2]: {
@@ -524,11 +491,7 @@ describe("Presence", () => {
 							"sendTimestamp": 1030,
 							"avgLatency": 10,
 							"data": {
-								"system:presence": {
-									"clientToSessionId": {
-										[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
-									},
-								},
+								...systemWorkspace,
 								"s:name:testStateWorkspace": {
 									count: {
 										[attendeeId2]: {
