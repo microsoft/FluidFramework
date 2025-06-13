@@ -21,12 +21,7 @@ import type {
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import {
-	getValueFromSerializable,
-	type ILocalValue,
-	makeSerializable,
-	makeSerialized,
-} from "./localValues.js";
+import { getValueFromSerializable, type ILocalValue, makeSerialized } from "./localValues.js";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -355,14 +350,6 @@ export class MapKernel {
 			serializedMapData[key] = makeSerialized(localValue.value, serializer, this.handle);
 		}
 		return serializedMapData;
-	}
-
-	public serialize(serializer: IFluidSerializer): string {
-		const serializableMapData: IMapDataObjectSerializable = {};
-		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
-		}
-		return JSON.stringify(serializableMapData);
 	}
 
 	/**
