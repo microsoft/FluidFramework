@@ -269,7 +269,7 @@ export class IncrementalFieldDecoder implements ChunkDecoder {
 		const chunks: TreeChunk[] = [];
 		for (const field of batch.data) {
 			const innerStream = { data: field, offset: 0 };
-			const result = anyDecoder.decode(decoders, innerStream);
+			const result = anyDecoder.decode(decoders, innerStream, getIncrementalFieldBatch);
 			assert(
 				innerStream.offset === innerStream.data.length,
 				0x73a /* expected decode to consume full stream */,
