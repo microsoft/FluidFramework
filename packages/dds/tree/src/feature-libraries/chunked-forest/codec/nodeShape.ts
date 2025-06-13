@@ -18,6 +18,7 @@ import { brand } from "../../../util/index.js";
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import { type BufferFormat, IdentifierToken, Shape } from "./chunkEncodingGeneric.js";
 import {
+	type BufferFormatIncremental,
 	type EncoderCache,
 	type FieldEncoder,
 	type KeyedFieldEncoder,
@@ -74,14 +75,14 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		outputBuffer: BufferFormatIncremental,
 	): void {
 		if (this.type === undefined) {
-			outputBuffer.push(new IdentifierToken(cursor.type));
+			outputBuffer.mainBuffer.push(new IdentifierToken(cursor.type));
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
+		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer.mainBuffer);
 		for (const fieldEncoder of this.specializedFieldEncoders) {
 			cursor.enterField(brand(fieldEncoder.key));
 			fieldEncoder.encoder.encodeField(cursor, cache, outputBuffer);
@@ -98,12 +99,16 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 					0x742 /* had extra local fields when shape does not support them */,
 				);
 				otherFieldsBuffer.push(new IdentifierToken(key));
-				this.otherFieldsEncoder.encodeField(cursor, cache, otherFieldsBuffer);
+				// Todo: Does this need its own incremental field buffers?
+				this.otherFieldsEncoder.encodeField(cursor, cache, {
+					mainBuffer: otherFieldsBuffer,
+					incrementalFieldBuffers: outputBuffer.incrementalFieldBuffers,
+				});
 			}
 		});
 
 		if (this.otherFieldsEncoder !== undefined) {
-			outputBuffer.push(otherFieldsBuffer);
+			outputBuffer.mainBuffer.push(otherFieldsBuffer);
 		}
 	}
 
