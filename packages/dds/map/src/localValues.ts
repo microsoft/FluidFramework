@@ -20,24 +20,11 @@ import type { ISerializableValue, ISerializedValue } from "./internalInterfaces.
  */
 export interface ILocalValue {
 	/**
-	 * Type indicator of the value stored within.
-	 */
-	readonly type: string;
-
-	/**
 	 * The in-memory value stored within.
 	 */
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly value: any;
-
-	/**
-	 * Retrieve the serialized form of the value stored within.
-	 * @param serializer - Data store runtime's serializer
-	 * @param bind - Container type's handle
-	 * @returns The serialized form of the contained value
-	 */
-	makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue;
 }
 
 /**
@@ -55,7 +42,7 @@ export function makeSerializable(
 	bind: IFluidHandle,
 	// eslint-disable-next-line import/no-deprecated
 ): ISerializableValue {
-	const value = localValue.makeSerialized(serializer, bind);
+	const value = makeSerialized(localValue, serializer, bind);
 	return {
 		type: value.type,
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -72,39 +59,31 @@ export class PlainLocalValue implements ILocalValue {
 	 * @param value - The value to store, which may contain shared object handles
 	 */
 	public constructor(public readonly value: unknown) {}
-
-	/**
-	 * {@inheritDoc ILocalValue."type"}
-	 */
-	public get type(): string {
-		return ValueType[ValueType.Plain];
-	}
-
-	/**
-	 * {@inheritDoc ILocalValue.makeSerialized}
-	 */
-	public makeSerialized(serializer: IFluidSerializer, bind: IFluidHandle): ISerializedValue {
-		// Stringify to convert to the serialized handle values - and then parse in order to create
-		// a POJO for the op
-		const value = serializeHandles(this.value, serializer, bind);
-
-		return {
-			type: this.type,
-			value,
-		};
-	}
 }
+
+/**
+ * Convert a local value to its serialized form.
+ */
+export const makeSerialized = (
+	value: ILocalValue,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
+): ISerializedValue => {
+	// Stringify to convert to the serialized handle values - and then parse in order to create
+	// a POJO for the op
+	const serializedValue = serializeHandles(value.value, serializer, bind);
+
+	return {
+		type: ValueType[ValueType.Plain],
+		value: serializedValue,
+	};
+};
 
 /**
  * Enables a container type {@link https://fluidframework.com/docs/build/dds/ | DDS} to produce and store local
  * values with minimal awareness of how those objects are stored, serialized, and deserialized.
  */
 export class LocalValueMaker {
-	/**
-	 * Create a new LocalValueMaker.
-	 */
-	public constructor() {}
-
 	/**
 	 * Create a new local value from an incoming serialized value.
 	 * @param serializable - The serializable value to make local
