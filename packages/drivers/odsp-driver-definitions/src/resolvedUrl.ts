@@ -95,6 +95,11 @@ export interface ShareLinkInfoType {
 	 * permission then this link can be redeemed for the permissions in the same network call.
 	 */
 	sharingLinkToRedeem?: string;
+
+	/**
+	 * If the redeem for the sharing link is non-durable, this flag will be set to true.
+	 */
+	doNonDurableRedeem?: boolean;
 }
 /**
  * @legacy
