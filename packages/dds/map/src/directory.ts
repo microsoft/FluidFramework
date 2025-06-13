@@ -767,7 +767,7 @@ export class SharedDirectory
 						this.serializer,
 						this.handle,
 					);
-					currentSubDir.populateStorage(key, { value });
+					currentSubDir.populateStorage(key, value);
 				}
 			}
 		}
@@ -1975,9 +1975,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param key - The key to populate
 	 * @param localValue - The local value to populate into it
 	 */
-	public populateStorage(key: string, localValue: ILocalValue): void {
+	public populateStorage(key: string, value: unknown): void {
 		this.throwIfDisposed();
-		this._storage.set(key, localValue);
+		this._storage.set(key, { value });
 	}
 
 	/**
