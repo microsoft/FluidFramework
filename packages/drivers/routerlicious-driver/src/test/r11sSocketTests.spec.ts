@@ -136,8 +136,8 @@ describe("R11s Socket Error Handling", () => {
 				);
 
 				// Use a promise to deterministically wait for the "disconnect" event.
-				const disconnectPromise = new Promise<IAnyDriverError>((resolve) => {
-					connection.on("disconnect", (reason) => resolve(reason as IAnyDriverError));
+				const disconnectPromise = new Promise<IAnyDriverError | undefined>((resolve) => {
+					connection.on("disconnect", (reason) => resolve(reason));
 				});
 
 				socket.sendErrorEvent(scenario.errorToThrow);
