@@ -49,17 +49,6 @@ export function makeSerializable(
 }
 
 /**
- * Manages a contained plain value.  May also contain shared object handles.
- */
-export class PlainLocalValue implements ILocalValue {
-	/**
-	 * Create a new PlainLocalValue.
-	 * @param value - The value to store, which may contain shared object handles
-	 */
-	public constructor(public readonly value: unknown) {}
-}
-
-/**
  * Convert a local value to its serialized form.
  */
 export const makeSerialized = (
@@ -100,5 +89,5 @@ export const fromSerializable = (
 		serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
 	}
 
-	return new PlainLocalValue(serializable.value);
+	return { value: serializable.value };
 };
