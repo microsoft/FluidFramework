@@ -201,15 +201,16 @@ export class PermutationVector extends Client {
 		posToAdjust: number,
 		op: ISequencedDocumentMessage,
 	): { pos: number | undefined; handle: Handle } {
-		const { segment, offset } = this.getContainingSegment<PermutationSegment>(posToAdjust, {
+		const segOff = this.getContainingSegment<PermutationSegment>(posToAdjust, {
 			referenceSequenceNumber: op.referenceSequenceNumber,
 			clientId: op.clientId,
 		});
 
 		assert(
-			segment !== undefined && offset !== undefined,
+			segOff !== undefined,
 			0xbac /* segment must be available for operations in the collab window */,
 		);
+		const { segment, offset } = segOff;
 
 		if (segmentIsRemoved(segment)) {
 			// this case is tricky. the segment which the row or column data is remove
@@ -471,7 +472,7 @@ export function reinsertSegmentIntoVector(
 
 	// (Re)insert the removed number of rows at the original position.
 	const op = vector.insertSegmentLocal(pos, original);
-	const inserted = vector.getContainingSegment(pos).segment as PermutationSegment;
+	const inserted = vector.getContainingSegment(pos)?.segment as PermutationSegment;
 
 	// we reuse the original handle here
 	// so if cells exist, they can be found, and re-inserted

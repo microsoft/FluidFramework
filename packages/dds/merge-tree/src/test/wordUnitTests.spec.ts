@@ -142,8 +142,8 @@ function makeBookmarks(client: TestClient, bookmarkCount: number): ReferencePosi
 			refType = ReferenceType.SlideOnRemove;
 		}
 		const lref = client.mergeTree.createLocalReferencePosition(
-			segoff.segment!,
-			segoff.offset!,
+			segoff!.segment,
+			segoff!.offset,
 			refType,
 			undefined,
 		);
@@ -169,10 +169,10 @@ function measureFetch(startFile: string, withBookmarks = false): void {
 			const curPG = client.searchForMarker(pos, "pg", true)!;
 			const properties = curPG.properties!;
 			const curSegOff = client.getContainingSegment<ISegmentPrivate>(pos)!;
-			const curSeg = curSegOff.segment!;
+			const curSeg = curSegOff.segment;
 			// Combine paragraph and direct properties
 			extend(properties, curSeg.properties);
-			pos += curSeg.cachedLength - curSegOff.offset!;
+			pos += curSeg.cachedLength - curSegOff.offset;
 			count++;
 		}
 	}

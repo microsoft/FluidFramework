@@ -82,7 +82,7 @@ describe("MergeTree", () => {
 					annotateStart,
 					mergeTree.localPerspective,
 				);
-				const segment = segmentInfo.segment as ISegmentPrivate;
+				const segment = segmentInfo?.segment as ISegmentPrivate;
 				assert.equal(segment?.properties?.propertySource, "remote");
 			});
 
@@ -102,7 +102,7 @@ describe("MergeTree", () => {
 					annotateStart,
 					mergeTree.localPerspective,
 				);
-				const segment = segmentInfo.segment as ISegmentPrivate;
+				const segment = segmentInfo?.segment as ISegmentPrivate;
 				assert.equal(segment.properties?.propertySource, "local");
 			});
 		});
@@ -134,7 +134,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "local");
 				});
 
@@ -154,7 +154,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.secondProperty, "local");
 				});
 
@@ -166,7 +166,7 @@ describe("MergeTree", () => {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const splitSegment = splitAt(mergeTree, splitPos)!;
 					assertMergeNode(splitSegment);
-					assert.notEqual(segmentInfo.segment?.ordinal, splitSegment.ordinal);
+					assert.notEqual(segmentInfo?.segment?.ordinal, splitSegment.ordinal);
 					assert.equal(splitSegment.properties?.propertySource, "local");
 				});
 
@@ -204,13 +204,13 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					const splitSegmentInfo = mergeTree.getContainingSegment(
 						splitPos,
 						mergeTree.localPerspective,
 					);
-					const splitSegment = splitSegmentInfo.segment as ISegmentPrivate;
+					const splitSegment = splitSegmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.segmentGroups?.size, 2);
 					assert.equal(segment.properties?.propertySource, "local");
@@ -305,7 +305,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.segmentGroups?.size, 1);
 					assert.equal(segment.properties?.propertySource, "local");
@@ -329,7 +329,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 					assert.equal(segment.segmentGroups?.size, 0);
 					assert.equal(segment.properties?.propertySource, "local");
 				});
@@ -362,7 +362,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.segmentGroups?.size, 0);
 					assert.equal(segment.properties?.propertySource, "remote");
@@ -374,7 +374,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.properties?.propertySource, "local");
 
@@ -499,7 +499,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.properties?.remoteOnly, 1);
 					assert.equal(segment.properties?.propertySource, "remote");
@@ -523,14 +523,14 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					assert(segmentInfo.segment?.segmentGroups?.size !== 0);
+					assert(segmentInfo?.segment?.segmentGroups?.size !== 0);
 				});
 				it("remote only", () => {
 					const segmentInfo = mergeTree.getContainingSegment(
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "remote");
 					assert.equal(segment.properties?.remoteProperty, 1);
 				});
@@ -544,7 +544,7 @@ describe("MergeTree", () => {
 					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					const splitSegment = splitAt(mergeTree, annotateStart + 1)!;
 					assertMergeNode(splitSegment);
-					assert.notEqual(segmentInfo.segment?.ordinal, splitSegment.ordinal);
+					assert.notEqual(segmentInfo?.segment?.ordinal, splitSegment.ordinal);
 					assert.equal(splitSegment.properties?.propertySource, "remote");
 					assert.equal(splitSegment.properties?.remoteProperty, 1);
 				});
@@ -565,7 +565,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "local");
 					assert.equal(segment.properties?.remoteProperty, 1);
 				});
@@ -579,7 +579,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					assert(segmentInfo.segment?.segmentGroups?.empty !== false);
+					assert(segmentInfo?.segment?.segmentGroups?.empty !== false);
 
 					mergeTree.annotateRange(
 						annotateStart,
@@ -590,7 +590,7 @@ describe("MergeTree", () => {
 						undefined as never,
 					);
 
-					assert.equal(segmentInfo.segment?.segmentGroups?.size, 1);
+					assert.equal(segmentInfo?.segment?.segmentGroups?.size, 1);
 
 					mergeTree.ackOp({
 						op: {
@@ -604,9 +604,9 @@ describe("MergeTree", () => {
 						} as unknown as ISequencedDocumentMessage,
 					});
 
-					assert(segmentInfo.segment?.segmentGroups?.empty);
-					assert.equal(segmentInfo.segment?.properties?.propertySource, "local");
-					assert.equal(segmentInfo.segment?.properties?.remoteProperty, 1);
+					assert(segmentInfo?.segment?.segmentGroups?.empty);
+					assert.equal(segmentInfo?.segment?.properties?.propertySource, "local");
+					assert.equal(segmentInfo?.segment?.properties?.remoteProperty, 1);
 				});
 			});
 			describe("local with rewrite first", () => {
@@ -640,7 +640,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 					assert.equal(segment.properties?.propertySource, "local2");
 					assert.equal(segment.properties?.secondProperty, "local");
 				});
@@ -661,7 +661,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.segmentGroups?.size, 1);
 					assert.equal(segment.properties?.propertySource, "local");
@@ -696,7 +696,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.segmentGroups?.size, 0);
 					assert.equal(segment.properties?.propertySource, "remote");
@@ -742,7 +742,7 @@ describe("MergeTree", () => {
 						annotateStart,
 						mergeTree.localPerspective,
 					);
-					const segment = segmentInfo.segment as ISegmentPrivate;
+					const segment = segmentInfo?.segment as ISegmentPrivate;
 
 					assert.equal(segment.properties?.remoteOnly, 1);
 					assert.equal(segment.properties?.propertySource, "remote");

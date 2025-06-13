@@ -465,10 +465,7 @@ export class SharedMatrix<T = any>
 		localSeq: number,
 	): LocalReferencePosition {
 		const segoff = vector.getContainingSegment(pos, undefined, localSeq);
-		assert(
-			segoff.segment !== undefined && segoff.offset !== undefined,
-			0x8b3 /* expected valid position */,
-		);
+		assert(segoff !== undefined, 0x8b3 /* expected valid position */);
 		return vector.createLocalReferencePosition(
 			segoff.segment,
 			segoff.offset,

@@ -988,28 +988,28 @@ export class IntervalCollection
 		}
 
 		const { clientId } = this.client.getCollabWindow();
-		const { segment, offset } = this.client.getContainingSegment(
-			pos,
-			{
-				referenceSequenceNumber: seqNumberFrom,
-				clientId: this.client.getLongClientId(clientId),
-			},
-			localSeq,
-		);
+		const { segment, offset } =
+			this.client.getContainingSegment(
+				pos,
+				{
+					referenceSequenceNumber: seqNumberFrom,
+					clientId: this.client.getLongClientId(clientId),
+				},
+				localSeq,
+			) ?? {};
 
 		// if segment is undefined, it slid off the string
-		assert(segment !== undefined, 0x54e /* No segment found */);
+		assert(segment !== undefined && offset !== undefined, 0x54e /* No segment found */);
 
-		const segoff =
-			getSlideToSegoff(
-				{ segment, offset },
-				undefined,
-				createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
-				this.options.mergeTreeReferencesCanSlideToEndpoint,
-			) ?? segment;
+		const segoff = getSlideToSegoff(
+			{ segment, offset },
+			undefined,
+			createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
+			this.options.mergeTreeReferencesCanSlideToEndpoint,
+		);
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
-		if (segoff.segment === undefined || segoff.offset === undefined) {
+		if (segoff?.segment === undefined || segoff.offset === undefined) {
 			return DetachedReferencePosition;
 		}
 
@@ -1536,28 +1536,27 @@ export class IntervalCollection
 	private getSlideToSegment(
 		lref: LocalReferencePosition,
 		slidingPreference: SlidingPreference,
-	): { segment: ISegment | undefined; offset: number | undefined } | undefined {
+	): { segment: ISegment; offset: number } | undefined {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
 		}
-		const segoff: { segment: ISegmentInternal | undefined; offset: number | undefined } = {
-			segment: lref.getSegment(),
-			offset: lref.getOffset(),
-		};
-		if (segoff.segment?.localRefs?.has(lref) !== true) {
+		const segment: ISegmentInternal | undefined = lref.getSegment();
+		if (segment === undefined) {
 			return undefined;
 		}
-		const newSegoff = getSlideToSegoff(
+		const segoff = {
+			segment,
+			offset: lref.getOffset(),
+		};
+		if (segoff.segment.localRefs?.has(lref) !== true) {
+			return undefined;
+		}
+		return getSlideToSegoff(
 			segoff,
 			slidingPreference,
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
-		const value: { segment: ISegment | undefined; offset: number | undefined } | undefined =
-			segoff.segment === newSegoff.segment && segoff.offset === newSegoff.offset
-				? undefined
-				: newSegoff;
-		return value;
 	}
 
 	private ackInterval(interval: SequenceIntervalClass, op: ISequencedDocumentMessage): void {
@@ -1585,8 +1584,9 @@ export class IntervalCollection
 			setSlideOnRemove(interval.end);
 		}
 
-		const needsStartUpdate = newStart !== undefined && !hasPendingChange;
-		const needsEndUpdate = newEnd !== undefined && !hasPendingChange;
+		const needsStartUpdate =
+			newStart?.segment !== interval.start.getSegment() && !hasPendingChange;
+		const needsEndUpdate = newEnd?.segment !== interval.end.getSegment() && !hasPendingChange;
 
 		if (needsStartUpdate || needsEndUpdate) {
 			if (!this.localCollection) {

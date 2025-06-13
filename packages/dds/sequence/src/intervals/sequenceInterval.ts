@@ -589,7 +589,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 export function createPositionReferenceFromSegoff(
 	client: Client,
-	segoff: { segment: ISegment | undefined; offset: number | undefined } | "start" | "end",
+	segoff: { segment: ISegment; offset: number } | undefined | "start" | "end",
 	refType: ReferenceType,
 	op?: ISequencedDocumentMessage,
 	localSeq?: number,
@@ -609,7 +609,7 @@ export function createPositionReferenceFromSegoff(
 		);
 	}
 
-	if (segoff.segment) {
+	if (segoff?.segment) {
 		const ref = client.createLocalReferencePosition(
 			segoff.segment,
 			segoff.offset,

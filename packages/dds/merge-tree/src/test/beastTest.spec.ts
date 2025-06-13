@@ -374,7 +374,7 @@ export function mergeTreeTest1(): void {
 	checkInsertMergeTree(mergeTree, 4, makeCollabTextSegment("fi"));
 	mergeTree.mapRange(printTextSegment, localPerspective, undefined);
 	const segoff = mergeTree.getContainingSegment(4, mergeTree.localPerspective);
-	log(mergeTree.getPosition(segoff.segment!, mergeTree.localPerspective));
+	log(mergeTree.getPosition(segoff!.segment, mergeTree.localPerspective));
 	log(new MergeTreeTextHelper(mergeTree).getText(mergeTree.localPerspective));
 	log(mergeTree.toString());
 	TestPack().firstTest();
@@ -1502,7 +1502,7 @@ function findReplacePerf(filename: string): void {
 		const curSegOff = client.getContainingSegment<ISegmentPrivate>(pos);
 		cFetches++;
 
-		const curSeg = curSegOff.segment;
+		const curSeg = curSegOff?.segment;
 		const textSeg = <TextSegment>curSeg;
 		if (textSeg !== null) {
 			const text = textSeg.text;
