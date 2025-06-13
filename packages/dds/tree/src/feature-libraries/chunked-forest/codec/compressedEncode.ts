@@ -549,12 +549,16 @@ export class IncrementalFieldShape
 		const fieldSummaryId = `${cache.idCompressor.generateCompressedId()}`;
 		outputBuffer.mainBuffer.push(fieldSummaryId);
 
-		const fieldOutputBuffer: BufferFormatIncremental = {
-			mainBuffer: [],
-			incrementalFieldBuffers: new Map(),
-		};
-		anyFieldEncoder.encodeField(cursor, cache, fieldOutputBuffer);
-		outputBuffer.incrementalFieldBuffers.set(fieldSummaryId, fieldOutputBuffer);
+		const fieldMainBuffer: BufferFormat = [];
+		const fieldIncrementalFieldBuffers: Map<string, FieldBufferFormat> = new Map();
+		anyFieldEncoder.encodeField(cursor, cache, {
+			mainBuffer: fieldMainBuffer,
+			incrementalFieldBuffers: fieldIncrementalFieldBuffers,
+		});
+		outputBuffer.incrementalFieldBuffers.set(fieldSummaryId, {
+			mainBuffer: [fieldMainBuffer],
+			incrementalFieldBuffers: fieldIncrementalFieldBuffers,
+		});
 
 		// Update the chunks of all nodes in the field with the new summaryRefId. Also, add a reference to the chunks
 		// which represents a ref to the chunk from the summary tree that holds its contents. This will ensure that if
