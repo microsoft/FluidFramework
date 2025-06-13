@@ -679,12 +679,12 @@ export class SharedDirectory
 		if (Array.isArray(newFormat.blobs)) {
 			// New storage format
 			this.populate(newFormat.content);
-			await Promise.all(
-				newFormat.blobs.map(async (value) => {
-					const dataExtra = await readAndParse(storage, value);
-					this.populate(dataExtra as IDirectoryDataObject);
-				}),
+			const blobContents = await Promise.all(
+				newFormat.blobs.map(async (blobName) => readAndParse(storage, blobName)),
 			);
+			for (const blobContent of blobContents) {
+				this.populate(blobContent as IDirectoryDataObject);
+			}
 		} else {
 			// Old storage format
 			this.populate(data as IDirectoryDataObject);
