@@ -4,8 +4,16 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import type { PhrasingContent } from "./PhrasingContent.js";
+import type { LineBreakNode } from "./LineBreakNode.js";
+import type { PlainTextNode } from "./PlainTextNode.js";
 import { createNodesFromPlainText } from "./Utilities.js";
+
+/**
+ * The types of child nodes that can be contained within a {@link FencedCodeBlockNode}.
+ *
+ * @public
+ */
+export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
 
 /**
  * A fenced code block, with an optional associated code language.
@@ -29,7 +37,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * @sealed
  * @public
  */
-export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingContent> {
+export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -47,7 +55,7 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingCon
 		return false;
 	}
 
-	public constructor(children: PhrasingContent[], language?: string) {
+	public constructor(children: FencedCodeBlockNodeContent[], language?: string) {
 		super(children);
 		this.language = language;
 	}

@@ -27,14 +27,20 @@ export {
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
-export { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
+export {
+	FencedCodeBlockNode,
+	type FencedCodeBlockNodeContent,
+} from "./FencedCodeBlockNode.js";
 export { HeadingNode } from "./HeadingNode.js";
 export { HorizontalRuleNode } from "./HorizontalRuleNode.js";
 export { LineBreakNode } from "./LineBreakNode.js";
 export { LinkNode } from "./LinkNode.js";
 export { OrderedListNode } from "./OrderedListNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
-export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
+export {
+	type PhrasingContent,
+	type PhrasingContentMap,
+} from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
 export { SpanNode } from "./SpanNode.js";

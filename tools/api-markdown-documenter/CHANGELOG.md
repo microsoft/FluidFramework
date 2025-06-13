@@ -2,6 +2,31 @@
 
 ## 0.21.0
 
+### Add DocumentationNode -> mdast transformation layer
+
+Adds transformation library for generating [mdast]() from `DocumentationNode`s.
+
+#### Example
+
+```typescript
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+// Transform the API Model to documents
+const documents = transformApiModel({
+	apiModel,
+});
+
+// Convert the documents to Markdown via mdast
+const markdownDocuments = documents.map((document) => documentToMarkdown(document, {}));
+
+// Use the resulting HTML documents with your favorite mdast-compatible library!
+```
+
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
 This type previously supported an unsafe escape hatch for text escaping.
