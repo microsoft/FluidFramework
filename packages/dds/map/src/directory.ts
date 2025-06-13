@@ -48,7 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { LocalValueMaker, makeSerialized } from "./localValues.js";
+import { fromSerializable, makeSerialized } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -423,9 +423,6 @@ export class SharedDirectory
 		return this.root.absolutePath;
 	}
 
-	/***/
-	public readonly localValueMaker: LocalValueMaker;
-
 	/**
 	 * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
 	 */
@@ -457,7 +454,6 @@ export class SharedDirectory
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_directory_");
-		this.localValueMaker = new LocalValueMaker();
 		this.setMessageHandlers();
 		// Mirror the containedValueChanged op on the SharedDirectory
 		this.root.on("containedValueChanged", (changed: IValueChanged, local: boolean) => {
@@ -833,7 +829,7 @@ export class SharedDirectory
 				serializable.type === ValueType[ValueType.Shared],
 			0x1e4 /* "Unexpected serializable type" */,
 		);
-		return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
+		return fromSerializable(serializable, this.serializer, this.handle);
 	}
 
 	/**
@@ -1002,11 +998,7 @@ export class SharedDirectory
 			case "set": {
 				dir?.set(
 					directoryOp.key,
-					this.localValueMaker.fromSerializable(
-						directoryOp.value,
-						this.serializer,
-						this.handle,
-					).value,
+					fromSerializable(directoryOp.value, this.serializer, this.handle).value,
 				);
 				break;
 			}
@@ -1322,7 +1314,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: { type: ValueType[ValueType.Plain], value: localValue.value as unknown },
+			value: { type: ValueType[ValueType.Plain], value: localValue.value },
 		};
 		this.submitKeyMessage(op, previousValue);
 		return this;

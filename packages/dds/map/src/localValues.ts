@@ -22,9 +22,7 @@ export interface ILocalValue {
 	/**
 	 * The in-memory value stored within.
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	readonly value: any;
+	readonly value: unknown;
 }
 
 /**
@@ -80,34 +78,27 @@ export const makeSerialized = (
 };
 
 /**
- * Enables a container type {@link https://fluidframework.com/docs/build/dds/ | DDS} to produce and store local
- * values with minimal awareness of how those objects are stored, serialized, and deserialized.
+ * Create a new local value from an incoming serialized value.
+ * @param serializable - The serializable value to make local
  */
-export class LocalValueMaker {
-	/**
-	 * Create a new local value from an incoming serialized value.
-	 * @param serializable - The serializable value to make local
-	 */
-	public fromSerializable(
-		// eslint-disable-next-line import/no-deprecated
-		serializable: ISerializableValue,
-		serializer: IFluidSerializer,
-		bind: IFluidHandle,
-	): ILocalValue {
-		// Migrate from old shared value to handles
-		if (serializable.type === ValueType[ValueType.Shared]) {
-			serializable.type = ValueType[ValueType.Plain];
-			const handle: ISerializedHandle = {
-				type: "__fluid_handle__",
-				url: serializable.value as string,
-			};
-			// NOTE: here we require the use of `parseHandles` because the roundtrip
-			// through a string is necessary to resolve the absolute path of
-			// legacy handles (`ValueType.Shared`)
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
-		}
-
-		return new PlainLocalValue(serializable.value);
+export const fromSerializable = (
+	// eslint-disable-next-line import/no-deprecated
+	serializable: ISerializableValue,
+	serializer: IFluidSerializer,
+	bind: IFluidHandle,
+): ILocalValue => {
+	// Migrate from old shared value to handles
+	if (serializable.type === ValueType[ValueType.Shared]) {
+		serializable.type = ValueType[ValueType.Plain];
+		const handle: ISerializedHandle = {
+			type: "__fluid_handle__",
+			url: serializable.value as string,
+		};
+		// NOTE: here we require the use of `parseHandles` because the roundtrip
+		// through a string is necessary to resolve the absolute path of
+		// legacy handles (`ValueType.Shared`)
+		serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
 	}
-}
+
+	return new PlainLocalValue(serializable.value);
+};

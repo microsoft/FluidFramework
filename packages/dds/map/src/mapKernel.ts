@@ -22,8 +22,8 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import {
+	fromSerializable,
 	type ILocalValue,
-	LocalValueMaker,
 	makeSerializable,
 	makeSerialized,
 } from "./localValues.js";
@@ -167,11 +167,6 @@ export class MapKernel {
 	private readonly pendingClearMessageIds: number[] = [];
 
 	/**
-	 * Object to create encapsulations of the values stored in the map.
-	 */
-	private readonly localValueMaker: LocalValueMaker;
-
-	/**
 	 * Create a new shared map kernel.
 	 * @param serializer - The serializer to serialize / parse handles
 	 * @param handle - The handle of the shared object using the kernel
@@ -187,7 +182,6 @@ export class MapKernel {
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
-		this.localValueMaker = new LocalValueMaker();
 		this.messageHandlers = this.getMessageHandlers();
 	}
 
@@ -232,7 +226,7 @@ export class MapKernel {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-						{ value: nextVal.value.value as unknown, done: false };
+						{ value: nextVal.value.value, done: false };
 			},
 			[Symbol.iterator](): IterableIterator<unknown> {
 				return this;
@@ -588,7 +582,7 @@ export class MapKernel {
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
 		) {
-			return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
+			return fromSerializable(serializable, this.serializer, this.handle);
 		} else {
 			throw new Error("Unknown local value type");
 		}
