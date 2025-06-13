@@ -561,7 +561,7 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "RedeemShareLink_end" },
+				{ eventName: "RedeemShareLink_end", setNonDurableRedeemHeader: false },
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),
@@ -606,8 +606,7 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "NonDurableRedeemFallback" },
-				{ eventName: "RedeemShareLink_end" },
+				{ eventName: "RedeemShareLink_end", setNonDurableRedeemHeader: true },
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),

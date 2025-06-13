@@ -228,6 +228,7 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.isNonDurableRedeem === true;
 
 			let redeemUrl: string | undefined;
+			let setNDRHeader = false;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
 					// IMPORTANT: Note that redeemUrl has '/driveItem' in it. Technically it is not required for executing redeem operation.
@@ -246,9 +247,7 @@ async function redeemSharingLink(
 					headers.prefer = "redeemSharingLink";
 					if (isNonDurableRedeem) {
 						headers.prefer = "nonDurableRedeem";
-						logger.sendTelemetryEvent({
-							eventName: "NonDurableRedeemFallback",
-						});
+						setNDRHeader = true;
 					}
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
@@ -266,7 +265,7 @@ async function redeemSharingLink(
 			// construct the url for /shares using tenant domain. We get tenant domain by getting origin of the siteUrl.
 			try {
 				await callSharesAPI(new URL(odspResolvedUrl.siteUrl).origin);
-				event.end({ details });
+				event.end({ details , setNDRHeader});
 			} catch (error) {
 				event.cancel({ details }, error);
 				throw error;
