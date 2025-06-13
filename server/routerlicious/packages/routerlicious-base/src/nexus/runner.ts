@@ -4,7 +4,13 @@
  */
 
 import cluster from "cluster";
+
 import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import {
+	configureWebSocketServices,
+	ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
+import { createMetricClient } from "@fluidframework/server-services";
 import {
 	ICache,
 	IClientManager,
@@ -22,17 +28,14 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
+import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
 import { Provider } from "nconf";
 import * as winston from "winston";
-import { createMetricClient } from "@fluidframework/server-services";
-import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
-import {
-	configureWebSocketServices,
-	ICollaborationSessionEvents,
-} from "@fluidframework/server-lambdas";
+
 import * as app from "./app";
-import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 
 export class NexusRunner implements IRunner {
 	private server?: IWebServer;
@@ -64,6 +67,7 @@ export class NexusRunner implements IRunner {
 		private readonly clusterDrainingChecker?: IClusterDrainingChecker,
 		private readonly collaborationSessionTracker?: ICollaborationSessionTracker,
 		private readonly readinessCheck?: IReadinessCheck,
+		private readonly denyList?: IDenyList,
 	) {}
 
 	// eslint-disable-next-line @typescript-eslint/promise-function-async
@@ -124,6 +128,7 @@ export class NexusRunner implements IRunner {
 				this.collaborationSessionEventEmitter,
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
+				this.denyList,
 			);
 
 			if (this.tokenRevocationManager) {

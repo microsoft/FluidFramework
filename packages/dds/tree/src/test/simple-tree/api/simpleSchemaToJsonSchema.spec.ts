@@ -215,7 +215,7 @@ describe("simpleSchemaToJsonSchema", () => {
 	describe("convertObjectNodeSchema", () => {
 		it("empty", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
-			const empty = schemaFactory.object("empty", {});
+			const empty = schemaFactory.objectAlpha("empty", {});
 			const emptyJson = convertObjectNodeSchema(empty, {
 				requireFieldsWithDefaults: false,
 				useStoredKeys: false,
@@ -232,7 +232,7 @@ describe("simpleSchemaToJsonSchema", () => {
 
 		it("withField", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
-			class WithField extends schemaFactory.object("withField", {
+			class WithField extends schemaFactory.objectAlpha("withField", {
 				prop: schemaFactory.optional(schemaFactory.number, {
 					key: "stored",
 					metadata: { description: "The description" },

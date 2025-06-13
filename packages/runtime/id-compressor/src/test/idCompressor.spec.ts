@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-nodejs-modules */
 import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
@@ -27,6 +26,7 @@ import {
 	IdCompressorTestNetwork,
 	MetaClient,
 	expectSerializes,
+	getClusterSize,
 	makeOpGenerator,
 	performFuzzActions,
 	roundtrip,
@@ -1214,20 +1214,14 @@ describe("IdCompressor", () => {
 				network.allocateAndSendIds(Client.Client1, 3);
 				network.allocateAndSendIds(
 					Client.Client2,
-
-					// eslint-disable-next-line @typescript-eslint/dot-notation
-					network.getCompressor(Client.Client2)["nextRequestedClusterSize"] * 2,
+					2 * getClusterSize(network.getCompressor(Client.Client2)),
 				);
 				network.allocateAndSendIds(Client.Client3, 5);
 				expectSequencedLogsAlign(network, Client.Client1, Client.Client2);
 			});
 
 			itNetwork("can finalize a range when the current cluster is full", 5, (network) => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				const clusterCapacity: number = network.getCompressor(
-					Client.Client1,
-					// eslint-disable-next-line @typescript-eslint/dot-notation
-				)["nextRequestedClusterSize"];
+				const clusterCapacity: number = getClusterSize(network.getCompressor(Client.Client1));
 				network.allocateAndSendIds(Client.Client1, clusterCapacity);
 				network.allocateAndSendIds(Client.Client2, clusterCapacity);
 				network.allocateAndSendIds(Client.Client1, clusterCapacity);
@@ -1235,11 +1229,7 @@ describe("IdCompressor", () => {
 			});
 
 			itNetwork("can finalize a range that spans multiple clusters", 5, (network) => {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				const clusterCapacity: number = network.getCompressor(
-					Client.Client1,
-					// eslint-disable-next-line @typescript-eslint/dot-notation
-				)["nextRequestedClusterSize"];
+				const clusterCapacity: number = getClusterSize(network.getCompressor(Client.Client1));
 				network.allocateAndSendIds(Client.Client1, 1);
 				network.allocateAndSendIds(Client.Client2, 1);
 				network.allocateAndSendIds(Client.Client1, clusterCapacity * 3);
@@ -1317,11 +1307,7 @@ describe("IdCompressor", () => {
 				"can resume a session and interact with multiple other clients",
 				3,
 				(network) => {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					const clusterSize: number = network.getCompressor(
-						Client.Client1,
-						// eslint-disable-next-line @typescript-eslint/dot-notation
-					)["nextRequestedClusterSize"];
+					const clusterSize: number = getClusterSize(network.getCompressor(Client.Client1));
 					network.allocateAndSendIds(Client.Client1, clusterSize);
 					network.allocateAndSendIds(Client.Client2, clusterSize);
 					network.allocateAndSendIds(Client.Client3, clusterSize);

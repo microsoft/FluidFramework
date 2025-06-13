@@ -111,6 +111,7 @@ export enum EncryptionKeyVersion {
 	key2023 = "2023",
 	key2024 = "2024",
 	key2025 = "2025",
+	key2026 = "2026",
 }
 
 /**
@@ -200,4 +201,12 @@ export interface ITenantManager {
  */
 export interface ITenantConfigManager {
 	getTenantStorageName(tenantId: string): Promise<string>;
+}
+
+export interface IInvalidTokenError {
+	// The error code to be cached
+	code: number;
+
+	// The error message to be cached
+	message: string;
 }

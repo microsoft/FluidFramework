@@ -125,6 +125,7 @@ export class RestGitService {
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 	}
 

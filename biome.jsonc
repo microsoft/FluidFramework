@@ -14,6 +14,7 @@
 			// Build output
 			"**/dist/*",
 			"**/lib/*",
+			"examples/**/build/*",
 			"**/*.done.build.log",
 			"**/.next", // NextJS
 

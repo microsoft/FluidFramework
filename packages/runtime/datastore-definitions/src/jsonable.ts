@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// JSON type definitions require null.
+/* eslint-disable @rushstack/no-new-null */
+
 /**
  * Type constraint for types that are likely serializable as JSON or have a custom
  * alternate type.
@@ -12,7 +15,7 @@
  * See {@link Jsonable} for serialization pitfalls.
  *
  * @privateRemarks
- * Perfer using `Jsonable<unknown>` over this type that is an implementation detail.
+ * Prefer using `Jsonable<unknown>` over this type that is an implementation detail.
  * @legacy
  * @alpha
  */
@@ -38,6 +41,7 @@ export type JsonableTypeWith<T> =
  * @legacy
  * @alpha
  */
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style -- Use of mapped type required to prevent circular reference issue
 export interface Internal_InterfaceOfJsonableTypesWith<T> {
 	[index: string | number]: JsonableTypeWith<T>;
 }

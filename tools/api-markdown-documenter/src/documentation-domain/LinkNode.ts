@@ -5,12 +5,7 @@
 
 import type { Link, UrlTarget } from "../Link.js";
 
-import {
-	DocumentationParentNodeBase,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 
 /**
  * A hyperlink to some other content.
@@ -27,43 +22,48 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <a href="https://fluidframework.com/">Fluid Framework</a>
  * ```
  *
+ * @sealed
  * @public
  */
-export class LinkNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements SingleLineDocumentationNode, Omit<Link, "text">
-{
+export class LinkNode implements DocumentationNode, Link {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Link;
-
-	/**
-	 * {@inheritDoc Link.target}
-	 */
-	public readonly target: UrlTarget;
+	public readonly type = "link";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
 	 */
-	public override get singleLine(): true {
-		return true;
-	}
-
-	public constructor(content: SingleLineDocumentationNode[], target: UrlTarget) {
-		super(content);
-		this.target = target;
-	}
+	public readonly singleLine = true;
 
 	/**
-	 * Generates a {@link LinkNode} from the provided string.
-	 *
-	 * @param text - The node contents. Note: this must not contain newline characters.
-	 * @param target - See {@link LinkNode.target}.
+	 * {@inheritDoc DocumentationNode.isLiteral}
 	 */
-	public static createFromPlainText(text: string, target: UrlTarget): LinkNode {
-		return new LinkNode([new PlainTextNode(text)], target);
+	public readonly isLiteral = false;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isParent}
+	 */
+	public readonly isParent = false;
+
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public get isEmpty(): boolean {
+		return this.text.length === 0 && this.target.length === 0;
 	}
+
+	public constructor(
+		/**
+		 * {@inheritDoc Link.text}
+		 */
+		public readonly text: string,
+
+		/**
+		 * {@inheritDoc Link.target}
+		 */
+		public readonly target: UrlTarget,
+	) {}
 
 	/**
 	 * Generates a {@link LinkNode} from the provided {@link Link}.
@@ -71,6 +71,6 @@ export class LinkNode
 	 * @param link - The link to represent. Note: its text must not contain newline characters.
 	 */
 	public static createFromPlainTextLink(link: Link): LinkNode {
-		return this.createFromPlainText(link.text, link.target);
+		return new LinkNode(link.text, link.target);
 	}
 }

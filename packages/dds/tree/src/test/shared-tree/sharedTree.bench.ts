@@ -18,7 +18,7 @@ import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
 	TreeCompressionStrategy,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 } from "../../feature-libraries/index.js";
 import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
@@ -50,10 +50,11 @@ import {
 	flexTreeViewWithContent,
 	toJsonableTree,
 	type SharedTreeWithContainerRuntime,
+	fieldCursorFromInsertable,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
-import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
@@ -70,10 +71,10 @@ const nodesCountDeep = [
 ];
 
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
-const factory = new TreeFactory({
+const factory = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
-});
+}).getFactory();
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -260,14 +261,14 @@ describe("SharedTree benchmarks", () => {
 						duration = state.timer.toSeconds(before, after);
 
 						// Cleanup + validation
-						const expected = jsonableTreeFromCursor(
-							cursorFromInsertable(
+						const expected = jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(
 								LinkedList,
 								makeJsDeepTree(numberOfNodes, setCount) as LinkedList,
 							),
 						);
 						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, [expected]);
+						assert.deepEqual(actual, expected);
 
 						// Collect data
 					} while (state.recordBatch(duration));
@@ -311,14 +312,14 @@ describe("SharedTree benchmarks", () => {
 						duration = state.timer.toSeconds(before, after);
 
 						// Cleanup + validation
-						const expected = jsonableTreeFromCursor(
-							cursorFromInsertable(
+						const expected = jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(
 								WideRoot,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
 						);
 						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, [expected]);
+						assert.deepEqual(actual, expected);
 
 						// Collect data
 					} while (state.recordBatch(duration));

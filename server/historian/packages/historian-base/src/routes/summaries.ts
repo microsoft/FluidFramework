@@ -13,14 +13,19 @@ import {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
+import {
+	denyListMiddleware,
+	IThrottleMiddlewareOptions,
+	throttle,
+} from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
 
@@ -98,7 +103,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getSummary(sha, useCache);
@@ -124,7 +128,6 @@ export function create(
 			initialUpload: initial,
 			storageName,
 			isEphemeralContainer,
-			denyList,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
 		});
@@ -145,7 +148,6 @@ export function create(
 			documentManager,
 			cache,
 			allowDisabledTenant: true,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
@@ -164,6 +166,7 @@ export function create(
 		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -192,6 +195,7 @@ export function create(
 		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -242,6 +246,8 @@ export function create(
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		// Skip documentDenyListCheck, as it is not needed for delete operations
+		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(

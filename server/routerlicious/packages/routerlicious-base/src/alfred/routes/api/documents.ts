@@ -4,34 +4,12 @@
  */
 
 import * as crypto from "crypto";
-import {
-	IDocumentStorage,
-	IThrottler,
-	ITenantManager,
-	ICache,
-	IDocumentRepository,
-	ITokenRevocationManager,
-	IRevokeTokenOptions,
-	IRevokedTokenChecker,
-	IClusterDrainingChecker,
-} from "@fluidframework/server-services-core";
-import {
-	verifyStorageToken,
-	getCreationToken,
-	throttle,
-	IThrottleMiddlewareOptions,
-	getParam,
-	validateTokenScopeClaims,
-	getBooleanFromConfig,
-	getTelemetryContextPropertiesWithHttpInfo,
-} from "@fluidframework/server-services-utils";
+
 import {
 	getBooleanParam,
 	validateRequestParams,
 	handleResponse,
 } from "@fluidframework/server-services";
-import { Request, Router } from "express";
-import winston from "winston";
 import {
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
 	IAlfredTenant,
@@ -43,13 +21,40 @@ import {
 	InternalErrorCode,
 } from "@fluidframework/server-services-client";
 import {
+	IDocumentStorage,
+	IThrottler,
+	ITenantManager,
+	ICache,
+	IDocumentRepository,
+	ITokenRevocationManager,
+	IRevokeTokenOptions,
+	IRevokedTokenChecker,
+	IClusterDrainingChecker,
+	type IDenyList,
+} from "@fluidframework/server-services-core";
+import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
 	type Lumber,
 } from "@fluidframework/server-services-telemetry";
+import {
+	verifyStorageToken,
+	getCreationToken,
+	throttle,
+	IThrottleMiddlewareOptions,
+	getParam,
+	validateTokenScopeClaims,
+	getBooleanFromConfig,
+	getTelemetryContextPropertiesWithHttpInfo,
+	denyListMiddleware,
+} from "@fluidframework/server-services-utils";
+import { Request, Router } from "express";
+import type { RequestHandler } from "express-serve-static-core";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
+import winston from "winston";
+
 import {
 	Constants,
 	generateCacheKey,
@@ -58,7 +63,6 @@ import {
 	StageTrace,
 } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
-import type { RequestHandler } from "express-serve-static-core";
 
 /**
  * Response body shape for modern clients that can handle object responses.
@@ -168,6 +172,7 @@ export function create(
 	revokedTokenChecker?: IRevokedTokenChecker,
 	clusterDrainingChecker?: IClusterDrainingChecker,
 	redisCacheForGetSession?: ICache,
+	denyList?: IDenyList,
 ): Router {
 	const router: Router = Router();
 	const externalOrdererUrl: string = config.get("worker:serverUrl");
@@ -245,6 +250,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId;
 			const documentId = request.params.id;
@@ -285,6 +291,7 @@ export function create(
 			tokenCache: singleUseTokenCache,
 			revokedTokenChecker,
 		}),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			// Tenant and document
@@ -429,6 +436,7 @@ export function create(
 			getSessionTenantThrottleOptions,
 		),
 		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;
@@ -514,6 +522,7 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;
@@ -557,6 +566,7 @@ export function create(
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
 		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
 			const documentId = request.params.id;

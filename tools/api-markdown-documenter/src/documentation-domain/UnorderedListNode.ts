@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-	type SingleLineDocumentationNode,
-} from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { PlainTextNode } from "./PlainTextNode.js";
 
 // TODOs:
@@ -35,12 +31,10 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * </ul>
  * ```
  *
+ * @sealed
  * @public
  */
-export class UnorderedListNode
-	extends DocumentationParentNodeBase<SingleLineDocumentationNode>
-	implements MultiLineDocumentationNode
-{
+export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Unordered List node.
 	 */
@@ -49,7 +43,7 @@ export class UnorderedListNode
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.UnorderedList;
+	public readonly type = "unorderedList";
 
 	/**
 	 * {@inheritDoc DocumentationNode.singleLine}
@@ -58,7 +52,7 @@ export class UnorderedListNode
 		return false;
 	}
 
-	public constructor(children: SingleLineDocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}
 

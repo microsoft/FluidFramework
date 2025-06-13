@@ -9,8 +9,13 @@ import {
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
+import {
+	denyListMiddleware,
+	IThrottleMiddlewareOptions,
+	throttle,
+} from "@fluidframework/server-services-utils";
 import {
 	containsPathTraversal,
 	validateRequestParams,
@@ -18,7 +23,7 @@ import {
 import { Router } from "express";
 import * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 import { NetworkError } from "@fluidframework/server-services-client";
@@ -63,7 +68,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getCommits(sha, count);
@@ -74,6 +78,7 @@ export function create(
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
 		utils.verifyToken(revokedTokenChecker),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const sha = utils.queryParamToString(request.query.sha);
 			if (sha === undefined) {

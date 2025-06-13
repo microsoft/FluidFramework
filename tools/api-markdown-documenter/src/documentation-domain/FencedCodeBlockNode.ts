@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type DocumentationNode,
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -30,16 +26,14 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </code>
  * ```
  *
+ * @sealed
  * @public
  */
-export class FencedCodeBlockNode
-	extends DocumentationParentNodeBase
-	implements MultiLineDocumentationNode
-{
+export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.FencedCode;
+	public readonly type = "fencedCode";
 
 	/**
 	 * (optional) Code language to associated with the code block.
@@ -53,7 +47,7 @@ export class FencedCodeBlockNode
 		return false;
 	}
 
-	public constructor(children: DocumentationNode[], language?: string) {
+	public constructor(children: PhrasingContent[], language?: string) {
 		super(children);
 		this.language = language;
 	}

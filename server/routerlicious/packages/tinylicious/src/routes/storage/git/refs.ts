@@ -4,10 +4,12 @@
  */
 
 import fs from "fs";
+
 import { ICreateRefParams, IPatchRefParams, IRef } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";
+
 import * as utils from "../utils";
 
 function refToIRef(ref: string, sha: string): IRef {

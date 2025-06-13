@@ -83,7 +83,10 @@ class BuildGraphContext implements BuildContext {
 }
 
 export class BuildPackage {
-	private readonly tasks = new Map<string, Task>();
+	private readonly tasks: Task[] = [];
+
+	// tasks (with lifecycle) to resolved named reference.
+	private readonly targetTasks = new Map<string, Task>();
 
 	// track a script task without the lifecycle (pre/post) tasks
 	private readonly scriptTasks = new Map<string, Task>();
@@ -106,10 +109,6 @@ export class BuildPackage {
 		traceTaskDef(
 			`${pkg.nameColored}: Task def: ${JSON.stringify(this._taskDefinitions, undefined, 2)}`,
 		);
-	}
-
-	public get taskCount() {
-		return this.tasks.size;
 	}
 
 	public createTasks(buildTaskNames: string[]) {
@@ -169,6 +168,8 @@ export class BuildPackage {
 		if (config?.script === false) {
 			const task = TaskFactory.CreateTargetTask(this, this.context, taskName);
 			pendingInitDep.push(task);
+			this.tasks.push(task);
+			this.targetTasks.set(taskName, task);
 			return task;
 		}
 		return this.createScriptTask(taskName, pendingInitDep);
@@ -182,6 +183,7 @@ export class BuildPackage {
 			if (scriptTask === undefined) {
 				scriptTask = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
 				pendingInitDep.push(scriptTask);
+				this.tasks.push(scriptTask);
 				this.scriptTasks.set(taskName, scriptTask);
 			}
 
@@ -196,10 +198,10 @@ export class BuildPackage {
 				this.ensureScriptTask(`post${taskName}`, pendingInitDep),
 			);
 			if (task !== scriptTask) {
-				// We are doing duplicate work initializeDependentTasks as both the lifecycle task
-				// and script task will have the task name and dependency
 				pendingInitDep.push(task);
+				this.tasks.push(task);
 			}
+			this.targetTasks.set(taskName, task);
 			return task;
 		}
 		return undefined;
@@ -221,12 +223,14 @@ export class BuildPackage {
 
 		const task = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
 		pendingInitDep.push(task);
+		this.tasks.push(task);
+		this.scriptTasks.set(taskName, task);
 		return task;
 	}
 
-	// Create or return and existing task with a name.  If it is a script, it will also create an return the pre/post script task if it exists
+	// Create or return and existing task with a name.  If it is a script, it will also create and return the pre/post script task if it exists
 	private getTask(taskName: string, pendingInitDep: Task[] | undefined): Task | undefined {
-		const existing = this.tasks.get(taskName);
+		const existing = this.targetTasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
@@ -236,11 +240,7 @@ export class BuildPackage {
 			return undefined;
 		}
 
-		const task = this.createTask(taskName, pendingInitDep);
-		if (task !== undefined) {
-			this.tasks.set(taskName, task);
-		}
-		return task;
+		return this.createTask(taskName, pendingInitDep);
 	}
 
 	public getScriptTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
@@ -249,16 +249,12 @@ export class BuildPackage {
 			// it is not a script task
 			return undefined;
 		}
-		const existing = this.tasks.get(taskName);
+		const existing = this.targetTasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
 
-		const task = this.createScriptTask(taskName, pendingInitDep);
-		if (task !== undefined) {
-			this.tasks.set(taskName, task);
-		}
-		return task;
+		return this.createScriptTask(taskName, pendingInitDep);
 	}
 
 	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]) {
@@ -290,7 +286,7 @@ export class BuildPackage {
 				for (const depPackage of this.dependentPackages) {
 					if (taskName === "*") {
 						assert.strictEqual(pendingInitDep, undefined);
-						matchedTasks.push(...depPackage.tasks.values());
+						matchedTasks.push(...depPackage.targetTasks.values());
 					} else {
 						const depTask = depPackage.getTask(taskName, pendingInitDep);
 						if (depTask !== undefined) {
@@ -334,7 +330,7 @@ export class BuildPackage {
 				return beforeStarTaskNames;
 			}
 			// avoid circular dependency. ignore mutual before "*" */
-			beforeStarTaskNames = Array.from(this.tasks.keys()).filter(
+			beforeStarTaskNames = Array.from(this.targetTasks.keys()).filter(
 				(depTaskName) => !this.getTaskDefinition(depTaskName)?.before.includes("*"),
 			);
 			return beforeStarTaskNames;
@@ -346,7 +342,7 @@ export class BuildPackage {
 				return afterStarTaskNames;
 			}
 			// avoid circular dependency. ignore mutual after "*" */
-			afterStarTaskNames = Array.from(this.tasks.keys()).filter(
+			afterStarTaskNames = Array.from(this.targetTasks.keys()).filter(
 				(depTaskName) => !this.getTaskDefinition(depTaskName)?.after.includes("*"),
 			);
 			return afterStarTaskNames;
@@ -381,7 +377,6 @@ export class BuildPackage {
 				const matchedTasks = this.getMatchedTasks(before);
 				const dependentTask = [task];
 				for (const matchedTask of matchedTasks) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					matchedTask.addDependentTasks(dependentTask, taskConfig.isDefault);
 				}
 			}
@@ -394,18 +389,11 @@ export class BuildPackage {
 					} -> ${JSON.stringify(after)}`,
 				);
 				const matchedTasks = this.getMatchedTasks(after);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				task.addDependentTasks(matchedTasks, taskConfig.isDefault);
 			}
 		};
 
 		this.tasks.forEach(finalizeTask);
-		this.scriptTasks.forEach((task: Task, name: string) => {
-			// Process named script task that hasn't been processed yet.
-			if (this.tasks.get(name) !== task) {
-				finalizeTask(task);
-			}
-		});
 	}
 
 	public initializeDependentLeafTasks() {
@@ -421,11 +409,11 @@ export class BuildPackage {
 	}
 
 	public async isUpToDate(): Promise<boolean> {
-		if (this.tasks.size == 0) {
+		if (this.tasks.length === 0) {
 			return true;
 		}
 		const isUpToDateP = new Array<Promise<boolean>>();
-		for (const task of this.tasks.values()) {
+		for (const task of this.tasks) {
 			isUpToDateP.push(task.isUpToDate());
 		}
 		const isUpToDateArr = await Promise.all(isUpToDateP);
@@ -434,14 +422,14 @@ export class BuildPackage {
 
 	private async buildAllTasks(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		const runP: Promise<BuildResult>[] = [];
-		for (const task of this.tasks.values()) {
+		for (const task of this.tasks) {
 			runP.push(task.run(q));
 		}
 		return summarizeBuildResult(await Promise.all(runP));
 	}
 	public async build(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		if (!this.buildP) {
-			if (this.tasks.size !== 0) {
+			if (this.tasks.length !== 0) {
 				this.buildP = this.buildAllTasks(q);
 			} else {
 				this.buildP = Promise.resolve(BuildResult.UpToDate);
@@ -514,12 +502,17 @@ export class BuildGraph {
 	}
 
 	private async isUpToDate() {
-		const isUpToDateP = new Array<Promise<boolean>>();
-		this.buildPackages.forEach((node) => {
-			isUpToDateP.push(node.isUpToDate());
-		});
-		const isUpToDateArr = await Promise.all(isUpToDateP);
-		return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		try {
+			const isUpToDateP = new Array<Promise<boolean>>();
+			this.buildPackages.forEach((node) => {
+				isUpToDateP.push(node.isUpToDate());
+			});
+			const isUpToDateArr = await Promise.all(isUpToDateP);
+			return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		} catch {
+			// If checking the up-to-date state fails, we assume that the build is not up to date.
+			return false;
+		}
 	}
 
 	public async checkInstall() {

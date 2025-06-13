@@ -5,8 +5,8 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
+
 import { IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import {
 	IDatabaseManager,
 	IDocumentStorage,
@@ -20,9 +20,11 @@ import {
 	ICheckpointRepository,
 	CheckpointService,
 } from "@fluidframework/server-services-core";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import * as _ from "lodash";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
+
 import { debug } from "./debug";
 import {
 	IConcreteNode,
@@ -136,6 +138,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			null,
 		);
 
+		// eslint-disable-next-line import/namespace
 		const result = _.clone(existing);
 		result.expiration = newExpiration;
 

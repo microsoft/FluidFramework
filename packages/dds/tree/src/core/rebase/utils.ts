@@ -372,8 +372,6 @@ export function rebaseChange<TChange>(
 	};
 }
 
-/**
- */
 export function revisionMetadataSourceFromInfo(
 	revInfos: readonly RevisionInfo[],
 ): RevisionMetadataSource {
@@ -440,19 +438,21 @@ function rollbackFromCommit<TChange>(
 	mintRevisionTag: () => RevisionTag,
 	cache?: boolean,
 ): TaggedChange<TChange, RevisionTag> {
-	const rollback = Rollback.get(commit);
-	if (rollback !== undefined) {
-		return rollback;
+	const cachedRollback = Rollback.get(commit);
+	if (cachedRollback !== undefined) {
+		return cachedRollback;
 	}
 	const tag = mintRevisionTag();
-	const untagged = changeRebaser.invert(commit, true, tag);
-	const deeplyTaggedRollback = changeRebaser.changeRevision(untagged, tag, commit.revision);
-	const fullyTaggedRollback = tagRollbackInverse(deeplyTaggedRollback, tag, commit.revision);
+	const rollback = tagRollbackInverse(
+		changeRebaser.invert(commit, true, tag),
+		tag,
+		commit.revision,
+	);
 
 	if (cache === true) {
-		Rollback.set(commit, fullyTaggedRollback);
+		Rollback.set(commit, rollback);
 	}
-	return fullyTaggedRollback;
+	return rollback;
 }
 
 /**

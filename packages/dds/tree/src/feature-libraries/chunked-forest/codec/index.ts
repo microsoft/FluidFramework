@@ -9,4 +9,5 @@ export {
 	type FieldBatchCodec,
 	makeFieldBatchCodec,
 	type FieldBatchEncodingContext,
+	fluidVersionToFieldBatchCodecWriteVersion,
 } from "./codecs.js";

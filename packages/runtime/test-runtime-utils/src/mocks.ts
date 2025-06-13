@@ -114,12 +114,16 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.processMessages?.(messageCollection);
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
-		this.handler?.reSubmit(content, localOpMetadata);
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+		this.handler?.reSubmit(content, localOpMetadata, squash);
 	}
 
 	public applyStashedOp(content: any): unknown {
 		return this.handler?.applyStashedOp(content);
+	}
+
+	public rollback?(message: any, localOpMetadata: unknown): void {
+		this.handler?.rollback?.(message, localOpMetadata);
 	}
 }
 
@@ -399,6 +403,21 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			} else {
 				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			}
+		});
+	}
+
+	/**
+	 * Rolls back all pending messages.
+	 * @remarks
+	 * This only works when the FlushMode is not immediate as immediate
+	 * flush mode send the ops to the mock runtime factory for processing/sequencing, and so those
+	 * ops are no longer local, so not available for rollback.
+	 */
+	public rollback?(): void {
+		const messagesToRollback = this.outbox.slice().reverse();
+		this.outbox.length = 0;
+		messagesToRollback.forEach((pm) => {
+			this.dataStoreRuntime.rollback?.(pm.content, pm.localOpMetadata);
 		});
 	}
 
@@ -841,6 +860,8 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 	}
+	private readonly: boolean = false;
+	public readonly isReadOnly = () => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
@@ -1039,6 +1060,10 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
+	public notifyReadOnlyState(readonly: boolean): void {
+		this.readonly = readonly;
+	}
+
 	public async resolveHandle(request: IRequest): Promise<IResponse> {
 		if (request.url !== undefined) {
 			return {
@@ -1136,9 +1161,9 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
 		this.deltaConnections.forEach((dc) => {
-			dc.reSubmit(content, localOpMetadata);
+			dc.reSubmit(content, localOpMetadata, squash);
 		});
 	}
 
@@ -1147,7 +1172,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public rollback?(message: any, localOpMetadata: unknown): void {
-		return;
+		this.deltaConnections.forEach((dc) => {
+			dc.rollback?.(message, localOpMetadata);
+		});
 	}
 }
 

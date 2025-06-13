@@ -200,6 +200,9 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		this.lastProposalSeqNum = 0;
 		for (const container of this.containers.keys()) {
 			container.close();
+			// Optional chaining here is because containers made with LTS loaders don't have a dispose method or process
+			// and this package is used with various previous versions of Fluid layers in our compat testing.
+			container.dispose?.();
 		}
 		this.containers.clear();
 

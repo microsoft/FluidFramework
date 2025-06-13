@@ -216,8 +216,8 @@ describe("DataStore Layer compatibility", () => {
 				return {
 					type,
 					attributes: { type, snapshotFormatVersion: "0" },
-					create: () => ({}) as any as IChannel,
-					load: async () => Promise.resolve({} as any as IChannel),
+					create: () => ({}) as unknown as IChannel,
+					load: async () => ({}) as unknown as IChannel,
 				};
 			},
 		};
@@ -228,7 +228,9 @@ describe("DataStore Layer compatibility", () => {
 			dataStoreContext = new MockFluidDataStoreContext();
 		});
 
-		function createDataStoreRuntime(compatDetails?: ILayerCompatDetails) {
+		function createDataStoreRuntime(
+			compatDetails?: ILayerCompatDetails,
+		): FluidDataStoreRuntime {
 			if (compatDetails !== undefined) {
 				dataStoreContext.ILayerCompatDetails = compatDetails;
 			}

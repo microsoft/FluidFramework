@@ -17,14 +17,11 @@ import {
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	// eslint-disable-next-line import/no-deprecated
-	type IDetachedBlobStorage,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { LocalCodeLoader } from "@fluidframework/test-utils/internal";
 
@@ -47,31 +44,6 @@ const codeDetails: IFluidCodeDetails = {
 
 export const createCodeLoader = (options?: IContainerRuntimeOptions | undefined) =>
 	new LocalCodeLoader([[codeDetails, createFluidExport(options)]]);
-
-// eslint-disable-next-line import/no-deprecated
-class MockDetachedBlobStorage implements IDetachedBlobStorage {
-	public readonly blobs = new Map<string, ArrayBufferLike>();
-
-	public get size() {
-		return this.blobs.size;
-	}
-
-	public getBlobIds(): string[] {
-		return Array.from(this.blobs.keys());
-	}
-
-	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
-		const id = this.size.toString();
-		this.blobs.set(id, content);
-		return { id };
-	}
-
-	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-		const blob = this.blobs.get(blobId);
-		assert(!!blob, "blob not found");
-		return blob;
-	}
-}
 
 export async function initialize(
 	testDriver: ITestDriver,
@@ -112,7 +84,6 @@ export async function initialize(
 		codeLoader: createCodeLoader(containerRuntimeOptions),
 		logger,
 		options: loaderOptions,
-		detachedBlobStorage: new MockDetachedBlobStorage(),
 		configProvider: configProvider(configurations),
 	};
 

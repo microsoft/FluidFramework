@@ -30,6 +30,9 @@ export {
 	RBNodeActions,
 	RedBlackTree,
 	SortedDictionary,
+	DoublyLinkedList,
+	ListNode,
+	ListNodeRange,
 } from "./collections/index.js";
 export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 export {
@@ -141,5 +144,5 @@ export {
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
 export type { OperationStamp } from "./stamps.js";
-export type { Perspective } from "./perspective.js";
+export { createLocalReconnectingPerspective, type Perspective } from "./perspective.js";
 export type { IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";

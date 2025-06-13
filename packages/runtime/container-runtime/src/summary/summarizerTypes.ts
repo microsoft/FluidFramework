@@ -27,12 +27,13 @@ import {
 	ITelemetryLoggerPropertyBag,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	ISummaryAckMessage,
-	ISummaryNackMessage,
-	ISummaryOpMessage,
-} from "./summaryCollection.js";
-import { SummarizeReason } from "./summaryGenerator.js";
+import type { SummarizeReason } from "./summarizerUtils.js";
+import type {
+	EnqueueSummarizeResult,
+	ISummarizeResults,
+} from "./summaryDelayLoadedModule/index.js";
+
+export const summarizerClientType = "summarizer";
 
 /**
  * Similar to AbortSignal, but using promise instead of events
@@ -363,33 +364,6 @@ export interface SubmitSummaryFailureData {
  * @legacy
  * @alpha
  */
-export interface IBroadcastSummaryResult {
-	readonly summarizeOp: ISummaryOpMessage;
-	readonly broadcastDuration: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface IAckSummaryResult {
-	readonly summaryAckOp: ISummaryAckMessage;
-	readonly ackNackDuration: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export interface INackSummaryResult {
-	readonly summaryNackOp: ISummaryNackMessage;
-	readonly ackNackDuration: number;
-}
-
-/**
- * @legacy
- * @alpha
- */
 export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 	| {
 			success: true;
@@ -400,64 +374,6 @@ export type SummarizeResultPart<TSuccess, TFailure = undefined> =
 			data: TFailure | undefined;
 			message: string;
 			error: IRetriableFailureError;
-	  };
-
-/**
- * @legacy
- * @alpha
- */
-export interface ISummarizeResults {
-	/**
-	 * Resolves when we generate, upload, and submit the summary.
-	 */
-	readonly summarySubmitted: Promise<
-		SummarizeResultPart<SubmitSummaryResult, SubmitSummaryFailureData>
-	>;
-	/**
-	 * Resolves when we observe our summarize op broadcast.
-	 */
-	readonly summaryOpBroadcasted: Promise<SummarizeResultPart<IBroadcastSummaryResult>>;
-	/**
-	 * Resolves when we receive a summaryAck or summaryNack.
-	 */
-	readonly receivedSummaryAckOrNack: Promise<
-		SummarizeResultPart<IAckSummaryResult, INackSummaryResult>
-	>;
-}
-
-/**
- * @legacy
- * @alpha
- */
-export type EnqueueSummarizeResult =
-	| (ISummarizeResults & {
-			/**
-			 * Indicates that another summarize attempt is not already enqueued,
-			 * and this attempt has been enqueued.
-			 */
-			readonly alreadyEnqueued?: undefined;
-	  })
-	| (ISummarizeResults & {
-			/**
-			 * Indicates that another summarize attempt was already enqueued.
-			 */
-			readonly alreadyEnqueued: true;
-			/**
-			 * Indicates that the other enqueued summarize attempt was abandoned,
-			 * and this attempt has been enqueued enqueued.
-			 */
-			readonly overridden: true;
-	  })
-	| {
-			/**
-			 * Indicates that another summarize attempt was already enqueued.
-			 */
-			readonly alreadyEnqueued: true;
-			/**
-			 * Indicates that the other enqueued summarize attempt remains enqueued,
-			 * and this attempt has not been enqueued.
-			 */
-			readonly overridden?: undefined;
 	  };
 
 /**
