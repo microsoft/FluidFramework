@@ -369,6 +369,10 @@ stages:
 
               npx --package=@ff-internal/trips-setup@0.0.3 -- trips-setup $SYSTEM_ACCESSTOKEN
 
+              echo 'Tenant credentials retrieved and stored in environment variables:'
+              echo "login__microsoft__clientId: $(appClientId)"
+              echo "login__odsp__test__tenants: $(tenantCreds)"
+
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
@@ -382,7 +386,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
+            customCommand: 'printenv && run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
           # filter report
