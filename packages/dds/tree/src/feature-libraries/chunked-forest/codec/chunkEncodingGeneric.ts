@@ -52,7 +52,7 @@ export type BufferFormat<TEncodedShape> = (
  */
 export function updateShapesAndIdentifiersEncoding<TEncodedShape>(
 	version: number,
-	buffer: BufferFormat<TEncodedShape>[],
+	buffer: BufferFormat<TEncodedShape>,
 	identifierFilter: CounterFilter<string> = jsonMinimizingFilter,
 ): EncodedFieldBatchGeneric<TEncodedShape> {
 	const identifiers = new Counter<string>();

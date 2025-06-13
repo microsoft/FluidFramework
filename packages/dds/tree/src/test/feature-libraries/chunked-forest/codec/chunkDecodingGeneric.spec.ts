@@ -58,6 +58,16 @@ class TestChunk1 extends ReferenceCountedBase implements TreeChunk {
 		super();
 	}
 
+	private _summaryRefId: string | undefined;
+
+	public get summaryRefId(): string | undefined {
+		return this._summaryRefId;
+	}
+
+	public addSummaryRefId(summaryRefId: string): void {
+		this._summaryRefId = summaryRefId;
+	}
+
 	public clone(): TestChunk1 {
 		return new TestChunk1(this.value);
 	}
@@ -74,6 +84,16 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 
 	public constructor(public value: number) {
 		super();
+	}
+
+	private _summaryRefId: string | undefined;
+
+	public get summaryRefId(): string | undefined {
+		return this._summaryRefId;
+	}
+
+	public addSummaryRefId(summaryRefId: string): void {
+		this._summaryRefId = summaryRefId;
 	}
 
 	public clone(): TestChunk2 {
