@@ -29,6 +29,7 @@ import {
 } from "./testUtils.js";
 import type { InternalTypes } from "../exposedInternalTypes.js";
 import type { StatesWorkspace } from "../types.js";
+import type { Latest } from "../latestValueManager.js";
 
 const systemWorkspace = {
 	"system:presence": {
@@ -145,6 +146,31 @@ describe("Presence", () => {
 			});
 
 			describe("validator is called appropriately", () => {
+				let stateWorkspace: StatesWorkspace<{
+					count: InternalTypes.ManagerFactory<
+						string,
+						InternalTypes.ValueRequiredState<{
+							num: number;
+						}>,
+						Latest<
+							{
+								num: number;
+							},
+							ProxiedValueAccessor<{
+								num: number;
+							}>
+						>
+					>;
+				}>;
+				let count: Latest<
+					{
+						num: number;
+					},
+					ProxiedValueAccessor<{
+						num: number;
+					}>
+				>;
+
 				beforeEach(() => {
 					runtime.signalsExpected.push([
 						{
@@ -167,21 +193,18 @@ describe("Presence", () => {
 							},
 						},
 					]);
-				});
 
-				it("getRemote does not call validator", () => {
-					// Setup
-					// Configure a state workspace
-					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 						count: StateFactory.latest({
 							local: { num: 0 } satisfies TestData,
 							validator: validatorFunction,
 							settings: { allowableUpdateLatencyMs: 0 },
 						}),
 					});
+					count = stateWorkspace.states.count;
+				});
 
-					const { count } = stateWorkspace.states;
-
+				it("getRemote does not call validator", () => {
 					// Act & Verify
 					count.local = { num: 11 };
 
@@ -194,18 +217,6 @@ describe("Presence", () => {
 				});
 
 				it("calls validator when data is read", () => {
-					// Setup
-					// Configure a state workspace
-					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-						count: StateFactory.latest({
-							local: { num: 0 } satisfies TestData,
-							validator: validatorFunction,
-							settings: { allowableUpdateLatencyMs: 0 },
-						}),
-					});
-
-					const { count } = stateWorkspace.states;
-
 					// Act & Verify
 					count.local = { num: 11 };
 
@@ -221,20 +232,8 @@ describe("Presence", () => {
 				});
 
 				it("calls validator only once if data is unchanged", () => {
-					// Setup
-					// Configure a state workspace
-					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-						count: StateFactory.latest({
-							local: { num: 0 },
-							validator: validatorFunction,
-							settings: { allowableUpdateLatencyMs: 0 },
-						}),
-					});
-
-					const { count } = stateWorkspace.states;
-					count.local = { num: 11 };
-
 					// Act & Verify
+					count.local = { num: 11 };
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
 					// Calling getRemote should not invoke the validator (only a value read will).
