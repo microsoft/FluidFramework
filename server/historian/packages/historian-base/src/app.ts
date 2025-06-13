@@ -54,7 +54,6 @@ export function create(
 	// Express app configuration
 	const app: express.Express = express();
 	const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
-	const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec");
 
 	const requestSize = config.get("requestSizeLimit");
 	// initialize RestLess server translation

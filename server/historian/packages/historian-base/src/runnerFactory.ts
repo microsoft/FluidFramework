@@ -120,7 +120,6 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 			riddlerEndpoint,
 			tenantCache,
 			redisCacheForInvalidToken,
-			config.get("auth:maxTokenLifetimeSec"),
 		);
 
 		// Redis connection for throttling.

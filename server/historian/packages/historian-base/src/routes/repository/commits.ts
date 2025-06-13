@@ -43,6 +43,8 @@ export function create(
 ): Router {
 	const router: Router = Router();
 
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
+
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
@@ -77,7 +79,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const sha = utils.queryParamToString(request.query.sha);

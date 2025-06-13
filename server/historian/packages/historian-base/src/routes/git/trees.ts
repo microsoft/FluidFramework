@@ -39,6 +39,8 @@ export function create(
 ): Router {
 	const router: Router = Router();
 
+	const maxTokenLifetimeSec = config.get("auth:maxTokenLifetimeSec");
+
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
 		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
@@ -89,7 +91,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const treeP = createTree(
@@ -105,7 +107,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees/:sha",
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);

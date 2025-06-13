@@ -21,7 +21,7 @@ import {
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { checkToken, getRequestErrorTranslator, getTokenLifetimeInSec, validateTokenClaimsExpiration } from "../utils";
+import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
@@ -31,8 +31,8 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 	constructor(
 		endpoint: string,
 		private readonly cache: RedisTenantCache,
+		// private readonly maxTokenLifetimeSec?: number,
 		private readonly redisCacheForInvalidToken?: ICache,
-		private readonly maxTokenLifetimeSec?: number,
 	) {
 		this.restWrapper = new BasicRestWrapper(
 			endpoint,
@@ -159,8 +159,7 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 
 			// HERE - TODO: ensure token expiration validity as well using `validateTokenClaimsExpiration` from `services-client`
 			let tokenLifetimeInSec = getTokenLifetimeInSec(token);
-			let claims = await checkToken(token, tenantId, "");
-			let maxTokenLifetimeSecValidation = validateTokenClaimsExpiration(claims, this.maxTokenLifetimeSec);
+			// let maxTokenLifetimeSecValidation = validateTokenClaimsExpiration(claims, this.maxTokenLifetimeSec);
 			// in case the service clock is behind, reducing the lifetime of token by 5%
 			// to avoid using an expired token.
 			if (tokenLifetimeInSec) {

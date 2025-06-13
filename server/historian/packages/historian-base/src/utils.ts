@@ -7,9 +7,9 @@ import { parse } from "path";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
 import { Params } from "express-serve-static-core";
-import { getParam, validateTokenClaims } from "@fluidframework/server-services-utils";
+import { getParam } from "@fluidframework/server-services-utils";
 import { ITokenClaims } from "@fluidframework/protocol-definitions";
-import { InternalErrorCode, isNetworkError, NetworkError } from "@fluidframework/server-services-client";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { decode } from "jsonwebtoken";
 import winston from "winston";
@@ -72,53 +72,53 @@ export function validateTokenClaimsExpiration(
 	return lifeTimeMSec;
 }
 
-export async function checkToken(
-	token: string | null,
-	tenantId: string,
-	documentId: string,
-): Promise<ITokenClaims> {
-	if (!token) {
-		throw new NetworkError(403, "Must provide an authorization token");
-	}
-	const claims = validateTokenClaims(token, documentId, tenantId);
-	try {
-		if (revokedTokenChecker && claims.jti) {
-			const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
-				claims.tenantId,
-				claims.documentId,
-				claims.jti,
-			);
-			if (isTokenRevoked) {
-				const error = createFluidServiceNetworkError(403, {
-					message: "Permission denied. Token has been revoked",
-					internalErrorCode: InternalErrorCode.TokenRevoked,
-					canRetry: false,
-					isFatal: true,
-				});
-				throw error;
-			}
-		}
-		await tenantManager.verifyToken(claims.tenantId, token);
-		return claims;
-	} catch (error: any) {
-		if (isNetworkError(error)) {
-			throw error;
-		}
-		// We don't understand the error, so it is likely an internal service error.
-		const errMsg = `Could not verify connect document token. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
-		throw handleServerErrorAndConvertToNetworkError(
-			logger,
-			errMsg,
-			claims.documentId,
-			claims.tenantId,
-			error,
-		);
-	}
-}
+// export async function checkToken(
+// 	token: string | null,
+// 	tenantId: string,
+// 	documentId: string,
+// ): Promise<ITokenClaims> {
+// 	if (!token) {
+// 		throw new NetworkError(403, "Must provide an authorization token");
+// 	}
+// 	const claims = validateTokenClaims(token, documentId, tenantId);
+// 	try {
+// 		if (revokedTokenChecker && claims.jti) {
+// 			const isTokenRevoked: boolean = await revokedTokenChecker.isTokenRevoked(
+// 				claims.tenantId,
+// 				claims.documentId,
+// 				claims.jti,
+// 			);
+// 			if (isTokenRevoked) {
+// 				const error = createFluidServiceNetworkError(403, {
+// 					message: "Permission denied. Token has been revoked",
+// 					internalErrorCode: InternalErrorCode.TokenRevoked,
+// 					canRetry: false,
+// 					isFatal: true,
+// 				});
+// 				throw error;
+// 			}
+// 		}
+// 		await tenantManager.verifyToken(claims.tenantId, token);
+// 		return claims;
+// 	} catch (error: any) {
+// 		if (isNetworkError(error)) {
+// 			throw error;
+// 		}
+// 		// We don't understand the error, so it is likely an internal service error.
+// 		const errMsg = `Could not verify connect document token. Error: ${safeStringify(
+// 			error,
+// 			undefined,
+// 			2,
+// 		)}`;
+// 		throw handleServerErrorAndConvertToNetworkError(
+// 			logger,
+// 			errMsg,
+// 			claims.documentId,
+// 			claims.tenantId,
+// 			error,
+// 		);
+// 	}
+// }
 
 export function getTenantIdFromRequest(params: Params) {
 	const tenantId = getParam(params, "tenantId");
