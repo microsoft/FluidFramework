@@ -40,13 +40,6 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingCon
 	 */
 	public readonly language?: string;
 
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
 	public constructor(children: PhrasingContent[], language?: string) {
 		super(children);
 		this.language = language;
