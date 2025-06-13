@@ -46,6 +46,7 @@ import {
 	getIdentifierFromNode,
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
 	getOrCreateInnerNode,
 	NodeKind,
 	tryGetTreeNodeForField,
@@ -71,8 +72,6 @@ import {
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
 	type FlexTreeSequenceField,
-	isFlexTreeNode,
-	type FlexTreeUnknownUnboxed,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
@@ -638,7 +637,7 @@ export const TreeAlpha: TreeAlpha = {
 				for (let index = 0; index < sequence.length; index++) {
 					const childFlexTree = sequence.at(index);
 					assert(childFlexTree !== undefined, "Sequence child was undefined.");
-					const childTree = nodeFromInnerUnboxedNode(childFlexTree);
+					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 					result.push([index, childTree]);
 				}
 				break;
@@ -675,10 +674,6 @@ export const TreeAlpha: TreeAlpha = {
 		return result;
 	},
 };
-
-function nodeFromInnerUnboxedNode(flexTree: FlexTreeUnknownUnboxed): TreeNode | TreeLeafValue {
-	return isFlexTreeNode(flexTree) ? getOrCreateNodeFromInnerNode(flexTree) : flexTree;
-}
 
 function exportConcise(
 	node: TreeNode | TreeLeafValue,

@@ -23,6 +23,7 @@ export {
 	SimpleContextSlot,
 	getOrCreateInnerNode,
 	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
 	getKernel,
 } from "./core/index.js";
 export {
