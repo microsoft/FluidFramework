@@ -48,7 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { getValueFromSerializable, makeSerialized } from "./localValues.js";
+import { makeSerialized, migrateIfSharedSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -762,12 +762,8 @@ export class SharedDirectory
 						this.serializer,
 						// eslint-disable-next-line import/no-deprecated
 					) as ISerializableValue;
-					const value = getValueFromSerializable(
-						parsedSerializable,
-						this.serializer,
-						this.handle,
-					);
-					currentSubDir.populateStorage(key, value);
+					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
+					currentSubDir.populateStorage(key, parsedSerializable.value);
 				}
 			}
 		}
@@ -893,8 +889,8 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
-					const value = getValueFromSerializable(op.value, this.serializer, this.handle);
-					const localValue = local ? undefined : { value };
+					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
+					const localValue = local ? undefined : { value: op.value.value as unknown };
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
@@ -977,10 +973,8 @@ export class SharedDirectory
 				break;
 			}
 			case "set": {
-				dir?.set(
-					directoryOp.key,
-					getValueFromSerializable(directoryOp.value, this.serializer, this.handle),
-				);
+				migrateIfSharedSerializable(directoryOp.value, this.serializer, this.handle);
+				dir?.set(directoryOp.key, directoryOp.value.value);
 				break;
 			}
 			default: {

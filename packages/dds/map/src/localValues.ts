@@ -44,17 +44,20 @@ export const makeSerialized = (
 /**
  * Very old versions of Fluid permitted a different type of stored value, which represented a
  * SharedObject held directly.  This functionality has since been replaced with handles.
- * This function ensures we convert any remaining "shared" values to handles.
+ *
+ * If the passed serializable is one of these old values, this function will mutate it to a modern
+ * value with a handle.
  * @param serializable - The serializable value to potentially convert.
  */
-export const getValueFromSerializable = (
+export const migrateIfSharedSerializable = (
 	// eslint-disable-next-line import/no-deprecated
 	serializable: ISerializableValue,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
-): unknown => {
+): void => {
 	// Migrate from old shared value to handles
 	if (serializable.type === ValueType[ValueType.Shared]) {
+		serializable.type = ValueType[ValueType.Plain];
 		const handle: ISerializedHandle = {
 			type: "__fluid_handle__",
 			url: serializable.value as string,
@@ -62,8 +65,6 @@ export const getValueFromSerializable = (
 		// NOTE: here we require the use of `parseHandles` because the roundtrip
 		// through a string is necessary to resolve the absolute path of
 		// legacy handles (`ValueType.Shared`)
-		return serializer.encode(parseHandles(handle, serializer), bind);
+		serializable.value = serializer.encode(parseHandles(handle, serializer), bind);
 	}
-
-	return serializable.value;
 };

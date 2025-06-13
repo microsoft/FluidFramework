@@ -21,7 +21,11 @@ import type {
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import { getValueFromSerializable, type ILocalValue, makeSerialized } from "./localValues.js";
+import {
+	type ILocalValue,
+	makeSerialized,
+	migrateIfSharedSerializable,
+} from "./localValues.js";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -360,8 +364,8 @@ export class MapKernel {
 		for (const [key, serializable] of Object.entries(
 			this.serializer.decode(json) as IMapDataObjectSerializable,
 		)) {
-			const value = getValueFromSerializable(serializable, this.serializer, this.handle);
-			this.data.set(key, { value });
+			migrateIfSharedSerializable(serializable, this.serializer, this.handle);
+			this.data.set(key, { value: serializable.value });
 		}
 	}
 
@@ -393,8 +397,8 @@ export class MapKernel {
 				break;
 			}
 			case "set": {
-				const value = getValueFromSerializable(op.value, this.serializer, this.handle);
-				this.set(op.key, value);
+				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
+				this.set(op.key, op.value.value);
 				break;
 			}
 			default: {
@@ -656,8 +660,8 @@ export class MapKernel {
 				}
 
 				// needProcessKeyOperation should have returned false if local is true
-				const value = getValueFromSerializable(op.value, this.serializer, this.handle);
-				this.setCore(op.key, { value }, local);
+				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
+				this.setCore(op.key, { value: op.value.value }, local);
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
