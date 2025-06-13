@@ -26,27 +26,6 @@ export interface ILocalValue {
 }
 
 /**
- * Converts the provided `localValue` to its serialized form.
- *
- * @param localValue - The value to serialize.
- * @param serializer - Data store runtime's serializer.
- * @param bind - Container type's handle.
- */
-export function makeSerializable(
-	value: unknown,
-	serializer: IFluidSerializer,
-	bind: IFluidHandle,
-	// eslint-disable-next-line import/no-deprecated
-): ISerializableValue {
-	const { value: serializedValue } = makeSerialized(value, serializer, bind);
-	return {
-		type: ValueType[ValueType.Plain],
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		value: serializedValue === undefined ? undefined : JSON.parse(serializedValue),
-	};
-}
-
-/**
  * Convert a local value to its serialized form.
  */
 export const makeSerialized = (
