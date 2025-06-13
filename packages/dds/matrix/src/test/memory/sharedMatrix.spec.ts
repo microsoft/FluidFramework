@@ -40,6 +40,7 @@ function createUndoBenchmark({
 
 		async run(): Promise<void> {
 			assert(this.undoStack !== undefined, "undoStack is not initialized");
+			assert.equal(this.undoStack.undoStackLength, stackCount);
 			for (let i = 0; i < stackCount; i++) {
 				this.undoStack.undoOperation();
 			}
@@ -83,6 +84,10 @@ function createRedoBenchmark({
 
 		async run(): Promise<void> {
 			assert(this.redoStack !== undefined, "redoStack is not initialized");
+			assert.equal(this.redoStack.redoStackLength, stackCount);
+			for (let i = 0; i < stackCount; i++) {
+				this.redoStack.redoOperation();
+			}
 		}
 
 		beforeIteration(): void {
@@ -94,6 +99,7 @@ function createRedoBenchmark({
 			this.redoStack = new UndoRedoStackManager();
 			this.localMatrix.openUndo(this.redoStack);
 			operation(this.localMatrix, operationCount);
+			assert.equal(this.redoStack.undoStackLength, stackCount);
 			for (let i = 0; i < stackCount; i++) {
 				this.redoStack.undoOperation();
 			}

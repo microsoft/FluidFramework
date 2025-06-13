@@ -50,7 +50,12 @@ class Stack<T> {
 	}
 
 	public get length(): number {
-		return this.items.length;
+		let length = 0;
+		for (const item of this.items) {
+			// eslint-disable-next-line unicorn/no-negated-condition
+			length += item !== undefined ? (item as Stack<T>).items.length : 0;
+		}
+		return length;
 	}
 }
 
@@ -190,6 +195,14 @@ export class UndoRedoStackManager {
 		} else {
 			operationStack.push(revertible);
 		}
+	}
+
+	public get undoStackLength(): number {
+		return this.undoStack.length;
+	}
+
+	public get redoStackLength(): number {
+		return this.redoStack.length;
 	}
 
 	private clearRedoStack(): void {
