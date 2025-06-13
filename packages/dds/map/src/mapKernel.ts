@@ -379,7 +379,7 @@ export class MapKernel {
 		)) {
 			const localValue = {
 				key,
-				value: this.makeLocal(key, serializable),
+				value: this.makeLocal(serializable),
 			};
 
 			this.data.set(localValue.key, localValue.value);
@@ -414,7 +414,7 @@ export class MapKernel {
 				break;
 			}
 			case "set": {
-				this.set(op.key, this.makeLocal(op.key, op.value).value);
+				this.set(op.key, this.makeLocal(op.value).value);
 				break;
 			}
 			default: {
@@ -571,13 +571,11 @@ export class MapKernel {
 	 * have the information we need to create a real object, but will not be the real object yet.  For example,
 	 * we might know it's a map and the map's ID but not have the actual map or its data yet.  makeLocal's
 	 * job is to convert that information into a real object for local usage.
-	 * @param key - The key that the caller intends to store the local value into (used for ops later).  But
-	 * doesn't actually store the local value into that key.  So better not lie!
 	 * @param serializable - The remote information that we can convert into a real object
 	 * @returns The local value that was produced
 	 */
 	// eslint-disable-next-line import/no-deprecated
-	private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
+	private makeLocal(serializable: ISerializableValue): ILocalValue {
 		if (
 			serializable.type === ValueType[ValueType.Plain] ||
 			serializable.type === ValueType[ValueType.Shared]
@@ -698,7 +696,7 @@ export class MapKernel {
 				}
 
 				// needProcessKeyOperation should have returned false if local is true
-				const context = this.makeLocal(op.key, op.value);
+				const context = this.makeLocal(op.value);
 				this.setCore(op.key, context, local);
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {

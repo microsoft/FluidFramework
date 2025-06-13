@@ -758,8 +758,6 @@ export class SharedDirectory
 			if (currentSubDirObject.storage) {
 				for (const [key, serializable] of Object.entries(currentSubDirObject.storage)) {
 					const localValue = this.makeLocal(
-						key,
-						currentSubDir.absolutePath,
 						// eslint-disable-next-line import/no-deprecated
 						parseHandles(serializable, this.serializer) as ISerializableValue,
 					);
@@ -813,14 +811,10 @@ export class SharedDirectory
 	 * will have the information we need to create a real object, but will not be the real object yet.  For example,
 	 * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
 	 * is to convert that information into a real object for local usage.
-	 * @param key - Key of element being converted
-	 * @param absolutePath - Path of element being converted
 	 * @param serializable - The remote information that we can convert into a real object
 	 * @returns The local value that was produced
 	 */
 	private makeLocal(
-		key: string,
-		absolutePath: string,
 		// eslint-disable-next-line import/no-deprecated
 		serializable: ISerializableValue,
 	): ILocalValue {
@@ -913,7 +907,7 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
-					const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
+					const context = local ? undefined : this.makeLocal(op.value);
 					subdir.processSetMessage(msg, op, context, local, localOpMetadata);
 				}
 			},
