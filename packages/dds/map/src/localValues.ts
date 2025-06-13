@@ -42,7 +42,7 @@ export function makeSerializable(
 	return {
 		type: ValueType[ValueType.Plain],
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		value: serializedValue && JSON.parse(serializedValue),
+		value: serializedValue === undefined ? undefined : JSON.parse(serializedValue),
 	};
 }
 
