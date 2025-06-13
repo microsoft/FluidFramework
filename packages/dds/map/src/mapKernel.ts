@@ -357,16 +357,12 @@ export class MapKernel {
 		return serializedMapData;
 	}
 
-	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
+	public serialize(serializer: IFluidSerializer): string {
 		const serializableMapData: IMapDataObjectSerializable = {};
 		for (const [key, localValue] of this.data.entries()) {
 			serializableMapData[key] = makeSerializable(localValue, serializer, this.handle);
 		}
-		return serializableMapData;
-	}
-
-	public serialize(serializer: IFluidSerializer): string {
-		return JSON.stringify(this.getSerializableStorage(serializer));
+		return JSON.stringify(serializableMapData);
 	}
 
 	/**
