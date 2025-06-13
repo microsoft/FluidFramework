@@ -10,8 +10,8 @@ import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../internalUtils.js";
-import type { LatestMapArguments } from "../latestMapValueManager.js";
-import type { StateSchemaValidator } from "../latestValueTypes.js";
+import type { LatestMap, LatestMapArguments } from "../latestMapValueManager.js";
+import type { ProxiedValueAccessor, StateSchemaValidator } from "../latestValueTypes.js";
 import type { createPresenceManager } from "../presenceManager.js";
 import { StateFactory } from "../stateFactory.js";
 
@@ -27,6 +27,8 @@ import {
 	prepareConnectedPresence,
 	type ValidatorSpy,
 } from "./testUtils.js";
+import type { InternalTypes } from "../exposedInternalTypes.js";
+import type { StatesWorkspace } from "../types.js";
 
 const systemWorkspace = {
 	"system:presence": {
@@ -303,6 +305,23 @@ describe("Presence", () => {
 		describe("LatestMapValueManager", () => {
 			let validatorFunction: StateSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
+			let stateWorkspace: StatesWorkspace<{
+				count: InternalTypes.ManagerFactory<
+					string,
+					InternalTypes.MapValueState<{ num: number }, "key1">,
+					LatestMap<{ num: number }, "key1", ProxiedValueAccessor<{ num: number }>>
+				>;
+			}>;
+			let count: LatestMap<
+				{
+					num: number;
+				},
+				"key1",
+				ProxiedValueAccessor<{
+					num: number;
+				}>
+			>;
+
 			beforeEach(() => {
 				runtime.signalsExpected.push(
 					[
@@ -362,14 +381,9 @@ describe("Presence", () => {
 				[validatorFunction, validatorSpy] = createSpiedValidator<{ num: number }>(
 					createNullValidator(),
 				);
-
 				assert.equal(validatorSpy.callCount, 0);
-			});
 
-			it("does not call validator when referencing map key", () => {
-				// Setup
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latestMap({
 						local: { "key1": { num: 0 } },
 						validator: validatorFunction,
@@ -377,11 +391,12 @@ describe("Presence", () => {
 					}),
 				});
 
-				const { count } = stateWorkspace.states;
+				count = stateWorkspace.states.count;
+			});
 
+			it("does not call validator when referencing map key", () => {
 				// Act & Verify
 				count.local.set("key1", { num: 84 });
-
 				const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
 				// Getting just the map or its key should not cause the validator to run
@@ -393,18 +408,6 @@ describe("Presence", () => {
 			});
 
 			it("calls validator when key value is read", () => {
-				// Setup
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latestMap({
-						local: { "key1": { num: 0 } },
-						validator: validatorFunction,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
-				});
-
-				const { count } = stateWorkspace.states;
-
 				// Act & Verify
 				count.local.set("key1", { num: 84 });
 
@@ -417,22 +420,10 @@ describe("Presence", () => {
 			});
 
 			it("calls validator only once for the same key value", () => {
-				// Setup
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latestMap({
-						local: { "key1": { num: 0 } },
-						validator: validatorFunction,
-						settings: { allowableUpdateLatencyMs: 0 },
-					} satisfies LatestMapArguments<{ num: number }, string>),
-				});
-
-				const { count } = stateWorkspace.states;
+				// Act & Verify
 				count.local.set("key1", { num: 84 });
-
 				const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
-				// Act & Verify
 				// Reading the data should cause the validator to get called once. Since this is a map, we need to read a key
 				// value to call the validator.
 				const remoteData = count.getRemote(attendee2);
