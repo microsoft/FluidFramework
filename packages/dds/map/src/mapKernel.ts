@@ -350,11 +350,11 @@ export class MapKernel {
 	 * @returns A JSON string containing serialized map data
 	 */
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
-		const serializableMapData: IMapDataObjectSerialized = {};
+		const serializedMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = makeSerialized(localValue.value, serializer, this.handle);
+			serializedMapData[key] = makeSerialized(localValue.value, serializer, this.handle);
 		}
-		return serializableMapData;
+		return serializedMapData;
 	}
 
 	public getSerializableStorage(serializer: IFluidSerializer): IMapDataObjectSerializable {
