@@ -22,7 +22,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import {
-	fromSerializable,
+	getValueFromSerializable,
 	type ILocalValue,
 	makeSerializable,
 	makeSerialized,
@@ -377,12 +377,8 @@ export class MapKernel {
 		for (const [key, serializable] of Object.entries(
 			this.serializer.decode(json) as IMapDataObjectSerializable,
 		)) {
-			const localValue = {
-				key,
-				value: this.makeLocal(serializable),
-			};
-
-			this.data.set(localValue.key, localValue.value);
+			const value = getValueFromSerializable(serializable, this.serializer, this.handle);
+			this.data.set(key, { value });
 		}
 	}
 
@@ -414,7 +410,8 @@ export class MapKernel {
 				break;
 			}
 			case "set": {
-				this.set(op.key, this.makeLocal(op.value).value);
+				const value = getValueFromSerializable(op.value, this.serializer, this.handle);
+				this.set(op.key, value);
 				break;
 			}
 			default: {
@@ -567,26 +564,6 @@ export class MapKernel {
 	}
 
 	/**
-	 * The remote ISerializableValue we're receiving (either as a result of a load or an incoming set op) will
-	 * have the information we need to create a real object, but will not be the real object yet.  For example,
-	 * we might know it's a map and the map's ID but not have the actual map or its data yet.  makeLocal's
-	 * job is to convert that information into a real object for local usage.
-	 * @param serializable - The remote information that we can convert into a real object
-	 * @returns The local value that was produced
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	private makeLocal(serializable: ISerializableValue): ILocalValue {
-		if (
-			serializable.type === ValueType[ValueType.Plain] ||
-			serializable.type === ValueType[ValueType.Shared]
-		) {
-			return fromSerializable(serializable, this.serializer, this.handle);
-		} else {
-			throw new Error("Unknown local value type");
-		}
-	}
-
-	/**
 	 * If our local operations that have not yet been ack'd will eventually overwrite an incoming operation, we should
 	 * not process the incoming operation.
 	 * @param op - Operation to check
@@ -696,8 +673,8 @@ export class MapKernel {
 				}
 
 				// needProcessKeyOperation should have returned false if local is true
-				const context = this.makeLocal(op.value);
-				this.setCore(op.key, context, local);
+				const value = getValueFromSerializable(op.value, this.serializer, this.handle);
+				this.setCore(op.key, { value }, local);
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);

@@ -48,7 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { fromSerializable, makeSerialized } from "./localValues.js";
+import { getValueFromSerializable, makeSerialized } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -757,11 +757,17 @@ export class SharedDirectory
 
 			if (currentSubDirObject.storage) {
 				for (const [key, serializable] of Object.entries(currentSubDirObject.storage)) {
-					const localValue = this.makeLocal(
+					const parsedSerializable = parseHandles(
+						serializable,
+						this.serializer,
 						// eslint-disable-next-line import/no-deprecated
-						parseHandles(serializable, this.serializer) as ISerializableValue,
+					) as ISerializableValue;
+					const value = getValueFromSerializable(
+						parsedSerializable,
+						this.serializer,
+						this.handle,
 					);
-					currentSubDir.populateStorage(key, localValue);
+					currentSubDir.populateStorage(key, { value });
 				}
 			}
 		}
@@ -804,26 +810,6 @@ export class SharedDirectory
 	 */
 	private makeAbsolute(relativePath: string): string {
 		return posix.resolve(posix.sep, relativePath);
-	}
-
-	/**
-	 * The remote ISerializableValue we're receiving (either as a result of a snapshot load or an incoming set op)
-	 * will have the information we need to create a real object, but will not be the real object yet.  For example,
-	 * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
-	 * is to convert that information into a real object for local usage.
-	 * @param serializable - The remote information that we can convert into a real object
-	 * @returns The local value that was produced
-	 */
-	private makeLocal(
-		// eslint-disable-next-line import/no-deprecated
-		serializable: ISerializableValue,
-	): ILocalValue {
-		assert(
-			serializable.type === ValueType[ValueType.Plain] ||
-				serializable.type === ValueType[ValueType.Shared],
-			0x1e4 /* "Unexpected serializable type" */,
-		);
-		return fromSerializable(serializable, this.serializer, this.handle);
 	}
 
 	/**
@@ -907,8 +893,9 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
-					const context = local ? undefined : this.makeLocal(op.value);
-					subdir.processSetMessage(msg, op, context, local, localOpMetadata);
+					const value = getValueFromSerializable(op.value, this.serializer, this.handle);
+					const localValue = local ? undefined : { value };
+					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
 			submit: (op: IDirectorySetOperation, localOpMetadata: unknown) => {
@@ -992,7 +979,7 @@ export class SharedDirectory
 			case "set": {
 				dir?.set(
 					directoryOp.key,
-					fromSerializable(directoryOp.value, this.serializer, this.handle).value,
+					getValueFromSerializable(directoryOp.value, this.serializer, this.handle),
 				);
 				break;
 			}
