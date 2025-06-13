@@ -71,7 +71,13 @@ import {
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
-import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+import Sinon, {
+	SinonFakeTimers,
+	createSandbox,
+	useFakeTimers,
+	match,
+	createStubInstance,
+} from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
 import { defaultMinVersionForCollab } from "../compatUtils.js";
@@ -170,27 +176,34 @@ function isSignalEnvelope(
 	);
 }
 
+let sandbox: Sinon.SinonSandbox;
+
 function stubChannelCollectionForResubmit(
 	containerRuntime: ContainerRuntime_WithPrivates,
-): void {
-	containerRuntime.channelCollection = {
-		setConnectionState: (_connected: boolean, _clientId?: string) => {},
-		// Pass data store op right back to ContainerRuntime
-		reSubmit: (
-			type: string,
-			envelope: IEnvelope,
-			localOpMetadata: unknown,
-			squash: boolean,
-		) => {
+): Sinon.SinonStubbedInstance<ChannelCollection> {
+	// Pass data store op right back to ContainerRuntime
+	const reSubmitFake = sandbox
+		.stub<[type: string, content: unknown, localOpMetadata: unknown, squash: boolean], void>()
+		.callsFake((type: string, content: unknown, localOpMetadata: unknown, squash: boolean) => {
+			// content is expected to be an IEnvelope, but the stub expects 'unknown'
+			const envelope = content as IEnvelope;
 			submitDataStoreOp(
 				containerRuntime,
 				envelope.address,
 				envelope.contents,
 				localOpMetadata,
 			);
-		},
-		notifyStagingMode: (staging: boolean) => {},
-	} satisfies Partial<ChannelCollection> as ChannelCollection;
+		});
+
+	const stub = createStubInstance(ChannelCollection, {
+		setConnectionState: sandbox.stub(),
+		reSubmit: reSubmitFake,
+		notifyStagingMode: sandbox.stub(),
+		dispose: sandbox.stub(),
+	});
+
+	containerRuntime.channelCollection = stub;
+	return stub;
 }
 
 describe("Runtime", () => {
@@ -212,6 +225,7 @@ describe("Runtime", () => {
 		submittedOps = [];
 		opFakeSequenceNumber = 1;
 		submittedSignals = [];
+		sandbox = createSandbox();
 	});
 
 	afterEach(() => {
@@ -988,7 +1002,6 @@ describe("Runtime", () => {
 		});
 
 		describe("Dirty flag", () => {
-			const sandbox = createSandbox();
 			const createMockContext = (
 				attachState: AttachState,
 				addPendingMsg: boolean,
@@ -2521,7 +2534,6 @@ describe("Runtime", () => {
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
-			const sandbox = createSandbox();
 			let snapshotWithContents: ISnapshot;
 			let blobContents: Map<string, ArrayBuffer>;
 			let ops: ISequencedDocumentMessage[];
@@ -4179,10 +4191,10 @@ describe("Runtime", () => {
 			});
 		});
 
-		//* SKIP
-		//* SKIP
-		//* SKIP
-		describe.skip("Staging Mode", () => {
+		//* ONLY
+		//* ONLY
+		//* ONLY
+		describe.only("Staging Mode", () => {
 			let containerRuntime: ContainerRuntime_WithPrivates;
 
 			beforeEach("init", async () => {
@@ -4287,22 +4299,44 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("commitChanges submits staged ops", () => {
-				const controls = containerRuntime.enterStagingMode();
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			it.only("commitChanges submits staged ops", () => {
+				const channelCollectionStub = stubChannelCollectionForResubmit(containerRuntime);
 
-				//* The ID/address needs to be real, or we need to intercept ChannelCollection.resubmit
+				const controls = containerRuntime.enterStagingMode();
+				assert(
+					channelCollectionStub.notifyStagingMode.calledOnceWithExactly(true),
+					"Expected notifyStagingMode to be called with true",
+				);
+
 				submitDataStoreOp(containerRuntime, "1", "staged-op");
 				// staged ops should not yet have hit submitFn
 				assert.equal(submittedOps.length, 0, "No ops expected while staged");
 
+				// No args - squash should be false by default
 				controls.commitChanges();
-				// flush any queued messages
-				containerRuntime.flush();
+
+				//* Also test where true is passed?
+				assert(
+					channelCollectionStub.reSubmit.calledOnceWith(
+						match.any,
+						match.any,
+						match.any,
+						false,
+					),
+					"Expected squash to be false by default",
+				);
+				assert(
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
+					"Expected notifyStagingMode to be called with false on the second call",
+				);
 
 				assert.equal(
 					submittedOps.length,
 					1,
-					"Staged op should be submitted after commitChanges",
+					"Staged op should be resubmitted after commitChanges",
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(submittedOps[0].contents.address, "1");
