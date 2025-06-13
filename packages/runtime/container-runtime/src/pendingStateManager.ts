@@ -234,10 +234,11 @@ function toSerializableForm(
 
 interface ReplayPendingStateOptions {
 	/**
-	 * If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
+	 * If true, only replay staged batches, clearing the "staged" flag.
+	 * This is used when we are exiting staging mode and want to rebase and submit the staged batches without resubmitting pre-staged messages.
 	 * Default: false
 	 */
-	onlyStagedBatches: boolean;
+	committingStagedBatches: boolean;
 	/**
 	 * @param squash - If true, edits should be squashed when resubmitting.
 	 * Default: false
@@ -246,7 +247,7 @@ interface ReplayPendingStateOptions {
 }
 
 const defaultReplayPendingStatesOptions: ReplayPendingStateOptions = {
-	onlyStagedBatches: false,
+	committingStagedBatches: false,
 	squash: false,
 };
 
@@ -742,16 +743,18 @@ export class PendingStateManager implements IDisposable {
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 */
-	public replayPendingStates(optionsParam?: ReplayPendingStateOptions): void {
-		const options = { ...defaultReplayPendingStatesOptions, ...optionsParam };
-		const { onlyStagedBatches, squash } = options;
+	public replayPendingStates(options?: ReplayPendingStateOptions): void {
+		const { committingStagedBatches, squash } = {
+			...defaultReplayPendingStatesOptions,
+			...options,
+		};
 		assert(
-			this.stateHandler.connected() || onlyStagedBatches === true,
+			this.stateHandler.connected() || committingStagedBatches === true,
 			0x172 /* "The connection state is not consistent with the runtime" */,
 		);
 
 		// Staged batches have not yet been submitted so check doesn't apply
-		if (!onlyStagedBatches) {
+		if (!committingStagedBatches) {
 			// This assert suggests we are about to send same ops twice, which will result in data loss.
 			assert(
 				this.clientIdFromLastReplay !== this.stateHandler.clientId(),
@@ -778,8 +781,8 @@ export class PendingStateManager implements IDisposable {
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
 
-			// Re-queue pre-staging messages if we are only processing staged batches
-			if (onlyStagedBatches) {
+			// Re-queue pre-staging messages - we are only to replay staged batches
+			if (committingStagedBatches) {
 				if (!pendingMessage.batchInfo.staged) {
 					assert(!seenStagedBatch, 0xb86 /* Staged batch was followed by non-staged batch */);
 					this.pendingMessages.push(pendingMessage);

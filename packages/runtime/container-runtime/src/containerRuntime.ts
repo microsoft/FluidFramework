@@ -3515,7 +3515,7 @@ export class ContainerRuntime
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
 					this.pendingStateManager.replayPendingStates({
-						onlyStagedBatches: true,
+						committingStagedBatches: true,
 						squash,
 					});
 				});
