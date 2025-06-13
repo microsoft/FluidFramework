@@ -559,7 +559,7 @@ export namespace InternalUtilityTypes {
 		: T;
 
 	/**
-	 * Convenience constraint for any Opaque Json type.
+	 * Convenience constraint for any OpaqueJson* type.
 	 *
 	 * @remarks
 	 * Use in extends check: `T extends AnyOpaqueJsonType`
@@ -825,7 +825,7 @@ export namespace InternalUtilityTypes {
 										| boolean
 										| number
 										| string
-										// Add in Opaque Json types
+										// Add in OpaqueJson* types
 										| AnyOpaqueJsonType;
 									DegenerateSubstitute: Controls["DegenerateSubstitute"];
 								},
@@ -855,7 +855,7 @@ export namespace InternalUtilityTypes {
 		: never /* unreachable else for infer */;
 
 	/**
-	 * Handle Opaque Json types for {@link JsonSerializable}.
+	 * Handle OpaqueJson* types for {@link JsonSerializable}.
 	 *
 	 * @remarks
 	 * {@link OpaqueJsonSerializable} and {@link OpaqueJsonDeserialized} instances
@@ -891,7 +891,7 @@ export namespace InternalUtilityTypes {
 							Controls["AllowExactly"],
 							Controls["AllowExtensionOf"]
 						>
-					: "internal error: failed to determine Opaque Json type"
+					: "internal error: failed to determine OpaqueJson* type"
 		: never;
 	/* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -1003,8 +1003,8 @@ export namespace InternalUtilityTypes {
 											>
 										: /* test for enum like types */ IfEnumLike<T> extends never
 											? /* enum or similar simple type (return as-is) => */ T
-											: /* test for Opaque Json types */ T extends AnyOpaqueJsonType
-												? /* Opaque Json type => */ JsonSerializableOpaqueAllowances<
+											: /* test for OpaqueJson* types */ T extends AnyOpaqueJsonType
+												? /* OpaqueJson* type => */ JsonSerializableOpaqueAllowances<
 														T,
 														Controls
 													>
@@ -1193,7 +1193,7 @@ export namespace InternalUtilityTypes {
 			JsonDeserializedFilter<T, Controls, TAncestorTypes | Extract<T, object>>;
 
 	/**
-	 * Handle Opaque Json types for {@link JsonDeserialized}.
+	 * Handle OpaqueJson* types for {@link JsonDeserialized}.
 	 *
 	 * @remarks
 	 * {@link OpaqueJsonSerializable} instances are converted to {@link OpaqueJsonDeserialized}.
@@ -1218,7 +1218,7 @@ export namespace InternalUtilityTypes {
 		| OpaqueJsonSerializable<infer TData, any, unknown>
 		| OpaqueJsonDeserialized<infer TData, any, unknown>
 		? OpaqueJsonDeserialized<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
-		: "internal error: failed to determine Opaque Json type";
+		: "internal error: failed to determine OpaqueJson* type";
 	/* eslint-enable @typescript-eslint/no-explicit-any */
 
 	/**
@@ -1270,8 +1270,8 @@ export namespace InternalUtilityTypes {
 									? /* `object` => */ Controls["DegenerateNonNullObjectSubstitute"]
 									: /* test for enum like types */ IfEnumLike<T> extends never
 										? /* enum or similar simple type (return as-is) => */ T
-										: /* test for matching Opaque Json types */ T extends AnyOpaqueJsonType
-											? /* Opaque Json type => */ JsonDeserializedOpaqueConversion<T, Controls>
+										: /* test for matching OpaqueJson* types */ T extends AnyOpaqueJsonType
+											? /* OpaqueJson* type => */ JsonDeserializedOpaqueConversion<T, Controls>
 											: /* property bag => */ FlattenIntersection<
 													/* properties with symbol keys or wholly unsupported values are removed */
 													{
