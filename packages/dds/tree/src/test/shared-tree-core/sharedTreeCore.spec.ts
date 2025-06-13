@@ -586,7 +586,7 @@ describe("SharedTreeCore", () => {
 
 	interface MockSummarizableEvents extends IEvent {
 		(event: "loaded", listener: (blobContents?: string) => void): void;
-		(event: "summarize" | "summarizeAttached" | "summarizeAsync" | "gcRequested"): void;
+		(event: "summarize" | "summarizeAttached" | "gcRequested"): void;
 	}
 
 	class MockSummarizable
@@ -613,24 +613,14 @@ describe("SharedTreeCore", () => {
 			}
 		}
 
-		public getAttachSummary(
-			stringify: SummaryElementStringifier,
-			fullTree?: boolean | undefined,
-			trackState?: boolean | undefined,
-			telemetryContext?: ITelemetryContext | undefined,
-		): ISummaryTreeWithStats {
+		public summarize(props: {
+			stringify: SummaryElementStringifier;
+			fullTree?: boolean | undefined;
+			trackState?: boolean | undefined;
+			telemetryContext?: ITelemetryContext | undefined;
+		}): ISummaryTreeWithStats {
 			this.emit("summarizeAttached");
-			return this.summarizeCore(stringify);
-		}
-
-		public async summarize(
-			stringify: SummaryElementStringifier,
-			fullTree?: boolean | undefined,
-			trackState?: boolean | undefined,
-			telemetryContext?: ITelemetryContext | undefined,
-		): Promise<ISummaryTreeWithStats> {
-			this.emit("summarizeAsync");
-			return this.summarizeCore(stringify);
+			return this.summarizeCore(props.stringify);
 		}
 
 		private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {
