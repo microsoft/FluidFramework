@@ -103,7 +103,7 @@ describe("Local Server Stress with rollback", () => {
 			...[12], // Values differ at key
 			...[28, 30], // Key not found or value not matching key
 			...[15, 31, 38], // Number of keys not same (directory)
-			...[24], // have different number of keys (map)
+			...[], // have different number of keys (map)
 			...[25, 53], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[65, 67], // 0x2f5 (op create references must be SlideOnRemove)
