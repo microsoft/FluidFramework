@@ -48,7 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { makeSerialized, migrateIfSharedSerializable } from "./localValues.js";
+import { serializeValue, migrateIfSharedSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -1949,8 +1949,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): Generator<[string, ISerializedValue], void> {
 		this.throwIfDisposed();
 		for (const [key, localValue] of this._storage) {
-			const value = makeSerialized(localValue.value, serializer, this.directory.handle);
-			const res: [string, ISerializedValue] = [key, value];
+			const serializedValue = serializeValue(
+				localValue.value,
+				serializer,
+				this.directory.handle,
+			);
+			const res: [string, ISerializedValue] = [key, serializedValue];
 			yield res;
 		}
 	}

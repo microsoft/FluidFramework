@@ -26,9 +26,9 @@ export interface ILocalValue {
 }
 
 /**
- * Convert a local value to its serialized form.
+ * Convert a value to its serialized form, i.e. to be used in ops and summaries.
  */
-export const makeSerialized = (
+export const serializeValue = (
 	value: unknown,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -46,7 +46,7 @@ export const makeSerialized = (
  * SharedObject held directly.  This functionality has since been replaced with handles.
  *
  * If the passed serializable is one of these old values, this function will mutate it to a modern
- * value with a handle.
+ * value with a handle.  Otherwise it does nothing.
  * @param serializable - The serializable value to potentially convert.
  */
 export const migrateIfSharedSerializable = (

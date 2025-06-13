@@ -23,7 +23,7 @@ import type {
 } from "./internalInterfaces.js";
 import {
 	type ILocalValue,
-	makeSerialized,
+	serializeValue,
 	migrateIfSharedSerializable,
 } from "./localValues.js";
 
@@ -351,7 +351,7 @@ export class MapKernel {
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializedMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			serializedMapData[key] = makeSerialized(localValue.value, serializer, this.handle);
+			serializedMapData[key] = serializeValue(localValue.value, serializer, this.handle);
 		}
 		return serializedMapData;
 	}
