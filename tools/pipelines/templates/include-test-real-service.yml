@@ -370,8 +370,23 @@ stages:
               npx --package=@ff-internal/trips-setup@0.0.3 -- trips-setup $SYSTEM_ACCESSTOKEN
 
               echo 'Tenant credentials retrieved and stored in environment variables:'
-              echo "login__microsoft__clientId: $(appClientId)"
-              echo "login__odsp__test__tenants: $(tenantCreds)"
+              echo 'login__microsoft__clientId: $(appClientId)'
+              echo 'login__odsp__test__tenants: $(tenantCreds)'
+
+        - task: Bash@3
+          displayName: 'DEBUG: Print tenant credentials'
+          env:
+            login__microsoft__clientId: $(appClientId)
+            ${{ if eq(endsWith(parameters.stageId, 'odspdf'), true) }}:
+              login__odspdf__test__tenants: $(tenantCreds)
+            ${{ if eq(endsWith(parameters.stageId, 'odsp'), true) }}:
+              login__odsp__test__tenants: $(tenantCreds)
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              echo 'DEBUG: Print tenant credentials'
+              printenv
 
         # run the test
         - task: Npm@1
@@ -386,7 +401,7 @@ stages:
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
-            customCommand: 'printenv && run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
+            customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
           # filter report
