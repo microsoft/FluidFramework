@@ -24,12 +24,18 @@ const persistedMetadata = { a: 2 };
 
 #### Feature flag
 
-To enable persisted metadata, use `configuredSharedTree` to specify the format version:
+To enable persisted metadata, use `configuredSharedTree` to specify the format version. The tree that is returned can be substituted in place of the default `SharedTree` object exported by the Fluid Framework. For example:
 
 ```ts
 const tree = configuredSharedTree({
     formatVersion: SharedTreeFormatVersion.v5,
 }).create(runtime);
+
+export const MyContainerSchema = {
+  initialObjects: {
+    appData: tree,
+  },
+} satisfies ContainerSchema;
 ```
 
 #### Examples
