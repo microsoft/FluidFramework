@@ -767,6 +767,11 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 	};
 }
 
+/**
+ * Export a {@link SimpleNodeSchema} from a {@link TreeNodeStoredSchema}.
+ * @privateRemarks
+ * TODO: Persist node metadata once schema FormatV2 is supported.
+ */
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {

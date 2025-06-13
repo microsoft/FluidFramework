@@ -39,10 +39,13 @@ import {
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
 	getKernel,
-	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
 } from "../../core/index.js";
-import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
+import {
+	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
@@ -1014,7 +1017,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const movedCount = sourceEnd - sourceStart;
 		if (!destinationField.context.isHydrated()) {
-			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+			if (!(sourceField instanceof UnhydratedSequenceField)) {
 				throw new UsageError(
 					"Cannot move elements from a hydrated array to an unhydrated array.",
 				);
@@ -1080,6 +1083,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
  * @param name - Unique identifier for this schema including the factory's scope.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
@@ -1140,10 +1144,7 @@ export function arraySchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {

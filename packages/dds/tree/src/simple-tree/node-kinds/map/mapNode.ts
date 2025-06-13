@@ -33,15 +33,15 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 	type Context,
-	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
+	type UnhydratedFlexTreeNode,
 } from "../../core/index.js";
 import {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
-} from "../../toMapTree.js";
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
 	brand,
@@ -220,7 +220,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getOrCreateInnerNode(this).boxedIterator()) {
+		for (const field of getOrCreateInnerNode(this)) {
 			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
@@ -233,6 +233,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
  *
  * @param base - base schema type to extend.
  * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
@@ -277,10 +278,7 @@ export function mapSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as FactoryContent, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {

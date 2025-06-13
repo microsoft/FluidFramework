@@ -4,7 +4,6 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -34,19 +33,12 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingCon
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.FencedCode;
+	public readonly type = "fencedCode";
 
 	/**
 	 * (optional) Code language to associated with the code block.
 	 */
 	public readonly language?: string;
-
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
 
 	public constructor(children: PhrasingContent[], language?: string) {
 		super(children);

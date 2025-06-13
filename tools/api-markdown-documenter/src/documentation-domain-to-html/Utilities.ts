@@ -40,16 +40,3 @@ export function transformChildrenUnderTag(
 ): HastElement {
 	return h(tag.name, tag.attributes ?? {}, documentationNodesToHtml(children, context));
 }
-
-/**
- * Transforms children, wrapping each child in a `<li>` element.
- *
- * @param children - The list item nodes to render.
- * @param context - See {@link TransformationContext}.
- */
-export function transformListChildren(
-	children: DocumentationNode[],
-	context: TransformationContext,
-): HastElement[] {
-	return children.map((child) => transformChildrenUnderTag({ name: "li" }, [child], context));
-}

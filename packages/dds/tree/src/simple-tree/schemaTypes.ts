@@ -8,7 +8,7 @@ import { Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { FieldKey } from "../core/index.js";
-import type { NodeIdentifierManager } from "../feature-libraries/index.js";
+import type { FlexTreeHydratedContextMinimal } from "../feature-libraries/index.js";
 import {
 	type MakeNominal,
 	brand,
@@ -31,12 +31,13 @@ import type {
 	TreeNode,
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
+	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { inPrototypeChain } from "./core/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import type { SimpleFieldSchema, SimpleObjectFieldSchema } from "./simpleSchema.js";
-import type { InsertableContent } from "./toMapTree.js";
+import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 import { TreeNodeValid } from "./treeNodeValid.js";
 
 /**
@@ -316,14 +317,14 @@ export interface FieldPropsAlpha<TCustomMetadata = unknown>
  * A {@link FieldProvider} which requires additional context in order to produce its content
  */
 export type ContextualFieldProvider = (
-	context: NodeIdentifierManager,
-) => InsertableContent | undefined;
+	context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
+) => UnhydratedFlexTreeNode[];
 /**
- * A {@link FieldProvider} which can produce its content in a vacuum
+ * A {@link FieldProvider} which can produce its content in a vacuum.
  */
-export type ConstantFieldProvider = () => InsertableContent | undefined;
+export type ConstantFieldProvider = () => UnhydratedFlexTreeNode[];
 /**
- * A function which produces content for a field every time that it is called
+ * A function which produces content for a field every time that it is called.
  */
 export type FieldProvider = ContextualFieldProvider | ConstantFieldProvider;
 /**
@@ -829,7 +830,7 @@ function areMetadataEqual(
 	}
 
 	return (
-		a?.custom === b?.custom &&
+		Object.is(a?.custom, b?.custom) &&
 		a?.description === b?.description &&
 		arePersistedMetadataEqual(a?.persistedMetadata, b?.persistedMetadata)
 	);
@@ -844,7 +845,7 @@ function arePersistedMetadataEqual(
 	a: JsonCompatibleReadOnlyObject | undefined,
 	b: JsonCompatibleReadOnlyObject | undefined,
 ): boolean {
-	if (a === b) {
+	if (Object.is(a, b)) {
 		return true;
 	}
 
@@ -1391,7 +1392,6 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
  * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
  * See {@link NodeSchemaMetadata.custom}.
  *
- * @sealed
  * @alpha
  */
 export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
