@@ -142,150 +142,110 @@ describe("Presence", () => {
 				assert.equal(validatorSpy.callCount, 0);
 			});
 
-			it("getRemote does not call validator", () => {
-				// Setup
-				runtime.signalsExpected.push([
-					{
-						"type": "Pres:DatastoreUpdate",
-						"content": {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId2]: {
-											"rev": 1,
-											"timestamp": 1030,
-											"value": toOpaqueJson({ "num": 11 }),
+			describe("validator is called appropriately", () => {
+				beforeEach(() => {
+					runtime.signalsExpected.push([
+						{
+							"type": "Pres:DatastoreUpdate",
+							"content": {
+								"sendTimestamp": 1030,
+								"avgLatency": 10,
+								"data": {
+									...systemWorkspace,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 1,
+												"timestamp": 1030,
+												"value": toOpaqueJson({ "num": 11 }),
+											},
 										},
 									},
 								},
 							},
 						},
-					},
-				]);
-
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({
-						local: { num: 0 } satisfies TestData,
-						validator: validatorFunction,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
+					]);
 				});
 
-				const { count } = stateWorkspace.states;
+				it("getRemote does not call validator", () => {
+					// Setup
+					// Configure a state workspace
+					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+						count: StateFactory.latest({
+							local: { num: 0 } satisfies TestData,
+							validator: validatorFunction,
+							settings: { allowableUpdateLatencyMs: 0 },
+						}),
+					});
 
-				// Act & Verify
-				count.local = { num: 11 };
+					const { count } = stateWorkspace.states;
 
-				const attendee2 = presence.attendees.getAttendee(attendeeId2);
+					// Act & Verify
+					count.local = { num: 11 };
 
-				// Calling getRemote should not invoke the validator (only a value read will).
-				count.getRemote(attendee2);
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
-				assert.equal(validatorSpy.callCount, 0);
-			});
+					// Calling getRemote should not invoke the validator (only a value read will).
+					count.getRemote(attendee2);
 
-			it("calls validator when data is read", () => {
-				// Setup
-				runtime.signalsExpected.push([
-					{
-						"type": "Pres:DatastoreUpdate",
-						"content": {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId2]: {
-											"rev": 1,
-											"timestamp": 1030,
-											"value": toOpaqueJson({ "num": 11 }),
-										},
-									},
-								},
-							},
-						},
-					},
-				]);
-
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({
-						local: { num: 0 } satisfies TestData,
-						validator: validatorFunction,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
+					assert.equal(validatorSpy.callCount, 0);
 				});
 
-				const { count } = stateWorkspace.states;
+				it("calls validator when data is read", () => {
+					// Setup
+					// Configure a state workspace
+					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+						count: StateFactory.latest({
+							local: { num: 0 } satisfies TestData,
+							validator: validatorFunction,
+							settings: { allowableUpdateLatencyMs: 0 },
+						}),
+					});
 
-				// Act & Verify
-				count.local = { num: 11 };
+					const { count } = stateWorkspace.states;
 
-				const attendee2 = presence.attendees.getAttendee(attendeeId2);
+					// Act & Verify
+					count.local = { num: 11 };
 
-				// Calling getRemote should not invoke the validator (only a value read will).
-				const remoteData = count.getRemote(attendee2);
-				const value = remoteData.value();
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
-				// Reading the data should cause the validator to get called once.
-				assert.equal(value?.num, 11);
-				assert.equal(validatorSpy.callCount, 1);
-			});
+					// Calling getRemote should not invoke the validator (only a value read will).
+					const remoteData = count.getRemote(attendee2);
+					const value = remoteData.value();
 
-			it("calls validator only once if data is unchanged", () => {
-				// Setup
-				runtime.signalsExpected.push([
-					{
-						"type": "Pres:DatastoreUpdate",
-						"content": {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId2]: {
-											"rev": 1,
-											"timestamp": 1030,
-											"value": toOpaqueJson({ "num": 11 }),
-										},
-									},
-								},
-							},
-						},
-					},
-				]);
-
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({
-						local: { num: 0 },
-						validator: validatorFunction,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
+					// Reading the data should cause the validator to get called once.
+					assert.equal(value?.num, 11);
+					assert.equal(validatorSpy.callCount, 1);
 				});
 
-				const { count } = stateWorkspace.states;
-				count.local = { num: 11 };
+				it("calls validator only once if data is unchanged", () => {
+					// Setup
+					// Configure a state workspace
+					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+						count: StateFactory.latest({
+							local: { num: 0 },
+							validator: validatorFunction,
+							settings: { allowableUpdateLatencyMs: 0 },
+						}),
+					});
 
-				// Act & Verify
-				const attendee2 = presence.attendees.getAttendee(attendeeId2);
+					const { count } = stateWorkspace.states;
+					count.local = { num: 11 };
 
-				// Calling getRemote should not invoke the validator (only a value read will).
-				const remoteData = count.getRemote(attendee2);
+					// Act & Verify
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
-				// Reading the data should cause the validator to get called once.
-				assert.equal(remoteData.value()?.num, 11);
-				assert.equal(validatorSpy.callCount, 1);
+					// Calling getRemote should not invoke the validator (only a value read will).
+					const remoteData = count.getRemote(attendee2);
 
-				// Subsequent reads should not call the validator when there is no new data.
-				assert.equal(remoteData.value()?.num, 11);
-				assert.equal(validatorSpy.callCount, 1);
+					// Reading the data should cause the validator to get called once.
+					assert.equal(remoteData.value()?.num, 11);
+					assert.equal(validatorSpy.callCount, 1);
+
+					// Subsequent reads should not call the validator when there is no new data.
+					assert.equal(remoteData.value()?.num, 11);
+					assert.equal(validatorSpy.callCount, 1);
+				});
 			});
 
 			it("returns undefined with invalid data", () => {
@@ -344,23 +304,25 @@ describe("Presence", () => {
 			let validatorFunction: StateSchemaValidator<{ num: number }>;
 			let validatorSpy: ValidatorSpy;
 			beforeEach(() => {
-				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									count: {
-										[attendeeId2]: {
-											rev: 0,
-											items: {
-												key1: {
-													rev: 0,
-													timestamp: 1030,
-													value: toOpaqueJson({ "num": 0 }),
+				runtime.signalsExpected.push(
+					[
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1030,
+								"avgLatency": 10,
+								"data": {
+									...systemWorkspace,
+									"s:name:testStateWorkspace": {
+										count: {
+											[attendeeId2]: {
+												rev: 0,
+												items: {
+													key1: {
+														rev: 0,
+														timestamp: 1030,
+														value: toOpaqueJson({ "num": 0 }),
+													},
 												},
 											},
 										},
@@ -368,8 +330,34 @@ describe("Presence", () => {
 								},
 							},
 						},
-					},
-				]);
+					],
+					[
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1030,
+								"avgLatency": 10,
+								"data": {
+									...systemWorkspace,
+									"s:name:testStateWorkspace": {
+										count: {
+											[attendeeId2]: {
+												rev: 1,
+												items: {
+													key1: {
+														rev: 1,
+														timestamp: 1030,
+														value: toOpaqueJson({ "num": 84 }),
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					],
+				);
 
 				[validatorFunction, validatorSpy] = createSpiedValidator<{ num: number }>(
 					createNullValidator(),
@@ -380,33 +368,6 @@ describe("Presence", () => {
 
 			it("does not call validator when referencing map key", () => {
 				// Setup
-				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									count: {
-										[attendeeId2]: {
-											rev: 1,
-											items: {
-												key1: {
-													rev: 1,
-													timestamp: 1030,
-													value: toOpaqueJson({ "num": 84 }),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				]);
-
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latestMap({
@@ -433,33 +394,6 @@ describe("Presence", () => {
 
 			it("calls validator when key value is read", () => {
 				// Setup
-				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									count: {
-										[attendeeId2]: {
-											rev: 1,
-											items: {
-												key1: {
-													rev: 1,
-													timestamp: 1030,
-													value: toOpaqueJson({ "num": 84 }),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				]);
-
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latestMap({
@@ -484,33 +418,6 @@ describe("Presence", () => {
 
 			it("calls validator only once for the same key value", () => {
 				// Setup
-				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									count: {
-										[attendeeId2]: {
-											rev: 1,
-											items: {
-												key1: {
-													rev: 1,
-													timestamp: 1030,
-													value: toOpaqueJson({ "num": 84 }),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
-				]);
-
 				// Configure a state workspace
 				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latestMap({
