@@ -24,7 +24,13 @@ const persistedMetadata = { a: 2 };
 
 #### Feature flag
 
-(TODO)
+To enable persisted metadata, use `configuredSharedTree` to specify the format version:
+
+```ts
+const tree = configuredSharedTree({
+    formatVersion: SharedTreeFormatVersion.v5,
+}).create(runtime);
+```
 
 #### Examples
 
