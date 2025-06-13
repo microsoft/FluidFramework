@@ -36,7 +36,7 @@ function validateFailureProperties(
 	minSupportedGeneration: number,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(error instanceof UsageError, "The error should be a UsageError");
+	assert(error instanceof UsageError, `The error should be a UsageError: ${error.message}`);
 	assert.strictEqual(
 		error.errorType,
 		FluidErrorTypes.usageError,
@@ -135,7 +135,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			);
 		});
 
-		itExpects.skip(
+		itExpects(
 			`Driver generation is not compatible with Loader`,
 			[{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" }],
 			async () => {
@@ -158,7 +158,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			},
 		);
 
-		itExpects.skip(
+		itExpects(
 			`Driver supported features are not compatible with Loader`,
 			[{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" }],
 			async () => {
