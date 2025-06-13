@@ -342,7 +342,10 @@ export function queryParamToString(value: any): string | undefined {
 	return value;
 }
 
-export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefined): RequestHandler {
+export function verifyToken(
+	revokedTokenChecker: IRevokedTokenChecker | undefined,
+	requiredScopes?: string[],
+): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		try {
@@ -362,14 +365,14 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 				// Prevent attempted directory traversal.
 				throw new NetworkError(400, `Invalid document id: ${documentId}`);
 			}
+
 			// Verify token not revoked if JTI claim is present
 			if (revokedTokenChecker && claims.jti) {
 				const isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
 					tenantId,
-					claims.documentId,
+					documentId,
 					claims.jti,
 				);
-
 				if (isTokenRevoked) {
 					throw new NetworkError(
 						403,
@@ -379,6 +382,19 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 					);
 				}
 			}
+
+			if (requiredScopes) {
+				const hasAllRequiredScopes = requiredScopes.every((scope) =>
+					claims.scopes.includes(scope),
+				);
+				if (!hasAllRequiredScopes) {
+					throw new NetworkError(
+						403,
+						`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
+					);
+				}
+			}
+
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },
