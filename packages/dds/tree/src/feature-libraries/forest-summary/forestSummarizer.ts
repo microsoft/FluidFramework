@@ -51,11 +51,11 @@ import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import type { Format } from "./format.js";
 import { incrementalFieldsTreeKey, IncrementalSummaryTracker } from "./summaryTrackers.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
 export const forestSummaryTreeKey = "Forest";
 export const forestSummaryContentKey = "ForestTree";
 export const fieldContentsKey = "fieldContents";
-export const incrementalFieldPathsKey = "IncrementalFieldPaths";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -204,15 +204,7 @@ export class ForestSummarizer implements Summarizable {
 				"",
 				incrementalSummaryContext,
 			);
-
 			this.incrementalSummaryTracker.summaryComplete(incrementalSummaryContext);
-			const incrementalBlobLeafPaths =
-				this.incrementalSummaryTracker.getIncrementalBlobLeafPaths(incrementalSummaryContext);
-			rootSummaryBuilder.addBlob(
-				incrementalFieldPathsKey,
-				stringify(incrementalBlobLeafPaths),
-			);
-			console.log("Incremental summary blobs", incrementalBlobLeafPaths);
 		}
 
 		return rootSummaryBuilder.getSummaryTree();
@@ -232,6 +224,45 @@ export class ForestSummarizer implements Summarizable {
 		);
 	}
 
+	private async getIncrementalFieldBatch(
+		services: IChannelStorageService,
+		readAndParse: ReadAndParseBlob,
+	): Promise<Map<string, EncodedFieldBatch>> {
+		const snapshotTree = services.getSnapshotTree?.();
+		assert(snapshotTree !== undefined, "Snapshot tree must be available during tree load");
+		const incrementalFieldsBatch: Map<string, EncodedFieldBatch> = new Map();
+		const rootIncrementalFieldsTree = snapshotTree.trees[incrementalFieldsTreeKey];
+		if (rootIncrementalFieldsTree === undefined) {
+			return incrementalFieldsBatch;
+		}
+
+		const processIncrementalFieldsTree = async (
+			incrementalFieldsTree: ISnapshotTree,
+			parentTreeKey: string,
+		): Promise<void> => {
+			for (const [fieldKey, fieldTree] of Object.entries(incrementalFieldsTree.trees)) {
+				const childTreeId = `${parentTreeKey}${incrementalFieldsTreeKey}/${fieldKey}`;
+				const childFieldContentsId = `${childTreeId}/${fieldContentsKey}`;
+				assert(
+					await services.contains(childFieldContentsId),
+					`Cannot find contents for field: ${childFieldContentsId}`,
+				);
+				const fieldContents = await readAndParse<EncodedFieldBatch>(childFieldContentsId);
+				incrementalFieldsBatch.set(fieldKey, fieldContents);
+
+				if (fieldTree.trees[incrementalFieldsTreeKey] !== undefined) {
+					await processIncrementalFieldsTree(
+						fieldTree.trees[incrementalFieldsTreeKey],
+						`${childTreeId}/`,
+					);
+				}
+			}
+		};
+
+		await processIncrementalFieldsTree(rootIncrementalFieldsTree, "");
+		return incrementalFieldsBatch;
+	}
+
 	public async load(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
@@ -242,33 +273,14 @@ export class ForestSummarizer implements Summarizable {
 				const decoded = bufferToString(blob, "utf8");
 				return parse(decoded) as T;
 			};
-			const incrementalFieldsBatch: Map<string, EncodedFieldBatch> = new Map();
-			if (await services.contains(incrementalFieldPathsKey)) {
-				const incrementalFieldPaths = await readAndParse<string[]>(incrementalFieldPathsKey);
-				for (const incrementalFieldPath of incrementalFieldPaths) {
-					const pathParts = incrementalFieldPath.split("/");
-					if (pathParts.length === 1) {
-						continue;
-					}
-
-					const incrementalFieldPathParts = pathParts.slice(1);
-					let incrementalFieldSummaryPath = "";
-					for (const incrementalFieldPathPart of incrementalFieldPathParts) {
-						incrementalFieldSummaryPath += `${incrementalFieldsTreeKey}/${incrementalFieldPathPart}/`;
-						const fieldContents = await readAndParse<EncodedFieldBatch>(
-							`${incrementalFieldSummaryPath}${fieldContentsKey}`,
-						);
-						incrementalFieldsBatch.set(incrementalFieldPathPart, fieldContents);
-					}
-				}
-			}
+			const incrementalFieldsBatch: Map<string, EncodedFieldBatch> =
+				await this.getIncrementalFieldBatch(services, readAndParse);
 			const getIncrementalFieldBatch = (fieldKey: string): EncodedFieldBatch => {
-				assert(
-					incrementalFieldsBatch.has(fieldKey),
-					`incremental blob table must have blobId`,
-				);
 				const encodedFieldBatch = incrementalFieldsBatch.get(fieldKey);
-				assert(encodedFieldBatch !== undefined, `Could not find data for ${fieldKey}`);
+				assert(
+					encodedFieldBatch !== undefined,
+					`Could not find batch for incremental field ${fieldKey}`,
+				);
 				return encodedFieldBatch;
 			};
 

@@ -72,32 +72,6 @@ export class IncrementalSummaryTracker {
 		return `${incrementalSummaryContext.summaryPath}/${summaryHandlePath}`;
 	}
 
-	public getIncrementalBlobLeafPaths(
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): string[] {
-		const summarySequenceNumber = incrementalSummaryContext?.summarySequenceNumber ?? 0;
-		const currentParentIdToBlobIdsMap =
-			this.parentIdToBlobIdsTracker.get(summarySequenceNumber);
-		assert(
-			currentParentIdToBlobIdsMap !== undefined,
-			"Current parentIdToBlobIdsMap should be defined",
-		);
-
-		const getChildPaths = (parentId: string, currentPath: string): string[] => {
-			const childBlobIds = currentParentIdToBlobIdsMap.get(parentId);
-			if (childBlobIds === undefined) {
-				return [currentPath];
-			}
-			const childPaths: string[] = [];
-			for (const childBlobId of childBlobIds) {
-				const childPath = `${currentPath}/${childBlobId}`;
-				childPaths.push(...getChildPaths(childBlobId, childPath));
-			}
-			return childPaths;
-		};
-		return getChildPaths("", "");
-	}
-
 	public summaryComplete(
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
 	): void {
