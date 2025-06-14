@@ -17,10 +17,10 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
 
-function makeAnnotated(type: TreeNodeSchema): AnnotatedAllowedSchema {
+function makeAnnotated(type: TreeNodeSchema, customValue = "test"): AnnotatedAllowedSchema {
 	return {
 		metadata: {
-			custom: "test",
+			custom: customValue,
 		},
 		type,
 	};
@@ -89,19 +89,36 @@ describe("walk schema", () => {
 		]);
 	});
 
+	it("calls visitor on different fields with the same allowed types", () => {
+		const annotatedString = makeAnnotated(sf.string);
+		const otherAnnotatedString = makeAnnotated(sf.string, "other");
+		const annotatedObject = makeAnnotated(
+			sf.objectAlpha("annotatedObject", {
+				name: annotatedString,
+				title: otherAnnotatedString,
+			}),
+		);
+
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+			normalizeFieldSchema(annotatedObject).annotatedAllowedTypeSet,
+		);
+
+		assert.deepEqual(visitedNodes, [
+			annotatedString.type,
+			otherAnnotatedString.type,
+			annotatedObject.type,
+		]);
+		assert.deepEqual(visitedAllowedTypes, [
+			[annotatedString, otherAnnotatedString],
+			[annotatedObject],
+		]);
+	});
+
 	it("handles empty allowed types", () => {
 		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([]);
 
 		assert.deepEqual(visitedNodes, []);
 		assert.deepEqual(visitedAllowedTypes, []);
-	});
-
-	it("does not revisit the same schema", () => {
-		const annotated = makeAnnotated(sf.string);
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([annotated, annotated]);
-
-		assert.deepEqual(visitedNodes, [annotated.type]);
-		assert.deepEqual(visitedAllowedTypes, [[annotated, annotated]]);
 	});
 
 	it("does not fail if visitor has no callbacks", () => {
