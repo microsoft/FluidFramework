@@ -23,7 +23,7 @@ import { createLocalMatrix } from "../utils.js";
 function runBenchmark({
 	title,
 	matrixSize,
-	initialValue,
+	cellValue,
 	setup,
 	operation,
 	minBatchDurationSeconds = 0,
@@ -31,8 +31,12 @@ function runBenchmark({
 }: {
 	title: string;
 	matrixSize: number;
-	initialValue: string;
+	cellValue: string;
 	setup?: (matrix: SharedMatrix) => void;
+	/**
+	 * The operation to perform on the matrix. This should be a function that takes a SharedMatrix
+	 * and performs the desired operation.
+	 */
 	operation: (matrix: SharedMatrix) => void;
 	minBatchDurationSeconds?: number;
 	maxBenchmarkDurationSeconds: number;
@@ -49,7 +53,7 @@ function runBenchmark({
 				const localMatrix = createLocalMatrix({
 					id: "testLocalMatrix",
 					size: matrixSize,
-					initialValue,
+					initialValue: cellValue,
 				});
 
 				if (setup) {
@@ -77,7 +81,7 @@ function runBenchmark({
 function runUndoRedoBenchmark({
 	title,
 	matrixSize,
-	initialValue,
+	cellValue,
 	setupOperation,
 	stackOperation,
 	minBatchDurationSeconds = 0,
@@ -85,8 +89,15 @@ function runUndoRedoBenchmark({
 }: {
 	title: string;
 	matrixSize: number;
-	initialValue: string;
+	cellValue: string;
+	/**
+	 * A function that sets up the operation to be performed on the matrix and stack.
+	 */
 	setupOperation: (matrix: SharedMatrix, stack: UndoRedoStackManager) => void;
+	/**
+	 * The operation to perform on the stack. This should be a function that takes an UndoRedoStackManager
+	 * and performs the desired operation.
+	 */
 	stackOperation: (stack: UndoRedoStackManager) => void;
 	minBatchDurationSeconds?: number;
 	maxBenchmarkDurationSeconds: number;
@@ -103,7 +114,7 @@ function runUndoRedoBenchmark({
 				const localMatrix = createLocalMatrix({
 					id: "testLocalMatrix",
 					size: matrixSize,
-					initialValue,
+					initialValue: cellValue,
 				});
 				const stack = new UndoRedoStackManager();
 				localMatrix.openUndo(stack);
@@ -154,7 +165,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a column in the middle ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -167,7 +178,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo insert the middle column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -186,7 +197,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo insert the middle column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -211,7 +222,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a row in the middle ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -224,7 +235,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo insert the middle row ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -243,7 +254,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo insert the middle row ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -268,7 +279,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a row and a column in the middle ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -282,7 +293,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo insert the middle a row and a column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -302,7 +313,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo insert the middle a row and a column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
@@ -330,7 +341,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Remove the middle column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -343,7 +354,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo remove the middle column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -362,7 +373,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo remove the middle column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -387,7 +398,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Remove the middle row ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
@@ -400,7 +411,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo remove the middle row ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
@@ -419,7 +430,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo remove the middle row ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
@@ -444,7 +455,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Remove the middle row and column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -458,7 +469,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo remove the middle row and column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -478,7 +489,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo remove the middle row and column ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -504,7 +515,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -520,7 +531,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -542,7 +553,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
@@ -570,7 +581,7 @@ describe("SharedMatrix execution time", () => {
 					runBenchmark({
 						title: `Set a 3-character string in ${count} cells`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						operation: (matrix) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
@@ -583,7 +594,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Undo set a 3-character string in ${count} cells`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
@@ -602,7 +613,7 @@ describe("SharedMatrix execution time", () => {
 					runUndoRedoBenchmark({
 						title: `Redo set a 3-character string in ${count} cells`,
 						matrixSize,
-						initialValue: matrixValue,
+						cellValue: matrixValue,
 						setupOperation: (matrix, stack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
