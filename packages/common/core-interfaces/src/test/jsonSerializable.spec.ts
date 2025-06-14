@@ -178,6 +178,11 @@ import {
 	opaqueSerializableUnknown,
 	opaqueDeserializedUnknown,
 	opaqueSerializableAndDeserializedUnknown,
+	objectWithOpaqueSerializableUnknown,
+	objectWithOpaqueDeserializedUnknown,
+	opaqueSerializableInRecursiveStructure,
+	opaqueDeserializedInRecursiveStructure,
+	opaqueSerializableAndDeserializedInRecursiveStructure,
 	opaqueSerializableObjectRequiringBigintSupport,
 	opaqueDeserializedObjectRequiringBigintSupport,
 	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
@@ -785,6 +790,39 @@ describe("JsonSerializable", () => {
 				it("opaque serializable and deserialized unknown", () => {
 					const { filteredIn, out } = passThru(opaqueSerializableAndDeserializedUnknown);
 					assertIdenticalTypes(filteredIn, opaqueSerializableAndDeserializedUnknown);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("object with opaque serializable unknown", () => {
+					const { filteredIn, out } = passThru(objectWithOpaqueSerializableUnknown);
+					assertIdenticalTypes(filteredIn, objectWithOpaqueSerializableUnknown);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("object with opaque deserialized unknown", () => {
+					const { filteredIn, out } = passThru(objectWithOpaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, objectWithOpaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive type with opaque serializable unknown", () => {
+					const { filteredIn, out } = passThru(opaqueSerializableInRecursiveStructure);
+					assertIdenticalTypes(filteredIn, opaqueSerializableInRecursiveStructure);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive type with opaque deserialized unknown", () => {
+					const { filteredIn, out } = passThru(opaqueDeserializedInRecursiveStructure);
+					assertIdenticalTypes(filteredIn, opaqueDeserializedInRecursiveStructure);
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive type with opaque serializable and deserialized unknown", () => {
+					const { filteredIn, out } = passThru(
+						opaqueSerializableAndDeserializedInRecursiveStructure,
+					);
+					assertIdenticalTypes(
+						filteredIn,
+						opaqueSerializableAndDeserializedInRecursiveStructure,
+					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(filteredIn, out);
 				});

@@ -118,6 +118,11 @@ export namespace InternalUtilityTypes {
 		 * Typically this will be `NonNullJsonObjectWith<TupleToUnion<AllowExactly> | AllowExtensionOf>`.
 		 */
 		DegenerateNonNullObjectSubstitute: unknown;
+
+		/**
+		 * Either `RecursionMarker` when filtering after recursion has been replace or `never`
+		 */
+		RecursionMarkerAllowed: unknown; // Can be RecursionMarker ?
 	}
 
 	/**
@@ -409,7 +414,7 @@ export namespace InternalUtilityTypes {
 				? /* primitive or replaced types => */ T
 				: /* test for exact alternative */ IfExactTypeInTuple<
 						T,
-						Controls["AllowExactly"],
+						[...Controls["AllowExactly"], Controls["RecursionMarkerAllowed"]],
 						/* exactly replaced => */ T,
 						/* test for known types that become null */ T extends undefined | symbol
 							? /* => */ null
@@ -1102,6 +1107,7 @@ export namespace InternalUtilityTypes {
 					: never)
 			| (Options extends { AllowExtensionOf: unknown } ? Options["AllowExtensionOf"] : never)
 		>;
+		RecursionMarkerAllowed: never;
 	} extends infer Controls
 		? /* Controls should always satisfy DeserializedFilterControls, but Typescript wants a check */
 			Controls extends DeserializedFilterControls
@@ -1110,17 +1116,24 @@ export namespace InternalUtilityTypes {
 				: /* infer non-recursive version of T */ ReplaceRecursionWithMarkerAndPreserveAllowances<
 							T,
 							RecursionMarker,
-							Controls
+							{
+								AllowExactly: Controls["AllowExactly"];
+								AllowExtensionOf:
+									| Controls["AllowExtensionOf"]
+									// Also preserve OpaqueJson* types
+									| AnyOpaqueJsonType;
+							}
 						> extends infer TNoRecursionAndOnlyPublics
 					? /* test for no change from filtered type */ IsSameType<
 							TNoRecursionAndOnlyPublics,
 							JsonDeserializedFilter<
 								TNoRecursionAndOnlyPublics,
 								{
-									AllowExactly: [...Controls["AllowExactly"], RecursionMarker];
+									AllowExactly: Controls["AllowExactly"];
 									AllowExtensionOf: Controls["AllowExtensionOf"];
 									DegenerateSubstitute: Controls["DegenerateSubstitute"];
 									DegenerateNonNullObjectSubstitute: Controls["DegenerateNonNullObjectSubstitute"];
+									RecursionMarkerAllowed: RecursionMarker;
 								}
 							>
 						> extends true
@@ -1132,7 +1145,13 @@ export namespace InternalUtilityTypes {
 								// primitives as JsonDeserializedFilter will allow them as
 								// extensions of the primitives. Should there be a need to
 								// explicitly allow them here, see JsonSerializableImpl's use.
-								Controls,
+								{
+									AllowExactly: Controls["AllowExactly"];
+									AllowExtensionOf:
+										| Controls["AllowExtensionOf"]
+										// Add in OpaqueJson* types
+										| AnyOpaqueJsonType;
+								},
 								"found non-publics",
 								"only publics"
 							> extends "found non-publics"
@@ -1244,7 +1263,7 @@ export namespace InternalUtilityTypes {
 				? /* primitive types or alternate => */ T
 				: /* test for given exact alternate */ IfExactTypeInTuple<
 							T,
-							Controls["AllowExactly"],
+							[...Controls["AllowExactly"], Controls["RecursionMarkerAllowed"]],
 							true,
 							"not found"
 						> extends true
@@ -1277,7 +1296,10 @@ export namespace InternalUtilityTypes {
 														/* properties with defined values are recursed */
 														[K in keyof T as NonSymbolWithDeserializablePropertyOf<
 															T,
-															Controls["AllowExactly"],
+															[
+																...Controls["AllowExactly"],
+																Controls["RecursionMarkerAllowed"],
+															],
 															Controls["AllowExtensionOf"],
 															K
 														>]: JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>;
@@ -1285,7 +1307,10 @@ export namespace InternalUtilityTypes {
 														/* properties that may have undefined values are optional */
 														[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
 															T,
-															Controls["AllowExactly"],
+															[
+																...Controls["AllowExactly"],
+																Controls["RecursionMarkerAllowed"],
+															],
 															Controls["AllowExtensionOf"],
 															K
 														>]?: JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>;

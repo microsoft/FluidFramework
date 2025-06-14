@@ -6,6 +6,7 @@
 import type { InternalUtilityTypes } from "../exposedInternalUtilityTypes.js";
 
 import type {
+	JsonDeserialized,
 	JsonTypeToOpaqueJson,
 	OpaqueJsonToJsonType,
 } from "@fluidframework/core-interfaces/internal";
@@ -77,4 +78,28 @@ export function exposeFromOpaqueJson<
 	TOpaque extends OpaqueJsonSerializable<unknown> | OpaqueJsonDeserialized<unknown>,
 >(v: TOpaque): OpaqueJsonToJsonType<TOpaque> {
 	return v as unknown as OpaqueJsonToJsonType<TOpaque>;
+}
+
+/**
+ * Process structure extracting `T` from `OpaqueJsonDeserialized<T>`.
+ *
+ * @remarks
+ * Only one level of {@link OpaqueJsonDeserialized} is processed, so nested
+ * {@link OpaqueJsonDeserialized} instances are retained.
+ *
+ * Only works with basic built-in stringify-parse logic (i.e. default
+ * {@link JsonDeserializedOptions}).
+ */
+type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
+	? JsonDeserialized<U>
+	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
+
+/**
+ * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
+ * types throughout a structure.
+ *
+ * @see {@link RevealOpaqueJsonDeserialized}.
+ */
+export function revealOpaqueJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
+	return value as RevealOpaqueJsonDeserialized<T>;
 }

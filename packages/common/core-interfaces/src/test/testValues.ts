@@ -690,6 +690,53 @@ export const opaqueSerializableAndDeserializedUnknown =
 	opaqueSerializableAndDeserializedObject as OpaqueJsonSerializable<unknown> &
 		OpaqueJsonDeserialized<unknown>;
 
+export const objectWithOpaqueSerializableUnknown = {
+	opaque: opaqueSerializableUnknown,
+};
+export const objectWithOpaqueDeserializedUnknown = {
+	opaque: opaqueDeserializedUnknown,
+};
+export const objectWithOpaqueSerializableAndDeserializedUnknown = {
+	opaque: opaqueSerializableAndDeserializedUnknown,
+};
+
+interface OptionalValue<TValue> {
+	value?: TValue;
+}
+
+export interface DirectoryOfValues<TValue> {
+	items: {
+		[name: string | number]: OptionalValue<TValue> | DirectoryOfValues<TValue>;
+	};
+}
+
+export const opaqueSerializableInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonSerializable<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+
+export const opaqueDeserializedInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonDeserialized<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+
+export const opaqueSerializableAndDeserializedInRecursiveStructure: DirectoryOfValues<
+	OpaqueJsonSerializable<unknown> & OpaqueJsonDeserialized<unknown>
+> = {
+	items: {
+		item1: {},
+		item2: { items: { subItem1: {} } },
+	},
+};
+
 export const opaqueSerializableObjectRequiringBigintSupport =
 	objectWithBigint as unknown as OpaqueJsonSerializable<typeof objectWithBigint, [bigint]>;
 export const opaqueDeserializedObjectRequiringBigintSupport =
