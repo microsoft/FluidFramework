@@ -62,7 +62,7 @@ describe("walk schema", () => {
 		const schema = sf.arrayAlpha("schema", annotatedObject);
 
 		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
-			normalizeFieldSchema(schema).annotatedAllowedTypeSet,
+			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
 		);
 
 		assert.deepEqual(visitedNodes, [annotatedString.type, annotatedObject.type, schema]);
@@ -79,7 +79,7 @@ describe("walk schema", () => {
 		const schema = sf.arrayAlpha("schema", [annotatedNumber, annotatedString]);
 
 		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
-			normalizeFieldSchema(schema).annotatedAllowedTypeSet,
+			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
 		);
 
 		assert.deepEqual(visitedNodes, [annotatedNumber.type, annotatedString.type, schema]);
@@ -100,7 +100,7 @@ describe("walk schema", () => {
 		);
 
 		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
-			normalizeFieldSchema(annotatedObject).annotatedAllowedTypeSet,
+			normalizeFieldSchema(annotatedObject).annotatedAllowedTypesNormalized,
 		);
 
 		assert.deepEqual(visitedNodes, [

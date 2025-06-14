@@ -14,5 +14,9 @@ export function walkFieldSchema(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	walkAllowedTypes(normalizeFieldSchema(schema).annotatedAllowedTypeSet, visitor, visitedSet);
+	walkAllowedTypes(
+		normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+		visitor,
+		visitedSet,
+	);
 }

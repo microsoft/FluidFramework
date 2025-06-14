@@ -354,7 +354,7 @@ export class SchematizingSimpleTreeView<
 			this.checkout.forest.anchors.slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
-					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypeSet,
+					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
 					view.context,
 				),
 			);

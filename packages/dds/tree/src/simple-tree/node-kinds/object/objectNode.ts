@@ -388,7 +388,7 @@ export function objectSchema<
 	);
 	const lazyAnnotatedTypes = new Lazy(() =>
 		Array.from(Object.values(info), (f) => [
-			...normalizeFieldSchema(f).annotatedAllowedTypeSet,
+			...normalizeFieldSchema(f).annotatedAllowedTypesNormalized,
 		]).flat(),
 	);
 

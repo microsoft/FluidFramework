@@ -561,7 +561,7 @@ export class FieldSchemaAlpha<
 	 * What types of tree nodes are allowed in this field and their annotations.
 	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
 	 */
-	public get annotatedAllowedTypeSet(): readonly AnnotatedAllowedSchema[] {
+	public get annotatedAllowedTypesNormalized(): readonly AnnotatedAllowedSchema[] {
 		return this.lazyAnnotatedTypes.value;
 	}
 }
