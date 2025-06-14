@@ -1037,6 +1037,9 @@ importers:
       '@fluidframework/tinylicious-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/tinylicious-client
+      '@sinclair/typebox':
+        specifier: ^0.34.13
+        version: 0.34.13
       emoji-picker-element:
         specifier: ^1.26.1
         version: 1.26.1
@@ -11582,6 +11585,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: ^0.55.0
         version: 0.55.0(@types/node@18.19.67)
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -11594,6 +11600,9 @@ importers:
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../../test/test-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../service-clients/tinylicious-client
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
@@ -11606,6 +11615,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -11621,6 +11633,9 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      microdiff:
+        specifier: ^1.5.0
+        version: 1.5.0
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -11633,9 +11648,18 @@ importers:
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
+      tinylicious:
+        specifier: ^5.0.0
+        version: 5.0.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
 
   packages/framework/request-handler:
     dependencies:
@@ -13246,6 +13270,115 @@ importers:
       nock:
         specifier: ^13.3.3
         version: 13.5.6
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
+  packages/service-clients/end-to-end-tests/tinylicious-client:
+    dependencies:
+      '@fluid-experimental/data-objects':
+        specifier: workspace:~
+        version: link:../../../../experimental/framework/data-objects
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../common/client-utils
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../test/mocha-test-setup
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-version-utils
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../framework/aqueduct
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../loader/container-loader
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../common/core-interfaces
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../common/driver-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../../../framework/fluid-static
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../framework/presence
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-definitions
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/test-runtime-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../tinylicious-client
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../framework/fluid-framework
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
+      tinylicious:
+        specifier: ^5.0.0
+        version: 5.0.0
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.55.0
+        version: 0.55.0(@types/node@18.19.67)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.7.4
+        version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -24034,6 +24167,9 @@ packages:
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
+
+  microdiff@1.5.0:
+    resolution: {integrity: sha512-Drq+/THMvDdzRYrK0oxJmOKiC24ayUV8ahrt8l3oRK51PWt6gdtrIGrlIH3pT/lFh1z93FbAcidtsHcWbnRz8Q==}
 
   micromark-core-commonmark@2.0.2:
     resolution: {integrity: sha512-FKjQKbxd1cibWMM1P9N+H8TwlgGgSkWZMmfuVucLCHaYqeSvJ0hFeHsIa65pA2nYbes0f8LDHPMrd9X7Ujxg9w==}
@@ -39473,6 +39609,8 @@ snapshots:
   merge2@1.4.1: {}
 
   methods@1.1.2: {}
+
+  microdiff@1.5.0: {}
 
   micromark-core-commonmark@2.0.2:
     dependencies:
