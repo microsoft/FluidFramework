@@ -48,9 +48,9 @@ export interface IPendingMessage {
 	content: string;
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
-	 * Unless this pending message came from stashed content, in which case this was roundtripped through string
+	 * Unless this pending message came from stashed content, in which case this is undefined at first and then deserialized from the contents string
 	 */
-	runtimeOp?: LocalContainerRuntimeMessage | EmptyGroupedBatch | undefined; // Undefined for initial messages before parsing
+	runtimeOp: LocalContainerRuntimeMessage | EmptyGroupedBatch | undefined; // Undefined for initial messages before parsing
 	/**
 	 * Local Op Metadata that was passed to the ContainerRuntime when the op was submitted.
 	 * This contains state needed when processing the ack, or to resubmit or rollback the op.
@@ -300,8 +300,8 @@ export class PendingStateManager implements IDisposable {
 		for (let i = 0; i < this.pendingMessages.length; i++) {
 			const element = this.pendingMessages.get(i);
 			if (
-				element?.runtimeOp !== undefined &&
-				isNotEmptyGroupedBatch(element) &&
+				element !== undefined &&
+				hasTypicalRuntimeOp(element) && // Empty batches don't count towards user changes
 				isContainerMessageDirtyable(element.runtimeOp)
 			) {
 				return true;
@@ -807,8 +807,8 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			assert(
-				pendingMessage.runtimeOp !== undefined && isNotEmptyGroupedBatch(pendingMessage),
-				0xb87 /* viableOp is only undefined for empty batches */,
+				hasTypicalRuntimeOp(pendingMessage),
+				0xb87 /* runtimeOp is only undefined for empty batches */,
 			);
 
 			/**
@@ -843,8 +843,8 @@ export class PendingStateManager implements IDisposable {
 			// check is >= because batch end may be last pending message
 			while (remainingPendingMessagesCount >= 0) {
 				assert(
-					pendingMessage.runtimeOp !== undefined && isNotEmptyGroupedBatch(pendingMessage),
-					0xb88 /* viableOp is only undefined for empty batches */,
+					hasTypicalRuntimeOp(pendingMessage),
+					0xb88 /* runtimeOp is only undefined for empty batches */,
 				);
 				batch.push({
 					runtimeOp: pendingMessage.runtimeOp,
@@ -890,13 +890,14 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public popStagedBatches(
 		callback: (
-			stagedMessage: IPendingMessage & { runtimeOp?: LocalContainerRuntimeMessage }, // exclude empty grouped batches
+			// callback will only be given staged messages with a valid runtime op (i.e. not empty batch and not an initial message with only serialized content)
+			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
 	): void {
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
 			if (stagedMessage?.batchInfo.staged === true) {
-				if (isNotEmptyGroupedBatch(stagedMessage)) {
+				if (hasTypicalRuntimeOp(stagedMessage)) {
 					callback(stagedMessage);
 					this.pendingMessages.pop();
 				}
@@ -924,7 +925,10 @@ function patchbatchInfo(
 	}
 }
 
-function isNotEmptyGroupedBatch(
+/**
+ * This filters out messages that are not "typical" runtime ops, i.e. empty batches or initial messages (which only have serialized content).
+ */
+function hasTypicalRuntimeOp(
 	message: IPendingMessage,
 ): message is IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage } {
 	return message.runtimeOp !== undefined && message.runtimeOp.type !== "groupedBatch";
