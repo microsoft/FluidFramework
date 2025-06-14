@@ -1201,6 +1201,12 @@ export class ContainerRuntime
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
+	/**
+	 * Returns whether the client is connected to the service.
+	 *
+	 * Unlike {@link ContainerRuntime.connected}, this reflects only the raw connection status.
+	 */
+	private readonly isConnected: () => boolean;
 
 	public readonly clientDetails: IClientDetails;
 
@@ -1615,9 +1621,11 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
 		this._getClientId = () => context.clientId;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
+		this.isConnected = () => context.connected;
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
 			// eslint-disable-next-line unicorn/consistent-destructuring
@@ -2765,6 +2773,13 @@ export class ContainerRuntime
 		this.channelCollection.notifyReadOnlyState(readonly);
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
+		// Raise connected event if we are connected to the service
+		if (this.isConnected()) {
+			this.emit("isConnected", clientId);
+		} else {
+			this.emit("isDisconnected");
+		}
+
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -5107,8 +5122,8 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
-		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		this.on("isConnected", (clientId: string) => eventEmitter.emit("connected", clientId));
+		this.on("isDisconnected", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
 	});
 
@@ -5130,7 +5145,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connected,
+				isConnected: this.isConnected,
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
