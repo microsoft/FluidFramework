@@ -13,7 +13,7 @@ import {
 import { deepCopyMapTree, EmptyKey, type FieldKey, type MapTree } from "../../core/index.js";
 import {
 	booleanSchema,
-	getTreeNodeForField,
+	tryGetTreeNodeForField,
 	handleSchema,
 	nullSchema,
 	numberSchema,
@@ -1283,7 +1283,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			const node = unhydratedFlexTreeFromInsertable({}, Test);
 			const field = node.getBoxed("stored");
 			assert(!field.pendingDefault);
-			const read = getTreeNodeForField(field);
+			const read = tryGetTreeNodeForField(field);
 			assert.equal(read, "x");
 		});
 
@@ -1308,7 +1308,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				const node = unhydratedFlexTreeFromInsertable({}, Test);
 				const field = node.getBoxed("stored");
 				assert(field.pendingDefault);
-				const read = getTreeNodeForField(field);
+				const read = tryGetTreeNodeForField(field);
 				assert(!field.pendingDefault);
 				assert.equal(read, "global");
 			});
@@ -1321,7 +1321,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				const context = getKernel(dummy).context.flexContext;
 				assert(context.isHydrated());
 				field.fillPendingDefaults(context);
-				const read = getTreeNodeForField(field);
+				const read = tryGetTreeNodeForField(field);
 				assert(!field.pendingDefault);
 				assert.equal(read, "contextual");
 			});
@@ -1338,7 +1338,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				const context = getKernel(dummy).context.flexContext;
 				assert(context.isHydrated());
 				field.fillPendingDefaults(context);
-				const read = getTreeNodeForField(field);
+				const read = tryGetTreeNodeForField(field);
 				assert(!field.pendingDefault);
 				assert.equal(read, "contextual");
 			});
