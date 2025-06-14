@@ -250,10 +250,6 @@ export interface IChannelStorageService {
 	 */
 	list(path: string): Promise<string[]>;
 
-	/**
-	 * Returns the snapshot tree for the channel. This will help channels examine their snapshot when it consists
-	 * of dynamic trees and blobs, i.e., the number of tree and blobs and / or their keys are not known in advance.
-	 */
 	getSnapshotTree?(): ISnapshotTree | undefined;
 }
 
