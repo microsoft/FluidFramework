@@ -67,6 +67,7 @@ function makeTestContainerConfig(
 			createBlobPayloadPending,
 		},
 		registry,
+		minVersionForCollab: "2.40.0",
 	};
 }
 
