@@ -4,6 +4,7 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
@@ -248,6 +249,8 @@ export interface IChannelStorageService {
 	 * Lists the blobs that exist at a specific path.
 	 */
 	list(path: string): Promise<string[]>;
+
+	getSnapshotTree?(): ISnapshotTree | undefined;
 }
 
 /**

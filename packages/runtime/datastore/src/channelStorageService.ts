@@ -77,6 +77,10 @@ export class ChannelStorageService implements IChannelStorageService {
 		return Object.keys(tree?.blobs ?? {});
 	}
 
+	public getSnapshotTree(): ISnapshotTree | undefined {
+		return this.tree;
+	}
+
 	private async getIdForPath(path: string): Promise<string | undefined> {
 		return this.flattenedTree[path];
 	}
