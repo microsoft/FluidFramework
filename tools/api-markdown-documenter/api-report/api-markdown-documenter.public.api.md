@@ -357,12 +357,15 @@ export namespace DocumentWriter {
 }
 
 // @public @sealed
-export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], language?: string);
+export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
+    constructor(children: FencedCodeBlockNodeContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
     readonly language?: string;
     readonly type = "fencedCode";
 }
+
+// @public
+export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
 
 // @public
 export interface FileSystemConfiguration {
