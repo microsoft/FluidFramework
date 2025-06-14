@@ -162,8 +162,18 @@ export function mergeValueDirectory<
 ): TValueState | InternalTypes.ValueDirectory<T> {
 	if (!isValueDirectory(update)) {
 		if (base === undefined || update.rev > base.rev) {
+			// The `update` content comes directly off the wire so should not have any validator related fields that need to
+			// be stripped.
 			return { ...update, timestamp: update.timestamp + timeDelta };
 		}
+
+		if (isValueDirectory(base)) {
+			return base;
+		}
+
+		// The base object may have validator-related properties so remove them since we're merging local data with remote
+		// data.
+		delete base.validatedValue;
 		return base;
 	}
 
@@ -174,7 +184,9 @@ export function mergeValueDirectory<
 		const baseIsDirectory = isValueDirectory(base);
 		if (base.rev >= update.rev) {
 			if (!baseIsDirectory) {
-				// base is leaf value that is more recent - nothing to do
+				// base is leaf value that is more recent - no merge needed
+				// Remove any validator-related data
+				delete base.validatedValue;
 				return base;
 			}
 			// While base has more advanced revision, assume mis-ordering or
