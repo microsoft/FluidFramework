@@ -246,8 +246,13 @@ export type TreeNodeSchemaBoth<
 
 /**
  * Data common to all tree node schema.
+ *
  * @remarks
  * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
+ *
+ * @privateRemarks
+ * All implementations must actually implement {@link TreeNodeSchemaCorePrivate} as well.
+ *
  * @sealed @public
  */
 export interface TreeNodeSchemaCore<
@@ -369,6 +374,24 @@ export interface TreeNodeSchemaCorePrivate<
 	 * @system
 	 */
 	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[];
+}
+
+/**
+ * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} if it is one.
+ *
+ * @remarks
+ * This function should only be used internally. The result should not be exposed publicly
+ * in any exported types or API return values.
+ */
+export function asTreeNodeSchemaCorePrivate(
+	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
+): TreeNodeSchemaCorePrivate {
+	if ("childAnnotatedAllowedTypes" in schema) {
+		return schema as TreeNodeSchemaCorePrivate;
+	}
+	throw new Error(
+		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
+	);
 }
 
 /**

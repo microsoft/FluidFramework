@@ -4,10 +4,10 @@
  */
 
 import type { AllowedTypeMetadata } from "../schemaTypes.js";
-import type {
-	AnnotatedAllowedSchema,
-	TreeNodeSchema,
-	TreeNodeSchemaCorePrivate,
+import {
+	asTreeNodeSchemaCorePrivate,
+	type AnnotatedAllowedSchema,
+	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 
 /**
@@ -23,7 +23,7 @@ export function walkNodeSchema(
 		visitedSet.add(schema);
 
 		const annotatedAllowedTypes =
-			(schema as unknown as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes ??
+			asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes ??
 			Array.from(schema.childTypes).map((type) => ({ type }));
 
 		walkAllowedTypes(annotatedAllowedTypes, visitor, visitedSet);
