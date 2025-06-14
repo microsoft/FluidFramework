@@ -1217,26 +1217,6 @@ describe("Pending State Manager", () => {
 		}
 
 		it("should replay all pending states as batches", () => {
-			const inputBatch: IPendingMessage[] = [
-				{
-					type: "message",
-					referenceSequenceNumber: 10,
-					content: '{"type":"component"}',
-					runtimeOp: {
-						type: ContainerMessageType.FluidDataStoreOp,
-						contents: {} as IEnvelope,
-					},
-					localOpMetadata: { foo: "bar" },
-					opMetadata: undefined,
-					sequenceNumber: undefined,
-					batchInfo: {
-						clientId,
-						batchStartCsn: 1,
-						length: 1,
-						staged: false,
-					},
-				},
-			];
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
 
@@ -1248,14 +1228,18 @@ describe("Pending State Manager", () => {
 				reSubmittedBatches.push({ batch: b, metadata });
 			});
 
-			// Add pending messages using onFlushBatch
 			pendingStateManager.onFlushBatch(
-				inputBatch.map((msg) => ({
-					runtimeOp: msg.runtimeOp as LocalContainerRuntimeMessage,
-					referenceSequenceNumber: msg.referenceSequenceNumber,
-					metadata: undefined,
-					localOpMetadata: msg.localOpMetadata ?? {},
-				})),
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 10,
+						metadata: undefined,
+						localOpMetadata: { foo: "bar" },
+					},
+				],
 				/* clientSequenceNumber: */ 1,
 				/* staged: */ false,
 			);
@@ -1272,42 +1256,6 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should replay multiple batches in order", () => {
-			const batch1: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 10,
-				content: '{"type":"component"}',
-				runtimeOp: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {} as IEnvelope,
-				},
-				localOpMetadata: { foo: "bar" },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 1,
-					length: 1,
-					staged: false,
-				},
-			};
-			const batch2: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 11,
-				content: '{"type":"component"}',
-				runtimeOp: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {} as IEnvelope,
-				},
-				localOpMetadata: { foo: "baz" },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 2,
-					length: 1,
-					staged: false,
-				},
-			};
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
 			const reSubmittedBatches: {
@@ -1320,10 +1268,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: batch1.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: batch1.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 10,
 						metadata: undefined,
-						localOpMetadata: batch1.localOpMetadata ?? {},
+						localOpMetadata: { foo: "bar" },
 					},
 				],
 				/* clientSequenceNumber: */ 1,
@@ -1332,10 +1283,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: batch2.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: batch2.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 11,
 						metadata: undefined,
-						localOpMetadata: batch2.localOpMetadata ?? {},
+						localOpMetadata: { foo: "baz" },
 					},
 				],
 				/* clientSequenceNumber: */ 1,
@@ -1348,42 +1302,6 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should replay only staged batches when committingStagedBatches is true", () => {
-			const stagedBatch: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 12,
-				content: '{"type":"component"}',
-				runtimeOp: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {} as IEnvelope,
-				},
-				localOpMetadata: { foo: "staged" },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 3,
-					length: 1,
-					staged: true,
-				},
-			};
-			const unstagedBatch: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 13,
-				content: '{"type":"component"}',
-				runtimeOp: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {} as IEnvelope,
-				},
-				localOpMetadata: { foo: "unstaged" },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 4,
-					length: 1,
-					staged: false,
-				},
-			};
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
 			const reSubmittedBatches: {
@@ -1396,10 +1314,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: unstagedBatch.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: unstagedBatch.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 13,
 						metadata: undefined,
-						localOpMetadata: unstagedBatch.localOpMetadata ?? {},
+						localOpMetadata: { foo: "unstaged" },
 					},
 				],
 				/* clientSequenceNumber: */ 1,
@@ -1408,10 +1329,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: stagedBatch.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: stagedBatch.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 12,
 						metadata: undefined,
-						localOpMetadata: stagedBatch.localOpMetadata ?? {},
+						localOpMetadata: { foo: "staged" },
 					},
 				],
 				/* clientSequenceNumber: */ undefined,
@@ -1446,24 +1370,6 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should clear staged flag on staged batches when committingStagedBatches is true", () => {
-			const stagedBatch: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 14,
-				content: '{"type":"component"}',
-				runtimeOp: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {} as IEnvelope,
-				},
-				localOpMetadata: { foo: "staged" },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 5,
-					length: 1,
-					staged: true,
-				},
-			};
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
 			const reSubmittedBatches: {
@@ -1476,10 +1382,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: stagedBatch.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: stagedBatch.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 14,
 						metadata: undefined,
-						localOpMetadata: stagedBatch.localOpMetadata ?? {},
+						localOpMetadata: { foo: "staged" },
 					},
 				],
 				/* clientSequenceNumber: */ undefined,
@@ -1498,24 +1407,6 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should throw if replayPendingStates is called twice for same clientId without committingStagedBatches", () => {
-			const inputBatch: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 15,
-				content: '{"type":"component"}',
-				runtimeOp: {
-					type: ContainerMessageType.FluidDataStoreOp,
-					contents: {} as IEnvelope,
-				},
-				localOpMetadata: { foo: "bar" },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 6,
-					length: 1,
-					staged: false,
-				},
-			};
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
 			const reSubmittedBatches: {
@@ -1528,10 +1419,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: inputBatch.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: inputBatch.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 15,
 						metadata: undefined,
-						localOpMetadata: inputBatch.localOpMetadata ?? {},
+						localOpMetadata: { foo: "bar" },
 					},
 				],
 				/* clientSequenceNumber: */ 1,
@@ -1542,10 +1436,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: inputBatch.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: inputBatch.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 15,
 						metadata: undefined,
-						localOpMetadata: inputBatch.localOpMetadata ?? {},
+						localOpMetadata: { foo: "bar" },
 					},
 				],
 				/* clientSequenceNumber: */ 1,
@@ -1559,21 +1456,6 @@ describe("Pending State Manager", () => {
 		});
 
 		it("should set squash flag when replayPendingStates is called with squash: true", () => {
-			const inputBatch: IPendingMessage = {
-				type: "message",
-				referenceSequenceNumber: 16,
-				content: '{"type":"component"}',
-				runtimeOp: { type: ContainerMessageType.FluidDataStoreOp, contents: {} as IEnvelope },
-				localOpMetadata: { foo: "bar" },
-				opMetadata: undefined,
-				sequenceNumber: undefined,
-				batchInfo: {
-					clientId,
-					batchStartCsn: 7,
-					length: 1,
-					staged: false,
-				},
-			};
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
 			const reSubmittedBatches: {
@@ -1586,10 +1468,13 @@ describe("Pending State Manager", () => {
 			pendingStateManager.onFlushBatch(
 				[
 					{
-						runtimeOp: inputBatch.runtimeOp as LocalContainerRuntimeMessage,
-						referenceSequenceNumber: inputBatch.referenceSequenceNumber,
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 16,
 						metadata: undefined,
-						localOpMetadata: inputBatch.localOpMetadata ?? {},
+						localOpMetadata: { foo: "bar" },
 					},
 				],
 				/* clientSequenceNumber: */ 1,
