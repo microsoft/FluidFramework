@@ -14,18 +14,21 @@ import {
 	IRedisClientConnectionManager,
 	RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
+import { Queue } from "bullmq";
 import { Provider } from "nconf";
 
 import { IGitrestResourcesCustomizations } from "./customizations";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
+	HybridFsManagerFactory,
 	IFileSystemManagerFactories,
 	IRepositoryManagerFactory,
 	IsomorphicGitManagerFactory,
 	IStorageDirectoryConfig,
 	NodeFsManagerFactory,
 	RedisFsManagerFactory,
+	setupHybridFsHandler,
 } from "./utils";
 
 export class GitrestResources implements core.IResources {
@@ -103,50 +106,66 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 
 		// Creating two customizations for redisClientConnectionManager for now.
 		// This may be changed to a single customization in the future.
+		const redisConfig = config.get("redis");
+		const redisClientConnectionManager =
+			customizations?.redisClientConnectionManagerForEphemeralFileSystem ??
+			new RedisClientConnectionManager(
+				undefined,
+				redisConfig,
+				redisConfig.enableClustering,
+				redisConfig.slotsRefreshTimeout,
+				undefined /* retryDelays */,
+				redisConfig.enableVerboseErrorLogging,
+			);
 		const defaultFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			defaultFileSystemName,
 			config,
-			customizations?.redisClientConnectionManagerForDefaultFileSystem,
+			redisClientConnectionManager,
 			defaultFileSystemMaxFileSizeBytes,
 		);
 		const ephemeralFileSystemManagerFactory = this.getFileSystemManagerFactoryByName(
 			ephemeralFileSystemName,
 			config,
-			customizations?.redisClientConnectionManagerForEphemeralFileSystem,
+			redisClientConnectionManager,
 			ephemeralFileSystemMaxFileSizeBytes,
 			ephemeralDocumentTTLSec,
 		);
 
+		const redisClient = redisClientConnectionManager.getRedisClient();
+
+		// Cast the Redis client to a compatible type for BullMQ
+		const queue = new Queue("hybridFsQueue", {
+			connection: redisClient,
+		});
+
+		const hybridFileSystemManagerFactory = new HybridFsManagerFactory(
+			defaultFileSystemManagerFactory,
+			ephemeralFileSystemManagerFactory,
+			queue,
+		);
+
+		setupHybridFsHandler(defaultFileSystemManagerFactory, redisClient);
+
 		return {
 			defaultFileSystemManagerFactory,
 			ephemeralFileSystemManagerFactory,
+			hybridFileSystemManagerFactory,
 		};
 	}
 
 	private getFileSystemManagerFactoryByName(
 		fileSystemName: string,
 		config: Provider,
-		redisClientConnectionManagerCustomization?: IRedisClientConnectionManager,
+		redisClientConnectionManagerCustomization: IRedisClientConnectionManager,
 		maxFileSizeBytes?: number,
 		documentTtlSec?: number,
 	) {
 		if (!fileSystemName || fileSystemName === "nodeFs") {
 			return new NodeFsManagerFactory(maxFileSizeBytes);
 		} else if (fileSystemName === "redisFs") {
-			const redisConfig = config.get("redis");
-			const redisClientConnectionManager =
-				redisClientConnectionManagerCustomization ??
-				new RedisClientConnectionManager(
-					undefined,
-					redisConfig,
-					redisConfig.enableClustering,
-					redisConfig.slotsRefreshTimeout,
-					undefined /* retryDelays */,
-					redisConfig.enableVerboseErrorLogging,
-				);
 			return new RedisFsManagerFactory(
 				config,
-				redisClientConnectionManager,
+				redisClientConnectionManagerCustomization,
 				maxFileSizeBytes,
 				documentTtlSec,
 			);
