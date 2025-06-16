@@ -192,12 +192,13 @@ describe("Presence", () => {
 				});
 
 				it("is not called by getRemote", () => {
-					// Act & Verify
+					// Setup
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
-					// Calling getRemote should not invoke the validator (only a value read will).
+					// Act - Calling getRemote should not invoke the validator (only a value read will).
 					count.getRemote(attendee2);
 
+					// Verify
 					assert.equal(validatorFunction.callCount, 0);
 				});
 
