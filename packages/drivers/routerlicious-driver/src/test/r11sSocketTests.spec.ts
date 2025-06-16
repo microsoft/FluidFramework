@@ -36,7 +36,7 @@ async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Pro
 	}
 }
 
-describe("R11s Socket Error Handling", () => {
+describe("Routerlicious Socket Error Handling", () => {
 	let documentService: DocumentService;
 	let routerliciousDocumentServiceFactory: RouterliciousDocumentServiceFactory;
 	let resolvedUrl: IResolvedUrl;
