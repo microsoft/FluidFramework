@@ -22,7 +22,10 @@ import {
 	r11sEndpointName,
 	tenantIndex,
 } from "./compatOptions.js";
-import { getVersionedTestObjectProviderFromApis } from "./compatUtils.js";
+import {
+	getDriverInformationWhenNoProviderIsAvailable,
+	getVersionedTestObjectProviderFromApis,
+} from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
 	getDataRuntimeApi,
@@ -373,7 +376,7 @@ function createE2EDocCompatSuite(
 						),
 					};
 
-					before(async function () {
+					before("Create TestObjectProvider", async function () {
 						try {
 							provider = await getVersionedTestObjectProviderFromApis(apis, {
 								type: driver,
@@ -389,8 +392,14 @@ function createE2EDocCompatSuite(
 							});
 							logger.sendErrorEvent(
 								{
+									// Note: TestObjectProvider already adds driverType and driverEndpointName to logs that go through it.
+									// In this code path we could not create the provider so we have to do things by hand.
+									...getDriverInformationWhenNoProviderIsAvailable(
+										driver,
+										odspEndpointName,
+										r11sEndpointName,
+									),
 									eventName: "TestObjectProviderLoadFailed",
-									driverType: driver,
 								},
 								error,
 							);
