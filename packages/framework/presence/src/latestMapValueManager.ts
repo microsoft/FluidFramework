@@ -694,7 +694,7 @@ export function latestMap<
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
-	args?: LatestMapArguments<T, Keys> | LatestMapArgumentsRaw<T, Keys>,
+	args?: Partial<LatestMapArguments<T, Keys>>,
 ):
 	| InternalTypes.ManagerFactory<
 			RegistrationKey,
