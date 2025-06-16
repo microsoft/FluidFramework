@@ -28,7 +28,7 @@ import {
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	UnhydratedFlexTreeNode,
-	type AnnotatedAllowedSchema,
+	type AnnotatedAllowedType,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
 
@@ -86,7 +86,7 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[] =
+			public static readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[] =
 				[];
 
 			public override get [typeNameSymbol](): string {
@@ -157,7 +157,7 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[] =
+			public static readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[] =
 				[];
 
 			public static override buildRawNode<T2>(
@@ -213,7 +213,7 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-			public static readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[] =
+			public static readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[] =
 				[];
 
 			public static override buildRawNode<T2>(

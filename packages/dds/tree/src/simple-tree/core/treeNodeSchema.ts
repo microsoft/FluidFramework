@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { LazyItem } from "../flexList.js";
 import type { AllowedTypeMetadata, TreeLeafValue } from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
@@ -63,10 +64,10 @@ export type TreeNodeSchema<
 	  >;
 
 /**
- * Stores annotations for an individual allowed type that has been evaluated.
+ * Stores annotations for an individual allowed type.
  * @alpha @sealed
  */
-export interface AnnotatedAllowedSchema {
+export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 	/**
 	 * Annotations for the allowed type.
 	 */
@@ -74,7 +75,7 @@ export interface AnnotatedAllowedSchema {
 	/**
 	 * The allowed type the annotations apply to in a particular schema.
 	 */
-	readonly type: TreeNodeSchema;
+	readonly type: T;
 }
 
 /**
@@ -373,7 +374,7 @@ export interface TreeNodeSchemaCorePrivate<
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedSchema[];
+	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[];
 }
 
 /**

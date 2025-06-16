@@ -42,7 +42,7 @@ import {
 	getKernel,
 	type UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
-	type AnnotatedAllowedSchema,
+	type AnnotatedAllowedType,
 } from "../../core/index.js";
 import {
 	type InsertableContent,
@@ -1192,7 +1192,7 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedSchema[] {
+		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedType<TreeNodeSchema>[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};

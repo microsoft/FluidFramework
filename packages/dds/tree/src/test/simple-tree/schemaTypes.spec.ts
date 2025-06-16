@@ -10,6 +10,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import type { TreeValue } from "../../core/index.js";
 import {
 	SchemaFactory,
+	type AnnotatedAllowedType,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
 	type LazyItem,
@@ -21,7 +22,6 @@ import {
 import {
 	type AllowedTypes,
 	type AllowedTypesMetadata,
-	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
 	FieldKind,
 	type FieldSchema,

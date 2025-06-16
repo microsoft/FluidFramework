@@ -36,7 +36,7 @@ import {
 	type Context,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
-	type AnnotatedAllowedSchema,
+	type AnnotatedAllowedType,
 	type UnhydratedFlexTreeNode,
 } from "../../core/index.js";
 import {
@@ -296,7 +296,7 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedSchema[] {
+		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedType<TreeNodeSchema>[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};

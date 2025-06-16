@@ -12,12 +12,15 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	walkAllowedTypes,
-	type AnnotatedAllowedSchema,
+	type AnnotatedAllowedType,
 	type SchemaVisitor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
 
-function makeAnnotated(type: TreeNodeSchema, customValue = "test"): AnnotatedAllowedSchema {
+function makeAnnotated(
+	type: TreeNodeSchema,
+	customValue = "test",
+): AnnotatedAllowedType<TreeNodeSchema> {
 	return {
 		metadata: {
 			custom: customValue,
@@ -27,10 +30,10 @@ function makeAnnotated(type: TreeNodeSchema, customValue = "test"): AnnotatedAll
 }
 
 function mockWalkAllowedTypes(
-	annotatedAllowedTypes: Iterable<AnnotatedAllowedSchema>,
-): [TreeNodeSchema[], AnnotatedAllowedSchema[][]] {
+	annotatedAllowedTypes: Iterable<AnnotatedAllowedType<TreeNodeSchema>>,
+): [TreeNodeSchema[], AnnotatedAllowedType<TreeNodeSchema>[][]] {
 	const visitedNodes: TreeNodeSchema[] = [];
-	const visitedAllowedTypes: AnnotatedAllowedSchema[][] = [];
+	const visitedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[][] = [];
 
 	const mockVisitor: SchemaVisitor = {
 		node: (schema) => visitedNodes.push(schema),
