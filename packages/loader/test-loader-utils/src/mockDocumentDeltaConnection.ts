@@ -90,10 +90,7 @@ export class MockDocumentDeltaConnection
 	/**
 	 * Error raising for socket.io issues
 	 */
-	protected createMockErrorObject(
-		handler: string,
-		message: string,
-	): IAnyDriverError {
+	protected createMockErrorObject(handler: string, message: string): IAnyDriverError {
 		return createGenericNetworkError(
 			`socket.io (${handler}): ${message}`,
 			{ canRetry: false },
