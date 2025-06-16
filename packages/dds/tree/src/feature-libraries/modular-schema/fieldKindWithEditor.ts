@@ -66,7 +66,7 @@ export class FieldKindWithEditor<
 	}
 
 	/**
-	 * @returns true iff `superset` permits a (non-strict) superset of the subtrees
+	 * Returns true if and only if `superset` permits a (non-strict) superset of the subtrees
 	 * allowed by field made from `this` and `originalTypes`.
 	 */
 	public allowsFieldSuperset(
@@ -79,6 +79,8 @@ export class FieldKindWithEditor<
 			isNeverField(policy, originalData, {
 				kind: this.identifier,
 				types: originalTypes,
+				// Metadata is not used for this check.
+				persistedMetadata: undefined,
 			})
 		) {
 			return true;

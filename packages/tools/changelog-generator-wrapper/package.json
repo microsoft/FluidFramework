@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/changelog-generator-wrapper",
-	"version": "2.33.0",
+	"version": "2.43.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -10,14 +10,8 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
+	"type": "commonjs",
 	"main": "./src/index.js",
-	"files": [
-		"dist/",
-		"LICENSE",
-		"*.md",
-		"*.cjs",
-		"*.json"
-	],
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint",
 		"build:commonjs": "npm run tsc",
@@ -42,7 +36,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"concurrently": "^8.2.1",
 		"eslint": "~8.55.0",
 		"rimraf": "^4.4.0"

@@ -32,4 +32,5 @@ jobs:
           files: .changeset
           vale_flags: "--glob=*-*-*.md"
           reporter: github-pr-review
-          filter_mode: nofilter
+          # Only run on added/changed files/lines. See https://github.com/reviewdog/reviewdog#filter-mode
+          filter_mode: added

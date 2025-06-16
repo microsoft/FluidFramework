@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { NetworkError } from "@fluidframework/server-services-client";
 import { IClient, IClientDetails, IConnect, IUser } from "@fluidframework/protocol-definitions";
-import * as semver from "semver";
+import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as semver from "semver";
 
 export const ProtocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 

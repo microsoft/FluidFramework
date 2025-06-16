@@ -4,8 +4,15 @@
  */
 
 import { assert } from "console";
-import { cloneDeep } from "lodash";
+
 import * as core from "@fluidframework/server-services-core";
+import {
+	BaseTelemetryProperties,
+	Lumberjack,
+	LumberEventName,
+} from "@fluidframework/server-services-telemetry";
+import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
+import { cloneDeep } from "lodash";
 import {
 	AggregationCursor,
 	Collection,
@@ -16,12 +23,7 @@ import {
 	MongoClientOptions,
 	OptionalUnlessRequiredId,
 } from "mongodb";
-import {
-	BaseTelemetryProperties,
-	Lumberjack,
-	LumberEventName,
-} from "@fluidframework/server-services-telemetry";
-import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
+
 import { MongoErrorRetryAnalyzer } from "./mongoExceptionRetryRules";
 
 const MaxFetchSize = 2000;

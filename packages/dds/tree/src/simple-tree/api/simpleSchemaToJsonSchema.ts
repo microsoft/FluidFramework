@@ -26,11 +26,9 @@ import type {
 	SimpleMapNodeSchema,
 } from "../simpleSchema.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
-import type { TreeSchema } from "./tree.js";
+import type { TreeSchema } from "./configuration.js";
 import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
-import { ObjectNodeSchema } from "../objectNodeTypes.js";
-import { ArrayNodeSchema } from "../arrayNodeTypes.js";
-import { MapNodeSchema } from "../mapNodeTypes.js";
+import { ArrayNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../node-kinds/index.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 
 /**

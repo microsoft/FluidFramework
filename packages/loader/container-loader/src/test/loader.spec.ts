@@ -5,18 +5,9 @@
 
 import assert from "node:assert";
 
-import { stringToBuffer, type IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	IRuntime,
-	type IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	type IDocumentStorageService,
 	type IResolvedUrl,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
@@ -30,46 +21,14 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
-import { Loader, type ICodeDetailsLoader } from "../loader.js";
+import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 import { failProxy, failSometimeProxy } from "./failProxy.js";
-
-const createCodeLoader = (props?: { createDetachedBlob?: boolean }): ICodeDetailsLoader => ({
-	load: async () => {
-		return {
-			details: {
-				package: "none",
-			},
-			module: {
-				fluidExport: {
-					IRuntimeFactory: {
-						get IRuntimeFactory(): IRuntimeFactory {
-							return this;
-						},
-						async instantiateRuntime(context, existing): Promise<IRuntime> {
-							if (existing === false && props?.createDetachedBlob === true) {
-								await context.storage.createBlob(stringToBuffer("whatever", "utf8"));
-							}
-
-							return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
-								createSummary: () => ({
-									tree: {},
-									type: SummaryType.Tree,
-								}),
-								setAttachState: () => {},
-								getPendingLocalState: () => ({
-									pending: [],
-								}),
-								ILayerCompatDetails: undefined,
-							});
-						},
-					},
-				},
-			},
-		};
-	},
-});
+import {
+	createTestCodeLoaderProxy,
+	createTestDocumentServiceFactoryProxy,
+} from "./testProxies.js";
 
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
@@ -94,7 +53,7 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
 		const loader = new Loader({
-			codeLoader: createCodeLoader(),
+			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 		});
@@ -110,7 +69,7 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
 		const loader = new Loader({
-			codeLoader: createCodeLoader({ createDetachedBlob: true }),
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 		});
@@ -126,7 +85,7 @@ describe("loader unit test", () => {
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
 		const loader = new Loader({
-			codeLoader: createCodeLoader(),
+			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 			configProvider: {
@@ -162,18 +121,8 @@ describe("loader unit test", () => {
 			url: "none",
 		};
 		const loader = new Loader({
-			codeLoader: createCodeLoader({ createDetachedBlob: true }),
-			documentServiceFactory: failSometimeProxy<IDocumentServiceFactory>({
-				createContainer: async () =>
-					failSometimeProxy<IDocumentService>({
-						policies: {},
-						resolvedUrl,
-						connectToStorage: async () =>
-							failSometimeProxy<IDocumentStorageService>({
-								createBlob: async () => ({ id: uuid() }),
-							}),
-					}),
-			}),
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver: failSometimeProxy<IUrlResolver>({
 				resolve: async () => resolvedUrl,
 			}),
@@ -227,7 +176,7 @@ describe("loader unit test", () => {
 		new Container({
 			urlResolver: failProxy(),
 			documentServiceFactory: failProxy(),
-			codeLoader: createCodeLoader(),
+			codeLoader: createTestCodeLoaderProxy(),
 			options: {},
 			scope: {},
 			subLogger: logger.logger,

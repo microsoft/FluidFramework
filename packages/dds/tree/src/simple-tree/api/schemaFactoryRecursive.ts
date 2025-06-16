@@ -4,8 +4,8 @@
  */
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
-
+import type { NodeKind, TreeNodeSchema, WithType, TreeNode } from "../core/index.js";
+import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 import {
 	type FieldKind,
 	type FieldProps,
@@ -14,18 +14,12 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../schemaTypes.js";
-import type {
-	NodeKind,
-	TreeNodeSchemaClass,
-	TreeNodeSchema,
-	WithType,
-	TreeNode,
-} from "../core/index.js";
-import type { FieldSchemaAlphaUnsafe, ImplicitAllowedTypesUnsafe } from "./typesUnsafe.js";
+
+import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
 	Kind extends FieldKind,
-	Types extends ImplicitAllowedTypesUnsafe,
+	Types extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 	TCustomMetadata = unknown,
 >(
 	kind: Kind,
@@ -33,7 +27,11 @@ export function createFieldSchemaUnsafe<
 	props?: FieldProps<TCustomMetadata>,
 ): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return createFieldSchema(kind, allowedTypes as ImplicitAllowedTypes & Types, props);
+	return createFieldSchema(
+		kind,
+		allowedTypes as ImplicitAllowedTypes & Types,
+		props,
+	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
 }
 
 /**
@@ -117,19 +115,26 @@ export function createFieldSchemaUnsafe<
  * Be very careful when declaring recursive schema.
  * Due to the removed extends clauses, subtle mistakes will compile just fine but cause strange errors when the schema is used.
  *
- * For example if the square brackets around the allowed types are forgotten:
+ * For example if a reference to a schema is malformed (in this case boxed inside an object):
  *
  * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
  * ```
  * This schema will still compile, and some (but not all) usages of it may look like they work correctly while other usages will produce generally unintelligible compile errors.
  * This issue can be partially mitigated using {@link ValidateRecursiveSchema}:
  *
  * ```typescript
- * class Test extends sf.arrayRecursive("Test", () => Test) {} // Bad
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
  * {
  *     type _check = ValidateRecursiveSchema<typeof Test>; // Reports compile error due to invalid schema above.
  * }
+ * ```
+ *
+ * If your TypeScript configuration objects to this patten due to the unused local, you can use {@link allowUnused} to suppress the error:
+ *
+ * ```typescript
+ * class Test extends sf.arrayRecursive("Test", [() => ({ Test })]) {} // Bad
+ * allowUnused<ValidateRecursiveSchema<typeof Test>>(); // Reports compile error due to invalid schema above.
  * ```
  *
  * ## Object Schema
@@ -152,36 +157,115 @@ export function createFieldSchemaUnsafe<
  */
 export type ValidateRecursiveSchema<
 	// Recursive types should always be using TreeNodeSchemaClass (not TreeNodeSchemaNonClass) as thats part of the requirements for the type to work across compilation boundaries correctly.
-	T extends TreeNodeSchemaClass<
-		// Name: This validator places no restrictions on the name other than that it's a string (as required by TreeNodeSchemaClass).
-		string,
-		// NodeKind: These are the NodeKinds which currently can be used recursively.
-		NodeKind.Array | NodeKind.Map | NodeKind.Object,
-		// TNode: The produced node API. This is pretty minimal validation: more could be added if similar to how TInsertable works below if needed.
-		TreeNode & WithType<T["identifier"], T["kind"]>,
-		// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
-		// These match whats defined in the recursive methods on `SchemaFactory` except they do not use `Unenforced`.
-		{
-			[NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema>
-				? InsertableObjectFromSchemaRecord<T["info"]>
-				: unknown;
-			[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
-				? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>>
-				: unknown;
-			[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
-				? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
-				: unknown;
-		}[T["kind"]],
-		// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
-		false,
-		// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
-		{
-			[NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
-			[NodeKind.Array]: ImplicitAllowedTypes;
-			[NodeKind.Map]: ImplicitAllowedTypes;
-		}[T["kind"]]
-	>,
+	T extends ValidateRecursiveSchemaTemplate<T>,
 > = true;
+
+/**
+ * Validation logic used by {@link ValidateRecursiveSchema}.
+ * @system @public
+ */
+export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<
+	// Name: This validator places no restrictions on the name other than that it's a string (as required by TreeNodeSchemaClass).
+	string,
+	// NodeKind: These are the NodeKinds which currently can be used recursively.
+	NodeKind.Array | NodeKind.Map | NodeKind.Object,
+	// TNode: The produced node API. This is pretty minimal validation: more could be added if similar to how TInsertable works below if needed.
+	TreeNode & WithType<T["identifier"], T["kind"]>,
+	// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
+	// These match whats defined in the recursive methods on `SchemaFactory` except they do not use `Unenforced`.
+	{
+		[NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema>
+			? InsertableObjectFromSchemaRecord<T["info"]>
+			: unknown;
+		[NodeKind.Array]: T["info"] extends ImplicitAllowedTypes
+			? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>>
+			: unknown;
+		[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
+			? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
+			: unknown;
+		[NodeKind.Leaf]: unknown;
+	}[T["kind"]],
+	// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
+	false,
+	// Info: What's passed to the method to create the schema. Constraining these here should be about as effective as if the actual constraints existed on the actual method itself.
+	{
+		[NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
+		[NodeKind.Array]: ImplicitAllowedTypes;
+		[NodeKind.Map]: ImplicitAllowedTypes;
+		[NodeKind.Leaf]: unknown;
+	}[T["kind"]]
+>;
+
+/**
+ * Workaround for "Type instantiation is excessively deep and possibly infinite.ts" errors.
+ * @remarks
+ *
+ * Generally this workaround should be avoided if possible,
+ * especially for exported types, as it is likely to result in issues when exporting or importing schema where the user will be forced to use the workaround as well.
+ * This is particularly problematic since in some cases it may not be possible for the user to replicate the pattern.
+ * Additionally, which cases hit these limits may vary based on TypeScript version and implementation details of this library.
+ *
+ * This workaround is provided and documented as a last resort to be able to keep an app compiling.
+ * Future version of SharedTree should provide schema type erasure functionality as a better alternative for most cases.
+ *
+ * When TypeScript gives the error "Error (TS2589) Type instantiation is excessively deep and possibly infinite." on the invocation of `ValidateRecursiveSchema`
+ * for a large schema, it can sometimes be worked around by repeating the usage of the type multiple times.
+ * This works because the TypeScript compiler caches some of the intermediate results from the first usage, and thus can get further on the second.
+ *
+ * This utility can be referenced when applying this pattern.
+ * For recursive types this can be used directly:
+ *
+ * ```typescript
+ * {
+ *     // @ts-expect-error Recursion limit
+ *     type _check1 = FixRecursiveRecursionLimit<typeof LargeType>;
+ *     type _check2 = FixRecursiveRecursionLimit<typeof LargeType>;
+ *     type _check3 = ValidateRecursiveSchemaTemplate<typeof LargeType>;
+ * }
+ * ```
+ *
+ * For non-recursive types, they can be ported to the more flexible recursive APIs and use the pattern above.
+ *
+ * Non-recursive types can also use this workaround by making a duplicate copy of the problematic schema written using the recursive APIs.
+ * Then this pattern can be applied to the duplicate copy.
+ *
+ * ```typescript
+ * // Workaround TypeScript recursion limit
+ * 	{
+ * 		class LargeUnionObjectNode_Fix extends schema.objectRecursive("ObjectNode", {
+ * 			x: largeUnion,
+ * 		}) {}
+ *
+ * 		// @ts-expect-error Recursion limit
+ * 		allowUnused<FixRecursiveRecursionLimit<typeof LargeUnionObjectNode_Fix>>();
+ * 		allowUnused<FixRecursiveRecursionLimit<typeof LargeUnionObjectNode_Fix>>();
+ * 		allowUnused<ValidateRecursiveSchema<typeof LargeUnionObjectNode_Fix>>();
+ * 		}
+ *
+ * 	// Fails to compile without the above workaround.
+ * 	class LargeUnionObjectNode extends schema.object("ObjectNode", { x: largeUnion }) {}
+ * ```
+ * @privateRemarks
+ * Using this is real sketchy, and leads to a lot of issues (errors which depend on how the schema is compiled, making different build setups produce different results and complicating exports).
+ * This is being kept as internal for now: if a customer really needs it, we have this as a documented workaround, but it would be much better to find an alternative solution before using this one.
+ * This uses ValidateRecursiveSchemaTemplate since it was found to evaluate enough of the type to work.
+ * @internal
+ */
+export type FixRecursiveRecursionLimit<T extends TreeNodeSchema> =
+	T extends ValidateRecursiveSchemaTemplate<T> ? undefined : undefined;
+
+/**
+ * Does nothing with the provided value, but appears to use it to make unused locals warnings and errors go away.
+ *
+ * @remarks
+ * When TypeScript is configured with "noUnusedLocals", it will produce an error if a local variable is declared but never used.
+ * When you want to have this check enabled, but not follow it for a specific variable, you can pass the type or value to this function.
+ *
+ * Instead of using this, consider disabling "noUnusedLocals" in your tsconfig.json file, and enabling a similar check via a linter.
+ * This will allow you to still have the check, but have more control over it, for example being able to suppress it, or enable patterns like allowing unused locals with an "_" prefix.
+ * @alpha
+ */
+export function allowUnused<T>(t?: T): void {}
 
 /**
  * Workaround for fixing errors resulting from an issue with recursive ArrayNode schema exports.
@@ -195,7 +279,7 @@ export type ValidateRecursiveSchema<
  *
  * This type always evaluates to `undefined` to ensure the dummy export (which doesn't exist at runtime) is typed correctly.
  *
- * [TypeScript Issue 59550](https://github.com/microsoft/TypeScript/issues/59550) tracks a suggestion which would make this workaround unnecessary.
+ * {@link https://github.com/microsoft/TypeScript/issues/59550|TypeScript Issue 59550} tracks a suggestion which would make this workaround unnecessary.
  *
  * @example Usage
  * Since recursive type handling in TypeScript is order dependent, putting just the right kind of usages of the type before the declarations can cause it to not hit this error.

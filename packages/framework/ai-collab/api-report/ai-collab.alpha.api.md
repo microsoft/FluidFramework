@@ -9,6 +9,7 @@ export function aiCollab(options: AiCollabOptions): Promise<AiCollabSuccessRespo
 
 // @alpha
 export interface AiCollabErrorResponse {
+    readonly diffs: readonly Diff[];
     readonly errorMessage: "tokenLimitExceeded" | "tooManyErrors" | "tooManyModelCalls" | "aborted" | "unexpectedError";
     readonly status: "failure" | "partial-failure";
     readonly tokensUsed: TokenUsage;
@@ -36,6 +37,7 @@ export interface AiCollabOptions {
 
 // @alpha
 export interface AiCollabSuccessResponse {
+    readonly diffs: readonly Diff[];
     readonly status: "success";
     readonly tokensUsed: TokenUsage;
 }
@@ -64,6 +66,24 @@ export interface ApplyEditSuccess extends EventFlowDebugEvent {
     eventFlowTraceId: string;
     // (undocumented)
     eventName: "APPLIED_EDIT_SUCCESS";
+}
+
+// @alpha
+export interface ArrayRangeRemoveDiff extends DiffBase {
+    readonly nodeContents: unknown[];
+    readonly nodePaths: NodePath[];
+    readonly removalType: "remove-array-range";
+    // (undocumented)
+    readonly type: "remove";
+}
+
+// @alpha
+export interface ArraySingleRemoveDiff extends DiffBase {
+    readonly nodeContent: unknown;
+    readonly nodePath: NodePath;
+    readonly removalType: "remove-array-single";
+    // (undocumented)
+    readonly type: "remove";
 }
 
 // @alpha
@@ -108,6 +128,15 @@ export interface DebugEvent {
 
 // @alpha
 export type DebugEventLogHandler = <T extends DebugEvent>(event: T) => unknown;
+
+// @alpha
+export type Diff = InsertDiff | ModifyDiff | RemoveDiff | MoveDiff;
+
+// @alpha
+export interface DiffBase {
+    readonly aiExplanation: string;
+    readonly type: string;
+}
 
 // @alpha
 export type Difference = DifferenceCreate | DifferenceRemove | DifferenceChange | DifferenceMove;
@@ -228,6 +257,14 @@ export interface GenerateTreeEditStarted extends EventFlowDebugEvent {
 }
 
 // @alpha
+export interface InsertDiff extends DiffBase {
+    readonly nodeContent: unknown;
+    readonly nodePath: NodePath;
+    // (undocumented)
+    readonly type: "insert";
+}
+
+// @alpha
 export interface LlmApiCallDebugEvent extends DebugEvent {
     eventFlowTraceId: string;
     // (undocumented)
@@ -244,6 +281,45 @@ export interface LlmApiCallDebugEvent extends DebugEvent {
 
 // @alpha
 export type LlmTreeEdit = Record<string, unknown>;
+
+// @alpha
+export interface ModifyDiff extends DiffBase {
+    readonly newValue: unknown;
+    readonly nodePath: NodePath;
+    readonly oldValue: unknown;
+    // (undocumented)
+    readonly type: "modify";
+}
+
+// @alpha
+export type MoveDiff = MoveSingleDiff | MoveRangeDiff;
+
+// @alpha
+export interface MoveRangeDiff extends DiffBase {
+    readonly destinationNodePath: NodePath;
+    readonly moveType: "move-range";
+    readonly nodeContents: unknown[];
+    readonly sourceNodePaths: NodePath[];
+    // (undocumented)
+    readonly type: "move";
+}
+
+// @alpha
+export interface MoveSingleDiff extends DiffBase {
+    readonly destinationNodePath: NodePath;
+    readonly moveType: "move-single";
+    readonly nodeContent: unknown;
+    readonly sourceNodePath: NodePath;
+    // (undocumented)
+    readonly type: "move";
+}
+
+// @alpha
+export type NodePath = {
+    readonly shortId: string | number | undefined;
+    readonly schemaIdentifier: string;
+    readonly parentField: string | number;
+}[];
 
 // @alpha
 export type ObjectPath = (string | number)[];
@@ -284,6 +360,18 @@ export interface PlanningPromptStarted extends EventFlowDebugEvent {
     eventFlowStatus: "STARTED";
     // (undocumented)
     eventName: "GENERATE_PLANNING_PROMPT_STARTED";
+}
+
+// @alpha
+export type RemoveDiff = RemoveNodeDiff | ArraySingleRemoveDiff | ArrayRangeRemoveDiff;
+
+// @alpha
+export interface RemoveNodeDiff extends DiffBase {
+    readonly nodeContent: unknown;
+    readonly nodePath: NodePath;
+    readonly removalType: "remove-node";
+    // (undocumented)
+    readonly type: "remove";
 }
 
 // @alpha

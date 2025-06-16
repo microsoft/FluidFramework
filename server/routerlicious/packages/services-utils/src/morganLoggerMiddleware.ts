@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import express from "express";
-import morgan from "morgan";
+import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
+
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -12,8 +12,10 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import express from "express";
+import morgan from "morgan";
+
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
-import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");

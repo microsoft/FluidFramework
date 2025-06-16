@@ -4,6 +4,7 @@
  */
 
 import { EventEmitter } from "events";
+
 import {
 	IContext,
 	IPublisher,
@@ -12,6 +13,7 @@ import {
 	IServiceConfiguration,
 	IClientManager,
 } from "@fluidframework/server-services-core";
+
 import { BroadcasterLambda } from "./lambda";
 
 /**

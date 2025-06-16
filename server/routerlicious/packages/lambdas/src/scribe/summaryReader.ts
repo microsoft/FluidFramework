@@ -25,6 +25,7 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+
 import { ILatestSummaryState, ISummaryReader } from "./interfaces";
 
 /**

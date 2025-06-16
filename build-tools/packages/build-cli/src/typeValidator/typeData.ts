@@ -17,6 +17,11 @@ export interface TypeData {
 	 */
 	readonly testCaseName: string;
 	readonly node: Node;
+	/**
+	 * Tags on the type.
+	 * @remarks
+	 * Does not include the "\@" prefix.
+	 */
 	readonly tags: ReadonlySet<string>;
 	/**
 	 * Indicates if this TypeData refer to the named item (false), or the typeof the named item (true).

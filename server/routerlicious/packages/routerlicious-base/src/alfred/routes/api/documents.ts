@@ -4,6 +4,22 @@
  */
 
 import * as crypto from "crypto";
+
+import {
+	getBooleanParam,
+	validateRequestParams,
+	handleResponse,
+} from "@fluidframework/server-services";
+import {
+	convertFirstSummaryWholeSummaryTreeToSummaryTree,
+	IAlfredTenant,
+	ISession,
+	NetworkError,
+	DocDeleteScopeType,
+	TokenRevokeScopeType,
+	createFluidServiceNetworkError,
+	InternalErrorCode,
+} from "@fluidframework/server-services-client";
 import {
 	IDocumentStorage,
 	IThrottler,
@@ -17,6 +33,12 @@ import {
 	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
+	getLumberBaseProperties,
+	LumberEventName,
+	Lumberjack,
+	type Lumber,
+} from "@fluidframework/server-services-telemetry";
+import {
 	verifyStorageToken,
 	getCreationToken,
 	throttle,
@@ -27,31 +49,12 @@ import {
 	getTelemetryContextPropertiesWithHttpInfo,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
-import {
-	getBooleanParam,
-	validateRequestParams,
-	handleResponse,
-} from "@fluidframework/server-services";
 import { Request, Router } from "express";
-import winston from "winston";
-import {
-	convertFirstSummaryWholeSummaryTreeToSummaryTree,
-	IAlfredTenant,
-	ISession,
-	NetworkError,
-	DocDeleteScopeType,
-	TokenRevokeScopeType,
-	createFluidServiceNetworkError,
-	InternalErrorCode,
-} from "@fluidframework/server-services-client";
-import {
-	getLumberBaseProperties,
-	LumberEventName,
-	Lumberjack,
-	type Lumber,
-} from "@fluidframework/server-services-telemetry";
+import type { RequestHandler } from "express-serve-static-core";
 import { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
+import winston from "winston";
+
 import {
 	Constants,
 	generateCacheKey,
@@ -60,7 +63,6 @@ import {
 	StageTrace,
 } from "../../../utils";
 import { IDocumentDeleteService } from "../../services";
-import type { RequestHandler } from "express-serve-static-core";
 
 /**
  * Response body shape for modern clients that can handle object responses.

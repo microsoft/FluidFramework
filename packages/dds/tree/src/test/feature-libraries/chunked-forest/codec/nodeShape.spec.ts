@@ -34,7 +34,7 @@ describe("nodeShape", () => {
 		it("empty node", () => {
 			const shape = new NodeShape(undefined, false, [], undefined);
 			const identifierCounter = new Counter<string>();
-			shape.count(identifierCounter, () => fail());
+			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
 			assert(identifierCounter.buildTable().indexToValue.length === 0);
 
 			const cache = new EncoderCache(
@@ -54,7 +54,7 @@ describe("nodeShape", () => {
 			const shape = new NodeShape(brand("foo"), true, [], undefined);
 
 			const identifierCounter = new Counter<string>();
-			shape.count(identifierCounter, () => fail());
+			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
 			const cache = new EncoderCache(
 				() => fail(),
 				() => fail(),
@@ -114,7 +114,7 @@ describe("nodeShape", () => {
 			);
 
 			// Shape which encodes to nothing.
-			const fieldShape1: FieldEncoder = asFieldEncoder(
+			const fieldEncoder1: FieldEncoder = asFieldEncoder(
 				new NodeShape(brand("1"), false, [], undefined),
 			);
 			// Shape which encodes to just the value.
@@ -128,9 +128,9 @@ describe("nodeShape", () => {
 				brand("type"),
 				true,
 				[
-					{ key: brand("nothing"), shape: fieldShape1 },
-					{ key: brand("shapeValueOnly"), shape: asFieldEncoder(shapeValueOnly) },
-					{ key: brand("shapeValues"), shape: shapeValues },
+					{ key: brand("nothing"), encoder: fieldEncoder1 },
+					{ key: brand("shapeValueOnly"), encoder: asFieldEncoder(shapeValueOnly) },
+					{ key: brand("shapeValues"), encoder: shapeValues },
 				],
 				undefined,
 			);

@@ -28,8 +28,7 @@ export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 			if (handler !== undefined && p in handler) {
 				return Reflect.get(t, p, r);
 			}
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-			return failProxy();
+			throw new Error(`${p.toString()} not implemented`);
 		},
 	});
 	return proxy;
@@ -52,6 +51,11 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			blobManagerLoadInfo: {},
 			stashedBlobs: undefined,
 			localBlobIdGenerator: undefined,
+			storage: failProxy<IDocumentStorageService>(),
+			sendBlobAttachOp: () => {},
+			blobRequested: () => {},
+			isBlobDeleted: () => false,
+			createBlobPayloadPending: false,
 
 			// overrides
 			...overrides,

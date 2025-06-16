@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha @sealed
+// @alpha @sealed @legacy
 export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, IContainerRuntimeBaseWithCombinedEvents {
     readonly attachState: AttachState;
     // (undocumented)
@@ -27,10 +27,10 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     readonly storage: IDocumentStorageService;
 }
 
-// @alpha @sealed (undocumented)
+// @alpha @sealed @legacy (undocumented)
 export type IContainerRuntimeBaseWithCombinedEvents = IContainerRuntimeBase & IEventProvider<IContainerRuntimeEvents>;
 
-// @alpha @sealed
+// @alpha @sealed @legacy
 export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents, ISummarizerEvents {
     // (undocumented)
     (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
@@ -38,7 +38,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents, IS
     (event: "connected", listener: (clientId: string) => void): any;
 }
 
-// @alpha @deprecated (undocumented)
+// @alpha @deprecated @legacy (undocumented)
 export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContainerRuntime {
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
@@ -46,7 +46,7 @@ export interface IContainerRuntimeWithResolveHandle_Deprecated extends IContaine
     resolveHandle(request: IRequest): Promise<IResponse>;
 }
 
-// @alpha @sealed (undocumented)
+// @alpha @sealed @legacy (undocumented)
 export interface ISummarizeEventProps {
     // (undocumented)
     currentAttempt: number;
@@ -60,7 +60,7 @@ export interface ISummarizeEventProps {
     result: "success" | "failure" | "canceled";
 }
 
-// @alpha @sealed (undocumented)
+// @alpha @sealed @legacy (undocumented)
 export interface ISummarizerEvents extends IEvent {
     // (undocumented)
     (event: "summarize", listener: (props: ISummarizeEventProps & ISummarizerObservabilityProps) => void): any;
@@ -81,7 +81,7 @@ export interface ISummarizerEvents extends IEvent {
     } & ISummarizerObservabilityProps) => void): any;
 }
 
-// @alpha @sealed (undocumented)
+// @alpha @sealed @legacy (undocumented)
 export interface ISummarizerObservabilityProps {
     // (undocumented)
     numUnsummarizedNonRuntimeOps: number;
@@ -89,7 +89,7 @@ export interface ISummarizerObservabilityProps {
     numUnsummarizedRuntimeOps: number;
 }
 
-// @alpha @sealed (undocumented)
+// @alpha @sealed @legacy (undocumented)
 export type SummarizerStopReason =
 /**
 * Summarizer client failed to summarize in all attempts.

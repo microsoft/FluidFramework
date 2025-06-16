@@ -12,6 +12,8 @@ import {
 
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 
+import type { EmptyGroupedBatch } from "./opGroupingManager.js";
+
 /**
  * Takes an incoming runtime message (outer type "op"), JSON.parses the message's contents in place,
  * if needed (old Loader does this for us).
@@ -30,10 +32,17 @@ export function ensureContentsDeserialized(mutableMessage: ISequencedDocumentMes
 /**
  * Before submitting an op to the Outbox, its contents must be serialized using this function.
  * @remarks - The deserialization on process happens via the function {@link ensureContentsDeserialized}.
+ *
+ * @param toSerialize - op message to serialize. Also supports an array of ops.
  */
-export function serializeOp(op: LocalContainerRuntimeMessage): string {
+export function serializeOp(
+	toSerialize:
+		| EmptyGroupedBatch
+		| LocalContainerRuntimeMessage
+		| LocalContainerRuntimeMessage[],
+): string {
 	return JSON.stringify(
-		op,
+		toSerialize,
 		// replacer:
 		(key, value: unknown) => {
 			// If 'value' is an IFluidHandle return its encoded form.

@@ -5,6 +5,7 @@
 
 import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
+
 import type { TreeChunk } from "./chunk.js";
 
 /**
