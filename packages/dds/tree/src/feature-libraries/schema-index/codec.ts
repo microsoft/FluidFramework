@@ -22,8 +22,6 @@ import {
 	decodeFieldSchema,
 	encodeFieldSchemaV1,
 	encodeFieldSchemaV2,
-	type schemaFormatV1,
-	type schemaFormatV2,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
 import { brand, type JsonCompatible } from "../../util/index.js";
@@ -89,18 +87,8 @@ export function encodeRepo(repo: TreeStoredSchema, version: SchemaVersion): Json
 }
 
 function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
-	const nodeSchema: Record<string, schemaFormatV1.TreeNodeSchemaDataFormat> =
-		Object.create(null);
+	const nodeSchema = encodeNodeSchema(repo, (schema) => schema.encodeV1());
 	const rootFieldSchema = encodeFieldSchemaV1(repo.rootFieldSchema);
-	for (const name of [...repo.nodeSchema.keys()].sort()) {
-		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
-		Object.defineProperty(nodeSchema, name, {
-			enumerable: true,
-			configurable: true,
-			writable: true,
-			value: schema.encodeV1(),
-		});
-	}
 	return {
 		version: SchemaVersion.v1,
 		nodes: nodeSchema,
@@ -109,23 +97,37 @@ function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 }
 
 function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
-	const nodeSchema: Record<string, schemaFormatV2.TreeNodeSchemaDataFormat> =
-		Object.create(null);
+	const nodeSchema = encodeNodeSchema(repo, (schema) => schema.encodeV2());
 	const rootFieldSchema = encodeFieldSchemaV2(repo.rootFieldSchema);
+	return {
+		version: SchemaVersion.v2,
+		nodes: nodeSchema,
+		root: rootFieldSchema,
+	};
+}
+
+/**
+ * Shared logic for encoding node schemas.
+ * @param repo - The stored schema to encode.
+ * @param encodeValue - A function which encodes a single node schema.
+ * @returns The encoded node schema.
+ */
+function encodeNodeSchema<TFormat>(
+	repo: TreeStoredSchema,
+	encodeValue: (schema: TreeNodeStoredSchema) => TFormat,
+): Record<string, TFormat> {
+	const nodeSchema: Record<string, TFormat> = Object.create(null);
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
 		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
 		Object.defineProperty(nodeSchema, name, {
 			enumerable: true,
 			configurable: true,
 			writable: true,
-			value: schema.encodeV2(),
+			value: encodeValue(schema),
 		});
 	}
-	return {
-		version: SchemaVersion.v2,
-		nodes: nodeSchema,
-		root: rootFieldSchema,
-	};
+
+	return nodeSchema;
 }
 
 function decodeV1(f: FormatV1): TreeStoredSchema {
