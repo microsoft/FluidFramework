@@ -25,10 +25,10 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-    "test": "cross-env logger__level=crit start-server-and-test tinylicious 7070 test:mocha",
-    "test:coverage": "c8 npm test",
+		"test": "cross-env logger__level=crit start-server-and-test tinylicious 7070 test:mocha",
+		"test:coverage": "c8 npm test",
 		"test:mocha": "mocha --recursive lib/test/**/*.spec.*js --config src/test/.mocharc.cjs --exit",
-    "test:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm test",
+		"test:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm test",
 		"tinylicious": "tinylicious"
 	},
 	"c8": {
