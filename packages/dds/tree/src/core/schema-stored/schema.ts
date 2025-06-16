@@ -245,8 +245,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 			this.encodeFieldsObject(encodeFieldSchemaV2);
 		const kind = { object: fieldsObject };
 
-		// Omit metadata from the output if it is undefined
-		return this.metadata !== undefined ? { kind, metadata: this.metadata } : { kind };
+		return { kind, metadata: this.metadata };
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -299,7 +298,7 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
 		const kind = { map: encodeFieldSchemaV2(this.mapFields) };
-		return this.metadata === undefined ? { kind, metadata: this.metadata } : { kind };
+		return { kind, metadata: this.metadata };
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
