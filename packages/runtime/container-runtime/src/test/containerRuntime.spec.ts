@@ -4311,10 +4311,12 @@ describe("Runtime", () => {
 				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
 				// but not the staged op (even with flush)
 				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
+
 				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
 				containerRuntime.flush();
 				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
 
+				// default options: { squash: false }
 				controls.commitChanges();
 
 				assert(
@@ -4347,23 +4349,29 @@ describe("Runtime", () => {
 			it("discardChanges drops staged ops", () => {
 				const channelCollectionStub = stubChannelCollection(containerRuntime);
 
+				// Won't be rolled back when exiting staging mode
+				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
+
 				const controls = containerRuntime.enterStagingMode();
 
-				submitDataStoreOp(containerRuntime, "1", "staged-op", "LOCAL_OP_METADATA");
+				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
+				// but not the staged op (even with flush)
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
+
 				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "3", "staged-op", "LOCAL_OP_METADATA");
 				containerRuntime.flush();
-				assert.equal(submittedOps.length, 0, "No ops expected while staged");
-				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty");
+				assert.equal(submittedOps.length, 1, "No more ops expected while staged");
 
 				controls.discardChanges();
 
-				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 				assert.deepEqual(
 					channelCollectionStub.rollback.getCalls().map((call) => call.args),
 					[
 						// LIFO order for rolling back
+						["component", { address: "3", contents: "staged-op" }, "LOCAL_OP_METADATA"],
 						["component", { address: "2", contents: "staged-op" }, "LOCAL_OP_METADATA"],
-						["component", { address: "1", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+						// Doesn't rollback the op from before staging mode
 					],
 					"Unexpected args for rollback",
 				);
@@ -4374,9 +4382,25 @@ describe("Runtime", () => {
 
 				assert.equal(
 					submittedOps.length,
-					0,
+					1, // From before staging mode
 					"Staged op should NOT be submitted after discardChanges",
 				);
+			});
+
+			it("discardChanges resets isDirty state", () => {
+				stubChannelCollection(containerRuntime);
+
+				const controls = containerRuntime.enterStagingMode();
+
+				submitDataStoreOp(containerRuntime, "1", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from Outbox)");
+				containerRuntime.flush();
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from PSM)");
+
+				controls.discardChanges();
+
+				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
 		});
 	});
