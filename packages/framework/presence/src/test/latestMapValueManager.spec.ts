@@ -186,10 +186,15 @@ export function checkCompiles(): void {
 	// The key value should be a function that returns a value.
 	const validatedValue: TestMapData | undefined = validatedKeyValue?.();
 
-	if (validatedValue === undefined) {
-		throw new Error("Value is not valid according to the validator function.");
+	// FIXME: Should this check be done elsewhere?
+	if (latestMapData.has("key2")) {
+		if (validatedValue === undefined) {
+			throw new Error("Value is not valid according to the validator function.");
+		}
+		logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
+	} else {
+		throw new Error("'key2' not found in LatestMap");
 	}
-	logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
 
 	// ----------------------------------
 	// pointers data
