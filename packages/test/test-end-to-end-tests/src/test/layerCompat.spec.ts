@@ -89,10 +89,6 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
-
-		if (provider.driver.type !== "local") {
-			this.skip();
-		}
 	});
 
 	describe("Loader / Driver compat", () => {
