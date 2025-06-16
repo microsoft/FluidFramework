@@ -100,7 +100,7 @@ function createCompatSuite(
 						});
 						logger.sendErrorEvent(
 							{
-								// Note: places where the ITestObjectProvider is available can use provider.driver.[type|endpointName].
+								// Note: TestObjectProvider already adds driverType and driverEndpointName to logs that go through it.
 								// In this code path we could not create the provider so we have to do things by hand.
 								...getDriverInformationWhenNoProviderIsAvailable(
 									driver,
