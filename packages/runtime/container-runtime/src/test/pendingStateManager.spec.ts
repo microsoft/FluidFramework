@@ -1235,10 +1235,7 @@ describe("Pending State Manager", () => {
 			secondBatchSize: [undefined, 1, 2] as const, // undefined means no second batch
 			secondBatchStaged: booleanCases,
 		})) {
-			//* ONLY
-			//* ONLY
-			//* ONLY
-			it.only(`should replay all pending states as batches (batch sizes: ${firstBatchSize}, ${secondBatchSize}, ${secondBatchStaged})`, () => {
+			it(`should replay all pending states as batches (batch sizes: ${firstBatchSize}, ${secondBatchSize}, ${secondBatchStaged})`, () => {
 				const stubs = getStateHandlerStub();
 				const pendingStateManager = createPendingStateManager(stubs);
 				const RefSeqInitial_10 = 10;
@@ -1360,51 +1357,6 @@ describe("Pending State Manager", () => {
 				);
 			});
 		}
-		it("should replay multiple batches in order", () => {
-			const stubs = getStateHandlerStub();
-			const pendingStateManager = createPendingStateManager(stubs);
-			const reSubmittedBatches: {
-				batch: PendingMessageResubmitData[];
-				metadata: PendingBatchResubmitMetadata;
-			}[] = [];
-			stubs.reSubmitBatch.callsFake((batch, metadata) => {
-				reSubmittedBatches.push({ batch, metadata });
-			});
-			pendingStateManager.onFlushBatch(
-				[
-					{
-						runtimeOp: {
-							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
-						},
-						referenceSequenceNumber: 10,
-						metadata: undefined,
-						localOpMetadata: { foo: "bar" },
-					},
-				],
-				/* clientSequenceNumber: */ 1,
-				/* staged: */ false,
-			);
-			pendingStateManager.onFlushBatch(
-				[
-					{
-						runtimeOp: {
-							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
-						},
-						referenceSequenceNumber: 11,
-						metadata: undefined,
-						localOpMetadata: { foo: "baz" },
-					},
-				],
-				/* clientSequenceNumber: */ 1,
-				/* staged: */ false,
-			);
-			pendingStateManager.replayPendingStates();
-			assert.strictEqual(reSubmittedBatches.length, 2, "Should resubmit two batches");
-			assert.deepStrictEqual(reSubmittedBatches[0].batch[0].localOpMetadata, { foo: "bar" });
-			assert.deepStrictEqual(reSubmittedBatches[1].batch[0].localOpMetadata, { foo: "baz" });
-		});
 
 		it("should replay only staged batches when committingStagedBatches is true", () => {
 			const stubs = getStateHandlerStub();
@@ -1416,6 +1368,8 @@ describe("Pending State Manager", () => {
 			stubs.reSubmitBatch.callsFake((batch, metadata) => {
 				reSubmittedBatches.push({ batch, metadata });
 			});
+
+			// Enqueue an unstaged one first, then staged.  The opposite order is not possible/supported
 			pendingStateManager.onFlushBatch(
 				[
 					{
@@ -1450,15 +1404,21 @@ describe("Pending State Manager", () => {
 				committingStagedBatches: true,
 				squash: false,
 			});
+			// We should only resubmit the staged batch, with the staged flag cleared
 			assert.strictEqual(
 				reSubmittedBatches.length,
 				1,
-				"Should only resubmit the staged batch when committingStagedBatches is true",
+				"Should resubmit only the staged batch when committingStagedBatches is true",
 			);
 			assert.deepStrictEqual(
 				reSubmittedBatches[0].batch[0].localOpMetadata,
 				{ foo: "staged" },
 				"Should resubmit the staged batch",
+			);
+			assert.strictEqual(
+				reSubmittedBatches[0].metadata.staged,
+				false,
+				"Staged flag should be cleared on resubmission",
 			);
 			// The unstaged batch should remain in the pendingMessages queue
 			assert.strictEqual(
@@ -1471,43 +1431,6 @@ describe("Pending State Manager", () => {
 				{
 					foo: "unstaged",
 				},
-			);
-		});
-
-		it("should clear staged flag on staged batches when committingStagedBatches is true", () => {
-			const stubs = getStateHandlerStub();
-			const pendingStateManager = createPendingStateManager(stubs);
-			const reSubmittedBatches: {
-				batch: PendingMessageResubmitData[];
-				metadata: PendingBatchResubmitMetadata;
-			}[] = [];
-			stubs.reSubmitBatch.callsFake((batch, metadata) => {
-				reSubmittedBatches.push({ batch, metadata });
-			});
-			pendingStateManager.onFlushBatch(
-				[
-					{
-						runtimeOp: {
-							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
-						},
-						referenceSequenceNumber: 14,
-						metadata: undefined,
-						localOpMetadata: { foo: "staged" },
-					},
-				],
-				/* clientSequenceNumber: */ undefined,
-				/* staged: */ true,
-			);
-			pendingStateManager.replayPendingStates({
-				committingStagedBatches: true,
-				squash: false,
-			});
-			assert.strictEqual(reSubmittedBatches.length, 1, "Should resubmit the staged batch");
-			assert.strictEqual(
-				reSubmittedBatches[0].metadata.staged,
-				false,
-				"Staged flag should be cleared on resubmission",
 			);
 		});
 
@@ -1536,6 +1459,7 @@ describe("Pending State Manager", () => {
 				/* clientSequenceNumber: */ 1,
 				/* staged: */ false,
 			);
+			// This will set clientIdFromLastReplay
 			pendingStateManager.replayPendingStates();
 			// Add another batch to allow replay again
 			pendingStateManager.onFlushBatch(
@@ -1553,6 +1477,7 @@ describe("Pending State Manager", () => {
 				/* clientSequenceNumber: */ 1,
 				/* staged: */ false,
 			);
+			// This will throw since clientIdFromLastReplay is already set to the same clientId
 			assert.throws(
 				() => pendingStateManager.replayPendingStates(),
 				/0x173/,
@@ -1563,13 +1488,6 @@ describe("Pending State Manager", () => {
 		it("should set squash flag when replayPendingStates is called with squash: true", () => {
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
-			const reSubmittedBatches: {
-				batch: PendingMessageResubmitData[];
-				metadata: PendingBatchResubmitMetadata;
-			}[] = [];
-			stubs.reSubmitBatch.callsFake((batch, metadata) => {
-				reSubmittedBatches.push({ batch, metadata });
-			});
 			pendingStateManager.onFlushBatch(
 				[
 					{
@@ -1589,9 +1507,12 @@ describe("Pending State Manager", () => {
 				squash: true,
 				committingStagedBatches: false,
 			});
-			assert.strictEqual(
-				reSubmittedBatches[0].metadata.squash,
-				true,
+			assert(
+				stubs.reSubmitBatch.calledOnceWith(Sinon.match.any, {
+					squash: true,
+					staged: Sinon.match.bool,
+					batchId: Sinon.match.string,
+				}),
 				"Squash flag should be set to true",
 			);
 		});
