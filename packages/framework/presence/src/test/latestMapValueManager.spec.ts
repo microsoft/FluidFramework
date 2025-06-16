@@ -174,7 +174,12 @@ export function checkCompiles(): void {
 	const latestMapData = props.validatedMap.getRemote(attendee2);
 
 	// Get a value from the validated map
-	const validatedKeyValue = latestMapData.get("key2")?.value;
+	const keyValue = latestMapData.get("key2");
+	if (keyValue === undefined) {
+		throw new Error("'key2' not found in LatestMap");
+	}
+
+	const validatedKeyValue = keyValue.value;
 
 	// @ts-expect-error because validatedKeyValue is an accessor, not a value
 	// Type '() =>
@@ -186,15 +191,10 @@ export function checkCompiles(): void {
 	// The key value should be a function that returns a value.
 	const validatedValue: TestMapData | undefined = validatedKeyValue?.();
 
-	// FIXME: Should this check be done elsewhere?
-	if (latestMapData.has("key2")) {
-		if (validatedValue === undefined) {
-			throw new Error("Value is not valid according to the validator function.");
-		}
-		logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
-	} else {
-		throw new Error("'key2' not found in LatestMap");
+	if (validatedValue === undefined) {
+		throw new Error("Value is not valid according to the validator function.");
 	}
+	logClientValue({ attendee: attendee2, key: "key2", value: validatedValue });
 
 	// ----------------------------------
 	// pointers data
