@@ -114,7 +114,7 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 /**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
  *
- * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps MinimumVersionForCollab
+ * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an function that maps MinimumVersionForCollab
  * to the appropriate default value for that property to supporting that MinimumVersionForCollab. If clients running MinimumVersionForCollab X are able to understand
  * the format changes introduced by the property, then the default value for that MinimumVersionForCollab will enable the feature associated with the property.
  * Otherwise, the feature will be disabled.
@@ -134,16 +134,12 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		["1.0.0", { ...disabledCompressionConfig }],
 	]),
 	enableRuntimeIdCompressor: minVersionForCollabToConfigValue([
-		// For IdCompressorMode, `undefined` represents a logical state (off).
-		// However, to satisfy the Required<> constraint while
-		// `exactOptionalPropertyTypes` is `false` (TODO: AB#8215), we need
-		// to have it defined, so we trick the type checker here.
-		["1.0.0", undefined],
 		// We do not yet want to enable idCompressor by default since it will
 		// increase bundle sizes, and not all customers will benefit from it.
 		// Therefore, we will require customers to explicitly enable it. We
 		// are keeping it as a DocSchema affecting option for now as this may
 		// change in the future.
+		["1.0.0", undefined],
 	]),
 	explicitSchemaControl: minVersionForCollabToConfigValue([
 		// This option's intention is to prevent 1.x clients from joining sessions
@@ -179,6 +175,16 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 	]),
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
+/**
+ * Mapping of RuntimeOptionsAffectingDocSchema config values to functions that return the minimum minVersionForCollab
+ * that a config value is considered "valid".
+ * A config value is "valid" with a minVersionForCollab if clients running that version or later can understand the
+ * format change that is introduced when using that config value.
+ *
+ * For example, if `true` is passed into the function for `createBlobPayloadPending`, then it will return "2.40.0", since
+ * only clients running 2.40.0 or later can understand the format change when `createBlobPayloadPending` is enabled.
+ * This is used to ensure that the runtime options passed in by the user are compatible with the minVersionForCollab.
+ */
 const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 	enableGroupedBatching: configValueToMinVersionForCollab([
 		[false, "1.0.0"],
@@ -220,6 +226,8 @@ export function getMinVersionForCollabDefaults(
 	return getConfigsForMinVersionForCollab(
 		minVersionForCollab,
 		runtimeOptionsAffectingDocSchemaConfigMap,
+		// This is a bad cast away from Partial that getConfigsForCompatMode provides.
+		// ConfigMap should be restructured to provide RuntimeOptionsAffectingDocSchema guarantee.
 	) as RuntimeOptionsAffectingDocSchema;
 }
 
@@ -305,7 +313,7 @@ export function getValidationForRuntimeOptions<T extends Record<string, unknown>
 }
 
 /**
- * Helper function to map minVersionForCollab config values to the default config value for a
+ * Helper function to map minVersionForCollab to the default config value for a
  * IContainerRuntimeOptionsInternal property in {@link runtimeOptionsAffectingDocSchemaConfigMap}.
  */
 export function minVersionForCollabToConfigValue<
@@ -324,6 +332,9 @@ export function minVersionForCollabToConfigValue<
 				return configValue;
 			}
 		}
+		// If runtimeOptionsAffectingDocSchemaConfigMap is setup properly, it shouldn't be possible to have
+		// a minVersionForCollab that does not map to a default config value.
+		// In case we reach this point, we will return undefined since there was no config found.
 		return undefined as T;
 	};
 }
