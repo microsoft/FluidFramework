@@ -191,7 +191,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
-	public getRemote = (attendee: Attendee): LatestData<T, ValueAccessor<T>> => {
+	public getRemote(attendee: Attendee): LatestData<T, ValueAccessor<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
@@ -201,7 +201,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			value: asDeeplyReadonlyDeserializedJson(clientState.value),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
-	};
+	}
 
 	public update(
 		attendee: Attendee,
