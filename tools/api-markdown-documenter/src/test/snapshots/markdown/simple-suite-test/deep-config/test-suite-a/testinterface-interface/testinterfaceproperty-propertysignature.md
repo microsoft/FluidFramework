@@ -1,6 +1,6 @@
 # testInterfaceProperty
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterface](/test-suite-a/testinterface-interface/) \> [testInterfaceProperty](/test-suite-a/testinterface-interface/testinterfaceproperty-propertysignature)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterface](/test-suite-a/testinterface-interface/) > [testInterfaceProperty](/test-suite-a/testinterface-interface/testinterfaceproperty-propertysignature)
 
 Test interface property
 
@@ -10,7 +10,7 @@ Test interface property
 testInterfaceProperty: number;
 ```
 
-**Type:** number
+**Type**: number
 
 ## Remarks {#testinterfaceproperty-remarks}
 

@@ -9,7 +9,6 @@ import {
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type NormalizedFieldUpPath,
-	type TreeNodeSchemaIdentifier,
 	type TreeValue,
 	anchorSlot,
 } from "../../core/index.js";
@@ -19,7 +18,12 @@ import type {
 	ValueFieldEditBuilder,
 	OptionalFieldEditBuilder,
 } from "../default-schema/index.js";
-import type { MinimalMapTreeNodeView } from "../mapTreeCursor.js";
+import type {
+	MapTreeFieldViewGeneric,
+	MapTreeNodeViewGeneric,
+	MinimalFieldMap,
+	MinimalMapTreeNodeView,
+} from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { FlexTreeContext, FlexTreeHydratedContext } from "./context.js";
@@ -75,6 +79,14 @@ export interface FlexTreeEntity {
 	 * A common context of FlexTrees.
 	 */
 	readonly context: FlexTreeContext;
+
+	/**
+	 * Get a cursor for the underlying data.
+	 * @remarks
+	 * This cursor might be one the node uses in its implementation, and thus must be returned to its original location before using any other APIs to interact with the tree.
+	 * Must not be held onto across edits or any other tree API use.
+	 */
+	borrowCursor(): ITreeCursorSynchronous;
 }
 
 /**
@@ -142,13 +154,8 @@ export enum TreeStatus {
  * @remarks
  * All editing is actually done via {@link FlexTreeField}s: the nodes are immutable other than that they contain mutable fields.
  */
-export interface FlexTreeNode extends FlexTreeEntity {
+export interface FlexTreeNode extends FlexTreeEntity, MapTreeNodeViewGeneric<FlexTreeNode> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Node;
-
-	/**
-	 * Value stored on this node.
-	 */
-	readonly value?: TreeValue;
 
 	/**
 	 * Gets a field of this node, if it is not empty.
@@ -168,10 +175,24 @@ export interface FlexTreeNode extends FlexTreeEntity {
 
 	/**
 	 * The field this tree is in, and the index within that field.
+	 * @remarks
+	 * The behavior of this at the root (especially removed and unhydrated roots) is currently not very consistent.
+	 * Since very little relies on this, limit what it exposes to reduce the potential impact of inconsistent root handling.
 	 */
-	readonly parentField: { readonly parent: FlexTreeField; readonly index: number };
+	readonly parentField: {
+		readonly parent: Pick<FlexTreeField, "parent" | "schema" | "key">;
+		readonly index: number;
+	};
 
-	boxedIterator(): IterableIterator<FlexTreeField>;
+	/**
+	 * The non-empty fields on this node.
+	 */
+	readonly fields: MinimalFieldMap<FlexTreeField>;
+
+	/**
+	 * The non-empty fields on this node.
+	 */
+	[Symbol.iterator](): IterableIterator<FlexTreeField>;
 
 	/**
 	 * Returns an iterable of keys for non-empty fields.
@@ -182,20 +203,6 @@ export interface FlexTreeNode extends FlexTreeEntity {
 	 * No guarantees are made regarding the order of the keys returned.
 	 */
 	keys(): IterableIterator<FieldKey>;
-
-	/**
-	 * Schema for this entity.
-	 * If well-formed, it must follow this schema.
-	 */
-	readonly schema: TreeNodeSchemaIdentifier;
-
-	/**
-	 * Get a cursor for the underlying data.
-	 * @remarks
-	 * This cursor might be one the node uses in its implementation, and thus must be returned to its original location before using any other APIs to interact with the tree.
-	 * Must not be held onto across edits or any other tree API use.
-	 */
-	borrowCursor(): ITreeCursorSynchronous;
 
 	/**
 	 * If true, this node is a {@link HydratedFlexTreeNode}.
@@ -243,7 +250,7 @@ export interface HydratedFlexTreeNode extends FlexTreeNode {
  * All content in the tree is accessible without down-casting, but if the schema is known,
  * the schema aware API may be more ergonomic.
  */
-export interface FlexTreeField extends FlexTreeEntity {
+export interface FlexTreeField extends FlexTreeEntity, MapTreeFieldViewGeneric<FlexTreeNode> {
 	readonly [flexTreeMarker]: FlexTreeEntityKind.Field;
 
 	/**
@@ -267,8 +274,6 @@ export interface FlexTreeField extends FlexTreeEntity {
 	 * Type guard for narrowing / down-casting to a specific schema.
 	 */
 	is<TKind extends FlexFieldKind>(kind: TKind): this is FlexTreeTypedField<TKind>;
-
-	boxedIterator(): IterableIterator<FlexTreeNode>;
 
 	/**
 	 * Gets a node of this field by its index without unboxing.
@@ -350,8 +355,6 @@ export interface FlexTreeSequenceField extends FlexTreeField {
 	 * Get an editor for this sequence.
 	 */
 	readonly editor: SequenceFieldEditBuilder<FlexibleFieldContent>;
-
-	boxedIterator(): IterableIterator<FlexTreeNode>;
 }
 
 /**

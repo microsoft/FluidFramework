@@ -1,6 +1,6 @@
 # TestInterfaceWithTypeParameter
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)
 
 Test interface with generic type parameter
 
@@ -38,7 +38,7 @@ A test interface property using generic type parameter
 testProperty: T;
 ```
 
-**Type:** T
+**Type**: T
 
 #### Remarks {#testproperty-remarks}
 

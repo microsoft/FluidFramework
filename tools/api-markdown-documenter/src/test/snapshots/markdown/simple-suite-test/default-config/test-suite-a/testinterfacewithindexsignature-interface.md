@@ -1,6 +1,6 @@
 # TestInterfaceWithIndexSignature
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestInterfaceWithIndexSignature](/test-suite-a/testinterfacewithindexsignature-interface)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterfaceWithIndexSignature](/test-suite-a/testinterfacewithindexsignature-interface)
 
 An interface with an index signature.
 

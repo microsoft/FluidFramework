@@ -1,6 +1,6 @@
 # sealedMethod
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestAbstractClass](/test-suite-a/testabstractclass-class/) \> [sealedMethod()](/test-suite-a/testabstractclass-class/sealedmethod-method)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestAbstractClass](/test-suite-a/testabstractclass-class/) > [sealedMethod()](/test-suite-a/testabstractclass-class/sealedmethod-method)
 
 A test `@sealed` method.
 
@@ -15,4 +15,4 @@ protected sealedMethod(): string;
 
 A string!
 
-**Return type:** string
+**Return type**: string

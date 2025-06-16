@@ -8,21 +8,20 @@
  * Licensed under the MIT License.
  */
 import type { Element as HastElement } from "hast";
-import { h } from "hastscript";
 
-import type { UnorderedListNode } from "../../documentation-domain/index.js";
+import type { ListItemNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import { transformListChildren } from "../Utilities.js";
+import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
- * Transform a {@link UnorderedListNode} to HTML.
+ * Transform a {@link ListItemNode} to HTML.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function unorderedListToHtml(
-	node: UnorderedListNode,
+export function listItemToHtml(
+	node: ListItemNode,
 	context: TransformationContext,
 ): HastElement {
-	return h("ul", transformListChildren(node.children, context));
+	return transformChildrenUnderTag({ name: "li" }, node.children, context);
 }

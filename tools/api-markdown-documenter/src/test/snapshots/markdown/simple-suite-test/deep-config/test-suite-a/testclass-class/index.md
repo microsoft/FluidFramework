@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestClass](/test-suite-a/testclass-class/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestClass](/test-suite-a/testclass-class/)
 
 Test class
 
@@ -10,7 +10,7 @@ Test class
 export declare class TestClass<TTypeParameterA, TTypeParameterB> extends TestAbstractClass
 ```
 
-**Extends:** [TestAbstractClass](/test-suite-a/testabstractclass-class/)
+**Extends**: [TestAbstractClass](/test-suite-a/testabstractclass-class/)
 
 ### Type Parameters
 
@@ -33,7 +33,7 @@ Here are some remarks about the class
 
 | Property | Type | Description |
 | - | - | - |
-| [testClassStaticProperty](/test-suite-a/testclass-class/testclassstaticproperty-property) | (foo: number) =\> string | Test static class property |
+| [testClassStaticProperty](/test-suite-a/testclass-class/testclassstaticproperty-property) | (foo: number) => string | Test static class property |
 
 ## Static Methods
 
@@ -45,7 +45,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property) | `readonly` | () =\> void | Test class event property |
+| [testClassEventProperty](/test-suite-a/testclass-class/testclasseventproperty-property) | `readonly` | () => void | Test class event property |
 
 ## Properties
 
@@ -59,9 +59,9 @@ Here are some remarks about the class
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](/test-suite-a/testclass-class/publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](/test-suite-a/testclass-class/publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](/test-suite-a/testclass-class/testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](/test-suite-a/testclass-class/virtualmethod-method) |  | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method). |
+| [virtualMethod()](/test-suite-a/testclass-class/virtualmethod-method) | | number | Overrides [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method). |
 
 ## See Also {#testclass-see-also}
 

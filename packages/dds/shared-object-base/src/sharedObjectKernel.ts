@@ -62,6 +62,7 @@ export interface SharedKernel {
 		serializer: IFluidSerializer,
 		telemetryContext: ITelemetryContext | undefined,
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats;
 
 	/**
@@ -146,8 +147,14 @@ class SharedObjectFromKernel<
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats {
-		return this.#kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+		return this.#kernel.summarizeCore(
+			serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+			fullTree,
+		);
 	}
 
 	protected override initializeLocalCore(): void {

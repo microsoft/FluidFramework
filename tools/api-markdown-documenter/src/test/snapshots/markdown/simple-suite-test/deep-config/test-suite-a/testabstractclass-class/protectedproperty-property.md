@@ -1,6 +1,6 @@
 # protectedProperty
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestAbstractClass](/test-suite-a/testabstractclass-class/) \> [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestAbstractClass](/test-suite-a/testabstractclass-class/) > [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property)
 
 A test protected property.
 
@@ -10,4 +10,4 @@ A test protected property.
 protected readonly protectedProperty: TestEnum;
 ```
 
-**Type:** [TestEnum](/test-suite-a/testenum-enum/)
+**Type**: [TestEnum](/test-suite-a/testenum-enum/)

@@ -45,7 +45,12 @@ import {
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
-import { brand, count, type RestrictiveStringRecord } from "../../../util/index.js";
+import {
+	brand,
+	count,
+	type JsonCompatibleReadOnlyObject,
+	type RestrictiveStringRecord,
+} from "../../../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
@@ -217,7 +222,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getOrCreateInnerNode(this).boxedIterator()) {
+		for (const field of getOrCreateInnerNode(this)) {
 			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
@@ -230,6 +235,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
  *
  * @param base - base schema type to extend.
  * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
@@ -243,6 +249,7 @@ export function mapSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ) {
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
@@ -300,6 +307,8 @@ export function mapSchema<
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

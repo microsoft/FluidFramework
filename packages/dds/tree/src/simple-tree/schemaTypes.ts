@@ -20,6 +20,7 @@ import {
 	getOrCreate,
 	type RestrictiveStringRecord,
 	type IsUnion,
+	type JsonCompatibleReadOnlyObject,
 } from "../util/index.js";
 
 import type {
@@ -288,7 +289,23 @@ export interface FieldProps<TCustomMetadata = unknown> {
 }
 
 /**
- * A {@link FieldProvider} which prefers to have additional context in order to produce its content.
+ * {@link FieldProps} extended with additional `alpha` options.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the field.
+ * See {@link FieldSchemaMetadata.custom}.
+ *
+ * @alpha @input
+ */
+export interface FieldPropsAlpha<TCustomMetadata = unknown>
+	extends FieldProps<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
+ * A {@link FieldProvider} which requires additional context in order to produce its content
  */
 export type ContextualFieldProvider = (
 	context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
@@ -350,6 +367,22 @@ export interface FieldSchemaMetadata<TCustomMetadata = unknown> {
 	 * used as the `description` field.
 	 */
 	readonly description?: string | undefined;
+}
+
+/**
+ * Metadata associated with a {@link FieldSchema}. Includes fields used by alpha features.
+ *
+ * @remarks Specified via {@link FieldProps.metadata}.
+ *
+ * @sealed
+ * @alpha
+ */
+export interface FieldSchemaMetadataAlpha<TCustomMetadata = unknown>
+	extends FieldSchemaMetadata<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
@@ -500,11 +533,19 @@ export class FieldSchemaAlpha<
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
 	private readonly lazyAnnotatedTypes: Lazy<readonly AnnotatedAllowedType<TreeNodeSchema>[]>;
+	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
 
 	/**
 	 * Metadata on the types of tree nodes allowed on this field.
 	 */
 	public readonly allowedTypesMetadata: AllowedTypesMetadata;
+
+	/**
+	 * Persisted metadata for this field schema.
+	 */
+	public get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined {
+		return this.propsAlpha?.persistedMetadata;
+	}
 
 	static {
 		createFieldSchemaPrivate = <
@@ -514,7 +555,7 @@ export class FieldSchemaAlpha<
 		>(
 			kind: Kind2,
 			annotatedAllowedTypes: Types2,
-			props?: FieldProps<TCustomMetadata2>,
+			props?: FieldPropsAlpha<TCustomMetadata2>,
 		) =>
 			new FieldSchemaAlpha(
 				kind,
@@ -528,7 +569,7 @@ export class FieldSchemaAlpha<
 		kind: Kind,
 		types: Types,
 		public readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes,
-		props?: FieldProps<TCustomMetadata>,
+		props?: FieldPropsAlpha<TCustomMetadata>,
 	) {
 		super(kind, types, props);
 
@@ -541,6 +582,7 @@ export class FieldSchemaAlpha<
 		this.lazyIdentifiers = new Lazy(
 			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
 		);
+		this.propsAlpha = props;
 	}
 
 	public get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -773,17 +815,48 @@ function areFieldPropsEqual(a: FieldProps | undefined, b: FieldProps | undefined
  * @remarks FieldSchemaMetadata are considered equivalent if their custom data and descriptions are (respectively) reference equal.
  */
 function areMetadataEqual(
-	a: FieldSchemaMetadata | undefined,
-	b: FieldSchemaMetadata | undefined,
+	a: FieldSchemaMetadataAlpha | undefined,
+	b: FieldSchemaMetadataAlpha | undefined,
 ): boolean {
 	// If any new fields are added to FieldSchemaMetadata, this check will stop compiling as a reminder that this function needs to be updated.
-	type _keys = requireTrue<areOnlyKeys<FieldSchemaMetadata, "custom" | "description">>;
+	type _keys = requireTrue<
+		areOnlyKeys<FieldSchemaMetadataAlpha, "custom" | "description" | "persistedMetadata">
+	>;
 
 	if (a === b) {
 		return true;
 	}
 
-	return a?.custom === b?.custom && a?.description === b?.description;
+	return (
+		Object.is(a?.custom, b?.custom) &&
+		a?.description === b?.description &&
+		arePersistedMetadataEqual(a?.persistedMetadata, b?.persistedMetadata)
+	);
+}
+
+/**
+ * Returns true if the given persisted metadata fields are equivalent, otherwise false.
+ * @remarks
+ * Currently only handles shallow equality in the case where the keys are in the same order. This is acceptable for current use cases.
+ */
+function arePersistedMetadataEqual(
+	a: JsonCompatibleReadOnlyObject | undefined,
+	b: JsonCompatibleReadOnlyObject | undefined,
+): boolean {
+	if (Object.is(a, b)) {
+		return true;
+	}
+
+	if (a === undefined || b === undefined) {
+		return false;
+	}
+
+	// Note that the key order matters. If `a` and `b` have the same content but the keys are in a different order,
+	// this method will return false.
+	const aStringified = JSON.stringify(a);
+	const bStringified = JSON.stringify(b);
+
+	return aStringified === bStringified;
 }
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();
@@ -1309,6 +1382,22 @@ export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
 	 * Different clients in the same collaborative session may see different metadata for the same field.
 	 */
 	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
+}
+
+/**
+ * Additional information to provide to Node Schema creation. Includes fields for alpha features.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @alpha
+ */
+export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
