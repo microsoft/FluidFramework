@@ -1451,7 +1451,7 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("popStagedBatches", () => {
-		it("should pop all staged batches in LIFO order and invoke callback", () => {
+		it("should pop all staged batch messages in LIFO order and invoke callback", () => {
 			const stubs = getStateHandlerStub();
 			const psm = newPendingStateManager(stubs);
 
