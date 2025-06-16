@@ -214,7 +214,7 @@ describe("Presence", () => {
 					assert.equal(validatorFunction.callCount, 0);
 				});
 
-				it("is called when value is read", () => {
+				it("is called one first .value() call", () => {
 					// Act & Verify
 					count.local = { num: 11 };
 
@@ -229,7 +229,7 @@ describe("Presence", () => {
 					assert.equal(validatorFunction.callCount, 1);
 				});
 
-				it("is called only once for multiple accesses on unchanged data", () => {
+				it("is called only once for multiple .value() calls on unchanged data", () => {
 					// Act & Verify
 					count.local = { num: 11 };
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
@@ -246,7 +246,7 @@ describe("Presence", () => {
 					assert.equal(validatorFunction.callCount, 1);
 				});
 
-				it("validator returns undefined with invalid data", () => {
+				it("validator returns undefined when data is invalid", () => {
 					// Setup
 					runtime.signalsExpected.push([
 						{
@@ -406,7 +406,7 @@ describe("Presence", () => {
 					assert.equal(validatorFunction.callCount, 0);
 				});
 
-				it("is called when key value is read", () => {
+				it("is called once when key.value() is called", () => {
 					// Act & Verify
 					count.local.set("key1", { num: 84 });
 
@@ -418,7 +418,7 @@ describe("Presence", () => {
 					assert.equal(validatorFunction.callCount, 1);
 				});
 
-				it("is only called once for unchanging key value", () => {
+				it("is only called once for multiple key.value() calls on unchanged data", () => {
 					// Act & Verify
 					count.local.set("key1", { num: 84 });
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
