@@ -146,7 +146,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		assert.strictEqual(connection.mode, "write", "connection should be write");
 
 		let disconnectedEvent = false;
-		connection.on("disconnect", (reason: IAnyDriverError) => {
+		connection.on("disconnect", (reason?: IAnyDriverError) => {
 			disconnectedEvent = true;
 		});
 
@@ -270,7 +270,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		);
 		const errorToThrow = { message: "OdspSocketError", code: 400 };
 		let errorReceived: IAnyDriverError | undefined;
-		connection.on("disconnect", (reason: IAnyDriverError) => {
+		connection.on("disconnect", (reason?: IAnyDriverError) => {
 			errorReceived = reason;
 		});
 		socket.sendServerDisconnectEvent(errorToThrow, connection.clientId);
@@ -305,7 +305,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		);
 		let errorReceived: IAnyDriverError | undefined;
 		const errorToThrow = { message: "OdspSocketError", code: 400 };
-		connection.on("disconnect", (reason: IAnyDriverError) => {
+		connection.on("disconnect", (reason?: IAnyDriverError) => {
 			errorReceived = reason;
 		});
 		socket.sendServerDisconnectEvent(errorToThrow);
@@ -338,7 +338,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		let errorReceived: IAnyDriverError | undefined;
 		const errorToThrow = createOdspNetworkError("TestSocketError", 400);
 		const details = { context: { code: 400, type: "badError" } };
-		connection.on("disconnect", (reason: IAnyDriverError) => {
+		connection.on("disconnect", (reason?: IAnyDriverError) => {
 			errorReceived = reason;
 		});
 		socket.sendDisconnectEvent(errorToThrow, details);
@@ -349,10 +349,6 @@ describe("OdspDocumentDeltaConnection tests", () => {
 			"should container disconnect event",
 		);
 		assert(errorReceived.errorType, OdspErrorTypes.genericNetworkError);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		assert((errorReceived as any).socketErrorType === details.context.type);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
-		assert((errorReceived as any).socketCode === details.context.code);
 		assert(socket !== undefined && !socket.connected, "socket should be closed");
 		checkListenerCount(socket);
 	});
@@ -375,7 +371,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 
 		let errorReceived: IAnyDriverError | undefined;
 		const errorToThrow = createOdspNetworkError("TestSocketError", 400);
-		connection.on("disconnect", (reason: IAnyDriverError) => {
+		connection.on("disconnect", (reason?: IAnyDriverError) => {
 			errorReceived = reason;
 		});
 		socket.sendErrorEvent(errorToThrow);
@@ -421,10 +417,10 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		let disconnectedEvent1 = false;
 		let disconnectedEvent2 = false;
 		const errorToThrow = { message: "OdspSocketError", code: 400 };
-		connection1.on("disconnect", (reason: IAnyDriverError) => {
+		connection1.on("disconnect", (reason?: IAnyDriverError) => {
 			disconnectedEvent1 = true;
 		});
-		connection2.on("disconnect", (reason: IAnyDriverError) => {
+		connection2.on("disconnect", (reason?: IAnyDriverError) => {
 			disconnectedEvent2 = true;
 		});
 		socket.sendServerDisconnectEvent(errorToThrow);
@@ -468,10 +464,10 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		let disconnectedEvent1 = false;
 		let disconnectedEvent2 = false;
 		const errorToThrow = { message: "OdspSocketError", code: 400 };
-		connection1.on("disconnect", (reason: IAnyDriverError) => {
+		connection1.on("disconnect", (reason?: IAnyDriverError) => {
 			disconnectedEvent1 = true;
 		});
-		connection2.on("disconnect", (reason: IAnyDriverError) => {
+		connection2.on("disconnect", (reason?: IAnyDriverError) => {
 			disconnectedEvent2 = true;
 		});
 		socket.sendServerDisconnectEvent(errorToThrow, connection1.clientId);
@@ -532,7 +528,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		let disconnectedEvent1 = false;
 
 		const errorToThrow = { message: "OdspSocketError", code: 400 };
-		connection1.on("disconnect", (reason: IAnyDriverError) => {
+		connection1.on("disconnect", (reason?: IAnyDriverError) => {
 			disconnectedEvent1 = true;
 		});
 

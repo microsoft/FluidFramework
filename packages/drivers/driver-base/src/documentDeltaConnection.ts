@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryBaseProperties,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { IDisposable, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -400,8 +396,11 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection and close the socket.
 	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
+	 *
+	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
+	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 */
-	public dispose() {
+	public dispose(error?: Error) {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -409,17 +408,13 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		this.disconnect(
-			createGenericNetworkError(
-				// pre-0.58 error message: clientClosingConnection
-				"Client closing delta connection",
-				{ canRetry: true },
-				{ driverVersion },
-			),
-		);
+		const disconnectError = error
+			? this.createErrorObject("dispose", error, false)
+			: undefined;
+		this.disconnect(disconnectError);
 	}
 
-	protected disconnect(err: IAnyDriverError) {
+	protected disconnect = (err?: IAnyDriverError) => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -449,15 +444,15 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-	}
+	};
 
 	/**
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore(err: IAnyDriverError) {
+	public disconnectCore = (err?: IAnyDriverError): void => {
 		this.socket.disconnect();
-	}
+	};
 
 	protected async initialize(connectMessage: IConnect, timeout: number) {
 		this.socket.on("op", this.earlyOpHandler);
@@ -630,14 +625,8 @@ export class DocumentDeltaConnection
 			// Socket can be disconnected while waiting for Fluid protocol messages
 			// (connect_document_error / connect_document_success), as well as before DeltaManager
 			// had a chance to register its handlers.
-			this.addTrackedListener("disconnect", (reason, details) => {
-				failAndCloseSocket(
-					this.createErrorObjectWithProps("disconnect", reason, {
-						socketErrorType: details?.context?.type,
-						// https://www.rfc-editor.org/rfc/rfc6455#section-7.4
-						socketCode: details?.context?.code,
-					}),
-				);
+			this.addTrackedListener("disconnect", (reason) => {
+				failAndCloseSocket(this.createErrorObject("disconnect", reason));
 			});
 
 			this.addTrackedListener("error", (error) => {
@@ -764,26 +753,6 @@ export class DocumentDeltaConnection
 		// They are Error objects with description containing WS error and description = "TransportError"
 		// Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
 		return `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
-	}
-
-	private createErrorObjectWithProps(
-		handler: string,
-		error?: any,
-		props?: ITelemetryBaseProperties,
-		canRetry = true,
-	): IAnyDriverError {
-		return createGenericNetworkError(
-			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
-			{ canRetry },
-			{
-				...props,
-				driverVersion,
-				details: JSON.stringify({
-					...this.getConnectionDetailsProps(),
-				}),
-				scenarioName: handler,
-			},
-		);
 	}
 
 	/**
