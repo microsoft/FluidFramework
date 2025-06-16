@@ -90,7 +90,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/trees",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite]),
+		utils.verifyToken(revokedTokenChecker, [
+			ScopeType.DocRead,
+			ScopeType.DocWrite,
+			ScopeType.SummaryWrite,
+		]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const treeP = createTree(
