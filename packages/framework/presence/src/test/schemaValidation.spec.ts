@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
-import { useFakeTimers, type SinonFakeTimers, spy } from "sinon";
+import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
@@ -285,7 +285,7 @@ describe("Presence", () => {
 				count: InternalTypes.ManagerFactory<
 					string,
 					InternalTypes.MapValueState<TestData, "key1">,
-					LatestMap<TestData, "key1", ProxiedValueAccessor<TestData>>
+					typeof count
 				>;
 			}>;
 
