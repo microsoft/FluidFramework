@@ -162,7 +162,7 @@ export class OverlappingIntervalsIndex implements ISequenceOverlappingIntervalsI
 	}
 
 	public remove(interval: SequenceIntervalClass) {
-		this.intervalTree.removeExisting(interval);
+		this.intervalTree.remove(interval);
 	}
 
 	public add(interval: SequenceIntervalClass) {
