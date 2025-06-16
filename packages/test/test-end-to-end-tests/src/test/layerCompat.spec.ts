@@ -16,7 +16,7 @@ import {
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
 import { localDriverCompatDetailsForLoader } from "@fluidframework/local-driver/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 type ILayerCompatSupportRequirementsOverride = Omit<
@@ -36,11 +36,9 @@ function validateFailureProperties(
 	minSupportedGeneration: number,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(error instanceof UsageError, "The error should be a UsageError");
-	assert.strictEqual(
-		error.errorType,
-		FluidErrorTypes.usageError,
-		"Error type should be usageError",
+	assert(
+		isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
+		"Error should be a usageError",
 	);
 	const telemetryProps = error.getTelemetryProperties();
 	assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
@@ -111,7 +109,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 		let originalMinSupportedGeneration: number;
 
 		beforeEach(() => {
-			originalRequiredFeatures = driverSupportRequirementsOverride.requiredFeatures;
+			originalRequiredFeatures = [...driverSupportRequirementsOverride.requiredFeatures];
 			originalMinSupportedGeneration =
 				driverSupportRequirementsOverride.minSupportedGeneration;
 		});
@@ -135,7 +133,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			);
 		});
 
-		itExpects.skip(
+		itExpects(
 			`Driver generation is not compatible with Loader`,
 			[{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" }],
 			async () => {
@@ -158,7 +156,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			},
 		);
 
-		itExpects.skip(
+		itExpects(
 			`Driver supported features are not compatible with Loader`,
 			[{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" }],
 			async () => {
