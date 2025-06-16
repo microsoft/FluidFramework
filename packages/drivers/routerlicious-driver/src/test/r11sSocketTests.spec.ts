@@ -113,7 +113,7 @@ describe("Routerlicious Socket Error Handling", () => {
 			expectedErrorType: RouterliciousErrorTypes.clusterDrainingError,
 			expectedInternalErrorCode: R11sServiceClusterDrainingErrorCode,
 		},
-	] satisfies IErrorScenario[];
+	] as const satisfies IErrorScenario[];
 
 	beforeEach(async () => {
 		routerliciousDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
