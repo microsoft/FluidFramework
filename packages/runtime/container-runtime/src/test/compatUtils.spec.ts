@@ -14,7 +14,6 @@ import {
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
-	minVersionForCollabToConfigValue,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
@@ -28,60 +27,75 @@ describe("compatUtils", () => {
 			featureE: string;
 			featureF: string;
 		};
-		const testConfigMap: ConfigMap<ITestConfigMap> = {
-			featureA: minVersionForCollabToConfigValue([
-				["0.5.0", "a1"],
-				["2.0.0", "a2"],
-				["8.0.0", "a4"],
-				["5.0.0", "a3"],
-			]),
-			featureB: minVersionForCollabToConfigValue([
-				["0.0.0-defaults", "b1"],
-				["3.0.0", "b2"],
-				["9.0.0", "b4"],
-				["6.0.0", "b3"],
-			]),
-			featureC: minVersionForCollabToConfigValue([
-				["1.0.0", "c1"],
-				["4.0.0", "c2"],
-				["10.0.0", "c4"],
-				["7.0.0", "c3"],
-			]),
-			featureD: minVersionForCollabToConfigValue([
-				["5.5.0", "d3"],
-				["0.1.0", "d1"],
-				["2.5.0", "d2"],
-				["8.5.0", "d4"],
-			]),
-			featureE: minVersionForCollabToConfigValue([
-				["3.5.0", "e2"],
-				["9.5.0", "e4"],
-				["6.5.0", "e3"],
-				["0.9.0", "e1"],
-			]),
-			featureF: minVersionForCollabToConfigValue([
-				["4.5.0", "f2"],
-				["1.5.0", "f1"],
-				["10.5.0", "f4"],
-				["7.5.0", "f3"],
-			]),
-		};
+		const testConfigMap = {
+			"1.0.0": {
+				featureA: "a1",
+				featureB: "b1",
+				featureC: "c1",
+				featureD: "d1",
+				featureE: "e1",
+				featureF: "f1",
+			},
+			"2.0.0": {
+				featureA: "a2",
+			},
+			"2.5.0": {
+				featureD: "d2",
+			},
+			"3.0.0": {
+				featureB: "b2",
+			},
+			"3.5.0": {
+				featureE: "e2",
+			},
+			"4.0.0": {
+				featureC: "c2",
+			},
+			"4.5.0": {
+				featureF: "f2",
+			},
+			"5.0.0": {
+				featureA: "a3",
+			},
+			"5.5.0": {
+				featureD: "d3",
+			},
+			"6.0.0": {
+				featureB: "b3",
+			},
+			"6.5.0": {
+				featureE: "e3",
+			},
+			"7.0.0": {
+				featureC: "c3",
+			},
+			"7.5.0": {
+				featureF: "f3",
+			},
+			"8.0.0": {
+				featureA: "a4",
+			},
+			"8.5.0": {
+				featureD: "d4",
+			},
+			"9.0.0": {
+				featureB: "b4",
+			},
+			"9.5.0": {
+				featureE: "e4",
+			},
+			"10.0.0": {
+				featureC: "c4",
+			},
+			"10.5.0": {
+				featureF: "f4",
+			},
+		} as const satisfies ConfigMap<ITestConfigMap>;
 
 		const testCases: {
 			minVersionForCollab: SemanticVersion;
-			expectedConfig: Partial<ITestConfigMap>;
+			expectedConfig: ITestConfigMap;
 		}[] = [
-			{
-				minVersionForCollab: "0.5.0",
-				expectedConfig: {
-					featureA: "a1",
-					featureB: "b1",
-					// featureC: undefined,
-					featureD: "d1",
-					// featureE: undefined,
-					// featureF: undefined,
-				},
-			},
 			{
 				minVersionForCollab: "1.0.0",
 				expectedConfig: {
@@ -90,7 +104,7 @@ describe("compatUtils", () => {
 					featureC: "c1",
 					featureD: "d1",
 					featureE: "e1",
-					// featureF: undefined,
+					featureF: "f1",
 				},
 			},
 			{
@@ -218,7 +232,7 @@ describe("compatUtils", () => {
 
 		for (const testCase of testCases) {
 			it(`returns correct configs for minVersionForCollab = "${testCase.minVersionForCollab}"`, () => {
-				const config = getConfigsForMinVersionForCollab(
+				const config = getConfigsForMinVersionForCollab<ITestConfigMap>(
 					testCase.minVersionForCollab,
 					testConfigMap,
 				);
