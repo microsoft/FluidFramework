@@ -86,8 +86,8 @@ export function parseToken(
 		if (!authorization.startsWith("Basic ")) {
 			throw new NetworkError(403, "Malformed authorization token");
 		}
-		const base64TokenMatch = authorization.replace("Basic ", "");
-		const decoded = Buffer.from(base64TokenMatch, "base64").toString();
+		const base64Token = authorization.replace("Basic ", "");
+		const decoded = Buffer.from(base64Token, "base64").toString();
 
 		const tokenMatch = decoded.split(":");
 		if (tokenMatch.length !== 2 || tenantId !== tokenMatch[0]) {
