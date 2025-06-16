@@ -34,18 +34,18 @@ import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
 	type DocumentationNode,
-	DocumentationNodeType,
 	type DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
+	ListItemNode,
+	ListNode,
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
 	type SectionContent,
 	SectionNode,
 	SpanNode,
-	UnorderedListNode,
 } from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
@@ -831,15 +831,12 @@ function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 	}
 
 	if (firstChild.isLiteral) {
-		if (firstChild.type === DocumentationNodeType.PlainText) {
+		if (firstChild.type === "text") {
 			const text = (firstChild as PlainTextNode).text;
 			if (text === title) {
 				// Remove from children, and remove any trailing line breaks
 				const newChildren = children.slice(1);
-				while (
-					newChildren.length > 0 &&
-					newChildren[0].type === DocumentationNodeType.LineBreak
-				) {
+				while (newChildren.length > 0 && newChildren[0].type === "lineBreak") {
 					newChildren.shift();
 				}
 				return {
@@ -1043,14 +1040,18 @@ export function wrapInSection(nodes: SectionContent[], heading?: Heading): Secti
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): UnorderedListNode | undefined {
+): ListNode | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;
 	}
 
-	return new UnorderedListNode(
-		apiEntryPoints.map((entryPoint) =>
-			LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+	return new ListNode(
+		apiEntryPoints.map(
+			(entryPoint) =>
+				new ListItemNode([
+					LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+				]),
 		),
+		/* ordered */ false,
 	);
 }

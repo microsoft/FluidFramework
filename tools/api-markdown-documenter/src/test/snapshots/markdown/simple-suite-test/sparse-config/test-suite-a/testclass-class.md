@@ -31,7 +31,7 @@ Here are some remarks about the class
 
 | Property | Type | Description |
 | - | - | - |
-| [testClassStaticProperty](docs/test-suite-a/testclass-testclassstaticproperty-property) | (foo: number) =\> string | Test static class property |
+| [testClassStaticProperty](docs/test-suite-a/testclass-testclassstaticproperty-property) | (foo: number) => string | Test static class property |
 
 ### Static Methods
 
@@ -43,7 +43,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [testClassEventProperty](docs/test-suite-a/testclass-testclasseventproperty-property) | `readonly` | () =\> void | Test class event property |
+| [testClassEventProperty](docs/test-suite-a/testclass-testclasseventproperty-property) | `readonly` | () => void | Test class event property |
 
 ### Properties
 
@@ -57,9 +57,9 @@ Here are some remarks about the class
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](docs/test-suite-a/testclass-publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](docs/test-suite-a/testclass-publicabstractmethod-method) | | void | A test public abstract method. |
 | [testClassMethod(input)](docs/test-suite-a/testclass-testclassmethod-method) | `sealed` | TTypeParameterA | Test class method |
-| [virtualMethod()](docs/test-suite-a/testclass-virtualmethod-method) |  | number | Overrides [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method). |
+| [virtualMethod()](docs/test-suite-a/testclass-virtualmethod-method) | | number | Overrides [virtualMethod()](docs/test-suite-a/testabstractclass-virtualmethod-method). |
 
 ### See Also {#testclass-see-also}
 

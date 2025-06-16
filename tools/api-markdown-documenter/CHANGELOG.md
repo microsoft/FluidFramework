@@ -2,6 +2,13 @@
 
 ## 0.21.0
 
+### `DocumentationNode.singleLine` has been removed
+
+This flag was never more than a hack to make our custom Markdown rendering work out correctly.
+It doesn't make sense in the context of a general-purpose documentation domain, as it is specifically in terms of whether or not the associated content could be rendered on a single line in *Markdown*.
+
+It has been removed and is no longer used by the system.
+
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
 This type previously supported an unsafe escape hatch for text escaping.
@@ -19,10 +26,20 @@ These have been updated to accept `string`s instead, which greatly simplifies th
 
 Their `createFromPlainText` static factory functions have also been removed, as they are now redundant with their constructors.
 
+### Replace `OrderedListNode` and `UnorderedListNode` with a single `ListNode` type
+
+Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
+
 ### `BlockQuoteNode` was removed
 
 This `DocumentationNode` implementation was not used by the library.
 If this type is required, it can be re-introduced via the Documentation Domain's [extensibility model](#new-extensibility-model).
+
+### `DocumentationNodeType` removed
+
+The `DocumentationNodeType` enum has been removed.
+Enumerations of supported node kinds in various contexts is now handled via type unions like `BlockContent` and `PhrasingContent`.
+String literal types makes typing much simpler to reason about, and more inline with `unist` patterns.
 
 ## 0.20.0
 

@@ -401,7 +401,7 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
  */
 export function getSimpleNodeSchemaFromInnerNode(innerNode: InnerNode): TreeNodeSchema {
 	const context: Context = getSimpleContextFromInnerNode(innerNode);
-	return context.schema.get(innerNode.schema) ?? fail(0xb3f /* missing schema from context */);
+	return context.schema.get(innerNode.type) ?? fail(0xb3f /* missing schema from context */);
 }
 
 /**
