@@ -2760,13 +2760,6 @@ export class ContainerRuntime
 		this.channelCollection.notifyReadOnlyState(readonly);
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
-		// Raise connected event if we are connected to the service
-		if (this.isConnected()) {
-			this.emit("isConnected", clientId);
-		} else {
-			this.emit("isDisconnected");
-		}
-
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -2774,6 +2767,13 @@ export class ContainerRuntime
 			this.clientId === currentClientId,
 			0x978 /* this.clientId does not match Audience */,
 		);
+
+		// Raise connected event if we are connected to the service
+		if (this.isConnected()) {
+			this.emit("isConnected", clientId);
+		} else {
+			this.emit("isDisconnected");
+		}
 
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			this.loadIdCompressor();
