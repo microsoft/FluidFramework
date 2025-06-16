@@ -11,13 +11,9 @@ import {
 	driverSupportRequirements,
 	loaderCoreCompatDetails,
 } from "@fluidframework/container-loader/internal";
-import {
-	FluidErrorTypes,
-	type ITelemetryBaseProperties,
-} from "@fluidframework/core-interfaces/internal";
+import { type ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import { localDriverCompatDetailsForLoader } from "@fluidframework/local-driver/internal";
-import { isFluidError } from "@fluidframework/telemetry-utils/internal";
-import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
+import { isUsageError, ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 type ILayerCompatSupportRequirementsOverride = Omit<
 	ILayerCompatSupportRequirements,
@@ -36,10 +32,7 @@ function validateFailureProperties(
 	minSupportedGeneration: number,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(
-		isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
-		"Error should be a usageError",
-	);
+	assert(isUsageError(error), "Error should be a usageError");
 	const telemetryProps = error.getTelemetryProperties();
 	assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
 	const properties = JSON.parse(telemetryProps.errorDetails) as ITelemetryBaseProperties;
