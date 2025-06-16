@@ -7,6 +7,7 @@
 
 import assert from "node:assert";
 
+import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	ContainerErrorTypes,
 	type IErrorBase,
@@ -1216,45 +1217,51 @@ describe("Pending State Manager", () => {
 			) as unknown as PendingStateManager_WithPrivates;
 		}
 
-		it("should replay all pending states as batches", () => {
-			const stubs = getStateHandlerStub();
-			const pendingStateManager = createPendingStateManager(stubs);
+		//* Run the tests for all combos
+		for (const { firstBatchSize, secondBatchSize } of generatePairwiseOptions({
+			firstBatchSize: [0, 1, 2], // 0 means no ops resubmitted so it becomes an empty batch during replay
+			secondBatchSize: [undefined, 0, 1, 2], // undefined means no second batch
+		})) {
+			it("should replay all pending states as batches", () => {
+				const stubs = getStateHandlerStub();
+				const pendingStateManager = createPendingStateManager(stubs);
 
-			const reSubmittedBatches: {
-				batch: PendingMessageResubmitData[];
-				metadata: PendingBatchResubmitMetadata;
-			}[] = [];
-			stubs.reSubmitBatch.callsFake((b, metadata) => {
-				reSubmittedBatches.push({ batch: b, metadata });
-			});
+				const reSubmittedBatches: {
+					batch: PendingMessageResubmitData[];
+					metadata: PendingBatchResubmitMetadata;
+				}[] = [];
+				stubs.reSubmitBatch.callsFake((b, metadata) => {
+					reSubmittedBatches.push({ batch: b, metadata });
+				});
 
-			pendingStateManager.onFlushBatch(
-				[
-					{
-						runtimeOp: {
-							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							runtimeOp: {
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: {} as IEnvelope,
+							},
+							referenceSequenceNumber: 10,
+							metadata: undefined,
+							localOpMetadata: { foo: "bar" },
 						},
-						referenceSequenceNumber: 10,
-						metadata: undefined,
-						localOpMetadata: { foo: "bar" },
-					},
-				],
-				/* clientSequenceNumber: */ 1,
-				/* staged: */ false,
-			);
-			pendingStateManager.replayPendingStates();
-			assert.strictEqual(reSubmittedBatches.length, 1, "Should resubmit one batch");
-			assert.strictEqual(
-				reSubmittedBatches[0].batch.length,
-				1,
-				"Batch should have one message",
-			);
-			assert.strictEqual(reSubmittedBatches[0].metadata.batchId, `${clientId}_[1]`);
-			assert.strictEqual(reSubmittedBatches[0].metadata.staged, false);
-			assert.strictEqual(reSubmittedBatches[0].metadata.squash, false);
-		});
+					],
+					/* clientSequenceNumber: */ 1,
+					/* staged: */ false,
+				);
+				pendingStateManager.replayPendingStates();
 
+				assert.strictEqual(reSubmittedBatches.length, 1, "Should resubmit one batch");
+				assert.strictEqual(
+					reSubmittedBatches[0].batch.length,
+					1,
+					"Batch should have one message",
+				);
+				assert.strictEqual(reSubmittedBatches[0].metadata.batchId, `${clientId}_[1]`);
+				assert.strictEqual(reSubmittedBatches[0].metadata.staged, false);
+				assert.strictEqual(reSubmittedBatches[0].metadata.squash, false);
+			});
+		}
 		it("should replay multiple batches in order", () => {
 			const stubs = getStateHandlerStub();
 			const pendingStateManager = createPendingStateManager(stubs);
