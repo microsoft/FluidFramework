@@ -356,7 +356,7 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 				throw new NetworkError(403, "Authorization token is missing.");
 			}
 			if (token.length > 1000) {
-				// Prevent excessively long tokens that could be a DoS attack / lead to performance issues.
+				// Prevent excessively long tokens that could lead to performance issues.
 				throw new NetworkError(403, "Invalid token. Token is too long.");
 			}
 			const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
