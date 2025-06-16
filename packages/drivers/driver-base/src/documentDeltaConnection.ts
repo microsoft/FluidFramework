@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	IDisposable,
-	ITelemetryBaseProperties,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { IDisposable, LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -629,14 +625,8 @@ export class DocumentDeltaConnection
 			// Socket can be disconnected while waiting for Fluid protocol messages
 			// (connect_document_error / connect_document_success), as well as before DeltaManager
 			// had a chance to register its handlers.
-			this.addTrackedListener("disconnect", (reason, details) => {
-				failAndCloseSocket(
-					this.createErrorObjectWithProps("disconnect", reason, {
-						socketErrorType: details?.context?.type,
-						// https://www.rfc-editor.org/rfc/rfc6455#section-7.4
-						socketCode: details?.context?.code,
-					}),
-				);
+			this.addTrackedListener("disconnect", (reason) => {
+				failAndCloseSocket(this.createErrorObject("disconnect", reason));
 			});
 
 			this.addTrackedListener("error", (error) => {
@@ -763,26 +753,6 @@ export class DocumentDeltaConnection
 		// They are Error objects with description containing WS error and description = "TransportError"
 		// Please see https://github.com/socketio/engine.io-client/blob/7245b80/lib/transport.ts#L44,
 		return `${messagePrefix}${JSON.stringify(error, getCircularReplacer())}`;
-	}
-
-	private createErrorObjectWithProps(
-		handler: string,
-		error?: any,
-		props?: ITelemetryBaseProperties,
-		canRetry = true,
-	): IAnyDriverError {
-		return createGenericNetworkError(
-			`socket.io (${handler}): ${this.getErrorMessage(error)}`,
-			{ canRetry },
-			{
-				...props,
-				driverVersion,
-				details: JSON.stringify({
-					...this.getConnectionDetailsProps(),
-				}),
-				scenarioName: handler,
-			},
-		);
 	}
 
 	/**

@@ -18,6 +18,7 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 
 // This is coppied from alfred.  Probably should clean this up.
 const DefaultServiceConfiguration: IClientConfiguration = {
@@ -80,7 +81,27 @@ export class MockDocumentDeltaConnection
 	}
 	public dispose(error?: Error): void {
 		this._disposed = true;
-		this.emit("disconnect", error?.message ?? "mock close() called");
+		const disconnectError = error
+			? this.createMockErrorObject("disconnect", error.message)
+			: this.createMockErrorObject("disconnect", "mock close() called");
+		this.emit("disconnect", disconnectError);
+	}
+
+	/**
+	 * Error raising for socket.io issues
+	 */
+	protected createMockErrorObject(
+		handler: string,
+		message: string,
+	): IAnyDriverError {
+		return createGenericNetworkError(
+			`socket.io (${handler}): ${message}`,
+			{ canRetry: false },
+			{
+				driverVersion: "2.43.0",
+				scenarioName: handler,
+			},
+		);
 	}
 
 	// Mock methods for raising events
