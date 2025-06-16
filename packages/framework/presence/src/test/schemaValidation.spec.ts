@@ -23,7 +23,7 @@ import {
 	assertFinalExpectations,
 	attendeeId1,
 	attendeeId2,
-	connectionId1,
+	// connectionId1,
 	connectionId2,
 	createNullValidator,
 	createSpiedValidator,
@@ -78,24 +78,24 @@ describe("Presence", () => {
 
 		beforeEach(() => {
 			// Create a session and join attendee1
-			presence = prepareConnectedPresence(runtime, attendeeId1, connectionId1, clock, logger);
+			// presence = prepareConnectedPresence(runtime, attendeeId1, connectionId1, clock, logger);
 
-			presence.processSignal(
-				[],
-				{
-					type: "Pres:ClientJoin",
-					content: {
-						sendTimestamp: clock.now - 50,
-						avgLatency: 50,
-						data: {
-							...systemWorkspace,
-						},
-						updateProviders: [connectionId2],
-					},
-					clientId: connectionId2,
-				},
-				false,
-			);
+			// presence.processSignal(
+			// 	[],
+			// 	{
+			// 		type: "Pres:ClientJoin",
+			// 		content: {
+			// 			sendTimestamp: clock.now - 50,
+			// 			avgLatency: 50,
+			// 			data: {
+			// 				...systemWorkspace,
+			// 			},
+			// 			updateProviders: [connectionId2],
+			// 		},
+			// 		clientId: connectionId2,
+			// 	},
+			// 	false,
+			// );
 
 			// Join attendee2 to the session; tests will act as attendee2
 			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger);

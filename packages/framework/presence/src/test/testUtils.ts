@@ -11,14 +11,17 @@ import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/int
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 
-import type { ClientConnectionId } from "../baseTypes.js";
-import type { StateSchemaValidator } from "../latestValueTypes.js";
-import type { AttendeeId } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+
+import type {
+	AttendeeId,
+	ClientConnectionId,
+	StateSchemaValidator,
+} from "@fluidframework/presence/alpha";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -58,10 +61,6 @@ export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
  * Mock {@link AttendeeId}.
  */
 export const attendeeId2 = createSpecificAttendeeId("attendeeId-2");
-/**
- * Mock {@link ClientConnectionId}.
- */
-export const connectionId1 = "client1" as const satisfies ClientConnectionId;
 /**
  * Mock {@link ClientConnectionId}.
  */
@@ -208,13 +207,11 @@ export type ValidatorSpy = Pick<SinonSpy, "callCount">;
 export function createSpiedValidator<T extends object>(
 	validator: StateSchemaValidator<T>,
 ): [StateSchemaValidator<T>, ValidatorSpy] {
-	const spy: ValidatorSpy = {
-		callCount: 0,
-	};
+	const spy = { callCount: 0 } satisfies ValidatorSpy;
 
 	const nullValidatorSpy: StateSchemaValidator<T> = (data: unknown) => {
 		spy.callCount++;
-		return validator(data) as JsonDeserialized<T>;
+		return validator(data);
 	};
 	return [nullValidatorSpy, spy];
 }
