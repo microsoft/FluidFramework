@@ -192,7 +192,10 @@ export enum FieldKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+export function getStoredKey(
+	propertyKey: string,
+	fieldSchema: ImplicitAnnotatedFieldSchema,
+): FieldKey {
 	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
@@ -200,7 +203,9 @@ export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSche
  * Gets the {@link FieldProps.key | stored key} specified by the schema, if one was explicitly specified.
  * Otherwise, returns undefined.
  */
-export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string | undefined {
+export function getExplicitStoredKey(
+	fieldSchema: ImplicitAnnotatedFieldSchema,
+): string | undefined {
 	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
 }
 

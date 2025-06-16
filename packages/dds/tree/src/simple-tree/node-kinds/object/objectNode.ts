@@ -51,7 +51,6 @@ import {
 	type FieldSchemaAlpha,
 	ObjectFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
-	unannotateSchemaRecord,
 	type UnannotateSchemaRecord,
 } from "../../schemaTypes.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
@@ -191,7 +190,9 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
+function createFlexKeyMapping(
+	fields: Record<string, ImplicitAnnotatedFieldSchema>,
+): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(propertyKey, fieldSchema);
@@ -367,14 +368,12 @@ export function objectSchema<
 	// Field set can't be modified after this since derived data is stored in maps.
 	Object.freeze(info);
 
-	const unannotatedInfo = unannotateSchemaRecord(info);
-
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
-	assertUniqueKeys(identifier, unannotatedInfo);
+	assertUniqueKeys(identifier, info);
 
 	// Performance optimization: cache property key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(unannotatedInfo);
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
 	const identifierFieldKeys: FieldKey[] = [];
 	for (const item of flexKeyMap.values()) {
@@ -386,11 +385,15 @@ export function objectSchema<
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
-	const lazyAnnotatedTypes = new Lazy(() =>
-		Array.from(Object.values(info), (f) => [
-			...normalizeFieldSchema(f).annotatedAllowedTypesNormalized,
-		]).flat(),
-	);
+	const lazyAnnotatedTypes = new Lazy(() => {
+		const annotatedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
+		for (const [_, { schema }] of flexKeyMap) {
+			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized.forEach((t) => {
+				annotatedAllowedTypes.push(t);
+			});
+		}
+		return annotatedAllowedTypes;
+	});
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
@@ -538,7 +541,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();
