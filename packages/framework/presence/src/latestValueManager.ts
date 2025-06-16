@@ -289,7 +289,7 @@ export function latest<T extends object | null, Key extends string = string>(
 
 // #endregion
 
-/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
+//// eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T> | LatestArgumentsRaw<T>,
 ):
@@ -325,4 +325,3 @@ export function latest<T extends object | null, Key extends string = string>(
 	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }
-/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
