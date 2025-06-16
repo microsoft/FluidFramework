@@ -166,13 +166,11 @@ export interface BlockContentMap {
     // (undocumented)
     horizontalRule: HorizontalRuleNode;
     // (undocumented)
-    orderedList: OrderedListNode;
+    list: ListNode;
     // (undocumented)
     paragraph: ParagraphNode;
     // (undocumented)
     table: TableNode;
-    // (undocumented)
-    unorderedList: UnorderedListNode;
 }
 
 // @public @sealed
@@ -181,7 +179,6 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
     static createFromPlainText(text: string): CodeSpanNode;
     static readonly Empty: CodeSpanNode;
     get isEmpty(): boolean;
-    readonly singleLine = true;
     readonly type = "codeSpan";
 }
 
@@ -255,7 +252,6 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements 
     abstract get isEmpty(): boolean;
     readonly isLiteral = true;
     readonly isParent = false;
-    abstract get singleLine(): boolean;
     abstract type: string;
     readonly value: TValue;
 }
@@ -265,7 +261,6 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
     readonly isEmpty: boolean;
     readonly isLiteral: boolean;
     readonly isParent: boolean;
-    readonly singleLine: boolean;
     readonly type: string;
 }
 
@@ -298,7 +293,6 @@ export abstract class DocumentationParentNodeBase<TDocumentationNode extends Doc
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = true;
-    get singleLine(): boolean;
     abstract type: string;
 }
 
@@ -367,7 +361,6 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase<PhrasingCon
     constructor(children: PhrasingContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
     readonly language?: string;
-    get singleLine(): false;
     readonly type = "fencedCode";
 }
 
@@ -460,7 +453,6 @@ export class HeadingNode implements DocumentationNode, Heading {
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = false;
-    readonly singleLine = true;
     readonly title: string;
     readonly type = "heading";
 }
@@ -506,7 +498,6 @@ export class HorizontalRuleNode implements DocumentationNode {
     readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
-    readonly singleLine = false;
     static readonly Singleton: HorizontalRuleNode;
     readonly type = "horizontalRule";
 }
@@ -558,7 +549,6 @@ export class LineBreakNode implements DocumentationNode {
     readonly isEmpty = false;
     readonly isLiteral = true;
     readonly isParent = false;
-    readonly singleLine = false;
     static readonly Singleton: LineBreakNode;
     readonly type = "lineBreak";
 }
@@ -578,7 +568,6 @@ export class LinkNode implements DocumentationNode, Link {
     get isEmpty(): boolean;
     readonly isLiteral = false;
     readonly isParent = false;
-    readonly singleLine = true;
     readonly target: UrlTarget;
     readonly text: string;
     readonly type = "link";
@@ -604,6 +593,22 @@ export interface LinterReferenceError {
     readonly referenceTarget: string;
     readonly sourceItem: string;
     readonly tagName: string;
+}
+
+// @public @sealed
+export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
+    constructor(children: PhrasingContent[]);
+    static createFromPlainText(text: string): ListItemNode;
+    static readonly Empty: ListItemNode;
+    readonly type = "listItem";
+}
+
+// @public @sealed
+export class ListNode extends DocumentationParentNodeBase<ListItemNode> {
+    constructor(children: ListItemNode[], ordered: boolean);
+    static createFromPlainTextEntries(entries: string[], ordered: boolean): ListNode;
+    readonly ordered: boolean;
+    readonly type = "list";
 }
 
 // @public
@@ -666,20 +671,10 @@ export interface MarkdownRenderers {
 export { NewlineKind }
 
 // @public @sealed
-export class OrderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainTextEntries(entries: string[]): OrderedListNode;
-    static readonly Empty: OrderedListNode;
-    get singleLine(): false;
-    readonly type = "orderedList";
-}
-
-// @public @sealed
 export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[]);
     static createFromPlainText(text: string): ParagraphNode;
     static readonly Empty: ParagraphNode;
-    get singleLine(): false;
     readonly type = "paragraph";
 }
 
@@ -705,7 +700,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
     constructor(text: string);
     static readonly Empty: PlainTextNode;
     get isEmpty(): boolean;
-    readonly singleLine = true;
     get text(): string;
     readonly type = "text";
 }
@@ -766,7 +760,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
     constructor(children: SectionContent[], heading?: HeadingNode);
     static readonly Empty: SectionNode;
     readonly heading?: HeadingNode;
-    get singleLine(): false;
     readonly type = "section";
 }
 
@@ -829,7 +822,6 @@ export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
     constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode);
     static readonly Empty: TableNode;
     readonly headerRow?: TableHeaderRowNode;
-    get singleLine(): false;
     readonly type = "table";
 }
 
@@ -887,15 +879,6 @@ export function transformApiModel(options: ApiItemTransformationOptions): Docume
 
 // @public
 export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
-
-// @public @sealed
-export class UnorderedListNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainTextEntries(entries: string[]): UnorderedListNode;
-    static readonly Empty: UnorderedListNode;
-    get singleLine(): false;
-    readonly type = "unorderedList";
-}
 
 // @public
 export type UrlTarget = string;
