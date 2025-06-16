@@ -108,7 +108,7 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
-		describe.skip("LatestValueManager", () => {
+		describe("LatestValueManager", () => {
 			const validatorFunction = createSpiedValidator<TestData>();
 
 			beforeEach(() => {
@@ -276,15 +276,15 @@ describe("Presence", () => {
 					);
 
 					// Configure a state workspace
-					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-						count: StateFactory.latest({
-							local: { num: 0 },
-							validator,
-							settings: { allowableUpdateLatencyMs: 0 },
-						}),
-					});
+					// const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					// 	count: StateFactory.latest({
+					// 		local: { num: 0 },
+					// 		validator,
+					// 		settings: { allowableUpdateLatencyMs: 0 },
+					// 	}),
+					// });
 
-					const { count } = stateWorkspace.states;
+					// const { count } = stateWorkspace.states;
 					count.local = "string" as unknown as { num: number };
 
 					// Act & Verify
@@ -301,7 +301,7 @@ describe("Presence", () => {
 			});
 		});
 
-		describe.skip("LatestMapValueManager", () => {
+		describe("LatestMapValueManager", () => {
 			const validatorFunction = createSpiedValidator<{ num: number }>();
 			let stateWorkspace: StatesWorkspace<{
 				count: InternalTypes.ManagerFactory<
