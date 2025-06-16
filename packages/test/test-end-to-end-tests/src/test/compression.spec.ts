@@ -144,6 +144,8 @@ const compressionSuite = (getProvider, apis?) => {
 						chunkSizeInBytes: option.chunking ? 100 : Number.POSITIVE_INFINITY,
 						enableGroupedBatching: option.grouping,
 					},
+					// We set minVersionForCollab to 2.0.0 so we can test grouping and batching features with older clients.
+					// in cross-client compat tests.
 					"2.0.0", // minVersionForCollab
 				);
 				const values = [

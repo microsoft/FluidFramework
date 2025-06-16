@@ -67,6 +67,8 @@ function makeTestContainerConfig(
 			createBlobPayloadPending,
 		},
 		registry,
+		// We set minVersionForCollab to 2.40.0 so we can test createBlobPayloadPending with older clients
+		// in cross-client compat tests.
 		minVersionForCollab: "2.40.0",
 	};
 }
