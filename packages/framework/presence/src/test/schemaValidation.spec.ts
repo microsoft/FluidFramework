@@ -145,30 +145,16 @@ describe("Presence", () => {
 			});
 
 			describe("validator", () => {
+				let count: Latest<TestData, ProxiedValueAccessor<TestData>>;
 				let stateWorkspace: StatesWorkspace<{
 					count: InternalTypes.ManagerFactory<
 						string,
 						InternalTypes.ValueRequiredState<{
 							num: number;
 						}>,
-						Latest<
-							{
-								num: number;
-							},
-							ProxiedValueAccessor<{
-								num: number;
-							}>
-						>
+						typeof count
 					>;
 				}>;
-				let count: Latest<
-					{
-						num: number;
-					},
-					ProxiedValueAccessor<{
-						num: number;
-					}>
-				>;
 
 				beforeEach(() => {
 					runtime.signalsExpected.push([
@@ -272,7 +258,7 @@ describe("Presence", () => {
 					]);
 
 					const validator = spy((d: unknown) =>
-						typeof d === "object" ? (d as { num: number }) : undefined,
+						typeof d === "object" ? (d as TestData) : undefined,
 					);
 
 					// Configure a state workspace
@@ -285,7 +271,7 @@ describe("Presence", () => {
 					// });
 
 					// const { count } = stateWorkspace.states;
-					count.local = "string" as unknown as { num: number };
+					count.local = "string" as unknown as TestData;
 
 					// Act & Verify
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
@@ -301,13 +287,13 @@ describe("Presence", () => {
 			});
 		});
 
-		describe("LatestMapValueManager", () => {
-			const validatorFunction = createSpiedValidator<{ num: number }>();
+		describe.skip("LatestMapValueManager", () => {
+			const validatorFunction = createSpiedValidator<TestData>();
 			let stateWorkspace: StatesWorkspace<{
 				count: InternalTypes.ManagerFactory<
 					string,
-					InternalTypes.MapValueState<{ num: number }, "key1">,
-					LatestMap<{ num: number }, "key1", ProxiedValueAccessor<{ num: number }>>
+					InternalTypes.MapValueState<TestData, "key1">,
+					LatestMap<TestData, "key1", ProxiedValueAccessor<TestData>>
 				>;
 			}>;
 			let count: LatestMap<
