@@ -93,8 +93,11 @@ jobs:
           persist-credentials: false
       - name: Check out tag from manual input
         if: github.event_name == 'workflow_dispatch'
-        run: |
-          git checkout refs/tags/${{ github.event.inputs.tag }}
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          ref: refs/tags/${{ github.event.inputs.tag }}
+          fetch-depth: 0 # all history
+          persist-credentials: false
 
       # Generate release reports
       - name: Create release reports (manifests)
