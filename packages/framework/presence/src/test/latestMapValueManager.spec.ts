@@ -174,7 +174,12 @@ export function checkCompiles(): void {
 	const latestMapData = props.validatedMap.getRemote(attendee2);
 
 	// Get a value from the validated map
-	const validatedKeyValue = latestMapData.get("key2")?.value;
+	const keyValue = latestMapData.get("key2");
+	if (keyValue === undefined) {
+		throw new Error("'key2' not found in LatestMap");
+	}
+
+	const validatedKeyValue = keyValue.value;
 
 	// @ts-expect-error because validatedKeyValue is an accessor, not a value
 	// Type '() =>

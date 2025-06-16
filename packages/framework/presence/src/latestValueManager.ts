@@ -193,7 +193,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
-			throw new Error(`No entry for attendeeId: ${attendee.attendeeId}`);
+			throw new Error("No entry for attendeeId");
 		}
 		return {
 			value:
@@ -311,8 +311,8 @@ export function latest<T extends object | null, Key extends string = string>(
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T> | LatestArgumentsRaw<T>,
 ):
-	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>
-	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>> {
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>
+	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
 	const { local, settings } = args;
 
 	const validator = args.validator;

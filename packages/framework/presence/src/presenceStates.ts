@@ -147,15 +147,6 @@ function isValueDirectory<
 	return "items" in value;
 }
 
-function excludeKeys<T extends object, K extends keyof T>(
-	obj: T,
-	keysToExclude: K[],
-): Omit<T, K> {
-	return Object.fromEntries(
-		Object.entries(obj).filter(([key]) => !keysToExclude.includes(key as K)),
-	) as Omit<T, K>;
-}
-
 /**
  * Merge a value directory.
  */
@@ -171,13 +162,19 @@ export function mergeValueDirectory<
 ): TValueState | InternalTypes.ValueDirectory<T> {
 	if (!isValueDirectory(update)) {
 		if (base === undefined || update.rev > base.rev) {
-			const newObj = { ...update, timestamp: update.timestamp + timeDelta };
-			return excludeKeys(newObj, ["validated", "validatedValue"]) as TValueState;
+			// The `update` content comes directly off the wire so should not have any validator related fields that need to
+			// be stripped.
+			return { ...update, timestamp: update.timestamp + timeDelta };
 		}
 
-		return isValueDirectory(base)
-			? base
-			: (excludeKeys(base, ["validated", "validatedValue"]) as TValueState);
+		if (isValueDirectory(base)) {
+			return base;
+		}
+
+		// The base object may have validator-related properties so remove them since we're merging local data with remote
+		// data.
+		delete base.validatedValue;
+		return base;
 	}
 
 	let mergeBase: InternalTypes.ValueDirectory<T>;
@@ -187,8 +184,10 @@ export function mergeValueDirectory<
 		const baseIsDirectory = isValueDirectory(base);
 		if (base.rev >= update.rev) {
 			if (!baseIsDirectory) {
-				// base is leaf value that is more recent - nothing to do
-				return excludeKeys(base, ["validated", "validatedValue"]) as TValueState;
+				// base is leaf value that is more recent - no merge needed
+				// Remove any validator-related data
+				delete base.validatedValue;
+				return base;
 			}
 			// While base has more advanced revision, assume mis-ordering or
 			// missed and catchup update needs merged in.

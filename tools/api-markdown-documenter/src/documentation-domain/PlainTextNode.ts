@@ -30,11 +30,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	public readonly type = "text";
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = true;
-
-	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {

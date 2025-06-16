@@ -88,6 +88,10 @@ export namespace InternalTypes {
     // @system
     export class StateValueBrand<T> {
     }
+    // @system
+    export interface ValidatedValueState<TValue> {
+        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+    }
     // @system (undocumented)
     export interface ValueDirectory<T> {
         // (undocumented)
@@ -100,16 +104,12 @@ export namespace InternalTypes {
     // @system (undocumented)
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system
-    export interface ValueOptionalState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+    export interface ValueOptionalState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system
-    export interface ValueRequiredState<TValue> extends ValueStateMetadata {
-        // (undocumented)
-        validatedValue?: OpaqueJsonDeserialized<TValue>;
+    export interface ValueRequiredState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
@@ -119,7 +119,6 @@ export namespace InternalTypes {
         rev: number;
         // (undocumented)
         timestamp: number;
-        validated?: boolean;
     }
 }
 
@@ -194,7 +193,7 @@ export function latestMap<T, Keys extends string | number = string | number, Reg
 // @beta
 export function latestMap<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 
-// @beta
+// @beta @input
 export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
     validator: StateSchemaValidator<T>;
 }

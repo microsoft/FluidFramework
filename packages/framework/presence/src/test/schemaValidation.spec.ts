@@ -9,14 +9,8 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { InternalTypes } from "../exposedInternalTypes.js";
 import { toOpaqueJson } from "../internalUtils.js";
-import type { LatestMap } from "../latestMapValueManager.js";
-import type { Latest } from "../latestValueManager.js";
-import type { ProxiedValueAccessor, StateSchemaValidator } from "../latestValueTypes.js";
 import type { createPresenceManager } from "../presenceManager.js";
-import { StateFactory } from "../stateFactory.js";
-import type { StatesWorkspace } from "../types.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
@@ -25,11 +19,18 @@ import {
 	attendeeId2,
 	connectionId1,
 	connectionId2,
-	createNullValidator,
 	createSpiedValidator,
 	prepareConnectedPresence,
-	type ValidatorSpy,
 } from "./testUtils.js";
+
+import { StateFactory } from "@fluidframework/presence/beta";
+import type {
+	InternalTypes,
+	Latest,
+	LatestMap,
+	ProxiedValueAccessor,
+	StatesWorkspace,
+} from "@fluidframework/presence/beta";
 
 const systemWorkspace = {
 	"system:presence": {
@@ -39,44 +40,32 @@ const systemWorkspace = {
 	},
 };
 
+interface TestData {
+	num: number;
+}
+
 describe("Presence", () => {
-	let runtime: MockEphemeralRuntime;
-	let logger: EventAndErrorTrackingLogger;
-	const initialTime = 1000;
-	let clock: SinonFakeTimers;
-
-	before(async () => {
-		clock = useFakeTimers();
-	});
-
-	beforeEach(() => {
-		logger = new EventAndErrorTrackingLogger();
-		runtime = new MockEphemeralRuntime(logger);
-		clock.setSystemTime(initialTime);
-	});
-
-	afterEach(function (done: Mocha.Done) {
-		clock.reset();
-
-		// If the test passed so far, check final expectations.
-		if (this.currentTest?.state === "passed") {
-			assertFinalExpectations(runtime, logger);
-		}
-		done();
-	});
-
-	after(() => {
-		clock.restore();
-	});
-
-	describe("schema validation", () => {
-		let presence: ReturnType<typeof createPresenceManager>;
+	describe("Runtime schema validation", () => {
 		const afterCleanUp: (() => void)[] = [];
-		interface TestData {
-			num: number;
-		}
+		const initialTime = 1000;
+		const validatorFunction = createSpiedValidator<TestData>((d: unknown) => {
+			return typeof d === "object" ? (d as TestData) : undefined;
+		});
+
+		let clock: SinonFakeTimers;
+		let logger: EventAndErrorTrackingLogger;
+		let presence: ReturnType<typeof createPresenceManager>;
+		let runtime: MockEphemeralRuntime;
+
+		before(async () => {
+			clock = useFakeTimers();
+		});
 
 		beforeEach(() => {
+			logger = new EventAndErrorTrackingLogger();
+			runtime = new MockEphemeralRuntime(logger);
+			clock.setSystemTime(initialTime);
+
 			// Create a session and join attendee1
 			presence = prepareConnectedPresence(runtime, attendeeId1, connectionId1, clock, logger);
 
@@ -104,18 +93,39 @@ describe("Presence", () => {
 			clock.tick(10);
 		});
 
-		afterEach(() => {
+		afterEach(function (done: Mocha.Done) {
+			clock.reset();
+
+			// If the test passed so far, check final expectations.
+			if (this.currentTest?.state === "passed") {
+				assertFinalExpectations(runtime, logger);
+			}
+
 			for (const cleanUp of afterCleanUp) {
 				cleanUp();
 			}
 			afterCleanUp.length = 0;
+			done();
+		});
+
+		after(() => {
+			clock.restore();
 		});
 
 		describe("LatestValueManager", () => {
-			let validatorFunction: StateSchemaValidator<TestData>;
-			let validatorSpy: ValidatorSpy;
+			let count: Latest<TestData, ProxiedValueAccessor<TestData>>;
+			let stateWorkspace: StatesWorkspace<{
+				count: InternalTypes.ManagerFactory<
+					string,
+					InternalTypes.ValueRequiredState<{
+						num: number;
+					}>,
+					typeof count
+				>;
+			}>;
 
 			beforeEach(() => {
+				validatorFunction.resetHistory();
 				runtime.signalsExpected.push([
 					{
 						type: "Pres:DatastoreUpdate",
@@ -138,39 +148,16 @@ describe("Presence", () => {
 					},
 				]);
 
-				[validatorFunction, validatorSpy] = createSpiedValidator<TestData>(
-					createNullValidator(),
-				);
+				// validatorFunction = createSpiedValidator<TestData>();
 
-				assert.equal(validatorSpy.callCount, 0);
+				assert.equal(validatorFunction.callCount, 0);
 			});
 
-			describe("validator is called appropriately", () => {
-				let stateWorkspace: StatesWorkspace<{
-					count: InternalTypes.ManagerFactory<
-						string,
-						InternalTypes.ValueRequiredState<{
-							num: number;
-						}>,
-						Latest<
-							{
-								num: number;
-							},
-							ProxiedValueAccessor<{
-								num: number;
-							}>
-						>
-					>;
-				}>;
-				let count: Latest<
-					{
-						num: number;
-					},
-					ProxiedValueAccessor<{
-						num: number;
-					}>
-				>;
+			afterEach(() => {
+				validatorFunction.resetHistory();
+			});
 
+			describe("validator", () => {
 				beforeEach(() => {
 					runtime.signalsExpected.push([
 						{
@@ -202,24 +189,21 @@ describe("Presence", () => {
 						}),
 					});
 					count = stateWorkspace.states.count;
+					count.local = { num: 11 };
 				});
 
-				it("getRemote does not call validator", () => {
+				it("is not called by getRemote", () => {
 					// Act & Verify
-					count.local = { num: 11 };
-
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
 					// Calling getRemote should not invoke the validator (only a value read will).
 					count.getRemote(attendee2);
 
-					assert.equal(validatorSpy.callCount, 0);
+					assert.equal(validatorFunction.callCount, 0);
 				});
 
-				it("calls validator when data is read", () => {
+				it("is called one first .value() call", () => {
 					// Act & Verify
-					count.local = { num: 11 };
-
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
 					// Calling getRemote should not invoke the validator (only a value read will).
@@ -228,12 +212,11 @@ describe("Presence", () => {
 
 					// Reading the data should cause the validator to get called once.
 					assert.equal(value?.num, 11);
-					assert.equal(validatorSpy.callCount, 1);
+					assert.equal(validatorFunction.callCount, 1);
 				});
 
-				it("calls validator only once if data is unchanged", () => {
+				it("is called only once for multiple .value() calls on unchanged data", () => {
 					// Act & Verify
-					count.local = { num: 11 };
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
 					// Calling getRemote should not invoke the validator (only a value read will).
@@ -241,76 +224,54 @@ describe("Presence", () => {
 
 					// Reading the data should cause the validator to get called once.
 					assert.equal(remoteData.value()?.num, 11);
-					assert.equal(validatorSpy.callCount, 1);
+					assert.equal(validatorFunction.callCount, 1);
 
 					// Subsequent reads should not call the validator when there is no new data.
 					assert.equal(remoteData.value()?.num, 11);
-					assert.equal(validatorSpy.callCount, 1);
+					assert.equal(validatorFunction.callCount, 1);
 				});
-			});
 
-			it("returns undefined with invalid data", () => {
-				// Setup
-				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId2]: {
-											"rev": 1,
-											"timestamp": 1030,
-											"value": toOpaqueJson("string"),
+				it("returns undefined when data is invalid", () => {
+					// Setup
+					runtime.signalsExpected.push([
+						{
+							type: "Pres:DatastoreUpdate",
+							content: {
+								"sendTimestamp": 1030,
+								"avgLatency": 10,
+								"data": {
+									...systemWorkspace,
+									"s:name:testStateWorkspace": {
+										"count": {
+											[attendeeId2]: {
+												"rev": 2,
+												"timestamp": 1030,
+												"value": toOpaqueJson("string"),
+											},
 										},
 									},
 								},
 							},
 						},
-					},
-				]);
+					]);
 
-				const [validator, spy] = createSpiedValidator((d: unknown) =>
-					typeof d === "object" ? (d as { num: number }) : undefined,
-				);
-				// Configure a state workspace
-				const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latest({
-						local: { num: 0 },
-						validator,
-						settings: { allowableUpdateLatencyMs: 0 },
-					}),
+					// count = stateWorkspace.states.count;
+					count.local = "string" as unknown as TestData;
+
+					// Act & Verify
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
+
+					// Calling getRemote should not invoke the validator (only a value read will).
+					const remoteData = count.getRemote(attendee2);
+					assert.equal(validatorFunction.callCount, 0);
+					assert.equal(remoteData.value(), undefined, "remoteData.value() returned a value");
+					// assertIdenticalTypes(remoteData.value(), createInstanceOf<undefined>());
+					assert.equal(validatorFunction.callCount, 1);
 				});
-
-				const { count } = stateWorkspace.states;
-				count.local = "string" as unknown as { num: number };
-
-				// Act & Verify
-				const attendee2 = presence.attendees.getAttendee(attendeeId2);
-
-				// Calling getRemote should not invoke the validator (only a value read will).
-				const remoteData = count.getRemote(attendee2);
-				assert.equal(spy.callCount, 0);
-
-				// Subsequent reads should not call the validator when there is no new data.
-				assert.equal(remoteData.value(), undefined);
-				assert.equal(spy.callCount, 1);
 			});
 		});
 
 		describe("LatestMapValueManager", () => {
-			let validatorFunction: StateSchemaValidator<{ num: number }>;
-			let validatorSpy: ValidatorSpy;
-			let stateWorkspace: StatesWorkspace<{
-				count: InternalTypes.ManagerFactory<
-					string,
-					InternalTypes.MapValueState<{ num: number }, "key1">,
-					LatestMap<{ num: number }, "key1", ProxiedValueAccessor<{ num: number }>>
-				>;
-			}>;
 			let count: LatestMap<
 				{
 					num: number;
@@ -320,8 +281,16 @@ describe("Presence", () => {
 					num: number;
 				}>
 			>;
+			let stateWorkspace: StatesWorkspace<{
+				count: InternalTypes.ManagerFactory<
+					string,
+					InternalTypes.MapValueState<TestData, "key1">,
+					typeof count
+				>;
+			}>;
 
 			beforeEach(() => {
+				validatorFunction.resetHistory();
 				runtime.signalsExpected.push(
 					[
 						{
@@ -377,10 +346,7 @@ describe("Presence", () => {
 					],
 				);
 
-				[validatorFunction, validatorSpy] = createSpiedValidator<{ num: number }>(
-					createNullValidator(),
-				);
-				assert.equal(validatorSpy.callCount, 0);
+				assert.equal(validatorFunction.callCount, 0);
 
 				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latestMap({
@@ -393,47 +359,53 @@ describe("Presence", () => {
 				count = stateWorkspace.states.count;
 			});
 
-			it("does not call validator when referencing map key", () => {
-				// Act & Verify
-				count.local.set("key1", { num: 84 });
-				const attendee2 = presence.attendees.getAttendee(attendeeId2);
-
-				// Getting just the map or its key should not cause the validator to run
-				const mapData = count.getRemote(attendee2);
-				assert.equal(validatorSpy.callCount, 0);
-
-				mapData.get("key1");
-				assert.equal(validatorSpy.callCount, 0);
+			afterEach(() => {
+				validatorFunction.resetHistory();
 			});
 
-			it("calls validator when key value is read", () => {
-				// Act & Verify
-				count.local.set("key1", { num: 84 });
+			describe("validator", () => {
+				it("is not called when referencing a map key", () => {
+					// Act & Verify
+					count.local.set("key1", { num: 84 });
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
-				const attendee2 = presence.attendees.getAttendee(attendeeId2);
-				const mapData = count.getRemote(attendee2);
+					// Getting just the map or its key should not cause the validator to run
+					const mapData = count.getRemote(attendee2);
+					assert.equal(validatorFunction.callCount, 0);
 
-				// Reading an individual map item's value should cause the validator to get called once.
-				assert.equal(mapData.get("key1")?.value()?.num, 84);
-				assert.equal(validatorSpy.callCount, 1);
-			});
+					mapData.get("key1");
+					assert.equal(validatorFunction.callCount, 0);
+				});
 
-			it("calls validator only once for the same key value", () => {
-				// Act & Verify
-				count.local.set("key1", { num: 84 });
-				const attendee2 = presence.attendees.getAttendee(attendeeId2);
+				it("is called once when key.value() is called", () => {
+					// Act & Verify
+					count.local.set("key1", { num: 84 });
 
-				// Reading the data should cause the validator to get called once. Since this is a map, we need to read a key
-				// value to call the validator.
-				const remoteData = count.getRemote(attendee2);
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
+					const mapData = count.getRemote(attendee2);
 
-				let keyData = remoteData.get("key1")?.value();
+					// Reading an individual map item's value should cause the validator to get called once.
+					assert.equal(mapData.get("key1")?.value()?.num, 84);
+					assert.equal(validatorFunction.callCount, 1);
+				});
 
-				// Subsequent reads should not call the validator when there is no new data.
-				keyData = remoteData.get("key1")?.value();
-				keyData = remoteData.get("key1")?.value();
-				assert.equal(validatorSpy.callCount, 1);
-				assert.equal(keyData?.num, 84);
+				it("is only called once for multiple key.value() calls on unchanged data", () => {
+					// Act & Verify
+					count.local.set("key1", { num: 84 });
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
+
+					// Reading the data should cause the validator to get called once. Since this is a map, we need to read a key
+					// value to call the validator.
+					const remoteData = count.getRemote(attendee2);
+
+					let keyData = remoteData.get("key1")?.value();
+
+					// Subsequent reads should not call the validator when there is no new data.
+					keyData = remoteData.get("key1")?.value();
+					keyData = remoteData.get("key1")?.value();
+					assert.equal(validatorFunction.callCount, 1);
+					assert.equal(keyData?.num, 84);
+				});
 			});
 		});
 	});
