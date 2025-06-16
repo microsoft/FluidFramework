@@ -208,13 +208,11 @@ export type ValidatorSpy = Pick<SinonSpy, "callCount">;
 export function createSpiedValidator<T extends object>(
 	validator: StateSchemaValidator<T>,
 ): [StateSchemaValidator<T>, ValidatorSpy] {
-	const spy: ValidatorSpy = {
-		callCount: 0,
-	};
+	const spy = { callCount: 0 } satisfies ValidatorSpy;
 
 	const nullValidatorSpy: StateSchemaValidator<T> = (data: unknown) => {
 		spy.callCount++;
-		return validator(data) as JsonDeserialized<T>;
+		return validator(data);
 	};
 	return [nullValidatorSpy, spy];
 }

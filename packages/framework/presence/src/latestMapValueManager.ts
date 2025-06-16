@@ -576,8 +576,26 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 	/**
 	 * See {@link BroadcastControlSettings}.
 	 *
-	 * @remarks
-	 * Without the `| undefined` type, TypeScript emits the following error:
+	 * @privateRemarks
+	 * Without the `| undefined` type, TypeScript emits an error when passing an optional
+	 * {@link BroadcastControlSettings}. For example, the following code will emit a compilation error:
+	 *
+	 * ```ts
+	 * function createLatestMapManager(
+	 * 	presence: Presence,
+	 * 	valueControlSettings?: BroadcastControlSettings,
+	 * ) {
+	 * 	const workspace = presence.states.getWorkspace(testWorkspaceName, {
+	 * 		fixedMap: StateFactory.latestMap({
+	 * 			local: { key1: { x: 0, y: 0 } },
+	 * 			settings: valueControlSettings,
+	 * 		}),
+	 * 	});
+	 * 	return workspace.states.fixedMap;
+	 * }
+	 *```
+	 *
+	 * The compilation error is:
 	 *
 	 * ```text
 	 * Types of property 'settings' are incompatible.
@@ -591,6 +609,7 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 /**
  * Arguments that are passed to the {@link StateFactory.latestMap} function.
  *
+ * @input
  * @beta
  */
 export interface LatestMapArguments<T, Keys extends string | number = string | number>

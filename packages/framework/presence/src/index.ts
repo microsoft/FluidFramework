@@ -68,12 +68,12 @@ export type {
 } from "./latestValueManager.js";
 export type {
 	Accessor,
-	LatestData,
 	LatestClientData,
+	LatestData,
 	LatestMetadata,
-	StateSchemaValidator,
 	ProxiedValueAccessor,
 	RawValueAccessor,
+	StateSchemaValidator,
 	ValueAccessor,
 } from "./latestValueTypes.js";
 
