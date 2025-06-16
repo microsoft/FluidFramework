@@ -898,12 +898,12 @@ export class PendingStateManager implements IDisposable {
 		) => void,
 	): void {
 		while (!this.pendingMessages.isEmpty()) {
-			const maybeStagedMessage = this.pendingMessages.peekBack();
-			if (maybeStagedMessage?.batchInfo.staged === true) {
+			const stagedMessage = this.pendingMessages.peekBack();
+			if (stagedMessage?.batchInfo.staged === true) {
 				this.pendingMessages.pop();
 
-				if (hasTypicalRuntimeOp(maybeStagedMessage)) {
-					callback(maybeStagedMessage);
+				if (hasTypicalRuntimeOp(stagedMessage)) {
+					callback(stagedMessage);
 				}
 			} else {
 				break; // no more staged messages
