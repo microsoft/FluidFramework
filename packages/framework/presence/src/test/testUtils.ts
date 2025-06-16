@@ -9,7 +9,7 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers, SinonSpy } from "sinon";
+import { spy, type SinonFakeTimers } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
@@ -24,7 +24,7 @@ import type {
 } from "@fluidframework/presence/alpha";
 
 /**
- * Use to compile-time assert types of two variables are identical.
+ * Used to compile-time assert types of two variables are identical.
  */
 export function assertIdenticalTypes<T, U>(
 	_actual: T & InternalUtilityTypes.IfSameType<T, U>,
@@ -57,6 +57,10 @@ export function createSpecificAttendeeId<const T extends string>(
  * Mock {@link AttendeeId}.
  */
 export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
+/**
+ * Mock {@link ClientConnectionId}.
+ */
+export const connectionId1 = "client1" as const satisfies ClientConnectionId;
 /**
  * Mock {@link AttendeeId}.
  */
@@ -187,31 +191,17 @@ export function assertFinalExpectations(
 }
 
 /**
- * Creates a null validator (one that does nothing) for a given type T.
+ * A null validator (one that does nothing) for a given type T. It simply casts the value to
+ * `JsonDeserialized<T> | undefined`.
  */
-export function createNullValidator<T extends object>(): StateSchemaValidator<T> {
-	const nullValidator: StateSchemaValidator<T> = (data: unknown) => {
-		return data as JsonDeserialized<T>;
-	};
-	return nullValidator;
-}
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+const nullValidator = <T extends object>(data: unknown) => {
+	return data as JsonDeserialized<T> | undefined;
+};
 
 /**
- * A validator function spy.
+ * Creates a spied validator anfor test purposes.
  */
-export type ValidatorSpy = Pick<SinonSpy, "callCount">;
-
-/**
- * Creates a validator and a spy for test purposes.
- */
-export function createSpiedValidator<T extends object>(
-	validator: StateSchemaValidator<T>,
-): [StateSchemaValidator<T>, ValidatorSpy] {
-	const spy = { callCount: 0 } satisfies ValidatorSpy;
-
-	const nullValidatorSpy: StateSchemaValidator<T> = (data: unknown) => {
-		spy.callCount++;
-		return validator(data);
-	};
-	return [nullValidatorSpy, spy];
-}
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+export const createSpiedValidator = <T extends object>(validatorFunction = nullValidator<T>) =>
+	spy(validatorFunction) satisfies StateSchemaValidator<T>;
