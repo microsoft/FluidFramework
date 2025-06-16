@@ -12,7 +12,7 @@ import {
 	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import { stub } from "sinon";
-import { type Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 import { R11sServiceClusterDrainingErrorCode } from "../contracts.js";
 import { DefaultTokenProvider } from "../defaultTokenProvider.js";
@@ -21,10 +21,13 @@ import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.j
 import { RouterliciousErrorTypes } from "../errorUtils.js";
 import * as socketModule from "../socketModule.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ClientSocketMock } from "../test/socketTestUtils.ts/socketMock.js";
+import { ClientSocketMock } from "./socketTestUtils.ts/socketMock.js";
 
 /**
  * Encapsulates the logic for mocking the socket.io-client creation.
+ * @param _response - The mock Socket instance to return when SocketIOClient is called
+ * @param callback - The async function to execute while the socket creation is mocked
+ * @returns The result of the callback function
  */
 async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
 	const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
@@ -49,8 +52,35 @@ describe("Routerlicious Socket Error Handling", () => {
 		scopes: [],
 	};
 
+	/**
+	 * Defines the structure for error test scenarios.
+	 */
+	interface IErrorScenario {
+		/** Display name for the error scenario */
+		name: string;
+		/** The error object to throw during testing */
+		errorToThrow: {
+			/** HTTP status code for the error */
+			code: number;
+			/** Error message text */
+			message: string;
+			/** Time in milliseconds to retry after the error (optional) */
+			retryAfterMs?: number;
+			/** Internal error code identifier */
+			internalErrorCode: string;
+			/** Type of driver error */
+			errorType: string;
+			/** Whether the error can be retried */
+			canRetry: boolean;
+		};
+		/** Expected error type in test assertions */
+		expectedErrorType: string;
+		/** Expected internal error code in test assertions */
+		expectedInternalErrorCode: string;
+	}
+
 	// Defines error scenarios in a structured way to avoid test code repetition.
-	const errorScenarios = [
+	const errorScenarios: IErrorScenario[] = [
 		{
 			name: "Token Revoked",
 			errorToThrow: {
@@ -101,7 +131,7 @@ describe("Routerlicious Socket Error Handling", () => {
 
 	describe("on 'connect_document_error'", () => {
 		errorScenarios.forEach((scenario) => {
-			it(`should reject the connection promise for a ${scenario.name} error`, async () => {
+			it(`when ${scenario.name} error occurs, connectToDeltaStream rejects with ${scenario.expectedErrorType}`, async () => {
 				const socket = new ClientSocketMock({
 					connect_document: {
 						eventToEmit: "connect_document_error",
@@ -126,7 +156,7 @@ describe("Routerlicious Socket Error Handling", () => {
 
 	describe("on post-connection 'error' event", () => {
 		errorScenarios.forEach((scenario) => {
-			it(`should disconnect the connection for a ${scenario.name} error`, async () => {
+			it(`when ${scenario.name} error occurs after connection, emits disconnect event with ${scenario.expectedErrorType}`, async () => {
 				const socket = new ClientSocketMock({
 					connect_document: { eventToEmit: "connect_document_success" },
 				});
