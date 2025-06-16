@@ -68,10 +68,49 @@ function withBatchMetadata(
 	return addBatchMetadata({ messages, referenceSequenceNumber: -1 }, batchId).messages;
 }
 
+type StubbedRuntimeStateHandler = {
+	[K in keyof IRuntimeStateHandler]: Sinon.SinonStub<
+		Parameters<IRuntimeStateHandler[K]>,
+		ReturnType<IRuntimeStateHandler[K]>
+	>;
+};
+
 describe("Pending State Manager", () => {
+	const sandbox = Sinon.createSandbox();
+	function getStateHandlerStub(): StubbedRuntimeStateHandler {
+		const stubs: StubbedRuntimeStateHandler = {
+			applyStashedOp: sandbox.stub(),
+			clientId: sandbox.stub(),
+			connected: sandbox.stub(),
+			reSubmitBatch: sandbox.stub(),
+			isActiveConnection: sandbox.stub(),
+			isAttached: sandbox.stub(),
+		};
+		stubs.applyStashedOp.resolves(undefined);
+		stubs.clientId.returns("clientId");
+		stubs.connected.returns(true);
+		stubs.isActiveConnection.returns(true);
+		stubs.isAttached.returns(true);
+		return stubs;
+	}
 	const mockLogger = new MockLogger();
 	const logger = createChildLogger({ logger: mockLogger });
 	const opGroupingManager = new OpGroupingManager({ groupedBatchingEnabled: true }, logger);
+
+	function newPendingStateManager(
+		stubs: IRuntimeStateHandler,
+		stashedLocalState?: IPendingLocalState,
+	): PendingStateManager_WithPrivates {
+		return new PendingStateManager(
+			stubs,
+			stashedLocalState,
+			logger,
+		) as unknown as PendingStateManager_WithPrivates;
+	}
+
+	afterEach("Sinon sandbox restore", () => {
+		sandbox.restore();
+	});
 
 	afterEach("ThrowOnErrorLogs", () => {
 		// Note: If mockLogger is used within a test,
@@ -1179,53 +1218,9 @@ describe("Pending State Manager", () => {
 		});
 	});
 
-	type StubbedRuntimeStateHandler = {
-		[K in keyof IRuntimeStateHandler]: Sinon.SinonStub<
-			Parameters<IRuntimeStateHandler[K]>,
-			ReturnType<IRuntimeStateHandler[K]>
-		>;
-	};
-
-	//* ONLY
-	//* ONLY
-	//* ONLY
-	describe.only("PendingStateManager.replayPendingStates", () => {
-		const sandbox = Sinon.createSandbox();
-		function getStateHandlerStub(): StubbedRuntimeStateHandler {
-			const stubs: StubbedRuntimeStateHandler = {
-				applyStashedOp: sandbox.stub(),
-				clientId: sandbox.stub(),
-				connected: sandbox.stub(),
-				reSubmitBatch: sandbox.stub(),
-				isActiveConnection: sandbox.stub(),
-				isAttached: sandbox.stub(),
-			};
-			stubs.applyStashedOp.resolves(undefined);
-			stubs.clientId.returns("clientId");
-			stubs.connected.returns(true);
-			stubs.isActiveConnection.returns(true);
-			stubs.isAttached.returns(true);
-			return stubs;
-		}
+	describe("PendingStateManager.replayPendingStates", () => {
 		const clientId = "clientId";
 
-		afterEach(() => {
-			sandbox.restore();
-		});
-
-		// eslint-disable-next-line unicorn/consistent-function-scoping
-		function createPendingStateManager(
-			stubs: IRuntimeStateHandler,
-			stashedLocalState?: IPendingLocalState,
-		): PendingStateManager_WithPrivates {
-			return new PendingStateManager(
-				stubs,
-				stashedLocalState,
-				logger,
-			) as unknown as PendingStateManager_WithPrivates;
-		}
-
-		//* Run the tests for all combos
 		for (const {
 			firstBatchSize,
 			secondBatchSize,
@@ -1237,7 +1232,7 @@ describe("Pending State Manager", () => {
 		})) {
 			it(`should replay all pending states as batches (batch sizes: ${firstBatchSize}, ${secondBatchSize}, ${secondBatchStaged})`, () => {
 				const stubs = getStateHandlerStub();
-				const pendingStateManager = createPendingStateManager(stubs);
+				const pendingStateManager = newPendingStateManager(stubs);
 				const RefSeqInitial_10 = 10;
 				const refSeqResubmit_15 = 15;
 
@@ -1360,7 +1355,7 @@ describe("Pending State Manager", () => {
 
 		it("should replay only staged batches when committingStagedBatches is true", () => {
 			const stubs = getStateHandlerStub();
-			const pendingStateManager = createPendingStateManager(stubs);
+			const pendingStateManager = newPendingStateManager(stubs);
 			const reSubmittedBatches: {
 				batch: PendingMessageResubmitData[];
 				metadata: PendingBatchResubmitMetadata;
@@ -1436,7 +1431,7 @@ describe("Pending State Manager", () => {
 
 		it("should throw if replayPendingStates is called twice for same clientId without committingStagedBatches", () => {
 			const stubs = getStateHandlerStub();
-			const pendingStateManager = createPendingStateManager(stubs);
+			const pendingStateManager = newPendingStateManager(stubs);
 			const reSubmittedBatches: {
 				batch: PendingMessageResubmitData[];
 				metadata: PendingBatchResubmitMetadata;
@@ -1487,7 +1482,7 @@ describe("Pending State Manager", () => {
 
 		it("should set squash flag when replayPendingStates is called with squash: true", () => {
 			const stubs = getStateHandlerStub();
-			const pendingStateManager = createPendingStateManager(stubs);
+			const pendingStateManager = newPendingStateManager(stubs);
 			pendingStateManager.onFlushBatch(
 				[
 					{
@@ -1514,6 +1509,177 @@ describe("Pending State Manager", () => {
 					batchId: Sinon.match.string,
 				}),
 				"Squash flag should be set to true",
+			);
+		});
+	});
+
+	describe("popStagedBatches", () => {
+		it("should pop all staged batches in LIFO order and invoke callback", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add staged batch 1
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo1"),
+						referenceSequenceNumber: 1,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			// Add staged batch 2
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo2"),
+						referenceSequenceNumber: 2,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.contents as string);
+			});
+			assert.deepStrictEqual(popped, ["foo2", "foo1"], "Should pop in LIFO order");
+			assert.strictEqual(
+				psm.hasPendingMessages(),
+				false,
+				"All staged messages should be popped",
+			);
+		});
+
+		it("should not pop unstaged messages", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add unstaged batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo1"),
+						referenceSequenceNumber: 1,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ false,
+			);
+			// Add staged batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo2"),
+						referenceSequenceNumber: 2,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.contents as string);
+			});
+			assert.deepStrictEqual(popped, ["foo2"], "Should only pop staged messages");
+			assert.strictEqual(psm.hasPendingMessages(), true, "Unstaged message should remain");
+			assert.strictEqual(
+				psm.pendingMessages.length,
+				1,
+				"Only unstaged message should remain in queue",
+			);
+		});
+
+		it("should not invoke callback for empty batch or messages without runtimeOp", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add staged empty batch
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 3);
+			psm.onFlushEmptyBatch(
+				placeholderMessage,
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			// Add staged message with no runtimeOp (simulate by direct mutation after adding)
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo2"),
+						referenceSequenceNumber: 4,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			psm.pendingMessages.peekBack()!.runtimeOp = undefined;
+			// Add staged normal batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo3"),
+						referenceSequenceNumber: 5,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.contents as string);
+			});
+			assert.deepStrictEqual(
+				popped,
+				["foo3"],
+				"Should only invoke the callback on staged messages with typical runtimeOp",
+			);
+			assert.strictEqual(
+				psm.pendingMessages.length,
+				0,
+				"Non-typical staged messages should also be popped, just without invoking callback",
+			);
+		});
+
+		it("should do nothing if there are no staged messages", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add unstaged batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo1"),
+						referenceSequenceNumber: 1,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ false,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.type as string);
+			});
+			assert.deepStrictEqual(popped, [], "Should not pop any messages");
+			assert.strictEqual(
+				psm.pendingMessages.length,
+				1,
+				"Unstaged message should remain in queue",
 			);
 		});
 	});
