@@ -376,7 +376,7 @@ stages:
             # ${{ if eq(endsWith(parameters.stageId, 'odspdf'), true) }}:
             #   login__odspdf__test__tenants: '$(tenantCreds)'
             # ${{ if eq(endsWith(parameters.stageId, 'odsp'), true) }}:
-            login__odsp__test__tenants: '$(tenantCreds)'
+            login__odsp__test__tenants: $(tenantCreds)
           inputs:
             targetType: 'inline'
             script: |
@@ -384,7 +384,7 @@ stages:
 
               echo 'Tenant credentials retrieved and stored in environment variables:'
               echo "$(appClientId)"
-              echo "$(tenantCreds)"
+              echo $(tenantCreds) # this is where the error is
 
               echo 'DEBUG: Print tenant credentials'
               echo "$login__microsoft__clientId"
