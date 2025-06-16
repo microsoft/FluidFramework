@@ -95,18 +95,6 @@ export function parseToken(
 		}
 
 		token = tokenMatch[1];
-		// const base64TokenMatch = authorization.match(/Basic (.+)/);
-		// if (!base64TokenMatch) {
-		// 	throw new NetworkError(403, "Malformed authorization token");
-		// }
-		// const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
-
-		// const tokenMatch = encoded.match(/(.+):(.+)/);
-		// if (!tokenMatch || tenantId !== tokenMatch[1]) {
-		// 	throw new NetworkError(403, "Malformed authorization token");
-		// }
-
-		// token = tokenMatch[2];
 	}
 
 	return token;

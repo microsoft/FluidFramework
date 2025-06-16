@@ -68,12 +68,6 @@ export function validateTokenClaims(
 		throw new NetworkError(403, "Missing token claims.");
 	}
 
-	// validate the claims.documentId length
-	if (claims.documentId && claims.documentId.length > 1000) {
-		Lumberjack.error(`Invalid documentId detected, it is too long`, {docIdLength: claims.documentId.length});
-		throw new NetworkError(403, "Invalid documentId in token claims.");
-	}
-
 	if (claims.tenantId !== tenantId) {
 		throw new NetworkError(403, "TenantId in token claims does not match request.");
 	}
