@@ -30,6 +30,7 @@ import {
 import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
+	getDriverInformationWhenNoProviderIsAvailable,
 } from "./compatUtils.js";
 import {
 	getContainerRuntimeApi,
@@ -99,8 +100,14 @@ function createCompatSuite(
 						});
 						logger.sendErrorEvent(
 							{
+								// Note: places where the ITestObjectProvider is available can use provider.driver.[type|endpointName].
+								// In this code path we could not create the provider so we have to do things by hand.
+								...getDriverInformationWhenNoProviderIsAvailable(
+									driver,
+									odspEndpointName,
+									r11sEndpointName,
+								),
 								eventName: "TestObjectProviderLoadFailed",
-								driverType: driver,
 							},
 							error,
 						);
