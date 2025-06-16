@@ -232,41 +232,17 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 
 	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
-		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
-		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
-		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
-		for (const key of [...this.objectNodeFields.keys()].sort()) {
-			Object.defineProperty(fieldsObject, key, {
-				enumerable: true,
-				configurable: true,
-				writable: true,
-				value: encodeFieldSchemaV1(
-					this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
-				),
-			});
-		}
+		const fieldsObject: Record<string, FieldSchemaFormat> =
+			this.encodeFieldsObject(encodeFieldSchemaV1);
+
 		return {
 			object: fieldsObject,
 		};
 	}
 
 	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
-		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
-		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
-		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
-		for (const key of [...this.objectNodeFields.keys()].sort()) {
-			const value = encodeFieldSchemaV2(
-				this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
-			);
-
-			Object.defineProperty(fieldsObject, key, {
-				enumerable: true,
-				configurable: true,
-				writable: true,
-				value,
-			});
-		}
-
+		const fieldsObject: Record<string, FieldSchemaFormat> =
+			this.encodeFieldsObject(encodeFieldSchemaV2);
 		const kind = { object: fieldsObject };
 
 		// Omit metadata from the output if it is undefined
@@ -275,6 +251,25 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
 		return this.objectNodeFields.get(field) ?? storedEmptyFieldSchema;
+	}
+
+	private encodeFieldsObject(
+		encodeFieldSchema: (storedFieldSchema: TreeFieldStoredSchema) => FieldSchemaFormat,
+	): Record<string, FieldSchemaFormat> {
+		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
+		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
+		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
+		for (const key of [...this.objectNodeFields.keys()].sort()) {
+			Object.defineProperty(fieldsObject, key, {
+				enumerable: true,
+				configurable: true,
+				writable: true,
+				value: encodeFieldSchema(
+					this.objectNodeFields.get(key) ?? fail(0xae7 /* missing field */),
+				),
+			});
+		}
+		return fieldsObject;
 	}
 }
 
