@@ -87,7 +87,7 @@ describe("Routerlicious Socket Error Handling", () => {
 	}
 
 	// Defines error scenarios in a structured way to avoid test code repetition.
-	const errorScenarios: IErrorScenario[] = [
+	const errorScenarios = [
 		{
 			name: "Token Revoked",
 			errorToThrow: {
@@ -113,7 +113,7 @@ describe("Routerlicious Socket Error Handling", () => {
 			expectedErrorType: RouterliciousErrorTypes.clusterDrainingError,
 			expectedInternalErrorCode: R11sServiceClusterDrainingErrorCode,
 		},
-	];
+	] satisfies IErrorScenario[];
 
 	beforeEach(async () => {
 		routerliciousDocumentServiceFactory = new RouterliciousDocumentServiceFactory(
