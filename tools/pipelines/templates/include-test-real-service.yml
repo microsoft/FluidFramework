@@ -370,8 +370,8 @@ stages:
               npx --package=@ff-internal/trips-setup@0.0.3 -- trips-setup $SYSTEM_ACCESSTOKEN
 
               echo 'Tenant credentials retrieved and stored in environment variables:'
-              echo 'login__microsoft__clientId: $(appClientId)'
-              echo 'login__odsp__test__tenants: $(tenantCreds)'
+              echo $(appClientId)
+              echo $(tenantCreds)
 
         - task: Bash@3
           displayName: 'DEBUG: Print tenant credentials'
@@ -386,7 +386,8 @@ stages:
             script: |
               set -eu -o pipefail
               echo 'DEBUG: Print tenant credentials'
-              printenv
+              echo $login__microsoft__clientId
+              echo $login__odsp__test__tenants
 
         # run the test
         - task: Npm@1
