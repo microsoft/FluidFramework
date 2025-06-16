@@ -828,7 +828,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Disconnect from the websocket
 	 */
-	protected disconnectCore = (err?: IAnyDriverError): void => {
+	public disconnectCore = (err?: IAnyDriverError): void => {
 		const socket = this.socketReference;
 		assert(socket !== undefined, 0x0a2 /* "reentrancy not supported!" */);
 		this.socketReference = undefined;

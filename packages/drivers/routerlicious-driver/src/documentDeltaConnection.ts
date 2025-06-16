@@ -111,10 +111,10 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	/**
 	 * Disconnect from the websocket
 	 */
-	protected disconnectCore = (err?: IAnyDriverError): void => {
+	public disconnectCore = (err?: IAnyDriverError): void => {
 		if (this.socket.connected && err?.errorType !== undefined) {
 			this.socket.emit("abnormal_disconnect", this.clientId, this.documentId, err.errorType);
 		}
-		super.disconnectCore(err);
+		DocumentDeltaConnection.prototype.disconnectCore.call(this, err);
 	};
 }

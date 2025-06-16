@@ -450,9 +450,9 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore(err?: IAnyDriverError): void {
+	public disconnectCore = (err?: IAnyDriverError): void => {
 		this.socket.disconnect();
-	}
+	};
 
 	protected async initialize(connectMessage: IConnect, timeout: number) {
 		this.socket.on("op", this.earlyOpHandler);
