@@ -11,7 +11,8 @@ import type {
 	HorizontalRuleNode,
 	LineBreakNode,
 	LinkNode,
-	OrderedListNode,
+	ListItemNode,
+	ListNode,
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
@@ -19,7 +20,6 @@ import type {
 	TableCellNode,
 	TableNode,
 	TableRowNode,
-	UnorderedListNode,
 } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import type { RenderContext } from "../RenderContext.js";
@@ -31,14 +31,14 @@ import {
 	renderHorizontalRule,
 	renderLineBreak,
 	renderLink,
-	renderOrderedList,
+	renderListItem,
+	renderList,
 	renderParagraph,
 	renderPlainText,
 	renderSpan,
 	renderTable,
 	renderTableCell,
 	renderTableRow,
-	renderUnorderedList,
 } from "../default-renderers/index.js";
 
 /**
@@ -82,12 +82,13 @@ export const defaultRenderers: Renderers = {
 	lineBreak: (node, writer, context): void =>
 		renderLineBreak(node as LineBreakNode, writer, context),
 	link: (node, writer, context): void => renderLink(node as LinkNode, writer, context),
+	listItem: (node, writer, context): void =>
+		renderListItem(node as ListItemNode, writer, context),
 	section: (node, writer, context): void =>
 		renderHierarchicalSection(node as SectionNode, writer, context),
 	horizontalRule: (node, writer, context): void =>
 		renderHorizontalRule(node as HorizontalRuleNode, writer, context),
-	orderedList: (node, writer, context): void =>
-		renderOrderedList(node as OrderedListNode, writer, context),
+	list: (node, writer, context): void => renderList(node as ListNode, writer, context),
 	paragraph: (node, writer, context): void =>
 		renderParagraph(node as ParagraphNode, writer, context),
 	text: (node, writer, context): void =>
@@ -98,6 +99,4 @@ export const defaultRenderers: Renderers = {
 		renderTableCell(node as TableCellNode, writer, context),
 	tableRow: (node, writer, context): void =>
 		renderTableRow(node as TableRowNode, writer, context),
-	unorderedList: (node, writer, context): void =>
-		renderUnorderedList(node as UnorderedListNode, writer, context),
 };
