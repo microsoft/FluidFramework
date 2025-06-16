@@ -748,69 +748,6 @@ describe("Pending State Manager", () => {
 		});
 	});
 
-	describe("replayPendingStates", () => {
-		let pendingStateManager: PendingStateManager;
-		const resubmittedBatchIds: (string | undefined)[] = [];
-		const clientId = "clientId";
-
-		beforeEach(async () => {
-			resubmittedBatchIds.length = 0;
-			pendingStateManager = new PendingStateManager(
-				{
-					applyStashedOp: async () => undefined,
-					clientId: () => clientId,
-					connected: () => true,
-					reSubmitBatch: (batch, { batchId }) => {
-						resubmittedBatchIds.push(batchId);
-					},
-					isActiveConnection: () => false,
-					isAttached: () => true,
-				},
-				undefined /* initialLocalState */,
-				logger,
-			);
-		});
-
-		it("replays pending states", () => {
-			const messages = [
-				{
-					type: ContainerMessageType.Rejoin,
-					clientSequenceNumber: 0,
-					referenceSequenceNumber: 0,
-					contents: undefined,
-				},
-				{
-					type: ContainerMessageType.Rejoin,
-					clientSequenceNumber: 1,
-					referenceSequenceNumber: 0,
-					contents: undefined,
-				},
-			] as const;
-			pendingStateManager.onFlushBatch(
-				messages.map<LocalBatchMessage>((message) => ({
-					runtimeOp: {
-						type: message.type,
-						contents: message.contents,
-					},
-					referenceSequenceNumber: message.referenceSequenceNumber,
-				})),
-				0,
-				false /* staged */,
-			);
-			pendingStateManager.replayPendingStates();
-			assert.strictEqual(resubmittedBatchIds[0], `${clientId}_[0]`);
-			assert.strictEqual(resubmittedBatchIds[1], `${clientId}_[0]`);
-		});
-
-		it("replays pending states with empty batch", () => {
-			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
-			pendingStateManager.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
-			pendingStateManager.replayPendingStates();
-			assert.strictEqual(resubmittedBatchIds[0], "batchId");
-			//* Also assert that the resubmitted batch is empty?
-		});
-	});
-
 	describe("applyStashedOpsAt", () => {
 		it("applyStashedOpsAt", async () => {
 			const applyStashedOps: string[] = [];
@@ -1218,7 +1155,7 @@ describe("Pending State Manager", () => {
 		});
 	});
 
-	describe("PendingStateManager.replayPendingStates", () => {
+	describe("replayPendingStates", () => {
 		const clientId = "clientId";
 
 		for (const {
@@ -1230,7 +1167,7 @@ describe("Pending State Manager", () => {
 			secondBatchSize: [undefined, 1, 2] as const, // undefined means no second batch
 			secondBatchStaged: booleanCases,
 		})) {
-			it(`should replay all pending states as batches (batch sizes: ${firstBatchSize}, ${secondBatchSize}, ${secondBatchStaged})`, () => {
+			it(`should replay all pending states as batches [batch sizes: ${firstBatchSize} / ${secondBatchSize} ${secondBatchStaged ? "(staged)" : ""}]`, () => {
 				const stubs = getStateHandlerStub();
 				const pendingStateManager = newPendingStateManager(stubs);
 				const RefSeqInitial_10 = 10;
