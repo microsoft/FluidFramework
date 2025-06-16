@@ -25,6 +25,8 @@ import {
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
+	ListItemNode,
+	ListNode,
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
@@ -34,7 +36,6 @@ import {
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
-	UnorderedListNode,
 } from "../../documentation-domain/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import { apiItemToSections } from "../TransformApiItem.js";
@@ -552,10 +553,17 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Body
 						new SectionNode(
 							[
-								new UnorderedListNode([
-									new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
-									new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
-								]),
+								new ListNode(
+									[
+										new ListItemNode([
+											new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
+										]),
+										new ListItemNode([
+											new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
+										]),
+									],
+									/* ordered */ false,
+								),
 							],
 							new HeadingNode("Entry Points"),
 						),

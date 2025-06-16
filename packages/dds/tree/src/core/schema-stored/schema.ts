@@ -6,7 +6,12 @@
 import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
-import { type MakeNominal, brand, invertMap } from "../../util/index.js";
+import {
+	type JsonCompatibleReadOnlyObject,
+	type MakeNominal,
+	brand,
+	invertMap,
+} from "../../util/index.js";
 
 import {
 	type FieldKey,
@@ -128,6 +133,13 @@ export interface TreeFieldStoredSchema {
 	 * If not specified, types are unconstrained.
 	 */
 	readonly types: TreeTypeSet;
+
+	/**
+	 * Portion of the metadata which can be persisted.
+	 * @remarks
+	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
+	 */
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
@@ -151,6 +163,7 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
 	kind: brand(forbiddenFieldKindIdentifier),
 	// This type set also forces the field to be empty not not allowing any types as all.
 	types: new Set(),
+	persistedMetadata: undefined,
 };
 
 /**
@@ -323,6 +336,8 @@ export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSch
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,
 		types: new Set(schema.types),
+		// TODO: Persist metadata once schema FormatV2 has been added.
+		persistedMetadata: undefined,
 	};
 	return out;
 }
