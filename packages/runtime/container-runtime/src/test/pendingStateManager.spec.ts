@@ -7,7 +7,7 @@
 
 import assert from "node:assert";
 
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
+import { booleanCases, generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	ContainerErrorTypes,
 	type IErrorBase,
@@ -27,6 +27,7 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import {
+	addBatchMetadata,
 	BatchManager,
 	LocalBatchMessage,
 	OpGroupingManager,
@@ -58,6 +59,13 @@ function op(data: string = ""): LocalContainerRuntimeMessage {
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents: data as unknown,
 	} as LocalContainerRuntimeMessage;
+}
+
+function withBatchMetadata(
+	messages: LocalBatchMessage[],
+	batchId?: string,
+): LocalBatchMessage[] {
+	return addBatchMetadata({ messages, referenceSequenceNumber: -1 }, batchId).messages;
 }
 
 describe("Pending State Manager", () => {
@@ -1218,22 +1226,57 @@ describe("Pending State Manager", () => {
 		}
 
 		//* Run the tests for all combos
-		for (const { firstBatchSize, secondBatchSize } of generatePairwiseOptions({
-			firstBatchSize: [0, 1, 2], // 0 means no ops resubmitted so it becomes an empty batch during replay
-			secondBatchSize: [undefined, 0, 1, 2], // undefined means no second batch
+		for (const {
+			firstBatchSize,
+			secondBatchSize,
+			secondBatchStaged,
+		} of generatePairwiseOptions({
+			firstBatchSize: [0, 1] as const, // 0 means no ops resubmitted so it becomes an empty batch during replay
+			secondBatchSize: [undefined, 1, 2] as const, // undefined means no second batch
+			secondBatchStaged: booleanCases,
 		})) {
-			it("should replay all pending states as batches", () => {
+			//* ONLY
+			//* ONLY
+			//* ONLY
+			it.only(`should replay all pending states as batches (batch sizes: ${firstBatchSize}, ${secondBatchSize}, ${secondBatchStaged})`, () => {
 				const stubs = getStateHandlerStub();
 				const pendingStateManager = createPendingStateManager(stubs);
+				const RefSeqInitial_10 = 10;
+				const refSeqResubmit_15 = 15;
 
-				const reSubmittedBatches: {
-					batch: PendingMessageResubmitData[];
-					metadata: PendingBatchResubmitMetadata;
-				}[] = [];
-				stubs.reSubmitBatch.callsFake((b, metadata) => {
-					reSubmittedBatches.push({ batch: b, metadata });
+				stubs.reSubmitBatch.callsFake((batch, metadata) => {
+					// Here's where we implement [firstBatchSize === 0] case - Flush an empty batch on resubmit
+					if (firstBatchSize === 0 && stubs.reSubmitBatch.callCount === 1) {
+						assert(metadata.batchId, "PRECONDITION: Expected batchId for empty batch");
+						const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
+							metadata.batchId,
+							refSeqResubmit_15,
+						);
+						pendingStateManager.onFlushEmptyBatch(
+							placeholderMessage,
+							/* clientSequenceNumber: */ 1,
+							/* staged: */ metadata.staged,
+						);
+						return;
+					}
+
+					// Otherwise, simulate the typical re-submission of the batch through the ContainerRuntime
+					pendingStateManager.onFlushBatch(
+						withBatchMetadata(
+							batch.map(({ runtimeOp, opMetadata, localOpMetadata }) => ({
+								runtimeOp,
+								referenceSequenceNumber: refSeqResubmit_15,
+								metadata: opMetadata,
+								localOpMetadata: `${localOpMetadata}_RESUBMITTED`,
+							})),
+							metadata.batchId,
+						),
+						/* clientSequenceNumber: */ metadata.staged ? undefined : 1,
+						/* staged: */ metadata.staged,
+					);
 				});
 
+				// First batch - Always starts with 1 op, but will become empty on replay if firstBatchSize is 0
 				pendingStateManager.onFlushBatch(
 					[
 						{
@@ -1241,25 +1284,80 @@ describe("Pending State Manager", () => {
 								type: ContainerMessageType.FluidDataStoreOp,
 								contents: {} as IEnvelope,
 							},
-							referenceSequenceNumber: 10,
-							metadata: undefined,
-							localOpMetadata: { foo: "bar" },
+							referenceSequenceNumber: RefSeqInitial_10,
+							metadata: undefined, // Single message batch has no batch metadata
+							localOpMetadata: "FIRST_BATCH_MSG1",
 						},
 					],
 					/* clientSequenceNumber: */ 1,
 					/* staged: */ false,
 				);
+				// Second batch (if applicable) - May have multiple ops or be skipped altogether
+				if (secondBatchSize !== undefined) {
+					pendingStateManager.onFlushBatch(
+						withBatchMetadata(
+							Array.from<unknown, LocalBatchMessage>({ length: secondBatchSize }, (_, i) => ({
+								runtimeOp: {
+									type: ContainerMessageType.FluidDataStoreOp,
+									contents: {} as IEnvelope,
+								},
+								referenceSequenceNumber: RefSeqInitial_10,
+								localOpMetadata: `SECOND_BATCH_MSG${i + 1}`,
+							})),
+						),
+						/* clientSequenceNumber: */ secondBatchStaged ? undefined : 2,
+						/* staged: */ secondBatchStaged,
+					);
+				}
 				pendingStateManager.replayPendingStates();
 
-				assert.strictEqual(reSubmittedBatches.length, 1, "Should resubmit one batch");
-				assert.strictEqual(
-					reSubmittedBatches[0].batch.length,
-					1,
-					"Batch should have one message",
+				const resubmittedMessages = pendingStateManager.pendingMessages.toArray();
+				assert.equal(
+					resubmittedMessages.length,
+					1 + (secondBatchSize ?? 0), // Even if firstBatchSize is 0, we still have the empty batch placeholder
+					"Incorrect number of resubmitted messages",
 				);
-				assert.strictEqual(reSubmittedBatches[0].metadata.batchId, `${clientId}_[1]`);
-				assert.strictEqual(reSubmittedBatches[0].metadata.staged, false);
-				assert.strictEqual(reSubmittedBatches[0].metadata.squash, false);
+
+				// First batch expectations - Should be 1 pending message, either the empty batch placeholder or the first message
+				const [firstResubmittedBatchPendingMessage] = resubmittedMessages.splice(0, 1);
+				(({
+					batchInfo: { length, staged },
+					opMetadata,
+					referenceSequenceNumber,
+				}: IPendingMessage) => {
+					assert.strictEqual(length, 1, "First batch size incorrect");
+					assert.strictEqual(opMetadata?.batchId, `${clientId}_[1]`);
+					assert.strictEqual(staged, false);
+					assert.strictEqual(referenceSequenceNumber, refSeqResubmit_15);
+				})(firstResubmittedBatchPendingMessage);
+
+				// Second batch expectations
+				if (secondBatchSize === undefined) {
+					assert(resubmittedMessages.length === 0, "No second batch expected");
+					return;
+				}
+				const secondResubmittedBatchPendingMessages = resubmittedMessages.splice(
+					0,
+					secondBatchSize,
+				);
+				// The first messages should have batchInfo and batchId on it
+				(({ batchInfo: { length, staged }, opMetadata }: IPendingMessage) => {
+					assert.strictEqual(length, secondBatchSize, "Wrong batch size (2nd)");
+					if (secondBatchStaged) {
+						assert((opMetadata?.batchId as string)?.length === 41, "Wrong clientId (2nd)");
+						assert((opMetadata?.batchId as string)?.includes("-1"), "Wrong clientId (2nd)");
+					} else {
+						assert.strictEqual(opMetadata?.batchId, `${clientId}_[2]`, "Wrong clientId (2nd)");
+					}
+					assert.strictEqual(staged, secondBatchStaged, "Wrong staged flag (2nd)");
+				})(secondResubmittedBatchPendingMessages[0]);
+				// Every message should have the same reference sequence number
+				assert(
+					secondResubmittedBatchPendingMessages.every(
+						(m) => m.referenceSequenceNumber === refSeqResubmit_15,
+					),
+					"Second batch reference sequence number incorrect",
+				);
 			});
 		}
 		it("should replay multiple batches in order", () => {
