@@ -11,6 +11,7 @@ import {
 	IResolvedUrl,
 	type IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 import type { Socket } from "socket.io-client";
 
@@ -20,18 +21,24 @@ import { DocumentService } from "../documentService.js";
 import { RouterliciousDocumentServiceFactory } from "../documentServiceFactory.js";
 import { RouterliciousErrorTypes } from "../errorUtils.js";
 import * as socketModule from "../socketModule.js";
+
 // eslint-disable-next-line import/no-internal-modules
 import { ClientSocketMock } from "./socketTestUtils.ts/socketMock.js";
 
 /**
  * Encapsulates the logic for mocking the socket.io-client creation.
- * @param _response - The mock Socket instance to return when SocketIOClient is called
+ * @param _response - The mock ClientSocketMock instance to return when SocketIOClient is called
  * @param callback - The async function to execute while the socket creation is mocked
  * @returns The result of the callback function
  */
-async function mockSocket<T>(_response: Socket, callback: () => Promise<T>): Promise<T> {
+async function mockSocket<T>(
+	_response: ClientSocketMock,
+	callback: () => Promise<T>,
+): Promise<T> {
 	const getSocketCreationStub = stub(socketModule, "SocketIOClientStatic");
-	getSocketCreationStub.returns(_response);
+	// Cast needed because ClientSocketMock doesn't implement the full Socket interface,
+	// but provides the minimal functionality needed for our tests
+	getSocketCreationStub.returns(_response as unknown as Socket);
 	try {
 		return await callback();
 	} finally {
@@ -140,9 +147,7 @@ describe("Routerlicious Socket Error Handling", () => {
 				});
 
 				await assert.rejects(
-					mockSocket(socket as unknown as Socket, async () =>
-						documentService.connectToDeltaStream(client),
-					),
+					mockSocket(socket, async () => documentService.connectToDeltaStream(client)),
 					{
 						errorType: scenario.expectedErrorType,
 						scenarioName: "connect_document_error",
@@ -161,7 +166,7 @@ describe("Routerlicious Socket Error Handling", () => {
 					connect_document: { eventToEmit: "connect_document_success" },
 				});
 
-				const connection = await mockSocket(socket as unknown as Socket, async () =>
+				const connection = await mockSocket(socket, async () =>
 					documentService.connectToDeltaStream(client),
 				);
 
@@ -180,8 +185,10 @@ describe("Routerlicious Socket Error Handling", () => {
 					`Error type should be ${scenario.expectedErrorType}`,
 				);
 				assert.strictEqual(error.scenarioName, "error", "Scenario name should be 'error'");
+
+				const telemetryProps = isFluidError(error) ? error.getTelemetryProperties() : {};
 				assert.strictEqual(
-					(error as any).internalErrorCode,
+					telemetryProps.internalErrorCode,
 					scenario.expectedInternalErrorCode,
 					`Internal error code should be ${scenario.expectedInternalErrorCode}`,
 				);
