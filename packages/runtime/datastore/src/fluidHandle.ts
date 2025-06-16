@@ -104,9 +104,9 @@ export class FluidObjectHandle<
 	// eslint-disable-next-line jsdoc/require-description
 	/**
 	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
-	 * @privateRemarks This implementation will be moved to SharedObjectHandle once this is removed.
+	 * @privateRemarks This implementation will be moved to SharedObjectHandle, along with some logic from attachGraph above.
 	 */
-	public bind(handle: IFluidHandleInternal): void {
+	protected bind(handle: IFluidHandleInternal): void {
 		// If this handle is visible, attach the graph of the incoming handle as well.
 		if (this.visible) {
 			handle.attachGraph();

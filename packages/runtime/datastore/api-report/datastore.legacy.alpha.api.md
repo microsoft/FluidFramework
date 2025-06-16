@@ -120,6 +120,7 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T | Promise<T>;
+    protected get visible(): boolean;
 }
 
 // @alpha @legacy (undocumented)

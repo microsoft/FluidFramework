@@ -569,14 +569,6 @@ describeCompat(
 				channel3.set("channel2handle", channel2.handle);
 				channel2.set("dataStore3", dataStore3.handle);
 				channel3.set("dataStore2", dataStore2.handle);
-				toFluidHandleInternal(dataStore2.handle).bind(
-					toFluidHandleInternal(dataStore3.handle),
-				);
-				toFluidHandleInternal(dataStore2.handle).bind(toFluidHandleInternal(channel3.handle));
-				toFluidHandleInternal(dataStore3.handle).bind(
-					toFluidHandleInternal(dataStore2.handle),
-				);
-				toFluidHandleInternal(dataStore3.handle).bind(toFluidHandleInternal(channel2.handle));
 
 				toFluidHandleInternal(dataStore2.handle).attachGraph();
 				assert.strictEqual(
@@ -675,11 +667,9 @@ describeCompat(
 					"Channel should be detached",
 				);
 
-				channel2OfDataStore2.set("componet3Handle", dataStore3.handle);
+				channel2OfDataStore2.set("dataStore3Handle", dataStore3.handle);
 				channel1OfDataStore3.set("channel23handle", channel2OfDataStore3.handle);
-				toFluidHandleInternal(dataStore3.handle).bind(
-					toFluidHandleInternal(dataStore4.handle),
-				);
+				channel1OfDataStore3.set("dataStore4Handle", dataStore4.handle);
 
 				// Channel 1 of dataStore 2 points to its parent dataStore 2.
 				// Channel 2 of dataStore 2 points to its parent dataStore 2 and also to dataStore 3.
