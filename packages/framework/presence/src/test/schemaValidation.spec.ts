@@ -144,30 +144,16 @@ describe("Presence", () => {
 			});
 
 			describe("validator", () => {
+				let count: Latest<TestData, ProxiedValueAccessor<TestData>>;
 				let stateWorkspace: StatesWorkspace<{
 					count: InternalTypes.ManagerFactory<
 						string,
 						InternalTypes.ValueRequiredState<{
 							num: number;
 						}>,
-						Latest<
-							{
-								num: number;
-							},
-							ProxiedValueAccessor<{
-								num: number;
-							}>
-						>
+						typeof count
 					>;
 				}>;
-				let count: Latest<
-					{
-						num: number;
-					},
-					ProxiedValueAccessor<{
-						num: number;
-					}>
-				>;
 
 				beforeEach(() => {
 					runtime.signalsExpected.push([
@@ -271,20 +257,20 @@ describe("Presence", () => {
 					]);
 
 					const validator = spy((d: unknown) =>
-						typeof d === "object" ? (d as { num: number }) : undefined,
+						typeof d === "object" ? (d as TestData) : undefined,
 					);
 
 					// Configure a state workspace
-					const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-						count: StateFactory.latest({
-							local: { num: 0 },
-							validator,
-							settings: { allowableUpdateLatencyMs: 0 },
-						}),
-					});
+					// const stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
+					// 	count: StateFactory.latest({
+					// 		local: { num: 0 },
+					// 		validator,
+					// 		settings: { allowableUpdateLatencyMs: 0 },
+					// 	}),
+					// });
 
-					const { count } = stateWorkspace.states;
-					count.local = "string" as unknown as { num: number };
+					// const { count } = stateWorkspace.states;
+					count.local = "string" as unknown as TestData;
 
 					// Act & Verify
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
@@ -301,12 +287,12 @@ describe("Presence", () => {
 		});
 
 		describe.skip("LatestMapValueManager", () => {
-			const validatorFunction = createSpiedValidator<{ num: number }>();
+			const validatorFunction = createSpiedValidator<TestData>();
 			let stateWorkspace: StatesWorkspace<{
 				count: InternalTypes.ManagerFactory<
 					string,
-					InternalTypes.MapValueState<{ num: number }, "key1">,
-					LatestMap<{ num: number }, "key1", ProxiedValueAccessor<{ num: number }>>
+					InternalTypes.MapValueState<TestData, "key1">,
+					LatestMap<TestData, "key1", ProxiedValueAccessor<TestData>>
 				>;
 			}>;
 			let count: LatestMap<
