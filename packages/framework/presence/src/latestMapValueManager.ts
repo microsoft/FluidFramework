@@ -162,6 +162,19 @@ export interface LatestMapEvents<
 }
 
 /**
+ * Events from {@link LatestMapRaw}.
+ *
+ * @deprecated Use {@link LatestMapEvents} instead.
+ * @sealed
+ * @beta
+ */
+export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<
+	T,
+	K,
+	RawValueAccessor<T>
+>;
+
+/**
  * Map of local client's values. Modifications are transmitted to all other connected clients.
  *
  * @sealed

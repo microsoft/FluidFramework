@@ -201,7 +201,7 @@ const nullValidator = <T extends object>(data: unknown): JsonDeserialized<T> => 
 /**
  * Creates a spied validator for test purposes.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 export const createSpiedValidator = <T extends object>(
 	validatorFunction: StateSchemaValidator<T> = nullValidator<T>,
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
 ) => spy(validatorFunction) satisfies StateSchemaValidator<T>;

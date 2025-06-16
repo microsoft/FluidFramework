@@ -40,7 +40,10 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @beta
  */
-export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> {
+export interface LatestEvents<
+	T,
+	TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
@@ -57,6 +60,15 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 		value: DeepReadonly<JsonSerializable<T>>;
 	}) => void;
 }
+
+/**
+ * Events from {@link LatestRaw}.
+ *
+ * @deprecated Use {@link LatestEvents} instead.
+ * @sealed
+ * @beta
+ */
+export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
 
 /**
  * State that provides the latest known value from this client to others and read access to their values.
@@ -289,7 +301,7 @@ export function latest<T extends object | null, Key extends string = string>(
 
 // #endregion
 
-//// eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
+// eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T> | LatestArgumentsRaw<T>,
 ):
