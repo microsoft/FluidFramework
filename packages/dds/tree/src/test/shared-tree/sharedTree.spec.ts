@@ -2244,10 +2244,7 @@ describe("SharedTree", () => {
 	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
 		it("can create a SharedTree with format v5 enabled", async () => {
 			// Create and initialize the runtime factory
-			const runtime = new MockFluidDataStoreRuntime({
-				idCompressor: createIdCompressor(),
-				attachState: AttachState.Detached,
-			});
+			const runtime = new MockSharedTreeRuntime();
 
 			// Enable Shared Tree format v5, which corresponds to schema format v2. Create a Shared Tree instance.
 			const tree = configuredSharedTree({
