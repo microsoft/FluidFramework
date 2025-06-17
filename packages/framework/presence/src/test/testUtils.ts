@@ -193,7 +193,7 @@ export function assertFinalExpectations(
 
 /**
  * A null validator (one that does nothing) for a given type T. It simply casts the value to
- * `JsonDeserialized<T> | undefined`.
+ * `JsonDeserialized<T>`.
  */
 const nullValidator = <T extends object>(data: unknown): JsonDeserialized<T> => {
 	return data as JsonDeserialized<T>;
