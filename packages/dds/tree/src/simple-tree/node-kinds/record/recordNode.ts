@@ -313,6 +313,6 @@ export function recordSchema<
 		}
 	}
 
-	const output: Output = CustomRecordNode;
+	const output = CustomRecordNode as Output; // TODO: avoid cast
 	return output;
 }
