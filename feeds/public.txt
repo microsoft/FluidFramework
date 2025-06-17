@@ -61,7 +61,6 @@ fluid-framework
 @fluidframework/merge-tree
 @fluidframework/matrix
 @fluidframework/map
-@fluidframework/legacy-dds
 @fluid-experimental/ink
 @fluidframework/counter
 @fluidframework/cell
