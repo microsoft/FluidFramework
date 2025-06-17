@@ -3,42 +3,60 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type { AllowedTypeMetadata } from "../schemaTypes.js";
+import {
+	asTreeNodeSchemaCorePrivate,
+	type AnnotatedAllowedType,
+	type TreeNodeSchema,
+} from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
  */
 export function walkNodeSchema(
 	schema: TreeNodeSchema,
+	annotations: AllowedTypeMetadata,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema>,
 ): void {
-	if (visitedSet.has(schema)) {
-		return;
-	}
-	visitedSet.add(schema);
+	if (!visitedSet.has(schema)) {
+		visitedSet.add(schema);
 
-	walkAllowedTypes(schema.childTypes, visitor, visitedSet);
+		const annotatedAllowedTypes =
+			asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes ??
+			Array.from(schema.childTypes).map((type) => ({ type }));
+
+		walkAllowedTypes(annotatedAllowedTypes, visitor, visitedSet);
+	}
 
 	// This visit is done at the end so the traversal order is most inner types first.
 	// This was picked since when fixing errors,
 	// working from the inner types out to the types that use them will probably go better than the reverse.
 	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
-	visitor.node?.(schema);
+	visitor.node?.(schema, annotations);
 }
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
  */
 export function walkAllowedTypes(
-	allowedTypes: Iterable<TreeNodeSchema>,
+	annotatedAllowedTypes: Iterable<AnnotatedAllowedType<TreeNodeSchema>>,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const childType of allowedTypes) {
-		walkNodeSchema(childType, visitor, visitedSet);
+	if (annotatedAllowedTypes[Symbol.iterator]().next().done === true) {
+		return;
 	}
-	visitor.allowedTypes?.(allowedTypes);
+
+	for (const annotatedAllowedType of annotatedAllowedTypes) {
+		walkNodeSchema(
+			annotatedAllowedType.type,
+			annotatedAllowedType.metadata,
+			visitor,
+			visitedSet,
+		);
+	}
+	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
 
 /**
@@ -46,14 +64,15 @@ export function walkAllowedTypes(
  */
 export interface SchemaVisitor {
 	/**
-	 * Called once for each node schema.
+	 * Called for each node schema. This may be called multiple times for the same node schema e.g. if the same schema
+	 * is allowed on different fields.
 	 */
-	node?: (schema: TreeNodeSchema) => void;
+	node?: (schema: TreeNodeSchema, annotations: AllowedTypeMetadata) => void;
 	/**
 	 * Called once for each set of allowed types.
 	 * Includes implicit allowed types (when a single type was used instead of an array).
 	 *
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
-	allowedTypes?: (allowedTypes: Iterable<TreeNodeSchema>) => void;
+	allowedTypes?: (allowedTypes: Iterable<AnnotatedAllowedType<TreeNodeSchema>>) => void;
 }

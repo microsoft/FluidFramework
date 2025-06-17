@@ -21,7 +21,12 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { type ICodecOptions, noopValidator } from "../codec/index.js";
+import {
+	type CodecWriteOptions,
+	FluidClientVersion,
+	type ICodecOptions,
+	noopValidator,
+} from "../codec/index.js";
 import {
 	type FieldKey,
 	type GraphCommit,
@@ -587,7 +592,7 @@ export type SharedTreeFormatVersion = typeof SharedTreeFormatVersion;
  * Configuration options for SharedTree.
  * @alpha @input
  */
-export type SharedTreeOptions = Partial<ICodecOptions> &
+export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
@@ -702,6 +707,7 @@ export function buildConfiguredForest(
 
 export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	jsonValidator: noopValidator,
+	oldestCompatibleClient: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	formatVersion: SharedTreeFormatVersion.v3,
@@ -744,20 +750,35 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		default:
 			fail(0xaca /* invalid field kind */);
 	}
-	return { kind, allowedTypesIdentifiers: schema.types, metadata: {} };
+	return {
+		kind,
+		allowedTypesIdentifiers: schema.types,
+		metadata: {},
+		persistedMetadata: schema.persistedMetadata,
+	};
 }
 
+/**
+ * Export a {@link SimpleNodeSchema} from a {@link TreeNodeStoredSchema}.
+ * @privateRemarks
+ * TODO: Persist node metadata once schema FormatV2 is supported.
+ */
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
-		return { kind: NodeKind.Array, allowedTypesIdentifiers: arrayTypes, metadata: {} };
+		return {
+			kind: NodeKind.Array,
+			allowedTypesIdentifiers: arrayTypes,
+			metadata: {},
+			persistedMetadata: undefined,
+		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields, metadata: {} };
+		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: undefined };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
@@ -768,10 +789,16 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Map,
 			allowedTypesIdentifiers: schema.mapFields.types,
 			metadata: {},
+			persistedMetadata: undefined,
 		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
-		return { kind: NodeKind.Leaf, leafKind: schema.leafValue, metadata: {} };
+		return {
+			kind: NodeKind.Leaf,
+			leafKind: schema.leafValue,
+			metadata: {},
+			persistedMetadata: undefined,
+		};
 	}
 	fail(0xacb /* invalid schema kind */);
 }

@@ -241,7 +241,7 @@ describe("SharedTree", () => {
 			view1.dispose();
 
 			assert(Tree.status(root1) === TreeStatus.Deleted);
-			assert.throws(() => root1.number, validateUsageError(/Deleted/));
+			assert.throws(() => root1.number, validateUsageError(/deleted/));
 
 			checkAnchors(false);
 
@@ -2275,7 +2275,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	// Note: this is basically a more e2e version of some tests for `toMapTree`.
+	// Note: this is basically a more end-to-end version of some tests for `unhydratedFlexTreeFromInsertable`.
 	it("throws when an invalid type is inserted at runtime", () => {
 		const provider = new TestTreeProviderLite(1);
 		const [sharedTree] = provider.trees;

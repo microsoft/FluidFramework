@@ -6,14 +6,16 @@
 import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, type ExclusiveMapTree } from "../../../core/index.js";
+import { EmptyKey } from "../../../core/index.js";
 import {
+	type FlexibleFieldContent,
 	type FlexTreeNode,
 	type FlexTreeSequenceField,
 	isFlexTreeNode,
 } from "../../../feature-libraries/index.js";
 import {
 	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
@@ -37,14 +39,16 @@ import {
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
-} from "../../core/index.js";
-import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
-import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import {
 	getKernel,
-	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
+	type AnnotatedAllowedType,
 } from "../../core/index.js";
+import {
+	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
+} from "../../unhydratedFlexTreeFromInsertable.js";
+import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { System_Unsafe } from "../../api/index.js";
@@ -52,6 +56,7 @@ import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 } from "./arrayNodeTypes.js";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -852,7 +857,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		super(input ?? []);
 	}
 
-	#mapTreesFromFieldData(value: Insertable<T>): ExclusiveMapTree[] {
+	#mapTreesFromFieldData(value: Insertable<T>): FlexibleFieldContent {
 		const sequenceField = getSequenceField(this);
 		const content = value as readonly (
 			| InsertableContent
@@ -1014,7 +1019,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const movedCount = sourceEnd - sourceStart;
 		if (!destinationField.context.isHydrated()) {
-			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+			if (!(sourceField instanceof UnhydratedSequenceField)) {
 				throw new UsageError(
 					"Cannot move elements from a hydrated array to an unhydrated array.",
 				);
@@ -1080,6 +1085,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
  * @param name - Unique identifier for this schema including the factory's scope.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
@@ -1093,6 +1099,7 @@ export function arraySchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ) {
 	type Output = ArrayNodeCustomizableSchema<
 		TName,
@@ -1105,6 +1112,7 @@ export function arraySchema<
 	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedTypes));
+	const lazyAnnotatedTypes = new Lazy(() => normalizeAnnotatedAllowedTypes(info));
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -1139,10 +1147,7 @@ export function arraySchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -1190,7 +1195,12 @@ export function arraySchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedType<TreeNodeSchema>[] {
+			return lazyAnnotatedTypes.value;
+		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

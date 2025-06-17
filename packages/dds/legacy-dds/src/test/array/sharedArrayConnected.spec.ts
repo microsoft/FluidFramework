@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";

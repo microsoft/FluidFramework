@@ -5,8 +5,6 @@
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import type { FieldKey, SchemaPolicy } from "../../../core/index.js";
 import {
@@ -16,7 +14,11 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../../../feature-libraries/index.js";
-import { type RestrictiveStringRecord, type FlattenKeys, brand } from "../../../util/index.js";
+import type {
+	RestrictiveStringRecord,
+	FlattenKeys,
+	JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -28,8 +30,9 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 	type Context,
-	UnhydratedFlexTreeNode,
+	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
+	type AnnotatedAllowedType,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { getTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -47,19 +50,19 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
 	FieldKind,
 	type NodeSchemaMetadata,
 	type FieldSchemaAlpha,
 	ObjectFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
-	unannotateSchemaRecord,
 	type UnannotateSchemaRecord,
 } from "../../schemaTypes.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
-import { mapTreeFromNodeData, type InsertableContent } from "../../toMapTree.js";
+import {
+	unhydratedFlexTreeFromInsertable,
+	type InsertableContent,
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
-import { stringSchema } from "../../leafNodeSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -191,7 +194,9 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
+function createFlexKeyMapping(
+	fields: Record<string, ImplicitAnnotatedFieldSchema>,
+): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(propertyKey, fieldSchema);
@@ -199,37 +204,6 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
 	}
 
 	return keyMap;
-}
-
-const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
-
-/**
- * Modify `flexNode` to add a newly generated identifier under the given `storedKey`.
- * @remarks
- * This is used after checking if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
- * This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
- * In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
- * @privateRemarks
- * TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
- * TODO: unify this with a more general defaults mechanism.
- */
-export function lazilyAllocateIdentifier(
-	flexNode: UnhydratedFlexTreeNode,
-	storedKey: FieldKey,
-): string {
-	debugAssert(() => !flexNode.mapTree.fields.has(storedKey) || "Identifier field already set");
-	const value = globalIdentifierAllocator.decompress(
-		globalIdentifierAllocator.generateCompressedId(),
-	);
-	flexNode.mapTree.fields.set(storedKey, [
-		{
-			type: brand(stringSchema.identifier),
-			value,
-			fields: new Map(),
-		},
-	]);
-
-	return value;
 }
 
 /**
@@ -263,13 +237,6 @@ function createProxyHandler(
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
 					return getTreeNodeForField(field);
-				}
-
-				if (
-					fieldInfo.schema.kind === FieldKind.Identifier &&
-					flexNode instanceof UnhydratedFlexTreeNode
-				) {
-					return lazilyAllocateIdentifier(flexNode, fieldInfo.storedKey);
 				}
 
 				return undefined;
@@ -388,6 +355,7 @@ abstract class CustomObjectNodeBase<
  *
  * @param name - Unique identifier for this schema within this factory's scope.
  * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 export function objectSchema<
 	TName extends string,
@@ -400,19 +368,18 @@ export function objectSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
 	// Field set can't be modified after this since derived data is stored in maps.
 	Object.freeze(info);
 
-	const unannotatedInfo = unannotateSchemaRecord(info);
-
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
-	assertUniqueKeys(identifier, unannotatedInfo);
+	assertUniqueKeys(identifier, info);
 
 	// Performance optimization: cache property key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(unannotatedInfo);
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
 	const identifierFieldKeys: FieldKey[] = [];
 	for (const item of flexKeyMap.values()) {
@@ -424,6 +391,15 @@ export function objectSchema<
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
+	const lazyAnnotatedTypes = new Lazy(() => {
+		const annotatedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
+		for (const [_, { schema }] of flexKeyMap) {
+			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized.forEach((t) => {
+				annotatedAllowedTypes.push(t);
+			});
+		}
+		return annotatedAllowedTypes;
+	});
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
@@ -495,10 +471,7 @@ export function objectSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as object, this as Output);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -545,7 +518,12 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedType<TreeNodeSchema>[] {
+			return lazyAnnotatedTypes.value;
+		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -571,7 +549,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();

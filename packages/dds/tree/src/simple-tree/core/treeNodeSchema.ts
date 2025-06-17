@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeLeafValue } from "../schemaTypes.js";
+import type { LazyItem } from "../flexList.js";
+import type { AllowedTypeMetadata, TreeLeafValue } from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
 import type { TreeNode } from "./treeNode.js";
@@ -61,6 +62,21 @@ export type TreeNodeSchema<
 			never,
 			TCustomMetadata
 	  >;
+
+/**
+ * Stores annotations for an individual allowed type.
+ * @alpha @sealed
+ */
+export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
+	/**
+	 * Annotations for the allowed type.
+	 */
+	readonly metadata: AllowedTypeMetadata;
+	/**
+	 * The allowed type the annotations apply to in a particular schema.
+	 */
+	readonly type: T;
+}
 
 /**
  * Schema which is not a class.
@@ -231,8 +247,13 @@ export type TreeNodeSchemaBoth<
 
 /**
  * Data common to all tree node schema.
+ *
  * @remarks
  * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
+ *
+ * @privateRemarks
+ * All implementations must actually implement {@link TreeNodeSchemaCorePrivate} as well.
+ *
  * @sealed @public
  */
 export interface TreeNodeSchemaCore<
@@ -314,6 +335,64 @@ export interface TreeNodeSchemaCore<
 	 * @sealed @system
 	 */
 	createFromInsertable(data: TInsertable): Unhydrated<TreeNode | TreeLeafValue>;
+}
+
+/**
+ * {@link TreeNodeSchemaCore} extended with some non-exported APIs.
+ */
+export interface TreeNodeSchemaCorePrivate<
+	Name extends string = string,
+	Kind extends NodeKind = NodeKind,
+	TInsertable = never,
+	ImplicitlyConstructable extends boolean = boolean,
+	Info = unknown,
+	TCustomMetadata = unknown,
+> extends TreeNodeSchemaCore<
+		Name,
+		Kind,
+		ImplicitlyConstructable,
+		Info,
+		TInsertable,
+		TCustomMetadata
+	> {
+	/**
+	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
+	 * with a particular schema.
+	 *
+	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
+	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
+	 * This property is simply re-exposing that information in an easier to traverse format consistent across all node kinds.
+	 * @remarks
+	 * Some kinds of nodes may have additional restrictions on children:
+	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this set.
+	 *
+	 * @privateRemarks
+	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
+	 * @system
+	 */
+	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+}
+
+/**
+ * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} if it is one.
+ *
+ * @remarks
+ * This function should only be used internally. The result should not be exposed publicly
+ * in any exported types or API return values.
+ */
+export function asTreeNodeSchemaCorePrivate(
+	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
+): TreeNodeSchemaCorePrivate {
+	if ("childAnnotatedAllowedTypes" in schema) {
+		return schema as TreeNodeSchemaCorePrivate;
+	}
+	throw new Error(
+		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
+	);
 }
 
 /**

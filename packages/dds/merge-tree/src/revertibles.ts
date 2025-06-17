@@ -309,7 +309,7 @@ function revertLocalRemove(
 		const insertSegment = mergeTreeWithRevert.getContainingSegment(
 			realPos,
 			mergeTreeWithRevert.localPerspective,
-		).segment;
+		)?.segment;
 		assertSegmentLeaf(insertSegment);
 
 		const localSlideFilter = (lref: LocalReferencePosition): boolean =>

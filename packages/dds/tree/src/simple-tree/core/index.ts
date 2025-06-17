@@ -10,7 +10,6 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
-	unhydratedFlexTreeNodeToTreeNode,
 	getOrCreateInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
@@ -32,13 +31,14 @@ export {
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
+	type AnnotatedAllowedType,
 } from "./treeNodeSchema.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
 export {
 	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
-	tryUnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
 	UnhydratedContext,
+	createField,
 } from "./unhydratedFlexTree.js";
