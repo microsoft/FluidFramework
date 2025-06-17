@@ -783,6 +783,7 @@ export class IntervalCollection
 			if (md.type === "add" || (md.type === "change" && hasEndpointChanges(op.value))) {
 				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
 				md.endpointChangesNode = endpointChanges.push(md).last;
+				md.rebased = undefined;
 			}
 			submitDelta(op, pending.local.push(md).last);
 		};
