@@ -252,18 +252,18 @@ describe("Presence", () => {
 
 					count = stateWorkspace.states.count;
 					count.local = "string" as unknown as TestData;
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
+					const remote = count.getRemote(attendee2);
 
 					// Act & Verify
-					const attendee2 = presence.attendees.getAttendee(attendeeId2);
-
 					assert.equal(validatorFunction.callCount, 0, "call count should be 0");
-					let remoteData = count.getRemote(attendee2)?.value();
+					let remoteData = remote.value();
 					assert.equal(remoteData, undefined);
 					assert.equal(validatorFunction.callCount, 1, "call count should be 1");
 
 					// Subsequent calls do not invoke validator
-					remoteData = count.getRemote(attendee2)?.value();
-					assert.equal(validatorFunction.callCount, 1, "call count should be 1");
+					remoteData = remote.value();
+					assert.equal(validatorFunction.callCount, 1, "call count should still be 1");
 				});
 			});
 		});
