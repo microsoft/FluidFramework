@@ -1352,6 +1352,10 @@ export class IntervalCollection
 			}
 			if (newInterval) {
 				this.emitChange(newInterval, interval, true, false);
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				interval.start.properties!.interval = undefined;
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				interval.end.properties!.interval = undefined;
 			}
 			return newInterval;
 		}
