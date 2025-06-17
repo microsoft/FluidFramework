@@ -16,11 +16,17 @@ import {
 import {
 	type FieldKey,
 	type FieldKindIdentifier,
-	type FieldSchemaFormat,
+	type FieldSchemaFormat as FieldSchemaFormatV1,
 	PersistedValueSchema,
-	type TreeNodeSchemaDataFormat,
+	type TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV1,
 	type TreeNodeSchemaIdentifier,
 } from "./formatV1.js";
+import type {
+	FieldSchemaFormat as FieldSchemaFormatV2,
+	PersistedMetadataFormat,
+	TreeNodeSchemaUnionFormat,
+	TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV2,
+} from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
 
 /**
@@ -28,7 +34,13 @@ import type { Multiplicity } from "./multiplicity.js";
  */
 export enum SchemaVersion {
 	v1 = 1,
+	/**
+	 * Adds persisted metadata to the node schema and field schema.
+	 */
+	v2 = 2,
 }
+
+type FieldSchemaFormat = FieldSchemaFormatV1 | FieldSchemaFormatV2;
 
 /**
  * Schema for what {@link TreeLeafValue} is allowed on a Leaf node.
@@ -138,6 +150,8 @@ export interface TreeFieldStoredSchema {
 	 * Portion of the metadata which can be persisted.
 	 * @remarks
 	 * Discarded when encoding to {@link SchemaFormatVersion.V1}.
+	 * @privateRemarks
+	 * This field corresponds to the `metadata` field in the persisted schema format.
 	 */
 	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
 }
@@ -177,12 +191,21 @@ export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
 
 	/**
-	 * @privateRemarks
-	 * Returns TreeNodeSchemaDataFormat.
-	 * This is uses an opaque type to avoid leaking these types out of the package,
-	 * and is runtime validated by the codec.
+	 * Constructor for a TreeNodeStoredSchema.
+	 * @param metadata - Persisted metadata for this node schema.
 	 */
-	public abstract encode(): TreeNodeSchemaDataFormat;
+	public constructor(public readonly metadata: PersistedMetadataFormat | undefined) {}
+
+	/**
+	 * Encode in the v1 schema format.
+	 */
+	public abstract encodeV1(): TreeNodeSchemaDataFormatV1;
+
+	/**
+	 * Encode in the v2 schema format.
+	 * @remarks Post-condition: if metadata was specified on the input schema, it will be present in the output.
+	 */
+	public abstract encodeV2(): TreeNodeSchemaDataFormatV2;
 
 	/**
 	 * Returns the schema for the provided field.
@@ -203,11 +226,35 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	 */
 	public constructor(
 		public readonly objectNodeFields: ReadonlyMap<FieldKey, TreeFieldStoredSchema>,
+		metadata?: PersistedMetadataFormat | undefined,
 	) {
-		super();
+		super(metadata);
 	}
 
-	public override encode(): TreeNodeSchemaDataFormat {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
+		const fieldsObject: Record<string, FieldSchemaFormat> =
+			this.encodeFieldsObject(encodeFieldSchemaV1);
+
+		return {
+			object: fieldsObject,
+		};
+	}
+
+	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
+		const fieldsObject: Record<string, FieldSchemaFormat> =
+			this.encodeFieldsObject(encodeFieldSchemaV2);
+		const kind = { object: fieldsObject };
+
+		return { kind, metadata: this.metadata };
+	}
+
+	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
+		return this.objectNodeFields.get(field) ?? storedEmptyFieldSchema;
+	}
+
+	private encodeFieldsObject(
+		encodeFieldSchema: (storedFieldSchema: TreeFieldStoredSchema) => FieldSchemaFormat,
+	): Record<string, FieldSchemaFormat> {
 		const fieldsObject: Record<string, FieldSchemaFormat> = Object.create(null);
 		// Sort fields to ensure output is identical for for equivalent schema (since field order is not considered significant).
 		// This makes comparing schema easier, and ensures chunk reuse for schema summaries isn't needlessly broken.
@@ -221,13 +268,7 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 				),
 			});
 		}
-		return {
-			object: fieldsObject,
-		};
-	}
-
-	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
-		return this.objectNodeFields.get(field) ?? storedEmptyFieldSchema;
+		return fieldsObject;
 	}
 }
 
@@ -242,14 +283,22 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	 * since no nodes can ever be in schema if you use `FieldKind.Value` here
 	 * (that would require infinite children).
 	 */
-	public constructor(public readonly mapFields: TreeFieldStoredSchema) {
-		super();
+	public constructor(
+		public readonly mapFields: TreeFieldStoredSchema,
+		metadata?: PersistedMetadataFormat | undefined,
+	) {
+		super(metadata);
 	}
 
-	public override encode(): TreeNodeSchemaDataFormat {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
 		return {
-			map: encodeFieldSchema(this.mapFields),
+			map: encodeFieldSchemaV1(this.mapFields),
 		};
+	}
+
+	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
+		const kind = { map: encodeFieldSchemaV2(this.mapFields) };
+		return { kind, metadata: this.metadata };
 	}
 
 	public override getFieldSchema(field: FieldKey): TreeFieldStoredSchema {
@@ -273,12 +322,22 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	 * This is simply one approach that can work for modeling them in the internal schema representation.
 	 */
 	public constructor(public readonly leafValue: ValueSchema) {
-		super();
+		// No metadata for leaf nodes.
+		super(undefined);
 	}
 
-	public override encode(): TreeNodeSchemaDataFormat {
+	public override encodeV1(): TreeNodeSchemaDataFormatV1 {
 		return {
 			leaf: encodeValueSchema(this.leafValue),
+		};
+	}
+
+	public override encodeV2(): TreeNodeSchemaDataFormatV2 {
+		return {
+			// No metadata for leaf nodes, so don't emit a metadata field.
+			kind: {
+				leaf: encodeValueSchema(this.leafValue),
+			},
 		};
 	}
 
@@ -287,22 +346,30 @@ export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
+/**
+ * Decoder wrapper function for {@link TreeNodeStoredSchema} implementations.
+ * Curries the constructor so that the caller can inject metadata.
+ */
+type StoredSchemaDecoder = (
+	metadata: PersistedMetadataFormat | undefined,
+) => TreeNodeStoredSchema;
+
 export const storedSchemaDecodeDispatcher: DiscriminatedUnionDispatcher<
-	TreeNodeSchemaDataFormat,
+	TreeNodeSchemaUnionFormat,
 	[],
-	TreeNodeStoredSchema
+	StoredSchemaDecoder
 > = new DiscriminatedUnionDispatcher({
-	leaf: (data: PersistedValueSchema) => new LeafNodeStoredSchema(decodeValueSchema(data)),
-	object: (
-		data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>,
-	): TreeNodeStoredSchema => {
+	leaf: (data: PersistedValueSchema) => (metadata) =>
+		new LeafNodeStoredSchema(decodeValueSchema(data)),
+	object: (data: Record<TreeNodeSchemaIdentifier, FieldSchemaFormat>) => (metadata) => {
 		const map = new Map();
 		for (const [key, value] of Object.entries(data)) {
 			map.set(key, decodeFieldSchema(value));
 		}
-		return new ObjectNodeStoredSchema(map);
+		return new ObjectNodeStoredSchema(map, metadata);
 	},
-	map: (data: FieldSchemaFormat) => new MapNodeStoredSchema(decodeFieldSchema(data)),
+	map: (data: FieldSchemaFormat) => (metadata) =>
+		new MapNodeStoredSchema(decodeFieldSchema(data), metadata),
 });
 
 const valueSchemaEncode = new Map([
@@ -323,7 +390,7 @@ function decodeValueSchema(inMemory: PersistedValueSchema): ValueSchema {
 	return valueSchemaDecode.get(inMemory) ?? fail(0xae9 /* missing ValueSchema */);
 }
 
-export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFormat {
+export function encodeFieldSchemaV1(schema: TreeFieldStoredSchema): FieldSchemaFormatV1 {
 	return {
 		kind: schema.kind,
 		// Types are sorted by identifier to improve stability of persisted data to increase chance of schema blob reuse.
@@ -331,13 +398,21 @@ export function encodeFieldSchema(schema: TreeFieldStoredSchema): FieldSchemaFor
 	};
 }
 
-export function decodeFieldSchema(schema: FieldSchemaFormat): TreeFieldStoredSchema {
+export function encodeFieldSchemaV2(schema: TreeFieldStoredSchema): FieldSchemaFormatV2 {
+	const fieldSchema: FieldSchemaFormatV1 = encodeFieldSchemaV1(schema);
+
+	// Omit metadata from the output if it is undefined
+	return schema.persistedMetadata !== undefined
+		? { ...fieldSchema, metadata: schema.persistedMetadata }
+		: { ...fieldSchema };
+}
+
+export function decodeFieldSchema(schema: FieldSchemaFormatV2): TreeFieldStoredSchema {
 	const out: TreeFieldStoredSchema = {
 		// TODO: maybe provide actual FieldKind objects here, error on unrecognized kinds.
 		kind: schema.kind,
 		types: new Set(schema.types),
-		// TODO: Persist metadata once schema FormatV2 has been added.
-		persistedMetadata: undefined,
+		persistedMetadata: schema.metadata,
 	};
 	return out;
 }
