@@ -165,7 +165,6 @@ export interface LatestMapEvents<
 /**
  * Events from {@link LatestMapRaw}.
  *
- * @deprecated Use {@link LatestMapEvents} instead.
  * @sealed
  * @beta
  */
@@ -704,7 +703,7 @@ export function latestMap<
 /**
  * @beta
  */
-/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
+// eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
 export function latestMap<
 	T,
 	Keys extends string | number = string | number,
@@ -799,4 +798,3 @@ export function latestMap<
 
 	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }
-/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */

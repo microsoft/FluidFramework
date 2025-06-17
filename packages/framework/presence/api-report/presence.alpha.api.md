@@ -273,7 +273,7 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number, TV
 // @beta @sealed
 export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
-// @beta @sealed @deprecated
+// @beta @sealed
 export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<T, K, RawValueAccessor<T>>;
 
 // @beta @sealed
@@ -285,7 +285,7 @@ export interface LatestMetadata {
 // @beta @sealed
 export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
 
-// @beta @sealed @deprecated
+// @beta @sealed
 export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
 
 // @alpha @sealed
