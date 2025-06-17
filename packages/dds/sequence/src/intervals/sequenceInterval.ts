@@ -31,7 +31,6 @@ import {
 	type ISegmentInternal,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
-	type RebasedObliterateEndpoint,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -499,8 +498,10 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		return endPos > bstart && startPos < bend;
 	}
 
-	public rebaseEndpoints(rebased: Record<"start" | "end", RebasedObliterateEndpoint>) {
-		this.startSide = rebased.start.side;
+	public rebaseEndpoints(
+		rebased: Record<"start" | "end", { segment: ISegment; offset: number } | "start" | "end">,
+	) {
+		// this.startSide = rebased.start.side;
 		const startRef = createPositionReferenceFromSegoff(
 			this.client,
 			rebased.start,
@@ -516,7 +517,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		}
 		this.start = startRef;
 
-		this.endSide = rebased.end.side;
+		// this.endSide = rebased.end.side;
 		const endRef = createPositionReferenceFromSegoff(
 			this.client,
 			rebased.end,
