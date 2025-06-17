@@ -2768,9 +2768,9 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
-		// setConnectionState() is called by Container every time the connection state of the container changes.
+		// setConnectionState() is called by Container to propagate connection state changes.
 		// This is called regardless of whether there was a change in the ability to send ops.
-		// Since the connection to the service has changed, we raise corresponding connected event
+		// Since the connection to the service state has changed, we raise corresponding connected event.
 		if (this.isConnected()) {
 			this.emit("connectedToService", clientId);
 		} else {
