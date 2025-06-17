@@ -160,7 +160,7 @@ export class TreeViewConfiguration<
 	public readonly preventAmbiguity: boolean;
 
 	/**
-	 * {@inheritDoc TreeSchema.definitions}
+	 * {@link TreeSchema.definitions} but with public types.
 	 */
 	protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
 
