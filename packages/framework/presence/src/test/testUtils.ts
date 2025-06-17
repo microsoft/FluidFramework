@@ -9,7 +9,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import { spy, type SinonFakeTimers } from "sinon";
+import { spy } from "sinon";
+import type { SinonFakeTimers } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
@@ -200,6 +201,8 @@ const nullValidator = <T extends object>(data: unknown): JsonDeserialized<T> => 
 
 /**
  * Creates a spied validator for test purposes.
+ *
+ * @param validatorFunction - A {@link StateSchemaValidator} to wrap in a spy.
  */
 export const createSpiedValidator = <T extends object>(
 	validatorFunction: StateSchemaValidator<T> = nullValidator<T>,
