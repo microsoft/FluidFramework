@@ -700,9 +700,6 @@ export function latestMap<
 
 // #endregion
 
-/**
- * @beta
- */
 // eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
 export function latestMap<
 	T,
