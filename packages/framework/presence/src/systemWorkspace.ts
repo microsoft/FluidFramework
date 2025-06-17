@@ -25,6 +25,7 @@ import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
  */
 interface ConnectionValueState extends InternalTypes.ValueStateMetadata {
 	value: AttendeeId;
+	disconnected?: true;
 }
 
 /**
@@ -218,6 +219,10 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		if (!attendee) {
 			return;
 		}
+		const knownSessionID = this.datastore.clientToSessionId[clientConnectionId];
+		assert(knownSessionID !== undefined, "Known attendee not found in datastore");
+		// Mark this client connection ID as disconnected.
+		knownSessionID.disconnected = true;
 
 		// If the local connection is being removed, clear the stale connection timer
 		if (attendee === this.selfAttendee) {
