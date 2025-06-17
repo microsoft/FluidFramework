@@ -14349,6 +14349,9 @@ importers:
       '@fluidframework/odsp-doclib-utils':
         specifier: workspace:~
         version: link:../../utils/odsp-doclib-utils
+      '@fluidframework/odsp-driver':
+        specifier: workspace:~
+        version: link:../../drivers/odsp-driver
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../../drivers/odsp-driver-definitions
@@ -14361,6 +14364,9 @@ importers:
       '@fluidframework/request-handler':
         specifier: workspace:~
         version: link:../../framework/request-handler
+      '@fluidframework/routerlicious-driver':
+        specifier: workspace:~
+        version: link:../../drivers/routerlicious-driver
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
