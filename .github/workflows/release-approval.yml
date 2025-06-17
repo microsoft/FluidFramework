@@ -71,9 +71,11 @@ jobs:
 
       ### These steps run on workflow_dispatch event only ###
       - name: "workflow_dispatch: Load PR number"
+        env:
+          PR: ${{ github.event.inputs.pr }}
         id: workflow_dispatch_load_pr
         if: github.event_name == 'workflow_dispatch'
-        run: echo "pr_num=${{ github.event.inputs.pr }}" >> $GITHUB_OUTPUT
+        run: echo "pr_num=$PR" >> $GITHUB_OUTPUT
 
       - name: "workflow_dispatch: Load is_release_branch"
         id: workflow_dispatch_is_release_branch
