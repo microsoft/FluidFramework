@@ -207,7 +207,10 @@ export function assertInterval(
 		"unexpected start side",
 	);
 	const actualStart = sharedString.localReferencePositionToPosition(actual.start);
-	assert.equal(actualStart, expectedPositionFromSequencePlace(expectedStart, -1));
+	assert.equal(
+		actualStart,
+		expectedPositionFromSequencePlace(expectedStart, sharedString.getLength()),
+	);
 	assert.equal(
 		actual.endSide,
 		typeof expectedEnd === "object" ? expectedEnd.side : Side.Before,
