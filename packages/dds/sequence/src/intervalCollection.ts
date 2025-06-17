@@ -986,12 +986,15 @@ export class IntervalCollection
 		}
 
 		const { clientId } = this.client.getCollabWindow();
-		const segment = ref.getSegment();
+		const segment: ISegmentInternal | undefined = ref.getSegment();
+		if (segment?.endpointType) {
+			return segment.endpointType;
+		}
 		const offset = ref.getOffset();
 
 		const segoff = getSlideToSegoff(
 			segment === undefined ? undefined : { segment, offset },
-			ref.slidingPreference,
+			undefined,
 			createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
