@@ -384,7 +384,6 @@ stages:
 
               echo 'Tenant credentials retrieved and stored in environment variables:'
               echo "$(appClientId)"
-              echo $(tenantCreds) # this is where the error is
 
               echo 'DEBUG: Print tenant credentials'
               echo "$login__microsoft__clientId"
