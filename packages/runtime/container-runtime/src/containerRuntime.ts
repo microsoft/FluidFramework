@@ -2768,6 +2768,15 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
+		// setConnectionState() is called by Container every time the connection state of the container changes.
+		// This is called regardless of whether there was a change in the ability to send ops.
+		// Since the connection to the service has changed, we raise corresponding connected event
+		if (this.isConnected()) {
+			this.emit("connectedToService", clientId);
+		} else {
+			this.emit("disconnectedFromService");
+		}
+
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			this.loadIdCompressor();
 		}
@@ -5101,10 +5110,10 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.deltaManager.on("connect", (details) =>
-			eventEmitter.emit("connected", details.clientId),
+		this.on("connectedToService", (clientId: string) =>
+			eventEmitter.emit("connected", clientId),
 		);
-		this.deltaManager.on("disconnect", () => eventEmitter.emit("disconnected"));
+		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
 	});
 
