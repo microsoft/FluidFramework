@@ -131,6 +131,7 @@ export type {
 	SimpleArrayNodeSchema,
 	SimpleObjectNodeSchema,
 	SimpleNodeSchemaBase,
+	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
 } from "./simpleSchema.js";
@@ -165,6 +166,7 @@ export {
 	type NodeBuilderData,
 	type DefaultProvider,
 	type FieldProps,
+	type FieldPropsAlpha,
 	normalizeFieldSchema,
 	areFieldSchemaEqual,
 	areImplicitFieldSchemaEqual,
@@ -180,6 +182,7 @@ export {
 	type ReadableField,
 	type ReadSchema,
 	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
@@ -214,11 +217,11 @@ export {
 	type TreeRecordNode,
 } from "./node-kinds/index.js";
 export {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
 	type FactoryContent,
 	type FactoryContentObject,
-} from "./toMapTree.js";
+} from "./unhydratedFlexTreeFromInsertable.js";
 export {
 	prepareForInsertion,
 	prepareForInsertionContextless,

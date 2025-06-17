@@ -160,7 +160,7 @@ function initializePendingOpCount(): { value: number } {
 			return value;
 		},
 		set value(newValue: number) {
-			assert(newValue >= 0, "pendingOpCount must be non-negative");
+			assert(newValue >= 0, 0xbbd /* pendingOpCount must be non-negative */);
 			value = newValue;
 		},
 	};

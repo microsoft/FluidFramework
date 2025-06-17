@@ -90,7 +90,12 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.handle",
-					{ leafKind: ValueSchema.FluidHandle, metadata: {}, kind: NodeKind.Leaf },
+					{
+						leafKind: ValueSchema.FluidHandle,
+						metadata: {},
+						persistedMetadata: undefined,
+						kind: NodeKind.Leaf,
+					},
 				],
 			]),
 		};
@@ -111,6 +116,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Array,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 					},
 				],
@@ -163,6 +169,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Map,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 					},
 				],
@@ -273,6 +280,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
@@ -280,6 +288,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Optional,
 									allowedTypesIdentifiers: new Set<string>([numberSchema.identifier]),
 									metadata: { description: "A number representing the concept of Foo." },
+									persistedMetadata: undefined,
 									storedKey: "foo",
 								},
 							],
@@ -289,6 +298,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Required,
 									allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 									metadata: { description: "A string representing the concept of Bar." },
+									persistedMetadata: undefined,
 									storedKey: "bar",
 								},
 							],
@@ -300,6 +310,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									metadata: {
 										description: "Unique identifier for the test object.",
 									},
+									persistedMetadata: undefined,
 									storedKey: "id",
 								},
 							],
@@ -406,6 +417,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"id",
@@ -461,12 +473,14 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Required,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set<string>([
 										numberSchema.identifier,
 										stringSchema.identifier,
@@ -527,12 +541,14 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Optional,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set<string>([
 										stringSchema.identifier,
 										"test.recursive-object",

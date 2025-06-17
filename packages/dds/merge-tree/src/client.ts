@@ -878,17 +878,20 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		const useNewSlidingBehavior = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
 		// eslint-disable-next-line prefer-const
-		let { segment: newSegment, offset: newOffset } = getSlideToSegoff(
+		const segOff = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,
 			reconnectingPerspective,
 			useNewSlidingBehavior,
 		);
 
-		newSegment ??=
-			slidePreference === SlidingPreference.FORWARD
-				? this._mergeTree.endOfTree
-				: this._mergeTree.startOfTree;
+		const { segment: newSegment, offset: newOffset } = segOff ?? {
+			segment:
+				slidePreference === SlidingPreference.FORWARD
+					? this._mergeTree.endOfTree
+					: this._mergeTree.startOfTree,
+			offset: 0,
+		};
 
 		assert(
 			isSegmentLeaf(newSegment) && newOffset !== undefined,
@@ -1005,7 +1008,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						(lastRemove.type === "sliceRemove" &&
 							lastRemove.localSeq === segmentGroup.localSeq) ||
 							opstampUtils.isSquashedOp(lastRemove),
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xbad /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 
 					// The original obliterate affected this segment, but it has since been removed.
@@ -1082,7 +1085,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						(lastRemove.type === "sliceRemove" &&
 							lastRemove.localSeq === segmentGroup.localSeq) ||
 							opstampUtils.isSquashedOp(lastRemove),
-						"Last remove should be the obliterate that is being resubmitted.",
+						0xbae /* Last remove should be the obliterate that is being resubmitted. */,
 					);
 
 					if (!opstampUtils.isSquashedOp(lastRemove)) {
@@ -1192,7 +1195,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 						assert(
 							removeInfo.removes.length === 1 ||
 								opstampUtils.isAcked(removeInfo.removes[removeInfo.removes.length - 2]),
-							"Expected only one local remove",
+							0xbaf /* Expected only one local remove */,
 						);
 						this.squashInsertion(segment);
 						break;
@@ -1612,10 +1615,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		pos: number,
 		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 		localSeq?: number,
-	): {
-		segment: T | undefined;
-		offset: number | undefined;
-	} {
+	):
+		| {
+				segment: T;
+				offset: number;
+		  }
+		| undefined {
 		let perspective: Perspective;
 		const clientId =
 			sequenceArgs === undefined
@@ -1630,20 +1635,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			perspective = new PriorPerspective(refSeq, clientId);
 		}
 
-		return this._mergeTree.getContainingSegment(pos, perspective) as {
-			segment: T | undefined;
-			offset: number | undefined;
-		};
+		return this._mergeTree.getContainingSegment(pos, perspective) as
+			| {
+					segment: T;
+					offset: number;
+			  }
+			| undefined;
 	}
 
 	getPropertiesAtPosition(pos: number): PropertySet | undefined {
-		let propertiesAtPosition: PropertySet | undefined;
 		const segoff = this.getContainingSegment(pos);
-		const seg = segoff.segment;
-		if (seg) {
-			propertiesAtPosition = seg.properties;
-		}
-		return propertiesAtPosition;
+		return segoff?.segment?.properties;
 	}
 
 	getRangeExtentsOfPosition(pos: number): {
@@ -1654,7 +1656,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		let posAfterEnd: number | undefined;
 
 		const segoff = this.getContainingSegment(pos);
-		const seg = segoff.segment;
+		const seg = segoff?.segment;
 		if (seg) {
 			posStart = this.getPosition(seg);
 			posAfterEnd = posStart + seg.cachedLength;

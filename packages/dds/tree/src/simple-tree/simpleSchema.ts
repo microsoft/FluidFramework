@@ -4,7 +4,7 @@
  */
 
 import type { ValueSchema } from "../core/index.js";
-
+import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 import type { NodeKind } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schemaTypes.js";
 
@@ -38,13 +38,30 @@ export interface SimpleNodeSchemaBase<
 }
 
 /**
+ * A {@link SimpleNodeSchema} containing fields for alpha features.
+ *
+ * @system
+ * @alpha
+ * @sealed
+ */
+export interface SimpleNodeSchemaBaseAlpha<
+	out TNodeKind extends NodeKind,
+	out TCustomMetadata = unknown,
+> extends SimpleNodeSchemaBase<TNodeKind, TCustomMetadata> {
+	/**
+	 * Persisted metadata for this node schema.
+	 */
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
  * A {@link SimpleNodeSchema} for an object node.
  *
  * @alpha
  * @sealed
  */
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Object, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
@@ -82,7 +99,7 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
  * @sealed
  */
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Array, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
 	/**
 	 * The types allowed in the array.
 	 *
@@ -99,7 +116,7 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
  * @sealed
  */
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Map, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
 	/**
 	 * The types allowed as values in the map.
 	 *
@@ -132,7 +149,7 @@ export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
+export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind.Leaf> {
 	/**
 	 * The kind of leaf node.
 	 */
@@ -188,6 +205,11 @@ export interface SimpleFieldSchema {
 	 * {@inheritDoc FieldSchemaMetadata}
 	 */
 	readonly metadata: FieldSchemaMetadata;
+
+	/**
+	 * Persisted metadata for this field schema.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**

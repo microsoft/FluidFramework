@@ -151,7 +151,7 @@ import {
 	type ITree,
 	type UnsafeUnknownSchema,
 	type InsertableField,
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -638,15 +638,11 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 	assert.deepEqual(actual, expected);
 }
 
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v1);
-
-// If you are adding a new schema format, consider changing the encoding format used in the above codec, given
+// If you are adding a new schema format, consider changing the encoding format used for this codec, given
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
-// Note we have to divide the length of the return value from `Object.keys` to get the number of enum entries.
-assert(
-	Object.keys(SchemaVersion).length / 2 === 1,
-	"This code only handles a single schema codec version.",
-);
+// If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
+// case with schema format v2.
+const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
@@ -1483,6 +1479,9 @@ export function fieldCursorFromInsertable<
 		: TSchema & ImplicitFieldSchema,
 	data: InsertableField<TSchema>,
 ): ITreeCursorSynchronous {
-	const mapTree = mapTreeFromNodeData(data as InsertableField<UnsafeUnknownSchema>, schema);
+	const mapTree = unhydratedFlexTreeFromInsertable(
+		data as InsertableField<UnsafeUnknownSchema>,
+		schema,
+	);
 	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
 }

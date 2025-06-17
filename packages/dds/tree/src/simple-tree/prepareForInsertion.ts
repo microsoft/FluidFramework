@@ -25,7 +25,10 @@ import {
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 } from "./schemaTypes.js";
-import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
+import {
+	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
+} from "./unhydratedFlexTreeFromInsertable.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
 import { getKernel, type TreeNode, type UnhydratedFlexTreeNode } from "./core/index.js";
@@ -73,7 +76,7 @@ export function prepareArrayContentForInsertion(
 	destinationContext: FlexTreeContext,
 ): FlexibleFieldContent {
 	const mapTrees: UnhydratedFlexTreeNode[] = data.map((item) =>
-		mapTreeFromNodeData(item, schema),
+		unhydratedFlexTreeFromInsertable(item, schema),
 	);
 
 	const fieldSchema = convertField(normalizeFieldSchema(schema));
@@ -81,7 +84,11 @@ export function prepareArrayContentForInsertion(
 	validateAndPrepare(
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
-		{ kind: FieldKinds.sequence.identifier, types: fieldSchema.types },
+		{
+			kind: FieldKinds.sequence.identifier,
+			types: fieldSchema.types,
+			persistedMetadata: undefined,
+		},
 		mapTrees,
 	);
 
@@ -103,7 +110,7 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
-	const mapTree = mapTreeFromNodeData(data, schema);
+	const mapTree = unhydratedFlexTreeFromInsertable(data, schema);
 
 	const contentArray = mapTree === undefined ? [] : [mapTree];
 	const fieldSchema = convertField(normalizeFieldSchema(schema));

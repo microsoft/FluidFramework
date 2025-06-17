@@ -10,11 +10,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type AnchorEvents,
-	type AnchorNode,
-	EmptyKey,
+	dummyRoot,
 	type FieldKey,
 	type FieldKindIdentifier,
-	forbiddenFieldKindIdentifier,
 	type ITreeCursorSynchronous,
 	type NodeData,
 	type NormalizedFieldUpPath,
@@ -49,8 +47,11 @@ import {
 	type FlexibleFieldContent,
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
+	type HydratedFlexTreeNode,
+	cursorForMapTreeField,
+	type MinimalFieldMap,
 } from "../../feature-libraries/index.js";
-import { brand, filterIterable, getOrCreate } from "../../util/index.js";
+import { brand, filterIterable, getOrCreate, mapIterable } from "../../util/index.js";
 
 import type { Context } from "./context.js";
 import type { ContextualFieldProvider } from "../schemaTypes.js";
@@ -62,10 +63,7 @@ interface UnhydratedTreeSequenceFieldEditBuilder
 type UnhydratedFlexTreeNodeEvents = Pick<AnchorEvents, "childrenChangedAfterBatch">;
 
 /** A node's parent field and its index in that field */
-interface LocationInField {
-	readonly parent: FlexTreeField;
-	readonly index: number;
-}
+type LocationInField = FlexTreeNode["parentField"];
 
 /**
  * The {@link Unhydrated} implementation of {@link FlexTreeNode}.
@@ -73,6 +71,10 @@ interface LocationInField {
 export class UnhydratedFlexTreeNode
 	implements FlexTreeNode, MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>
 {
+	public isHydrated(): this is HydratedFlexTreeNode {
+		return false;
+	}
+
 	private location = unparentedLocation;
 
 	public get storedSchema(): TreeNodeStoredSchema {
@@ -136,14 +138,15 @@ export class UnhydratedFlexTreeNode
 	 * Due to having to detect if a field is empty, this forces the evaluation of any pending defaults in the fields.
 	 * Use {@link allFieldsLazy} to avoid evaluating pending defaults.
 	 */
-	public readonly fields: Pick<
-		Map<FieldKey, UnhydratedFlexTreeField>,
-		typeof Symbol.iterator | "get"
-	> = {
+	public readonly fields: MinimalFieldMap<UnhydratedFlexTreeField> = {
 		get: (key: FieldKey): UnhydratedFlexTreeField | undefined => this.tryGetField(key),
 		[Symbol.iterator]: (): IterableIterator<[FieldKey, UnhydratedFlexTreeField]> =>
 			filterIterable(this.fieldsAll, ([, field]) => field.length > 0),
 	};
+
+	public [Symbol.iterator](): IterableIterator<UnhydratedFlexTreeField> {
+		return mapIterable(this.fields, ([, field]) => field)[Symbol.iterator]();
+	}
 
 	/**
 	 * Gets all fields, without filtering out empty ones.
@@ -155,10 +158,6 @@ export class UnhydratedFlexTreeNode
 	}
 
 	public get type(): TreeNodeSchemaIdentifier {
-		return this.data.type;
-	}
-
-	public get schema(): TreeNodeSchemaIdentifier {
 		return this.data.type;
 	}
 
@@ -235,22 +234,12 @@ export class UnhydratedFlexTreeNode
 		return this.getOrCreateField(fieldKey);
 	}
 
-	public boxedIterator(): IterableIterator<FlexTreeField> {
-		return Array.from(this.fields, ([key, field]) => field)[Symbol.iterator]();
-	}
-
 	public keys(): IterableIterator<FieldKey> {
 		return Array.from(this.fields, ([key]) => key)[Symbol.iterator]();
 	}
 
 	public get value(): Value {
 		return this.data.value;
-	}
-
-	public get anchorNode(): AnchorNode {
-		// This API is relevant to `LazyTreeNode`s, but not `UnhydratedFlexTreeNode`s.
-		// TODO: Refactor the FlexTreeNode interface so that stubbing this out isn't necessary.
-		return fail(0xb47 /* UnhydratedFlexTreeNode does not implement anchorNode */);
 	}
 
 	public emitChangedEvent(key: FieldKey): void {
@@ -290,31 +279,16 @@ export class UnhydratedContext implements FlexTreeContext {
  * However, this field cannot be used in any practical way because it is empty, i.e. it does not actually contain the children that claim to be parented under it.
  * It has the "empty" schema and it will always contain zero children if queried.
  * Any nodes with this location will have a dummy parent index of `-1`.
+ *
+ * TODO: make this make sense.
  */
 const unparentedLocation: LocationInField = {
 	parent: {
-		[flexTreeMarker]: FlexTreeEntityKind.Field as const,
-		length: 0,
-		key: EmptyKey,
+		key: dummyRoot,
 		parent: undefined,
-		is<TKind2 extends FlexFieldKind>(kind: TKind2) {
-			return this.schema === kind.identifier;
-		},
-		boxedIterator(): IterableIterator<FlexTreeNode> {
-			return [].values();
-		},
-		boxedAt(index: number): FlexTreeNode | undefined {
-			return undefined;
-		},
-		schema: brand(forbiddenFieldKindIdentifier),
-		get context(): never {
-			return fail(0xb48 /* unsupported */);
-		},
-		getFieldPath() {
-			fail(0xb49 /* unsupported */);
-		},
+		schema: brand(FieldKinds.optional.identifier),
 	},
-	index: -1,
+	index: 0,
 };
 
 /**
@@ -347,6 +321,12 @@ export class UnhydratedFlexTreeField
 				child.adoptBy(this, i);
 			}
 		}
+	}
+
+	public borrowCursor(): ITreeCursorSynchronous {
+		return cursorForMapTreeField<MapTreeNodeViewGeneric<UnhydratedFlexTreeNode>>(
+			this.children,
+		);
 	}
 
 	private getPendingDefault(): ContextualFieldProvider | undefined {
@@ -391,10 +371,6 @@ export class UnhydratedFlexTreeField
 		return this.schema === kind.identifier;
 	}
 
-	public boxedIterator(): IterableIterator<UnhydratedFlexTreeNode> {
-		return this.children[Symbol.iterator]();
-	}
-
 	public boxedAt(index: number): FlexTreeNode | undefined {
 		const i = indexForAt(index, this.length);
 		if (i === undefined) {
@@ -405,7 +381,7 @@ export class UnhydratedFlexTreeField
 	}
 
 	public [Symbol.iterator](): IterableIterator<UnhydratedFlexTreeNode> {
-		return this.boxedIterator();
+		return this.children[Symbol.iterator]();
 	}
 
 	/**
@@ -459,7 +435,10 @@ export class UnhydratedOptionalField
 	public readonly editor = {
 		set: (newContent: FlexibleNodeContent | undefined): void => {
 			if (newContent !== undefined) {
-				assert(newContent instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
+				assert(
+					newContent instanceof UnhydratedFlexTreeNode,
+					0xbb7 /* Expected unhydrated node */,
+				);
 			}
 
 			this.edit((mapTrees) => {
@@ -508,7 +487,7 @@ export class UnhydratedSequenceField
 		insert: (index, newContent): void => {
 			for (const c of newContent) {
 				assert(c !== undefined, 0xa0a /* Unexpected sparse array content */);
-				assert(c instanceof UnhydratedFlexTreeNode, "Expected unhydrated node");
+				assert(c instanceof UnhydratedFlexTreeNode, 0xbb8 /* Expected unhydrated node */);
 			}
 			const newContentChecked = newContent as readonly UnhydratedFlexTreeNode[];
 			this.edit((mapTrees) => {

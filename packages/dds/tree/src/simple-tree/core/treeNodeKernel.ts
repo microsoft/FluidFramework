@@ -27,6 +27,7 @@ import {
 	TreeStatus,
 	treeStatusFromAnchorCache,
 	type FlexTreeNode,
+	type HydratedFlexTreeNode,
 } from "../../feature-libraries/index.js";
 
 import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
@@ -143,6 +144,8 @@ export class TreeNodeKernel {
 		innerNode: InnerNode,
 		private readonly initialContext: Context,
 	) {
+		splitInnerNodeType(innerNode);
+
 		assert(!treeNodeToKernel.has(node), 0xa1a /* only one kernel per node can be made */);
 		treeNodeToKernel.set(node, this);
 
@@ -354,18 +357,24 @@ const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] a
 type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 
 /**
- * For "cooked" nodes this is a FlexTreeNode thats a projection of forest content.
- * For {@link Unhydrated} nodes this is a MapTreeNode.
+ * For "cooked" nodes this is a HydratedFlexTreeNode thats a projection of forest content.
+ * For {@link Unhydrated} nodes this is a UnhydratedFlexTreeNode.
+ *
  * For "marinated" nodes, some code (ex: getOrCreateInnerNode) returns the FlexTreeNode thats a projection of forest content, and some code (ex: tryGetInnerNode) returns undefined.
- *
- * @remarks
- * Currently MapTreeNode extends FlexTreeNode, and most code which can work with either just uses FlexTreeNode.
- * TODO: Code should be migrating toward using this type to distinguish to two use-cases.
- *
- * TODO: The inconsistent handling of "marinated" cases should be cleaned up.
- * Maybe getOrCreateInnerNode should cook marinated nodes so they have a proper InnerNode?
  */
-export type InnerNode = FlexTreeNode | UnhydratedFlexTreeNode;
+export type InnerNode = FlexTreeNode;
+
+/**
+ * Narrows innerNode to either {@link UnhydratedFlexTreeNode} or {@link HydratedFlexTreeNode}.
+ */
+export function splitInnerNodeType(
+	innerNode: InnerNode,
+): asserts innerNode is UnhydratedFlexTreeNode | HydratedFlexTreeNode {
+	assert(
+		innerNode instanceof UnhydratedFlexTreeNode || innerNode.isHydrated(),
+		"Invalid inner node type",
+	);
+}
 
 /**
  * An anchor slot which associates an anchor with its corresponding {@link TreeNode}, if there is one.
@@ -392,13 +401,14 @@ export function tryDisposeTreeNode(anchorNode: AnchorNode): void {
  */
 export function getSimpleNodeSchemaFromInnerNode(innerNode: InnerNode): TreeNodeSchema {
 	const context: Context = getSimpleContextFromInnerNode(innerNode);
-	return context.schema.get(innerNode.schema) ?? fail(0xb3f /* missing schema from context */);
+	return context.schema.get(innerNode.type) ?? fail(0xb3f /* missing schema from context */);
 }
 
 /**
  * Gets the {@link Context} for the {@link InnerNode}.
  */
 export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
+	splitInnerNodeType(innerNode);
 	if (innerNode instanceof UnhydratedFlexTreeNode) {
 		return innerNode.simpleContext;
 	}
@@ -427,7 +437,7 @@ export function getOrCreateInnerNode(treeNode: TreeNode): InnerNode {
 /**
  * Gets a flex node from an anchor node
  */
-function flexNodeFromAnchor(anchorNode: AnchorNode): FlexTreeNode {
+function flexNodeFromAnchor(anchorNode: AnchorNode): HydratedFlexTreeNode {
 	const flexNode = anchorNode.slots.get(flexTreeSlot);
 	if (flexNode !== undefined) {
 		return flexNode; // If it does have a flex node, return it...

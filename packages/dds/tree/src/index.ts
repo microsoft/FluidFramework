@@ -113,6 +113,7 @@ export {
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
 	type FieldProps,
+	type FieldPropsAlpha,
 	type InternalTreeNode,
 	type WithType,
 	type NodeChangedData,
@@ -198,6 +199,7 @@ export {
 	type LazyItem,
 	type Unenforced,
 	type SimpleNodeSchemaBase,
+	type SimpleNodeSchemaBaseAlpha,
 	type SimpleTreeSchema,
 	type SimpleNodeSchema,
 	type SimpleFieldSchema,
@@ -216,6 +218,7 @@ export {
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
 	type SchemaStatics,
 	type ITreeAlpha,
@@ -288,6 +291,8 @@ export type {
 	PopUnion,
 	JsonCompatible,
 	JsonCompatibleObject,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 

@@ -64,6 +64,7 @@ export function toSimpleTreeSchema(
 					allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
 					kind: normalizedSchema.kind,
 					metadata: normalizedSchema.metadata,
+					persistedMetadata: normalizedSchema.persistedMetadata,
 				} satisfies SimpleFieldSchema)
 			: normalizedSchema,
 		definitions,
@@ -96,6 +97,7 @@ function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchem
 		kind: NodeKind.Leaf,
 		leafKind: schema.leafKind,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 
@@ -106,6 +108,7 @@ function copySimpleSchemaWithAllowedTypes(
 		kind: schema.kind,
 		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 
@@ -117,6 +120,7 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 			kind: field.kind,
 			allowedTypesIdentifiers: field.allowedTypesIdentifiers,
 			metadata: field.metadata,
+			persistedMetadata: field.persistedMetadata,
 			storedKey: field.storedKey,
 		});
 	}
@@ -125,5 +129,6 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 		kind: NodeKind.Object,
 		fields,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }

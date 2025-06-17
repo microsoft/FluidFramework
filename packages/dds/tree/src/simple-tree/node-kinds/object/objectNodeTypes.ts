@@ -8,7 +8,7 @@ import type {
 	TreeObjectNode,
 	SimpleKeyMap,
 	InsertableObjectFromAnnotatedSchemaRecord,
-} from "./objectNode.js";
+} from "./objectNode_old_draft.js";
 import type {
 	FieldSchemaAlpha,
 	ImplicitAnnotatedFieldSchema,

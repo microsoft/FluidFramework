@@ -28,7 +28,7 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	ImplicitAnnotatedFieldSchema,
 	ImplicitFieldSchema,
-	NodeSchemaOptions,
+	NodeSchemaOptionsAlpha,
 } from "../schemaTypes.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
@@ -100,6 +100,7 @@ export class SchemaFactoryAlpha<
 			options?.allowUnknownOptionalFields ??
 				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 			options?.metadata,
+			options?.persistedMetadata,
 		);
 	}
 
@@ -160,7 +161,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritDoc SchemaStatics.optional}
+	 * {@inheritDoc SchemaStatics.leaves}
 	 */
 	public static override readonly leaves = schemaStatics.leaves;
 
@@ -180,9 +181,39 @@ export class SchemaFactoryAlpha<
 	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
 	 */
 	public static readonly identifier = schemaStatics.identifier;
+
+	/**
+	 * {@inheritDoc SchemaStatics.leaves}
+	 */
+	public override readonly leaves = schemaStatics.leaves;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optional}
+	 */
+	public override readonly optional = schemaStatics.optional;
+
+	/**
+	 * {@inheritDoc SchemaStatics.required}
+	 */
+	public override readonly required = schemaStatics.required;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
@@ -205,9 +236,16 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		allowedTypes: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return mapSchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return mapSchema(
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+			options?.persistedMetadata,
+		);
 	}
 
 	/**
@@ -218,7 +256,7 @@ export class SchemaFactoryAlpha<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.mapAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -249,9 +287,16 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		allowedTypes: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return arraySchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return arraySchema(
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+			options?.persistedMetadata,
+		);
 	}
 
 	/**
@@ -262,7 +307,7 @@ export class SchemaFactoryAlpha<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.arrayAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -452,7 +497,7 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		allowedTypes: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): RecordNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
 		return recordSchema(this.scoped2(name), allowedTypes, true, options?.metadata);
 	}

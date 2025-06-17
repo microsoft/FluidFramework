@@ -14,7 +14,11 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../../../feature-libraries/index.js";
-import type { RestrictiveStringRecord, FlattenKeys } from "../../../util/index.js";
+import type {
+	RestrictiveStringRecord,
+	FlattenKeys,
+	JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -54,7 +58,10 @@ import {
 	type UnannotateSchemaRecord,
 } from "../../schemaTypes.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
-import { mapTreeFromNodeData, type InsertableContent } from "../../toMapTree.js";
+import {
+	unhydratedFlexTreeFromInsertable,
+	type InsertableContent,
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 
 /**
@@ -346,6 +353,7 @@ abstract class CustomObjectNodeBase<
  *
  * @param name - Unique identifier for this schema within this factory's scope.
  * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 export function objectSchema<
 	TName extends string,
@@ -358,6 +366,7 @@ export function objectSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
 	// Field set can't be modified after this since derived data is stored in maps.
@@ -453,7 +462,7 @@ export function objectSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return mapTreeFromNodeData(input as object, this as Output);
+			return unhydratedFlexTreeFromInsertable(input as object, this as Output);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -501,6 +510,8 @@ export function objectSchema<
 			return lazyChildTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
