@@ -24,6 +24,16 @@ const bar = TreeAlpha.child(myObject, "bar"); // undefined
 const baz = TreeAlpha.child(myObject, "baz"); // undefined
 ```
 
+```typescript
+class MyArray extends schemaFactory.array("MyArray", schemaFactory.string) {}
+
+const myArray = new MyArray("Hello", "World");
+
+const child0 = TreeAlpha.child(myArray, 0); // "Hello"
+const child1 = TreeAlpha.child(myArray, 1); // "World
+const child2 = TreeAlpha.child(myArray, 2); // undefined
+```
+
 #### TreeAlpha.children
 
 Get all child nodes / values of a `TreeNode`, keyed by their property keys.
@@ -41,4 +51,12 @@ const myObject = new MyObject({
 });
 
 const children = TreeAlpha.children(myObject); // [["foo", "Hello world!"], ["baz", 42]]
+```
+
+```typescript
+class MyArray extends schemaFactory.array("MyArray", schemaFactory.string) {}
+
+const myArray = new MyArray("Hello", "World");
+
+const children = TreeAlpha.children(myObject); // [[0, "Hello"], [1, "World"]]
 ```
