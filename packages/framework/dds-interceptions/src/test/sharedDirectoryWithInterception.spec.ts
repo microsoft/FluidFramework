@@ -353,7 +353,7 @@ describe("Shared Directory with Interception", () => {
 
 			// Interception callback for wrapping the subdirectory that adds user email to the attribution.
 			function interceptionCb(
-				baseDirectory,
+				baseDirectory: IDirectory,
 				subDirectory: IDirectory,
 				key: string,
 				value,
@@ -415,7 +415,7 @@ describe("Shared Directory with Interception", () => {
 			// causing an infinite recursion.
 			// If useWrapper is false, it uses the passed subDirectory which does not cause recursion.
 			function recursiveInterceptionCb(
-				baseDirectory,
+				baseDirectory: IDirectory,
 				subDirectory: IDirectory,
 				key: string,
 				value: unknown,
