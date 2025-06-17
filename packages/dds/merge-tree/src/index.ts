@@ -15,7 +15,7 @@ export {
 	createPropertyTrackingAttributionPolicyFactory,
 	createPropertyTrackingAndInsertionAttributionPolicyFactory,
 } from "./attributionPolicy.js";
-export { Client, IClientEvents } from "./client.js";
+export { Client, IClientEvents, RebasedObliterateEndpoint } from "./client.js";
 export {
 	ConflictAction,
 	Dictionary,

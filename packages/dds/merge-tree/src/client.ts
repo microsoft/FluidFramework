@@ -108,7 +108,10 @@ import * as opstampUtils from "./stamps.js";
 type IMergeTreeDeltaRemoteOpArgs = Omit<IMergeTreeDeltaOpArgs, "sequencedMessage"> &
 	Required<Pick<IMergeTreeDeltaOpArgs, "sequencedMessage">>;
 
-interface RebasedObliterateEndpoint {
+/**
+ * @internal
+ */
+export interface RebasedObliterateEndpoint {
 	segment: ISegmentLeaf;
 	offset: number;
 	side: Side;
@@ -910,8 +913,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return { segment: newSegment, offset: newOffset, side: newSide };
 	}
 
-	private computeNewObliterateEndpoints(
-		obliterateInfo: ObliterateInfo,
+	public computeNewObliterateEndpoints(
+		obliterateInfo: {
+			start: LocalReferencePosition;
+			end: LocalReferencePosition;
+			stamp: OperationStamp;
+			startSide: Side;
+			endSide: Side;
+		},
 		squash: boolean,
 	): {
 		start: RebasedObliterateEndpoint;
