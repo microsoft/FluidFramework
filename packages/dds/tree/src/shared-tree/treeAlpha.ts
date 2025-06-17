@@ -52,12 +52,12 @@ import {
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
 } from "../simple-tree/index.js";
-import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
+import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
-	type CodecWriteOptions,
-	type ICodecOptions,
-	currentVersion,
+	FluidClientVersion,
 	noopValidator,
+	type ICodecOptions,
+	type CodecWriteOptions,
 } from "../codec/index.js";
 import { EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
@@ -521,7 +521,8 @@ export const TreeAlpha: TreeAlpha = {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
-			schema: extractPersistedSchema(config, currentVersion),
+			// Always use a v1 schema codec for consistency.
+			schema: extractPersistedSchema(config, FluidClientVersion.v2_0),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
