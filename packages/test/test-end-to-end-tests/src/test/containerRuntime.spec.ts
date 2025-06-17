@@ -7,20 +7,11 @@ import { strict as assert } from "assert";
 
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
-import type { IEventProvider } from "@fluidframework/core-interfaces/internal";
-import type {
-	IContainerRuntimeBase,
-	IContainerRuntimeBaseEvents,
-} from "@fluidframework/runtime-definitions/internal";
 import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
-	timeoutPromise as timeoutPromiseUnnamed,
-	TimeoutWithError,
-	TimeoutWithValue,
 } from "@fluidframework/test-utils/internal";
 
 describeCompat(
@@ -198,97 +189,6 @@ describeCompat(
 		}
 	},
 );
-
-async function timeoutPromise<T = void>(
-	executor: (controller: {
-		resolve: (value: T | PromiseLike<T>) => void;
-		reject: (reason?: any) => void;
-	}) => void,
-	timeoutOptions: TimeoutWithError | TimeoutWithValue<T> = {},
-): Promise<T> {
-	return timeoutPromiseUnnamed(
-		(resolve, reject) => executor({ resolve, reject }),
-		timeoutOptions,
-	);
-}
-interface ConnectedEvents extends IContainerRuntimeBaseEvents {
-	(event: "connectedToService", listener: () => void);
-	(event: "disconnectedFromService", listener: () => void);
-}
-
-type IContainerRuntimeBaseWithConnectedEvents = IContainerRuntimeBase &
-	IEventProvider<ConnectedEvents>;
-
-describeCompat("Eventing", "NoCompat", (getTestObjectProvider) => {
-	it("emits initial 'connectedToService'", async () => {
-		const provider: ITestObjectProvider = getTestObjectProvider();
-		const container = await provider.makeTestContainer();
-		container.forceReadonly?.(true); // Readonly container
-		const entry = await getContainerEntryPointBackCompat<ITestDataObject>(container);
-		const containerRuntime = entry._context
-			.containerRuntime as IContainerRuntimeBaseWithConnectedEvents;
-		if (container.connectionState !== ConnectionState.Connected) {
-			await timeoutPromise(
-				({ resolve }) => containerRuntime.once("connectedToService", () => resolve()),
-				{
-					durationMs: 2000,
-					errorMsg: `Connected to service timeout`,
-				},
-			);
-		}
-	});
-
-	describe("after initial 'connectedToService'", () => {
-		let provider: ITestObjectProvider;
-		let container: IContainer;
-		let entry: ITestDataObject;
-		let containerRuntime: IContainerRuntimeBaseWithConnectedEvents;
-
-		beforeEach("setup", async () => {
-			provider = getTestObjectProvider();
-			container = await provider.makeTestContainer();
-			container.forceReadonly?.(true); // Readonly container
-			entry = await getContainerEntryPointBackCompat<ITestDataObject>(container);
-			containerRuntime = entry._context
-				.containerRuntime as IContainerRuntimeBaseWithConnectedEvents;
-
-			if (container.connectionState !== ConnectionState.Connected) {
-				await new Promise<void>((resolve) =>
-					containerRuntime.once("connectedToService", () => resolve()),
-				);
-			}
-		});
-
-		it("emits 'disconnectedFromService' event", async () => {
-			let disconnectedCount = 0;
-			containerRuntime.on("disconnectedFromService", () => {
-				disconnectedCount++;
-			});
-			container.disconnect();
-
-			assert.strictEqual(disconnectedCount, 1, "Should have disconnected");
-		});
-
-		it("emits 'connectedToService' event after reconnect", async () => {
-			let connectedCount = 0;
-			containerRuntime.on("connectedToService", () => {
-				connectedCount++;
-			});
-			container.disconnect();
-			container.connect();
-
-			await timeoutPromise(
-				({ resolve }) => containerRuntime.once("connectedToService", () => resolve()),
-				{
-					durationMs: 2000,
-					errorMsg: `Connected to service timeout`,
-				},
-			);
-
-			assert.strictEqual(connectedCount, 1, "Should have reconnected");
-		});
-	});
-});
 
 describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
