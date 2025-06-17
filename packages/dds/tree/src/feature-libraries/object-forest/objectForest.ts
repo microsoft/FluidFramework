@@ -154,6 +154,9 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 								// Some detached fields may have multiple nodes, so we must treat them as sequences:
 								kind: FieldKinds.sequence.identifier,
 								types: new Set(documentRoot.map((node) => node.type)),
+
+								// Metadata is not used for schema checks
+								persistedMetadata: undefined,
 							};
 				const maybeError = isFieldInSchema(documentRoot, fieldSchema, {
 					schema,
