@@ -9,15 +9,12 @@ import { describeCompat, ITestDataObject } from "@fluid-private/test-version-uti
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
-<<<<<<< true-connected-state
 import type { IEventProvider } from "@fluidframework/core-interfaces/internal";
 import type {
 	IContainerRuntimeBase,
 	IContainerRuntimeBaseEvents,
 } from "@fluidframework/runtime-definitions/internal";
-=======
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
->>>>>>> main
 import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
