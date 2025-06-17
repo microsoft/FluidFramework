@@ -45,7 +45,7 @@ import {
 	TokenFetcher,
 } from "./restWrapper.js";
 import { RestWrapper } from "./restWrapperBase.js";
-import { r11sDriverCompatDetailsForLoader } from "./runtimeLayerCompatState.js";
+import { r11sDriverCompatDetailsForLoader } from "./routerliciousLayerCompatState.js";
 import type { IGetSessionInfoResponse } from "./sessionInfoManager.js";
 import { SocketIOClientStatic } from "./socketModule.js";
 import { ITokenProvider } from "./tokens.js";

@@ -38,7 +38,7 @@ import {
 	OdspDeltaStorageWithCache,
 } from "./odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
-import { odspDriverCompatDetailsForLoader } from "./odspRuntimeLayerCompatState.js";
+import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";

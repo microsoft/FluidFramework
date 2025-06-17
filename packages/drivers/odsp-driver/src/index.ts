@@ -68,4 +68,4 @@ export {
 } from "./compactSnapshotParser.js";
 
 // Layer Compat details
-export { odspDriverCompatDetailsForLoader } from "./odspRuntimeLayerCompatState.js";
+export { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";

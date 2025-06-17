@@ -24,4 +24,4 @@ export {
 export { IRouterliciousDriverPolicies } from "./policies.js";
 
 // Layer Compat details
-export { r11sDriverCompatDetailsForLoader } from "./runtimeLayerCompatState.js";
+export { r11sDriverCompatDetailsForLoader } from "./routerliciousLayerCompatState.js";
