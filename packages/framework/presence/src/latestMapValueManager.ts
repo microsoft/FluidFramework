@@ -164,7 +164,6 @@ export interface LatestMapEvents<
 /**
  * Events from {@link LatestMapRaw}.
  *
- * @deprecated Use {@link LatestMapEvents} instead.
  * @sealed
  * @beta
  */

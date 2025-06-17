@@ -64,7 +64,6 @@ export interface LatestEvents<
 /**
  * Events from {@link LatestRaw}.
  *
- * @deprecated Use {@link LatestEvents} instead.
  * @sealed
  * @beta
  */
