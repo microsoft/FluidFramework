@@ -97,8 +97,8 @@ export interface ShareLinkInfoType {
 	sharingLinkToRedeem?: string;
 
 	/**
-	 * When sharingLinkToRedeem is used this parameter can be used to make it so that the redemption
-	 * expires after a certain time period.
+	 * When a sharingLinkToRedeem is used, this parameter can be set to make the request with
+	 * the redemption expire after a certain time period.
 	 * @defaultValue false
 	 */
 	isRedemptionNonDurable?: boolean;
