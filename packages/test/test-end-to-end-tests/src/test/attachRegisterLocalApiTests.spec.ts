@@ -22,7 +22,6 @@ import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
-	TestFluidObject,
 	TestFluidObjectFactory,
 	createDocumentId,
 } from "@fluidframework/test-utils/internal";

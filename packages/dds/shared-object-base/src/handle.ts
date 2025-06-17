@@ -40,8 +40,10 @@ export function isISharedObjectHandle(handle: unknown): handle is ISharedObjectH
  *
  * @remarks
  *
- * This object is used for already loaded (in-memory) shared objects, and implements the behavior where
- * storing a handle in an attached (or to-be-attached) DDS will result in the target object becoming attached as well.
+ * This object is used for already loaded (in-memory) shared objects.
+ *
+ * It provides a "bind" function that is expected to be invoked on all handles stored in this DDS,
+ * ensuring the target object becomes attached along with this DDS.
  */
 export class SharedObjectHandle
 	extends FluidObjectHandle<ISharedObject>
