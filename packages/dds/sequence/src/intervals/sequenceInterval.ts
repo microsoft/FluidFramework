@@ -286,8 +286,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
 		props?: PropertySet,
-		public readonly startSide: Side = Side.Before,
-		public readonly endSide: Side = Side.Before,
+		public startSide: Side = Side.Before,
+		public endSide: Side = Side.Before,
 	) {
 		if (props) {
 			this.#props.properties = addProperties(this.#props.properties, props);
@@ -500,6 +500,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	}
 
 	public rebaseEndpoints(rebased: Record<"start" | "end", RebasedObliterateEndpoint>) {
+		this.startSide = rebased.start.side;
 		const startRef = createPositionReferenceFromSegoff(
 			this.client,
 			rebased.start,
@@ -515,6 +516,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		}
 		this.start = startRef;
 
+		this.endSide = rebased.end.side;
 		const endRef = createPositionReferenceFromSegoff(
 			this.client,
 			rebased.end,
