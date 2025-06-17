@@ -364,7 +364,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 				url: url.toString(),
 				headers: {
 					[SharingLinkHeader.isSharingLinkToRedeem]: true,
-					[SharingLinkHeader.nonDurableRedeem]: true,
+					[SharingLinkHeader.isRedemptionNonDurable]: true,
 				},
 			});
 		});
@@ -381,7 +381,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 			return urlResolverWithShareLinkFetcher.resolve({
 				url: url.toString(),
 				headers: {
-					[SharingLinkHeader.nonDurableRedeem]: true,
+					[SharingLinkHeader.isRedemptionNonDurable]: true,
 				},
 			});
 		});

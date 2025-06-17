@@ -99,6 +99,7 @@ export interface ShareLinkInfoType {
 	/**
 	 * When a sharingLinkToRedeem is used, this parameter can be set to make the request with
 	 * the redemption expire after a certain time period.
+	 * The duration of the redemption is not set by Fluid.
 	 * @defaultValue false
 	 */
 	isRedemptionNonDurable?: boolean;
