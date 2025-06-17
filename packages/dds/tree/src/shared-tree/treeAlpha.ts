@@ -52,7 +52,7 @@ import {
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
 } from "../simple-tree/index.js";
-import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
+import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
 	FluidClientVersion,
 	noopValidator,
