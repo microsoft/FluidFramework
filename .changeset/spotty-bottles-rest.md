@@ -3,7 +3,7 @@
 "@fluidframework/tree": minor
 "__section": feature
 ---
-Persisted metadata for Shared Tree schemas
+Persisted metadata for Shared Tree schemas (Alpha)
 
 The persisted metadata feature for Shared Tree allows an application author to write document-persisted metadata along with the schema. This feature is supported for both object node and field schemas.
 
