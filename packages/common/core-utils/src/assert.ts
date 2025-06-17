@@ -27,7 +27,7 @@
  * This API is not intended for use outside of the Fluid Framework client codebase: it will most likely be made internal in the future.
  * @privateRemarks
  * This should be deprecated (as a non internal API) then moved to purely internal.
- * When done the `skipInProduction` reference above should be turned into a link.
+ * When done, the `skipInProduction` reference above should be turned into a link.
  * @legacy
  * @alpha
  */
