@@ -41,7 +41,10 @@ import { brandIVM } from "./valueManager.js";
  * @sealed
  * @beta
  */
-export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> {
+export interface LatestEvents<
+	T,
+	TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
+> {
 	/**
 	 * Raised when remote client's value is updated, which may be the same value.
 	 *
@@ -58,6 +61,14 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> 
 		value: DeepReadonly<JsonSerializable<T>>;
 	}) => void;
 }
+
+/**
+ * Events from {@link LatestRaw}.
+ *
+ * @sealed
+ * @beta
+ */
+export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
 
 /**
  * State that provides the latest known value from this client to others and read access to their values.
@@ -189,7 +200,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			.map((attendeeId) => this.datastore.presence.attendees.getAttendee(attendeeId));
 	}
 
-	public getRemote = (attendee: Attendee): LatestData<T, ValueAccessor<T>> => {
+	public getRemote(attendee: Attendee): LatestData<T, ValueAccessor<T>> {
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
@@ -202,7 +213,7 @@ class LatestValueManagerImpl<T, Key extends string>
 					: createValidatedGetter(clientState, this.validator),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
-	};
+	}
 
 	public update(
 		attendee: Attendee,
@@ -307,7 +318,7 @@ export function latest<T extends object | null, Key extends string = string>(
 
 // #endregion
 
-/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
+// eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
 export function latest<T extends object | null, Key extends string = string>(
 	args: LatestArguments<T> | LatestArgumentsRaw<T>,
 ):
@@ -381,4 +392,3 @@ export function latest<T extends object | null, Key extends string = string>(
 				});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
 }
-/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */

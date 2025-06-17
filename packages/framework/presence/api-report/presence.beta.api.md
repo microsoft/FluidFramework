@@ -164,7 +164,7 @@ export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
 }
 
 // @beta @sealed
-export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T>> {
+export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
     localUpdated: (update: {
         value: DeepReadonly<JsonSerializable<T>>;
@@ -247,6 +247,9 @@ export interface LatestMapItemUpdatedClientData<T, K extends string | number, TV
 export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
 
 // @beta @sealed
+export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<T, K, RawValueAccessor<T>>;
+
+// @beta @sealed
 export interface LatestMetadata {
     revision: number;
     timestamp: number;
@@ -254,6 +257,9 @@ export interface LatestMetadata {
 
 // @beta @sealed
 export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
+
+// @beta @sealed
+export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
 
 // @beta @sealed
 export interface Presence {

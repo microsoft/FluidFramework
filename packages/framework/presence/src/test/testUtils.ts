@@ -9,7 +9,8 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
-import { spy, type SinonFakeTimers } from "sinon";
+import { spy } from "sinon";
+import type { SinonFakeTimers } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
 import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
@@ -24,7 +25,7 @@ import type {
 } from "@fluidframework/presence/alpha";
 
 /**
- * Used to compile-time assert types of two variables are identical.
+ * Use to compile-time assert types of two variables are identical.
  */
 export function assertIdenticalTypes<T, U>(
 	_actual: T & InternalUtilityTypes.IfSameType<T, U>,
@@ -192,16 +193,18 @@ export function assertFinalExpectations(
 
 /**
  * A null validator (one that does nothing) for a given type T. It simply casts the value to
- * `JsonDeserialized<T> | undefined`.
+ * `JsonDeserialized<T>`.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-const nullValidator = <T extends object>(data: unknown) => {
-	return data as JsonDeserialized<T> | undefined;
+const nullValidator = <T extends object>(data: unknown): JsonDeserialized<T> => {
+	return data as JsonDeserialized<T>;
 };
 
 /**
- * Creates a spied validator anfor test purposes.
+ * Creates a spied validator for test purposes.
+ *
+ * @param validatorFunction - A {@link StateSchemaValidator} to wrap in a spy.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
-export const createSpiedValidator = <T extends object>(validatorFunction = nullValidator<T>) =>
-	spy(validatorFunction) satisfies StateSchemaValidator<T>;
+export const createSpiedValidator = <T extends object>(
+	validatorFunction: StateSchemaValidator<T> = nullValidator<T>,
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+) => spy(validatorFunction) satisfies StateSchemaValidator<T>;

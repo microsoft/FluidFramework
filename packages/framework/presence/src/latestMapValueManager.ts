@@ -163,6 +163,18 @@ export interface LatestMapEvents<
 }
 
 /**
+ * Events from {@link LatestMapRaw}.
+ *
+ * @sealed
+ * @beta
+ */
+export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<
+	T,
+	K,
+	RawValueAccessor<T>
+>;
+
+/**
  * Map of local client's values. Modifications are transmitted to all other connected clients.
  *
  * @sealed
@@ -605,33 +617,6 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 
 	/**
 	 * See {@link BroadcastControlSettings}.
-	 *
-	 * @privateRemarks
-	 * Without the `| undefined` type, TypeScript emits an error when passing an optional
-	 * {@link BroadcastControlSettings}. For example, the following code will emit a compilation error:
-	 *
-	 * ```ts
-	 * function createLatestMapManager(
-	 * 	presence: Presence,
-	 * 	valueControlSettings?: BroadcastControlSettings,
-	 * ) {
-	 * 	const workspace = presence.states.getWorkspace(testWorkspaceName, {
-	 * 		fixedMap: StateFactory.latestMap({
-	 * 			local: { key1: { x: 0, y: 0 } },
-	 * 			settings: valueControlSettings,
-	 * 		}),
-	 * 	});
-	 * 	return workspace.states.fixedMap;
-	 * }
-	 *```
-	 *
-	 * The compilation error is:
-	 *
-	 * ```text
-	 * Types of property 'settings' are incompatible.
-	 *    Type 'BroadcastControlSettings | undefined' is not assignable to type 'BroadcastControlSettings'.
-	 *      Type 'undefined' is not assignable to type 'BroadcastControlSettings'.
-	 * ```
 	 */
 	settings?: BroadcastControlSettings | undefined;
 }
@@ -715,10 +700,7 @@ export function latestMap<
 
 // #endregion
 
-/**
- * @beta
- */
-/* eslint-disable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */
+// eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
 export function latestMap<
 	T,
 	Keys extends string | number = string | number,
@@ -738,11 +720,7 @@ export function latestMap<
 	  > {
 	const settings = args?.settings;
 	const initialValues = args?.local;
-
-	const validator =
-		args !== undefined && "validator" in args && args.validator !== undefined
-			? args.validator
-			: undefined;
+	const validator = args?.validator;
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
@@ -817,4 +795,3 @@ export function latestMap<
 
 	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
 }
-/* eslint-enable jsdoc/require-jsdoc -- no tsdoc since the overloads are documented */

@@ -95,6 +95,7 @@ describe("Presence", () => {
 
 		afterEach(function (done: Mocha.Done) {
 			clock.reset();
+			validatorFunction.resetHistory();
 
 			// If the test passed so far, check final expectations.
 			if (this.currentTest?.state === "passed") {
@@ -125,7 +126,6 @@ describe("Presence", () => {
 			}>;
 
 			beforeEach(() => {
-				validatorFunction.resetHistory();
 				runtime.signalsExpected.push([
 					{
 						type: "Pres:DatastoreUpdate",
@@ -151,10 +151,6 @@ describe("Presence", () => {
 				// validatorFunction = createSpiedValidator<TestData>();
 
 				assert.equal(validatorFunction.callCount, 0);
-			});
-
-			afterEach(() => {
-				validatorFunction.resetHistory();
 			});
 
 			describe("validator", () => {
@@ -193,33 +189,32 @@ describe("Presence", () => {
 				});
 
 				it("is not called by getRemote", () => {
-					// Act & Verify
+					// Setup
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
 
-					// Calling getRemote should not invoke the validator (only a value read will).
+					// Act - Calling getRemote should not invoke the validator (only a value read will).
 					count.getRemote(attendee2);
 
+					// Verify
 					assert.equal(validatorFunction.callCount, 0);
 				});
 
-				it("is called one first .value() call", () => {
-					// Act & Verify
+				it("is called on first .value() call", () => {
+					// Setup
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
-
-					// Calling getRemote should not invoke the validator (only a value read will).
 					const remoteData = count.getRemote(attendee2);
+
+					// Act - Reading the data should cause the validator to get called once.
 					const value = remoteData.value();
 
-					// Reading the data should cause the validator to get called once.
+					// Verify
 					assert.equal(value?.num, 11);
 					assert.equal(validatorFunction.callCount, 1);
 				});
 
 				it("is called only once for multiple .value() calls on unchanged data", () => {
-					// Act & Verify
+					// Setup
 					const attendee2 = presence.attendees.getAttendee(attendeeId2);
-
-					// Calling getRemote should not invoke the validator (only a value read will).
 					const remoteData = count.getRemote(attendee2);
 
 					// Reading the data should cause the validator to get called once.
@@ -231,12 +226,12 @@ describe("Presence", () => {
 					assert.equal(validatorFunction.callCount, 1);
 				});
 
-				it("returns undefined when data is invalid", () => {
+				it("returns undefined through proxied value accessor when remote data is invalid", () => {
 					// Setup
 					runtime.signalsExpected.push([
 						{
-							type: "Pres:DatastoreUpdate",
-							content: {
+							"type": "Pres:DatastoreUpdate",
+							"content": {
 								"sendTimestamp": 1030,
 								"avgLatency": 10,
 								"data": {
@@ -255,18 +250,20 @@ describe("Presence", () => {
 						},
 					]);
 
-					// count = stateWorkspace.states.count;
+					count = stateWorkspace.states.count;
 					count.local = "string" as unknown as TestData;
+					const attendee2 = presence.attendees.getAttendee(attendeeId2);
+					const remote = count.getRemote(attendee2);
 
 					// Act & Verify
-					const attendee2 = presence.attendees.getAttendee(attendeeId2);
+					assert.equal(validatorFunction.callCount, 0, "call count should be 0");
+					let remoteData = remote.value();
+					assert.equal(remoteData, undefined);
+					assert.equal(validatorFunction.callCount, 1, "call count should be 1");
 
-					// Calling getRemote should not invoke the validator (only a value read will).
-					const remoteData = count.getRemote(attendee2);
-					assert.equal(validatorFunction.callCount, 0);
-					assert.equal(remoteData.value(), undefined, "remoteData.value() returned a value");
-					// assertIdenticalTypes(remoteData.value(), createInstanceOf<undefined>());
-					assert.equal(validatorFunction.callCount, 1);
+					// Subsequent calls do not invoke validator
+					remoteData = remote.value();
+					assert.equal(validatorFunction.callCount, 1, "call count should still be 1");
 				});
 			});
 		});
@@ -290,7 +287,6 @@ describe("Presence", () => {
 			}>;
 
 			beforeEach(() => {
-				validatorFunction.resetHistory();
 				runtime.signalsExpected.push(
 					[
 						{
@@ -357,10 +353,6 @@ describe("Presence", () => {
 				});
 
 				count = stateWorkspace.states.count;
-			});
-
-			afterEach(() => {
-				validatorFunction.resetHistory();
 			});
 
 			describe("validator", () => {
