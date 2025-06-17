@@ -1,4 +1,4 @@
-# @fluidframework/tinylicious-end-to-end-tests
+# @fluid-private/tinylicious-end-to-end-tests
 
 Functional end-to-end tests for Tinylicious and tinylicious-client.
 
