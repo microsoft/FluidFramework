@@ -54,6 +54,7 @@ export function assert(
  * ```ts
  *  const x: number = numbersMap.get("foo") ?? fail("foo missing from map");
  * ```
+ * @see {@link assert}
  * @internal
  */
 export function fail(message: string | number, debugMessageBuilder?: () => string): never {
