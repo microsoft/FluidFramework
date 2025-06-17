@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import {
+	validateRequestParams,
+	handleResponse,
+	validatePrivateLink,
+} from "@fluidframework/server-services";
 import { IAlfredTenant } from "@fluidframework/server-services-client";
 import {
 	ICache,
@@ -42,6 +46,7 @@ export function create(
 	const rawDeltasCollectionName = config.get("mongo:collectionNames:rawdeltas");
 	const getDeltasRequestMaxOpsRange =
 		(config.get("alfred:getDeltasRequestMaxOpsRange") as number) ?? 2000;
+	const clusterHost: string = config.get("clusterHost");
 	const router: Router = Router();
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
@@ -59,6 +64,8 @@ export function create(
 		throttleIdPrefix: Constants.getDeltasThrottleIdPrefix,
 		throttleIdSuffix: Constants.alfredRestThrottleIdSuffix,
 	};
+
+	const enableNetworkCheck: boolean = config.get("alfred:enableNetworkCheck");
 
 	// Jwt token cache
 	const enableJwtTokenCache: boolean = getBooleanFromConfig(
@@ -138,6 +145,7 @@ export function create(
 	router.get(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
+		validatePrivateLink(tenantManager, clusterHost, enableNetworkCheck),
 		throttle(
 			clusterThrottlers.get(Constants.getDeltasThrottleIdPrefix),
 			winston,
