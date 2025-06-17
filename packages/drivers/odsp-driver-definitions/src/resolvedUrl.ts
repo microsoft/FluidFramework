@@ -97,9 +97,11 @@ export interface ShareLinkInfoType {
 	sharingLinkToRedeem?: string;
 
 	/**
-	 * If the redeem for the sharing link is non-durable, this flag will be set to true.
+	 * When sharingLinkToRedeem is used this parameter can be used to make it so that the redemption
+	 * expires after a certain time period.
+	 * @defaultValue false
 	 */
-	doNonDurableRedeem?: boolean;
+	isRedemptionNonDurable?: boolean;
 }
 /**
  * @legacy

@@ -224,8 +224,8 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			);
 
-			const doNonDurableRedeem: boolean =
-				odspResolvedUrl.shareLinkInfo?.doNonDurableRedeem === true;
+			const isRedemptionNonDurable: boolean =
+				odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
@@ -243,7 +243,7 @@ async function redeemSharingLink(
 						"RedeemShareLink",
 					);
 					const headers = getHeadersWithAuth(authHeader);
-					headers.prefer = doNonDurableRedeem ? "nonDurableRedeem" : "redeemSharingLink";
+					headers.prefer = isRedemptionNonDurable ? "nonDurableRedeem" : "redeemSharingLink";
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
 			}
@@ -260,9 +260,9 @@ async function redeemSharingLink(
 			// construct the url for /shares using tenant domain. We get tenant domain by getting origin of the siteUrl.
 			try {
 				await callSharesAPI(new URL(odspResolvedUrl.siteUrl).origin);
-				event.end({ details, doNonDurableRedeem });
+				event.end({ details, isRedemptionNonDurable });
 			} catch (error) {
-				event.cancel({ details, doNonDurableRedeem }, error);
+				event.cancel({ details, isRedemptionNonDurable }, error);
 				throw error;
 			}
 		},
@@ -727,14 +727,14 @@ export const downloadSnapshot = mockify(
 		const queryString = getQueryString(queryParams);
 		const url = `${snapshotUrl}/trees/latest${queryString}`;
 		const method = "POST";
-		const doNonDurableRedeem: boolean =
-			odspResolvedUrl.shareLinkInfo?.doNonDurableRedeem === true;
+		const isRedemptionNonDurable: boolean =
+			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 		// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 		// If the share link is non-durable, we will add the nonDurableRedeem header to the header.prefer.
-		const header = doNonDurableRedeem
+		const header = isRedemptionNonDurable
 			? { prefer: "manualredirect, nonDurableRedeem" }
 			: { prefer: "manualredirect" };
 		const authHeader = await getAuthHeader(

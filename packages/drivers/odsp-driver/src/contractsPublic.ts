@@ -21,12 +21,16 @@ export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
  * @internal
  */
 export enum SharingLinkHeader {
-	// Can be used in request made to resolver, to tell the resolver that the passed in URL is a sharing link
-	// which can be redeemed at server to get permissions.
+	/**
+	 * Can be used in request made to resolver, to tell the resolver that the passed in URL is a sharing link
+	 * which can be redeemed at server to get permissions.
+	 */
 	isSharingLinkToRedeem = "isSharingLinkToRedeem",
-	// When isSharingLinkToRedeem is true, this header can be used to tell the server that the redeem of the sharing link
-	// is meant to be non-durable.
-	doNonDurableRedeem = "doNonDurableRedeem",
+	/**
+	 * When isSharingLinkToRedeem is true, this header can be used to tell the server that the redemption of the sharing link
+	 * is meant to be non-durable.
+	 */
+	nonDurableRedeem = "nonDurableRedeem",
 }
 
 /**
@@ -34,7 +38,7 @@ export enum SharingLinkHeader {
  */
 export interface ISharingLinkHeader {
 	[SharingLinkHeader.isSharingLinkToRedeem]: boolean;
-	[SharingLinkHeader.doNonDurableRedeem]: boolean;
+	[SharingLinkHeader.nonDurableRedeem]: boolean;
 }
 /**
  * @internal
