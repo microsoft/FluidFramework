@@ -31,7 +31,6 @@ import {
 	type ISegmentInternal,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
-	type RebasedObliterateEndpoint,
 } from "@fluidframework/merge-tree/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -286,8 +285,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		public end: LocalReferencePosition,
 		public intervalType: IntervalType,
 		props?: PropertySet,
-		public startSide: Side = Side.Before,
-		public endSide: Side = Side.Before,
+		public readonly startSide: Side = Side.Before,
+		public readonly endSide: Side = Side.Before,
 	) {
 		if (props) {
 			this.#props.properties = addProperties(this.#props.properties, props);
@@ -497,40 +496,6 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		const startPos = this.client.localReferencePositionToPosition(this.start);
 		const endPos = this.client.localReferencePositionToPosition(this.end);
 		return endPos > bstart && startPos < bend;
-	}
-
-	public rebaseEndpoints(rebased: Record<"start" | "end", RebasedObliterateEndpoint>) {
-		this.startSide = rebased.start.side;
-		const startRef = createPositionReferenceFromSegoff(
-			this.client,
-			rebased.start,
-			this.start.refType,
-			undefined,
-			undefined,
-			undefined,
-			startReferenceSlidingPreference(this.stickiness),
-			startReferenceSlidingPreference(this.stickiness) === SlidingPreference.BACKWARD,
-		);
-		if (this.start.properties) {
-			startRef.addProperties(this.start.properties);
-		}
-		this.start = startRef;
-
-		this.endSide = rebased.end.side;
-		const endRef = createPositionReferenceFromSegoff(
-			this.client,
-			rebased.end,
-			this.end.refType,
-			undefined,
-			undefined,
-			undefined,
-			endReferenceSlidingPreference(this.stickiness),
-			endReferenceSlidingPreference(this.stickiness) === SlidingPreference.FORWARD,
-		);
-		if (this.end.properties) {
-			endRef.addProperties(this.end.properties);
-		}
-		this.end = endRef;
 	}
 
 	/**
