@@ -32,6 +32,7 @@ export type FluidObjectSymbolProvider<T> = {
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
 	: {
+			// eslint-disable-next-line @rushstack/no-new-null --  supported by JavaScript; it isn't deprecated
 			[P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
 		};
 

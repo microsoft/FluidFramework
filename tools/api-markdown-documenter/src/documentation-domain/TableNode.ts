@@ -4,7 +4,6 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
 
 // TODOs:
@@ -72,14 +71,7 @@ export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Table;
-
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
+	public readonly type = "table";
 
 	/**
 	 * Optional table header row.
