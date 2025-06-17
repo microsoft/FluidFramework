@@ -63,7 +63,9 @@ jobs:
         run: echo "TAG_NAME=${GITHUB_REF}" >> $GITHUB_ENV
       - name: Set tag name from manual input
         if: github.event_name == 'workflow_dispatch'
-        run: echo "TAG_NAME=refs/tags/${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+        env:
+          TAG: ${{ github.event.inputs.tag }}
+        run: echo "TAG_NAME=refs/tags/$TAG" >> $GITHUB_ENV
 
       - name: Get release metadata JSON
         run: |
@@ -90,8 +92,10 @@ jobs:
           git checkout ${{ github.ref }}
       - name: Check out tag from manual input
         if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ github.event.inputs.tag }}
         run: |
-          git checkout refs/tags/${{ github.event.inputs.tag }}
+          git checkout refs/tags/$TAG
 
       # Generate release reports
       - name: Create release reports (manifests)
