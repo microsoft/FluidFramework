@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -19,7 +19,7 @@ import {
 	type RebaseStatsWithDuration,
 	tagChange,
 } from "../core/index.js";
-import { type Mutable, brand, fail, getOrCreate, mapIterable } from "../util/index.js";
+import { type Mutable, brand, getOrCreate, mapIterable } from "../util/index.js";
 
 import { SharedTreeBranch, type BranchTrimmingEvents, onForkTransitive } from "./branch.js";
 import type {
@@ -627,8 +627,10 @@ export class EditManager<
 	}
 
 	/**
-	 * @returns The length of the longest branch maintained by this EditManager.
+	 * Gets the length of the longest branch maintained by this `EditManager`.
 	 * This may be the length of a peer branch or the local branch.
+	 *
+	 * @remarks
 	 * The length is counted from the lowest common ancestor with the trunk such that a fully sequenced branch would
 	 * have length zero.
 	 */
@@ -825,7 +827,7 @@ export interface SummaryData<TChangeset> {
 }
 
 /**
- * @returns the path from the base of a branch to its head
+ * Gets the path from the base of a branch to its head.
  */
 function getPathFromBase<TCommit extends { parent?: TCommit }>(
 	branchHead: TCommit,

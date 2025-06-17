@@ -15,8 +15,10 @@ import {
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { IDocumentDeleteService } from "./services";
+
 import { ITenantRepository } from "../riddler";
+
+import { IDocumentDeleteService } from "./services";
 
 /**
  * @internal
@@ -33,6 +35,8 @@ export interface IAlfredResourcesCustomizations {
 	clusterDrainingChecker?: IClusterDrainingChecker;
 	redisClientConnectionManagerForJwtCache?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForThrottling?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForGetSession?: IRedisClientConnectionManager;
 	readinessCheck?: IReadinessCheck;
 	fluidAccessTokenGenerator?: IFluidAccessTokenGenerator;
 }

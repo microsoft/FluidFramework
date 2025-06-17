@@ -31,7 +31,6 @@ import {
 	ISummarizerRuntime,
 	ISummaryManagerConfig,
 	ISummaryOpMessage,
-	RunningSummarizer,
 	SummarizeHeuristicData,
 	Summarizer,
 	SummaryCollection,
@@ -39,6 +38,7 @@ import {
 	SummaryManagerState,
 	neverCancelledSummaryToken,
 	DefaultSummaryConfiguration,
+	RunningSummarizer,
 } from "../../summary/index.js";
 
 class MockRuntime {

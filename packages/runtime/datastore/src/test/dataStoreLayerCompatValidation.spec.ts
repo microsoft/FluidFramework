@@ -14,7 +14,7 @@ import {
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { MockFluidDataStoreContext } from "@fluidframework/test-runtime-utils/internal";
 import Sinon from "sinon";
 
@@ -36,7 +36,7 @@ type ILayerCompatSupportRequirementsOverride = Omit<
 describe("DataStore Layer compatibility", () => {
 	let originalRequiredFeatures: readonly string[];
 	beforeEach(() => {
-		originalRequiredFeatures = runtimeSupportRequirements.requiredFeatures;
+		originalRequiredFeatures = [...runtimeSupportRequirements.requiredFeatures];
 	});
 
 	afterEach(() => {
@@ -50,7 +50,10 @@ describe("DataStore Layer compatibility", () => {
 		runtimeGeneration: number,
 		unsupportedFeatures?: string[],
 	): boolean {
-		assert(error instanceof UsageError, "The error should be a UsageError");
+		assert(
+			isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
+			"Error should be a usageError",
+		);
 		assert.strictEqual(
 			error.errorType,
 			FluidErrorTypes.usageError,
@@ -216,8 +219,8 @@ describe("DataStore Layer compatibility", () => {
 				return {
 					type,
 					attributes: { type, snapshotFormatVersion: "0" },
-					create: () => ({}) as any as IChannel,
-					load: async () => Promise.resolve({} as any as IChannel),
+					create: () => ({}) as unknown as IChannel,
+					load: async () => ({}) as unknown as IChannel,
 				};
 			},
 		};
@@ -228,7 +231,9 @@ describe("DataStore Layer compatibility", () => {
 			dataStoreContext = new MockFluidDataStoreContext();
 		});
 
-		function createDataStoreRuntime(compatDetails?: ILayerCompatDetails) {
+		function createDataStoreRuntime(
+			compatDetails?: ILayerCompatDetails,
+		): FluidDataStoreRuntime {
 			if (compatDetails !== undefined) {
 				dataStoreContext.ILayerCompatDetails = compatDetails;
 			}

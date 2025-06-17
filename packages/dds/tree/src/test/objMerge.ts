@@ -4,7 +4,6 @@
  */
 
 import { strict as assert } from "node:assert";
-import { fail } from "../util/index.js";
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class Merged {}
@@ -58,7 +57,7 @@ export function merge<T>(
 	transform: ObjectTransform = identityTransform,
 ): Conflicted | Conflict | ConflictedMap | T {
 	if (hasConflict(lhs) || hasConflict(rhs)) {
-		fail("This function does not accept its output type as an input type");
+		assert.fail("This function does not accept its output type as an input type");
 	}
 
 	// === is not reflective because of how NaN is handled, so use Object.is instead.

@@ -48,7 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import type { ILocalValue } from "./localValues.js";
-import { LocalValueMaker } from "./localValues.js";
+import { serializeValue, migrateIfSharedSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -85,8 +85,6 @@ interface IDirectoryMessageHandler {
 
 /**
  * Operation indicating a value should be set for a key.
- * @legacy
- * @alpha
  */
 export interface IDirectorySetOperation {
 	/**
@@ -113,8 +111,6 @@ export interface IDirectorySetOperation {
 
 /**
  * Operation indicating a key should be deleted from the directory.
- * @legacy
- * @alpha
  */
 export interface IDirectoryDeleteOperation {
 	/**
@@ -135,15 +131,11 @@ export interface IDirectoryDeleteOperation {
 
 /**
  * An operation on a specific key within a directory.
- * @legacy
- * @alpha
  */
 export type IDirectoryKeyOperation = IDirectorySetOperation | IDirectoryDeleteOperation;
 
 /**
  * Operation indicating the directory should be cleared.
- * @legacy
- * @alpha
  */
 export interface IDirectoryClearOperation {
 	/**
@@ -159,15 +151,11 @@ export interface IDirectoryClearOperation {
 
 /**
  * An operation on one or more of the keys within a directory.
- * @legacy
- * @alpha
  */
 export type IDirectoryStorageOperation = IDirectoryKeyOperation | IDirectoryClearOperation;
 
 /**
  * Operation indicating a subdirectory should be created.
- * @legacy
- * @alpha
  */
 export interface IDirectoryCreateSubDirectoryOperation {
 	/**
@@ -188,8 +176,6 @@ export interface IDirectoryCreateSubDirectoryOperation {
 
 /**
  * Operation indicating a subdirectory should be deleted.
- * @legacy
- * @alpha
  */
 export interface IDirectoryDeleteSubDirectoryOperation {
 	/**
@@ -210,8 +196,6 @@ export interface IDirectoryDeleteSubDirectoryOperation {
 
 /**
  * An operation on the subdirectories within a directory.
- * @legacy
- * @alpha
  */
 export type IDirectorySubDirectoryOperation =
 	| IDirectoryCreateSubDirectoryOperation
@@ -219,8 +203,6 @@ export type IDirectorySubDirectoryOperation =
 
 /**
  * Any operation on a directory.
- * @legacy
- * @alpha
  */
 export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDirectoryOperation;
 
@@ -424,8 +406,6 @@ class DirectoryCreationTracker {
  * ```
  *
  * @sealed
- * @legacy
- * @alpha
  */
 export class SharedDirectory
 	extends SharedObject<ISharedDirectoryEvents>
@@ -442,9 +422,6 @@ export class SharedDirectory
 	public get absolutePath(): string {
 		return this.root.absolutePath;
 	}
-
-	/***/
-	public readonly localValueMaker: LocalValueMaker;
 
 	/**
 	 * Root of the SharedDirectory, most operations on the SharedDirectory itself act on the root.
@@ -477,7 +454,6 @@ export class SharedDirectory
 		attributes: IChannelAttributes,
 	) {
 		super(id, runtime, attributes, "fluid_directory_");
-		this.localValueMaker = new LocalValueMaker();
 		this.setMessageHandlers();
 		// Mirror the containedValueChanged op on the SharedDirectory
 		this.root.on("containedValueChanged", (changed: IValueChanged, local: boolean) => {
@@ -703,12 +679,12 @@ export class SharedDirectory
 		if (Array.isArray(newFormat.blobs)) {
 			// New storage format
 			this.populate(newFormat.content);
-			await Promise.all(
-				newFormat.blobs.map(async (value) => {
-					const dataExtra = await readAndParse(storage, value);
-					this.populate(dataExtra as IDirectoryDataObject);
-				}),
+			const blobContents = await Promise.all(
+				newFormat.blobs.map(async (blobName) => readAndParse(storage, blobName)),
 			);
+			for (const blobContent of blobContents) {
+				this.populate(blobContent as IDirectoryDataObject);
+			}
 		} else {
 			// Old storage format
 			this.populate(data as IDirectoryDataObject);
@@ -781,13 +757,13 @@ export class SharedDirectory
 
 			if (currentSubDirObject.storage) {
 				for (const [key, serializable] of Object.entries(currentSubDirObject.storage)) {
-					const localValue = this.makeLocal(
-						key,
-						currentSubDir.absolutePath,
+					const parsedSerializable = parseHandles(
+						serializable,
+						this.serializer,
 						// eslint-disable-next-line import/no-deprecated
-						parseHandles(serializable, this.serializer) as ISerializableValue,
-					);
-					currentSubDir.populateStorage(key, localValue);
+					) as ISerializableValue;
+					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
+					currentSubDir.populateStorage(key, parsedSerializable.value);
 				}
 			}
 		}
@@ -830,30 +806,6 @@ export class SharedDirectory
 	 */
 	private makeAbsolute(relativePath: string): string {
 		return posix.resolve(posix.sep, relativePath);
-	}
-
-	/**
-	 * The remote ISerializableValue we're receiving (either as a result of a snapshot load or an incoming set op)
-	 * will have the information we need to create a real object, but will not be the real object yet.  For example,
-	 * we might know it's a map and the ID but not have the actual map or its data yet.  makeLocal's job
-	 * is to convert that information into a real object for local usage.
-	 * @param key - Key of element being converted
-	 * @param absolutePath - Path of element being converted
-	 * @param serializable - The remote information that we can convert into a real object
-	 * @returns The local value that was produced
-	 */
-	private makeLocal(
-		key: string,
-		absolutePath: string,
-		// eslint-disable-next-line import/no-deprecated
-		serializable: ISerializableValue,
-	): ILocalValue {
-		assert(
-			serializable.type === ValueType[ValueType.Plain] ||
-				serializable.type === ValueType[ValueType.Shared],
-			0x1e4 /* "Unexpected serializable type" */,
-		);
-		return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
 	}
 
 	/**
@@ -937,8 +889,9 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
-					const context = local ? undefined : this.makeLocal(op.key, op.path, op.value);
-					subdir.processSetMessage(msg, op, context, local, localOpMetadata);
+					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
+					const localValue = local ? undefined : { value: op.value.value as unknown };
+					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
 			submit: (op: IDirectorySetOperation, localOpMetadata: unknown) => {
@@ -1020,14 +973,8 @@ export class SharedDirectory
 				break;
 			}
 			case "set": {
-				dir?.set(
-					directoryOp.key,
-					this.localValueMaker.fromSerializable(
-						directoryOp.value,
-						this.serializer,
-						this.handle,
-					).value,
-				);
+				migrateIfSharedSerializable(directoryOp.value, this.serializer, this.handle);
+				dir?.set(directoryOp.key, directoryOp.value.value);
 				break;
 			}
 			default: {
@@ -1327,7 +1274,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// Create a local value and serialize it.
-		const localValue = this.directory.localValueMaker.fromInMemory(value);
+		const localValue: ILocalValue = { value };
 		bindHandles(localValue, this.serializer, this.directory.handle);
 
 		// Set the value locally.
@@ -1342,7 +1289,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: { type: localValue.type, value: localValue.value as unknown },
+			value: { type: ValueType[ValueType.Plain], value: localValue.value },
 		};
 		this.submitKeyMessage(op, previousValue);
 		return this;
@@ -1727,7 +1674,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public processSetMessage(
 		msg: ISequencedDocumentMessage,
 		op: IDirectorySetOperation,
-		context: ILocalValue | undefined,
+		localValue: ILocalValue | undefined,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
@@ -1742,9 +1689,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// needProcessStorageOperation should have returned false if local is true
-		// so we can assume context is not undefined
+		// so we can assume localValue is not undefined
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.setCore(op.key, context!, local);
+		this.setCore(op.key, localValue!, local);
 	}
 
 	/**
@@ -2002,8 +1949,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): Generator<[string, ISerializedValue], void> {
 		this.throwIfDisposed();
 		for (const [key, localValue] of this._storage) {
-			const value = localValue.makeSerialized(serializer, this.directory.handle);
-			const res: [string, ISerializedValue] = [key, value];
+			const serializedValue = serializeValue(
+				localValue.value,
+				serializer,
+				this.directory.handle,
+			);
+			const res: [string, ISerializedValue] = [key, serializedValue];
 			yield res;
 		}
 	}
@@ -2022,9 +1973,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param key - The key to populate
 	 * @param localValue - The local value to populate into it
 	 */
-	public populateStorage(key: string, localValue: ILocalValue): void {
+	public populateStorage(key: string, value: unknown): void {
 		this.throwIfDisposed();
-		this._storage.set(key, localValue);
+		this._storage.set(key, { value });
 	}
 
 	/**
@@ -2034,6 +1985,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public populateSubDirectory(subdirName: string, newSubDir: SubDirectory): void {
 		this.throwIfDisposed();
+		this.registerEventsOnSubDirectory(newSubDir, subdirName);
 		this._subdirectories.set(subdirName, newSubDir);
 	}
 
@@ -2479,7 +2431,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.logger,
 			);
 			/**
-			 * Store the sequnce numbers of newly created subdirectory to the proper creation tracker, based
+			 * Store the sequence numbers of newly created subdirectory to the proper creation tracker, based
 			 * on whether the creation behavior has been ack'd or not
 			 */
 			if (isAcknowledgedOrDetached(seqData)) {

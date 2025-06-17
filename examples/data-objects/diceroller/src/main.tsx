@@ -67,7 +67,10 @@ export const DiceRollerView: React.FC<IDiceRollerViewProps> = (
 export class DiceRoller extends DataObject implements IDiceRoller {
 	public static readonly Name = "@fluid-example/dice-roller";
 
-	public static readonly factory = new DataObjectFactory(DiceRoller.Name, DiceRoller, [], {});
+	public static readonly factory = new DataObjectFactory({
+		type: DiceRoller.Name,
+		ctor: DiceRoller,
+	});
 
 	/**
 	 * initializingFirstTime is called only once, it is executed only by the first client to open the

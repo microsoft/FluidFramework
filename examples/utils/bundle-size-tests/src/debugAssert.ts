@@ -6,7 +6,7 @@
 import { debugAssert, assert } from "@fluidframework/core-utils/internal";
 
 // TODO: ideally there would be a unit test which actually checks that this is omitted from production builds.
-// For now it can be manually verified in ../dist/debugAssert.js,
+// For now it can be manually verified in ../build/debugAssert.js,
 // and any regression breaking it will show up as a bundle size regression.
 debugAssert(() => "This should be removed in production");
 assert(true, "This should be kept 1");

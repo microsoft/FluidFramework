@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { ExperimentalPresenceManager } from "@fluidframework/presence/alpha";
 import { Tree, type TreeNode, TreeViewConfiguration } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import { SharedTree } from "fluid-framework";
@@ -13,7 +12,7 @@ const sf = new SchemaFactoryAlpha("ai-collab-sample-application");
 
 // NOTE that there is currently a bug with the ai-collab library that requires us to rearrange the keys of each type to not have the same first key.
 
-export class SharedTreeTask extends sf.object(
+export class SharedTreeTask extends sf.objectAlpha(
 	"Task",
 	{
 		title: sf.required(sf.string, {
@@ -57,7 +56,7 @@ export class SharedTreeTask extends sf.object(
 
 export class SharedTreeTaskList extends sf.array("TaskList", SharedTreeTask) {}
 
-export class SharedTreeEngineer extends sf.object(
+export class SharedTreeEngineer extends sf.objectAlpha(
 	"Engineer",
 	{
 		name: sf.required(sf.string, {
@@ -86,7 +85,7 @@ export class SharedTreeEngineer extends sf.object(
 
 export class SharedTreeEngineerList extends sf.array("EngineerList", SharedTreeEngineer) {}
 
-export class SharedTreeTaskGroup extends sf.object(
+export class SharedTreeTaskGroup extends sf.objectAlpha(
 	"TaskGroup",
 	{
 		description: sf.required(sf.string, {
@@ -202,11 +201,6 @@ export const INITIAL_APP_STATE = {
 export const CONTAINER_SCHEMA = {
 	initialObjects: {
 		appState: SharedTree,
-		/**
-		 * A Presence Manager object temporarily needs to be placed within container schema
-		 * https://github.com/microsoft/FluidFramework/blob/main/packages/framework/presence/README.md#onboarding
-		 * */
-		presence: ExperimentalPresenceManager,
 	},
 };
 

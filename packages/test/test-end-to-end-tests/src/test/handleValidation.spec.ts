@@ -181,6 +181,17 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		ConsensusQueue,
 	} = apis.dds;
 
+	let provider: ITestObjectProvider;
+	before(function () {
+		provider = getTestObjectProvider();
+		switch (provider.driver.type) {
+			case "local":
+				break;
+			default:
+				this.skip();
+		}
+	});
+
 	const { ConsensusResult } = apis.dataRuntime.packages.orderedCollection;
 
 	const registry: ChannelFactoryRegistry = [
@@ -424,7 +435,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 	};
 
 	async function setup() {
-		const provider: ITestObjectProvider = getTestObjectProvider();
 		const loader = provider.makeTestLoader(testContainerConfig);
 		const container1 = await createAndAttachContainer(
 			provider.defaultCodeDetails,
@@ -452,7 +462,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			 * as well as its `root` DDS. This is then validated from a second container.
 			 */
 			it(`can store a handle to detached dataObject while detached then attach`, async () => {
-				const { container1, provider } = await setup();
+				const { container1 } = await setup();
 
 				{
 					const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
@@ -499,7 +509,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			 * of that data object. All the same objects should be attached.
 			 */
 			it(`can store a handle to detached dataObject.root while detached then attach`, async () => {
-				const { container1, provider } = await setup();
+				const { container1 } = await setup();
 
 				{
 					const defaultDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
@@ -573,7 +583,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			/**
 			 * setup required for all portions of the test
 			 */
-			const { container1, provider } = await setup();
+			const { container1 } = await setup();
 
 			const attachedDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 			await provider.ensureSynchronized();
@@ -641,7 +651,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 			/**
 			 * setup required for all portions of the test
 			 */
-			const { container1, provider } = await setup();
+			const { container1 } = await setup();
 
 			const attachedDataStore = (await container1.getEntryPoint()) as ITestFluidObject;
 

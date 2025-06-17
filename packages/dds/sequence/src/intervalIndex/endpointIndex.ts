@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-deprecated */
-
 import { Client, RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { createSequenceInterval, IntervalType, SequenceInterval } from "../intervals/index.js";
+import { createTransientInterval, SequenceInterval } from "../intervals/index.js";
 import { ISharedString } from "../sharedString.js";
 
 import { type SequenceIntervalIndex } from "./intervalIndex.js";
@@ -39,13 +37,7 @@ export class EndpointIndex implements IEndpointIndex {
 	}
 
 	public previousInterval(pos: number): SequenceInterval | undefined {
-		const transientInterval = createSequenceInterval(
-			"transient",
-			pos,
-			pos,
-			this.client,
-			IntervalType.Transient,
-		);
+		const transientInterval = createTransientInterval(pos, pos, this.client);
 		const rbNode = this.endIntervalTree.floor(transientInterval);
 		if (rbNode) {
 			return rbNode.data;
@@ -53,13 +45,7 @@ export class EndpointIndex implements IEndpointIndex {
 	}
 
 	public nextInterval(pos: number): SequenceInterval | undefined {
-		const transientInterval = createSequenceInterval(
-			"transient",
-			pos,
-			pos,
-			this.client,
-			IntervalType.Transient,
-		);
+		const transientInterval = createTransientInterval(pos, pos, this.client);
 		const rbNode = this.endIntervalTree.ceil(transientInterval);
 		if (rbNode) {
 			return rbNode.data;

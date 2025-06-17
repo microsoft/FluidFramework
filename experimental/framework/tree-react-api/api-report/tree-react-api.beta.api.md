@@ -12,6 +12,9 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 }
 
 // @public
+export function objectIdNumber(object: object): number;
+
+// @public
 export interface SchemaIncompatibleProps {
     readonly compatibility: SchemaCompatibilityStatus;
     readonly upgradeSchema: () => void;

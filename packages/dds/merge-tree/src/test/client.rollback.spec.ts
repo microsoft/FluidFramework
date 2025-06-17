@@ -17,7 +17,7 @@ import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
-import { TestClientLogger } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 import { validatePartialLengths } from "./testUtils.js";
 
 describe("client.rollback", () => {
@@ -367,27 +367,31 @@ describe("client.rollback", () => {
 		client.insertTextLocal(0, "d");
 		client.insertTextLocal(0, "abc");
 		const segInfo1 = client.getContainingSegment<ISegmentPrivate>(2);
+		assert(segInfo1);
+
 		const segInfo3 = client.getContainingSegment<ISegmentPrivate>(5);
+		assert(segInfo3);
+
 		const ref1 = client.createLocalReferencePosition(
-			segInfo1.segment!,
+			segInfo1.segment,
 			0,
 			ReferenceType.Simple,
 			undefined,
 		);
 		const refSlide = client.createLocalReferencePosition(
-			segInfo1.segment!,
+			segInfo1.segment,
 			2,
 			ReferenceType.SlideOnRemove,
 			undefined,
 		);
 		const ref2 = client.createLocalReferencePosition(
-			segInfo3.segment!,
+			segInfo3.segment,
 			1,
 			ReferenceType.Simple,
 			undefined,
 		);
 		const refStay = client.createLocalReferencePosition(
-			segInfo3.segment!,
+			segInfo3.segment,
 			1,
 			ReferenceType.StayOnRemove,
 			undefined,
@@ -399,14 +403,14 @@ describe("client.rollback", () => {
 		assert.equal(client.getText(), "abcdefg");
 		const segInfo1After = client.getContainingSegment<ISegmentPrivate>(2);
 		assert.notEqual(segInfo1After, undefined);
-		assert.notEqual(segInfo1After.segment?.localRefs, undefined);
-		assert(segInfo1After.segment?.localRefs!.has(ref1));
-		assert(segInfo1After.segment?.localRefs!.has(refSlide));
+		assert.notEqual(segInfo1After?.segment?.localRefs, undefined);
+		assert(segInfo1After?.segment?.localRefs!.has(ref1));
+		assert(segInfo1After?.segment?.localRefs!.has(refSlide));
 		const segInfo3After = client.getContainingSegment<ISegmentPrivate>(5);
 		assert.notEqual(segInfo3After, undefined);
-		assert.notEqual(segInfo3After.segment?.localRefs, undefined);
-		assert(segInfo3After.segment?.localRefs!.has(ref2));
-		assert(segInfo3After.segment?.localRefs!.has(refStay));
+		assert.notEqual(segInfo3After?.segment?.localRefs, undefined);
+		assert(segInfo3After?.segment?.localRefs!.has(ref2));
+		assert(segInfo3After?.segment?.localRefs!.has(refStay));
 	});
 	it("Should zamboni rolled back remove", () => {
 		client.applyMsg(
@@ -610,5 +614,24 @@ describe("client.rollback", () => {
 		}
 
 		logger.validate({ baseText: "124abc5" });
+	});
+
+	it("Conflicting insert with winner split by rollback", () => {
+		const clients = createClientsAtInitialState({ initialState: "" }, "A", "B");
+		const logger = new TestClientLogger(clients.all);
+		let seq = 0;
+		const ops = [
+			clients.A.makeOpMessage(clients.A.insertTextLocal(0, "AAAAA"), ++seq),
+			clients.B.makeOpMessage(clients.B.insertTextLocal(0, "BBBBB"), ++seq),
+		];
+		const rollbackOp = clients.B.insertTextLocal(2, "RRRRR");
+		clients.B.rollback(rollbackOp, clients.B.peekPendingSegmentGroups());
+
+		for (const op of ops) {
+			for (const c of clients.all) {
+				c.applyMsg(op);
+			}
+		}
+		logger.validate({ baseText: "BBBBBAAAAA" });
 	});
 });

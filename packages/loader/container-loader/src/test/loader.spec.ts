@@ -5,21 +5,11 @@
 
 import assert from "node:assert";
 
-import { stringToBuffer, type IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	IRuntime,
-	type IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
-import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IDocumentService,
-	IDocumentServiceFactory,
-	type IDocumentStorageService,
 	type IResolvedUrl,
 	type IUrlResolver,
-	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	isFluidError,
@@ -31,42 +21,14 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
-import { IDetachedBlobStorage, Loader, type ICodeDetailsLoader } from "../loader.js";
+import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
 import { failProxy, failSometimeProxy } from "./failProxy.js";
-
-const codeLoader: ICodeDetailsLoader = {
-	load: async () => {
-		return {
-			details: {
-				package: "none",
-			},
-			module: {
-				fluidExport: {
-					IRuntimeFactory: {
-						get IRuntimeFactory(): IRuntimeFactory {
-							return this;
-						},
-						async instantiateRuntime(context, existing): Promise<IRuntime> {
-							return failSometimeProxy<IRuntime & IProvideLayerCompatDetails>({
-								createSummary: () => ({
-									tree: {},
-									type: SummaryType.Tree,
-								}),
-								setAttachState: () => {},
-								getPendingLocalState: () => ({
-									pending: [],
-								}),
-								ILayerCompatDetails: undefined,
-							});
-						},
-					},
-				},
-			},
-		};
-	},
-};
+import {
+	createTestCodeLoaderProxy,
+	createTestDocumentServiceFactoryProxy,
+} from "./testProxies.js";
 
 describe("loader unit test", () => {
 	it("rehydrateDetachedContainerFromSnapshot with invalid format", async () => {
@@ -91,7 +53,7 @@ describe("loader unit test", () => {
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format", async () => {
 		const loader = new Loader({
-			codeLoader,
+			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 		});
@@ -106,30 +68,12 @@ describe("loader unit test", () => {
 	});
 
 	it("rehydrateDetachedContainerFromSnapshot with valid format and attachment blobs", async () => {
-		const blobs = new Map<string, ArrayBufferLike>();
-		const detachedBlobStorage: IDetachedBlobStorage = {
-			createBlob: async (file) => {
-				const response: ICreateBlobResponse = {
-					id: uuid(),
-				};
-				blobs.set(response.id, file);
-				return response;
-			},
-			getBlobIds: () => [...blobs.keys()],
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			readBlob: async (id) => blobs.get(id)!,
-			get size() {
-				return blobs.size;
-			},
-		};
 		const loader = new Loader({
-			codeLoader,
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
-			detachedBlobStorage,
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
-		await detachedBlobStorage.createBlob(stringToBuffer("whatever", "utf8"));
 		const detachedContainerState = detached.serialize();
 		const parsedState = JSON.parse(detachedContainerState) as IPendingDetachedContainerState;
 		assert.strictEqual(parsedState.attached, false);
@@ -141,7 +85,7 @@ describe("loader unit test", () => {
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching", async () => {
 		const loader = new Loader({
-			codeLoader,
+			codeLoader: createTestCodeLoaderProxy(),
 			documentServiceFactory: failProxy(),
 			urlResolver: failProxy(),
 			configProvider: {
@@ -169,22 +113,6 @@ describe("loader unit test", () => {
 	});
 
 	it("serialize and rehydrateDetachedContainerFromSnapshot while attaching with valid format and attachment blobs", async () => {
-		const blobs = new Map<string, ArrayBufferLike>();
-		const detachedBlobStorage: IDetachedBlobStorage = {
-			createBlob: async (file) => {
-				const response: ICreateBlobResponse = {
-					id: uuid(),
-				};
-				blobs.set(response.id, file);
-				return response;
-			},
-			getBlobIds: () => [...blobs.keys()],
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			readBlob: async (id) => blobs.get(id)!,
-			get size() {
-				return blobs.size;
-			},
-		};
 		const resolvedUrl: IResolvedUrl = {
 			id: uuid(),
 			endpoints: {},
@@ -193,29 +121,17 @@ describe("loader unit test", () => {
 			url: "none",
 		};
 		const loader = new Loader({
-			codeLoader,
-			documentServiceFactory: failSometimeProxy<IDocumentServiceFactory>({
-				createContainer: async () =>
-					failSometimeProxy<IDocumentService>({
-						policies: {},
-						resolvedUrl,
-						connectToStorage: async () =>
-							failSometimeProxy<IDocumentStorageService>({
-								createBlob: async () => ({ id: uuid() }),
-							}),
-					}),
-			}),
+			codeLoader: createTestCodeLoaderProxy({ createDetachedBlob: true }),
+			documentServiceFactory: createTestDocumentServiceFactoryProxy(resolvedUrl),
 			urlResolver: failSometimeProxy<IUrlResolver>({
 				resolve: async () => resolvedUrl,
 			}),
-			detachedBlobStorage,
 			configProvider: {
 				getRawConfig: (name): ConfigTypes =>
 					name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
 			},
 		});
 		const detached = await loader.createDetachedContainer({ package: "none" });
-		await detachedBlobStorage.createBlob(stringToBuffer("whatever", "utf8"));
 
 		await detached.attach({ url: "none" }).then(
 			() => assert.fail("attach should fail"),
@@ -260,7 +176,7 @@ describe("loader unit test", () => {
 		new Container({
 			urlResolver: failProxy(),
 			documentServiceFactory: failProxy(),
-			codeLoader,
+			codeLoader: createTestCodeLoaderProxy(),
 			options: {},
 			scope: {},
 			subLogger: logger.logger,

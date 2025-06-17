@@ -7,14 +7,11 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
 	SequencePlace,
 	Side,
 } from "@fluidframework/merge-tree/internal";
-
-import type { SequenceInterval } from "./sequenceInterval.js";
 
 /**
  * Basic interval abstraction
@@ -24,6 +21,9 @@ import type { SequenceInterval } from "./sequenceInterval.js";
 export interface IInterval {
 	/**
 	 * @returns a new interval object with identical semantics.
+	 *
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 * @privateRemarks Move to ISerializableInterval after deprecation period
 	 */
 	clone(): IInterval;
 	/**
@@ -48,6 +48,8 @@ export interface IInterval {
 	compareEnd(b: IInterval): number;
 	/**
 	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+	 *
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	modify(
 		label: string,
@@ -66,6 +68,8 @@ export interface IInterval {
 	 * Unions this interval with `b`, returning a new interval.
 	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
 	 * intermediate values between the two intervals.
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 * @privateRemarks Move to ISerializableInterval after deprecation period
 	 */
 	union(b: IInterval): IInterval;
 }
@@ -155,12 +159,16 @@ export interface ISerializedInterval {
 /**
  * @legacy
  * @alpha
+ * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+ * @privateRemarks Remove from external exports, and replace usages of IInterval with this interface after deprecation period
  */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
 
-	/***/
+	/**
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 */
 	serialize(): ISerializedInterval;
 
 	/**
@@ -170,10 +178,6 @@ export interface ISerializableInterval extends IInterval {
 	 */
 	getIntervalId(): string;
 }
-
-export type ISerializableIntervalPrivate = SequenceInterval & {
-	propertyManager?: PropertiesManager;
-};
 
 /**
  * Represents a change that should be applied to an existing interval.

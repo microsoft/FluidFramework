@@ -46,11 +46,11 @@ export {
 	createReturnsSection,
 	createSeeAlsoSection,
 	createSignatureSection,
-	createSummaryParagraph,
+	createSummarySection,
 	createThrowsSection,
 	createTypeParametersSection,
 } from "./helpers/index.js";
-export { transformTsdocNode } from "./TsdocNodeTransforms.js";
+export { transformTsdoc } from "./TsdocNodeTransforms.js";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 export { transformApiModel } from "./TransformApiModel.js";
 export { checkForDuplicateDocumentPaths } from "./Utilities.js";

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -19,9 +19,10 @@ import {
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
+	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
-import { disposeSymbol, fail, getOrCreate } from "../../util/index.js";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import {
 	FieldKinds,
 	MappedEditBuilder,
@@ -30,33 +31,28 @@ import {
 	type SequenceFieldEditBuilder,
 	type ValueFieldEditBuilder,
 } from "../default-schema/index.js";
+import { cursorForMapTreeField } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "../modular-schema/index.js";
 
 import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
 	type FlexTreeTypedField,
 	type FlexTreeUnknownUnboxed,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
+	type HydratedFlexTreeNode,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
-import {
-	LazyEntity,
-	anchorSymbol,
-	cursorSymbol,
-	forgetAnchorSymbol,
-	isFreedSymbol,
-	tryMoveCursorToAnchorSymbol,
-} from "./lazyEntity.js";
+import { LazyEntity } from "./lazyEntity.js";
 import { type LazyTreeNode, makeTree } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
-import { cursorForMapTreeField } from "../mapTreeCursor.js";
 
 /**
  * Reuse fields.
@@ -166,64 +162,58 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return this.schema === kind.identifier;
 	}
 
-	public get parent(): FlexTreeNode | undefined {
-		if (this[anchorSymbol].parent === undefined) {
+	public get parent(): HydratedFlexTreeNode | undefined {
+		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
 
-		const cursor = this[cursorSymbol];
+		const cursor = this.cursor;
 		cursor.exitField();
 		const output = makeTree(this.context, cursor);
 		cursor.enterField(this.key);
 		return output;
 	}
 
-	protected override [tryMoveCursorToAnchorSymbol](
+	protected override tryMoveCursorToAnchor(
 		cursor: ITreeSubscriptionCursor,
 	): TreeNavigationResult {
-		return this.context.checkout.forest.tryMoveCursorToField(this[anchorSymbol], cursor);
+		return this.context.checkout.forest.tryMoveCursorToField(this.anchor, cursor);
 	}
 
-	protected override [forgetAnchorSymbol](): void {
+	protected override forgetAnchor(): void {
 		this.offAfterDestroy?.();
-		if (this[anchorSymbol].parent === undefined) return;
-		this.context.checkout.forest.anchors.forget(this[anchorSymbol].parent);
+		if (this.anchor.parent === undefined) return;
+		this.context.checkout.forest.anchors.forget(this.anchor.parent);
 	}
 
 	public get length(): number {
-		return this[cursorSymbol].getFieldLength();
+		return this.cursor.getFieldLength();
 	}
 
 	public atIndex(index: number): FlexTreeUnknownUnboxed {
-		return inCursorNode(this[cursorSymbol], index, (cursor) =>
-			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
+		return inCursorNode(this.cursor, index, (cursor) =>
+			unboxedFlexNode(this.context, cursor, this.anchor),
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeNode | undefined {
+	public boxedAt(index: number): HydratedFlexTreeNode | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
 			return undefined;
 		}
 
-		return inCursorNode(this[cursorSymbol], finalIndex, (cursor) =>
-			makeTree(this.context, cursor),
-		);
+		return inCursorNode(this.cursor, finalIndex, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
-		return Array.from(this, callbackfn);
-	}
-
-	public boxedIterator(): IterableIterator<FlexTreeNode> {
-		return iterateCursorField(this[cursorSymbol], (cursor) => makeTree(this.context, cursor));
-	}
-
-	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
-		return iterateCursorField(this[cursorSymbol], (cursor) =>
-			unboxedFlexNode(this.context, cursor, this[anchorSymbol]),
+		return mapCursorField(this.cursor, (cursor) =>
+			callbackfn(unboxedFlexNode(this.context, cursor, this.anchor), cursor.fieldIndex),
 		);
+	}
+
+	public [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
+		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public getFieldPath(): NormalizedFieldUpPath {
@@ -235,10 +225,10 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	 * This path is not valid to hold onto across edits: this must be recalled for each edit.
 	 */
 	public getFieldPathForEditing(): NormalizedFieldUpPath {
-		if (!this[isFreedSymbol]()) {
+		if (!this.isFreed()) {
 			if (
 				// Only allow editing if we are the root document field...
-				(this.parent === undefined && this[anchorSymbol].fieldKey === rootFieldKey) ||
+				(this.parent === undefined && this.anchor.fieldKey === rootFieldKey) ||
 				// ...or are under a node in the document
 				(this.parent !== undefined &&
 					treeStatusFromAnchorCache(this.parent.anchorNode) === TreeStatus.InDocument)
@@ -272,7 +262,7 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 		return this.map((x) => x);
 	}
 
-	public editor: SequenceFieldEditBuilder<ExclusiveMapTree[]> = {
+	public editor: SequenceFieldEditBuilder<FlexibleFieldContent> = {
 		insert: (index, newContent) => {
 			this.sequenceEditor().insert(index, cursorForMapTreeField(newContent));
 		},
@@ -287,20 +277,8 @@ export class LazySequence extends LazyField implements FlexTreeSequenceField {
 	}
 }
 
-export class ReadonlyLazyValueField extends LazyField implements FlexTreeRequiredField {
-	public editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
-		set: (newContent) => {
-			assert(false, 0xa0c /* Unexpected set of readonly field */);
-		},
-	};
-
-	public get content(): FlexTreeUnknownUnboxed {
-		return this.atIndex(0);
-	}
-}
-
-export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRequiredField {
-	public override editor: ValueFieldEditBuilder<ExclusiveMapTree> = {
+export class LazyValueField extends LazyField implements FlexTreeRequiredField {
+	public editor: ValueFieldEditBuilder<FlexibleNodeContent> = {
 		set: (newContent) => {
 			this.valueFieldEditor().set(cursorForMapTreeField([newContent]));
 		},
@@ -312,7 +290,7 @@ export class LazyValueField extends ReadonlyLazyValueField implements FlexTreeRe
 		return fieldEditor;
 	}
 
-	public override get content(): FlexTreeUnknownUnboxed {
+	public get content(): FlexTreeUnknownUnboxed {
 		return this.atIndex(0);
 	}
 }

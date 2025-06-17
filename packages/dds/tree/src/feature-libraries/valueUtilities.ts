@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { type TreeValue, type Value, ValueSchema } from "../core/index.js";
 

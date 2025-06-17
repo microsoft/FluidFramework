@@ -6,10 +6,6 @@
 
 /// <reference types="mocha" />
 
-export { AsyncGenerator_2 as AsyncGenerator }
-
-export { Generator_2 as Generator }
-
 // (No @packageDocumentation comment for this package)
 
 ```

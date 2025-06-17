@@ -4,7 +4,7 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export interface IOldestClientObservable extends IEventProvider<IOldestClientObservableEvents> {
     // (undocumented)
     attachState: AttachState;
@@ -16,7 +16,7 @@ export interface IOldestClientObservable extends IEventProvider<IOldestClientObs
     getQuorum(): IQuorumClients;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IOldestClientObservableEvents extends IEvent {
     // (undocumented)
     (event: "connected", listener: () => void): any;
@@ -24,19 +24,19 @@ export interface IOldestClientObservableEvents extends IEvent {
     (event: "disconnected", listener: () => void): any;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IOldestClientObserver extends IEventProvider<IOldestClientObserverEvents> {
     // (undocumented)
     isOldest(): boolean;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IOldestClientObserverEvents extends IEvent {
     // (undocumented)
     (event: "becameOldest" | "lostOldest", listener: () => void): any;
 }
 
-// @alpha
+// @alpha @legacy
 export class OldestClientObserver extends TypedEventEmitter<IOldestClientObserverEvents> implements IOldestClientObserver {
     constructor(observable: IOldestClientObservable);
     // (undocumented)

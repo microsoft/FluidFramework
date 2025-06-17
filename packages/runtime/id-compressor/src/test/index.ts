@@ -7,4 +7,7 @@
  * Exports for test utilities for `id-compressor`
  */
 
-export { createAlwaysFinalizedIdCompressor } from "./idCompressorTestUtilities.js";
+export {
+	createAlwaysFinalizedIdCompressor,
+	modifyClusterSize,
+} from "./idCompressorTestUtilities.js";

@@ -72,7 +72,7 @@ describe("Table Markdown rendering tests", () => {
 			const expected = [
 				"",
 				"| Header A | Header B | Header C |",
-				"| --- | --- | --- |",
+				"| - | - | - |",
 				"| Cell 1A | Cell 1B |",
 				"| Cell 2A | Cell 2B | Cell 2C |",
 				"",

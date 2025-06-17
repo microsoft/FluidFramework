@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -18,10 +21,6 @@ import {
 	type Context,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
-import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { fail } from "../util/index.js";
-
 import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
 import { markEager } from "./flexList.js";
 
@@ -175,9 +174,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		const cache = schema.oneTimeInitialize();
 
 		if (isTreeNode(input)) {
-			// TODO: update this once we have better support for deep-copying and move operations.
+			// TODO: update this once TreeBeta.clone is stable.
 			throw new UsageError(
-				"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). Currently no API is provided to make deep copies, but it can be done manually with object spreads - for example `new Foo({...oldFoo})` will work if all fields of `oldFoo` are leaf nodes.",
+				"Existing nodes may not be used as the constructor parameter for a new node. The existing node may be used directly instead of creating a new one, used as a child of the new node (if it has not yet been inserted into the tree). If the desired result is copying the provided node, it must be deep copied (since any child node would be parented under both the new and old nodes). `TreeBeta.clone` can be used to do this.",
 			);
 		}
 

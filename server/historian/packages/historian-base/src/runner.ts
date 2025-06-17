@@ -13,11 +13,12 @@ import {
 	IStorageNameRetriever,
 	IDocumentManager,
 	IReadinessCheck,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { Provider } from "nconf";
 import * as winston from "winston";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import * as app from "./app";
 
 export class HistorianRunner implements IRunner {

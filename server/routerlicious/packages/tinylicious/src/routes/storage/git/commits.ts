@@ -4,10 +4,12 @@
  */
 
 import fs from "fs";
+
 import { ICommit, ICreateCommitParams } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
 import nconf from "nconf";
+
 import * as utils from "../utils";
 
 export async function createCommit(

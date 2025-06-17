@@ -9,10 +9,12 @@ import {
 	type IIdCompressor,
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
+
 import type { ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
+	SchemaVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
@@ -25,13 +27,13 @@ import {
 	initializeForest,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/format.js";
+import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
 	TreeViewAlpha,
 } from "../simple-tree/index.js";
-import type { JsonCompatibleReadOnly, JsonCompatible } from "../util/index.js";
+import { type JsonCompatibleReadOnly, type JsonCompatible, Breakable } from "../util/index.js";
 import {
 	buildConfiguredForest,
 	defaultSharedTreeOptions,
@@ -53,11 +55,13 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & { idCompressor?: IIdCompressor | undefined },
 ): TreeViewAlpha<TSchema> {
+	const breaker = new Breakable("independentView");
 	const idCompressor: IIdCompressor = options.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 	const schema = new TreeStoredSchemaRepository();
 	const forest = buildConfiguredForest(
+		breaker,
 		options.forest ?? defaultSharedTreeOptions.forest,
 		schema,
 		idCompressor,
@@ -65,6 +69,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema,
+		breaker,
 	});
 	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
 		checkout,
@@ -87,15 +92,17 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	options: ForestOptions & ICodecOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
+	const breaker = new Breakable("independentInitializedView");
 	const idCompressor: IIdCompressor = content.idCompressor;
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 
 	const fieldBatchCodec = makeFieldBatchCodec(options, 1);
-	const schemaCodec = makeSchemaCodec(options);
+	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 
 	const schema = new TreeStoredSchemaRepository(schemaCodec.decode(content.schema as Format));
 	const forest = buildConfiguredForest(
+		breaker,
 		options.forest ?? defaultSharedTreeOptions.forest,
 		schema,
 		idCompressor,
@@ -117,6 +124,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema,
+		breaker,
 	});
 	const out: TreeViewAlpha<TSchema> = new SchematizingSimpleTreeView<TSchema>(
 		checkout,
@@ -134,7 +142,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
  */
 export interface ViewContent {
 	/**
-	 * Compressed tree from {@link TreeAlpha.exportCompressed}.
+	 * Compressed tree from {@link (TreeAlpha:interface).exportCompressed}.
 	 * @remarks
 	 * This is an owning reference:
 	 * consumers of this content might modify this data in place (for example when applying edits) to avoid copying.

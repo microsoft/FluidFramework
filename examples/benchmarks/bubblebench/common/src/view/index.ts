@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { AppView } from "./app.js";
+export { AppView, type IAppProps } from "./app.js";

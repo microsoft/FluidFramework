@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as core from "@fluidframework/server-services-core";
 import { getNetworkInformationFromIP } from "@fluidframework/server-services-client";
+import * as core from "@fluidframework/server-services-core";
 
 /**
  * Check the network information to determine if the socket should connect.

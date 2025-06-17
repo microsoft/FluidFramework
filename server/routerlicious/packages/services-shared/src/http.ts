@@ -4,10 +4,12 @@
  */
 
 import { parse } from "path";
+
 import { NetworkError, getNetworkInformationFromIP } from "@fluidframework/server-services-client";
-import type { RequestHandler, Response } from "express";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { ITenantManager, type ITenantConfig } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { RequestHandler, Response } from "express";
+
 /**
  * Check a given path string for path traversal (e.g. "../" or "/").
  * @internal

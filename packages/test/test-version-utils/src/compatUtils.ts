@@ -4,7 +4,11 @@
  */
 
 import { mixinAttributor } from "@fluid-experimental/attributor";
-import { TestDriverTypes } from "@fluid-internal/test-driver-definitions";
+import {
+	TestDriverTypes,
+	type OdspEndpoint,
+	type RouterliciousEndpoint,
+} from "@fluid-internal/test-driver-definitions";
 import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/test-drivers";
 import {
 	DefaultSummaryConfiguration,
@@ -251,6 +255,7 @@ export async function getVersionedTestObjectProviderFromApis(
 				containerOptions?.runtimeOptions,
 				type,
 			),
+			containerOptions?.minVersionForCollab,
 		);
 	};
 
@@ -363,6 +368,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 				containerOptions?.runtimeOptions,
 				driverConfig.type,
 			),
+			containerOptions?.minVersionForCollab,
 			[innerRequestHandler],
 		);
 	};
@@ -387,6 +393,7 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 				containerOptions?.runtimeOptions,
 				driverConfig.type,
 			),
+			containerOptions?.minVersionForCollab,
 			[innerRequestHandler],
 		);
 	};
@@ -408,4 +415,31 @@ export async function getCompatVersionedTestObjectProviderFromApis(
 			},
 		},
 	);
+}
+
+/**
+ * Returns an object with `driverType` and `driverEndpointName` properties for use in telemetry.
+ * @remarks Mostly exists to have a single place for this logic.
+ *
+ * @param driver - The driver type according to the config (environment or however it was provided)
+ * @param odspEndpointName - The ODSP endpoint name according to the config (environment or however it was provided)
+ * @param r11sEndpointName - The R11S endpoint name according to the config (environment or however it was provided)
+ */
+export function getDriverInformationWhenNoProviderIsAvailable(
+	driver: TestDriverTypes,
+	odspEndpointName: OdspEndpoint | undefined,
+	r11sEndpointName: RouterliciousEndpoint | undefined,
+): {
+	driverType: TestDriverTypes;
+	driverEndpointName: OdspEndpoint | RouterliciousEndpoint | undefined;
+} {
+	return {
+		driverType: driver,
+		driverEndpointName:
+			driver === "odsp"
+				? odspEndpointName
+				: driver === "routerlicious" || driver === "r11s"
+					? r11sEndpointName
+					: undefined,
+	};
 }

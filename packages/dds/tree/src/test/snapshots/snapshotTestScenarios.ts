@@ -4,32 +4,25 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { SessionId } from "@fluidframework/id-compressor";
-import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../external-utilities/index.js";
-import {
-	getBranch,
-	type ISharedTree,
-	type SharedTreeOptions,
-	Tree,
-} from "../../shared-tree/index.js";
-import { TestTreeProviderLite, treeTestFactory } from "../utils.js";
+import { getBranch, type SharedTreeOptions, Tree } from "../../shared-tree/index.js";
+import { createSnapshotCompressor, TestTreeProviderLite } from "../utils.js";
 import { SchemaFactory, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
-
-// Session ids used for the created trees' IdCompressors must be deterministic.
-// TestTreeProviderLite does this by default.
-// Test trees which manually create their data store runtime must set up their trees'
-// session ids explicitly.
-export const snapshotSessionId = "beefbeef-beef-4000-8000-000000000001" as SessionId;
-
-export function createSnapshotCompressor() {
-	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
-}
+import { configuredSharedTree, type ISharedTree } from "../../treeFactory.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 
 const enableSchemaValidation = true;
+
+export interface TestTree {
+	only?: boolean;
+	skip?: boolean;
+	name: string;
+	runScenario: (
+		takeSnapshot: (tree: IChannel, name: string) => Promise<void>,
+	) => Promise<void>;
+}
 
 // TODO: The generated test trees should eventually be updated to use the chunked-forest.
 export function generateTestTrees(options: SharedTreeOptions) {
@@ -37,15 +30,8 @@ export function generateTestTrees(options: SharedTreeOptions) {
 		jsonValidator: typeboxValidator,
 		...options,
 	};
-	const factory = new TreeFactory(factoryOptions);
-	const testTrees: {
-		only?: boolean;
-		skip?: boolean;
-		name: string;
-		runScenario: (
-			takeSnapshot: (tree: ISharedTree, name: string) => Promise<void>,
-		) => Promise<void>;
-	}[] = [
+	const factory = configuredSharedTree(factoryOptions).getFactory();
+	const testTrees: TestTree[] = [
 		{
 			name: "tree-with-identifier-field",
 			runScenario: async (takeSnapshot) => {
@@ -265,7 +251,11 @@ export function generateTestTrees(options: SharedTreeOptions) {
 						StringArray,
 					]) {}
 
-					const provider = new TestTreeProviderLite(1, new TreeFactory(options), true);
+					const provider = new TestTreeProviderLite(
+						1,
+						configuredSharedTree(options).getFactory(),
+						true,
+					);
 					const tree = provider.trees[0];
 					const view = tree.viewWith(
 						new TreeViewConfiguration({
@@ -386,14 +376,14 @@ export function generateTestTrees(options: SharedTreeOptions) {
 			runScenario: async (takeSnapshot) => {
 				// This test makes changes only while detached to test EditManager's optimization of evicting/trimming
 				// trunk commits outside of the collab window (which is all changes when detached).
-				const tree = treeTestFactory({
-					runtime: new MockFluidDataStoreRuntime({
+				const tree = factory.create(
+					new MockFluidDataStoreRuntime({
 						clientId: "test-client",
 						id: "test",
 						idCompressor: createSnapshotCompressor(),
 					}),
-					options: factoryOptions,
-				});
+					"tree",
+				);
 
 				const sf = new SchemaFactory("attachment-tree");
 				const view = tree.viewWith(

@@ -5,6 +5,8 @@
 
 import { EventEmitter } from "events";
 import * as http from "http";
+import { performance } from "perf_hooks";
+
 import * as core from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -12,16 +14,16 @@ import {
 	LumberEventName,
 } from "@fluidframework/server-services-telemetry";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
 import { createAdapter as createRedisAdapter } from "@socket.io/redis-adapter";
-import type { Adapter } from "socket.io-adapter";
 import type { Cluster, Redis } from "ioredis";
+import { Namespace, Server, Socket, RemoteSocket, type DisconnectReason } from "socket.io";
+import type { Adapter } from "socket.io-adapter";
+
 import * as redisSocketIoAdapter from "./redisSocketIoAdapter";
 import {
 	SocketIORedisConnection,
 	SocketIoRedisSubscriptionConnection,
 } from "./socketIoRedisConnection";
-import { performance } from "perf_hooks";
 
 class SocketIoSocket implements core.IWebSocket {
 	private readonly eventListeners: { event: string; listener: () => void }[] = [];

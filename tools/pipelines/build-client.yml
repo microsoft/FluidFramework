@@ -83,7 +83,6 @@ trigger:
     - experimental
     - fluidBuild.config.cjs
     - layerInfo.json
-    - lerna.json
     - LICENSE
     - NOTICE.md
     - packages
@@ -145,7 +144,6 @@ pr:
     - experimental
     - fluidBuild.config.cjs
     - layerInfo.json
-    - lerna.json
     - LICENSE
     - NOTICE.md
     - packages
@@ -202,6 +200,7 @@ extends:
     # We only care about pipeline run telemetry for the CI runs on the internal project, not for PR runs in the public
     # one. And since we don't batch commits for CI pipeline runs, the only reason we see for automated runs is IndividualCI.
     telemetry: ${{ eq(variables['Build.Reason'], 'IndividualCI') }}
+    shouldShip: ${{ or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}
     taskTest:
     # This check must be run after the build, since it relies on built files being present. Eventually it might be moved
     # to the "pack" stage since it can use the already-packed packages in that case. As it is the pipeline packs some
@@ -209,7 +208,7 @@ extends:
     - { name: "ci:test:jest", jobName: "JestTest" }
     - { name: "ci:test:realsvc:tinylicious", jobName: "RealsvcTinyliciousTest" }
     - { name: "ci:test:stress:tinylicious", jobName: "StressTinyliciousTest" }
-    - { name: "check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
+    - { name: "ci:check:are-the-types-wrong", jobName: "AreTheTypesWrong" }
     coverageTests:
     - { name: "ci:test:mocha", jobName: "MochaTest" }
     - { name: "ci:test:realsvc:local", jobName: "RealsvcLocalTest" }
