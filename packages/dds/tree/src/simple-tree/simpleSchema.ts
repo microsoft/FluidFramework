@@ -133,7 +133,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
  * @sealed
  */
 export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Record, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
 	/**
 	 * The types allowed as values in the record.
 	 *

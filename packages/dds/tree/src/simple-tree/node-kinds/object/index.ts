@@ -12,5 +12,5 @@ export {
 	objectSchema,
 	setField,
 	type TreeObjectNode,
-} from "./objectNode_old_draft.js";
+} from "./objectNode.js";
 export { isObjectNodeSchema, ObjectNodeSchema } from "./objectNodeTypes.js";

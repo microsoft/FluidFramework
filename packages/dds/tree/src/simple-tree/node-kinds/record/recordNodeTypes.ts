@@ -3,9 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { RecordNodeInsertableData, TreeRecordNode } from "./recordNode.js";
 import type {
+	ImplicitAllowedTypes,
 	ImplicitAnnotatedAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
 	UnannotateImplicitAllowedTypes,
 } from "../../schemaTypes.js";
 import {
@@ -14,9 +16,30 @@ import {
 	type TreeNodeSchema,
 	type TreeNodeSchemaNonClass,
 	type WithType,
+	type TreeNode,
 } from "../../core/index.js";
 
 import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";
+import type { RestrictiveStringRecord } from "../../../util/index.js";
+
+/**
+ * A {@link TreeNode} which models a TypeScript {@link record | https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type}.
+ *
+ * @remarks
+ * Record nodes consist of a type which specifies which {@link TreeNodeSchema} may appear as child elements (see {@link TreeNodeApi.schema} and {@link SchemaFactory.record}).
+ *
+ * @alpha
+ */
+export type TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> = TreeNode &
+	Record<string, TreeNodeFromImplicitAllowedTypes<T>>;
+
+/**
+ * Content which can be used to construct a Record node, explicitly or implicitly.
+ * @system @public
+ */
+export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<
+	InsertableTreeNodeFromImplicitAllowedTypes<T>
+>;
 
 /**
  * A schema for customizable {@link (TreeMapNode:interface)}s.
@@ -28,14 +51,15 @@ export interface RecordNodeCustomizableSchema<
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaClass<
-			TName,
-			NodeKind.Record,
-			TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>,
-			RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable,
-			T,
-			undefined,
-			TCustomMetadata
+			/* Name */ TName,
+			/* Kind */ NodeKind.Record,
+			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
+				WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* ImplicitlyConstructable */ ImplicitlyConstructable,
+			/* Info */ T,
+			/* TConstructorExtra */ undefined,
+			/* TCustomMetadata */ TCustomMetadata
 		>,
 		SimpleRecordNodeSchema<TCustomMetadata> {}
 
@@ -49,14 +73,15 @@ export interface RecordNodePojoEmulationSchema<
 	out ImplicitlyConstructable extends boolean = true,
 	out TCustomMetadata = unknown,
 > extends TreeNodeSchemaNonClass<
-			TName,
-			NodeKind.Record,
-			TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>,
-			RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
-			ImplicitlyConstructable,
-			T,
-			undefined,
-			TCustomMetadata
+			/* Name */ TName,
+			/* Kind */ NodeKind.Record,
+			/* TNode */ TreeRecordNode<UnannotateImplicitAllowedTypes<T>> &
+				WithType<TName, NodeKind.Record, T>,
+			/* TInsertable */ RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>,
+			/* ImplicitlyConstructable */ ImplicitlyConstructable,
+			/* Info */ T,
+			/* TConstructorExtra */ undefined,
+			/* TCustomMetadata */ TCustomMetadata
 		>,
 		SimpleRecordNodeSchema<TCustomMetadata> {}
 
@@ -68,7 +93,14 @@ export interface RecordNodePojoEmulationSchema<
  * perhaps if moving to an order independent way to pass generic arguments, adding support for them here would make sense.
  * @alpha
  */
-export type RecordNodeSchema = RecordNodeCustomizableSchema | RecordNodePojoEmulationSchema;
+export type RecordNodeSchema<
+	TName extends string = string,
+	T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes,
+	ImplicitlyConstructable extends boolean = true,
+	TCustomMetadata = unknown,
+> =
+	| RecordNodeCustomizableSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>
+	| RecordNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
 
 /**
  * @alpha

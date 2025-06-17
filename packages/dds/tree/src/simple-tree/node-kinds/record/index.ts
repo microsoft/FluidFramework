@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-export {
-	type RecordNodeInsertableData,
-	recordSchema,
-	type TreeRecordNode,
-} from "./recordNode.js";
+export { recordSchema } from "./recordNode.js";
 export {
 	isRecordNodeSchema,
 	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
-	RecordNodeSchema,
+	type RecordNodeSchema,
+	type TreeRecordNode,
 } from "./recordNodeTypes.js";

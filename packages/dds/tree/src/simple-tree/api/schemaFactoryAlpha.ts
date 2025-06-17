@@ -464,7 +464,11 @@ export class SchemaFactoryAlpha<
 		/* Info */ T,
 		/* TConstructorExtra */ undefined
 	> {
-		const record = recordSchema(this.scoped2(name), allowedTypes, implicitlyConstructable);
+		const record = recordSchema({
+			identifier: this.scoped2(name),
+			info: allowedTypes,
+			implicitlyConstructable,
+		});
 
 		return record as TreeNodeSchemaBoth<
 			/* Name */ ScopedSchemaName<TScope, Name>,
@@ -499,7 +503,13 @@ export class SchemaFactoryAlpha<
 		allowedTypes: T,
 		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): RecordNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return recordSchema(this.scoped2(name), allowedTypes, true, options?.metadata);
+		return recordSchema({
+			identifier: this.scoped2(name),
+			info: allowedTypes,
+			implicitlyConstructable: true,
+			metadata: options?.metadata,
+			persistedMetadata: options?.persistedMetadata,
+		});
 	}
 
 	/**
