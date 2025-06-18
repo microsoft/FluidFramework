@@ -954,7 +954,9 @@ export class MergeTree {
 					for (const ref of collection) {
 						if (pred(ref) && !refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
 							ref.callbacks?.beforeSlide?.(ref);
-							collection.removeLocalRef(ref);
+							if (maybeEndpoint === undefined || ref.canSlideToEndpoint !== true) {
+								collection.removeLocalRef(ref);
+							}
 							ref.callbacks?.afterSlide?.(ref);
 						}
 					}
