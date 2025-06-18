@@ -431,7 +431,7 @@ export interface IInterval {
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
     // @deprecated
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
     // @deprecated
@@ -1047,7 +1047,7 @@ export interface SequenceInterval extends ISerializableInterval {
     // (undocumented)
     readonly intervalType: IntervalType;
     // @deprecated
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): SequenceInterval | undefined;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
