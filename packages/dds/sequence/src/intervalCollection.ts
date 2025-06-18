@@ -960,7 +960,7 @@ export class IntervalCollection
 		ref: LocalReferencePosition,
 		localSeq: number,
 		squash: boolean,
-	): { segment: ISegment; offset: number } | "start" | "end" {
+	): { segment: ISegment; offset: number } | undefined {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
 		}
@@ -968,7 +968,7 @@ export class IntervalCollection
 		const { clientId } = this.client.getCollabWindow();
 		const segment: ISegmentInternal | undefined = ref.getSegment();
 		if (segment?.endpointType) {
-			return segment.endpointType;
+			return { segment, offset: 0 };
 		}
 		const offset = ref.getOffset();
 
@@ -986,9 +986,16 @@ export class IntervalCollection
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff === undefined) {
-			return ref.canSlideToEndpoint && ref.slidingPreference === SlidingPreference.FORWARD
-				? "end"
-				: "start";
+			if (ref.canSlideToEndpoint !== true) {
+				return undefined;
+			}
+			return {
+				segment:
+					ref.slidingPreference === SlidingPreference.FORWARD
+						? this.client.endOfTree
+						: this.client.startOfTree,
+				offset: 0,
+			};
 		}
 		return segoff;
 	}
@@ -996,18 +1003,22 @@ export class IntervalCollection
 	private computeRebasedPositions(
 		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
 		squash: boolean,
-	): Record<"start" | "end", { segment: ISegment; offset: number } | "start" | "end"> {
+	): Record<"start" | "end", { segment: ISegmentInternal; offset: number }> | "detached" {
 		assert(
 			this.client !== undefined,
 			0x550 /* Client should be defined when computing rebased position */,
 		);
 
 		const { localSeq, interval } = localOpMetadata;
-		const rebased = {
-			start: this.rebaseReferenceWithSegmentSlide(interval.start, localSeq, squash),
-			end: this.rebaseReferenceWithSegmentSlide(interval.end, localSeq, squash),
-		};
-		return rebased;
+		const start = this.rebaseReferenceWithSegmentSlide(interval.start, localSeq, squash);
+		if (start === undefined) {
+			return "detached";
+		}
+		const end = this.rebaseReferenceWithSegmentSlide(interval.end, localSeq, squash);
+		if (end === undefined) {
+			return "detached";
+		}
+		return { start, end };
 	}
 
 	public attachGraph(client: Client, label: string) {
@@ -1468,14 +1479,10 @@ export class IntervalCollection
 			localOpMetadata,
 			squash,
 		));
-		const { start: startRebased, end: endRebased } = rebasedEndpoint;
 		const localInterval = this.localCollection.idIntervalIndex.getIntervalById(id);
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
-		if (
-			!this.options.mergeTreeReferencesCanSlideToEndpoint &&
-			(typeof startRebased === "string" || typeof endRebased === "string")
-		) {
+		if (rebasedEndpoint === "detached") {
 			if (
 				localInterval !== undefined &&
 				(localInterval === interval || localOpMetadata.type === "add")
@@ -1484,9 +1491,11 @@ export class IntervalCollection
 			}
 			return undefined;
 		}
+
 		if (localInterval === interval) {
 			this.localCollection.removeExistingInterval(localInterval);
 		}
+
 		const old = interval.clone();
 		interval.rebaseEndpoints(rebasedEndpoint);
 		if (localInterval === interval) {
@@ -1496,18 +1505,15 @@ export class IntervalCollection
 		this.client.removeLocalReferencePosition(old.start);
 		this.client.removeLocalReferencePosition(old.end);
 
+		const { start, end } = rebasedEndpoint;
 		return {
 			...original,
 			start:
-				typeof startRebased === "string"
-					? startRebased
-					: this.client.findReconnectionPosition(startRebased.segment, localSeq) +
-						startRebased.offset,
+				start.segment.endpointType ??
+				this.client.findReconnectionPosition(start.segment, localSeq) + start.offset,
 			end:
-				typeof endRebased === "string"
-					? endRebased
-					: this.client.findReconnectionPosition(endRebased.segment, localSeq) +
-						endRebased.offset,
+				end.segment.endpointType ??
+				this.client.findReconnectionPosition(end.segment, localSeq) + end.offset,
 			sequenceNumber: this.client?.getCurrentSeq() ?? 0,
 		};
 	}

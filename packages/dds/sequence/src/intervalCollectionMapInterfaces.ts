@@ -7,7 +7,7 @@ import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/in
 import {
 	IMergeTreeOptions,
 	ListNode,
-	type ISegment,
+	type ISegmentInternal,
 } from "@fluidframework/merge-tree/internal";
 
 import type {
@@ -26,7 +26,9 @@ export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
 	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
-	rebased?: Record<"start" | "end", { segment: ISegment; offset: number } | "start" | "end">;
+	rebased?:
+		| Record<"start" | "end", { segment: ISegmentInternal; offset: number }>
+		| "detached";
 	interval: SequenceIntervalClass;
 }
 export interface IntervalChangeLocalMetadata {
@@ -34,7 +36,9 @@ export interface IntervalChangeLocalMetadata {
 	localSeq: number;
 	previous: ISerializedInterval;
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
-	rebased?: Record<"start" | "end", { segment: ISegment; offset: number } | "start" | "end">;
+	rebased?:
+		| Record<"start" | "end", { segment: ISegmentInternal; offset: number }>
+		| "detached";
 	interval: SequenceIntervalClass;
 }
 export interface IntervalDeleteLocalMetadata {

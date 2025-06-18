@@ -498,7 +498,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	}
 
 	public rebaseEndpoints(
-		rebased: Record<"start" | "end", { segment: ISegment; offset: number } | "start" | "end">,
+		rebased: Record<"start" | "end", { segment: ISegment; offset: number }>,
 	) {
 		// this.startSide = rebased.start.side;
 		const startRef = createPositionReferenceFromSegoff({
