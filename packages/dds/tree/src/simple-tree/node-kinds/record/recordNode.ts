@@ -17,6 +17,7 @@ import {
 	type Context,
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
+	getKernel,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { getTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -28,6 +29,8 @@ import {
 	unannotateImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
+	createFieldSchema,
+	FieldKind,
 } from "../../schemaTypes.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -41,7 +44,8 @@ import type {
 	RecordNodeSchema,
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
-import type { FlexTreeNode } from "../../../feature-libraries/index.js";
+import type { FlexTreeNode, FlexTreeOptionalField } from "../../../feature-libraries/index.js";
+import { prepareForInsertion } from "../../prepareForInsertion.js";
 
 // TODO: don't allow shadowing of properties - just methods?
 
@@ -58,22 +62,20 @@ function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): Tre
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
 	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
 		get: (target, key, receiver) => {
-			// TODO: is this right?
 			if (typeof key === "symbol") {
-				return false;
+				return undefined;
 			}
 
 			const innerNode = getOrCreateInnerNode(receiver);
 			const field = innerNode.tryGetField(brand(key));
 			if (field === undefined) {
-				return false;
+				return undefined;
 			}
 
-			// TODO: handle customizable
+			// TODO: handle customizable?
 			return getTreeNodeForField(field);
 		},
 		set: (target, key, value: InsertableContent | undefined, receiver) => {
-			// TODO: is this right?
 			if (typeof key === "symbol") {
 				return false;
 			}
@@ -81,23 +83,32 @@ function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): Tre
 			const innerNode = getOrCreateInnerNode(receiver);
 			const childField = innerNode.tryGetField(brand(key));
 
-			// TODO: handle customizable
+			// TODO: handle customizable?
 			if (childField === undefined) {
 				return false;
 			}
 
-			// TODO: set data on node
-			throw new Error("TODO");
+			const kernel = getKernel(receiver);
+			const mapTree = prepareForInsertion(
+				value,
+				createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
+				innerNode.context,
+			);
+
+			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
+
+			field.editor.set(mapTree, field.length === 0);
+			return true;
 		},
 		has: (target, key) => {
-			// TODO: is this right?
 			if (typeof key === "symbol") {
 				return false;
 			}
+
 			const innerNode = getOrCreateInnerNode(proxy);
 			const childField = innerNode.tryGetField(brand(key));
 
-			// TODO: handle customizable
+			// TODO: handle customizable?
 			return childField !== undefined;
 		},
 		ownKeys: (target) => {
