@@ -279,36 +279,21 @@ export class TscTask extends LeafTask {
 				? new Set()
 				: new Set(["allowJs", "checkJs"]);
 
-		const diffResults = diffObjects(configOptions, tsBuildInfoOptions);
-		if (diffResults.length > 0) {
-			// Track whether the diff is "real"; that is, the diff is in properties that are not ignored. By default,
-			// assume that it is.
-			let diffIsReal = true;
-
-			// We only need to check the different properties if the number of differences is <= the ignored options;
-			// any properties over that count will be a non-ignored difference.
-			if (diffResults.length <= tsConfigOptionsIgnored.size) {
-				// The diff is "real" if any different property is not ignored
-				diffIsReal = diffResults.some((diffResult) => {
-					const isIgnoredOption = tsConfigOptionsIgnored.has(diffResult.path);
-					if (isIgnoredOption) {
-						this.traceTrigger(`ignoring tsbuildinfo property: ${diffResult.path}`);
-					}
-					return !isIgnoredOption;
-				});
+		for (const ignoredOption of tsConfigOptionsIgnored) {
+			// Delete the ignored option if it exists on the object
+			if (ignoredOption in configOptions) {
+				this.traceTrigger(`ignoring tsBuildInfoOption: '${ignoredOption}1`);
+				delete configOptions[ignoredOption];
 			}
+		}
 
-			if (diffIsReal) {
-				this.traceTrigger(`ts options changed ${configFileFullPath}`);
-				this.traceTrigger("Diff:");
-				this.traceTrigger(JSON.stringify(diffResults, undefined, 2));
-
-				this.traceTriggerDebug("Config:");
-				this.traceTriggerDebug(JSON.stringify(configOptions, undefined, 2));
-				this.traceTriggerDebug("BuildInfo:");
-				this.traceTriggerDebug(JSON.stringify(tsBuildInfoOptions, undefined, 2));
-				return false;
-			}
+		if (!isEqual(configOptions, tsBuildInfoOptions)) {
+			this.traceTrigger(`ts option changed ${configFileFullPath}`);
+			this.traceTrigger("Config:");
+			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
+			this.traceTrigger("BuildInfo:");
+			this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+			return false;
 		}
 		return true;
 	}
