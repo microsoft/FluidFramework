@@ -24,11 +24,19 @@ export function renderTableRow(
 	writer.write("| ");
 	for (let i = 0; i < node.children.length; i++) {
 		const child = node.children[i];
-		renderNode(child, writer, {
-			...context,
-			insideTable: true,
-		});
-		writer.write(i === node.children.length - 1 ? " |" : " | ");
+
+		if (child.isEmpty) {
+			writer.write("|");
+		} else {
+			renderNode(child, writer, {
+				...context,
+				insideTable: true,
+			});
+			writer.write(" |");
+		}
+		if (i < node.children.length - 1) {
+			writer.write(" ");
+		}
 	}
 	writer.ensureNewLine(); // Ensure line break after row
 }

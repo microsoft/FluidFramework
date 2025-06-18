@@ -16,12 +16,12 @@ Here are some remarks about the method
 ### Parameters {#testclassmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
-| input | TTypeParameterA |  |
+| - | - | - |
+| input | TTypeParameterA | |
 
 ### Returns {#testclassmethod-returns}
 
-**Return type:** TTypeParameterA
+**Return type**: TTypeParameterA
 
 ### Throws {#testclassmethod-throws}
 

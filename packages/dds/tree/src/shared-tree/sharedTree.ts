@@ -64,7 +64,7 @@ import {
 	makeTreeChunker,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/index.js";
+import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
 import {
 	type ClonableSchemaAndPolicy,
 	DefaultResubmitMachine,
@@ -92,12 +92,6 @@ import {
 	type ITreeAlpha,
 	type SimpleObjectFieldSchema,
 } from "../simple-tree/index.js";
-import {
-	type Breakable,
-	breakingClass,
-	type JsonCompatible,
-	throwIfBroken,
-} from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeReadonlyChangeEnricher } from "./sharedTreeChangeEnricher.js";
@@ -105,6 +99,12 @@ import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
+import {
+	type Breakable,
+	breakingClass,
+	type JsonCompatible,
+	throwIfBroken,
+} from "../util/index.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -191,6 +191,10 @@ const formatVersionToTopLevelCodecVersions = new Map<number, ExplicitCodecVersio
 	[
 		4,
 		{ forest: 1, schema: 1, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
+	],
+	[
+		5,
+		{ forest: 1, schema: 2, detachedFieldIndex: 1, editManager: 4, message: 4, fieldBatch: 1 },
 	],
 ]);
 
@@ -511,7 +515,7 @@ export function persistedToSimpleSchema(
 	options: ICodecOptions,
 ): SimpleTreeSchema {
 	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-	const stored = schemaCodec.decode(persisted as Format);
+	const stored = schemaCodec.decode(persisted as FormatV1);
 	return exportSimpleSchema(stored);
 }
 
@@ -572,6 +576,11 @@ export const SharedTreeFormatVersion = {
 	 * Requires \@fluidframework/tree \>= 2.0.0.
 	 */
 	v3: 3,
+
+	/**
+	 * Requires \@fluidframework/tree \>= 2.0.0.
+	 */
+	v5: 5,
 } as const;
 
 /**
@@ -750,20 +759,35 @@ function exportSimpleFieldSchemaStored(schema: TreeFieldStoredSchema): SimpleFie
 		default:
 			fail(0xaca /* invalid field kind */);
 	}
-	return { kind, allowedTypesIdentifiers: schema.types, metadata: {} };
+	return {
+		kind,
+		allowedTypesIdentifiers: schema.types,
+		metadata: {},
+		persistedMetadata: schema.persistedMetadata,
+	};
 }
 
+/**
+ * Export a {@link SimpleNodeSchema} from a {@link TreeNodeStoredSchema}.
+ * @privateRemarks
+ * TODO: Persist node metadata once schema FormatV2 is supported.
+ */
 function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeSchema {
 	const arrayTypes = tryStoredSchemaAsArray(schema);
 	if (arrayTypes !== undefined) {
-		return { kind: NodeKind.Array, allowedTypesIdentifiers: arrayTypes, metadata: {} };
+		return {
+			kind: NodeKind.Array,
+			allowedTypesIdentifiers: arrayTypes,
+			metadata: {},
+			persistedMetadata: schema.metadata,
+		};
 	}
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const fields = new Map<FieldKey, SimpleObjectFieldSchema>();
 		for (const [storedKey, field] of schema.objectNodeFields) {
 			fields.set(storedKey, { ...exportSimpleFieldSchemaStored(field), storedKey });
 		}
-		return { kind: NodeKind.Object, fields, metadata: {} };
+		return { kind: NodeKind.Object, fields, metadata: {}, persistedMetadata: schema.metadata };
 	}
 	if (schema instanceof MapNodeStoredSchema) {
 		assert(
@@ -774,10 +798,16 @@ function exportSimpleNodeSchemaStored(schema: TreeNodeStoredSchema): SimpleNodeS
 			kind: NodeKind.Map,
 			allowedTypesIdentifiers: schema.mapFields.types,
 			metadata: {},
+			persistedMetadata: schema.metadata,
 		};
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
-		return { kind: NodeKind.Leaf, leafKind: schema.leafValue, metadata: {} };
+		return {
+			kind: NodeKind.Leaf,
+			leafKind: schema.leafValue,
+			metadata: {},
+			persistedMetadata: schema.metadata,
+		};
 	}
 	fail(0xacb /* invalid schema kind */);
 }

@@ -8,4 +8,4 @@ Test interface property
 readonly testClassProperty: string;
 ```
 
-**Type:** string
+**Type**: string

@@ -469,15 +469,17 @@ function getSlideToSegment(
  * @internal
  */
 export function getSlideToSegoff(
-	segoff: { segment: ISegmentInternal | undefined; offset: number | undefined },
+	segoff: { segment: ISegmentInternal; offset: number } | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective = allAckedChangesPerspective,
 	useNewSlidingBehavior: boolean = false,
-): {
-	segment: ISegmentInternal | undefined;
-	offset: number | undefined;
-} {
-	if (!isSegmentLeaf(segoff.segment)) {
+):
+	| {
+			segment: ISegmentInternal;
+			offset: number;
+	  }
+	| undefined {
+	if (!isSegmentLeaf(segoff?.segment)) {
 		return segoff;
 	}
 	const [segment, _] = getSlideToSegment(
@@ -490,8 +492,11 @@ export function getSlideToSegoff(
 	if (segment === segoff.segment) {
 		return segoff;
 	}
-	const offset =
-		segment && segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
+	if (segment === undefined) {
+		return undefined;
+	}
+
+	const offset = segment.ordinal < segoff.segment.ordinal ? segment.cachedLength - 1 : 0;
 	return {
 		segment,
 		offset,
@@ -849,10 +854,12 @@ export class MergeTree {
 	public getContainingSegment(
 		pos: number,
 		perspective: Perspective,
-	): {
-		segment: ISegmentLeaf | undefined;
-		offset: number | undefined;
-	} {
+	):
+		| {
+				segment: ISegmentLeaf;
+				offset: number;
+		  }
+		| undefined {
 		assert(
 			perspective.localSeq === undefined ||
 				perspective.clientId === this.collabWindow.clientId,
@@ -868,6 +875,9 @@ export class MergeTree {
 			return false;
 		};
 		this.nodeMap(perspective, leaf, undefined, pos, pos + 1);
+		if (segment === undefined || offset === undefined) {
+			return undefined;
+		}
 		return { segment, offset };
 	}
 
@@ -1260,17 +1270,18 @@ export class MergeTree {
 	): Marker | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment(startPos, this.localPerspective);
-		if (!isSegmentLeaf(segment)) {
+		const segoff = this.getContainingSegment(startPos, this.localPerspective);
+		if (!isSegmentLeaf(segoff?.segment)) {
 			return undefined;
 		}
+		const { segment } = segoff;
 
 		depthFirstNodeWalk(
 			segment.parent,
 			segment,
 			(node) => {
 				if (node.isLeaf()) {
-					if (Marker.is(node) && refHasTileLabel(node, markerLabel)) {
+					if (!isRemoved(node) && Marker.is(node) && refHasTileLabel(node, markerLabel)) {
 						foundMarker = node;
 					}
 				} else {
@@ -1529,7 +1540,7 @@ export class MergeTree {
 
 		if (isSegmentLeaf(segmentInfo?.segment)) {
 			const segmentPosition = this.getPosition(segmentInfo.segment, this.localPerspective);
-			return segmentPosition + segmentInfo.offset!;
+			return segmentPosition + segmentInfo.offset;
 		} else {
 			if (remoteClientPosition === this.getLength(remotePerspective)) {
 				return this.getLength(this.localPerspective);
@@ -2085,14 +2096,9 @@ export class MergeTree {
 		const createRefFromSequencePlace = (
 			place: InteriorSequencePlace,
 		): LocalReferencePosition => {
-			const { segment: placeSeg, offset: placeOffset } = this.getContainingSegment(
-				place.pos,
-				perspective,
-			);
-			assert(
-				isSegmentLeaf(placeSeg) && placeOffset !== undefined,
-				0xa3f /* segments cannot be undefined */,
-			);
+			const segOff = this.getContainingSegment(place.pos, perspective);
+			assert(isSegmentLeaf(segOff?.segment), 0xa3f /* segments cannot be undefined */);
+			const { segment: placeSeg, offset: placeOffset } = segOff;
 			return this.createLocalReferencePosition(
 				placeSeg,
 				placeOffset,

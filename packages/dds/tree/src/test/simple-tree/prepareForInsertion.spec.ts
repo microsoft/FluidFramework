@@ -99,8 +99,8 @@ describe("prepareForInsertion", () => {
 				policy: {
 					fieldKinds: defaultSchemaPolicy.fieldKinds,
 					validateSchema: true,
-					// toMapTree drops all extra fields, so varying this policy is unnecessary
-					// (schema validation only occurs after converting to a MapTree)
+					// unhydratedFlexTreeFromInsertable drops all extra fields, so varying this policy is unnecessary
+					// (schema validation only occurs after converting to a flex tree)
 					allowUnknownOptionalFields: () => false,
 				},
 			};
@@ -135,6 +135,7 @@ describe("prepareForInsertion", () => {
 				return {
 					kind: kind.identifier,
 					types: new Set(allowedTypes),
+					persistedMetadata: undefined,
 				};
 			}
 

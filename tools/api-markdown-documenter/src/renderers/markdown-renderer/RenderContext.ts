@@ -53,8 +53,7 @@ export interface RenderContext extends TextFormatting {
 	 *
 	 * @remarks
 	 *
-	 * Will include default renderers for all {@link DocumentationNode} types enumerated in
-	 * {@link DocumentationNodeType}.
+	 * Will include default renderers for all {@link DocumentationNode} types exported by this library.
 	 */
 	readonly customRenderers?: Renderers;
 }

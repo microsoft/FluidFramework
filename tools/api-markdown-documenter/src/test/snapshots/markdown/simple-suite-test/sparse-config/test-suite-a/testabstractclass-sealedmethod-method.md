@@ -13,4 +13,4 @@ protected sealedMethod(): string;
 
 A string!
 
-**Return type:** string
+**Return type**: string

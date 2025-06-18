@@ -179,7 +179,7 @@ export function create(
 		"/:tenantId/:id/broadcast-signal",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config),
+		verifyStorageToken(tenantManager, config, [ScopeType.DocRead, ScopeType.DocWrite]),
 		denyListMiddleware(denyList),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response) => {

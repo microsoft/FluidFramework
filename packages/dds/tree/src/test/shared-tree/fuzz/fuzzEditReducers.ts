@@ -437,9 +437,9 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 				: undefined;
 
 			if (constraintNode !== undefined) {
-				tree.checkout.editor.addNodeExistsConstraint(
-					getOrCreateInnerNode(constraintNode).anchorNode,
-				);
+				const flex = getOrCreateInnerNode(constraintNode);
+				assert(flex.isHydrated());
+				tree.checkout.editor.addNodeExistsConstraint(flex.anchorNode);
 			}
 			break;
 		}

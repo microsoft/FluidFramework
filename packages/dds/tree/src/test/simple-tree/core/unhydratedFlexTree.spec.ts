@@ -5,21 +5,26 @@
 
 import { strict as assert } from "node:assert";
 
-import { FieldKinds, type FlexTreeOptionalField } from "../../../feature-libraries/index.js";
+import { cursorForMapTreeNode, FieldKinds } from "../../../feature-libraries/index.js";
 import {
-	deepCopyMapTree,
 	EmptyKey,
 	type ExclusiveMapTree,
 	type FieldKey,
+	type MapTree,
+	type Value,
 } from "../../../core/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	UnhydratedFlexTreeNode,
+	type UnhydratedOptionalField,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/unhydratedFlexTree.js";
 import { SchemaFactory, stringSchema } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+// eslint-disable-next-line import/no-internal-modules
+import { unhydratedFlexTreeFromCursor } from "../../../simple-tree/api/create.js";
+import { expectEqualCursors } from "../../utils.js";
 
 describe("unhydratedFlexTree", () => {
 	// #region The schema used in this test suite
@@ -72,15 +77,13 @@ describe("unhydratedFlexTree", () => {
 		arrayNodeSchemaSimple,
 		objectSchemaSimple,
 	]);
-	const map = UnhydratedFlexTreeNode.getOrCreate(context, mapMapTree);
-	const arrayNode = UnhydratedFlexTreeNode.getOrCreate(context, fieldNodeMapTree);
-	const object = UnhydratedFlexTreeNode.getOrCreate(context, objectMapTree);
 
-	it("are cached", () => {
-		assert.equal(UnhydratedFlexTreeNode.getOrCreate(context, mapMapTree), map);
-		assert.equal(UnhydratedFlexTreeNode.getOrCreate(context, fieldNodeMapTree), arrayNode);
-		assert.equal(UnhydratedFlexTreeNode.getOrCreate(context, objectMapTree), object);
-	});
+	const object = unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(objectMapTree));
+	const map = object.getBoxed(objectMapKey).boxedAt(0) ?? assert.fail();
+	const arrayNode = object.getBoxed(objectFieldNodeKey).boxedAt(0) ?? assert.fail();
+
+	assert(map instanceof UnhydratedFlexTreeNode);
+	assert(arrayNode instanceof UnhydratedFlexTreeNode);
 
 	it("can get their type", () => {
 		assert.equal(map.type, "Test.Map");
@@ -97,12 +100,12 @@ describe("unhydratedFlexTree", () => {
 	});
 
 	it("can get their schema", () => {
-		assert.equal(map.schema, mapSchemaSimple.identifier);
-		assert.equal(arrayNode.schema, arrayNodeSchemaSimple.identifier);
-		assert.equal(object.schema, objectSchemaSimple.identifier);
-		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.schema, schemaFactory.string.identifier);
+		assert.equal(map.type, mapSchemaSimple.identifier);
+		assert.equal(arrayNode.type, arrayNodeSchemaSimple.identifier);
+		assert.equal(object.type, objectSchemaSimple.identifier);
+		assert.equal(map.tryGetField(mapKey)?.boxedAt(0)?.type, schemaFactory.string.identifier);
 		assert.equal(
-			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.schema,
+			arrayNode.tryGetField(EmptyKey)?.boxedAt(0)?.type,
 			schemaFactory.string.identifier,
 		);
 	});
@@ -114,8 +117,8 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(map.getBoxed(mapKey).length, 1);
 		assert.equal(map.tryGetField(brand("unknown key")), undefined);
 		assert.equal(map.getBoxed("unknown key").length, 0);
-		assert.equal([...map.boxedIterator()].length, 1);
-		assert.equal([...map.boxedIterator()][0].boxedAt(0)?.value, childValue);
+		assert.equal([...map].length, 1);
+		assert.equal([...map][0].boxedAt(0)?.value, childValue);
 		assert.deepEqual([...map.keys()], [mapKey]);
 	});
 
@@ -132,27 +135,42 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(field.at(-1), childValue);
 		assert.equal(field.at(0), childValue);
 		assert.equal(field.at(1), undefined);
-		assert.equal([...arrayNode.boxedIterator()].length, 1);
-		assert.equal([...arrayNode.boxedIterator()][0].boxedAt(0)?.value, childValue);
+		assert.equal([...arrayNode].length, 1);
+		assert.equal([...arrayNode][0].boxedAt(0)?.value, childValue);
 	});
 
 	it("can get the children of object nodes", () => {
 		assert.equal(object.getBoxed("map").key, "map");
-		assert.equal(object.tryGetField(objectMapKey)?.boxedAt(0), map);
-		assert.equal(object.tryGetField(objectFieldNodeKey)?.boxedAt(0), arrayNode);
-		assert.equal(object.getBoxed(objectMapKey).boxedAt(0), map);
-		assert.equal(object.getBoxed(objectFieldNodeKey).boxedAt(0), arrayNode);
+		expectEqualCursors(
+			object.tryGetField(objectMapKey)?.boxedAt(0)?.borrowCursor(),
+			map.borrowCursor(),
+		);
+		expectEqualCursors(
+			object.tryGetField(objectFieldNodeKey)?.boxedAt(0)?.borrowCursor(),
+			arrayNode.borrowCursor(),
+		);
+		expectEqualCursors(
+			object.getBoxed(objectMapKey).boxedAt(0)?.borrowCursor(),
+			map.borrowCursor(),
+		);
+		expectEqualCursors(
+			object.getBoxed(objectFieldNodeKey).boxedAt(0)?.borrowCursor(),
+			arrayNode.borrowCursor(),
+		);
 		assert.equal(object.tryGetField(brand("unknown key")), undefined);
 		assert.equal(object.getBoxed("unknown key").length, 0);
-		assert.equal([...object.boxedIterator()].length, 2);
+		assert.equal([...object].length, 2);
 	});
 
 	it("cannot be multiparented", () => {
 		assert.throws(() =>
-			UnhydratedFlexTreeNode.getOrCreate(context, {
-				type: brand("Parent of a node that already has another parent"),
-				fields: new Map([[brand("fieldKey"), [mapMapTree]]]),
-			}),
+			unhydratedFlexTreeFromCursor(
+				context,
+				cursorForMapTreeNode({
+					type: brand("Parent of a node that already has another parent"),
+					fields: new Map([[brand("fieldKey"), [mapMapTree]]]),
+				}),
+			),
 		);
 
 		const duplicateChild: ExclusiveMapTree = {
@@ -161,17 +179,20 @@ describe("unhydratedFlexTree", () => {
 			fields: new Map(),
 		};
 		assert.throws(() => {
-			UnhydratedFlexTreeNode.getOrCreate(context, {
-				type: brand("Parent with the same child twice in the same field"),
-				fields: new Map([[EmptyKey, [duplicateChild, duplicateChild]]]),
-			});
+			unhydratedFlexTreeFromCursor(
+				context,
+				cursorForMapTreeNode({
+					type: brand("Parent with the same child twice in the same field"),
+					fields: new Map([[EmptyKey, [duplicateChild, duplicateChild]]]),
+				}),
+			);
 		});
 	});
 
 	it("can get their parent index", () => {
 		assert.equal(map.parentField.index, 0);
 		assert.equal(arrayNode.parentField.index, 0);
-		assert.equal(object.parentField.index, -1);
+		assert.equal(object.parentField.index, 0);
 	});
 
 	it("can get their parent node", () => {
@@ -180,77 +201,85 @@ describe("unhydratedFlexTree", () => {
 		assert.equal(object.parentField.parent.parent, undefined);
 	});
 
-	describe("cannot", () => {
-		it("get their context", () => {
-			assert.equal(map.context.isHydrated(), false);
-			assert.equal(arrayNode.context.isHydrated(), false);
-			assert.equal(object.context.isHydrated(), false);
-		});
+	it("get their context", () => {
+		assert.equal(map.context.isHydrated(), false);
+		assert.equal(arrayNode.context.isHydrated(), false);
+		assert.equal(object.context.isHydrated(), false);
+	});
 
-		it("get their anchor node", () => {
-			assert.throws(() => map.anchorNode);
-			assert.throws(() => arrayNode.anchorNode);
-			assert.throws(() => object.anchorNode);
-		});
+	it("is unhydrated", () => {
+		assert(map.isHydrated() === false);
+		assert(arrayNode.isHydrated() === false);
+		assert(object.isHydrated() === false);
 	});
 
 	describe("can mutate", () => {
 		it("required fields", () => {
-			const mutableObjectMapTree = deepCopyMapTree(objectMapTree);
-			const mutableObjectMapTreeMap = mutableObjectMapTree.fields.get(objectMapKey)?.[0];
-			assert(mutableObjectMapTreeMap !== undefined);
-			const mutableObject = UnhydratedFlexTreeNode.getOrCreate(context, mutableObjectMapTree);
-			const field = mutableObject.getBoxed(objectMapKey) as FlexTreeOptionalField;
+			const mutableObject = unhydratedFlexTreeFromCursor(
+				context,
+				cursorForMapTreeNode(objectMapTree),
+			);
+			// Find a field to edit. In this case the one with the map in it.
+			const field = mutableObject.getBoxed(objectMapKey) as UnhydratedOptionalField;
 			const oldMap = field.boxedAt(0);
-			assert(oldMap !== undefined);
+			assert(oldMap instanceof UnhydratedFlexTreeNode);
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
-			const newMap = UnhydratedFlexTreeNode.getOrCreate(context, deepCopyMapTree(mapMapTree));
+
+			// Allocate a new node
+			const newMap = unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(mapMapTree));
 			assert.notEqual(newMap, oldMap);
 			assert.equal(newMap.parentField.parent.parent, undefined);
+
 			// Replace the old map with a new map
-			field.editor.set(newMap.mapTree, false);
+			field.editor.set(newMap);
 			assert.equal(oldMap.parentField.parent.parent, undefined);
 			assert.equal(newMap.parentField.parent.parent, mutableObject);
 			assert.equal(field.boxedAt(0), newMap);
+
 			// Replace the new map with the old map again
-			field.editor.set(mutableObjectMapTreeMap, false);
+			field.editor.set(oldMap);
 			assert.equal(oldMap.parentField.parent.parent, mutableObject);
 			assert.equal(newMap.parentField.parent.parent, undefined);
 			assert.equal(field.boxedAt(0), oldMap);
 		});
 
 		it("optional fields", () => {
-			const mutableMap = UnhydratedFlexTreeNode.getOrCreate(
+			const mutableMap = unhydratedFlexTreeFromCursor(
 				context,
-				deepCopyMapTree(mapMapTree),
+				cursorForMapTreeNode(mapMapTree),
 			);
-			const field = mutableMap.getBoxed(mapKey) as FlexTreeOptionalField;
+			const field = mutableMap.getBoxed(mapKey) as UnhydratedOptionalField;
 			const oldValue = field.boxedAt(0);
 			const newValue = `new ${childValue}`;
-			field.editor.set({ ...mapChildMapTree, value: newValue }, false);
+			const newTree: MapTree = { ...mapChildMapTree, value: newValue };
+			field.editor.set(unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(newTree)));
 			assert.equal(field.boxedAt(0)?.value, newValue);
 			assert.notEqual(newValue, oldValue);
-			field.editor.set(undefined, false);
+			field.editor.set(undefined);
 			assert.equal(field.boxedAt(0)?.value, undefined);
 		});
 
 		describe("arrays", () => {
 			it("insert and remove", () => {
-				const mutableFieldNode = UnhydratedFlexTreeNode.getOrCreate(
+				const mutableFieldNode = unhydratedFlexTreeFromCursor(
 					context,
-					deepCopyMapTree(fieldNodeMapTree),
+					cursorForMapTreeNode(fieldNodeMapTree),
 				);
 				const field = mutableFieldNode.getBoxed(EmptyKey);
 				assert(field.is(FieldKinds.sequence));
-				const values = () => Array.from(field.boxedIterator(), (n) => n.value);
+				const values = (): Value[] => Array.from(field, (n): Value => n.value);
 				assert.deepEqual(values(), [childValue]);
+				const treeC: MapTree = { ...mapChildMapTree, value: "c" };
+				const treeD: MapTree = { ...mapChildMapTree, value: "d" };
 				field.editor.insert(1, [
-					{ ...mapChildMapTree, value: "c" },
-					{ ...mapChildMapTree, value: "d" },
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeC)),
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeD)),
 				]);
+				const treeA: MapTree = { ...mapChildMapTree, value: "a" };
+				const treeB: MapTree = { ...mapChildMapTree, value: "b" };
 				field.editor.insert(0, [
-					{ ...mapChildMapTree, value: "a" },
-					{ ...mapChildMapTree, value: "b" },
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeA)),
+					unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(treeB)),
 				]);
 				assert.deepEqual(values(), ["a", "b", childValue, "c", "d"]);
 				field.editor.remove(2, 1);
@@ -259,20 +288,24 @@ describe("unhydratedFlexTree", () => {
 
 			it("with a large sequence of new content", () => {
 				// This exercises a special code path for inserting large arrays, since large arrays are treated differently to avoid overflow with `splice` + spread.
-				const mutableFieldNode = UnhydratedFlexTreeNode.getOrCreate(context, {
-					...fieldNodeMapTree,
-					fields: new Map(),
-				});
+				const mutableFieldNode = unhydratedFlexTreeFromCursor(
+					context,
+					cursorForMapTreeNode({
+						...fieldNodeMapTree,
+						fields: new Map(),
+					}),
+				);
 				const field = mutableFieldNode.getBoxed(EmptyKey);
 				assert(field.is(FieldKinds.sequence));
-				const newContent: ExclusiveMapTree[] = [];
+				const newContent: UnhydratedFlexTreeNode[] = [];
 				for (let i = 0; i < 10000; i++) {
-					newContent.push({ ...mapChildMapTree, value: String(i) });
+					const tree: MapTree = { ...mapChildMapTree, value: String(i) };
+					newContent.push(unhydratedFlexTreeFromCursor(context, cursorForMapTreeNode(tree)));
 				}
 				field.editor.insert(0, newContent);
 				assert.equal(field.length, newContent.length);
 				assert.deepEqual(
-					Array.from(field.boxedIterator(), (n) => n.value),
+					Array.from(field, (n) => n.value),
 					newContent.map((c) => c.value),
 				);
 			});

@@ -567,52 +567,6 @@ describe("Tests1 for snapshot fetch", () => {
 			]),
 		);
 	});
-
-	it("RedeemFallback behavior when fallback succeeds with using siteUrl", async () => {
-		resolved.shareLinkInfo = {
-			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
-		};
-		hostPolicy.enableRedeemFallback = true;
-
-		const snapshot: ISnapshot = {
-			blobContents,
-			snapshotTree: snapshotTreeWithGroupId,
-			ops: [],
-			latestSequenceNumber: 0,
-			sequenceNumber: 0,
-			snapshotFormatV: 1,
-		};
-		const response = (await createResponse(
-			{ "x-fluid-epoch": "epoch1", "content-type": "application/ms-fluid" },
-			convertToCompactSnapshot(snapshot),
-			200,
-		)) as unknown as Response;
-
-		await assert.doesNotReject(
-			async () =>
-				mockFetchMultiple(
-					async () => service.getSnapshot({}),
-					[
-						notFound,
-						notFound,
-						async (): Promise<MockResponse> => okResponse({}, {}),
-						async (): Promise<Response> => {
-							return response;
-						},
-					],
-				),
-			"Should succeed",
-		);
-		assert(
-			mockLogger.matchEvents([
-				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "ShareLinkRedeemFailedWithTenantDomain", statusCode: 404 },
-				{ eventName: "RedeemShareLink_end" },
-				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
-				{ eventName: "TreesLatest_end" },
-			]),
-		);
-	});
 });
 
 const snapshotTreeWithGroupId: ISnapshotTree = {

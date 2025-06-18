@@ -212,20 +212,30 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
+			// Add the summarizable's path in the summary tree to the incremental summary context's
+			// summary path, so that the summarizable can use it to generate incremental summaries.
+			const childIncrementalSummaryContext =
+				incrementalSummaryContext === undefined
+					? undefined
+					: {
+							...incrementalSummaryContext,
+							summaryPath: `${incrementalSummaryContext.summaryPath}/${summarizablesTreeKey}/${s.key}`,
+						};
 			summarizableBuilder.addWithStats(
 				s.key,
-				s.getAttachSummary(
-					(contents) => serializer.stringify(contents, this.sharedObject.handle),
-					undefined,
-					undefined,
+				s.summarize({
+					stringify: (contents: unknown) =>
+						serializer.stringify(contents, this.sharedObject.handle),
+					fullTree,
 					telemetryContext,
-					incrementalSummaryContext,
-				),
+					incrementalSummaryContext: childIncrementalSummaryContext,
+				}),
 			);
 		}
 
@@ -435,27 +445,26 @@ export interface Summarizable {
 	readonly key: string;
 
 	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
-	 */
-	getAttachSummary(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats;
-
-	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
 	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
+	 * @param fullTree - A flag indicating whether the attempt should generate a full
+	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
+	 * a summary from the entire container. The default value is false.
+	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
+	 * of an object did not change since last successful summary, an
+	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
+	 * send an `ISummaryHandle`, since you are not expected to track state. The default value is true.
+	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
+	 * @param incrementalSummaryContext - See {@link @fluidframework/runtime-definitions#IExperimentalIncrementalSummaryContext}.
 	 */
-	summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummaryTreeWithStats>;
+	summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats;
 
 	/**
 	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore

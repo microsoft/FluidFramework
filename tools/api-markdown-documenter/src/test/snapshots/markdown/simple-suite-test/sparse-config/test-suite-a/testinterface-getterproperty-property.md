@@ -8,4 +8,4 @@ A test getter-only interface property.
 get getterProperty(): boolean;
 ```
 
-**Type:** boolean
+**Type**: boolean

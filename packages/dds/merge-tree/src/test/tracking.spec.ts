@@ -45,7 +45,7 @@ describe("MergeTree.tracking", () => {
 
 		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 1);
 
-		assert(trackingGroup.unlink(segmentInfo.segment), "unlink segment should be true");
+		assert(trackingGroup.unlink(segmentInfo?.segment), "unlink segment should be true");
 
 		assert.equal(segmentInfo?.segment?.trackingCollection.trackingGroups.size, 0);
 	});
@@ -110,9 +110,9 @@ describe("MergeTree.tracking", () => {
 		assert.equal(testClient.getLength(), 3);
 
 		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
-		assert(segmentInfo.segment);
+		assert(segmentInfo?.segment);
 		const ref = testClient.createLocalReferencePosition(
-			segmentInfo.segment,
+			segmentInfo?.segment,
 			0,
 			ReferenceType.SlideOnRemove,
 			undefined,
@@ -127,9 +127,9 @@ describe("MergeTree.tracking", () => {
 		assert.equal(testClient.getLength(), 3);
 
 		const segmentInfo = testClient.getContainingSegment<ISegmentPrivate>(0);
-		assert(segmentInfo.segment);
+		assert(segmentInfo?.segment);
 		const ref = testClient.createLocalReferencePosition(
-			segmentInfo.segment,
+			segmentInfo?.segment,
 			0,
 			ReferenceType.SlideOnRemove,
 			undefined,
@@ -157,7 +157,7 @@ describe("MergeTree.tracking", () => {
 
 		testClient.insertTextLocal(0, "abc");
 
-		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0);
+		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
 		segment?.trackingCollection.link(trackingGroup);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 1);
@@ -183,7 +183,7 @@ describe("MergeTree.tracking", () => {
 
 		testClient.insertTextLocal(0, "abc");
 
-		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0);
+		const { segment } = testClient.getContainingSegment<ISegmentPrivate>(0) ?? {};
 		segment?.trackingCollection.link(trackingGroup);
 
 		assert.equal(segment?.trackingCollection.trackingGroups.size, 1);

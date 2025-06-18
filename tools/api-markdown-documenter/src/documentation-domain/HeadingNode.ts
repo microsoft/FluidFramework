@@ -6,8 +6,6 @@
 import type { Heading } from "../Heading.js";
 
 import type { DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
 
 /**
  * A document heading.
@@ -31,16 +29,11 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * @sealed
  * @public
  */
-export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Heading, "title"> {
+export class HeadingNode implements DocumentationNode, Heading {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Heading;
-
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = true;
+	public readonly type = "heading";
 
 	/**
 	 * {@inheritDoc DocumentationNode.isLiteral}
@@ -56,14 +49,14 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {
-		return this.title.isEmpty;
+		return this.title.length === 0;
 	}
 
 	public constructor(
 		/**
 		 * {@inheritDoc Heading.title}
 		 */
-		public readonly title: PlainTextNode,
+		public readonly title: string,
 
 		/**
 		 * {@inheritDoc Heading.id}
@@ -72,18 +65,9 @@ export class HeadingNode implements DocumentationNode<PlainTextNode>, Omit<Headi
 	) {}
 
 	/**
-	 * Generates a `HeadingNode` from the provided string.
-	 * @param title - See {@link Heading.title}
-	 * @param id - See {@link Heading.id}
-	 */
-	public static createFromPlainText(title: string, id?: string): HeadingNode {
-		return new HeadingNode(new PlainTextNode(title), id);
-	}
-
-	/**
 	 * Generates a `HeadingNode` from the provided {@link Heading}.
 	 */
 	public static createFromPlainTextHeading(heading: Heading): HeadingNode {
-		return HeadingNode.createFromPlainText(heading.title, heading.id);
+		return new HeadingNode(heading.title, heading.id);
 	}
 }

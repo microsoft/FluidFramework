@@ -1,5 +1,9 @@
 # @fluidframework/protocol-base
 
+## 6.0.0
+
+Dependency updates only.
+
 ## 5.0.0
 
 ### Minor Changes

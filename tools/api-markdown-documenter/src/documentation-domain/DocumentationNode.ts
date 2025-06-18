@@ -41,16 +41,6 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 	readonly isParent: boolean;
 
 	/**
-	 * Whether or not the content of the node fits on a single line.
-	 *
-	 * @remarks
-	 *
-	 * Certain classes of items are required to be single-line only, and will use this flag to violate
-	 * child contents, etc.
-	 */
-	readonly singleLine: boolean;
-
-	/**
 	 * True if and only if the node contains no content.
 	 */
 	readonly isEmpty: boolean;
@@ -158,18 +148,6 @@ export abstract class DocumentationParentNodeBase<
 	public readonly children: TDocumentationNode[];
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public get singleLine(): boolean {
-		for (const child of this.children) {
-			if (!child.singleLine) {
-				return false;
-			}
-		}
-		return true;
-	}
-
-	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {
@@ -220,11 +198,6 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown>
 	 * {@inheritDoc DocumentationLiteralNode.value}
 	 */
 	public readonly value: TValue;
-
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public abstract get singleLine(): boolean;
 
 	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}

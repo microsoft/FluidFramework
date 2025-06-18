@@ -4,7 +4,6 @@
  */
 
 import type { DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * A horizontal line dividing above and below contents in a document.
@@ -30,7 +29,7 @@ export class HorizontalRuleNode implements DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.HorizontalRule;
+	public readonly type = "horizontalRule";
 
 	/**
 	 * {@inheritDoc DocumentationNode.isLiteral}
@@ -46,11 +45,6 @@ export class HorizontalRuleNode implements DocumentationNode {
 	 * Static `HorizontalRuleNode` singleton.
 	 */
 	public static readonly Singleton = new HorizontalRuleNode();
-
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = false;
 
 	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}

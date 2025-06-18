@@ -199,6 +199,19 @@ This section contains common workflows and patterns to increase inner dev loop e
 -   `pnpm clean` if random build failures, especially with no changes
 -   `git clean -xdf` to remove extraneous files if debugging becomes slow or hangs.
 
+### Repo maintenance
+
+It's a good idea to periodically run `git maintenance run` in the folder where you cloned the repository
+(by default this will just run git's garbage collection)
+to keep its size down and operations on it as snappy as possible.
+
+Depending on your environment you might want to run `git maintenance start` instead,
+which will schedule maintenance to run periodically.
+- It should work on Windows because it leverages Task Scheduler.
+- It won't work in WSL unless [you configure it to use systemd](https://devblogs.microsoft.com/commandline/systemd-support-is-now-available-in-wsl/),
+which could have other implications for your system, so proceed with caution.
+- It won't work on Codespaces because it doesn't run `cron`.
+
 ## Testing
 
 You can run all of our tests from the root of the repo, or you can run a scoped set of tests by running the `test`

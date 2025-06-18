@@ -40,21 +40,30 @@ export interface MapTreeNodeViewGeneric<TNode> extends NodeData {
 	 * The non-empty fields on this node.
 	 * @remarks
 	 * This is the subset of map needed to view the tree.
-	 * Theoretically "size" could be removed by measuring the length of keys, but it is included for convenience.
+	 * Theoretically `Symbol.iterator` and "keys" are redundant.
 	 */
-	readonly fields: Pick<
-		ReadonlyMap<FieldKey, MapTreeFieldViewGeneric<TNode>>,
-		typeof Symbol.iterator | "get" | "size" | "keys"
-	>;
+	readonly fields: MinimalFieldMap<MapTreeFieldViewGeneric<TNode>>;
+}
+
+/**
+ * A minimal map for the fields of a {@link MapTreeNodeViewGeneric}.
+ * @remarks
+ * Subset of map, so can be implemented by `Map<FieldKey, TField>`.
+ */
+export interface MinimalFieldMap<TField> {
+	[Symbol.iterator]: () => Iterator<[FieldKey, TField]>;
+	get: (key: FieldKey) => TField | undefined;
 }
 
 /**
  * A field in {@link MapTreeNodeViewGeneric}.
+ * @remarks
+ * Subset of array, so can be implemented by `TNode[]`.
  */
-export type MapTreeFieldViewGeneric<TNode> = Pick<
-	readonly TNode[],
-	typeof Symbol.iterator | "length"
->;
+export interface MapTreeFieldViewGeneric<TNode> {
+	readonly [Symbol.iterator]: () => Iterator<TNode>;
+	readonly length: number;
+}
 
 /**
  * Like {@link MapTree} but with the minimal properties needed for reading.
@@ -127,7 +136,7 @@ export function cursorForMapTreeField<T extends MapTreeNodeViewGeneric<T>>(
 const adapter: CursorAdapter<MinimalMapTreeNodeView> = {
 	value: (node) => node.value,
 	type: (node) => node.type,
-	keysFromNode: (node) => [...node.fields.keys()], // TODO: don't convert this to array here.
+	keysFromNode: (node) => Array.from(node.fields, ([key, field]) => key),
 	getFieldFromNode: (node, key): Field<MinimalMapTreeNodeView> => {
 		const field = node.fields.get(key) as
 			| MinimalMapTreeNodeView[]

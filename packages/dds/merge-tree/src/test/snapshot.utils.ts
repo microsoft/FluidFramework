@@ -175,7 +175,7 @@ export class TestString {
 	}
 
 	public getSegment(pos: number): ISegmentPrivate {
-		const { segment } = this.client.getContainingSegment<ISegmentPrivate>(pos);
+		const { segment } = this.client.getContainingSegment<ISegmentPrivate>(pos) ?? {};
 		assert(segment !== undefined);
 		return segment;
 	}

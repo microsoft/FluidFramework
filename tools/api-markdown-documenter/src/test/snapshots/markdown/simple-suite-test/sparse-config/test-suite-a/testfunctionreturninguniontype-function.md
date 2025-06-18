@@ -12,4 +12,4 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type:** string \| [TestInterface](docs/test-suite-a/testinterface-interface)
+**Return type**: string \| [TestInterface](docs/test-suite-a/testinterface-interface)

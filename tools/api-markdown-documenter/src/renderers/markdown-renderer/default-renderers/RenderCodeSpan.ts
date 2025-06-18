@@ -5,7 +5,6 @@
 
 import type { CodeSpanNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
-import { renderNode } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
 
 /**
@@ -20,10 +19,5 @@ export function renderCodeSpan(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	writer.write("`");
-	renderNode(node.value, writer, {
-		...context,
-		insideCodeBlock: true,
-	});
-	writer.write("`");
+	writer.write(`\`${node.value}\``);
 }

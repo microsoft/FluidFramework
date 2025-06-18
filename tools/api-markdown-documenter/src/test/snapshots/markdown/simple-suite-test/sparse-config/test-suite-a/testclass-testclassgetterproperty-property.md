@@ -10,7 +10,7 @@ get testClassGetterProperty(): number;
 set testClassGetterProperty(newValue: number);
 ```
 
-**Type:** number
+**Type**: number
 
 ### Remarks {#testclassgetterproperty-remarks}
 

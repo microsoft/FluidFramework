@@ -8,7 +8,7 @@ Test interface property
 testInterfaceProperty: number;
 ```
 
-**Type:** number
+**Type**: number
 
 ### Remarks {#testinterfaceproperty-remarks}
 

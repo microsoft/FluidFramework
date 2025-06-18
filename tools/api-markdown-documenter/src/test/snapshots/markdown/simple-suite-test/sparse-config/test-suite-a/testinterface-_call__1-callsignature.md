@@ -1,4 +1,4 @@
-## (event: 'anotherTestCallSignature', listener: (input: number) =&gt; string): number
+## (event: 'anotherTestCallSignature', listener: (input: number) => string): number
 
 Another example call signature
 

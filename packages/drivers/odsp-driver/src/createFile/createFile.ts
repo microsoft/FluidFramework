@@ -212,7 +212,7 @@ export async function createNewEmptyFluidFile(
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
-	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+	}/items/root:${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
 	return getWithRetryForTokenRefresh(async (options) => {
 		const url = initialUrl;

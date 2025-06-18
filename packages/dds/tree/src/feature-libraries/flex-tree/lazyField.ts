@@ -19,6 +19,7 @@ import {
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
+	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
@@ -37,7 +38,6 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeNode,
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
@@ -45,6 +45,7 @@ import {
 	type FlexTreeUnknownUnboxed,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
+	type HydratedFlexTreeNode,
 	TreeStatus,
 	flexTreeMarker,
 	flexTreeSlot,
@@ -161,7 +162,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		return this.schema === kind.identifier;
 	}
 
-	public get parent(): FlexTreeNode | undefined {
+	public get parent(): HydratedFlexTreeNode | undefined {
 		if (this.anchor.parent === undefined) {
 			return undefined;
 		}
@@ -195,7 +196,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public boxedAt(index: number): FlexTreeNode | undefined {
+	public boxedAt(index: number): HydratedFlexTreeNode | undefined {
 		const finalIndex = indexForAt(index, this.length);
 
 		if (finalIndex === undefined) {
@@ -206,17 +207,13 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
-		return Array.from(this, callbackfn);
-	}
-
-	public boxedIterator(): IterableIterator<FlexTreeNode> {
-		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
-	}
-
-	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
-		return iterateCursorField(this.cursor, (cursor) =>
-			unboxedFlexNode(this.context, cursor, this.anchor),
+		return mapCursorField(this.cursor, (cursor) =>
+			callbackfn(unboxedFlexNode(this.context, cursor, this.anchor), cursor.fieldIndex),
 		);
+	}
+
+	public [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
+		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public getFieldPath(): NormalizedFieldUpPath {

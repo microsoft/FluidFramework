@@ -66,7 +66,7 @@ import {
 } from "./clientLoading.js";
 import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 import { DDSFuzzSerializer } from "./fuzzSerializer.js";
-import { makeUnreachableCodePathProxy } from "./utils.js";
+import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";
 
 /**
  * @internal
@@ -111,6 +111,7 @@ export interface ClientSpec {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
+	squash?: boolean;
 }
 
 /**
@@ -536,6 +537,11 @@ export interface DDSFuzzSuiteOptions {
 	 * @deprecated This is option is for back-compat only. Once all usages are removed, it should also be removed.
 	 */
 	forceGlobalSeed?: true;
+
+	/**
+	 * If enabled, connection state change operations will sometimes use squashed resubmits.
+	 */
+	testSquashResubmit?: true;
 }
 
 /**
@@ -578,7 +584,6 @@ export function mixinNewClient<
 	const generatorFactory: () => AsyncGenerator<TOperation | AddClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state: TState): Promise<TOperation | AddClient | typeof done> => {
-			const baseOp = baseGenerator(state);
 			const { clients, random, isDetached } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
@@ -594,7 +599,7 @@ export function mixinNewClient<
 						: false,
 				};
 			}
-			return baseOp;
+			return baseGenerator(state);
 		};
 	};
 
@@ -653,10 +658,14 @@ export function mixinReconnect<
 			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 				const baseOp = baseGenerator(state);
 				if (isReconnectAllowed(state) && state.random.bool(options.reconnectProbability)) {
-					return {
+					const op: ChangeConnectionState = {
 						type: "changeConnectionState",
 						connected: !state.client.containerRuntime.connected,
 					};
+					if (options.testSquashResubmit === true && op.connected && state.random.bool(0.5)) {
+						op.squash = true;
+					}
+					return op;
 				}
 
 				return baseOp;
@@ -671,11 +680,15 @@ export function mixinReconnect<
 		state,
 		operation,
 	) => {
-		if (operation.type === "changeConnectionState") {
-			state.client.containerRuntime.connected = (operation as ChangeConnectionState).connected;
+		if (isOperationType<ChangeConnectionState>("changeConnectionState", operation)) {
+			if (operation.squash === true) {
+				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
+			} else {
+				state.client.containerRuntime.connected = operation.connected;
+			}
 			return state;
 		} else {
-			return model.reducer(state, operation as TOperation);
+			return model.reducer(state, operation);
 		}
 	};
 	return {

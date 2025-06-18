@@ -33,7 +33,7 @@ const bar = TestEnum.TestEnumValue2
 ### Flags
 
 | Flag | Description |
-| --- | --- |
+| - | - |
 | [TestEnumValue1](docs/test-suite-a/testenum-testenumvalue1-enummember) | Test enum value 1 (string) |
 | [TestEnumValue2](docs/test-suite-a/testenum-testenumvalue2-enummember) | Test enum value 2 (number) |
 | [TestEnumValue3](docs/test-suite-a/testenum-testenumvalue3-enummember) | Test enum value 3 (default) |

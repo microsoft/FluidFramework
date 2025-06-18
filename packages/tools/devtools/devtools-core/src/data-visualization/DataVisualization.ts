@@ -255,7 +255,9 @@ export class DataVisualizerGraph
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeDataObject;
 		} else if (isTreeDataObj) {
-			rootSharedObject = visualizableObject.sharedTree as unknown as ISharedObject;
+			rootSharedObject = (
+				visualizableObject as unknown as { readonly sharedTree: ISharedObject }
+			).sharedTree;
 			objectId = getKeyForFluidObject(rootSharedObject);
 			visualizationFunction = visualizeTreeDataObject;
 		} else {
@@ -576,7 +578,7 @@ function isTreeDataObject(value: unknown): value is TreeDataObject<unknown> {
 			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "sharedTree")?.get !==
 				undefined)
 	) {
-		const tree = (value as TreeDataObject<unknown>).sharedTree;
+		const tree = (value as { readonly sharedTree?: ISharedObject }).sharedTree;
 		if (tree === undefined) {
 			throw new Error(
 				"TreeDataObject must have a `sharedTree` property, but it was undefined.",

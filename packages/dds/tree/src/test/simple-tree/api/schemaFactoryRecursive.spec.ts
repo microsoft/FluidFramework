@@ -787,6 +787,43 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 	});
 
+	/**
+	 * Test various recursive object node cases with persisted metadata.
+	 */
+	it("Node schema persisted metadata", () => {
+		// Example persistedMetadata containing a mix of primitives and objects
+		const persistedMetadata = {
+			a: "test",
+			anObject: { baz: true },
+		};
+
+		// Test adding persistedMetadata to a recursive array schema
+		const factory = new SchemaFactoryAlpha("");
+		class Foos extends factory.arrayRecursive("FooList", [() => Foo], { persistedMetadata }) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof Foos>;
+		}
+		assert.deepEqual(Foos.persistedMetadata, persistedMetadata);
+
+		// Test adding persistedMetadata to a recursive object schema
+		class Foo extends factory.objectRecursive(
+			"Foo",
+			{ fooList: Foos },
+			{ persistedMetadata },
+		) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof Foo>;
+		}
+		assert.deepEqual(Foo.persistedMetadata, persistedMetadata);
+
+		// Test adding persistedMetadata to a recursive map schema
+		class FooMap extends factory.mapRecursive("FooMap", [() => Foo], { persistedMetadata }) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof FooMap>;
+		}
+		assert.deepEqual(FooMap.persistedMetadata, persistedMetadata);
+	});
+
 	it("recursive under non-recursive", () => {
 		class ArrayRecursive extends sf.arrayRecursive("List", [() => ArrayRecursive]) {}
 		{

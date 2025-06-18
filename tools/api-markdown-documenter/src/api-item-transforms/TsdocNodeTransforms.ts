@@ -7,7 +7,6 @@ import type { ApiItem } from "@microsoft/api-extractor-model";
 import {
 	type DocCodeSpan,
 	type DocDeclarationReference,
-	type DocEscapedText,
 	type DocFencedCode,
 	type DocLinkTag,
 	type DocNode,
@@ -25,7 +24,6 @@ import type { LoggingConfiguration } from "../LoggingConfiguration.js";
 import {
 	type BlockContent,
 	CodeSpanNode,
-	DocumentationNodeType,
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
@@ -46,7 +44,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 /**
  * Options for {@link @microsoft/tsdoc#DocNode} transformations.
  */
-export interface TsdocNodeTransformOptions extends LoggingConfiguration {
+export interface TsdocNodeTransformOptions extends Required<LoggingConfiguration> {
 	/**
 	 * The API item with which the documentation node(s) are associated.
 	 */
@@ -108,13 +106,10 @@ function transformTsdocSection(
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
 
-	let transformedChildren: BlockContent[] = [];
+	const transformedChildren: BlockContent[] = [];
 	for (const child of node.nodes) {
 		transformedChildren.push(...transformTsdocSectionContent(child, options));
 	}
-
-	// Remove line breaks adjacent to paragraphs, as they are redundant
-	transformedChildren = filterNewlinesAdjacentToParagraphs(transformedChildren);
 
 	return transformedChildren;
 }
@@ -196,23 +191,16 @@ function transformTsdocParagraph(
 	// Trim leading whitespace from first child if it is plain text,
 	// and trim trailing whitespace from last child if it is plain text.
 	if (transformedChildren.length > 0) {
-		if (transformedChildren[0].type === DocumentationNodeType.PlainText) {
+		if (transformedChildren[0].type === "text") {
 			const plainTextNode = transformedChildren[0];
-			transformedChildren[0] = new PlainTextNode(
-				plainTextNode.value.trimStart(),
-				plainTextNode.escaped,
-			);
+			transformedChildren[0] = new PlainTextNode(plainTextNode.value.trimStart());
 		}
-		if (
-			transformedChildren[transformedChildren.length - 1].type ===
-			DocumentationNodeType.PlainText
-		) {
+		if (transformedChildren[transformedChildren.length - 1].type === "text") {
 			const plainTextNode = transformedChildren[
 				transformedChildren.length - 1
 			] as PlainTextNode;
 			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
 				plainTextNode.value.trimEnd(),
-				plainTextNode.escaped,
 			);
 		}
 	}
@@ -242,9 +230,6 @@ function transformTsdocParagraphContent(
 	switch (node.kind) {
 		case DocNodeKind.CodeSpan: {
 			return [transformTsdocCodeSpan(node as DocCodeSpan, options)];
-		}
-		case DocNodeKind.EscapedText: {
-			return [transformTsdocEscapedText(node as DocEscapedText, options)];
 		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
@@ -288,7 +273,7 @@ function transformTsdocCodeSpan(
 	node: DocCodeSpan,
 	options: TsdocNodeTransformOptions,
 ): CodeSpanNode {
-	return CodeSpanNode.createFromPlainText(node.code.trim());
+	return new CodeSpanNode(node.code.trim());
 }
 
 /**
@@ -327,16 +312,6 @@ function transformTsdocPlainText(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
- */
-function transformTsdocEscapedText(
-	node: DocEscapedText,
-	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	return new PlainTextNode(node.encodedText, /* escaped: */ true);
-}
-
-/**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
 function transformTsdocFencedCode(
@@ -363,7 +338,7 @@ function transformTsdocLinkTag(
 		} else {
 			const linkText = input.linkText?.trim() ?? link.text;
 			const linkTarget = link.target;
-			return LinkNode.createFromPlainText(linkText, linkTarget);
+			return new LinkNode(linkText, linkTarget);
 		}
 	}
 
@@ -371,7 +346,7 @@ function transformTsdocLinkTag(
 		// If link text was not provided, use the name of the referenced element.
 		const linkText = input.linkText ?? input.urlDestination;
 
-		return LinkNode.createFromPlainText(linkText, input.urlDestination);
+		return new LinkNode(linkText, input.urlDestination);
 	}
 
 	throw new Error(
@@ -422,7 +397,7 @@ function collapseAdjacentLineBreaks(nodes: readonly PhrasingContent[]): Phrasing
 	const result: PhrasingContent[] = [];
 	let onNewline = false;
 	for (const node of nodes) {
-		if (node.type === DocumentationNodeType.LineBreak) {
+		if (node.type === "lineBreak") {
 			if (onNewline) {
 				continue;
 			} else {
@@ -455,7 +430,7 @@ function trimLeadingAndTrailingLineBreaks(
 	let endIndex = nodes.length - 1;
 
 	for (const node of nodes) {
-		if (node.type === DocumentationNodeType.LineBreak) {
+		if (node.type === "lineBreak") {
 			startIndex++;
 		} else {
 			break;
@@ -463,7 +438,7 @@ function trimLeadingAndTrailingLineBreaks(
 	}
 
 	for (let i = nodes.length - 1; i > startIndex; i--) {
-		if (nodes[i].type === DocumentationNodeType.LineBreak) {
+		if (nodes[i].type === "lineBreak") {
 			endIndex--;
 		} else {
 			break;
@@ -471,30 +446,4 @@ function trimLeadingAndTrailingLineBreaks(
 	}
 
 	return nodes.slice(startIndex, endIndex + 1);
-}
-
-/**
- * Filters out line break nodes that are adjacent to paragraph nodes.
- * Since paragraph nodes inherently create line breaks on either side, these nodes are redundant and
- * clutter the output tree.
- */
-function filterNewlinesAdjacentToParagraphs(nodes: readonly BlockContent[]): BlockContent[] {
-	if (nodes.length === 0) {
-		return [];
-	}
-
-	const result: BlockContent[] = [];
-	for (let i = 0; i < nodes.length; i++) {
-		if (nodes[i].type === DocumentationNodeType.LineBreak) {
-			const previousIsParagraph =
-				i > 0 ? nodes[i - 1].type === DocumentationNodeType.Paragraph : false;
-			const nextIsParagraph =
-				i < nodes.length - 1 ? nodes[i + 1].type === DocumentationNodeType.Paragraph : false;
-			if (previousIsParagraph || nextIsParagraph) {
-				continue;
-			}
-		}
-		result.push(nodes[i]);
-	}
-	return result;
 }

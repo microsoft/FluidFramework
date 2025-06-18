@@ -25,7 +25,8 @@ describe("client.getPosition", () => {
 		client.startOrUpdateCollaboration(localUserLongId);
 
 		const segOff = client.getContainingSegment<ISegmentPrivate>(segPos);
-		assert(TextSegment.is(segOff.segment!));
+		assert(segOff);
+		assert(TextSegment.is(segOff.segment));
 		assert.strictEqual(segOff.offset, 0);
 		assert.strictEqual(segOff.segment.text, "o");
 		segment = segOff.segment;

@@ -1851,6 +1851,7 @@ describeCompat(
 						state: "disabled",
 					},
 				},
+				enableRuntimeIdCompressor: "on", // id compressor is not enabled by default
 			},
 			loaderProps: {
 				configProvider: configProvider({

@@ -28,6 +28,7 @@ import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-serv
 import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -44,6 +45,7 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
@@ -165,7 +167,7 @@ export function create(
 		validateRequestParams("tenantId", "sha"),
 		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
@@ -194,7 +196,11 @@ export function create(
 			createSummaryPerClusterThrottleOptions,
 		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
@@ -245,7 +251,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/summaries",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
 		// Skip documentDenyListCheck, as it is not needed for delete operations
 		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {

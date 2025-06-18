@@ -8,8 +8,14 @@ import { strict as assert, fail } from "node:assert";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { Attendee, NotificationsManager, NotificationsWorkspace } from "../index.js";
+import type {
+	Attendee,
+	ClientConnectionId,
+	NotificationsManager,
+	NotificationsWorkspace,
+} from "../index.js";
 import { Notifications } from "../index.js";
+import { toOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -24,8 +30,7 @@ import {
 } from "./testUtils.js";
 
 const attendeeId3 = createSpecificAttendeeId("attendeeId-3");
-// Really a ClientConnectionId, but typed as AttendeeId for TypeScript workaround.
-const connectionId3 = createSpecificAttendeeId("client3");
+const connectionId3 = "client3" as const satisfies ClientConnectionId;
 
 describe("Presence", () => {
 	describe("NotificationsManager", () => {
@@ -80,7 +85,8 @@ describe("Presence", () => {
 			notificationsWorkspace.add(
 				"testEvents",
 				Notifications<
-					// Below explicit generic specification should not be required.
+					// Below explicit generic specification should not be required
+					// when default handler is specified.
 					{
 						newId: (id: number) => void;
 					},
@@ -135,7 +141,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -188,7 +194,7 @@ describe("Presence", () => {
 									[attendeeId2]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -267,7 +273,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [42] },
+										"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -345,7 +351,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "oldId", "args": [41] },
+										"value": toOpaqueJson({ "name": "oldId", "args": [41] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -411,7 +417,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [43] },
+										"value": toOpaqueJson({ "name": "newId", "args": [43] }),
 										"ignoreUnmonitored": true,
 									},
 								},
@@ -483,7 +489,7 @@ describe("Presence", () => {
 									[attendeeId3]: {
 										"rev": 0,
 										"timestamp": 0,
-										"value": { "name": "newId", "args": [44] },
+										"value": toOpaqueJson({ "name": "newId", "args": [44] }),
 										"ignoreUnmonitored": true,
 									},
 								},

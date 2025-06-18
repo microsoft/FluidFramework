@@ -174,6 +174,9 @@ import {
 	opaqueSerializableObject,
 	opaqueDeserializedObject,
 	opaqueSerializableAndDeserializedObject,
+	opaqueSerializableUnknown,
+	opaqueDeserializedUnknown,
+	opaqueSerializableAndDeserializedUnknown,
 	opaqueSerializableObjectRequiringBigintSupport,
 	opaqueDeserializedObjectRequiringBigintSupport,
 	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
@@ -764,6 +767,23 @@ describe("JsonSerializable", () => {
 				it("opaque serializable and deserialized object", () => {
 					const { filteredIn, out } = passThru(opaqueSerializableAndDeserializedObject);
 					assertIdenticalTypes(filteredIn, opaqueSerializableAndDeserializedObject);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("opaque serializable unknown", () => {
+					const { filteredIn, out } = passThru(opaqueSerializableUnknown);
+					assertIdenticalTypes(filteredIn, opaqueSerializableUnknown);
+					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("opaque deserialized unknown", () => {
+					const { filteredIn, out } = passThru(opaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, opaqueDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("opaque serializable and deserialized unknown", () => {
+					const { filteredIn, out } = passThru(opaqueSerializableAndDeserializedUnknown);
+					assertIdenticalTypes(filteredIn, opaqueSerializableAndDeserializedUnknown);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
 					assertIdenticalTypes(filteredIn, out);
 				});
@@ -1813,37 +1833,37 @@ describe("JsonSerializable", () => {
 			describe("opaque Json types requiring extra allowed types", () => {
 				it("opaque serializable object with `bigint`", () => {
 					const { filteredIn } = passThruThrows(
-						// @ts-expect-error `bigint` is not supported (becomes `never`)
+						// @ts-expect-error `bigint` is not supported and `AllowExactly` parameters are incompatible
 						opaqueSerializableObjectRequiringBigintSupport,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<OpaqueJsonSerializable<{ bigint: never }>>(),
+						createInstanceOf<OpaqueJsonSerializable<{ bigint: bigint }>>(),
 					);
 				});
 				it("opaque deserialized object with `bigint`", () => {
 					const { filteredIn } = passThruThrows(
-						// @ts-expect-error `bigint` is not supported (becomes `never`)
+						// @ts-expect-error `bigint` is not supported and `AllowExactly` parameters are incompatible
 						opaqueDeserializedObjectRequiringBigintSupport,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						filteredIn,
-						createInstanceOf<OpaqueJsonDeserialized<{ bigint: never }>>(),
+						createInstanceOf<OpaqueJsonDeserialized<{ bigint: bigint }>>(),
 					);
 				});
 				it("opaque serializable and deserialized object with `bigint`", () => {
 					const { filteredIn } = passThruThrows(
-						// @ts-expect-error `bigint` is not supported (becomes `never`)
+						// @ts-expect-error `bigint` is not supported and `AllowExactly` parameters are incompatible
 						opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						filteredIn,
 						createInstanceOf<
-							OpaqueJsonSerializable<{ bigint: never }> &
-								OpaqueJsonDeserialized<{ bigint: never }>
+							OpaqueJsonSerializable<{ bigint: bigint }> &
+								OpaqueJsonDeserialized<{ bigint: bigint }>
 						>(),
 					);
 				});

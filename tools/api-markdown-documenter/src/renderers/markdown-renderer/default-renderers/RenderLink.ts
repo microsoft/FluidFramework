@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { LinkNode } from "../../../documentation-domain/index.js";
+import { PlainTextNode, type LinkNode } from "../../../documentation-domain/index.js";
 import type { DocumentWriter } from "../../DocumentWriter.js";
 import { renderNode } from "../Render.js";
 import type { RenderContext } from "../RenderContext.js";
@@ -21,6 +21,6 @@ export function renderLink(
 	context: RenderContext,
 ): void {
 	writer.write("[");
-	renderNode(node.text, writer, context);
+	renderNode(new PlainTextNode(node.text), writer, context);
 	writer.write(`](${node.target})`);
 }

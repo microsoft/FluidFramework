@@ -30,6 +30,9 @@ export {
 	RBNodeActions,
 	RedBlackTree,
 	SortedDictionary,
+	DoublyLinkedList,
+	ListNode,
+	ListNodeRange,
 } from "./collections/index.js";
 export { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 export {

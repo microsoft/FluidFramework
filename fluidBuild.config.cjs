@@ -346,6 +346,9 @@ module.exports = {
 				"experimental/PropertyDDS/packages/property-query/test/get_config.js",
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
+				// minified DOMPurify is not a source file, so it doesn't need a header.
+				"docs/static/dompurify/purify.min.js",
+
 				// Type test files can be excluded since they're generated and known to have the correct header.
 				// This can be removed once the whole repo uses build-tools v0.35.0+.
 				/.*\/validate.*\.generated\.ts/,
@@ -370,6 +373,7 @@ module.exports = {
 				"docs/local-api-rollup.js",
 				// Avoids MIME-type issues in the browser.
 				"docs/static/trusted-types-policy.js",
+				"docs/static/dompurify/purify.min.js",
 				"docs/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",

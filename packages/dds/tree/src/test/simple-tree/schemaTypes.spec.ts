@@ -10,6 +10,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import type { TreeValue } from "../../core/index.js";
 import {
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	type booleanSchema,
 	type InsertableObjectFromSchemaRecord,
 	type LazyItem,
@@ -553,7 +554,7 @@ describe("schemaTypes", () => {
 	});
 
 	it("areImplicitFieldSchemaEqual", () => {
-		const sf = new SchemaFactory("test");
+		const sf = new SchemaFactoryAlpha("test");
 		function check(a: ImplicitFieldSchema, b: ImplicitFieldSchema, expected: boolean) {
 			assert.equal(areImplicitFieldSchemaEqual(a, b), expected);
 		}
@@ -593,6 +594,18 @@ describe("schemaTypes", () => {
 			false,
 		); // Different custom metadata
 		check(sf.identifier, sf.optional(sf.string), false); // Identifier vs. optional string
+		// Same persisted metadata
+		check(
+			sf.required(sf.number, { persistedMetadata: { foo: "a" } }),
+			sf.required(sf.number, { persistedMetadata: { foo: "a" } }),
+			true,
+		);
+		// Different persisted metadata
+		check(
+			sf.required(sf.number, { persistedMetadata: { foo: "a" } }),
+			sf.required(sf.number, { persistedMetadata: { foo: "b" } }),
+			true,
+		);
 	});
 
 	/**

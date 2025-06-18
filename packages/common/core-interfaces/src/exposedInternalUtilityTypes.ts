@@ -859,8 +859,11 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @remarks
 	 * {@link OpaqueJsonSerializable} and {@link OpaqueJsonDeserialized} instances
-	 * are limited to `Controls` given context supports. Further, the data type
-	 * is filtered through {@link JsonSerializable} with those `Controls`.
+	 * are limited to `Controls` given context supports.
+	 * `T` from the original Opaque type is preserved. In the case that this now
+	 * produces an improper type such as a `bigint` being let through that is no
+	 * longer supported, then the variance of `Controls` is expected to raise
+	 * the incompatibility error.
 	 *
 	 * @privateRemarks
 	 * Additional intersections beyond {@link OpaqueJsonSerializable},
@@ -878,25 +881,13 @@ export namespace InternalUtilityTypes {
 		| OpaqueJsonDeserialized<infer TData, any, unknown>
 		? T extends OpaqueJsonSerializable<TData, any, unknown> &
 				OpaqueJsonDeserialized<TData, any, unknown>
-			? OpaqueJsonSerializable<
-					JsonSerializableImpl<TData, Controls>,
-					Controls["AllowExactly"],
-					Controls["AllowExtensionOf"]
-				> &
-					OpaqueJsonDeserialized<
-						JsonSerializableImpl<TData, Controls>,
-						Controls["AllowExactly"],
-						Controls["AllowExtensionOf"]
-					>
+			? OpaqueJsonSerializable<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]> &
+					OpaqueJsonDeserialized<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
 			: T extends OpaqueJsonSerializable<TData, any, unknown>
-				? OpaqueJsonSerializable<
-						JsonSerializableImpl<TData, Controls>,
-						Controls["AllowExactly"],
-						Controls["AllowExtensionOf"]
-					>
+				? OpaqueJsonSerializable<TData, Controls["AllowExactly"], Controls["AllowExtensionOf"]>
 				: T extends OpaqueJsonDeserialized<TData, any, unknown>
 					? OpaqueJsonDeserialized<
-							JsonSerializableImpl<TData, Controls>,
+							TData,
 							Controls["AllowExactly"],
 							Controls["AllowExtensionOf"]
 						>

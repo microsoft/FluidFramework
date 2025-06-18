@@ -12,6 +12,7 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { AttendeeId } from "./presence.js";
 import type { ClientUpdateEntry } from "./presenceStates.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
+import type { WorkspaceAddress } from "./types.js";
 
 /**
  * Datastore that contains system workspace data
@@ -21,17 +22,22 @@ export interface SystemDatastore {
 }
 
 /**
+ * Expected address format for general workspaces in the presence protocol.
+ */
+export type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
+
+/**
  * General datastore (and message) structure.
  */
 export interface GeneralDatastoreMessageContent {
-	[WorkspaceAddress: string]: {
+	[WorkspaceAddress: InternalWorkspaceAddress]: {
 		[StateValueManagerKey: string]: {
 			[AttendeeId: AttendeeId]: ClientUpdateEntry;
 		};
 	};
 }
 
-type DatastoreMessageContent = GeneralDatastoreMessageContent & SystemDatastore;
+type DatastoreMessageContent = SystemDatastore & GeneralDatastoreMessageContent;
 type AcknowledgmentId = string;
 
 /**
