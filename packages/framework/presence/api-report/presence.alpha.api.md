@@ -227,11 +227,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 
 // @beta @input
 export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
-<<<<<<< HEAD
     local: {
-=======
-    local?: {
->>>>>>> main
         [K in Keys]: JsonSerializable<T>;
     };
     settings?: BroadcastControlSettings | undefined;
