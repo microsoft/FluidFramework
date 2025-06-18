@@ -419,8 +419,8 @@ export class TestClient extends Client {
 		});
 
 		assert(segment !== undefined, "No segment found");
-		const segoff = getSlideToSegoff({ segment, offset }, undefined, perspective) ?? segment;
-		if (segoff.segment === undefined || segoff.offset === undefined) {
+		const segoff = getSlideToSegoff({ segment, offset }, undefined, perspective);
+		if (segoff === undefined) {
 			return DetachedReferencePosition;
 		}
 
@@ -537,7 +537,7 @@ export class TestClient extends Client {
 	): ReferencePosition | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos);
+		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos) ?? {};
 		assertSegmentLeaf(segment);
 		if (Marker.is(segment)) {
 			if (refHasTileLabel(segment, markerLabel)) {

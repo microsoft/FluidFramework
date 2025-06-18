@@ -212,7 +212,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 		);
 	}
 
-	public boxedIterator(): IterableIterator<HydratedFlexTreeNode> {
+	public [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
 		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 

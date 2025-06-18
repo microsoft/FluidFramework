@@ -87,15 +87,16 @@ describe("MergeTree.Client", () => {
 					refs.push([]);
 					for (let t = 0; t < c.getLength(); t++) {
 						const seg = c.getContainingSegment<ISegmentPrivate>(t);
+						assert(seg);
 						const forwardLref = c.createLocalReferencePosition(
-							seg.segment!,
+							seg.segment,
 							seg.offset,
 							ReferenceType.SlideOnRemove,
 							{ t },
 							SlidingPreference.FORWARD,
 						);
 						const backwardLref = c.createLocalReferencePosition(
-							seg.segment!,
+							seg.segment,
 							seg.offset,
 							ReferenceType.SlideOnRemove,
 							{ t },
