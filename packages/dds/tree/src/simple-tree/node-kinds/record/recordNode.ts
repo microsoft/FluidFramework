@@ -140,8 +140,7 @@ function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): Tre
 			};
 		},
 		defineProperty(target, key, attributes) {
-			// TODO: prevent shadowing of properties?
-			return Reflect.defineProperty(dispatchTarget, key, attributes);
+			throw new UsageError("Shadowing properties of record nodes is not permitted.");
 		},
 	});
 	return proxy;
@@ -286,7 +285,7 @@ export function recordSchema<
 							Reflect.getOwnPropertyDescriptor(prototype, key) !== undefined
 						) {
 							throw new UsageError(
-								`Schema ${identifier} defines an inherited property "${key.toString()}" which could shadow a legal entry. Since child fields are exposed as own properties, this shadowing will not work, and is an error.`,
+								`Schema ${identifier} defines an inherited property "${key.toString()}" which could shadow a legal entry. Since child fields are exposed as own properties, shadowing properties of record nodes is not permitted.`,
 							);
 						}
 					}
