@@ -62,7 +62,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
 	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
-		get: (target, key, receiver) => {
+		get: (target, key, receiver): unknown => {
 			if (typeof key === "symbol") {
 				// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
 				if (key === typeSchemaSymbol) {
@@ -85,7 +85,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			// TODO: handle customizable?
 			return getTreeNodeForField(field);
 		},
-		set: (target, key, value: InsertableContent | undefined, receiver) => {
+		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
 			if (typeof key === "symbol") {
 				return false;
 			}
@@ -103,7 +103,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			field.editor.set(mapTree, field.length === 0);
 			return true;
 		},
-		has: (target, key) => {
+		has: (target, key): boolean => {
 			if (typeof key === "symbol") {
 				return false;
 			}
