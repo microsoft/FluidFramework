@@ -1492,20 +1492,26 @@ export class IntervalCollection
 			return undefined;
 		}
 
-		if (localInterval === interval) {
-			this.localCollection.removeExistingInterval(localInterval);
-		}
-
-		const old = interval.clone();
-		interval.rebaseEndpoints(rebasedEndpoint);
-		if (localInterval === interval) {
-			this.localCollection.add(interval);
-			this.emitChange(interval, old, true, true);
-		}
-		this.client.removeLocalReferencePosition(old.start);
-		this.client.removeLocalReferencePosition(old.end);
-
 		const { start, end } = rebasedEndpoint;
+		if (
+			interval.start.getSegment() !== start.segment ||
+			interval.start.getOffset() !== start.offset ||
+			interval.end.getSegment() !== end.segment ||
+			interval.end.getOffset() !== end.offset
+		) {
+			if (localInterval === interval) {
+				this.localCollection.removeExistingInterval(localInterval);
+			}
+			const old = interval.clone();
+			interval.rebaseEndpoints(rebasedEndpoint);
+			if (localInterval === interval) {
+				this.localCollection.add(interval);
+				this.emitChange(interval, old, true, true);
+			}
+			this.client.removeLocalReferencePosition(old.start);
+			this.client.removeLocalReferencePosition(old.end);
+		}
+
 		return {
 			...original,
 			start:
