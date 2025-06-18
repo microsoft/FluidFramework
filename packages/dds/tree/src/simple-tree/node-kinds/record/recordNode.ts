@@ -48,8 +48,6 @@ import type {
 import type { FlexTreeNode, FlexTreeOptionalField } from "../../../feature-libraries/index.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 
-// TODO: don't allow shadowing of properties - just methods?
-
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
  * @param proxyTarget - Target object of the proxy. Must provide an own `length` value property
@@ -235,8 +233,8 @@ export function recordSchema<
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
-	let customizable: boolean;
-	let unhydratedContext: Context;
+	let customizable: boolean; // TODO: is this needed?
+	let unhydratedContext: Context; // TODO: is this needed?
 
 	class CustomRecordNode
 		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
@@ -273,7 +271,6 @@ export function recordSchema<
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomRecordNode;
 			const schema = this as unknown as RecordNodeSchema;
 			unhydratedContext = getUnhydratedContext(schema);
