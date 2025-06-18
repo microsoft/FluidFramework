@@ -190,7 +190,7 @@ export class TreeViewConfiguration<
 			allowedTypes(types): void {
 				if (config.preventAmbiguity) {
 					checkUnion(
-						Array.from(types).map(({ type }) => type),
+						Array.from(types, ({ type }) => type),
 						ambiguityErrors,
 					);
 				}
