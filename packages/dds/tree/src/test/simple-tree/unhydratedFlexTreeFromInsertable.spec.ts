@@ -596,7 +596,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
 			const schema = schemaFactory.record("record", [schemaFactory.number]);
 
-			const actual = mapTreeFromNodeData({}, [schema]);
+			const actual = unhydratedFlexTreeFromInsertable({}, [schema]);
 
 			const expected: MapTree = {
 				type: brand("test.record"),
@@ -613,7 +613,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				schemaFactory.string,
 			]);
 
-			const actual = mapTreeFromNodeData(
+			const actual = unhydratedFlexTreeFromInsertable(
 				{
 					a: 42,
 					b: "Hello world",
@@ -662,7 +662,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				schemaFactory.null,
 			]);
 
-			const actual = mapTreeFromNodeData(
+			const actual = unhydratedFlexTreeFromInsertable(
 				{
 					a: 42,
 					b: "Hello world",
@@ -733,7 +733,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
 			const schema = schemaFactory.record("record", [schemaFactory.number]);
 
-			const actual = mapTreeFromNodeData(
+			const actual = unhydratedFlexTreeFromInsertable(
 				{
 					a: 42,
 					b: undefined as unknown as InsertableContent, // Should be skipped in output
@@ -765,7 +765,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 
 			assert.throws(
 				() =>
-					mapTreeFromNodeData(
+					unhydratedFlexTreeFromInsertable(
 						{
 							a: "Hello world",
 							b: true, // Boolean input is not allowed by the schema
@@ -784,7 +784,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			const testData = new TestSchema2({ field: "test" });
 
 			assert.throws(
-				() => mapTreeFromNodeData(testData, TestSchema),
+				() => unhydratedFlexTreeFromInsertable(testData, TestSchema),
 				validateUsageError("Invalid schema for this context."),
 			);
 		});

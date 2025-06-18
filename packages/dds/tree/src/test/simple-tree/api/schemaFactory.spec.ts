@@ -720,9 +720,7 @@ describe("schemaFactory", () => {
 
 		it("Named", () => {
 			const factory = new SchemaFactoryAlpha("test");
-			class NamedRecord extends factory.record("name", factory.number) {
-				public testProperty = false;
-			}
+			class NamedRecord extends factory.record("name", factory.number) {}
 
 			// Due to missing unhydrated map support, make a wrapper object
 			class Parent extends factory.object("parent", { child: NamedRecord }) {}
@@ -735,13 +733,11 @@ describe("schemaFactory", () => {
 			const recordNode = view.root.child;
 			assert(recordNode instanceof NamedRecord);
 			assert(isTreeNode(recordNode));
-			assert(Reflect.has(recordNode, "testProperty"));
-			assert.equal(recordNode.testProperty, false);
-			recordNode.testProperty = true;
-			assert.equal(recordNode.testProperty, true);
 
 			// Test record property access
-			// assert.equal(recordNode.x, 5); // TODO
+			assert.equal(recordNode.x, 5);
+			recordNode.x = 42;
+			assert.equal(recordNode.x, 42);
 		});
 
 		it("Unhydrated", () => {
