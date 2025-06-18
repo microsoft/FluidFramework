@@ -107,7 +107,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IDataStore": {
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreChannel": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
