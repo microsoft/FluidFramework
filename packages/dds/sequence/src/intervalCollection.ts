@@ -15,7 +15,6 @@ import {
 	LocalReferencePosition,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
@@ -26,6 +25,7 @@ import {
 	createLocalReconnectingPerspective,
 	DoublyLinkedList,
 	type ListNode,
+	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -56,9 +56,7 @@ import {
 	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
-	endReferenceSlidingPreference,
 	getSerializedProperties,
-	startReferenceSlidingPreference,
 } from "./intervals/index.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
@@ -69,7 +67,7 @@ export interface ISerializedIntervalCollectionV2 {
 	intervals: CompressedSerializedInterval[];
 }
 
-export function sidesFromStickiness(stickiness: IntervalStickiness) {
+function sidesFromStickiness(stickiness: IntervalStickiness) {
 	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
 	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
 
@@ -135,25 +133,6 @@ export function toOptionalSequencePlace(
 	side: Side | undefined,
 ): SequencePlace | undefined {
 	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
-}
-
-export function computeStickinessFromSide(
-	startPos: number | "start" | "end" | undefined = -1,
-	startSide: Side = Side.Before,
-	endPos: number | "start" | "end" | undefined = -1,
-	endSide: Side = Side.Before,
-): IntervalStickiness {
-	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
-
-	if (startSide === Side.After || startPos === "start") {
-		stickiness |= IntervalStickiness.START;
-	}
-
-	if (endSide === Side.Before || endPos === "end") {
-		stickiness |= IntervalStickiness.END;
-	}
-
-	return stickiness as IntervalStickiness;
 }
 
 export class LocalIntervalCollection {
@@ -1007,7 +986,9 @@ export class IntervalCollection
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
 		if (segoff === undefined) {
-			return ref.slidingPreference === SlidingPreference.FORWARD ? "end" : "start";
+			return ref.canSlideToEndpoint && ref.slidingPreference === SlidingPreference.FORWARD
+				? "end"
+				: "start";
 		}
 		return segoff;
 	}
@@ -1533,7 +1514,6 @@ export class IntervalCollection
 
 	private getSlideToSegment(
 		lref: LocalReferencePosition,
-		slidingPreference: SlidingPreference,
 	): { segment: ISegment; offset: number } | undefined {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
@@ -1551,7 +1531,7 @@ export class IntervalCollection
 		}
 		return getSlideToSegoff(
 			segoff,
-			slidingPreference,
+			lref.slidingPreference,
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
@@ -1565,14 +1545,8 @@ export class IntervalCollection
 			return;
 		}
 
-		const newStart = this.getSlideToSegment(
-			interval.start,
-			startReferenceSlidingPreference(interval.stickiness),
-		);
-		const newEnd = this.getSlideToSegment(
-			interval.end,
-			endReferenceSlidingPreference(interval.stickiness),
-		);
+		const newStart = this.getSlideToSegment(interval.start);
+		const newEnd = this.getSlideToSegment(interval.end);
 
 		const id = interval.getIntervalId();
 		const hasPendingChange = this.hasPendingEndpointChanges(id);
@@ -1604,16 +1578,14 @@ export class IntervalCollection
 
 			if (needsStartUpdate) {
 				const props = interval.start.properties;
-				interval.start = createPositionReferenceFromSegoff(
-					this.client,
-					newStart,
-					interval.start.refType,
+				interval.start = createPositionReferenceFromSegoff({
+					client: this.client,
+					segoff: newStart,
+					refType: interval.start.refType,
 					op,
-					undefined,
-					undefined,
-					startReferenceSlidingPreference(interval.stickiness),
-					startReferenceSlidingPreference(interval.stickiness) === SlidingPreference.BACKWARD,
-				);
+					slidingPreference: interval.start.slidingPreference,
+					canSlideToEndpoint: interval.start.canSlideToEndpoint,
+				});
 				if (props) {
 					interval.start.addProperties(props);
 				}
@@ -1625,16 +1597,14 @@ export class IntervalCollection
 			}
 			if (needsEndUpdate) {
 				const props = interval.end.properties;
-				interval.end = createPositionReferenceFromSegoff(
-					this.client,
-					newEnd,
-					interval.end.refType,
+				interval.end = createPositionReferenceFromSegoff({
+					client: this.client,
+					segoff: newEnd,
+					refType: interval.end.refType,
 					op,
-					undefined,
-					undefined,
-					endReferenceSlidingPreference(interval.stickiness),
-					endReferenceSlidingPreference(interval.stickiness) === SlidingPreference.FORWARD,
-				);
+					slidingPreference: interval.end.slidingPreference,
+					canSlideToEndpoint: interval.end.canSlideToEndpoint,
+				});
 				if (props) {
 					interval.end.addProperties(props);
 				}
