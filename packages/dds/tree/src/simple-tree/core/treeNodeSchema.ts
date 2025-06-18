@@ -65,7 +65,7 @@ export type TreeNodeSchema<
 
 /**
  * Stores annotations for an individual allowed type.
- * @alpha @sealed
+ * @alpha
  */
 export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 	/**
