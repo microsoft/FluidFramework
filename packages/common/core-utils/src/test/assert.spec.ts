@@ -104,7 +104,7 @@ describe("assert", () => {
 		removeListener2();
 		strict.throws(() => assert(false, "D"));
 
-		strict.deepEqual(log, ["A\nDebug Message:Extra", "B", "B", "C"]);
+		strict.deepEqual(log, ["A\nDebug Message: Extra", "B", "B", "C"]);
 	});
 
 	it("onAssertionFailure", () => {
