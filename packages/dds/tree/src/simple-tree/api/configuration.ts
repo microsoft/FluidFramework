@@ -195,7 +195,7 @@ export class TreeViewConfiguration<
 		walkFieldSchema(config.schema, {
 			node: (schema) => {
 				// Ensure all reachable schema are marked as most derived.
-				// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
+				// This ensures if multiple schema extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
 				// an error is reported.
 				markSchemaMostDerived(schema, true);
 
