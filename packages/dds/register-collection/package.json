@@ -149,7 +149,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ConsensusRegisterCollectionClass": {
+				"backCompat": false
+			},
+			"ClassStatics_ConsensusRegisterCollectionClass": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

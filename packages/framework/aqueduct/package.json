@@ -154,7 +154,23 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_DataObject": {
+				"backCompat": false
+			},
+			"Class_PureDataObject": {
+				"backCompat": false
+			},
+			"ClassStatics_DataObject": {
+				"backCompat": false
+			},
+			"ClassStatics_PureDataObject": {
+				"backCompat": false
+			},
+			"Interface_DataObjectFactoryProps": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
