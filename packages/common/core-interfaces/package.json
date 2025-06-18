@@ -148,7 +148,14 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IProvideFluidHandle": {
+				"backCompat": false
+			},
+			"Interface_IFluidHandleInternal": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
