@@ -618,6 +618,9 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 // @alpha
 export const noopValidator: JsonValidator;
 
+// @alpha
+export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema>;
+
 // @public @system
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;

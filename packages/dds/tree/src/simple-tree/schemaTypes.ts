@@ -640,7 +640,7 @@ export function normalizeFieldSchema(
  * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
  * recursive schemas may fail.
  *
- * @internal
+ * @alpha
  */
 export function normalizeAllowedTypes(
 	types: ImplicitAllowedTypes,
