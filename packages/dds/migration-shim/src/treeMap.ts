@@ -51,14 +51,14 @@ import {
 const schemaFactory = new SchemaFactory("com.fluidframework/adapters/map");
 
 /**
- * @alpha
+ * @internal
  * @system
  * @sealed
  */
 export const MapAdapterRoot_base = schemaFactory.map("Root", FluidSerializableAsTree.Tree);
 
 /**
- * @alpha
+ * @internal
  */
 export class MapAdapterRoot extends MapAdapterRoot_base {
 	public setRaw(key: string, value: ConciseTree | undefined): void {
@@ -105,8 +105,11 @@ function dataFromTree(tree: ITree): TreeData | ErrorData {
 	}
 }
 
-// TODO: using this in more places that it should be.
-type ITreeSubset = Omit<ITree, keyof (IChannelView & IFluidLoadable)>;
+/**
+ * TODO: using this in more places that it should be.
+ * @internal
+ */
+export type ITreeSubset = Omit<ITree, keyof (IChannelView & IFluidLoadable)>;
 
 const treeFactory: SharedKernelFactory<ITreeSubset> = treeKernelFactory({
 	jsonValidator: typeboxValidator,
@@ -268,7 +271,7 @@ const mapToTree: MigrationSet<ISharedMap, ISharedMap, ITree> = {
  * Once all active clients are using this, switch to {@link TreeFromMap} if access to the data using tree APIs is desired.
  *
  * Note: This will get promoted to alpha+legacy (not public) once stable.
- * @alpha
+ * @internal
  */
 export const MapToTree = makeSharedObjectAdapter<SharedMap, ISharedMap>(mapToTree);
 
@@ -332,7 +335,7 @@ const mapToTreePhase2: MigrationSet<ISharedMapCore, ITreeSubset, ITreeSubset> = 
  *
  * 1. With ISharedKind which will get promoted to alpha+legacy (not public) once stable.
  * 2. Without ISharedKind which will get promoted to beta then public once stable.
- * @alpha
+ * @internal
  */
 export const TreeFromMap = makeSharedObjectAdapter<ISharedMapCore, ITreeSubset>(
 	mapToTreePhase2,
@@ -359,7 +362,7 @@ function mapToTreePhase2Partial(
  * TODO: strip off ISharedObjectKind for alpha version.
  *
  * Note: This will get promoted to alpha+legacy (not public) once stable.
- * @alpha
+ * @internal
  */
 export function treeFromMapPartial(
 	filter: (id: string) => boolean,

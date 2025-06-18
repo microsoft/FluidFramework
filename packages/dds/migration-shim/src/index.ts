@@ -15,4 +15,5 @@ export {
 	TreeFromMap,
 	MapAdapterRoot,
 	MapAdapterRoot_base,
+	type ITreeSubset,
 } from "./treeMap.js";

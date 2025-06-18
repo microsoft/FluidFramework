@@ -38,7 +38,13 @@ import {
 import { TreeViewConfiguration, type ITree } from "@fluidframework/tree/internal";
 
 import { MigrationStatus, shimInfo, type IMigrationShim } from "../shim.js";
-import { MapAdapterRoot, MapToTree, TreeFromMap, treeFromMapPartial } from "../treeMap.js";
+import {
+	MapAdapterRoot,
+	MapToTree,
+	TreeFromMap,
+	treeFromMapPartial,
+	type ITreeSubset,
+} from "../treeMap.js";
 
 onAssertionFailure((error) => {
 	debugger;
@@ -277,7 +283,7 @@ describe("treeMap", () => {
 
 		// TODO: cast
 		// c.sharedObject[shimInfo].cast();
-		const tree = c.sharedObject as ITree;
+		const tree = c.sharedObject as ITreeSubset;
 		const view = tree.viewWith(config);
 		assert.equal(view.root.get("K"), "V");
 
@@ -367,7 +373,7 @@ describe("treeMap", () => {
 
 		// Phase 2
 
-		const treeKind: ISharedObjectKind<(ITree | ISharedMapCore) & IMigrationShim> =
+		const treeKind: ISharedObjectKind<(ITreeSubset | ISharedMapCore) & IMigrationShim> =
 			treeFromMapPartial((id: string): boolean => id === mapId);
 		registry = [[mapId, treeKind.getFactory()]];
 
