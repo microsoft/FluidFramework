@@ -706,8 +706,8 @@ describe("schemaFactory", () => {
 			const factory = new SchemaFactoryAlpha("test");
 
 			// Explicit structural example
-			const MyMap = factory.record(factory.number);
-			type MyMap = NodeFromSchema<typeof MyMap>;
+			const MyRecord = factory.record(factory.number);
+			type MyRecord = NodeFromSchema<typeof MyRecord>;
 
 			// Inline structural example
 			factory.object("Foo", { myMap: factory.record(factory.number) });
