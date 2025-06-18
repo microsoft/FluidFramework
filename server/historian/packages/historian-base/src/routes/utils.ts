@@ -345,6 +345,7 @@ export function queryParamToString(value: any): string | undefined {
 export function verifyToken(
 	revokedTokenChecker: IRevokedTokenChecker | undefined,
 	requiredScopes: string[],
+	maxTokenLifetimeSec: number,
 ): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
@@ -395,6 +396,13 @@ export function verifyToken(
 				}
 			}
 
+			if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
+				throw new NetworkError(403, "Invalid token expiry");
+			}
+			const lifeTimeMSec = claims.exp * 1000 - new Date().getTime();
+			if (lifeTimeMSec < 0) {
+				throw new NetworkError(401, "Expired token");
+			}
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(
 				{ tenantId, documentId },

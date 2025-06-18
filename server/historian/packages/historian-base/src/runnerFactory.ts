@@ -95,6 +95,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		// Create services
 		const riddlerEndpoint = config.get("riddler");
 		const alfredEndpoint = config.get("alfred");
+		const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 		const redisClientConnectionManagerForInvalidTokenCache =
 			customizations?.redisClientConnectionManagerForInvalidTokenCache
@@ -119,6 +120,7 @@ export class HistorianResourcesFactory implements core.IResourcesFactory<Histori
 		const riddler = new historianServices.RiddlerService(
 			riddlerEndpoint,
 			tenantCache,
+			maxTokenLifetimeSec,
 			redisCacheForInvalidToken,
 		);
 
