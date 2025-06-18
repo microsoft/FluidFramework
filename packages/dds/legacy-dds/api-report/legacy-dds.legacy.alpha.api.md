@@ -5,11 +5,6 @@
 ```ts
 
 // @alpha @legacy (undocumented)
-export type FullyReadonly<T> = {
-    readonly [P in keyof T]: FullyReadonly<T[P]>;
-};
-
-// @alpha @legacy (undocumented)
 export interface IDeleteOperation {
     // (undocumented)
     entryId: string;
@@ -54,18 +49,24 @@ export interface ISharedArray<T extends SerializableTypeForSharedArray> extends 
     // (undocumented)
     delete(index: number): void;
     // (undocumented)
-    get(): FullyReadonly<T[]>;
+    get(): readonly T[];
     // (undocumented)
     insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
     // (undocumented)
+    insertBulkAfter<TWrite>(ref: T | undefined, values: (Serializable<TWrite> & T)[]): void;
+    // (undocumented)
     move(oldIndex: number, newIndex: number): void;
+    // (undocumented)
+    toggle(entryId: string): void;
+    // (undocumented)
+    toggleMove(oldEntryId: string, newEntryId: string): void;
 }
 
 // @alpha @legacy
 export interface ISharedArrayEvents extends ISharedObjectEvents {
-    // (undocumented)
+    // @eventProperty (undocumented)
     (event: "valueChanged", listener: (op: ISharedArrayOperation, isLocal: boolean, target: IEventThisPlaceHolder) => void): void;
-    // (undocumented)
+    // @eventProperty (undocumented)
     (event: "revertible", listener: (revertible: IRevertible) => void): void;
 }
 
@@ -124,6 +125,12 @@ export type SerializableTypeForSharedArray = boolean | number | string | object 
 
 // @alpha @legacy
 export type SerializableTypeForSharedSignal = boolean | number | string | IFluidHandle | object;
+
+// @alpha @legacy
+export const SharedArray: ISharedObjectKind<ISharedArray<SerializableTypeForSharedArray>> & SharedObjectKind<ISharedArray<SerializableTypeForSharedArray>>;
+
+// @alpha @legacy
+export const SharedArrayBuilder: <T extends SerializableTypeForSharedArray>() => ISharedObjectKind<ISharedArray<T>> & SharedObjectKind<ISharedArray<T>>;
 
 // @alpha @legacy
 export const SharedSignal: ISharedObjectKind<ISharedSignal<any>> & SharedObjectKind<ISharedSignal<any>>;

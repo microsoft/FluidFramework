@@ -27,7 +27,7 @@ import { TestHistorian } from "@fluidframework/server-test-utils";
 import { LocalDeltaStorageService } from "./localDeltaStorageService.js";
 import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { LocalDocumentStorageService } from "./localDocumentStorageService.js";
-import { localDriverCompatDetailsForLoader } from "./localRuntimeLayerCompatState.js";
+import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 
 /**
  * Basic implementation of a document service for local use.

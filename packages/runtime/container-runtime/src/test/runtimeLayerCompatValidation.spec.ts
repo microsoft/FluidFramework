@@ -18,7 +18,7 @@ import {
 	FluidErrorTypes,
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
-import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
 	MockAudience,
@@ -52,7 +52,10 @@ function validateFailureProperties(
 	layerType: "Loader" | "DataStore",
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(error instanceof UsageError, "The error should be a UsageError");
+	assert(
+		isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
+		"Error should be a usageError",
+	);
 	assert.strictEqual(
 		error.errorType,
 		FluidErrorTypes.usageError,
@@ -104,7 +107,7 @@ describe("Runtime Layer compatibility", () => {
 	describe("Runtime <-> Loader compatibility", () => {
 		let originalRequiredFeatures: readonly string[];
 		beforeEach(() => {
-			originalRequiredFeatures = loaderSupportRequirements.requiredFeatures;
+			originalRequiredFeatures = [...loaderSupportRequirements.requiredFeatures];
 		});
 
 		afterEach(() => {

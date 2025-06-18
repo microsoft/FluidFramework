@@ -5,6 +5,7 @@
 
 import * as crypto from "crypto";
 
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	getBooleanParam,
 	validateRequestParams,
@@ -249,7 +250,12 @@ export function create(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId;
@@ -283,7 +289,7 @@ export function create(
 			createDocTenantThrottleOptions,
 			isHttpUsageCountingEnabled,
 		),
-		verifyStorageToken(tenantManager, config, {
+		verifyStorageToken(tenantManager, config, [ScopeType.DocRead, ScopeType.DocWrite], {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
@@ -435,7 +441,12 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageTokenForGetSession(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
@@ -521,7 +532,12 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead, ScopeType.DocWrite],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
@@ -565,7 +581,12 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead, ScopeType.DocWrite],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {

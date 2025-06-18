@@ -14,7 +14,11 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../../../feature-libraries/index.js";
-import type { RestrictiveStringRecord, FlattenKeys } from "../../../util/index.js";
+import type {
+	RestrictiveStringRecord,
+	FlattenKeys,
+	JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -30,7 +34,7 @@ import {
 	getOrCreateInnerNode,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
@@ -230,13 +234,13 @@ function createProxyHandler(
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
-					return getTreeNodeForField(field);
+					return tryGetTreeNodeForField(field);
 				}
 
 				return undefined;
 			}
 
-			// POJO mode objects don't have TreeNode's build in members on their targets, so special case them:
+			// POJO mode objects don't have TreeNode's built in members on their targets, so special case them:
 			if (propertyKey === typeSchemaSymbol) {
 				return schema;
 			}
@@ -298,7 +302,7 @@ function createProxyHandler(
 			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
-				value: field === undefined ? undefined : getTreeNodeForField(field),
+				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
 				writable: true,
 				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
 				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
@@ -349,6 +353,7 @@ abstract class CustomObjectNodeBase<
  *
  * @param name - Unique identifier for this schema within this factory's scope.
  * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 export function objectSchema<
 	TName extends string,
@@ -361,6 +366,7 @@ export function objectSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
 	// Field set can't be modified after this since derived data is stored in maps.
@@ -504,6 +510,8 @@ export function objectSchema<
 			return lazyChildTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

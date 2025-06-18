@@ -583,7 +583,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		return this.client.getContainingSegment<T>(pos);
+		return (
+			this.client.getContainingSegment<T>(pos) ?? { segment: undefined, offset: undefined }
+		);
 	}
 
 	public getLength(): number {
@@ -780,7 +782,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 			0x8bb /* Expected a recorded refSeq when resubmitting an op */,
 		);
 		this.useResubmitRefSeq(originalRefSeq, () => {
-			if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata)) {
+			if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata, squash)) {
 				this.submitSequenceMessage(
 					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata, squash),
 				);

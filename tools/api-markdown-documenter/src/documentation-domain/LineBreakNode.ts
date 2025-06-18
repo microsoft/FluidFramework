@@ -40,11 +40,6 @@ export class LineBreakNode implements DocumentationNode {
 	public static readonly Singleton = new LineBreakNode();
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = false;
-
-	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public readonly isEmpty = false;
