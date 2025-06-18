@@ -32,6 +32,8 @@ import {
 } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
+const MAX_TOKEN_LENGTH = 1000; // Maximum allowed token length in characters
+
 export { handleResponse } from "@fluidframework/server-services-shared";
 
 export type CommonRouteParams = [
@@ -358,6 +360,10 @@ export function verifyToken(
 			const token = parseToken(reqTenantId, authorization);
 			if (!token) {
 				throw new NetworkError(403, "Authorization token is missing.");
+			}
+			if (token.length > MAX_TOKEN_LENGTH) {
+				// Prevent excessively long tokens that could lead to performance issues.
+				throw new NetworkError(403, "Invalid token. Token is too long.");
 			}
 			const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
 			const documentId = claims.documentId;
