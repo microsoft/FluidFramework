@@ -344,6 +344,7 @@ export function queryParamToString(value: any): string | undefined {
 
 export function verifyToken(
 	revokedTokenChecker: IRevokedTokenChecker | undefined,
+	requiredScopes: string[],
 	maxTokenLifetimeSec: number,
 ): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -365,20 +366,32 @@ export function verifyToken(
 				// Prevent attempted directory traversal.
 				throw new NetworkError(400, `Invalid document id: ${documentId}`);
 			}
+
 			// Verify token not revoked if JTI claim is present
 			if (revokedTokenChecker && claims.jti) {
 				const isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
 					tenantId,
-					claims.documentId,
+					documentId,
 					claims.jti,
 				);
-
 				if (isTokenRevoked) {
 					throw new NetworkError(
 						403,
 						"Permission denied. Token has been revoked.",
 						false /* canRetry */,
 						true /* isFatal */,
+					);
+				}
+			}
+
+			if (requiredScopes) {
+				const hasAllRequiredScopes = requiredScopes.every((scope) =>
+					claims.scopes.includes(scope),
+				);
+				if (!hasAllRequiredScopes) {
+					throw new NetworkError(
+						403,
+						`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
 					);
 				}
 			}

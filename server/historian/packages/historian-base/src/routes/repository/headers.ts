@@ -23,6 +23,7 @@ import winston from "winston";
 import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -91,7 +92,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/headers/:sha",
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, maxTokenLifetimeSec),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
@@ -109,7 +110,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/tree/:sha",
 		validateRequestParams("tenantId", "sha"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker, maxTokenLifetimeSec),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
