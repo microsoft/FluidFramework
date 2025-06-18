@@ -927,6 +927,7 @@ export class IntervalCollection
 	public resubmitMessage(
 		op: IIntervalCollectionTypeOperationValue,
 		maybeMetadata: unknown,
+		squash: boolean,
 	): void {
 		const { opName, value } = op;
 
@@ -935,7 +936,7 @@ export class IntervalCollection
 		const rebasedValue =
 			localOpMetadata.endpointChangesNode === undefined
 				? value
-				: this.rebaseLocalInterval(value, localOpMetadata);
+				: this.rebaseLocalInterval(value, localOpMetadata, squash);
 
 		if (rebasedValue === undefined) {
 			const { id } = getSerializedProperties(value);
@@ -980,6 +981,7 @@ export class IntervalCollection
 	private rebaseReferenceWithSegmentSlide(
 		ref: LocalReferencePosition,
 		localSeq: number,
+		squash: boolean,
 	): number | "start" | "end" {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
@@ -995,7 +997,12 @@ export class IntervalCollection
 		const segoff = getSlideToSegoff(
 			segment === undefined ? undefined : { segment, offset },
 			undefined,
-			createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
+			createLocalReconnectingPerspective(
+				this.client.getCurrentSeq(),
+				clientId,
+				localSeq,
+				squash,
+			),
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
 
@@ -1008,6 +1015,7 @@ export class IntervalCollection
 
 	private computeRebasedPositions(
 		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
+		squash: boolean,
 	): Pick<ISerializedInterval, "start" | "end"> {
 		assert(
 			this.client !== undefined,
@@ -1016,8 +1024,8 @@ export class IntervalCollection
 
 		const { localSeq, interval } = localOpMetadata;
 		const rebased = {
-			start: this.rebaseReferenceWithSegmentSlide(interval.start, localSeq),
-			end: this.rebaseReferenceWithSegmentSlide(interval.end, localSeq),
+			start: this.rebaseReferenceWithSegmentSlide(interval.start, localSeq, squash),
+			end: this.rebaseReferenceWithSegmentSlide(interval.end, localSeq, squash),
 		};
 		return rebased;
 	}
@@ -1034,11 +1042,11 @@ export class IntervalCollection
 		// Instantiate the local interval collection based on the saved intervals
 		this.client = client;
 		if (client) {
-			client.on("normalize", () => {
+			client.on("normalize", (squash) => {
 				for (const pending of Object.values(this.pending)) {
 					if (pending?.endpointChanges !== undefined) {
 						for (const local of pending.endpointChanges) {
-							local.data.rebased = this.computeRebasedPositions(local.data);
+							local.data.rebased = this.computeRebasedPositions(local.data, squash);
 						}
 					}
 				}
@@ -1464,6 +1472,7 @@ export class IntervalCollection
 	public rebaseLocalInterval(
 		original: SerializedIntervalDelta,
 		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
+		squash: boolean,
 	): SerializedIntervalDelta | undefined {
 		if (!this.client || !hasEndpointChanges(original)) {
 			// If there's no associated mergeTree client, the originally submitted op is still correct.
@@ -1477,7 +1486,7 @@ export class IntervalCollection
 		const { intervalType, properties, stickiness, startSide, endSide } = original;
 		const { id } = getSerializedProperties(original);
 		const { start: startRebased, end: endRebased } = (localOpMetadata.rebased ??=
-			this.computeRebasedPositions(localOpMetadata));
+			this.computeRebasedPositions(localOpMetadata, squash));
 
 		const localInterval = this.localCollection.idIntervalIndex.getIntervalById(id);
 
