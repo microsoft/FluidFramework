@@ -17,6 +17,7 @@ export interface OptionalChangeset {
 	 * An optional description of how to replace the current value of the field.
 	 */
 	readonly valueReplace?: Replace;
+	readonly nodeDetach?: ChangeAtomId;
 	readonly childChange?: NodeId;
 }
 

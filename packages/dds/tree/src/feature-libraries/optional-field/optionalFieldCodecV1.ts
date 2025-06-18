@@ -94,7 +94,6 @@ export function makeOptionalFieldCodec(
 				// the tree in the field is concurrently replaced.
 				if (
 					change.valueReplace.isEmpty ||
-					// XXX: Consider renames
 					areEqualChangeAtomIdOpts(change.valueReplace.dst, change.valueReplace.src)
 				) {
 					encoded.d = registerIdCodec.encode(change.valueReplace.dst, context.baseContext);
@@ -110,8 +109,6 @@ export function makeOptionalFieldCodec(
 			if (encoded.m.length === 0) {
 				delete encoded.m;
 			}
-
-			// XXX
 
 			return encoded;
 		},

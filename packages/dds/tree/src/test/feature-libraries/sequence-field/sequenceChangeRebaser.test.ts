@@ -553,9 +553,9 @@ const codecOptions: ICodecOptions = {
 };
 
 const fieldKindConfiguration: FieldKindConfiguration =
-	fieldKindConfigurations.get(4) ?? strict.fail("Field kind configuration not found");
+	fieldKindConfigurations.get(5) ?? strict.fail("Field kind configuration not found");
 assert(
-	fieldKindConfigurations.get(5) === undefined,
+	fieldKindConfigurations.get(6) === undefined,
 	"There's a newer configuration. It probably should be used.",
 );
 

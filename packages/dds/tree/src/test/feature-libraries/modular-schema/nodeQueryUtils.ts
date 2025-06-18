@@ -4,8 +4,6 @@ import type {
 	InvertNodeManager,
 	RebaseNodeManager,
 } from "../../../feature-libraries/index.js";
-import type { ChangeAtomId } from "../../../core/index.js";
-import type { RangeQueryEntry } from "../../../util/rangeMap.js";
 
 const failingDelegate = (): never => assert.fail("Should not be called");
 

@@ -182,7 +182,7 @@ export class ModularChangeFamily
 	}
 
 	public compose(changes: TaggedChange<ModularChangeset>[]): ModularChangeset {
-		const { revInfos, maxId } = getRevInfoFromTaggedChanges(changes);
+		const { maxId } = getRevInfoFromTaggedChanges(changes);
 		const idState: IdAllocationState = { maxId };
 
 		const pairwiseDelegate = (
@@ -751,7 +751,7 @@ export class ModularChangeFamily
 			invertRevision: revisionForInvert,
 			invertedNodeToParent: brand(change.change.nodeToParent.clone()),
 			invalidatedFields: new Set(),
-			invertedRoots: invertRootTable(change.change),
+			invertedRoots: invertRootTable(change.change, isRollback),
 			attachToDetachId: newChangeAtomIdTransform(),
 			detachToAttachId: newChangeAtomIdTransform(),
 		};
@@ -2737,6 +2737,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		const newNodeId = nodeEntry.value;
 
 		const detachEntry = firstDetachIdFromAttachId(
+			// XXX: same as `baseRenameEntry`
 			this.table.baseChange.rootNodes,
 			baseAttachId,
 			countToProcess,
@@ -3848,6 +3849,7 @@ function rebaseRename(
 		// so we need to ensure that field is processed.
 		affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
 	} else if (baseRenameEntry.value !== undefined) {
+		// XXX: This condition is always true
 		renameNodes(rebasedRoots, baseRenameEntry.value, renameEntry.value, count);
 	}
 
@@ -3887,12 +3889,13 @@ function composeRootTables(
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
 	const mergedTable = cloneRootTable(change1.rootNodes);
-	for (const entry of change2.rootNodes.oldToNewId.entries()) {
+
+	for (const renameEntry of change2.rootNodes.oldToNewId.entries()) {
 		renameNodes(
 			mergedTable,
-			entry.start,
-			entry.value,
-			entry.length,
+			renameEntry.start,
+			renameEntry.value,
+			renameEntry.length,
 			change1.rootNodes.newToOldId,
 		);
 	}
@@ -3935,7 +3938,7 @@ function cloneRootTable(table: RootNodeTable): RootNodeTable {
 	};
 }
 
-function invertRootTable(change: ModularChangeset): RootNodeTable {
+function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNodeTable {
 	const invertedNodeChanges: ChangeAtomIdBTree<NodeId> = newTupleBTree();
 	for (const [[revision, localId], nodeId] of change.rootNodes.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision, localId };
@@ -3944,18 +3947,65 @@ function invertRootTable(change: ModularChangeset): RootNodeTable {
 		// This checks whether `change` attaches this node.
 		// If it does, the node is not detached in the input context of the inverse, and so should not be included in the root table.
 		if (
-			change.crossFieldKeys.getAll({ ...renamedId, target: CrossFieldTarget.Destination }, 1)
-				.length === 0
+			change.crossFieldKeys.getFirst({ ...renamedId, target: CrossFieldTarget.Destination }, 1)
+				.value === undefined
 		) {
 			setInChangeAtomIdMap(invertedNodeChanges, renamedId, nodeId);
 		}
 	}
 
-	return {
+	const invertedRoots: RootNodeTable = {
 		oldToNewId: change.rootNodes.newToOldId.clone(),
 		newToOldId: change.rootNodes.oldToNewId.clone(),
 		nodeChanges: invertedNodeChanges,
 	};
+
+	if (!isRollback) {
+		// Renames which do not have an associated attach or detach should not be undone.
+		for (const {
+			start: oldId,
+			value: newId,
+			length,
+		} of change.rootNodes.oldToNewId.entries()) {
+			for (const attachEntry of doesChangeAttachNodes(change.crossFieldKeys, newId, length)) {
+				if (!attachEntry.value) {
+					// XXX: Improve range map API
+					const offset = subtractChangeAtomIds(attachEntry.start, newId);
+					for (const detachEntry of doesChangeDetachNodes(
+						change.crossFieldKeys,
+						offsetChangeAtomId(oldId, offset),
+						attachEntry.length,
+					)) {
+						if (!detachEntry.value) {
+							deleteNodeRename(invertedRoots, attachEntry.start, detachEntry.length);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return invertedRoots;
+}
+
+function doesChangeAttachNodes(
+	table: CrossFieldKeyTable,
+	id: ChangeAtomId,
+	count: number,
+): RangeQueryEntry<ChangeAtomId, boolean>[] {
+	return table
+		.getAll2({ ...id, target: CrossFieldTarget.Destination }, count)
+		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
+}
+
+function doesChangeDetachNodes(
+	table: CrossFieldKeyTable,
+	id: ChangeAtomId,
+	count: number,
+): RangeQueryEntry<ChangeAtomId, boolean>[] {
+	return table
+		.getAll2({ ...id, target: CrossFieldTarget.Source }, count)
+		.map((entry) => ({ ...entry, value: entry.value !== undefined }));
 }
 
 export function renameNodes(
@@ -3973,12 +4023,16 @@ export function renameNodes(
 	let adjustedOldId = oldId;
 	if (oldEntry?.value !== undefined) {
 		adjustedOldId = oldEntry.value;
+
+		// XXX: This assumes that table's entry is the same as oldEntry
 		deleteNodeRenameEntry(table, oldEntry.value, oldId, countToRename);
 	}
 
 	let adjustedNewId = newId;
 	if (newEntry?.value !== undefined) {
 		adjustedNewId = newEntry.value;
+
+		// XXX: This assumes that table's entry is the same as newEntry
 		deleteNodeRenameEntry(table, newId, newEntry.value, countToRename);
 	}
 

@@ -71,6 +71,7 @@ const OptionalChange = {
 		ids: {
 			fill: ChangeAtomId;
 			detach: ChangeAtomId;
+			detachNode?: ChangeAtomId;
 		},
 	) {
 		return optionalFieldEditor.set(wasEmpty, ids);
@@ -308,15 +309,13 @@ const generateChildStates: ChildStateGenerator<string | undefined, DefaultChange
 					type: "field",
 					field: { parent: undefined, field: rootFieldKey },
 					fieldKind: optional.identifier,
-					change: brand(OptionalChange.set(false, { detach, fill: attach })),
+					change: brand(
+						OptionalChange.set(false, { detach, fill: attach, detachNode: attach }),
+					),
 					revision,
 				};
-				const rename: GlobalEditDescription = {
-					type: "global",
-					renames: [{ count: 1, oldId: detach, newId: attach }],
-					revision,
-				};
-				const modularEdit = editor.buildChanges([fieldEdit, rename]);
+
+				const modularEdit = editor.buildChanges([fieldEdit]);
 				yield {
 					content: state.content,
 					mostRecentEdit: {

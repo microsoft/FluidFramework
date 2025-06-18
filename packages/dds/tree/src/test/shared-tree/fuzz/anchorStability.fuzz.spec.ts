@@ -37,6 +37,7 @@ import type { Operation } from "./operationTypes.js";
 import type { NodeBuilderData } from "../../../internalTypes.js";
 // eslint-disable-next-line import/no-internal-modules
 import { jsonableTreeFromForest } from "../../../feature-libraries/treeTextCursor.js";
+import { SharedTreeFormatVersion } from "../../../shared-tree/sharedTree.js";
 
 interface AnchorFuzzTestState extends FuzzTestState {
 	// Parallel array to `clients`: set in testStart
@@ -89,7 +90,9 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors",
-			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
+			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState), undefined, {
+				formatVersion: SharedTreeFormatVersion.v5,
+			}),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},
@@ -159,7 +162,9 @@ describe("Fuzz - anchor stability", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "anchors-undo-redo",
-			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState)),
+			factory: new SharedTreeTestFactory(createOnCreate(initialTreeState), undefined, {
+				formatVersion: SharedTreeFormatVersion.v5,
+			}),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: () => {},

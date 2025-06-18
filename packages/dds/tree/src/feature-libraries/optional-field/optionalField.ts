@@ -33,7 +33,6 @@ import {
 	type CrossFieldKeyRange,
 	CrossFieldTarget,
 	type ContextualizedFieldChange,
-	type RootsInfo,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
@@ -49,217 +48,90 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		nodeManager: InvertNodeManager,
 	): OptionalChangeset => {
 		const inverted: Mutable<OptionalChangeset> = {};
-		let childChange = change.childChange;
+		const detachId = getEffectiveDetachId(change);
 
-		const replace = change.valueReplace;
-		if (isReplaceEffectful(replace)) {
-			const invertedReplace: Mutable<Replace> =
-				replace.src === undefined
-					? {
-							isEmpty: true,
-							dst: makeChangeAtomId(genId.allocate(), revision),
-						}
-					: {
-							isEmpty: false,
-							dst: isRollback ? replace.src : makeChangeAtomId(genId.allocate(), revision),
-						};
-			if (!replace.isEmpty) {
-				invertedReplace.src = isRollback
-					? replace.dst
-					: makeChangeAtomId(genId.allocate(), revision);
+		if (detachId !== undefined) {
+			const attachIdForInverse = isRollback
+				? detachId
+				: makeChangeAtomId(detachId.localId, revision);
 
-				nodeManager.invertDetach(replace.dst, 1, change.childChange, invertedReplace.src);
-				childChange = undefined;
-			}
+			nodeManager.invertDetach(detachId, 1, change.childChange, attachIdForInverse);
 
-			if (replace.src !== undefined) {
-				childChange = nodeManager.invertAttach(replace.src, 1, invertedReplace.dst).value;
-			}
-
-			inverted.valueReplace = invertedReplace;
+			inverted.valueReplace = {
+				isEmpty: change.valueReplace?.src === undefined,
+				dst: makeChangeAtomId(genId.allocate(), revision),
+				src: attachIdForInverse,
+			};
 		}
 
-		if (childChange !== undefined) {
-			inverted.childChange = childChange;
+		if (change.valueReplace?.src !== undefined) {
+			const detachIdForInverse = isRollback
+				? change.valueReplace.src
+				: makeChangeAtomId(change.valueReplace.src.localId, revision);
+
+			const attachEntry = nodeManager.invertAttach(
+				change.valueReplace.src,
+				1,
+				detachIdForInverse,
+			);
+
+			if (attachEntry.value !== undefined) {
+				inverted.childChange = attachEntry.value;
+			}
+
+			inverted.nodeDetach = detachIdForInverse;
+		} else if (detachId === undefined && change.childChange !== undefined) {
+			// This change does not affect which node is in the field, so its child change should remain here.
+			inverted.childChange = change.childChange;
 		}
 
 		return inverted;
 	},
 
 	rebase: (
-		{ change: newChange, roots: newRoots }: ContextualizedFieldChange<OptionalChangeset>,
+		{ change: newChange }: ContextualizedFieldChange<OptionalChangeset>,
 		{ change: overChange }: ContextualizedFieldChange<OptionalChangeset>,
 		rebaseChild: NodeChangeRebaser,
 		_genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
 	): OptionalChangeset => {
-		// `newChange` can be any of the following 7 cases:
-		// (_ _)
-		// (_▲_)
-		// (A A)
-		// (A▼A)
-		// (A B)
-		// (A _)
-		// (_ B)
-
-		// The same is true for `overChange` but we don't care about intentions that have no effect.
-		const overReplace = isReplaceEffectful(overChange.valueReplace)
-			? overChange.valueReplace
-			: undefined;
-
-		// This does not however lead to 7*5=35 possible rebase cases because both input changes must have the same input context:
-		if (newChange.valueReplace?.isEmpty === true) {
-			assert(
-				overChange.valueReplace?.isEmpty !== false,
-				"Inconsistent input context: empty in newChange but populated in overChange",
-			);
-		} else if (newChange.valueReplace?.isEmpty === false) {
-			assert(
-				overChange.valueReplace?.isEmpty !== true,
-				"Inconsistent input context: populated in newChange but empty in overChange",
-			);
-		}
-		// This leaves us with 4*3=12 cases when the field is populated in the input context:
-		// +-------+   +-------+
-		// |  new  |   | over  |
-		// +-------+   +-------+
-		// | (A A) |   | (A A) |
-		// | (A▼A) | x | (A C) |
-		// | (A B) |   | (A _) |
-		// | (A _) |   +-------+
-		// +-------+
-		// And 3*2=6 cases when the field is empty in the input context:
-		// +-------+   +-------+
-		// |  new  |   | over  |
-		// +-------+   +-------+
-		// | (_ _) |   | (_ _) |
-		// | (_▲_) | x | (_ C) |
-		// | (_ B) |   +-------+
-		// +-------+
-		// For a total of 12+6=18 cases.
-
-		const rebasedChildChangeForA = rebaseChild(newChange.childChange, overChange.childChange);
-		const newReplace = newChange.valueReplace;
 		const rebased: Mutable<OptionalChangeset> = {};
-		if (newReplace === undefined) {
-			// This branch deals with the 3+2=5 cases where `newChange` is (A A) or (_ _).
-			// There are no shallow change intentions to rebase.
-			// However, we need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
-			if (overReplace !== undefined && !overReplace.isEmpty) {
-				// This branch deals with the following cases:
-				// (A A) ↷ (A C)
-				// (A A) ↷ (A _)
-				nodeManager.rebaseOverDetach(overReplace.dst, 1, undefined, rebasedChildChangeForA);
-			}
-		} else if (overReplace === undefined) {
-			// This branch deals with the 4+3=7 cases where `overChange` is (A A) or (_ _),
-			// though two of these cases have already be dealt with in the previous branch).
-			// There are no shallow change intentions to rebase over, so `newChange` shallow change intentions are unchanged.
-			rebased.valueReplace = newReplace;
-		} else {
-			// This branch deals with the remaining 8 cases where both changesets have shallow change intentions:
-			// (A▼A) ↷ (A C)
-			// (A▼A) ↷ (A _)
-			// (A B) ↷ (A C)
-			// (A B) ↷ (A _)
-			// (A _) ↷ (A C)
-			// (A _) ↷ (A _)
-			// (_▲_) ↷ (_ C)
-			// (_ B) ↷ (_ C)
 
-			const replace: Mutable<Replace> = {
-				// The `overChange` determines whether the field is empty in its output context
-				isEmpty: overReplace.src === undefined,
-				// There is no way for the `dst` field to be affected by the rebasing
-				dst: newReplace.dst,
-			};
-			// We now turn our attention to the `src` field.
-			if (newReplace.src === undefined) {
-				// This branch deals with the 2+1=3 cases where `newChange` is (A _) or (_▲_).
-				// `newChange` represent an intention to clear the field.
-				// This is unaffected by anything that `overChange` may do.
-				if (!overReplace.isEmpty) {
-					nodeManager.rebaseOverDetach(overReplace.dst, 1, undefined, newChange.childChange);
-				}
-			} else {
-				// This branch deals with the remaining 5 cases:
-				// (A▼A) ↷ (A C)
-				// (A▼A) ↷ (A _)
-				// (A B) ↷ (A C)
-				// (A B) ↷ (A _)
-				// (_ B) ↷ (_ C)
-				// In all cases, `newChange`'s intention to attach a node is unaffected by the rebasing,
-				// but it's possible that `overChange` has an impact on how the rebased change should refer to the node it attaches.
-				if (isPin(newReplace, newRoots)) {
-					// This branch deals with cases (A▼A) ↷ (A C) and (A▼A) ↷ (A _).
-					// In both cases, `overChange` detaches node A which is pinned by `newChange`.
-					// The rebased change should therefore attach A from wherever `overChange` has sent it.
-					replace.src = newReplace.src;
-					nodeManager.rebaseOverDetach(
-						overReplace.dst,
-						1,
-						// XXX: This is a dirty trick:
-						// We want to tell the MCF that we now want to detach the node being pinned with ID `replace.src`.
-						// We would normally do this by passing `replace.src` here, which would create the desired rename from `overReplace.dst` to `replace.src`.
-						// However, the MCF still has our old rename from `replace.dst` to `replace.src`.
-						// There's no way to tell the MCF that we don't want to keep the that old rename anymore.
-						// So instead, we pass `replace.dst` here to trick the MCF into building a rename chain from  `overReplace.dst` to `replace.dst` to `replace.src`
-						// which it will compress into a single rename from `overReplace.dst` to `replace.src`.
-						replace.dst,
-						rebasedChildChangeForA,
-					);
-				} else {
-					// This branch deals with the remaining 3 cases:
-					// (A B) ↷ (A _)
-					// (A B) ↷ (A C)
-					// (_ B) ↷ (_ C)
-					// Note that in the last two cases, it's possible for nodes B and C to actually be the same node.
-					if (
-						overReplace.src !== undefined &&
-						nodeManager.areSameRenamedNodes(overReplace.src, newReplace.src)
-					) {
-						// This branch deals with the cases (A B) ↷ (A C) and (_ B) ↷ (_ C) where B and C are the same node.
-						// The rebased change becomes a pin.
-						replace.src = newReplace.src;
-						// This is necessary to ensure that the rebased change contains a rename from `replace.dst` to `replace.src`.
-						// One way to rationalize this is that as a result of `overReplace` attaching the node in the field,
-						// the intention to attach that node now needs to account for it being attached and for it being detached with `replace.dst`.
-						nodeManager.rebaseOverDetach(replace.dst, 1, replace.src, undefined);
-					} else {
-						// This branch deals with the following cases where B and C are different nodes:
-						// (A B) ↷ (A _)
-						// (A B) ↷ (A C)
-						// (_ B) ↷ (_ C)
-						// In all other cases, the location of B is unaffected by the rebasing.
-						replace.src = newReplace.src;
-						// We need to inform the node manager of any child changes since they ought to be represented at the location of A in the input context of the rebased change.
-						nodeManager.rebaseOverDetach(
-							overReplace.dst,
-							1,
-							undefined,
-							rebasedChildChangeForA,
-						);
-					}
-				}
-			}
-			rebased.valueReplace = replace;
+		const rebasedChild = rebaseChild(newChange.childChange, overChange.childChange);
+		const overDetach = getEffectiveDetachId(overChange);
+		if (overDetach !== undefined) {
+			nodeManager.rebaseOverDetach(overDetach, 1, newChange.nodeDetach, rebasedChild);
 		}
 
-		// In this block we determine which child changes should be included in `rebased` if any.
-		if (overReplace !== undefined) {
-			if (overReplace.src !== undefined) {
-				// Some new node is attached by `overChange`.
-				// The rebased changeset must represent any nested changes for that node in as part of the field changeset.
-				const changesForAttachedNode = nodeManager.getNewChangesForBaseAttach(
-					overReplace.src,
-					1,
-				).value;
-				if (changesForAttachedNode?.nodeChange !== undefined) {
-					rebased.childChange = changesForAttachedNode.nodeChange;
-				}
+		const overAttach = overChange.valueReplace?.src;
+		if (overAttach !== undefined) {
+			const movedChangeEntry = nodeManager.getNewChangesForBaseAttach(overAttach, 1).value;
+
+			if (movedChangeEntry?.nodeChange !== undefined) {
+				rebased.childChange = movedChangeEntry.nodeChange;
 			}
-		} else if (rebasedChildChangeForA !== undefined) {
-			rebased.childChange = rebasedChildChangeForA;
+
+			if (movedChangeEntry?.detachId !== undefined) {
+				rebased.nodeDetach = movedChangeEntry.detachId;
+			}
+		} else if (overDetach === undefined) {
+			// `overChange` did not change which node is in the field.
+			if (rebasedChild !== undefined) {
+				rebased.childChange = rebasedChild;
+			}
+
+			if (newChange.nodeDetach !== undefined) {
+				rebased.nodeDetach = newChange.nodeDetach;
+			}
+		}
+
+		if (newChange.valueReplace !== undefined) {
+			const isEmpty =
+				overDetach !== undefined || overChange.valueReplace !== undefined
+					? overChange.valueReplace?.src === undefined
+					: newChange.valueReplace.isEmpty;
+
+			rebased.valueReplace = { ...newChange.valueReplace, isEmpty };
 		}
 
 		return rebased;
@@ -302,6 +174,10 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			);
 		}
 
+		if (change.nodeDetach !== undefined) {
+			updated.nodeDetach = replaceAtomRevisions(change.nodeDetach, oldRevisions, newRevision);
+		}
+
 		return updated;
 	},
 };
@@ -313,14 +189,13 @@ function compose(
 	_genId: IdAllocator,
 	nodeManager: ComposeNodeManager,
 ): OptionalChangeset {
-	const composedReplace = composeShallowChanges(
-		change1.valueReplace,
-		change2.valueReplace,
-		nodeManager,
-	);
+	const detachId2 = getEffectiveDetachId(change2);
+	if (change1.valueReplace?.src !== undefined && detachId2 !== undefined) {
+		nodeManager.composeAttachDetach(change1.valueReplace.src, detachId2, 1);
+	}
 
-	sendNewChildChanges(change1, change2, nodeManager);
-
+	const composedDetach = composeNodeDetaches(change1, change2);
+	const composedReplace = composeReplaces(change1, change2);
 	const composedChildChange = getComposedChildChanges(
 		change1,
 		change2,
@@ -328,38 +203,52 @@ function compose(
 		composeChild,
 	);
 
-	return makeChangeset(composedReplace, composedChildChange);
+	sendNewChildChanges(change1, change2, nodeManager);
+
+	if (
+		change1.nodeDetach !== undefined &&
+		areEqualChangeAtomIdOpts(change1.nodeDetach, change2.valueReplace?.src)
+	) {
+		return makeChangeset(undefined, undefined, composedChildChange);
+	}
+
+	return makeChangeset(composedReplace, composedDetach, composedChildChange);
 }
 
-/**
- * Composes the shallow changes from two changesets.
- * This function has the side-effect of informing the node manager of any attach/detach pairs that are being composed.
- * @param replace1 - The first change to compose. Conceptually applies before `replace2`.
- * @param replace2 - The second change to compose. Conceptually applies after `replace1`.
- * @param nodeManager - The node manager.
- * @returns The composed shallow changes.
- */
-function composeShallowChanges(
-	replace1: Replace | undefined,
-	replace2: Replace | undefined,
-	nodeManager: ComposeNodeManager,
-): Replace | undefined {
-	if (replace1 === undefined || replace2 === undefined) {
-		return replace1 ?? replace2;
-	} else {
-		if (replace1.src !== undefined) {
-			// If a node is present in the field in the intermediate context, then it is being attached by `replace1` and detached by `replace2`.
-			// We consider this to be true even when the node is being pinned by either or both changes.
-			nodeManager.composeAttachDetach(replace1.src, replace2.dst, 1);
-		}
-
-		// If the field is empty in the input context of `replace1`, then `replace1.dst` is the dormant ID that will be used to detach any node that might be attached by a concurrent change.
-		// If the field is not empty, then `replace1.dst` is the detach ID we associate with that node. This is true even if that node is then reattached by `replace1.src` or `replace2.src`.
-		const composedDst = replace1.dst;
-		// Since the optional field has LWW semantics, `replace2` has the final word on what node (if any) should reside in the field in the output context of the composition.
-		const composedSrc = replace2.src;
-		return makeShallowChangeset(replace1.isEmpty, composedDst, composedSrc);
+function composeNodeDetaches(
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
+): ChangeAtomId | undefined {
+	if (change1.nodeDetach !== undefined) {
+		return change1.nodeDetach;
 	}
+
+	return getEffectiveDetachId(change1) !== undefined || change1.valueReplace?.isEmpty === true
+		? undefined
+		: change2.nodeDetach;
+}
+
+function composeReplaces(
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
+): Replace | undefined {
+	const firstReplace = change1.valueReplace ?? change2.valueReplace;
+	if (firstReplace === undefined) {
+		return undefined;
+	}
+
+	const isEmpty = change1.nodeDetach !== undefined ? false : firstReplace.isEmpty;
+	const replace: Mutable<Replace> = { isEmpty, dst: firstReplace.dst };
+	if (change2.valueReplace?.src !== undefined) {
+		replace.src = change2.valueReplace.src;
+	} else if (
+		getEffectiveDetachId(change2) === undefined &&
+		change1.valueReplace?.src !== undefined
+	) {
+		replace.src = change1.valueReplace.src;
+	}
+
+	return replace;
 }
 
 /**
@@ -398,13 +287,17 @@ function getComposedChildChanges(
 	nodeManager: ComposeNodeManager,
 	composeChild: NodeChangeComposer,
 ): NodeId | undefined {
+	const detachId1 = getEffectiveDetachId(change1);
+
 	// We need to determine what the child changes are in change2 for the node (if any) that resides in the field in the input context of change1.
 	const childChangesFromChange2: NodeId | undefined =
 		// If such a node did exist, the changes for it in change2 would come from wherever change1 sends that node.
 		// Note: in both branches of this ternary, we are leveraging the fact querying for changes of a non-existent node safely yields undefined
-		change1.valueReplace !== undefined
-			? nodeManager.getNewChangesForBaseDetach(change1.valueReplace.dst, 1).value
-			: change2.childChange;
+		detachId1 !== undefined
+			? nodeManager.getNewChangesForBaseDetach(detachId1, 1).value
+			: change1.valueReplace?.src !== undefined
+				? undefined
+				: change2.childChange;
 
 	let composedChildChange: NodeId | undefined;
 	if (change1.childChange !== undefined || childChangesFromChange2 !== undefined) {
@@ -413,34 +306,20 @@ function getComposedChildChanges(
 	return composedChildChange;
 }
 
-function makeShallowChangeset(
-	isEmpty: boolean,
-	dst: ChangeAtomId,
-	src?: ChangeAtomId,
-): Replace | undefined {
-	if (areEqualChangeAtomIdOpts(dst, src)) {
-		// This can occur when composing a change and its rollback together, which amounts to a no-op.
-		// The reason we prefer a no-op as opposed to a pin is twofold:
-		// 1. A rollback is not a new intention to be composed with the existing one, so much as it is a retraction of the previous intention.
-		// 2. If we were to represent this composition as a pin, such a pin would use the same ID for its src and dst which makes it unrebasable over an attach.
-		return undefined;
-	}
-
-	const replace: Mutable<Replace> | undefined = {
-		isEmpty,
-		dst,
-	};
-	if (src !== undefined) {
-		replace.src = src;
-	}
-	return replace;
-}
-
-function makeChangeset(replace?: Replace, childChange?: NodeId): OptionalChangeset {
+function makeChangeset(
+	replace: Replace | undefined,
+	detachId: ChangeAtomId | undefined,
+	childChange: NodeId | undefined,
+): OptionalChangeset {
 	const changeset: Mutable<OptionalChangeset> = {};
 	if (replace !== undefined) {
 		changeset.valueReplace = replace;
 	}
+
+	if (detachId !== undefined) {
+		changeset.nodeDetach = detachId;
+	}
+
 	if (childChange !== undefined) {
 		changeset.childChange = childChange;
 	}
@@ -464,40 +343,12 @@ function replaceReplaceRevisions(
 	return updated;
 }
 
-type EffectfulReplace =
-	| {
-			isEmpty: true;
-			src?: ChangeAtomId;
-			dst: ChangeAtomId;
-	  }
-	| {
-			isEmpty: boolean;
-			src: ChangeAtomId;
-			dst: ChangeAtomId;
-	  };
-
-function isReplaceEffectful(
-	replace: Replace | undefined,
-	rootsInfo?: RootsInfo,
-): replace is EffectfulReplace {
-	if (replace === undefined) {
-		return false;
+function getEffectiveDetachId(change: OptionalChangeset): ChangeAtomId | undefined {
+	if (change.nodeDetach !== undefined) {
+		return change.nodeDetach;
 	}
 
-	if (rootsInfo !== undefined && isPin(replace, rootsInfo)) {
-		return false;
-	}
-	return !replace.isEmpty || replace.src !== undefined;
-}
-
-function isPin(
-	replace: Replace | undefined,
-	rootsInfo: RootsInfo,
-): replace is Replace & { isEmpty: false; src: ChangeAtomId } {
-	if (replace?.src === undefined || replace.isEmpty) {
-		return false;
-	}
-	return rootsInfo.areSameNodes(replace.dst, replace.src);
+	return change.valueReplace?.isEmpty === false ? change.valueReplace.dst : undefined;
 }
 
 export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
@@ -514,6 +365,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 		ids: {
 			fill: ChangeAtomId;
 			detach: ChangeAtomId;
+			detachNode?: ChangeAtomId;
 		},
 	): OptionalChangeset;
 
@@ -532,6 +384,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 			fill: ChangeAtomId;
 			// Should be interpreted as a set of an empty field if undefined.
 			detach: ChangeAtomId;
+			detachNode?: ChangeAtomId;
 		},
 	): OptionalChangeset => ({
 		valueReplace: {
@@ -539,6 +392,7 @@ export const optionalFieldEditor: OptionalFieldEditor = {
 			src: ids.fill,
 			dst: ids.detach,
 		},
+		nodeDetach: ids.detachNode,
 	}),
 
 	clear: (wasEmpty: boolean, detachId: ChangeAtomId): OptionalChangeset => ({
@@ -569,17 +423,16 @@ export function optionalFieldIntoDelta(
 ): DeltaFieldChanges {
 	let markIsANoop = true;
 	const mark: Mutable<DeltaMark> = { count: 1 };
+	const detachId = getEffectiveDetachId(change);
+	const attachId = change.valueReplace?.src;
+	if (detachId !== undefined && !areEqualChangeAtomIdOpts(detachId, attachId)) {
+		mark.detach = nodeIdFromChangeAtom(detachId);
+		markIsANoop = false;
+	}
 
-	const replace = change.valueReplace;
-	if (replace !== undefined && !areEqualChangeAtomIdOpts(replace.dst, replace.src)) {
-		if (!replace.isEmpty) {
-			mark.detach = nodeIdFromChangeAtom(replace.dst);
-			markIsANoop = false;
-		}
-		if (replace.src !== undefined) {
-			mark.attach = nodeIdFromChangeAtom(replace.src);
-			markIsANoop = false;
-		}
+	if (attachId !== undefined && !areEqualChangeAtomIdOpts(attachId, detachId)) {
+		mark.attach = nodeIdFromChangeAtom(attachId);
+		markIsANoop = false;
 	}
 
 	if (change.childChange !== undefined) {
@@ -601,7 +454,9 @@ export const optionalChangeHandler: FieldChangeHandler<
 	intoDelta: optionalFieldIntoDelta,
 
 	isEmpty: (change: OptionalChangeset) =>
-		change.childChange === undefined && change.valueReplace === undefined,
+		change.childChange === undefined &&
+		change.valueReplace === undefined &&
+		change.nodeDetach === undefined,
 
 	getNestedChanges,
 
@@ -623,6 +478,10 @@ function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 				count: 1,
 			});
 		}
+	}
+
+	if (change.nodeDetach !== undefined) {
+		keys.push({ key: { ...change.nodeDetach, target: CrossFieldTarget.Source }, count: 1 });
 	}
 
 	return keys;
