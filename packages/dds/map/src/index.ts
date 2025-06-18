@@ -24,6 +24,7 @@ export type {
 	ISharedMap,
 	ISharedMapEvents,
 	IValueChanged,
+	ISharedMapCore,
 } from "./interfaces.js";
 export { SharedMap } from "./mapFactory.js";
 export { SharedDirectory } from "./directoryFactory.js";

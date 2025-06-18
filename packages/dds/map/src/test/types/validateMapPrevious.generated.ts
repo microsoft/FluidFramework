@@ -49,6 +49,7 @@ declare type current_as_old_for_ClassStatics_DirectoryFactory = requireAssignabl
  * typeValidation.broken:
  * "ClassStatics_MapFactory": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_MapFactory = requireAssignableTo<TypeOnly<typeof current.MapFactory>, TypeOnly<typeof old.MapFactory>>
 
 /*
