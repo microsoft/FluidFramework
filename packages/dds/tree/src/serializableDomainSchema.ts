@@ -23,14 +23,14 @@ const sf = new SchemaFactory("com.fluidframework.serializable");
  * Schema which replicate the Fluid Serializable data model with {@link TreeNode}s.
  *
  * Fluid Serializable data can be imported from the {@link FluidSerializableAsTree.Data|Fluid Serializable format} into this format using {@link (TreeAlpha:interface).importConcise} with the {@link FluidSerializableAsTree.(Tree:variable)} schema.
- * @alpha
+ * @internal
  */
 export namespace FluidSerializableAsTree {
 	/**
 	 * Data which can be serialized by Fluid.
 	 * @remarks
 	 * Can be encoded as a {@link FluidSerializableAsTree.(Tree:type)} using {@link (TreeAlpha:interface).importConcise}.
-	 * @alpha
+	 * @internal
 	 */
 	export type Data = JsonCompatible<IFluidHandle>;
 
@@ -40,7 +40,7 @@ export namespace FluidSerializableAsTree {
 	 * ```typescript
 	 * const tree = TreeAlpha.importConcise(FluidSerializableAsTree.Tree, { example: { nested: true }, value: 5 });
 	 * ```
-	 * @alpha
+	 * @internal
 	 */
 	export const Tree = [
 		() => FluidSerializableObject,
@@ -49,13 +49,13 @@ export namespace FluidSerializableAsTree {
 	] as const;
 
 	/**
-	 * @alpha
+	 * @internal
 	 */
 	export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
 
 	/**
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
-	 * @system @alpha
+	 * @system @internal
 	 */
 	export const _APIExtractorWorkaroundObjectBase = sf.mapRecursive("object", Tree);
 
@@ -74,7 +74,7 @@ export namespace FluidSerializableAsTree {
 	 * ```
 	 * @privateRemarks
 	 * Due to https://github.com/microsoft/TypeScript/issues/61270 this can't be named `Object`.
-	 * @sealed @alpha
+	 * @sealed @internal
 	 */
 	export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {}
 	{
@@ -86,7 +86,7 @@ export namespace FluidSerializableAsTree {
 	 * @privateRemarks
 	 * In the past this this had to reference the base type (_APIExtractorWorkaroundArrayBase).
 	 * Testing for this in examples/utils/import-testing now shows it has to reference FluidSerializableAsTree.Array instead.
-	 * @system @alpha
+	 * @system @internal
 	 */
 	export declare type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<
 		typeof Array
@@ -94,7 +94,7 @@ export namespace FluidSerializableAsTree {
 
 	/**
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
-	 * @system @alpha
+	 * @system @internal
 	 */
 	export const _APIExtractorWorkaroundArrayBase = sf.arrayRecursive("array", Tree);
 
@@ -113,7 +113,7 @@ export namespace FluidSerializableAsTree {
 	 * assert(Tree.is(inner, FluidSerializableAsTree.Array));
 	 * const leaf = inner[0];
 	 * ```
-	 * @sealed @alpha
+	 * @sealed @internal
 	 */
 	export class Array extends _APIExtractorWorkaroundArrayBase {}
 	{

@@ -105,7 +105,7 @@ export abstract class SharedObjectCore<
 	/**
 	 * The handle referring to this SharedObject
 	 */
-	public handle: IFluidHandleInternal;
+	public readonly handle: IFluidHandleInternal;
 
 	/**
 	 * Telemetry logger for the shared object
