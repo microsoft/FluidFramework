@@ -272,10 +272,14 @@ function formatTypes(allowed: Iterable<TreeNodeSchema>): string {
 
 /**
  * Check if union contents are valid (shallowly).
- * @remarks
- * If `preventAmbiguity` is true, detect cases documented in {@link ITreeConfigurationOptions.preventAmbiguity}, reporting them to `ambiguityErrors`.
  *
- * Also checks for other invalid cases, such as duplicate schemas in the union.
+ * @param union - The union of {@link TreeNodeSchema} to check.
+ * @param preventAmbiguity - If true, detect cases documented in {@link ITreeConfigurationOptions.preventAmbiguity}, reporting them to `ambiguityErrors`.
+ * @param ambiguityErrors - An array into which this function inserts any ambiguity errors, see {@link ITreeConfigurationOptions.preventAmbiguity}.
+ *
+ * @remarks
+ * Includes checks for non-ambiguity errors as well: such as duplicate schemas in the union.
+ * Any non-ambiguity errors are thrown as exceptions: `UsageError`s if causable by incorrect API use, and asserts if violating internal invariants.
  */
 export function checkUnion(
 	union: Iterable<TreeNodeSchema>,
