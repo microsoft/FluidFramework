@@ -252,7 +252,7 @@ export type TreeNodeSchemaBoth<
  * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
  *
  * @privateRemarks
- * All implementations must actually implement {@link TreeNodeSchemaCorePrivate} as well.
+ * All implementations must implement {@link TreeNodeSchemaCorePrivate} as well.
  *
  * @sealed @public
  */
