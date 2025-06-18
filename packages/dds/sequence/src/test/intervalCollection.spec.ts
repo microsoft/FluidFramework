@@ -1800,7 +1800,7 @@ describe("SharedString interval collections", () => {
 			assertSequenceIntervals(sharedString, collection, [{ start: 0, end: 3 }], false);
 		});
 
-		it("none stickiness slides off string when entire string is deleted", () => {
+		it.only("none stickiness slides off string when entire string is deleted", () => {
 			const collection = sharedString.getIntervalCollection("test");
 			sharedString.insertText(0, "abc");
 			containerRuntimeFactory.processAllMessages();
