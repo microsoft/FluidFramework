@@ -43,14 +43,6 @@ export const Constants = Object.freeze({
 	invalidTokenCachePrefix: "invalidTokenCache",
 });
 
-export function getTokenLifetimeInSec(token: string): number | undefined {
-	const claims = decode(token) as ITokenClaims;
-	if (claims?.exp) {
-		return claims.exp - Math.round(new Date().getTime() / 1000);
-	}
-	return undefined;
-}
-
 export function getTenantIdFromRequest(params: Params) {
 	const tenantId = getParam(params, "tenantId");
 	if (tenantId !== undefined) {
