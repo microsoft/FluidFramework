@@ -290,6 +290,8 @@ async function fetchLatestSnapshotCore(
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
 		const internalFarmType = checkForKnownServerFarmType(odspResolvedUrl.siteUrl);
+		const isRedemptionNonDurable: boolean =
+			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 
 		const perfEvent = {
 			eventName,
@@ -564,6 +566,8 @@ async function fetchLatestSnapshotCore(
 				// slowTreeStructureCount, slowBlobStructureCount, durationStructure, durationStrings,
 				// durationSnapshotTree, durationBlobs, etc.
 				...parsedSnapshotContents.content.telemetryProps,
+				// Whether the redemption used is non-durable or not.
+				isRedemptionNonDurable,
 			});
 			return snapshot;
 		}).catch((error) => {
