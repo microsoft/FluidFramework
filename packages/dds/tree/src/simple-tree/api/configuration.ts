@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -160,6 +160,11 @@ export class TreeViewConfiguration<
 	public readonly preventAmbiguity: boolean;
 
 	/**
+	 * {@link TreeSchema.definitions} but with public types.
+	 */
+	protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
+
+	/**
 	 * Construct a new {@link TreeViewConfiguration}.
 	 *
 	 * @param props - Property bag of configuration options.
@@ -181,30 +186,38 @@ export class TreeViewConfiguration<
 		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
 		const ambiguityErrors: string[] = [];
 
-		walkFieldSchema(config.schema, {
-			// Ensure all reachable schema are marked as most derived.
-			// This ensures if multiple schema extending the same schema factory generated class are present (or have been constructed, or get constructed in the future),
-			// an error is reported.
+		// Eagerly perform this conversion to surface errors sooner.
+		// Includes detection of duplicate schema identifiers.
+		toStoredSchema(config.schema);
 
-			node: (schema) => markSchemaMostDerived(schema, true),
+		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
+
+		walkFieldSchema(config.schema, {
+			node: (schema) => {
+				// Ensure all reachable schema are marked as most derived.
+				// This ensures if multiple schema extending the same schema factory generated class are present (or have had instances of them constructed, or get instances of them constructed in the future),
+				// an error is reported.
+				markSchemaMostDerived(schema, true);
+
+				debugAssert(() => !definitions.has(schema.identifier));
+				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
+			},
 			allowedTypes(types): void {
-				if (config.preventAmbiguity) {
-					checkUnion(
-						Array.from(types, ({ type }) => type),
-						ambiguityErrors,
-					);
-				}
+				checkUnion(
+					Array.from(types, ({ type }) => type),
+					config.preventAmbiguity,
+					ambiguityErrors,
+				);
 			},
 		});
+
+		this.definitionsInternal = definitions;
 
 		if (ambiguityErrors.length !== 0) {
 			// Duplicate errors are common since when two types conflict, both orders error:
 			const deduplicated = new Set(ambiguityErrors);
 			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
-
-		// Eagerly perform this conversion to surface errors sooner.
-		toStoredSchema(config.schema);
 	}
 }
 
@@ -222,20 +235,17 @@ export class TreeViewConfigurationAlpha<
 	 * {@inheritDoc TreeSchema.root}
 	 */
 	public readonly root: FieldSchemaAlpha;
+
 	/**
 	 * {@inheritDoc TreeSchema.definitions}
 	 */
-	public readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+	public get definitions(): ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema> {
+		return this.definitionsInternal as ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+	}
 
 	public constructor(props: ITreeViewConfiguration<TSchema>) {
 		super(props);
 		this.root = normalizeFieldSchema(props.schema);
-		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
-		walkFieldSchema(props.schema, {
-			node: (schema) =>
-				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema),
-		});
-		this.definitions = definitions;
 	}
 }
 
@@ -265,9 +275,21 @@ function formatTypes(allowed: Iterable<TreeNodeSchema>): string {
 }
 
 /**
- * Detect cases documented in {@link ITreeConfigurationOptions.preventAmbiguity}.
+ * Check if union contents are valid (shallowly).
+ *
+ * @param union - The union of {@link TreeNodeSchema} to check.
+ * @param preventAmbiguity - If true, detect cases documented in {@link ITreeConfigurationOptions.preventAmbiguity}, reporting them to `ambiguityErrors`.
+ * @param ambiguityErrors - An array into which this function inserts any ambiguity errors, see {@link ITreeConfigurationOptions.preventAmbiguity}.
+ *
+ * @remarks
+ * Includes checks for non-ambiguity errors as well: such as duplicate schemas in the union.
+ * Any non-ambiguity errors are thrown as exceptions: `UsageError`s if causable by incorrect API use, and asserts if violating internal invariants.
  */
-export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): void {
+export function checkUnion(
+	union: Iterable<TreeNodeSchema>,
+	preventAmbiguity: boolean,
+	ambiguityErrors: string[],
+): void {
 	const checked: Set<TreeNodeSchema> = new Set();
 	const maps: TreeNodeSchema[] = [];
 	const arrays: TreeNodeSchema[] = [];
@@ -297,26 +319,31 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 		}
 	}
 
+	if (!preventAmbiguity) {
+		// All remaining checks are for the preventAmbiguity case, so skip them if not enabled.
+		return;
+	}
+
 	if (arrays.length > 1) {
-		errors.push(
+		ambiguityErrors.push(
 			`More than one kind of array allowed within union (${formatTypes(arrays)}). This would require type disambiguation which is not supported by arrays during import or export.`,
 		);
 	}
 
 	if (maps.length > 1) {
-		errors.push(
+		ambiguityErrors.push(
 			`More than one kind of map allowed within union (${formatTypes(maps)}). This would require type disambiguation which is not supported by maps during import or export.`,
 		);
 	}
 
 	if (maps.length > 0 && arrays.length > 0) {
-		errors.push(
+		ambiguityErrors.push(
 			`Both a map and an array allowed within union (${formatTypes([...arrays, ...maps])}). Both can be implicitly constructed from iterables like arrays, which are ambiguous when the array is empty.`,
 		);
 	}
 
 	if (objects.length > 0 && maps.length > 0) {
-		errors.push(
+		ambiguityErrors.push(
 			`Both a object and a map allowed within union (${formatTypes([...objects, ...maps])}). Both can be constructed from objects and can be ambiguous.`,
 		);
 	}
@@ -348,7 +375,7 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 			// Consider separating unambiguous implicit construction format from constructor arguments at type level, allowing constructor to superset the implicit construction options (ex: optional constant fields).
 			// The policy here however must remain at least as conservative as shallowCompatibilityTest in src/simple-tree/unhydratedFlexTreeFromInsertable.ts.
 
-			errors.push(
+			ambiguityErrors.push(
 				`The required fields of ${JSON.stringify(schema.identifier)} are insufficient to differentiate it from the following types: ${formatTypes(possiblyAmbiguous)}. For objects to be considered unambiguous, each must have required fields that do not all occur on any other object in the union.`,
 			);
 		}

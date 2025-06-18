@@ -37,6 +37,8 @@ const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ * @throws
+ * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
 export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return getOrCreate(viewToStoredCache, root, () => {
@@ -123,11 +125,15 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 		}
 		case NodeKind.Map: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
-			return new MapNodeStoredSchema({
-				kind: FieldKinds.optional.identifier,
-				types,
-				persistedMetadata: schema.persistedMetadata,
-			});
+			return new MapNodeStoredSchema(
+				{
+					kind: FieldKinds.optional.identifier,
+					types,
+					persistedMetadata: schema.persistedMetadata,
+				},
+				// TODO: Find a way to avoid injecting persistedMetadata twice in these constructor calls.
+				schema.persistedMetadata,
+			);
 		}
 		case NodeKind.Array: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
@@ -137,14 +143,14 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 				persistedMetadata: schema.persistedMetadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
 				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		default:
 			unreachableCase(kind);
