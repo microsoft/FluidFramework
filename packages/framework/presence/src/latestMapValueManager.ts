@@ -452,7 +452,7 @@ class LatestMapValueManagerImpl<
 		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapEvents<T, Keys, ValueAccessor<T>>>();
+	public readonly events = createEmitter<LatestMapEvents<T, Keys, RawValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -572,7 +572,6 @@ class LatestMapValueManagerImpl<
 				revision: item.rev,
 				timestamp: item.timestamp,
 			};
-
 			if (item.value !== undefined) {
 				const updatedItem = {
 					attendee,

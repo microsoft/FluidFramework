@@ -138,20 +138,6 @@ export type StateSchemaValidator<T> = (
 ) => JsonDeserialized<T> | undefined;
 
 /**
- * Optional metadata that is passed to a {@link StateSchemaValidator}.
- *
- * @beta
- *
- * TODO: What else needs to be in the metadata?
- */
-export interface StateSchemaValidatorMetadata {
-	/**
-	 * If the value being validated is a LatestMap value, this will be set to the value of the corresponding key.
-	 */
-	key?: string | number;
-}
-
-/**
  * Creates a getter for a state value that validates the data with a validator if one is provided.
  *
  * @param clientState - The client state to be validated.
