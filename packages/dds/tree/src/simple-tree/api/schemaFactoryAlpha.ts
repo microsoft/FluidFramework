@@ -401,7 +401,7 @@ export class SchemaFactoryAlpha<
 	 */
 	public record<const T extends ImplicitAllowedTypes>(
 		nameOrAllowedTypes: TName | ((T & TreeNodeSchema) | readonly TreeNodeSchema[]),
-		allowedTypes?: T,
+		maybeAllowedTypes?: T,
 	): TreeNodeSchema<
 		/* Name */ ScopedSchemaName<TScope, string>,
 		/* Kind */ NodeKind.Record,
@@ -410,11 +410,11 @@ export class SchemaFactoryAlpha<
 		/* ImplicitlyConstructable */ true,
 		/* Info */ T
 	> {
-		if (allowedTypes === undefined) {
+		if (maybeAllowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Record", types);
 			return this.getStructuralType(fullName, types, () =>
-				this.namedRecord(fullName, nameOrAllowedTypes as T, false),
+				this.namedRecord(fullName, nameOrAllowedTypes as T, true),
 			) as TreeNodeSchemaClass<
 				/* Name */ ScopedSchemaName<TScope, string>,
 				/* Kind */ NodeKind.Record,
@@ -433,7 +433,7 @@ export class SchemaFactoryAlpha<
 			/* ImplicitlyConstructable */ true,
 			/* Info */ T,
 			/* TConstructorExtra */ undefined
-		> = this.namedRecord(nameOrAllowedTypes as TName, allowedTypes, true);
+		> = this.namedRecord(nameOrAllowedTypes as TName, maybeAllowedTypes, true);
 		return out;
 	}
 
