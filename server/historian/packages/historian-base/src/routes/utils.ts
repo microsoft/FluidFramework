@@ -344,7 +344,7 @@ export function queryParamToString(value: any): string | undefined {
 
 export function verifyToken(
 	revokedTokenChecker: IRevokedTokenChecker | undefined,
-	requiredScopes?: string[],
+	requiredScopes: string[],
 ): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {

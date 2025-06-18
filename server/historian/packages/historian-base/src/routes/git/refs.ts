@@ -175,7 +175,11 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [
+			ScopeType.DocRead,
+			ScopeType.DocWrite,
+			ScopeType.SummaryWrite,
+		]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = createRef(

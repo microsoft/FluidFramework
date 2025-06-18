@@ -27,6 +27,7 @@ import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../se
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -77,7 +78,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead]),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const sha = utils.queryParamToString(request.query.sha);
