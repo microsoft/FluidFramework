@@ -76,6 +76,39 @@ describe("walk schema", () => {
 		]);
 	});
 
+	it("calls visitor on nested objects", () => {
+		const annotatedString = makeAnnotated(sf.string);
+		const annotatedObject3 = makeAnnotated(
+			sf.objectAlpha("annotatedObject3", { name: annotatedString }),
+		);
+		const annotatedObject2 = makeAnnotated(
+			sf.objectAlpha("annotatedObject2", { bar: annotatedObject3 }),
+		);
+		const annotatedObject = makeAnnotated(
+			sf.objectAlpha("annotatedObject", { foo: annotatedObject2 }),
+		);
+		const schema = sf.arrayAlpha("schema", annotatedObject);
+
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+		);
+
+		assert.deepEqual(visitedNodes, [
+			annotatedString.type,
+			annotatedObject3.type,
+			annotatedObject2.type,
+			annotatedObject.type,
+			schema,
+		]);
+		assert.deepEqual(visitedAllowedTypes, [
+			[annotatedString],
+			[annotatedObject3],
+			[annotatedObject2],
+			[annotatedObject],
+			[{ metadata: {}, type: schema }],
+		]);
+	});
+
 	it("calls visitor on all child allowed types", () => {
 		const annotatedString = makeAnnotated(sf.string);
 		const annotatedNumber = makeAnnotated(sf.number);
@@ -106,13 +139,10 @@ describe("walk schema", () => {
 			normalizeFieldSchema(annotatedObject).annotatedAllowedTypesNormalized,
 		);
 
-		assert.deepEqual(visitedNodes, [
-			annotatedString.type,
-			otherAnnotatedString.type,
-			annotatedObject.type,
-		]);
+		assert.deepEqual(visitedNodes, [annotatedString.type, annotatedObject.type]);
 		assert.deepEqual(visitedAllowedTypes, [
-			[annotatedString, otherAnnotatedString],
+			[annotatedString],
+			[otherAnnotatedString],
 			[annotatedObject],
 		]);
 	});
@@ -121,7 +151,7 @@ describe("walk schema", () => {
 		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([]);
 
 		assert.deepEqual(visitedNodes, []);
-		assert.deepEqual(visitedAllowedTypes, []);
+		assert.deepEqual(visitedAllowedTypes, [[]]);
 	});
 
 	it("does not fail if visitor has no callbacks", () => {

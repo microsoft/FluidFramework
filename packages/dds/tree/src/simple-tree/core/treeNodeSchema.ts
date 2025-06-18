@@ -356,8 +356,8 @@ export interface TreeNodeSchemaCorePrivate<
 		TCustomMetadata
 	> {
 	/**
-	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
-	 * with a particular schema.
+	 * All possible annotated allowed types that a direct child of a node with this schema could have, grouped by field.
+	 * If this node does not have fields, it will contain a single array with all its allowed types.
 	 *
 	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
 	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
@@ -374,7 +374,7 @@ export interface TreeNodeSchemaCorePrivate<
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+	readonly childAnnotatedAllowedTypes: readonly (readonly AnnotatedAllowedType<TreeNodeSchema>[])[];
 }
 
 /**
@@ -387,7 +387,12 @@ export interface TreeNodeSchemaCorePrivate<
 export function asTreeNodeSchemaCorePrivate(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): TreeNodeSchemaCorePrivate {
-	if ("childAnnotatedAllowedTypes" in schema) {
+	if (
+		"childAnnotatedAllowedTypes" in schema &&
+		Array.isArray(schema.childAnnotatedAllowedTypes) &&
+		(schema.childAnnotatedAllowedTypes.length === 0 ||
+			Array.isArray(schema.childAnnotatedAllowedTypes[0]))
+	) {
 		return schema as TreeNodeSchemaCorePrivate;
 	}
 	throw new Error(

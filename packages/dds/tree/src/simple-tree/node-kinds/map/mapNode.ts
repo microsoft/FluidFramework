@@ -254,7 +254,7 @@ export function mapSchema<
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
-	const lazyAnnotatedTypes = new Lazy(() => normalizeAnnotatedAllowedTypes(info));
+	const lazyAnnotatedTypes = new Lazy(() => [normalizeAnnotatedAllowedTypes(info)]);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -303,7 +303,7 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedType<TreeNodeSchema>[] {
+		public static get childAnnotatedAllowedTypes(): readonly (readonly AnnotatedAllowedType<TreeNodeSchema>[])[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};

@@ -391,15 +391,12 @@ export function objectSchema<
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
-	const lazyAnnotatedTypes = new Lazy(() => {
-		const annotatedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
-		for (const [_, { schema }] of flexKeyMap) {
-			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized.forEach((t) => {
-				annotatedAllowedTypes.push(t);
-			});
-		}
-		return annotatedAllowedTypes;
-	});
+	const lazyAnnotatedTypes = new Lazy(() =>
+		Array.from(
+			flexKeyMap.values(),
+			({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+		),
+	);
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
@@ -518,7 +515,7 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedType<TreeNodeSchema>[] {
+		public static get childAnnotatedAllowedTypes(): readonly (readonly AnnotatedAllowedType<TreeNodeSchema>[])[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};

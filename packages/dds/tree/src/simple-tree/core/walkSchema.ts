@@ -19,14 +19,17 @@ export function walkNodeSchema(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema>,
 ): void {
-	if (!visitedSet.has(schema)) {
-		visitedSet.add(schema);
+	if (visitedSet.has(schema)) {
+		return;
+	}
 
-		const annotatedAllowedTypes =
-			asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes ??
-			Array.from(schema.childTypes).map((type) => ({ type }));
+	visitedSet.add(schema);
 
-		walkAllowedTypes(annotatedAllowedTypes, visitor, visitedSet);
+	const annotatedAllowedTypes = asTreeNodeSchemaCorePrivate(schema)
+		.childAnnotatedAllowedTypes ?? [Array.from(schema.childTypes).map((type) => ({ type }))];
+
+	for (const fieldAllowedTypes of annotatedAllowedTypes) {
+		walkAllowedTypes(fieldAllowedTypes, visitor, visitedSet);
 	}
 
 	// This visit is done at the end so the traversal order is most inner types first.
@@ -44,10 +47,6 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	if (annotatedAllowedTypes[Symbol.iterator]().next().done === true) {
-		return;
-	}
-
 	for (const annotatedAllowedType of annotatedAllowedTypes) {
 		walkNodeSchema(
 			annotatedAllowedType.type,
