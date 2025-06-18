@@ -23,10 +23,10 @@ import type { SimpleRecordNodeSchema } from "../../simpleSchema.js";
 import type { RestrictiveStringRecord } from "../../../util/index.js";
 
 /**
- * A {@link TreeNode} which models a TypeScript {@link record | https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type}.
+ * A {@link TreeNode} which models a TypeScript {@link https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type | record}.
  *
  * @remarks
- * Record nodes consist of a type which specifies which {@link TreeNodeSchema} may appear as child elements (see {@link TreeNodeApi.schema} and {@link SchemaFactory.record}).
+ * Record nodes consist of a type which specifies which {@link TreeNodeSchema} may appear as child elements (see {@link TreeNodeApi.schema} and {@link SchemaFactoryAlpha.recordAlpha}).
  *
  * @alpha
  */
@@ -86,7 +86,7 @@ export interface RecordNodePojoEmulationSchema<
 		SimpleRecordNodeSchema<TCustomMetadata> {}
 
 /**
- * A schema for {@link (TreeRecordNode:interface)}s.
+ * A schema for {@link (TreeRecordNode:type)}s.
  * @privateRemarks
  * This could have generic arguments added and forwarded.
  * The expected use-cases for this don't need them however, and if they did want an argument it would probably be the allowed types;

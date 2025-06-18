@@ -320,7 +320,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeRecordNode:interface)}.
+	 * Define a structurally typed {@link TreeNodeSchema} for a {@link (TreeRecordNode:type)}.
 	 *
 	 * @param allowedTypes - The types that may appear in the record.
 	 *
@@ -369,7 +369,7 @@ export class SchemaFactoryAlpha<
 		/* TConstructorExtra */ undefined
 	>;
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeRecordNode:interface)}.
+	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeRecordNode:type)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the record.
@@ -483,7 +483,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeRecordNode:interface)}.
+	 * Define (and add to this library) a {@link TreeNodeSchemaClass} for a {@link (TreeRecordNode:type)}.
 	 *
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the record.
