@@ -57,6 +57,22 @@ export const runtimeSupportRequirements: ILayerCompatSupportRequirements = {
 };
 
 /**
+ * The requirements that the Driver layer must meet to be compatible with this Loader.
+ * @internal
+ */
+export const driverSupportRequirements: ILayerCompatSupportRequirements = {
+	/**
+	 * Minimum generation that Driver must be at to be compatible with Loader. Note that 0 is used here for
+	 * Driver layers before the introduction of the layer compatibility enforcement.
+	 */
+	minSupportedGeneration: 0,
+	/**
+	 * The features that the Driver must support to be compatible with Loader.
+	 */
+	requiredFeatures: [],
+};
+
+/**
  * Validates that the Runtime layer is compatible with the Loader.
  * @internal
  */
@@ -76,6 +92,35 @@ export function validateRuntimeCompatibility(
 				loaderGeneration: loaderCompatDetailsForRuntime.generation,
 				runtimeGeneration: maybeRuntimeCompatDetails?.generation,
 				minSupportedGeneration: runtimeSupportRequirements.minSupportedGeneration,
+				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
+				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
+			}),
+		});
+		disposeFn(error);
+		throw error;
+	}
+}
+
+/**
+ * Validates that the Driver layer is compatible with the Loader.
+ * @internal
+ */
+export function validateDriverCompatibility(
+	maybeDriverCompatDetails: ILayerCompatDetails | undefined,
+	disposeFn: (error?: ICriticalContainerError) => void,
+): void {
+	const layerCheckResult = checkLayerCompatibility(
+		driverSupportRequirements,
+		maybeDriverCompatDetails,
+	);
+	if (!layerCheckResult.isCompatible) {
+		const error = new UsageError("Loader is not compatible with Driver", {
+			errorDetails: JSON.stringify({
+				loaderVersion: loaderCoreCompatDetails.pkgVersion,
+				driverVersion: maybeDriverCompatDetails?.pkgVersion,
+				loaderGeneration: loaderCoreCompatDetails.generation,
+				driverGeneration: maybeDriverCompatDetails?.generation,
+				minSupportedGeneration: driverSupportRequirements.minSupportedGeneration,
 				isGenerationCompatible: layerCheckResult.isGenerationCompatible,
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),

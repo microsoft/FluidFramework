@@ -47,7 +47,7 @@ describe("simple-tree API integration tests", () => {
 				() => {
 					array.insertAtEnd(obj);
 				},
-				validateUsageError(/already in a tree/),
+				validateUsageError(/more than one place/),
 			);
 		});
 

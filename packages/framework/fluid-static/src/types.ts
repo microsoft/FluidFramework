@@ -4,7 +4,13 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
-import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ContainerExtensionStore } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	IEvent,
+	IEventProvider,
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -19,7 +25,6 @@ export type CompatibilityMode = "1" | "2";
 
 /**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
- * @internal
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
 
@@ -95,18 +100,10 @@ export interface ContainerSchema {
 }
 
 /**
- * @internal
- */
-export interface IProvideRootDataObject {
-	readonly IRootDataObject: IRootDataObject;
-}
-
-/**
  * Holds the collection of objects that the container was initially created with, as well as provides the ability
  * to dynamically create further objects during usage.
- * @internal
  */
-export interface IRootDataObject extends IProvideRootDataObject {
+export interface IRootDataObject {
 	/**
 	 * Provides a record of the initial objects defined on creation.
 	 */
@@ -120,6 +117,28 @@ export interface IRootDataObject extends IProvideRootDataObject {
 	 * @typeParam T - The class of the `DataObject` or `SharedObject`.
 	 */
 	create<T>(objectClass: SharedObjectKind<T>): Promise<T>;
+
+	/**
+	 * Upload a blob of data.
+	 * Although it is marked as internal, there is external usage of this function for experimental purposes.
+	 * Please contact yunho-microsoft or vladsud if you need to change it.
+	 * @param blob - blob to be uploaded.
+	 *
+	 * @remarks This method is used to expose uploadBlob to the IFluidContainer level. UploadBlob will upload data to server side (as of now, ODSP only). There is no downloadBlob provided as it is not needed(blob lifetime managed by server).
+	 */
+	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+}
+
+interface IProvideStaticEntryPoint {
+	readonly IStaticEntryPoint: IStaticEntryPoint;
+}
+
+/**
+ * This is the internal entry point fluid-static creates.
+ */
+export interface IStaticEntryPoint extends IProvideStaticEntryPoint {
+	readonly rootDataObject: IRootDataObject;
+	readonly extensionStore: ContainerExtensionStore;
 }
 
 /**

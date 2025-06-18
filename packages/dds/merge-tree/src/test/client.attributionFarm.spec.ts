@@ -74,7 +74,7 @@ describeFuzz("MergeTree.Attribution", ({ testCount }) => {
 							[name: string]: AttributionKey | undefined;
 					  }
 					| undefined => {
-					const { segment, offset } = client.getContainingSegment<ISegmentPrivate>(pos);
+					const { segment, offset } = client.getContainingSegment<ISegmentPrivate>(pos) ?? {};
 					if (segment?.attribution === undefined || offset === undefined) {
 						return undefined;
 					}

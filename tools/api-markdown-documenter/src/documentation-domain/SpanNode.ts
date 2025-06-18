@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type DocumentationNode, DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import type { TextFormatting } from "./TextFormatting.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -40,7 +40,7 @@ import { createNodesFromPlainText } from "./Utilities.js";
  *
  * @public
  */
-export class SpanNode extends DocumentationParentNodeBase {
+export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Span Text node.
 	 */
@@ -49,7 +49,7 @@ export class SpanNode extends DocumentationParentNodeBase {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Span;
+	public readonly type = "span";
 
 	/**
 	 * Formatting to apply to all {@link DocumentationParentNode.children}.
@@ -58,7 +58,7 @@ export class SpanNode extends DocumentationParentNodeBase {
 	 */
 	public readonly textFormatting?: TextFormatting;
 
-	public constructor(children: DocumentationNode[], formatting?: TextFormatting) {
+	public constructor(children: PhrasingContent[], formatting?: TextFormatting) {
 		super(children);
 		this.textFormatting = formatting;
 	}

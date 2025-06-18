@@ -16,15 +16,15 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { SharedSignal } from "../../index.js";
+import { SharedSignal, type ISharedSignal } from "../../index.js";
 
 describe("SharedSignal", () => {
 	let factory: IChannelFactory;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 
 	const mockHandle = new MockHandle({});
-	let remoteSharedSignal: SharedSignal<IFluidHandle>;
-	let localSharedSignal: SharedSignal<IFluidHandle>;
+	let remoteSharedSignal: ISharedSignal<IFluidHandle>;
+	let localSharedSignal: ISharedSignal<IFluidHandle>;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 	beforeEach(() => {
@@ -41,7 +41,7 @@ describe("SharedSignal", () => {
 		localSharedSignal = factory.create(
 			dataStoreRuntime,
 			"SharedSignalIFluidHandle",
-		) as SharedSignal<IFluidHandle>;
+		) as ISharedSignal<IFluidHandle>;
 		localSharedSignal.connect(services1);
 
 		const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
@@ -54,7 +54,7 @@ describe("SharedSignal", () => {
 		remoteSharedSignal = factory.create(
 			dataStoreRuntime2,
 			"remoteSharedSignalId",
-		) as SharedSignal<IFluidHandle>;
+		) as ISharedSignal<IFluidHandle>;
 		remoteSharedSignal.connect(services2);
 	});
 
