@@ -325,6 +325,9 @@ export function latest<T extends object | null, Key extends string = string>(
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
 	const { local, settings } = args;
+	if ("validator" in args) {
+		throw new Error(`Validators are not yet implemented.`);
+	}
 
 	const validator = args.validator;
 
