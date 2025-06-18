@@ -155,32 +155,51 @@ function createKeyLocalOpMetadata(
 	return localMetadata;
 }
 
-function mapFromKernelArgs(args: KernelArgs): MapKernel {
-	return new MapKernel(
+function mapFromKernelArgs(args: KernelArgs): {
+	kernel: MapKernel;
+	view: ISharedMapCore;
+} {
+	const kernel = new MapKernel(
 		args.serializer,
 		args.sharedObject.handle,
 		args.submitLocalMessage,
 		() => args.sharedObject.isAttached(),
 		args.eventEmitter,
 	);
+	const view: ISharedMapCore = {
+		clear: kernel.clear.bind(kernel),
+		get: kernel.get.bind(kernel),
+		has: kernel.has.bind(kernel),
+		keys: kernel.keys.bind(kernel),
+		set: kernel.set.bind(kernel),
+		get size(): number {
+			return kernel.size;
+		},
+		values: kernel.values.bind(kernel),
+		entries: kernel.entries.bind(kernel),
+		[Symbol.iterator]: kernel[Symbol.iterator].bind(kernel),
+		forEach: kernel.forEach.bind(kernel),
+		delete: kernel.delete.bind(kernel),
+		[Symbol.toStringTag]: kernel[Symbol.toStringTag],
+	};
+	return { kernel, view };
 }
 
 /**
  * @internal
  */
 export const mapKernelFactory: SharedKernelFactory<ISharedMapCore> = {
-	create: (args: KernelArgs): FactoryOut<MapKernel> => {
-		const k = mapFromKernelArgs(args);
-		return { kernel: k, view: k };
+	create: (args: KernelArgs): FactoryOut<ISharedMapCore> => {
+		return mapFromKernelArgs(args);
 	},
 
 	async loadCore(
 		args: KernelArgs,
 		storage: IChannelStorageService,
 	): Promise<FactoryOut<ISharedMapCore>> {
-		const k = mapFromKernelArgs(args);
-		await k.loadCore(storage);
-		return { kernel: k, view: k };
+		const out = mapFromKernelArgs(args);
+		await out.kernel.loadCore(storage);
+		return out;
 	},
 };
 
