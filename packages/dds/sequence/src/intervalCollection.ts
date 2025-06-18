@@ -16,7 +16,6 @@ import {
 	LocalReferencePosition,
 	PropertySet,
 	ReferenceType,
-	SlidingPreference,
 	getSlideToSegoff,
 	refTypeIncludesFlag,
 	reservedRangeLabelsKey,
@@ -57,9 +56,7 @@ import {
 	SerializedIntervalDelta,
 	createPositionReferenceFromSegoff,
 	createSequenceInterval,
-	endReferenceSlidingPreference,
 	getSerializedProperties,
-	startReferenceSlidingPreference,
 } from "./intervals/index.js";
 
 export type ISerializedIntervalCollectionV1 = ISerializedInterval[];
@@ -70,7 +67,7 @@ export interface ISerializedIntervalCollectionV2 {
 	intervals: CompressedSerializedInterval[];
 }
 
-export function sidesFromStickiness(stickiness: IntervalStickiness) {
+function sidesFromStickiness(stickiness: IntervalStickiness) {
 	const startSide = (stickiness & IntervalStickiness.START) !== 0 ? Side.After : Side.Before;
 	const endSide = (stickiness & IntervalStickiness.END) !== 0 ? Side.Before : Side.After;
 
@@ -136,25 +133,6 @@ export function toOptionalSequencePlace(
 	side: Side | undefined,
 ): SequencePlace | undefined {
 	return typeof pos === "number" && side !== undefined ? { pos, side } : pos;
-}
-
-export function computeStickinessFromSide(
-	startPos: number | "start" | "end" | undefined = -1,
-	startSide: Side = Side.Before,
-	endPos: number | "start" | "end" | undefined = -1,
-	endSide: Side = Side.Before,
-): IntervalStickiness {
-	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
-
-	if (startSide === Side.After || startPos === "start") {
-		stickiness |= IntervalStickiness.START;
-	}
-
-	if (endSide === Side.Before || endPos === "end") {
-		stickiness |= IntervalStickiness.END;
-	}
-
-	return stickiness as IntervalStickiness;
 }
 
 export class LocalIntervalCollection {
@@ -927,6 +905,7 @@ export class IntervalCollection
 	public resubmitMessage(
 		op: IIntervalCollectionTypeOperationValue,
 		maybeMetadata: unknown,
+		squash: boolean,
 	): void {
 		const { opName, value } = op;
 
@@ -935,7 +914,7 @@ export class IntervalCollection
 		const rebasedValue =
 			localOpMetadata.endpointChangesNode === undefined
 				? value
-				: this.rebaseLocalInterval(value, localOpMetadata);
+				: this.rebaseLocalInterval(value, localOpMetadata, squash);
 
 		if (rebasedValue === undefined) {
 			const { id } = getSerializedProperties(value);
@@ -980,6 +959,7 @@ export class IntervalCollection
 	private rebaseReferenceWithSegmentSlide(
 		ref: LocalReferencePosition,
 		localSeq: number,
+		squash: boolean,
 	): number | "start" | "end" {
 		if (!this.client) {
 			throw new LoggingError("mergeTree client must exist");
@@ -995,7 +975,12 @@ export class IntervalCollection
 		const segoff = getSlideToSegoff(
 			segment === undefined ? undefined : { segment, offset },
 			undefined,
-			createLocalReconnectingPerspective(this.client.getCurrentSeq(), clientId, localSeq),
+			createLocalReconnectingPerspective(
+				this.client.getCurrentSeq(),
+				clientId,
+				localSeq,
+				squash,
+			),
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
 
@@ -1008,6 +993,7 @@ export class IntervalCollection
 
 	private computeRebasedPositions(
 		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
+		squash: boolean,
 	): Pick<ISerializedInterval, "start" | "end"> {
 		assert(
 			this.client !== undefined,
@@ -1016,8 +1002,8 @@ export class IntervalCollection
 
 		const { localSeq, interval } = localOpMetadata;
 		const rebased = {
-			start: this.rebaseReferenceWithSegmentSlide(interval.start, localSeq),
-			end: this.rebaseReferenceWithSegmentSlide(interval.end, localSeq),
+			start: this.rebaseReferenceWithSegmentSlide(interval.start, localSeq, squash),
+			end: this.rebaseReferenceWithSegmentSlide(interval.end, localSeq, squash),
 		};
 		return rebased;
 	}
@@ -1034,11 +1020,11 @@ export class IntervalCollection
 		// Instantiate the local interval collection based on the saved intervals
 		this.client = client;
 		if (client) {
-			client.on("normalize", () => {
+			client.on("normalize", (squash) => {
 				for (const pending of Object.values(this.pending)) {
 					if (pending?.endpointChanges !== undefined) {
 						for (const local of pending.endpointChanges) {
-							local.data.rebased = this.computeRebasedPositions(local.data);
+							local.data.rebased = this.computeRebasedPositions(local.data, squash);
 						}
 					}
 				}
@@ -1464,6 +1450,7 @@ export class IntervalCollection
 	public rebaseLocalInterval(
 		original: SerializedIntervalDelta,
 		localOpMetadata: IntervalAddLocalMetadata | IntervalChangeLocalMetadata,
+		squash: boolean,
 	): SerializedIntervalDelta | undefined {
 		if (!this.client || !hasEndpointChanges(original)) {
 			// If there's no associated mergeTree client, the originally submitted op is still correct.
@@ -1477,7 +1464,7 @@ export class IntervalCollection
 		const { intervalType, properties, stickiness, startSide, endSide } = original;
 		const { id } = getSerializedProperties(original);
 		const { start: startRebased, end: endRebased } = (localOpMetadata.rebased ??=
-			this.computeRebasedPositions(localOpMetadata));
+			this.computeRebasedPositions(localOpMetadata, squash));
 
 		const localInterval = this.localCollection.idIntervalIndex.getIntervalById(id);
 
@@ -1520,7 +1507,6 @@ export class IntervalCollection
 
 	private getSlideToSegment(
 		lref: LocalReferencePosition,
-		slidingPreference: SlidingPreference,
 	): { segment: ISegment; offset: number } | undefined {
 		if (!this.client) {
 			throw new LoggingError("client does not exist");
@@ -1538,7 +1524,7 @@ export class IntervalCollection
 		}
 		return getSlideToSegoff(
 			segoff,
-			slidingPreference,
+			lref.slidingPreference,
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 		);
@@ -1552,14 +1538,8 @@ export class IntervalCollection
 			return;
 		}
 
-		const newStart = this.getSlideToSegment(
-			interval.start,
-			startReferenceSlidingPreference(interval.stickiness),
-		);
-		const newEnd = this.getSlideToSegment(
-			interval.end,
-			endReferenceSlidingPreference(interval.stickiness),
-		);
+		const newStart = this.getSlideToSegment(interval.start);
+		const newEnd = this.getSlideToSegment(interval.end);
 
 		const id = interval.getIntervalId();
 		const hasPendingChange = this.hasPendingEndpointChanges(id);
@@ -1591,16 +1571,14 @@ export class IntervalCollection
 
 			if (needsStartUpdate) {
 				const props = interval.start.properties;
-				interval.start = createPositionReferenceFromSegoff(
-					this.client,
-					newStart,
-					interval.start.refType,
+				interval.start = createPositionReferenceFromSegoff({
+					client: this.client,
+					segoff: newStart,
+					refType: interval.start.refType,
 					op,
-					undefined,
-					undefined,
-					startReferenceSlidingPreference(interval.stickiness),
-					startReferenceSlidingPreference(interval.stickiness) === SlidingPreference.BACKWARD,
-				);
+					slidingPreference: interval.start.slidingPreference,
+					canSlideToEndpoint: interval.start.canSlideToEndpoint,
+				});
 				if (props) {
 					interval.start.addProperties(props);
 				}
@@ -1612,16 +1590,14 @@ export class IntervalCollection
 			}
 			if (needsEndUpdate) {
 				const props = interval.end.properties;
-				interval.end = createPositionReferenceFromSegoff(
-					this.client,
-					newEnd,
-					interval.end.refType,
+				interval.end = createPositionReferenceFromSegoff({
+					client: this.client,
+					segoff: newEnd,
+					refType: interval.end.refType,
 					op,
-					undefined,
-					undefined,
-					endReferenceSlidingPreference(interval.stickiness),
-					endReferenceSlidingPreference(interval.stickiness) === SlidingPreference.FORWARD,
-				);
+					slidingPreference: interval.end.slidingPreference,
+					canSlideToEndpoint: interval.end.canSlideToEndpoint,
+				});
 				if (props) {
 					interval.end.addProperties(props);
 				}

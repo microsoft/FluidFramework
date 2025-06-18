@@ -240,7 +240,7 @@ function createProxyHandler(
 				return undefined;
 			}
 
-			// POJO mode objects don't have TreeNode's build in members on their targets, so special case them:
+			// POJO mode objects don't have TreeNode's built in members on their targets, so special case them:
 			if (propertyKey === typeSchemaSymbol) {
 				return schema;
 			}
