@@ -18,6 +18,7 @@ import {
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	getKernel,
+	type InternalTreeNode,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { getTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -56,14 +57,23 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
  * Controls the prototype exposed by the produced proxy.
  * @param dispatchTarget - provides the functionally of the node, implementing all fields.
  */
-function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): TreeRecordNode {
+function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): TreeRecordNode {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
 	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
 	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
 		get: (target, key, receiver) => {
 			if (typeof key === "symbol") {
-				return undefined;
+				// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
+				if (key === typeSchemaSymbol) {
+					return schema;
+				}
+				// eslint-disable-next-line import/no-deprecated
+				if (key === typeNameSymbol) {
+					return schema.identifier;
+				}
+
+				return false;
 			}
 
 			const innerNode = getOrCreateInnerNode(receiver);
@@ -81,21 +91,14 @@ function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): Tre
 			}
 
 			const innerNode = getOrCreateInnerNode(receiver);
-			const childField = innerNode.tryGetField(brand(key));
-
-			// TODO: handle customizable?
-			if (childField === undefined) {
-				return false;
-			}
-
+			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 			const kernel = getKernel(receiver);
+
 			const mapTree = prepareForInsertion(
 				value,
 				createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
 				innerNode.context,
 			);
-
-			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 
 			field.editor.set(mapTree, field.length === 0);
 			return true;
@@ -113,18 +116,16 @@ function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): Tre
 		},
 		ownKeys: (target) => {
 			const innerNode = getOrCreateInnerNode(proxy);
-			// TODO: anything else we need to include here?
 			return [...innerNode.keys()];
 		},
 		getOwnPropertyDescriptor: (target, key) => {
-			// TODO: is this right?
 			if (typeof key === "symbol") {
 				return undefined;
 			}
 			const innerNode = getOrCreateInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key));
 
-			// TODO: handle customizable
+			// TODO: handle customizable?
 			if (field === undefined) {
 				return undefined;
 			}
@@ -132,15 +133,26 @@ function createRecordNodeProxy(proxyTarget: object, dispatchTarget: object): Tre
 			return {
 				value: getTreeNodeForField(field),
 				writable: true,
-				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
-				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
-				// JSON and deep equals with JSON compatible object (which can't have undefined fields).
-				enumerable: field !== undefined,
+				enumerable: true,
 				configurable: true, // Must be 'configurable' if property is absent from proxy target.
 			};
 		},
 		defineProperty(target, key, attributes) {
 			throw new UsageError("Shadowing properties of record nodes is not permitted.");
+		},
+		deleteProperty(target, key) {
+			if (typeof key === "symbol") {
+				return false;
+			}
+
+			const innerNode = getOrCreateInnerNode(proxy);
+			const field = innerNode.tryGetField(brand(key)) as FlexTreeOptionalField | undefined;
+			if (field === undefined) {
+				return false;
+			}
+
+			field.editor.set(undefined, field.length === 0);
+			return true;
 		},
 	});
 	return proxy;
@@ -150,6 +162,10 @@ abstract class CustomRecordNodeBase<
 	const T extends ImplicitAllowedTypes,
 > extends TreeNodeValid<RecordNodeInsertableData<T>> {
 	public static readonly kind = NodeKind.Record;
+
+	public constructor(input?: InternalTreeNode | RecordNodeInsertableData<T> | undefined) {
+		super(input ?? {});
+	}
 }
 
 /**
@@ -205,25 +221,16 @@ export function recordSchema<
 		TCustomMetadata
 	>,
 ) {
-	type Output = RecordNodeCustomizableSchema<
-		TName,
-		TAllowedTypes,
-		TImplicitlyConstructable,
-		TCustomMetadata
-	> &
-		RecordNodePojoEmulationSchema<
-			TName,
-			TAllowedTypes,
-			TImplicitlyConstructable,
-			TCustomMetadata
-		>;
+	type TUnannotatedAllowedTypes = UnannotateImplicitAllowedTypes<TAllowedTypes>;
 
 	const { identifier, info, implicitlyConstructable, metadata, persistedMetadata } = options;
+
 	// Field set can't be modified after this since derived data is stored in maps.
 	Object.freeze(info);
 
-	const unannotatedAllowedTypes = unannotateImplicitAllowedTypes(info);
-	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedAllowedTypes));
+	const lazyChildTypes = new Lazy(() =>
+		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
+	);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -232,15 +239,13 @@ export function recordSchema<
 	let unhydratedContext: Context;
 
 	class CustomRecordNode
-		extends CustomRecordNodeBase<UnannotateImplicitAllowedTypes<TAllowedTypes>>
-		implements TreeRecordNode<UnannotateImplicitAllowedTypes<TAllowedTypes>>
+		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
+		implements TreeRecordNode<TUnannotatedAllowedTypes>
 	{
 		/**
 		 * Record-like index signature for the node.
 		 */
-		[key: string]: TreeNodeFromImplicitAllowedTypes<
-			UnannotateImplicitAllowedTypes<TAllowedTypes>
-		>;
+		[key: string]: TreeNodeFromImplicitAllowedTypes<TUnannotatedAllowedTypes>;
 
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
@@ -248,7 +253,10 @@ export function recordSchema<
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
 			const proxyTarget = customizable ? instance : {};
-			return createRecordNodeProxy(proxyTarget, instance) as unknown as CustomRecordNode;
+			return createRecordNodeProxy(
+				proxyTarget,
+				this as unknown as RecordNodeSchema,
+			) as unknown as CustomRecordNode;
 		}
 
 		public static override buildRawNode<T2>(
@@ -268,7 +276,6 @@ export function recordSchema<
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomRecordNode;
 			const schema = this as unknown as RecordNodeSchema;
-			// handler = createRecordNodeProxy(schema, customizable);
 			unhydratedContext = getUnhydratedContext(schema);
 
 			// First run, do extra validation.
@@ -323,6 +330,19 @@ export function recordSchema<
 		}
 	}
 
-	const output = CustomRecordNode as Output; // TODO: avoid cast
+	type Output = RecordNodeCustomizableSchema<
+		TName,
+		TAllowedTypes,
+		TImplicitlyConstructable,
+		TCustomMetadata
+	> &
+		RecordNodePojoEmulationSchema<
+			TName,
+			TAllowedTypes,
+			TImplicitlyConstructable,
+			TCustomMetadata
+		>;
+
+	const output: Output = CustomRecordNode;
 	return output;
 }
