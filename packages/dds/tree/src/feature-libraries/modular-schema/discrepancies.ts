@@ -20,9 +20,11 @@ import {
 	type ValueSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import { isMapNodeSchema, MapNodeSchema, normalizeFieldSchema, type FieldSchema, type TreeNodeSchema } from "../../simple-tree/index.js";
-import { type AllowedTypeMetadata, ObjectFieldSchema } from "../../simple-tree/schemaTypes.js";
-import { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
+import { NodeKind, normalizeFieldSchema, type FieldSchema, type MapNodeSchema, type TreeNodeSchema } from "../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { AllowedTypeMetadata, ObjectFieldSchema } from "../../simple-tree/schemaTypes.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
 
 // TODO:
 // The comparisons in this file seem redundant with those in comparison.ts.
@@ -149,15 +151,20 @@ function getStoredNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactor
 	throwUnsupportedNodeType(nodeSchema.constructor.name);
 }
 
-function getViewNodeSchemaType(nodeSchema: TreeNodeSchema): SchemaFactoryNodeKind {
-	if (nodeSchema instanceof ObjectFieldSchema) {
-		return "object";
-	} else if (isMapNodeSchema(nodeSchema)) {
-		return "map";
-	} else if (nodeSchema instanceof LeafNodeSchema) {
-		return "leaf";
+function getViewNodeSchemaType(schema: TreeNodeSchema): SchemaFactoryNodeKind {
+	switch(schema.kind) {
+		case NodeKind.Leaf: {
+			return "leaf";
+		}
+		case NodeKind.Map: {
+			return "map";
+		}
+		case NodeKind.Object: {
+			return "object";
+		}
+		default:
+			throwUnsupportedNodeType(schema.constructor.name);
 	}
-	throwUnsupportedNodeType(nodeSchema.constructor.name);
 }
 
 /**
@@ -184,22 +191,21 @@ export function* getAllowedContentDiscrepancies(
 	);
 
 	// TODO is this actually the allowed types? why is the mismatch called nodeKind
-	const annotatedAllowedTypes = normalizeFieldSchema(view).annotatedAllowedTypeSet;
+	const annotatedAllowedTypes = normalizeFieldSchema(view).annotatedAllowedTypesNormalized;
 	const storedAllowedTypes = stored.nodeSchema;
 
 	const viewAllowedTypes = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
-	for (const [viewSchema, annotations] of annotatedAllowedTypes) {
+	for (const { metadata, type } of annotatedAllowedTypes) {
 		// map view schema identifiers to the field schemas to make access in the stored schema pass more efficient
 		// TODO should this be a map on field schema?
-		const identifier: TreeNodeSchemaIdentifier = brand(viewSchema.identifier);
-		viewAllowedTypes.set(identifier, viewSchema);
+		const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
+		viewAllowedTypes.set(identifier, type);
 
 		const storedSchema = storedAllowedTypes.get(identifier);
 
 		// if the view schema has an allowed type that's not in the stored schema
 		if (storedSchema === undefined) {
-			// TODO
-			const viewType = getViewNodeSchemaType(viewSchema);
+			const viewType = getViewNodeSchemaType(type);
 			yield {
 				identifier,
 				// TODO why is this a node kind mismatch and not an allowed types one?
@@ -209,7 +215,7 @@ export function* getAllowedContentDiscrepancies(
 			};
 			break;
 		} else {
-			yield* getNodeDiscrepancies(identifier, viewSchema, annotations, storedSchema);
+			yield* getNodeDiscrepancies(identifier, type, metadata, storedSchema);
 			break;
 		}
 	}
@@ -231,6 +237,7 @@ export function* getAllowedContentDiscrepancies(
 function* getNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
 	view: TreeNodeSchema,
+	annotations: AllowedTypeMetadata,
 	stored: TreeNodeStoredSchema,
 ): Iterable<Discrepancy> {
 	const viewType = getViewNodeSchemaType(view);
@@ -250,7 +257,7 @@ function* getNodeDiscrepancies(
 			const differences = Array.from(
 				trackObjectNodeDiscrepancies(
 					identifier,
-					view as ObjectNodeStoredSchema,
+					view as ObjectFieldSchema,
 					stored as ObjectNodeStoredSchema,
 				),
 			);
@@ -265,14 +272,14 @@ function* getNodeDiscrepancies(
 		}
 		case "map":
 			yield* getFieldDiscrepancies(
-				(view as MapNodeStoredSchema).mapFields,
+				(view as MapNodeSchema).mapFields,
 				(stored as MapNodeStoredSchema).mapFields,
 				identifier,
 				undefined,
 			);
 			break;
 		case "leaf": {
-			const viewValue = (view as LeafNodeStoredSchema).leafValue;
+			const viewValue = (view as LeafNodeSchema).leafValue;
 			const storedValue = (stored as LeafNodeStoredSchema).leafValue;
 			if (viewValue !== storedValue) {
 				yield {
