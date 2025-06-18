@@ -12,7 +12,7 @@ import isEqual from "lodash.isequal";
 import * as tsTypes from "typescript";
 
 import { TscUtil, getTscUtils } from "../../tscUtils";
-import { diffObjects, getInstalledPackageVersion } from "../taskUtils";
+import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
 interface ITsBuildInfo {
