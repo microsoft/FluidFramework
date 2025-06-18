@@ -683,14 +683,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				}
 
 				if (this.isCoopRebalanceStrategyEnabled) {
-					Lumberjack.debug("cooperative rebalance incremental assign: ", assignments);
+					Lumberjack.debug("cooperative rebalance incremental assign", assignments);
 					consumer.incrementalAssign(assignments);
 				} else {
 					consumer.assign(assignments);
 				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
 				if (this.isCoopRebalanceStrategyEnabled) {
-					Lumberjack.debug("cooperative rebalance revoke: ", assignments);
+					Lumberjack.debug("cooperative rebalance revoke", assignments);
 					consumer.incrementalUnassign(assignments);
 				} else {
 					consumer.unassign();
@@ -746,36 +746,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			// cleanup things left over from the lost partitions
 			for (const partition of originalAssignedPartitions) {
 				if (!newAssignedPartitions.has(partition)) {
-					// clear latest offset
-					this.latestOffsets.delete(partition);
-
-					// clear paused offset if it exists
-					if (this.pausedOffsets.has(partition)) {
-						this.pausedOffsets.delete(partition);
-					}
-					if (this.paused.has(partition)) {
-						this.paused.delete(partition);
-					}
-
-					// reject pending commit
-					const deferredCommit = this.pendingCommits.get(partition);
-					if (deferredCommit) {
-						this.pendingCommits.delete(partition);
-						deferredCommit.reject(
-							new Error(`Partition for commit was unassigned. ${partition}`),
-						);
-					}
+					this.cleanupPartitionResources(partition);
 				}
 			}
 
 			this.isRebalancing = false;
 
-			for (const pendingMessages of this.pendingMessages.values()) {
-				// process messages sent while we were rebalancing for each partition in order
-				for (const pendingMessage of pendingMessages) {
-					this.processMessage(pendingMessage);
-				}
-			}
+			this.processPendingMessages();
 		} catch (ex) {
 			this.isRebalancing = false;
 			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:eager" });
@@ -825,39 +802,52 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				topicPartitions.forEach((tp) => {
 					const partition = tp.partition;
 					this.assignedPartitions.delete(partition);
-					// clear the latest offset
-					this.latestOffsets.delete(partition);
-
-					// clear paused offset if it exists
-					if (this.pausedOffsets.has(partition)) {
-						this.pausedOffsets.delete(partition);
-					}
-					if (this.paused.has(partition)) {
-						this.paused.delete(partition);
-					}
-
-					// reject pending commit
-					const deferredCommit = this.pendingCommits.get(partition);
-					if (deferredCommit) {
-						this.pendingCommits.delete(partition);
-						deferredCommit.reject(
-							new Error(`Partition for commit was unassigned. ${partition}`),
-						);
-					}
+					this.cleanupPartitionResources(partition);
 				});
 			}
 
 			this.isRebalancing = false;
 
-			for (const pendingMessages of this.pendingMessages.values()) {
-				// process messages sent while we were rebalancing for each partition in order
-				for (const pendingMessage of pendingMessages) {
-					this.processMessage(pendingMessage);
-				}
-			}
+			this.processPendingMessages();
 		} catch (ex) {
 			this.isRebalancing = false;
 			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:cooperative" });
+		}
+	}
+
+	/**
+	 * Cleanup resources for a specific partition that is no longer assigned
+	 * @param partition - The partition number to cleanup
+	 */
+	private cleanupPartitionResources(partition: number): void {
+		// clear latest offset
+		this.latestOffsets.delete(partition);
+
+		// clear paused offset if it exists
+		if (this.pausedOffsets.has(partition)) {
+			this.pausedOffsets.delete(partition);
+		}
+		if (this.paused.has(partition)) {
+			this.paused.delete(partition);
+		}
+
+		// reject pending commit
+		const deferredCommit = this.pendingCommits.get(partition);
+		if (deferredCommit) {
+			this.pendingCommits.delete(partition);
+			deferredCommit.reject(new Error(`Partition for commit was unassigned. ${partition}`));
+		}
+	}
+
+	/**
+	 * Process any pending messages after rebalancing
+	 */
+	private processPendingMessages(): void {
+		for (const pendingMessages of this.pendingMessages.values()) {
+			// process messages sent while we were rebalancing for each partition in order
+			for (const pendingMessage of pendingMessages) {
+				this.processMessage(pendingMessage);
+			}
 		}
 	}
 }

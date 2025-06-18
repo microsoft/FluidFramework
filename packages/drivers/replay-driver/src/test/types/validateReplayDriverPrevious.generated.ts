@@ -76,6 +76,7 @@ declare type current_as_old_for_Class_ReplayController = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_ReplayDocumentService": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_ReplayDocumentService = requireAssignableTo<TypeOnly<old.ReplayDocumentService>, TypeOnly<current.ReplayDocumentService>>
 
 /*
