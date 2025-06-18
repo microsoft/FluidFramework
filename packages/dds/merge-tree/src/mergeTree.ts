@@ -472,7 +472,7 @@ export function getSlideToSegoff(
 	segoff: { segment: ISegmentInternal; offset: number } | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective = allAckedChangesPerspective,
-	canSlideToEndpoint: boolean = false,
+	useNewSlidingBehavior: boolean = false,
 ):
 	| {
 			segment: ISegmentInternal;
@@ -487,7 +487,7 @@ export function getSlideToSegoff(
 		slidingPreference,
 		perspective,
 		undefined,
-		canSlideToEndpoint,
+		useNewSlidingBehavior,
 	);
 	if (segment === segoff.segment) {
 		return segoff;
@@ -954,9 +954,7 @@ export class MergeTree {
 					for (const ref of collection) {
 						if (pred(ref) && !refTypeIncludesFlag(ref, ReferenceType.StayOnRemove)) {
 							ref.callbacks?.beforeSlide?.(ref);
-							if (maybeEndpoint === undefined || ref.canSlideToEndpoint !== true) {
-								collection.removeLocalRef(ref);
-							}
+							collection.removeLocalRef(ref);
 							ref.callbacks?.afterSlide?.(ref);
 						}
 					}
