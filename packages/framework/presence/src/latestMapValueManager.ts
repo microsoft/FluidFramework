@@ -579,7 +579,10 @@ class LatestMapValueManagerImpl<
 					value: createValidatedGetter(item, this.validator),
 					metadata,
 				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
-				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
+				// FIXME no as any
+				postUpdateActions.push(() =>
+					this.events.emit("remoteItemUpdated", updatedItem as any),
+				);
 				allUpdates.items.set(key, {
 					value: createValidatedGetter(item, this.validator),
 					metadata,
