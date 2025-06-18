@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -186,6 +186,10 @@ export class TreeViewConfiguration<
 		// Ambiguity errors are lower priority to report than invalid schema errors, so collect these in an array and report them all at once.
 		const ambiguityErrors: string[] = [];
 
+		// Eagerly perform this conversion to surface errors sooner.
+		// Includes detection of duplicate schema identifiers.
+		toStoredSchema(config.schema);
+
 		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
 
 		walkFieldSchema(config.schema, {
@@ -195,11 +199,7 @@ export class TreeViewConfiguration<
 				// an error is reported.
 				markSchemaMostDerived(schema, true);
 
-				if (definitions.has(schema.identifier)) {
-					throw new UsageError(
-						`Multiple schema found with the same identifier: ${JSON.stringify(schema.identifier)}`,
-					);
-				}
+				debugAssert(() => !definitions.has(schema.identifier));
 				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
 			},
 			allowedTypes(types): void {
@@ -214,9 +214,6 @@ export class TreeViewConfiguration<
 			const deduplicated = new Set(ambiguityErrors);
 			throw new UsageError(`Ambiguous schema found:\n${[...deduplicated].join("\n")}`);
 		}
-
-		// Eagerly perform this conversion to surface errors sooner.
-		toStoredSchema(config.schema);
 	}
 }
 
