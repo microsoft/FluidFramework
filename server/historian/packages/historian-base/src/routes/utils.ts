@@ -32,6 +32,8 @@ import {
 } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
 
+const MAX_TOKEN_LENGTH = 1000; // Maximum allowed token length in characters
+
 export { handleResponse } from "@fluidframework/server-services-shared";
 
 export type CommonRouteParams = [
@@ -344,6 +346,7 @@ export function queryParamToString(value: any): string | undefined {
 
 export function verifyToken(
 	revokedTokenChecker: IRevokedTokenChecker | undefined,
+	requiredScopes: string[],
 	maxTokenLifetimeSec: number,
 ): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
@@ -358,6 +361,10 @@ export function verifyToken(
 			if (!token) {
 				throw new NetworkError(403, "Authorization token is missing.");
 			}
+			if (token.length > MAX_TOKEN_LENGTH) {
+				// Prevent excessively long tokens that could lead to performance issues.
+				throw new NetworkError(403, "Invalid token. Token is too long.");
+			}
 			const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
 			const documentId = claims.documentId;
 			const tenantId = claims.tenantId;
@@ -365,20 +372,32 @@ export function verifyToken(
 				// Prevent attempted directory traversal.
 				throw new NetworkError(400, `Invalid document id: ${documentId}`);
 			}
+
 			// Verify token not revoked if JTI claim is present
 			if (revokedTokenChecker && claims.jti) {
 				const isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
 					tenantId,
-					claims.documentId,
+					documentId,
 					claims.jti,
 				);
-
 				if (isTokenRevoked) {
 					throw new NetworkError(
 						403,
 						"Permission denied. Token has been revoked.",
 						false /* canRetry */,
 						true /* isFatal */,
+					);
+				}
+			}
+
+			if (requiredScopes) {
+				const hasAllRequiredScopes = requiredScopes.every((scope) =>
+					claims.scopes.includes(scope),
+				);
+				if (!hasAllRequiredScopes) {
+					throw new NetworkError(
+						403,
+						`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
 					);
 				}
 			}
