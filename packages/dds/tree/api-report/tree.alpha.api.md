@@ -1216,6 +1216,8 @@ export const Tree: Tree;
 // @alpha @sealed @system
 export interface TreeAlpha {
     branch(node: TreeNode): TreeBranch | undefined;
+    child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+    children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         idCompressor?: IIdCompressor;
