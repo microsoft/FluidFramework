@@ -4,7 +4,6 @@
  */
 
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-
 import type { SharedObjectKind } from "@fluidframework/shared-object-base";
 import {
 	type ISharedObject,
@@ -16,6 +15,7 @@ import {
 	type FactoryOut,
 	type IChannelView,
 } from "@fluidframework/shared-object-base/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	SharedTreeKernel,
@@ -25,11 +25,10 @@ import {
 	type SharedTreeKernelView,
 	type ITreeInternal,
 } from "./shared-tree/index.js";
-import type { ITree } from "./simple-tree/index.js";
-
-import { Breakable } from "./util/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { SharedTreeFactoryType, SharedTreeAttributes } from "./sharedTreeAttributes.js";
+import type { ITree } from "./simple-tree/index.js";
+import { Breakable } from "./util/index.js";
+import { FluidClientVersion } from "./codec/index.js";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 /**
@@ -52,6 +51,10 @@ function treeKernelFactoryPrivate(
 		if (args.idCompressor === undefined) {
 			throw new UsageError("IdCompressor must be enabled to use SharedTree");
 		}
+		const adjustedOptions = { ...options };
+		// TODO: get default from runtime once something like runtime.oldestCompatibleClient exists.
+		// Using default of 2.0 since that is the oldest version that supports SharedTree.
+		adjustedOptions.oldestCompatibleClient ??= FluidClientVersion.v2_0;
 		return new SharedTreeKernel(
 			new Breakable("SharedTree"),
 			args.sharedObject,
@@ -60,7 +63,7 @@ function treeKernelFactoryPrivate(
 			args.lastSequenceNumber,
 			args.logger,
 			args.idCompressor,
-			options,
+			adjustedOptions,
 		);
 	}
 
@@ -112,7 +115,7 @@ export const SharedTree = configuredSharedTree({});
  * 	// eslint-disable-next-line import/no-internal-modules
  * } from "@fluidframework/tree/internal";
  * const SharedTree = configuredSharedTree({
- * 	forest: ForestType.Reference,
+ * 	forest: ForestTypeReference,
  * 	jsonValidator: typeboxValidator,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });

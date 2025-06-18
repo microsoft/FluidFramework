@@ -4,6 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+
 import {
 	CursorLocationType,
 	CursorMarker,

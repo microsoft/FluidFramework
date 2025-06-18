@@ -4,6 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
@@ -24,7 +25,6 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
-import { isStableId } from "@fluidframework/id-compressor/internal";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
@@ -121,9 +121,9 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		};
 	}
 
-	public count(
+	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
-		shapes: (shape: Shape<EncodedChunkShape>) => void,
+		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 	): void {
 		if (this.type !== undefined) {
 			identifiers.add(this.type);
@@ -131,11 +131,11 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 
 		for (const fieldEncoder of this.specializedFieldEncoders) {
 			identifiers.add(fieldEncoder.key);
-			shapes(fieldEncoder.encoder.shape);
+			shapeDiscovered(fieldEncoder.encoder.shape);
 		}
 
 		if (this.otherFieldsEncoder !== undefined) {
-			shapes(this.otherFieldsEncoder.shape);
+			shapeDiscovered(this.otherFieldsEncoder.shape);
 		}
 	}
 

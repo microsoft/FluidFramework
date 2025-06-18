@@ -398,12 +398,13 @@ function getSlidePosition(
 	lref: LocalReferencePosition,
 	pos: number,
 ): number {
-	const slide = getSlideToSegoff(
-		{ segment: lref.getSegment(), offset: undefined },
-		lref.slidingPreference,
-	);
-	return slide?.segment !== undefined &&
-		slide.offset !== undefined &&
+	const segment = lref.getSegment();
+	const offset = lref.getOffset();
+	const slide =
+		segment === undefined
+			? undefined
+			: getSlideToSegoff({ segment, offset }, lref.slidingPreference);
+	return slide !== undefined &&
 		string.getPosition(slide.segment) !== -1 &&
 		(pos < 0 || pos >= string.getLength())
 		? string.getPosition(slide.segment) + slide.offset

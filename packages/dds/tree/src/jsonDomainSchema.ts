@@ -4,7 +4,6 @@
  */
 
 import { SchemaFactory } from "./simple-tree/index.js";
-
 import type {
 	AllowedTypes,
 	FixRecursiveArraySchema,

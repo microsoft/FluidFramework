@@ -26,7 +26,7 @@ describe("HierarchicalSection HTML rendering tests", () => {
 				HorizontalRuleNode.Singleton,
 				ParagraphNode.createFromPlainText("Bar"),
 			],
-			/* heading: */ HeadingNode.createFromPlainText("Hello World", /* id: */ "heading-id"),
+			/* heading: */ new HeadingNode("Hello World", /* id: */ "heading-id"),
 		);
 
 		const expected = h("section", [
@@ -44,23 +44,20 @@ describe("HierarchicalSection HTML rendering tests", () => {
 			[
 				new SectionNode(
 					[ParagraphNode.createFromPlainText("Foo")],
-					/* heading: */ HeadingNode.createFromPlainText(
-						"Sub-Heading 1",
-						/* id: */ "sub-heading-1",
-					),
+					/* heading: */ new HeadingNode("Sub-Heading 1", /* id: */ "sub-heading-1"),
 				),
 
 				new SectionNode(
 					[
 						new SectionNode(
 							[ParagraphNode.createFromPlainText("Bar")],
-							/* heading: */ HeadingNode.createFromPlainText("Sub-Heading 2b"),
+							/* heading: */ new HeadingNode("Sub-Heading 2b"),
 						),
 					],
 					/* heading: */ undefined,
 				),
 			],
-			/* heading: */ HeadingNode.createFromPlainText("Root Heading", /* id: */ "root-heading"),
+			/* heading: */ new HeadingNode("Root Heading", /* id: */ "root-heading"),
 		);
 
 		const expected = h("section", [

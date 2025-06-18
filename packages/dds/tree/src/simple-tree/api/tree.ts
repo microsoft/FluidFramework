@@ -10,13 +10,11 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
-
 import type {
 	// This is referenced by doc comments.
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
 } from "../../shared-tree/index.js";
-
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -26,8 +24,9 @@ import type {
 	TreeFieldFromImplicitField,
 	UnsafeUnknownSchema,
 } from "../schemaTypes.js";
-import type { VerboseTree } from "./verboseTree.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
+
+import type { TreeViewConfiguration } from "./configuration.js";
 import type {
 	RunTransactionParams,
 	TransactionCallbackStatus,
@@ -35,7 +34,7 @@ import type {
 	TransactionResultExt,
 	VoidTransactionCallbackStatus,
 } from "./transactionTypes.js";
-import type { TreeViewConfiguration } from "./configuration.js";
+import type { VerboseTree } from "./verboseTree.js";
 
 /**
  * A tree from which a {@link TreeView} can be created.

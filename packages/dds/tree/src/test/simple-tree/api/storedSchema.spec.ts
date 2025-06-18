@@ -38,19 +38,13 @@ describe("simple-tree storedSchema", () => {
 					FluidClientVersion.v2_0,
 				);
 
-				const status = comparePersistedSchema(
-					persistedA,
-					test.schema,
-					{
-						jsonValidator: typeboxValidator,
-					},
-					false,
-				);
+				const status = comparePersistedSchema(persistedA, test.schema, {
+					jsonValidator: typeboxValidator,
+				});
 				assert.deepEqual(status, {
 					isEquivalent: true,
 					canView: true,
 					canUpgrade: true,
-					canInitialize: false,
 				});
 			});
 		}

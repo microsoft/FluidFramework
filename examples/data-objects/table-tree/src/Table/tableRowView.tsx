@@ -86,33 +86,21 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 				<TableCell key={col.id} className="custom-cell">
 					{hint === "checkbox" ? (
 						<Checkbox
-							checked={cell?.value === "true"}
+							checked={cell === "true"}
 							onChange={(_, data) => {
 								const newValue = data.checked?.toString() ?? "false";
-								if (cell === undefined) {
-									row.setCell(col, { value: newValue });
-								} else {
-									cell.value = newValue;
-								}
+								row.setCell(col, newValue);
 							}}
 						/>
 					) : hint === "date" ? (
 						<Input
 							type="date"
 							className="custom-input"
-							value={
-								cell?.value instanceof DateTime
-									? cell.value.value.toISOString().split("T")[0]
-									: ""
-							}
+							value={cell instanceof DateTime ? cell.value.toISOString().split("T")[0] : ""}
 							onChange={(e) => {
 								const date = new Date(e.target.value);
-								if (cell === undefined) {
-									const dateObj = DateTime.fromDate(date);
-									row.setCell(col, { value: dateObj });
-								} else if (cell.value instanceof DateTime) {
-									cell.value.value = date;
-								}
+								const dateObj = DateTime.fromDate(date);
+								row.setCell(col, dateObj);
 							}}
 						/>
 					) : (
@@ -120,14 +108,10 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 							type="text"
 							appearance="underline"
 							className="custom-input"
-							value={typeof cell?.value === "string" ? cell.value : ""}
+							value={typeof cell === "string" ? cell : ""}
 							onChange={(e) => {
 								const newVal = e.target.value;
-								if (cell === undefined) {
-									row.setCell(col, { value: newVal });
-								} else {
-									cell.value = newVal;
-								}
+								row.setCell(col, newVal);
 							}}
 						/>
 					)}

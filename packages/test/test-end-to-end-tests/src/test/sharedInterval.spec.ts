@@ -571,8 +571,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 		});
 
-		// ! Disabled due to flakiness (see AB#29397)
-		it.skip("Conflicting ops", async () => {
+		it("Conflicting ops", async () => {
 			const stringId = "stringKey";
 			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 			const testContainerConfig: ITestContainerConfig = {

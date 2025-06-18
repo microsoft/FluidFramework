@@ -56,14 +56,17 @@ export enum AttachState {
 /**
  * The IRuntime represents an instantiation of a code package within a Container.
  * Primarily held by the ContainerContext to be able to interact with the running instance of the Container.
+ *
  * @legacy
  * @alpha
  */
 export interface IRuntime extends IDisposable {
 	/**
 	 * Notifies the runtime of a change in the connection state
+	 * @param canSendOps - true if the runtime is allowed to send ops
+	 * @param clientId - the ID of the client that is connecting or disconnecting
 	 */
-	setConnectionState(connected: boolean, clientId?: string);
+	setConnectionState(canSendOps: boolean, clientId?: string);
 
 	/**
 	 * Processes the given op (message)

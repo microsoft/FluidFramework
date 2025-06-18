@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
 import type { ErasedType } from "@fluidframework/core-interfaces";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { isFlexTreeNode, type FlexTreeNode } from "../../feature-libraries/index.js";
 

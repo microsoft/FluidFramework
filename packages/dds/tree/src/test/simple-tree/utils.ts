@@ -3,25 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { TreeStoredSchemaRepository } from "../../core/index.js";
 import {
-	buildForest,
-	cursorForMapTreeField,
-	defaultSchemaPolicy,
-	getSchemaAndPolicy,
-	initializeForest,
-	MockNodeIdentifierManager,
-} from "../../feature-libraries/index.js";
-import {
-	HydratedContext,
 	isTreeNode,
 	isTreeNodeSchemaClass,
-	mapTreeFromNodeData,
-	normalizeFieldSchema,
-	SimpleContextSlot,
+	TreeViewConfiguration,
 	type ImplicitFieldSchema,
-	type InsertableContent,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
@@ -31,18 +17,9 @@ import {
 	type TreeNodeSchema,
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
-import {
-	getTreeNodeForField,
-	prepareContentForHydration,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/proxies.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
-import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { getView } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 
 /**
  * Initializes a node with the given schema and content.
@@ -63,7 +40,7 @@ export function initNode<
 	hydrateNode: boolean,
 ): TreeFieldFromImplicitField<TSchema> {
 	if (hydrateNode) {
-		return hydrate(schema, content as InsertableTreeFieldFromImplicitField<TSchema>);
+		return hydrate(schema, content as InsertableField<TSchema>);
 	}
 
 	if (isTreeNode(content)) {
@@ -112,40 +89,18 @@ export function describeHydration(
 
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
- *
+ * @remarks
  * For minimal/concise targeted unit testing of specific simple-tree content.
  *
- * TODO: determine and document if this produces "cooked" or "marinated" nodes.
+ * This produces "marinated" nodes, meaning hydrated nodes which may not have an inner node cached yet.
  */
 export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree: InsertableField<TSchema> | InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	const forest = buildForest();
-
-	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		forest,
-		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
-	});
-	const manager = new MockNodeIdentifierManager();
-	const checkout = new CheckoutFlexTreeView(branch, defaultSchemaPolicy, manager);
-	const field = checkout.flexTree;
-	branch.forest.anchors.slots.set(
-		SimpleContextSlot,
-		new HydratedContext(normalizeFieldSchema(schema).allowedTypeSet, checkout.context),
-	);
-	assert(field.context.isHydrated(), "Expected LazyField");
-	const mapTree = mapTreeFromNodeData(
-		initialTree as InsertableContent,
-		schema,
-		field.context.nodeKeyManager,
-		getSchemaAndPolicy(field),
-	);
-	prepareContentForHydration(mapTree, field.context.checkout.forest);
-	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
-	const cursor = cursorForMapTreeField([mapTree]);
-	initializeForest(forest, cursor, testRevisionTagCodec, testIdCompressor, true);
-	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;
+	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
+	view.initialize(initialTree as InsertableField<TSchema>);
+	return view.root;
 }
 
 /**
@@ -157,7 +112,7 @@ export function hydrateUnsafe<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableField<UnsafeUnknownSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	return hydrate(schema, initialTree as InsertableTreeFieldFromImplicitField<TSchema>);
+	return hydrate(schema, initialTree as InsertableField<TSchema>);
 }
 
 /**

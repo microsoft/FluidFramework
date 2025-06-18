@@ -10,6 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
+import { revealOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
@@ -17,13 +18,21 @@ import { TimerManager } from "./timerManager.js";
 import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
 
 /**
- * The system workspace's datastore structure.
+ * `ConnectionValueState` is known value state for `clientToSessionId` data.
  *
- * @internal
+ * @remarks
+ * It is {@link InternalTypes.ValueRequiredState} with a known value type.
+ */
+interface ConnectionValueState extends InternalTypes.ValueStateMetadata {
+	value: AttendeeId;
+}
+
+/**
+ * The system workspace's datastore structure.
  */
 export interface SystemWorkspaceDatastore {
 	clientToSessionId: {
-		[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<AttendeeId>;
+		[ConnectionId: ClientConnectionId]: ConnectionValueState;
 	};
 }
 
@@ -62,11 +71,11 @@ class SessionClient implements Attendee {
 }
 
 /**
- * @internal
+ * Internal workspace that manages metadata for session attendees.
  */
 export interface SystemWorkspace
 	// Portion of Presence that is handled by SystemWorkspace along with
-	// responsiblity for emitting "attendeeConnected" events.
+	// responsibility for emitting "attendeeConnected" events.
 	extends Exclude<Presence["attendees"], never> {
 	/**
 	 * Must be called when the current client acquires a new connection.
@@ -119,11 +128,21 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	public processUpdate(
 		_received: number,
 		_timeModifier: number,
+		/**
+		 * Remote datastore typed to match {@link PresenceStatesInternal.processUpdate}'s
+		 * `ValueUpdateRecord` type that uses {@link InternalTypes.ValueRequiredState}
+		 * and expects an Opaque JSON type. (We get away with a non-`unknown` value type
+		 * per TypeScript's method parameter bivariance.) Proper type would be
+		 * {@link ConnectionValueState} directly.
+		 * {@link ClientConnectionId} use for index is also a deviation, but conveniently
+		 * the accurate {@link AttendeeId} type is just a branded string, and
+		 * {@link ClientConnectionId} is just `string`.
+		 */
 		remoteDatastore: {
 			clientToSessionId: {
-				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<AttendeeId> & {
-					ignoreUnmonitored?: true;
-				};
+				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<
+					ConnectionValueState["value"]
+				>;
 			};
 		},
 		senderConnectionId: ClientConnectionId,
@@ -131,7 +150,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		const audienceMembers = this.audience.getMembers();
 		const postUpdateActions: PostUpdateAction[] = [];
 		for (const [clientConnectionId, value] of Object.entries(
-			remoteDatastore.clientToSessionId,
+			revealOpaqueJson(remoteDatastore.clientToSessionId),
 		)) {
 			const attendeeId = value.value;
 			const { attendee, isJoining } = this.ensureAttendee(
@@ -148,8 +167,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 				postUpdateActions.push(() => this.events.emit("attendeeConnected", attendee));
 			}
 
-			const knownSessionId: InternalTypes.ValueRequiredState<AttendeeId> | undefined =
-				this.datastore.clientToSessionId[clientConnectionId];
+			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] = value;
 			} else {
@@ -287,8 +305,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 /**
  * Instantiates the system workspace.
- *
- * @internal
  */
 export function createSystemWorkspace(
 	attendeeId: AttendeeId,

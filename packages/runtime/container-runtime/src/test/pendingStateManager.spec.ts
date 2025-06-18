@@ -26,6 +26,7 @@ import {
 import {
 	BatchManager,
 	LocalBatchMessage,
+	OpGroupingManager,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
@@ -34,9 +35,15 @@ import {
 	PendingStateManager,
 } from "../pendingStateManager.js";
 
-type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
-	initialMessages: Deque<IPendingMessage>;
-};
+type Patch<T, U> = Omit<T, keyof U> & U;
+
+type PendingStateManager_WithPrivates = Patch<
+	PendingStateManager,
+	{
+		pendingMessages: Deque<IPendingMessage>;
+		initialMessages: Deque<IPendingMessage>;
+	}
+>;
 
 // Make a mock op with distinguishable contents
 function op(data: string = ""): LocalContainerRuntimeMessage {
@@ -49,6 +56,7 @@ function op(data: string = ""): LocalContainerRuntimeMessage {
 describe("Pending State Manager", () => {
 	const mockLogger = new MockLogger();
 	const logger = createChildLogger({ logger: mockLogger });
+	const opGroupingManager = new OpGroupingManager({ groupedBatchingEnabled: true }, logger);
 
 	afterEach("ThrowOnErrorLogs", () => {
 		// Note: If mockLogger is used within a test,
@@ -293,19 +301,13 @@ describe("Pending State Manager", () => {
 		});
 
 		it("empty batch is processed correctly", () => {
-			// Empty batch is reflected in the pending state manager as a single message
-			// with the following metadata:
-			submitBatch(
-				[
-					{
-						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
-						referenceSequenceNumber: 0,
-						metadata: { batchId: "batchId" },
-					},
-				],
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			pendingStateManager.onFlushEmptyBatch(
+				placeholderMessage,
 				1 /* clientSequenceNumber */,
-				{ emptyBatch: true },
+				false /* staged */,
 			);
+
 			// A groupedBatch is supposed to have nested messages inside its contents,
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
 			// the psm will expect the next pending message to be an "empty" message as portrayed above.
@@ -747,15 +749,8 @@ describe("Pending State Manager", () => {
 		});
 
 		it("replays pending states with empty batch", () => {
-			pendingStateManager.onFlushEmptyBatch(
-				{
-					localOpMetadata: { emptyBatch: true },
-					referenceSequenceNumber: 0,
-					metadata: { batchId: "batchId" },
-				},
-				0,
-				false /* staged */,
-			);
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			pendingStateManager.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
 			pendingStateManager.replayPendingStates();
 			assert.strictEqual(resubmittedBatchIds[0], "batchId");
 		});
@@ -801,18 +796,23 @@ describe("Pending State Manager", () => {
 		});
 
 		it("applyStashedOpsAt for empty batch", async () => {
-			const applyStashedOps: string[] = [];
-			const messages: IPendingMessage[] = [
+			const oldPsm = new PendingStateManager(
 				{
-					type: "message",
-					content: '{"type":"groupedBatch", "contents": []}',
-					referenceSequenceNumber: 10,
-					opMetadata: undefined,
-					localOpMetadata: { emptyBatch: true },
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					applyStashedOp: async () => undefined,
+					clientId: () => "1",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
 				},
-			];
+				undefined /* initialLocalState */,
+				logger,
+			);
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
+			const localStateWithEmptyBatch = oldPsm.getLocalState(0);
 
+			const applyStashedOps: string[] = [];
 			const pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: async (content) => applyStashedOps.push(content),
@@ -822,7 +822,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
-				{ pendingStates: messages },
+				localStateWithEmptyBatch,
 				logger,
 			);
 			await pendingStateManager.applyStashedOpsAt();
@@ -1061,6 +1061,98 @@ describe("Pending State Manager", () => {
 				pendingStateManager.minimumPendingMessageSequenceNumber,
 				undefined,
 				"Should no minimum sequence number as there are no messages",
+			);
+		});
+	});
+
+	describe("hasPendingUserChanges", () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		function createPendingStateManager(
+			pendingMessages: IPendingMessage[] = [],
+			initialMessages: IPendingMessage[] = [],
+		): PendingStateManager_WithPrivates {
+			const psm: PendingStateManager_WithPrivates = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "CLIENT_ID",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: initialMessages },
+				logger,
+			) as unknown as PendingStateManager_WithPrivates;
+
+			psm.pendingMessages.push(...pendingMessages);
+			return psm;
+		}
+		const dirtyableOp = {
+			type: ContainerMessageType.Alias,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+		const nonDirtyableOp = {
+			type: ContainerMessageType.GC,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+
+		it("returns false when there are no pending or initial messages", () => {
+			const psm = createPendingStateManager();
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false with no messages",
+			);
+		});
+
+		it("returns true if any pending message is dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: dirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				true,
+				"Should be true with dirtyable op",
+			);
+		});
+
+		it("returns false if all pending messages are not dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: nonDirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false with non-dirtyable op",
+			);
+		});
+
+		it("returns false if all pending messages are empty batches (runtimeOp undefined)", () => {
+			const psm = createPendingStateManager();
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			psm.onFlushEmptyBatch(placeholderMessage, 0, false);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false for empty batch",
+			);
+		});
+
+		it("returns true if there are any initial messages, even if non-dirtyable", () => {
+			const initialMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: nonDirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager([], initialMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				true,
+				"Should be true with initial messages",
 			);
 		});
 	});

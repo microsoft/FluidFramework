@@ -10,7 +10,7 @@
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 
-import type { HeadingNode } from "../../documentation-domain/index.js";
+import { PlainTextNode, type HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
 
@@ -48,7 +48,7 @@ export function headingToHtml(
 
 		return transformChildrenUnderTag(
 			{ name: `h${headingLevel}`, attributes },
-			headingNode.children,
+			[new PlainTextNode(headingNode.title)],
 			context,
 		);
 	} else {
@@ -57,7 +57,11 @@ export function headingToHtml(
 			transformedChildren.push(h("a", { id: headingNode.id }));
 		}
 		transformedChildren.push(
-			transformChildrenUnderTag({ name: "b" }, headingNode.children, context),
+			transformChildrenUnderTag(
+				{ name: "b" },
+				[new PlainTextNode(headingNode.title)],
+				context,
+			),
 		);
 
 		// Wrap the 2 child elements in a fragment

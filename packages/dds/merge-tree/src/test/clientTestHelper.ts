@@ -225,7 +225,7 @@ export class ClientTestHelper {
 			this.disconnectedClientOps.delete(clientName);
 			const client = this.clients[clientName];
 			for (const { op, segmentGroup } of submittedOps) {
-				const rebasedOp = client.regeneratePendingOp(op, segmentGroup);
+				const rebasedOp = client.regeneratePendingOp(op, segmentGroup, false);
 				this.addMessage(client, rebasedOp);
 			}
 		}

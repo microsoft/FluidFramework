@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+	setupAxiosInterceptorsForAbortSignals,
+	getGlobalAbortControllerContext,
+} from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import * as services from "@fluidframework/server-services-shared";
 import {
@@ -11,6 +15,8 @@ import {
 	RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
 import { Provider } from "nconf";
+
+import { IGitrestResourcesCustomizations } from "./customizations";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
@@ -21,7 +27,6 @@ import {
 	NodeFsManagerFactory,
 	RedisFsManagerFactory,
 } from "./utils";
-import { IGitrestResourcesCustomizations } from "./customizations";
 
 export class GitrestResources implements core.IResources {
 	public webServerFactory: core.IWebServerFactory;
@@ -63,6 +68,12 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 			fileSystemManagerFactories,
 		);
 		const startupCheck = new services.StartupCheck();
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new GitrestResources(
 			config,

@@ -36,7 +36,11 @@ import type {
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import { type ILocalValue, LocalValueMaker } from "./localValues.js";
+import {
+	type ILocalValue,
+	serializeValue,
+	migrateIfSharedSerializable,
+} from "./localValues.js";
 
 /**
  * Defines the means to process and submit a given op on a map.
@@ -214,17 +218,12 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	/**
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
 	 */
-	private pendingMessageId: number = -1;
+	private nextPendingMessageId: number = 0;
 
 	/**
 	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
 	 */
 	private readonly pendingClearMessageIds: number[] = [];
-
-	/**
-	 * Object to create encapsulations of the values stored in the map.
-	 */
-	private readonly localValueMaker: LocalValueMaker;
 
 	/**
 	 * Create a new shared map kernel.
@@ -242,7 +241,6 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 		private readonly isAttached: () => boolean,
 		private readonly eventEmitter: TypedEventEmitter<ISharedMapEvents>,
 	) {
-		this.localValueMaker = new LocalValueMaker();
 		this.messageHandlers = this.getMessageHandlers();
 	}
 
@@ -258,9 +256,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public entries(): IterableIterator<[string, any]> {
+	public entries(): IterableIterator<[string, unknown]> {
 		const localEntriesIterator = this.data.entries();
 		const iterator = {
 			next(): IteratorResult<[string, unknown]> {
@@ -281,9 +277,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	 * Get an iterator over the values in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public values(): IterableIterator<any> {
+	public values(): IterableIterator<unknown> {
 		const localValuesIterator = this.data.values();
 		const iterator = {
 			next(): IteratorResult<unknown> {
@@ -291,7 +285,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 				return nextVal.done
 					? { value: undefined, done: true }
 					: // Unpack the stored value
-						{ value: nextVal.value.value as unknown, done: false };
+						{ value: nextVal.value.value, done: false };
 			},
 			[Symbol.iterator](): IterableIterator<unknown> {
 				return this;
@@ -304,9 +298,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public [Symbol.iterator](): IterableIterator<[string, any]> {
+	public [Symbol.iterator](): IterableIterator<[string, unknown]> {
 		return this.entries();
 	}
 
@@ -326,9 +318,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	/**
 	 * {@inheritDoc ISharedMap.get}
 	 */
-	// TODO: Use `unknown` instead (breaking change).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public get<T = any>(key: string): T | undefined {
+	public get<T = unknown>(key: string): T | undefined {
 		const localValue = this.data.get(key);
 		return localValue === undefined ? undefined : (localValue.value as T);
 	}
@@ -351,11 +341,8 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 			throw new Error("Undefined and null keys are not supported");
 		}
 
-		// Create a local value and serialize it.
-		const localValue = this.localValueMaker.fromInMemory(value);
-
 		// Set the value locally.
-		const previousValue = this.setCore(key, localValue, true);
+		const previousValue = this.setCore(key, { value }, true);
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
@@ -365,7 +352,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
-			value: { type: localValue.type, value: localValue.value as unknown },
+			value: { type: ValueType[ValueType.Plain], value },
 		};
 		this.submitMapKeyMessage(op, previousValue);
 
@@ -424,11 +411,11 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	 * @returns A JSON string containing serialized map data
 	 */
 	private getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
-		const serializableMapData: IMapDataObjectSerialized = {};
+		const serializedMapData: IMapDataObjectSerialized = {};
 		for (const [key, localValue] of this.data.entries()) {
-			serializableMapData[key] = localValue.makeSerialized(serializer, this.handle);
+			serializedMapData[key] = serializeValue(localValue.value, serializer, this.handle);
 		}
-		return serializableMapData;
+		return serializedMapData;
 	}
 
 	/**
@@ -439,12 +426,8 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 		for (const [key, serializable] of Object.entries(
 			this.serializer.decode(json) as IMapDataObjectSerializable,
 		)) {
-			const localValue = {
-				key,
-				value: this.makeLocal(key, serializable),
-			};
-
-			this.data.set(localValue.key, localValue.value);
+			migrateIfSharedSerializable(serializable, this.serializer, this.handle);
+			this.data.set(key, { value: serializable.value });
 		}
 	}
 
@@ -476,7 +459,8 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 				break;
 			}
 			case "set": {
-				this.set(op.key, this.makeLocal(op.key, op.value).value);
+				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
+				this.set(op.key, op.value.value);
 				break;
 			}
 			default: {
@@ -629,28 +613,6 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	}
 
 	/**
-	 * The remote ISerializableValue we're receiving (either as a result of a load or an incoming set op) will
-	 * have the information we need to create a real object, but will not be the real object yet.  For example,
-	 * we might know it's a map and the map's ID but not have the actual map or its data yet.  makeLocal's
-	 * job is to convert that information into a real object for local usage.
-	 * @param key - The key that the caller intends to store the local value into (used for ops later).  But
-	 * doesn't actually store the local value into that key.  So better not lie!
-	 * @param serializable - The remote information that we can convert into a real object
-	 * @returns The local value that was produced
-	 */
-	// eslint-disable-next-line import/no-deprecated
-	private makeLocal(key: string, serializable: ISerializableValue): ILocalValue {
-		if (
-			serializable.type === ValueType[ValueType.Plain] ||
-			serializable.type === ValueType[ValueType.Shared]
-		) {
-			return this.localValueMaker.fromSerializable(serializable, this.serializer, this.handle);
-		} else {
-			throw new Error("Unknown local value type");
-		}
-	}
-
-	/**
 	 * If our local operations that have not yet been ack'd will eventually overwrite an incoming operation, we should
 	 * not process the incoming operation.
 	 * @param op - Operation to check
@@ -760,8 +722,8 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 				}
 
 				// needProcessKeyOperation should have returned false if local is true
-				const context = this.makeLocal(op.key, op.value);
-				this.setCore(op.key, context, local);
+				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
+				this.setCore(op.key, { value: op.value.value }, local);
 			},
 			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
@@ -772,7 +734,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	}
 
 	private getMapClearMessageId(): number {
-		const pendingMessageId = ++this.pendingMessageId;
+		const pendingMessageId = this.nextPendingMessageId++;
 		this.pendingClearMessageIds.push(pendingMessageId);
 		return pendingMessageId;
 	}
@@ -790,7 +752,7 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 	}
 
 	private getMapKeyMessageId(op: IMapKeyOperation): number {
-		const pendingMessageId = ++this.pendingMessageId;
+		const pendingMessageId = this.nextPendingMessageId++;
 		const pendingMessageIds = this.pendingKeys.get(op.key);
 		if (pendingMessageIds === undefined) {
 			this.pendingKeys.set(op.key, [pendingMessageId]);
@@ -936,12 +898,14 @@ class MapKernel implements SharedKernel, ISharedMapCore {
 		const newFormat = json as IMapSerializationFormat;
 		if (Array.isArray(newFormat.blobs)) {
 			this.populateFromSerializable(newFormat.content);
-			await Promise.all(
-				newFormat.blobs.map(async (value) => {
-					const content = await readAndParse<IMapDataObjectSerializable>(storage, value);
-					this.populateFromSerializable(content);
-				}),
+			const blobContents = await Promise.all(
+				newFormat.blobs.map(async (blobName) =>
+					readAndParse<IMapDataObjectSerializable>(storage, blobName),
+				),
 			);
+			for (const blobContent of blobContents) {
+				this.populateFromSerializable(blobContent);
+			}
 		} else {
 			this.populateFromSerializable(json as IMapDataObjectSerializable);
 		}

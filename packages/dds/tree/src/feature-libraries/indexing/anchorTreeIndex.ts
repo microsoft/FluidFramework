@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { disposeSymbol, getOrCreate } from "../../util/index.js";
+
 import {
 	type Anchor,
 	type AnchorNode,
@@ -24,8 +24,10 @@ import {
 	TreeNavigationResult,
 	type ITreeCursorSynchronous,
 } from "../../core/index.js";
-import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
+import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { TreeStatus } from "../flex-tree/index.js";
+
+import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
 
 /**
  * A function that gets the value to index a node on, must be pure and functional.

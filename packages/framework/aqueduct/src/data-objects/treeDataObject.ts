@@ -36,11 +36,6 @@ const uninitializedErrorString =
  * }
  * ```
  *
- * @privateRemarks
- * TODO: Before promoting this beyond internal, we should consider alternative API patterns that don't depend on
- * sub-classing and don't leak Fluid concepts that should ideally be internal.
- * See `tree-react-api` for an example of a pattern that avoids unnecessary leakage of implementation details.
- *
  * @internal
  */
 export abstract class TreeDataObject<TTreeView> extends PureDataObject {
@@ -49,6 +44,25 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	 * @remarks Called once during initialization.
 	 */
 	protected abstract generateView(tree: ITree): TTreeView;
+
+	/**
+	 * Implementation of SharedTree which is used to generate the view.
+	 * @remarks Created once during initialization.
+	 */
+	#sharedTree: ITree | undefined;
+
+	/**
+	 * Gets the underlying {@link @fluidframework/tree#ITree | tree}.
+	 * @remarks
+	 * Note: in most cases, you will want to use {@link TreeDataObject.treeView} instead.
+	 * Created once during initialization.
+	 */
+	protected get sharedTree(): ITree {
+		if (this.#sharedTree === undefined) {
+			throw new UsageError(uninitializedErrorString);
+		}
+		return this.#sharedTree;
+	}
 
 	/**
 	 * View derived from the underlying tree.
@@ -82,11 +96,14 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 				);
 			}
 			const sharedTree: ITree = channel;
+
+			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 		} else {
 			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
+			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 
 			// Note, the implementer is responsible for initializing the tree with initial data.
