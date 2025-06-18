@@ -102,7 +102,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ReplayDocumentService": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }
