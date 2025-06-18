@@ -370,7 +370,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 		assert(
 			resolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true,
-			"Sharing link should be set in resolved url",
+			"isRedemptionNonDurable should be set in shareLinkInfo of resolved url",
 		);
 	});
 
@@ -387,7 +387,7 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		});
 		assert(
 			resolvedUrl.shareLinkInfo?.isRedemptionNonDurable === undefined,
-			"Sharing link should not be set in resolved url",
+			"isRedemptionNonDurable should not be set in shareLinkInfo and shareLinkInfo should be undefined",
 		);
 	});
 
