@@ -344,61 +344,63 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
               path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
-        # Retrieve a tenant from the TRIPS tenant pool
-        - task: AzureCLI@2
-          displayName: 'Log in to retrieve tenant credentials'
-          inputs:
-            azureSubscription: 'Fluid Framework Tests'
-            addSpnToEnvironment: true
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              set -eu -o pipefail
+        # Only check out tenants from the TRIPS tenant pool if we are running tests against ODSP
+        - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
+          # Retrieve a tenant from the TRIPS tenant pool
+          - task: AzureCLI@2
+            displayName: 'Log in to retrieve tenant credentials'
+            inputs:
+              azureSubscription: 'Fluid Framework Tests'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
 
-              az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
 
-        - task: Bash@3
-          displayName: 'Run tenant setup script'
-          env:
-            SYSTEM_ACCESSTOKEN: $(System.AccessToken)
-          inputs:
-            workingDirectory: ${{ parameters.testWorkspace }}
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
+          - task: Bash@3
+            displayName: 'Run tenant setup script'
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+            inputs:
+              workingDirectory: ${{ parameters.testWorkspace }}
+              targetType: 'inline'
+              script: |
+                set -eu -o pipefail
 
-              npx --package=@ff-internal/trips-setup@0.0.3 -- trips-setup $SYSTEM_ACCESSTOKEN
+                npx --package=@ff-internal/trips-setup@0.0.3 -- trips-setup $SYSTEM_ACCESSTOKEN
 
-        - task: Bash@3
-          displayName: 'DEBUG: Print tenant credentials'
-          env:
-            login__microsoft__clientId: '$(appClientId)'
-            # ${{ if eq(endsWith(parameters.stageId, 'odspdf'), true) }}:
-            #   login__odspdf__test__tenants: '$(tenantCreds)'
-            # ${{ if eq(endsWith(parameters.stageId, 'odsp'), true) }}:
-            login__odsp__test__tenants: $(tenantCreds)
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
+          - task: Bash@3
+            displayName: 'DEBUG: Print tenant credentials'
+            env:
+              login__microsoft__clientId: '$(appClientId)'
+              # ${{ if eq(endsWith(parameters.stageId, 'odspdf'), true) }}:
+              #   login__odspdf__test__tenants: '$(tenantCreds)'
+              # ${{ if eq(endsWith(parameters.stageId, 'odsp'), true) }}:
+              login__odsp__test__tenants: $(tenantCreds)
+            inputs:
+              targetType: 'inline'
+              script: |
+                set -eu -o pipefail
 
-              echo 'Tenant credentials retrieved and stored in environment variables:'
-              echo "$(appClientId)"
+                echo 'Tenant credentials retrieved and stored in environment variables:'
+                echo "$(appClientId)"
 
-              echo 'DEBUG: Print tenant credentials'
-              echo "$login__microsoft__clientId"
-              echo "$login__odsp__test__tenants"
+                echo 'DEBUG: Print tenant credentials'
+                echo "$login__microsoft__clientId"
+                echo "$login__odsp__test__tenants"
 
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            login__microsoft__clientId: $(appClientId)
-            ${{ if eq(endsWith(parameters.stageId, 'odspdf'), true) }}:
-              login__odspdf__test__tenants: $(tenantCreds)
-            ${{ if eq(endsWith(parameters.stageId, 'odsp'), true) }}:
+            ${{ if ne(parameters.stageId, 'e2e_odsp') }}:
+              ${{ parameters.env }}
+            ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
               login__odsp__test__tenants: $(tenantCreds)
+              login__microsoft__clientId: $(appClientId)
           inputs:
             command: 'custom'
             workingDir: ${{ parameters.testWorkspace }}/node_modules/${{ parameters.testPackage }}
@@ -449,27 +451,29 @@ stages:
             condition: always()
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
-        # Release the tenant back to the TRIPS tenant pool
-        - task: AzureCLI@2
-          displayName: 'Log in to release tenant credentials'
-          inputs:
-            azureSubscription: 'Fluid Framework Tests'
-            addSpnToEnvironment: true
-            scriptType: 'bash'
-            scriptLocation: 'inlineScript'
-            inlineScript: |
-              set -eu -o pipefail
+        # Only release tenants that were checked out from the TRIPS tenant pool for ODSP tests
+        - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
+          # Release the tenant back to the TRIPS tenant pool
+          - task: AzureCLI@2
+            displayName: 'Log in to release tenant credentials'
+            inputs:
+              azureSubscription: 'Fluid Framework Tests'
+              addSpnToEnvironment: true
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                set -eu -o pipefail
 
-              az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+                az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
 
-        - task: Bash@3
-          displayName: 'Release tenant credentials'
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
+          - task: Bash@3
+            displayName: 'Release tenant credentials'
+            inputs:
+              targetType: 'inline'
+              script: |
+                set -eu -o pipefail
 
-              npx --package=@ff-internal/trips-setup@0.0.3 -- trips-cleanup $(stringBearerToken)
+                npx --package=@ff-internal/trips-setup@0.0.3 -- trips-cleanup $(stringBearerToken)
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self

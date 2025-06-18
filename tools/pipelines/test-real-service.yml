@@ -167,8 +167,6 @@ stages:
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:odsp:report
-      stageVariables:
-        - group: e2e-odsp-lock
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0 --tenantIndex=0
