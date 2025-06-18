@@ -128,7 +128,7 @@ export const mochaHooks = {
 			eventName: "fluid:telemetry:Test_start",
 		});
 	},
-	afterEach(this: Mocha.Context) {
+	async afterEach(this: Mocha.Context) {
 		ensureTestRunLoggerIsInitialized(testLogger);
 		testLogger.send({
 			category: "generic",
@@ -148,6 +148,9 @@ export const mochaHooks = {
 		// Clear the current test from the logger. Important so if anything calls `getTestLogger` outside the context of a
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurrentTest();
+
+		// Flush the logger to ensure all events are sent before the next test runs.
+		await testLogger.flush();
 	},
 };
 
