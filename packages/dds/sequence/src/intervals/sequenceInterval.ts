@@ -520,19 +520,21 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 		let startRef = this.start;
 		if (startPos !== undefined) {
+			const slidingPreference = startReferenceSlidingPreference(
+				startPos,
+				startSide ?? Side.Before,
+				endPos,
+				endSide ?? Side.Before,
+			);
 			startRef = createPositionReference({
 				client: this.client,
 				pos: startPos,
 				refType: getRefType(this.start.refType),
 				op,
 				localSeq,
-				slidingPreference: startReferenceSlidingPreference(
-					startPos,
-					startSide ?? Side.Before,
-					endPos,
-					endSide ?? Side.Before,
-				),
-				canSlideToEndpoint,
+				slidingPreference,
+				canSlideToEndpoint:
+					canSlideToEndpoint && slidingPreference === SlidingPreference.BACKWARD,
 			});
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
@@ -541,19 +543,21 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 		let endRef = this.end;
 		if (endPos !== undefined) {
+			const slidingPreference = endReferenceSlidingPreference(
+				startPos,
+				startSide ?? Side.Before,
+				endPos,
+				endSide ?? Side.Before,
+			);
 			endRef = createPositionReference({
 				client: this.client,
 				pos: endPos,
 				refType: getRefType(this.end.refType),
 				op,
 				localSeq,
-				slidingPreference: endReferenceSlidingPreference(
-					startPos,
-					startSide ?? Side.Before,
-					endPos,
-					endSide ?? Side.Before,
-				),
-				canSlideToEndpoint,
+				slidingPreference,
+				canSlideToEndpoint:
+					canSlideToEndpoint && slidingPreference === SlidingPreference.FORWARD,
 			});
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
@@ -764,16 +768,31 @@ export function createSequenceInterval(
 		}
 	}
 
+	const startSlidingPreference = startReferenceSlidingPreference(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
+	);
+
 	const startLref = createPositionReference({
 		client,
 		pos: startPos,
 		refType: beginRefType,
 		op,
 		fromSnapshot,
-		slidingPreference: startReferenceSlidingPreference(startPos, startSide, endPos, endSide),
-		canSlideToEndpoint,
+		slidingPreference: startSlidingPreference,
+		canSlideToEndpoint:
+			canSlideToEndpoint && startSlidingPreference === SlidingPreference.BACKWARD,
 		rollback,
 	});
+
+	const endSlidingPreference = endReferenceSlidingPreference(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
+	);
 
 	const endLref = createPositionReference({
 		client,
@@ -781,8 +800,9 @@ export function createSequenceInterval(
 		refType: endRefType,
 		op,
 		fromSnapshot,
-		slidingPreference: endReferenceSlidingPreference(startPos, startSide, endPos, endSide),
-		canSlideToEndpoint,
+		slidingPreference: endSlidingPreference,
+		canSlideToEndpoint:
+			canSlideToEndpoint && endSlidingPreference === SlidingPreference.FORWARD,
 		rollback,
 	});
 
