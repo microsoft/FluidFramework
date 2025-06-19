@@ -150,6 +150,18 @@ describe("Map", () => {
 					map.set(null as unknown as string, "two");
 				}, "Should throw for key of null");
 			});
+
+			it("entries", () => {
+				assert.deepEqual([...map.entries()], []);
+				map.set("key1", "value1");
+				assert.deepEqual([...map.entries()], [["key1", "value1"]]);
+			});
+
+			it("Can iterate", () => {
+				assert.deepEqual([...map], []);
+				map.set("key1", "value1");
+				assert.deepEqual([...map], [["key1", "value1"]]);
+			});
 		});
 
 		describe("Serialize", () => {
