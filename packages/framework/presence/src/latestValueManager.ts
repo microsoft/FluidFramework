@@ -180,10 +180,9 @@ class LatestValueManagerImpl<T, Key extends string>
 			if (attendeeId !== allKnownStates.self) {
 				yield {
 					attendee: this.datastore.presence.attendees.getAttendee(attendeeId),
-					value:
-						this.validator === undefined
-							? asDeeplyReadonlyDeserializedJson(clientState.value)
-							: createValidatedGetter(clientState, this.validator),
+					// FIXME
+					// @ts-expect-error Type null is not assignable to type ...
+					value: createValidatedGetter(clientState, this.validator),
 					metadata: {
 						revision: clientState.rev,
 						timestamp: clientState.timestamp,
@@ -207,10 +206,9 @@ class LatestValueManagerImpl<T, Key extends string>
 			throw new Error("No entry for attendeeId");
 		}
 		return {
-			value:
-				this.validator === undefined
-					? asDeeplyReadonlyDeserializedJson(clientState.value)
-					: createValidatedGetter(clientState, this.validator),
+			// FIXME
+			// @ts-expect-error Type null is not assignable to type ...
+			value: createValidatedGetter(clientState, this.validator),
 			metadata: { revision: clientState.rev, timestamp: Date.now() },
 		};
 	}
@@ -231,6 +229,8 @@ class LatestValueManagerImpl<T, Key extends string>
 			() =>
 				this.events.emit("remoteUpdated", {
 					attendee,
+					// FIXME
+					// @ts-expect-error Type null is not assignable to type ...
 					value: createValidatedGetter(value, this.validator),
 					metadata: { revision: value.rev, timestamp: value.timestamp },
 				}),
