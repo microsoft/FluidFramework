@@ -4,7 +4,6 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
-import type { AllowedTypeMetadata } from "../schemaTypes.js";
 import {
 	asTreeNodeSchemaCorePrivate,
 	type NormalizedAnnotatedAllowedTypes,
@@ -16,7 +15,6 @@ import {
  */
 export function walkNodeSchema(
 	schema: TreeNodeSchema,
-	annotations: AllowedTypeMetadata,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema>,
 ): void {
@@ -38,7 +36,7 @@ export function walkNodeSchema(
 	// This was picked since when fixing errors,
 	// working from the inner types out to the types that use them will probably go better than the reverse.
 	// This does not however ensure all types referenced by a type are visited before it, since in recursive cases thats impossible.
-	visitor.node?.(schema, annotations);
+	visitor.node?.(schema);
 }
 
 /**
@@ -50,8 +48,8 @@ export function walkAllowedTypes(
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
 	for (const annotatedAllowedType of annotatedAllowedTypes.types) {
-		const { type, metadata } = annotatedAllowedType;
-		walkNodeSchema(type, metadata, visitor, visitedSet);
+		const { type } = annotatedAllowedType;
+		walkNodeSchema(type, visitor, visitedSet);
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
@@ -61,10 +59,9 @@ export function walkAllowedTypes(
  */
 export interface SchemaVisitor {
 	/**
-	 * Called for each node schema. This may be called multiple times for the same node schema e.g. if the same schema
-	 * is allowed on different fields.
+	 * Called for each node schema.
 	 */
-	node?: (schema: TreeNodeSchema, annotations: AllowedTypeMetadata) => void;
+	node?: (schema: TreeNodeSchema) => void;
 	/**
 	 * Called once for each set of allowed types.
 	 * Includes implicit allowed types (when a single type was used instead of an array).
