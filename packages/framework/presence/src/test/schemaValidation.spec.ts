@@ -113,7 +113,7 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
-		describe.skip("LatestValueManager", () => {
+		describe("LatestValueManager", () => {
 			let count: Latest<TestData, ProxiedValueAccessor<TestData>>;
 			let stateWorkspace: StatesWorkspace<{
 				count: InternalTypes.ManagerFactory<
@@ -268,7 +268,7 @@ describe("Presence", () => {
 			});
 		});
 
-		describe.skip("LatestMapValueManager", () => {
+		describe("LatestMapValueManager", () => {
 			let count: LatestMap<
 				{
 					num: number;

@@ -88,6 +88,10 @@ export namespace InternalTypes {
     // @system
     export class StateValueBrand<T> {
     }
+    // @system
+    export interface ValidatedValueState<TValue> {
+        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+    }
     // @system (undocumented)
     export interface ValueDirectory<T> {
         // (undocumented)
@@ -100,12 +104,12 @@ export namespace InternalTypes {
     // @system (undocumented)
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system
-    export interface ValueOptionalState<TValue> extends ValueStateMetadata {
+    export interface ValueOptionalState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system
-    export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+    export interface ValueRequiredState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
@@ -145,6 +149,7 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 export interface LatestArgumentsRaw<T extends object | null> {
     local: JsonSerializable<T>;
     settings?: BroadcastControlSettings | undefined;
+    validator?: StateSchemaValidator<T>;
 }
 
 // @beta @sealed
@@ -195,7 +200,7 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 
 // @beta @input
 export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
-    local?: {
+    local: {
         [K in Keys]: JsonSerializable<T>;
     };
     settings?: BroadcastControlSettings | undefined;
