@@ -110,7 +110,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 export interface LatestMapEvents<
 	T,
 	K extends string | number,
-	TRemoteValueAccessor extends ValueAccessor<T>,
+	TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
 > {
 	/**
 	 * Raised when any item's value for remote client is updated.
@@ -452,7 +452,7 @@ class LatestMapValueManagerImpl<
 		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapEvents<T, Keys, RawValueAccessor<T>>>();
+	public readonly events = createEmitter<LatestMapEvents<T, Keys, ValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -515,11 +515,9 @@ class LatestMapValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					// @ts-expect-error Type {} is not assignable to type ...
-					value:
-						validator === undefined
-							? asDeeplyReadonly(value)
-							: createValidatedGetter(item, validator),
+					// FIXME
+					// @ts-expect-error Type null is not assignable to type ...
+					value: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -576,14 +574,17 @@ class LatestMapValueManagerImpl<
 				const updatedItem = {
 					attendee,
 					key,
+					// FIXME
+					// @ts-expect-error Type null is not assignable to type ...
 					value: createValidatedGetter(item, this.validator),
 					metadata,
 				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
-				// FIXME no as any
-				postUpdateActions.push(() =>
-					this.events.emit("remoteItemUpdated", updatedItem as any),
-				);
+				// FIXME
+				// @ts-expect-error Type null is not assignable to type ...
+				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
 				allUpdates.items.set(key, {
+					// FIXME
+					// @ts-expect-error Type null is not assignable to type ...
 					value: createValidatedGetter(item, this.validator),
 					metadata,
 				});
