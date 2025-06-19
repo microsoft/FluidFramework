@@ -571,7 +571,7 @@ export class TenantManager {
 			scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
 			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenantDocument),
 			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
-			publicNetworkAccessEnabled: tenantDocument.publicNetworkAccessEnabled ?? false,
+			publicNetworkAccessEnabled: tenantDocument.publicNetworkAccessEnabled ?? true,
 		};
 	}
 
