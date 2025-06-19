@@ -268,8 +268,6 @@ export function recordSchema<
 			);
 		}
 
-		protected static override constructorCached: MostDerivedData | undefined = undefined;
-
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			customizable = (this as unknown) !== CustomRecordNode;
 			const schema = this as unknown as RecordNodeSchema;
@@ -306,6 +304,8 @@ export function recordSchema<
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
 			return lazyAllowedTypesIdentifiers.value;
 		}
+
+		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		public static readonly identifier = identifier;
 		public static readonly info = info;
