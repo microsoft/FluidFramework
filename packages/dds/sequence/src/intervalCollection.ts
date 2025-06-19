@@ -1508,8 +1508,7 @@ export class IntervalCollection
 				this.localCollection.add(interval);
 				this.emitChange(interval, old, true, true);
 			}
-			this.client.removeLocalReferencePosition(old.start);
-			this.client.removeLocalReferencePosition(old.end);
+			old.dispose();
 		}
 
 		return {
