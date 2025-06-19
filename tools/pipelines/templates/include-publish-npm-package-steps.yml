@@ -36,12 +36,13 @@ steps:
       echo Generating .npmrc for ${{ parameters.feedUrl }}
       echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc
-      cat .npmrc
+      cat .npmrc ${{}}
 - task: npmAuthenticate@0
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:
     workingFile: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}/.npmrc
     workloadIdentityServiceConnection: ${{ parameters.workloadIdentityServiceConnection }}
+    feedUrl: ${{ parameters.feedUrl }}
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:
