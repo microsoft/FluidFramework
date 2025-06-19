@@ -5,6 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -32,7 +33,7 @@ import {
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -222,8 +223,10 @@ export interface SequenceInterval extends ISerializableInterval {
 	getIntervalId(): string;
 }
 
-// eslint-disable-next-line import/no-deprecated
-export class SequenceIntervalClass implements SequenceInterval, ISerializableInterval {
+export class SequenceIntervalClass
+	// eslint-disable-next-line import/no-deprecated
+	implements SequenceInterval, ISerializableInterval, IDisposable
+{
 	readonly #props: {
 		propertyManager?: PropertiesManager;
 		properties: PropertySet;
@@ -233,6 +236,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
 	public get properties(): Readonly<PropertySet> {
+		this.verifyNotDispose();
 		return this.#props.properties;
 	}
 
@@ -241,6 +245,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		op?: ISequencedDocumentMessage,
 		rollback?: boolean,
 	) {
+		this.verifyNotDispose();
+
 		if (props !== undefined) {
 			this.#props.propertyManager ??= new PropertiesManager();
 			return this.#props.propertyManager.handleProperties(
@@ -258,6 +264,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 	/***/
 	public get stickiness(): IntervalStickiness {
+		this.verifyNotDispose();
+
 		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
 		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		return computeStickinessFromSide(
@@ -291,6 +299,23 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 			this.#props.properties = addProperties(this.#props.properties, props);
 		}
 	}
+	#disposed = false;
+	public get disposed() {
+		return this.#disposed;
+	}
+	public dispose(error?: Error): void {
+		if (this.#disposed) return;
+		this.#disposed = true;
+		this.client.removeLocalReferencePosition(this.start);
+		this.client.removeLocalReferencePosition(this.end);
+		this.removePositionChangeListeners();
+	}
+
+	private verifyNotDispose() {
+		if (this.#disposed) {
+			throw new LoggingError("Invalid interval access after dispose");
+		}
+	}
 
 	private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
 
@@ -301,6 +326,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		beforePositionChange: () => void,
 		afterPositionChange: () => void,
 	): void {
+		this.verifyNotDispose();
 		if (this.callbacks === undefined) {
 			this.callbacks = {
 				beforePositionChange,
@@ -329,6 +355,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc ISerializableInterval.serialize}
 	 */
 	public serialize(): ISerializedInterval {
+		this.verifyNotDispose();
+
 		return this.serializeDelta({
 			props: this.properties,
 			includeEndpoints: true,
@@ -342,6 +370,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		props: PropertySet | undefined;
 		includeEndpoints: boolean;
 	}): SerializedIntervalDelta {
+		this.verifyNotDispose();
+
 		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
 		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		const startPosition = includeEndpoints
@@ -371,6 +401,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.clone}
 	 */
 	public clone(): SequenceIntervalClass {
+		this.verifyNotDispose();
+
 		return new SequenceIntervalClass(
 			this.client,
 			this.id,
@@ -413,6 +445,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.compareStart}
 	 */
 	public compareStart(b: SequenceInterval) {
+		this.verifyNotDispose();
+
 		const dist = compareReferencePositions(this.start, b.start);
 
 		if (dist === 0) {
@@ -426,6 +460,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.compareEnd}
 	 */
 	public compareEnd(b: SequenceInterval): number {
+		this.verifyNotDispose();
+
 		const dist = compareReferencePositions(this.end, b.end);
 
 		if (dist === 0) {
@@ -439,6 +475,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.overlaps}
 	 */
 	public overlaps(b: SequenceInterval) {
+		this.verifyNotDispose();
+
 		const result =
 			compareReferencePositions(this.start, b.end) <= 0 &&
 			compareReferencePositions(this.end, b.start) >= 0;
@@ -456,6 +494,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.union}
 	 */
 	public union(b: SequenceIntervalClass) {
+		this.verifyNotDispose();
+
 		const newStart = minReferencePosition(this.start, b.start);
 		const newEnd = maxReferencePosition(this.end, b.end);
 
@@ -492,6 +532,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
+		this.verifyNotDispose();
+
 		const startPos = this.client.localReferencePositionToPosition(this.start);
 		const endPos = this.client.localReferencePositionToPosition(this.end);
 		return endPos > bstart && startPos < bend;
@@ -500,6 +542,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	public moveEndpointReferences(
 		rebased: Partial<Record<"start" | "end", { segment: ISegment; offset: number }>>,
 	) {
+		this.verifyNotDispose();
+
 		if (rebased.start) {
 			const startRef = createPositionReferenceFromSegoff({
 				client: this.client,
@@ -540,6 +584,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		localSeq?: number,
 		canSlideToEndpoint: boolean = false,
 	) {
+		this.verifyNotDispose();
+
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
@@ -612,6 +658,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	}
 
 	public ackPropertiesChange(newProps: PropertySet, op: ISequencedDocumentMessage) {
+		this.verifyNotDispose();
+
 		this.#props.propertyManager ??= new PropertiesManager();
 		// Let the propertyManager prune its pending change-properties set.
 		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
