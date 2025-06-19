@@ -302,6 +302,8 @@ async function fetchLatestSnapshotCore(
 			details: {
 				internalFarmType,
 			},
+			// Whether the redemption used is non-durable or not.
+			isRedemptionNonDurable,
 		};
 		if (snapshotOptions !== undefined) {
 			for (const [key, value] of Object.entries(snapshotOptions)) {
@@ -566,8 +568,6 @@ async function fetchLatestSnapshotCore(
 				// slowTreeStructureCount, slowBlobStructureCount, durationStructure, durationStrings,
 				// durationSnapshotTree, durationBlobs, etc.
 				...parsedSnapshotContents.content.telemetryProps,
-				// Whether the redemption used is non-durable or not.
-				isRedemptionNonDurable,
 			});
 			return snapshot;
 		}).catch((error) => {
