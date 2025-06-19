@@ -302,9 +302,9 @@ async function fetchLatestSnapshotCore(
 			redeemFallbackEnabled: enableRedeemFallback,
 			details: {
 				internalFarmType,
+				// Whether the redemption used is non-durable or not.
+				isRedemptionNonDurable,
 			},
-			// Whether the redemption used is non-durable or not.
-			isRedemptionNonDurable,
 		};
 		if (snapshotOptions !== undefined) {
 			for (const [key, value] of Object.entries(snapshotOptions)) {
