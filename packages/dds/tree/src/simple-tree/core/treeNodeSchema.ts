@@ -389,7 +389,7 @@ export interface TreeNodeSchemaCorePrivate<
 		TCustomMetadata
 	> {
 	/**
-	 * All possible annotated allowed types that a field under node with this schema could have.
+	 * All possible annotated allowed types that a field under a node with this schema could have.
 	 * @remarks
 	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
 	 * This includes the content field for arrays, and all the fields for map nodes.
