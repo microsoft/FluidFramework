@@ -122,21 +122,6 @@ export function getOdspCredentials(
 			);
 		}
 
-		// ***** USE ONLY IF CHANGING TENANT FORMAT IN STRESSTESTS.TS *****
-		// const output: CredentialOutput = JSON.parse(loginAccounts);
-		// if (output.resources[0]?.resources[0] === undefined) {
-		// 	throw new Error("No resources found in the login tenants");
-		// }
-		// const username = requestedUserName ?? output.resources[0].resources[0].name;
-		// if (username === undefined) {
-		// 	throw new Error("username should not be undefined when getting odsp credentials");
-		// }
-		// const password = output.resources[0].resources[0].properties.Password;
-		// if (password === undefined) {
-		// 	throw new Error("password should not be undefined when getting odsp credentials");
-		// }
-		// creds.push({ username, password });
-
 		// Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
 		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
 
