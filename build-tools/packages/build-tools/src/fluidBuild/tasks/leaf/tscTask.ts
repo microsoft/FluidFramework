@@ -281,9 +281,9 @@ export class TscTask extends LeafTask {
 
 		for (const ignoredOption of tsConfigOptionsIgnored) {
 			// Delete the ignored option if it exists on the object
-			if (ignoredOption in configOptions) {
-				this.traceTrigger(`ignoring tsBuildInfoOption: '${ignoredOption}1`);
-				delete configOptions[ignoredOption];
+			if (ignoredOption in tsBuildInfoOptions) {
+				this.traceTrigger(`ignoring tsBuildInfoOption: '${ignoredOption}'`);
+				delete tsBuildInfoOptions[ignoredOption];
 			}
 		}
 
