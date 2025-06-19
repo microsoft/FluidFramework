@@ -395,7 +395,7 @@ function getSlideToSegment(
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective,
 	cache?: Map<ISegmentLeaf, { seg?: ISegmentLeaf }>,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 ): [ISegmentLeaf | undefined, "start" | "end" | undefined] {
 	if (
 		!segment ||
@@ -443,7 +443,7 @@ function getSlideToSegment(
 	//
 	// in both of these cases detached may be substituted for one of the special
 	// endpoint segments, if such behavior is enabled
-	if (!useNewSlidingBehavior) {
+	if (!canSlideToEndpoint) {
 		if (slidingPreference === SlidingPreference.BACKWARD) {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
@@ -472,7 +472,7 @@ export function getSlideToSegoff(
 	segoff: { segment: ISegmentInternal; offset: number } | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective = allAckedChangesPerspective,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 ):
 	| {
 			segment: ISegmentInternal;
@@ -487,7 +487,7 @@ export function getSlideToSegoff(
 		slidingPreference,
 		perspective,
 		undefined,
-		useNewSlidingBehavior,
+		canSlideToEndpoint,
 	);
 	if (segment === segoff.segment) {
 		return segoff;
