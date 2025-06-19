@@ -21,6 +21,10 @@ parameters:
   type: string
   default:
 
+- name: workloadIdentityServiceConnection
+  type: string
+  default:
+
 steps:
 - task: Bash@3
   displayName: Generate .npmrc for ${{ parameters.artifactPath }}
