@@ -974,14 +974,14 @@ export class IntervalCollection
 
 		const segoff = getSlideToSegoff(
 			segment === undefined ? undefined : { segment, offset },
-			undefined,
+			ref.slidingPreference,
 			createLocalReconnectingPerspective(
 				this.client.getCurrentSeq(),
 				clientId,
 				localSeq,
 				squash,
 			),
-			this.options.mergeTreeReferencesCanSlideToEndpoint,
+			ref.canSlideToEndpoint,
 		);
 
 		// case happens when rebasing op, but concurrently entire string has been deleted
@@ -1545,7 +1545,7 @@ export class IntervalCollection
 			segoff,
 			lref.slidingPreference,
 			undefined,
-			this.options.mergeTreeReferencesCanSlideToEndpoint,
+			lref.canSlideToEndpoint,
 		);
 	}
 
