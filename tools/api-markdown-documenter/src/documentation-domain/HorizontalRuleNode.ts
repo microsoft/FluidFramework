@@ -47,11 +47,6 @@ export class HorizontalRuleNode implements DocumentationNode {
 	public static readonly Singleton = new HorizontalRuleNode();
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = false;
-
-	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public readonly isEmpty = false;

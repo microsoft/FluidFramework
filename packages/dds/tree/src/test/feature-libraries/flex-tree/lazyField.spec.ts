@@ -197,8 +197,8 @@ describe("LazyField", () => {
 		});
 		const context = getReadonlyContext(forest, Holder);
 
-		const holder = [...context.root.boxedIterator()][0];
-		assert(holder.schema === Holder.identifier);
+		const holder = [...context.root][0];
+		assert(holder.type === Holder.identifier);
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
@@ -221,8 +221,8 @@ describe("LazyField", () => {
 		});
 		const context = getReadonlyContext(forest, Holder);
 
-		const holder = [...context.root.boxedIterator()][0];
-		assert(holder.schema === Holder.identifier);
+		const holder = [...context.root][0];
+		assert(holder.type === Holder.identifier);
 		const field = holder.getBoxed(brand("f"));
 		assert(field instanceof LazyField);
 
@@ -316,7 +316,7 @@ describe("LazyField", () => {
 
 			it("boxedAt", () => {
 				const boxedResult = field.boxedAt(0) ?? assert.fail();
-				assert.equal(boxedResult.schema, numberSchema.identifier);
+				assert.equal(boxedResult.type, numberSchema.identifier);
 				assert.equal(boxedResult.value, 42);
 			});
 
@@ -407,7 +407,7 @@ describe("LazyField", () => {
 
 		it("boxedAt", () => {
 			const boxedResult = field.boxedAt(0) ?? assert.fail();
-			assert.equal(boxedResult.schema, stringSchema.identifier);
+			assert.equal(boxedResult.type, stringSchema.identifier);
 			assert.equal(boxedResult.value, initialTree);
 		});
 
@@ -444,6 +444,7 @@ describe("LazyField", () => {
 		const rootSchema: TreeFieldStoredSchema = {
 			kind: FieldKinds.sequence.identifier,
 			types: new Set([brand(numberSchema.identifier)]),
+			persistedMetadata: undefined,
 		};
 		const schema: TreeStoredSchema = {
 			rootFieldSchema: rootSchema,
@@ -493,15 +494,15 @@ describe("LazyField", () => {
 		it("boxedAt", () => {
 			const sequence = testSequence([37, 42]);
 			const boxedResult0 = sequence.boxedAt(0) ?? assert.fail();
-			assert.equal(boxedResult0.schema, numberSchema.identifier);
+			assert.equal(boxedResult0.type, numberSchema.identifier);
 			assert.equal(boxedResult0.value, 37);
 
 			const boxedResult1 = sequence.boxedAt(1) ?? assert.fail();
-			assert.equal(boxedResult1.schema, numberSchema.identifier);
+			assert.equal(boxedResult1.type, numberSchema.identifier);
 			assert.equal(boxedResult1.value, 42);
 
 			const boxedResultNeg1 = sequence.boxedAt(-1) ?? assert.fail();
-			assert.equal(boxedResultNeg1.schema, numberSchema.identifier);
+			assert.equal(boxedResultNeg1.type, numberSchema.identifier);
 			assert.equal(boxedResultNeg1.value, 42);
 
 			assert.equal(sequence.boxedAt(2), undefined);

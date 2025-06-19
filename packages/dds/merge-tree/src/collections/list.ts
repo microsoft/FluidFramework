@@ -5,15 +5,46 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+/**
+ * Represents a node in a doubly linked list.
+ * @internal
+ */
 export interface ListNode<T> {
+	/**
+	 * The list this node belongs to, or undefined if not attached.
+	 */
 	readonly list: DoublyLinkedList<T> | undefined;
+	/**
+	 * The data value stored in this node.
+	 */
 	readonly data: T;
+	/**
+	 * The next node in the list, or undefined if this is the last node.
+	 */
 	readonly next: ListNode<T> | undefined;
+	/**
+	 * The previous node in the list, or undefined if this is the first node.
+	 */
 	readonly prev: ListNode<T> | undefined;
+	/**
+	 * Removes this node from its list.
+	 * @returns The removed node, or undefined if not in a list.
+	 */
+	remove(): ListNode<T> | undefined;
 }
 
+/**
+ * Represents a range of nodes in a doubly linked list.
+ * @internal
+ */
 export interface ListNodeRange<T> {
+	/**
+	 * The first node in the range.
+	 */
 	first: ListNode<T>;
+	/**
+	 * The last node in the range.
+	 */
 	last: ListNode<T>;
 }
 
@@ -50,6 +81,9 @@ class DataNode<T> extends HeadNode<T> implements ListNode<T> {
 		super(undefined);
 		this.headNode = headNode;
 	}
+	remove(): ListNode<T> | undefined {
+		return this.list?.remove(this);
+	}
 }
 
 function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRange<T> {
@@ -80,6 +114,11 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 	return newRange;
 }
 
+/**
+ * A doubly linked list implementation with array-like methods and node access.
+ * @typeParam T - The type of data stored in the list nodes.
+ * @internal
+ */
 export class DoublyLinkedList<T>
 	implements
 		Iterable<ListNode<T>>,
@@ -87,12 +126,21 @@ export class DoublyLinkedList<T>
 		// try to match array signature and semantics where possible
 		Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes">
 {
+	/**
+	 * Creates a new doubly linked list optionally initialized with values.
+	 * @param values - Optional iterable of values to populate the list.
+	 */
 	constructor(values?: Iterable<T>) {
 		if (values !== undefined) {
 			this.push(...values);
 		}
 	}
 
+	/**
+	 * Finds the first node matching the predicate.
+	 * @param predicate - Function to test each node.
+	 * @returns The first matching node, or undefined if none found.
+	 */
 	find(
 		predicate: (value: ListNode<T>, obj: DoublyLinkedList<T>) => unknown,
 	): ListNode<T> | undefined {
@@ -106,6 +154,10 @@ export class DoublyLinkedList<T>
 		return found;
 	}
 
+	/**
+	 * Returns an iterable that maps each node to a new value.
+	 * @param callbackfn - Function to produce a new value for each node.
+	 */
 	map<U>(callbackfn: (value: ListNode<T>) => U): Iterable<U> {
 		let node = this.first;
 		const iterator: IterableIterator<U> = {
@@ -124,6 +176,12 @@ export class DoublyLinkedList<T>
 		return iterator;
 	}
 
+	/**
+	 * Inserts items after the specified node.
+	 * @param preceding - The node to insert after.
+	 * @param items - Items to insert.
+	 * @returns The range of newly inserted nodes.
+	 */
 	insertAfter(preceding: ListNode<T>, ...items: T[]): ListNodeRange<T> {
 		if (!this._includes(preceding)) {
 			throw new Error("preceding not in list");
@@ -132,10 +190,19 @@ export class DoublyLinkedList<T>
 		return insertAfter(preceding, items);
 	}
 
+	/**
+	 * Removes and returns the last node in the list.
+	 * @returns The removed node, or undefined if the list is empty.
+	 */
 	pop(): ListNode<T> | undefined {
 		return this.remove(this.last);
 	}
 
+	/**
+	 * Appends items to the end of the list.
+	 * @param items - Items to append.
+	 * @returns The range of newly inserted nodes.
+	 */
 	push(...items: T[]): ListNodeRange<T> {
 		this._len += items.length;
 		const start = this.headNode._prev;
@@ -143,14 +210,17 @@ export class DoublyLinkedList<T>
 	}
 
 	/**
-	 * Remove and return the first element
+	 * Removes and returns the first node in the list.
+	 * @returns The removed node, or undefined if the list is empty.
 	 */
 	shift(): ListNode<T> | undefined {
 		return this.remove(this.first);
 	}
 
 	/**
-	 * Insert `items` at start of list
+	 * Inserts items at the start of the list.
+	 * @param items - Items to insert.
+	 * @returns The range of newly inserted nodes.
 	 */
 	unshift(...items: T[]): ListNodeRange<T> {
 		this._len += items.length;
@@ -158,9 +228,10 @@ export class DoublyLinkedList<T>
 	}
 
 	/**
-	 * Remove nodes starting at `start` until either the `end` node is reached
-	 * or until `count` nodes have been removed. Returns the removed nodes as
-	 * a separate linked list
+	 * Removes nodes starting at `start` until `end` or `count` is reached.
+	 * @param start - The node to start removing from.
+	 * @param countOrEnd - The number of nodes to remove or the end node.
+	 * @returns A new list containing the removed nodes.
 	 */
 	splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): DoublyLinkedList<T> {
 		const newList = new DoublyLinkedList<T>();
@@ -187,6 +258,11 @@ export class DoublyLinkedList<T>
 		return newList;
 	}
 
+	/**
+	 * Checks if the node is in this list.
+	 * @param node - The node to check.
+	 * @returns True if the node is in the list.
+	 */
 	public includes(node: ListNode<T> | undefined): node is ListNode<T> {
 		return this._includes(node);
 	}
@@ -207,6 +283,11 @@ export class DoublyLinkedList<T>
 		return undefined;
 	}
 
+	/**
+	 * Removes the specified node from the list.
+	 * @param node - The node to remove.
+	 * @returns The removed node, or undefined if not in the list.
+	 */
 	public remove(node: ListNode<T> | undefined): ListNode<T> | undefined {
 		return this._remove(node);
 	}
@@ -231,16 +312,31 @@ export class DoublyLinkedList<T>
 
 	private _len: number = 0;
 	private readonly headNode: HeadNode<T> | DataNode<T> = new HeadNode(this);
+
+	/**
+	 * The number of nodes in the list.
+	 */
 	public get length(): number {
 		return this._len;
 	}
+
+	/**
+	 * Whether the list is empty.
+	 */
 	public get empty(): boolean {
 		return this._len === 0;
 	}
+
+	/**
+	 * The first node in the list, or undefined if empty.
+	 */
 	public get first(): ListNode<T> | undefined {
 		return this.headNode.next;
 	}
 
+	/**
+	 * The last node in the list, or undefined if empty.
+	 */
 	public get last(): ListNode<T> | undefined {
 		return this.headNode.prev;
 	}

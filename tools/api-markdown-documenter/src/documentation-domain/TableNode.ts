@@ -74,13 +74,6 @@ export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
 	public readonly type = "table";
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
-	/**
 	 * Optional table header row.
 	 */
 	public readonly headerRow?: TableHeaderRowNode;

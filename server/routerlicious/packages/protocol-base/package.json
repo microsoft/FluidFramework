@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-base",
-	"version": "6.0.0",
+	"version": "7.0.0",
 	"description": "Fluid protocol base",
 	"homepage": "https://fluidframework.com",
 	"repository": {
