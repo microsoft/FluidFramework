@@ -971,9 +971,6 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 export const noopValidator: JsonValidator;
 
 // @alpha
-export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema>;
-
-// @alpha
 export interface NormalizedAnnotatedAllowedTypes {
     readonly metadata: AllowedTypesMetadata;
     readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];

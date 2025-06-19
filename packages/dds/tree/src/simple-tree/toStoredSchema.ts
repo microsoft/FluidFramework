@@ -47,7 +47,6 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 		walkFieldSchema(normalized, {
 			node(schema) {
 				if (nodeSchema.has(brand(schema.identifier))) {
-					// Throw an error if the identifier has already been encountered for a different schema
 					// Use JSON.stringify to quote and escape identifier string.
 					throw new UsageError(
 						`Multiple schema encountered with the identifier ${JSON.stringify(
