@@ -781,11 +781,11 @@ export class SchemaFactory<
 				types,
 				() =>
 					this.namedMap(
-						fullName as TName,
+						fullName,
 						nameOrAllowedTypes as T,
 						false,
 						true,
-					) as TreeNodeSchema,
+					),
 			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
@@ -796,7 +796,7 @@ export class SchemaFactory<
 				undefined
 			>;
 		}
-		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		// To actually have type safety, assign to the type this method should return before implicitly up-casting when returning.
 		const out: TreeNodeSchemaBoth<
 			string,
 			NodeKind.Map,
