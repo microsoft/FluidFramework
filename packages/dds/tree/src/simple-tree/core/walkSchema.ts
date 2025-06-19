@@ -24,9 +24,7 @@ export function walkNodeSchema(
 
 	visitedSet.add(schema);
 
-	const annotatedAllowedTypes =
-		asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes ??
-		fail("TreeNodeSchemas must implement TreeNodeSchemaCorePrivate");
+	const annotatedAllowedTypes = asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
 		walkAllowedTypes(fieldAllowedTypes, visitor, visitedSet);
