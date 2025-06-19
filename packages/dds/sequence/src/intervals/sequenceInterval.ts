@@ -798,6 +798,8 @@ export function createSequenceInterval(
 		}
 	}
 
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+
 	const startSlidingPreference = startReferenceSlidingPreference(
 		startPos,
 		startSide,
@@ -812,8 +814,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		slidingPreference: startSlidingPreference,
-		canSlideToEndpoint:
-			canSlideToEndpoint && startSlidingPreference === SlidingPreference.BACKWARD,
+		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
 	});
 
@@ -831,8 +832,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		slidingPreference: endSlidingPreference,
-		canSlideToEndpoint:
-			canSlideToEndpoint && endSlidingPreference === SlidingPreference.FORWARD,
+		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
 	});
 
