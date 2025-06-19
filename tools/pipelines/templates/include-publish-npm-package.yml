@@ -40,7 +40,7 @@ stages:
   - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
     parameters:
       feedUrl: $(ado-feeds-test-feed) # Comes from the ado-feeds variable group
-      customEndPoint: ff-feed-publisher # Comes from the name of the service connection.
+      workloadIdentityServiceConnection: ff-feed-publisher # Comes from the name of the service connection.
       feedKind: internal-test
       environment: test-package-build-feed
       pool: ${{ parameters.pool }}

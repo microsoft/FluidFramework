@@ -37,7 +37,7 @@ steps:
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:
     workingFile: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}/.npmrc
-    customEndPoint: ${{ parameters.customEndPoint }}
+    workloadIdentityServiceConnection: ${{ parameters.workloadIdentityServiceConnection }}
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:
