@@ -220,7 +220,8 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 		provider = getTestObjectProvider();
 	});
 
-	// The combinations of the layers for which we support compatibility.
+	// The combinations of the layers for which we support compatibility. Here, layer1 will validate that
+	// layer2 is compatible with it. The order of the layers matters, as the compatibility check is directional.
 	const layerCombinations: { layer1: LayerType; layer2: LayerType }[] = [
 		{
 			layer1: "Loader",
