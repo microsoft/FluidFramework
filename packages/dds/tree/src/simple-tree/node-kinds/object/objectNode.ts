@@ -5,8 +5,6 @@
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
 import type { FieldKey, SchemaPolicy } from "../../../core/index.js";
 import {
@@ -16,7 +14,11 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../../../feature-libraries/index.js";
-import { type RestrictiveStringRecord, type FlattenKeys, brand } from "../../../util/index.js";
+import type {
+	RestrictiveStringRecord,
+	FlattenKeys,
+	JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -28,11 +30,11 @@ import {
 	type InternalTreeNode,
 	type TreeNode,
 	type Context,
-	UnhydratedFlexTreeNode,
+	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
@@ -47,7 +49,6 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type FieldSchema,
 	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
 	FieldKind,
 	type NodeSchemaMetadata,
 	type FieldSchemaAlpha,
@@ -57,9 +58,11 @@ import {
 	type UnannotateSchemaRecord,
 } from "../../schemaTypes.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
-import { mapTreeFromNodeData, type InsertableContent } from "../../toMapTree.js";
+import {
+	unhydratedFlexTreeFromInsertable,
+	type InsertableContent,
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
-import { stringSchema } from "../../leafNodeSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -201,37 +204,6 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
 	return keyMap;
 }
 
-const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
-
-/**
- * Modify `flexNode` to add a newly generated identifier under the given `storedKey`.
- * @remarks
- * This is used after checking if the user is trying to read an identifier field of an unhydrated node, but the identifier is not present.
- * This means the identifier is an "auto-generated identifier", because otherwise it would have been supplied by the user at construction time and would have been successfully read just above.
- * In this case, it is categorically impossible to provide an identifier (auto-generated identifiers can't be created until hydration/insertion time), so we emit an error.
- * @privateRemarks
- * TODO: this special case logic should move to the inner node (who's schema claims it has an identifier), rather than here, after we already read undefined out of a required field.
- * TODO: unify this with a more general defaults mechanism.
- */
-export function lazilyAllocateIdentifier(
-	flexNode: UnhydratedFlexTreeNode,
-	storedKey: FieldKey,
-): string {
-	debugAssert(() => !flexNode.mapTree.fields.has(storedKey) || "Identifier field already set");
-	const value = globalIdentifierAllocator.decompress(
-		globalIdentifierAllocator.generateCompressedId(),
-	);
-	flexNode.mapTree.fields.set(storedKey, [
-		{
-			type: brand(stringSchema.identifier),
-			value,
-			fields: new Map(),
-		},
-	]);
-
-	return value;
-}
-
 /**
  * Creates a proxy handler for the given schema.
  *
@@ -262,20 +234,13 @@ function createProxyHandler(
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
-					return getTreeNodeForField(field);
-				}
-
-				if (
-					fieldInfo.schema.kind === FieldKind.Identifier &&
-					flexNode instanceof UnhydratedFlexTreeNode
-				) {
-					return lazilyAllocateIdentifier(flexNode, fieldInfo.storedKey);
+					return tryGetTreeNodeForField(field);
 				}
 
 				return undefined;
 			}
 
-			// POJO mode objects don't have TreeNode's build in members on their targets, so special case them:
+			// POJO mode objects don't have TreeNode's built in members on their targets, so special case them:
 			if (propertyKey === typeSchemaSymbol) {
 				return schema;
 			}
@@ -337,7 +302,7 @@ function createProxyHandler(
 			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
-				value: field === undefined ? undefined : getTreeNodeForField(field),
+				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
 				writable: true,
 				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
 				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
@@ -388,6 +353,7 @@ abstract class CustomObjectNodeBase<
  *
  * @param name - Unique identifier for this schema within this factory's scope.
  * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 export function objectSchema<
 	TName extends string,
@@ -400,6 +366,7 @@ export function objectSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
 	// Field set can't be modified after this since derived data is stored in maps.
@@ -495,10 +462,7 @@ export function objectSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as object, this as Output);
 		}
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
@@ -546,6 +510,8 @@ export function objectSchema<
 			return lazyChildTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

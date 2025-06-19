@@ -7,11 +7,10 @@ import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../../../core/index.js";
-import {
-	type FlexibleFieldContent,
-	type FlexTreeNode,
-	type FlexTreeSequenceField,
-	isFlexTreeNode,
+import type {
+	FlexibleFieldContent,
+	FlexTreeNode,
+	FlexTreeSequenceField,
 } from "../../../feature-libraries/index.js";
 import {
 	normalizeAllowedTypes,
@@ -39,10 +38,14 @@ import {
 	getOrCreateInnerNode,
 	type TreeNodeSchemaClass,
 	getKernel,
-	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
+	type UnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
+	getOrCreateNodeFromInnerUnboxedNode,
 } from "../../core/index.js";
-import { type InsertableContent, mapTreeFromNodeData } from "../../toMapTree.js";
+import {
+	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
@@ -51,6 +54,7 @@ import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
 } from "./arrayNodeTypes.js";
+import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -731,9 +735,9 @@ function createArrayNodeProxy(
 			}
 
 			const maybeContent = field.at(maybeIndex);
-			return isFlexTreeNode(maybeContent)
-				? getOrCreateNodeFromInnerNode(maybeContent)
-				: maybeContent;
+			return maybeContent === undefined
+				? undefined
+				: getOrCreateNodeFromInnerUnboxedNode(maybeContent);
 		},
 		set: (target, key, newValue, receiver) => {
 			if (key === "length") {
@@ -792,7 +796,7 @@ function createArrayNodeProxy(
 				// To satisfy 'deepEquals' level scrutiny, the property descriptor for indexed properties must
 				// be a simple value property (as opposed to using getter) and declared writable/enumerable/configurable.
 				return {
-					value: isFlexTreeNode(val) ? getOrCreateNodeFromInnerNode(val) : val,
+					value: val === undefined ? undefined : getOrCreateNodeFromInnerUnboxedNode(val),
 					writable: true, // For MVP, setting indexed properties is reported as allowed here (for deep equals compatibility noted above), but not actually supported.
 					enumerable: true,
 					configurable: true,
@@ -1013,7 +1017,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		const movedCount = sourceEnd - sourceStart;
 		if (!destinationField.context.isHydrated()) {
-			if (!(sourceField instanceof UnhydratedTreeSequenceField)) {
+			if (!(sourceField instanceof UnhydratedSequenceField)) {
 				throw new UsageError(
 					"Cannot move elements from a hydrated array to an unhydrated array.",
 				);
@@ -1079,6 +1083,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
  * Define a {@link TreeNodeSchema} for a {@link (TreeArrayNode:interface)}.
  *
  * @param name - Unique identifier for this schema including the factory's scope.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function arraySchema<
@@ -1092,6 +1097,7 @@ export function arraySchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	customizable: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ) {
 	type Output = ArrayNodeCustomizableSchema<
 		TName,
@@ -1138,10 +1144,7 @@ export function arraySchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as object, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -1190,6 +1193,8 @@ export function arraySchema<
 			return lazyChildTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {

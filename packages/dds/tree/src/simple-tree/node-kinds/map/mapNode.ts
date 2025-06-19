@@ -10,7 +10,7 @@ import type {
 	FlexTreeOptionalField,
 	OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -33,17 +33,22 @@ import {
 	type TreeNode,
 	typeSchemaSymbol,
 	type Context,
-	UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
+	type UnhydratedFlexTreeNode,
 } from "../../core/index.js";
 import {
-	mapTreeFromNodeData,
+	unhydratedFlexTreeFromInsertable,
 	type FactoryContent,
 	type InsertableContent,
-} from "../../toMapTree.js";
+} from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
-import { brand, count, type RestrictiveStringRecord } from "../../../util/index.js";
+import {
+	brand,
+	count,
+	type JsonCompatibleReadOnlyObject,
+	type RestrictiveStringRecord,
+} from "../../../util/index.js";
 import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
@@ -172,14 +177,14 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		for (const key of node.keys()) {
 			yield [
 				key,
-				getTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+				tryGetTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
 			];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = this.innerNode;
 		const field = node.getBoxed(brand(key));
-		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		return tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
@@ -215,8 +220,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		callbackFn: (value: TreeNodeFromImplicitAllowedTypes<T>, key: string, map: TThis) => void,
 		thisArg?: unknown,
 	): void {
-		for (const field of getOrCreateInnerNode(this).boxedIterator()) {
-			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		for (const field of getOrCreateInnerNode(this)) {
+			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
 	}
@@ -228,6 +233,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
  *
  * @param base - base schema type to extend.
  * @param useMapPrototype - should this type emulate a ES6 Map object (by faking its prototype with a proxy).
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function mapSchema<
@@ -241,6 +247,7 @@ export function mapSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	useMapPrototype: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ) {
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
@@ -271,10 +278,7 @@ export function mapSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return UnhydratedFlexTreeNode.getOrCreate(
-				unhydratedContext,
-				mapTreeFromNodeData(input as FactoryContent, this as unknown as ImplicitAllowedTypes),
-			);
+			return unhydratedFlexTreeFromInsertable(input as FactoryContent, this as typeof Schema);
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -297,6 +301,8 @@ export function mapSchema<
 			return lazyChildTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
