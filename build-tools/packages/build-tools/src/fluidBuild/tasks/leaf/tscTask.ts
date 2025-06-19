@@ -9,6 +9,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 import isEqual from "lodash.isequal";
+import diff from "microdiff";
 import * as tsTypes from "typescript";
 
 import { TscUtil, getTscUtils } from "../../tscUtils";
@@ -293,6 +294,7 @@ export class TscTask extends LeafTask {
 			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
 			this.traceTrigger("BuildInfo:");
 			this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+			this.traceTrigger(JSON.stringify(diff(configOptions, tsBuildInfoOptions), undefined, 2));
 			return false;
 		}
 		return true;
