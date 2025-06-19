@@ -6,14 +6,14 @@
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
 import type {
-	Presence,
 	Attendee,
-	StatesWorkspace,
 	Latest,
+	Presence,
+	StatesWorkspace,
 } from "@fluidframework/presence/beta";
 import { AttendeeStatus, StateFactory } from "@fluidframework/presence/beta";
 
-import { IMousePositionValidator, type IMousePosition } from "./types.js";
+import { MousePositionValidator, type MousePosition } from "./types.js";
 
 /**
  * Definitions of the events that the MouseTracker raises.
@@ -35,7 +35,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * State that tracks the latest mouse position  of connected session clients.
 	 */
-	private readonly cursor: Latest<IMousePosition>;
+	private readonly cursor: Latest<MousePosition>;
 
 	constructor(
 		private readonly presence: Presence,
@@ -51,9 +51,9 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		// Create a Latest state object to track the mouse position.
 		statesWorkspace.add(
 			"cursor",
-			StateFactory.latest<IMousePosition>({
+			StateFactory.latest<MousePosition>({
 				local: { x: 0, y: 0 },
-				validator: IMousePositionValidator,
+				validator: MousePositionValidator,
 			}),
 		);
 
@@ -85,13 +85,16 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * A map of session clients to mouse positions.
 	 */
-	public getMousePresences(): Map<Attendee, IMousePosition> {
-		const statuses: Map<Attendee, IMousePosition> = new Map();
+	public getMousePresences(): Map<Attendee, MousePosition> {
+		const statuses: Map<Attendee, MousePosition> = new Map();
 
 		for (const { attendee, value } of this.cursor.getRemotes()) {
 			if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
 				const v = value();
+
 				if (v === undefined) {
+					// If the value is undefined, it means the data was invalid according to the validator. Rather than dealing
+					// with that case, we just ignore that attendee's mouse data.
 					continue;
 				}
 				statuses.set(attendee, v);
@@ -112,7 +115,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 	/**
 	 * The most recent mouse position of the current client.
 	 */
-	public getMyMousePosition(): IMousePosition {
+	public getMyMousePosition(): MousePosition {
 		return this.cursor.local;
 	}
 }

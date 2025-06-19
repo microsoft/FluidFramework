@@ -11,7 +11,7 @@ import type {
 } from "@fluidframework/presence/alpha";
 
 import type { MouseTracker } from "./MouseTracker.js";
-import type { IMousePosition } from "./types.js";
+import type { MousePosition } from "./types.js";
 
 /**
  * Initializes reactions support for the app. Initialization will create a presence Notifications workspace and connect
@@ -33,7 +33,7 @@ export function initializeReactions(presence: Presence, mouseTracker: MouseTrack
 				Notifications<// This explicit generic type specification will not be required in the future.
 				{
 					reaction: (
-						// In the future, we'll be able to use IMousePosition here.
+						// In the future, we'll be able to use MousePosition here.
 						position: { x: number; y: number },
 						value: string,
 					) => void;
@@ -66,7 +66,7 @@ export function initializeReactions(presence: Presence, mouseTracker: MouseTrack
 /**
  * Renders reactions to the window using absolute positioning.
  */
-function onReaction(client: Attendee, position: IMousePosition, value: string): void {
+function onReaction(client: Attendee, position: MousePosition, value: string): void {
 	const reactionDiv = document.createElement("div");
 	reactionDiv.className = "reaction";
 	reactionDiv.style.position = "absolute";

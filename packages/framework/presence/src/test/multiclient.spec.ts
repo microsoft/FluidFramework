@@ -360,9 +360,8 @@ describe(`Presence with TinyliciousClient`, () => {
 
 			describe("is called", () => {
 				it("on value read", async () => {
-					const data = client1.getRemote(attendee2);
 					// Reading the remote value should cause the validator to be called
-					assert.equal(data?.value()?.num, 1);
+					assert.equal(client1.getRemote(attendee2)?.value()?.num, 1);
 					assert.equal(validatorFunction1.callCount, 1, "call count is wrong");
 				});
 

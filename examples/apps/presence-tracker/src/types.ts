@@ -3,33 +3,30 @@
  * Licensed under the MIT License.
  */
 
-import type { StateSchemaValidator } from "@fluidframework/presence/alpha";
+import type { StateSchemaValidator } from "@fluidframework/presence/beta";
 import { type Static, Type } from "@sinclair/typebox";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules -- this is the correct module. See https://github.com/sinclairzx81/typebox#values
 import { Value } from "@sinclair/typebox/value";
 
-/**
- * IMousePosition is the data that individual session clients share via presence.
- */
-export type IMousePosition = Static<typeof IMousePosition>;
-
-export const IMousePosition = Type.Object({
+export const MousePosition = Type.Object({
 	x: Type.Readonly(Type.Number()),
 	y: Type.Readonly(Type.Number()),
 });
 
-export const IMousePositionValidator: StateSchemaValidator<IMousePosition> = (
+/**
+ * MousePosition is the data that individual session clients share via presence.
+ */
+export type MousePosition = Static<typeof MousePosition>;
+
+export const MousePositionValidator: StateSchemaValidator<MousePosition> = (
 	maybeValid,
-): IMousePosition | undefined => {
+): MousePosition | undefined => {
 	console.debug(`Validator called with`, maybeValid);
-	// const isValid = Value.Parse(IMousePosition, maybeValid);
 
-	// Will throw if the value is invalid.
-	Value.Assert(IMousePosition, maybeValid);
+	// Value matches type expectations
+	if (Value.Check(MousePosition, maybeValid)) {
+		return maybeValid;
+	}
 
-	// Will throw if the value is invalid.
-	// const parsed = Value.Parse(IMousePosition, maybeValid);
-
-	// console.debug(parsed);
-	return maybeValid;
+	return undefined;
 };
