@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "@fluidframework/core-utils/internal";
 import {
 	asTreeNodeSchemaCorePrivate,
 	type NormalizedAnnotatedAllowedTypes,
@@ -57,7 +56,7 @@ export function walkAllowedTypes(
  */
 export interface SchemaVisitor {
 	/**
-	 * Called for each node schema.
+	 * Called once for each node schema.
 	 */
 	node?: (schema: TreeNodeSchema) => void;
 	/**

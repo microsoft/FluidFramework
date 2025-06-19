@@ -22,7 +22,7 @@ import {
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
-import { NodeKind, type TreeNodeSchema } from "./core/index.js";
+import { NodeKind } from "./core/index.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
 import type {
@@ -44,16 +44,9 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return getOrCreate(viewToStoredCache, root, () => {
 		const normalized = normalizeFieldSchema(root);
 		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-		const visitedNodes: Set<TreeNodeSchema> = new Set();
 		walkFieldSchema(normalized, {
 			node(schema) {
-				if (!nodeSchema.has(brand(schema.identifier))) {
-					nodeSchema.set(
-						brand(schema.identifier),
-						getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
-					);
-					visitedNodes.add(schema);
-				} else if (!visitedNodes.has(schema)) {
+				if (nodeSchema.has(brand(schema.identifier))) {
 					// Throw an error if the identifier has already been encountered for a different schema
 					// Use JSON.stringify to quote and escape identifier string.
 					throw new UsageError(
@@ -62,6 +55,10 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 						)}. Remove or rename them to avoid the collision.`,
 					);
 				}
+				nodeSchema.set(
+					brand(schema.identifier),
+					getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
+				);
 			},
 		});
 
