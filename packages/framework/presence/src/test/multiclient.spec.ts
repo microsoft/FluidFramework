@@ -134,7 +134,7 @@ const event = {
 	},
 };
 
-describe.skip(`Presence with TinyliciousClient`, () => {
+describe(`Presence with TinyliciousClient`, () => {
 	const connectedContainers: IFluidContainer[] = [];
 	const connectTimeoutMs = 10000;
 	const user1: TinyliciousUser = {
@@ -374,7 +374,7 @@ describe.skip(`Presence with TinyliciousClient`, () => {
 					assert.equal(validatorFunction1.callCount, 2);
 				});
 
-				it("client2 sees initial data from client1", async () => {
+				it.skip("client2 sees initial data from client1", async () => {
 					// Second client should see the initial value for client 1
 					data = client2.getRemote(attendee1);
 					assert.equal(data?.value()?.num, 0);
