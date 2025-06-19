@@ -207,7 +207,7 @@ export class TreeViewConfiguration<
 			allowedTypes({ types }): void {
 				checkUnion(
 					types.map((t) =>
-						isAnnotatedAllowedType(t) ? evaluateLazySchema(t.type) : evaluateLazySchema(t),
+						evaluateLazySchema(isAnnotatedAllowedType(t)? t.type: t),
 					),
 					config.preventAmbiguity,
 					ambiguityErrors,
