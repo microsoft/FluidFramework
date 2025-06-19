@@ -254,15 +254,16 @@ async function redeemSharingLink(
 				queryParamsLength: new URL(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem).search
 					.length,
 				useHeaders: true,
+				isRedemptionNonDurable,
 			});
 			// There is an issue where if we use the siteUrl in /shares, then the allowed length of url is just a few hundred characters(300-400)
 			// and we fail to do the redeem. But if we use the tenant domain in the url, then the allowed length becomes 2048. So,
 			// construct the url for /shares using tenant domain. We get tenant domain by getting origin of the siteUrl.
 			try {
 				await callSharesAPI(new URL(odspResolvedUrl.siteUrl).origin);
-				event.end({ details, isRedemptionNonDurable });
+				event.end({ details });
 			} catch (error) {
-				event.cancel({ details, isRedemptionNonDurable }, error);
+				event.cancel({ details }, error);
 				throw error;
 			}
 		},
