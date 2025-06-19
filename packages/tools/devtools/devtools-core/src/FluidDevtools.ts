@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
-import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import {
+	ContainerDevtools,
+	DecomposedContainer,
+	type ContainerDevtoolsProps,
+	type DataObjectDevtoolsProps,
+	type DecomposedDevtoolsIContainer,
+} from "./ContainerDevtools.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -313,6 +321,33 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
+	 * TODO
+	 */
+	public registerDataObject(props: DataObjectDevtoolsProps): void {
+		const { runtime, dataObject } = props;
+
+		const runtimeId = runtime?.id;
+
+		if (runtimeId === undefined) {
+			throw new UsageError("WHHEy");
+		}
+
+		const decomposedIContainerComponent = toDecomposedIContainer(dataObject);
+
+		if (this.containers.has(runtimeId)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(runtimeId));
+		}
+
+		const containerDevtools = new ContainerDevtools({
+			containerKey: runtimeId,
+			container: decomposedIContainerComponent,
+		});
+		this.containers.set(runtimeId, containerDevtools);
+
+		this.postContainerList();
+	}
+
+	/**
 	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
 	 */
 	public closeContainerDevtools(containerKey: ContainerKey): void {
@@ -425,4 +460,18 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();
+}
+
+/**
+ * TODO
+ */
+export function toDecomposedIContainer(
+	dataObject: PureDataObject,
+): DecomposedDevtoolsIContainer {
+	// Type assertion for runtime
+	const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
+
+	const decomposedContainer = new DecomposedContainer(runtime);
+
+	return decomposedContainer;
 }

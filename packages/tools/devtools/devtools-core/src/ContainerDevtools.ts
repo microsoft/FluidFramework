@@ -3,9 +3,17 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import type { IAudience } from "@fluidframework/container-definitions";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	AttachState,
+	IContainerEvents,
+	ICriticalContainerError,
+} from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-loader";
+import type { IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 
 import type { AudienceClientMetadata } from "./AudienceMetadata.js";
@@ -45,6 +53,72 @@ import {
 } from "./messaging/index.js";
 
 /**
+ * TODO
+ *
+ * @alpha
+ */
+export interface DecomposedDevtoolsIContainer extends IEventProvider<IContainerEvents> {
+	readonly audience: IAudience;
+	readonly clientId?: string | undefined;
+	readonly attachState: AttachState;
+	readonly connectionState: ConnectionState;
+	readonly closed: boolean;
+
+	connect?(): void;
+	disconnect?(): void;
+	close?(error?: ICriticalContainerError): void;
+}
+
+/**
+ * TODO
+ *
+ * @alpha
+ */
+export class DecomposedContainer
+	extends TypedEventEmitter<IContainerEvents>
+	implements DecomposedDevtoolsIContainer
+{
+	private readonly attachedHandler = (): boolean => this.emit("attached");
+	private readonly connectedHandler = (clientId: string): boolean =>
+		this.emit("connected", clientId);
+	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
+	private readonly disposedHandler = (error?: ICriticalContainerError): boolean =>
+		this.emit("disposed", error);
+
+	private readonly runtime: IFluidDataStoreRuntime;
+
+	public constructor(runtime: IFluidDataStoreRuntime) {
+		super();
+		this.runtime = runtime;
+		runtime.on("attached", this.attachedHandler);
+		runtime.on("connected", this.connectedHandler);
+		runtime.on("disconnected", this.disconnectedHandler);
+		runtime.on("dispose", this.disposedHandler); // "disposed" in IContainerEvents
+		// TODO: What to do with closed?
+	}
+
+	public get audience(): IAudience {
+		return this.runtime.getAudience();
+	}
+
+	public get clientId(): string | undefined {
+		return this.runtime.clientId;
+	}
+
+	public get attachState(): AttachState {
+		return this.runtime.attachState;
+	}
+
+	public get connectionState(): ConnectionState {
+		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
+	}
+
+	public get closed(): boolean {
+		return !this.runtime.connected;
+	}
+}
+
+/**
  * Properties for registering a {@link @fluidframework/container-definitions#IContainer} with the Devtools.
  * @alpha
  */
@@ -52,7 +126,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
 	 * The Container to register with the Devtools.
 	 */
-	container: IContainer;
+	container: DecomposedDevtoolsIContainer;
 
 	/**
 	 * (optional) Distributed Data Structures (DDSs) associated with the
@@ -70,6 +144,16 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	containerData?: Record<string, IFluidLoadable>;
 
 	// TODO: Add ability for customers to specify custom visualizer overrides
+}
+
+/**
+ * TODO
+ *
+ * @alpha
+ */
+export interface DataObjectDevtoolsProps {
+	runtime: IFluidDataStoreRuntime;
+	dataObject: PureDataObject;
 }
 
 /**
@@ -129,7 +213,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	/**
 	 * The registered Container.
 	 */
-	public readonly container: IContainer;
+	public readonly container: DecomposedDevtoolsIContainer;
 
 	/**
 	 * The {@link ContainerDevtools.container}'s audience.
@@ -281,7 +365,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[ConnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as ConnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.connect();
+				this.container.connect?.();
 				return true;
 			}
 			return false;
@@ -289,7 +373,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.disconnect(
+				this.container.disconnect?.(
 					/* TODO: Specify devtools reason here once it is supported */
 				);
 				return true;
@@ -299,7 +383,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[CloseContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as CloseContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.close(/* TODO: Specify devtools reason here once it is supported */);
+				this.container.close?.(/* TODO: Specify devtools reason here once it is supported */);
 				return true;
 			}
 			return false;

@@ -12,6 +12,12 @@ import {
 import { SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import {
+	createDevtoolsLogger,
+	initializeDevtools,
+} from "@fluidframework/devtools-core/internal";
+// import type { IDevtoolsLogger, IFluidDevtools } from "@fluidframework/devtools-core/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
@@ -143,6 +149,17 @@ export class AppDataTwo extends DataObject {
 		this._text = await this.root.get<IFluidHandle<SharedString>>(this.sharedTextKey)?.get();
 	}
 }
+
+/**
+ * TODO
+ */
+export const logger = createDevtoolsLogger();
+/**
+ * TODO
+ */
+export const devtools = initializeDevtools({
+	logger,
+});
 
 /**
  * AppData uses the React CollaborativeTextArea to load a collaborative HTML <textarea>
@@ -313,6 +330,11 @@ export class AppData extends DataObject {
 		} else {
 			this._sharedTree = sharedTree;
 		}
+
+		// if (process.env.NODE_ENV === "development") {
+		// 	console.log("Running in DEVELOPMENT mode");
+		// 	this.devtools?.registerDataObject({ runtime: this.runtime, dataObject: this });
+		// }
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
@@ -386,5 +408,10 @@ export class AppData extends DataObject {
 				},
 			}),
 		);
+	}
+
+	public getRuntime(): IFluidDataStoreRuntime {
+		console.log("this.runtime", this.runtime);
+		return this.runtime;
 	}
 }
