@@ -289,11 +289,8 @@ export class TscTask extends LeafTask {
 		}
 
 		if (!isEqual(configOptions, tsBuildInfoOptions)) {
-			this.traceTrigger(`ts option changed ${configFileFullPath}`);
-			this.traceTrigger("Config:");
-			this.traceTrigger(JSON.stringify(configOptions, undefined, 2));
-			this.traceTrigger("BuildInfo:");
-			this.traceTrigger(JSON.stringify(tsBuildInfoOptions, undefined, 2));
+			this.traceTrigger(`ts option changed in '${configFileFullPath}'`);
+			this.traceTrigger("Diff:");
 			this.traceTrigger(JSON.stringify(diff(configOptions, tsBuildInfoOptions), undefined, 2));
 			return false;
 		}
