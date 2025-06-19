@@ -234,9 +234,9 @@ export function recordSchema<
 	);
 
 	let customizable: boolean; // TODO: is this needed?
-	let unhydratedContext: Context; // TODO: is this needed?
+	let unhydratedContext: Context; // TODO: can this be inlined?
 
-	class CustomRecordNode
+	class Schema
 		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
 		implements TreeRecordNode<TUnannotatedAllowedTypes>
 	{
@@ -254,7 +254,7 @@ export function recordSchema<
 			return createRecordNodeProxy(
 				proxyTarget,
 				this as unknown as RecordNodeSchema,
-			) as unknown as CustomRecordNode;
+			) as unknown as Schema;
 		}
 
 		public static override buildRawNode<T2>(
@@ -264,12 +264,12 @@ export function recordSchema<
 		): UnhydratedFlexTreeNode {
 			return unhydratedFlexTreeFromInsertable(
 				input as object,
-				this as typeof CustomRecordNode,
+				this as typeof Schema,
 			);
 		}
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			customizable = (this as unknown) !== CustomRecordNode;
+			customizable = (this as unknown) !== Schema;
 			const schema = this as unknown as RecordNodeSchema;
 			unhydratedContext = getUnhydratedContext(schema);
 
@@ -279,7 +279,7 @@ export function recordSchema<
 			{
 				let prototype: object = this.prototype;
 				// There isn't a clear cleaner way to author this loop.
-				while (prototype !== CustomRecordNode.prototype) {
+				while (prototype !== Schema.prototype) {
 					for (const key of Object.getOwnPropertyNames(prototype)) {
 						if (
 							// constructor is a special case, since one is built in on the derived type, and shadowing it works fine since we only use it before fields are applied.
@@ -323,7 +323,7 @@ export function recordSchema<
 			return identifier;
 		}
 		public get [typeSchemaSymbol](): Output {
-			return CustomRecordNode.constructorCached?.constructor as unknown as Output;
+			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 	}
 
@@ -340,6 +340,6 @@ export function recordSchema<
 			TCustomMetadata
 		>;
 
-	const output: Output = CustomRecordNode;
+	const output: Output = Schema;
 	return output;
 }
