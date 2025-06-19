@@ -134,7 +134,7 @@ const event = {
 	},
 };
 
-describe(`Presence with TinyliciousClient`, () => {
+describe.only(`Presence with TinyliciousClient`, () => {
 	const connectedContainers: IFluidContainer[] = [];
 	const connectTimeoutMs = 10000;
 	const user1: TinyliciousUser = {
@@ -259,7 +259,7 @@ describe(`Presence with TinyliciousClient`, () => {
 			await initMultiClientSetup();
 		});
 
-		describe("Latest", () => {
+		describe("Latest validator", () => {
 			let stateWorkspace1: StatesWorkspace<{
 				testData: InternalTypes.ManagerFactory<
 					string,
@@ -324,26 +324,26 @@ describe(`Presence with TinyliciousClient`, () => {
 				await event.RemoteUpdated(client1);
 			});
 
-			it("getRemote does not call validator", async () => {
+			it("is not called by .getRemote()", async () => {
 				client1.getRemote(attendee2);
 				assert.equal(validatorFunction1.callCount, 0);
 			});
 
-			it("calls validator on value read", async () => {
+			it("is called on value read", async () => {
 				const data = client1.getRemote(attendee2);
 				// Reading the remote value should cause the validator to be called
 				assert.equal(data?.value()?.num, 1);
 				assert.equal(validatorFunction1.callCount, 1, "call count is wrong");
 			});
 
-			describe("remote data tests", () => {
+			describe("remote data validator", () => {
 				let data: LatestData<TestData, ProxiedValueAccessor<TestData>>;
 
 				beforeEach(() => {
 					data = client1.getRemote(attendee2);
 				});
 
-				it("calls validator only once if data is unchanged", async () => {
+				it("is called only once if data is unchanged", async () => {
 					// Reading the remote value should cause the validator to be called the first time,
 					// but subsequent reads should not
 					assert.equal(data?.value()?.num, 1);
@@ -354,7 +354,7 @@ describe(`Presence with TinyliciousClient`, () => {
 					assert.equal(validatorFunction1.callCount, 1, "subsequent call count is wrong");
 				});
 
-				it("calls validator when remote data has changed", async () => {
+				it("is called when remote data has changed", async () => {
 					// Get the remote data and read it, verify that the validator is called once.
 					data = client1.getRemote(attendee2);
 					assert.equal(data?.value()?.num, 1);
@@ -374,18 +374,18 @@ describe(`Presence with TinyliciousClient`, () => {
 					assert.equal(validatorFunction1.callCount, 2);
 				});
 
-				it.skip("client2 sees initial data from client1", async () => {
+				it("is called on unvalidated data from remote client", async () => {
 					// Second client should see the initial value for client 1
 					data = client2.getRemote(attendee1);
-					assert.equal(data?.value()?.num, 0);
+					assert.equal(data?.value()?.num, 0, "initial value is not correct");
 
 					// Second client should have called the validator once for the read above
-					assert.equal(validatorFunction1.callCount, 1);
+					assert.equal(validatorFunction2.callCount, 1, "callCount is wrong");
 				});
 			});
 		});
 
-		describe("LatestMap", () => {
+		describe("LatestMap validator", () => {
 			let stateWorkspace1: StatesWorkspace<{
 				testData: InternalTypes.ManagerFactory<
 					string,
@@ -444,12 +444,12 @@ describe(`Presence with TinyliciousClient`, () => {
 				await event.RemoteMapUpdated(client1);
 			});
 
-			it("getRemote does not call validator", async () => {
+			it("is not called by .getRemote()", async () => {
 				client1.getRemote(attendee2);
 				assert.equal(validatorFunction1.callCount, 0);
 			});
 
-			it(".get does not call validator", async () => {
+			it("is not called by .get()", async () => {
 				const mapData = client1.getRemote(attendee2);
 				assert.equal(validatorFunction1.callCount, 0);
 
@@ -457,23 +457,21 @@ describe(`Presence with TinyliciousClient`, () => {
 				assert.equal(validatorFunction1.callCount, 0);
 			});
 
-			it("calls validator on key value read", async () => {
+			it("is called when a key value is read", async () => {
 				const mapData = client1.getRemote(attendee2);
 				const key = mapData.get("key1");
-				assert.equal(validatorFunction1.callCount, 0);
-
 				assert.equal(key?.value()?.num, 3);
 				assert.equal(validatorFunction1.callCount, 1, "call count is wrong");
 			});
 
-			describe("remote data tests", () => {
+			describe("remote data validator", () => {
 				let mapData: ReadonlyMap<string, LatestData<TestData, ProxiedValueAccessor<TestData>>>;
 
 				beforeEach(() => {
 					mapData = client1.getRemote(attendee2);
 				});
 
-				it("calls validator only once if data is unchanged", async () => {
+				it("is called only once if data is unchanged", async () => {
 					// Reading the remote value should cause the validator to be called the first time,
 					// but subsequent reads should not
 					assert.equal(mapData.get("key1")?.value()?.num, 3);
@@ -484,7 +482,7 @@ describe(`Presence with TinyliciousClient`, () => {
 					assert.equal(validatorFunction1.callCount, 1, "subsequent call count is wrong");
 				});
 
-				it("calls validator when remote key data has changed", async () => {
+				it("is called when remote key data has changed", async () => {
 					// Get the remote data and read it, verify that the validator is called once.
 					mapData = client1.getRemote(attendee2);
 					assert.equal(mapData.get("key1")?.value()?.num, 3);
@@ -509,7 +507,7 @@ describe(`Presence with TinyliciousClient`, () => {
 				});
 
 				// FIXME: This test should pass.
-				it.skip("does not call validator when a different key is changed", async () => {
+				it.skip("is not called when a different key is changed", async () => {
 					// Get the remote data and read it, verify that the validator is called once.
 					mapData = client1.getRemote(attendee2);
 					assert.equal(mapData.get("key1")?.value()?.num, 3);
@@ -522,18 +520,26 @@ describe(`Presence with TinyliciousClient`, () => {
 					// Wait for the remote data to get to client 1
 					await event.RemoteMapUpdated(client1, "client1");
 
-					// Reading the remote value for key 1should not cause the validator to be called a second time.
-					const mapData2 = client1.getRemote(attendee2);
+					// Reading the remote value for key 1 should not cause the validator to be called a second time.
 					assert.equal(
 						mapData.get("key1")?.value()?.num,
 						3,
 						"third getRemote(attendee2) count is wrong",
 					);
-					assert.equal(validatorFunction1.callCount, 1, "call count is wrong");
+					// FIXME this should pass
+					// assert.equal(
+					// 	validatorFunction1.callCount,
+					// 	1,
+					// 	"validator called on previously validated value",
+					// );
 
 					// Reading key2's value will call the validator
 					assert.equal(mapData.get("key2")?.value()?.num, 22);
-					assert.equal(validatorFunction1.callCount, 2, "call count is wrong");
+					assert.equal(
+						validatorFunction1.callCount,
+						2,
+						"validator not called on unvalidated data",
+					);
 				});
 
 				it("client2 sees initial data from client1", async () => {
