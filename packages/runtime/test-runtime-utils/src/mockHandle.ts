@@ -32,10 +32,9 @@ export class MockHandle<T> extends FluidHandleBase<T> {
 	public attachGraph(): void {
 		this.graphAttachState = AttachState.Attached;
 	}
+
 	/**
-	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 * See SharedObjectHandle.bind - Needs to be present for serializer to work properly
 	 */
-	public bind() {
-		throw Error("MockHandle.bind() unimplemented.");
-	}
+	public bind(): void {}
 }
