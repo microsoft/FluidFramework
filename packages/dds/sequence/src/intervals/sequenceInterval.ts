@@ -35,14 +35,13 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { computeStickinessFromSide } from "../intervalCollection.js";
-
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ISerializableInterval,
 	ISerializedInterval,
 	IntervalStickiness,
 	IntervalType,
+	computeStickinessFromSide,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 	type SerializedIntervalDelta,
@@ -180,7 +179,7 @@ export interface SequenceInterval extends ISerializableInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		useNewSlidingBehavior?: boolean,
+		canSlideToEndpoint?: boolean,
 	): SequenceInterval | undefined;
 	/**
 	 * @returns whether this interval overlaps with `b`.
@@ -507,17 +506,9 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		useNewSlidingBehavior: boolean = false,
+		canSlideToEndpoint: boolean = false,
 	) {
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
-		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
-		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
-		const stickiness = computeStickinessFromSide(
-			startPos ?? startSegment?.endpointType,
-			startSide ?? this.startSide,
-			endPos ?? endSegment?.endpointType,
-			endSide ?? this.endSide,
-		);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
 			if (op === undefined) {
@@ -529,17 +520,22 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 		let startRef = this.start;
 		if (startPos !== undefined) {
-			startRef = createPositionReference(
-				this.client,
+			const slidingPreference = startReferenceSlidingPreference(
 				startPos,
-				getRefType(this.start.refType),
-				op,
-				undefined,
-				localSeq,
-				startReferenceSlidingPreference(stickiness),
-				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
-				useNewSlidingBehavior,
+				startSide ?? Side.Before,
+				endPos,
+				endSide ?? Side.Before,
 			);
+			startRef = createPositionReference({
+				client: this.client,
+				pos: startPos,
+				refType: getRefType(this.start.refType),
+				op,
+				localSeq,
+				slidingPreference,
+				canSlideToEndpoint:
+					canSlideToEndpoint && slidingPreference === SlidingPreference.BACKWARD,
+			});
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
 			}
@@ -547,17 +543,22 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 		let endRef = this.end;
 		if (endPos !== undefined) {
-			endRef = createPositionReference(
-				this.client,
+			const slidingPreference = endReferenceSlidingPreference(
+				startPos,
+				startSide ?? Side.Before,
 				endPos,
-				getRefType(this.end.refType),
-				op,
-				undefined,
-				localSeq,
-				endReferenceSlidingPreference(stickiness),
-				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
-				useNewSlidingBehavior,
+				endSide ?? Side.Before,
 			);
+			endRef = createPositionReference({
+				client: this.client,
+				pos: endPos,
+				refType: getRefType(this.end.refType),
+				op,
+				localSeq,
+				slidingPreference,
+				canSlideToEndpoint:
+					canSlideToEndpoint && slidingPreference === SlidingPreference.FORWARD,
+			});
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
 			}
@@ -587,17 +588,27 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	}
 }
 
-export function createPositionReferenceFromSegoff(
-	client: Client,
-	segoff: { segment: ISegment; offset: number } | undefined | "start" | "end",
-	refType: ReferenceType,
-	op?: ISequencedDocumentMessage,
-	localSeq?: number,
-	fromSnapshot?: boolean,
-	slidingPreference?: SlidingPreference,
-	canSlideToEndpoint?: boolean,
-	rollback?: boolean,
-): LocalReferencePosition {
+export function createPositionReferenceFromSegoff({
+	client,
+	segoff,
+	refType,
+	op,
+	localSeq,
+	fromSnapshot,
+	slidingPreference,
+	canSlideToEndpoint,
+	rollback,
+}: {
+	client: Client;
+	segoff: { segment: ISegment; offset: number } | undefined | "start" | "end";
+	refType: ReferenceType;
+	op?: ISequencedDocumentMessage;
+	localSeq?: number;
+	fromSnapshot?: boolean;
+	slidingPreference: SlidingPreference | undefined;
+	canSlideToEndpoint: boolean | undefined;
+	rollback?: boolean;
+}): LocalReferencePosition {
 	if (segoff === "start" || segoff === "end") {
 		return client.createLocalReferencePosition(
 			segoff,
@@ -639,18 +650,27 @@ export function createPositionReferenceFromSegoff(
 	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
-function createPositionReference(
-	client: Client,
-	pos: number | "start" | "end",
-	refType: ReferenceType,
-	op?: ISequencedDocumentMessage,
-	fromSnapshot?: boolean,
-	localSeq?: number,
-	slidingPreference?: SlidingPreference,
-	exclusive: boolean = false,
-	useNewSlidingBehavior: boolean = false,
-	rollback?: boolean,
-): LocalReferencePosition {
+function createPositionReference({
+	client,
+	pos,
+	refType,
+	op,
+	fromSnapshot,
+	localSeq,
+	slidingPreference,
+	canSlideToEndpoint,
+	rollback,
+}: {
+	client: Client;
+	pos: number | "start" | "end";
+	refType: ReferenceType;
+	op?: ISequencedDocumentMessage;
+	fromSnapshot?: boolean;
+	localSeq?: number;
+	slidingPreference: SlidingPreference;
+	canSlideToEndpoint: boolean;
+	rollback?: boolean;
+}): LocalReferencePosition {
 	let segoff;
 
 	if (op) {
@@ -665,7 +685,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff, slidingPreference, undefined, useNewSlidingBehavior);
+			segoff = getSlideToSegoff(segoff, slidingPreference, undefined, canSlideToEndpoint);
 		}
 	} else {
 		assert(
@@ -678,7 +698,7 @@ function createPositionReference(
 				: client.getContainingSegment(pos, undefined, localSeq);
 	}
 
-	return createPositionReferenceFromSegoff(
+	return createPositionReferenceFromSegoff({
 		client,
 		segoff,
 		refType,
@@ -686,9 +706,9 @@ function createPositionReference(
 		localSeq,
 		fromSnapshot,
 		slidingPreference,
-		exclusive,
+		canSlideToEndpoint,
 		rollback,
-	);
+	});
 }
 
 export function createTransientInterval(
@@ -715,7 +735,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 	props?: PropertySet,
 	rollback?: boolean,
 ): SequenceIntervalClass {
@@ -730,7 +750,6 @@ export function createSequenceInterval(
 			endSide !== undefined,
 		0x794 /* start and end cannot be undefined because they were not passed in as undefined */,
 	);
-	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
 	if (intervalType === IntervalType.Transient) {
@@ -749,31 +768,43 @@ export function createSequenceInterval(
 		}
 	}
 
-	const startLref = createPositionReference(
-		client,
+	const startSlidingPreference = startReferenceSlidingPreference(
 		startPos,
-		beginRefType,
-		op,
-		fromSnapshot,
-		undefined,
-		startReferenceSlidingPreference(stickiness),
-		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
-		useNewSlidingBehavior,
-		rollback,
+		startSide,
+		endPos,
+		endSide,
 	);
 
-	const endLref = createPositionReference(
+	const startLref = createPositionReference({
 		client,
-		endPos,
-		endRefType,
+		pos: startPos,
+		refType: beginRefType,
 		op,
 		fromSnapshot,
-		undefined,
-		endReferenceSlidingPreference(stickiness),
-		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
-		useNewSlidingBehavior,
+		slidingPreference: startSlidingPreference,
+		canSlideToEndpoint:
+			canSlideToEndpoint && startSlidingPreference === SlidingPreference.BACKWARD,
 		rollback,
+	});
+
+	const endSlidingPreference = endReferenceSlidingPreference(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
 	);
+
+	const endLref = createPositionReference({
+		client,
+		pos: endPos,
+		refType: endRefType,
+		op,
+		fromSnapshot,
+		slidingPreference: endSlidingPreference,
+		canSlideToEndpoint:
+			canSlideToEndpoint && endSlidingPreference === SlidingPreference.FORWARD,
+		rollback,
+	});
 
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],
