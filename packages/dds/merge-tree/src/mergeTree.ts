@@ -472,7 +472,7 @@ export function getSlideToSegoff(
 	segoff: { segment: ISegmentInternal; offset: number } | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective = allAckedChangesPerspective,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 ):
 	| {
 			segment: ISegmentInternal;
@@ -487,7 +487,7 @@ export function getSlideToSegoff(
 		slidingPreference,
 		perspective,
 		undefined,
-		useNewSlidingBehavior,
+		canSlideToEndpoint,
 	);
 	if (segment === segoff.segment) {
 		return segoff;
