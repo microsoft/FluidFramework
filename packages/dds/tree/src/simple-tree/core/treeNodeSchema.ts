@@ -389,19 +389,15 @@ export interface TreeNodeSchemaCorePrivate<
 		TCustomMetadata
 	> {
 	/**
-	 * All possible annotated allowed types that a direct child of a node with this schema could have, grouped by field.
-	 * If this node does not have fields, it will contain a single array with all its allowed types.
-	 *
-	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
-	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
-	 * This property is simply re-exposing that information in an easier to traverse format consistent across all node kinds.
+	 * All possible annotated allowed types that a field under node with this schema could have.
 	 * @remarks
-	 * Some kinds of nodes may have additional restrictions on children:
-	 * this set simply enumerates all directly referenced schema, and can be use to walk over all referenced schema types.
+	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
+	 * This includes the content field for arrays, and all the fields for map nodes.
+	 * If this node does not have fields (and thus is a leaf), the array will be empty.
 	 *
 	 * This set cannot be used before the schema in it have been defined:
 	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
-	 * users must wait until after the schema are defined to access this set.
+	 * users must wait until after the schema are defined to access this array.
 	 *
 	 * @privateRemarks
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
