@@ -776,16 +776,8 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
-			return this.getStructuralType(
-				fullName,
-				types,
-				() =>
-					this.namedMap(
-						fullName,
-						nameOrAllowedTypes as T,
-						false,
-						true,
-					),
+			return this.getStructuralType(fullName, types, () =>
+				this.namedMap(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
