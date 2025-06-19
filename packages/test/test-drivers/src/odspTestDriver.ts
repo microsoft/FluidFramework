@@ -54,26 +54,11 @@ interface IOdspTestDriverConfig extends TokenConfig {
 }
 
 /**
- * Properties of the credentials for an individual user returned from the TRIPS API.
+ * A simplified version of the credentials returned by the TRIPS API containing only username and password values.
  */
-export interface CredentialProperties {
+export interface UserPassCredentials {
 	UserPrincipalName: string;
-	TenantId: string;
 	Password: string;
-	TestAssetId: string;
-	ExpirationDate: string;
-	LeaseExpirationDate: string;
-}
-/**
- * Response type from the TRIPS API.
- * Within the top-level resources array, each entry is a user with the account
- * name, password, etc detailed in properties.
- */
-export interface CredentialOutput {
-	name: string;
-	profileName: string;
-	properties: CredentialProperties;
-	resources: CredentialOutput[];
 }
 
 /**
@@ -105,19 +90,18 @@ export function getOdspCredentials(
 			? process.env.login__odsp__test__tenants
 			: process.env.login__odspdf__test__tenants;
 	/**
-	 * For the expected format of loginTenants, see {@link CredentialOutput}
+	 * For the expected format of loginTenants, see {@link UserPassCredentials}
 	 */
 	if (loginTenants !== undefined) {
-		const output: CredentialOutput = JSON.parse(loginTenants);
-		const tenant = output.resources[tenantIndex];
-		if (tenant?.resources === undefined) {
+		const output: UserPassCredentials[] = JSON.parse(loginTenants);
+		if (output?.[tenantIndex] === undefined) {
 			throw new Error("No resources found in the login tenants");
 		}
 
 		// Return the set of accounts to choose from a single tenant
-		for (const account of tenant.resources) {
-			const username = account.name;
-			const password = account.properties.Password;
+		for (const account of output) {
+			const username = account.UserPrincipalName;
+			const password = account.Password;
 			if (requestedUserName === undefined || requestedUserName === username) {
 				creds.push({ username, password });
 			}
