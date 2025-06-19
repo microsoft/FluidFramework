@@ -48,6 +48,11 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 			requiredModulePaths.unshift(modulePath);
 		}
 	}
+	// Still needs to be supported for custom logger implementations
+	if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
+		// Inject implementation of getTestLogger, put it first before mocha-test-setup
+		requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+	}
 
 	const config = {
 		"recursive": true,
