@@ -9,6 +9,7 @@ export {
 	type WithType,
 	type TreeNodeSchema,
 	type AnnotatedAllowedType,
+	type NormalizedAnnotatedAllowedTypes,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
@@ -139,7 +140,6 @@ export type {
 export {
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
-	type AnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
@@ -158,6 +158,7 @@ export {
 	type AllowedTypes,
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
+	type AnnotatedAllowedTypes,
 	FieldKind,
 	FieldSchema,
 	type FieldSchemaAlpha,

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import type { AllowedTypeMetadata } from "../schemaTypes.js";
 import {
 	asTreeNodeSchemaCorePrivate,
-	type AnnotatedAllowedType,
+	type NormalizedAnnotatedAllowedTypes,
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 
@@ -25,8 +26,9 @@ export function walkNodeSchema(
 
 	visitedSet.add(schema);
 
-	const annotatedAllowedTypes = asTreeNodeSchemaCorePrivate(schema)
-		.childAnnotatedAllowedTypes ?? [Array.from(schema.childTypes).map((type) => ({ type }))];
+	const annotatedAllowedTypes =
+		asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes ??
+		fail("TreeNodeSchemas must implement TreeNodeSchemaCorePrivate");
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
 		walkAllowedTypes(fieldAllowedTypes, visitor, visitedSet);
@@ -43,17 +45,13 @@ export function walkNodeSchema(
  * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
  */
 export function walkAllowedTypes(
-	annotatedAllowedTypes: Iterable<AnnotatedAllowedType<TreeNodeSchema>>,
+	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const annotatedAllowedType of annotatedAllowedTypes) {
-		walkNodeSchema(
-			annotatedAllowedType.type,
-			annotatedAllowedType.metadata,
-			visitor,
-			visitedSet,
-		);
+	for (const annotatedAllowedType of annotatedAllowedTypes.types) {
+		const { type, metadata } = annotatedAllowedType;
+		walkNodeSchema(type, metadata, visitor, visitedSet);
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
@@ -73,5 +71,5 @@ export interface SchemaVisitor {
 	 *
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
-	allowedTypes?: (allowedTypes: Iterable<AnnotatedAllowedType<TreeNodeSchema>>) => void;
+	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
 }

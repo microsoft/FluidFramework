@@ -4,7 +4,13 @@
  */
 
 import type { LazyItem } from "../flexList.js";
-import type { AllowedTypeMetadata, TreeLeafValue } from "../schemaTypes.js";
+import type {
+	AllowedTypeMetadata,
+	AllowedTypesMetadata,
+	AnnotatedAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	TreeLeafValue,
+} from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
 import type { TreeNode } from "./treeNode.js";
@@ -76,6 +82,32 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 	 * The allowed type the annotations apply to in a particular schema.
 	 */
 	readonly type: T;
+}
+
+/**
+ * Stores annotations for a set of evaluated annotated allowed types.
+ * @alpha
+ */
+export interface NormalizedAnnotatedAllowedTypes {
+	/**
+	 * Annotations that apply to a set of allowed types.
+	 */
+	readonly metadata: AllowedTypesMetadata;
+	/**
+	 * All the evaluated allowed types that the annotations apply to. The types themselves are also individually annotated.
+	 */
+	readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+}
+
+/**
+ * Checks if the input is an {@link AnnotatedAllowedTypes}.
+ */
+export function isAnnotatedAllowedTypes(
+	allowedTypes: ImplicitAnnotatedAllowedTypes,
+): allowedTypes is AnnotatedAllowedTypes {
+	return (
+		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
+	);
 }
 
 /**
@@ -374,7 +406,7 @@ export interface TreeNodeSchemaCorePrivate<
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly (readonly AnnotatedAllowedType<TreeNodeSchema>[])[];
+	readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[];
 }
 
 /**
@@ -391,7 +423,9 @@ export function asTreeNodeSchemaCorePrivate(
 		"childAnnotatedAllowedTypes" in schema &&
 		Array.isArray(schema.childAnnotatedAllowedTypes) &&
 		(schema.childAnnotatedAllowedTypes.length === 0 ||
-			Array.isArray(schema.childAnnotatedAllowedTypes[0]))
+			isAnnotatedAllowedTypes(
+				schema.childAnnotatedAllowedTypes[0] as ImplicitAnnotatedAllowedTypes,
+			))
 	) {
 		return schema as TreeNodeSchemaCorePrivate;
 	}

@@ -32,7 +32,7 @@ import {
 	type Context,
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
-	type AnnotatedAllowedType,
+	type NormalizedAnnotatedAllowedTypes,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -515,7 +515,7 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): readonly (readonly AnnotatedAllowedType<TreeNodeSchema>[])[] {
+		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
