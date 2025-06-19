@@ -497,34 +497,36 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		return endPos > bstart && startPos < bend;
 	}
 
-	public rebaseEndpoints(
-		rebased: Record<"start" | "end", { segment: ISegment; offset: number }>,
+	public moveEndpointReferences(
+		rebased: Partial<Record<"start" | "end", { segment: ISegment; offset: number }>>,
 	) {
-		// this.startSide = rebased.start.side;
-		const startRef = createPositionReferenceFromSegoff({
-			client: this.client,
-			segoff: rebased.start,
-			refType: this.start.refType,
-			slidingPreference: this.start.slidingPreference,
-			canSlideToEndpoint: this.start.canSlideToEndpoint,
-		});
-		if (this.start.properties) {
-			startRef.addProperties(this.start.properties);
+		if (rebased.start) {
+			const startRef = createPositionReferenceFromSegoff({
+				client: this.client,
+				segoff: rebased.start,
+				refType: this.start.refType,
+				slidingPreference: this.start.slidingPreference,
+				canSlideToEndpoint: this.start.canSlideToEndpoint,
+			});
+			if (this.start.properties) {
+				startRef.addProperties(this.start.properties);
+			}
+			this.start = startRef;
 		}
-		this.start = startRef;
 
-		// this.endSide = rebased.end.side;
-		const endRef = createPositionReferenceFromSegoff({
-			client: this.client,
-			segoff: rebased.end,
-			refType: this.end.refType,
-			slidingPreference: this.end.slidingPreference,
-			canSlideToEndpoint: this.end.canSlideToEndpoint,
-		});
-		if (this.end.properties) {
-			endRef.addProperties(this.end.properties);
+		if (rebased.end) {
+			const endRef = createPositionReferenceFromSegoff({
+				client: this.client,
+				segoff: rebased.end,
+				refType: this.end.refType,
+				slidingPreference: this.end.slidingPreference,
+				canSlideToEndpoint: this.end.canSlideToEndpoint,
+			});
+			if (this.end.properties) {
+				endRef.addProperties(this.end.properties);
+			}
+			this.end = endRef;
 		}
-		this.end = endRef;
 	}
 
 	/**

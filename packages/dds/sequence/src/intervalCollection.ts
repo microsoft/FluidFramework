@@ -1503,7 +1503,7 @@ export class IntervalCollection
 				this.localCollection.removeExistingInterval(localInterval);
 			}
 			const old = interval.clone();
-			interval.rebaseEndpoints(rebasedEndpoint);
+			interval.moveEndpointReferences(rebasedEndpoint);
 			if (localInterval === interval) {
 				this.localCollection.add(interval);
 				this.emitChange(interval, old, true, true);
