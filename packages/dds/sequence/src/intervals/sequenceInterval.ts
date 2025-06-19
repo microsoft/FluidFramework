@@ -28,7 +28,6 @@ import {
 	Side,
 	endpointPosAndSide,
 	addProperties,
-	copyPropertiesAndManager,
 	type ISegmentInternal,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
@@ -309,6 +308,7 @@ export class SequenceIntervalClass
 		this.client.removeLocalReferencePosition(this.start);
 		this.client.removeLocalReferencePosition(this.end);
 		this.removePositionChangeListeners();
+		this.#props.propertyManager = undefined;
 	}
 
 	private verifyNotDispose() {
@@ -540,37 +540,33 @@ export class SequenceIntervalClass
 	}
 
 	public moveEndpointReferences(
-		rebased: Partial<Record<"start" | "end", { segment: ISegment; offset: number }>>,
+		rebased: Record<"start" | "end", { segment: ISegment; offset: number }>,
 	) {
 		this.verifyNotDispose();
 
-		if (rebased.start) {
-			const startRef = createPositionReferenceFromSegoff({
-				client: this.client,
-				segoff: rebased.start,
-				refType: this.start.refType,
-				slidingPreference: this.start.slidingPreference,
-				canSlideToEndpoint: this.start.canSlideToEndpoint,
-			});
-			if (this.start.properties) {
-				startRef.addProperties(this.start.properties);
-			}
-			this.start = startRef;
+		const startRef = createPositionReferenceFromSegoff({
+			client: this.client,
+			segoff: rebased.start,
+			refType: this.start.refType,
+			slidingPreference: this.start.slidingPreference,
+			canSlideToEndpoint: this.start.canSlideToEndpoint,
+		});
+		if (this.start.properties) {
+			startRef.addProperties(this.start.properties);
 		}
+		this.start = startRef;
 
-		if (rebased.end) {
-			const endRef = createPositionReferenceFromSegoff({
-				client: this.client,
-				segoff: rebased.end,
-				refType: this.end.refType,
-				slidingPreference: this.end.slidingPreference,
-				canSlideToEndpoint: this.end.canSlideToEndpoint,
-			});
-			if (this.end.properties) {
-				endRef.addProperties(this.end.properties);
-			}
-			this.end = endRef;
+		const endRef = createPositionReferenceFromSegoff({
+			client: this.client,
+			segoff: rebased.end,
+			refType: this.end.refType,
+			slidingPreference: this.end.slidingPreference,
+			canSlideToEndpoint: this.end.canSlideToEndpoint,
+		});
+		if (this.end.properties) {
+			endRef.addProperties(this.end.properties);
 		}
+		this.end = endRef;
 	}
 
 	/**
@@ -653,14 +649,15 @@ export class SequenceIntervalClass
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		copyPropertiesAndManager(this.#props, newInterval.#props);
+		newInterval.#props.properties = this.#props.propertyManager ??= new PropertiesManager();
+		newInterval.#props.properties = { ...this.#props.properties };
 		return newInterval;
 	}
 
 	public ackPropertiesChange(newProps: PropertySet, op: ISequencedDocumentMessage) {
 		this.verifyNotDispose();
 
-		this.#props.propertyManager ??= new PropertiesManager();
+		assert(this.#props.propertyManager !== undefined, "must have property manager to ack");
 		// Let the propertyManager prune its pending change-properties set.
 		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
 			props: newProps,
