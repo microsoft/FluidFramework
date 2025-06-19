@@ -3,13 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	debugAssert,
+	fail,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
+	asIndex,
 	getKernel,
 	type TreeNode,
 	type Unhydrated,
@@ -40,10 +46,20 @@ import {
 	getIdentifierFromNode,
 	unhydratedFlexTreeFromInsertable,
 	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+	getOrCreateInnerNode,
+	NodeKind,
+	tryGetTreeNodeForField,
+	isObjectNodeSchema,
 } from "../simple-tree/index.js";
-import { extractFromOpaque, type JsonCompatible } from "../util/index.js";
-import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
-import type { ITreeCursorSynchronous } from "../core/index.js";
+import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
+import {
+	FluidClientVersion,
+	noopValidator,
+	type ICodecOptions,
+	type CodecWriteOptions,
+} from "../codec/index.js";
+import { EmptyKey, type ITreeCursorSynchronous } from "../core/index.js";
 import {
 	cursorForMapTreeField,
 	defaultSchemaPolicy,
@@ -55,10 +71,10 @@ import {
 	type FieldBatchEncodingContext,
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type LocalNodeIdentifier,
+	type FlexTreeSequenceField,
 } from "../feature-libraries/index.js";
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
-import { currentVersion, noopValidator } from "../codec/index.js";
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	const nodeIdentifier = getIdentifierFromNode(node, "uncompressed");
@@ -339,6 +355,48 @@ export interface TreeAlpha {
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
 	 */
 	key2(node: TreeNode): string | number | undefined;
+
+	/**
+	 * Gets the child of the given node with the given property key if a child exists under that key.
+	 *
+	 * @remarks {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
+	 *
+	 * @param node - The parent node whose child is being requested.
+	 * @param key - The property key under the node under which the child is being requested.
+	 * For Object nodes, this is the developer-facing "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 *
+	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
+	 *
+	 * @see {@link (TreeAlpha:interface).key2}
+	 * @see {@link (TreeNodeApi:interface).parent}
+	 */
+	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+
+	/**
+	 * Gets the children of the provided node, paired with their property keys under the node.
+	 *
+	 * @remarks
+	 * No guarantees are made regarding the order of the children in the returned array.
+	 *
+	 * Optional properties of Object nodes with no value are not included in the result.
+	 *
+	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes are not included in the result.
+	 *
+	 * @param node - The node whose children are being requested.
+	 *
+	 * @returns
+	 * An array of pairs of the form `[propertyKey, child]`.
+	 *
+	 * For Array nodes, the `propertyKey` is the index of the child in the array.
+	 *
+	 * For Object nodes, the returned `propertyKey`s are the developer-facing "property keys", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
+	 *
+	 * @see {@link (TreeAlpha:interface).key2}
+	 * @see {@link (TreeNodeApi:interface).parent}
+	 */
+	children(
+		node: TreeNode,
+	): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
 }
 
 /**
@@ -463,7 +521,8 @@ export const TreeAlpha: TreeAlpha = {
 	): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 		const config = new TreeViewConfigurationAlpha({ schema });
 		const content: ViewContent = {
-			schema: extractPersistedSchema(config, currentVersion),
+			// Always use a v1 schema codec for consistency.
+			schema: extractPersistedSchema(config, FluidClientVersion.v2_0),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};
@@ -486,6 +545,134 @@ export const TreeAlpha: TreeAlpha = {
 		const storedKey = getStoredKey(node);
 		const parentSchema = treeNodeApi.schema(parent);
 		return getPropertyKeyFromStoredKey(parentSchema, storedKey);
+	},
+
+	child: (
+		node: TreeNode,
+		propertyKey: string | number,
+	): TreeNode | TreeLeafValue | undefined => {
+		const flexNode = getOrCreateInnerNode(node);
+		debugAssert(
+			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+		);
+
+		const schema = treeNodeApi.schema(node);
+
+		switch (schema.kind) {
+			case NodeKind.Array: {
+				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+
+				// Empty sequence - cannot have children.
+				if (sequence === undefined) {
+					return undefined;
+				}
+
+				const index =
+					typeof propertyKey === "number"
+						? propertyKey
+						: asIndex(propertyKey, Number.POSITIVE_INFINITY);
+
+				// If the key is not a valid index, then there is no corresponding child.
+				if (index === undefined) {
+					return undefined;
+				}
+
+				const childFlexTree = sequence.at(index);
+
+				// No child at the given index.
+				if (childFlexTree === undefined) {
+					return undefined;
+				}
+
+				return getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
+			}
+			case NodeKind.Map:
+				if (typeof propertyKey !== "string") {
+					// Map nodes only support string keys.
+					return undefined;
+				}
+			// Fall through
+			case NodeKind.Object: {
+				let storedKey: string | number = propertyKey;
+				if (isObjectNodeSchema(schema)) {
+					const fieldSchema = schema.fields.get(String(propertyKey));
+					if (fieldSchema === undefined) {
+						return undefined;
+					}
+
+					storedKey = fieldSchema.storedKey;
+				}
+
+				const field = flexNode.tryGetField(brand(String(storedKey)));
+				if (field !== undefined) {
+					return tryGetTreeNodeForField(field);
+				}
+
+				return undefined;
+			}
+			case NodeKind.Leaf: {
+				fail("Leaf schema associated with non-leaf tree node.");
+			}
+			default: {
+				unreachableCase(schema.kind);
+			}
+		}
+	},
+
+	children(node: TreeNode): [propertyKey: string | number, child: TreeNode | TreeLeafValue][] {
+		const flexNode = getOrCreateInnerNode(node);
+		debugAssert(
+			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+		);
+
+		const schema = treeNodeApi.schema(node);
+
+		const result: [string | number, TreeNode | TreeLeafValue][] = [];
+		switch (schema.kind) {
+			case NodeKind.Array: {
+				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+				if (sequence === undefined) {
+					break;
+				}
+
+				for (let index = 0; index < sequence.length; index++) {
+					const childFlexTree = sequence.at(index);
+					assert(childFlexTree !== undefined, "Sequence child was undefined.");
+					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
+					result.push([index, childTree]);
+				}
+				break;
+			}
+			case NodeKind.Map: {
+				for (const [key, flexField] of flexNode.fields) {
+					const childTreeNode = tryGetTreeNodeForField(flexField);
+					if (childTreeNode !== undefined) {
+						result.push([key, childTreeNode]);
+					}
+				}
+				break;
+			}
+			case NodeKind.Object: {
+				assert(isObjectNodeSchema(schema), "Expected object schema.");
+				for (const [propertyKey, fieldSchema] of schema.fields) {
+					const storedKey = fieldSchema.storedKey;
+					const flexField = flexNode.tryGetField(brand(String(storedKey)));
+					if (flexField !== undefined) {
+						const childTreeNode = tryGetTreeNodeForField(flexField);
+						assert(childTreeNode !== undefined, "Expected child tree node for field.");
+						result.push([propertyKey, childTreeNode]);
+					}
+				}
+				break;
+			}
+			case NodeKind.Leaf: {
+				fail("Leaf schema associated with non-leaf tree node.");
+			}
+			default: {
+				unreachableCase(schema.kind);
+			}
+		}
+		return result;
 	},
 };
 

@@ -10,7 +10,7 @@ import type {
 	FlexTreeOptionalField,
 	OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	createFieldSchema,
 	FieldKind,
@@ -36,8 +36,8 @@ import {
 	type Context,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
-	type AnnotatedAllowedType,
 	type UnhydratedFlexTreeNode,
+	type NormalizedAnnotatedAllowedTypes,
 } from "../../core/index.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -179,14 +179,14 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		for (const key of node.keys()) {
 			yield [
 				key,
-				getTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
+				tryGetTreeNodeForField(node.getBoxed(key)) as TreeNodeFromImplicitAllowedTypes<T>,
 			];
 		}
 	}
 	public get(key: string): TreeNodeFromImplicitAllowedTypes<T> {
 		const node = this.innerNode;
 		const field = node.getBoxed(brand(key));
-		return getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+		return tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public has(key: string): boolean {
 		return this.innerNode.tryGetField(brand(key)) !== undefined;
@@ -223,7 +223,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		thisArg?: unknown,
 	): void {
 		for (const field of getOrCreateInnerNode(this)) {
-			const node = getTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
+			const node = tryGetTreeNodeForField(field) as TreeNodeFromImplicitAllowedTypes<T>;
 			callbackFn.call(thisArg, node, field.key, this);
 		}
 	}
@@ -254,7 +254,7 @@ export function mapSchema<
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
-	const lazyAnnotatedTypes = new Lazy(() => normalizeAnnotatedAllowedTypes(info));
+	const lazyAnnotatedTypes = new Lazy(() => [normalizeAnnotatedAllowedTypes(info)]);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -303,7 +303,7 @@ export function mapSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
-		public static get childAnnotatedAllowedTypes(): readonly AnnotatedAllowedType<TreeNodeSchema>[] {
+		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
 			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};

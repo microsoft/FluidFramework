@@ -4,7 +4,13 @@
  */
 
 import type { LazyItem } from "../flexList.js";
-import type { AllowedTypeMetadata, TreeLeafValue } from "../schemaTypes.js";
+import type {
+	AllowedTypeMetadata,
+	AllowedTypesMetadata,
+	AnnotatedAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	TreeLeafValue,
+} from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
 import type { TreeNode } from "./treeNode.js";
@@ -76,6 +82,32 @@ export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
 	 * The allowed type the annotations apply to in a particular schema.
 	 */
 	readonly type: T;
+}
+
+/**
+ * Stores annotations for a set of evaluated annotated allowed types.
+ * @alpha
+ */
+export interface NormalizedAnnotatedAllowedTypes {
+	/**
+	 * Annotations that apply to a set of allowed types.
+	 */
+	readonly metadata: AllowedTypesMetadata;
+	/**
+	 * All the evaluated allowed types that the annotations apply to. The types themselves are also individually annotated.
+	 */
+	readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+}
+
+/**
+ * Checks if the input is an {@link AnnotatedAllowedTypes}.
+ */
+export function isAnnotatedAllowedTypes(
+	allowedTypes: ImplicitAnnotatedAllowedTypes,
+): allowedTypes is AnnotatedAllowedTypes {
+	return (
+		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
+	);
 }
 
 /**
@@ -252,7 +284,7 @@ export type TreeNodeSchemaBoth<
  * Implementation detail of {@link TreeNodeSchema} which should be accessed instead of referring to this type directly.
  *
  * @privateRemarks
- * All implementations must actually implement {@link TreeNodeSchemaCorePrivate} as well.
+ * All implementations must implement {@link TreeNodeSchemaCorePrivate} as well.
  *
  * @sealed @public
  */
@@ -356,8 +388,8 @@ export interface TreeNodeSchemaCorePrivate<
 		TCustomMetadata
 	> {
 	/**
-	 * All possible schema that a direct child of a node with this schema could have along with any allowed type metadata that may be associated
-	 * with a particular schema.
+	 * All possible annotated allowed types that a direct child of a node with this schema could have, grouped by field.
+	 * If this node does not have fields, it will contain a single array with all its allowed types.
 	 *
 	 * Equivalently, this is also all schema directly referenced when defining this schema's allowed child types,
 	 * which is also the same as the set of schema referenced directly by the `Info` type parameter and the `info` property.
@@ -374,7 +406,7 @@ export interface TreeNodeSchemaCorePrivate<
 	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
 	 * @system
 	 */
-	readonly childAnnotatedAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+	readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[];
 }
 
 /**
@@ -387,7 +419,14 @@ export interface TreeNodeSchemaCorePrivate<
 export function asTreeNodeSchemaCorePrivate(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): TreeNodeSchemaCorePrivate {
-	if ("childAnnotatedAllowedTypes" in schema) {
+	if (
+		"childAnnotatedAllowedTypes" in schema &&
+		Array.isArray(schema.childAnnotatedAllowedTypes) &&
+		(schema.childAnnotatedAllowedTypes.length === 0 ||
+			isAnnotatedAllowedTypes(
+				schema.childAnnotatedAllowedTypes[0] as ImplicitAnnotatedAllowedTypes,
+			))
+	) {
 		return schema as TreeNodeSchemaCorePrivate;
 	}
 	throw new Error(

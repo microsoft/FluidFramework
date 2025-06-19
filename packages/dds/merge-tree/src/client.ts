@@ -83,8 +83,8 @@ import {
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import {
+	createLocalReconnectingPerspective,
 	LocalReconnectingPerspective,
-	LocalSquashPerspective,
 	PriorPerspective,
 	type Perspective,
 } from "./perspective.js";
@@ -130,7 +130,10 @@ export interface IIntegerRange {
  * @internal
  */
 export interface IClientEvents {
-	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
+	(
+		event: "normalize",
+		listener: (squash: boolean, target: IEventThisPlaceHolder) => void,
+	): void;
 	(
 		event: "delta",
 		listener: (
@@ -918,9 +921,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		end: RebasedObliterateEndpoint;
 	} {
 		const { currentSeq, clientId } = this.getCollabWindow();
-		const reconnectingPerspective = new (
-			squash ? LocalSquashPerspective : LocalReconnectingPerspective
-		)(currentSeq, clientId, obliterateInfo.stamp.localSeq! - 1);
+		const reconnectingPerspective = createLocalReconnectingPerspective(
+			currentSeq,
+			clientId,
+			obliterateInfo.stamp.localSeq! - 1,
+			squash,
+		);
 
 		const newStart = this.rebaseSidedLocalReference(
 			obliterateInfo.start,
@@ -1476,7 +1482,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					this.cachedObliterateRebases.set(localSeq, { start, end });
 				}
 			}
-			this.emit("normalize", this);
+			this.emit("normalize", squash, this);
 
 			this._mergeTree.normalizeSegmentsOnRebase();
 			this.lastNormalization = {

@@ -13,6 +13,7 @@ import {
 import {
 	walkAllowedTypes,
 	type AnnotatedAllowedType,
+	type NormalizedAnnotatedAllowedTypes,
 	type SchemaVisitor,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
@@ -30,14 +31,14 @@ function makeAnnotated(
 }
 
 function mockWalkAllowedTypes(
-	annotatedAllowedTypes: Iterable<AnnotatedAllowedType<TreeNodeSchema>>,
-): [TreeNodeSchema[], AnnotatedAllowedType<TreeNodeSchema>[][]] {
+	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
+): [TreeNodeSchema[], readonly NormalizedAnnotatedAllowedTypes[]] {
 	const visitedNodes: TreeNodeSchema[] = [];
-	const visitedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[][] = [];
+	const visitedAllowedTypes: NormalizedAnnotatedAllowedTypes[] = [];
 
 	const mockVisitor: SchemaVisitor = {
 		node: (schema) => visitedNodes.push(schema),
-		allowedTypes: (types) => visitedAllowedTypes.push(Array.from(types)),
+		allowedTypes: (types) => visitedAllowedTypes.push(types),
 	};
 
 	walkAllowedTypes(annotatedAllowedTypes, mockVisitor);
@@ -50,11 +51,15 @@ describe("walk schema", () => {
 
 	it("calls visitor on single allowed type", () => {
 		const annotated = makeAnnotated(sf.string);
+		const annotatedTypes = {
+			metadata: {},
+			types: [annotated],
+		};
 
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([annotated]);
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(annotatedTypes);
 
 		assert.deepEqual(visitedNodes, [annotated.type]);
-		assert.deepEqual(visitedAllowedTypes, [[annotated]]);
+		assert.deepEqual(visitedAllowedTypes, [annotatedTypes]);
 	});
 
 	it("calls visitor on nested allowed types", () => {
@@ -70,9 +75,42 @@ describe("walk schema", () => {
 
 		assert.deepEqual(visitedNodes, [annotatedString.type, annotatedObject.type, schema]);
 		assert.deepEqual(visitedAllowedTypes, [
-			[annotatedString],
-			[annotatedObject],
-			[{ metadata: {}, type: schema }],
+			{ metadata: {}, types: [annotatedString] },
+			{ metadata: {}, types: [annotatedObject] },
+			{ metadata: {}, types: [{ metadata: {}, type: schema }] },
+		]);
+	});
+
+	it("calls visitor on nested objects", () => {
+		const annotatedString = makeAnnotated(sf.string);
+		const annotatedObject3 = makeAnnotated(
+			sf.objectAlpha("annotatedObject3", { name: annotatedString }),
+		);
+		const annotatedObject2 = makeAnnotated(
+			sf.objectAlpha("annotatedObject2", { bar: annotatedObject3 }),
+		);
+		const annotatedObject = makeAnnotated(
+			sf.objectAlpha("annotatedObject", { foo: annotatedObject2 }),
+		);
+		const schema = sf.arrayAlpha("schema", annotatedObject);
+
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+			normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+		);
+
+		assert.deepEqual(visitedNodes, [
+			annotatedString.type,
+			annotatedObject3.type,
+			annotatedObject2.type,
+			annotatedObject.type,
+			schema,
+		]);
+		assert.deepEqual(visitedAllowedTypes, [
+			{ metadata: {}, types: [annotatedString] },
+			{ metadata: {}, types: [annotatedObject3] },
+			{ metadata: {}, types: [annotatedObject2] },
+			{ metadata: {}, types: [annotatedObject] },
+			{ metadata: {}, types: [{ metadata: {}, type: schema }] },
 		]);
 	});
 
@@ -87,8 +125,8 @@ describe("walk schema", () => {
 
 		assert.deepEqual(visitedNodes, [annotatedNumber.type, annotatedString.type, schema]);
 		assert.deepEqual(visitedAllowedTypes, [
-			[annotatedNumber, annotatedString],
-			[{ metadata: {}, type: schema }],
+			{ metadata: {}, types: [annotatedNumber, annotatedString] },
+			{ metadata: {}, types: [{ metadata: {}, type: schema }] },
 		]);
 	});
 
@@ -106,27 +144,29 @@ describe("walk schema", () => {
 			normalizeFieldSchema(annotatedObject).annotatedAllowedTypesNormalized,
 		);
 
-		assert.deepEqual(visitedNodes, [
-			annotatedString.type,
-			otherAnnotatedString.type,
-			annotatedObject.type,
-		]);
+		assert.deepEqual(visitedNodes, [annotatedString.type, annotatedObject.type]);
 		assert.deepEqual(visitedAllowedTypes, [
-			[annotatedString, otherAnnotatedString],
-			[annotatedObject],
+			{ metadata: {}, types: [annotatedString] },
+			{ metadata: {}, types: [otherAnnotatedString] },
+			{ metadata: {}, types: [annotatedObject] },
 		]);
 	});
 
 	it("handles empty allowed types", () => {
-		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes([]);
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes({
+			metadata: {},
+			types: [],
+		});
 
 		assert.deepEqual(visitedNodes, []);
-		assert.deepEqual(visitedAllowedTypes, []);
+		assert.deepEqual(visitedAllowedTypes, [{ metadata: {}, types: [] }]);
 	});
 
 	it("does not fail if visitor has no callbacks", () => {
 		const annotatedString = makeAnnotated(sf.string);
 
-		assert.doesNotThrow(() => walkAllowedTypes([annotatedString], {}));
+		assert.doesNotThrow(() =>
+			walkAllowedTypes({ metadata: {}, types: [annotatedString] }, {}),
+		);
 	});
 });
