@@ -217,7 +217,7 @@ export function assertInterval(
 			expectedStart,
 			actual.start.canSlideToEndpoint ? sharedString.getLength() : DetachedReferencePosition,
 		),
-		"unexpected start position",
+		`unexpected start position(${sharedString.getLength()})`,
 	);
 	assert.equal(
 		actual.endSide,
