@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import type { LazyItem } from "../flexList.js";
 import type {
 	AllowedTypeMetadata,
@@ -416,19 +417,15 @@ export interface TreeNodeSchemaCorePrivate<
 export function asTreeNodeSchemaCorePrivate(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): TreeNodeSchemaCorePrivate {
-	if (
-		"childAnnotatedAllowedTypes" in schema &&
-		Array.isArray(schema.childAnnotatedAllowedTypes) &&
-		(schema.childAnnotatedAllowedTypes.length === 0 ||
-			isAnnotatedAllowedTypes(
-				schema.childAnnotatedAllowedTypes[0] as ImplicitAnnotatedAllowedTypes,
-			))
-	) {
-		return schema as TreeNodeSchemaCorePrivate;
-	}
-	throw new Error(
+	assert(
+		"childAnnotatedAllowedTypes" in schema,
 		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
 	);
+	assert(
+		Array.isArray((schema as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes),
+		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
+	);
+	return schema as TreeNodeSchemaCorePrivate;
 }
 
 /**
