@@ -106,6 +106,7 @@ export function isAnnotatedAllowedTypes(
 	allowedTypes: ImplicitAnnotatedAllowedTypes,
 ): allowedTypes is AnnotatedAllowedTypes {
 	return (
+		// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
 		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
 	);
 }
