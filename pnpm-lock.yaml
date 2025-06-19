@@ -11633,6 +11633,9 @@ importers:
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../fluid-framework
       microdiff:
         specifier: ^1.5.0
         version: 1.5.0

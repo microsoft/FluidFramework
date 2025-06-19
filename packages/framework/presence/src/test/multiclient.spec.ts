@@ -20,26 +20,25 @@ import type {
 	TinyliciousContainerServices,
 	TinyliciousUser,
 } from "@fluidframework/tinylicious-client";
-
-import {
-	ExperimentalPresenceManager,
-	getPresenceViaDataObject,
-	type ExperimentalPresenceDO,
-} from "../datastorePresenceManagerFactory.js";
-import type { InternalTypes } from "../exposedInternalTypes.js";
-import type { LatestMap, LatestMapClientData } from "../latestMapValueManager.js";
-import type { Latest } from "../latestValueManager.js";
-import type {
-	LatestClientData,
-	LatestData,
-	ProxiedValueAccessor,
-} from "../latestValueTypes.js";
-import type { Attendee, Presence } from "../presence.js";
-import { StateFactory } from "../stateFactory.js";
-import type { StatesWorkspace, WorkspaceAddress } from "../types.js";
+import { SharedTree } from "fluid-framework";
 
 import { createTinyliciousClient } from "./TinyliciousClientFactory.js";
 import { createSpiedValidator } from "./testUtils.js";
+
+import { getPresence, StateFactory } from "@fluidframework/presence/beta";
+import type {
+	Attendee,
+	InternalTypes,
+	Latest,
+	LatestClientData,
+	LatestData,
+	LatestMap,
+	LatestMapClientData,
+	Presence,
+	ProxiedValueAccessor,
+	StatesWorkspace,
+	WorkspaceAddress,
+} from "@fluidframework/presence/beta";
 
 interface TestData {
 	num: number;
@@ -187,11 +186,11 @@ describe.only(`Presence with TinyliciousClient`, () => {
 		containerId: string;
 	}> => {
 		const client = createTinyliciousClient(user.id, user.name, scopes);
-		const schema: ContainerSchema = {
+		const schema = {
 			initialObjects: {
-				presence: ExperimentalPresenceManager,
+				appData: SharedTree,
 			},
-		};
+		} satisfies ContainerSchema;
 		let container: IFluidContainer;
 		let services: TinyliciousContainerServices;
 		let containerId: string;
@@ -218,9 +217,7 @@ describe.only(`Presence with TinyliciousClient`, () => {
 			"Container is not attached after attach is called",
 		);
 
-		const presence = getPresenceViaDataObject(
-			container.initialObjects.presence as ExperimentalPresenceDO,
-		);
+		const presence = getPresence(container);
 		return {
 			client,
 			container,
