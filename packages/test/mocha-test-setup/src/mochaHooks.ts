@@ -149,10 +149,10 @@ export const mochaHooks = {
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurrentTest();
 	},
-	async after(){
+	async after() {
 		// Flush the logger to ensure all events are sent before the next test runs.
 		await testLogger.flush();
-	}
+	},
 };
 
 globalThis.getMochaModule = () => {
