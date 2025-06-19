@@ -515,8 +515,6 @@ class LatestMapValueManagerImpl<
 			const value = item.value;
 			if (value !== undefined) {
 				items.set(key, {
-					// FIXME
-					// @ts-expect-error Type null is not assignable to type ...
 					value: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
@@ -574,17 +572,11 @@ class LatestMapValueManagerImpl<
 				const updatedItem = {
 					attendee,
 					key,
-					// FIXME
-					// @ts-expect-error Type null is not assignable to type ...
 					value: createValidatedGetter(item, this.validator),
 					metadata,
 				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
-				// FIXME
-				// @ts-expect-error Type null is not assignable to type ...
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
 				allUpdates.items.set(key, {
-					// FIXME
-					// @ts-expect-error Type null is not assignable to type ...
 					value: createValidatedGetter(item, this.validator),
 					metadata,
 				});
