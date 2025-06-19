@@ -226,7 +226,7 @@ export class SequenceIntervalClass
 	// eslint-disable-next-line import/no-deprecated
 	implements SequenceInterval, ISerializableInterval, IDisposable
 {
-	readonly #props: {
+	readonly _props: {
 		propertyManager?: PropertiesManager;
 		properties: PropertySet;
 	} = { properties: createMap<any>() };
@@ -236,7 +236,7 @@ export class SequenceIntervalClass
 	 */
 	public get properties(): Readonly<PropertySet> {
 		this.verifyNotDispose();
-		return this.#props.properties;
+		return this._props.properties;
 	}
 
 	public changeProperties(
@@ -247,10 +247,10 @@ export class SequenceIntervalClass
 		this.verifyNotDispose();
 
 		if (props !== undefined) {
-			this.#props.propertyManager ??= new PropertiesManager();
-			return this.#props.propertyManager.handleProperties(
+			this._props.propertyManager ??= new PropertiesManager();
+			return this._props.propertyManager.handleProperties(
 				{ props },
-				this.#props,
+				this._props,
 				this.client.getCollabWindow().collaborating
 					? (op?.sequenceNumber ?? UnassignedSequenceNumber)
 					: UniversalSequenceNumber,
@@ -295,7 +295,7 @@ export class SequenceIntervalClass
 		public readonly endSide: Side = Side.Before,
 	) {
 		if (props) {
-			this.#props.properties = addProperties(this.#props.properties, props);
+			this._props.properties = addProperties(this._props.properties, props);
 		}
 	}
 	#disposed = false;
@@ -308,7 +308,7 @@ export class SequenceIntervalClass
 		this.client.removeLocalReferencePosition(this.start);
 		this.client.removeLocalReferencePosition(this.end);
 		this.removePositionChangeListeners();
-		this.#props.propertyManager = undefined;
+		this._props.propertyManager = undefined;
 	}
 
 	private verifyNotDispose() {
@@ -649,17 +649,22 @@ export class SequenceIntervalClass
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		newInterval.#props.properties = this.#props.propertyManager ??= new PropertiesManager();
-		newInterval.#props.properties = { ...this.#props.properties };
+		newInterval._props.propertyManager = this._props.propertyManager ??=
+			new PropertiesManager();
+		newInterval._props.properties = this._props.properties;
 		return newInterval;
 	}
 
 	public ackPropertiesChange(newProps: PropertySet, op: ISequencedDocumentMessage) {
 		this.verifyNotDispose();
 
-		assert(this.#props.propertyManager !== undefined, "must have property manager to ack");
+		if (Object.keys(newProps).length === 0) {
+			return;
+		}
+
+		assert(this._props.propertyManager !== undefined, "must have property manager to ack");
 		// Let the propertyManager prune its pending change-properties set.
-		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
+		this._props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
 			props: newProps,
 		});
 	}
