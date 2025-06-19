@@ -329,19 +329,8 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		}
 	}
 
-	// FIXME: This gets called when using mapState.local.get(), even though we only want to validate remote data.
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		const data = this.value.items[key]?.value;
-		// if (this.validator === undefined) {
-		// 	return data === undefined
-		// 		? undefined
-		// 		: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
-		// 			asDeeplyReadonlyFromJsonHandle(this.value.items[key]!.value!);
-		// }
-		// const maybeValid = this.validator(data, { key });
-		// return asDeeplyReadonly(maybeValid);
-
-		return data === undefined
+		return this.value.items[key]?.value === undefined
 			? undefined
 			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
 				asDeeplyReadonlyDeserializedJson(this.value.items[key]!.value!);
