@@ -306,8 +306,10 @@ export function mergeAPIs<const Base extends object, const Extra extends object>
 	base: Base,
 	extra: Extra,
 ): asserts base is Base & Extra {
-	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(extra))) {
+	for (const key of Reflect.ownKeys(extra)) {
 		assert(!Reflect.has(base, key), 0xb9a /* colliding properties */);
+		const descriptor =
+			Object.getOwnPropertyDescriptor(extra, key) ?? fail("missing property descriptor");
 
 		// Detect and special case functions.
 		// Currently this is done eagerly (when mergeAPIs is called) rather than lazily (when the property is read):
