@@ -214,7 +214,7 @@ async function createAndLoadContainers(provider: ITestObjectProvider) {
 	await provider.loadTestContainer();
 }
 
-describeCompat.only("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
