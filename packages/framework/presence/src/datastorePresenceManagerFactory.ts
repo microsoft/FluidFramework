@@ -55,7 +55,6 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 				getClientId: () => runtime.clientId,
 				events,
 				getQuorum: runtime.getQuorum.bind(runtime),
-				getAudience: runtime.getAudience.bind(runtime),
 				submitSignal: (message: OutboundPresenceMessage) =>
 					runtime.submitSignal(message.type, message.content, message.targetClientId),
 				supportedFeatures:

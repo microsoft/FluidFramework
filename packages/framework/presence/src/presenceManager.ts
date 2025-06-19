@@ -99,7 +99,7 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			}
 		});
 
-		runtime.getAudience().on("removeMember", this.removeClientConnectionId.bind(this));
+		runtime.events.on("remoteDisconnected", this.removeClientConnectionId.bind(this));
 
 		// Check if already connected at the time of construction.
 		// If constructed during data store load, the runtime may already be connected
@@ -166,7 +166,6 @@ function setupSubComponents(
 		attendeeId,
 		systemWorkspaceDatastore,
 		events,
-		runtime.getAudience(),
 	);
 	const datastoreManager = new PresenceDatastoreManagerImpl(
 		attendeeId,
