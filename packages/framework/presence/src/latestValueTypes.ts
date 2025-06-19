@@ -137,46 +137,48 @@ export type StateSchemaValidator<T> = (
 	unvalidatedData: unknown,
 ) => JsonDeserialized<T> | undefined;
 
-/**
- * Creates a getter for a state value that validates the data with a validator if one is provided.
- *
- * @param clientState - The client state to be validated.
- * @param validator - The validator function to run.
- * @returns A function that will validate the data, returning the validated data if it was valid, and `undefined`
- * otherwise.
- */
-export function createValidatedGetter<T>(
+function createGetterFunction<T>(
 	clientState: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
-	validator?: StateSchemaValidator<T>,
+	validator: StateSchemaValidator<T>,
 ): () => DeepReadonly<JsonDeserialized<T>> | undefined {
-	const getterFunction = (): DeepReadonly<JsonDeserialized<T>> | undefined => {
-		const valueToCheck =
-			validator === undefined
-				? // No validator, so use the raw value
-					clientState.value
-				: "validatedValue" in clientState
-					? // Stored value has been validated, so return it without revalidating
-						clientState.validatedValue
-					: // Use false to signal that value needs to be validated
-						false;
-
-		if (valueToCheck !== false) {
-			return valueToCheck === undefined
-				? undefined
-				: asDeeplyReadonlyDeserializedJson(valueToCheck);
+	return (): DeepReadonly<JsonDeserialized<T>> | undefined => {
+		if ("validatedValue" in clientState) {
+			// Stored value has been validated, so return it without revalidating
+			return asDeeplyReadonlyDeserializedJson(clientState.validatedValue);
 		}
 
+		// FIXME
 		// @ts-expect-error Type 'null' is not assignable to type 'T | undefined'.
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		const validData: T | undefined = validator!(
-			clientState.value === undefined ? undefined : revealOpaqueJson(clientState.value),
-		);
+		const validData: T | undefined = validator(revealOpaqueJson(clientState.value));
 		clientState.validatedValue =
+			// FIXME
 			// @ts-expect-error Argument of type 'T & ({} | null)' is not assignable to parameter of type
 			validData === undefined ? undefined : toOpaqueJson(validData);
 		return clientState.validatedValue === undefined
 			? undefined
 			: asDeeplyReadonlyDeserializedJson(clientState.validatedValue);
 	};
-	return getterFunction;
+}
+
+/**
+ * Creates a getter for a state value that validates the data with a validator if one is provided. Otherwise the value
+ * is returned directly.
+ *
+ * @param clientState - The client state to be validated.
+ * @param validator - The validator function to run.
+ * @returns Either returns the value directly if a validator is not provided, or a function that will return the
+ * validated data.
+ */
+export function createValidatedGetter<T>(
+	clientState: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
+	validator?: StateSchemaValidator<T>,
+): (() => DeepReadonly<JsonDeserialized<T>> | undefined) | JsonDeserialized<T> {
+	if (validator === undefined) {
+		if (clientState.value === undefined) {
+			// FIXME: Is this the right thing to do?
+			throw new Error("The client value was undefined and no validator was provided.");
+		}
+		return revealOpaqueJson(clientState.value);
+	}
+	return createGetterFunction(clientState, validator);
 }
