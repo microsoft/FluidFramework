@@ -1,17 +1,16 @@
 ---
 title: Presence
-sidebar_postition: 10
+sidebar_position: 10
 ---
 
 ## Overview
 
-We are introducing a new way to power your ephemeral experiences with Fluid. Introducing the new Presence APIs (in beta
-as of version 2.42.0) that provide session-focused utilities for lightweight data sharing and messaging.
+We are introducing a new way to power your ephemeral experiences with Fluid: the new Presence APIs (in beta as of version 2.42.0) that provide session-focused utilities for lightweight data sharing and messaging.
 Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as _presence_.
 
 By leveraging this shared state, applications can provide a seamless and interactive collaborative experience, ensuring that users are always aware of each other's actions and selections in real-time.
 
-The key scenarios that the new Presence APIs are suitable for includes:
+The key scenarios for which the new Presence APIs are suitable include:
 
 -   User presence
 -   Collaborative cursors
@@ -49,11 +48,12 @@ A `NotificationsWorkspace` is similar to states workspace, but is dedicated to n
 
 #### LatestMap
 
-`LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified to represent deletetion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`.
+`LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a
+key may be set to `undefined` to represent deletion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`.
 
 #### NotificationsManager
 
-Notifications are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `StatesWorkspace` for convenience. `NotificationsManager` is the only presence object permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to a `NotificationsWorkspace` or `StatesWorkspace`.
+Notifications are a special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `StatesWorkspace` for convenience. `NotificationsManager` is the only presence object permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to a `NotificationsWorkspace` or `StatesWorkspace`.
 
 ## Using Presence
 
@@ -71,46 +71,8 @@ function usePresence(container: IFluidContainer): void {
 
 ### Runtime data validation
 
-The Presence API provides a simple mechanism (added in version 2.43.0) to validate that state data
-received within session from other clients matches the types declared. The schema of workspace addresses and states
-
-When creating State objects using `StateFactory.latest` or `StateFactory.latestMap`, you can pass a validator function
-that will be called at runtime to verify that the data is valid. This is especially useful when changing the schema of
-presence data.
-
-When you provide a validator function, the data in a State object must be accessed via a function instead of a direct
-value access. This is reflected in the types.
-
-#### Example
-
-You can configure the grouping and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
-
-```ts
-// Configure a states workspace
-const stateWorkspace = presence.states.getWorkspace(
-	"app:v1states",
-	{
-		// This Latest state has an allowable latency of 100ms.
-		position: StateFactory.latest({
-			local: { x: 0, y: 0 },
-			validator: (value: unknown) => {
-			// ...implement validation and return the validated value or `undefined` if value is invalid.
-			},
-		}),
-	},
-);
-```
-
-:::important
-
-If no validator function is provided, then the data shared in Presence is assumed to be compatible. This may result in
-runtime errors if the data does not match the expected type. It is recommended to always provide a validator function
-to ensure that the data is valid and to prevent runtime errors.
-
-Note that here are important considerations around data compatibility that should be considered regardless of whether
-you provide a validator function or not. See [Compatibility and Versioning](#compatibility-and-versioning) for more details.
-
-:::
+Runtime data validation is not yet implemented. The StateFactory.latest and StateFactory.latestMap APIs do not yet
+accept a `validator` argument. The validator argument is reserved for future use. **Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
 
 ## Limitations
 
@@ -147,9 +109,9 @@ The current implementation relies on Fluid Framework's signal infrastructure ins
 
 ### Notifications
 
-Notifications API is partially implemented at alpha support level. All messages are always broadcast even if `unicast` API is used. Type inferences are not working even with a fully specified `initialSubscriptions` value provided to `Notifications` and schema type must be specified explicitly.
+Notifications API is partially implemented at alpha support level. All messages are always broadcast even if `unicast` API is used. Type inferences are not working even with a fully specified `initialSubscriptions` value provided to `Notifications`, and the schema type must be specified explicitly.
 
-Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
+Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent the most common loss of notifications, always check for connection before sending.
 
 ### Throttling / Grouping
 
