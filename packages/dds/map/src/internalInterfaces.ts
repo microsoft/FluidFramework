@@ -7,6 +7,7 @@ import type { ILocalValue } from "./localValues.js";
 
 /**
  * Operation indicating a value should be set for a key.
+ * @internal
  */
 export interface IMapSetOperation {
 	/**
@@ -27,6 +28,7 @@ export interface IMapSetOperation {
 
 /**
  * Operation indicating the map should be cleared.
+ * @internal
  */
 export interface IMapClearOperation {
 	/**
@@ -37,6 +39,7 @@ export interface IMapClearOperation {
 
 /**
  * Operation indicating a key should be deleted from the map.
+ * @internal
  */
 export interface IMapDeleteOperation {
 	/**
@@ -52,6 +55,7 @@ export interface IMapDeleteOperation {
 
 /**
  * Metadata for an local `edit` operation.
+ * @internal
  */
 export interface IMapKeyEditLocalOpMetadata {
 	/**
@@ -72,6 +76,7 @@ export interface IMapKeyEditLocalOpMetadata {
 
 /**
  * Metadata for an local `add` operation.
+ * @internal
  */
 export interface IMapKeyAddLocalOpMetadata {
 	/**
@@ -87,6 +92,7 @@ export interface IMapKeyAddLocalOpMetadata {
 
 /**
  * Metadata for an local `clear` operation.
+ * @internal
  */
 export interface IMapClearLocalOpMetadata {
 	/**
@@ -155,6 +161,7 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
+ * @internal
  */
 export interface ISerializedValue {
 	/**
