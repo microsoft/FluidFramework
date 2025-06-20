@@ -4257,7 +4257,7 @@ describe("Runtime", () => {
 				);
 			});
 
-			it("cannot enter staging mode while attaching", async () => {
+			it("can enter staging mode while attaching", async () => {
 				const mockContext = getMockContext({
 					attachState: AttachState.Attaching,
 				}) as IContainerContext;
