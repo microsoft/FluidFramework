@@ -32,9 +32,9 @@ export interface AllowedTypesMetadata {
 export function allowUnused<T>(t?: T): void;
 
 // @alpha
-export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema> {
+export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
     readonly metadata: AllowedTypeMetadata;
-    readonly type: LazyItem<T>;
+    readonly type: T;
 }
 
 // @alpha
@@ -258,7 +258,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     readonly allowedTypesMetadata: AllowedTypesMetadata;
     // (undocumented)
     readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes;
-    get annotatedAllowedTypeSet(): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>;
+    get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes;
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
 }
 
@@ -969,6 +969,12 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 
 // @alpha
 export const noopValidator: JsonValidator;
+
+// @alpha
+export interface NormalizedAnnotatedAllowedTypes {
+    readonly metadata: AllowedTypesMetadata;
+    readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+}
 
 // @public @system
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
