@@ -170,8 +170,8 @@ pr:
     - tools/pipelines/templates/upload-dev-manifest.yml
 
 variables:
-  System.Debug: true
-
+  - name: System.Debug
+    value: true
   - template: /tools/pipelines/templates/include-vars.yml@self
     parameters:
       publishOverride: '${{ parameters.publishOverride }}'
