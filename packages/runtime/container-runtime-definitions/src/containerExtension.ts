@@ -4,7 +4,6 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
-import type { IAudience } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
 	BrandedType,
@@ -206,6 +205,7 @@ export interface ContainerExtension<
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
 	"connected": (clientId: ClientConnectionId) => void;
+	"remoteDisconnected": (clientId: ClientConnectionId) => void;
 }
 
 /**
@@ -245,8 +245,6 @@ export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProper
 	 * Also contains a map of key-value pairs that must be agreed upon by all clients before being accepted.
 	 */
 	getQuorum: () => IQuorumClients;
-
-	getAudience: () => IAudience;
 }
 
 /**

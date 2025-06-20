@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
-import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
+import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
 import type { ClientConnectionId } from "../baseTypes.js";
 import type { IEphemeralRuntime } from "../internalTypes.js";
@@ -53,17 +53,6 @@ function makeMockQuorum(clients: ClientData[]): MockQuorumClients {
 }
 
 /**
- * Creates a mock {@link @fluidframework/container-definitions#IAudience} for testing.
- */
-function makeMockAudience(clients: ClientData[]): MockAudience {
-	const audience = new MockAudience();
-	for (const [clientId, client] of clients) {
-		audience.addMember(clientId, client);
-	}
-	return audience;
-}
-
-/**
  * Mock ephemeral runtime for testing
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
@@ -71,14 +60,15 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public connected: boolean = false;
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
-	public readonly audience: MockAudience;
 
 	public readonly listeners: {
 		connected: ((clientId: ClientConnectionId) => void)[];
 		disconnected: (() => void)[];
+		remoteDisconnected: ((clientId: ClientConnectionId) => void)[];
 	} = {
 		connected: [],
 		disconnected: [],
+		remoteDisconnected: [],
 	};
 
 	private isSupportedEvent(event: string): event is keyof typeof this.listeners {
@@ -98,7 +88,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 			/* count of write clients (in quorum) */ 6,
 		);
 		this.quorum = makeMockQuorum(clientsData);
-		this.audience = makeMockAudience(clientsData);
 		this.events = {
 			on: (
 				event: string,
@@ -144,19 +133,19 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		);
 	}
 
-	public removeMember(clientId: ClientConnectionId): void {
-		const client = this.audience.getMember(clientId);
-		assert(client !== undefined, `Attempting to remove unknown connection: ${clientId}`);
-		if (client.mode === "write") {
-			this.quorum.removeMember(clientId);
-		}
-		this.audience.removeMember(clientId);
-	}
-
 	public connect(clientId: string): void {
 		this.clientId = clientId;
 		this.connected = true;
 		for (const listener of this.listeners.connected) {
+			listener(clientId);
+		}
+	}
+
+	public remoteDisconnect(clientId: ClientConnectionId): void {
+		if (this.quorum.getMembers().has(clientId)) {
+			this.quorum.removeMember(clientId);
+		}
+		for (const listener of this.listeners.remoteDisconnected) {
 			listener(clientId);
 		}
 	}
@@ -176,7 +165,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public events: IEphemeralRuntime["events"];
 
 	public getQuorum: () => ReturnType<IEphemeralRuntime["getQuorum"]> = () => this.quorum;
-	public getAudience: () => ReturnType<IEphemeralRuntime["getAudience"]> = () => this.audience;
 
 	public submitSignal: IEphemeralRuntime["submitSignal"] = (...args: unknown[]) => {
 		if (this.signalsExpected.length === 0) {
