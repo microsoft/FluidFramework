@@ -814,41 +814,32 @@ export class IntervalCollection
 		const localOpMetadata = removeMetadataFromPendingChanges(maybeMetadata);
 		const { value } = op;
 		const { id, properties } = getSerializedProperties(value);
-		const { type } = localOpMetadata;
+		const pending = clearEmptyPendingEntry(this.pending, id);
+		const previous = pending?.local.empty
+			? pending.consensus
+			: pending?.local.last?.data.interval;
+		const { type, interval } = localOpMetadata;
 		switch (type) {
 			case "add": {
-				const interval = this.getIntervalById(id);
-				if (interval) {
-					this.deleteExistingInterval({ interval, local: true, rollback: true });
-				}
+				this.deleteExistingInterval({ interval, local: true, rollback: true });
 				break;
 			}
 			case "change": {
-				const { previous } = localOpMetadata;
-				const endpointsChanged = hasEndpointChanges(value);
-				const start = endpointsChanged
-					? toOptionalSequencePlace(previous.start, previous.startSide)
-					: undefined;
-				const end = endpointsChanged
-					? toOptionalSequencePlace(previous.end, previous.endSide)
-					: undefined;
-				this.change(id, {
-					start,
-					end,
-					props: Object.keys(properties).length > 0 ? properties : undefined,
-					rollback: true,
-				});
+				if (Object.keys(properties).length > 0) {
+					interval.changeProperties(properties, undefined, true);
+				}
+				if (localOpMetadata.endpointChangesNode !== undefined) {
+					this.localCollection?.removeExistingInterval(interval);
+					assert(previous !== undefined, "must have existed to change");
+					this.localCollection?.add(previous);
+					this.emitChange(previous, interval, true, true);
+					// maybe dispose the interval
+				}
 				break;
 			}
 			case "delete": {
-				const { previous } = localOpMetadata;
-				this.add({
-					id,
-					start: toSequencePlace(previous.start, previous.startSide),
-					end: toSequencePlace(previous.end, previous.endSide),
-					props: Object.keys(properties).length > 0 ? properties : undefined,
-					rollback: true,
-				});
+				assert(previous !== undefined, "must have existed to delete");
+				this.localCollection?.add(previous);
 				break;
 			}
 			default:
