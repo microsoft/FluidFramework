@@ -77,7 +77,7 @@ export namespace InternalTypes {
         };
         manager: StateValue<TManager>;
     });
-    // @system (undocumented)
+    // @system
     export interface MapValueState<T, Keys extends string | number> {
         // (undocumented)
         items: {
@@ -86,14 +86,14 @@ export namespace InternalTypes {
         // (undocumented)
         rev: number;
     }
-    // @system (undocumented)
+    // @system
     export interface NotificationType {
         // (undocumented)
         args: unknown[];
         // (undocumented)
         name: string;
     }
-    // @system (undocumented)
+    // @system
     export class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
     }
     // @system
@@ -105,7 +105,7 @@ export namespace InternalTypes {
     export interface ValidatedValueState<TValue> {
         validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
     }
-    // @system (undocumented)
+    // @system
     export interface ValueDirectory<T> {
         // (undocumented)
         items: {
@@ -114,7 +114,7 @@ export namespace InternalTypes {
         // (undocumented)
         rev: number;
     }
-    // @system (undocumented)
+    // @system
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system
     export interface ValueOptionalState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
@@ -126,7 +126,7 @@ export namespace InternalTypes {
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
-    // @system (undocumented)
+    // @system
     export interface ValueStateMetadata {
         // (undocumented)
         rev: number;
@@ -336,7 +336,6 @@ export interface NotificationsWorkspaceSchema {
 
 // @beta @sealed
 export interface Presence {
-    // (undocumented)
     readonly attendees: {
         readonly events: Listenable<AttendeesEvents>;
         getAttendees(): ReadonlySet<Attendee>;
@@ -344,7 +343,6 @@ export interface Presence {
         getMyself(): Attendee;
     };
     readonly events: Listenable<PresenceEvents>;
-    // (undocumented)
     readonly states: {
         getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
     };
