@@ -215,6 +215,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * sequentially.
 	 *
 	 * If the callback throws an error, the container will close and the error will be logged.
+	 *
+	 * @remarks
+	 * `orderSequentially` may enter staging mode for the duration of the function. This is necessary for rolling back certain op types.
 	 */
 	orderSequentially(callback: () => void): void;
 
