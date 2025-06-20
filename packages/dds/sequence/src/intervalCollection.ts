@@ -1401,33 +1401,32 @@ export class IntervalCollection
 			this.ackInterval(interval, op);
 			return interval;
 		} else {
-			const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
+			const latestInterval = this.getIntervalById(id);
+			const intervalToChange: SequenceIntervalClass | undefined =
+				this.pending[id]?.consensus ?? latestInterval;
 
-			if (!interval) {
+			const isLatestInterval = intervalToChange === latestInterval;
+
+			if (!intervalToChange) {
 				// The interval has been removed locally; no-op.
-				return;
-			}
-			// If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
-			// should be the winning change.
-			let start: number | "start" | "end" | undefined;
-			let end: number | "start" | "end" | undefined;
-			// Track pending start/end independently of one another.
-			if (!this.hasPendingEndpointChanges(id)) {
-				start = serializedInterval.start;
-				end = serializedInterval.end;
+				return intervalToChange;
 			}
 
-			let newInterval = interval;
-			if (start !== undefined || end !== undefined) {
+			let newInterval = intervalToChange;
+			if (hasEndpointChanges(serializedInterval)) {
+				const { start, end, startSide, endSide } = serializedInterval;
 				// If changeInterval gives us a new interval, work with that one. Otherwise keep working with
 				// the one we originally found in the tree.
-				newInterval =
-					this.localCollection.changeInterval(
-						interval,
-						toOptionalSequencePlace(start, serializedInterval.startSide ?? Side.Before),
-						toOptionalSequencePlace(end, serializedInterval.endSide ?? Side.Before),
-						op,
-					) ?? interval;
+				newInterval = intervalToChange.modify(
+					"",
+					toOptionalSequencePlace(start, startSide ?? Side.Before),
+					toOptionalSequencePlace(end, endSide ?? Side.Before),
+					op,
+				);
+				if (isLatestInterval) {
+					this.localCollection.removeExistingInterval(intervalToChange);
+					this.localCollection.add(newInterval);
+				}
 			}
 			const deltaProps = newInterval.changeProperties(properties, op);
 
@@ -1435,14 +1434,14 @@ export class IntervalCollection
 				this.onDeserialize(newInterval);
 			}
 
-			if (newInterval !== interval) {
-				this.emitChange(newInterval, interval, local, false, op);
+			if (newInterval !== intervalToChange && isLatestInterval) {
+				this.emitChange(newInterval, intervalToChange, local, false, op);
 			}
 
 			const changedProperties = Object.keys(properties).length > 0;
 			if (changedProperties) {
-				this.emit("propertyChanged", interval, deltaProps, local, op);
-				this.emit("changed", interval, deltaProps, undefined, local, false);
+				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
+				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
 			return newInterval;
 		}

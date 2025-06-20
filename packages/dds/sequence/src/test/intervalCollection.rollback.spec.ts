@@ -223,7 +223,7 @@ describe("SharedString IntervalCollection rollback", () => {
 		assert(!interval.disposed, "should not be disposed after rollback");
 	});
 
-	it.only("should rollback local changes in presence of remote changes from another client", () => {
+	it("should rollback local changes in presence of remote changes from another client", () => {
 		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
 			setupRollbackTest();
 		// Create a second client
