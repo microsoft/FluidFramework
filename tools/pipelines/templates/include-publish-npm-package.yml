@@ -35,6 +35,7 @@ stages:
   displayName: Publish internal test feed
   condition: and(succeeded(), eq(variables['testBuild'], true))
   variables:
+    System.Debug: true
   - group: ado-feeds
   jobs:
   - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
