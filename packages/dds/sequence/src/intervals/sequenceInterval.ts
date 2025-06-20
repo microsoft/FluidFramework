@@ -226,7 +226,7 @@ export class SequenceIntervalClass
 	// eslint-disable-next-line import/no-deprecated
 	implements SequenceInterval, ISerializableInterval, IDisposable
 {
-	readonly _props: {
+	readonly #props: {
 		propertyManager?: PropertiesManager;
 		properties: PropertySet;
 	} = { properties: createMap<any>() };
@@ -236,7 +236,7 @@ export class SequenceIntervalClass
 	 */
 	public get properties(): Readonly<PropertySet> {
 		this.verifyNotDispose();
-		return this._props.properties;
+		return this.#props.properties;
 	}
 
 	public changeProperties(
@@ -247,10 +247,10 @@ export class SequenceIntervalClass
 		this.verifyNotDispose();
 
 		if (props !== undefined) {
-			this._props.propertyManager ??= new PropertiesManager();
-			return this._props.propertyManager.handleProperties(
+			this.#props.propertyManager ??= new PropertiesManager();
+			return this.#props.propertyManager.handleProperties(
 				{ props },
-				this._props,
+				this.#props,
 				this.client.getCollabWindow().collaborating
 					? (op?.sequenceNumber ?? UnassignedSequenceNumber)
 					: UniversalSequenceNumber,
@@ -295,7 +295,7 @@ export class SequenceIntervalClass
 		public readonly endSide: Side = Side.Before,
 	) {
 		if (props) {
-			this._props.properties = addProperties(this._props.properties, props);
+			this.#props.properties = addProperties(this.#props.properties, props);
 		}
 	}
 	#disposed = false;
@@ -308,7 +308,7 @@ export class SequenceIntervalClass
 		this.client.removeLocalReferencePosition(this.start);
 		this.client.removeLocalReferencePosition(this.end);
 		this.removePositionChangeListeners();
-		this._props.propertyManager = undefined;
+		this.#props.propertyManager = undefined;
 	}
 
 	private verifyNotDispose() {
@@ -649,9 +649,9 @@ export class SequenceIntervalClass
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		newInterval._props.propertyManager = this._props.propertyManager ??=
+		newInterval.#props.propertyManager = this.#props.propertyManager ??=
 			new PropertiesManager();
-		newInterval._props.properties = this._props.properties;
+		newInterval.#props.properties = this.#props.properties;
 		return newInterval;
 	}
 
@@ -662,9 +662,9 @@ export class SequenceIntervalClass
 			return;
 		}
 
-		assert(this._props.propertyManager !== undefined, "must have property manager to ack");
+		assert(this.#props.propertyManager !== undefined, "must have property manager to ack");
 		// Let the propertyManager prune its pending change-properties set.
-		this._props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
+		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
 			props: newProps,
 		});
 	}
