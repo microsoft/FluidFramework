@@ -1,6 +1,6 @@
 # TestAbstractClass
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TestAbstractClass](/test-suite-a/testabstractclass-class/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestAbstractClass](/test-suite-a/testabstractclass-class/)
 
 A test abstract class.
 
@@ -27,6 +27,6 @@ export declare abstract class TestAbstractClass
 
 | Method | Modifiers | Return Type | Description |
 | - | - | - | - |
-| [publicAbstractMethod()](/test-suite-a/testabstractclass-class/publicabstractmethod-method) |  | void | A test public abstract method. |
+| [publicAbstractMethod()](/test-suite-a/testabstractclass-class/publicabstractmethod-method) | | void | A test public abstract method. |
 | [sealedMethod()](/test-suite-a/testabstractclass-class/sealedmethod-method) | `sealed` | string | A test `@sealed` method. |
 | [virtualMethod()](/test-suite-a/testabstractclass-class/virtualmethod-method) | `virtual` | number | A test `@virtual` method. |

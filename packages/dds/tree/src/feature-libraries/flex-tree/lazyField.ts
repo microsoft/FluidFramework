@@ -19,6 +19,7 @@ import {
 	type TreeNavigationResult,
 	inCursorNode,
 	iterateCursorField,
+	mapCursorField,
 	rootFieldKey,
 } from "../../core/index.js";
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
@@ -206,17 +207,13 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
-		return Array.from(this, callbackfn);
-	}
-
-	public boxedIterator(): IterableIterator<HydratedFlexTreeNode> {
-		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
-	}
-
-	public [Symbol.iterator](): IterableIterator<FlexTreeUnknownUnboxed> {
-		return iterateCursorField(this.cursor, (cursor) =>
-			unboxedFlexNode(this.context, cursor, this.anchor),
+		return mapCursorField(this.cursor, (cursor) =>
+			callbackfn(unboxedFlexNode(this.context, cursor, this.anchor), cursor.fieldIndex),
 		);
+	}
+
+	public [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
+		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
 	}
 
 	public getFieldPath(): NormalizedFieldUpPath {

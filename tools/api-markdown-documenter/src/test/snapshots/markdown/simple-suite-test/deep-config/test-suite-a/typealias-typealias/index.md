@@ -1,6 +1,6 @@
 # TypeAlias
 
-[Packages](/) \> [test-suite-a](/test-suite-a/) \> [TypeAlias](/test-suite-a/typealias-typealias/)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TypeAlias](/test-suite-a/typealias-typealias/)
 
 Test Type-Alias
 

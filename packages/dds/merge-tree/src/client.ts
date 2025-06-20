@@ -83,8 +83,8 @@ import {
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import {
+	createLocalReconnectingPerspective,
 	LocalReconnectingPerspective,
-	LocalSquashPerspective,
 	PriorPerspective,
 	type Perspective,
 } from "./perspective.js";
@@ -130,7 +130,10 @@ export interface IIntegerRange {
  * @internal
  */
 export interface IClientEvents {
-	(event: "normalize", listener: (target: IEventThisPlaceHolder) => void): void;
+	(
+		event: "normalize",
+		listener: (squash: boolean, target: IEventThisPlaceHolder) => void,
+	): void;
 	(
 		event: "delta",
 		listener: (
@@ -875,20 +878,23 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			oldSegment !== undefined && oldOffset !== undefined,
 			0xb61 /* Invalid old reference */,
 		);
-		const useNewSlidingBehavior = true;
+		const canSlideToEndpoint = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
 		// eslint-disable-next-line prefer-const
-		let { segment: newSegment, offset: newOffset } = getSlideToSegoff(
+		const segOff = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,
 			reconnectingPerspective,
-			useNewSlidingBehavior,
+			canSlideToEndpoint,
 		);
 
-		newSegment ??=
-			slidePreference === SlidingPreference.FORWARD
-				? this._mergeTree.endOfTree
-				: this._mergeTree.startOfTree;
+		const { segment: newSegment, offset: newOffset } = segOff ?? {
+			segment:
+				slidePreference === SlidingPreference.FORWARD
+					? this._mergeTree.endOfTree
+					: this._mergeTree.startOfTree,
+			offset: 0,
+		};
 
 		assert(
 			isSegmentLeaf(newSegment) && newOffset !== undefined,
@@ -915,9 +921,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		end: RebasedObliterateEndpoint;
 	} {
 		const { currentSeq, clientId } = this.getCollabWindow();
-		const reconnectingPerspective = new (
-			squash ? LocalSquashPerspective : LocalReconnectingPerspective
-		)(currentSeq, clientId, obliterateInfo.stamp.localSeq! - 1);
+		const reconnectingPerspective = createLocalReconnectingPerspective(
+			currentSeq,
+			clientId,
+			obliterateInfo.stamp.localSeq! - 1,
+			squash,
+		);
 
 		const newStart = this.rebaseSidedLocalReference(
 			obliterateInfo.start,
@@ -1473,7 +1482,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					this.cachedObliterateRebases.set(localSeq, { start, end });
 				}
 			}
-			this.emit("normalize", this);
+			this.emit("normalize", squash, this);
 
 			this._mergeTree.normalizeSegmentsOnRebase();
 			this.lastNormalization = {
@@ -1612,10 +1621,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		pos: number,
 		sequenceArgs?: Pick<ISequencedDocumentMessage, "referenceSequenceNumber" | "clientId">,
 		localSeq?: number,
-	): {
-		segment: T | undefined;
-		offset: number | undefined;
-	} {
+	):
+		| {
+				segment: T;
+				offset: number;
+		  }
+		| undefined {
 		let perspective: Perspective;
 		const clientId =
 			sequenceArgs === undefined
@@ -1630,20 +1641,17 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			perspective = new PriorPerspective(refSeq, clientId);
 		}
 
-		return this._mergeTree.getContainingSegment(pos, perspective) as {
-			segment: T | undefined;
-			offset: number | undefined;
-		};
+		return this._mergeTree.getContainingSegment(pos, perspective) as
+			| {
+					segment: T;
+					offset: number;
+			  }
+			| undefined;
 	}
 
 	getPropertiesAtPosition(pos: number): PropertySet | undefined {
-		let propertiesAtPosition: PropertySet | undefined;
 		const segoff = this.getContainingSegment(pos);
-		const seg = segoff.segment;
-		if (seg) {
-			propertiesAtPosition = seg.properties;
-		}
-		return propertiesAtPosition;
+		return segoff?.segment?.properties;
 	}
 
 	getRangeExtentsOfPosition(pos: number): {
@@ -1654,7 +1662,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		let posAfterEnd: number | undefined;
 
 		const segoff = this.getContainingSegment(pos);
-		const seg = segoff.segment;
+		const seg = segoff?.segment;
 		if (seg) {
 			posStart = this.getPosition(seg);
 			posAfterEnd = posStart + seg.cachedLength;
