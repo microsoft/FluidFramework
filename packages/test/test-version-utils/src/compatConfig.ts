@@ -283,9 +283,13 @@ export function isOdspCompatCompliant(config: CompatConfig): boolean {
 }
 
 // Helper function for genCrossClientCompatConfig().
-function genCompatConfig(createVersion: string, loadVersion: string): CompatConfig {
+function genCompatConfig(
+	createVersion: string,
+	loadVersion: string,
+	deltas: string[],
+): CompatConfig {
 	return {
-		name: `compat cross-client - create with ${createVersion} + load with ${loadVersion}`,
+		name: `compat cross-client - create with ${createVersion} (${deltas[0]}) + load with ${loadVersion} (${deltas[1]})`,
 		kind: CompatKind.CrossClient,
 		// Note: `compatVersion` is used to determine what versions need to be installed.
 		// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
@@ -314,10 +318,12 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 		false, // adjustMajorPublic = false
 	);
 
-	// We build a list of all the versions we want to test the current version against.
-	// We will not add any duplicate versions or versions below 1.0.0 (only >1.0.0 is supported by our
-	// cross-client compat policy).
-	const deltaVersions: string[] = [];
+	// We build a map of all the versions we want to test the current version against.
+	// The key is the version and the value is a string describing the delta from the current version.
+	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
+	// If there is a duplicate version (i.e. the N-1 public major version is the same as the LTS version),
+	// then we will append the delta description to the existing delta description for that version.
+	const deltaVersions: Map<string, string> = new Map();
 
 	// N-1 and N-2 legacy+alpha breaking minor releases
 	defaultCompatVersions.currentCrossClientVersionDeltas
@@ -328,8 +334,8 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 				delta,
 				false, // adjustMajorPublic = false
 			);
-			if (semver.gte(v, "1.0.0") && !deltaVersions.includes(v)) {
-				deltaVersions.push(v);
+			if (semver.gte(v, "1.0.0")) {
+				deltaVersions.set(v, `N${delta} legacy+alpha`);
 			}
 		});
 
@@ -343,25 +349,33 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 				delta,
 				true, // adjustMajorPublic = true
 			);
-			if (semver.gte(v, "1.0.0") && !deltaVersions.includes(v)) {
-				deltaVersions.push(v);
+			if (semver.gte(v, "1.0.0")) {
+				if (deltaVersions.has(v)) {
+					deltaVersions.set(v, `${deltaVersions.get(v)}/public major`);
+				} else {
+					deltaVersions.set(v, `N${delta} public major`);
+				}
 			}
 		});
 
 	// LTS versions
 	for (const v of defaultCompatVersions.ltsVersions) {
-		if (semver.gte(v, "1.0.0") && !deltaVersions.includes(v)) {
-			deltaVersions.push(v);
+		if (semver.gte(v, "1.0.0")) {
+			if (deltaVersions.has(v)) {
+				deltaVersions.set(v, `${deltaVersions.get(v)}/LTS`);
+			} else {
+				deltaVersions.set(v, "LTS");
+			}
 		}
 	}
 
 	// Build all combos of (current version, prior version) & (prior version, current version)
 	const configs: CompatConfig[] = [];
-	for (const v of deltaVersions) {
-		configs.push(genCompatConfig(currentVersion, v));
+	for (const [v, delta] of deltaVersions) {
+		configs.push(genCompatConfig(currentVersion, v, ["N", delta]));
 	}
-	for (const v of deltaVersions) {
-		configs.push(genCompatConfig(v, currentVersion));
+	for (const [v, delta] of deltaVersions) {
+		configs.push(genCompatConfig(v, currentVersion, [delta, "N"]));
 	}
 
 	return configs;
