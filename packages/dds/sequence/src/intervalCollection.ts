@@ -1258,7 +1258,7 @@ export class IntervalCollection
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
 		}
-		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
+		const interval = this.getIntervalById(id);
 		if (interval) {
 			this.deleteExistingInterval({ interval, local: true });
 		}
@@ -1479,7 +1479,7 @@ export class IntervalCollection
 			localOpMetadata,
 			squash,
 		));
-		const localInterval = this.localCollection.idIntervalIndex.getIntervalById(id);
+		const localInterval = this.getIntervalById(id);
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
 		if (rebasedEndpoint === "detached") {
@@ -1690,7 +1690,7 @@ export class IntervalCollection
 		}
 
 		const { id } = getSerializedProperties(serializedInterval);
-		const interval = this.localCollection.idIntervalIndex.getIntervalById(id);
+		const interval = this.getIntervalById(id);
 		if (interval) {
 			this.deleteExistingInterval({ interval, local, op });
 		}
