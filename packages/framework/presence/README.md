@@ -93,7 +93,7 @@ To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 import { getPresence } from "@fluidframework/presence/beta";
 
 function usePresence(container: IFluidContainer): void {
-   const presence = await getPresence(container);
+   const presence = getPresence(container);
 }
 ```
 
