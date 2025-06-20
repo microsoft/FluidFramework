@@ -13253,6 +13253,115 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
 
+  packages/service-clients/end-to-end-tests/tinylicious-client:
+    dependencies:
+      '@fluid-experimental/data-objects':
+        specifier: workspace:~
+        version: link:../../../../experimental/framework/data-objects
+      '@fluid-internal/client-utils':
+        specifier: workspace:~
+        version: link:../../../common/client-utils
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../../test/mocha-test-setup
+      '@fluid-private/test-version-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-version-utils
+      '@fluidframework/aqueduct':
+        specifier: workspace:~
+        version: link:../../../framework/aqueduct
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../../loader/container-loader
+      '@fluidframework/core-interfaces':
+        specifier: workspace:~
+        version: link:../../../common/core-interfaces
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../common/driver-definitions
+      '@fluidframework/fluid-static':
+        specifier: workspace:~
+        version: link:../../../framework/fluid-static
+      '@fluidframework/presence':
+        specifier: workspace:~
+        version: link:../../../framework/presence
+      '@fluidframework/runtime-definitions':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-definitions
+      '@fluidframework/test-runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/test-runtime-utils
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../../test/test-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../tinylicious-client
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
+      fluid-framework:
+        specifier: workspace:~
+        version: link:../../../framework/fluid-framework
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
+      sinon:
+        specifier: ^18.0.1
+        version: 18.0.1
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
+      tinylicious:
+        specifier: ^5.0.0
+        version: 5.0.0
+      uuid:
+        specifier: ^9.0.0
+        version: 9.0.1
+    devDependencies:
+      '@biomejs/biome':
+        specifier: ~1.9.3
+        version: 1.9.4
+      '@fluidframework/build-common':
+        specifier: ^2.0.3
+        version: 2.0.3
+      '@fluidframework/build-tools':
+        specifier: ^0.55.0
+        version: 0.55.0(@types/node@18.19.67)
+      '@fluidframework/eslint-config-fluid':
+        specifier: ^5.7.4
+        version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
+      '@types/mocha':
+        specifier: ^10.0.10
+        version: 10.0.10
+      '@types/node':
+        specifier: ^18.19.0
+        version: 18.19.67
+      '@types/sinon':
+        specifier: ^17.0.3
+        version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
+      eslint:
+        specifier: ~8.55.0
+        version: 8.55.0
+      rimraf:
+        specifier: ^4.4.0
+        version: 4.4.1
+      typescript:
+        specifier: ~5.4.5
+        version: 5.4.5
+
   packages/service-clients/odsp-client:
     dependencies:
       '@fluidframework/container-definitions':
