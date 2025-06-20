@@ -1408,15 +1408,14 @@ export class IntervalCollection
 			const isLatestInterval = intervalToChange === latestInterval;
 
 			if (!intervalToChange) {
-				// The interval has been removed locally; no-op.
 				return intervalToChange;
 			}
+
+			const deltaProps = intervalToChange.changeProperties(properties, op);
 
 			let newInterval = intervalToChange;
 			if (hasEndpointChanges(serializedInterval)) {
 				const { start, end, startSide, endSide } = serializedInterval;
-				// If changeInterval gives us a new interval, work with that one. Otherwise keep working with
-				// the one we originally found in the tree.
 				newInterval = intervalToChange.modify(
 					"",
 					toOptionalSequencePlace(start, startSide ?? Side.Before),
@@ -1426,20 +1425,14 @@ export class IntervalCollection
 				if (isLatestInterval) {
 					this.localCollection.removeExistingInterval(intervalToChange);
 					this.localCollection.add(newInterval);
+					this.emitChange(newInterval, intervalToChange, local, false, op);
+					if (this.onDeserialize) {
+						this.onDeserialize(newInterval);
+					}
 				}
 			}
-			const deltaProps = newInterval.changeProperties(properties, op);
 
-			if (this.onDeserialize) {
-				this.onDeserialize(newInterval);
-			}
-
-			if (newInterval !== intervalToChange && isLatestInterval) {
-				this.emitChange(newInterval, intervalToChange, local, false, op);
-			}
-
-			const changedProperties = Object.keys(properties).length > 0;
-			if (changedProperties) {
+			if (deltaProps !== undefined && Object.keys(deltaProps).length > 0) {
 				this.emit("propertyChanged", latestInterval, deltaProps, local, op);
 				this.emit("changed", latestInterval, deltaProps, undefined, local, false);
 			}
