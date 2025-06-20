@@ -690,6 +690,7 @@ type PendingChanges = Partial<
 			endpointChanges?: DoublyLinkedList<
 				IntervalAddLocalMetadata | IntervalChangeLocalMetadata
 			>;
+			consensus: SequenceIntervalClass | undefined;
 		}
 	>
 >;
@@ -744,6 +745,7 @@ export class IntervalCollection
 	private readonly submitDelta: (
 		op: IIntervalCollectionTypeOperationValue,
 		md: IntervalMessageLocalMetadata,
+		consensus?: SequenceIntervalClass,
 	) => void;
 
 	constructor(
@@ -753,10 +755,11 @@ export class IntervalCollection
 	) {
 		super();
 
-		this.submitDelta = (op, md) => {
+		this.submitDelta = (op, md, consensus) => {
 			const { id } = getSerializedProperties(op.value);
 			const pending = (this.pending[id] ??= {
 				local: new DoublyLinkedList(),
+				consensus,
 			});
 			if (md.type === "add" || (md.type === "change" && hasEndpointChanges(op.value))) {
 				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
@@ -1246,6 +1249,7 @@ export class IntervalCollection
 						localSeq: this.getNextLocalSeq(),
 						previous: value,
 					},
+					interval,
 				);
 			} else {
 				if (this.onDeserialize) {
@@ -1342,6 +1346,7 @@ export class IntervalCollection
 						value: serializedInterval,
 					},
 					metadata,
+					interval,
 				);
 			}
 			if (deltaProps !== undefined) {
