@@ -109,7 +109,7 @@ export interface LatestMapItemRemovedClientData<K extends string | number> {
 export interface LatestMapEvents<
 	T,
 	K extends string | number,
-	TRemoteValueAccessor extends ValueAccessor<T>,
+	TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>,
 > {
 	/**
 	 * Raised when any item's value for remote client is updated.
