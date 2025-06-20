@@ -594,7 +594,7 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 	/**
 	 * The initial value of the local state.
 	 */
-	local: {
+	local?: {
 		[K in Keys]: JsonSerializable<T>;
 	};
 

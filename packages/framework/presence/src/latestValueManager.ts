@@ -260,11 +260,6 @@ export interface LatestArgumentsRaw<T extends object | null> {
 	 * See {@link BroadcastControlSettings}.
 	 */
 	settings?: BroadcastControlSettings | undefined;
-
-	/**
-	 * Optional validator. See {@link StateSchemaValidator}.
-	 */
-	validator?: StateSchemaValidator<T>;
 }
 
 /**
@@ -312,7 +307,7 @@ export function latest<T extends object | null, Key extends string = string>(
 
 // eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
 export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArguments<T> | LatestArgumentsRaw<T>,
+	args: Partial<LatestArguments<T>> & Pick<LatestArguments<T>, "local">,
 ):
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>
 	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
