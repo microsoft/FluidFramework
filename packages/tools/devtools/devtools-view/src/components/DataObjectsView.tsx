@@ -48,7 +48,11 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 			[RootDataVisualizations.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as RootDataVisualizations.Message;
 
+				console.log('message.data.containerKey', message.data.containerKey)
+				console.log('containerKey', containerKey)
+
 				if (message.data.containerKey === containerKey) {
+					console.log('message.data.visualizations', message.data.visualizations)
 					setRootDataHandles(message.data.visualizations);
 
 					return true;
@@ -79,6 +83,7 @@ export function DataObjectsView(props: DataObjectsViewProps): React.ReactElement
 	}, [containerKey, setRootDataHandles, messageRelay]);
 
 	if (rootDataHandles === undefined) {
+		console.log('here here here')
 		return <Waiting />;
 	}
 

@@ -329,20 +329,27 @@ export class FluidDevtools implements IFluidDevtools {
 		const runtimeId = runtime?.id;
 
 		if (runtimeId === undefined) {
-			throw new UsageError("WHHEy");
+			throw new UsageError("No runtime ID found");
 		}
+
+		// Create a unique container key using a random number for testing
+		const containerKey = `test-container-${Math.random().toString(36).slice(2, 11)}`;
 
 		const decomposedIContainerComponent = toDecomposedIContainer(dataObject);
 
-		if (this.containers.has(runtimeId)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(runtimeId));
+		console.log("runtimeId", runtime, runtimeId);
+		console.log("containerKey", containerKey);
+
+		if (this.containers.has(containerKey)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
 		}
 
 		const containerDevtools = new ContainerDevtools({
-			containerKey: runtimeId,
+			containerKey,
 			container: decomposedIContainerComponent,
+			containerData: {appData: dataObject},
 		});
-		this.containers.set(runtimeId, containerDevtools);
+		this.containers.set(containerKey, containerDevtools);
 
 		this.postContainerList();
 	}
