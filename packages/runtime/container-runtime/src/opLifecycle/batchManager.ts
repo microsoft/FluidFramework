@@ -178,7 +178,7 @@ export class BatchManager {
 	}
 }
 
-const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
+export const addBatchMetadata = (batch: LocalBatch, batchId?: BatchId): LocalBatch => {
 	const batchEnd = batch.messages.length - 1;
 
 	const firstMsg = batch.messages[0];

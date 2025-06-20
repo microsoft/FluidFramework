@@ -3415,7 +3415,7 @@ export class ContainerRuntime
 					try {
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							// These changes are staged since we entered staging mode above
-							this.rollbackStagedChanges(message.runtimeOp, message.localOpMetadata),
+							this.rollbackStagedChange(message.runtimeOp, message.localOpMetadata),
 						);
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
@@ -3481,17 +3481,17 @@ export class ContainerRuntime
 	// eslint-disable-next-line import/no-deprecated
 	public enterStagingMode = (): StageControlsExperimental => {
 		if (this.stageControls !== undefined) {
-			throw new UsageError("already in staging mode");
+			throw new UsageError("Already in staging mode");
 		}
 		if (this.attachState === AttachState.Detached) {
-			throw new UsageError("cannot enter staging mode while detached");
+			throw new UsageError("Cannot enter staging mode while Detached");
 		}
 
 		// Make sure Outbox is empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
 		this.flush();
 
-		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
+		const exitStagingMode = (discardOrCommit: () => void): void => {
 			try {
 				// Final flush of any last staged changes
 				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
@@ -3514,25 +3514,24 @@ export class ContainerRuntime
 
 		// eslint-disable-next-line import/no-deprecated
 		const stageControls: StageControlsExperimental = {
-			discardChanges: exitStagingMode(() => {
-				// Pop all staged batches from the PSM and roll them back in LIFO order
-				this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-					assert(
-						runtimeOp !== undefined,
-						0xb82 /* Staged batches expected to have runtimeOp defined */,
-					);
-					this.rollbackStagedChanges(runtimeOp, localOpMetadata);
-				});
-				this.updateDocumentDirtyState();
-			}),
-			commitChanges: (optionsParam) => {
-				const options = { ...defaultStagingCommitOptions, ...optionsParam };
-				return exitStagingMode(() => {
-					this.pendingStateManager.replayPendingStates({
-						onlyStagedBatches: true,
-						squash: options.squash ?? false,
+			discardChanges: () =>
+				exitStagingMode(() => {
+					// Pop all staged batches from the PSM and roll them back in LIFO order
+					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
+						this.rollbackStagedChange(runtimeOp, localOpMetadata);
 					});
-				})();
+					this.updateDocumentDirtyState();
+				}),
+			commitChanges: (options) => {
+				const { squash } = { ...defaultStagingCommitOptions, ...options };
+				exitStagingMode(() => {
+					// Replay all staged batches in typical FIFO order.
+					// We'll be out of staging mode so they'll be sent to the service finally.
+					this.pendingStateManager.replayPendingStates({
+						committingStagedBatches: true,
+						squash,
+					});
+				});
 			},
 		};
 
@@ -4832,7 +4831,7 @@ export class ContainerRuntime
 	/**
 	 * Rollback the given op which was only staged but not yet submitted.
 	 */
-	private rollbackStagedChanges(
+	private rollbackStagedChange(
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
@@ -4870,7 +4869,6 @@ export class ContainerRuntime
 	/**
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
-
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
