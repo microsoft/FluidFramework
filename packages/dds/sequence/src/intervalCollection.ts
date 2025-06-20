@@ -1579,10 +1579,14 @@ export class IntervalCollection
 			// `interval`'s endpoints will get modified in-place, so clone it prior to doing so for event emission.
 			const oldInterval = interval.clone();
 
-			// In this case, where we change the start or end of an interval,
-			// it is necessary to remove and re-add the interval listeners.
-			// This ensures that the correct listeners are added to the LocalReferencePosition.
-			this.localCollection.removeExistingInterval(interval);
+			const isLatestInterval = this.getIntervalById(id) === interval;
+
+			if (isLatestInterval) {
+				// In this case, where we change the start or end of an interval,
+				// it is necessary to remove and re-add the interval listeners.
+				// This ensures that the correct listeners are added to the LocalReferencePosition.
+				this.localCollection.removeExistingInterval(interval);
+			}
 			if (!this.client) {
 				throw new LoggingError("client does not exist");
 			}
@@ -1625,8 +1629,10 @@ export class IntervalCollection
 				oldInterval.end.refType = ReferenceType.Transient;
 				oldSeg?.localRefs?.addLocalRef(oldInterval.end, oldInterval.end.getOffset());
 			}
-			this.localCollection.add(interval);
-			this.emitChange(interval, oldInterval, true, true, op);
+			if (isLatestInterval) {
+				this.localCollection.add(interval);
+				this.emitChange(interval, oldInterval, true, true, op);
+			}
 		}
 	}
 
@@ -1643,10 +1649,7 @@ export class IntervalCollection
 				localOpMetadata !== undefined,
 				0x553 /* op metadata should be defined for local op */,
 			);
-			const localInterval = this.getIntervalById(id);
-			if (localInterval) {
-				this.ackInterval(localInterval, op);
-			}
+			this.ackInterval(localOpMetadata.interval, op);
 			return;
 		}
 
