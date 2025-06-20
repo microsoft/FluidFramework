@@ -707,8 +707,7 @@ function removeMetadataFromPendingChanges(
 
 function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
 	const pending = pendingChanges[id];
-	assert(pending !== undefined, "pending must exist for local process");
-	if (pending.local.empty) {
+	if (pending?.local.empty) {
 		assert(
 			pending.endpointChanges?.empty !== false,
 			"endpointChanges must be empty if not pending changes",
@@ -716,6 +715,7 @@ function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete pendingChanges[id];
 	}
+	return pending;
 }
 
 function hasEndpointChanges(
@@ -869,13 +869,15 @@ export class IntervalCollection
 			: undefined;
 
 		const { opName, value } = op;
+		const { id } = getSerializedProperties(value);
 		assert(
 			(local === false && localOpMetadata === undefined) || opName === localOpMetadata?.type,
 			"must be same type",
 		);
+		let newConsensus = localOpMetadata?.interval;
 		switch (opName) {
 			case "add": {
-				this.ackAdd(
+				newConsensus = this.ackAdd(
 					value,
 					local,
 					message,
@@ -892,7 +894,7 @@ export class IntervalCollection
 			}
 
 			case "change": {
-				this.ackChange(
+				newConsensus = this.ackChange(
 					value,
 					local,
 					message, // this cast is safe because of the above assert which
@@ -904,10 +906,10 @@ export class IntervalCollection
 			default:
 				unreachableCase(opName);
 		}
+		const pending = clearEmptyPendingEntry(this.pending, id);
 
-		if (local) {
-			const { id } = getSerializedProperties(value);
-			clearEmptyPendingEntry(this.pending, id);
+		if (pending !== undefined) {
+			pending.consensus = newConsensus;
 		}
 	}
 
@@ -1399,9 +1401,11 @@ export class IntervalCollection
 
 		if (local) {
 			assert(localOpMetadata !== undefined, "local must have metadata");
-			localOpMetadata?.interval.ackPropertiesChange(properties, op);
+			const { interval } = localOpMetadata;
+			interval.ackPropertiesChange(properties, op);
 
-			this.ackInterval(localOpMetadata?.interval, op);
+			this.ackInterval(interval, op);
+			return interval;
 		} else {
 			const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
 
@@ -1446,6 +1450,7 @@ export class IntervalCollection
 				this.emit("propertyChanged", interval, deltaProps, local, op);
 				this.emit("changed", interval, deltaProps, undefined, local, false);
 			}
+			return newInterval;
 		}
 	}
 
@@ -1654,7 +1659,7 @@ export class IntervalCollection
 		local: boolean,
 		op: ISequencedDocumentMessage,
 		localOpMetadata: IntervalAddLocalMetadata | undefined,
-	) {
+	): SequenceIntervalClass {
 		const { id, properties } = getSerializedProperties(serializedInterval);
 
 		if (local) {
@@ -1663,7 +1668,7 @@ export class IntervalCollection
 				0x553 /* op metadata should be defined for local op */,
 			);
 			this.ackInterval(localOpMetadata.interval, op);
-			return;
+			return localOpMetadata.interval;
 		}
 
 		if (!this.localCollection) {
