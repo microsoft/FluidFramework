@@ -224,7 +224,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	public readonly closeAbortController = new AbortController();
 
 	private readonly deltaStorageDelayId = uuid();
-	"";
 	private readonly deltaStreamDelayId = uuid();
 
 	private messageBuffer: IDocumentMessage[] = [];
