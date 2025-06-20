@@ -89,6 +89,7 @@ export class FluidObjectHandle<
 	 * {@inheritDoc @fluidframework/core-interfaces#IFluidHandle.attachGraph }
 	 */
 	public attachGraph(): void {
+		// start legacy bind/attach flow
 		if (this.visible) {
 			return;
 		}
@@ -98,6 +99,8 @@ export class FluidObjectHandle<
 			handle.attachGraph();
 		}
 		this.pendingHandlesToMakeVisible.clear();
+		// end legacy bind/attach flow
+
 		this.routeContext.attachGraph();
 	}
 
