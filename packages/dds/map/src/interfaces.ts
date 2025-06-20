@@ -364,9 +364,23 @@ export interface ISharedMapEvents extends ISharedObjectEvents {
  * @legacy
  * @alpha
  */
+export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapCore {}
+
+/**
+ * A `Map<string, any>` like API for use by {@link ISharedMap}.
+ *
+ * @remarks
+ * Unlike JavaScript maps, `ISharedMapCore` does not make any guarantees regarding enumeration order.
+ * Unlike TypeScript maps, `ISharedMapCore` is not generic: no compiler enforcement of value types is provided, and keys must be strings.
+ * @privateRemarks
+ * @sealed
+ * @legacy
+ * @alpha
+ * @system
+ */
 // TODO: Use `unknown` instead (breaking change).
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
+export interface ISharedMapCore extends Map<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from

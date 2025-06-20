@@ -306,8 +306,10 @@ export function mergeAPIs<const Base extends object, const Extra extends object>
 	base: Base,
 	extra: Extra,
 ): asserts base is Base & Extra {
-	for (const [key, descriptor] of Object.entries(Object.getOwnPropertyDescriptors(extra))) {
+	for (const key of Reflect.ownKeys(extra)) {
 		assert(!Reflect.has(base, key), 0xb9a /* colliding properties */);
+		const descriptor =
+			Object.getOwnPropertyDescriptor(extra, key) ?? fail("missing property descriptor");
 
 		// Detect and special case functions.
 		// Currently this is done eagerly (when mergeAPIs is called) rather than lazily (when the property is read):
@@ -395,8 +397,8 @@ export interface SharedObjectOptions<T extends object> {
  * Use {@link makeSharedObjectKind} instead unless exposing the factory is required for legacy API compatibility.
  * @internal
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/explicit-module-boundary-types
+export function makeChannelFactory<T extends object>(options: SharedObjectOptions<T>) {
 	class ChannelFactory implements IChannelFactory<T> {
 		/**
 		 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory."type"}
