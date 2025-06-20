@@ -99,6 +99,8 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 			}
 		});
 
+		runtime.getQuorum().on("removeMember", this.removeClientConnectionId.bind(this));
+
 		runtime.events.on("remoteDisconnected", this.removeClientConnectionId.bind(this));
 
 		// Check if already connected at the time of construction.
