@@ -286,4 +286,58 @@ describe("SharedString IntervalCollection rollback", () => {
 			"interval start reflects remote change after rollback",
 		);
 	});
+
+	it("should rollback remove in presence of remote changes from another client", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		// Create a second client
+		const {
+			sharedString: sharedString2,
+			containerRuntime: containerRuntime2,
+			collection: collection2,
+		} = createAdditionalClient(containerRuntimeFactory);
+
+		sharedString.insertText(0, "abcde");
+		// Client 1 adds an interval
+		const interval1 = collection.add({ start: 0, end: 3 });
+		const intervalId = interval1.getIntervalId();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		// Client 1 makes a local change (not flushed)
+		{
+			collection.removeIntervalById(intervalId);
+		}
+		// Client 2 makes a local change and flushes
+		{
+			const change2 = collection2.change(intervalId, {
+				start: 2,
+				end: 3,
+				props: { change: "client2" },
+			});
+			assert(change2, "Interval should exist after local change");
+			assert.equal(
+				sharedString2.localReferencePositionToPosition(change2.start),
+				2,
+				"interval start changed locally",
+			);
+			containerRuntime2.flush();
+			containerRuntimeFactory.processAllMessages();
+		}
+
+		// Rollback local change in client 1
+		containerRuntime.rollback?.();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		// Should reflect remote change from client 2
+
+		const found = collection.getIntervalById(intervalId);
+		assert(found, "Interval should exist after rollback");
+		assert.equal(found.properties?.change, "client2");
+		assert.equal(
+			sharedString.localReferencePositionToPosition(found.start),
+			2,
+			"interval start reflects remote change after rollback",
+		);
+	});
 });
