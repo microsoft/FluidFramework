@@ -194,7 +194,6 @@ export class LocalIntervalCollection {
 		end: SequencePlace,
 		props?: PropertySet,
 		op?: ISequencedDocumentMessage,
-		rollback?: boolean,
 	) {
 		// This check is intended to prevent scenarios where a random interval is created and then
 		// inserted into a collection. The aim is to ensure that the collection is created first
@@ -218,7 +217,7 @@ export class LocalIntervalCollection {
 			undefined,
 			this.options.mergeTreeReferencesCanSlideToEndpoint,
 			props,
-			rollback,
+			false,
 		);
 
 		this.add(interval);
@@ -825,9 +824,10 @@ export class IntervalCollection
 				break;
 			}
 			case "change": {
-				if (Object.keys(properties).length > 0) {
-					interval.changeProperties(properties, undefined, true);
-				}
+				const changeProperties = Object.keys(properties).length > 0;
+				const deltaProps = changeProperties
+					? interval.changeProperties(properties, undefined, true)
+					: undefined;
 				if (localOpMetadata.endpointChangesNode !== undefined) {
 					this.localCollection?.removeExistingInterval(interval);
 					assert(previous !== undefined, "must have existed to change");
@@ -835,11 +835,16 @@ export class IntervalCollection
 					this.emitChange(previous, interval, true, true);
 					// maybe dispose the interval
 				}
+
+				if (changeProperties) {
+					this.emit("propertyChanged", previous, deltaProps, true, undefined);
+				}
 				break;
 			}
 			case "delete": {
 				assert(previous !== undefined, "must have existed to delete");
 				this.localCollection?.add(previous);
+				this.emit("addInterval", previous, true, undefined);
 				break;
 			}
 			default:
@@ -1149,13 +1154,11 @@ export class IntervalCollection
 		start,
 		end,
 		props,
-		rollback,
 	}: {
 		id?: string;
 		start: SequencePlace;
 		end: SequencePlace;
 		props?: PropertySet;
-		rollback?: boolean;
 	}): SequenceIntervalClass {
 		if (!this.localCollection) {
 			throw new LoggingError("attach must be called prior to adding intervals");
@@ -1181,7 +1184,6 @@ export class IntervalCollection
 			toSequencePlace(endPos, endSide),
 			props,
 			undefined,
-			rollback,
 		);
 
 		if (interval) {
@@ -1191,7 +1193,7 @@ export class IntervalCollection
 			}
 			const serializedInterval: ISerializedInterval = interval.serialize();
 			const localSeq = this.getNextLocalSeq();
-			if (this.isCollaborating && rollback !== true) {
+			if (this.isCollaborating) {
 				this.submitDelta(
 					{
 						opName: "add",
