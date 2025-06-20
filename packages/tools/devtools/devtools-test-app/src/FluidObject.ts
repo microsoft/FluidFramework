@@ -12,6 +12,8 @@ import {
 import { SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IDevtoolsLogger, IFluidDevtools } from "@fluidframework/devtools-core/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { type ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
@@ -313,6 +315,8 @@ export class AppData extends DataObject {
 		} else {
 			this._sharedTree = sharedTree;
 		}
+
+
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
@@ -386,5 +390,22 @@ export class AppData extends DataObject {
 				},
 			}),
 		);
+	}
+
+	public getRuntime(): IFluidDataStoreRuntime {
+		console.log("this.runtime", this.runtime);
+		return this.runtime;
+	}
+
+	/**
+	 * Sets the devtools and logger instances to be used by this AppData instance.
+	 * This method is called by the RuntimeFactory to inject the devtools from the React component.
+	 */
+	public setDevtools(devtools: IFluidDevtools, logger: IDevtoolsLogger): void {
+		if (process.env.NODE_ENV === "development") {
+			console.log('Devtools Registration!')
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+			devtools.registerDataObject({ runtime: this.runtime, dataObject: this });
+		}
 	}
 }

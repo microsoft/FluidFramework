@@ -3,10 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
-import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import {
+	ContainerDevtools,
+	DecomposedContainer,
+	type ContainerDevtoolsProps,
+	type DataObjectDevtoolsProps,
+	type DecomposedDevtoolsIContainer,
+} from "./ContainerDevtools.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -313,6 +321,40 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
+	 * TODO
+	 */
+	public registerDataObject(props: DataObjectDevtoolsProps): void {
+		const { runtime, dataObject } = props;
+
+		const runtimeId = runtime?.id;
+
+		if (runtimeId === undefined) {
+			throw new UsageError("No runtime ID found");
+		}
+
+		// Create a unique container key using a random number for testing
+		const containerKey = `test-container-${Math.random().toString(36).slice(2, 11)}`;
+
+		const decomposedIContainerComponent = toDecomposedIContainer(dataObject);
+
+		console.log("runtimeId", runtime, runtimeId);
+		console.log("containerKey", containerKey);
+
+		if (this.containers.has(containerKey)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
+		}
+
+		const containerDevtools = new ContainerDevtools({
+			containerKey,
+			container: decomposedIContainerComponent,
+			containerData: {appData: dataObject},
+		});
+		this.containers.set(containerKey, containerDevtools);
+
+		this.postContainerList();
+	}
+
+	/**
 	 * {@inheritDoc IFluidDevtools.closeContainerDevtools}
 	 */
 	public closeContainerDevtools(containerKey: ContainerKey): void {
@@ -425,4 +467,18 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();
+}
+
+/**
+ * TODO
+ */
+export function toDecomposedIContainer(
+	dataObject: PureDataObject,
+): DecomposedDevtoolsIContainer {
+	// Type assertion for runtime
+	const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
+
+	const decomposedContainer = new DecomposedContainer(runtime);
+
+	return decomposedContainer;
 }
