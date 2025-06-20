@@ -22,12 +22,11 @@ import {
 	TreeStatus,
 } from "../feature-libraries/index.js";
 import {
-	type FieldSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type TreeView,
 	type TreeViewEvents,
-	getTreeNodeForField,
+	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
 	SchemaCompatibilityTester,
@@ -53,6 +52,7 @@ import {
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 	prepareForInsertionContextless,
+	type FieldSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -353,7 +353,10 @@ export class SchematizingSimpleTreeView<
 			);
 			this.checkout.forest.anchors.slots.set(
 				SimpleContextSlot,
-				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
+				new HydratedContext(
+					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
+					view.context,
+				),
 			);
 
 			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
@@ -428,7 +431,7 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getView();
-		return getTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
+		return tryGetTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {

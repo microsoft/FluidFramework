@@ -8,6 +8,8 @@ export {
 	typeSchemaSymbol,
 	type WithType,
 	type TreeNodeSchema,
+	type AnnotatedAllowedType,
+	type NormalizedAnnotatedAllowedTypes,
 	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
@@ -23,6 +25,7 @@ export {
 	SimpleContextSlot,
 	getOrCreateInnerNode,
 	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
 	getKernel,
 } from "./core/index.js";
 export {
@@ -83,9 +86,9 @@ export {
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
-	tryGetSchema,
-	getStoredKey,
 	getPropertyKeyFromStoredKey,
+	getStoredKey,
+	tryGetSchema,
 	applySchemaToParserOptions,
 	cursorFromVerbose,
 	verboseFromCursor,
@@ -137,8 +140,6 @@ export type {
 export {
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
-	type AnnotatedAllowedType,
-	type AnnotatedAllowedTypes,
 	type ImplicitFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
@@ -157,6 +158,7 @@ export {
 	type AllowedTypes,
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
+	type AnnotatedAllowedTypes,
 	FieldKind,
 	FieldSchema,
 	type FieldSchemaAlpha,
@@ -185,11 +187,12 @@ export {
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
 } from "./schemaTypes.js";
-export { getTreeNodeForField } from "./getTreeNodeForField.js";
+export { tryGetTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	type ArrayNodeCustomizableSchema,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
+	asIndex,
 	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	type ReadonlyArrayNode,
@@ -204,6 +207,7 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	isObjectNodeSchema,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,

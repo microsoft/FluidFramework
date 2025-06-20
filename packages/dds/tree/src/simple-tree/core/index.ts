@@ -31,10 +31,16 @@ export {
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
+	type AnnotatedAllowedType,
+	type NormalizedAnnotatedAllowedTypes,
+	isAnnotatedAllowedTypes,
 } from "./treeNodeSchema.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
-export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
+export {
+	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+} from "./getOrCreateNode.js";
 export {
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
