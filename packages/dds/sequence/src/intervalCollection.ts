@@ -821,6 +821,7 @@ export class IntervalCollection
 		switch (type) {
 			case "add": {
 				this.deleteExistingInterval({ interval, local: true, rollback: true });
+				interval.dispose();
 				break;
 			}
 			case "change": {
@@ -835,7 +836,9 @@ export class IntervalCollection
 					this.emitChange(previous, interval, true, true);
 					// maybe dispose the interval
 				}
-
+				if (previous !== interval) {
+					interval.dispose();
+				}
 				if (changeProperties) {
 					this.emit("propertyChanged", previous, deltaProps, true, undefined);
 				}
