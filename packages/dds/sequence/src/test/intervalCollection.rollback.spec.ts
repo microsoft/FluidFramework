@@ -69,6 +69,7 @@ describe("SharedString IntervalCollection rollback", () => {
 			undefined,
 			"interval removed after rollback",
 		);
+		assert(interval.disposed, "should be disposed after rollback");
 	});
 
 	it("should rollback changeInterval operation", () => {
@@ -80,7 +81,7 @@ describe("SharedString IntervalCollection rollback", () => {
 		const intervalId = interval.getIntervalId();
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		collection.change(intervalId, { start: 2, end: 4 });
+		const changedInterval = collection.change(intervalId, { start: 2, end: 4 });
 		let found = collection.getIntervalById(intervalId);
 		assert(found);
 		assert.equal(
@@ -97,6 +98,8 @@ describe("SharedString IntervalCollection rollback", () => {
 			1,
 			"interval start reverted after rollback",
 		);
+		assert(!interval.disposed, "should not be disposed after rollback");
+		assert(changedInterval?.disposed, "should be disposed after rollback");
 	});
 
 	it("should rollback removeInterval operation", () => {
@@ -116,6 +119,7 @@ describe("SharedString IntervalCollection rollback", () => {
 			undefined,
 			"interval restored after rollback",
 		);
+		assert(!interval.disposed, "should not be disposed after rollback");
 	});
 
 	it("should rollback multiple interval operations in sequence", () => {
@@ -168,6 +172,7 @@ describe("SharedString IntervalCollection rollback", () => {
 			2,
 			"interval start not reverted after flush",
 		);
+		assert(!interval.disposed, "should not be disposed after rollback");
 	});
 
 	it("should be a no-op if rollback is called with no pending interval changes", () => {
@@ -187,5 +192,6 @@ describe("SharedString IntervalCollection rollback", () => {
 			1,
 			"interval unchanged after no-op rollback",
 		);
+		assert(!interval.disposed, "should not be disposed after rollback");
 	});
 });
