@@ -102,6 +102,10 @@ export namespace InternalTypes {
     export class StateValueBrand<T> {
     }
     // @system
+    export interface ValidatedValueState<TValue> {
+        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+    }
+    // @system
     export interface ValueDirectory<T> {
         // (undocumented)
         items: {
@@ -113,12 +117,12 @@ export namespace InternalTypes {
     // @system
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system
-    export interface ValueOptionalState<TValue> extends ValueStateMetadata {
+    export interface ValueOptionalState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system
-    export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+    export interface ValueRequiredState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
@@ -235,7 +239,7 @@ export interface LatestMapClientData<T, Keys extends string | number, TValueAcce
 }
 
 // @beta @sealed
-export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T>> {
+export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;
