@@ -186,6 +186,15 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	attach(props?: ContainerAttachProps): Promise<string>;
 
 	/**
+	 * Capture the state of a container that is not attached or closed.
+	 *
+	 * @see
+	 *
+	 * - {@link IContainer.serialize}
+	 */
+	serialize(): string;
+
+	/**
 	 * Attempts to connect the container to the delta stream and process operations.
 	 *
 	 * @throws Will throw an error if connection is unsuccessful.
@@ -387,6 +396,10 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
 		return this.rootDataObject.create(objectClass);
+	}
+
+	public serialize(): string {
+		return this.container.serialize();
 	}
 
 	public dispose(): void {
