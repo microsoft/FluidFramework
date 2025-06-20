@@ -13,7 +13,7 @@ import {
 	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { ISequenceIntervalCollection } from "../intervalCollection.js";
+import { IntervalCollection } from "../intervalCollection.js";
 import { SharedStringFactory } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
@@ -22,7 +22,7 @@ interface RollbackTestSetup {
 	dataStoreRuntime: MockFluidDataStoreRuntime;
 	containerRuntimeFactory: MockContainerRuntimeFactory;
 	containerRuntime: MockContainerRuntime;
-	collection: ISequenceIntervalCollection;
+	collection: IntervalCollection;
 }
 
 function setupRollbackTest(): RollbackTestSetup {
@@ -41,6 +41,7 @@ function setupRollbackTest(): RollbackTestSetup {
 		objectStorage: new MockStorage(),
 	});
 	const collection = sharedString.getIntervalCollection("test");
+	assert(collection instanceof IntervalCollection);
 	return {
 		sharedString,
 		dataStoreRuntime,
