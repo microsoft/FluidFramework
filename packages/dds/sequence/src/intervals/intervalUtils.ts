@@ -57,7 +57,7 @@ export interface IInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		useNewSlidingBehavior?: boolean,
+		canSlideToEndpoint?: boolean,
 	): IInterval | undefined;
 	/**
 	 * @returns whether this interval overlaps with `b`.
@@ -264,8 +264,12 @@ export const IntervalStickiness = {
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 export function startReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
 ): SlidingPreference {
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	// if any start stickiness, prefer sliding backwards
 	return (stickiness & IntervalStickiness.START) === 0
 		? SlidingPreference.FORWARD
@@ -273,10 +277,34 @@ export function startReferenceSlidingPreference(
 }
 
 export function endReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
 ): SlidingPreference {
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+
 	// if any end stickiness, prefer sliding forwards
 	return (stickiness & IntervalStickiness.END) === 0
 		? SlidingPreference.BACKWARD
 		: SlidingPreference.FORWARD;
+}
+
+export function computeStickinessFromSide(
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
+): IntervalStickiness {
+	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
+
+	if (startSide === Side.After || startPos === "start") {
+		stickiness |= IntervalStickiness.START;
+	}
+
+	if (endSide === Side.Before || endPos === "end") {
+		stickiness |= IntervalStickiness.END;
+	}
+
+	return stickiness as IntervalStickiness;
 }

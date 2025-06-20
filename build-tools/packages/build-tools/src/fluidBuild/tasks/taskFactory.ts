@@ -188,6 +188,7 @@ export class TaskFactory {
 		const executable = getExecutableFromCommand(
 			command,
 			context.fluidBuildConfig?.multiCommandExecutables ?? [],
+			// TODO: Is the toLowerCase necessary here? Commands are usually case-sensitive
 		).toLowerCase();
 
 		// Will return a task-specific handler or the UnknownLeafTask
