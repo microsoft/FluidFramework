@@ -351,7 +351,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 			);
 			if (semver.gte(v, "1.0.0")) {
 				if (deltaVersions.has(v)) {
-					deltaVersions.set(v, `${deltaVersions.get(v)}/public major`);
+					deltaVersions.set(v, `${deltaVersions.get(v)}/N${delta} public major`);
 				} else {
 					deltaVersions.set(v, `N${delta} public major`);
 				}
