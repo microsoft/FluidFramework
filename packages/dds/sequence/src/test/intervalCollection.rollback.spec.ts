@@ -1,0 +1,190 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { strict as assert } from "assert";
+
+import { AttachState } from "@fluidframework/container-definitions";
+import {
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+	type MockContainerRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
+
+import type { ISequenceIntervalCollection } from "../intervalCollection.js";
+import { SharedStringFactory } from "../sequenceFactory.js";
+import { SharedStringClass } from "../sharedString.js";
+
+interface RollbackTestSetup {
+	sharedString: SharedStringClass;
+	dataStoreRuntime: MockFluidDataStoreRuntime;
+	containerRuntimeFactory: MockContainerRuntimeFactory;
+	containerRuntime: MockContainerRuntime;
+	collection: ISequenceIntervalCollection;
+}
+
+function setupRollbackTest(): RollbackTestSetup {
+	const containerRuntimeFactory = new MockContainerRuntimeFactory({ flushMode: 1 }); // TurnBased
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: "1" });
+	const containerRuntime = containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+	const sharedString = new SharedStringClass(
+		dataStoreRuntime,
+		"shared-string-1",
+		SharedStringFactory.Attributes,
+	);
+	dataStoreRuntime.setAttachState(AttachState.Attached);
+	sharedString.initializeLocal();
+	sharedString.connect({
+		deltaConnection: dataStoreRuntime.createDeltaConnection(),
+		objectStorage: new MockStorage(),
+	});
+	const collection = sharedString.getIntervalCollection("test");
+	return {
+		sharedString,
+		dataStoreRuntime,
+		containerRuntimeFactory,
+		containerRuntime,
+		collection,
+	};
+}
+
+describe("SharedString IntervalCollection rollback", () => {
+	it("should rollback addInterval operation", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		sharedString.insertText(0, "abcde");
+		containerRuntimeFactory.processAllMessages();
+		const interval = collection.add({ start: 1, end: 3 });
+		assert.equal(
+			collection.getIntervalById(interval.getIntervalId()) !== undefined,
+			true,
+			"interval added",
+		);
+		containerRuntime.rollback?.();
+		assert.equal(
+			collection.getIntervalById(interval.getIntervalId()),
+			undefined,
+			"interval removed after rollback",
+		);
+	});
+
+	it("should rollback changeInterval operation", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		sharedString.insertText(0, "abcde");
+		containerRuntimeFactory.processAllMessages();
+		const interval = collection.add({ start: 1, end: 3 });
+		const intervalId = interval.getIntervalId();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		collection.change(intervalId, { start: 2, end: 4 });
+		let found = collection.getIntervalById(intervalId);
+		assert(found);
+		assert.equal(
+			sharedString.localReferencePositionToPosition(found.start),
+			2,
+			"interval start changed",
+		);
+		containerRuntime.rollback?.();
+		found = collection.getIntervalById(intervalId);
+		assert(found);
+
+		assert.equal(
+			sharedString.localReferencePositionToPosition(found.start),
+			1,
+			"interval start reverted after rollback",
+		);
+	});
+
+	it("should rollback removeInterval operation", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		sharedString.insertText(0, "abcde");
+		containerRuntimeFactory.processAllMessages();
+		const interval = collection.add({ start: 1, end: 3 });
+		const intervalId = interval.getIntervalId();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		collection.removeIntervalById(intervalId);
+		assert.equal(collection.getIntervalById(intervalId), undefined, "interval removed");
+		containerRuntime.rollback?.();
+		assert.notEqual(
+			collection.getIntervalById(intervalId),
+			undefined,
+			"interval restored after rollback",
+		);
+	});
+
+	it("should rollback multiple interval operations in sequence", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		sharedString.insertText(0, "abcde");
+		const i1 = collection.add({ start: 0, end: 2 });
+		const i2 = collection.add({ start: 2, end: 4 });
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		collection.change(i1.getIntervalId(), { start: 1, end: 3 });
+		collection.removeIntervalById(i2.getIntervalId());
+		assert.equal(
+			collection.getIntervalById(i1.getIntervalId()) !== undefined,
+			true,
+			"i1 present",
+		);
+		assert.equal(collection.getIntervalById(i2.getIntervalId()), undefined, "i2 removed");
+		containerRuntime.rollback?.();
+		assert.equal(
+			collection.getIntervalById(i1.getIntervalId()) !== undefined,
+			true,
+			"i1 present after rollback",
+		);
+		assert.equal(
+			collection.getIntervalById(i2.getIntervalId()) !== undefined,
+			true,
+			"i2 restored after rollback",
+		);
+	});
+
+	it("should not rollback already flushed (acked) interval operations", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		sharedString.insertText(0, "abcde");
+		containerRuntimeFactory.processAllMessages();
+		const interval = collection.add({ start: 1, end: 3 });
+		const intervalId = interval.getIntervalId();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		collection.change(intervalId, { start: 2, end: 4 });
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		containerRuntime.rollback?.();
+		const found = collection.getIntervalById(intervalId);
+		assert(found);
+		assert.equal(
+			sharedString.localReferencePositionToPosition(found.start),
+			2,
+			"interval start not reverted after flush",
+		);
+	});
+
+	it("should be a no-op if rollback is called with no pending interval changes", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		sharedString.insertText(0, "abcde");
+		containerRuntimeFactory.processAllMessages();
+		const interval = collection.add({ start: 1, end: 3 });
+		const intervalId = interval.getIntervalId();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+		containerRuntime.rollback?.();
+		const found = collection.getIntervalById(intervalId);
+		assert(found);
+		assert.equal(
+			sharedString.localReferencePositionToPosition(found.start),
+			1,
+			"interval unchanged after no-op rollback",
+		);
+	});
+});
