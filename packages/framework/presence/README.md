@@ -42,6 +42,8 @@ API documentation for **@fluidframework/presence** is available at <https://flui
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE:path=../../../docs/docs/build/presence.mdx&start=20&end=80) -->
 ## Concepts
 
 ### Attendees
@@ -69,7 +71,7 @@ A `NotificationsWorkspace`, is similar to states workspace, but is dedicated to 
 
 #### Latest
 
-`Latest` retains the most recent atomic value each attendee has shared. Use `Latest` to add one to `StatesWorkspace`.
+`Latest` retains the most recent atomic value each attendee has shared. Use `StateFactory.latest` to add one to `StatesWorkspace`.
 
 #### LatestMap
 
@@ -104,18 +106,19 @@ Current API does not provide a mechanism to validate that state and notification
 Example:
 
 ```typescript
-presence.states.getWorkspace("app:v1states", { myState: StateFactory.latest({x: 0})});
+presence.states.getWorkspace("app:v1states", { myState: StateFactory.latest({ local: { x: 0 } })});
 ```
  is incompatible with
 ```typescript
-presence.states.getWorkspace("app:v1states", { myState: StateFactory.latest({x: "text"})});
+presence.states.getWorkspace("app:v1states", { myState: StateFactory.latest({ local: { x: "text"} })});
 ```
 as "app:v1states"+"myState" have different value type expectations: `{x: number}` versus `{x: string}`.
 
 ```typescript
-presence.states.getWorkspace("app:v1states", { myState2: StateFactory.latest({x: true})});
+presence.states.getWorkspace("app:v1states", { myState2: StateFactory.latest({ local: { x: 0 } })});
 ```
- would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
+
+would be compatible with both of the prior schemas as "myState2" is a different name. Though in this situation none of the different clients would be able to observe each other.
 
 
 ### Notifications
@@ -162,6 +165,7 @@ countState.local = { num: 5000 };
 // Reset the update latency to the workspace default
 countState.controls.allowableUpdateLatencyMs = undefined;
 ```
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
