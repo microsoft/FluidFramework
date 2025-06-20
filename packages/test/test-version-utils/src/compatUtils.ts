@@ -91,7 +91,9 @@ function getMinVersionForCollab(
 function assertValidMinVersionForCollab(
 	version: string,
 ): asserts version is MinimumVersionForCollab {
-	assert(semver.valid(version) !== null, "version must be valid semver");
+	if (semver.valid(version) === null) {
+		throw new Error(`Runtime version must be valid semver: ${version}`);
+	}
 }
 
 /**
