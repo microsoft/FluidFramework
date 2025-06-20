@@ -1201,6 +1201,12 @@ export class ContainerRuntime
 	public get clientId(): string | undefined {
 		return this._getClientId();
 	}
+	/**
+	 * Returns whether the client is connected to the service.
+	 *
+	 * Unlike {@link ContainerRuntime.connected}, this reflects only the raw connection status.
+	 */
+	private readonly isConnected: () => boolean;
 
 	public readonly clientDetails: IClientDetails;
 
@@ -1615,9 +1621,11 @@ export class ContainerRuntime
 		this.clientDetails = clientDetails;
 		this.isSummarizerClient = this.clientDetails.type === summarizerClientType;
 		this.loadedFromVersionId = context.getLoadedFromVersion()?.id;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
 		this._getClientId = () => context.clientId;
-		// eslint-disable-next-line unicorn/consistent-destructuring
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
+		this.isConnected = () => context.connected;
+		// eslint-disable-next-line unicorn/consistent-destructuring -- reinvoke getter on each call
 		this._getAttachState = () => context.attachState;
 		this.getAbsoluteUrl = async (relativeUrl: string) => {
 			// eslint-disable-next-line unicorn/consistent-destructuring
@@ -2772,6 +2780,18 @@ export class ContainerRuntime
 			this.clientId === currentClientId,
 			0x978 /* this.clientId does not match Audience */,
 		);
+
+		// isConnected() is directly tied to the connection state of the container through its ConnectionStateHandler.
+		// The ConnectionStateHandler controls the connection state transition from old -> new connection details.
+		// Every time this connection state changes, the change is propagated to the ContainerRuntime through this function.
+		// This is done alongside raising the container "connected" event, setting current clientId in audience,
+		// and updating protocol handler connection state. See Container.propagateConnectionState() for more details.
+		// So, since the connection to the service state has changed, we raise corresponding connected event.
+		if (this.isConnected()) {
+			this.emit("connectedToService", clientId);
+		} else {
+			this.emit("disconnectedFromService");
+		}
 
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			this.loadIdCompressor();
@@ -5105,8 +5125,10 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
-		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		this.on("connectedToService", (clientId: string) =>
+			eventEmitter.emit("connected", clientId),
+		);
+		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
 	});
 
@@ -5128,7 +5150,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connected,
+				isConnected: this.isConnected,
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
