@@ -3689,8 +3689,8 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("Default Configurations", () => {
-			it("minVersionForCollab not provided", async () => {
+		describe("Default configurations of runtime options (using minVersionForCollab)", () => {
+			it("runtime options are set when minVersionForCollab is not provided", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3747,7 +3747,7 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("minVersionForCollab = 1.0.0", async () => {
+			it("correct runtime options set when minVersionForCollab = 1.0.0", async () => {
 				const minVersionForCollab = "1.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
@@ -3785,7 +3785,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
+			it('correct runtime options set when minVersionForCollab = 2.0.0-defaults ("default")', async () => {
 				const minVersionForCollab = "2.0.0-defaults";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
@@ -3823,7 +3823,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
+			it("correct runtime options set when minVersionForCollab = 2.0.0 (explicit)", async () => {
 				const minVersionForCollab = "2.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
@@ -3861,7 +3861,7 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minVersionForCollab = 2.20.0", async () => {
+			it("correct runtime options set when minVersionForCollab = 2.20.0", async () => {
 				const minVersionForCollab = "2.20.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
@@ -3898,7 +3898,47 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minVersionForCollab not provided, with manual configs", async () => {
+			// Note: We may need to update `expectedRuntimeOptions` for this test
+			// when we bump to certain versions.
+			it("correct runtime options set when minVersionForCollab = pkgVersion", async () => {
+				const minVersionForCollab = pkgVersion;
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
+					},
+				]);
+			});
+
+			it("correct runtime options set when minVersionForCollab is not provided, and runtimeOptions manually provided", async () => {
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -3944,13 +3984,16 @@ describe("Runtime", () => {
 			});
 
 			for (const { desc, runtimeOptions } of [
-				{ desc: "all options unspecified", runtimeOptions: {} },
+				{
+					desc: "correct runtime options set when runtimeOptions object is provided but empty",
+					runtimeOptions: {},
+				},
 				{
 					// This case tests degenerate specification that is permissible
 					// with exactOptionalPropertyTypes disabled. Even when enabled,
 					// this should be tested in case callers violate exactness.
 					// (use @ts-expect-error or `as` to ignore when needed)
-					desc: "all options explicitly undefined",
+					desc: "correct runtime options set when runtimeOptions are manually provided as undefined",
 					runtimeOptions: {
 						summaryOptions: undefined,
 						gcOptions: undefined,
@@ -4002,46 +4045,6 @@ describe("Runtime", () => {
 					]);
 				});
 
-			// Note: We may need to update `expectedRuntimeOptions` for this test
-			// when we bump to certain versions.
-			it("minVersionForCollab = pkgVersion", async () => {
-				const minVersionForCollab = pkgVersion;
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime({
-					context: getMockContext({ logger }) as IContainerContext,
-					registryEntries: [],
-					existing: false,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
-				});
-
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.TurnBased,
-					compressionOptions: {
-						minimumBatchSizeInBytes: 614400,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: true,
-					explicitSchemaControl: true,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
-					},
-				]);
-			});
-
 			for (const runtimeOption of [
 				{ enableGroupedBatching: true },
 				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
@@ -4053,11 +4056,11 @@ describe("Runtime", () => {
 				{ enableRuntimeIdCompressor: "delayed" },
 				{ createBlobPayloadPending: true },
 				{ flushMode: FlushMode.TurnBased },
-			]) {
+			] as const satisfies IContainerRuntimeOptionsInternal[]) {
 				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
 					const runtimeOptions = {
 						...runtimeOption,
-					} as unknown as IContainerRuntimeOptionsInternal;
+					};
 					const logger = new MockLogger();
 					const minVersionForCollab = "1.0.0";
 					await assert.rejects(async () => {
@@ -4072,7 +4075,7 @@ describe("Runtime", () => {
 					});
 				});
 			}
-			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
+			it("does not throw if the default minVersionForCollab is incompatible with runtimeOptions", async () => {
 				const logger = new MockLogger();
 				await assert.doesNotReject(async () => {
 					await ContainerRuntime.loadRuntime({
@@ -4083,6 +4086,7 @@ describe("Runtime", () => {
 						// not explicity set minVersionForCollab, we allow it.
 						runtimeOptions: { createBlobPayloadPending: true },
 						provideEntryPoint: mockProvideEntryPoint,
+						minVersionForCollab: defaultMinVersionForCollab,
 					});
 				});
 			});
