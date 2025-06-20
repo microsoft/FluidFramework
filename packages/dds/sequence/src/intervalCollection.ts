@@ -889,7 +889,13 @@ export class IntervalCollection
 			}
 
 			case "change": {
-				this.ackChange(value, local, message);
+				this.ackChange(
+					value,
+					local,
+					message, // this cast is safe because of the above assert which
+					// validates the op and metadata types match for local changes
+					localOpMetadata as IntervalChangeLocalMetadata | undefined,
+				);
 				break;
 			}
 			default:
@@ -1374,6 +1380,7 @@ export class IntervalCollection
 		serializedInterval: SerializedIntervalDelta,
 		local: boolean,
 		op: ISequencedDocumentMessage,
+		localOpMetadata: IntervalChangeLocalMetadata | undefined,
 	) {
 		if (!this.localCollection) {
 			throw new LoggingError("Attach must be called before accessing intervals");
@@ -1384,18 +1391,19 @@ export class IntervalCollection
 		// strip it out of the properties here.
 		const { id, properties } = getSerializedProperties(serializedInterval);
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
-		const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
-
-		if (!interval) {
-			// The interval has been removed locally; no-op.
-			return;
-		}
 
 		if (local) {
-			interval.ackPropertiesChange(properties, op);
+			assert(localOpMetadata !== undefined, "local must have metadata");
+			localOpMetadata?.interval.ackPropertiesChange(properties, op);
 
-			this.ackInterval(interval, op);
+			this.ackInterval(localOpMetadata?.interval, op);
 		} else {
+			const interval: SequenceIntervalClass | undefined = this.getIntervalById(id);
+
+			if (!interval) {
+				// The interval has been removed locally; no-op.
+				return;
+			}
 			// If there are pending changes with this ID, don't apply the remote start/end change, as the local ack
 			// should be the winning change.
 			let start: number | "start" | "end" | undefined;
