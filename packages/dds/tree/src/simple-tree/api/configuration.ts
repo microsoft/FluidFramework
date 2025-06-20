@@ -9,7 +9,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
+	evaluateLazySchema,
 	FieldKind,
+	isAnnotatedAllowedType,
 	markSchemaMostDerived,
 	normalizeFieldSchema,
 } from "../schemaTypes.js";
@@ -202,8 +204,12 @@ export class TreeViewConfiguration<
 				debugAssert(() => !definitions.has(schema.identifier));
 				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
 			},
-			allowedTypes(types): void {
-				checkUnion(types, config.preventAmbiguity, ambiguityErrors);
+			allowedTypes({ types }): void {
+				checkUnion(
+					types.map((t) => evaluateLazySchema(isAnnotatedAllowedType(t) ? t.type : t)),
+					config.preventAmbiguity,
+					ambiguityErrors,
+				);
 			},
 		});
 

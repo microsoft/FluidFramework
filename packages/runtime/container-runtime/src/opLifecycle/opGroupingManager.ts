@@ -53,7 +53,7 @@ export interface OpGroupingManagerConfig {
  */
 export interface EmptyGroupedBatch {
 	type: typeof OpGroupingManager.groupedBatchOp;
-	contents: readonly unknown[];
+	contents: readonly [];
 }
 
 export class OpGroupingManager {

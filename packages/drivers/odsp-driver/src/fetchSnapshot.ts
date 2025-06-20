@@ -224,6 +224,9 @@ async function redeemSharingLink(
 				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem,
 			);
 
+			const isRedemptionNonDurable: boolean =
+				odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
+
 			let redeemUrl: string | undefined;
 			async function callSharesAPI(baseUrl: string): Promise<void> {
 				await getWithRetryForTokenRefresh(async (tokenFetchOptions) => {
@@ -240,7 +243,7 @@ async function redeemSharingLink(
 						"RedeemShareLink",
 					);
 					const headers = getHeadersWithAuth(authHeader);
-					headers.prefer = "redeemSharingLink";
+					headers.prefer = isRedemptionNonDurable ? "nonDurableRedeem" : "redeemSharingLink";
 					await fetchAndParseAsJSONHelper(url, { headers, method });
 				});
 			}
@@ -251,6 +254,7 @@ async function redeemSharingLink(
 				queryParamsLength: new URL(odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem).search
 					.length,
 				useHeaders: true,
+				isRedemptionNonDurable,
 			});
 			// There is an issue where if we use the siteUrl in /shares, then the allowed length of url is just a few hundred characters(300-400)
 			// and we fail to do the redeem. But if we use the tenant domain in the url, then the allowed length becomes 2048. So,
@@ -287,6 +291,8 @@ async function fetchLatestSnapshotCore(
 		const fetchSnapshotForLoadingGroup = isSnapshotFetchForLoadingGroup(loadingGroupIds);
 		const eventName = fetchSnapshotForLoadingGroup ? "TreesLatestForGroup" : "TreesLatest";
 		const internalFarmType = checkForKnownServerFarmType(odspResolvedUrl.siteUrl);
+		const isRedemptionNonDurable: boolean =
+			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 
 		const perfEvent = {
 			eventName,
@@ -296,6 +302,8 @@ async function fetchLatestSnapshotCore(
 			redeemFallbackEnabled: enableRedeemFallback,
 			details: {
 				internalFarmType,
+				// Whether the redemption used is non-durable or not.
+				isRedemptionNonDurable,
 			},
 		};
 		if (snapshotOptions !== undefined) {
@@ -724,11 +732,16 @@ export const downloadSnapshot = mockify(
 		const queryString = getQueryString(queryParams);
 		const url = `${snapshotUrl}/trees/latest${queryString}`;
 		const method = "POST";
+		const isRedemptionNonDurable: boolean =
+			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
 		// The location of file can move on Spo in which case server returns 308(Permanent Redirect) error.
 		// Adding below header will make VROOM API return 404 instead of 308 and browser can intercept it.
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
-		const header = { prefer: "manualredirect" };
+		// If the share link is non-durable, we will add the nonDurableRedeem header to the header.prefer.
+		const header = isRedemptionNonDurable
+			? { prefer: "manualredirect, nonDurableRedeem" }
+			: { prefer: "manualredirect" };
 		const authHeader = await getAuthHeader(
 			{ ...tokenFetchOptions, request: { url, method } },
 			"downloadSnapshot",
