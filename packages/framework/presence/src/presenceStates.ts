@@ -185,8 +185,6 @@ export function mergeValueDirectory<
 		if (base.rev >= update.rev) {
 			if (!baseIsDirectory) {
 				// base is leaf value that is more recent - no merge needed
-				// Remove any validator-related data
-				delete base.validatedValue;
 				return base;
 			}
 			// While base has more advanced revision, assume mis-ordering or
