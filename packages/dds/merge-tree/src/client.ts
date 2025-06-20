@@ -51,6 +51,7 @@ import {
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
+	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
@@ -210,6 +211,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 			policy.attach(this);
 		}
+	}
+
+	public get endOfTree(): ISegmentInternal {
+		return this._mergeTree.endOfTree;
+	}
+	public get startOfTree(): ISegmentInternal {
+		return this._mergeTree.startOfTree;
 	}
 
 	/**

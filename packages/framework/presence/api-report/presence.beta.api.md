@@ -208,7 +208,7 @@ export interface LatestMapClientData<T, Keys extends string | number, TValueAcce
 }
 
 // @beta @sealed
-export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T>> {
+export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;
