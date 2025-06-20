@@ -272,13 +272,12 @@ export class TscTask extends LeafTask {
 		// status when there is ANY difference between these settings. Thus the safest thing to do is to assume a rebuild is
 		// needed, Projects using these ignored settings may exhibit strange incremental build behavior.
 		//
-		// For that reason, this behavior can be disabled completely using the _FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_
-		// environment variable. If that variable is set to any non-empty value, the list of ignored options will not be
-		// checked.
+		// For that reason, this behavior must be enabled using the _FLUID_BUILD_ENABLE_IGNORE_TSC_OPTIONS_
+		// environment variable. To enable ignoring these settings, set the environment variable to "1".
 		const tsConfigOptionsIgnored: Set<string> =
-			(process.env._FLUID_BUILD_DISABLE_IGNORE_TSC_OPTIONS_ ?? "" !== "")
-				? new Set()
-				: new Set(["allowJs", "checkJs"]);
+			(process.env._FLUID_BUILD_ENABLE_IGNORE_TSC_OPTIONS_ === "1")
+				? new Set(["allowJs", "checkJs"])
+				: new Set();
 
 		for (const ignoredOption of tsConfigOptionsIgnored) {
 			// Delete the ignored option if it exists on the object
