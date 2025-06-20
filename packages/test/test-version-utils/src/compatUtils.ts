@@ -71,13 +71,13 @@ function getMinVersionForCollab(
 	runtimeVersion: string,
 	runtimeVersionForLoading: string | undefined,
 ): MinimumVersionForCollab {
-	isMinimumVersionForCollab(runtimeVersion);
+	assertValidMinVersionForCollab(runtimeVersion);
 	if (runtimeVersionForLoading === undefined) {
 		// If `containerRuntimeForLoading` is not defined, then this is not a cross-client compat scenario.
 		// In this case, we can use the `runtimeVersion` as the default minVersionForCollab.
 		return runtimeVersion;
 	}
-	isMinimumVersionForCollab(runtimeVersionForLoading);
+	assertValidMinVersionForCollab(runtimeVersionForLoading);
 	// If `containerRuntimeForLoading` is defined, we will use the lower of the two versions to ensure
 	// compatibility between the two runtimes.
 	return semver.compare(runtimeVersion, runtimeVersionForLoading) <= 0
@@ -88,7 +88,7 @@ function getMinVersionForCollab(
 /**
  * Asserts the given version is valid semver and is type MinimumVersionForCollab.
  */
-function isMinimumVersionForCollab(
+function assertValidMinVersionForCollab(
 	version: string,
 ): asserts version is MinimumVersionForCollab {
 	assert(semver.valid(version) !== null, "version must be valid semver");
