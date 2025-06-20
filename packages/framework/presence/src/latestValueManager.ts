@@ -169,9 +169,7 @@ class LatestValueManagerImpl<T, Key extends string>
 			allowableUpdateLatencyMs: this.controls.allowableUpdateLatencyMs,
 		});
 
-		this.events.emit("localUpdated", {
-			value: asDeeplyReadonly(value),
-		});
+		this.events.emit("localUpdated", { value: asDeeplyReadonly(value) });
 	}
 
 	public *getRemotes(): IterableIterator<LatestClientData<T, ValueAccessor<T>>> {

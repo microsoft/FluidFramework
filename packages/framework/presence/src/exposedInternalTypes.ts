@@ -159,3 +159,17 @@ export namespace InternalTypes {
 		args: unknown[];
 	}
 }
+
+/**
+ * Type guard to check if a state is a required state (has a value).
+ *
+ * @param state - The state to check
+ * @returns True if the state has a value and is therefore a ValueRequiredState
+ *
+ * @system
+ */
+export function isValueRequiredState<T>(
+	state: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
+): state is InternalTypes.ValueRequiredState<T> {
+	return state.value !== undefined;
+}

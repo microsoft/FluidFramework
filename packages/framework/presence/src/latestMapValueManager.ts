@@ -14,7 +14,7 @@ import type {
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
-import type { InternalTypes } from "./exposedInternalTypes.js";
+import { isValueRequiredState, type InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
@@ -501,8 +501,7 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			const value = item.value;
-			if (value !== undefined) {
+			if (isValueRequiredState(item)) {
 				items.set(key, {
 					value: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
@@ -557,7 +556,7 @@ class LatestMapValueManagerImpl<
 				revision: item.rev,
 				timestamp: item.timestamp,
 			};
-			if (item.value !== undefined) {
+			if (isValueRequiredState(item)) {
 				const updatedItem = {
 					attendee,
 					key,
