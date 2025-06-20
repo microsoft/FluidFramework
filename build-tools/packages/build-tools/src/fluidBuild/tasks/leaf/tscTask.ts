@@ -275,7 +275,7 @@ export class TscTask extends LeafTask {
 		// For that reason, this behavior must be enabled using the _FLUID_BUILD_ENABLE_IGNORE_TSC_OPTIONS_
 		// environment variable. To enable ignoring these settings, set the environment variable to "1".
 		const tsConfigOptionsIgnored: Set<string> =
-			(process.env._FLUID_BUILD_ENABLE_IGNORE_TSC_OPTIONS_ === "1")
+			process.env._FLUID_BUILD_ENABLE_IGNORE_TSC_OPTIONS_ === "1"
 				? new Set(["allowJs", "checkJs"])
 				: new Set();
 
