@@ -1245,7 +1245,6 @@ export class IntervalCollection
 					{
 						type: "delete",
 						localSeq: this.getNextLocalSeq(),
-						previous: value,
 					},
 					interval,
 				);
@@ -1334,7 +1333,6 @@ export class IntervalCollection
 				const metadata: IntervalChangeLocalMetadata = {
 					type: "change",
 					localSeq,
-					previous: interval.serialize(),
 					interval: newInterval ?? interval,
 				};
 
