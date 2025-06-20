@@ -36,7 +36,7 @@ steps:
       echo Generating .npmrc for ${{ parameters.feedUrl }}
       echo "registry=${{ parameters.feedUrl }}" >> ./.npmrc
       echo "always-auth=true" >> ./.npmrc
-      cat .npmrc ${{}}
+      cat .npmrc
 - task: npmAuthenticate@0
   displayName: npm Authenticate for ${{ parameters.artifactPath }}
   inputs:
