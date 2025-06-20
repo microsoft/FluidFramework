@@ -588,6 +588,9 @@ export class SequenceIntervalClass
 			if (op === undefined) {
 				refType &= ~ReferenceType.SlideOnRemove;
 				refType |= ReferenceType.StayOnRemove;
+			} else {
+				refType &= ~ReferenceType.StayOnRemove;
+				refType |= ReferenceType.SlideOnRemove;
 			}
 			return refType;
 		};
