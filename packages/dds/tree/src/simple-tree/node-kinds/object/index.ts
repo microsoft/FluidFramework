@@ -13,4 +13,8 @@ export {
 	setField,
 	type TreeObjectNode,
 } from "./objectNode.js";
-export { isObjectNodeSchema, ObjectNodeSchema } from "./objectNodeTypes.js";
+export {
+	isObjectNodeSchema,
+	ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
+} from "./objectNodeTypes.js";

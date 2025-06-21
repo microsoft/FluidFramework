@@ -14,6 +14,7 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
+	asTreeNodeSchemaCorePrivate,
 	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
 	// See docs on TreeNode for more details.
 	type TreeNode,
@@ -207,6 +208,7 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
 	isObjectNodeSchema,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
@@ -223,13 +225,14 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
+export { toStoredSchema, getStoredSchema, convertFieldKind } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
 	booleanSchema,
 	handleSchema,
 	nullSchema,
+	asLeafNodeSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
 export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";

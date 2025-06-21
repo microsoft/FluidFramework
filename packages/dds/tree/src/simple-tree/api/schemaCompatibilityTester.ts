@@ -91,7 +91,7 @@ export class SchemaCompatibilityTester {
 									this.policy,
 									// TODO do I need a new version of this for view schema?
 									this.viewSchemaRoot,
-									this.viewSchemaRoot.,
+									this.viewSchemaRoot,
 								),
 						)
 					) {
@@ -144,10 +144,7 @@ export class SchemaCompatibilityTester {
 			}
 		};
 
-		for (const discrepancy of getAllowedContentDiscrepancies(
-			this.viewSchemaRoot,
-			stored,
-		)) {
+		for (const discrepancy of getAllowedContentDiscrepancies(this.viewSchemaRoot, stored)) {
 			if (!canView && !canUpgrade) {
 				break;
 			}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { type TreeValue, ValueSchema } from "../core/index.js";
 import {
@@ -75,6 +75,19 @@ function makeLeaf<Name extends string, const T extends ValueSchema>(
 ): LeafSchema<Name, TreeValue<T>> & SimpleLeafNodeSchema {
 	// Names in this domain follow https://en.wikipedia.org/wiki/Reverse_domain_name_notation
 	return new LeafNodeSchema(`com.fluidframework.leaf.${name}`, t);
+}
+
+export function isLeafNodeSchema(
+	schema: TreeNodeSchema,
+): schema is LeafNodeSchema<string, ValueSchema> {
+	return schema.kind === NodeKind.Leaf;
+}
+
+/**
+ * Returns the given schema as a {@link LeafNodeSchema} and throws an error if it isn't one.
+ */
+export function asLeafNodeSchema(schema: TreeNodeSchema): LeafNodeSchema<string, ValueSchema> {
+	return isLeafNodeSchema(schema) ? schema : fail("Schema is not a leaf schema");
 }
 
 /**
