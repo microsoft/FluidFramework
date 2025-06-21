@@ -23,9 +23,9 @@ import Sinon from "sinon";
 
 import { Loader } from "../loader.js";
 import {
-	driverSupportRequirements,
+	driverSupportRequirementsForLoader,
 	loaderCoreCompatDetails,
-	runtimeSupportRequirements,
+	runtimeSupportRequirementsForLoader,
 	validateDriverCompatibility,
 	validateRuntimeCompatibility,
 } from "../loaderLayerCompatState.js";
@@ -120,13 +120,13 @@ describe("Loader Layer compatibility", () => {
 				layerType: "Runtime",
 				validateCompatibility: validateRuntimeCompatibility,
 				layerSupportRequirements:
-					runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					runtimeSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 			{
 				layerType: "Driver",
 				validateCompatibility: validateDriverCompatibility,
 				layerSupportRequirements:
-					driverSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					driverSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 		];
 
@@ -260,12 +260,12 @@ describe("Loader Layer compatibility", () => {
 			{
 				layerType: "Runtime",
 				layerSupportRequirements:
-					runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					runtimeSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 			{
 				layerType: "Driver",
 				layerSupportRequirements:
-					driverSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					driverSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 		];
 
