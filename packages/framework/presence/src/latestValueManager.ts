@@ -279,38 +279,33 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 // Overloads should be ordered from most specific to least specific when combined.
 
 /**
- * Factory for creating a {@link LatestRaw} State object.
+ * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  *
  * @beta
  * @sealed
  */
 export interface LatestFactory {
 	/**
-	 * Factory for creating a {@link LatestRaw} State object.
-	 *
-	 * @privateRemarks (change to `remarks` when adding signature overload)
-	 * This overload is used when called with {@link LatestArgumentsRaw}.
-	 * That is, if a validator function is _not_ provided.
-	 */
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type -- interface to allow for clean overload evolution
-	<T extends object | null, Key extends string = string>(
-		args: LatestArgumentsRaw<T>,
-	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
-}
-
-/**
- * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
- */
-export interface LatestFactoryInternal extends LatestFactory {
-	/**
 	 * Factory for creating a {@link Latest} State object.
 	 *
 	 * @remarks
-	 * This overload is used when called with {@link LatestArguments}. That is, if a validator function is provided.
+	 * This overload is used when called with {@link LatestArguments}.
+	 * That is, if a validator function is provided.
 	 */
 	<T extends object | null, Key extends string = string>(
 		args: LatestArguments<T>,
 	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+
+	/**
+	 * Factory for creating a {@link LatestRaw} State object.
+	 *
+	 * @remarks
+	 * This overload is used when called with {@link LatestArgumentsRaw}.
+	 * That is, if a validator function is _not_ provided.
+	 */
+	<T extends object | null, Key extends string = string>(
+		args: LatestArgumentsRaw<T>,
+	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 }
 
 // #endregion
@@ -318,10 +313,7 @@ export interface LatestFactoryInternal extends LatestFactory {
 /**
  * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  */
-export const latest: LatestFactoryInternal = <
-	T extends object | null,
-	Key extends string = string,
->(
+export const latest: LatestFactory = <T extends object | null, Key extends string = string>(
 	args: LatestArguments<T> | LatestArgumentsRaw<T>,
 ): InternalTypes.ManagerFactory<
 	Key,

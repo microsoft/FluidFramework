@@ -624,12 +624,27 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 // Overloads should be ordered from most specific to least specific when combined.
 
 /**
- * Factory for creating a {@link LatestMapRaw} State object.
+ * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
  *
  * @beta
  * @sealed
  */
 export interface LatestMapFactory {
+	/**
+	 * Factory for creating a {@link LatestMap} State object.
+	 *
+	 * @remarks
+	 * This overload is used when called with {@link LatestMapArguments}.
+	 * That is, if a validator function is provided.
+	 */
+	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
+		args: LatestMapArguments<T, Keys>,
+	): InternalTypes.ManagerFactory<
+		RegistrationKey,
+		InternalTypes.MapValueState<T, Keys>,
+		LatestMap<T, Keys>
+	>;
+
 	/**
 	 * Factory for creating a {@link LatestMapRaw} State object.
 	 *
@@ -637,7 +652,6 @@ export interface LatestMapFactory {
 	 * This overload is used when called with {@link LatestMapArgumentsRaw}.
 	 * That is, if a validator function is _not_ provided.
 	 */
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type -- interface to allow for clean overload evolution
 	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
 		args?: LatestMapArgumentsRaw<T, Keys>,
 	): InternalTypes.ManagerFactory<
@@ -647,31 +661,12 @@ export interface LatestMapFactory {
 	>;
 }
 
-/**
- * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
- */
-export interface LatestMapFactoryInternal extends LatestMapFactory {
-	/**
-	 * Factory for creating a {@link LatestMap} State object.
-	 *
-	 * @remarks
-	 * This overload is used when called with {@link LatestMapArguments}. That is, if a validator function is provided.
-	 */
-	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
-		args: LatestMapArguments<T, Keys>,
-	): InternalTypes.ManagerFactory<
-		RegistrationKey,
-		InternalTypes.MapValueState<T, Keys>,
-		LatestMap<T, Keys>
-	>;
-}
-
 // #endregion
 
 /**
  * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
  */
-export const latestMap: LatestMapFactoryInternal = <
+export const latestMap: LatestMapFactory = <
 	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
