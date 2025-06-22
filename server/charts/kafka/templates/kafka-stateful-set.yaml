@@ -9,6 +9,8 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  securityContext:
+    runAsNonRoot: true
   serviceName: kafka
   replicas: 1
   selector:
