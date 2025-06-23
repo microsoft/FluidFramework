@@ -656,14 +656,13 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			it("conflicting removes + add resolves to single interval", async () => {
 				const { intervals1, intervals2 } = await setupConflictingOps();
 				const interval1 = intervals1.add({ start: 1, end: 1 });
-				let id1 = interval1.getIntervalId();
+				const id1 = interval1.getIntervalId();
 				const interval2 = intervals2.add({ start: 1, end: 1 });
 				const id2 = interval2.getIntervalId();
 				await provider.ensureSynchronized();
 				intervals2.removeIntervalById(id1);
 				intervals1.removeIntervalById(id2);
 				const newInterval1 = intervals1.add({ start: 1, end: 1 });
-				id1 = newInterval1.getIntervalId();
 				await provider.ensureSynchronized();
 				assert.strictEqual(
 					newInterval1,
@@ -682,45 +681,39 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 
 			it("conflicting changes are resolved consistently", async () => {
 				const { intervals1, intervals2 } = await setupConflictingOps();
-				const interval1 = intervals1.add({ start: 1, end: 1 });
-				const id1 = interval1.getIntervalId();
+				const id1 = intervals1.add({ start: 1, end: 1 }).getIntervalId();
 				await provider.ensureSynchronized();
-				if (
-					typeof intervals1.change === "function" &&
-					typeof intervals2.change === "function"
-				) {
-					intervals1.change(id1, { start: 1, end: 2 });
-					intervals2.change(id1, { start: 2, end: 1 });
-					await provider.ensureSynchronized();
-					const foundInterval2 = intervals2.getIntervalById(id1);
-					assert.strictEqual(interval1?.getIntervalId(), id1);
-					assert.strictEqual(foundInterval2?.getIntervalId(), id1);
-					for (const interval of intervals1) {
-						const id: string = interval?.getIntervalId();
-						assert.strictEqual(
-							interval?.start.getOffset(),
-							intervals2.getIntervalById(id)?.start.getOffset(),
-							"Conflicting changes",
-						);
-						assert.strictEqual(
-							interval?.end.getOffset(),
-							intervals2.getIntervalById(id)?.end.getOffset(),
-							"Conflicting changes",
-						);
-					}
-					for (const interval of intervals2) {
-						const id: string = interval?.getIntervalId();
-						assert.strictEqual(
-							interval?.start.getOffset(),
-							intervals1.getIntervalById(id)?.start.getOffset(),
-							"Conflicting changes",
-						);
-						assert.strictEqual(
-							interval?.end.getOffset(),
-							intervals1.getIntervalById(id)?.end.getOffset(),
-							"Conflicting changes",
-						);
-					}
+
+				intervals1.change(id1, { start: 1, end: 2 });
+				intervals2.change(id1, { start: 2, end: 1 });
+				await provider.ensureSynchronized();
+				const foundInterval2 = intervals2.getIntervalById(id1);
+				assert.strictEqual(foundInterval2?.getIntervalId(), id1);
+				for (const interval of intervals1) {
+					const id: string = interval?.getIntervalId();
+					assert.strictEqual(
+						interval?.start.getOffset(),
+						intervals2.getIntervalById(id)?.start.getOffset(),
+						"Conflicting changes",
+					);
+					assert.strictEqual(
+						interval?.end.getOffset(),
+						intervals2.getIntervalById(id)?.end.getOffset(),
+						"Conflicting changes",
+					);
+				}
+				for (const interval of intervals2) {
+					const id: string = interval?.getIntervalId();
+					assert.strictEqual(
+						interval?.start.getOffset(),
+						intervals1.getIntervalById(id)?.start.getOffset(),
+						"Conflicting changes",
+					);
+					assert.strictEqual(
+						interval?.end.getOffset(),
+						intervals1.getIntervalById(id)?.end.getOffset(),
+						"Conflicting changes",
+					);
 				}
 			});
 
@@ -729,161 +722,157 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				const interval1 = intervals1.add({ start: 1, end: 1 });
 				const id1 = interval1.getIntervalId();
 				await provider.ensureSynchronized();
-				if (
-					typeof intervals1.change === "function" &&
-					typeof intervals2.change === "function"
-				) {
-					const assertPropertyChangedArg = (p: any, v: any, m: string) => {
-						if (
-							intervals1 instanceof TypedEventEmitter &&
-							intervals2 instanceof TypedEventEmitter
-						) {
-							assert.strictEqual(p, v, m);
-						}
-					};
-					let deltaArgs1: PropertySet = {};
-					let deltaArgs2: PropertySet = {};
-					intervals1.on("propertyChanged", (_interval, propertyDeltas) => {
-						deltaArgs1 = propertyDeltas;
-					});
-					intervals2.on("propertyChanged", (_interval, propertyDeltas) => {
-						deltaArgs2 = propertyDeltas;
-					});
-					intervals1.change(id1, { props: { prop1: "prop1" } });
-					assertPropertyChangedArg(
-						deltaArgs1.prop1,
-						null,
-						"Mismatch in property-changed event arg 1",
-					);
-					await provider.opProcessingController.processOutgoing();
-					intervals2.change(id1, { props: { prop2: "prop2" } });
-					assertPropertyChangedArg(
-						deltaArgs2.prop2,
-						null,
-						"Mismatch in property-changed event arg 2",
-					);
-					await provider.ensureSynchronized();
-					assertPropertyChangedArg(
-						deltaArgs1.prop2,
-						null,
-						"Mismatch in property-changed event arg 3",
-					);
-					assertPropertyChangedArg(
-						deltaArgs2.prop1,
-						null,
-						"Mismatch in property-changed event arg 4",
-					);
-					// interval1 = intervals1.getIntervalById(id1);
-					const interval2 = intervals2.getIntervalById(id1);
-					assert.strictEqual(
-						interval1?.properties.prop1,
-						"prop1",
-						"Mismatch in changed properties 1",
-					);
-					assert.strictEqual(
-						interval1?.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 2",
-					);
-					assert.strictEqual(
-						interval2?.properties.prop1,
-						"prop1",
-						"Mismatch in changed properties 3",
-					);
-					assert.strictEqual(
-						interval2?.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 4",
-					);
-					intervals1.change(id1, { props: { prop1: "no" } });
-					assertPropertyChangedArg(
-						deltaArgs1.prop1,
-						"prop1",
-						"Mismatch in property-changed event arg 5",
-					);
-					await provider.opProcessingController.processOutgoing();
-					intervals2.change(id1, { props: { prop1: "yes" } });
-					assertPropertyChangedArg(
-						deltaArgs2.prop1,
-						"prop1",
-						"Mismatch in property-changed event arg 6",
-					);
-					await provider.ensureSynchronized();
-					assertPropertyChangedArg(
-						deltaArgs1.prop1,
-						"no",
-						"Mismatch in property-changed event arg 7",
-					);
-					assertPropertyChangedArg(
-						Object.hasOwnProperty.call(deltaArgs2, "prop1"),
-						false,
-						"Mismatch in property-changed event arg 8",
-					);
-					assert.strictEqual(
-						interval1?.properties.prop1,
-						"yes",
-						"Mismatch in changed properties 5",
-					);
-					assert.strictEqual(
-						interval1?.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 6",
-					);
-					assert.strictEqual(
-						interval2?.properties.prop1,
-						"yes",
-						"Mismatch in changed properties 7",
-					);
-					assert.strictEqual(
-						interval2?.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 8",
-					);
-					intervals1.change(id1, { props: { prop1: "maybe" } });
-					assertPropertyChangedArg(
-						deltaArgs1.prop1,
-						"yes",
-						"Mismatch in property-changed event arg 9",
-					);
-					await provider.opProcessingController.processOutgoing();
-					intervals2.change(id1, { props: { prop1: null } });
-					assertPropertyChangedArg(
-						deltaArgs2.prop1,
-						"yes",
-						"Mismatch in property-changed event arg 10",
-					);
-					await provider.ensureSynchronized();
-					assertPropertyChangedArg(
-						deltaArgs1.prop1,
-						"maybe",
-						"Mismatch in property-changed event arg 11",
-					);
-					assertPropertyChangedArg(
-						Object.hasOwnProperty.call(deltaArgs2, "prop1"),
-						false,
-						"Mismatch in property-changed event arg 12",
-					);
-					assert.strictEqual(
-						Object.prototype.hasOwnProperty.call(interval1.properties, "prop1"),
-						false,
-						"Property not deleted 1",
-					);
-					assert.strictEqual(
-						interval1.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 9",
-					);
-					assert.strictEqual(
-						Object.prototype.hasOwnProperty.call(interval2.properties, "prop1"),
-						false,
-						"Property not deleted 2",
-					);
-					assert.strictEqual(
-						interval2.properties.prop2,
-						"prop2",
-						"Mismatch in changed properties 10",
-					);
-				}
+
+				const assertPropertyChangedArg = (p: any, v: any, m: string) => {
+					if (
+						intervals1 instanceof TypedEventEmitter &&
+						intervals2 instanceof TypedEventEmitter
+					) {
+						assert.strictEqual(p, v, m);
+					}
+				};
+				let deltaArgs1: PropertySet = {};
+				let deltaArgs2: PropertySet = {};
+				intervals1.on("propertyChanged", (_interval, propertyDeltas) => {
+					deltaArgs1 = propertyDeltas;
+				});
+				intervals2.on("propertyChanged", (_interval, propertyDeltas) => {
+					deltaArgs2 = propertyDeltas;
+				});
+				intervals1.change(id1, { props: { prop1: "prop1" } });
+				assertPropertyChangedArg(
+					deltaArgs1.prop1,
+					null,
+					"Mismatch in property-changed event arg 1",
+				);
+				await provider.opProcessingController.processOutgoing();
+				intervals2.change(id1, { props: { prop2: "prop2" } });
+				assertPropertyChangedArg(
+					deltaArgs2.prop2,
+					null,
+					"Mismatch in property-changed event arg 2",
+				);
+				await provider.ensureSynchronized();
+				assertPropertyChangedArg(
+					deltaArgs1.prop2,
+					null,
+					"Mismatch in property-changed event arg 3",
+				);
+				assertPropertyChangedArg(
+					deltaArgs2.prop1,
+					null,
+					"Mismatch in property-changed event arg 4",
+				);
+				// interval1 = intervals1.getIntervalById(id1);
+				const interval2 = intervals2.getIntervalById(id1);
+				assert.strictEqual(
+					interval1?.properties.prop1,
+					"prop1",
+					"Mismatch in changed properties 1",
+				);
+				assert.strictEqual(
+					interval1?.properties.prop2,
+					"prop2",
+					"Mismatch in changed properties 2",
+				);
+				assert.strictEqual(
+					interval2?.properties.prop1,
+					"prop1",
+					"Mismatch in changed properties 3",
+				);
+				assert.strictEqual(
+					interval2?.properties.prop2,
+					"prop2",
+					"Mismatch in changed properties 4",
+				);
+				intervals1.change(id1, { props: { prop1: "no" } });
+				assertPropertyChangedArg(
+					deltaArgs1.prop1,
+					"prop1",
+					"Mismatch in property-changed event arg 5",
+				);
+				await provider.opProcessingController.processOutgoing();
+				intervals2.change(id1, { props: { prop1: "yes" } });
+				assertPropertyChangedArg(
+					deltaArgs2.prop1,
+					"prop1",
+					"Mismatch in property-changed event arg 6",
+				);
+				await provider.ensureSynchronized();
+				assertPropertyChangedArg(
+					deltaArgs1.prop1,
+					"no",
+					"Mismatch in property-changed event arg 7",
+				);
+				assertPropertyChangedArg(
+					Object.hasOwnProperty.call(deltaArgs2, "prop1"),
+					false,
+					"Mismatch in property-changed event arg 8",
+				);
+				assert.strictEqual(
+					interval1?.properties.prop1,
+					"yes",
+					"Mismatch in changed properties 5",
+				);
+				assert.strictEqual(
+					interval1?.properties.prop2,
+					"prop2",
+					"Mismatch in changed properties 6",
+				);
+				assert.strictEqual(
+					interval2?.properties.prop1,
+					"yes",
+					"Mismatch in changed properties 7",
+				);
+				assert.strictEqual(
+					interval2?.properties.prop2,
+					"prop2",
+					"Mismatch in changed properties 8",
+				);
+				intervals1.change(id1, { props: { prop1: "maybe" } });
+				assertPropertyChangedArg(
+					deltaArgs1.prop1,
+					"yes",
+					"Mismatch in property-changed event arg 9",
+				);
+				await provider.opProcessingController.processOutgoing();
+				intervals2.change(id1, { props: { prop1: null } });
+				assertPropertyChangedArg(
+					deltaArgs2.prop1,
+					"yes",
+					"Mismatch in property-changed event arg 10",
+				);
+				await provider.ensureSynchronized();
+				assertPropertyChangedArg(
+					deltaArgs1.prop1,
+					"maybe",
+					"Mismatch in property-changed event arg 11",
+				);
+				assertPropertyChangedArg(
+					Object.hasOwnProperty.call(deltaArgs2, "prop1"),
+					false,
+					"Mismatch in property-changed event arg 12",
+				);
+				assert.strictEqual(
+					Object.prototype.hasOwnProperty.call(interval1.properties, "prop1"),
+					false,
+					"Property not deleted 1",
+				);
+				assert.strictEqual(
+					interval1.properties.prop2,
+					"prop2",
+					"Mismatch in changed properties 9",
+				);
+				assert.strictEqual(
+					Object.prototype.hasOwnProperty.call(interval2.properties, "prop1"),
+					false,
+					"Property not deleted 2",
+				);
+				assert.strictEqual(
+					interval2.properties.prop2,
+					"prop2",
+					"Mismatch in changed properties 10",
+				);
 			});
 
 			it("conflicting removes after property changes remove interval from both clients", async () => {
