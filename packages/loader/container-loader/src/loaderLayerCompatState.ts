@@ -73,12 +73,12 @@ export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements
 };
 
 /**
- * Validates that the Runtime layer is compatible with the Loader.
+ * Validates that the Runtime layer is compatible with the Loader. *
  * @internal
  */
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
-	disposeFn?: (error?: ICriticalContainerError) => void,
+	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
 		runtimeSupportRequirementsForLoader,
@@ -96,7 +96,7 @@ export function validateRuntimeCompatibility(
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),
 		});
-		disposeFn?.(error);
+		disposeFn(error);
 		throw error;
 	}
 }

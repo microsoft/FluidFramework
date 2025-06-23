@@ -243,7 +243,7 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			layer1: "DataStore",
 			layer2: "Runtime",
 		},
-		// This will be enabled once Runtime / Driver compatibility enforcement is implemented.
+		// This will be enabled once Runtime / Driver compatibility enforcement is implemented - AB#33773.
 		// {
 		// 	layer1: "Runtime",
 		// 	layer2: "Driver",
