@@ -32,27 +32,32 @@ export function createSharedMapWithInterception(
 	// executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
 	let executingCallback: boolean = false;
 
-	sharedMapWithInterception.set = (key: string, value: unknown) => {
-		let map;
-		// Set should not be called on the wrapped object from the interception callback as this will lead to
-		// infinite recursion.
-		assert(
-			executingCallback === false,
-			0x0c0 /* "set called recursively from the interception callback" */,
-		);
+	Object.defineProperty(sharedMapWithInterception, "set", {
+		enumerable: false,
+		configurable: false,
+		writable: false,
+		value: ((key: string, value: unknown) => {
+			let map;
+			// Set should not be called on the wrapped object from the interception callback as this will lead to
+			// infinite recursion.
+			assert(
+				executingCallback === false,
+				0x0c0 /* "set called recursively from the interception callback" */,
+			);
 
-		context.containerRuntime.orderSequentially(() => {
-			map = sharedMap.set(key, value);
-			executingCallback = true;
-			try {
-				setInterceptionCallback(sharedMap, key, value);
-			} finally {
-				executingCallback = false;
-			}
-		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-		return map;
-	};
+			context.containerRuntime.orderSequentially(() => {
+				map = sharedMap.set(key, value);
+				executingCallback = true;
+				try {
+					setInterceptionCallback(sharedMap, key, value);
+				} finally {
+					executingCallback = false;
+				}
+			});
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-return
+			return map;
+		}) satisfies ISharedMap["set"],
+	});
 
 	return sharedMapWithInterception;
 }
