@@ -26,6 +26,11 @@ export class OdspClient {
         container: IFluidContainer<T>;
         services: OdspContainerServices;
     }>;
+    // (undocumented)
+    rehydrateContainer<T extends ContainerSchema>(serializedContainer: string, containerSchema: T): Promise<{
+        container: IFluidContainer<T>;
+        services: OdspContainerServices;
+    }>;
 }
 
 // @beta (undocumented)

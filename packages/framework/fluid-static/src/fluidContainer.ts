@@ -188,9 +188,12 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	/**
 	 * Capture the state of a container that is not attached or closed.
 	 *
-	 * @see
+	 * @remarks
 	 *
-	 * - {@link IContainer.serialize}
+	 * This should only be called when the container is in the
+	 * {@link @fluidframework/container-definitions#AttachState.Detached} state.
+	 *
+	 * This can be determined by observing {@link IFluidContainer.attachState}.
 	 */
 	serialize(): string;
 
