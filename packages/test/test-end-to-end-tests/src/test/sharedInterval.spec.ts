@@ -570,7 +570,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 		});
 
-		describe.only("Conflicting ops (multi-client scenarios)", () => {
+		describe("Conflicting ops", () => {
 			async function setupConflictingOps() {
 				const stringId = "stringKey";
 				const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
