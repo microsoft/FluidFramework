@@ -71,9 +71,7 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 
 		const appData = await entryPointHandle.get();
 
-		// Pass the devtools and logger to the AppData instance
 		if (this.devtools && this.logger) {
-			console.log("Setting devtools and logger in DataObject");
 			appData.setDevtools(this.devtools, this.logger);
 		}
 

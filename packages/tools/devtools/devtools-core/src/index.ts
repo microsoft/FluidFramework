@@ -33,9 +33,9 @@ export { EditType } from "./CommonInterfaces.js";
 export { ContainerStateChangeKind } from "./Container.js";
 export type {
 	ContainerDevtoolsProps,
-	DecomposedDevtoolsIContainer,
-	DataObjectDevtoolsProps,
+	DataObjectProps,
 } from "./ContainerDevtools.js";
+export type { DecomposedIContainer } from "./DecomposedContainer.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
 export type {
 	FluidHandleNode,

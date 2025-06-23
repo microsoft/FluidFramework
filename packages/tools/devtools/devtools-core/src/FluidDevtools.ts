@@ -10,11 +10,10 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ContainerKey } from "./CommonInterfaces.js";
 import {
 	ContainerDevtools,
-	DecomposedContainer,
 	type ContainerDevtoolsProps,
-	type DataObjectDevtoolsProps,
-	type DecomposedDevtoolsIContainer,
+	type DataObjectProps,
 } from "./ContainerDevtools.js";
+import { DecomposedContainer, type DecomposedIContainer } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -321,35 +320,26 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * TODO
+	 * Registers a data object with the devtools.
+	 *
 	 */
-	public registerDataObject(props: DataObjectDevtoolsProps): void {
+	public registerDataObject(props: DataObjectProps): void {
 		const { runtime, dataObject } = props;
 
-		const runtimeId = runtime?.id;
+		const runtimeId = `${runtime.id}-${Math.random().toString(36).slice(2, 11)}`;
 
-		if (runtimeId === undefined) {
-			throw new UsageError("No runtime ID found");
-		}
+		const decomposedIContainer = toDecomposedIContainer(dataObject);
 
-		// Create a unique container key using a random number for testing
-		const containerKey = `test-container-${Math.random().toString(36).slice(2, 11)}`;
-
-		const decomposedIContainerComponent = toDecomposedIContainer(dataObject);
-
-		console.log("runtimeId", runtime, runtimeId);
-		console.log("containerKey", containerKey);
-
-		if (this.containers.has(containerKey)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
+		if (this.containers.has(runtimeId)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(runtimeId));
 		}
 
 		const containerDevtools = new ContainerDevtools({
-			containerKey,
-			container: decomposedIContainerComponent,
-			containerData: {appData: dataObject},
+			containerKey: runtimeId,
+			container: decomposedIContainer,
+			containerData: { appData: dataObject },
 		});
-		this.containers.set(containerKey, containerDevtools);
+		this.containers.set(runtimeId, containerDevtools);
 
 		this.postContainerList();
 	}
@@ -470,14 +460,13 @@ export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 }
 
 /**
- * TODO
+ * Converts a {@link PureDataObject} into a {@link DecomposedIContainer} by wrapping its runtime.
+ * This enables data objects to be registered with devtools as if they were containers.
+ *
+ * @alpha
  */
-export function toDecomposedIContainer(
-	dataObject: PureDataObject,
-): DecomposedDevtoolsIContainer {
-	// Type assertion for runtime
+export function toDecomposedIContainer(dataObject: PureDataObject): DecomposedIContainer {
 	const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
-
 	const decomposedContainer = new DecomposedContainer(runtime);
 
 	return decomposedContainer;

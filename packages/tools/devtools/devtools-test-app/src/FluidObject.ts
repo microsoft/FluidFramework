@@ -315,8 +315,6 @@ export class AppData extends DataObject {
 		} else {
 			this._sharedTree = sharedTree;
 		}
-
-
 	}
 
 	private populateSharedTree(sharedTree: ITree): void {
@@ -393,7 +391,6 @@ export class AppData extends DataObject {
 	}
 
 	public getRuntime(): IFluidDataStoreRuntime {
-		console.log("this.runtime", this.runtime);
 		return this.runtime;
 	}
 
@@ -403,8 +400,7 @@ export class AppData extends DataObject {
 	 */
 	public setDevtools(devtools: IFluidDevtools, logger: IDevtoolsLogger): void {
 		if (process.env.NODE_ENV === "development") {
-			console.log('Devtools Registration!')
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+			console.log("Devtools Registration!");
 			devtools.registerDataObject({ runtime: this.runtime, dataObject: this });
 		}
 	}

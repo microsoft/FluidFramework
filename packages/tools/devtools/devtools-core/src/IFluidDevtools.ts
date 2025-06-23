@@ -6,7 +6,7 @@
 import type { IDisposable } from "@fluidframework/core-interfaces";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
-import type { ContainerDevtoolsProps, DataObjectDevtoolsProps } from "./ContainerDevtools.js";
+import type { ContainerDevtoolsProps, DataObjectProps } from "./ContainerDevtools.js";
 
 /**
  * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid
@@ -34,9 +34,13 @@ export interface IFluidDevtools extends IDisposable {
 	registerContainerDevtools(props: ContainerDevtoolsProps): void;
 
 	/**
-	 * TODO
+	 * Registers a data object with the devtools.
+	 *
+	 * @remarks Although the data object is not a container, it is treated as one and stored in `containers` map for the purposes of the devtools.
+	 *
+	 * @throws Will throw if devtools have already been registered for the specified {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntime.id}.
 	 */
-	registerDataObject(props: DataObjectDevtoolsProps): void;
+	registerDataObject(props: DataObjectProps): void;
 
 	/**
 	 * Removes the Container with the specified {@link ContainerKey} from the Devtools.
