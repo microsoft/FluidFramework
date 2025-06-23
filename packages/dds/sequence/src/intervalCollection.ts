@@ -853,8 +853,6 @@ export class IntervalCollection
 			default:
 				unreachableCase(type);
 		}
-
-		clearEmptyPendingEntry(this.pending, id);
 	}
 
 	public process(
