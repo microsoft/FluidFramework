@@ -214,7 +214,7 @@ async function createAndLoadContainers(provider: ITestObjectProvider) {
 	await provider.loadTestContainer();
 }
 
-describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
+describeCompat.only("Layer compatibility validation", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
@@ -274,15 +274,13 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 			let layer1Generation: number;
 			let layer2CompatDetails: ILayerCompatDetails;
 
-			before("setup", function () {
+			beforeEach(function () {
 				if (layer1 !== "Driver" && layer2 !== "Driver" && provider.driver.type !== "local") {
 					// These tests need to run for every driver only if one of the layers is a driver.
 					// Otherwise, they are driver agnostic, so skip them for non-local drivers.
 					this.skip();
 				}
-			});
 
-			beforeEach(function () {
 				const testParams = getLayerTestParams(layer1, layer2, provider.driver.type);
 				layer1SupportRequirements = testParams.layer1SupportRequirements;
 				layer1Version = testParams.layer1Version;
@@ -292,7 +290,12 @@ describeCompat("Layer compatibility", "NoCompat", (getTestObjectProvider) => {
 				originalMinSupportedGeneration = layer1SupportRequirements.minSupportedGeneration;
 			});
 
-			afterEach(() => {
+			afterEach(function () {
+				if (layer1 !== "Driver" && layer2 !== "Driver" && provider.driver.type !== "local") {
+					// If the test was skipped, the original vales would not be set, so skip the reset.
+					this.skip();
+				}
+
 				layer1SupportRequirements.requiredFeatures = [...originalRequiredFeatures];
 				layer1SupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
 			});
