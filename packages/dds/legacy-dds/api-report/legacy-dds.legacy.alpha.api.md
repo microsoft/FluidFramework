@@ -85,7 +85,7 @@ export interface ISharedSignal<T extends SerializableTypeForSharedSignal = any> 
 // @alpha @legacy (undocumented)
 export interface ISharedSignalEvents<T extends SerializableTypeForSharedSignal> extends ISharedObjectEvents {
     // (undocumented)
-    (event: "notify", listener: (value: T) => void): any;
+    (event: "notify", listener: (value: T, isLocal: boolean) => void): any;
 }
 
 // @alpha @legacy (undocumented)
