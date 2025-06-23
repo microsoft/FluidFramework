@@ -528,7 +528,7 @@ export function addConstraintsToTransaction(
 						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
 					);
 				}
-				assert(node.isHydrated(), "In document node must be hydrated.");
+				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
 				if (constraintsOnRevert) {
 					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
 				} else {

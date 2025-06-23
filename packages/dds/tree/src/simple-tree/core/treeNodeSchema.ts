@@ -419,11 +419,11 @@ export function asTreeNodeSchemaCorePrivate(
 ): TreeNodeSchemaCorePrivate {
 	assert(
 		"childAnnotatedAllowedTypes" in schema,
-		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
+		0xbc9 /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
 	assert(
 		Array.isArray((schema as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes),
-		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
+		0xbca /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
 	return schema as TreeNodeSchemaCorePrivate;
 }
