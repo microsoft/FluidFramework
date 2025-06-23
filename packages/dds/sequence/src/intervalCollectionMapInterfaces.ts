@@ -4,7 +4,11 @@
  */
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { IMergeTreeOptions, ListNode } from "@fluidframework/merge-tree/internal";
+import {
+	IMergeTreeOptions,
+	ListNode,
+	type ISegmentInternal,
+} from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
@@ -15,28 +19,34 @@ import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	SerializedIntervalDelta,
+	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
 export interface IntervalAddLocalMetadata {
 	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
 	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
-	rebased?: ISerializedInterval;
-	original: ISerializedInterval;
+	rebased?:
+		| Record<"start" | "end", { segment: ISegmentInternal; offset: number }>
+		| "detached";
+	interval: SequenceIntervalClass;
 }
 export interface IntervalChangeLocalMetadata {
 	type: typeof IntervalDeltaOpType.CHANGE;
 	localSeq: number;
 	previous: ISerializedInterval;
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
-	rebased?: SerializedIntervalDelta;
-	original: SerializedIntervalDelta;
+	rebased?:
+		| Record<"start" | "end", { segment: ISegmentInternal; offset: number }>
+		| "detached";
+	interval: SequenceIntervalClass;
 }
 export interface IntervalDeleteLocalMetadata {
 	type: typeof IntervalDeltaOpType.DELETE;
 	localSeq: number;
 	previous: ISerializedInterval;
 	endpointChangesNode?: undefined;
+	interval?: undefined;
 }
 export type IntervalMessageLocalMetadata =
 	| IntervalAddLocalMetadata

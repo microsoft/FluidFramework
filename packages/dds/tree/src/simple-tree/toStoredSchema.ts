@@ -37,6 +37,8 @@ const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ * @throws
+ * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
 export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return getOrCreate(viewToStoredCache, root, () => {
