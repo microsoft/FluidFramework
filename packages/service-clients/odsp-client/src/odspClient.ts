@@ -11,6 +11,7 @@ import type {
 import {
 	createDetachedContainer,
 	loadExistingContainer,
+	rehydrateDetachedContainer,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
@@ -128,6 +129,27 @@ export class OdspClient {
 				package: "no-dynamic-package",
 				config: {},
 			},
+		});
+
+		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+
+		const services = await this.getContainerServices(container);
+
+		return { container: fluidContainer as IFluidContainer<T>, services };
+	}
+
+	public async rehydrateContainer<T extends ContainerSchema>(
+		serializedContainer: string,
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
+		services: OdspContainerServices;
+	}> {
+		const loaderProps = this.getLoaderProps(containerSchema);
+
+		const container = await rehydrateDetachedContainer({
+			...loaderProps,
+			serializedState: serializedContainer,
 		});
 
 		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
