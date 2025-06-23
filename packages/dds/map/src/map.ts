@@ -275,7 +275,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
 	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
-		this.kernel.trySubmitMessage(content as IMapOperation, localOpMetadata);
+		this.kernel.tryResubmitMessage(content as IMapOperation, localOpMetadata);
 	}
 
 	/**
@@ -310,6 +310,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
 	protected override rollback(content: unknown, localOpMetadata: unknown): void {
-		this.kernel.rollback(content, localOpMetadata);
+		this.kernel.rollback(content as IMapOperation, localOpMetadata);
 	}
 }

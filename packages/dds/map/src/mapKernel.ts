@@ -45,7 +45,7 @@ interface IMapMessageHandler {
 	 * @param op - The map operation to submit
 	 * @param localOpMetadata - The metadata to be submitted with the message.
 	 */
-	submit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
+	resubmit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
 }
 
 /**
@@ -370,19 +370,19 @@ export class MapKernel {
 	}
 
 	/**
-	 * Submit the given op if a handler is registered.
+	 * Resubmit the given op if a handler is registered.
 	 * @param op - The operation to attempt to submit
 	 * @param localOpMetadata - The local metadata associated with the op. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public trySubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
+	public tryResubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
 		}
-		handler.submit(op, localOpMetadata as MapLocalOpMetadata);
+		handler.resubmit(op, localOpMetadata as MapLocalOpMetadata);
 		return true;
 	}
 
@@ -435,15 +435,12 @@ export class MapKernel {
 		return true;
 	}
 
-	/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 	/**
 	 * Rollback a local op
 	 * @param op - The operation to rollback
 	 * @param localOpMetadata - The local metadata associated with the op.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	public rollback(op: any, localOpMetadata: unknown): void {
+	public rollback(op: IMapOperation, localOpMetadata: unknown): void {
 		if (!isMapLocalOpMetadata(localOpMetadata)) {
 			throw new Error("Invalid localOpMetadata");
 		}
@@ -465,30 +462,28 @@ export class MapKernel {
 			}
 		} else if (op.type === "delete" || op.type === "set") {
 			if (localOpMetadata.type === "add") {
-				this.deleteCore(op.key as string, true);
+				this.deleteCore(op.key, true);
 			} else if (
 				localOpMetadata.type === "edit" &&
 				localOpMetadata.previousValue !== undefined
 			) {
-				this.setCore(op.key as string, localOpMetadata.previousValue, true);
+				this.setCore(op.key, localOpMetadata.previousValue, true);
 			} else {
 				throw new Error("Cannot rollback without previous value");
 			}
 
-			const pendingMessageIds = this.pendingKeys.get(op.key as string);
+			const pendingMessageIds = this.pendingKeys.get(op.key);
 			const lastPendingMessageId = pendingMessageIds?.pop();
 			if (!pendingMessageIds || lastPendingMessageId !== localOpMetadata.pendingMessageId) {
 				throw new Error("Rollback op does not match last pending");
 			}
 			if (pendingMessageIds.length === 0) {
-				this.pendingKeys.delete(op.key as string);
+				this.pendingKeys.delete(op.key);
 			}
 		} else {
 			throw new Error("Unsupported op for rollback");
 		}
 	}
-
-	/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
 	/**
 	 * Set implementation used for both locally sourced sets as well as incoming remote sets.
@@ -628,7 +623,7 @@ export class MapKernel {
 				}
 				this.clearCore(local);
 			},
-			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
+			resubmit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
 				assert(
 					isClearLocalOpMetadata(localOpMetadata),
 					0x2fc /* Invalid localOpMetadata for clear */,
@@ -649,7 +644,7 @@ export class MapKernel {
 				}
 				this.deleteCore(op.key, local);
 			},
-			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
+			resubmit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
 			},
 		});
@@ -663,7 +658,7 @@ export class MapKernel {
 				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 				this.setCore(op.key, { value: op.value.value }, local);
 			},
-			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
+			resubmit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
 				this.resubmitMapKeyMessage(op, localOpMetadata);
 			},
 		});
