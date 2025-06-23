@@ -223,9 +223,6 @@ export function recordSchema<
 
 	const { identifier, info, implicitlyConstructable, metadata, persistedMetadata } = options;
 
-	// Field set can't be modified after this since derived data is stored in maps.
-	Object.freeze(info);
-
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
