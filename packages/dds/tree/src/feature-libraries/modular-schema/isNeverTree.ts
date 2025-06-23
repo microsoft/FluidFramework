@@ -16,10 +16,11 @@ import {
 } from "../../core/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
+import type { FieldSchema } from "../../simple-tree/schemaTypes.js";
 
 export function isNeverField(
 	policy: FullSchemaPolicy,
-	originalData: TreeStoredSchema,
+	originalData: FieldSchema,
 	field: TreeFieldStoredSchema,
 ): boolean {
 	return isNeverFieldRecursive(policy, originalData, field, new Set());
@@ -27,7 +28,7 @@ export function isNeverField(
 
 export function isNeverFieldRecursive(
 	policy: FullSchemaPolicy,
-	originalData: TreeStoredSchema,
+	originalData: FieldSchema,
 	field: TreeFieldStoredSchema,
 	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
@@ -37,6 +38,8 @@ export function isNeverFieldRecursive(
 		field.types !== undefined
 	) {
 		for (const type of field.types) {
+
+			
 			if (
 				!isNeverTreeRecursive(
 					policy,
@@ -63,7 +66,7 @@ export function isNeverFieldRecursive(
 
 export function isNeverTree(
 	policy: FullSchemaPolicy,
-	originalData: TreeStoredSchema,
+	originalData: FieldSchema,
 	treeNode: TreeNodeStoredSchema | undefined,
 ): boolean {
 	return isNeverTreeRecursive(policy, originalData, treeNode, new Set());
@@ -77,7 +80,7 @@ export function isNeverTree(
 
 export function isNeverTreeRecursive(
 	policy: FullSchemaPolicy,
-	originalData: TreeStoredSchema,
+	originalData: FieldSchema,
 	treeNode: TreeNodeStoredSchema | undefined,
 	parentTypeStack: Set<TreeNodeStoredSchema>,
 ): boolean {
