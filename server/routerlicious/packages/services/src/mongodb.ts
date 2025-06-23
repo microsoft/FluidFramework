@@ -777,6 +777,11 @@ export class MongoDbFactory implements core.IDbFactory {
 			options.maxPoolSize = this.connectionPoolMaxSize;
 		}
 
+		Lumberjack.info("TEST: Connecting to MongoDB", {
+			operationsDbEndpoint: this.operationsDbEndpoint.substring(150),
+			globalDbEndpoint: this.globalDbEndpoint?.substring(150),
+		});
+
 		const connection = await MongoClient.connect(
 			global && this.globalDbEndpoint ? this.globalDbEndpoint : this.operationsDbEndpoint,
 			options,
