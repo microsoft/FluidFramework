@@ -1,5 +1,9 @@
 # @fluidframework/replay-driver
 
+## 2.43.0
+
+Dependency updates only.
+
 ## 2.42.0
 
 Dependency updates only.
