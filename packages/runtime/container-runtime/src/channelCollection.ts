@@ -701,7 +701,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = (): void => this.disposeOnce.value;
+	public dispose(): void {
+		return this.disposeOnce.value;
+	}
 
 	public reSubmit(
 		type: string,
