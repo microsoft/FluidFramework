@@ -116,12 +116,7 @@ module.exports = {
 			 * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
 			 * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
 			 */
-			exclude: (instance) =>
-				// TODO: Server packages use uuid ^11.1.0 but client packages are still pulling in ^9.0.1. Because of this, we are
-				// currently pulling in both versions of the uuid package.
-				// The below check was added to avoid the duplication error for uuid, but it should be removed once we update
-				// the client packages to use uuid ^11.1.0.
-				instance.name === "uuid",
+			exclude: (instance) => false,
 		}),
 		new BundleAnalyzerPlugin({
 			analyzerMode: "static",
