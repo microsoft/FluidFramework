@@ -87,7 +87,7 @@ export interface RecordNodePojoEmulationSchema<
 		SimpleRecordNodeSchema<TCustomMetadata> {}
 
 /**
- * A schema for {@link (TreeRecordNode:type)}s.
+ * A schema for {@link (TreeRecordNode:interface)}s.
  * @privateRemarks
  * This could have generic arguments added and forwarded.
  * The expected use-cases for this don't need them however, and if they did want an argument it would probably be the allowed types;
