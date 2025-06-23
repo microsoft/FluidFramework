@@ -28,7 +28,7 @@ import {
 } from "./localValues.js";
 
 /**
- * Defines the means to process and submit a given op on a map.
+ * Defines the means to process and resubmit a given op on a map.
  */
 interface IMapMessageHandler {
 	/**
@@ -38,14 +38,14 @@ interface IMapMessageHandler {
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	process(op: IMapOperation, local: boolean, localOpMetadata: MapLocalOpMetadata): void;
+	process(op: IMapOperation, local: boolean, localOpMetadata: number | undefined): void;
 
 	/**
-	 * Communicate the operation to remote clients.
-	 * @param op - The map operation to submit
-	 * @param localOpMetadata - The metadata to be submitted with the message.
+	 * Resubmit a previously submitted operation that was not delivered.
+	 * @param op - The map operation to resubmit
+	 * @param localOpMetadata - The metadata that was originally submitted with the message.
 	 */
-	resubmit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
+	resubmit(op: IMapOperation, localOpMetadata: number): void;
 }
 
 /**
@@ -159,6 +159,8 @@ export class MapKernel {
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
 	 */
 	private nextPendingMessageId: number = 0;
+
+	private readonly pendingMapLocalOpMetadata: MapLocalOpMetadata[] = [];
 
 	/**
 	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
@@ -377,12 +379,12 @@ export class MapKernel {
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
+	public tryResubmitMessage(op: IMapOperation, localOpMetadata: number): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
 		}
-		handler.resubmit(op, localOpMetadata as MapLocalOpMetadata);
+		handler.resubmit(op, localOpMetadata);
 		return true;
 	}
 
@@ -425,13 +427,13 @@ export class MapKernel {
 	public tryProcessMessage(
 		op: IMapOperation,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: number | undefined,
 	): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
 		}
-		handler.process(op, local, localOpMetadata as MapLocalOpMetadata);
+		handler.process(op, local, localOpMetadata);
 		return true;
 	}
 
@@ -557,7 +559,7 @@ export class MapKernel {
 	private needProcessKeyOperation(
 		op: IMapKeyOperation,
 		local: boolean,
-		localOpMetadata: MapLocalOpMetadata,
+		localOpMetadata: MapLocalOpMetadata | undefined,
 	): boolean {
 		if (this.pendingClearMessageIds[0] !== undefined) {
 			if (local) {
@@ -604,15 +606,21 @@ export class MapKernel {
 	private getMessageHandlers(): Map<string, IMapMessageHandler> {
 		const messageHandlers = new Map<string, IMapMessageHandler>();
 		messageHandlers.set("clear", {
-			process: (op: IMapClearOperation, local, localOpMetadata) => {
+			process: (op: IMapClearOperation, local: boolean, localOpMetadata: number) => {
 				if (local) {
+					const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
-						isClearLocalOpMetadata(localOpMetadata),
+						isClearLocalOpMetadata(mapLocalOpMetadata),
 						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
 					);
+					assert(
+						mapLocalOpMetadata.pendingMessageId === localOpMetadata,
+						"Processing unexpected local clear op",
+					);
+					// TODO: Do we need to double-track clear messages?
 					const pendingClearMessageId = this.pendingClearMessageIds.shift();
 					assert(
-						pendingClearMessageId === localOpMetadata.pendingMessageId,
+						pendingClearMessageId === localOpMetadata,
 						0x2fb /* pendingMessageId does not match */,
 					);
 					return;
@@ -623,34 +631,60 @@ export class MapKernel {
 				}
 				this.clearCore(local);
 			},
-			resubmit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
+			resubmit: (op: IMapClearOperation, localOpMetadata: number) => {
+				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 				assert(
-					isClearLocalOpMetadata(localOpMetadata),
+					isClearLocalOpMetadata(mapLocalOpMetadata),
 					0x2fc /* Invalid localOpMetadata for clear */,
+				);
+				assert(
+					mapLocalOpMetadata.pendingMessageId === localOpMetadata,
+					"Resubmitting unexpected local clear op",
 				);
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const pendingClearMessageId = this.pendingClearMessageIds.shift();
 				assert(
-					pendingClearMessageId === localOpMetadata.pendingMessageId,
+					pendingClearMessageId === localOpMetadata,
 					0x2fd /* pendingMessageId does not match */,
 				);
-				this.submitMapClearMessage(op, localOpMetadata.previousMap);
+				this.submitMapClearMessage(op, mapLocalOpMetadata.previousMap);
 			},
 		});
 		messageHandlers.set("delete", {
-			process: (op: IMapDeleteOperation, local, localOpMetadata) => {
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+			process: (op: IMapDeleteOperation, local: boolean, localOpMetadata: number) => {
+				let mapLocalOpMetadata: MapLocalOpMetadata | undefined;
+				if (local) {
+					mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+					assert(
+						mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+						"Processing unexpected local delete op",
+					);
+				}
+				if (!this.needProcessKeyOperation(op, local, mapLocalOpMetadata)) {
 					return;
 				}
 				this.deleteCore(op.key, local);
 			},
-			resubmit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
-				this.resubmitMapKeyMessage(op, localOpMetadata);
+			resubmit: (op: IMapDeleteOperation, localOpMetadata: number) => {
+				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+				assert(
+					mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+					"Resubmitting unexpected local delete op",
+				);
+				this.resubmitMapKeyMessage(op, mapLocalOpMetadata);
 			},
 		});
 		messageHandlers.set("set", {
-			process: (op: IMapSetOperation, local, localOpMetadata) => {
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+			process: (op: IMapSetOperation, local: boolean, localOpMetadata: number) => {
+				let mapLocalOpMetadata: MapLocalOpMetadata | undefined;
+				if (local) {
+					mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+					assert(
+						mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+						"Processing unexpected local set op",
+					);
+				}
+				if (!this.needProcessKeyOperation(op, local, mapLocalOpMetadata)) {
 					return;
 				}
 
@@ -658,8 +692,13 @@ export class MapKernel {
 				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 				this.setCore(op.key, { value: op.value.value }, local);
 			},
-			resubmit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
-				this.resubmitMapKeyMessage(op, localOpMetadata);
+			resubmit: (op: IMapSetOperation, localOpMetadata: number) => {
+				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+				assert(
+					mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+					"Resubmitting unexpected local set op",
+				);
+				this.resubmitMapKeyMessage(op, mapLocalOpMetadata);
 			},
 		});
 
@@ -680,8 +719,10 @@ export class MapKernel {
 		op: IMapClearOperation,
 		previousMap?: Map<string, ILocalValue>,
 	): void {
-		const metadata = createClearLocalOpMetadata(op, this.getMapClearMessageId(), previousMap);
-		this.submitMessage(op, metadata);
+		const pendingMessageId = this.getMapClearMessageId();
+		const localMetadata = createClearLocalOpMetadata(op, pendingMessageId, previousMap);
+		this.pendingMapLocalOpMetadata.push(localMetadata);
+		this.submitMessage(op, pendingMessageId);
 	}
 
 	private getMapKeyMessageId(op: IMapKeyOperation): number {
@@ -701,12 +742,10 @@ export class MapKernel {
 	 * @param previousValue - The value of the key before this op
 	 */
 	private submitMapKeyMessage(op: IMapKeyOperation, previousValue?: ILocalValue): void {
-		const localMetadata = createKeyLocalOpMetadata(
-			op,
-			this.getMapKeyMessageId(op),
-			previousValue,
-		);
-		this.submitMessage(op, localMetadata);
+		const pendingMessageId = this.getMapKeyMessageId(op);
+		const localMetadata = createKeyLocalOpMetadata(op, pendingMessageId, previousValue);
+		this.pendingMapLocalOpMetadata.push(localMetadata);
+		this.submitMessage(op, pendingMessageId);
 	}
 
 	/**
@@ -741,10 +780,11 @@ export class MapKernel {
 
 		// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 		const pendingMessageId = this.getMapKeyMessageId(op);
-		const localMetadata =
+		const localMetadata: MapKeyLocalOpMetadata =
 			localOpMetadata.type === "edit"
 				? { type: "edit", pendingMessageId, previousValue: localOpMetadata.previousValue }
 				: { type: "add", pendingMessageId };
-		this.submitMessage(op, localMetadata);
+		this.pendingMapLocalOpMetadata.push(localMetadata);
+		this.submitMessage(op, pendingMessageId);
 	}
 }
