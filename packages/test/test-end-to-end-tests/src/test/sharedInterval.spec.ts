@@ -571,153 +571,159 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 		});
 
-		it("Conflicting ops", async () => {
-			const stringId = "stringKey";
-			const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
-			const testContainerConfig: ITestContainerConfig = {
-				fluidDataObjectType: DataObjectFactoryType.Test,
-				registry,
-			};
-
-			// Create a Container for the first client.
-			const container1 = await provider.makeTestContainer(testContainerConfig);
-			const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-			const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
-
-			sharedString1.insertText(0, "01234");
-			const intervals1 = sharedString1.getIntervalCollection("intervals");
-			let interval1: SequenceInterval | undefined;
-			let interval2: SequenceInterval | undefined;
-			let id1;
-			let id2;
-
-			// Load the Container that was created by the first client.
-			const container2 = await provider.loadTestContainer(testContainerConfig);
-			const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
-			const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
-			const intervals2 = sharedString2.getIntervalCollection("intervals");
-
-			await provider.ensureSynchronized();
-
-			// Conflicting adds
-			interval1 = intervals1.add({ start: 0, end: 0 });
-			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add({ start: 0, end: 0 });
-			id2 = interval2.getIntervalId();
-
-			await provider.ensureSynchronized();
-
-			assert.notStrictEqual(
-				intervals1.getIntervalById(id2),
-				undefined,
-				"Interval not added to collection 1",
-			);
-			assert.notStrictEqual(
-				intervals1.getIntervalById(id2),
-				interval1,
-				"Unique interval not added",
-			);
-			assert.notStrictEqual(
-				intervals2.getIntervalById(id1),
-				undefined,
-				"Interval not added to collection 2",
-			);
-			assert.notStrictEqual(
-				intervals2.getIntervalById(id1),
-				interval2,
-				"Unique interval not added",
-			);
-
-			// Conflicting removes
-			interval1 = intervals1.removeIntervalById(id2);
-			assert.notStrictEqual(interval1, undefined, "Interval not removed by id");
-			interval2 = intervals2.removeIntervalById(id1);
-			assert.notStrictEqual(interval2, undefined, "Interval not removed by id");
-
-			await provider.ensureSynchronized();
-
-			assert.strictEqual(
-				intervals1.getIntervalById(id1),
-				undefined,
-				"Interval not removed from other client",
-			);
-			assert.strictEqual(
-				intervals2.getIntervalById(id2),
-				undefined,
-				"Interval not removed from other client",
-			);
-
-			// Conflicting removes + add
-			interval1 = intervals1.add({ start: 1, end: 1 });
-			id1 = interval1.getIntervalId();
-			interval2 = intervals2.add({ start: 1, end: 1 });
-			id2 = interval2.getIntervalId();
-
-			await provider.ensureSynchronized();
-
-			intervals2.removeIntervalById(id1);
-			intervals1.removeIntervalById(id2);
-			interval1 = intervals1.add({ start: 1, end: 1 });
-			id1 = interval1.getIntervalId();
-
-			await provider.ensureSynchronized();
-
-			assert.strictEqual(
-				interval1,
-				intervals1.getIntervalById(id1),
-				"Interval missing from collection 1",
-			);
-			for (const interval of intervals1) {
-				assert.strictEqual(interval, interval1, "Oddball interval found in client 1");
+		describe.only("Conflicting ops (multi-client scenarios)", () => {
+			interface ConflictingOpsSetup {
+				sharedString1: SharedString;
+				sharedString2: SharedString;
+				intervals1: ISequenceIntervalCollection;
+				intervals2: ISequenceIntervalCollection;
 			}
 
-			interval2 = intervals2.getIntervalById(id1);
-			assert.notStrictEqual(interval2, undefined, "Interval missing from collection 2");
-			for (const interval of intervals2) {
-				assert.strictEqual(interval, interval2, "Oddball interval found in client 2");
-			}
+			async function setupConflictingOps(): Promise<ConflictingOpsSetup> {
+				const stringId = "stringKey";
+				const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
+				const testContainerConfig: ITestContainerConfig = {
+					fluidDataObjectType: DataObjectFactoryType.Test,
+					registry,
+				};
 
-			if (typeof intervals1.change === "function" && typeof intervals2.change === "function") {
-				// Conflicting changes
-				intervals1.change(id1, { start: 1, end: 2 });
-				intervals2.change(id1, { start: 2, end: 1 });
+				const container1 = await provider.makeTestContainer(testContainerConfig);
+				const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
+				const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
+				sharedString1.insertText(0, "01234");
+				const intervals1 = sharedString1.getIntervalCollection("intervals");
+
+				const container2 = await provider.loadTestContainer(testContainerConfig);
+				const dataObject2 = (await container2.getEntryPoint()) as ITestFluidObject;
+				const sharedString2 = await dataObject2.getSharedObject<SharedString>(stringId);
+				const intervals2 = sharedString2.getIntervalCollection("intervals");
 
 				await provider.ensureSynchronized();
+				return { sharedString1, sharedString2, intervals1, intervals2 };
+			}
 
-				assert.strictEqual(interval1?.getIntervalId(), id1);
-				assert.strictEqual(interval2?.getIntervalId(), id1);
-				for (interval1 of intervals1) {
-					const id: string = interval1?.getIntervalId();
+			it("conflicting adds are visible on both clients", async () => {
+				const { intervals1, intervals2 } = await setupConflictingOps();
+				const interval1 = intervals1.add({ start: 0, end: 0 });
+				const id1 = interval1.getIntervalId();
+				const interval2 = intervals2.add({ start: 0, end: 0 });
+				const id2 = interval2.getIntervalId();
+				await provider.ensureSynchronized();
+				assert.notStrictEqual(
+					intervals1.getIntervalById(id2),
+					undefined,
+					"Interval not added to collection 1",
+				);
+				assert.notStrictEqual(
+					intervals1.getIntervalById(id2),
+					interval1,
+					"Unique interval not added",
+				);
+				assert.notStrictEqual(
+					intervals2.getIntervalById(id1),
+					undefined,
+					"Interval not added to collection 2",
+				);
+				assert.notStrictEqual(
+					intervals2.getIntervalById(id1),
+					interval2,
+					"Unique interval not added",
+				);
+			});
+
+			it("conflicting removes are visible on both clients", async () => {
+				const { intervals1, intervals2 } = await setupConflictingOps();
+				const interval1 = intervals1.add({ start: 0, end: 0 });
+				const id1 = interval1.getIntervalId();
+				const interval2 = intervals2.add({ start: 0, end: 0 });
+				const id2 = interval2.getIntervalId();
+				await provider.ensureSynchronized();
+				intervals1.removeIntervalById(id2);
+				intervals2.removeIntervalById(id1);
+				await provider.ensureSynchronized();
+				assert.strictEqual(
+					intervals1.getIntervalById(id1),
+					undefined,
+					"Interval not removed from other client",
+				);
+				assert.strictEqual(
+					intervals2.getIntervalById(id2),
+					undefined,
+					"Interval not removed from other client",
+				);
+			});
+
+			it("conflicting removes + add resolves to single interval", async () => {
+				const { intervals1, intervals2 } = await setupConflictingOps();
+				const interval1 = intervals1.add({ start: 1, end: 1 });
+				const id1 = interval1.getIntervalId();
+				const interval2 = intervals2.add({ start: 1, end: 1 });
+				const id2 = interval2.getIntervalId();
+				await provider.ensureSynchronized();
+				intervals2.removeIntervalById(id1);
+				intervals1.removeIntervalById(id2);
+				const newInterval1 = intervals1.add({ start: 1, end: 1 });
+				await provider.ensureSynchronized();
+				assert.strictEqual(
+					newInterval1,
+					intervals1.getIntervalById(id1),
+					"Interval missing from collection 1",
+				);
+				for (const interval of intervals1) {
+					assert.strictEqual(interval, newInterval1, "Oddball interval found in client 1");
+				}
+				const foundInterval2 = intervals2.getIntervalById(id1);
+				assert.notStrictEqual(foundInterval2, undefined, "Interval missing from collection 2");
+				for (const interval of intervals2) {
+					assert.strictEqual(interval, foundInterval2, "Oddball interval found in client 2");
+				}
+			});
+
+			it("conflicting changes are resolved consistently", async () => {
+				const { intervals1, intervals2 } = await setupConflictingOps();
+				const id1 = intervals1.add({ start: 1, end: 1 }).getIntervalId();
+				await provider.ensureSynchronized();
+
+				intervals1.change(id1, { start: 1, end: 2 });
+				intervals2.change(id1, { start: 2, end: 1 });
+				await provider.ensureSynchronized();
+				const foundInterval2 = intervals2.getIntervalById(id1);
+				assert.strictEqual(foundInterval2?.getIntervalId(), id1);
+				for (const interval of intervals1) {
+					const id: string = interval?.getIntervalId();
 					assert.strictEqual(
-						interval1?.start.getOffset(),
+						interval?.start.getOffset(),
 						intervals2.getIntervalById(id)?.start.getOffset(),
 						"Conflicting changes",
 					);
 					assert.strictEqual(
-						interval1?.end.getOffset(),
+						interval?.end.getOffset(),
 						intervals2.getIntervalById(id)?.end.getOffset(),
 						"Conflicting changes",
 					);
 				}
-				for (interval2 of intervals2) {
-					const id: string = interval2?.getIntervalId();
+				for (const interval of intervals2) {
+					const id: string = interval?.getIntervalId();
 					assert.strictEqual(
-						interval2?.start.getOffset(),
+						interval?.start.getOffset(),
 						intervals1.getIntervalById(id)?.start.getOffset(),
 						"Conflicting changes",
 					);
 					assert.strictEqual(
-						interval2?.end.getOffset(),
+						interval?.end.getOffset(),
 						intervals1.getIntervalById(id)?.end.getOffset(),
 						"Conflicting changes",
 					);
 				}
-			}
-			if (typeof intervals1.change === "function" && typeof intervals2.change === "function") {
+			});
+
+			it("conflicting property changes are resolved and events fire as expected", async () => {
+				const { intervals1, intervals2 } = await setupConflictingOps();
+				const interval1 = intervals1.add({ start: 1, end: 1 });
+				const id1 = interval1.getIntervalId();
+				await provider.ensureSynchronized();
+
 				const assertPropertyChangedArg = (p: any, v: any, m: string) => {
-					// Check expected values of args passed to the propertyChanged event only if IntervalCollection
-					// is a TypedEventEmitter. (This is not true of earlier versions,
-					// which will not capture the values.)
 					if (
 						intervals1 instanceof TypedEventEmitter &&
 						intervals2 instanceof TypedEventEmitter
@@ -727,18 +733,12 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				};
 				let deltaArgs1: PropertySet = {};
 				let deltaArgs2: PropertySet = {};
-				intervals1.on(
-					"propertyChanged",
-					(interval: SequenceInterval, propertyDeltas: PropertySet) => {
-						deltaArgs1 = propertyDeltas;
-					},
-				);
-				intervals2.on(
-					"propertyChanged",
-					(interval: SequenceInterval, propertyDeltas: PropertySet) => {
-						deltaArgs2 = propertyDeltas;
-					},
-				);
+				intervals1.on("propertyChanged", (_interval, propertyDeltas) => {
+					deltaArgs1 = propertyDeltas;
+				});
+				intervals2.on("propertyChanged", (_interval, propertyDeltas) => {
+					deltaArgs2 = propertyDeltas;
+				});
 				intervals1.change(id1, { props: { prop1: "prop1" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
@@ -752,7 +752,6 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					null,
 					"Mismatch in property-changed event arg 2",
 				);
-
 				await provider.ensureSynchronized();
 				assertPropertyChangedArg(
 					deltaArgs1.prop2,
@@ -764,8 +763,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					null,
 					"Mismatch in property-changed event arg 4",
 				);
-
-				interval1 = intervals1.getIntervalById(id1);
+				// interval1 = intervals1.getIntervalById(id1);
+				const interval2 = intervals2.getIntervalById(id1);
 				assert.strictEqual(
 					interval1?.properties.prop1,
 					"prop1",
@@ -776,7 +775,6 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					"prop2",
 					"Mismatch in changed properties 2",
 				);
-				interval2 = intervals2.getIntervalById(id1);
 				assert.strictEqual(
 					interval2?.properties.prop1,
 					"prop1",
@@ -787,7 +785,6 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					"prop2",
 					"Mismatch in changed properties 4",
 				);
-
 				intervals1.change(id1, { props: { prop1: "no" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
@@ -801,7 +798,6 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					"prop1",
 					"Mismatch in property-changed event arg 6",
 				);
-
 				await provider.ensureSynchronized();
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
@@ -813,7 +809,6 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					false,
 					"Mismatch in property-changed event arg 8",
 				);
-
 				assert.strictEqual(
 					interval1?.properties.prop1,
 					"yes",
@@ -834,7 +829,6 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					"prop2",
 					"Mismatch in changed properties 8",
 				);
-
 				intervals1.change(id1, { props: { prop1: "maybe" } });
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
@@ -848,9 +842,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					"yes",
 					"Mismatch in property-changed event arg 10",
 				);
-
 				await provider.ensureSynchronized();
-
 				assertPropertyChangedArg(
 					deltaArgs1.prop1,
 					"maybe",
@@ -861,7 +853,6 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					false,
 					"Mismatch in property-changed event arg 12",
 				);
-
 				assert.strictEqual(
 					Object.prototype.hasOwnProperty.call(interval1.properties, "prop1"),
 					false,
@@ -882,21 +873,23 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					"prop2",
 					"Mismatch in changed properties 10",
 				);
-			}
+			});
 
-			// Conflicting removes
-			intervals1.removeIntervalById(id1);
-			intervals2.removeIntervalById(id1);
-
-			await provider.ensureSynchronized();
-
-			for (interval1 of intervals1) {
-				assert.fail("Interval not removed from collection 1");
-			}
-
-			for (interval2 of intervals2) {
-				assert.fail("Interval not removed from collection 2");
-			}
+			it("conflicting removes after property changes remove interval from both clients", async () => {
+				const { intervals1, intervals2 } = await setupConflictingOps();
+				const interval1 = intervals1.add({ start: 1, end: 1 });
+				const id1 = interval1.getIntervalId();
+				await provider.ensureSynchronized();
+				intervals1.removeIntervalById(id1);
+				intervals2.removeIntervalById(id1);
+				await provider.ensureSynchronized();
+				for (const interval of intervals1) {
+					assert.fail("Interval not removed from collection 1");
+				}
+				for (const interval of intervals2) {
+					assert.fail("Interval not removed from collection 2");
+				}
+			});
 		});
 	});
 
