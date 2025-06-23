@@ -721,9 +721,11 @@ export class MongoDbFactory implements core.IDbFactory {
 		}
 		assert(
 			mongoAmiEnabled ? !!operationsDbEndpointAmi : !!operationsDbEndpoint,
-			`No endpoint provided`
+			`No endpoint provided`,
 		);
-		this.operationsDbEndpoint = mongoAmiEnabled ? operationsDbEndpointAmi : operationsDbEndpoint;
+		this.operationsDbEndpoint = mongoAmiEnabled
+			? operationsDbEndpointAmi
+			: operationsDbEndpoint;
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
