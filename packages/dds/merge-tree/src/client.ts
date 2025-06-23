@@ -51,6 +51,7 @@ import {
 	SegmentGroup,
 	compareStrings,
 	isSegmentLeaf,
+	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ObliterateInfo,
 } from "./mergeTreeNodes.js";
@@ -210,6 +211,13 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 			policy.attach(this);
 		}
+	}
+
+	public get endOfTree(): ISegmentInternal {
+		return this._mergeTree.endOfTree;
+	}
+	public get startOfTree(): ISegmentInternal {
+		return this._mergeTree.startOfTree;
 	}
 
 	/**
@@ -878,14 +886,14 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			oldSegment !== undefined && oldOffset !== undefined,
 			0xb61 /* Invalid old reference */,
 		);
-		const useNewSlidingBehavior = true;
+		const canSlideToEndpoint = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
 		// eslint-disable-next-line prefer-const
 		const segOff = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,
 			reconnectingPerspective,
-			useNewSlidingBehavior,
+			canSlideToEndpoint,
 		);
 
 		const { segment: newSegment, offset: newOffset } = segOff ?? {

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "@fluidframework/core-utils/internal";
 import type { AllowedTypeMetadata } from "../schemaTypes.js";
 import {
 	asTreeNodeSchemaCorePrivate,
@@ -26,9 +25,7 @@ export function walkNodeSchema(
 
 	visitedSet.add(schema);
 
-	const annotatedAllowedTypes =
-		asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes ??
-		fail("TreeNodeSchemas must implement TreeNodeSchemaCorePrivate");
+	const annotatedAllowedTypes = asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
 		walkAllowedTypes(fieldAllowedTypes, visitor, visitedSet);
@@ -49,9 +46,8 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const annotatedAllowedType of annotatedAllowedTypes.types) {
-		const { type, metadata } = annotatedAllowedType;
-		walkNodeSchema(type, metadata, visitor, visitedSet);
+	for (const { type } of annotatedAllowedTypes.types) {
+		walkNodeSchema(type, visitor, visitedSet);
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
 }

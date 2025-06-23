@@ -34,7 +34,6 @@ export {
 	type AnnotatedAllowedType,
 	type NormalizedAnnotatedAllowedTypes,
 	isAnnotatedAllowedTypes,
-	asTreeNodeSchemaCorePrivate,
 } from "./treeNodeSchema.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";

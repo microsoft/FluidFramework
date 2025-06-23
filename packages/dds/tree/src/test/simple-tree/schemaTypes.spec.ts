@@ -977,31 +977,45 @@ describe("schemaTypes", () => {
 
 		it("adds metadata when it doesn't already exist", () => {
 			const result = normalizeAnnotatedAllowedTypes(stringSchema);
-			assert.deepStrictEqual(result, [{ metadata: {}, type: stringSchema }]);
+			assert.deepStrictEqual(result, {
+				metadata: {},
+				types: [{ metadata: {}, type: stringSchema }],
+			});
 		});
 
 		it("evaluates any lazy allowed types", () => {
 			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, [
-				{ metadata: {}, type: stringSchema },
-				{ metadata: { custom: true }, type: numberSchema },
-			]);
+			assert.deepStrictEqual(result, {
+				metadata: {},
+				types: [
+					{ metadata: {}, type: stringSchema },
+					{ metadata: { custom: true }, type: numberSchema },
+				],
+			});
 		});
 
 		it("handles single AnnotatedAllowedType", () => {
 			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, [{ metadata: { custom: 1 }, type: stringSchema }]);
+			assert.deepStrictEqual(result, {
+				metadata: {},
+				types: [{ metadata: { custom: 1 }, type: stringSchema }],
+			});
 		});
 
-		it("removes top level metadata from AnnotatedAllowedTypes object", () => {
+		it("retains top level metadata from AnnotatedAllowedTypes object", () => {
 			const input: AnnotatedAllowedTypes = {
-				metadata: {},
+				metadata: {
+					custom: "test",
+				},
 				types: [{ metadata: { custom: 1 }, type: lazyString }],
 			};
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, [{ metadata: { custom: 1 }, type: stringSchema }]);
+			assert.deepStrictEqual(result, {
+				metadata: { custom: "test" },
+				types: [{ metadata: { custom: 1 }, type: stringSchema }],
+			});
 		});
 	});
 });
