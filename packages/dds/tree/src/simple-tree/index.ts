@@ -66,6 +66,8 @@ export {
 	type JsonTreeSchema,
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 	type TreeSchemaEncodingOptions,
 	getJsonSchema,
 	getSimpleSchema,

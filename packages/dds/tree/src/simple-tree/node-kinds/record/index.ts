@@ -9,6 +9,6 @@ export {
 	type RecordNodeCustomizableSchema,
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
-	type RecordNodeSchema,
+	RecordNodeSchema,
 	type TreeRecordNode,
 } from "./recordNodeTypes.js";

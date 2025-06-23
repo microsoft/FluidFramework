@@ -8,6 +8,7 @@ import {
 	FieldKind,
 	NodeKind,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
@@ -159,6 +160,34 @@ describe("getSimpleSchema", () => {
 					"test.map",
 					{
 						kind: NodeKind.Map,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					},
+				],
+				["com.fluidframework.leaf.string", simpleString],
+			]),
+		};
+		assert.deepEqual(actual, expected);
+	});
+
+	it("Record schema", () => {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		class Schema extends schemaFactory.record("record", schemaFactory.string) {}
+
+		const actual = toSimpleTreeSchema(Schema, true);
+		const expected: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.record"]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
 						metadata: {},
 						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),

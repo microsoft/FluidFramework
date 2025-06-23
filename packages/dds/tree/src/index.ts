@@ -195,6 +195,8 @@ export {
 	type JsonRefPath,
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,

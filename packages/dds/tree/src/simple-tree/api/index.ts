@@ -67,6 +67,8 @@ export {
 	type JsonTreeSchema,
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 } from "./jsonSchema.js";
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";

@@ -17,7 +17,12 @@ import type {
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
 import { NodeKind } from "../core/index.js";
-import { ArrayNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../node-kinds/index.js";
+import {
+	ArrayNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
+	RecordNodeSchema,
+} from "../node-kinds/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 
@@ -50,7 +55,8 @@ export function toSimpleTreeSchema(
 				nodeSchema instanceof ArrayNodeSchema ||
 					nodeSchema instanceof MapNodeSchema ||
 					nodeSchema instanceof LeafNodeSchema ||
-					nodeSchema instanceof ObjectNodeSchema,
+					nodeSchema instanceof ObjectNodeSchema ||
+					nodeSchema instanceof RecordNodeSchema,
 				0xb60 /* Invalid schema */,
 			);
 			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
