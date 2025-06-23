@@ -230,7 +230,7 @@ export function recordSchema<
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
-	let customizable: boolean; // TODO: is this needed?
+	// let customizable: boolean; // TODO: is this needed?
 	let unhydratedContext: Context; // TODO: can this be inlined?
 
 	class Schema
@@ -247,7 +247,7 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
-			const proxyTarget = customizable ? instance : {};
+			const proxyTarget = {}; // customizable ? instance : {};
 			return createRecordNodeProxy(
 				proxyTarget,
 				this as unknown as RecordNodeSchema,
@@ -259,14 +259,11 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			input: T2,
 		): UnhydratedFlexTreeNode {
-			return unhydratedFlexTreeFromInsertable(
-				input as object,
-				this as typeof Schema,
-			);
+			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
 		}
 
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			customizable = (this as unknown) !== Schema;
+			// customizable = (this as unknown) !== Schema;
 			const schema = this as unknown as RecordNodeSchema;
 			unhydratedContext = getUnhydratedContext(schema);
 
