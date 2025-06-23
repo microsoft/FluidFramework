@@ -22,7 +22,7 @@ export async function updateChangelogs(
 	bumpType: VersionBumpType,
 	version?: string,
 ): Promise<void> {
-	if (pkg.isReleaseGroupRoot) {
+	if (pkg.isReleaseGroupRoot || pkg.isWorkspaceRoot) {
 		// No changelog for root packages.
 		return;
 	}

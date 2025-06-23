@@ -55,7 +55,7 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 
 		// Strips additional custom metadata from the source files before we call `changeset version`,
 		// because the changeset tools - like @changesets/cli - only work on canonical changesets.
-		const bumpType = await canonicalizeChangesets(releaseGroupRoot);
+		const bumpType = await canonicalizeChangesets(releaseGroupRoot, this.logger);
 
 		// The `changeset version` command applies the changesets to the changelogs
 		ux.action.start("Running `changeset version`");
