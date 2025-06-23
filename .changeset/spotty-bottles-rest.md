@@ -47,7 +47,7 @@ export const MyContainerSchema = {
 const schemaFactory = new SchemaFactoryAlpha("com.example");
 
 // Define metadata. This can take the shape of any JSON-serializable object.
-const persistedMetadata = { "a": 2 };
+const persistedMetadata = { a: 2 };
 
 // Foo is an object type with metadata
 class Foo extends schemaFactory.objectAlpha("Foo", {
@@ -67,7 +67,7 @@ class Foo extends schemaFactory.objectAlpha("Foo", {
 const schemaFactory = new SchemaFactoryAlpha("com.example");
 
 // Define metadata. This can take the shape of any JSON-serializable object.
-const persistedMetadata = { "a": 2 };
+const persistedMetadata = { a: 2 };
 
 // Recursive object schema with persisted metadata
 class RecursiveObject extends schemaFactory.objectRecursive("RecursiveObject", {
@@ -87,7 +87,7 @@ const recursiveField = schemaFactory.optionalRecursive(
 const schemaFactory = new SchemaFactoryAlpha("com.example");
 
 // Define metadata. This can take the shape of any JSON-serializable object.
-const persistedMetadata = { "a": 2 };
+const persistedMetadata = { a: 2 };
 
 // Recursive array schema
 class Foos extends schemaFactory.arrayRecursive(
