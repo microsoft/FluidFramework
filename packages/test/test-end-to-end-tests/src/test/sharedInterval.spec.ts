@@ -710,13 +710,29 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 				}
 			});
 
-			describe.only("conflicting property changes", () => {
+			describe("conflicting property changes", () => {
 				function verifyAndClearDeltas(
 					actual: PropertySet[],
 					expected: PropertySet[],
 					message?: string,
 				) {
 					assert.deepEqual(actual.splice(0), expected, message);
+				}
+				function verifyIntervalProperties(
+					properties1: PropertySet | undefined,
+					properties2: PropertySet | undefined,
+					expected: PropertySet,
+				) {
+					assert.deepStrictEqual(
+						{ ...properties1 },
+						{ ...expected },
+						"properties1 does not match",
+					);
+					assert.deepStrictEqual(
+						{ ...properties2 },
+						{ ...expected },
+						"properties2 does not match",
+					);
 				}
 
 				it("change different properties", async () => {
@@ -739,9 +755,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					await provider.ensureSynchronized();
 					verifyAndClearDeltas(deltaEvents1, [{ prop2: null }]);
 					verifyAndClearDeltas(deltaEvents2, [{ prop1: null }]);
-					assert.deepEqual(
+					verifyIntervalProperties(
 						intervals1.getIntervalById(id)?.properties,
 						intervals2.getIntervalById(id)?.properties,
+						{ prop1: "prop1", prop2: "prop2" },
 					);
 				});
 				it("change the same property", async () => {
@@ -779,9 +796,10 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 					await provider.ensureSynchronized();
 					verifyAndClearDeltas(deltaEvents1, [{ prop1: "1again" }]);
 					verifyAndClearDeltas(deltaEvents2, []);
-					assert.deepEqual(
+					verifyIntervalProperties(
 						intervals1.getIntervalById(id)?.properties,
 						intervals2.getIntervalById(id)?.properties,
+						{},
 					);
 				});
 			});
