@@ -209,7 +209,7 @@ function getLayerTestParams(
 	}
 }
 
-describeCompat.only("Layer compatibility validation", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Layer compatibility validation", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", function () {
 		provider = getTestObjectProvider();
