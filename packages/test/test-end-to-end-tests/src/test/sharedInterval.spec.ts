@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/driver-definitions";
@@ -571,15 +570,8 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			}
 		});
 
-		describe.only("Conflicting ops (multi-client scenarios)", () => {
-			interface ConflictingOpsSetup {
-				sharedString1: SharedString;
-				sharedString2: SharedString;
-				intervals1: ISequenceIntervalCollection;
-				intervals2: ISequenceIntervalCollection;
-			}
-
-			async function setupConflictingOps(): Promise<ConflictingOpsSetup> {
+		describe("Conflicting ops", () => {
+			async function setupConflictingOps() {
 				const stringId = "stringKey";
 				const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 				const testContainerConfig: ITestContainerConfig = {
@@ -656,13 +648,14 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 			it("conflicting removes + add resolves to single interval", async () => {
 				const { intervals1, intervals2 } = await setupConflictingOps();
 				const interval1 = intervals1.add({ start: 1, end: 1 });
-				const id1 = interval1.getIntervalId();
+				let id1 = interval1.getIntervalId();
 				const interval2 = intervals2.add({ start: 1, end: 1 });
 				const id2 = interval2.getIntervalId();
 				await provider.ensureSynchronized();
 				intervals2.removeIntervalById(id1);
 				intervals1.removeIntervalById(id2);
 				const newInterval1 = intervals1.add({ start: 1, end: 1 });
+				id1 = newInterval1.getIntervalId();
 				await provider.ensureSynchronized();
 				assert.strictEqual(
 					newInterval1,
