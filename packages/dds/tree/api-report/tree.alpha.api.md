@@ -479,13 +479,11 @@ export type JsonLeafSchemaType = "string" | "number" | "boolean" | "null";
 
 // @alpha @sealed
 export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "object"> {
-    readonly patternProperties: {
-        "^.*$": JsonFieldSchema;
-    };
+    readonly patternProperties: JsonStringKeyPatternProperties;
 }
 
 // @alpha
-export type JsonNodeSchema = JsonLeafNodeSchema | JsonMapNodeSchema | JsonArrayNodeSchema | JsonObjectNodeSchema;
+export type JsonNodeSchema = JsonLeafNodeSchema | JsonMapNodeSchema | JsonArrayNodeSchema | JsonObjectNodeSchema | JsonRecordNodeSchema;
 
 // @alpha @sealed
 export interface JsonNodeSchemaBase<TNodeKind extends NodeKind, TJsonSchemaType extends JsonSchemaType> {
@@ -501,6 +499,11 @@ export interface JsonObjectNodeSchema extends JsonNodeSchemaBase<NodeKind.Object
     readonly required?: string[];
 }
 
+// @alpha @sealed
+export interface JsonRecordNodeSchema extends JsonNodeSchemaBase<NodeKind.Record, "object"> {
+    readonly patternProperties: JsonStringKeyPatternProperties;
+}
+
 // @alpha
 export type JsonRefPath = `#/$defs/${JsonSchemaId}`;
 
@@ -514,6 +517,11 @@ export interface JsonSchemaRef {
 
 // @alpha
 export type JsonSchemaType = "object" | "array" | JsonLeafSchemaType;
+
+// @alpha @sealed
+export interface JsonStringKeyPatternProperties {
+    "^.*$": JsonFieldSchema;
+}
 
 // @alpha @sealed
 export type JsonTreeSchema = JsonFieldSchema & {
@@ -656,14 +664,14 @@ TSchema
 ] extends [ImplicitFieldSchema] ? TSchema : ImplicitFieldSchema;
 
 // @alpha @sealed @system
-export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<TCustomMetadata> {
+export interface RecordNodeCustomizableSchema<out TName extends string = string, in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaClass<TName, NodeKind.Record, TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, never, TCustomMetadata>, SimpleRecordNodeSchema<TCustomMetadata> {
 }
 
 // @public @system
 export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
 
 // @alpha @sealed @system
-export interface RecordNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Record, TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, undefined, TCustomMetadata>, SimpleRecordNodeSchema<TCustomMetadata> {
+export interface RecordNodePojoEmulationSchema<out TName extends string = string, in out T extends ImplicitAnnotatedAllowedTypes = ImplicitAnnotatedAllowedTypes, out ImplicitlyConstructable extends boolean = true, out TCustomMetadata = unknown> extends TreeNodeSchemaNonClass<TName, NodeKind.Record, TreeRecordNode<UnannotateImplicitAllowedTypes<T>> & WithType<TName, NodeKind.Record, T>, RecordNodeInsertableData<UnannotateImplicitAllowedTypes<T>>, ImplicitlyConstructable, T, never, TCustomMetadata>, SimpleRecordNodeSchema<TCustomMetadata> {
 }
 
 // @alpha
@@ -1329,7 +1337,7 @@ export interface TreeChangeEvents {
 
 // @beta @sealed
 export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode> extends TreeChangeEvents {
-    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
+    nodeChanged: (data: NodeChangedData<TNode> & (TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record> ? Required<Pick<NodeChangedData<TNode>, "changedProperties">> : unknown)) => void;
 }
 
 // @alpha
@@ -1435,7 +1443,8 @@ export type TreeNodeSchemaNonClass<Name extends string = string, Kind extends No
 export type TreeObjectNode<T extends RestrictiveStringRecord<ImplicitFieldSchema>, TypeName extends string = string> = TreeNode & ObjectFromSchemaRecord<T> & WithType<TypeName, NodeKind.Object, T>;
 
 // @alpha
-export type TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> = TreeNode & Record<string, TreeNodeFromImplicitAllowedTypes<T>>;
+export interface TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends TreeNode, Record<string, TreeNodeFromImplicitAllowedTypes<T>> {
+}
 
 // @alpha @sealed (undocumented)
 export interface TreeSchema extends SimpleTreeSchema {
