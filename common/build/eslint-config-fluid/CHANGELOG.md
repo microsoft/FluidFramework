@@ -1,5 +1,54 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [6.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v6.0.0)
+
+### ESLint v9 support
+
+Added support for ESLint v9 through dedicated v9-compatible configurations in flat config format. ESLint v8 configurations remain available with their current paths.
+
+Access the v9-compatible configurations with the `/v9` path segment:
+
+#### For ESLint v8-style Configuration
+
+```js
+// .eslintrc.js or .eslintrc.cjs (ESLint v8-style configuration)
+module.exports = {
+  extends: [
+    require.resolve("@fluidframework/eslint-config-fluid/v9"),
+    "prettier"
+  ],
+  // ...
+};
+```
+
+#### For ESLint v9 Flat Configuration
+
+```js
+// eslint.config.js (ESLint v9-style configuration)
+import fluidConfig from "@fluidframework/eslint-config-fluid/v9";
+import prettierConfig from "eslint-config-prettier";
+
+export default [
+  ...fluidConfig,
+  ...prettierConfig,
+  // ...your other configuration
+];
+```
+
+For strict configuration:
+
+```js
+// eslint.config.js (ESLint v9-style configuration)
+import fluidStrictConfig from "@fluidframework/eslint-config-fluid/v9/strict";
+import prettierConfig from "eslint-config-prettier";
+
+export default [
+  ...fluidStrictConfig,
+  ...prettierConfig,
+  // ...your other configuration
+];
+```
+
 ## [5.7.4](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.4)
 
 Updates the contexts in which `jsdoc/require-jsdoc` is applied to make it less overzealous.
