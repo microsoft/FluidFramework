@@ -646,7 +646,7 @@ interface IMongoDBConfig {
 	globalDbEndpoint?: string;
 	globalDbEnabled?: boolean;
 	globalDbEndpointAmi?: string;
-	cosmosAmiEnabled?: boolean;
+	mongoAmiEnabled?: boolean;
 	connectionPoolMinSize?: number;
 	connectionPoolMaxSize?: number;
 	directConnection?: boolean;
@@ -699,7 +699,7 @@ export class MongoDbFactory implements core.IDbFactory {
 			globalDbEnabled,
 			globalDbEndpoint,
 			globalDbEndpointAmi,
-			cosmosAmiEnabled,
+			mongoAmiEnabled,
 			connectionPoolMinSize,
 			connectionPoolMaxSize,
 			directConnection,
@@ -717,13 +717,13 @@ export class MongoDbFactory implements core.IDbFactory {
 			consecutiveFailedThresholdForLowerTotalRequests,
 		} = config;
 		if (globalDbEnabled) {
-			this.globalDbEndpoint = cosmosAmiEnabled ? globalDbEndpointAmi : globalDbEndpoint;
+			this.globalDbEndpoint = mongoAmiEnabled ? globalDbEndpointAmi : globalDbEndpoint;
 		}
 		assert(
-			cosmosAmiEnabled ? !!operationsDbEndpointAmi : !!operationsDbEndpoint,
+			mongoAmiEnabled ? !!operationsDbEndpointAmi : !!operationsDbEndpoint,
 			`No endpoint provided`
 		);
-		this.operationsDbEndpoint = cosmosAmiEnabled ? operationsDbEndpointAmi : operationsDbEndpoint;
+		this.operationsDbEndpoint = mongoAmiEnabled ? operationsDbEndpointAmi : operationsDbEndpoint;
 		this.connectionPoolMinSize = connectionPoolMinSize;
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
