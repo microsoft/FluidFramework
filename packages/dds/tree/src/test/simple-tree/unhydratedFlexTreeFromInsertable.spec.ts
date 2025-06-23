@@ -606,7 +606,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Simple map", () => {
+		it("Simple record", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
 			const schema = schemaFactory.record("record", [
 				schemaFactory.number,
@@ -649,7 +649,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Complex Map", () => {
+		it("Complex record", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
 			const childObjectSchema = schemaFactory.object("child-object", {
 				name: schemaFactory.string,
@@ -729,7 +729,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 			assert.deepEqual(actual, expected);
 		});
 
-		it("Undefined map entries are omitted", () => {
+		it("Undefined record entries are omitted", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");
 			const schema = schemaFactory.record("record", [schemaFactory.number]);
 
