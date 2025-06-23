@@ -2482,6 +2482,10 @@ export class Container
 				async () => runtimeFactory.instantiateRuntime(context, existing),
 			);
 
+			// Validate that the Runtime is compatible with this Loader.
+			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
+			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails);
+
 			this._runtime = runtime;
 			this._lifecycleEvents.emit("runtimeInstantiated");
 			this._loadedCodeDetails = codeDetails;
@@ -2489,12 +2493,6 @@ export class Container
 			this.dispose(normalizeError(error));
 			throw error;
 		}
-
-		// Validate that the Runtime is compatible with this Loader.
-		const maybeRuntimeCompatDetails = this._runtime as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
-			this.dispose(error),
-		);
 	}
 
 	private readonly updateDirtyContainerState = (dirty: boolean): void => {

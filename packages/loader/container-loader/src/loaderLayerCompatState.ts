@@ -78,7 +78,6 @@ export const driverSupportRequirementsForLoader: ILayerCompatSupportRequirements
  */
 export function validateRuntimeCompatibility(
 	maybeRuntimeCompatDetails: ILayerCompatDetails | undefined,
-	disposeFn: (error?: ICriticalContainerError) => void,
 ): void {
 	const layerCheckResult = checkLayerCompatibility(
 		runtimeSupportRequirementsForLoader,
@@ -96,7 +95,6 @@ export function validateRuntimeCompatibility(
 				unsupportedFeatures: layerCheckResult.unsupportedFeatures,
 			}),
 		});
-		disposeFn(error);
 		throw error;
 	}
 }

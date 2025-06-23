@@ -209,11 +209,6 @@ function getLayerTestParams(
 	}
 }
 
-async function createAndLoadContainers(provider: ITestObjectProvider) {
-	await provider.makeTestContainer();
-	await provider.loadTestContainer();
-}
-
 describeCompat.only("Layer compatibility validation", "NoCompat", (getTestObjectProvider) => {
 	let provider: ITestObjectProvider;
 	beforeEach("getTestObjectProvider", function () {
@@ -252,21 +247,6 @@ describeCompat.only("Layer compatibility validation", "NoCompat", (getTestObject
 
 	for (const { layer1, layer2 } of layerCombinations) {
 		describe(`${layer1} / ${layer2} compatibility`, () => {
-			// The container disposes with a usage error event if the compatibility check fails.
-			const expectedErrorEvents: ExpectedEvents = [
-				{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" },
-			];
-
-			// In case of validating compatibility of DataStore with Runtime, we expect an additional error event
-			// when the data store context tries to attach the data store runtime. This is logged before the
-			// container dispose event.
-			if (layer2 === "DataStore") {
-				expectedErrorEvents.unshift({
-					eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError",
-					errorType: "usageError",
-				});
-			}
-
 			let originalRequiredFeatures: readonly string[];
 			let originalMinSupportedGeneration: number;
 			let layer1SupportRequirements: ILayerCompatSupportRequirementsOverride;
@@ -274,7 +254,7 @@ describeCompat.only("Layer compatibility validation", "NoCompat", (getTestObject
 			let layer1Generation: number;
 			let layer2CompatDetails: ILayerCompatDetails;
 
-			beforeEach(function () {
+			beforeEach(async function () {
 				if (layer1 !== "Driver" && layer2 !== "Driver" && provider.driver.type !== "local") {
 					// These tests need to run for every driver only if one of the layers is a driver.
 					// Otherwise, they are driver agnostic, so skip them for non-local drivers.
@@ -300,76 +280,133 @@ describeCompat.only("Layer compatibility validation", "NoCompat", (getTestObject
 				layer1SupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
 			});
 
-			it(`${layer2} is compatible with ${layer1}`, async () => {
-				layer1SupportRequirements.requiredFeatures = [
-					...layer2CompatDetails.supportedFeatures,
+			// The tests validate both the container creation and load flows since the validation happens
+			// during different phases of the container lifecycle in these flows.
+			type CreateOrLoad = "create" | "load";
+
+			// In the validation step, we create or load a container based on the flow type.
+			async function validationStep(flow: CreateOrLoad) {
+				return flow === "create" ? provider.makeTestContainer() : provider.loadTestContainer();
+			}
+
+			const createOrLoadFlows: CreateOrLoad[] = ["create", "load"];
+
+			for (const flow of createOrLoadFlows) {
+				// The container disposes with a usage error event if the compatibility check fails.
+				const expectedErrorEvents: ExpectedEvents = [
+					{ eventName: "fluid:telemetry:Container:ContainerDispose", errorType: "usageError" },
 				];
-				layer1SupportRequirements.minSupportedGeneration = layer2CompatDetails.generation;
 
-				await assert.doesNotReject(
-					createAndLoadContainers(provider),
-					`${layer2} should be compatible with ${layer1}`,
-				);
-			});
+				// In case of validating Runtime and DataStore, we expect one of the following addition error events
+				// to be logged before the container dispose event:
+				if ((layer1 === "DataStore" || layer2 === "DataStore") && flow === "load") {
+					// In load flows, the layer compat validation in the Runtime and the DataStore layers both happen
+					// during data store realization, so we expect this error event to be logged.
+					expectedErrorEvents.unshift({
+						eventName: "fluid:telemetry:FluidDataStoreContext:RealizeError",
+						errorType: "usageError",
+					});
+				} else if (layer2 === "DataStore" && flow === "create") {
+					// In create flows, the layer compat validation in the Runtime layer happens during data store runtime
+					// attach, so we expect this error event to be logged.
+					// However, the validation in the DataStore layer happens during its creation which is outside of the
+					// data store runtime attach flow, so we do not expect this error event to be logged.
+					expectedErrorEvents.unshift({
+						eventName: "fluid:telemetry:FluidDataStoreContext:AttachRuntimeError",
+						errorType: "usageError",
+					});
+				}
 
-			itExpects(
-				`${layer2} generation is not compatible with ${layer1}`,
-				expectedErrorEvents,
-				async () => {
-					layer1SupportRequirements.requiredFeatures = [
-						...layer2CompatDetails.supportedFeatures,
-					];
-					layer1SupportRequirements.minSupportedGeneration =
-						layer2CompatDetails.generation + 1;
-					await assert.rejects(
-						createAndLoadContainers(provider),
-						(e: Error) =>
-							validateFailureProperties(
-								e,
-								false /* isGenerationCompatible */,
-								layer1SupportRequirements.minSupportedGeneration,
-								[
-									{ type: layer1, pkgVersion: layer1Version, generation: layer1Generation },
-									{
-										type: layer2,
-										pkgVersion: layer2CompatDetails.pkgVersion,
-										generation: layer2CompatDetails.generation,
-									},
-								],
-							),
-						`${layer2}'s generation should not be compatible with ${layer1}`,
+				describe(`${flow} flow`, () => {
+					beforeEach(async function () {
+						// During load flow, container creation happens during setup and the validation happens
+						// during container load.
+						if (flow === "load") {
+							await provider.makeTestContainer();
+						}
+					});
+
+					it(`${layer2} is compatible with ${layer1} - ${flow} flow`, async () => {
+						layer1SupportRequirements.requiredFeatures = [
+							...layer2CompatDetails.supportedFeatures,
+						];
+						layer1SupportRequirements.minSupportedGeneration = layer2CompatDetails.generation;
+
+						await assert.doesNotReject(
+							validationStep(flow),
+							`${layer2} should be compatible with ${layer1}`,
+						);
+					});
+
+					itExpects(
+						`${layer2} generation is not compatible with ${layer1} - ${flow} flow`,
+						expectedErrorEvents,
+						async () => {
+							layer1SupportRequirements.requiredFeatures = [
+								...layer2CompatDetails.supportedFeatures,
+							];
+							layer1SupportRequirements.minSupportedGeneration =
+								layer2CompatDetails.generation + 1;
+							await assert.rejects(
+								validationStep(flow),
+								(e: Error) =>
+									validateFailureProperties(
+										e,
+										false /* isGenerationCompatible */,
+										layer1SupportRequirements.minSupportedGeneration,
+										[
+											{
+												type: layer1,
+												pkgVersion: layer1Version,
+												generation: layer1Generation,
+											},
+											{
+												type: layer2,
+												pkgVersion: layer2CompatDetails.pkgVersion,
+												generation: layer2CompatDetails.generation,
+											},
+										],
+									),
+								`${layer2}'s generation should not be compatible with ${layer1}`,
+							);
+						},
 					);
-				},
-			);
 
-			itExpects(
-				`${layer2} supported features are not compatible with ${layer1}`,
-				expectedErrorEvents,
-				async () => {
-					const requiredFeatures = ["feature2", "feature3"];
-					layer1SupportRequirements.requiredFeatures = requiredFeatures;
-					layer1SupportRequirements.minSupportedGeneration = layer2CompatDetails.generation;
-					await assert.rejects(
-						createAndLoadContainers(provider),
-						(e: Error) =>
-							validateFailureProperties(
-								e,
-								true /* isGenerationCompatible */,
-								layer1SupportRequirements.minSupportedGeneration,
-								[
-									{ type: layer1, pkgVersion: layer1Version, generation: layer1Generation },
-									{
-										type: layer2,
-										pkgVersion: layer2CompatDetails.pkgVersion,
-										generation: layer2CompatDetails.generation,
-									},
-								],
-								requiredFeatures,
-							),
-						`${layer2}'s supported features should not be compatible with ${layer1}`,
+					itExpects(
+						`${layer2} supported features are not compatible with ${layer1} - ${flow} flow`,
+						expectedErrorEvents,
+						async () => {
+							const requiredFeatures = ["feature2", "feature3"];
+							layer1SupportRequirements.requiredFeatures = requiredFeatures;
+							layer1SupportRequirements.minSupportedGeneration =
+								layer2CompatDetails.generation;
+							await assert.rejects(
+								validationStep(flow),
+								(e: Error) =>
+									validateFailureProperties(
+										e,
+										true /* isGenerationCompatible */,
+										layer1SupportRequirements.minSupportedGeneration,
+										[
+											{
+												type: layer1,
+												pkgVersion: layer1Version,
+												generation: layer1Generation,
+											},
+											{
+												type: layer2,
+												pkgVersion: layer2CompatDetails.pkgVersion,
+												generation: layer2CompatDetails.generation,
+											},
+										],
+										requiredFeatures,
+									),
+								`${layer2}'s supported features should not be compatible with ${layer1}`,
+							);
+						},
 					);
-				},
-			);
+				});
+			}
 		});
 	}
 });

@@ -102,6 +102,19 @@ function validateFailureProperties(
 	return true;
 }
 
+function validateDisposeCall(
+	layerType: "Runtime" | "Driver",
+	disposeFn: Sinon.SinonSpy,
+): void {
+	if (layerType === "Runtime") {
+		// In case of "Runtime", the dispose is not called during validation. It is called as part of the overall
+		// container creation / load.
+		assert(disposeFn.notCalled, `Dispose should not be called for ${layerType} layer`);
+	} else {
+		assert(disposeFn.calledOnce, `Dispose should be called for ${layerType} layer`);
+	}
+}
+
 describe("Loader Layer compatibility", () => {
 	/**
 	 * These tests ensure that the validation logic for layer compatibility is correct
@@ -189,7 +202,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 
 				it(`Loader features are incompatible with ${testCase.layerType}`, () => {
@@ -216,7 +229,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 
 				it(`Loader generation and features are both incompatible with ${testCase.layerType}`, () => {
@@ -243,7 +256,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 			});
 		}
