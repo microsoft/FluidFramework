@@ -699,18 +699,18 @@ function removeMetadataFromPendingChanges(
 ): IntervalMessageLocalMetadata {
 	const acked = (localOpMetadataNode as ListNode<IntervalMessageLocalMetadata>)?.remove()
 		?.data;
-	assert(acked !== undefined, "local change must exist");
+	assert(acked !== undefined, 0xbbe /* local change must exist */);
 	acked.endpointChangesNode?.remove();
 	return acked;
 }
 
 function clearEmptyPendingEntry(pendingChanges: PendingChanges, id: string) {
 	const pending = pendingChanges[id];
-	assert(pending !== undefined, "pending must exist for local process");
+	assert(pending !== undefined, 0xbbf /* pending must exist for local process */);
 	if (pending.local.empty) {
 		assert(
 			pending.endpointChanges?.empty !== false,
-			"endpointChanges must be empty if not pending changes",
+			0xbc0 /* endpointChanges must be empty if not pending changes */,
 		);
 		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
 		delete pendingChanges[id];
@@ -868,7 +868,7 @@ export class IntervalCollection
 		const { opName, value } = op;
 		assert(
 			(local === false && localOpMetadata === undefined) || opName === localOpMetadata?.type,
-			"must be same type",
+			0xbc1 /* must be same type */,
 		);
 		switch (opName) {
 			case "add": {
