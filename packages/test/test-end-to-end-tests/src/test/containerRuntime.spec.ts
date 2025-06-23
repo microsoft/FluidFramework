@@ -131,6 +131,7 @@ describeCompat(
 				// We set minVersionForCollab to 2.0.0 so we can test schema control with older clients
 				// in cross-client compat tests.
 				minVersionForCollab: "2.0.0",
+				skipSecondContainerLoad: true,
 			};
 			const container = await provider.makeTestContainer(options);
 			entry = await getEntryPoint(container);
