@@ -5,7 +5,6 @@
 
 import { strict as assert } from "assert";
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { ISummaryBlob } from "@fluidframework/driver-definitions";
@@ -572,14 +571,7 @@ describeCompat("SharedInterval", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 
 		describe.only("Conflicting ops (multi-client scenarios)", () => {
-			interface ConflictingOpsSetup {
-				sharedString1: SharedString;
-				sharedString2: SharedString;
-				intervals1: ISequenceIntervalCollection;
-				intervals2: ISequenceIntervalCollection;
-			}
-
-			async function setupConflictingOps(): Promise<ConflictingOpsSetup> {
+			async function setupConflictingOps() {
 				const stringId = "stringKey";
 				const registry: ChannelFactoryRegistry = [[stringId, SharedString.getFactory()]];
 				const testContainerConfig: ITestContainerConfig = {
