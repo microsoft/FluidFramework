@@ -143,10 +143,11 @@ function createGetterFunction<T>(
 	validator: StateSchemaValidatorToOpaque<T>,
 ): () => DeepReadonly<JsonDeserialized<T>> | undefined {
 	return (): DeepReadonly<JsonDeserialized<T>> | undefined => {
-		if (!("validatedValue" in clientState)) {
-			// Stored `value` has not been validated yet.
-			clientState.validatedValue = validator(clientState.value);
+		if ("validatedValue" in clientState) {
+			return asDeeplyReadonlyDeserializedJson(clientState.validatedValue);
 		}
+		// Stored `value` has not been validated yet.
+		clientState.validatedValue = validator(clientState.value);
 		return asDeeplyReadonlyDeserializedJson(clientState.validatedValue);
 	};
 }
@@ -168,7 +169,6 @@ export function createValidatedGetter<T>(
 		return asDeeplyReadonlyDeserializedJson(clientState.value);
 	}
 
-	// FIXME: is this cast safe? Should it be an arrow function that calls the validator and returns the data as
-	// OpaqueJson?
+	// FIXME: is this cast safe?
 	return createGetterFunction(clientState, validator as StateSchemaValidatorToOpaque<T>);
 }
