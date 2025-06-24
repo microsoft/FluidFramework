@@ -31,6 +31,7 @@ jobs:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
           fetch-depth: "0" # all history
+          fetch-tags: true
           persist-credentials: false
 
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
@@ -92,6 +93,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
           fetch-depth: 0 # all history
+          fetch-tags: true
           persist-credentials: false
           clean: false # preserve build-tools build output
       - name: Check out tag from manual input
@@ -102,6 +104,7 @@ jobs:
         with:
           ref: refs/tags/$TAG
           fetch-depth: 0 # all history
+          fetch-tags: true
           persist-credentials: false
           clean: false # preserve build-tools build output
 
