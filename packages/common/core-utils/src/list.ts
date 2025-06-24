@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
 /**
  * Represents a node in a doubly linked list.
  * @internal
@@ -53,7 +51,7 @@ class HeadNode<T> {
 	public _prev: HeadNode<T> | DataNode<T> = this;
 	public headNode: HeadNode<T> = this;
 	private readonly _list?: DoublyLinkedList<T>;
-	constructor(list: DoublyLinkedList<T> | undefined) {
+	public constructor(list: DoublyLinkedList<T> | undefined) {
 		if (list) {
 			this._list = list;
 		}
@@ -74,14 +72,14 @@ class HeadNode<T> {
 const DeadHead = new HeadNode<any>(undefined);
 
 class DataNode<T> extends HeadNode<T> implements ListNode<T> {
-	constructor(
+	public constructor(
 		headNode: HeadNode<T>,
 		public readonly data: T,
 	) {
 		super(undefined);
 		this.headNode = headNode;
 	}
-	remove(): ListNode<T> | undefined {
+	public remove(): ListNode<T> | undefined {
 		return this.list?.remove(this);
 	}
 }
@@ -109,7 +107,7 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
 	// so i went with a more user-friendly error, which describes the
 	// only condition that could lead to this being undefined in the current code.
 	if (newRange === undefined) {
-		throw new UsageError("items must not be empty");
+		throw new Error("items must not be empty");
 	}
 	return newRange;
 }
@@ -121,28 +119,25 @@ function insertAfter<T>(node: DataNode<T> | HeadNode<T>, items: T[]): ListNodeRa
  */
 export class DoublyLinkedList<T>
 	implements
-		Iterable<ListNode<T>>,
-		Partial<ListNodeRange<T>>,
-		// try to match array signature and semantics where possible
+		Iterable<ListNode<T>>, // try to match array signature and semantics where possible
 		Pick<ListNode<T>[], "pop" | "shift" | "length" | "includes">
 {
 	/**
 	 * Creates a new doubly linked list optionally initialized with values.
 	 * @param values - Optional iterable of values to populate the list.
 	 */
-	constructor(values?: Iterable<T>) {
+	public constructor(values?: Iterable<T>) {
 		if (values !== undefined) {
 			this.push(...values);
 		}
 	}
-
 	/**
 	 * Finds the first node matching the predicate.
 	 * @param predicate - Function to test each node.
 	 * @returns The first matching node, or undefined if none found.
 	 */
-	find(
-		predicate: (value: ListNode<T>, obj: DoublyLinkedList<T>) => unknown,
+	public find(
+		predicate: (value: ListNode<T>, obj: DoublyLinkedList<T>) => boolean,
 	): ListNode<T> | undefined {
 		let found: ListNode<T> | undefined;
 		walkList(this, (node) => {
@@ -158,7 +153,7 @@ export class DoublyLinkedList<T>
 	 * Returns an iterable that maps each node to a new value.
 	 * @param callbackfn - Function to produce a new value for each node.
 	 */
-	map<U>(callbackfn: (value: ListNode<T>) => U): Iterable<U> {
+	public map<U>(callbackfn: (value: ListNode<T>) => U): Iterable<U> {
 		let node = this.first;
 		const iterator: IterableIterator<U> = {
 			next(): IteratorResult<U> {
@@ -182,7 +177,7 @@ export class DoublyLinkedList<T>
 	 * @param items - Items to insert.
 	 * @returns The range of newly inserted nodes.
 	 */
-	insertAfter(preceding: ListNode<T>, ...items: T[]): ListNodeRange<T> {
+	public insertAfter(preceding: ListNode<T>, ...items: T[]): ListNodeRange<T> {
 		if (!this._includes(preceding)) {
 			throw new Error("preceding not in list");
 		}
@@ -194,7 +189,7 @@ export class DoublyLinkedList<T>
 	 * Removes and returns the last node in the list.
 	 * @returns The removed node, or undefined if the list is empty.
 	 */
-	pop(): ListNode<T> | undefined {
+	public pop(): ListNode<T> | undefined {
 		return this.remove(this.last);
 	}
 
@@ -203,7 +198,7 @@ export class DoublyLinkedList<T>
 	 * @param items - Items to append.
 	 * @returns The range of newly inserted nodes.
 	 */
-	push(...items: T[]): ListNodeRange<T> {
+	public push(...items: T[]): ListNodeRange<T> {
 		this._len += items.length;
 		const start = this.headNode._prev;
 		return insertAfter(start, items);
@@ -213,7 +208,7 @@ export class DoublyLinkedList<T>
 	 * Removes and returns the first node in the list.
 	 * @returns The removed node, or undefined if the list is empty.
 	 */
-	shift(): ListNode<T> | undefined {
+	public shift(): ListNode<T> | undefined {
 		return this.remove(this.first);
 	}
 
@@ -222,7 +217,7 @@ export class DoublyLinkedList<T>
 	 * @param items - Items to insert.
 	 * @returns The range of newly inserted nodes.
 	 */
-	unshift(...items: T[]): ListNodeRange<T> {
+	public unshift(...items: T[]): ListNodeRange<T> {
 		this._len += items.length;
 		return insertAfter(this.headNode, items);
 	}
@@ -233,7 +228,7 @@ export class DoublyLinkedList<T>
 	 * @param countOrEnd - The number of nodes to remove or the end node.
 	 * @returns A new list containing the removed nodes.
 	 */
-	splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): DoublyLinkedList<T> {
+	public splice(start: ListNode<T>, countOrEnd?: ListNode<T> | number): DoublyLinkedList<T> {
 		const newList = new DoublyLinkedList<T>();
 		walkList(
 			this,
@@ -342,6 +337,20 @@ export class DoublyLinkedList<T>
 	}
 }
 
+/**
+ * Iterates over the nodes of a `DoublyLinkedList`, calling the provided visitor function for each node.
+ * Iteration starts at the specified node (or at the head/tail if not provided) and proceeds forward or backward.
+ * If the visitor returns `false`, iteration stops early.
+ *
+ * @typeParam T - The type of data stored in the list nodes.
+ * @param list - The list to walk.
+ * @param visitor - Function called for each node. If it returns `false`, iteration stops.
+ * @param start - Optional node to start iteration from. If not provided, starts at the first (or last if `forward` is false) node.
+ * @param forward - If `true` (default), iterates forward; if `false`, iterates backward.
+ * @returns `false` if iteration was stopped early by the visitor, otherwise `true`.
+ *
+ * @internal
+ */
 export function walkList<T>(
 	list: DoublyLinkedList<T>,
 	visitor: (node: ListNode<T>) => boolean | void,
@@ -351,7 +360,7 @@ export function walkList<T>(
 	let current: ListNode<T> | undefined;
 	if (start) {
 		if (!list.includes(start)) {
-			throw new UsageError("start must be in the provided list");
+			throw new Error("start must be in the provided list");
 		}
 		current = start;
 	} else {
@@ -375,6 +384,8 @@ export function walkList<T>(
  * and stops iterating at the first value where the predicate is false.
  * @param start - the node to start the iteration from
  * @param includePredicate - determine if the current value be included in the iteration or stop if iteration
+ *
+ * @internal
  */
 export function iterateListValuesWhile<T>(
 	start: ListNode<T> | undefined,

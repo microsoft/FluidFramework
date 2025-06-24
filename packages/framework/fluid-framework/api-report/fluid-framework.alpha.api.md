@@ -32,9 +32,9 @@ export interface AllowedTypesMetadata {
 export function allowUnused<T>(t?: T): void;
 
 // @alpha
-export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema> {
+export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
     readonly metadata: AllowedTypeMetadata;
-    readonly type: LazyItem<T>;
+    readonly type: T;
 }
 
 // @alpha
@@ -258,7 +258,7 @@ export class FieldSchemaAlpha<Kind extends FieldKind = FieldKind, Types extends 
     readonly allowedTypesMetadata: AllowedTypesMetadata;
     // (undocumented)
     readonly annotatedAllowedTypes: ImplicitAnnotatedAllowedTypes;
-    get annotatedAllowedTypeSet(): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>;
+    get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes;
     get persistedMetadata(): JsonCompatibleReadOnlyObject | undefined;
 }
 
@@ -971,6 +971,12 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 // @alpha
 export const noopValidator: JsonValidator;
 
+// @alpha
+export interface NormalizedAnnotatedAllowedTypes {
+    readonly metadata: AllowedTypesMetadata;
+    readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+}
+
 // @public @system
 export type ObjectFromSchemaRecord<T extends RestrictiveStringRecord<ImplicitFieldSchema>> = RestrictiveStringRecord<ImplicitFieldSchema> extends T ? {} : {
     -readonly [Property in keyof T]: Property extends string ? TreeFieldFromImplicitField<T[Property]> : unknown;
@@ -1627,6 +1633,8 @@ export const Tree: Tree;
 // @alpha @sealed @system
 export interface TreeAlpha {
     branch(node: TreeNode): TreeBranch | undefined;
+    child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+    children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         idCompressor?: IIdCompressor;
@@ -1867,6 +1875,7 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 // @public @sealed
 export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
+    protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;
     readonly schema: TSchema;
@@ -1877,7 +1886,7 @@ export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = I
 // @alpha @sealed
 export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends TreeViewConfiguration<TSchema> implements TreeSchema {
     constructor(props: ITreeViewConfiguration<TSchema>);
-    readonly definitions: ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
+    get definitions(): ReadonlyMap<string, SimpleNodeSchema & TreeNodeSchema>;
     readonly root: FieldSchemaAlpha;
 }
 

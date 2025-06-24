@@ -19,9 +19,10 @@ import {
 	getOrCreateInnerNode,
 	getKernel,
 	type InternalTreeNode,
+	type NormalizedAnnotatedAllowedTypes,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -32,6 +33,7 @@ import {
 	type UnannotateImplicitAllowedTypes,
 	createFieldSchema,
 	FieldKind,
+	normalizeAnnotatedAllowedTypes,
 } from "../../schemaTypes.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -81,7 +83,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			}
 
 			// TODO: handle customizable?
-			return getTreeNodeForField(field);
+			return tryGetTreeNodeForField(field);
 		},
 		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
 			if (typeof key === "symbol") {
@@ -129,7 +131,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			}
 
 			return {
-				value: getTreeNodeForField(field),
+				value: tryGetTreeNodeForField(field),
 				writable: true,
 				enumerable: true,
 				configurable: true, // Must be 'configurable' if property is absent from proxy target.
@@ -226,6 +228,7 @@ export function recordSchema<
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
+	const lazyAnnotatedTypes = new Lazy(() => [normalizeAnnotatedAllowedTypes(info)]);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
@@ -307,6 +310,9 @@ export function recordSchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
+		}
+		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
+			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
