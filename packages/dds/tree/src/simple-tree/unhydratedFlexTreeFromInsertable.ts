@@ -54,8 +54,7 @@ import { isArrayNodeSchema, type ArrayNodeSchema } from "./node-kinds/array/arra
 import { isMapNodeSchema, type MapNodeSchema } from "./node-kinds/map/mapNodeTypes.js";
 import {
 	isObjectNodeSchema,
-	type ObjectNodeSchema,
-	type ObjectNodeSchemaInternalData,
+	type ObjectNodeSchemaPrivate,
 } from "./node-kinds/object/objectNodeTypes.js";
 /* eslint-enable import/no-internal-modules */
 
@@ -366,7 +365,7 @@ function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexCont
  */
 function objectToFlexContent(
 	data: FactoryContent,
-	schema: ObjectNodeSchema & ObjectNodeSchemaInternalData,
+	schema: ObjectNodeSchemaPrivate,
 ): FlexContent {
 	if (
 		typeof data !== "object" ||
