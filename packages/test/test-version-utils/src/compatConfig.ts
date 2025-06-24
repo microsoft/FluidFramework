@@ -305,9 +305,18 @@ function genCompatConfig(
  * `CompatConfig.loadVersion` is set to the delta version. Then, a second permutation where `CompatConfig.createVersion`
  * is set to the delta version and `CompatConfig.loadVersion` is set to the current version.
  * The delta versions will be:
- * - N-1 and N-2, for legacy+alpha breaking minor releases (i.e. \>=2.10.0 \<2.20.0, \>=2.20.0 \<2.30.0, etc.)
- * - N-1 and N-2, for public major releases (i.e. ^1.0.0, ^2.0.0, etc.)
+ * - N-1 and N-2, for "fast train" customers (i.e. \>=2.10.0 \<2.20.0, \>=2.20.0 \<2.30.0, etc.)
+ * - N-1 and N-2, for "slow train" customers (i.e. ^1.0.0, ^2.0.0, etc.)
  * - LTS versions
+ *
+ * @remarks
+ * Fast/slow trains refer to the different velocities that customers adopt new releases.
+ * Fast train customers integrate most minor releases quickly and saturate on a roughly 3-month
+ * cadence (this could be subject to change in the future).
+ * Slow train customers mainly integrate public major releases and may take much longer to saturate
+ * on any given release.
+ * We want to be able to test cross-client compat for both types of customers, so we generate permutations for
+ * N/N-1 and N/N-2 for both fast and slow trains.
  *
  * @internal
  */
@@ -325,7 +334,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	// then we will append the delta description to the existing delta description for that version.
 	const deltaVersions: Map<string, string> = new Map();
 
-	// N-1 and N-2 legacy+alpha breaking minor releases
+	// N-1 and N-2 for "fast train" releases
 	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
 		.forEach((delta) => {
@@ -335,11 +344,11 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 				false, // adjustMajorPublic = false
 			);
 			if (semver.gte(v, "1.0.0")) {
-				deltaVersions.set(v, `N${delta} legacy+alpha`);
+				deltaVersions.set(v, `N${delta} fast train`);
 			}
 		});
 
-	// N-1 and N-2 public major releases
+	// N-1 and N-2 for "slow train" releases
 	// Note: We add these in a separate for loop to maintain the order of tests (minor, major, then LTS).
 	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
@@ -351,14 +360,14 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 			);
 			if (semver.gte(v, "1.0.0")) {
 				if (deltaVersions.has(v)) {
-					deltaVersions.set(v, `${deltaVersions.get(v)}/N${delta} public major`);
+					deltaVersions.set(v, `${deltaVersions.get(v)}/N${delta} slow train`);
 				} else {
-					deltaVersions.set(v, `N${delta} public major`);
+					deltaVersions.set(v, `N${delta} slow train`);
 				}
 			}
 		});
 
-	// LTS versions
+	// LTS releases
 	for (const v of defaultCompatVersions.ltsVersions) {
 		if (semver.gte(v, "1.0.0")) {
 			if (deltaVersions.has(v)) {
