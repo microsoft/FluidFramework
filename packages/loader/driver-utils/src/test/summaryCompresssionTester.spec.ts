@@ -117,13 +117,13 @@ class InternalTestStorage implements IDocumentStorageService {
 	async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null -- legacy API compatibility
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return JSON.parse(JSON.stringify(snapshotTree)) as ISnapshotTree;
 	}
 
 	async getVersions(
-		// eslint-disable-next-line @rushstack/no-new-null -- legacy API compatibility
+		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
 		count: number,
 		scenarioName?: string | undefined,

@@ -32,7 +32,7 @@ export class PrefetchDocumentStorageService extends DocumentStorageServiceProxy 
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
-		// eslint-disable-next-line @rushstack/no-new-null -- legacy API compatibility
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		const p = this.internalStorageService.getSnapshotTree(version, scenarioName);
 		if (this.prefetchEnabled) {
