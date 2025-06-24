@@ -10,10 +10,13 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { independentView, Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
+	getJsonSchema,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ConciseTree,
+	type JsonTreeSchema,
 	type TreeNode,
+	type VerboseTree,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 import type { areSafelyAssignable, requireTrue } from "../util/index.js";
@@ -22,7 +25,7 @@ import { validateUsageError } from "./utils.js";
 const schemaFactory = new SchemaFactoryAlpha("test");
 
 describe("TableFactory unit tests", () => {
-	function createTableTree() {
+	function createTableSchema() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
 		}) {}
@@ -58,6 +61,17 @@ describe("TableFactory unit tests", () => {
 			column: Column,
 			row: Row,
 		}) {}
+
+		return {
+			Cell,
+			Column,
+			Row,
+			Table,
+		};
+	}
+
+	function createTableTree() {
+		const { Cell, Column, Row, Table } = createTableSchema();
 
 		const treeView = independentView(
 			new TreeViewConfiguration({
@@ -1453,6 +1467,195 @@ describe("TableFactory unit tests", () => {
 		assert.equal(cell, cell0);
 		assert.equal(row, row0);
 		assert.equal(column, column0);
+	});
+
+	describe("JSON serialization", () => {
+		it("JSON schema representation", () => {
+			const { Table } = createTableSchema();
+			const actual: JsonTreeSchema = getJsonSchema(Table, {
+				requireFieldsWithDefaults: false,
+				useStoredKeys: false,
+			});
+
+			const expected: JsonTreeSchema = {
+				$defs: {
+					"com.fluidframework.leaf.boolean": {
+						_treeNodeSchemaKind: 3,
+						type: "boolean",
+					},
+					"com.fluidframework.leaf.string": {
+						_treeNodeSchemaKind: 3,
+						type: "string",
+					},
+					"test.table-cell": {
+						_treeNodeSchemaKind: 2,
+						additionalProperties: false,
+						properties: {
+							"value": {
+								$ref: "#/$defs/com.fluidframework.leaf.string",
+							},
+						},
+						required: ["value"],
+						type: "object",
+					},
+					"test.table-column-props": {
+						_treeNodeSchemaKind: 2,
+						additionalProperties: false,
+						properties: {
+							label: {
+								$ref: "#/$defs/com.fluidframework.leaf.string",
+							},
+						},
+						required: [],
+						type: "object",
+					},
+					"test.table-row-props": {
+						_treeNodeSchemaKind: 2,
+						additionalProperties: false,
+						properties: {
+							selectable: {
+								$ref: "#/$defs/com.fluidframework.leaf.boolean",
+							},
+						},
+						required: [],
+						type: "object",
+					},
+					"test.table.Column": {
+						_treeNodeSchemaKind: 2,
+						additionalProperties: false,
+						properties: {
+							id: {
+								$ref: "#/$defs/com.fluidframework.leaf.string",
+							},
+							props: {
+								$ref: "#/$defs/test.table-column-props",
+							},
+						},
+						required: ["props"],
+						type: "object",
+					},
+					"test.table.Row": {
+						_treeNodeSchemaKind: 2,
+						additionalProperties: false,
+						properties: {
+							cells: {
+								$ref: "#/$defs/test.table.Row.cells",
+								"description": "The cells of the table row, keyed by column ID.",
+							},
+							id: {
+								$ref: "#/$defs/com.fluidframework.leaf.string",
+							},
+							props: {
+								$ref: "#/$defs/test.table-row-props",
+							},
+						},
+						required: ["cells"],
+						type: "object",
+					},
+					"test.table.Row.cells": {
+						_treeNodeSchemaKind: 4,
+						patternProperties: {
+							"^.*$": {
+								$ref: "#/$defs/test.table-cell",
+							},
+						},
+						type: "object",
+					},
+					"test.table.Table": {
+						_treeNodeSchemaKind: 2,
+						additionalProperties: false,
+						properties: {
+							columns: {
+								$ref: "#/$defs/test.table.Table.columns",
+							},
+							rows: {
+								$ref: "#/$defs/test.table.Table.rows",
+							},
+						},
+						required: ["rows", "columns"],
+						type: "object",
+					},
+					"test.table.Table.columns": {
+						_treeNodeSchemaKind: 1,
+						items: {
+							$ref: "#/$defs/test.table.Column",
+						},
+						type: "array",
+					},
+					"test.table.Table.rows": {
+						_treeNodeSchemaKind: 1,
+						items: {
+							$ref: "#/$defs/test.table.Row",
+						},
+						type: "array",
+					},
+				},
+				$ref: "#/$defs/test.table.Table",
+			};
+
+			assert.deepEqual(actual, expected);
+		});
+
+		it("JSON data representation", () => {
+			const { treeView, Cell, Column, Row } = createTableTree();
+
+			const cell0 = new Cell({ value: "Hello World!" });
+			const column0 = new Column({ id: "column-0", props: {} });
+			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
+			treeView.initialize({
+				columns: [column0],
+				rows: [row0],
+			});
+
+			const actual: VerboseTree = TreeAlpha.exportVerbose(treeView.root, {});
+			const expected = {
+				fields: {
+					columns: {
+						fields: [
+							{
+								fields: {
+									id: "column-0",
+									props: {
+										fields: {},
+										type: "test.table-column-props",
+									},
+								},
+								type: "test.table.Column",
+							},
+						],
+						type: "test.table.Table.columns",
+					},
+					rows: {
+						fields: [
+							{
+								fields: {
+									"cells": {
+										fields: {
+											"column-0": {
+												fields: {
+													"value": "Hello World!",
+												},
+												type: "test.table-cell",
+											},
+										},
+										type: "test.table.Row.cells",
+									},
+									id: "row-0",
+									props: {
+										fields: {},
+										type: "test.table-row-props",
+									},
+								},
+								type: "test.table.Row",
+							},
+						],
+						type: "test.table.Table.rows",
+					},
+				},
+				type: "test.table.Table",
+			};
+			assert.deepEqual(actual, expected);
+		});
 	});
 
 	// The code within the following tests is included in TSDoc comments in the source code.

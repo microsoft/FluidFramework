@@ -352,7 +352,7 @@ export namespace System_TableSchema {
 		// See definition of `RowInsertableType` below.
 		const rowFieldsBuiltInParts = {
 			id: schemaFactory.identifier,
-			cells: schemaFactory.required(schemaFactory.map("Row.cells", cellSchema), {
+			cells: schemaFactory.required(schemaFactory.record("Row.cells", cellSchema), {
 				metadata: {
 					description: "The cells of the table row, keyed by column ID.",
 				},
@@ -389,7 +389,7 @@ export namespace System_TableSchema {
 				columnOrId: TableSchema.Column<TCellSchema> | string,
 			): CellValueType | undefined {
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-				return this.cells.get(columnId) as CellValueType | undefined;
+				return this.cells[columnId];
 			}
 
 			public setCell(
@@ -398,8 +398,14 @@ export namespace System_TableSchema {
 			): void {
 				// TODO: throw if column does not exist in the owning table.
 
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-				this.cells.set(columnId, value);
+				if (value === undefined) {
+					this.removeCell(columnOrId);
+				} else {
+					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+					// TODO: verify that this is not an issue with Record itself.
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					this.cells[columnId] = value as any;
+				}
 			}
 
 			public removeCell(
@@ -409,12 +415,13 @@ export namespace System_TableSchema {
 
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 
-				const cell: CellValueType | undefined = this.cells.get(columnId);
+				const cell: CellValueType | undefined = this.cells[columnId];
 				if (cell === undefined) {
 					return undefined;
 				}
 
-				this.cells.delete(columnId);
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+				delete this.cells[columnId];
 				return cell;
 			}
 
@@ -423,7 +430,7 @@ export namespace System_TableSchema {
 				cell: CellValueType;
 			}[] {
 				const result = [];
-				for (const [columnId, cell] of this.cells.entries()) {
+				for (const [columnId, cell] of Object.entries(this.cells)) {
 					if (cell !== undefined) {
 						result.push({
 							columnId,
