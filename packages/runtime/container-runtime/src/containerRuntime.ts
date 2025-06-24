@@ -1116,6 +1116,16 @@ export class ContainerRuntime
 			(error: IErrorBase) => runtime.closeFn(error),
 		);
 
+		// The compressor must be initialized before applying stashed ops, as DDSs may have a dependency on it.
+		if (
+			runtime.sessionSchema.idCompressorMode === "on" ||
+			(runtime.sessionSchema.idCompressorMode === "delayed" && runtime.connected)
+		) {
+			runtime._idCompressor = runtime.createIdCompressorFn();
+			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
+			assert(runtime.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
+		}
+
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
@@ -2012,16 +2022,6 @@ export class ContainerRuntime
 	 */
 	private async initializeBaseState(loader: ILoader): Promise<void> {
 		await this.initializeSummarizer(loader);
-
-		if (
-			this.sessionSchema.idCompressorMode === "on" ||
-			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
-		) {
-			this._idCompressor = this.createIdCompressorFn();
-			// This is called from loadRuntime(), long before we process any ops, so there should be no ops accumulated yet.
-			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
-		}
-
 		await this.garbageCollector.initializeBaseState();
 	}
 
