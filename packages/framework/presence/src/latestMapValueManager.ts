@@ -14,7 +14,8 @@ import type {
 
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
-import { isValueRequiredState, type InternalTypes } from "./exposedInternalTypes.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
+import { isValueRequiredState } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
