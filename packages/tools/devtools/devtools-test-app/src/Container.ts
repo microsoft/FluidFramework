@@ -72,7 +72,7 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 		const appData = await entryPointHandle.get();
 
 		if (this.devtools && this.logger) {
-			appData.setDevtools(this.devtools, this.logger);
+			appData.registerDevtools(this.devtools, this.logger);
 		}
 
 		return new AppModel(appData, container);
