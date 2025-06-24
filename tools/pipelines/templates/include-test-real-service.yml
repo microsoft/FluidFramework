@@ -344,13 +344,14 @@ stages:
               key: '"compat-version-installs" | "$(Agent.OS)" | "${{ parameters.testCommand }}" | "${{ variant.name }}"'
               path: ${{ parameters.testWorkspace }}/node_modules/@fluid-private/test-version-utils/node_modules/.legacy/
 
-        # Only check out tenants from the TRIPS tenant pool if we are running tests against ODSP
+        # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
           # Retrieve a tenant from the TRIPS tenant pool
           - task: AzureCLI@2
             displayName: 'Log in to retrieve tenant credentials'
             inputs:
               azureSubscription: 'Fluid Framework Tests'
+              # This injects environment variables into the below script. See https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2?view=azure-pipelines
               addSpnToEnvironment: true
               scriptType: 'bash'
               scriptLocation: 'inlineScript'
