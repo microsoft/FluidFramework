@@ -778,7 +778,7 @@ export class MongoDbFactory implements core.IDbFactory {
 		}
 
 		Lumberjack.info("TEST: Connecting to MongoDB", {
-			operationsDbEndpoint: this.operationsDbEndpoint.substring(150),
+			operationsDbEndpoint: this.operationsDbEndpoint?.substring(150),
 			globalDbEndpoint: this.globalDbEndpoint?.substring(150),
 		});
 
