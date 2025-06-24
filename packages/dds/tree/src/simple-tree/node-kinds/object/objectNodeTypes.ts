@@ -88,8 +88,6 @@ export const ObjectNodeSchema = {
  */
 export type ObjectNodeSchemaPrivate = ObjectNodeSchema & ObjectNodeSchemaInternalData;
 
-export function isObjectNodeSchema(
-	schema: TreeNodeSchema,
-): schema is ObjectNodeSchemaPrivate {
+export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchemaPrivate {
 	return schema.kind === NodeKind.Object;
 }
