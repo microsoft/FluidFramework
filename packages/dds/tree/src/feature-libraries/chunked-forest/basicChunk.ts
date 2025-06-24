@@ -29,8 +29,6 @@ import { SynchronousCursor, prefixPath } from "../treeCursorUtils.js";
 export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 	public readonly topLevelLength: number = 1;
 
-	private _summaryRefId: string | undefined;
-
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
@@ -55,11 +53,13 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 		super();
 	}
 
+	private _summaryRefId: string | undefined;
+
 	public get summaryRefId(): string | undefined {
 		return this._summaryRefId;
 	}
 
-	public addSummaryRefId(summaryRefId: string): void {
+	public updateSummaryRefId(summaryRefId: string): void {
 		this._summaryRefId = summaryRefId;
 	}
 

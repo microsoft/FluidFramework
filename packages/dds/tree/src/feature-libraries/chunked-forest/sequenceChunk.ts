@@ -26,7 +26,7 @@ export class SequenceChunk extends ReferenceCountedBase implements TreeChunk {
 		return this._summaryRefId;
 	}
 
-	public addSummaryRefId(summaryRefId: string): void {
+	public updateSummaryRefId(summaryRefId: string): void {
 		this._summaryRefId = summaryRefId;
 	}
 

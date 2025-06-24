@@ -28,10 +28,10 @@ export interface IncrementalSummaryProps {
 	 */
 	readonly summaryRefId: string | undefined;
 	/**
-	 * Add a reference ID for this chunk in the current summary. This will be used in the next summary to refer to
+	 * Update the reference ID for this chunk in the current summary. This will be used in the next summary to refer to
 	 * this chunk if it has not changed since the last summary.
 	 */
-	addSummaryRefId: (summaryRefId: string) => void;
+	updateSummaryRefId: (summaryRefId: string) => void;
 }
 
 /**
