@@ -36,7 +36,7 @@ export interface TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowed
 
 /**
  * Content which can be used to construct a Record node, explicitly or implicitly.
- * @system @public
+ * @system @alpha
  */
 export type RecordNodeInsertableData<T extends ImplicitAllowedTypes> = RestrictiveStringRecord<
 	InsertableTreeNodeFromImplicitAllowedTypes<T>
