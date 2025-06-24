@@ -2,14 +2,6 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
-
-export {
-	DoublyLinkedList,
-	ListNode,
-	ListNodeRange,
-	walkList,
-	iterateListValuesWhile,
-} from "./list.js";
 export {
 	ConflictAction,
 	Dictionary,
