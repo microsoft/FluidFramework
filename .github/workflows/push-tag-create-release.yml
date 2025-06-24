@@ -30,8 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
         with:
-          fetch-depth: "0" # all history
-          fetch-tags: true
+          fetch-depth: "0" # all history, including tags
           persist-credentials: false
 
       - uses: pnpm/action-setup@fe02b34f77f8bc703788d5817da081398fad5dd2 # ratchet:pnpm/action-setup@v4
@@ -89,24 +88,16 @@ jobs:
 
       - name: Check out tag from push
         if: github.event_name == 'push'
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
-        with:
-          ref: ${{ github.ref }}
-          fetch-depth: 0 # all history
-          fetch-tags: true
-          persist-credentials: false
-          clean: false # preserve build-tools build output
+        env:
+          TAG: ${{ github.ref }}
+        run: |
+          git checkout $TAG
       - name: Check out tag from manual input
         if: github.event_name == 'workflow_dispatch'
         env:
           TAG: ${{ github.event.inputs.tag }}
-        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
-        with:
-          ref: refs/tags/$TAG
-          fetch-depth: 0 # all history
-          fetch-tags: true
-          persist-credentials: false
-          clean: false # preserve build-tools build output
+        run: |
+          git checkout $TAG
 
       # Generate release reports
       - name: Create release reports (manifests)
