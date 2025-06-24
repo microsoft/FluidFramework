@@ -419,9 +419,6 @@ function recordToFlexContent(data: FactoryContent, schema: TreeNodeSchema): Flex
 
 	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
 	for (const item of fieldsIterator) {
-		if (!isReadonlyArray(item) || item.length !== 2 || typeof item[0] !== "string") {
-			throw new UsageError(`Input data is incompatible with map entry: ${item}`);
-		}
 		const [key, value] = item;
 		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
 
