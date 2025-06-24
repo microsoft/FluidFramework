@@ -49,7 +49,7 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 		const releaseGroupRoot = releaseGroup.workspace.directory;
 		const releaseGroupVersion = parse(releaseGroup.version);
 		if (releaseGroupVersion === null) {
-			this.error(`Version isn't a valid semver string: '${releaseGroup.version}'`);
+			this.error(`Version isn't a valid semver string: '${releaseGroup.version}'`, { exit: 1 });
 		}
 
 		// Strips additional custom metadata from the source files before we call `changeset version`,
