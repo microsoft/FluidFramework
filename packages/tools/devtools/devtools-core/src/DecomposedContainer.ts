@@ -15,53 +15,49 @@ import type { IEventProvider } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 /**
- * A lightweight abstraction of {@link @fluidframework/container-definitions/internal#IContainer} that provides
+ * A lightweight abstraction of {@link @fluidframework/container-definitions#IContainer} that provides
  * only the essential properties and methods needed for Fluid DevTools functionality.
  *
  * @alpha
  */
 export interface DecomposedIContainer extends IEventProvider<IContainerEvents> {
 	/**
-	 * The audience associated with this container.
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.audience}
 	 */
 	readonly audience: IAudience;
 
 	/**
-	 * The unique identifier for the current client in this container session.
-	 * @remarks Optional since it is also optional in {@link @fluidframework/container-definitions#IContainer}
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.clientId}
 	 */
 	readonly clientId?: string | undefined;
 
 	/**
-	 * The current attachment state of the container.
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.attachState}
 	 */
 	readonly attachState: AttachState;
 
 	/**
-	 * The current connection state of the container.
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.connectionState}
 	 */
 	readonly connectionState: ConnectionState;
 
 	/**
-	 * Whether the container has been closed.
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.closed}
 	 */
 	readonly closed: boolean;
 
 	/**
-	 * Attempts to connect the container to the service.
-	 * @remarks Optional since it does not exist in {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntimeEvents}
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.connect}
 	 */
 	connect?(): void;
 
 	/**
-	 * Disconnects the container from the service.
-	 * @remarks Optional since it does not exist in {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntimeEvents}
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.disconnect}
 	 */
 	disconnect?(): void;
 
 	/**
-	 * Closes the container, optionally with an error.
-	 * @remarks Optional since it does not exist in {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntimeEvents}
+	 * {@inheritDoc @fluidframework/container-definitions#IContainer.close}
 	 */
 	close?(error?: ICriticalContainerError): void;
 }

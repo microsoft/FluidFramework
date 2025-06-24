@@ -38,7 +38,7 @@ export interface IFluidDevtools extends IDisposable {
 	 *
 	 * @remarks Although the data object is not a container, it is treated as one and stored in `containers` map for the purposes of the devtools.
 	 *
-	 * @throws Will throw if devtools have already been registered for the specified {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntime.id}.
+	 * @throws Will throw if devtools have already been registered for the specified {@link @fluidframework/datastore-definitions#IFluidDataStoreRuntime.id}.
 	 */
 	registerDataObject(props: DataObjectProps): void;
 

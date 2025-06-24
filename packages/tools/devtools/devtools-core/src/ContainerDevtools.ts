@@ -75,7 +75,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 }
 
 /**
- * Properties for registering a {@link @fluidframework/aqueduct/internal#PureDataObject} with the Devtools.
+ * Properties for registering a {@link @fluidframework/aqueduct#PureDataObject} with the Devtools.
  *
  * @alpha
  */
