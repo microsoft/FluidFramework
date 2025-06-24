@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { ListNode } from "@fluidframework/core-utils/internal";
 import type { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -22,6 +23,7 @@ import type {
 	IMapDeleteOperation,
 	IMapSetOperation,
 	ISerializableValue,
+	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
 import type { IMapOperation } from "../../mapKernel.js";
@@ -55,15 +57,15 @@ function createLocalMap(id: string): SharedMapInternal {
 }
 
 class TestSharedMap extends SharedMapInternal {
-	private lastMetadata?: number;
-	public testApplyStashedOp(content: IMapOperation): number | undefined {
+	private lastMetadata?: ListNode<MapLocalOpMetadata>;
+	public testApplyStashedOp(content: IMapOperation): ListNode<MapLocalOpMetadata> | undefined {
 		this.lastMetadata = undefined;
 		this.applyStashedOp(content);
 		return this.lastMetadata;
 	}
 
 	public submitLocalMessage(op: IMapOperation, localOpMetadata: unknown): void {
-		this.lastMetadata = localOpMetadata as number;
+		this.lastMetadata = localOpMetadata as ListNode<MapLocalOpMetadata>;
 		super.submitLocalMessage(op, localOpMetadata);
 	}
 }
@@ -417,20 +419,29 @@ describe("Map", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				});
-				let metadata = map1.testApplyStashedOp(op);
-				assert.equal(metadata, 0);
-				const editMetadata = map1.testApplyStashedOp(op);
-				assert.equal(editMetadata, 1);
+				let metadata = map1.testApplyStashedOp(op)?.data;
+				assert.equal(metadata?.type, "add");
+				assert.equal(metadata.pendingMessageId, 0);
+				const editMetadata = map1.testApplyStashedOp(op)?.data;
+				assert.equal(editMetadata?.type, "edit");
+				assert.equal(editMetadata.pendingMessageId, 1);
+				assert.equal(editMetadata.previousValue.value, "value");
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
 				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
-				metadata = map1.testApplyStashedOp(op2);
-				assert.equal(metadata, 2);
+				metadata = map1.testApplyStashedOp(op2)?.data;
+				assert.equal(metadata?.type, "add");
+				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3);
-				assert.equal(metadata, 3);
+				metadata = map1.testApplyStashedOp(op3)?.data;
+				assert.equal(metadata?.type, "edit");
+				assert.equal(metadata.pendingMessageId, 3);
+				assert.equal(metadata.previousValue.value, "value2");
 				const op4: IMapClearOperation = { type: "clear" };
-				metadata = map1.testApplyStashedOp(op4);
-				assert.equal(metadata, 4);
+				metadata = map1.testApplyStashedOp(op4)?.data;
+				assert.equal(metadata?.pendingMessageId, 4);
+				assert.equal(metadata.type, "clear");
+				assert.equal(metadata.previousMap?.get("key")?.value, "value");
+				assert.equal(metadata.previousMap?.has("key2"), false);
 			});
 		});
 	});
