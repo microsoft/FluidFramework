@@ -340,18 +340,18 @@ export class SchemaFactoryAlpha<
 	 * ```
 	 * Or inline:
 	 * ```typescript
-	 * factory.object("Foo", {myRecord: factory.record(factory.number)});
+	 * factory.object("Foo", { myRecord: factory.record(factory.number) });
 	 * ```
 	 *
 	 * @privateRemarks
-	 * The name produced at the type level here is not as specific as it could be, however doing type-level sorting and escaping is a real mess.
+	 * The name produced at the type-level here is not as specific as it could be; however, doing type-level sorting and escaping is a real mess.
 	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
-	 * For example attempts to narrow unions of structural arrays by name won't work.
+	 * For example, attempts to narrow unions of structural records by name won't work.
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
 	 *
-	 * The return value is a class, but its the type is intentionally not specific enough to indicate it is a class.
-	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the ease of accidentally giving two different calls o this different subclasses)
+	 * The return value is a class, but its type is intentionally not specific enough to indicate it is a class.
+	 * This prevents callers of this from sub-classing it, which is unlikely to work well (due to the ease of accidentally giving two different calls to this different subclasses)
 	 * when working with structural typing.
 	 *
 	 * {@label STRUCTURAL}
