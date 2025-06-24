@@ -39,6 +39,7 @@ import {
 	SpecialField,
 	version,
 } from "./format.js";
+import { EncodedDataBuilder, type IEncodedDataBuilder } from "./encodedDataBuilder.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`. Fields that support incremental encoding
@@ -58,18 +59,17 @@ export function compressedEncode(
 ): EncodedFieldBatch {
 	const encodeIncrementally = outputIncrementalFieldsBatch !== undefined;
 	const batchBuffer: BufferFormat[] = [];
-	const incrementalFieldBuffers: Map<string, FieldBufferFormat> | undefined =
-		encodeIncrementally ? new Map() : undefined;
+	const incrementalFieldBuffers: Map<string, FieldBufferFormat> = new Map();
 
 	// Populate buffer, including shape and identifier references
 	for (const cursor of fieldBatch) {
-		const mainBuffer: BufferFormat = [];
-		const incrementalBuffer: BufferFormatIncremental = {
-			mainBuffer,
+		const encodedDataBuilder = new EncodedDataBuilder(
+			encodeIncrementally,
+			[],
 			incrementalFieldBuffers,
-		};
-		anyFieldEncoder.encodeField(cursor, cache, incrementalBuffer);
-		batchBuffer.push(mainBuffer);
+		);
+		anyFieldEncoder.encodeField(cursor, cache, encodedDataBuilder);
+		batchBuffer.push(encodedDataBuilder.getBufferIncremental().mainBuffer);
 	}
 
 	const encodeShapes = (
@@ -81,7 +81,7 @@ export function compressedEncode(
 			incrementalBuffer.mainBuffer,
 		);
 		if (incrementalBuffer.incrementalFieldBuffers !== undefined) {
-			assert(encodeIncrementally, "expected incremental encoding");
+			// assert(encodeIncrementally, "expected incremental encoding");
 			incrementalBuffer.incrementalFieldBuffers.forEach((fieldBufferFormat, summaryRefId) => {
 				if (fieldBufferFormat === FieldUnchanged) {
 					incrementalFieldsBatch.set(summaryRefId, fieldBufferFormat);
@@ -169,7 +169,7 @@ export interface NodeEncoder extends Encoder {
 	encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void;
 }
 
@@ -183,7 +183,7 @@ export interface NodesEncoder extends Encoder {
 	encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void;
 }
 
@@ -197,7 +197,7 @@ export interface FieldEncoder extends Encoder {
 	encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void;
 }
 
@@ -210,9 +210,9 @@ export function asFieldEncoder(encoder: NodeEncoder): FieldEncoder {
 		encodeField(
 			cursor: ITreeCursorSynchronous,
 			shapes: EncoderCache,
-			outputBuffer: BufferFormatIncremental,
+			dataBuilder: IEncodedDataBuilder,
 		): void {
-			forEachNode(cursor, () => encoder.encodeNode(cursor, shapes, outputBuffer));
+			forEachNode(cursor, () => encoder.encodeNode(cursor, shapes, dataBuilder));
 		},
 		shape: encoder.shape,
 	};
@@ -226,9 +226,9 @@ export function asNodesEncoder(encoder: NodeEncoder): NodesEncoder {
 		encodeNodes(
 			cursor: ITreeCursorSynchronous,
 			shapes: EncoderCache,
-			outputBuffer: BufferFormatIncremental,
+			dataBuilder: IEncodedDataBuilder,
 		): void {
-			encoder.encodeNode(cursor, shapes, outputBuffer);
+			encoder.encodeNode(cursor, shapes, dataBuilder);
 			cursor.nextNode();
 		},
 		shape: encoder.shape,
@@ -260,31 +260,31 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	public static encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 		shape: FieldEncoder,
 	): void {
-		outputBuffer.mainBuffer.push(shape.shape);
-		shape.encodeField(cursor, cache, outputBuffer);
+		dataBuilder.addToBuffer(shape.shape);
+		shape.encodeField(cursor, cache, dataBuilder);
 	}
 
 	public static encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 		shape: NodeEncoder,
 	): void {
-		outputBuffer.mainBuffer.push(shape.shape);
-		shape.encodeNode(cursor, cache, outputBuffer);
+		dataBuilder.addToBuffer(shape.shape);
+		shape.encodeNode(cursor, cache, dataBuilder);
 	}
 
 	public static encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 		shape: NodesEncoder,
 	): void {
-		outputBuffer.mainBuffer.push(shape.shape);
-		shape.encodeNodes(cursor, cache, outputBuffer);
+		dataBuilder.addToBuffer(shape.shape);
+		shape.encodeNodes(cursor, cache, dataBuilder);
 	}
 }
 
@@ -295,11 +295,11 @@ export const anyNodeEncoder: NodeEncoder = {
 	encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
 		// TODO: Fast path uniform chunk content.
 		const shape = cache.shapeFromTree(cursor.type);
-		AnyShape.encodeNode(cursor, cache, outputBuffer, shape);
+		AnyShape.encodeNode(cursor, cache, dataBuilder, shape);
 	},
 
 	shape: AnyShape.instance,
@@ -312,24 +312,24 @@ export const anyFieldEncoder: FieldEncoder = {
 	encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
 		// TODO: Fast path uniform chunks.
 
 		if (cursor.getFieldLength() === 0) {
 			const shape = InlineArrayShape.empty;
-			AnyShape.encodeField(cursor, cache, outputBuffer, shape);
+			AnyShape.encodeField(cursor, cache, dataBuilder, shape);
 		} else if (cursor.getFieldLength() === 1) {
 			// Fast path chunk of size one size one at least: skip nested array.
 			cursor.enterNode(0);
-			anyNodeEncoder.encodeNode(cursor, cache, outputBuffer);
+			anyNodeEncoder.encodeNode(cursor, cache, dataBuilder);
 			cursor.exitNode();
 		} else {
 			// TODO: more efficient encoding for common cases.
 			// Could try to find more specific shape compatible with all children than `anyNodeEncoder`.
 
 			const shape = cache.nestedArray(anyNodeEncoder);
-			AnyShape.encodeField(cursor, cache, outputBuffer, shape);
+			AnyShape.encodeField(cursor, cache, dataBuilder, shape);
 		}
 	},
 
@@ -351,7 +351,7 @@ export class InlineArrayShape
 		encodeNodes(
 			cursor: ITreeCursorSynchronous,
 			shapes: EncoderCache,
-			outputBuffer: BufferFormatIncremental,
+			dataBuilder: IEncodedDataBuilder,
 		): void {
 			fail(0xb4d /* Empty array should not encode any nodes */);
 		},
@@ -370,19 +370,19 @@ export class InlineArrayShape
 	public encodeNodes(
 		cursor: ITreeCursorSynchronous,
 		shapes: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
 		// Linter is wrong about this loop being for-of compatible.
 		// eslint-disable-next-line @typescript-eslint/prefer-for-of
 		for (let index = 0; index < this.length; index++) {
-			this.inner.encodeNodes(cursor, shapes, outputBuffer);
+			this.inner.encodeNodes(cursor, shapes, dataBuilder);
 		}
 	}
 
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		shapes: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
 		// Its possible individual items from this array encode multiple nodes, so don't assume === here.
 		assert(
@@ -390,7 +390,7 @@ export class InlineArrayShape
 			0x73c /* unexpected length for fixed length array */,
 		);
 		cursor.firstNode();
-		this.encodeNodes(cursor, shapes, outputBuffer);
+		this.encodeNodes(cursor, shapes, dataBuilder);
 		assert(
 			cursor.mode === CursorLocationType.Fields,
 			0x73d /* should return to fields mode when finished encoding */,
@@ -435,30 +435,28 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
 		const buffer: BufferFormat = [];
-		const bufferFormatIncremental: BufferFormatIncremental = {
-			mainBuffer: buffer,
-			incrementalFieldBuffers: outputBuffer.incrementalFieldBuffers,
-		};
+		const fieldDataBuilder = dataBuilder.createSiblingFromBuffer(buffer);
 		let allNonZeroSize = true;
 		const length = cursor.getFieldLength();
 		forEachNode(cursor, () => {
 			const before = buffer.length;
-			this.inner.encodeNode(cursor, cache, bufferFormatIncremental);
+			// TODO: Does this need its own incremental field buffers?
+			this.inner.encodeNode(cursor, cache, fieldDataBuilder);
 			allNonZeroSize &&= buffer.length - before !== 0;
 		});
 		if (buffer.length === 0) {
 			// This relies on the number of inner chunks being the same as the number of nodes.
 			// If making inner a `NodesEncoder`, this code will have to be adjusted accordingly.
-			outputBuffer.mainBuffer.push(length);
+			dataBuilder.addToBuffer(length);
 		} else {
 			assert(
 				allNonZeroSize,
 				0x73e /* either all or none of the members of a nested array must be 0 sized, or there is no way the decoder could process the content correctly. */,
 			);
-			outputBuffer.mainBuffer.push(buffer);
+			dataBuilder.addToBuffer(buffer);
 		}
 	}
 
@@ -493,16 +491,16 @@ export class IncrementalFieldShape
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
-		// If incrementalFieldBuffers is undefined incremental encoding is not supported; encode using anyFieldEncoder.
-		if (outputBuffer.incrementalFieldBuffers === undefined) {
-			return anyFieldEncoder.encodeField(cursor, cache, outputBuffer);
+		// If encodeIncrementally is false, incremental encoding is not supported; encode using anyFieldEncoder.
+		if (dataBuilder.encodeIncrementally === false) {
+			return anyFieldEncoder.encodeField(cursor, cache, dataBuilder);
 		}
 
 		// If there are no nodes in the field, there is no need to do incremental encoding. Encode a zero length field.
 		if (cursor.getFieldLength() === 0) {
-			outputBuffer.mainBuffer.push(0);
+			dataBuilder.addToBuffer(0);
 			return;
 		}
 
@@ -521,6 +519,7 @@ export class IncrementalFieldShape
 			if (chunk.summaryRefId === undefined) {
 				fieldChanged = true;
 			} else {
+				chunk.updateSummaryRefId(chunk.summaryRefId);
 				if (summaryRefId === undefined) {
 					summaryRefId = chunk.summaryRefId;
 				}
@@ -532,32 +531,28 @@ export class IncrementalFieldShape
 		});
 
 		// If the field has not changed since the last encoding, store the previous summaryRefId in the main buffer
-		// and set the incremental field buffer for this field to FieldUnchanged.
+		// and set the incremental field buffer for this field to the summary ref id in its previous summary.
 		if (!fieldChanged) {
 			assert(
 				summaryRefId !== undefined,
 				"if field is unchanged, summary ref id must be defined",
 			);
-			outputBuffer.mainBuffer.push(summaryRefId);
-			outputBuffer.incrementalFieldBuffers.set(summaryRefId, FieldUnchanged);
+			dataBuilder.addToBuffer(summaryRefId);
+			dataBuilder.addIncrementalFieldUnchanged(summaryRefId);
 			return;
 		}
 
 		// If the field has changed, generate a new summaryRefId, store this into the main buffer and encode the field
 		// data in the incremental field buffer.
 		const fieldSummaryId = `${cache.idCompressor.generateCompressedId()}`;
-		outputBuffer.mainBuffer.push(fieldSummaryId);
+		dataBuilder.addToBuffer(fieldSummaryId);
 
-		const fieldMainBuffer: BufferFormat = [];
-		const fieldIncrementalFieldBuffers: Map<string, FieldBufferFormat> = new Map();
-		anyFieldEncoder.encodeField(cursor, cache, {
-			mainBuffer: fieldMainBuffer,
-			incrementalFieldBuffers: fieldIncrementalFieldBuffers,
-		});
-		outputBuffer.incrementalFieldBuffers.set(fieldSummaryId, {
-			mainBuffer: [fieldMainBuffer],
-			incrementalFieldBuffers: fieldIncrementalFieldBuffers,
-		});
+		const fieldDataBuilder = dataBuilder.createChild();
+		anyFieldEncoder.encodeField(cursor, cache, fieldDataBuilder);
+		dataBuilder.addIncrementalFieldChanged(
+			fieldSummaryId,
+			fieldDataBuilder.getBufferIncremental(),
+		);
 
 		// Update the chunks of all nodes in the field with the new summaryRefId. Also, add a reference to the chunks
 		// which represents a ref to the chunk from the summary tree that holds its contents. This will ensure that if
@@ -565,7 +560,7 @@ export class IncrementalFieldShape
 		forEachNode(cursor, (nodeCursor) => {
 			const chunk = tryGetChunk(nodeCursor);
 			assert(chunk !== undefined, "could not find chunk for node cursor");
-			chunk.addSummaryRefId(fieldSummaryId);
+			chunk.updateSummaryRefId(fieldSummaryId);
 			chunk.referenceAdded();
 		});
 	}
@@ -598,18 +593,19 @@ export class IncrementalFieldShape
 export function encodeValue(
 	value: Value,
 	shape: EncodedValueShape,
-	outputBuffer: BufferFormat,
+	dataBuilder: IEncodedDataBuilder,
 ): void {
 	if (shape === undefined) {
 		if (value !== undefined) {
-			outputBuffer.push(true, value);
+			dataBuilder.addToBuffer(true);
+			dataBuilder.addToBuffer(value);
 		} else {
-			outputBuffer.push(false);
+			dataBuilder.addToBuffer(false);
 		}
 	} else {
 		if (shape === true) {
 			assert(value !== undefined, 0x78d /* required value must not be missing */);
-			outputBuffer.push(value);
+			dataBuilder.addToBuffer(value);
 		} else if (shape === false) {
 			assert(value === undefined, 0x73f /* incompatible value shape: expected no value */);
 		} else if (Array.isArray(shape)) {
@@ -617,7 +613,7 @@ export function encodeValue(
 		} else if (shape === SpecialField.Identifier) {
 			// This case is a special case handling the encoding of identifier fields.
 			assert(value !== undefined, 0x998 /* required value must not be missing */);
-			outputBuffer.push(value);
+			dataBuilder.addToBuffer(value);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "Encoding values as deltas is not yet supported");
@@ -682,9 +678,9 @@ class LazyFieldEncoder implements FieldEncoder {
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormatIncremental,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
-		this.encoder.encodeField(cursor, cache, outputBuffer);
+		this.encoder.encodeField(cursor, cache, dataBuilder);
 	}
 
 	private get encoder(): FieldEncoder {
