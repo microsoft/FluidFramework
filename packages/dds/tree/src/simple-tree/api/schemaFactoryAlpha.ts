@@ -325,7 +325,7 @@ export class SchemaFactoryAlpha<
 	 * @param allowedTypes - The types that may appear in the record.
 	 *
 	 * @remarks
-	 * The identifier for this Record is defined as a function of the provided types.
+	 * The identifier for this record is defined as a function of the provided types.
 	 * It is still scoped to this `SchemaFactory`, but multiple calls with the same arguments will return the same
 	 * schema object, providing somewhat structural typing.
 	 * This does not support recursive types.
