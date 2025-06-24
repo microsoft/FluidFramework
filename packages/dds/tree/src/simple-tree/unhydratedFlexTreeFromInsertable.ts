@@ -39,17 +39,24 @@ import {
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
 } from "./core/index.js";
+import { getUnhydratedContext } from "./createContext.js";
+
 // Required to prevent the introduction of new circular dependencies
 // TODO: Having the schema provide their own policy functions for compatibility which
-// unhydratedFlexTreeFromInsertable invokes instead of manually handling each kind would remove this bad
+// `unhydratedFlexTreeFromInsertable` invokes instead of manually handling each kind would remove this bad
 // dependency, and reduce coupling.
-// eslint-disable-next-line import/no-internal-modules
-import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
+/* eslint-disable import/no-internal-modules */
+import { isArrayNodeSchema, type ArrayNodeSchema } from "./node-kinds/array/index.js";
+import { isMapNodeSchema, type MapNodeSchema } from "./node-kinds/map/index.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchema,
+	type ObjectNodeSchemaInternalData,
+} from "./node-kinds/object/objectNodeTypes.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-internal-modules
 import { createField, type UnhydratedFlexTreeField } from "./core/unhydratedFlexTree.js";
+/* eslint-enable import/no-internal-modules */
 import { convertFieldKind } from "./toStoredSchema.js";
-import { getUnhydratedContext } from "./createContext.js";
 
 /**
  * Module notes:
@@ -139,12 +146,15 @@ function unhydratedFlexTreeFromInsertableNode(
 			result = leafToFlexContent(data, schema, allowedTypes);
 			break;
 		case NodeKind.Array:
+			assert(isArrayNodeSchema(schema), 0x922 /* Expected an array schema. */);
 			result = arrayToFlexContent(data, schema);
 			break;
 		case NodeKind.Map:
+			assert(isMapNodeSchema(schema), 0x923 /* Expected a Map schema. */);
 			result = mapToFlexContent(data, schema);
 			break;
 		case NodeKind.Object:
+			assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 			result = objectToFlexContent(data, schema);
 			break;
 		default:
@@ -265,8 +275,7 @@ function arrayChildToFlexTree(
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
  */
-function arrayToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
-	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
+function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
@@ -308,8 +317,7 @@ function arrayToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexC
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
  */
-function mapToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
-	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
+function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
@@ -355,8 +363,10 @@ function mapToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexCon
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
  */
-function objectToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
-	assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
+function objectToFlexContent(
+	data: FactoryContent,
+	schema: ObjectNodeSchema & ObjectNodeSchemaInternalData,
+): FlexContent {
 	if (
 		typeof data !== "object" ||
 		data === null ||
