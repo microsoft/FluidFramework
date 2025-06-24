@@ -46,8 +46,8 @@ import { getUnhydratedContext } from "./createContext.js";
 // `unhydratedFlexTreeFromInsertable` invokes instead of manually handling each kind would remove this bad
 // dependency, and reduce coupling.
 /* eslint-disable import/no-internal-modules */
-import { isArrayNodeSchema, type ArrayNodeSchema } from "./node-kinds/array/index.js";
-import { isMapNodeSchema, type MapNodeSchema } from "./node-kinds/map/index.js";
+import { isArrayNodeSchema, type ArrayNodeSchema } from "./node-kinds/array/arrayNodeTypes.js";
+import { isMapNodeSchema, type MapNodeSchema } from "./node-kinds/map/mapNodeTypes.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
