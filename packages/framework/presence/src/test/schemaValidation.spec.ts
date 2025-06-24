@@ -47,6 +47,128 @@ interface TestData {
 	num: number;
 }
 
+/**
+ * Helper functions for creating test signals
+ */
+interface DatastoreUpdateSignalParams {
+	clientId: string;
+	sendTimestamp: number;
+	avgLatency: number;
+	workspaceData: Record<string, unknown>;
+}
+
+function createDatastoreUpdateSignal(params: DatastoreUpdateSignalParams) {
+	return {
+		type: "Pres:DatastoreUpdate" as const,
+		clientId: params.clientId,
+		content: {
+			sendTimestamp: params.sendTimestamp,
+			avgLatency: params.avgLatency,
+			data: {
+				...systemWorkspace,
+				...params.workspaceData,
+			},
+		},
+	};
+}
+
+interface StateWorkspaceSignalParams {
+	/**
+	 * The name of the state workspace.
+	 */
+	stateName: string;
+	attendeeId: string;
+	value: TestData;
+	rev?: number;
+	timestamp?: number;
+}
+
+function createStateWorkspaceSignal(params: StateWorkspaceSignalParams) {
+	return {
+		"s:name:testStateWorkspace": {
+			[params.stateName]: {
+				[params.attendeeId]: {
+					rev: params.rev ?? 0,
+					timestamp: params.timestamp ?? 1030,
+					value: toOpaqueJson(params.value),
+				},
+			},
+		},
+	};
+}
+
+interface MapStateSignalParams extends StateWorkspaceSignalParams {
+	/**
+	 * The name of the state workspace.
+	 */
+	// stateName: string;
+	// attendeeId: string;
+	key: string;
+	// value: TestData;
+	// rev?: number;
+	// timestamp?: number;
+}
+
+function createMapStateSignal(params: MapStateSignalParams) {
+	return {
+		"s:name:testStateWorkspace": {
+			count: {
+				[params.attendeeId]: {
+					rev: params.rev ?? 0,
+					items: {
+						[params.key]: {
+							rev: params.rev ?? 0,
+							timestamp: params.timestamp ?? 1030,
+							value: toOpaqueJson(params.value),
+						},
+					},
+				},
+			},
+		},
+	};
+}
+
+interface ValidatorTestParams {
+	getRemoteValue: () => TestData | undefined;
+	validatorFunction: ReturnType<typeof createSpiedValidator<TestData>>;
+	expectedCallCount: number;
+	expectedValue: TestData | undefined;
+}
+
+/**
+ * Runs a test against a validator by getting the value and matching the resulting data and validator call counts
+ * against expectations.
+ */
+function runValidatorTest(params: ValidatorTestParams): void {
+	const initialValue = params.getRemoteValue();
+	assert.deepEqual(initialValue, params.expectedValue);
+	assert.equal(params.validatorFunction.callCount, params.expectedCallCount);
+}
+
+interface MultipleCallsTestParams {
+	getRemoteValue: () => TestData | undefined;
+	expectedValue: TestData | undefined;
+	validatorFunction: ReturnType<typeof createSpiedValidator<TestData>>;
+}
+
+/**
+ * Runs a test against a validator by getting the value multiple times and verifying that the validator is not called
+ * multiple times.
+ */
+function runMultipleCallsTest(params: MultipleCallsTestParams): void {
+	// First call should invoke validator
+	const firstValue = params.getRemoteValue();
+	assert.deepEqual(firstValue, params.expectedValue);
+	assert.equal(params.validatorFunction.callCount, 1);
+
+	// Subsequent calls should not invoke validator when data is unchanged
+	const secondValue = params.getRemoteValue();
+	const thirdValue = params.getRemoteValue();
+	assert.deepEqual(secondValue, params.expectedValue);
+	assert.deepEqual(thirdValue, params.expectedValue);
+	assert.equal(params.validatorFunction.callCount, 1);
+}
+
 describe("Presence", () => {
 	let attendee2: Attendee<AttendeeId>;
 
@@ -74,7 +196,7 @@ describe("Presence", () => {
 			// Create a session and join attendee1
 			presence = prepareConnectedPresence(runtime, attendeeId1, connectionId1, clock, logger);
 
-			// Join attendee2 to the session; tests will act as attendee2
+			// Join attendee2 to the session. Tests will act as attendee2.
 			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger);
 
 			attendee2 = presence.attendees.getAttendee(attendeeId2);
@@ -115,8 +237,8 @@ describe("Presence", () => {
 			}>;
 
 			beforeEach(() => {
+				// Setup workspace initialization signal
 				runtime.signalsExpected.push([
-					// client2 workspace initialization signal
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
@@ -124,15 +246,11 @@ describe("Presence", () => {
 							avgLatency: 10,
 							data: {
 								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									"count": {
-										[attendeeId2]: {
-											"rev": 0,
-											"timestamp": 1030,
-											"value": toOpaqueJson({ "num": 0 }),
-										},
-									},
-								},
+								...createStateWorkspaceSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									value: { num: 0 },
+								}),
 							},
 						},
 					},
@@ -149,29 +267,20 @@ describe("Presence", () => {
 
 			describe("validator", () => {
 				beforeEach(() => {
+					// Process a valid update signal
 					presence.processSignal(
 						[],
-						// Signal is equivalent to `count.local = { num: 11 };`
-						{
-							"type": "Pres:DatastoreUpdate",
-							"clientId": connectionId2,
-							"content": {
-								"sendTimestamp": 1030,
-								"avgLatency": 10,
-								"data": {
-									...systemWorkspace,
-									"s:name:testStateWorkspace": {
-										"count": {
-											[attendeeId2]: {
-												"rev": 1,
-												"timestamp": 1030,
-												"value": toOpaqueJson({ "num": 11 }),
-											},
-										},
-									},
-								},
-							},
-						},
+						createDatastoreUpdateSignal({
+							clientId: connectionId2,
+							sendTimestamp: 1030,
+							avgLatency: 10,
+							workspaceData: createStateWorkspaceSignal({
+								stateName: "count",
+								attendeeId: attendeeId2,
+								rev: 1,
+								value: { num: 11 },
+							}),
+						}),
 						false,
 					);
 				});
@@ -180,77 +289,69 @@ describe("Presence", () => {
 					it("by .getRemote()", () => {
 						// Calling getRemote should not invoke the validator (only a value read will).
 						stateWorkspace.states.count.getRemote(attendee2);
-
 						assert.equal(validatorFunction.callCount, 0);
-					});
-
-					it("by local .value()", () => {
-						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
-						// Reading the data should cause the validator to get called once.
-						const value = remoteData.value();
-
-						assert.equal(value?.num, 11);
-						assert.equal(validatorFunction.callCount, 1);
 					});
 				});
 
 				describe("is called", () => {
-					it("on first .value() call", () => {
+					it("on first value() call", () => {
 						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
-						const value = remoteData.value();
-
-						assert.equal(value?.num, 11);
-						assert.equal(validatorFunction.callCount, 1);
+						runValidatorTest({
+							getRemoteValue: () => remoteData.value(),
+							expectedCallCount: 1,
+							expectedValue: { num: 11 },
+							validatorFunction,
+						});
 					});
 
-					it("only once for multiple .value() calls on unchanged data", () => {
+					it("only once for multiple value() calls on unchanged data", () => {
 						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
-						// Reading the data should cause the validator to get called once.
-						assert.equal(remoteData.value()?.num, 11);
-						assert.equal(validatorFunction.callCount, 1);
-
-						// Subsequent reads should not call the validator when there is no new data.
-						assert.equal(remoteData.value()?.num, 11);
-						assert.equal(validatorFunction.callCount, 1);
+						runMultipleCallsTest({
+							getRemoteValue: () => remoteData.value(),
+							expectedValue: { num: 11 },
+							validatorFunction,
+						});
 					});
 				});
 
-				it("returns undefined through proxied value accessor when remote data is invalid", () => {
+				it("returns undefined when remote data is invalid", () => {
+					// Send invalid data
 					presence.processSignal(
 						[],
-						// Send invalid data. Equivalent to `count.local = "string" as unknown as TestData;`
-						{
-							"type": "Pres:DatastoreUpdate",
-							"clientId": connectionId2,
-							"content": {
-								"sendTimestamp": 1030,
-								"avgLatency": 11,
-								"data": {
-									...systemWorkspace,
-									"s:name:testStateWorkspace": {
-										"count": {
-											[attendeeId2]: {
-												"rev": 2,
-												"timestamp": 1030,
-												"value": toOpaqueJson("string"),
-											},
-										},
-									},
-								},
-							},
-						},
+						createDatastoreUpdateSignal({
+							clientId: connectionId2,
+							sendTimestamp: 1030,
+							avgLatency: 10,
+							workspaceData: createStateWorkspaceSignal({
+								stateName: "count",
+								attendeeId: attendeeId2,
+								value: "string" as unknown as TestData,
+								rev: 2,
+							}),
+						}),
 						false,
 					);
 
 					const remoteData = stateWorkspace.states.count.getRemote(attendee2);
 
-					assert.equal(validatorFunction.callCount, 0, "call count should be 0");
-					assert.equal(remoteData.value(), undefined);
-					assert.equal(validatorFunction.callCount, 1, "call count should be 1");
+					// Validator should not be called initially
+					assert.equal(
+						validatorFunction.callCount,
+						0,
+						"validator should not be called initially",
+					);
 
-					// Subsequent calls do not invoke validator
+					// First value() call should invoke validator and return undefined
+					assert.equal(remoteData.value(), undefined);
+					assert.equal(validatorFunction.callCount, 1, "validator should be called once");
+
+					// Subsequent calls should not invoke validator again
 					remoteData.value();
-					assert.equal(validatorFunction.callCount, 1, "call count should still be 1");
+					assert.equal(
+						validatorFunction.callCount,
+						1,
+						"validator should still be called only once",
+					);
 				});
 			});
 		});
@@ -265,34 +366,27 @@ describe("Presence", () => {
 			}>;
 
 			beforeEach(() => {
+				// Add expected workspace initialization signal
 				runtime.signalsExpected.push([
-					// Workspace initialization signal
 					{
 						type: "Pres:DatastoreUpdate",
 						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
+							sendTimestamp: 1030,
+							avgLatency: 10,
+							data: {
 								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									count: {
-										[attendeeId2]: {
-											rev: 0,
-											items: {
-												key1: {
-													rev: 0,
-													timestamp: 1030,
-													value: toOpaqueJson({ "num": 0 }),
-												},
-											},
-										},
-									},
-								},
+								...createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									key: "key1",
+									value: { num: 0 },
+								}),
 							},
 						},
 					},
 				]);
 
+				// initialize the state workspace, which will process the signal above.
 				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latestMap({
 						local: { "key1": { num: 0 } },
@@ -301,49 +395,34 @@ describe("Presence", () => {
 					}),
 				});
 
+				// Process signal with new value
 				presence.processSignal(
 					[],
-					// Equivalent to `stateWorkspace.states.count.local.set("key1", { num: 84 });`
-					{
-						type: "Pres:DatastoreUpdate",
+					createDatastoreUpdateSignal({
 						clientId: connectionId2,
-						content: {
-							"sendTimestamp": 1030,
-							"avgLatency": 10,
-							"data": {
-								...systemWorkspace,
-								"s:name:testStateWorkspace": {
-									count: {
-										[attendeeId2]: {
-											rev: 1,
-											items: {
-												key1: {
-													rev: 1,
-													timestamp: 1030,
-													value: toOpaqueJson({ "num": 84 }),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+						sendTimestamp: 1030,
+						avgLatency: 10,
+						workspaceData: createMapStateSignal({
+							stateName: "count",
+							attendeeId: attendeeId2,
+							key: "key1",
+							value: { num: 84 },
+							rev: 1,
+						}),
+					}),
 					false,
 				);
 			});
 
 			describe("validator", () => {
 				describe("is not called", () => {
-					it("when referencing a local key value", () => {
-						// Getting a local value should not call the validator
+					it("when accessing local key value", () => {
 						assert.equal(stateWorkspace.states.count.local.get("key1")?.num, 84);
 						assert.equal(validatorFunction.callCount, 0);
 					});
 
-					it("when referencing a map key", () => {
+					it("when calling get() on remote map", () => {
 						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
-
 						remoteData.get("key1");
 						assert.equal(validatorFunction.callCount, 0);
 					});
@@ -352,22 +431,21 @@ describe("Presence", () => {
 				describe("is called", () => {
 					it("once when key.value() is called", () => {
 						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
-
-						// Reading an individual map item's value should cause the validator to get called once.
-						assert.equal(remoteData.get("key1")?.value()?.num, 84);
-						assert.equal(validatorFunction.callCount, 1);
+						runValidatorTest({
+							getRemoteValue: () => remoteData.get("key1")?.value(),
+							expectedCallCount: 1,
+							expectedValue: { num: 84 },
+							validatorFunction,
+						});
 					});
 
 					it("only once for multiple key.value() calls on unchanged data", () => {
 						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
-
-						let keyData = remoteData.get("key1")?.value();
-						assert.equal(keyData?.num, 84);
-
-						// Subsequent reads should not call the validator when there is no new data.
-						keyData = remoteData.get("key1")?.value();
-						keyData = remoteData.get("key1")?.value();
-						assert.equal(validatorFunction.callCount, 1);
+						runMultipleCallsTest({
+							getRemoteValue: () => remoteData.get("key1")?.value(),
+							expectedValue: { num: 84 },
+							validatorFunction,
+						});
 					});
 				});
 			});
