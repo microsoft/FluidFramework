@@ -275,7 +275,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
 	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
-		this.kernel.tryResubmitMessage(content as IMapOperation, localOpMetadata as number);
+		this.kernel.tryResubmitMessage(content as IMapOperation, localOpMetadata);
 	}
 
 	/**
@@ -299,7 +299,7 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 				this.kernel.tryProcessMessage(
 					message.contents as IMapOperation,
 					local,
-					localOpMetadata as number | undefined,
+					localOpMetadata,
 				),
 				0xab2 /* Map received an unrecognized op, possibly from a newer version */,
 			);
@@ -310,6 +310,6 @@ export class SharedMap extends SharedObject<ISharedMapEvents> implements IShared
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
 	protected override rollback(content: unknown, localOpMetadata: unknown): void {
-		this.kernel.rollback(content as IMapOperation, localOpMetadata);
+		this.kernel.rollback(content, localOpMetadata);
 	}
 }

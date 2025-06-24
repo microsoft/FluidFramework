@@ -379,12 +379,12 @@ export class MapKernel {
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(op: IMapOperation, localOpMetadata: number): boolean {
+	public tryResubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
 		}
-		handler.resubmit(op, localOpMetadata);
+		handler.resubmit(op, localOpMetadata as number);
 		return true;
 	}
 
@@ -427,13 +427,13 @@ export class MapKernel {
 	public tryProcessMessage(
 		op: IMapOperation,
 		local: boolean,
-		localOpMetadata: number | undefined,
+		localOpMetadata: unknown,
 	): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
 		}
-		handler.process(op, local, localOpMetadata);
+		handler.process(op, local, localOpMetadata as number | undefined);
 		return true;
 	}
 
@@ -442,7 +442,8 @@ export class MapKernel {
 	 * @param op - The operation to rollback
 	 * @param localOpMetadata - The local metadata associated with the op.
 	 */
-	public rollback(op: IMapOperation, localOpMetadata: unknown): void {
+	public rollback(op: unknown, localOpMetadata: unknown): void {
+		const mapOp: IMapOperation = op as IMapOperation;
 		const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.pop();
 		assert(
 			mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
@@ -452,7 +453,7 @@ export class MapKernel {
 			throw new Error("Invalid mapLocalOpMetadata");
 		}
 
-		if (op.type === "clear" && mapLocalOpMetadata.type === "clear") {
+		if (mapOp.type === "clear" && mapLocalOpMetadata.type === "clear") {
 			if (mapLocalOpMetadata.previousMap === undefined) {
 				throw new Error("Cannot rollback without previous map");
 			}
@@ -467,25 +468,25 @@ export class MapKernel {
 			) {
 				throw new Error("Rollback op does match last clear");
 			}
-		} else if (op.type === "delete" || op.type === "set") {
+		} else if (mapOp.type === "delete" || mapOp.type === "set") {
 			if (mapLocalOpMetadata.type === "add") {
-				this.deleteCore(op.key, true);
+				this.deleteCore(mapOp.key, true);
 			} else if (
 				mapLocalOpMetadata.type === "edit" &&
 				mapLocalOpMetadata.previousValue !== undefined
 			) {
-				this.setCore(op.key, mapLocalOpMetadata.previousValue, true);
+				this.setCore(mapOp.key, mapLocalOpMetadata.previousValue, true);
 			} else {
 				throw new Error("Cannot rollback without previous value");
 			}
 
-			const pendingMessageIds = this.pendingKeys.get(op.key);
+			const pendingMessageIds = this.pendingKeys.get(mapOp.key);
 			const lastPendingMessageId = pendingMessageIds?.pop();
 			if (!pendingMessageIds || lastPendingMessageId !== mapLocalOpMetadata.pendingMessageId) {
 				throw new Error("Rollback op does not match last pending");
 			}
 			if (pendingMessageIds.length === 0) {
-				this.pendingKeys.delete(op.key);
+				this.pendingKeys.delete(mapOp.key);
 			}
 		} else {
 			throw new Error("Unsupported op for rollback");
