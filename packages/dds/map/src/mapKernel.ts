@@ -622,7 +622,6 @@ export class MapKernel {
 						mapLocalOpMetadata.pendingMessageId === localOpMetadata,
 						"Processing unexpected local clear op",
 					);
-					// TODO: Do we need to double-track clear messages?
 					const pendingClearMessageId = this.pendingClearMessageIds.shift();
 					assert(
 						pendingClearMessageId === localOpMetadata,
@@ -637,14 +636,15 @@ export class MapKernel {
 				this.clearCore(local);
 			},
 			resubmit: (op: IMapClearOperation, localOpMetadata: number) => {
-				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+				const index = this.pendingMapLocalOpMetadata.findIndex(
+					(metadata) => metadata.pendingMessageId === localOpMetadata,
+				);
+				assert(index !== -1, "Resubmitting unexpected local clear op");
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- asserted that the item was found above
+				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.splice(index, 1)[0]!;
 				assert(
 					isClearLocalOpMetadata(mapLocalOpMetadata),
 					0x2fc /* Invalid localOpMetadata for clear */,
-				);
-				assert(
-					mapLocalOpMetadata.pendingMessageId === localOpMetadata,
-					"Resubmitting unexpected local clear op",
 				);
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const pendingClearMessageId = this.pendingClearMessageIds.shift();
@@ -671,11 +671,12 @@ export class MapKernel {
 				this.deleteCore(op.key, local);
 			},
 			resubmit: (op: IMapDeleteOperation, localOpMetadata: number) => {
-				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
-				assert(
-					mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
-					"Resubmitting unexpected local delete op",
+				const index = this.pendingMapLocalOpMetadata.findIndex(
+					(metadata) => metadata.pendingMessageId === localOpMetadata,
 				);
+				assert(index !== -1, "Resubmitting unexpected local delete op");
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- asserted that the item was found above
+				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.splice(index, 1)[0]!;
 				this.resubmitMapKeyMessage(op, mapLocalOpMetadata);
 			},
 		});
@@ -698,11 +699,12 @@ export class MapKernel {
 				this.setCore(op.key, { value: op.value.value }, local);
 			},
 			resubmit: (op: IMapSetOperation, localOpMetadata: number) => {
-				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
-				assert(
-					mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
-					"Resubmitting unexpected local set op",
+				const index = this.pendingMapLocalOpMetadata.findIndex(
+					(metadata) => metadata.pendingMessageId === localOpMetadata,
 				);
+				assert(index !== -1, "Resubmitting unexpected local set op");
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- asserted that the item was found above
+				const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.splice(index, 1)[0]!;
 				this.resubmitMapKeyMessage(op, mapLocalOpMetadata);
 			},
 		});
