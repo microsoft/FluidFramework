@@ -40,6 +40,7 @@ import {
 	UnhydratedSequenceField,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
+import { convertFieldKind } from "./toStoredSchema.js";
 
 // Required to prevent the introduction of new circular dependencies
 // TODO: Having the schema provide their own policy functions for compatibility which
@@ -56,7 +57,6 @@ import {
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { createField, type UnhydratedFlexTreeField } from "./core/unhydratedFlexTree.js";
 /* eslint-enable import/no-internal-modules */
-import { convertFieldKind } from "./toStoredSchema.js";
 
 /**
  * Module notes:
