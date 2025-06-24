@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -16,7 +16,12 @@ import {
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../node-kinds/index.js";
+import {
+	isObjectNodeSchema,
+	isRecordNodeSchema,
+	type ObjectNodeSchema,
+	type RecordNodeSchema,
+} from "../node-kinds/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
@@ -268,8 +273,9 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 	const checked: Set<TreeNodeSchema> = new Set();
 	const maps: TreeNodeSchema[] = [];
 	const arrays: TreeNodeSchema[] = [];
-
+	const records: RecordNodeSchema[] = [];
 	const objects: ObjectNodeSchema[] = [];
+
 	// Map from key to schema using that key
 	const allObjectKeys: Map<string, Set<TreeNodeSchema>> = new Map();
 
@@ -288,9 +294,11 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 			}
 		} else if (schema.kind === NodeKind.Array) {
 			arrays.push(schema);
-		} else {
-			assert(schema.kind === NodeKind.Map, 0x9e7 /* invalid schema */);
+		} else if (schema.kind === NodeKind.Map) {
 			maps.push(schema);
+		} else {
+			assert(isRecordNodeSchema(schema), 0x9e7 /* invalid schema */);
+			records.push(schema);
 		}
 	}
 
@@ -306,15 +314,55 @@ export function checkUnion(union: Iterable<TreeNodeSchema>, errors: string[]): v
 		);
 	}
 
+	if (records.length > 1) {
+		errors.push(
+			`More than one kind of record allowed within union (${formatTypes(records)}). This would require type disambiguation which is not supported by records during import or export.`,
+		);
+	}
+
 	if (maps.length > 0 && arrays.length > 0) {
 		errors.push(
 			`Both a map and an array allowed within union (${formatTypes([...arrays, ...maps])}). Both can be implicitly constructed from iterables like arrays, which are ambiguous when the array is empty.`,
 		);
 	}
 
-	if (objects.length > 0 && maps.length > 0) {
+	/**
+	 * Constructs a sentence-formatted list of entries, using commas and "and" as appropriate.
+	 */
+	function sentenceList(entries: readonly string[]): string {
+		switch (entries.length) {
+			case 0: {
+				return "";
+			}
+			case 1: {
+				return entries[0] ?? oob();
+			}
+			case 2: {
+				return `${entries[0] ?? oob()} and ${entries[1] ?? oob()}`;
+			}
+			default: {
+				return `${entries.slice(0, -1).join(", ")}, and ${entries[entries.length - 1]}`;
+			}
+		}
+	}
+
+	if (
+		(objects.length > 0 ? 1 : 0) + (maps.length > 0 ? 1 : 0) + (records.length > 0 ? 1 : 0) >
+		1
+	) {
+		const nodeKindListEntries = [];
+		if (objects.length > 0) {
+			nodeKindListEntries.push("objects");
+		}
+		if (maps.length > 0) {
+			nodeKindListEntries.push("maps");
+		}
+		if (records.length > 0) {
+			nodeKindListEntries.push("records");
+		}
+		const nodeKindListString = sentenceList(nodeKindListEntries);
 		errors.push(
-			`Both a object and a map allowed within union (${formatTypes([...objects, ...maps])}). Both can be constructed from objects and can be ambiguous.`,
+			`A combination of ${nodeKindListString} is allowed within union (${formatTypes([...objects, ...maps, ...records])}). These can be constructed from objects and can be ambiguous.`,
 		);
 	}
 
