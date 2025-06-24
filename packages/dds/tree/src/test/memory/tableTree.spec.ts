@@ -43,12 +43,12 @@ function createUndoBenchmark({
 	operation: (tree: TableTreeDefinition, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
-		readonly title = title;
+		public readonly title = title;
 		private localTree: TableTreeDefinition | undefined;
 
-		async run(): Promise<void> {
+		public async run(): Promise<void> {
 			assert(
-				this.localTree !== undefined && this.localTree.undoStack !== undefined,
+				this.localTree?.undoStack !== undefined,
 				"undoStack or localTree is not initialized",
 			);
 			for (let i = 0; i < stackCount; i++) {
@@ -58,7 +58,7 @@ function createUndoBenchmark({
 			}
 		}
 
-		beforeIteration(): void {
+		public beforeIteration(): void {
 			this.localTree = createTableTree(tableSize, initialValue);
 			operation(this.localTree, operationCount);
 		}
@@ -84,12 +84,12 @@ function createRedoBenchmark({
 	operation: (tree: TableTreeDefinition, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
-		readonly title = title;
+		public readonly title = title;
 		private localTree: TableTreeDefinition | undefined;
 
-		async run(): Promise<void> {
+		public async run(): Promise<void> {
 			assert(
-				this.localTree !== undefined && this.localTree.redoStack !== undefined,
+				this.localTree?.redoStack !== undefined,
 				"redoStack or localTree is not initialized",
 			);
 
@@ -100,7 +100,7 @@ function createRedoBenchmark({
 			}
 		}
 
-		beforeIteration(): void {
+		public beforeIteration(): void {
 			this.localTree = createTableTree(tableSize, initialValue);
 			operation(this.localTree, operationCount);
 			for (let i = 0; i < stackCount; i++) {
@@ -158,10 +158,10 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for inserting a column in the middle for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title = `Insert a column in the middle ${count} times`;
+							public readonly title = `Insert a column in the middle ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -170,7 +170,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
@@ -217,10 +217,10 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for inserting a column in the middle for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title = `Insert a column in the middle ${count} times`;
+							public readonly title = `Insert a column in the middle ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -229,7 +229,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
@@ -276,10 +276,10 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for inserting a column and a row in the middle for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title = `Insert a column and a row in the middle ${count} times`;
+							public readonly title = `Insert a column and a row in the middle ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -290,7 +290,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
@@ -344,10 +344,10 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for removing a column in the middle for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title = `Remove a column in the middle ${count} times`;
+							public readonly title = `Remove a column in the middle ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -355,7 +355,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
@@ -400,10 +400,10 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for removing a row in the middle for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title = `Remove a row in the middle ${count} times`;
+							public readonly title = `Remove a row in the middle ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -411,7 +411,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
@@ -456,10 +456,10 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for removing a column and a row in the middle for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title = `Remove a column and a row in the middle ${count} times`;
+							public readonly title = `Remove a column and a row in the middle ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -468,7 +468,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
@@ -515,11 +515,11 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for inserting a column and a row in the middle and removing them right away for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title =
+							public readonly title =
 								`Insert a column and a row in the middle and remove right away ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -532,7 +532,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
@@ -587,10 +587,10 @@ describe("SharedTree memory usage", () => {
 					// Test the memory usage of the SharedTree for setting a cell value in the middle for a given number of times.
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
-							readonly title = `Set cell value in the middle ${count} times`;
+							public readonly title = `Set cell value in the middle ${count} times`;
 							private localTree: TableTreeDefinition | undefined;
 
-							async run(): Promise<void> {
+							public async run(): Promise<void> {
 								assert(this.localTree !== undefined, "localTree is not initialized");
 								const { table } = this.localTree;
 								for (let i = 0; i < count; i++) {
@@ -604,7 +604,7 @@ describe("SharedTree memory usage", () => {
 								}
 							}
 
-							beforeIteration(): void {
+							public beforeIteration(): void {
 								this.localTree = createTableTree(tableSize, cellValue);
 							}
 						})(),
