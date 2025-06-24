@@ -286,10 +286,11 @@ export function isOdspCompatCompliant(config: CompatConfig): boolean {
 function genCompatConfig(
 	createVersion: string,
 	loadVersion: string,
-	deltas: string[],
+	createDelta: string,
+	loadDelta: string,
 ): CompatConfig {
 	return {
-		name: `compat cross-client - create with ${createVersion} (${deltas[0]}) + load with ${loadVersion} (${deltas[1]})`,
+		name: `compat cross-client - create with ${createVersion} (${createDelta}) + load with ${loadVersion} (${loadDelta})`,
 		kind: CompatKind.CrossClient,
 		// Note: `compatVersion` is used to determine what versions need to be installed.
 		// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
@@ -314,18 +315,15 @@ function genCompatConfig(
  * Fast train customers integrate most minor releases quickly and saturate on a roughly 3-month
  * cadence (this could be subject to change in the future).
  * Slow train customers mainly integrate public major releases and may take much longer to saturate
- * on any given release.
+ * on any given release. Ideally, the slow train releases would also be on a regular time-based cadence, but
+ * public major releases are not currently on a fixed schedule. This may change in the future.
  * We want to be able to test cross-client compat for both types of customers, so we generate permutations for
  * N/N-1 and N/N-2 for both fast and slow trains.
  *
  * @internal
  */
 export const genCrossClientCompatConfig = (): CompatConfig[] => {
-	const currentVersion = getRequestedVersion(
-		pkgVersion,
-		0,
-		false, // adjustMajorPublic = false
-	);
+	const currentVersion = getRequestedVersion(pkgVersion, 0, false /* adjustMajorPublic */);
 
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
@@ -338,11 +336,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
 		.forEach((delta) => {
-			const v = getRequestedVersion(
-				pkgVersion,
-				delta,
-				false, // adjustMajorPublic = false
-			);
+			const v = getRequestedVersion(pkgVersion, delta, false /* adjustMajorPublic */);
 			if (semver.gte(v, "1.0.0")) {
 				deltaVersions.set(v, `N${delta} fast train`);
 			}
@@ -353,11 +347,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
 		.forEach((delta) => {
-			const v = getRequestedVersion(
-				pkgVersion,
-				delta,
-				true, // adjustMajorPublic = true
-			);
+			const v = getRequestedVersion(pkgVersion, delta, true /* adjustMajorPublic */);
 			if (semver.gte(v, "1.0.0")) {
 				if (deltaVersions.has(v)) {
 					deltaVersions.set(v, `${deltaVersions.get(v)}/N${delta} slow train`);
@@ -381,10 +371,10 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	// Build all combos of (current version, prior version) & (prior version, current version)
 	const configs: CompatConfig[] = [];
 	for (const [v, delta] of deltaVersions) {
-		configs.push(genCompatConfig(currentVersion, v, ["N", delta]));
+		configs.push(genCompatConfig(currentVersion, v, "N", delta));
 	}
 	for (const [v, delta] of deltaVersions) {
-		configs.push(genCompatConfig(v, currentVersion, [delta, "N"]));
+		configs.push(genCompatConfig(v, currentVersion, delta, "N"));
 	}
 
 	return configs;
