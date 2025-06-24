@@ -26,7 +26,6 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 			description:
 				"The version for which to generate the changelog. If this is not provided, the version of the package according to package.json will be used.",
 		}),
-		// install: checkFlags.install,
 		...BaseCommandWithBuildProject.flags,
 	} as const;
 
