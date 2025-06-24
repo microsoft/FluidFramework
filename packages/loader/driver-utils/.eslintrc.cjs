@@ -19,15 +19,6 @@ module.exports = {
 			rules: {
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
 			},
-		},
-		{
-			// Ignore dist and lib folders for linting
-			files: ["dist/**", "lib/**"],
-			rules: {},
-		},
-		{
-			files: ["src/**/*.ts"],
-			rules: {},
-		},
+		}
 	],
 };

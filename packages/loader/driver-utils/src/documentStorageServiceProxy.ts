@@ -36,7 +36,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 	public async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null -- legacy API compatibility
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		return this.internalStorageService.getSnapshotTree(version, scenarioName);
 	}
@@ -51,7 +51,7 @@ export class DocumentStorageServiceProxy implements IDocumentStorageService {
 	}
 
 	public async getVersions(
-		versionId: string | null, // eslint-disable-line @rushstack/no-new-null -- legacy API compatibility
+		versionId: string | null, // eslint-disable-line @rushstack/no-new-null
 		count: number,
 		scenarioName?: string | undefined,
 		fetchSource?: FetchSource | undefined,

@@ -317,7 +317,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		summary: ISummaryTree,
 	): { [path: string]: SummaryObject } | undefined {
 		const metadataHolder = this.findMetadataHolderSummary(summary);
-		assert(metadataHolder !== undefined, "metadataHolder must be a non-null object");
+		assert(metadataHolder !== undefined, 0x6f8 /* metadataHolder must be a non-null object */);
 		const metadataHolderTree = metadataHolder.tree;
 		if (metadataHolderTree === undefined) {
 			return undefined;
@@ -418,14 +418,14 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	public override async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null -- legacy API compatibility
+		// eslint-disable-next-line @rushstack/no-new-null
 	): Promise<ISnapshotTree | null> {
 		const snapshotTree = await super.getSnapshotTree(version, scenarioName);
 		this._isCompressionEnabled =
 			snapshotTree !== undefined &&
 			snapshotTree !== null &&
 			DocumentStorageServiceCompressionAdapter.hasCompressionMarkup(snapshotTree);
-		// eslint-disable-next-line unicorn/no-null -- legacy API compatibility, returning null as per interface contract
+		// eslint-disable-next-line unicorn/no-null
 		return snapshotTree ?? null;
 	}
 
