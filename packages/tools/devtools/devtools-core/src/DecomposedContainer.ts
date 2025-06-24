@@ -28,7 +28,7 @@ export interface DecomposedIContainer extends IEventProvider<IContainerEvents> {
 
 	/**
 	 * The unique identifier for the current client in this container session.
-	 * @remarks Optional since it is also optional in {@link @fluidframework/container-definitions/internal#IContainer}
+	 * @remarks Optional since it is also optional in {@link @fluidframework/container-definitions#IContainer}
 	 */
 	readonly clientId?: string | undefined;
 
