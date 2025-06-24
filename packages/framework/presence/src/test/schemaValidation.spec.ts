@@ -97,31 +97,48 @@ function createStateWorkspaceSignal(params: StateWorkspaceSignalParams) {
 	};
 }
 
-interface MapStateSignalParams extends StateWorkspaceSignalParams {
+interface MapStateSignalParams extends Omit<StateWorkspaceSignalParams, "value"> {
 	/**
-	 * The name of the state workspace.
+	 * Key/value pairs to populate the signal
 	 */
-	// stateName: string;
-	// attendeeId: string;
-	key: string;
-	// value: TestData;
-	// rev?: number;
-	// timestamp?: number;
+	items:
+		| Array<{
+				key: string;
+				value: TestData;
+				rev?: number;
+				timestamp?: number;
+		  }>
+		| {
+				key: string;
+				value: TestData;
+				rev?: number;
+				timestamp?: number;
+		  };
 }
 
 function createMapStateSignal(params: MapStateSignalParams) {
+	// Normalize items to always be an array
+	const itemsArray = Array.isArray(params.items) ? params.items : [params.items];
+
+	const items: Record<
+		string,
+		{ rev: number; timestamp: number; value: ReturnType<typeof toOpaqueJson<TestData>> }
+	> = {};
+
+	for (const item of itemsArray) {
+		items[item.key] = {
+			rev: item.rev ?? params.rev ?? 0,
+			timestamp: item.timestamp ?? 1030,
+			value: toOpaqueJson(item.value),
+		};
+	}
+
 	return {
 		"s:name:testStateWorkspace": {
-			count: {
+			[params.stateName]: {
 				[params.attendeeId]: {
 					rev: params.rev ?? 0,
-					items: {
-						[params.key]: {
-							rev: params.rev ?? 0,
-							timestamp: params.timestamp ?? 1030,
-							value: toOpaqueJson(params.value),
-						},
-					},
+					items,
 				},
 			},
 		},
@@ -532,8 +549,8 @@ describe("Presence", () => {
 			let stateWorkspace: StatesWorkspace<{
 				count: InternalTypes.ManagerFactory<
 					string,
-					InternalTypes.MapValueState<TestData, "key1">,
-					LatestMap<TestData, "key1", ProxiedValueAccessor<TestData>>
+					InternalTypes.MapValueState<TestData, "key1" | "key2">,
+					LatestMap<TestData, "key1" | "key2", ProxiedValueAccessor<TestData>>
 				>;
 			}>;
 
@@ -550,8 +567,16 @@ describe("Presence", () => {
 								...createMapStateSignal({
 									stateName: "count",
 									attendeeId: attendeeId2,
-									key: "key1",
-									value: { num: 0 },
+									items: [
+										{
+											key: "key1",
+											value: { num: 0 },
+										},
+										{
+											key: "key2",
+											value: { num: 0 },
+										},
+									],
 								}),
 							},
 						},
@@ -561,7 +586,7 @@ describe("Presence", () => {
 				// initialize the state workspace, which will process the signal above.
 				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
 					count: StateFactory.latestMap({
-						local: { "key1": { num: 0 } },
+						local: { "key1": { num: 0 }, "key2": { num: 0 } },
 						validator: validatorFunction,
 						settings: { allowableUpdateLatencyMs: 0 },
 					}),
@@ -577,9 +602,11 @@ describe("Presence", () => {
 						workspaceData: createMapStateSignal({
 							stateName: "count",
 							attendeeId: attendeeId2,
-							key: "key1",
-							value: { num: 84 },
-							rev: 1,
+							items: {
+								key: "key1",
+								value: { num: 84 },
+								rev: 1,
+							},
 						}),
 					}),
 					false,
@@ -636,9 +663,11 @@ describe("Presence", () => {
 								workspaceData: createMapStateSignal({
 									stateName: "count",
 									attendeeId: attendeeId2,
-									key: "key1",
-									value: { num: 22 },
-									rev: 2,
+									items: {
+										key: "key1",
+										value: { num: 22 },
+										rev: 2,
+									},
 								}),
 							}),
 							false,
@@ -681,9 +710,11 @@ describe("Presence", () => {
 								workspaceData: createMapStateSignal({
 									stateName: "count",
 									attendeeId: attendeeId2,
-									key: "key1",
-									value: "invalid" as unknown as TestData,
-									rev: 2,
+									items: {
+										key: "key1",
+										value: "invalid" as unknown as TestData,
+										rev: 2,
+									},
 								}),
 							}),
 							false,
@@ -709,9 +740,11 @@ describe("Presence", () => {
 								workspaceData: createMapStateSignal({
 									stateName: "count",
 									attendeeId: attendeeId2,
-									key: "key1",
-									value: "invalid" as unknown as TestData,
-									rev: 2,
+									items: {
+										key: "key1",
+										value: "invalid" as unknown as TestData,
+										rev: 2,
+									},
 								}),
 							}),
 							false,
@@ -734,9 +767,11 @@ describe("Presence", () => {
 								workspaceData: createMapStateSignal({
 									stateName: "count",
 									attendeeId: attendeeId2,
-									key: "key1",
-									value: { num: 55 },
-									rev: 3,
+									items: {
+										key: "key1",
+										value: { num: 55 },
+										rev: 3,
+									},
 								}),
 							}),
 							false,
@@ -762,9 +797,11 @@ describe("Presence", () => {
 								workspaceData: createMapStateSignal({
 									stateName: "count",
 									attendeeId: attendeeId2,
-									key: "key1",
-									value: "invalid1" as unknown as TestData,
-									rev: 2,
+									items: {
+										key: "key1",
+										value: "invalid1" as unknown as TestData,
+										rev: 2,
+									},
 								}),
 							}),
 							false,
@@ -787,9 +824,11 @@ describe("Presence", () => {
 								workspaceData: createMapStateSignal({
 									stateName: "count",
 									attendeeId: attendeeId2,
-									key: "key1",
-									value: "invalid2" as unknown as TestData,
-									rev: 3,
+									items: {
+										key: "key1",
+										value: "invalid2" as unknown as TestData,
+										rev: 3,
+									},
 								}),
 							}),
 							false,
@@ -802,6 +841,83 @@ describe("Presence", () => {
 							"invalid key data should return undefined",
 						);
 						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
+					});
+
+					it("is not called again for unchanged key when different key is updated", () => {
+						// First, set up both keys with some data
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1030,
+								avgLatency: 10,
+								workspaceData: createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									rev: 1,
+									items: [
+										{ key: "key1", value: { num: 84 }, rev: 1 },
+										{ key: "key2", value: { num: 42 }, rev: 1 },
+									],
+								}),
+							}),
+							false,
+						);
+
+						// Read key1 value - should call validator once
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value()?.num,
+							84,
+						);
+						assert.equal(
+							validatorFunction.callCount,
+							1,
+							"validator should be called once for key1",
+						);
+
+						// Update key2 (different key) with new data, keeping key1 unchanged
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1040,
+								avgLatency: 10,
+								workspaceData: createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									rev: 2,
+									items: [
+										{ key: "key1", value: { num: 84 }, rev: 1, timestamp: 1030 },
+										{ key: "key2", value: { num: 99 }, rev: 2, timestamp: 1040 },
+									],
+								}),
+							}),
+							false,
+						);
+
+						// Read key1 value again - should NOT call validator again since key1 data hasn't changed
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value()?.num,
+							84,
+							"key1 value should remain unchanged",
+						);
+						assert.equal(
+							validatorFunction.callCount,
+							1,
+							"validator should still be called only once for key1",
+						);
+
+						// Read key2 value - should call validator for the second time (first time for key2)
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key2")?.value()?.num,
+							99,
+							"key2 should have updated value",
+						);
+						assert.equal(
+							validatorFunction.callCount,
+							2,
+							"validator should be called twice total (once for each key)",
+						);
 					});
 				});
 			});
