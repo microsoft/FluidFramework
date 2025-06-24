@@ -619,88 +619,68 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 	validator: StateSchemaValidator<T>;
 }
 
-// #region function overloads
-// Overloads should be ordered from most specific to least specific.
-
-/**
- * Factory for creating a {@link LatestMap} State object.
- *
- * @remarks
- * This overload is used when called with {@link LatestMapArguments}. That is, if a validator function is provided.
- *
- * @beta
- */
-export function latestMap<
-	T,
-	Keys extends string | number = string | number,
-	RegistrationKey extends string = string,
->(
-	args: LatestMapArguments<T, Keys>,
-): InternalTypes.ManagerFactory<
-	RegistrationKey,
-	InternalTypes.MapValueState<T, Keys>,
-	LatestMap<T, Keys>
->;
+// #region factory function overloads
+// Overloads should be ordered from most specific to least specific when combined.
 
 /**
  * Factory for creating a {@link LatestMapRaw} State object.
  *
- * @remarks
- * This overload is used when called with {@link LatestMapArgumentsRaw}. That is, if a validator function is
- * _not_ provided.
- *
  * @beta
+ * @sealed
  */
-export function latestMap<
-	T,
-	Keys extends string | number = string | number,
-	RegistrationKey extends string = string,
->(
-	args: LatestMapArgumentsRaw<T, Keys>,
-): InternalTypes.ManagerFactory<
-	RegistrationKey,
-	InternalTypes.MapValueState<T, Keys>,
-	LatestMapRaw<T, Keys>
->;
+export interface LatestMapFactory {
+	/**
+	 * Factory for creating a {@link LatestMapRaw} State object.
+	 *
+	 * @privateRemarks (change to `remarks` when adding signature overload)
+	 * This overload is used when called with {@link LatestMapArgumentsRaw}.
+	 * That is, if a validator function is _not_ provided.
+	 */
+	// eslint-disable-next-line @typescript-eslint/prefer-function-type -- interface to allow for clean overload evolution
+	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
+		args?: LatestMapArgumentsRaw<T, Keys>,
+	): InternalTypes.ManagerFactory<
+		RegistrationKey,
+		InternalTypes.MapValueState<T, Keys>,
+		LatestMapRaw<T, Keys>
+	>;
+}
 
 /**
- * Factory for creating a {@link LatestMapRaw} State object with no arguments.
- *
- * @remarks
- * This overload is used when called with no arguments.
- *
- * @beta
+ * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
  */
-export function latestMap<
-	T,
-	Keys extends string | number = string | number,
-	RegistrationKey extends string = string,
->(): InternalTypes.ManagerFactory<
-	RegistrationKey,
-	InternalTypes.MapValueState<T, Keys>,
-	LatestMapRaw<T, Keys>
->;
+export interface LatestMapFactoryInternal extends LatestMapFactory {
+	/**
+	 * Factory for creating a {@link LatestMap} State object.
+	 *
+	 * @remarks
+	 * This overload is used when called with {@link LatestMapArguments}. That is, if a validator function is provided.
+	 */
+	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
+		args: LatestMapArguments<T, Keys>,
+	): InternalTypes.ManagerFactory<
+		RegistrationKey,
+		InternalTypes.MapValueState<T, Keys>,
+		LatestMap<T, Keys>
+	>;
+}
 
 // #endregion
 
-// eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
-export function latestMap<
+/**
+ * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
+ */
+export const latestMap: LatestMapFactoryInternal = <
 	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
 >(
 	args?: Partial<LatestMapArguments<T, Keys>>,
-):
-	| InternalTypes.ManagerFactory<
-			RegistrationKey,
-			InternalTypes.MapValueState<T, Keys>,
-			LatestMap<T, Keys>
-	  >
-	| InternalTypes.ManagerFactory<
-			RegistrationKey,
-			InternalTypes.MapValueState<T, Keys>,
-			LatestMapRaw<T, Keys>
-	  > {
+): InternalTypes.ManagerFactory<
+	RegistrationKey,
+	InternalTypes.MapValueState<T, Keys>,
+	LatestMapRaw<T, Keys> & LatestMap<T, Keys>
+> => {
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
@@ -721,60 +701,29 @@ export function latestMap<
 			};
 		}
 	}
-
-	// FIXME: There has to be a better way than duplicating the function...
-	const factory =
-		validator === undefined
-			? (
-					key: RegistrationKey,
-					datastoreHandle: InternalTypes.StateDatastoreHandle<
-						RegistrationKey,
-						InternalTypes.MapValueState<T, Keys>
-					>,
-				): {
-					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-					manager: InternalTypes.StateValue<LatestMapRaw<T, Keys>>;
-				} => ({
-					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-					manager: brandIVM<
-						LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
-						T,
-						InternalTypes.MapValueState<T, Keys>
-					>(
-						new LatestMapValueManagerImpl(
-							key,
-							datastoreFromHandle(datastoreHandle),
-							value,
-							settings,
-							validator,
-						),
-					),
-				})
-			: (
-					key: RegistrationKey,
-					datastoreHandle: InternalTypes.StateDatastoreHandle<
-						RegistrationKey,
-						InternalTypes.MapValueState<T, Keys>
-					>,
-				): {
-					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-					manager: InternalTypes.StateValue<LatestMap<T, Keys>>;
-				} => ({
-					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-					manager: brandIVM<
-						LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
-						T,
-						InternalTypes.MapValueState<T, Keys>
-					>(
-						new LatestMapValueManagerImpl(
-							key,
-							datastoreFromHandle(datastoreHandle),
-							value,
-							settings,
-							validator,
-						),
-					),
-				});
-
+	const factory = (
+		key: RegistrationKey,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<
+			RegistrationKey,
+			InternalTypes.MapValueState<T, Keys>
+		>,
+	): {
+		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+		manager: InternalTypes.StateValue<LatestMapRaw<T, Keys> & LatestMap<T, Keys>>;
+	} => ({
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+		manager: brandIVM<
+			LatestMapValueManagerImpl<T, RegistrationKey, Keys>,
+			T,
+			InternalTypes.MapValueState<T, Keys>
+		>(
+			new LatestMapValueManagerImpl(
+				key,
+				datastoreFromHandle(datastoreHandle),
+				value,
+				settings,
+			),
+		),
+	});
 	return Object.assign(factory, { instanceBase: LatestMapValueManagerImpl });
-}
+};

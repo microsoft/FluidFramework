@@ -1,17 +1,16 @@
 ---
 title: Presence
-sidebar_postition: 10
+sidebar_position: 10
 ---
 
 ## Overview
 
-We are introducing a new way to power your ephemeral experiences with Fluid. Introducing the new Presence APIs (in beta
-as of version 2.42.0) that provide session-focused utilities for lightweight data sharing and messaging.
+We are introducing a new way to power your ephemeral experiences with Fluid: the new Presence APIs (in beta as of version 2.42.0) that provide session-focused utilities for lightweight data sharing and messaging.
 Collaborative features typically rely on each user maintaining their own temporary state, which is subsequently shared with others. For example, in applications featuring multiplayer cursors, the cursor position of each user signifies their state. This state can be further utilized for various purposes such as indicating typing activity or displaying a user's current selection. This concept is referred to as _presence_.
 
 By leveraging this shared state, applications can provide a seamless and interactive collaborative experience, ensuring that users are always aware of each other's actions and selections in real-time.
 
-The key scenarios that the new Presence APIs are suitable for includes:
+The key scenarios for which the new Presence APIs are suitable include:
 
 -   User presence
 -   Collaborative cursors
@@ -49,11 +48,12 @@ A `NotificationsWorkspace` is similar to states workspace, but is dedicated to n
 
 #### LatestMap
 
-`LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a key may be nullified to represent deletetion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`.
+`LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a
+key may be set to `undefined` to represent deletion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`.
 
 #### NotificationsManager
 
-Notifications are special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `StatesWorkspace` for convenience. `NotificationsManager` is the only presence object permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to a `NotificationsWorkspace` or `StatesWorkspace`.
+Notifications are a special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `StatesWorkspace` for convenience. `NotificationsManager` is the only presence object permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to a `NotificationsWorkspace` or `StatesWorkspace`.
 
 ## Using Presence
 
@@ -63,7 +63,7 @@ To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 import { getPresence } from "@fluidframework/presence/beta";
 
 function usePresence(container: IFluidContainer): void {
-   const presence = await getPresence(container);
+   const presence = getPresence(container);
 }
 ```
 
@@ -71,7 +71,7 @@ function usePresence(container: IFluidContainer): void {
 
 ### Runtime data validation
 
-The Presence API provides a simple mechanism (added in version 2.43.0) to validate that state data
+The Presence API provides a simple mechanism (added in version 2.50.0) to validate that state data
 received within session from other clients matches the types declared. The schema of workspace addresses and states
 
 When creating State objects using `StateFactory.latest` or `StateFactory.latestMap`, you can pass a validator function
@@ -147,9 +147,9 @@ The current implementation relies on Fluid Framework's signal infrastructure ins
 
 ### Notifications
 
-Notifications API is partially implemented at alpha support level. All messages are always broadcast even if `unicast` API is used. Type inferences are not working even with a fully specified `initialSubscriptions` value provided to `Notifications` and schema type must be specified explicitly.
+Notifications API is partially implemented at alpha support level. All messages are always broadcast even if `unicast` API is used. Type inferences are not working even with a fully specified `initialSubscriptions` value provided to `Notifications`, and the schema type must be specified explicitly.
 
-Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent most common loss of notifications, always check for connection before sending.
+Notifications are fundamentally unreliable at this time as there are no built-in acknowledgements nor retained state. To prevent the most common loss of notifications, always check for connection before sending.
 
 ### Throttling / Grouping
 

@@ -832,13 +832,13 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string): { resolved: boolean } => {
+		resolver: (file: string, gitRoot: string): { resolved: boolean } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
 				json.license = licenseId;
 
-				// file is already relative to the repo root, so we can use it as-is.
-				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				// file is absolute path, so make relative to the repo root
+				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
 				json.repository =
 					// The directory field should be omitted from the root package.
 					relativePkgDir === "."

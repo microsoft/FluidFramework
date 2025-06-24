@@ -275,42 +275,59 @@ export interface LatestArguments<T extends object | null> extends LatestArgument
 	validator: StateSchemaValidator<T>;
 }
 
-// #region function overloads
-// Overloads should be ordered from most specific to least specific.
-
-/**
- * Factory for creating a {@link Latest} State object.
- *
- * @remarks
- * This overload is used when called with {@link LatestArguments}. That is, if a validator function is provided.
- *
- * @beta
- */
-export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArguments<T>,
-): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+// #region factory function overloads
+// Overloads should be ordered from most specific to least specific when combined.
 
 /**
  * Factory for creating a {@link LatestRaw} State object.
  *
- * @remarks
- * This overload is used when called with {@link LatestArgumentsRaw}. That is, if a validator function is _not_
- * provided.
- *
  * @beta
+ * @sealed
  */
-export function latest<T extends object | null, Key extends string = string>(
-	args: LatestArgumentsRaw<T>,
-): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+export interface LatestFactory {
+	/**
+	 * Factory for creating a {@link LatestRaw} State object.
+	 *
+	 * @privateRemarks (change to `remarks` when adding signature overload)
+	 * This overload is used when called with {@link LatestArgumentsRaw}.
+	 * That is, if a validator function is _not_ provided.
+	 */
+	// eslint-disable-next-line @typescript-eslint/prefer-function-type -- interface to allow for clean overload evolution
+	<T extends object | null, Key extends string = string>(
+		args: LatestArgumentsRaw<T>,
+	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+}
+
+/**
+ * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
+ */
+export interface LatestFactoryInternal extends LatestFactory {
+	/**
+	 * Factory for creating a {@link Latest} State object.
+	 *
+	 * @remarks
+	 * This overload is used when called with {@link LatestArguments}. That is, if a validator function is provided.
+	 */
+	<T extends object | null, Key extends string = string>(
+		args: LatestArguments<T>,
+	): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+}
 
 // #endregion
 
-// eslint-disable-next-line jsdoc/require-jsdoc -- no tsdoc since the overloads are documented
-export function latest<T extends object | null, Key extends string = string>(
-	args: Partial<LatestArguments<T>> & Pick<LatestArguments<T>, "local">,
-):
-	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>
-	| InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>> {
+/**
+ * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
+ */
+export const latest: LatestFactoryInternal = <
+	T extends object | null,
+	Key extends string = string,
+>(
+	args: LatestArguments<T> | LatestArgumentsRaw<T>,
+): InternalTypes.ManagerFactory<
+	Key,
+	InternalTypes.ValueRequiredState<T>,
+	LatestRaw<T> & Latest<T>
+> => {
 	const { local, settings, validator } = args;
 
 	// Latest takes ownership of the initial local value but makes a shallow
@@ -321,59 +338,20 @@ export function latest<T extends object | null, Key extends string = string>(
 		timestamp: Date.now(),
 		value: shallowCloneNullableObject(opaqueLocal),
 	};
-
-	// FIXME There has to be a better way than duplicating the function...
-	const factory =
-		validator === undefined
-			? (
-					key: Key,
-					datastoreHandle: InternalTypes.StateDatastoreHandle<
-						Key,
-						InternalTypes.ValueRequiredState<T>
-					>,
-				): {
-					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-					manager: InternalTypes.StateValue<LatestRaw<T>>;
-				} => ({
-					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-					manager: brandIVM<
-						LatestValueManagerImpl<T, Key>,
-						T,
-						InternalTypes.ValueRequiredState<T>
-					>(
-						new LatestValueManagerImpl(
-							key,
-							datastoreFromHandle(datastoreHandle),
-							value,
-							validator,
-							settings,
-						),
-					),
-				})
-			: (
-					key: Key,
-					datastoreHandle: InternalTypes.StateDatastoreHandle<
-						Key,
-						InternalTypes.ValueRequiredState<T>
-					>,
-				): {
-					initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
-					manager: InternalTypes.StateValue<Latest<T>>;
-				} => ({
-					initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
-					manager: brandIVM<
-						LatestValueManagerImpl<T, Key>,
-						T,
-						InternalTypes.ValueRequiredState<T>
-					>(
-						new LatestValueManagerImpl(
-							key,
-							datastoreFromHandle(datastoreHandle),
-							value,
-							validator,
-							settings,
-						),
-					),
-				});
+	const factory = (
+		key: Key,
+		datastoreHandle: InternalTypes.StateDatastoreHandle<
+			Key,
+			InternalTypes.ValueRequiredState<T>
+		>,
+	): {
+		initialData: { value: typeof value; allowableUpdateLatencyMs: number | undefined };
+		manager: InternalTypes.StateValue<LatestRaw<T> & Latest<T>>;
+	} => ({
+		initialData: { value, allowableUpdateLatencyMs: settings?.allowableUpdateLatencyMs },
+		manager: brandIVM<LatestValueManagerImpl<T, Key>, T, InternalTypes.ValueRequiredState<T>>(
+			new LatestValueManagerImpl(key, datastoreFromHandle(datastoreHandle), value, validator, settings),
+		),
+	});
 	return Object.assign(factory, { instanceBase: LatestValueManagerImpl });
-}
+};

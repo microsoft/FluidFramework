@@ -47,13 +47,12 @@ export {
 } from "./datastorePresenceManagerFactory.js";
 
 export type {
-	// `latestMap` is exported as a type only because it is exposed on the StateFactory object
-	latestMap,
 	LatestMap,
 	LatestMapArguments,
 	LatestMapArgumentsRaw,
 	LatestMapClientData,
 	LatestMapEvents,
+	LatestMapFactory,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
 	LatestMapRaw,
@@ -61,12 +60,11 @@ export type {
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
-	// `latest` is exported as a type only because it is exposed on the StateFactory object
-	latest,
 	Latest,
 	LatestArguments,
 	LatestArgumentsRaw,
 	LatestEvents,
+	LatestFactory,
 	LatestRaw,
 	LatestRawEvents,
 } from "./latestValueManager.js";
