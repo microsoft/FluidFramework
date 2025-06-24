@@ -443,40 +443,45 @@ export class MapKernel {
 	 * @param localOpMetadata - The local metadata associated with the op.
 	 */
 	public rollback(op: IMapOperation, localOpMetadata: unknown): void {
-		if (!isMapLocalOpMetadata(localOpMetadata)) {
-			throw new Error("Invalid localOpMetadata");
+		const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.pop();
+		assert(
+			mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+			"Rolling back unexpected op",
+		);
+		if (!isMapLocalOpMetadata(mapLocalOpMetadata)) {
+			throw new Error("Invalid mapLocalOpMetadata");
 		}
 
-		if (op.type === "clear" && localOpMetadata.type === "clear") {
-			if (localOpMetadata.previousMap === undefined) {
+		if (op.type === "clear" && mapLocalOpMetadata.type === "clear") {
+			if (mapLocalOpMetadata.previousMap === undefined) {
 				throw new Error("Cannot rollback without previous map");
 			}
-			for (const [key, localValue] of localOpMetadata.previousMap.entries()) {
+			for (const [key, localValue] of mapLocalOpMetadata.previousMap.entries()) {
 				this.setCore(key, localValue, true);
 			}
 
 			const lastPendingClearId = this.pendingClearMessageIds.pop();
 			if (
 				lastPendingClearId === undefined ||
-				lastPendingClearId !== localOpMetadata.pendingMessageId
+				lastPendingClearId !== mapLocalOpMetadata.pendingMessageId
 			) {
 				throw new Error("Rollback op does match last clear");
 			}
 		} else if (op.type === "delete" || op.type === "set") {
-			if (localOpMetadata.type === "add") {
+			if (mapLocalOpMetadata.type === "add") {
 				this.deleteCore(op.key, true);
 			} else if (
-				localOpMetadata.type === "edit" &&
-				localOpMetadata.previousValue !== undefined
+				mapLocalOpMetadata.type === "edit" &&
+				mapLocalOpMetadata.previousValue !== undefined
 			) {
-				this.setCore(op.key, localOpMetadata.previousValue, true);
+				this.setCore(op.key, mapLocalOpMetadata.previousValue, true);
 			} else {
 				throw new Error("Cannot rollback without previous value");
 			}
 
 			const pendingMessageIds = this.pendingKeys.get(op.key);
 			const lastPendingMessageId = pendingMessageIds?.pop();
-			if (!pendingMessageIds || lastPendingMessageId !== localOpMetadata.pendingMessageId) {
+			if (!pendingMessageIds || lastPendingMessageId !== mapLocalOpMetadata.pendingMessageId) {
 				throw new Error("Rollback op does not match last pending");
 			}
 			if (pendingMessageIds.length === 0) {

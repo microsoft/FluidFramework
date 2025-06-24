@@ -18,13 +18,10 @@ import {
 
 import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
 import type {
-	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
-	IMapKeyEditLocalOpMetadata,
 	IMapSetOperation,
 	ISerializableValue,
-	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
 import { SharedMap as SharedMapInternal } from "../../map.js";
 import type { IMapOperation } from "../../mapKernel.js";
