@@ -22,7 +22,7 @@ import {
 	type NormalizedAnnotatedAllowedTypes,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { getTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -83,7 +83,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			}
 
 			// TODO: handle customizable?
-			return tryGetTreeNodeForField(field);
+			return getTreeNodeForField(field);
 		},
 		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
 			if (typeof key === "symbol") {
@@ -131,7 +131,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			}
 
 			return {
-				value: tryGetTreeNodeForField(field),
+				value: getTreeNodeForField(field),
 				writable: true,
 				enumerable: true,
 				configurable: true, // Must be 'configurable' if property is absent from proxy target.

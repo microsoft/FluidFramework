@@ -39,7 +39,7 @@ import {
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
-import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
+import { getTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -319,7 +319,7 @@ export function getIdentifierFromNode(
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifierField = flexNode.tryGetField(key);
 			assert(identifierField !== undefined, 0xbb5 /* missing identifier field */);
-			const identifierValue = tryGetTreeNodeForField(identifierField);
+			const identifierValue = getTreeNodeForField(identifierField);
 			assert(typeof identifierValue === "string", 0xbb6 /* identifier not a string */);
 
 			const context = flexNode.context;

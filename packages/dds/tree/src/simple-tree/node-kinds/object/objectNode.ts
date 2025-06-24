@@ -35,7 +35,7 @@ import {
 	type NormalizedAnnotatedAllowedTypes,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { getTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
@@ -236,7 +236,7 @@ function createProxyHandler(
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
-					return tryGetTreeNodeForField(field);
+					return getTreeNodeForField(field);
 				}
 
 				return undefined;
@@ -304,7 +304,7 @@ function createProxyHandler(
 			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
-				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
+				value: field === undefined ? undefined : getTreeNodeForField(field),
 				writable: true,
 				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
 				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with

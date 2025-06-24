@@ -49,7 +49,7 @@ import {
 	getOrCreateNodeFromInnerUnboxedNode,
 	getOrCreateInnerNode,
 	NodeKind,
-	tryGetTreeNodeForField,
+	getTreeNodeForField,
 	isObjectNodeSchema,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
@@ -606,7 +606,7 @@ export const TreeAlpha: TreeAlpha = {
 
 				const field = flexNode.tryGetField(brand(String(storedKey)));
 				if (field !== undefined) {
-					return tryGetTreeNodeForField(field);
+					return getTreeNodeForField(field);
 				}
 
 				return undefined;
@@ -647,7 +647,7 @@ export const TreeAlpha: TreeAlpha = {
 			case NodeKind.Map:
 			case NodeKind.Record: {
 				for (const [key, flexField] of flexNode.fields) {
-					const childTreeNode = tryGetTreeNodeForField(flexField);
+					const childTreeNode = getTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
 						result.push([key, childTreeNode]);
 					}
@@ -660,7 +660,7 @@ export const TreeAlpha: TreeAlpha = {
 					const storedKey = fieldSchema.storedKey;
 					const flexField = flexNode.tryGetField(brand(String(storedKey)));
 					if (flexField !== undefined) {
-						const childTreeNode = tryGetTreeNodeForField(flexField);
+						const childTreeNode = getTreeNodeForField(flexField);
 						assert(
 							childTreeNode !== undefined,
 							0xbc6 /* Expected child tree node for field. */,

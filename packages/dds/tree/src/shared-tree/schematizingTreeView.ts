@@ -26,7 +26,7 @@ import {
 	type SchemaCompatibilityStatus,
 	type TreeView,
 	type TreeViewEvents,
-	tryGetTreeNodeForField,
+	getTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
 	SchemaCompatibilityTester,
@@ -431,7 +431,7 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getView();
-		return tryGetTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
+		return getTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
