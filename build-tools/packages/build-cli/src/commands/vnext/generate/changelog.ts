@@ -28,7 +28,7 @@ export default class GenerateChangeLogCommand extends BaseCommandWithBuildProjec
 	static readonly description =
 		"Generate a changelog for packages based on changesets. Note that this process deletes the changeset files!";
 
-		static readonly aliases = ["vnext:generate:changelogs"];
+	static readonly aliases = ["vnext:generate:changelogs"];
 
 	static readonly flags = {
 		releaseGroup: releaseGroupNameFlag({ required: true }),
