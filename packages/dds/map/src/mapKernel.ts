@@ -95,14 +95,6 @@ function isClearLocalOpMetadata(metadata: any): metadata is IMapClearLocalOpMeta
 	);
 }
 
-function isMapLocalOpMetadata(metadata: any): metadata is MapLocalOpMetadata {
-	return (
-		metadata !== undefined &&
-		typeof metadata.pendingMessageId === "number" &&
-		(metadata.type === "add" || metadata.type === "edit" || metadata.type === "clear")
-	);
-}
-
 /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
 
 function createClearLocalOpMetadata(
@@ -160,6 +152,9 @@ export class MapKernel {
 	 */
 	private nextPendingMessageId: number = 0;
 
+	/**
+	 * The pending metadata for any local operations that have not yet been ack'd from the server, in order.
+	 */
 	private readonly pendingMapLocalOpMetadata: MapLocalOpMetadata[] = [];
 
 	/**
@@ -446,12 +441,10 @@ export class MapKernel {
 		const mapOp: IMapOperation = op as IMapOperation;
 		const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.pop();
 		assert(
-			mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+			mapLocalOpMetadata !== undefined &&
+				mapLocalOpMetadata.pendingMessageId === localOpMetadata,
 			"Rolling back unexpected op",
 		);
-		if (!isMapLocalOpMetadata(mapLocalOpMetadata)) {
-			throw new Error("Invalid mapLocalOpMetadata");
-		}
 
 		if (mapOp.type === "clear" && mapLocalOpMetadata.type === "clear") {
 			if (mapLocalOpMetadata.previousMap === undefined) {
@@ -612,7 +605,11 @@ export class MapKernel {
 	private getMessageHandlers(): Map<string, IMapMessageHandler> {
 		const messageHandlers = new Map<string, IMapMessageHandler>();
 		messageHandlers.set("clear", {
-			process: (op: IMapClearOperation, local: boolean, localOpMetadata: number) => {
+			process: (
+				op: IMapClearOperation,
+				local: boolean,
+				localOpMetadata: number | undefined,
+			) => {
 				if (local) {
 					const mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
@@ -657,12 +654,17 @@ export class MapKernel {
 			},
 		});
 		messageHandlers.set("delete", {
-			process: (op: IMapDeleteOperation, local: boolean, localOpMetadata: number) => {
+			process: (
+				op: IMapDeleteOperation,
+				local: boolean,
+				localOpMetadata: number | undefined,
+			) => {
 				let mapLocalOpMetadata: MapLocalOpMetadata | undefined;
 				if (local) {
 					mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
-						mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+						mapLocalOpMetadata !== undefined &&
+							mapLocalOpMetadata.pendingMessageId === localOpMetadata,
 						"Processing unexpected local delete op",
 					);
 				}
@@ -682,12 +684,13 @@ export class MapKernel {
 			},
 		});
 		messageHandlers.set("set", {
-			process: (op: IMapSetOperation, local: boolean, localOpMetadata: number) => {
+			process: (op: IMapSetOperation, local: boolean, localOpMetadata: number | undefined) => {
 				let mapLocalOpMetadata: MapLocalOpMetadata | undefined;
 				if (local) {
 					mapLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
-						mapLocalOpMetadata?.pendingMessageId === localOpMetadata,
+						mapLocalOpMetadata !== undefined &&
+							mapLocalOpMetadata.pendingMessageId === localOpMetadata,
 						"Processing unexpected local set op",
 					);
 				}
