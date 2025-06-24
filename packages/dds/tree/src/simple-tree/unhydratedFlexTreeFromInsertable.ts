@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -30,12 +31,14 @@ import {
 	type ContextualFieldProvider,
 } from "./schemaTypes.js";
 import {
+	createField,
 	getKernel,
 	isTreeNode,
 	NodeKind,
 	type TreeNode,
 	type TreeNodeSchema,
 	type Unhydrated,
+	type UnhydratedFlexTreeField,
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
 } from "./core/index.js";
@@ -54,8 +57,6 @@ import {
 	type ObjectNodeSchema,
 	type ObjectNodeSchemaInternalData,
 } from "./node-kinds/object/objectNodeTypes.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { createField, type UnhydratedFlexTreeField } from "./core/unhydratedFlexTree.js";
 /* eslint-enable import/no-internal-modules */
 
 /**
