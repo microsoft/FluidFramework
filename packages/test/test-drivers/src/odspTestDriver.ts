@@ -54,7 +54,7 @@ interface IOdspTestDriverConfig extends TokenConfig {
 }
 
 /**
- * A simplified version of the credentials returned by the TRIPS API containing only username and password values.
+ * A simplified version of the credentials returned by the tenant pool containing only username and password values.
  */
 export interface UserPassCredentials {
 	UserPrincipalName: string;
