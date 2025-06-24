@@ -292,21 +292,24 @@ describe("Presence", () => {
 						assert.equal(validatorFunction.callCount, 0);
 					});
 
-					it("by local .value()", () => {
-						createDatastoreUpdateSignal({
-							clientId: connectionId2,
-							sendTimestamp: 1030,
-							avgLatency: 10,
-							workspaceData: createStateWorkspaceSignal({
-								stateName: "count",
-								attendeeId: attendeeId2,
-								rev: 1,
-								value: { num: 33 },
+					it("when accessing .local", () => {
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId1,
+								sendTimestamp: 1030,
+								avgLatency: 10,
+								workspaceData: createStateWorkspaceSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									rev: 1,
+									value: { num: 33 },
+								}),
 							}),
-						}),
-							// stateWorkspace.states.count.local = { num: 33 };
-							assert.equal(validatorFunction.callCount, 0, "initial call count is wrong");
-						assert.equal(stateWorkspace.states.count.local.num, 33);
+							false,
+						);
+						assert.equal(validatorFunction.callCount, 0, "initial call count is wrong");
+						assert.equal(stateWorkspace.states.count.local.num, 0);
 						assert.equal(validatorFunction.callCount, 0, "validator was called on local data");
 					});
 				});
@@ -358,6 +361,127 @@ describe("Presence", () => {
 						// changed.
 						const data2 = stateWorkspace.states.count.getRemote(attendee2);
 						assert.equal(data2.value()?.num, 22, "updated remote value is wrong");
+						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
+					});
+
+					it("when remote data changes from valid to invalid", () => {
+						// Get the remote data and read it, verify that the validator is called once.
+						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
+						assert.equal(remoteData.value()?.num, 11);
+						assert.equal(validatorFunction.callCount, 1, "first call count is wrong");
+
+						// Send invalid data from remote client
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1040,
+								avgLatency: 10,
+								workspaceData: createStateWorkspaceSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									value: "invalid" as unknown as TestData,
+									rev: 2,
+								}),
+							}),
+							false,
+						);
+
+						// Reading the remote value should cause the validator to be called a second time and return undefined
+						const data2 = stateWorkspace.states.count.getRemote(attendee2);
+						assert.equal(data2.value(), undefined, "invalid data should return undefined");
+						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
+					});
+
+					it("when remote data changes from invalid to valid", () => {
+						// First send invalid data
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1030,
+								avgLatency: 10,
+								workspaceData: createStateWorkspaceSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									value: "invalid" as unknown as TestData,
+									rev: 2,
+								}),
+							}),
+							false,
+						);
+
+						// Get the remote data and read it, verify that the validator is called once and returns undefined
+						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
+						assert.equal(remoteData.value(), undefined);
+						assert.equal(validatorFunction.callCount, 1, "first call count is wrong");
+
+						// Send valid data from remote client
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1040,
+								avgLatency: 10,
+								workspaceData: createStateWorkspaceSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									value: { num: 33 },
+									rev: 3,
+								}),
+							}),
+							false,
+						);
+
+						// Reading the remote value should cause the validator to be called a second time and return valid data
+						const data2 = stateWorkspace.states.count.getRemote(attendee2);
+						assert.equal(data2.value()?.num, 33, "valid data should be returned");
+						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
+					});
+
+					it("when remote data changes from invalid to invalid", () => {
+						// First send invalid data
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1030,
+								avgLatency: 10,
+								workspaceData: createStateWorkspaceSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									value: "invalid1" as unknown as TestData,
+									rev: 2,
+								}),
+							}),
+							false,
+						);
+
+						// Get the remote data and read it, verify that the validator is called once and returns undefined
+						const remoteData = stateWorkspace.states.count.getRemote(attendee2);
+						assert.equal(remoteData.value(), undefined);
+						assert.equal(validatorFunction.callCount, 1, "first call count is wrong");
+
+						// Send different invalid data from remote client
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1040,
+								avgLatency: 10,
+								workspaceData: createStateWorkspaceSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									value: "invalid2" as unknown as TestData,
+									rev: 3,
+								}),
+							}),
+							false,
+						);
+
+						// Reading the remote value should cause the validator to be called a second time and still return undefined
+						const data2 = stateWorkspace.states.count.getRemote(attendee2);
+						assert.equal(data2.value(), undefined, "invalid data should return undefined");
 						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
 					});
 				});
@@ -538,48 +662,147 @@ describe("Presence", () => {
 							validatorFunction,
 						});
 					});
-				});
 
-				it("returns undefined when remote key data is invalid", () => {
-					// Send invalid data for a key
-					presence.processSignal(
-						[],
-						createDatastoreUpdateSignal({
-							clientId: connectionId2,
-							sendTimestamp: 1040,
-							avgLatency: 10,
-							workspaceData: createMapStateSignal({
-								stateName: "count",
-								attendeeId: attendeeId2,
-								key: "key1",
-								value: "string" as unknown as TestData,
-								rev: 2,
+					it("when remote key data changes from valid to invalid", () => {
+						// Get the remote data and read it, verify that the validator is called once.
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value()?.num,
+							84,
+						);
+						assert.equal(validatorFunction.callCount, 1, "first call count is wrong");
+
+						// Send invalid key data from remote client
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1040,
+								avgLatency: 10,
+								workspaceData: createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									key: "key1",
+									value: "invalid" as unknown as TestData,
+									rev: 2,
+								}),
 							}),
-						}),
-						false,
-					);
+							false,
+						);
 
-					const remoteData = stateWorkspace.states.count.getRemote(attendee2);
-					const key = remoteData.get("key1");
+						// Reading the remote value should cause the validator to be called a second time and return undefined
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value(),
+							undefined,
+							"invalid key data should return undefined",
+						);
+						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
+					});
 
-					// Validator should not be called initially
-					assert.equal(
-						validatorFunction.callCount,
-						0,
-						"validator should not be called initially",
-					);
+					it("when remote key data changes from invalid to valid", () => {
+						// First send invalid key data
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1030,
+								avgLatency: 10,
+								workspaceData: createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									key: "key1",
+									value: "invalid" as unknown as TestData,
+									rev: 2,
+								}),
+							}),
+							false,
+						);
 
-					// First value() call should invoke validator and return undefined
-					assert.equal(key?.value(), undefined);
-					assert.equal(validatorFunction.callCount, 1, "validator should be called once");
+						// Get the remote data and read it, verify that the validator is called once and returns undefined
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value(),
+							undefined,
+						);
+						assert.equal(validatorFunction.callCount, 1, "first call count is wrong");
 
-					// Subsequent calls should not invoke validator again
-					key?.value();
-					assert.equal(
-						validatorFunction.callCount,
-						1,
-						"validator should still be called only once",
-					);
+						// Send valid key data from remote client
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1040,
+								avgLatency: 10,
+								workspaceData: createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									key: "key1",
+									value: { num: 55 },
+									rev: 3,
+								}),
+							}),
+							false,
+						);
+
+						// Reading the remote value should cause the validator to be called a second time and return valid data
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value()?.num,
+							55,
+							"valid key data should be returned",
+						);
+						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
+					});
+
+					it("when remote key data changes from invalid to invalid", () => {
+						// First send invalid key data
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1030,
+								avgLatency: 10,
+								workspaceData: createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									key: "key1",
+									value: "invalid1" as unknown as TestData,
+									rev: 2,
+								}),
+							}),
+							false,
+						);
+
+						// Get the remote data and read it, verify that the validator is called once and returns undefined
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value(),
+							undefined,
+						);
+						assert.equal(validatorFunction.callCount, 1, "first call count is wrong");
+
+						// Send different invalid key data from remote client
+						presence.processSignal(
+							[],
+							createDatastoreUpdateSignal({
+								clientId: connectionId2,
+								sendTimestamp: 1040,
+								avgLatency: 10,
+								workspaceData: createMapStateSignal({
+									stateName: "count",
+									attendeeId: attendeeId2,
+									key: "key1",
+									value: "invalid2" as unknown as TestData,
+									rev: 3,
+								}),
+							}),
+							false,
+						);
+
+						// Reading the remote value should cause the validator to be called a second time and still return undefined
+						assert.equal(
+							stateWorkspace.states.count.getRemote(attendee2).get("key1")?.value(),
+							undefined,
+							"invalid key data should return undefined",
+						);
+						assert.equal(validatorFunction.callCount, 2, "validator should be called twice");
+					});
 				});
 			});
 		});
