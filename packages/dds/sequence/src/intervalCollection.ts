@@ -7,7 +7,12 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IEvent } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	unreachableCase,
+	type ListNode,
+} from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	Client,
@@ -23,8 +28,6 @@ import {
 	endpointPosAndSide,
 	type ISegmentInternal,
 	createLocalReconnectingPerspective,
-	DoublyLinkedList,
-	type ListNode,
 	SlidingPreference,
 } from "@fluidframework/merge-tree/internal";
 import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
