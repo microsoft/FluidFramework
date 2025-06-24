@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { ListNode } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
-	IMergeTreeOptions,
-	ListNode,
-	type ISegmentInternal,
-} from "@fluidframework/merge-tree/internal";
+import { IMergeTreeOptions, type ISegmentInternal } from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
