@@ -147,8 +147,8 @@ class LatestValueManagerImpl<T, Key extends string>
 		private readonly key: Key,
 		private readonly datastore: StateDatastore<Key, InternalTypes.ValueRequiredState<T>>,
 		public readonly value: InternalTypes.ValueRequiredState<T>,
-		private readonly validator: StateSchemaValidator<T> | undefined,
 		controlSettings: BroadcastControlSettings | undefined,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 	}
@@ -320,8 +320,7 @@ export const latest: LatestFactory = <T extends object | null, Key extends strin
 	InternalTypes.ValueRequiredState<T>,
 	LatestRaw<T> & Latest<T>
 > => {
-	const { local, settings, validator } = args;
-
+	const { local, settings } = args;
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const opaqueLocal = toOpaqueJson<T>(local);
@@ -346,8 +345,9 @@ export const latest: LatestFactory = <T extends object | null, Key extends strin
 				key,
 				datastoreFromHandle(datastoreHandle),
 				value,
-				validator,
 				settings,
+				// eslint-disable-next-line unicorn/consistent-destructuring -- false positive
+				"validator" in args ? args.validator : undefined,
 			),
 		),
 	});

@@ -168,7 +168,7 @@ export function createValidatedGetter<T>(
 		return asDeeplyReadonlyDeserializedJson(clientState.value);
 	}
 
-	// FIXME: is this case safe? Should it be an arrow function that calls the validator and returns the data as
+	// FIXME: is this cast safe? Should it be an arrow function that calls the validator and returns the data as
 	// OpaqueJson?
 	return createGetterFunction(clientState, validator as StateSchemaValidatorToOpaque<T>);
 }

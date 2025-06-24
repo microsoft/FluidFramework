@@ -453,7 +453,7 @@ class LatestMapValueManagerImpl<
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
-		private readonly validator?: StateSchemaValidator<T>,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -718,6 +718,7 @@ export const latestMap: LatestMapFactory = <
 				datastoreFromHandle(datastoreHandle),
 				value,
 				settings,
+				validator,
 			),
 		),
 	});
