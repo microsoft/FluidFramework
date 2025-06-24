@@ -226,12 +226,17 @@ export class ThrottlingError
 }
 
 /**
+ * Creates a write error for driver utils.
  * @internal
  */
-export const createWriteError = (message: string, props: DriverErrorTelemetryProps) =>
+export const createWriteError = (
+	message: string,
+	props: DriverErrorTelemetryProps,
+): NonRetryableError<typeof DriverErrorTypes.writeError> =>
 	new NonRetryableError(message, DriverErrorTypes.writeError, props);
 
 /**
+ * Creates a generic network or throttling error based on retry information.
  * @internal
  */
 export function createGenericNetworkError(
@@ -251,18 +256,21 @@ export function createGenericNetworkError(
  * @param error - The error to inspect for ability to retry
  * @internal
  */
-export const canRetryOnError = (error: any): boolean => error?.canRetry === true;
+export const canRetryOnError = (error: unknown): boolean =>
+	(error as { canRetry?: unknown })?.canRetry === true;
 
 /**
  * Check retryAfterSeconds property on error
  * @internal
  */
-export const getRetryDelaySecondsFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds as number | undefined;
+export const getRetryDelaySecondsFromError = (error: unknown): number | undefined =>
+	(error as { retryAfterSeconds?: unknown })?.retryAfterSeconds as number | undefined;
 
 /**
  * Check retryAfterSeconds property on error and convert to ms
  * @internal
  */
-export const getRetryDelayFromError = (error: any): number | undefined =>
-	error?.retryAfterSeconds !== undefined ? error.retryAfterSeconds * 1000 : undefined;
+export const getRetryDelayFromError = (error: unknown): number | undefined => {
+	const retryAfter = (error as { retryAfterSeconds?: unknown })?.retryAfterSeconds;
+	return retryAfter === undefined ? undefined : (retryAfter as number) * 1000;
+};

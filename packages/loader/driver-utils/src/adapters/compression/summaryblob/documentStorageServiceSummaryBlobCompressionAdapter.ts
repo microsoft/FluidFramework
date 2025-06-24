@@ -71,10 +71,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param blob - The maybe compressed blob.
 	 */
 	private static readAlgorithmFromBlob(blob: ArrayBufferLike): number {
-		return !this.hasPrefix(blob)
-			? SummaryCompressionAlgorithm.None
-			: // eslint-disable-next-line no-bitwise
-				IsoBuffer.from(blob)[0] & 0x0f;
+		return this.hasPrefix(blob)
+			? // eslint-disable-next-line no-bitwise
+				IsoBuffer.from(blob)[0] & 0x0f
+			: SummaryCompressionAlgorithm.None;
 	}
 
 	/**
@@ -197,6 +197,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		} else if (algorithm === SummaryCompressionAlgorithm.None) {
 			maybeCompressed = file;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			const compressed = compress(file) as ArrayBufferLike;
 			maybeCompressed = compressed;
 		} else {
@@ -216,8 +217,8 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	private static decodeBlob(file: ArrayBufferLike): ArrayBufferLike {
 		let decompressed: ArrayBufferLike;
-		let originalBlob;
-		let algorithm;
+		let originalBlob: ArrayBufferLike;
+		let algorithm: number;
 		if (this.hasPrefix(file)) {
 			algorithm = DocumentStorageServiceCompressionAdapter.readAlgorithmFromBlob(file);
 			originalBlob = this.removePrefixFromBlobIfPresent(file);
@@ -228,6 +229,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		if (algorithm === SummaryCompressionAlgorithm.None) {
 			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			decompressed = decompress(originalBlob) as ArrayBufferLike;
 		} else {
 			throw new Error(`Unknown Algorithm ${algorithm}`);
@@ -262,7 +264,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 		}
 		let clone: object | undefined;
 		for (const key of Object.keys(input)) {
-			const value = input[key];
+			const value: unknown = input[key];
 
 			if (Boolean(value) && typeof value === "object") {
 				const replaced = this.recursivelyReplace(
@@ -311,10 +313,15 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 * @param summary - The summary tree to traverse.
 	 * @returns The content of the tree attribute of the summary tree containing the metadata blob.
 	 */
-	private static getMetadataHolderTree(summary: ISummaryTree) {
+	private static getMetadataHolderTree(
+		summary: ISummaryTree,
+	): { [path: string]: SummaryObject } | undefined {
 		const metadataHolder = this.findMetadataHolderSummary(summary);
-		assert(metadataHolder !== undefined, 0x6f8 /* metadataHolder must be a non-null object */);
+		assert(metadataHolder !== undefined, "metadataHolder must be a non-null object");
 		const metadataHolderTree = metadataHolder.tree;
+		if (metadataHolderTree === undefined) {
+			return undefined;
+		}
 		return metadataHolderTree;
 	}
 
@@ -325,6 +332,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	private static putCompressionMarkup(summary: ISummaryTree): void {
 		const metadataHolderTree =
 			DocumentStorageServiceCompressionAdapter.getMetadataHolderTree(summary);
+		assert(metadataHolderTree !== undefined, "metadataHolderTree must be defined");
 		metadataHolderTree[blobHeadersBlobName] = {
 			type: 2,
 			content: "",
@@ -389,13 +397,13 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	public override async readBlob(id: string): Promise<ArrayBufferLike> {
 		const originalBlob = await super.readBlob(id);
-		if (!this._isCompressionEnabled) {
-			return originalBlob;
-		} else {
+		if (this._isCompressionEnabled) {
 			const decompressedBlob =
 				DocumentStorageServiceCompressionAdapter.decodeBlob(originalBlob);
 			//			console.log(`Miso summary-blob Blob read END : ${id} ${decompressedBlob.byteLength}`);
 			return decompressedBlob;
+		} else {
+			return originalBlob;
 		}
 	}
 
@@ -410,14 +418,15 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	public override async getSnapshotTree(
 		version?: IVersion | undefined,
 		scenarioName?: string | undefined,
-		// eslint-disable-next-line @rushstack/no-new-null
+		// eslint-disable-next-line @rushstack/no-new-null -- legacy API compatibility
 	): Promise<ISnapshotTree | null> {
 		const snapshotTree = await super.getSnapshotTree(version, scenarioName);
 		this._isCompressionEnabled =
 			snapshotTree !== undefined &&
 			snapshotTree !== null &&
 			DocumentStorageServiceCompressionAdapter.hasCompressionMarkup(snapshotTree);
-		return snapshotTree;
+		// eslint-disable-next-line unicorn/no-null -- legacy API compatibility, returning null as per interface contract
+		return snapshotTree ?? null;
 	}
 
 	/**
@@ -444,14 +453,14 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	public override async downloadSummary(id: ISummaryHandle): Promise<ISummaryTree> {
 		const summary = await super.downloadSummary(id);
-		return !this._isCompressionEnabled
-			? summary
-			: (DocumentStorageServiceCompressionAdapter.recursivelyReplace(
+		return this._isCompressionEnabled
+			? (DocumentStorageServiceCompressionAdapter.recursivelyReplace(
 					false,
 					summary,
 					DocumentStorageServiceCompressionAdapter.blobEncoder,
 					DocumentStorageServiceCompressionAdapter.blobDecoder,
 					this._config,
-				) as ISummaryTree);
+				) as ISummaryTree)
+			: summary;
 	}
 }

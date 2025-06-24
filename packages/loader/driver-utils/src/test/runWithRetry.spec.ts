@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -11,13 +11,14 @@ import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { runWithRetry } from "../runWithRetry.js";
 
 const _setTimeout = global.setTimeout;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const fastSetTimeout: any = (
 	callback: (...cbArgs: any[]) => void,
 	ms: number,
-	...args: any[]
-) => _setTimeout(callback, ms / 1000.0, ...args);
+	...args: unknown[]
+) => _setTimeout(callback, ms / 1000, ...(args as Parameters<typeof setTimeout>).slice(2));
 async function runWithFastSetTimeout<T>(callback: () => Promise<T>): Promise<T> {
-	global.setTimeout = fastSetTimeout;
+	global.setTimeout = fastSetTimeout as typeof global.setTimeout;
 	return callback().finally(() => {
 		global.setTimeout = _setTimeout;
 	});
@@ -29,7 +30,7 @@ describe("runWithRetry Tests", () => {
 	it("Should succeed at first time", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			retryTimes -= 1;
 			return true;
 		};
@@ -51,12 +52,15 @@ describe("runWithRetry Tests", () => {
 		const maxTries: number = 5;
 		let retryTimes: number = maxTries;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
-				const error = new Error("Throw error");
-				(error as any).retryAfterSeconds = 10;
-				(error as any).canRetry = true;
+				const error = new Error("Throw error") as Error & {
+					retryAfterSeconds?: number;
+					canRetry?: boolean;
+				};
+				error.retryAfterSeconds = 10;
+				error.canRetry = true;
 				throw error;
 			}
 			return true;
@@ -78,13 +82,17 @@ describe("runWithRetry Tests", () => {
 	it("Check that it retries after retry seconds", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
-				const error = new Error("Throttle Error");
-				(error as any).errorType = DriverErrorTypes.throttlingError;
-				(error as any).retryAfterSeconds = 400;
-				(error as any).canRetry = true;
+				const error = new Error("Throttle Error") as Error & {
+					errorType?: string;
+					retryAfterSeconds?: number;
+					canRetry?: boolean;
+				};
+				error.errorType = DriverErrorTypes.throttlingError;
+				error.retryAfterSeconds = 400;
+				error.canRetry = true;
 				throw error;
 			}
 			return true;
@@ -97,18 +105,20 @@ describe("runWithRetry Tests", () => {
 	it("If error is just a string, should retry as canRetry is not false", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
-				const err = new Error("error");
-				(err as any).canRetry = true;
+				const err = new Error("error") as Error & { canRetry?: boolean };
+				err.canRetry = true;
 				throw err;
 			}
 			return true;
 		};
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
-		} catch (error) {}
+		} catch {
+			// Intentionally empty: error is expected in this test case
+		}
 		assert.strictEqual(retryTimes, 0, "Should retry");
 		assert.strictEqual(success, true, "Should succeed as retry should be successful");
 	});
@@ -116,11 +126,11 @@ describe("runWithRetry Tests", () => {
 	it("Should not retry if canRetry is set as false", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
-				const error = new Error("error");
-				(error as any).canRetry = false;
+				const error = new Error("error") as Error & { canRetry?: boolean };
+				error.canRetry = false;
 				throw error;
 			}
 			return true;
@@ -128,7 +138,9 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch {
+			// Intentionally empty: error is expected in this test case
+		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
@@ -136,7 +148,7 @@ describe("runWithRetry Tests", () => {
 	it("Should not retry if canRetry is not set", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
 				const error = new Error("error");
@@ -147,7 +159,9 @@ describe("runWithRetry Tests", () => {
 		try {
 			success = await runWithFastSetTimeout(async () => runWithRetry(api, "test", logger, {}));
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch {
+			// Intentionally empty: error is expected in this test case
+		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as canRetry was not set");
 	});
@@ -155,11 +169,11 @@ describe("runWithRetry Tests", () => {
 	it("Should not retry if it is disabled", async () => {
 		let retryTimes: number = 1;
 		let success = false;
-		const api = async () => {
+		const api = async (): Promise<boolean> => {
 			if (retryTimes > 0) {
 				retryTimes -= 1;
-				const error = new Error("error");
-				(error as any).canRetry = true;
+				const error = new Error("error") as Error & { canRetry?: boolean };
+				error.canRetry = true;
 				throw error;
 			}
 			return true;
@@ -173,7 +187,9 @@ describe("runWithRetry Tests", () => {
 				}),
 			);
 			assert.fail("Should not succeed");
-		} catch (error) {}
+		} catch {
+			// Intentionally empty: error is expected in this test case
+		}
 		assert.strictEqual(retryTimes, 0, "Should not retry");
 		assert.strictEqual(success, false, "Should not succeed as retrying was disabled");
 	});
@@ -181,10 +197,10 @@ describe("runWithRetry Tests", () => {
 	it("Abort reason is included in thrown exception", async () => {
 		const abortController = new AbortController();
 
-		const api = () => {
+		const api = async (): Promise<void> => {
 			abortController.abort("Sample abort reason");
 			const error = new Error("aborted");
-			(error as any).canRetry = true;
+			(error as Error & { canRetry?: boolean }).canRetry = true;
 			throw error;
 		};
 		try {
@@ -195,8 +211,8 @@ describe("runWithRetry Tests", () => {
 			);
 			assert.fail("Should not succeed");
 		} catch (error) {
-			assert.strictEqual((error as any).message, "runWithRetry was Aborted");
-			assert.strictEqual((error as any).reason, "Sample abort reason");
+			assert.strictEqual((error as { message?: string }).message, "runWithRetry was Aborted");
+			assert.strictEqual((error as { reason?: string }).reason, "Sample abort reason");
 		}
 	});
 });

@@ -21,7 +21,7 @@ export class RateLimiter {
 
 	// Run when one of the tasks finished running.
 	// Release next task if we have one, or allow more tasks to run in future.
-	protected readonly release = () => {
+	protected readonly release = (): void => {
 		const task = this.tasks.shift();
 		if (task !== undefined) {
 			return task();
@@ -29,7 +29,7 @@ export class RateLimiter {
 		this.maxRequests++;
 	};
 
-	protected async acquire() {
+	protected async acquire(): Promise<void> {
 		if (this.maxRequests > 0) {
 			this.maxRequests--;
 			return;
@@ -40,7 +40,7 @@ export class RateLimiter {
 		});
 	}
 
-	public async schedule<T>(work: () => Promise<T>) {
+	public async schedule<T>(work: () => Promise<T>): Promise<T> {
 		await this.acquire();
 		return work().finally(this.release);
 	}

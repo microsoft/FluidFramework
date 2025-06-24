@@ -4,10 +4,7 @@
  */
 
 module.exports = {
-	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid/minimal-deprecated"),
-		"prettier",
-	],
+	extends: [require.resolve("@fluidframework/eslint-config-fluid"), "prettier"],
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
@@ -22,6 +19,15 @@ module.exports = {
 			rules: {
 				"import/no-nodejs-modules": "off", // Node libraries are OK for test files.
 			},
+		},
+		{
+			// Ignore dist and lib folders for linting
+			files: ["dist/**", "lib/**"],
+			rules: {},
+		},
+		{
+			files: ["src/**/*.ts"],
+			rules: {},
 		},
 	],
 };

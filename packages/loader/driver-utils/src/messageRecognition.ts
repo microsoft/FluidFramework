@@ -20,6 +20,7 @@ export function isRuntimeMessage(message: { type: string }): boolean {
 }
 
 /**
+ * Determines whether a message can be coalesced by the service.
  * @privateRemarks ADO #1385: To be moved to packages/protocol-base/src/protocol.ts
  * @internal
  */

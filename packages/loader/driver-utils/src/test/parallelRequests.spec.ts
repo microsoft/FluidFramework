@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
@@ -25,7 +25,7 @@ describe("Parallel Requests", () => {
 		expectedRequests: number,
 		knownTo: boolean,
 		howMany: HowMany = HowMany.Exact,
-	) {
+	): Promise<void> {
 		let nextElement = from;
 		let requests = 0;
 		let dispatches = 0;
@@ -47,16 +47,20 @@ describe("Parallel Requests", () => {
 				assert(!knownTo || _to <= to);
 
 				switch (howMany) {
-					case HowMany.Partial:
+					case HowMany.Partial: {
 						length = Math.min(length, payloadSize / 2 + 1);
 						break;
-					case HowMany.TooMany:
+					}
+					case HowMany.TooMany: {
 						length = 2 * length + 2;
 						break;
-					case HowMany.Exact:
+					}
+					case HowMany.Exact: {
 						break;
-					default:
+					}
+					default: {
 						unreachableCase(howMany);
+					}
 				}
 				// covering knownTo === false case
 				const actualTo = Math.min(_from + length, to);
@@ -95,9 +99,9 @@ describe("Parallel Requests", () => {
 		from: number,
 		to: number | undefined,
 		cancelAt: number,
-		payloadSize,
+		payloadSize: number,
 		expectedRequests: number,
-	) {
+	): Promise<void> {
 		let nextElement = from;
 		let requests = 0;
 		let dispatches = 0;
@@ -222,9 +226,9 @@ describe("Parallel Requests", () => {
 		let success = true;
 		try {
 			await manager.run(10);
-		} catch (error: any) {
+		} catch (error) {
 			success = false;
-			assert(error.message === "request");
+			assert((error as { message?: string }).message === "request");
 		}
 		assert(!success);
 		logger.assertMatchNone([{ category: "error" }]);
@@ -249,9 +253,9 @@ describe("Parallel Requests", () => {
 		let success = true;
 		try {
 			await manager.run(10);
-		} catch (error: any) {
+		} catch (error) {
 			success = false;
-			assert(error.message === "response");
+			assert((error as { message?: string }).message === "response");
 		}
 		assert(!success);
 		logger.assertMatchNone([{ category: "error" }]);
