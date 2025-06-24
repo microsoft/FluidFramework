@@ -250,6 +250,9 @@ export interface IChannelStorageService {
 	 */
 	list(path: string): Promise<string[]>;
 
+	/**
+	 * Returns the snapshot tree for the channel.
+	 */
 	getSnapshotTree?(): ISnapshotTree | undefined;
 }
 

@@ -37,7 +37,7 @@ export const emptyChunk: TreeChunk = {
 		return false; // Immutable, so sharing does not matter.
 	},
 	summaryRefId: undefined,
-	addSummaryRefId(summaryRefId: string): void {
+	updateSummaryRefId(summaryRefId: string): void {
 		fail("empty chunk cannot do incremental summary");
 	},
 };

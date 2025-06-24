@@ -43,8 +43,6 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
 export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	public idCompressor: undefined | IIdCompressor;
 
-	private _summaryRefId: string | undefined;
-
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *
@@ -68,11 +66,13 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 		return this.shape.topLevelLength;
 	}
 
+	private _summaryRefId: string | undefined;
+
 	public get summaryRefId(): string | undefined {
 		return this._summaryRefId;
 	}
 
-	public addSummaryRefId(summaryRefId: string): void {
+	public updateSummaryRefId(summaryRefId: string): void {
 		this._summaryRefId = summaryRefId;
 	}
 
