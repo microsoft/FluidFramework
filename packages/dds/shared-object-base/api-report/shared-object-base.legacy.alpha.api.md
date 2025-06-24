@@ -47,7 +47,7 @@ export abstract class SharedObject<TEvent extends ISharedObjectEvents = ISharedO
     // (undocumented)
     protected get serializer(): IFluidSerializer;
     summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): Promise<ISummaryTreeWithStats>;
-    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext): ISummaryTreeWithStats;
+    protected abstract summarizeCore(serializer: IFluidSerializer, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext, fullTree?: boolean): ISummaryTreeWithStats;
 }
 
 // @alpha @legacy
@@ -84,6 +84,7 @@ export abstract class SharedObjectCore<TEvent extends ISharedObjectEvents = ISha
     protected abstract processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
     protected processMessagesCore?(messagesCollection: IRuntimeMessageCollection): void;
     protected reSubmitCore(content: unknown, localOpMetadata: unknown): void;
+    protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void;
     protected rollback(content: unknown, localOpMetadata: unknown): void;
     protected runtime: IFluidDataStoreRuntime;
     protected abstract get serializer(): IFluidSerializer;

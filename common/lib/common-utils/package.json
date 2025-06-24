@@ -88,8 +88,8 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.49.0",
 		"@fluidframework/common-utils-previous": "npm:@fluidframework/common-utils@1.0.0",
-		"@fluidframework/eslint-config-fluid": "^5.5.1",
-		"@microsoft/api-extractor": "7.52.5",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@microsoft/api-extractor": "7.52.8",
 		"@types/base64-js": "^1.3.0",
 		"@types/benchmark": "^2.1.0",
 		"@types/jest": "29.5.3",
@@ -150,7 +150,7 @@
 			"sharp": "^0.33.2"
 		},
 		"patchedDependencies": {
-			"@microsoft/api-extractor@7.52.5": "../../../patches/@microsoft__api-extractor@7.52.5.patch"
+			"@microsoft/api-extractor@7.52.8": "../../../patches/@microsoft__api-extractor@7.52.8.patch"
 		}
 	},
 	"typeValidation": {

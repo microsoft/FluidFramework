@@ -14,6 +14,7 @@ import {
 	isNetworkError,
 	NetworkError,
 	RestWrapper,
+	validateTokenClaimsExpiration,
 } from "@fluidframework/server-services-client";
 import { v4 as uuid } from "uuid";
 import {
@@ -21,16 +22,19 @@ import {
 	Lumberjack,
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
-import { getRequestErrorTranslator, getTokenLifetimeInSec } from "../utils";
+import { getRequestErrorTranslator } from "../utils";
 import { ITenantService } from "./definitions";
 import { RedisTenantCache } from "./redisTenantCache";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
+import { decode } from "jsonwebtoken";
 
 export class RiddlerService implements ITenantService, ITenantConfigManager {
 	private readonly restWrapper: RestWrapper;
 	constructor(
 		endpoint: string,
 		private readonly cache: RedisTenantCache,
+		private readonly maxTokenLifetimeSec: number,
 		private readonly redisCacheForInvalidToken?: ICache,
 	) {
 		this.restWrapper = new BasicRestWrapper(
@@ -51,6 +55,7 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 			() => getGlobalTelemetryContext().getProperties() /* getTelemetryContextProperties */,
 			undefined /* refreshTokenIfNeeded */,
 			logHttpMetrics,
+			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
 		);
 	}
 
@@ -155,8 +160,11 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 				.post(tokenValidationUrl, { token }, { includeDisabledTenant })
 				.catch(getRequestErrorTranslator(tokenValidationUrl, "POST", lumberProperties));
 
-			// TODO: ensure token expiration validity as well using `validateTokenClaimsExpiration` from `services-client`
-			let tokenLifetimeInSec = getTokenLifetimeInSec(token);
+			const claims = decode(token) as ITokenClaims;
+			let tokenLifetimeInSec = validateTokenClaimsExpiration(
+				claims,
+				this.maxTokenLifetimeSec,
+			);
 			// in case the service clock is behind, reducing the lifetime of token by 5%
 			// to avoid using an expired token.
 			if (tokenLifetimeInSec) {

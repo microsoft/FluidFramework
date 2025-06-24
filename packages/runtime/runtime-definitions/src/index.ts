@@ -18,11 +18,13 @@ export type {
 	IContainerRuntimeBaseEvents,
 	IDataStore,
 	IFluidDataStoreChannel,
+	IFluidDataStorePolicies,
 	IFluidDataStoreContext,
 	IFluidParentContext,
 	IFluidDataStoreContextDetached,
 	IPendingMessagesState,
 	StageControlsExperimental,
+	CommitStagedChangesOptionsExperimental,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";

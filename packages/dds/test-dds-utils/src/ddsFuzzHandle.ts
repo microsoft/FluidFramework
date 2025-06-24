@@ -43,6 +43,10 @@ export class DDSFuzzHandle extends FluidHandleBase<string> {
 		}
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
 	public bind(handle: IFluidHandle): void {}
 }
 
@@ -77,5 +81,9 @@ export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IP
 		}
 	}
 
+	// eslint-disable-next-line jsdoc/require-description
+	/**
+	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
+	 */
 	public bind(handle: IFluidHandle): void {}
 }

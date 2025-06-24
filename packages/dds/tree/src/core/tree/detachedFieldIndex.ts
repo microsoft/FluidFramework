@@ -4,8 +4,14 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec, noopValidator } from "../../codec/index.js";
+import {
+	type CodecWriteOptions,
+	FluidClientVersion,
+	type IJsonCodec,
+	noopValidator,
+} from "../../codec/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,
@@ -31,7 +37,6 @@ import type {
 	Major,
 	Minor,
 } from "./detachedFieldIndexTypes.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * The tree index records detached field IDs and associates them with a change atom ID.
@@ -55,7 +60,7 @@ export class DetachedFieldIndex {
 	> = new Map();
 
 	private readonly codec: IJsonCodec<DetachedFieldSummaryData, Format>;
-	private readonly options: ICodecOptions;
+	private readonly options: CodecWriteOptions;
 
 	/**
 	 * The process for loading `DetachedFieldIndex` data from a summary is split into two steps:
@@ -76,9 +81,13 @@ export class DetachedFieldIndex {
 		private rootIdAllocator: IdAllocator<ForestRootId>,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		options?: ICodecOptions,
+		options?: CodecWriteOptions,
 	) {
-		this.options = options ?? { jsonValidator: noopValidator };
+		this.options = options ?? {
+			jsonValidator: noopValidator,
+			oldestCompatibleClient: FluidClientVersion.v2_0,
+		};
+		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeDetachedNodeToFieldCodec(revisionTagCodec, this.options, idCompressor);
 	}
 

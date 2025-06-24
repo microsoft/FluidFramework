@@ -4,22 +4,22 @@
  */
 
 import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
-import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import {
 	LocalKafka,
 	LocalContext,
 	LocalLambdaController,
 } from "@fluidframework/server-memory-orderer";
+import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
-import { RedisOptions, ClusterOptions } from "ioredis";
-import * as winston from "winston";
 import {
 	RedisClientConnectionManager,
 	type IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
+import { RedisOptions, ClusterOptions } from "ioredis";
+import { Provider } from "nconf";
+import * as winston from "winston";
 
 export async function deliCreate(
 	config: Provider,

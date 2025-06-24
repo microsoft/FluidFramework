@@ -4,12 +4,10 @@
  */
 
 import type { Nodes as HastTree } from "hast";
+import { h } from "hastscript";
 
 import type { CodeSpanNode } from "../../index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import { transformChildrenUnderTag } from "../Utilities.js";
-
-import { applyFormatting } from "./Utilities.js";
 
 /**
  * Transform a {@link BlockQuoteNode} to HTML.
@@ -18,6 +16,5 @@ import { applyFormatting } from "./Utilities.js";
  * @param context - See {@link TransformationContext}.
  */
 export function codeSpanToHtml(node: CodeSpanNode, context: TransformationContext): HastTree {
-	const transformed = transformChildrenUnderTag({ name: "code" }, node.children, context);
-	return applyFormatting(transformed, context);
+	return h("code", node.isEmpty ? [] : [{ type: "text", value: node.value }]);
 }

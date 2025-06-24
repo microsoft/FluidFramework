@@ -15,7 +15,7 @@ import {
 	IAudience,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
@@ -30,11 +30,11 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
-	isFluidCodeDetails,
 	ReadOnlyInfo,
-	type ILoader,
-	type ILoaderOptions,
+	ILoader,
+	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
+import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IEvent,
@@ -72,7 +72,6 @@ import {
 	ISequencedDocumentMessage,
 	ISignalMessage,
 	type ConnectionMode,
-	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -129,7 +128,10 @@ import {
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 import { RelativeLoader } from "./loader.js";
-import { validateRuntimeCompatibility } from "./loaderLayerCompatState.js";
+import {
+	validateDriverCompatibility,
+	validateRuntimeCompatibility,
+} from "./loaderLayerCompatState.js";
 import {
 	createMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
@@ -713,17 +715,6 @@ export class Container
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
 		return this._loadedCodeDetails;
-	}
-
-	/**
-	 * Get the package info for the code details that were used to load the container.
-	 * @returns The package info for the code details that were used to load the container if it is loaded, undefined otherwise
-	 * @deprecated To be removed in 2.40.
-	 * Use getLoadedCodeDetails instead; see https://github.com/microsoft/FluidFramework/issues/23898 for details.
-	 * Deprecating the function here to avoid polluting public container api surface.
-	 */
-	public getContainerPackageInfo?(): IContainerPackageInfo | undefined {
-		return getPackageName(this._loadedCodeDetails);
 	}
 
 	private _loadedModule: IFluidModuleWithDetails | undefined;
@@ -1348,20 +1339,10 @@ export class Container
 										createNewResolvedUrl !== undefined,
 									0x2c4 /* "client should not be summarizer before container is created" */,
 								);
-								this.service = await runWithRetry(
-									async () =>
-										this.serviceFactory.createContainer(
-											summary,
-											createNewResolvedUrl,
-											this.subLogger,
-											false, // clientIsSummarizer
-										),
-									"containerAttach",
-									this.mc.logger,
-									{
-										cancel: this._deltaManager.closeAbortController.signal,
-									}, // progress
-								);
+								this.service = await this.createDocumentService(createNewResolvedUrl, {
+									mode: "attach",
+									summary,
+								});
 							}
 							this.storageAdapter.connectToService(this.service);
 							return this.storageAdapter;
@@ -1600,14 +1581,51 @@ export class Container
 		this.emit("metadataUpdate", metadata);
 	};
 
+	/**
+	 * Creates a document service during container attachment or loading.
+	 * @param resolvedUrl - The resolved URL of the container.
+	 * @param props - Properties indicating whether to load or attach the container. For attaching,
+	 * a summary tree can be provided.
+	 * @remarks This method validates that the driver is compatible with the Loader.
+	 */
 	private async createDocumentService(
-		serviceProvider: () => Promise<IDocumentService>,
+		resolvedUrl: IResolvedUrl,
+		props: { mode: "load" } | { mode: "attach"; summary: ISummaryTree | undefined },
 	): Promise<IDocumentService> {
-		const service = await serviceProvider();
-		// Back-compat for Old driver
-		if (service.on !== undefined) {
-			service.on("metadataUpdate", this.metadataUpdateHandler);
+		let service: IDocumentService;
+		if (props.mode === "load") {
+			service = await this.serviceFactory.createDocumentService(
+				resolvedUrl,
+				this.subLogger,
+				this.client.details.type === summarizerClientType,
+			);
+			if (service.on !== undefined) {
+				// Back-compat for Old driver
+				service.on("metadataUpdate", this.metadataUpdateHandler);
+			}
+		} else {
+			service = await runWithRetry(
+				async () =>
+					this.serviceFactory.createContainer(
+						props.summary,
+						resolvedUrl,
+						this.subLogger,
+						false, // clientIsSummarizer
+					),
+				"containerAttach",
+				this.mc.logger,
+				{
+					cancel: this._deltaManager.closeAbortController.signal,
+				}, // progress
+			);
 		}
+
+		// Validate that the Driver is compatible with this Loader.
+		const maybeDriverCompatDetails = service as FluidObject<ILayerCompatDetails>;
+		validateDriverCompatibility(maybeDriverCompatDetails.ILayerCompatDetails, (error) =>
+			this.dispose(error),
+		);
+
 		return service;
 	}
 
@@ -1628,13 +1646,7 @@ export class Container
 		dmLastKnownSeqNumber: number;
 	}> {
 		const timings: Record<string, number> = { phase1: performanceNow() };
-		this.service = await this.createDocumentService(async () =>
-			this.serviceFactory.createDocumentService(
-				resolvedUrl,
-				this.subLogger,
-				this.client.details.type === summarizerClientType,
-			),
-		);
+		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
 
 		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
 		const mode =
@@ -1835,7 +1847,7 @@ export class Container
 			if (attachmentBlobs !== undefined) {
 				assert(
 					this.detachedBlobStorage !== undefined,
-					"detached blob storage should always exist when detached",
+					0xb8e /* detached blob storage should always exist when detached */,
 				);
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}
@@ -2498,13 +2510,11 @@ export class Container
 	 */
 	private setContextConnectedState(connected: boolean, readonly: boolean): void {
 		if (this._runtime?.disposed === false && this.loaded) {
-			/**
-			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
-			 * ops getting through to the DeltaManager.
-			 * The ContainerRuntime's "connected" state simply means it is ok to send ops
-			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
-			 */
-			this.runtime.setConnectionState(connected && !readonly, this.clientId);
+			this.runtime.setConnectionState(
+				connected &&
+					!readonly /* container can send ops if connected to service and not in readonly mode */,
+				this.clientId,
+			);
 		}
 	}
 

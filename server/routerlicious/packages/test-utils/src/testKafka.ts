@@ -5,12 +5,14 @@
 
 import { strict as assert } from "assert";
 import { EventEmitter } from "events";
+
 import {
 	IConsumer,
 	IProducer,
 	IQueuedMessage,
 	ISequencedOperationMessage,
 } from "@fluidframework/server-services-core";
+
 import { TestContext } from "./testContext";
 
 /**

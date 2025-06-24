@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "@fluidframework/core-utils/internal";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
-import { compare, gte, lte, valid } from "semver-ts";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { compare, gt, gte, lte, valid } from "semver-ts";
 
 import {
 	disabledCompressionConfig,
@@ -16,7 +18,7 @@ import { pkgVersion } from "./packageVersion.js";
 /**
  * Our policy is to support N/N-1 compatibility by default, where N is the most
  * recent public major release of the runtime.
- * Therefore, if the customer does not provide a compatibility mode, we will
+ * Therefore, if the customer does not provide a minVersionForCollab, we will
  * default to use N-1.
  *
  * However, this is not consistent with today's behavior. Some options (i.e.
@@ -26,12 +28,21 @@ import { pkgVersion } from "./packageVersion.js";
  * Importantly though, N/N-2 compatibility is still guaranteed with the proper
  * configurations set.
  *
- * Further to distinguish unspecified `compatibilityVersion` from a specified
+ * Further to distinguish unspecified `minVersionForCollab` from a specified
  * version and allow `enableExplicitSchemaControl` to default to `true` for
  * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
  * is semantically less than 2.0.0.
  */
-export const defaultCompatibilityVersion = "2.0.0-defaults" as const;
+export const defaultMinVersionForCollab =
+	"2.0.0-defaults" as const satisfies MinimumVersionForCollab;
+
+/**
+ * We don't want allow a version before the major public release of the LTS version.
+ * Today we use "1.0.0", because our policy supports N/N-1 & N/N-2, which includes
+ * all minor versions of N. Though LTS starts at 1.4.0, we should stay consistent
+ * with our policy and allow all 1.x versions to be compatible with 2.x.
+ */
+const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -43,6 +54,20 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
+ *
+ * @legacy
+ * @alpha
+ */
+export type MinimumVersionForCollab =
+	| `${1 | 2}.${bigint}.${bigint}`
+	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+
+/**
+ * String in a valid semver format of a specific version at least specifying minor.
+ * Unlike {@link MinimumVersionForCollab}, this type allows any bigint for the major version.
+ * Used as a more generic type that allows major versions other than 1 or 2.
+ *
+ * @internal
  */
 export type SemanticVersion =
 	| `${bigint}.${bigint}.${bigint}`
@@ -55,6 +80,13 @@ export type ConfigMap<T extends Record<string, unknown>> = {
 	[K in keyof T]-?: {
 		[version: MinimumMinorSemanticVersion]: T[K];
 	};
+};
+
+/**
+ * Generic type for runtimeOptionsAffectingDocSchemaConfigValidationMap
+ */
+export type ConfigValidationMap<T extends Record<string, unknown>> = {
+	[K in keyof T]-?: (configValue: T[K]) => SemanticVersion | undefined;
 };
 
 /**
@@ -84,13 +116,13 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
 /**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
  *
- * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps SemanticVersions
- * to the appropriate default value for that property to supporting that SemanticVersion. If clients running SemanticVersion X are able to understand
- * the format changes introduced by the property, then the default value for that SemanticVersion will enable the feature associated with the property.
+ * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps MinimumVersionForCollab
+ * to the appropriate default value for that property to supporting that MinimumVersionForCollab. If clients running MinimumVersionForCollab X are able to understand
+ * the format changes introduced by the property, then the default value for that MinimumVersionForCollab will enable the feature associated with the property.
  * Otherwise, the feature will be disabled.
  *
- * For example if the compatibilityVersion is a 1.x version (i.e. "1.5.0"), then the default value for `enableGroupedBatching` will be false since 1.x
- * clients do not understand the document format when batching is enabled. If the compatibilityVersion is a 2.x client (i.e. "2.0.0" or later), then the
+ * For example if the minVersionForCollab is a 1.x version (i.e. "1.5.0"), then the default value for `enableGroupedBatching` will be false since 1.x
+ * clients do not understand the document format when batching is enabled. If the minVersionForCollab is a 2.x client (i.e. "2.0.0" or later), then the
  * default value for `enableGroupedBatching` will be true because clients running 2.0 or later will be able to understand the format changes associated
  * with the batching feature.
  */
@@ -98,11 +130,11 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 	enableGroupedBatching: {
 		"1.0.0": false,
 		"2.0.0-defaults": true,
-	} as const,
+	},
 	compressionOptions: {
 		"1.0.0": disabledCompressionConfig,
 		"2.0.0-defaults": enabledCompressionConfig,
-	} as const,
+	},
 	enableRuntimeIdCompressor: {
 		// For IdCompressorMode, `undefined` represents a logical state (off).
 		// However, to satisfy the Required<> constraint while
@@ -114,49 +146,81 @@ const runtimeOptionsAffectingDocSchemaConfigMap = {
 		// Therefore, we will require customers to explicitly enable it. We
 		// are keeping it as a DocSchema affecting option for now as this may
 		// change in the future.
-	} as const,
+	},
 	explicitSchemaControl: {
 		"1.0.0": false,
 		// This option's intention is to prevent 1.x clients from joining sessions
-		// when enabled. This is set to true when the compatibility version is set
+		// when enabled. This is set to true when the minVersionForCollab is set
 		// to >=2.0.0 (explicitly). This is different than other 2.0 defaults
 		// because it was not enabled by default prior to the implementation of
-		// `compatibilityVersion`.
-		// `defaultCompatibilityVersion` is set to "2.0.0-defaults" which "2.0.0"
+		// `minVersionForCollab`.
+		// `defaultMinVersionForCollab` is set to "2.0.0-defaults" which "2.0.0"
 		// does not satisfy to avoiding enabling this option by default as of
-		// `compatibilityVersion` introduction, which could be unexpected.
-		// Only enable as a default when `compatibilityVersion` is specified at
+		// `minVersionForCollab` introduction, which could be unexpected.
+		// Only enable as a default when `minVersionForCollab` is specified at
 		// 2.0.0+.
 		"2.0.0": true,
-	} as const,
+	},
 	flushMode: {
 		// Note: 1.x clients are compatible with TurnBased flushing, but here we elect to remain on Immediate flush mode
 		// as a work-around for inability to send batches larger than 1Mb. Immediate flushing keeps batches smaller as
 		// fewer messages will be included per flush.
 		"1.0.0": FlushMode.Immediate,
 		"2.0.0-defaults": FlushMode.TurnBased,
-	} as const,
+	},
 	gcOptions: {
 		"1.0.0": {},
-		// Although sweep is supported in 2.x, it is disabled by default until compatibilityVersion>=3.0.0 to be extra safe.
+		// Although sweep is supported in 2.x, it is disabled by default until minVersionForCollab>=3.0.0 to be extra safe.
 		"3.0.0": { enableGCSweep: true },
-	} as const,
+	},
 	createBlobPayloadPending: {
 		// This feature is new and disabled by default. In the future we will enable it by default, but we have not
 		// closed on the version where that will happen yet.  Probably a .10 release since blob functionality is not
 		// exposed on the `@public` API surface.
 		"1.0.0": undefined,
-	} as const,
+	},
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
+const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
+	enableGroupedBatching: configValueToMinVersionForCollab([
+		[false, "1.0.0"],
+		[true, "2.0.0-defaults"],
+	]),
+	compressionOptions: configValueToMinVersionForCollab([
+		[{ ...disabledCompressionConfig }, "1.0.0"],
+		[{ ...enabledCompressionConfig }, "2.0.0-defaults"],
+	]),
+	enableRuntimeIdCompressor: configValueToMinVersionForCollab([
+		[undefined, "1.0.0"],
+		["on", "2.0.0-defaults"],
+		["delayed", "2.0.0-defaults"],
+	]),
+	explicitSchemaControl: configValueToMinVersionForCollab([
+		[false, "1.0.0"],
+		[true, "2.0.0-defaults"],
+	]),
+	flushMode: configValueToMinVersionForCollab([
+		[FlushMode.Immediate, "1.0.0"],
+		[FlushMode.TurnBased, "2.0.0-defaults"],
+	]),
+	gcOptions: configValueToMinVersionForCollab([
+		[{ enableGCSweep: undefined }, "1.0.0"],
+		[{ enableGCSweep: true }, "2.0.0-defaults"],
+	]),
+	createBlobPayloadPending: configValueToMinVersionForCollab([
+		[undefined, "1.0.0"],
+		[true, "2.40.0"],
+	]),
+} as const satisfies ConfigValidationMap<RuntimeOptionsAffectingDocSchema>;
+
 /**
- * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given compatibility version.
+ * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
  */
-export function getCompatibilityVersionDefaults(
-	compatibilityVersion: SemanticVersion,
+export function getMinVersionForCollabDefaults(
+	minVersionForCollab: MinimumVersionForCollab,
 ): RuntimeOptionsAffectingDocSchema {
-	return getConfigsForCompatMode(
-		compatibilityVersion,
+	return getConfigsForMinVersionForCollab(
+		minVersionForCollab,
 		runtimeOptionsAffectingDocSchemaConfigMap,
 		// This is a bad cast away from Partial that getConfigsForCompatMode provides.
 		// ConfigMap should be restructured to provide RuntimeOptionsAffectingDocSchema guarantee.
@@ -164,10 +228,10 @@ export function getCompatibilityVersionDefaults(
 }
 
 /**
- * Returns a default configuration given compatibility version and configuration version map.
+ * Returns a default configuration given minVersionForCollab and configuration version map.
  */
-export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknown>>(
-	compatibilityVersion: SemanticVersion,
+export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
+	minVersionForCollab: SemanticVersion,
 	configMap: ConfigMap<T>,
 ): Partial<T> {
 	const defaultConfigs: Partial<T> = {};
@@ -176,14 +240,14 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
 		const config = configMap[key as keyof T];
 		// Sort the versions in ascending order so we can short circuit the loop.
 		const versions = Object.keys(config).sort(compare);
-		// For each config, we iterate over the keys and check if compatibilityVersion is greater than or equal to the version.
+		// For each config, we iterate over the keys and check if minVersionForCollab is greater than or equal to the version.
 		// If so, we set it as the default value for the option. At the end of the loop we should have the most recent default
-		// value that is compatible with the version specified as the compatibilityVersion.
+		// value that is compatible with the version specified as the minVersionForCollab.
 		for (const version of versions) {
-			if (gte(compatibilityVersion, version)) {
+			if (gte(minVersionForCollab, version)) {
 				defaultConfigs[key] = config[version as MinimumMinorSemanticVersion];
 			} else {
-				// If the compatibility mode is less than the version, we break out of the loop since we don't need to check
+				// If the minVersionForCollab is less than the version, we break out of the loop since we don't need to check
 				// any later versions.
 				break;
 			}
@@ -193,13 +257,109 @@ export function getConfigsForCompatMode<T extends Record<SemanticVersion, unknow
 }
 
 /**
- * Checks if the compatibility version is valid.
- * A valid compatibility version is a string that is a valid semver version and is less than or equal to the current package version.
+ * Checks if the minVersionForCollab is valid.
+ * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
  */
-export function isValidCompatVersion(compatibilityVersion: SemanticVersion): boolean {
+export function isValidMinVersionForCollab(
+	minVersionForCollab: MinimumVersionForCollab,
+): boolean {
 	return (
-		compatibilityVersion !== undefined &&
-		valid(compatibilityVersion) !== null &&
-		lte(compatibilityVersion, pkgVersion)
+		valid(minVersionForCollab) !== null &&
+		gte(minVersionForCollab, lowestMinVersionForCollab) &&
+		lte(minVersionForCollab, pkgVersion)
 	);
+}
+
+/**
+ * Validates if the runtime options passed in from the user are compatible with the minVersionForCollab.
+ * For example, if a user sets the `enableGroupedBatching` option to true, but the minVersionForCollab
+ * is set to "1.0.0", then we should throw a UsageError since 1.x clients do not support batching.
+ * */
+export function validateRuntimeOptions(
+	minVersionForCollab: MinimumVersionForCollab,
+	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
+): void {
+	getValidationForRuntimeOptions<RuntimeOptionsAffectingDocSchema>(
+		minVersionForCollab,
+		runtimeOptions as Partial<RuntimeOptionsAffectingDocSchema>,
+		runtimeOptionsAffectingDocSchemaConfigValidationMap,
+	);
+}
+
+/**
+ * Generic function to validate runtime options against the minVersionForCollab.
+ */
+export function getValidationForRuntimeOptions<T extends Record<string, unknown>>(
+	minVersionForCollab: SemanticVersion,
+	runtimeOptions: Partial<T>,
+	validationMap: ConfigValidationMap<T>,
+): void {
+	if (minVersionForCollab === defaultMinVersionForCollab) {
+		// If the minVersionForCollab is set to the default value, then we will not validate the runtime options
+		// This is to avoid disruption to users who have not yet set the minVersionForCollab value explicitly.
+		return;
+	}
+	// Iterate through each runtime option passed in by the user
+	for (const [passedRuntimeOption, passedRuntimeOptionValue] of Object.entries(
+		runtimeOptions,
+	) as [keyof T & string, T[keyof T & string]][]) {
+		// Skip if passedRuntimeOption is not in validation map
+		if (!(passedRuntimeOption in validationMap)) {
+			continue;
+		}
+
+		const requiredVersion = validationMap[passedRuntimeOption](passedRuntimeOptionValue);
+		if (requiredVersion !== undefined && gt(requiredVersion, minVersionForCollab)) {
+			throw new UsageError(
+				`Runtime option ${passedRuntimeOption}:${JSON.stringify(passedRuntimeOptionValue)} requires ` +
+					`runtime version ${requiredVersion}. Please update minVersionForCollab ` +
+					`(currently ${minVersionForCollab}) to ${requiredVersion} or later to proceed.`,
+			);
+		}
+	}
+}
+
+/**
+ * Helper function to map ContainerRuntimeOptionsInternal config values to
+ * minVersionForCollab in {@link runtimeOptionsAffectingDocSchemaConfigValidationMap}.
+ */
+export function configValueToMinVersionForCollab<
+	T extends string | number | boolean | undefined | object,
+	Arr extends readonly [T, SemanticVersion][],
+>(configToMinVer: Arr): (configValue: T) => SemanticVersion | undefined {
+	const configValueToRequiredVersionMap = new Map(configToMinVer);
+	return (configValue: T) => {
+		// If the configValue is not an object then we can get the version required directly from the map.
+		if (typeof configValue !== "object") {
+			return configValueToRequiredVersionMap.get(configValue);
+		}
+		// When the input `configValue` is an object, this logic determines the minimum runtime version it requires.
+		// It iterates through each entry in `configValueToRequiredVersionMap`. If `possibleConfigValue` shares at
+		// least one key-value pair with the input `configValue`, its associated `versionRequired` is collected into
+		// `matchingVersions`. After checking all entries, the highest among the collected versions is returned.
+		// This represents the overall minimum version required to support the features implied by the input `configValue`.
+		const matchingVersions: SemanticVersion[] = [];
+		for (const [
+			possibleConfigValue,
+			versionRequired,
+		] of configValueToRequiredVersionMap.entries()) {
+			assert(
+				typeof possibleConfigValue == "object",
+				0xbb9 /* possibleConfigValue should be an object */,
+			);
+			// Check if `possibleConfigValue` and the input `configValue` share at least one
+			// common key-value pair. If they do, the `versionRequired` for this `possibleConfigValue`
+			// is added to `matchingVersions`.
+			if (Object.entries(possibleConfigValue).some(([k, v]) => configValue[k] === v)) {
+				matchingVersions.push(versionRequired);
+			}
+		}
+		if (matchingVersions.length > 0) {
+			// Return the latest minVersionForCollab among all matches.
+			return matchingVersions.sort((a, b) => compare(b, a))[0];
+		}
+		// If no matches then we return undefined. This means that the config value passed in
+		// does not require a specific minVersionForCollab to be valid.
+		return undefined;
+	};
 }

@@ -4,8 +4,8 @@
  */
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
-
+import type { NodeKind, TreeNodeSchema, WithType, TreeNode } from "../core/index.js";
+import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 import {
 	type FieldKind,
 	type FieldProps,
@@ -14,7 +14,7 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../schemaTypes.js";
-import type { NodeKind, TreeNodeSchema, WithType, TreeNode } from "../core/index.js";
+
 import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
 
 export function createFieldSchemaUnsafe<
@@ -27,7 +27,11 @@ export function createFieldSchemaUnsafe<
 	props?: FieldProps<TCustomMetadata>,
 ): FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata> {
 	// At runtime, we still want this to be a FieldSchema instance, but we can't satisfy its extends clause, so just return it as an FieldSchemaUnsafe
-	return createFieldSchema(kind, allowedTypes as ImplicitAllowedTypes & Types, props);
+	return createFieldSchema(
+		kind,
+		allowedTypes as ImplicitAllowedTypes & Types,
+		props,
+	) as FieldSchemaAlphaUnsafe<Kind, Types, TCustomMetadata>;
 }
 
 /**

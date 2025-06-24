@@ -5,14 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
+
 import {
-	getConfigsForCompatMode,
+	getConfigsForMinVersionForCollab,
+	getValidationForRuntimeOptions,
 	type ConfigMap,
 	type SemanticVersion,
+	type ConfigValidationMap,
+	configValueToMinVersionForCollab,
 } from "../compatUtils.js";
 
 describe("compatUtils", () => {
-	describe("getConfigsForCompatMode", () => {
+	describe("getConfigsForMinVersionForCollab", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {
 			featureA: string;
@@ -62,11 +67,11 @@ describe("compatUtils", () => {
 		};
 
 		const testCases: {
-			compatibilityVersion: SemanticVersion;
+			minVersionForCollab: SemanticVersion;
 			expectedConfig: Partial<ITestConfigMap>;
 		}[] = [
 			{
-				compatibilityVersion: "0.5.0",
+				minVersionForCollab: "0.5.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -77,7 +82,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "1.0.0",
+				minVersionForCollab: "1.0.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -88,7 +93,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "1.5.0",
+				minVersionForCollab: "1.5.0",
 				expectedConfig: {
 					featureA: "a1",
 					featureB: "b1",
@@ -99,7 +104,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "2.0.0",
+				minVersionForCollab: "2.0.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -110,7 +115,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "2.1.5",
+				minVersionForCollab: "2.1.5",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -121,7 +126,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "2.5.0",
+				minVersionForCollab: "2.5.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b1",
@@ -132,7 +137,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "3.0.0",
+				minVersionForCollab: "3.0.0",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -143,7 +148,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "3.7.2",
+				minVersionForCollab: "3.7.2",
 				expectedConfig: {
 					featureA: "a2",
 					featureB: "b2",
@@ -154,7 +159,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "5.0.1",
+				minVersionForCollab: "5.0.1",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b2",
@@ -165,7 +170,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "6.9.9",
+				minVersionForCollab: "6.9.9",
 				expectedConfig: {
 					featureA: "a3",
 					featureB: "b3",
@@ -176,7 +181,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "8.2.3",
+				minVersionForCollab: "8.2.3",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b3",
@@ -187,7 +192,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "9.7.0",
+				minVersionForCollab: "9.7.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -198,7 +203,7 @@ describe("compatUtils", () => {
 				},
 			},
 			{
-				compatibilityVersion: "10.0.0",
+				minVersionForCollab: "10.0.0",
 				expectedConfig: {
 					featureA: "a4",
 					featureB: "b4",
@@ -211,12 +216,147 @@ describe("compatUtils", () => {
 		];
 
 		for (const testCase of testCases) {
-			it(`returns correct configs for compatibilityVersion = "${testCase.compatibilityVersion}"`, () => {
-				const config = getConfigsForCompatMode(testCase.compatibilityVersion, testConfigMap);
+			it(`returns correct configs for minVersionForCollab = "${testCase.minVersionForCollab}"`, () => {
+				const config = getConfigsForMinVersionForCollab(
+					testCase.minVersionForCollab,
+					testConfigMap,
+				);
 				assert.deepEqual(
 					config,
 					testCase.expectedConfig,
-					`Failed for compatibilityVersion: ${testCase.compatibilityVersion}`,
+					`Failed for minVersionForCollab: ${testCase.minVersionForCollab}`,
+				);
+			});
+		}
+	});
+
+	describe("getValidationForRuntimeOptions", () => {
+		type FeatureAType = string;
+		type FeatureBType = boolean;
+		type FeatureCType = object;
+		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+		type TestConfigFeatures = {
+			featureA: FeatureAType;
+			featureB: FeatureBType;
+			featureC: FeatureCType;
+		};
+		const testConfigValidationMap = {
+			featureA: configValueToMinVersionForCollab([
+				["a1", "0.5.0"],
+				["a2", "2.0.0"],
+				["a3", "5.0.0"],
+				["a4", "8.0.0"],
+			]),
+			featureB: configValueToMinVersionForCollab([
+				[false, "0.0.0-defaults"],
+				[true, "3.0.0"],
+			]),
+			featureC: configValueToMinVersionForCollab([
+				[{ foo: 1 }, "4.0.0"],
+				[{ foo: 2 }, "7.0.0"],
+				[{ bar: "baz" }, "3.0.0"],
+				[{ bar: "bax" }, "8.0.0"],
+				[{ qaz: true }, "9.0.0"],
+			]),
+		} as const satisfies ConfigValidationMap<TestConfigFeatures>;
+
+		const compatibleCases: {
+			minVersionForCollab: SemanticVersion;
+			runtimeOptions: Partial<TestConfigFeatures>;
+		}[] = [
+			{
+				minVersionForCollab: "0.5.0",
+				runtimeOptions: { featureA: "a1", featureB: false },
+			},
+			{
+				minVersionForCollab: "2.0.0",
+				runtimeOptions: { featureB: false, featureA: "a2" },
+			},
+			{
+				minVersionForCollab: "5.0.0",
+				runtimeOptions: { featureA: "a3", featureB: true, featureC: { foo: 1, bax: 10 } },
+			},
+			{
+				minVersionForCollab: "8.0.0",
+				runtimeOptions: { featureA: "a1", featureC: { foo: 1, qaz: 10 } },
+			},
+			{
+				minVersionForCollab: "9.0.0",
+				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true }, featureA: "a4" },
+			},
+			{
+				minVersionForCollab: "1.0.0",
+				runtimeOptions: { featureC: { notDocSchemaAffecting: true }, featureA: "a1" },
+			},
+		];
+
+		const incompatibleCases: {
+			minVersionForCollab: SemanticVersion;
+			runtimeOptions: Partial<TestConfigFeatures>;
+			expectedErrorMessage: string;
+		}[] = [
+			{
+				minVersionForCollab: "0.5.0",
+				runtimeOptions: { featureA: "a2" },
+				expectedErrorMessage: `Runtime option featureA:"a2" requires runtime version 2.0.0. Please update minVersionForCollab (currently 0.5.0) to 2.0.0 or later to proceed.`,
+			},
+			{
+				minVersionForCollab: "2.0.0",
+				runtimeOptions: { featureB: true },
+				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update minVersionForCollab (currently 2.0.0) to 3.0.0 or later to proceed.`,
+			},
+			{
+				minVersionForCollab: "2.0.0",
+				runtimeOptions: { featureA: "a1", featureB: true },
+				expectedErrorMessage: `Runtime option featureB:true requires runtime version 3.0.0. Please update minVersionForCollab (currently 2.0.0) to 3.0.0 or later to proceed.`,
+			},
+			{
+				minVersionForCollab: "6.0.0",
+				runtimeOptions: { featureC: { foo: 2 } },
+				expectedErrorMessage: `Runtime option featureC:{"foo":2} requires runtime version 7.0.0. Please update minVersionForCollab (currently 6.0.0) to 7.0.0 or later to proceed.`,
+			},
+			{
+				minVersionForCollab: "3.0.0",
+				runtimeOptions: { featureA: "a1", featureC: { bar: "baz", foo: 2 } },
+				expectedErrorMessage: `Runtime option featureC:{"bar":"baz","foo":2} requires runtime version 7.0.0. Please update minVersionForCollab (currently 3.0.0) to 7.0.0 or later to proceed.`,
+			},
+			{
+				minVersionForCollab: "7.0.0",
+				runtimeOptions: { featureC: { foo: 2, bar: "bax" } },
+				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax"} requires runtime version 8.0.0. Please update minVersionForCollab (currently 7.0.0) to 8.0.0 or later to proceed.`,
+			},
+			{
+				minVersionForCollab: "8.5.0",
+				runtimeOptions: { featureC: { foo: 2, bar: "bax", qaz: true } },
+				expectedErrorMessage: `Runtime option featureC:{"foo":2,"bar":"bax","qaz":true} requires runtime version 9.0.0. Please update minVersionForCollab (currently 8.5.0) to 9.0.0 or later to proceed.`,
+			},
+		];
+
+		for (const test of compatibleCases) {
+			it(`does not throw for compatible options: ${JSON.stringify(test)}`, () => {
+				assert.doesNotThrow(() => {
+					getValidationForRuntimeOptions(
+						test.minVersionForCollab,
+						test.runtimeOptions,
+						testConfigValidationMap,
+					);
+				});
+			});
+		}
+		for (const test of incompatibleCases) {
+			it(`throws for incompatible options: ${JSON.stringify({ minVersionForCollab: test.minVersionForCollab, runtimeOptions: test.runtimeOptions })}`, () => {
+				assert.throws(
+					() => {
+						getValidationForRuntimeOptions(
+							test.minVersionForCollab,
+							test.runtimeOptions,
+							testConfigValidationMap,
+						);
+					},
+					(error: Error) => {
+						assert(isFluidError(error));
+						return error.message === test.expectedErrorMessage;
+					},
 				);
 			});
 		}

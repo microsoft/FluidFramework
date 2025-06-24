@@ -40,8 +40,9 @@ import {
 	defaultDDSFuzzSuiteOptions,
 	type CleanupFunction,
 	ReducerPreconditionError,
+	normalizeSeedOption,
 } from "./ddsFuzzHarness.js";
-import { makeUnreachableCodePathProxy } from "./utils.js";
+import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";
 
 /**
  * @internal
@@ -218,7 +219,7 @@ export function mixinStagingMode<
 			}
 			if (newStatus === "off") {
 				model.validatePoisonedContentRemoved(state.client);
-				state.client.containerRuntime.connected = true;
+				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
 			} else if (newStatus === "staging") {
 				state.client.containerRuntime.connected = false;
 			}
@@ -384,7 +385,7 @@ export namespace createSquashFuzzSuite {
 		): void =>
 			createSquashFuzzSuite(ddsModel, {
 				...providedOptions,
-				only: [...seeds, ...(providedOptions?.only ?? [])],
+				only: [...seeds, ...normalizeSeedOption(providedOptions?.only)],
 			});
 
 	/**
@@ -406,6 +407,6 @@ export namespace createSquashFuzzSuite {
 		): void =>
 			createSquashFuzzSuite(ddsModel, {
 				...providedOptions,
-				skip: [...seeds, ...(providedOptions?.skip ?? [])],
+				skip: [...seeds, ...normalizeSeedOption(providedOptions?.skip)],
 			});
 }

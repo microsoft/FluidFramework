@@ -10,20 +10,20 @@ export {
 	tryGetTreeNodeSchema,
 	type InnerNode,
 	tryDisposeTreeNode,
-	unhydratedFlexTreeNodeToTreeNode,
 	getOrCreateInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
-	type TreeChangeEvents,
-	TreeNode,
 	type Unhydrated,
-	inPrototypeChain,
 	type InternalTreeNode,
-	privateToken,
 } from "./types.js";
+export {
+	TreeNode,
+	privateToken,
+	inPrototypeChain,
+} from "./treeNode.js";
 export {
 	type TreeNodeSchema,
 	NodeKind,
@@ -31,13 +31,19 @@ export {
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
+	type AnnotatedAllowedType,
+	type NormalizedAnnotatedAllowedTypes,
+	isAnnotatedAllowedTypes,
 } from "./treeNodeSchema.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
-export { getOrCreateNodeFromInnerNode } from "./getOrCreateNode.js";
+export {
+	getOrCreateNodeFromInnerNode,
+	getOrCreateNodeFromInnerUnboxedNode,
+} from "./getOrCreateNode.js";
 export {
 	UnhydratedFlexTreeNode,
-	UnhydratedTreeSequenceField,
-	tryUnhydratedFlexTreeNode,
+	UnhydratedSequenceField,
 	UnhydratedContext,
+	createField,
 } from "./unhydratedFlexTree.js";

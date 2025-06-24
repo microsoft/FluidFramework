@@ -82,19 +82,10 @@ export { ITelemetryBaseEvent }
 
 export { ITelemetryBaseLogger }
 
-// @alpha @deprecated @legacy
-export type ITokenClaims = ITokenClaims_2;
-
 export { ITokenProvider }
 
 export { ITokenResponse }
 
 export { IUser }
-
-// @alpha @deprecated @legacy
-export const ScopeType: typeof ScopeType_2;
-
-// @alpha @deprecated @legacy
-export type ScopeType = ScopeType_2;
 
 ```

@@ -4,6 +4,7 @@
  */
 
 export {
+	addBatchMetadata,
 	BatchId,
 	BatchManager,
 	BatchSequenceNumbers,
@@ -27,6 +28,7 @@ export {
 	ensureContentsDeserialized,
 } from "./opSerialization.js";
 export {
+	BatchResubmitInfo,
 	estimateSocketSize,
 	localBatchToOutboundBatch,
 	Outbox,
@@ -42,6 +44,7 @@ export {
 	unpackRuntimeMessage,
 } from "./remoteMessageProcessor.js";
 export {
+	EmptyGroupedBatch,
 	OpGroupingManager,
 	OpGroupingManagerConfig,
 	isGroupedBatch,

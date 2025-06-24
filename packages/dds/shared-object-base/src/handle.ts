@@ -7,8 +7,33 @@ import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/inter
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 // eslint-disable-next-line import/no-deprecated
 import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 
 import { ISharedObject } from "./types.js";
+
+/**
+ * Handle for a shared object. See also `SharedObjectHandle`.
+ * Supports binding other handles to the underlying Shared Object (see {@link ISharedObjectHandle.bind}).
+ *
+ * @internal
+ */
+export interface ISharedObjectHandle extends IFluidHandleInternal<ISharedObject> {
+	/**
+	 * Binds the given handle to this DDS or attach the given handle if this DDS is attached.
+	 * A bound handle will also be attached once this DDS is attached.
+	 *
+	 * @param handle - The target handle to bind to this DDS
+	 */
+	bind(handle: IFluidHandleInternal): void;
+}
+
+/**
+ * Type guard for {@link ISharedObjectHandle}.
+ * @internal
+ */
+export function isISharedObjectHandle(handle: unknown): handle is ISharedObjectHandle {
+	return isFluidHandle(handle) && typeof (handle as ISharedObjectHandle).bind === "function";
+}
 
 /**
  * Handle for a shared object.
@@ -21,7 +46,10 @@ import { ISharedObject } from "./types.js";
  * {@link @fluidframework/datastore#FluidDataStoreRuntime.request} recognizes requests in the form of
  * '/\<shared object id\>' and loads shared object.
  */
-export class SharedObjectHandle extends FluidObjectHandle<ISharedObject> {
+export class SharedObjectHandle
+	extends FluidObjectHandle<ISharedObject>
+	implements ISharedObjectHandle
+{
 	/**
 	 * Whether services have been attached for the associated shared object.
 	 */

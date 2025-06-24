@@ -81,7 +81,7 @@ export class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList]
 export const POJO = schema.object("POJO", { stuff: [NodeMap, NodeList] });
 export type POJO = NodeFromSchema<typeof POJO>;
 
-export const POJOAlpha = schemaAlpha.object("POJO", { stuff: [NodeMap, NodeList] });
+export const POJOAlpha = schemaAlpha.objectAlpha("POJO", { stuff: [NodeMap, NodeList] });
 {
 	type _check = requireAssignableTo<typeof POJOAlpha, ObjectNodeSchema>;
 }

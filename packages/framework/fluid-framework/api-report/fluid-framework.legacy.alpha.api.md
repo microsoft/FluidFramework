@@ -84,7 +84,9 @@ export abstract class ErasedType<out Name = unknown> {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public @system
-type FieldHasDefault<T extends ImplicitFieldSchema> = T extends FieldSchema<FieldKind.Optional | FieldKind.Identifier> ? true : false;
+type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
+FieldSchema<FieldKind.Optional | FieldKind.Identifier>
+] ? true : false;
 
 // @public
 export enum FieldKind {
@@ -418,20 +420,21 @@ export const IFluidLoadable: keyof IProvideFluidLoadable;
 
 // @public @sealed
 export interface IFluidLoadable extends IProvideFluidLoadable {
-    // (undocumented)
     readonly handle: IFluidHandle;
 }
 
 // @alpha @legacy
 export interface IInterval {
-    // (undocumented)
+    // @deprecated (undocumented)
     clone(): IInterval;
     compare(b: IInterval): number;
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
+    // @deprecated
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
+    // @deprecated
     union(b: IInterval): IInterval;
 }
 
@@ -503,8 +506,7 @@ declare namespace InternalTypes {
         InsertableObjectFromSchemaRecord,
         FlexList,
         FlexListToUnion,
-        ExtractItemType,
-        TreeApi
+        ExtractItemType
     }
 }
 export { InternalTypes }
@@ -571,7 +573,7 @@ export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequence
         end: SequencePlace;
         props?: PropertySet;
     }): SequenceInterval;
-    // (undocumented)
+    // @deprecated (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
     readonly attached: boolean;
@@ -611,11 +613,11 @@ export interface ISequenceIntervalCollectionEvents extends IEvent {
     (event: "changed", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, previousInterval: SequenceInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
-// @alpha @legacy (undocumented)
+// @alpha @deprecated @legacy (undocumented)
 export interface ISerializableInterval extends IInterval {
     getIntervalId(): string;
     properties: PropertySet;
-    // (undocumented)
+    // @deprecated (undocumented)
     serialize(): ISerializedInterval;
 }
 
@@ -1031,8 +1033,9 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
 
 // @alpha @legacy
 export interface SequenceInterval extends ISerializableInterval {
+    // @deprecated
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
@@ -1040,13 +1043,17 @@ export interface SequenceInterval extends ISerializableInterval {
     readonly end: LocalReferencePosition;
     // (undocumented)
     readonly endSide: Side;
+    getIntervalId(): string;
     // (undocumented)
     readonly intervalType: IntervalType;
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
+    // @deprecated
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): SequenceInterval | undefined;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
+    properties: PropertySet;
+    // @deprecated
     removePositionChangeListeners(): void;
     // (undocumented)
     readonly start: LocalReferencePosition;
@@ -1054,6 +1061,7 @@ export interface SequenceInterval extends ISerializableInterval {
     readonly startSide: Side;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
+    // @deprecated
     union(b: SequenceInterval): SequenceInterval;
 }
 
@@ -1208,14 +1216,14 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
 
-// @public
-export const Tree: TreeApi;
-
 // @public @sealed @system
-interface TreeApi extends TreeNodeApi {
+export interface Tree extends TreeNodeApi {
     contains(node: TreeNode, other: TreeNode): boolean;
     readonly runTransaction: RunTransaction;
 }
+
+// @public
+export const Tree: Tree;
 
 // @public @sealed
 export interface TreeArrayNode<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes, out T = [TAllowedTypes] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TAllowedTypes> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes> : InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TMoveFrom = ReadonlyArrayNode> extends ReadonlyArrayNode<T> {
@@ -1343,6 +1351,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 // @public @sealed
 export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
+    protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;
     readonly schema: TSchema;

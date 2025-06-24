@@ -109,8 +109,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly disposed?: boolean;
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    // @deprecated
-    getContainerPackageInfo?(): IContainerPackageInfo | undefined;
     getEntryPoint(): Promise<FluidObject>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
@@ -397,7 +395,7 @@ export interface IRuntime extends IDisposable {
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-    setConnectionState(connected: boolean, clientId?: string): any;
+    setConnectionState(canSendOps: boolean, clientId?: string): any;
 }
 
 // @alpha @legacy (undocumented)

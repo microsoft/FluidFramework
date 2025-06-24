@@ -5,9 +5,10 @@
 
 import { EventEmitter } from "events";
 import * as util from "util";
+
 import * as core from "@fluidframework/server-services-core";
-import { Emitter as SocketIoEmitter } from "@socket.io/redis-emitter";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { Emitter as SocketIoEmitter } from "@socket.io/redis-emitter";
 
 /**
  * @internal

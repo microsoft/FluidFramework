@@ -513,29 +513,33 @@ describe("SchemaFactory Recursive methods", () => {
 		});
 
 		it("Invalid cases", () => {
-			{
-				// @ts-expect-error Missing [] around allowed types.
-				class Test extends sf.arrayRecursive("Test", () => Test) {}
-				// @ts-expect-error Missing [] around allowed types.
-				type _check = ValidateRecursiveSchema<typeof Test>;
-			}
+			// These are type tests and expected to fail during compilation
+			// eslint-disable-next-line no-constant-condition
+			if (false) {
+				{
+					// @ts-expect-error Missing [] around allowed types.
+					class Test extends sf.arrayRecursive("Test", () => Test) {}
+					// @ts-expect-error Missing [] around allowed types.
+					type _check = ValidateRecursiveSchema<typeof Test>;
+				}
 
-			{
-				// @ts-expect-error Objects take a record type with fields, not a field directly.
-				class Test extends sf.objectRecursive("Test", sf.optionalRecursive([() => Test])) {}
-				// @ts-expect-error Objects take a record type with fields, not a field directly.
-				type _check = ValidateRecursiveSchema<typeof Test>;
-			}
+				{
+					// @ts-expect-error Objects take a record type with fields, not a field directly.
+					class Test extends sf.objectRecursive("Test", sf.optionalRecursive([() => Test])) {}
+					// @ts-expect-error Objects take a record type with fields, not a field directly.
+					type _check = ValidateRecursiveSchema<typeof Test>;
+				}
 
-			{
-				// @ts-expect-error 'MapRecursive' is referenced directly or indirectly in its own base expression.
-				class MapRecursive extends sf.mapRecursive(
-					"Test",
+				{
+					// @ts-expect-error 'MapRecursive' is referenced directly or indirectly in its own base expression.
+					class MapRecursive extends sf.mapRecursive(
+						"Test",
+						// @ts-expect-error Maps accept allowed types, not field schema.
+						sf.optionalRecursive([() => MapRecursive]),
+					) {}
 					// @ts-expect-error Maps accept allowed types, not field schema.
-					sf.optionalRecursive([() => MapRecursive]),
-				) {}
-				// @ts-expect-error Maps accept allowed types, not field schema.
-				type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+					type _check = ValidateRecursiveSchema<typeof MapRecursive>;
+				}
 			}
 
 			{
@@ -781,6 +785,43 @@ describe("SchemaFactory Recursive methods", () => {
 				custom: { baz: true },
 			});
 		});
+	});
+
+	/**
+	 * Test various recursive object node cases with persisted metadata.
+	 */
+	it("Node schema persisted metadata", () => {
+		// Example persistedMetadata containing a mix of primitives and objects
+		const persistedMetadata = {
+			a: "test",
+			anObject: { baz: true },
+		};
+
+		// Test adding persistedMetadata to a recursive array schema
+		const factory = new SchemaFactoryAlpha("");
+		class Foos extends factory.arrayRecursive("FooList", [() => Foo], { persistedMetadata }) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof Foos>;
+		}
+		assert.deepEqual(Foos.persistedMetadata, persistedMetadata);
+
+		// Test adding persistedMetadata to a recursive object schema
+		class Foo extends factory.objectRecursive(
+			"Foo",
+			{ fooList: Foos },
+			{ persistedMetadata },
+		) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof Foo>;
+		}
+		assert.deepEqual(Foo.persistedMetadata, persistedMetadata);
+
+		// Test adding persistedMetadata to a recursive map schema
+		class FooMap extends factory.mapRecursive("FooMap", [() => Foo], { persistedMetadata }) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof FooMap>;
+		}
+		assert.deepEqual(FooMap.persistedMetadata, persistedMetadata);
 	});
 
 	it("recursive under non-recursive", () => {

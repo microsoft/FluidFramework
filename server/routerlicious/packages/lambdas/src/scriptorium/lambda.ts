@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
 import {
 	extractBoxcar,
 	ICollection,
@@ -22,7 +23,7 @@ import {
 	QueuedMessageProperties,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
-import { convertSortedNumberArrayToRanges } from "@fluidframework/server-services-client";
+
 import { circuitBreakerOptions, LambdaCircuitBreaker } from "../utils";
 
 enum ScriptoriumStatus {

@@ -22,7 +22,11 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannel,
+	// eslint-disable-next-line import/no-deprecated
+	IFluidDataStoreRuntimeExperimental,
+} from "@fluidframework/datastore-definitions/internal";
 // Valid export as per package.json export map
 // eslint-disable-next-line import/no-internal-modules
 import { modifyClusterSize } from "@fluidframework/id-compressor/internal/test-utils";
@@ -71,13 +75,17 @@ export type StressDataObjectOperations =
 	| ExitStagingMode;
 
 export class StressDataObject extends DataObject {
-	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory(
-		"StressDataObject",
-		StressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[["StressDataObject", new LazyPromise(async () => StressDataObject.factory)]],
-	);
+	public static readonly factory: DataObjectFactory<StressDataObject> = new DataObjectFactory({
+		type: "StressDataObject",
+		ctor: StressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+		registryEntries: [
+			["StressDataObject", new LazyPromise(async () => StressDataObject.factory)],
+		],
+		policies: {
+			readonlyInStagingMode: false,
+		},
+	});
 
 	get StressDataObject() {
 		return this;
@@ -174,7 +182,13 @@ export class StressDataObject extends DataObject {
 	public orderSequentially(act: () => void) {
 		this.context.containerRuntime.orderSequentially(act);
 	}
+
+	public get isDirty(): boolean | undefined {
+		// eslint-disable-next-line import/no-deprecated
+		return (this.runtime as IFluidDataStoreRuntimeExperimental).isDirty;
+	}
 }
+
 export type ContainerObjects =
 	| { type: "newBlob"; handle: IFluidHandle; tag: `blob-${number}` }
 	| {
@@ -324,13 +338,13 @@ export class DefaultStressDataObject extends StressDataObject {
 }
 
 export const createRuntimeFactory = (): IRuntimeFactory => {
-	const defaultStressDataObjectFactory = new DataObjectFactory(
-		"DefaultStressDataObject",
-		DefaultStressDataObject,
-		[...ddsModelMap.values()].map((v) => v.factory),
-		{},
-		[[StressDataObject.factory.type, StressDataObject.factory]],
-	);
+	const defaultStressDataObjectFactory = new DataObjectFactory({
+		type: "DefaultStressDataObject",
+		ctor: DefaultStressDataObject,
+		sharedObjects: [...ddsModelMap.values()].map((v) => v.factory),
+
+		registryEntries: [[StressDataObject.factory.type, StressDataObject.factory]],
+	});
 
 	const runtimeOptions: IContainerRuntimeOptionsInternal = {
 		summaryOptions: {
@@ -340,6 +354,7 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 			} as any,
 		},
 		enableRuntimeIdCompressor: "on",
+		createBlobPayloadPending: true,
 	};
 
 	return {

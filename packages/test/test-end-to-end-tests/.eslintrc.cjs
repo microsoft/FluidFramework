@@ -73,7 +73,7 @@ module.exports = {
 			files: ["src/test/benchmark/**"],
 			rules: {
 				// General guidance to avoid importing compat-provided APIs does not apply to the benchmark tests,
-				// since they don't currently aim to test performance of mixed-versioned packages or cross-version
+				// since they don't currently aim to test performance of mixed-versioned packages or cross-client
 				// collaboration between clients.
 				"@typescript-eslint/no-restricted-imports": "off",
 			},

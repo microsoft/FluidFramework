@@ -109,7 +109,7 @@ const config: Config = {
 						if (docPath.startsWith("api/")) {
 							return undefined;
 						}
-						return `${githubDocsUrl}/${versionDocsDirPath}${docPath}`;
+						return `${githubDocsUrl}/${versionDocsDirPath}/${docPath}`;
 					},
 				},
 				// We can add support for blog posts in the future.
@@ -191,6 +191,10 @@ const config: Config = {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
 	},
 	scripts: [
+		{
+			src: "/dompurify/purify.min.js",
+			async: false,
+		},
 		{
 			src: "/trusted-types-policy.js",
 			async: false,

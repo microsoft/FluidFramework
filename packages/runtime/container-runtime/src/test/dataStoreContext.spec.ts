@@ -250,6 +250,7 @@ describe("Data Store Context Tests", () => {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
 					clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 					deltaManager: new MockDeltaManager(),
+					isReadOnly: () => false,
 				} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
@@ -350,7 +351,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
-						eventName: "FluidDataStoreContext:DataStoreCreatedInSummarizer",
+						eventName: "FluidDataStoreContext:DataStoreCreatedWhileReadonly",
 						fullPackageName: {
 							tag: TelemetryDataTag.CodeArtifact,
 							value: packageName.join("/"),
@@ -389,7 +390,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
-						eventName: "FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer",
+						eventName: "FluidDataStoreContext:DataStoreMessageWhileReadonly",
 						type: DataStoreMessageType.ChannelOp,
 						fluidDataStoreId: {
 							tag: TelemetryDataTag.CodeArtifact,
@@ -430,9 +431,8 @@ describe("Data Store Context Tests", () => {
 				}
 				for (const event of mockLogger.events) {
 					if (
-						event.eventName ===
-							"FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer" ||
-						event.eventName === "FluidDataStoreContext:DataStoreCreatedInSummarizer"
+						event.eventName === "FluidDataStoreContext:DataStoreMessageWhileReadonly" ||
+						event.eventName === "FluidDataStoreContext:DataStoreCreatedWhileReadonly"
 					) {
 						eventCount++;
 					}
@@ -547,6 +547,7 @@ describe("Data Store Context Tests", () => {
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
@@ -1043,6 +1044,7 @@ describe("Data Store Context Tests", () => {
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 

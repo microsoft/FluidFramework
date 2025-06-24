@@ -7,7 +7,7 @@
  * Common controls for States objects.
  *
  * @sealed
- * @alpha
+ * @beta
  */
 export interface BroadcastControls {
 	/**
@@ -40,7 +40,7 @@ export interface BroadcastControls {
 /**
  * Value set to configure {@link BroadcastControls}.
  *
- * @alpha
+ * @beta
  */
 export interface BroadcastControlSettings {
 	/**
@@ -89,7 +89,8 @@ class ForcedRefreshControl
 }
 
 /**
- * @internal
+ * Implements {@link BroadcastControls} for States Managers
+ * where returning `undefined` settings are allowed.
  */
 export class OptionalBroadcastControl
 	extends ForcedRefreshControl
@@ -109,8 +110,6 @@ export class OptionalBroadcastControl
  *
  * If {@link BroadcastControls.allowableUpdateLatencyMs | allowableUpdateLatencyMs}
  * is set to `undefined`, the default will be restored.
- *
- * @internal
  */
 export class RequiredBroadcastControl
 	extends ForcedRefreshControl

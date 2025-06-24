@@ -66,6 +66,8 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManagerErased;
@@ -87,6 +89,12 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
+	/**
+	 * An optional ID compressor.
+	 * @remarks
+	 * When provided, can be used to compress and decompress IDs stored in this datastore.
+	 * Some SharedObjects, like SharedTree, require this.
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
@@ -171,6 +179,7 @@ export interface IFluidDataStoreRuntime
  */
 export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
 	readonly inStagingMode?: boolean;
+	readonly isDirty?: boolean;
 }
 
 /**

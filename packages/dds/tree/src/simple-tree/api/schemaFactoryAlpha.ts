@@ -4,6 +4,14 @@
  */
 
 import {
+	type ArrayNodeCustomizableSchema,
+	arraySchema,
+	type MapNodeCustomizableSchema,
+	mapSchema,
+	type ObjectNodeSchema,
+	objectSchema,
+} from "../node-kinds/index.js";
+import {
 	defaultSchemaFactoryObjectOptions,
 	SchemaFactory,
 	schemaStatics,
@@ -12,10 +20,11 @@ import {
 } from "./schemaFactory.js";
 import type {
 	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	ImplicitAnnotatedFieldSchema,
 	ImplicitFieldSchema,
-	NodeSchemaOptions,
+	NodeSchemaOptionsAlpha,
 } from "../schemaTypes.js";
-import { objectSchema } from "../objectNode.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type { NodeKind, TreeNodeSchemaClass } from "../core/index.js";
 import type {
@@ -23,12 +32,7 @@ import type {
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
 } from "./typesUnsafe.js";
-import { mapSchema } from "../mapNode.js";
-import { arraySchema } from "../arrayNode.js";
-import type { ObjectNodeSchema } from "../objectNodeTypes.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
-import type { ArrayNodeCustomizableSchema } from "../arrayNodeTypes.js";
-import type { MapNodeCustomizableSchema } from "../mapNodeTypes.js";
 
 /**
  * {@link SchemaFactory} with additional alpha APIs.
@@ -56,9 +60,9 @@ export class SchemaFactoryAlpha<
 	 * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
 	 * @param options - Additional options for the schema.
 	 */
-	public override object<
+	public objectAlpha<
 		const Name extends TName,
-		const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
+		const T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
@@ -84,6 +88,7 @@ export class SchemaFactoryAlpha<
 			options?.allowUnknownOptionalFields ??
 				defaultSchemaFactoryObjectOptions.allowUnknownOptionalFields,
 			options?.metadata,
+			options?.persistedMetadata,
 		);
 	}
 
@@ -121,7 +126,7 @@ export class SchemaFactoryAlpha<
 		Pick<ObjectNodeSchema, "fields"> {
 		// TODO: syntax highting is vs code is broken here. Don't trust it. Use the compiler instead.
 		type TScopedName = ScopedSchemaName<TScope, Name>;
-		return this.object(
+		return this.objectAlpha(
 			name,
 			t as T & RestrictiveStringRecord<ImplicitFieldSchema>,
 			options,
@@ -144,7 +149,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * {@inheritDoc SchemaStatics.optional}
+	 * {@inheritDoc SchemaStatics.leaves}
 	 */
 	public static override readonly leaves = schemaStatics.leaves;
 
@@ -164,9 +169,39 @@ export class SchemaFactoryAlpha<
 	public static override readonly optionalRecursive = schemaStatics.optionalRecursive;
 
 	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public static override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
 	 * Like {@link SchemaFactory.identifier} but static and a factory function that can be provided {@link FieldProps}.
 	 */
 	public static readonly identifier = schemaStatics.identifier;
+
+	/**
+	 * {@inheritDoc SchemaStatics.leaves}
+	 */
+	public override readonly leaves = schemaStatics.leaves;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optional}
+	 */
+	public override readonly optional = schemaStatics.optional;
+
+	/**
+	 * {@inheritDoc SchemaStatics.required}
+	 */
+	public override readonly required = schemaStatics.required;
+
+	/**
+	 * {@inheritDoc SchemaStatics.optionalRecursive}
+	 */
+	public override readonly optionalRecursive = schemaStatics.optionalRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStatics.requiredRecursive}
+	 */
+	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.
@@ -184,14 +219,21 @@ export class SchemaFactoryAlpha<
 	 */
 	public mapAlpha<
 		Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): MapNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return mapSchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return mapSchema(
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+			options?.persistedMetadata,
+		);
 	}
 
 	/**
@@ -202,7 +244,7 @@ export class SchemaFactoryAlpha<
 		Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.mapAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
@@ -228,14 +270,21 @@ export class SchemaFactoryAlpha<
 	 */
 	public arrayAlpha<
 		const Name extends TName,
-		const T extends ImplicitAllowedTypes,
+		const T extends ImplicitAnnotatedAllowedTypes,
 		const TCustomMetadata = unknown,
 	>(
 		name: Name,
 		allowedTypes: T,
-		options?: NodeSchemaOptions<TCustomMetadata>,
+		options?: NodeSchemaOptionsAlpha<TCustomMetadata>,
 	): ArrayNodeCustomizableSchema<ScopedSchemaName<TScope, Name>, T, true, TCustomMetadata> {
-		return arraySchema(this.scoped2(name), allowedTypes, true, true, options?.metadata);
+		return arraySchema(
+			this.scoped2(name),
+			allowedTypes,
+			true,
+			true,
+			options?.metadata,
+			options?.persistedMetadata,
+		);
 	}
 
 	/**
@@ -246,7 +295,7 @@ export class SchemaFactoryAlpha<
 		const Name extends TName,
 		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
 		const TCustomMetadata = unknown,
-	>(name: Name, allowedTypes: T, options?: NodeSchemaOptions<TCustomMetadata>) {
+	>(name: Name, allowedTypes: T, options?: NodeSchemaOptionsAlpha<TCustomMetadata>) {
 		return this.arrayAlpha(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,

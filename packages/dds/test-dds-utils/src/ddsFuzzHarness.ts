@@ -66,7 +66,7 @@ import {
 } from "./clientLoading.js";
 import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 import { DDSFuzzSerializer } from "./fuzzSerializer.js";
-import { makeUnreachableCodePathProxy } from "./utils.js";
+import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";
 
 /**
  * @internal
@@ -111,6 +111,7 @@ export interface ClientSpec {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
+	squash?: boolean;
 }
 
 /**
@@ -448,7 +449,7 @@ export interface DDSFuzzSuiteOptions {
 	 * TODO: Improving workflows around fuzz test minimization, regression test generation for a particular seed,
 	 * or more flexibility around replay of test files would be a nice value add to this harness.
 	 */
-	replay?: number;
+	replay?: number | Iterable<number>;
 
 	/**
 	 * Runs only the provided seeds.
@@ -463,7 +464,7 @@ export interface DDSFuzzSuiteOptions {
 	 * @remarks
 	 * If you prefer, a variant of the standard `.only` syntax works. See {@link (createDDSFuzzSuite:namespace).only}.
 	 */
-	only: Iterable<number>;
+	only: Iterable<number> | number;
 
 	/**
 	 * Skips the provided seeds.
@@ -478,7 +479,7 @@ export interface DDSFuzzSuiteOptions {
 	 * @remarks
 	 * If you prefer, a variant of the standard `.skip` syntax works. See {@link (createDDSFuzzSuite:namespace).skip}.
 	 */
-	skip: Iterable<number>;
+	skip: Iterable<number> | number;
 
 	/**
 	 * Whether failure files should be saved to disk, and if so, the directory in which they should be saved.
@@ -524,6 +525,23 @@ export interface DDSFuzzSuiteOptions {
 	idCompressorFactory?: (
 		summary?: FuzzSerializedIdCompressor,
 	) => IIdCompressor & IIdCompressorCore;
+
+	/**
+	 * This preserves the old seed behavior where the whole fuzz tests gets a single seed.
+	 * This creates issues as small changes, like adding a new random usage,
+	 * can result in a cascade of changes to the test, which can invalidate current skips.
+	 *
+	 * The new behavior generates a seed per operation, which leads to more stable results, as
+	 * random calls within a generator or reducer do not cascade to other generators or reducers.
+	 *
+	 * @deprecated This is option is for back-compat only. Once all usages are removed, it should also be removed.
+	 */
+	forceGlobalSeed?: true;
+
+	/**
+	 * If enabled, connection state change operations will sometimes use squashed resubmits.
+	 */
+	testSquashResubmit?: true;
 }
 
 /**
@@ -566,7 +584,6 @@ export function mixinNewClient<
 	const generatorFactory: () => AsyncGenerator<TOperation | AddClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state: TState): Promise<TOperation | AddClient | typeof done> => {
-			const baseOp = baseGenerator(state);
 			const { clients, random, isDetached } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
@@ -582,7 +599,7 @@ export function mixinNewClient<
 						: false,
 				};
 			}
-			return baseOp;
+			return baseGenerator(state);
 		};
 	};
 
@@ -641,10 +658,14 @@ export function mixinReconnect<
 			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 				const baseOp = baseGenerator(state);
 				if (isReconnectAllowed(state) && state.random.bool(options.reconnectProbability)) {
-					return {
+					const op: ChangeConnectionState = {
 						type: "changeConnectionState",
 						connected: !state.client.containerRuntime.connected,
 					};
+					if (options.testSquashResubmit === true && op.connected && state.random.bool(0.5)) {
+						op.squash = true;
+					}
+					return op;
 				}
 
 				return baseOp;
@@ -659,11 +680,15 @@ export function mixinReconnect<
 		state,
 		operation,
 	) => {
-		if (operation.type === "changeConnectionState") {
-			state.client.containerRuntime.connected = (operation as ChangeConnectionState).connected;
+		if (isOperationType<ChangeConnectionState>("changeConnectionState", operation)) {
+			if (operation.squash === true) {
+				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
+			} else {
+				state.client.containerRuntime.connected = operation.connected;
+			}
 			return state;
 		} else {
-			return model.reducer(state, operation as TOperation);
+			return model.reducer(state, operation);
 		}
 	};
 	return {
@@ -1494,6 +1519,7 @@ export async function runTestForSeed<
 		},
 		initialState,
 		saveInfo,
+		options.forceGlobalSeed,
 	);
 
 	// Sanity-check that the generator produced at least one operation. If it failed to do so,
@@ -1576,6 +1602,10 @@ type InternalOptions = InternalOnlyAndSkip & Omit<DDSFuzzSuiteOptions, "only" | 
  */
 export class ReducerPreconditionError extends Error {}
 
+export const normalizeSeedOption = (
+	seeds: number | Iterable<number> | undefined,
+): Iterable<number> => (typeof seeds === "number" ? [seeds] : (seeds ?? []));
+
 /**
  * Performs the test again to verify if the DDS still fails with the same error message.
  *
@@ -1594,8 +1624,8 @@ export async function replayTest<
 	const options = {
 		...defaultDDSFuzzSuiteOptions,
 		...providedOptions,
-		only: new Set(providedOptions?.only ?? []),
-		skip: new Set(providedOptions?.skip ?? []),
+		only: new Set(normalizeSeedOption(providedOptions?.only)),
+		skip: new Set(normalizeSeedOption(providedOptions?.skip)),
 	};
 
 	const model = {
@@ -1610,8 +1640,8 @@ export async function replayTest<
 export function convertOnlyAndSkip<TOptions extends DDSFuzzSuiteOptions>(
 	options: TOptions,
 ): InternalOnlyAndSkip & Omit<TOptions, "only" | "skip"> {
-	const only = new Set(options.only);
-	const skip = new Set(options.skip);
+	const only = new Set(normalizeSeedOption(options.only));
+	const skip = new Set(normalizeSeedOption(options.skip));
 	Object.assign(options, { only, skip });
 	return options as unknown as InternalOnlyAndSkip & Omit<TOptions, "only" | "skip">;
 }
@@ -1621,6 +1651,15 @@ export function createSuite<
 	TOperation extends BaseOperation,
 >(model: DDSFuzzHarnessModel<TChannelFactory, TOperation>, options: InternalOptions): void {
 	const describeFuzz = createFuzzDescribe({ defaultTestCount: options.defaultTestCount });
+
+	if (options.forceGlobalSeed !== undefined && options.skip.size === 0) {
+		// if this error is getting in your way while debugging just comment it out, but re-add before you checkin
+		throw new Error(
+			"Yay. You fixed all the skipped tests. Remove forceGlobalSeed from the options as it is no longer needed, and removing it will lead to more consistent results going forward." +
+				"Please also do a search on the repo for forceGlobalSeed, and if they have all been removed, please remove the option, and its related code!",
+		);
+	}
+
 	describeFuzz(model.workloadName, ({ testCount, stressMode }) => {
 		before(() => {
 			if (options.saveFailures !== false) {
@@ -1641,24 +1680,25 @@ export function createSuite<
 		}
 
 		if (options.replay !== undefined) {
-			const seed = options.replay;
 			describe.only(`replay from file`, () => {
-				const saveInfo = getSaveInfo(model, options, seed);
-				assert(
-					saveInfo.saveOnFailure !== false,
-					"Cannot replay a file without a directory to save files in!",
-				);
-				const operations = options.parseOperations(
-					readFileSync(saveInfo.saveOnFailure.path).toString(),
-				);
+				for (const seed of normalizeSeedOption(options.replay)) {
+					const saveInfo = getSaveInfo(model, options, seed);
+					assert(
+						saveInfo.saveOnFailure !== false,
+						"Cannot replay a file without a directory to save files in!",
+					);
+					const operations = options.parseOperations(
+						readFileSync(saveInfo.saveOnFailure.path).toString(),
+					);
 
-				const replayModel = {
-					...model,
-					// We lose some type safety here because the options interface isn't generic
-					generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
-						asyncGeneratorFromArray(operations as TOperation[]),
-				};
-				runTest(replayModel, options, seed, undefined);
+					const replayModel = {
+						...model,
+						// We lose some type safety here because the options interface isn't generic
+						generatorFactory: (): AsyncGenerator<TOperation, unknown> =>
+							asyncGeneratorFromArray(operations as TOperation[]),
+					};
+					runTest(replayModel, options, seed, undefined);
+				}
 			});
 		}
 	});
@@ -1730,7 +1770,7 @@ export namespace createDDSFuzzSuite {
 		): void =>
 			createDDSFuzzSuite(ddsModel, {
 				...providedOptions,
-				only: [...seeds, ...(providedOptions?.only ?? [])],
+				only: [...seeds, ...normalizeSeedOption(providedOptions?.only)],
 			});
 
 	/**
@@ -1752,6 +1792,6 @@ export namespace createDDSFuzzSuite {
 		): void =>
 			createDDSFuzzSuite(ddsModel, {
 				...providedOptions,
-				skip: [...seeds, ...(providedOptions?.skip ?? [])],
+				skip: [...seeds, ...normalizeSeedOption(providedOptions?.skip)],
 			});
 }

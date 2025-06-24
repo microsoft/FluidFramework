@@ -23,7 +23,6 @@ import {
 	DefaultChangeFamily,
 	type DefaultChangeset,
 	DefaultEditBuilder,
-	buildForest,
 	cursorForJsonableTreeField,
 	initializeForest,
 	intoDelta,
@@ -32,6 +31,7 @@ import {
 import { brand } from "../../../util/index.js";
 import {
 	assertDeltaEqual,
+	buildTestForest,
 	chunkFromJsonableTrees,
 	failCodecFamily,
 	mintRevisionTag,
@@ -107,6 +107,7 @@ function assertDeltasEqual(actual: DeltaRoot[], expected: DeltaRoot[]): void {
 }
 
 /**
+ * Initialize an editable forest.
  * @param data - The data to initialize the forest with.
  */
 function initializeEditableForest(data?: JsonableTree): {
@@ -115,7 +116,7 @@ function initializeEditableForest(data?: JsonableTree): {
 	changes: TaggedChange<DefaultChangeset>[];
 	deltas: DeltaRoot[];
 } {
-	const forest = buildForest();
+	const forest = buildTestForest({ additionalAsserts: true });
 	if (data !== undefined) {
 		initializeForest(
 			forest,

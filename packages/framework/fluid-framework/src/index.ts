@@ -114,7 +114,7 @@ export const SharedTree: SharedObjectKind<ITree> = OriginalSharedTree;
  * 	typeboxValidator,
  * } from "@fluid-framework/alpha";
  * const SharedTree = configuredSharedTree({
- * 	forest: ForestType.Reference,
+ * 	forest: ForestTypeReference,
  * 	jsonValidator: typeboxValidator,
  * 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
  * });

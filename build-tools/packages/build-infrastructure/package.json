@@ -86,7 +86,7 @@
 		"@fluid-tools/api-markdown-documenter": "^0.17.1",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.49.0",
-		"@fluidframework/eslint-config-fluid": "^5.4.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@microsoft/api-extractor": "^7.50.1",
 		"@types/chai": "^4.3.20",
 		"@types/chai-arrays": "^2.0.3",
@@ -107,8 +107,7 @@
 		"rimraf": "^4.4.1",
 		"ts-node": "^10.9.2",
 		"typedoc": "^0.26.10",
-		"typedoc-plugin-markdown": "^4.2.9",
-		"unionfs": "^4.5.4"
+		"typedoc-plugin-markdown": "^4.2.9"
 	},
 	"oclif": {
 		"bin": "buildProject",

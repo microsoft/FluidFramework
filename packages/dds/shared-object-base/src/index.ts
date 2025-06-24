@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+export { ISharedObjectHandle, isISharedObjectHandle } from "./handle.js";
 export { FluidSerializer, IFluidSerializer } from "./serializer.js";
 export {
 	SharedObject,
@@ -21,3 +22,13 @@ export {
 	type IChannelView,
 } from "./utils.js";
 export { ValueType } from "./valueType.js";
+export {
+	SharedKernel,
+	thisWrap,
+	KernelArgs,
+	makeSharedObjectKind,
+	SharedKernelFactory,
+	FactoryOut,
+	SharedObjectOptions,
+	mergeAPIs,
+} from "./sharedObjectKernel.js";

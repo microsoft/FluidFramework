@@ -4,6 +4,10 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
+import type {
+	ContainerExtension,
+	InboundExtensionMessage,
+} from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
@@ -14,10 +18,16 @@ import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/in
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { IEphemeralRuntime } from "./internalTypes.js";
-import type { AttendeesEvents, AttendeeId, Presence, PresenceEvents } from "./presence.js";
+import type { ExtensionRuntimeProperties, IEphemeralRuntime } from "./internalTypes.js";
+import type {
+	AttendeesEvents,
+	AttendeeId,
+	PresenceWithNotifications as Presence,
+	PresenceEvents,
+} from "./presence.js";
 import type { PresenceDatastoreManager } from "./presenceDatastoreManager.js";
 import { PresenceDatastoreManagerImpl } from "./presenceDatastoreManager.js";
+import type { SignalMessages } from "./protocol.js";
 import type { SystemWorkspace, SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { createSystemWorkspace } from "./systemWorkspace.js";
 import type {
@@ -28,18 +38,11 @@ import type {
 	WorkspaceAddress,
 } from "./types.js";
 
-import type {
-	IContainerExtension,
-	IExtensionMessage,
-} from "@fluidframework/presence/internal/container-definitions/internal";
-
 /**
- * Portion of the container extension requirements ({@link IContainerExtension}) that are delegated to presence manager.
- *
- * @internal
+ * Portion of the container extension requirements ({@link ContainerExtension}) that are delegated to presence manager.
  */
 export type PresenceExtensionInterface = Required<
-	Pick<IContainerExtension<never>, "processSignal">
+	Pick<ContainerExtension<ExtensionRuntimeProperties>, "processSignal">
 >;
 
 /**
@@ -87,11 +90,12 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 		this.attendees = this.systemWorkspace;
 
-		runtime.on("connected", this.onConnect.bind(this));
+		runtime.events.on("connected", this.onConnect.bind(this));
 
-		runtime.on("disconnected", () => {
-			if (runtime.clientId !== undefined) {
-				this.removeClientConnectionId(runtime.clientId);
+		runtime.events.on("disconnected", () => {
+			const currentClientId = runtime.getClientId();
+			if (currentClientId !== undefined) {
+				this.removeClientConnectionId(currentClientId);
 			}
 		});
 
@@ -103,8 +107,8 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		// delayed we expect that "connected" event has passed.
 		// Note: In some manual testing, this does not appear to be enough to
 		// always trigger an initial connect.
-		const clientId = runtime.clientId;
-		if (clientId !== undefined && runtime.connected) {
+		const clientId = runtime.getClientId();
+		if (clientId !== undefined && runtime.isConnected()) {
 			this.onConnect(clientId);
 		}
 	}
@@ -120,12 +124,20 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 	/**
 	 * Check for Presence message and process it.
 	 *
-	 * @param address - Address of the message
-	 * @param message - Message to be processed
+	 * @param addressChain - Address chain of the message
+	 * @param message - Unverified message to be processed
 	 * @param local - Whether the message originated locally (`true`) or remotely (`false`)
 	 */
-	public processSignal(address: string, message: IExtensionMessage, local: boolean): void {
-		this.datastoreManager.processSignal(message, local);
+	public processSignal(
+		addressChain: string[],
+		message: InboundExtensionMessage<SignalMessages>,
+		local: boolean,
+	): void {
+		this.datastoreManager.processSignal(
+			message,
+			local,
+			/* optional */ addressChain[0] === "?",
+		);
 	}
 }
 
@@ -159,7 +171,6 @@ function setupSubComponents(
 	const datastoreManager = new PresenceDatastoreManagerImpl(
 		attendeeId,
 		runtime,
-		systemWorkspaceConfig.workspace.getAttendee.bind(systemWorkspaceConfig.workspace),
 		logger,
 		events,
 		presence,
@@ -171,8 +182,6 @@ function setupSubComponents(
 
 /**
  * Instantiates Presence Manager
- *
- * @internal
  */
 export function createPresenceManager(
 	runtime: IEphemeralRuntime,
