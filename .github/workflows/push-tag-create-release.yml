@@ -93,6 +93,7 @@ jobs:
           ref: ${{ github.ref }}
           fetch-depth: 0 # all history
           persist-credentials: false
+          clean: false # preserve build-tools build output
       - name: Check out tag from manual input
         if: github.event_name == 'workflow_dispatch'
         env:
@@ -102,6 +103,7 @@ jobs:
           ref: refs/tags/$TAG
           fetch-depth: 0 # all history
           persist-credentials: false
+          clean: false # preserve build-tools build output
 
       # Generate release reports
       - name: Create release reports (manifests)
