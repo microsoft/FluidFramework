@@ -603,7 +603,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				fields: new Map<FieldKey, MapTree[]>(),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Simple record", () => {
@@ -646,7 +646,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Complex record", () => {
@@ -726,7 +726,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Undefined record entries are omitted", () => {
@@ -756,7 +756,7 @@ describe("unhydratedFlexTreeFromInsertable", () => {
 				]),
 			};
 
-			assert.deepEqual(actual, expected);
+			assert.deepEqual(deepCopyMapTree(actual), expected);
 		});
 
 		it("Throws on schema-incompatible entries", () => {
