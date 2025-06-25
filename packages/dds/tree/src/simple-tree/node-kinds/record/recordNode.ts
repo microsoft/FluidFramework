@@ -230,7 +230,7 @@ export function recordSchema<
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
-	let unhydratedContext: Context; // TODO: can this be inlined?
+	let unhydratedContext: Context;
 
 	class Schema
 		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
