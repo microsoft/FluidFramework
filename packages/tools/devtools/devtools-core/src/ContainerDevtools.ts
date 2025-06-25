@@ -5,8 +5,8 @@
 
 import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import type { IAudience } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 
 import type { AudienceClientMetadata } from "./AudienceMetadata.js";
@@ -52,9 +52,9 @@ import {
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
-	 * The decomposed container to register with the Devtools.
+	 * The container to register with the Devtools.
 	 */
-	container: DecomposedIContainer;
+	container: IContainer;
 
 	/**
 	 * (optional) Distributed Data Structures (DDSs) associated with the
@@ -80,11 +80,6 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  * @alpha
  */
 export interface DataObjectProps {
-	/**
-	 * The runtime of the data object.
-	 */
-	runtime: IFluidDataStoreRuntime;
-
 	/**
 	 * The data object to register with the Devtools.
 	 */
@@ -148,7 +143,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	/**
 	 * The registered Container.
 	 */
-	public readonly container: DecomposedIContainer;
+	public readonly container: IContainer;
 
 	/**
 	 * The {@link ContainerDevtools.container}'s audience.
@@ -300,7 +295,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[ConnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as ConnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.connect?.();
+				this.container.connect();
 				return true;
 			}
 			return false;
@@ -308,9 +303,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.disconnect?.(
-					/* TODO: Specify devtools reason here once it is supported */
-				);
+				this.container.disconnect();
 				return true;
 			}
 			return false;
@@ -318,7 +311,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[CloseContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as CloseContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.close?.(/* TODO: Specify devtools reason here once it is supported */);
+				this.container.close();
 				return true;
 			}
 			return false;
@@ -580,5 +573,14 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 	): Promise<FluidObjectNode | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
+	}
+
+	/**
+	 * Creates a ContainerDevtools instance from a DecomposedIContainer for internal use.
+	 */
+	public static createFromDecomposedContainer(
+		props: Omit<ContainerDevtoolsProps, "container"> & { container: DecomposedIContainer },
+	): ContainerDevtools {
+		return new ContainerDevtools(props as ContainerDevtoolsProps);
 	}
 }

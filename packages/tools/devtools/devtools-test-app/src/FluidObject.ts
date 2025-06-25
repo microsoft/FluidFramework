@@ -396,7 +396,7 @@ export class AppData extends DataObject {
 	public registerDevtools(devtools: IFluidDevtools, logger: IDevtoolsLogger): void {
 		if (process.env.NODE_ENV === "development") {
 			console.log(`Running in devlopment mode, registering ${AppData.Name} with devtools!`);
-			devtools.registerDataObject({ runtime: this.runtime, dataObject: this });
+			devtools.registerDataObject({ dataObject: this });
 		}
 	}
 }

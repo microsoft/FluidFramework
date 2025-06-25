@@ -157,12 +157,6 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Interface_FluidDevtoolsProps": {
-				"backCompat": false
-			},
-			"Interface_ContainerDevtoolsProps": {
-				"backCompat": false
-			},
 			"Interface_IFluidDevtools": {
 				"forwardCompat": false
 			}

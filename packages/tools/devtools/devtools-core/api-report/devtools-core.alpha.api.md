@@ -6,7 +6,7 @@
 
 // @alpha
 export interface ContainerDevtoolsProps extends HasContainerKey {
-    container: DecomposedIContainer;
+    container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
 }
 
@@ -19,19 +19,6 @@ export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoo
 // @alpha
 export interface DataObjectProps {
     dataObject: PureDataObject;
-    runtime: IFluidDataStoreRuntime;
-}
-
-// @alpha
-export interface DecomposedIContainer extends IEventProvider<IContainerEvents> {
-    readonly attachState: AttachState;
-    readonly audience: IAudience;
-    readonly clientId?: string | undefined;
-    close?(error?: ICriticalContainerError): void;
-    readonly closed: boolean;
-    connect?(): void;
-    readonly connectionState: ConnectionState;
-    disconnect?(): void;
 }
 
 // @alpha

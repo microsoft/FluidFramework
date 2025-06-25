@@ -324,8 +324,10 @@ export class FluidDevtools implements IFluidDevtools {
 	 *
 	 */
 	public registerDataObject(props: DataObjectProps): void {
-		const { runtime, dataObject } = props;
+		const { dataObject } = props;
 
+		// Extract runtime from the data object internally
+		const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
 		const runtimeId = `${runtime.id}-${Math.random().toString(36).slice(2, 11)}`;
 
 		const decomposedIContainer = toDecomposedIContainer(dataObject);
@@ -334,7 +336,7 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(runtimeId));
 		}
 
-		const containerDevtools = new ContainerDevtools({
+		const containerDevtools = ContainerDevtools.createFromDecomposedContainer({
 			containerKey: runtimeId,
 			container: decomposedIContainer,
 			containerData: { appData: dataObject },
@@ -462,8 +464,6 @@ export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 /**
  * Converts a {@link PureDataObject} into a {@link DecomposedIContainer} by wrapping its runtime.
  * This enables data objects to be registered with devtools as if they were containers.
- *
- * @alpha
  */
 export function toDecomposedIContainer(dataObject: PureDataObject): DecomposedIContainer {
 	const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;

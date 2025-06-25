@@ -17,8 +17,6 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 /**
  * A lightweight abstraction of {@link @fluidframework/container-definitions#IContainer} that provides
  * only the essential properties and methods needed for Fluid DevTools functionality.
- *
- * @alpha
  */
 export interface DecomposedIContainer extends IEventProvider<IContainerEvents> {
 	/**

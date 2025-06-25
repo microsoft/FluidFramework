@@ -35,7 +35,6 @@ export type {
 	ContainerDevtoolsProps,
 	DataObjectProps,
 } from "./ContainerDevtools.js";
-export type { DecomposedIContainer } from "./DecomposedContainer.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
 export type {
 	FluidHandleNode,
