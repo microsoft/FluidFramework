@@ -69,7 +69,7 @@ export interface ComposeNodeManager {
 	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, NodeId>;
+	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 
 	/**
 	 * Must be called by a field kind when composing an attach in the base changeset with a detach in the new changeset.

@@ -194,7 +194,7 @@ function compose(
 		nodeManager.composeAttachDetach(change1.valueReplace.src, detachId2, 1);
 	}
 
-	const composedDetach = composeNodeDetaches(change1, change2);
+	const composedDetach = composeNodeDetaches(change1, change2, nodeManager);
 	const composedReplace = composeReplaces(change1, change2);
 	const composedChildChange = getComposedChildChanges(
 		change1,
@@ -218,12 +218,22 @@ function compose(
 function composeNodeDetaches(
 	change1: OptionalChangeset,
 	change2: OptionalChangeset,
+	nodeManager: ComposeNodeManager,
 ): ChangeAtomId | undefined {
+	const detach1 = getEffectiveDetachId(change1);
+	if (detach1 !== undefined) {
+		const newDetachId = nodeManager.getNewChangesForBaseDetach(detach1, 1).value?.detachId;
+
+		if (newDetachId !== undefined) {
+			return newDetachId;
+		}
+	}
+
 	if (change1.nodeDetach !== undefined) {
 		return change1.nodeDetach;
 	}
 
-	return getEffectiveDetachId(change1) !== undefined || change1.valueReplace?.isEmpty === true
+	return detach1 !== undefined || change1.valueReplace?.isEmpty === true
 		? undefined
 		: change2.nodeDetach;
 }
@@ -294,7 +304,7 @@ function getComposedChildChanges(
 		// If such a node did exist, the changes for it in change2 would come from wherever change1 sends that node.
 		// Note: in both branches of this ternary, we are leveraging the fact querying for changes of a non-existent node safely yields undefined
 		detachId1 !== undefined
-			? nodeManager.getNewChangesForBaseDetach(detachId1, 1).value
+			? nodeManager.getNewChangesForBaseDetach(detachId1, 1).value?.nodeChange
 			: change1.valueReplace?.src !== undefined
 				? undefined
 				: change2.childChange;

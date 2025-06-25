@@ -22,7 +22,15 @@ import type {
 import { MarkListFactory } from "./markListFactory.js";
 import { MarkQueue } from "./markQueue.js";
 import type { NodeRangeQueryFunc } from "./moveEffectTable.js";
-import type { CellMark, Changeset, Mark, MarkEffect, MarkList, NoopMark } from "./types.js";
+import type {
+	CellMark,
+	Changeset,
+	Detach,
+	Mark,
+	MarkEffect,
+	MarkList,
+	NoopMark,
+} from "./types.js";
 import {
 	CellOrder,
 	areEqualCellIds,
@@ -114,7 +122,7 @@ function composeMarksIgnoreChild(
 	if (isNoopMark(baseMark)) {
 		return newMark;
 	} else if (isNoopMark(newMark)) {
-		return baseMark;
+		return updateBaseMarkId(moveEffects, baseMark);
 	}
 
 	if (isRename(baseMark) && isRename(newMark)) {
@@ -128,7 +136,7 @@ function composeMarksIgnoreChild(
 		return { ...newMark, cellId: baseMark.cellId };
 	} else if (isRename(newMark)) {
 		assert(isDetach(baseMark), 0x9f2 /* Unexpected mark type */);
-		return { ...baseMark, idOverride: newMark.idOverride };
+		return updateBaseMarkId(moveEffects, { ...baseMark, idOverride: newMark.idOverride });
 	}
 
 	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
@@ -147,7 +155,7 @@ function composeMarksIgnoreChild(
 
 			return { cellId: baseMark.cellId, ...newMark };
 		}
-		return baseMark;
+		return updateBaseMarkId(moveEffects, baseMark);
 	} else if (areInputCellsEmpty(baseMark)) {
 		assert(isDetach(newMark), 0x71c /* Unexpected mark type */);
 		assert(isAttach(baseMark), 0x71d /* Expected generative mark */);
@@ -186,6 +194,22 @@ function composeMarksIgnoreChild(
 		delete composedMark.cellId;
 		return composedMark;
 	}
+}
+
+function updateBaseMarkId(moveEffects: ComposeNodeManager, baseMark: Mark): Mark {
+	if (isDetach(baseMark)) {
+		const updatedDetachId = getUpdatedDetachId(moveEffects, baseMark);
+		if (updatedDetachId !== undefined) {
+			return {
+				...baseMark,
+				revision: updatedDetachId.revision,
+				id: updatedDetachId.localId,
+				idOverride: baseMark.idOverride ?? getDetachedNodeId(baseMark),
+			};
+		}
+	}
+
+	return baseMark;
 }
 
 function createNoopMark(
@@ -254,7 +278,7 @@ export class ComposeQueue {
 				: mark.count;
 
 		this.baseMarks = new MarkQueue(baseMarks, queryFunc);
-		this.newMarks = new MarkQueue(newMarks, queryFunc);
+		this.newMarks = new MarkQueue(newMarks, (mark) => mark.count);
 		this.baseMarksCellSources = cellSourcesFromMarks(baseMarks, getOutputCellId);
 		this.newMarksCellSources = cellSourcesFromMarks(newMarks, getInputCellId);
 	}
@@ -375,5 +399,14 @@ function getMovedChangesFromMark(
 		return undefined;
 	}
 
-	return moveEffects.getNewChangesForBaseDetach(getDetachedNodeId(markEffect), 1).value;
+	return moveEffects.getNewChangesForBaseDetach(getDetachedNodeId(markEffect), 1).value
+		?.nodeChange;
+}
+
+function getUpdatedDetachId(
+	manager: ComposeNodeManager,
+	mark: CellMark<Detach>,
+): ChangeAtomId | undefined {
+	return manager.getNewChangesForBaseDetach(getDetachedNodeId(mark), mark.count).value
+		?.detachId;
 }

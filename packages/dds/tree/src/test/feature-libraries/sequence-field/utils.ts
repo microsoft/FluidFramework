@@ -833,8 +833,8 @@ function newComposeManager(): TestComposeManager {
 		getNewChangesForBaseDetach(
 			baseDetachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<ChangeAtomId, NodeId> {
-			return this.nodeChangeTable.getFirst(baseDetachId, count);
+		): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
+			throw new Error("Not implemented");
 		},
 
 		composeAttachDetach(

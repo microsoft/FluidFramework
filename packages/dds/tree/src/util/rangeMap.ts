@@ -333,6 +333,7 @@ interface RangeEntry<V> {
  * Describes the result of a range query, including the value and length of the matching prefix.
  */
 export interface RangeQueryResult<K, V> {
+	// XXX: Consider replacing this with an offset from the initial query key.
 	/**
 	 * The key for the first element in the range.
 	 */

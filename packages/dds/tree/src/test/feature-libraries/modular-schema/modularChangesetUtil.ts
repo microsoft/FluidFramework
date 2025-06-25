@@ -71,6 +71,7 @@ import { strict as assert } from "node:assert";
 import { assertStructuralEquality } from "../../objMerge.js";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 import { testIdCompressor } from "../../utils.js";
+import type { DetachedNodeEntry } from "../../../feature-libraries/modular-schema/crossFieldQueries.js";
 
 export const Change = {
 	build,
@@ -664,7 +665,7 @@ const dummyComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
 		count: number,
-	): RangeQueryResult<ChangeAtomId, NodeId> {
+	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
 		return { start: baseDetachId, value: undefined, length: count };
 	},
 

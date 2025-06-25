@@ -1101,7 +1101,6 @@ describe("ModularChangeFamily integration", () => {
 				tagChangeInline(move2, tag2),
 			]);
 
-			const id1: ChangeAtomId = { revision: tag1, localId: brand(0) };
 			const id2: ChangeAtomId = { revision: tag2, localId: brand(2) };
 
 			const expected = Change.build(
@@ -1109,9 +1108,8 @@ describe("ModularChangeFamily integration", () => {
 					family,
 					maxId: 3,
 					revisions: [{ revision: tag1 }, { revision: tag2 }],
-					renames: [{ oldId: id1, newId: id2, count: 1 }],
 				},
-				Change.field(fieldA, sequence.identifier, [MarkMaker.remove(1, id1)]),
+				Change.field(fieldA, sequence.identifier, [MarkMaker.remove(1, id2)]),
 				Change.field(fieldB, sequence.identifier, [
 					MarkMaker.rename(
 						1,
@@ -1365,9 +1363,6 @@ describe("ModularChangeFamily integration", () => {
 
 			const undo = family.invert(move, false, tag4);
 
-			const id1Original: ChangeAtomId = { revision: tag3, localId: brand(0) };
-			const id1Undo: ChangeAtomId = { revision: tag4, localId: brand(0) };
-
 			const id2Original: ChangeAtomId = { revision: tag3, localId: brand(2) };
 			const id2Undo: ChangeAtomId = { revision: tag4, localId: brand(2) };
 
@@ -1378,14 +1373,14 @@ describe("ModularChangeFamily integration", () => {
 					maxId: 3,
 					renames: [
 						{
-							oldId: id2Undo,
-							newId: id1Undo,
+							oldId: id2Original,
+							newId: id2Undo,
 							count: 1,
 						},
 					],
 				},
 				Change.field(fieldA, sequence.identifier, [
-					MarkMaker.insert(1, id1Original, { revision: tag4 }),
+					MarkMaker.insert(1, id2Original, { revision: tag4 }),
 					MarkMaker.rename(1, id2Original, { revision: tag4, localId: brand(1) }),
 					MarkMaker.remove(1, id2Undo),
 				]),
