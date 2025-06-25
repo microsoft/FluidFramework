@@ -9,6 +9,9 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
   selector:
     matchLabels:
       app: {{ template "redis.fullname" . }}
@@ -25,6 +28,9 @@ spec:
       - name: {{ template "redis.fullname" . }}
         image: "{{ .Values.image }}"
         imagePullPolicy: {{ default "" .Values.imagePullPolicy | quote }}
+        securityContext:
+          runAsUser: 1000
+          runAsNonRoot: true
         ports:
         - name: redis
           containerPort: 6379
