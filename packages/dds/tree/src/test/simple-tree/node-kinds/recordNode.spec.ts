@@ -11,11 +11,9 @@ import { validateUsageError } from "../../utils.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
-const CustomizableNumberRecord = schemaFactory.record("Array", schemaFactory.number);
+const CustomizableNumberRecord = schemaFactory.record("Record", schemaFactory.number);
 
-// TODO: add recursive tests once support has been added.
-
-describe("RecordNode", () => {
+describe.only("RecordNode", () => {
 	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
 	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
@@ -62,6 +60,19 @@ describe("RecordNode", () => {
 				assert.equal(record.bar, undefined);
 			});
 
+			it("cannot set values of wrong type", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+				assert.throws(
+					() => {
+						// @ts-expect-error: Intentionally setting a string where a number is expected.
+						record.foo = "strings are not allowed by the schema";
+					},
+					validateUsageError(
+						/The provided data is incompatible with all of the types allowed by the schema/,
+					),
+				);
+			});
+
 			it("Object.keys", () => {
 				const record = init(schemaType, { foo: 1, bar: 2 });
 				assert.deepEqual(Object.keys(record), ["foo", "bar"]);
@@ -95,14 +106,14 @@ describe("RecordNode", () => {
 		});
 
 		describe("implicit construction", () => {
-			it("from POJO (named)", () => {
+			it("named", () => {
 				class Schema extends schemaFactory.record("x", schemaFactory.number) {}
 				class Root extends schemaFactory.object("root", { data: Schema }) {}
 				const fromPojo = new Root({ data: { foo: 42 } });
 				assert.deepEqual(fromPojo.data, { foo: 42 });
 			});
 
-			it("from POJO (structural)", () => {
+			it("structural", () => {
 				class Root extends schemaFactory.object("root", {
 					data: schemaFactory.record(schemaFactory.number),
 				}) {}
@@ -157,6 +168,94 @@ describe("RecordNode", () => {
 					c: { foo: 200, bar: "New entry!" },
 				}),
 			);
+		});
+	});
+
+	describe("recursive", () => {
+		class RecursiveRecordSchema extends schemaFactory.recordRecursive("x", [
+			schemaFactory.number,
+			() => RecursiveRecordSchema,
+		]) {}
+
+		it("construction", () => {
+			const _empty: RecursiveRecordSchema = new RecursiveRecordSchema({});
+			const _nonEmpty: RecursiveRecordSchema = new RecursiveRecordSchema({
+				foo: 42,
+				bar: new RecursiveRecordSchema({ x: 100 }),
+				baz: new RecursiveRecordSchema({}),
+			});
+		});
+
+		it("stringifies in the same way as a POJO record", () => {
+			const tsRecord = { foo: 1, bar: 2 };
+			const recordNode = new RecursiveRecordSchema(tsRecord);
+			assert.equal(JSON.stringify(recordNode), JSON.stringify(tsRecord));
+		});
+
+		it("can get and set values", () => {
+			const record = new RecursiveRecordSchema({
+				foo: 1,
+				bar: new RecursiveRecordSchema({ x: 42 }),
+			});
+			assert.equal(record.foo, 1);
+			assert(record.bar instanceof RecursiveRecordSchema);
+			assert.equal(record.bar.x, 42);
+			assert.equal(record.baz, undefined);
+
+			record.foo = 3;
+			assert.equal(record.foo, 3);
+
+			record.bar.y = 37;
+			assert.equal(record.bar.y, 37);
+
+			record.bar = 37;
+			assert.equal(record.bar, 37);
+
+			record.baz = 4;
+			assert.equal(record.baz, 4);
+
+			delete record.bar;
+			assert.equal(record.bar, undefined);
+		});
+
+		it("cannot set values of wrong type", () => {
+			const record = new RecursiveRecordSchema({
+				foo: 1,
+				bar: new RecursiveRecordSchema({ x: 42 }),
+			});
+			assert.throws(
+				() => {
+					// @ts-expect-error: Intentionally setting a string where a number is expected.
+					record.foo = "strings are not allowed by the schema";
+				},
+				validateUsageError(
+					/The provided data is incompatible with all of the types allowed by the schema/,
+				),
+			);
+		});
+
+		it("Object.keys", () => {
+			const record = new RecursiveRecordSchema({
+				foo: 1,
+				bar: new RecursiveRecordSchema({ x: 42 }),
+			});
+			assert.deepEqual(Object.keys(record), ["foo", "bar"]);
+		});
+
+		it("Object.values", () => {
+			const bar = new RecursiveRecordSchema({ x: 42 });
+			const record = new RecursiveRecordSchema({ foo: 1, bar });
+			assert.deepEqual(Object.values(record), [1, bar]); // TODO
+		});
+
+		it("Object.entries", () => {
+			const bar = new RecursiveRecordSchema({ x: 42 });
+			const record = new RecursiveRecordSchema({ foo: 1, bar });
+			assert.deepEqual(Object.entries(record), [
+				// TODO
+				["foo", 1],
+				["bar", bar],
+			]);
 		});
 	});
 });

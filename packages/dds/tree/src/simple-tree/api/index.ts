@@ -80,6 +80,7 @@ export type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 
 export {

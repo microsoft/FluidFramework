@@ -43,6 +43,7 @@ import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 
@@ -510,6 +511,44 @@ export class SchemaFactoryAlpha<
 			metadata: options?.metadata,
 			persistedMetadata: options?.persistedMetadata,
 		});
+	}
+
+	/**
+	 * {@link SchemaFactoryAlpha.(record:2)} except tweaked to work better for recursive types.
+	 * Use with {@link ValidateRecursiveSchema} for improved type safety.
+	 * @remarks
+	 * This version of `SchemaFactory.record` uses the same workarounds as {@link SchemaFactory.objectRecursive}.
+	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 */
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+	public recordRecursive<
+		Name extends TName,
+		const T extends System_Unsafe.ImplicitAllowedTypesUnsafe,
+	>(name: Name, allowedTypes: T) {
+		const RecordSchema = this.namedRecord(
+			name,
+			allowedTypes as T & ImplicitAllowedTypes,
+			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
+			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
+			false,
+		);
+
+		return RecordSchema as TreeNodeSchemaClass<
+			/* Name */ ScopedSchemaName<TScope, Name>,
+			/* Kind */ NodeKind.Record,
+			/* TNode */ TreeRecordNodeUnsafe<T> &
+				WithType<ScopedSchemaName<TScope, Name>, NodeKind.Record>,
+			/* TInsertable */ {
+				// Ideally this would be
+				// RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+				// but doing so breaks recursive types.
+				// Instead we do a less nice version:
+				readonly [P in string]: System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<T>;
+			},
+			/* ImplicitlyConstructable */ false,
+			/* Info */ T,
+			/* TConstructorExtra */ undefined
+		>;
 	}
 
 	/**
