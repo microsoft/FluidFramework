@@ -15,6 +15,8 @@
  */
 
 export {
+	BuildProject,
+	generateBuildProjectConfig,
 	getAllDependencies,
 	loadBuildProject,
 } from "./buildProject.js";
@@ -24,11 +26,25 @@ export {
 	type IFluidBuildDir,
 	type IFluidBuildDirs,
 	type IFluidBuildDirEntry,
-	type BuildProjectConfig as BuildProjectLayout,
-	BUILDPROJECT_CONFIG_VERSION,
+	type BuildProjectConfig,
+	type BuildProjectConfigBase,
+	type BuildProjectConfigV1,
+	type BuildProjectConfigV1Base,
+	BUILDPROJECT_CONFIG_MIN_VERSION,
 	getBuildProjectConfig,
+	isV1Config,
 } from "./config.js";
 export { NotInGitRepository } from "./errors.js";
+export {
+	type PackageFilterOptions,
+	type PackageSelectionCriteria,
+	filterPackages,
+	FilterablePackage,
+	selectAndFilterPackages,
+	EmptySelectionCriteria,
+	AllPackagesSelectionCriteria,
+	GlobString,
+} from "./filter.js";
 export {
 	getFiles,
 	findGitRootSync,
@@ -36,9 +52,11 @@ export {
 	getRemote,
 	getChangedSinceRef,
 } from "./git.js";
+export { type Logger, type LoggingFunction, type ErrorLoggingFunction } from "./logging.js";
 export { PackageBase } from "./package.js";
 export { updatePackageJsonFile, updatePackageJsonFileAsync } from "./packageJsonUtils.js";
-export { createPackageManager } from "./packageManagers.js";
+export { detectPackageManager } from "./packageManagers.js";
+export { Stopwatch } from "./stopwatch.js";
 export type {
 	AdditionalPackageProps,
 	Installable,
@@ -52,7 +70,7 @@ export type {
 	ReleaseGroupName,
 	Reloadable,
 	WorkspaceName,
-	PnpmPackageJsonFields as FluidPackageJsonFields,
+	PnpmPackageJsonFields,
 	PackageDependency,
 	IPackageManager,
 } from "./types.js";

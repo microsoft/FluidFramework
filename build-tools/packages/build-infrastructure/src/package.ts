@@ -16,7 +16,6 @@ import { readPackageJsonAndIndent, writePackageJson } from "./packageJsonUtils.j
 import type {
 	AdditionalPackageProps,
 	IPackage,
-	IPackageManager,
 	IWorkspace,
 	PackageDependency,
 	PackageJson,
@@ -86,7 +85,7 @@ export abstract class PackageBase<
 		/**
 		 * {@inheritDoc IPackage.packageManager}
 		 */
-		public readonly packageManager: IPackageManager,
+		// public readonly packageManager: IPackageManager,
 
 		/**
 		 * {@inheritDoc IPackage.workspace}
@@ -204,12 +203,9 @@ export abstract class PackageBase<
 
 		const errors: string[] = [];
 		for (const dep of this.combinedDependencies) {
-			const found = lookUpDirSync(this.directory, (currentDir) => {
-				// TODO: check semver as well
-				return existsSync(path.join(currentDir, "node_modules", dep.name));
-			});
+			const found = checkDependency(this.directory, dep);
 
-			if (found === undefined) {
+			if (!found) {
 				errors.push(`${this.nameColored}: dependency ${dep.name} not found`);
 			}
 		}
@@ -253,7 +249,6 @@ class Package<
 	>(
 		this: T,
 		packageJsonFilePath: string,
-		packageManager: IPackageManager,
 		isWorkspaceRoot: boolean,
 		workspaceDefinition: WorkspaceDefinition,
 		workspace: IWorkspace,
@@ -283,7 +278,7 @@ class Package<
 
 		const pkg = new this(
 			packageJsonFilePath,
-			packageManager,
+			// packageManager,
 			workspace,
 			isWorkspaceRoot,
 			releaseGroupName,
@@ -307,14 +302,12 @@ class Package<
  */
 export function loadPackageFromWorkspaceDefinition(
 	packageJsonFilePath: string,
-	packageManager: IPackageManager,
 	isWorkspaceRoot: boolean,
 	workspaceDefinition: WorkspaceDefinition,
 	workspace: IWorkspace,
 ): IPackage {
 	return Package.loadFromWorkspaceDefinition(
 		packageJsonFilePath,
-		packageManager,
 		isWorkspaceRoot,
 		workspaceDefinition,
 		workspace,
@@ -364,4 +357,21 @@ function* iterateDependencies<T extends PackageJson>(
 			depKind: "peer",
 		} as const;
 	}
+}
+
+/**
+ * Checks if a dependency is installed by looking up the folder tree's node_modules folders and looking for the
+ * dependent package. If the dependency's folder in node_modules is found, the dependency is considered installed.
+ *
+ * @remarks
+ *
+ * Note that the version of the dependency is _not_ checked.
+ */
+function checkDependency(packagePath: string, dependency: PackageDependency): boolean {
+	const foundDepPath = lookUpDirSync(packagePath, (currentDir) => {
+		// TODO: check that the version matches the requested semver range as well
+		return existsSync(path.join(currentDir, "node_modules", dependency.name));
+	});
+
+	return foundDepPath !== undefined;
 }
