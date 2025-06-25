@@ -82,7 +82,6 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 				return undefined;
 			}
 
-			// TODO: handle customizable?
 			return tryGetTreeNodeForField(field);
 		},
 		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
@@ -111,7 +110,6 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			const innerNode = getOrCreateInnerNode(proxy);
 			const childField = innerNode.tryGetField(brand(key));
 
-			// TODO: handle customizable?
 			return childField !== undefined;
 		},
 		ownKeys: (target) => {
@@ -125,7 +123,6 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			const innerNode = getOrCreateInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key));
 
-			// TODO: handle customizable?
 			if (field === undefined) {
 				return undefined;
 			}
