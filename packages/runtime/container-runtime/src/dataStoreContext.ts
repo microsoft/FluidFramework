@@ -239,7 +239,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 }
 
 /**
- * Context for an {@link IDataStore}. This context is passed to the store runtime.
+ * Context for an {@link IDataStore}. This context is provided to the FluidDataStoreRuntime.
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
