@@ -43,11 +43,14 @@ steps:
     workingFile: $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}/.npmrc
     workloadIdentityServiceConnection: ${{ parameters.workloadIdentityServiceConnection }}
     feedUrl: ${{ parameters.feedUrl }}
+- task: Bash@3
+  displayName: Check WIF token presence
+  inputs:
+    targetType: 'inline'
     script: |
       echo "AZURE_FEDERATED_TOKEN_FILE=$AZURE_FEDERATED_TOKEN_FILE"
       echo "IDENTITY_ENDPOINT=$IDENTITY_ENDPOINT"
-      ls -alh $AZURE_FEDERATED_TOKEN_FILE
-    displayName: Check WIF token presence
+      ls -alh $AZURE_FEDERATED_TOKEN_FILE || echo "Token file not found"
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:
