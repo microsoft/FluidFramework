@@ -244,7 +244,7 @@ export interface IDocumentDeltaConnectionEvents extends IErrorEvent {
 	 * Signature will change from `(reason: IAnyDriverError) => void` to `(reason?: IAnyDriverError) => void`.
 	 * Update your listener implementations to handle cases where `reason` is undefined.
 	 */
-	(event: "disconnect", listener: (reason: IAnyDriverError) => void);
+	(event: "disconnect", listener: (reason: IAnyDriverError | undefined) => void);
 	(event: "op", listener: (documentId: string, messages: ISequencedDocumentMessage[]) => void);
 	(event: "signal", listener: (message: ISignalMessage | ISignalMessage[]) => void);
 	(event: "pong", listener: (latency: number) => void);
