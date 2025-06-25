@@ -48,9 +48,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      echo "AZURE_FEDERATED_TOKEN_FILE=$AZURE_FEDERATED_TOKEN_FILE"
-      echo "IDENTITY_ENDPOINT=$IDENTITY_ENDPOINT"
-      ls -alh $AZURE_FEDERATED_TOKEN_FILE || echo "Token file not found"
+      env | sort
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
   inputs:

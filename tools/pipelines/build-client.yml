@@ -193,7 +193,7 @@ extends:
     buildDirectory: .
     tagName: client
     isReleaseGroup: true
-    poolBuild: ubuntu-latest
+    poolBuild: Large-eastus2
     checkoutSubmodules: true
     taskBundleAnalysis: true
     taskLint: false # Linting is captured by `ci:build` via fluid-build
