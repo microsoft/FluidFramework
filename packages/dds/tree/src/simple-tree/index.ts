@@ -220,7 +220,7 @@ export {
 	type RecordNodeInsertableData,
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
-	type TreeRecordNode,
+	TreeRecordNode,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,

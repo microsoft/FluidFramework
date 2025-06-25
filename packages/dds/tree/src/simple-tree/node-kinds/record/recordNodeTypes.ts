@@ -36,6 +36,27 @@ export interface TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowed
 		Record<string, TreeNodeFromImplicitAllowedTypes<T>> {}
 
 /**
+ * Static methods for {@link (TreeRecordNode:interface)}.
+ * @alpha
+ */
+export const TreeRecordNode = {
+	remove: (node: TreeRecordNode, key: string): void => {
+		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+		delete node[key];
+	},
+
+	set: <T extends ImplicitAllowedTypes = ImplicitAllowedTypes>(
+		node: TreeRecordNode,
+		key: string,
+		value: InsertableTreeNodeFromImplicitAllowedTypes<T>,
+	): void => {
+		// TODO: ideally we could make standard property setter take the insertable type,
+		// in which case this would not be needed.
+		node[key] = value as TreeNodeFromImplicitAllowedTypes<T>;
+	},
+} as const;
+
+/**
  * Content which can be used to construct a Record node, explicitly or implicitly.
  * @system @alpha
  */
@@ -109,7 +130,7 @@ export type RecordNodeSchema<
  */
 export const RecordNodeSchema = {
 	/**
-	 * `instanceof`-based narrowing support for {@link RecordNodeSchema} in JavaScript and TypeScript 5.3 or newer.
+	 * `instanceof`-based narrowing support for {@link (RecordNodeSchema:type)} in JavaScript and TypeScript 5.3 or newer.
 	 */
 	[Symbol.hasInstance](value: TreeNodeSchema): value is RecordNodeSchema {
 		return isRecordNodeSchema(value);

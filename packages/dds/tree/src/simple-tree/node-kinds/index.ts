@@ -45,5 +45,5 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	recordSchema,
-	type TreeRecordNode,
+	TreeRecordNode,
 } from "./record/index.js";
