@@ -28,7 +28,6 @@ import {
 	type ImplicitAnnotatedFieldSchema,
 	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
-	TreeRecordNode,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -403,7 +402,11 @@ export namespace System_TableSchema {
 					this.removeCell(columnOrId);
 				} else {
 					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-					TreeRecordNode.set(this.cells, columnId, value as CellInsertableType);
+
+					// Record nodes' typing does not support setting properties with their insertable types,
+					// but doing so is supported at runtime.
+					// So we will cast the insertable type to the expected value type.
+					this.cells[columnId] = value as CellValueType;
 				}
 			}
 
@@ -419,7 +422,9 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				TreeRecordNode.remove(this.cells, columnId);
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- The record's values are non-optional, so setting `undefined` is not supported.
+				delete this.cells[columnId];
+
 				return cell;
 			}
 

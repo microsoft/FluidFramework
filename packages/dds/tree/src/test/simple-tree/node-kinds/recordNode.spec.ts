@@ -134,13 +134,11 @@ describe("RecordNode", () => {
 		});
 
 		it("complex children", () => {
-			class MyRecord extends schemaFactory.record(
-				"x",
-				schemaFactory.object("y", {
-					foo: schemaFactory.number,
-					bar: schemaFactory.string,
-				}),
-			) {}
+			class InnerObject extends schemaFactory.object("y", {
+				foo: schemaFactory.number,
+				bar: schemaFactory.string,
+			}) {}
+			class MyRecord extends schemaFactory.record("x", InnerObject) {}
 
 			const myRecord = new MyRecord({
 				a: { foo: 42, bar: "Hello world!" },
@@ -150,9 +148,7 @@ describe("RecordNode", () => {
 			delete myRecord.b;
 			myRecord.a.foo = 100;
 
-			// TODO: make record accept insertable data.
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			myRecord.c = { foo: 200, bar: "New entry!" } as any;
+			myRecord.c = new InnerObject({ foo: 200, bar: "New entry!" });
 
 			assert.equal(
 				JSON.stringify(myRecord),

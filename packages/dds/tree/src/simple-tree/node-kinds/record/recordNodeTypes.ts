@@ -30,31 +30,9 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
  *
  * @alpha
  */
-// TODO: allow writing via insertable types
 export interface TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeNode,
 		Record<string, TreeNodeFromImplicitAllowedTypes<T>> {}
-
-/**
- * Static methods for {@link (TreeRecordNode:interface)}.
- * @alpha
- */
-export const TreeRecordNode = {
-	remove: (node: TreeRecordNode, key: string): void => {
-		// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-		delete node[key];
-	},
-
-	set: <T extends ImplicitAllowedTypes = ImplicitAllowedTypes>(
-		node: TreeRecordNode,
-		key: string,
-		value: InsertableTreeNodeFromImplicitAllowedTypes<T>,
-	): void => {
-		// TODO: ideally we could make standard property setter take the insertable type,
-		// in which case this would not be needed.
-		node[key] = value as TreeNodeFromImplicitAllowedTypes<T>;
-	},
-} as const;
 
 /**
  * Content which can be used to construct a Record node, explicitly or implicitly.

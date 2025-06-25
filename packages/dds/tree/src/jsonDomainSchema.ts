@@ -76,6 +76,7 @@ export namespace JsonAsTree {
 	 */
 	export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
 
+	// TODO: use Record
 	/**
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
