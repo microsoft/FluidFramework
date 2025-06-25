@@ -196,10 +196,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 		const pkgs: Map<PackageName, P> = new WriteOnceMap();
 		for (const ws of this.workspaces.values()) {
 			for (const pkg of ws.packages) {
-				// if (pkgs.has(pkg.name)) {
-				// 	throw new Error(`Duplicate package: ${pkg.name}`);
-				// }
-
 				pkgs.set(pkg.name, pkg as P);
 			}
 		}
@@ -341,14 +337,6 @@ export function loadBuildProject<P extends IPackage>(
 	const repo = new BuildProject<P>(searchPath, infer, upstreamRemotePartialUrl);
 	return repo;
 }
-
-// export function loadBuildProjectFromConfig<P extends IPackage>(
-// 	config: BuildProjectConfig,
-// 	upstreamRemotePartialUrl?: string,
-// ): IBuildProject<P> {
-// 	const repo = new BuildProject<P>(searchPath, infer, upstreamRemotePartialUrl);
-// 	return repo;
-// }
 
 /**
  * Returns an object containing all the packages, release groups, and workspaces that a given set of packages depends
