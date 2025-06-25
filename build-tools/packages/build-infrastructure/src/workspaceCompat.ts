@@ -4,9 +4,9 @@
  */
 
 import { existsSync } from "node:fs";
-import path from "node:path";
+import * as path from "node:path";
 
-import globby from "globby";
+import { globSync } from "tinyglobby";
 
 import type {
 	// eslint-disable-next-line import/no-deprecated -- back-compat code
@@ -18,6 +18,7 @@ import type {
 } from "./config.js";
 import type { IBuildProject, IWorkspace, WorkspaceName } from "./types.js";
 import { Workspace } from "./workspace.js";
+import { WriteOnceMap } from "./writeOnceMap.js";
 
 /**
  * Loads workspaces based on the "legacy" config -- the former repoPackages section of the fluid-build config.
@@ -32,7 +33,7 @@ export function loadWorkspacesFromLegacyConfig(
 	config: IFluidBuildDirs,
 	buildProject: IBuildProject,
 ): Map<WorkspaceName, IWorkspace> {
-	const workspaces: Map<WorkspaceName, IWorkspace> = new Map();
+	const workspaces: Map<WorkspaceName, IWorkspace> = new WriteOnceMap();
 
 	// Iterate over the entries and create synthetic workspace definitions for them, then load the workspaces.
 	for (const [name, entry] of Object.entries(config)) {
@@ -99,20 +100,18 @@ function loadWorkspacesFromLegacyConfigEntry(
 		];
 	}
 
-	const packageJsonPaths = globby
-		.sync(["**/package.json"], {
-			cwd: path.dirname(packagePath),
-			gitignore: true,
-			onlyFiles: true,
-			absolute: true,
-			// BACK-COMPAT HACK - only search two levels below entries for package.jsons. This avoids finding some test
-			// files and treating them as packages. This is only needed when loading old configs.
-			deep: 2,
-		})
-		.map(
-			// Make the paths relative to the repo root
-			(filePath) => path.relative(buildProject.root, filePath),
-		);
+	const packageJsonPaths = globSync(["**/package.json"], {
+		cwd: path.dirname(packagePath),
+		ignore: ["**/node_modules/**"],
+		onlyFiles: true,
+		absolute: true,
+		// BACK-COMPAT HACK - only search two levels below entries for package.jsons. This avoids finding some test
+		// files and treating them as packages. This is only needed when loading old configs.
+		deep: 2,
+	}).map(
+		// Make the paths relative to the repo root
+		(filePath) => path.relative(buildProject.root, filePath),
+	);
 	const workspaces = packageJsonPaths.flatMap((pkgPath) => {
 		const dir = path.dirname(pkgPath);
 		return loadWorkspacesFromLegacyConfigEntry(dir, buildProject);
