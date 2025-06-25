@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
+import path from "node:path";
 
 import { type SimpleGit, simpleGit } from "simple-git";
 import { globSync } from "tinyglobby";
@@ -134,26 +134,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 			}
 		}
 
-		// If the config has an excludeGlobs setting,
-		// if (configToUse.configuration.excludeGlobs !== undefined) {
-		// 	// TODO: refactor and consolidate all this logic. Maybe a single function that take a BuildProjectConfig and
-		// 	// returns all the class properties that are set in these blocks. Then we can just set it once and move the logic
-		// 	// to a function.
-		// 	this.configuration = generateBuildProjectConfig(searchPath);
-		// 	this.configFilePath = searchPath;
-		// 	this.configurationSource = "INFERRED";
-		// 	this.root = searchPath;
-		// }
-		// If the config has no buildProject or repoPackages setting, use the inferred
-		// if (
-		// 	(configToUse.configuration.buildProject ?? configToUse.configuration.repoPackages) === undefined
-		// ) {
-		// 	this.configuration = generateBuildProjectConfig(searchPath);
-		// 	this.configFilePath = searchPath;
-		// 	this.configurationSource = "INFERRED";
-		// 	this.root = searchPath;
-		// }
-
 		return configToUse;
 	}
 
@@ -196,10 +176,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 		const pkgs: Map<PackageName, P> = new WriteOnceMap();
 		for (const ws of this.workspaces.values()) {
 			for (const pkg of ws.packages) {
-				// if (pkgs.has(pkg.name)) {
-				// 	throw new Error(`Duplicate package: ${pkg.name}`);
-				// }
-
 				pkgs.set(pkg.name, pkg as P);
 			}
 		}
@@ -298,10 +274,8 @@ export function generateBuildProjectConfig(searchPath: string): BuildProjectConf
 		throw new Error("Unexpected error loading config-less build project.");
 	}
 
-	// const workspaces: Map<string, string> = new Map();
 	for (const workspaceRootPath of workspaceRoots) {
 		const wsName = path.basename(workspaceRootPath);
-		// workspaces.set(wsName, workspaceRootPath);
 
 		toReturn.buildProject.workspaces[wsName] = {
 			directory: workspaceRootPath,
@@ -341,14 +315,6 @@ export function loadBuildProject<P extends IPackage>(
 	const repo = new BuildProject<P>(searchPath, infer, upstreamRemotePartialUrl);
 	return repo;
 }
-
-// export function loadBuildProjectFromConfig<P extends IPackage>(
-// 	config: BuildProjectConfig,
-// 	upstreamRemotePartialUrl?: string,
-// ): IBuildProject<P> {
-// 	const repo = new BuildProject<P>(searchPath, infer, upstreamRemotePartialUrl);
-// 	return repo;
-// }
 
 /**
  * Returns an object containing all the packages, release groups, and workspaces that a given set of packages depends

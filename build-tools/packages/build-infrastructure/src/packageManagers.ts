@@ -22,6 +22,8 @@ const lockFileMap = new Map<PackageManagerName, string[]>([
 ]);
 
 export class PackageManager implements IPackageManager {
+	public readonly lockfileNames: string[];
+
 	/**
 	 * Instantiates a new package manager object. Prefer the {@link createPackageManager} function, which retuns an
 	 * {@link IPackageManager}, to calling the constructor directly.
@@ -36,8 +38,6 @@ export class PackageManager implements IPackageManager {
 		}
 		this.lockfileNames = entry;
 	}
-
-	public readonly lockfileNames: string[];
 
 	/**
 	 * {@inheritdoc IPackageManager.getInstallCommandWithArgs}

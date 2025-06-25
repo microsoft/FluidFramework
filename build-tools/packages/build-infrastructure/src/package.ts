@@ -294,7 +294,6 @@ class Package<
  * Loads an {@link IPackage} from a {@link WorkspaceDefinition}.
  *
  * @param packageJsonFilePath - The path to the package.json for the package being loaded.
- * @param packageManager - The package manager to use.
  * @param isWorkspaceRoot - Set to `true` if the package is a workspace root package.
  * @param workspaceDefinition - The workspace definition.
  * @param workspace - The workspace that this package belongs to.
