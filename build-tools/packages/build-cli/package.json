@@ -170,6 +170,7 @@
 		"eslint-config-oclif": "^5.2.1",
 		"eslint-config-oclif-typescript": "^3.1.12",
 		"eslint-config-prettier": "~9.1.0",
+		"eslint-plugin-chai-friendly": "~1.0.1",
 		"jssm-viz-cli": "^5.101.0",
 		"mocha": "^10.7.3",
 		"mocha-multi-reporters": "^1.5.1",

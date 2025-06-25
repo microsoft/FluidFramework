@@ -4,7 +4,7 @@
  */
 
 module.exports = {
-	plugins: ["@typescript-eslint"],
+	plugins: ["@typescript-eslint", "chai-friendly"],
 	extends: [
 		"oclif",
 		"oclif-typescript",
@@ -109,6 +109,12 @@ module.exports = {
 			rules: {
 				// Test files can import from anywhere
 				"import/no-internal-modules": "off",
+
+				// Superseded by chai-friendly/no-unused-expressions
+				"no-unused-expressions": "off",
+				"@typescript-eslint/no-unused-expressions": "off",
+
+				"chai-friendly/no-unused-expressions": "error",
 			},
 		},
 		{
