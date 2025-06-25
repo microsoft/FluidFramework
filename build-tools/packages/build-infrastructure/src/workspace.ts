@@ -51,7 +51,7 @@ export class Workspace implements IWorkspace {
 	 */
 	public readonly directory: string;
 
-	private readonly packageManager: IPackageManager;
+	public readonly packageManager: IPackageManager;
 
 	/**
 	 * Construct a new workspace object.

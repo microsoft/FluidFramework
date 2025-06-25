@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { Agent, AgentName } from "package-manager-detector";
 import { SimpleGit } from "simple-git";
 import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
@@ -297,15 +296,7 @@ export function isIReleaseGroup(
 /**
  * Known package managers supported by build-infrastructure.
  */
-export type PackageManagerName = AgentName;
-
-/**
- * For package managers that have multiple versions or flavors, this type contains the unambiguous string that can be
- * used to install the package manager.
- *
- * For example, "yarn" is yarn 1, while "yarn\@berry" is yarn's new version.
- */
-export type PackageManagerInstallName = Agent;
+export type PackageManagerName = "npm" | "pnpm" | "yarn";
 
 /**
  * A package manager, such as "npm" or "pnpm".

@@ -6,7 +6,7 @@
 import type { IPackageManager, PackageManagerName } from "./types.js";
 
 export class PackageManager implements IPackageManager {
-	public readonly lockfileName: string;
+	public readonly lockfileNames: string[];
 
 	/**
 	 * Instantiates a new package manager object. Prefer the {@link createPackageManager} function, which retuns an
@@ -15,17 +15,17 @@ export class PackageManager implements IPackageManager {
 	public constructor(public readonly name: PackageManagerName) {
 		switch (this.name) {
 			case "npm": {
-				this.lockfileName = "package-lock.json";
+				this.lockfileNames = ["package-lock.json"];
 				break;
 			}
 
 			case "pnpm": {
-				this.lockfileName = "pnpm-lock.yaml";
+				this.lockfileNames = ["pnpm-lock.yaml"];
 				break;
 			}
 
 			case "yarn": {
-				this.lockfileName = "yarn.lock";
+				this.lockfileNames = ["yarn.lock"];
 				break;
 			}
 
