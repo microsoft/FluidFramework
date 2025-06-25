@@ -13,7 +13,7 @@ const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
 const CustomizableNumberRecord = schemaFactory.record("Record", schemaFactory.number);
 
-describe.only("RecordNode", () => {
+describe("RecordNode", () => {
 	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
 	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
@@ -225,12 +225,25 @@ describe.only("RecordNode", () => {
 			});
 			assert.throws(
 				() => {
-					// @ts-expect-error: Intentionally setting a string where a number is expected.
+					// @ts-expect-error: Intentionally setting a value of an incompatible type.
 					record.foo = "strings are not allowed by the schema";
 				},
 				validateUsageError(
 					/The provided data is incompatible with all of the types allowed by the schema/,
 				),
+			);
+
+			class OtherRecursiveRecord extends schemaFactory.recordRecursive("y", [
+				schemaFactory.number,
+				() => OtherRecursiveRecord,
+			]) {}
+
+			assert.throws(
+				() => {
+					// @ts-expect-error: Intentionally setting a value of an incompatible type.
+					record.foo = new OtherRecursiveRecord({ x: 100 });
+				},
+				validateUsageError(/Invalid schema for this context/),
 			);
 		});
 
