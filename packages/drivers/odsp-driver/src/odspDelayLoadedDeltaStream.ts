@@ -338,17 +338,6 @@ export class OdspDelayLoadedDeltaStream {
 		clientId: string | undefined,
 		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> {
-		const startTime = performanceNow();
-
-		// Log the attempt to join session with key context
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "JoinSessionAttempt",
-			isRefreshingJoinSession,
-			requestSocketToken,
-			clientId: clientId ?? "undefined",
-			driverVersion,
-		});
-
 		// If this call is to refresh the join session for the current connection but we are already disconnected in
 		// the meantime or disconnected and then reconnected then do not make the call. However, we should not have
 		// come here if that is the case because timer should have been disposed, but due to race condition with the
@@ -377,20 +366,6 @@ export class OdspDelayLoadedDeltaStream {
 			isRefreshingJoinSession,
 			displayName,
 		).catch((error) => {
-			// Log failure details before handling facet codes
-			const errorDuration = performanceNow() - startTime;
-			this.mc.logger.sendTelemetryEvent(
-				{
-					eventName: "JoinSessionError",
-					isRefreshingJoinSession,
-					requestSocketToken,
-					clientId: clientId ?? "undefined",
-					duration: errorDuration,
-					driverVersion,
-				},
-				error,
-			);
-
 			if (hasFacetCodes(error) && error.facetCodes !== undefined) {
 				for (const code of error.facetCodes) {
 					switch (code) {
@@ -418,21 +393,6 @@ export class OdspDelayLoadedDeltaStream {
 			}
 			throw error;
 		});
-
-		// Log successful join session
-		const duration = performanceNow() - startTime;
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "JoinSessionSuccess",
-			isRefreshingJoinSession,
-			requestSocketToken,
-			clientId: clientId ?? "undefined",
-			duration,
-			tenantId: response.tenantId,
-			socketId: response.id,
-			refreshSessionDurationSeconds: response.refreshSessionDurationSeconds,
-			driverVersion,
-		});
-
 		this._relayServiceTenantAndSessionId = `${response.tenantId}/${response.id}`;
 		return response;
 	}
