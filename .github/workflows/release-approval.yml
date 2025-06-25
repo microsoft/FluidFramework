@@ -27,9 +27,6 @@ permissions:
   # Needed to check pull request metadata for review status
   pull-requests: read
 
-  # Needed to update the PR check status to permit/prevent merge
-  statuses: write
-
 jobs:
   metadata:
     name: Get PR metadata
@@ -102,6 +99,9 @@ jobs:
             return pr.head.sha;
 
   check_approval:
+    permissions:
+      # Needed to update the PR check status to permit/prevent merge
+      statuses: write
     name: Check PR approval
     if: needs.metadata.outputs.is_release_branch == 'true'
     needs: metadata

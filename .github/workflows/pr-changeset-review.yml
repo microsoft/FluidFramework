@@ -16,11 +16,10 @@ on:
     paths:
       - ".changeset/**" # Trigger only when changes are found under .changeset
 
-permissions:
-  pull-requests: write
-
 jobs:
   vale:
+    permissions:
+      pull-requests: write
     name: vale
     runs-on: ubuntu-latest
     steps:

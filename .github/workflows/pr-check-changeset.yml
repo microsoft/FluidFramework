@@ -12,7 +12,7 @@ on:
     types: [labeled, unlabeled, opened, synchronize, reopened]
 
 permissions:
-  pull-requests: read
+  contents: read
 
 jobs:
   # When a PR has the changeset-required label, check if it has a changeset.

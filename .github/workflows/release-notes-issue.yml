@@ -18,11 +18,10 @@ on:
 env:
   ISSUE: ${{ vars.RELEASE_NOTES_ISSUE }}
 
-permissions:
-  issues: write
-
 jobs:
   update-issue:
+    permissions:
+      issues: write
     name: Update release notes
     runs-on: ubuntu-latest
     steps:
