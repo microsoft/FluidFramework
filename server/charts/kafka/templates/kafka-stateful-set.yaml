@@ -11,6 +11,7 @@ metadata:
 spec:
   securityContext:
     runAsNonRoot: true
+    runAsUser: 1000
   serviceName: kafka
   replicas: 1
   selector:
