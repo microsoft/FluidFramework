@@ -44,12 +44,15 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	 */
 	public readonly configuration: BuildProjectConfig;
 
-	public readonly configurationSource: string;
-
 	/**
-	 * The absolute path to the config file.
+	 * The source of the configuration. This indicates whether the configuration was loaded from a file
+	 * or inferred from the project structure.
+	 *
+	 * @remarks
+	 * - When a configuration file is found, this contains the absolute path to that file.
+	 * - When configuration is inferred (no config file found), this is set to "INFERRED".
 	 */
-	private readonly configFilePath: string;
+	public readonly configurationSource: string;
 
 	/**
 	 * @param searchPath - The path that should be searched for a BuildProject config file.
@@ -68,7 +71,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 	) {
 		// Handle configuration
 		const props = this.determineClassProps(searchPath, infer);
-		this.configFilePath = props.configFilePath;
 		this.configuration = props.configuration;
 		this.configurationSource = props.configurationSource;
 		this.root = props.root;
