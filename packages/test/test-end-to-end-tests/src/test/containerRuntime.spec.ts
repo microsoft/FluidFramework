@@ -329,6 +329,7 @@ describeCompat(
 				loaderProps: {
 					logger,
 				},
+				skipSecondContainerLoad: true,
 			};
 			const optionsWithMinVersionForCollab: ITestContainerConfig = {
 				...options,
