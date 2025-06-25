@@ -497,6 +497,38 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		return endPos > bstart && startPos < bend;
 	}
 
+	public moveEndpointReferences(
+		rebased: Partial<Record<"start" | "end", { segment: ISegment; offset: number }>>,
+	) {
+		if (rebased.start) {
+			const startRef = createPositionReferenceFromSegoff({
+				client: this.client,
+				segoff: rebased.start,
+				refType: this.start.refType,
+				slidingPreference: this.start.slidingPreference,
+				canSlideToEndpoint: this.start.canSlideToEndpoint,
+			});
+			if (this.start.properties) {
+				startRef.addProperties(this.start.properties);
+			}
+			this.start = startRef;
+		}
+
+		if (rebased.end) {
+			const endRef = createPositionReferenceFromSegoff({
+				client: this.client,
+				segoff: rebased.end,
+				refType: this.end.refType,
+				slidingPreference: this.end.slidingPreference,
+				canSlideToEndpoint: this.end.canSlideToEndpoint,
+			});
+			if (this.end.properties) {
+				endRef.addProperties(this.end.properties);
+			}
+			this.end = endRef;
+		}
+	}
+
 	/**
 	 * {@inheritDoc IInterval.modify}
 	 */
@@ -768,6 +800,8 @@ export function createSequenceInterval(
 		}
 	}
 
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+
 	const startSlidingPreference = startReferenceSlidingPreference(
 		startPos,
 		startSide,
@@ -782,8 +816,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		slidingPreference: startSlidingPreference,
-		canSlideToEndpoint:
-			canSlideToEndpoint && startSlidingPreference === SlidingPreference.BACKWARD,
+		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
 	});
 
@@ -801,8 +834,7 @@ export function createSequenceInterval(
 		op,
 		fromSnapshot,
 		slidingPreference: endSlidingPreference,
-		canSlideToEndpoint:
-			canSlideToEndpoint && endSlidingPreference === SlidingPreference.FORWARD,
+		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
 	});
 
