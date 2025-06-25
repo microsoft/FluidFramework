@@ -139,6 +139,7 @@ export const fetchJoinSession = mockify(
 
 				return response.content;
 			},
+			{ start: true, end: true, cancel: "error" },
 		);
 	},
 );
