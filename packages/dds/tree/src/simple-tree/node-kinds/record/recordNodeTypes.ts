@@ -30,6 +30,7 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
  *
  * @alpha
  */
+// TODO: allow writing via insertable types
 export interface TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeNode,
 		Record<string, TreeNodeFromImplicitAllowedTypes<T>> {}
@@ -108,7 +109,7 @@ export type RecordNodeSchema<
  */
 export const RecordNodeSchema = {
 	/**
-	 * instanceof-based narrowing support for RecordNodeSchema in Javascript and TypeScript 5.3 or newer.
+	 * `instanceof`-based narrowing support for {@link RecordNodeSchema} in JavaScript and TypeScript 5.3 or newer.
 	 */
 	[Symbol.hasInstance](value: TreeNodeSchema): value is RecordNodeSchema {
 		return isRecordNodeSchema(value);
@@ -118,8 +119,8 @@ export const RecordNodeSchema = {
 /**
  * Narrows a {@link (TreeNodeSchema:interface)} to an {@link (RecordNodeSchema:interface)}.
  * @privateRemarks
- * If at some point we want to have internal only APIs for MapNodeSchema (like done for objects),
- * this can include those since its not the public facing API.
+ * If at some point we want to have internal only APIs for RecordNodeSchema (like done for objects),
+ * this can include those since its not the public-facing API.
  */
 export function isRecordNodeSchema(schema: TreeNodeSchema): schema is RecordNodeSchema {
 	return schema.kind === NodeKind.Record;
