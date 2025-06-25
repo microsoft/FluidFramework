@@ -27,7 +27,7 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
-describe.only("TableFactory unit tests", () => {
+describe("TableFactory unit tests", () => {
 	function createTableSchema() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
