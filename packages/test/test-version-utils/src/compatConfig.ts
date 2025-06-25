@@ -283,12 +283,13 @@ export function isOdspCompatCompliant(config: CompatConfig): boolean {
 }
 
 // Helper function for genCrossClientCompatConfig().
-function genCompatConfig(
-	createVersion: string,
-	loadVersion: string,
-	createDelta: string,
-	loadDelta: string,
-): CompatConfig {
+function genCompatConfig(versionDetails: {
+	createVersion: string;
+	loadVersion: string;
+	createDelta: string;
+	loadDelta: string;
+}): CompatConfig {
+	const { createVersion, loadVersion, createDelta, loadDelta } = versionDetails;
 	return {
 		name: `compat cross-client - create with ${createVersion} (${createDelta}) + load with ${loadVersion} (${loadDelta})`,
 		kind: CompatKind.CrossClient,
@@ -371,10 +372,24 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	// Build all combos of (current version, prior version) & (prior version, current version)
 	const configs: CompatConfig[] = [];
 	for (const [v, delta] of deltaVersions) {
-		configs.push(genCompatConfig(currentVersion, v, "N", delta));
+		configs.push(
+			genCompatConfig({
+				createVersion: currentVersion,
+				loadVersion: v,
+				createDelta: "N",
+				loadDelta: delta,
+			}),
+		);
 	}
 	for (const [v, delta] of deltaVersions) {
-		configs.push(genCompatConfig(v, currentVersion, delta, "N"));
+		configs.push(
+			genCompatConfig({
+				createVersion: v,
+				loadVersion: currentVersion,
+				createDelta: delta,
+				loadDelta: "N",
+			}),
+		);
 	}
 
 	return configs;
