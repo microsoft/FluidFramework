@@ -149,7 +149,13 @@ export interface IFluidDataStoreContextProps {
 	readonly storage: IDocumentStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-	readonly pkg?: Readonly<string[]>;
+	/**
+	 * ???
+	 */
+	readonly pkg?: readonly string[];
+	/**
+	 * See {@link FluidDataStoreContext.loadingGroupId}.
+	 */
 	readonly loadingGroupId?: string;
 }
 
@@ -233,7 +239,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 }
 
 /**
- * Represents the context for the store. This context is passed to the store runtime.
+ * Context for an {@link IDataStore}. This context is passed to the store runtime.
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
@@ -414,8 +420,13 @@ export abstract class FluidDataStoreContext
 	private readonly parentContext: IFluidParentContextPrivate;
 	public readonly storage: IDocumentStorageService;
 	public readonly scope: FluidObject;
-	// Represents the group to which the data store belongs too.
+	/**
+	 * The loading group to which the data store belongs to.
+	 */
 	public readonly loadingGroupId: string | undefined;
+	/**
+	 * ???
+	 */
 	protected pkg?: readonly string[];
 
 	constructor(
@@ -520,6 +531,9 @@ export abstract class FluidDataStoreContext
 		attachState: AttachState.Attaching | AttachState.Attached,
 	): void;
 
+	/**
+	 * ???
+	 */
 	private rejectDeferredRealize(
 		reason: string,
 		failedPkgPath?: string,
@@ -558,6 +572,9 @@ export abstract class FluidDataStoreContext
 		return this.channelP;
 	}
 
+	/**
+	 * ???
+	 */
 	protected async factoryFromPackagePath(): Promise<IFluidDataStoreFactory> {
 		const packages = this.pkg;
 		if (packages === undefined) {
@@ -568,6 +585,7 @@ export abstract class FluidDataStoreContext
 		let registry: IFluidDataStoreRegistry | undefined =
 			this.parentContext.IFluidDataStoreRegistry;
 		let lastPkg: string | undefined;
+		// ???
 		for (const pkg of packages) {
 			if (!registry) {
 				this.rejectDeferredRealize("No registry for package", lastPkg, packages);

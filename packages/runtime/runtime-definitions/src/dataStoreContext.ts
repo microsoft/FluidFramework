@@ -174,7 +174,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Can be assigned an alias
  *
  * @privateRemarks
- * TODO: These docs should define what a datastore is, and not do so by just referencing "data store".
+ * TODO: These docs should define what a "data store" is, and not do so by just referencing "data store".
  *
  * @legacy
  * @alpha
