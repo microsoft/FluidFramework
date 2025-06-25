@@ -134,26 +134,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 			}
 		}
 
-		// If the config has an excludeGlobs setting,
-		// if (configToUse.configuration.excludeGlobs !== undefined) {
-		// 	// TODO: refactor and consolidate all this logic. Maybe a single function that take a BuildProjectConfig and
-		// 	// returns all the class properties that are set in these blocks. Then we can just set it once and move the logic
-		// 	// to a function.
-		// 	this.configuration = generateBuildProjectConfig(searchPath);
-		// 	this.configFilePath = searchPath;
-		// 	this.configurationSource = "INFERRED";
-		// 	this.root = searchPath;
-		// }
-		// If the config has no buildProject or repoPackages setting, use the inferred
-		// if (
-		// 	(configToUse.configuration.buildProject ?? configToUse.configuration.repoPackages) === undefined
-		// ) {
-		// 	this.configuration = generateBuildProjectConfig(searchPath);
-		// 	this.configFilePath = searchPath;
-		// 	this.configurationSource = "INFERRED";
-		// 	this.root = searchPath;
-		// }
-
 		return configToUse;
 	}
 
@@ -294,10 +274,8 @@ export function generateBuildProjectConfig(searchPath: string): BuildProjectConf
 		throw new Error("Unexpected error loading config-less build project.");
 	}
 
-	// const workspaces: Map<string, string> = new Map();
 	for (const workspaceRootPath of workspaceRoots) {
 		const wsName = path.basename(workspaceRootPath);
-		// workspaces.set(wsName, workspaceRootPath);
 
 		toReturn.buildProject.workspaces[wsName] = {
 			directory: workspaceRootPath,
