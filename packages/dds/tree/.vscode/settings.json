@@ -25,10 +25,16 @@
 		"fluidframework",
 		"insertable",
 		"parameterizing",
+		"rebaser",
 		"reentrantly",
+		"rushstack",
+		"typebox",
 		"typeparam",
 		"unannotate",
 		"unhydrated",
+		"unioned",
+		"unparented",
+		"upcasting",
 	],
 
 	// Enable biome as default formatter, and disable rules that disagree with it
