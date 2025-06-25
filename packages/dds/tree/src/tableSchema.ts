@@ -402,9 +402,9 @@ export namespace System_TableSchema {
 					this.removeCell(columnOrId);
 				} else {
 					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-					// TODO: verify that this is not an issue with Record itself.
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					this.cells[columnId] = value as any;
+
+					// TODO: make record accept insertable data.
+					this.cells[columnId] = value as CellValueType;
 				}
 			}
 

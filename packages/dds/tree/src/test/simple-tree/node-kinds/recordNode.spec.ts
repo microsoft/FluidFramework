@@ -132,5 +132,35 @@ describe("RecordNode", () => {
 			const myRecord = new MyRecord(data);
 			assert.equal(JSON.stringify(myRecord), json);
 		});
+
+		it("complex children", () => {
+			class MyRecord extends schemaFactory.record(
+				"x",
+				schemaFactory.object("y", {
+					foo: schemaFactory.number,
+					bar: schemaFactory.string,
+				}),
+			) {}
+
+			const myRecord = new MyRecord({
+				a: { foo: 42, bar: "Hello world!" },
+				b: { foo: 37, bar: "Everybody dance now!" },
+			});
+
+			delete myRecord.b;
+			myRecord.a.foo = 100;
+
+			// TODO: make record accept insertable data.
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			myRecord.c = { foo: 200, bar: "New entry!" } as any;
+
+			assert.equal(
+				JSON.stringify(myRecord),
+				JSON.stringify({
+					a: { foo: 100, bar: "Hello world!" },
+					c: { foo: 200, bar: "New entry!" },
+				}),
+			);
+		});
 	});
 });
