@@ -9,8 +9,6 @@ import type { TreeNodeSchemaIdentifier, TreeStoredSchema } from "../schema-store
  * APIs for applying `view schema` to documents.
  */
 
-/**
- */
 export interface TreeAdapter {
 	readonly output: TreeNodeSchemaIdentifier;
 	readonly input: TreeNodeSchemaIdentifier;

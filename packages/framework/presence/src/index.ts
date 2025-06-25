@@ -47,12 +47,12 @@ export {
 } from "./datastorePresenceManagerFactory.js";
 
 export type {
-	latestMap,
 	LatestMap,
-	LatestMapArguments,
+	// LatestMapArguments,
 	LatestMapArgumentsRaw,
 	LatestMapClientData,
 	LatestMapEvents,
+	LatestMapFactory,
 	LatestMapItemRemovedClientData,
 	LatestMapItemUpdatedClientData,
 	LatestMapRaw,
@@ -60,11 +60,11 @@ export type {
 	StateMap,
 } from "./latestMapValueManager.js";
 export type {
-	latest,
 	Latest,
-	LatestArguments,
+	// LatestArguments,
 	LatestArgumentsRaw,
 	LatestEvents,
+	LatestFactory,
 	LatestRaw,
 	LatestRawEvents,
 } from "./latestValueManager.js";
