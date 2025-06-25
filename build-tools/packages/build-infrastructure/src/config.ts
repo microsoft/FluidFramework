@@ -18,6 +18,14 @@ import {
  */
 export const BUILDPROJECT_CONFIG_MIN_VERSION = 1;
 
+/**
+ * The main configuration type for a BuildProject. This is the top-level configuration that defines
+ * workspaces, release groups, and other project settings.
+ *
+ * @remarks
+ * This type is versioned to allow for future configuration format changes while maintaining backward compatibility.
+ * Currently only supports version 1 configuration format.
+ */
 export type BuildProjectConfig = BuildProjectConfigV1;
 
 /**
@@ -30,7 +38,7 @@ export interface BuildProjectConfigBase {
 	version: number;
 
 	/**
-	 * The layout of the build project into workspaces and release groups.
+	 * The layout of the BuildProject into workspaces and release groups.
 	 */
 	buildProject: {
 		workspaces: {
@@ -42,13 +50,17 @@ export interface BuildProjectConfigBase {
 	};
 
 	/**
-	 * An array of glob strings. Any paths that match at least one of these globs will be excluded from the build project.
+	 * An array of glob strings. Any paths that match at least one of these globs will be excluded from the BuildProject.
 	 * This setting is helpful if you need to exclude workspaces that are used for testing or that are not yet managed by
 	 * sail.
 	 */
 	excludeGlobs: string[];
 }
 
+/**
+ * Base interface for version 1 BuildProject configuration. This extends the main configuration base
+ * with backward compatibility support for the legacy fluid-build configuration format.
+ */
 export interface BuildProjectConfigV1Base extends Partial<BuildProjectConfigBase> {
 	/**
 	 * The version of the config.
@@ -65,6 +77,16 @@ export interface BuildProjectConfigV1Base extends Partial<BuildProjectConfigBase
 	repoPackages?: IFluidBuildDirs;
 }
 
+/**
+ * Version 1 configuration for a BuildProject. This type ensures that exactly one of the required
+ * configuration properties is provided: either the new `buildProject` format, `excludeGlobs`, or
+ * the legacy `repoPackages` format.
+ *
+ * @remarks
+ * This type uses the `RequireExactlyOne` utility type to enforce that users specify exactly
+ * one of the mutually exclusive configuration options. This prevents invalid configurations where
+ * multiple incompatible formats are specified simultaneously.
+ */
 export type BuildProjectConfigV1 = RequireExactlyOne<
 	BuildProjectConfigV1Base,
 	"buildProject" | "excludeGlobs" | "repoPackages"

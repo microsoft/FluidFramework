@@ -22,7 +22,6 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
     constructor(searchPath: string, infer?: boolean,
     upstreamRemotePartialUrl?: string | undefined);
     readonly configuration: BuildProjectConfig;
-    // (undocumented)
     readonly configurationSource: string;
     getGitRepository(): Promise<Readonly<SimpleGit>>;
     getPackageReleaseGroup(pkg: Readonly<P>): Readonly<IReleaseGroup>;
@@ -38,7 +37,7 @@ export class BuildProject<P extends IPackage> implements IBuildProject<P> {
 // @public
 export const BUILDPROJECT_CONFIG_MIN_VERSION = 1;
 
-// @public (undocumented)
+// @public
 export type BuildProjectConfig = BuildProjectConfigV1;
 
 // @public
@@ -52,10 +51,10 @@ export interface BuildProjectConfigBase {
     version: number;
 }
 
-// @public (undocumented)
+// @public
 export type BuildProjectConfigV1 = RequireExactlyOne<BuildProjectConfigV1Base, "buildProject" | "excludeGlobs" | "repoPackages">;
 
-// @public (undocumented)
+// @public
 export interface BuildProjectConfigV1Base extends Partial<BuildProjectConfigBase> {
     // @deprecated
     repoPackages?: IFluidBuildDirs;
