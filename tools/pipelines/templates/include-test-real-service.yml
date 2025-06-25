@@ -435,7 +435,9 @@ stages:
 
         # Only release tenants that were checked out from the tenant pool for ODSP tests
         - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
-          # Release the tenant back to the tenant pool
+          # Login to release tenant credentials
+          # Currently, some of the compat tests run for longer than 60 minutes and exceed the average token lifetime:
+          # https://learn.microsoft.com/en-us/entra/identity-platform/configurable-token-lifetimes#access-tokens
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
             inputs:
@@ -447,7 +449,9 @@ stages:
                 set -eu -o pipefail
 
                 az login --service-principal -u $servicePrincipalId -p $idToken --tenant $tenantId
+            condition: eq(variables['tenantSetupSuccess'], 'true')
 
+          # Release the tenant back to the tenant pool
           - task: Bash@3
             displayName: 'Release tenant credentials'
             inputs:
