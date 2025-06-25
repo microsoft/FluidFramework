@@ -434,7 +434,7 @@ stages:
             continueOnError: true # Keep running subsequent tasks even if this one fails (e.g. the tinylicious log wasn't there)
 
         # Only release tenants that were checked out from the tenant pool for ODSP tests
-        - ${{ if and(eq(parameters.stageId, 'e2e_odsp'), eq(tenantSetupSuccess, true)) }}:
+        - ${{ if eq(parameters.stageId, 'e2e_odsp') }}:
           # Release the tenant back to the tenant pool
           - task: AzureCLI@2
             displayName: 'Log in to release tenant credentials'
@@ -456,6 +456,7 @@ stages:
                 set -eu -o pipefail
 
                 npx --package=@ff-internal/trips-setup@0.0.4 -- trips-cleanup $(stringBearerToken)
+            condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Log Test Failures
         # - template: /tools/pipelines/templates/include-process-test-results.yml@self
