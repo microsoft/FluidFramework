@@ -4,7 +4,6 @@
 
 ```ts
 
-import type { AgentName } from 'package-manager-detector';
 import { LoggingFunction as LoggingFunction_2 } from './logging.js';
 import type { Opaque } from 'type-fest';
 import type { PackageJson as PackageJson_2 } from 'type-fest';
@@ -63,9 +62,6 @@ export interface BuildProjectConfigV1Base extends Partial<BuildProjectConfigBase
     repoPackages?: IFluidBuildDirs;
     version: 1;
 }
-
-// @public
-export function detectPackageManager(cwd?: string): IPackageManager;
 
 // @public
 export const EmptySelectionCriteria: PackageSelectionCriteria;
@@ -291,7 +287,7 @@ export interface PackageFilterOptions {
 export type PackageJson = PackageJson_2 & SetRequired<Pick<PackageJson_2, "name" | "scripts" | "version" | "dependencies" | "devDependencies" | "peerDependencies" | "private" | "type">, "name" | "scripts" | "version"> & PnpmPackageJsonFields;
 
 // @public
-export type PackageManagerName = AgentName;
+export type PackageManagerName = "npm" | "pnpm" | "yarn";
 
 // @public
 export type PackageName = Opaque<string, "PackageName">;

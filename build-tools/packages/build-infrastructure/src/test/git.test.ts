@@ -132,7 +132,6 @@ describe("getFiles", () => {
 
 	it("correct files with clean working directory", async () => {
 		const actual = await getFiles(git, testRepoRoot);
-		console.debug(testRepoRoot, actual);
 
 		expect(actual).to.be.containingAllOf(
 			[

@@ -107,7 +107,6 @@ export class Workspace implements IWorkspace {
 		for (const pkg of foundPackages) {
 			const loadedPackage = loadPackageFromWorkspaceDefinition(
 				path.join(pkg.dir, "package.json"),
-				this.packageManager,
 				/* isWorkspaceRoot */ foundPackages.length === 1,
 				definition,
 				this,
@@ -120,7 +119,6 @@ export class Workspace implements IWorkspace {
 		if (foundPackages.length > 1) {
 			this.rootPackage = loadPackageFromWorkspaceDefinition(
 				path.join(this.directory, "package.json"),
-				this.packageManager,
 				/* isWorkspaceRoot */ true,
 				definition,
 				this,

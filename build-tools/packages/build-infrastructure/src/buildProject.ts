@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as path from "node:path";
+import path from "node:path";
 
 import { type SimpleGit, simpleGit } from "simple-git";
 import { globSync } from "tinyglobby";
