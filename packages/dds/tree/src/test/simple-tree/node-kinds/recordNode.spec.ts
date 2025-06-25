@@ -13,12 +13,13 @@ const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
 const CustomizableNumberRecord = schemaFactory.record("Array", schemaFactory.number);
 
+// TODO: add recursive tests once support has been added.
+
 describe("RecordNode", () => {
 	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
 	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
 	describeHydration("customizable", (init) => {
-		// TODO: is this the right policy? Or should we allow when the type matches?
 		it("doesn't allow extra properties", () => {
 			class Test extends schemaFactory.record("test", schemaFactory.number) {
 				public get foo(): number {
@@ -93,14 +94,6 @@ describe("RecordNode", () => {
 			const _fromRecord: Schema = Schema.create({});
 		});
 
-		// it("constructor - recursive empty", () => {
-		// 	class Schema extends schemaFactory.recordRecursive("x", [() => Schema]) {
-		// 	}
-		// 	const _fromIterable: Schema = new Schema({});
-		// 	const _fromUndefined: Schema = new Schema(undefined);
-		// 	const _fromNothing: Schema = new Schema();
-		// });
-
 		describe("implicit construction", () => {
 			it("from POJO (named)", () => {
 				class Schema extends schemaFactory.record("x", schemaFactory.number) {}
@@ -141,23 +134,3 @@ describe("RecordNode", () => {
 		});
 	});
 });
-
-// // Workaround to avoid
-// // `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.
-
-// // Example workaround, see experimental/framework/tree-react-api/src/testExports.ts for an actual test of this including an import.
-// declare const _RecursiveArrayWorkaround: FixRecursiveArraySchema<typeof RecursiveArray>;
-// class RecursiveArray extends schemaFactory.recordRecursive("RA", [() => RecursiveArray]) {}
-// {
-// 	type _check = ValidateRecursiveSchema<typeof RecursiveArray>;
-// }
-
-// // Invalid case similar to ones generated in d.ts
-// const Base = schemaFactory.recordRecursive("RA", [() => RecursiveArray2]);
-// // @ts-expect-error Separated Base from schema errors.
-// class RecursiveArray2 extends Base {}
-
-// // Invalid case similar to ones generated in d.ts, with workaround:
-// declare const _RecursiveArrayWorkaround3: FixRecursiveArraySchema<typeof RecursiveArray3>;
-// const Base3 = schemaFactory.recordRecursive("RA", [() => RecursiveArray3]);
-// class RecursiveArray3 extends Base3 {}
