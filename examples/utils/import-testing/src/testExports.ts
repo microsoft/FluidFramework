@@ -105,7 +105,8 @@ export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]
 }
 
 export class RecursiveRecord extends schemaAlpha.recordRecursive("RR", [
-	SchemaFactory.number, () => RecursiveRecord,
+	SchemaFactory.number,
+	() => RecursiveRecord,
 ]) {}
 {
 	type _check = ValidateRecursiveSchema<typeof RecursiveRecord>;

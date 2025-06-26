@@ -34,6 +34,9 @@ export interface TreeRecordNode<
 	TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes,
 > extends TreeNode,
 		Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+	/**
+	 * Allows the record's entries to be iterated over, including in contexts like `for...of` loops.
+	 */
 	[Symbol.iterator](): IterableIterator<
 		[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
 	>;

@@ -284,5 +284,20 @@ describe("RecordNode", () => {
 				["bar", bar],
 			]);
 		});
+
+		it("iteration", () => {
+			const bar = new RecursiveRecordSchema({ x: 42 });
+			const record = new RecursiveRecordSchema({ foo: 1, bar });
+
+			const output: [string, number | RecursiveRecordSchema][] = [];
+			for (const entry of record) {
+				output.push(entry);
+			}
+
+			assert.deepEqual(output, [
+				["foo", 1],
+				["bar", bar],
+			]);
+		});
 	});
 });
