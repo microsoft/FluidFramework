@@ -12,5 +12,6 @@ describe("App Insights Example App UI test", () => {
 	it("App renders", async (): Promise<void> => {
 		render(<App />);
 		await screen.findByText("Loading Shared container...");
+		await screen.findByTestId("collaborative-text-area-widget");
 	});
 });
