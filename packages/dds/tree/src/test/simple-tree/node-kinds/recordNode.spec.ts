@@ -8,12 +8,13 @@ import { strict as assert } from "node:assert";
 import { describeHydration } from "../utils.js";
 import { SchemaFactoryAlpha, type NodeFromSchema } from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
+import { Tree } from "../../../shared-tree/tree.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
 const CustomizableNumberRecord = schemaFactory.record("Record", schemaFactory.number);
 
-describe("RecordNode", () => {
+describe.only("RecordNode", () => {
 	{
 		// Assignable to TypeScript record
 		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
@@ -95,6 +96,13 @@ describe("RecordNode", () => {
 					["foo", 1],
 					["bar", 2],
 				]);
+			});
+
+			it("in", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+				assert("foo" in record);
+				assert("bar" in record);
+				assert(!("baz" in record));
 			});
 
 			it("iteration", () => {
@@ -296,17 +304,27 @@ describe("RecordNode", () => {
 		it("Object.values", () => {
 			const bar = new RecursiveRecordSchema({ x: 42 });
 			const record = new RecursiveRecordSchema({ foo: 1, bar });
-			assert.deepEqual(Object.values(record), [1, bar]); // TODO
+			assert.deepEqual(Object.values(record), [1, { x: 42 }]);
 		});
 
 		it("Object.entries", () => {
 			const bar = new RecursiveRecordSchema({ x: 42 });
 			const record = new RecursiveRecordSchema({ foo: 1, bar });
 			assert.deepEqual(Object.entries(record), [
-				// TODO
 				["foo", 1],
-				["bar", bar],
+				["bar", { x: 42 }],
 			]);
+		});
+
+		it("in", () => {
+			const bar = new RecursiveRecordSchema({ x: 42 });
+			const record = new RecursiveRecordSchema({ foo: 1, bar });
+			assert("foo" in record);
+			assert("bar" in record);
+			assert(!("baz" in record));
+			assert(Tree.is(record.bar, RecursiveRecordSchema));
+			assert("x" in record.bar);
+			assert(!("y" in record.bar));
 		});
 
 		it("iteration", () => {
