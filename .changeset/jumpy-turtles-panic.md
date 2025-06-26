@@ -20,11 +20,13 @@ const myRecord = new MyRecord({
 
 const foo = myRecord.foo; // 42
 
+delete myRecord.foo;
+
 myRecord.baz = 37;
 
-const keys = Object.keys(myRecord); // ["foo", "bar", "baz"]
-const values = Object.values(myRecord); // [42, "Hello world!", 37]
-const entries = Object.entries(myRecord); // [["foo", 42], ["bar", "Hello world!"], ["baz", 37]]
+const keys = Object.keys(myRecord); // ["bar", "baz"]
+const values = Object.values(myRecord); // ["Hello world!", 37]
+const entries = Object.entries(myRecord); // [["bar", "Hello world!"], ["baz", 37]]
 ```
 
 #### Recursive records
