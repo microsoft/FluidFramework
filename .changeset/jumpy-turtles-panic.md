@@ -6,6 +6,8 @@
 section: tree
 ---
 
+TODO: note NodeKind compat
+
 Record node kind was added (alpha)
 
 Adds a new node kind to SharedTree to represent record-like data.
@@ -27,6 +29,25 @@ myRecord.baz = 37;
 const keys = Object.keys(myRecord); // ["bar", "baz"]
 const values = Object.values(myRecord); // ["Hello world!", 37]
 const entries = Object.entries(myRecord); // [["bar", "Hello world!"], ["baz", 37]]
+```
+
+#### Additional features
+
+In addition to standard operations afforded by standard TypeScript records, SharedTree record nodes can also be iterated.
+
+```typescript
+class MyRecord extends schemaFactory.record("my-record", [schemaFactory.number, schemaFactory.string]) {}
+const myRecord = new MyRecord({
+	foo: 42,
+	bar: "Hello world!"
+});
+
+for (const [key, value] of myRecord) {
+	...
+}
+
+const a = { ...myRecord }; // { foo: 42, bar: "Hello world!" }
+const b = [...myRecord]; // [["foo", 42], ["bar, "Hello world!"]]
 ```
 
 #### Recursive records
