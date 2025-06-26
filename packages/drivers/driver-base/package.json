@@ -128,11 +128,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_DocumentDeltaConnection": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "internal"
 	}
 }

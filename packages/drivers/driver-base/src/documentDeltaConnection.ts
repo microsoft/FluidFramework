@@ -454,9 +454,9 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	public disconnectCore = (err?: IAnyDriverError): void => {
+	protected disconnectCore(err?: IAnyDriverError): void {
 		this.socket.disconnect();
-	};
+	}
 
 	protected async initialize(connectMessage: IConnect, timeout: number) {
 		this.socket.on("op", this.earlyOpHandler);
@@ -642,14 +642,8 @@ export class DocumentDeltaConnection
 			this.addTrackedListener("error", (error) => {
 				// This includes "Invalid namespace" error, which we consider critical (reconnecting will not help)
 				const err = this.createErrorObject("error", error, error !== "Invalid namespace");
-				// During connection, this error is fatal and will fail the connection.
-				// After connection, we will disconnect and attempt to reconnect.
-				if (this.hasDetails) {
-					this.disconnect(err);
-				} else {
-					// Disconnect socket - required if happened before initial handshake
-					failAndCloseSocket(err);
-				}
+				// Disconnect socket - required if happened before initial handshake
+				failAndCloseSocket(err);
 			});
 
 			this.addConnectionListener("connect_document_error", (error) => {
