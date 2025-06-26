@@ -774,6 +774,7 @@ export class TenantManager {
 	): IPlainTextAndEncryptedTenantKeys & {
 		encryptionKeyVersion: EncryptionKeyVersion | undefined;
 	} {
+		lumberProperties.usePrivateKeys = usePrivateKeys;
 		const encryptedTenantKey1 =
 			usePrivateKeys && tenantDocument.privateKeys
 				? tenantDocument.privateKeys.key
