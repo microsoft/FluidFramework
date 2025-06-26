@@ -402,6 +402,12 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 	}
 
 	public serialize(): string {
+		if (this.container.attachState !== AttachState.Detached) {
+			throw new Error("Cannot serialize container. Container is not in detached state.");
+		}
+		if (this.container.closed) {
+			throw new Error("Cannot serialize container. Container is closed.");
+		}
 		return this.container.serialize();
 	}
 
