@@ -542,7 +542,7 @@ export abstract class FluidDataStoreContext
 	): void;
 
 	/**
-	 * ???
+	 * Throw a {@link LoggingError} indicating that {@link factoryFromPackagePath} failed.
 	 */
 	private factoryFromPackagePathError(
 		reason: string,
