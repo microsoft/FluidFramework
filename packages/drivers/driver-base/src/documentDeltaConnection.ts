@@ -413,7 +413,12 @@ export class DocumentDeltaConnection
 			}),
 		});
 		const disconnectError = error
-			? this.createErrorObject("dispose", error, false)
+			? createGenericNetworkError(
+					// pre-0.58 error message: clientClosingConnection
+					error.message,
+					{ canRetry: true },
+					{ driverVersion },
+				)
 			: undefined;
 		this.disconnect(disconnectError);
 	}
