@@ -28,7 +28,6 @@ import {
 
 import type {
 	Attendee,
-	AttendeeId,
 	InternalTypes,
 	Latest,
 	LatestMap,
@@ -40,7 +39,7 @@ import { StateFactory } from "@fluidframework/presence/beta";
 const systemWorkspace = {
 	"system:presence": {
 		"clientToSessionId": {
-			[connectionId2]: { "rev": 0, "timestamp": 1010, "value": attendeeId2 },
+			[connectionId2]: { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
 		},
 	},
 };
@@ -102,13 +101,8 @@ interface TestData {
  * Focused helper functions for creating test signals
  */
 
-// Core data creation helpers
-function createStateData(
-	attendeeId: string,
-	value: TestData,
-	rev = 0,
-	timestamp = 1030,
-): { [x: string]: { rev: number; timestamp: number; value: any } } {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createStateData(attendeeId: string, value: TestData, rev = 0, timestamp = 1030) {
 	return {
 		[attendeeId]: {
 			rev,
@@ -118,28 +112,16 @@ function createStateData(
 	};
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createMapStateData(
 	attendeeId: string,
 	items: Record<string, TestData>,
 	rev = 0,
 	timestamp = 1030,
-): {
-	[x: string]: {
-		rev: number;
-		timestamp: number;
-		items: Record<
-			string,
-			{
-				rev: number;
-				timestamp: number;
-				value: ReturnType<typeof toOpaqueJson<TestData>>;
-			}
-		>;
-	};
-} {
+) {
 	const processedItems: Record<
 		string,
-		{ rev: number; timestamp: number; value: ReturnType<typeof toOpaqueJson<TestData>> }
+		{ rev: number; timestamp?: number; value: ReturnType<typeof toOpaqueJson<TestData>> }
 	> = {};
 
 	for (const [key, value] of Object.entries(items)) {
@@ -170,23 +152,12 @@ function createWorkspaceData(
 }
 
 // Signal creation helpers
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createDatastoreSignal(
 	clientId: string,
 	workspaceData: Record<string, unknown>,
 	timestamp = 1030,
-): {
-	type: "Pres:DatastoreUpdate";
-	clientId: string;
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-		data: {
-			"system:presence": {
-				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
-			};
-		};
-	};
-} {
+) {
 	return {
 		type: "Pres:DatastoreUpdate" as const,
 		clientId,
@@ -202,6 +173,7 @@ function createDatastoreSignal(
 }
 
 // Convenience functions for common patterns
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createStateUpdateSignal(
 	clientId: string,
 	stateName: string,
@@ -209,24 +181,13 @@ function createStateUpdateSignal(
 	value: TestData,
 	rev = 0,
 	timestamp = 1030,
-): {
-	type: "Pres:DatastoreUpdate";
-	clientId: string;
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-		data: {
-			"system:presence": {
-				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
-			};
-		};
-	};
-} {
+) {
 	const stateData = createStateData(attendeeId, value, rev, timestamp);
 	const workspaceData = createWorkspaceData(stateName, stateData);
 	return createDatastoreSignal(clientId, workspaceData, timestamp);
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createMapUpdateSignal(
 	clientId: string,
 	stateName: string,
@@ -234,24 +195,13 @@ function createMapUpdateSignal(
 	items: Record<string, TestData>,
 	rev = 0,
 	timestamp = 1030,
-): {
-	type: "Pres:DatastoreUpdate";
-	clientId: string;
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-		data: {
-			"system:presence": {
-				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
-			};
-		};
-	};
-} {
+) {
 	const mapData = createMapStateData(attendeeId, items, rev, timestamp);
 	const workspaceData = createWorkspaceData(stateName, mapData);
 	return createDatastoreSignal(clientId, workspaceData, timestamp);
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createMapKeyUpdateSignal(
 	clientId: string,
 	stateName: string,
@@ -260,19 +210,7 @@ function createMapKeyUpdateSignal(
 	value: TestData,
 	rev = 0,
 	timestamp = 1030,
-): {
-	type: "Pres:DatastoreUpdate";
-	clientId: string;
-	content: {
-		sendTimestamp: number;
-		avgLatency: number;
-		data: {
-			"system:presence": {
-				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
-			};
-		};
-	};
-} {
+) {
 	return createMapUpdateSignal(
 		clientId,
 		stateName,
@@ -588,8 +526,29 @@ describe("Presence", () => {
 
 			beforeEach(() => {
 				// Setup workspace initialization signal
+				const sig = createStateUpdateSignal(connectionId2, "count", attendeeId2, { num: 0 });
 				runtime.signalsExpected.push([
-					createStateUpdateSignal(connectionId2, "count", attendeeId2, { num: 0 }),
+					sig,
+					// {
+					// 	"type": "Pres:DatastoreUpdate",
+					// 	"content": {
+					// 		"sendTimestamp": 1030,
+					// 		"avgLatency": 10,
+					// 		"data": {
+					// 			"system:presence": {
+					// 				"clientToSessionId": {
+					// 					"client2": { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
+					// 				},
+					// 			},
+					// 			"s:name:testStateWorkspace": {
+					// 				"count": {
+					// 					// @ts-expect-error
+					// 					[attendeeId2]: { "rev": 0, "timestamp": 1030, "value": { "num": 0 } },
+					// 				},
+					// 			},
+					// 		},
+					// 	},
+					// },
 				]);
 
 				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
