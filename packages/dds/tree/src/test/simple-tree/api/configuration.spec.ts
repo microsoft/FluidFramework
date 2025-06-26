@@ -173,6 +173,27 @@ describe("simple-tree configuration", () => {
 				],
 			);
 		});
+		it("object and record", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.object("A", { a: schemaFactory.string }),
+					schemaFactory.record("B", schemaFactory.string),
+				]),
+				[
+					`A combination of objects and records is allowed within union (["test.A", "test.B"]). These can be constructed from objects and can be ambiguous.`,
+				],
+			);
+		});
+		it("array and record", () => {
+			// No potential ambiguity, so this should pass.
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.array("A", schemaFactory.string),
+					schemaFactory.record("B", schemaFactory.string),
+				]),
+				[],
+			);
+		});
 		it("map and record", () => {
 			assert.deepEqual(
 				getErrors([
