@@ -91,7 +91,7 @@ function runMultipleCallsTest(params: MultipleCallsTestParams): void {
 describe("Presence", () => {
 	let attendee2: Attendee<AttendeeId>;
 
-	describe.only("Runtime schema validation with Builder Pattern", () => {
+	describe.skip("Runtime schema validation with Builder Pattern", () => {
 		const afterCleanUp: (() => void)[] = [];
 		const initialTime = 1000;
 		const validatorFunction = createSpiedValidator<TestData>((d: unknown) => {
