@@ -52,10 +52,8 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
- * @param proxyTarget - Target object of the proxy. Must provide an own `length` value property
- * (which is not used but must exist for getOwnPropertyDescriptor invariants) and the array functionality from {@link arrayNodePrototype}.
- * Controls the prototype exposed by the produced proxy.
- * @param dispatchTarget - provides the functionally of the node, implementing all fields.
+ * @param proxyTarget - Target object of the proxy.
+ * @param dispatchTarget - Provides the functionally of the node, implementing all fields.
  */
 function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): TreeRecordNode {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
