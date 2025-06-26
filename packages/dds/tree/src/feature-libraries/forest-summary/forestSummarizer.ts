@@ -49,13 +49,22 @@ import {
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import type { Format } from "./format.js";
-import { incrementalFieldsTreeKey, IncrementalSummaryTracker } from "./summaryTrackers.js";
+import { incrementalFieldsTreeKey, TreeIncrementalSummaryTracker } from "./summaryTrackers.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
+/**
+ * The key for the summary tree that contains the overall forest's content.
+ */
 export const forestSummaryTreeKey = "Forest";
+/**
+ * The key for the summary tree that contains the forest's tree contents.
+ */
 export const forestSummaryContentKey = "ForestTree";
-export const fieldContentsKey = "fieldContents";
+/**
+ * The key for the summary blob that contains the contents of an incremental field.
+ */
+export const fieldContentsKey = "FieldContents";
 
 /**
  * Provides methods for summarizing and loading a forest.
@@ -65,7 +74,7 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly codec: ForestCodec;
 
-	private readonly incrementalSummaryTracker = new IncrementalSummaryTracker();
+	private readonly incrementalSummaryTracker = new TreeIncrementalSummaryTracker();
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
@@ -89,14 +98,14 @@ export class ForestSummarizer implements Summarizable {
 	 *     ├── ForestTree
 	 *     ├── IncrementalFields
 	 *         ├── fieldId1
-	 *         |   ├── fieldContents
+	 *         |   ├── FieldContents
 	 *         |   ├── IncrementalFields
 	 *         |       ├── fieldId2
-	 *         |           ├── fieldContents
+	 *         |           ├── FieldContents
 	 *         |           ...
 	 *         |       ├── /Forest/ForestTree/IncrementalFields/field1/IncrementalFields/fieldId3 - Summary Handle
 	 *         ├── fieldId4
-	 *             ├── fieldContents
+	 *             ├── FieldContents
 	 *             ...
 	 *         ├── /Forest/ForestTree/IncrementalFields/fieldId5 - Summary Handle
 	 *         ...
@@ -106,24 +115,24 @@ export class ForestSummarizer implements Summarizable {
 		stringify: SummaryElementStringifier,
 		parentSummaryBuilder: SummaryTreeBuilder,
 		parentIncrementalFieldsBatch: Map<string, EncodedFieldBatchFormat>,
-		parentBlobId: string,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		parentRefId: string,
+		encodeIncrementally: boolean,
+		incrementalSummaryContext: IExperimentalIncrementalSummaryContext,
 	): void {
-		// this.incrementalSummaryTracker.trackNewSummary(incrementalSummaryContext);
-		assert(
-			incrementalSummaryContext !== undefined,
-			"incrementalSummaryContext must be defined if there are incremental fields",
-		);
 		// Summary builder for the incremental field tree under the key "IncrementalFields"
 		const childrenSummaryBuilder = new SummaryTreeBuilder();
 		for (const [fieldKey, fieldIncrementalFieldsBatch] of parentIncrementalFieldsBatch) {
 			if (fieldIncrementalFieldsBatch === FieldUnchanged) {
-				const childSummaryHandlePath = this.incrementalSummaryTracker.getSummaryHandlePath(
-					fieldKey,
-					incrementalSummaryContext,
+				assert(
+					encodeIncrementally,
+					"There shouldn't be incremental fields if encodeIncrementally is false",
 				);
-				assert(childSummaryHandlePath !== undefined, "childSummaryHandlePath must be defined");
-				childrenSummaryBuilder.addHandle(fieldKey, SummaryType.Tree, childSummaryHandlePath);
+				const childLastSummaryPath = this.incrementalSummaryTracker.getLastSummaryPath(
+					fieldKey,
+					incrementalSummaryContext.summaryPath,
+				);
+				assert(childLastSummaryPath !== undefined, "childLastSummaryPath must be defined");
+				childrenSummaryBuilder.addHandle(fieldKey, SummaryType.Tree, childLastSummaryPath);
 			} else {
 				// Summary builder for the field contents tree under the field's unique id "fieldKey".
 				const fieldSummaryBuilder = new SummaryTreeBuilder();
@@ -137,16 +146,13 @@ export class ForestSummarizer implements Summarizable {
 						fieldSummaryBuilder,
 						fieldIncrementalFieldsBatch.incrementalFieldsBatch,
 						fieldKey,
+						encodeIncrementally,
 						incrementalSummaryContext,
 					);
 				}
 				childrenSummaryBuilder.addWithStats(fieldKey, fieldSummaryBuilder.getSummaryTree());
 			}
-			this.incrementalSummaryTracker.trackBlob(
-				fieldKey,
-				parentBlobId,
-				incrementalSummaryContext,
-			);
+			this.incrementalSummaryTracker.trackReferenceId(fieldKey, parentRefId);
 		}
 		parentSummaryBuilder.addWithStats(
 			incrementalFieldsTreeKey,
@@ -181,13 +187,13 @@ export class ForestSummarizer implements Summarizable {
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
 
+		const encodeIncrementally = incrementalSummaryContext !== undefined && !fullTree;
 		const outputIncrementalFieldsBatch: Map<string, EncodedFieldBatchFormat> = new Map();
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
-			outputIncrementalFieldsBatch:
-				fullTree === false && incrementalSummaryContext !== undefined
-					? outputIncrementalFieldsBatch
-					: undefined,
+			outputIncrementalFieldsBatch: encodeIncrementally
+				? outputIncrementalFieldsBatch
+				: undefined,
 		};
 		const encoded = this.codec.encode(fieldMap, encoderContext);
 		fieldMap.forEach((value) => value.free());
@@ -195,16 +201,28 @@ export class ForestSummarizer implements Summarizable {
 		const rootSummaryBuilder = new SummaryTreeBuilder();
 		rootSummaryBuilder.addBlob(forestSummaryContentKey, stringify(encoded));
 
+		// Incremental summary context is not available when summarizing a detached container, i.e., the first ever
+		// summary. In this case, use a default one to not having to check for undefined in every place.
+		// Ideally shared object or upper layers do this. But for now, we do it here.
+		const incrementalSummaryContextInternal: IExperimentalIncrementalSummaryContext =
+			incrementalSummaryContext ?? {
+				summaryPath: "",
+				summarySequenceNumber: 0,
+				latestSummarySequenceNumber: -1,
+			};
+
 		// If there are incremental fields, build incremental fields summary.
 		if (outputIncrementalFieldsBatch.size > 0) {
+			this.incrementalSummaryTracker.startTracking(incrementalSummaryContextInternal);
 			this.buildIncrementalFieldsSummary(
 				stringify,
 				rootSummaryBuilder,
 				outputIncrementalFieldsBatch,
-				"",
-				incrementalSummaryContext,
+				"/",
+				encodeIncrementally,
+				incrementalSummaryContextInternal,
 			);
-			this.incrementalSummaryTracker.summaryComplete(incrementalSummaryContext);
+			this.incrementalSummaryTracker.completeTracking();
 		}
 
 		return rootSummaryBuilder.getSummaryTree();
