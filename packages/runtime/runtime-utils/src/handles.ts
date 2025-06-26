@@ -20,14 +20,11 @@ export interface ISerializedHandle {
 }
 
 /**
- * Is the input object a @see ISerializedHandle?
+ * Narrow a value to {@link ISerializedHandle} by checking its type property.
  * @internal
  */
 export const isSerializedHandle = (value: unknown): value is ISerializedHandle =>
-	typeof value === "object" &&
-	value !== null &&
-	"type" in value &&
-	value.type === "__fluid_handle__";
+	(value as { type?: string } | undefined)?.type === "__fluid_handle__";
 
 /**
  * Setting to opt into compatibility with handles from before {@link fluidHandleSymbol} existed (Fluid Framework client 2.0.0-rc.3.0.0 and earlier).
