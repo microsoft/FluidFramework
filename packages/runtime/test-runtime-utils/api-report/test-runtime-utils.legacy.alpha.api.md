@@ -99,6 +99,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     rollback?(): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
+    runWithManualFlush(act: () => void | Promise<void>): Promise<void>;
+    // (undocumented)
     submit(messageContent: any, localOpMetadata?: unknown): number;
 }
 
