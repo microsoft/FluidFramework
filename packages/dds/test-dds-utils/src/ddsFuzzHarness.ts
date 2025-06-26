@@ -1160,6 +1160,7 @@ export function mixinRollback<
 
 	const reducer: AsyncReducer<TOperation | Rollback, TState> = async (state, operation) => {
 		if (isOperationType<Rollback>("rollback", operation)) {
+			state.client.containerRuntime.flush();
 			await state.client.containerRuntime.runWithManualFlush(async () => {
 				await model.reducer(state, operation.ddsOp as TOperation);
 			});
