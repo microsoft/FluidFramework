@@ -162,7 +162,7 @@ export class TenantManager {
 		includeDisabledTenant = false,
 		forceGenerateTokenWithPrivateKey = false,
 	): Promise<IFluidAccessToken> {
-		const lumberProperties = {
+		const lumberProperties: Record<string, any> = {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
 			documentId,
@@ -183,6 +183,7 @@ export class TenantManager {
 		// If the tenant is a keyless tenant, always use the private keys to sign the token
 		const isTenantPrivateKeyAccessEnabled =
 			this.isTenantPrivateKeyAccessEnabled(tenantDocument);
+		lumberProperties.usePrivateKeys = isTenantPrivateKeyAccessEnabled;
 
 		// If private keys access is not enabled, and the requester is trying to generate a token with private keys, throw an error.
 		// The forceGenerateTokenWithPrivateKey flag is not used anywhere ahead as private keys are given preference to sign tokens over shared keys if both are enabled.
@@ -775,7 +776,6 @@ export class TenantManager {
 	): IPlainTextAndEncryptedTenantKeys & {
 		encryptionKeyVersion: EncryptionKeyVersion | undefined;
 	} {
-		lumberProperties.usePrivateKeys = usePrivateKeys;
 		const encryptedTenantKey1 =
 			usePrivateKeys && tenantDocument.privateKeys
 				? tenantDocument.privateKeys.key
