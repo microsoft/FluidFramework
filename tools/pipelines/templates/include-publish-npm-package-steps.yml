@@ -48,7 +48,7 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      cat $(Build.SourcesDirectory)/.npmrc
+      cat $(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}/.npmrc
       env | sort
 - task: Bash@3
   displayName: Publish Packages for ${{ parameters.artifactPath }}
