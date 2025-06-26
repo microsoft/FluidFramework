@@ -14,6 +14,12 @@ const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
 const CustomizableNumberRecord = schemaFactory.record("Record", schemaFactory.number);
 
 describe("RecordNode", () => {
+	{
+		// Assignable to TypeScript record
+		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
+		const _record2: Record<string, number> = new CustomizableNumberRecord({});
+	}
+
 	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
 	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
