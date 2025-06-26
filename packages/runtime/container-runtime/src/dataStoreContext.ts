@@ -428,7 +428,7 @@ export abstract class FluidDataStoreContext
 	 */
 	public readonly loadingGroupId: string | undefined;
 	/**
-	 * This is the package name of this data store which is the key for this data store's entry in {@link @fluidframework/runtime-definitions#NamedFluidDataStoreRegistryEntries}.
+	 * {@link PackagePath} of this data store.
 	 *
 	 * This can be undefined when a data store is delay loaded, i.e., the attributes of this data store in the snapshot are not fetched until this data store is actually used.
 	 * At that time, the attributes blob is fetched and the pkg is updated from it.
