@@ -31,7 +31,6 @@ import type {
 	AttendeeId,
 	InternalTypes,
 	Latest,
-	LatestData,
 	LatestMap,
 	ProxiedValueAccessor,
 	StatesWorkspace,
@@ -104,7 +103,12 @@ interface TestData {
  */
 
 // Core data creation helpers
-function createStateData(attendeeId: string, value: TestData, rev = 0, timestamp = 1030) {
+function createStateData(
+	attendeeId: string,
+	value: TestData,
+	rev = 0,
+	timestamp = 1030,
+): { [x: string]: { rev: number; timestamp: number; value: any } } {
 	return {
 		[attendeeId]: {
 			rev,
@@ -119,7 +123,20 @@ function createMapStateData(
 	items: Record<string, TestData>,
 	rev = 0,
 	timestamp = 1030,
-) {
+): {
+	[x: string]: {
+		rev: number;
+		timestamp: number;
+		items: Record<
+			string,
+			{
+				rev: number;
+				timestamp: number;
+				value: ReturnType<typeof toOpaqueJson<TestData>>;
+			}
+		>;
+	};
+} {
 	const processedItems: Record<
 		string,
 		{ rev: number; timestamp: number; value: ReturnType<typeof toOpaqueJson<TestData>> }
@@ -141,7 +158,10 @@ function createMapStateData(
 	};
 }
 
-function createWorkspaceData(stateName: string, stateData: Record<string, unknown>) {
+function createWorkspaceData(
+	stateName: string,
+	stateData: Record<string, unknown>,
+): { "s:name:testStateWorkspace": { [x: string]: Record<string, unknown> } } {
 	return {
 		"s:name:testStateWorkspace": {
 			[stateName]: stateData,
@@ -154,7 +174,19 @@ function createDatastoreSignal(
 	clientId: string,
 	workspaceData: Record<string, unknown>,
 	timestamp = 1030,
-) {
+): {
+	type: "Pres:DatastoreUpdate";
+	clientId: string;
+	content: {
+		sendTimestamp: number;
+		avgLatency: number;
+		data: {
+			"system:presence": {
+				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
+			};
+		};
+	};
+} {
 	return {
 		type: "Pres:DatastoreUpdate" as const,
 		clientId,
@@ -177,7 +209,19 @@ function createStateUpdateSignal(
 	value: TestData,
 	rev = 0,
 	timestamp = 1030,
-) {
+): {
+	type: "Pres:DatastoreUpdate";
+	clientId: string;
+	content: {
+		sendTimestamp: number;
+		avgLatency: number;
+		data: {
+			"system:presence": {
+				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
+			};
+		};
+	};
+} {
 	const stateData = createStateData(attendeeId, value, rev, timestamp);
 	const workspaceData = createWorkspaceData(stateName, stateData);
 	return createDatastoreSignal(clientId, workspaceData, timestamp);
@@ -190,7 +234,19 @@ function createMapUpdateSignal(
 	items: Record<string, TestData>,
 	rev = 0,
 	timestamp = 1030,
-) {
+): {
+	type: "Pres:DatastoreUpdate";
+	clientId: string;
+	content: {
+		sendTimestamp: number;
+		avgLatency: number;
+		data: {
+			"system:presence": {
+				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
+			};
+		};
+	};
+} {
 	const mapData = createMapStateData(attendeeId, items, rev, timestamp);
 	const workspaceData = createWorkspaceData(stateName, mapData);
 	return createDatastoreSignal(clientId, workspaceData, timestamp);
@@ -204,7 +260,19 @@ function createMapKeyUpdateSignal(
 	value: TestData,
 	rev = 0,
 	timestamp = 1030,
-) {
+): {
+	type: "Pres:DatastoreUpdate";
+	clientId: string;
+	content: {
+		sendTimestamp: number;
+		avgLatency: number;
+		data: {
+			"system:presence": {
+				clientToSessionId: { client2: { rev: number; timestamp: number; value: any } };
+			};
+		};
+	};
+} {
 	return createMapUpdateSignal(
 		clientId,
 		stateName,
@@ -257,7 +325,7 @@ function runMultipleCallsTest(params: MultipleCallsTestParams): void {
 }
 
 describe("Presence", () => {
-	let attendee2: Attendee<AttendeeId>;
+	let attendee2: Attendee;
 
 	describe.only("Runtime schema validation", () => {
 		const afterCleanUp: (() => void)[] = [];
