@@ -398,8 +398,11 @@ export class DocumentDeltaConnection
 
 	/**
 	 * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection and close the socket.
-	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
+	 * However, the OdspDocumentDeltaConnection differs in dispose as it does not close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
+	 *
+	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
+	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 *
 	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
 	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
