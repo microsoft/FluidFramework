@@ -403,9 +403,6 @@ export class DocumentDeltaConnection
 	 *
 	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
 	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
-	 *
-	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
-	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 */
 	public dispose(error?: Error) {
 		this.logger.sendTelemetryEvent({
@@ -426,7 +423,7 @@ export class DocumentDeltaConnection
 		this.disconnect(disconnectError);
 	}
 
-	protected disconnect = (err?: IAnyDriverError) => {
+	protected readonly disconnect = (err?: IAnyDriverError) => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.

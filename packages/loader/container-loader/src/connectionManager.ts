@@ -1003,7 +1003,10 @@ export class ConnectionManager implements IConnectionManager {
 	 * @param error - Error reconnect information including whether or not to reconnect
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
-	private reconnectOnError(requestedMode: ConnectionMode, error?: IAnyDriverError): void {
+	private reconnectOnError(
+		requestedMode: ConnectionMode,
+		error: IAnyDriverError | undefined,
+	): void {
 		this.reconnect(requestedMode, {
 			text: error?.message ?? "Client closing delta connection",
 			error,
