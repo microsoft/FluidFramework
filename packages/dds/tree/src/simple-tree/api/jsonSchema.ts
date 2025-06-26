@@ -150,9 +150,7 @@ export interface JsonMapNodeSchema extends JsonNodeSchemaBase<NodeKind.Map, "obj
 }
 
 /**
- * JSON Schema for a map node.
- *
- * @remarks Special case for map nodes, which do not have a native JSON schema corollary.
+ * JSON Schema for a record node.
  *
  * @see {@link https://json-schema.org/draft/2020-12/json-schema-core#name-instance-data-model}.
  *
