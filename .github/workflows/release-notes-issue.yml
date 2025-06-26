@@ -18,6 +18,9 @@ on:
 env:
   ISSUE: ${{ vars.RELEASE_NOTES_ISSUE }}
 
+permissions:
+  issues: read
+
 jobs:
   update-issue:
     permissions:

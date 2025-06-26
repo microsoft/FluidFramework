@@ -16,6 +16,9 @@ on:
     paths:
       - ".changeset/**" # Trigger only when changes are found under .changeset
 
+permissions:
+  pull-requests: read
+
 jobs:
   vale:
     permissions:
