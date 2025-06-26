@@ -48,101 +48,119 @@ interface TestData {
 }
 
 /**
- * Helper functions for creating test signals
+ * Focused helper functions for creating test signals
  */
-interface DatastoreUpdateSignalParams {
-	clientId: string;
-	sendTimestamp: number;
-	avgLatency: number;
-	workspaceData: Record<string, unknown>;
-}
 
-function createDatastoreUpdateSignal(params: DatastoreUpdateSignalParams) {
+// Core data creation helpers
+function createStateData(attendeeId: string, value: TestData, rev = 0, timestamp = 1030) {
 	return {
-		type: "Pres:DatastoreUpdate" as const,
-		clientId: params.clientId,
-		content: {
-			sendTimestamp: params.sendTimestamp,
-			avgLatency: params.avgLatency,
-			data: {
-				...systemWorkspace,
-				...params.workspaceData,
-			},
+		[attendeeId]: {
+			rev,
+			timestamp,
+			value: toOpaqueJson(value),
 		},
 	};
 }
 
-interface StateWorkspaceSignalParams {
-	/**
-	 * The name of the state workspace.
-	 */
-	stateName: string;
-	attendeeId: string;
-	value: TestData;
-	rev?: number;
-	timestamp?: number;
-}
-
-function createStateWorkspaceSignal(params: StateWorkspaceSignalParams) {
-	return {
-		"s:name:testStateWorkspace": {
-			[params.stateName]: {
-				[params.attendeeId]: {
-					rev: params.rev ?? 0,
-					timestamp: params.timestamp ?? 1030,
-					value: toOpaqueJson(params.value),
-				},
-			},
-		},
-	};
-}
-
-interface MapStateSignalParams extends Omit<StateWorkspaceSignalParams, "value"> {
-	/**
-	 * Key/value pairs to populate the signal
-	 */
-	items:
-		| Array<{
-				key: string;
-				value: TestData;
-				rev?: number;
-				timestamp?: number;
-		  }>
-		| {
-				key: string;
-				value: TestData;
-				rev?: number;
-				timestamp?: number;
-		  };
-}
-
-function createMapStateSignal(params: MapStateSignalParams) {
-	// Normalize items to always be an array
-	const itemsArray = Array.isArray(params.items) ? params.items : [params.items];
-
-	const items: Record<
+function createMapStateData(
+	attendeeId: string,
+	items: Record<string, TestData>,
+	rev = 0,
+	timestamp = 1030,
+) {
+	const processedItems: Record<
 		string,
 		{ rev: number; timestamp: number; value: ReturnType<typeof toOpaqueJson<TestData>> }
 	> = {};
 
-	for (const item of itemsArray) {
-		items[item.key] = {
-			rev: item.rev ?? params.rev ?? 0,
-			timestamp: item.timestamp ?? 1030,
-			value: toOpaqueJson(item.value),
+	for (const [key, value] of Object.entries(items)) {
+		processedItems[key] = {
+			rev,
+			timestamp,
+			value: toOpaqueJson(value),
 		};
 	}
 
 	return {
+		[attendeeId]: {
+			rev,
+			items: processedItems,
+		},
+	};
+}
+
+function createWorkspaceData(stateName: string, stateData: Record<string, unknown>) {
+	return {
 		"s:name:testStateWorkspace": {
-			[params.stateName]: {
-				[params.attendeeId]: {
-					rev: params.rev ?? 0,
-					items,
-				},
+			[stateName]: stateData,
+		},
+	};
+}
+
+// Signal creation helpers
+function createDatastoreSignal(
+	clientId: string,
+	workspaceData: Record<string, unknown>,
+	timestamp = 1030,
+) {
+	return {
+		type: "Pres:DatastoreUpdate" as const,
+		clientId,
+		content: {
+			sendTimestamp: timestamp,
+			avgLatency: 10,
+			data: {
+				...systemWorkspace,
+				...workspaceData,
 			},
 		},
 	};
+}
+
+// Convenience functions for common patterns
+function createStateUpdateSignal(
+	clientId: string,
+	stateName: string,
+	attendeeId: string,
+	value: TestData,
+	rev = 0,
+	timestamp = 1030,
+) {
+	const stateData = createStateData(attendeeId, value, rev, timestamp);
+	const workspaceData = createWorkspaceData(stateName, stateData);
+	return createDatastoreSignal(clientId, workspaceData, timestamp);
+}
+
+function createMapUpdateSignal(
+	clientId: string,
+	stateName: string,
+	attendeeId: string,
+	items: Record<string, TestData>,
+	rev = 0,
+	timestamp = 1030,
+) {
+	const mapData = createMapStateData(attendeeId, items, rev, timestamp);
+	const workspaceData = createWorkspaceData(stateName, mapData);
+	return createDatastoreSignal(clientId, workspaceData, timestamp);
+}
+
+function createMapKeyUpdateSignal(
+	clientId: string,
+	stateName: string,
+	attendeeId: string,
+	key: string,
+	value: TestData,
+	rev = 0,
+	timestamp = 1030,
+) {
+	return createMapUpdateSignal(
+		clientId,
+		stateName,
+		attendeeId,
+		{ [key]: value },
+		rev,
+		timestamp,
+	);
 }
 
 interface ValidatorTestParams {
@@ -256,21 +274,7 @@ describe("Presence", () => {
 			beforeEach(() => {
 				// Setup workspace initialization signal
 				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							sendTimestamp: 1030,
-							avgLatency: 10,
-							data: {
-								...systemWorkspace,
-								...createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									value: { num: 0 },
-								}),
-							},
-						},
-					},
+					createStateUpdateSignal(connectionId2, "count", attendeeId2, { num: 0 }),
 				]);
 
 				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
@@ -287,17 +291,7 @@ describe("Presence", () => {
 					// Process a valid update signal
 					presence.processSignal(
 						[],
-						createDatastoreUpdateSignal({
-							clientId: connectionId2,
-							sendTimestamp: 1030,
-							avgLatency: 10,
-							workspaceData: createStateWorkspaceSignal({
-								stateName: "count",
-								attendeeId: attendeeId2,
-								rev: 1,
-								value: { num: 11 },
-							}),
-						}),
+						createStateUpdateSignal(connectionId2, "count", attendeeId2, { num: 11 }, 1),
 						false,
 					);
 				});
@@ -312,17 +306,7 @@ describe("Presence", () => {
 					it("when accessing .local", () => {
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId1,
-								sendTimestamp: 1030,
-								avgLatency: 10,
-								workspaceData: createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									rev: 1,
-									value: { num: 33 },
-								}),
-							}),
+							createStateUpdateSignal(connectionId1, "count", attendeeId2, { num: 33 }, 1),
 							false,
 						);
 						assert.equal(validatorFunction.callCount, 0, "initial call count is wrong");
@@ -360,17 +344,14 @@ describe("Presence", () => {
 						// Send updated data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									value: { num: 22 },
-									rev: 2,
-								}),
-							}),
+							createStateUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								{ num: 22 },
+								2,
+								1040,
+							),
 							false,
 						);
 
@@ -390,17 +371,14 @@ describe("Presence", () => {
 						// Send invalid data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									value: "invalid" as unknown as TestData,
-									rev: 2,
-								}),
-							}),
+							createStateUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"invalid" as unknown as TestData,
+								2,
+								1040,
+							),
 							false,
 						);
 
@@ -414,17 +392,13 @@ describe("Presence", () => {
 						// First send invalid data
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1030,
-								avgLatency: 10,
-								workspaceData: createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									value: "invalid" as unknown as TestData,
-									rev: 2,
-								}),
-							}),
+							createStateUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"invalid" as unknown as TestData,
+								2,
+							),
 							false,
 						);
 
@@ -436,17 +410,14 @@ describe("Presence", () => {
 						// Send valid data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									value: { num: 33 },
-									rev: 3,
-								}),
-							}),
+							createStateUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								{ num: 33 },
+								3,
+								1040,
+							),
 							false,
 						);
 
@@ -460,17 +431,13 @@ describe("Presence", () => {
 						// First send invalid data
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1030,
-								avgLatency: 10,
-								workspaceData: createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									value: "invalid1" as unknown as TestData,
-									rev: 2,
-								}),
-							}),
+							createStateUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"invalid1" as unknown as TestData,
+								2,
+							),
 							false,
 						);
 
@@ -482,17 +449,14 @@ describe("Presence", () => {
 						// Send different invalid data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createStateWorkspaceSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									value: "invalid2" as unknown as TestData,
-									rev: 3,
-								}),
-							}),
+							createStateUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"invalid2" as unknown as TestData,
+								3,
+								1040,
+							),
 							false,
 						);
 
@@ -507,17 +471,13 @@ describe("Presence", () => {
 					// Send invalid data
 					presence.processSignal(
 						[],
-						createDatastoreUpdateSignal({
-							clientId: connectionId2,
-							sendTimestamp: 1030,
-							avgLatency: 10,
-							workspaceData: createStateWorkspaceSignal({
-								stateName: "count",
-								attendeeId: attendeeId2,
-								value: "string" as unknown as TestData,
-								rev: 2,
-							}),
-						}),
+						createStateUpdateSignal(
+							connectionId2,
+							"count",
+							attendeeId2,
+							"string" as unknown as TestData,
+							2,
+						),
 						false,
 					);
 
@@ -557,30 +517,10 @@ describe("Presence", () => {
 			beforeEach(() => {
 				// Add expected workspace initialization signal
 				runtime.signalsExpected.push([
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							sendTimestamp: 1030,
-							avgLatency: 10,
-							data: {
-								...systemWorkspace,
-								...createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									items: [
-										{
-											key: "key1",
-											value: { num: 0 },
-										},
-										{
-											key: "key2",
-											value: { num: 0 },
-										},
-									],
-								}),
-							},
-						},
-					},
+					createMapUpdateSignal(connectionId2, "count", attendeeId2, {
+						"key1": { num: 0 },
+						"key2": { num: 0 },
+					}),
 				]);
 
 				// initialize the state workspace, which will process the signal above.
@@ -595,20 +535,14 @@ describe("Presence", () => {
 				// Process signal with new value
 				presence.processSignal(
 					[],
-					createDatastoreUpdateSignal({
-						clientId: connectionId2,
-						sendTimestamp: 1030,
-						avgLatency: 10,
-						workspaceData: createMapStateSignal({
-							stateName: "count",
-							attendeeId: attendeeId2,
-							items: {
-								key: "key1",
-								value: { num: 84 },
-								rev: 1,
-							},
-						}),
-					}),
+					createMapKeyUpdateSignal(
+						connectionId2,
+						"count",
+						attendeeId2,
+						"key1",
+						{ num: 84 },
+						1,
+					),
 					false,
 				);
 			});
@@ -631,20 +565,13 @@ describe("Presence", () => {
 						// Set up both keys with some initial data
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1030,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									rev: 1,
-									items: [
-										{ key: "key1", value: { num: 84 }, rev: 1 },
-										{ key: "key2", value: { num: 42 }, rev: 1 },
-									],
-								}),
-							}),
+							createMapUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								{ "key1": { num: 84 }, "key2": { num: 42 } },
+								1,
+							),
 							false,
 						);
 
@@ -662,20 +589,14 @@ describe("Presence", () => {
 						// Update key2 (different key) with new data, keeping key1 unchanged
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									rev: 2,
-									items: [
-										{ key: "key1", value: { num: 84 }, rev: 1, timestamp: 1030 }, // Include unchanged key1
-										{ key: "key2", value: { num: 99 }, rev: 2, timestamp: 1040 },
-									],
-								}),
-							}),
+							createMapUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								{ "key1": { num: 84 }, "key2": { num: 99 } },
+								2,
+								1040,
+							),
 							false,
 						);
 
@@ -734,20 +655,15 @@ describe("Presence", () => {
 						// Send updated key data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									items: {
-										key: "key1",
-										value: { num: 22 },
-										rev: 2,
-									},
-								}),
-							}),
+							createMapKeyUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"key1",
+								{ num: 22 },
+								2,
+								1040,
+							),
 							false,
 						);
 
@@ -781,20 +697,15 @@ describe("Presence", () => {
 						// Send invalid key data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									items: {
-										key: "key1",
-										value: "invalid" as unknown as TestData,
-										rev: 2,
-									},
-								}),
-							}),
+							createMapKeyUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"key1",
+								"invalid" as unknown as TestData,
+								2,
+								1040,
+							),
 							false,
 						);
 
@@ -811,20 +722,14 @@ describe("Presence", () => {
 						// First send invalid key data
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1030,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									items: {
-										key: "key1",
-										value: "invalid" as unknown as TestData,
-										rev: 2,
-									},
-								}),
-							}),
+							createMapKeyUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"key1",
+								"invalid" as unknown as TestData,
+								2,
+							),
 							false,
 						);
 
@@ -838,20 +743,15 @@ describe("Presence", () => {
 						// Send valid key data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									items: {
-										key: "key1",
-										value: { num: 55 },
-										rev: 3,
-									},
-								}),
-							}),
+							createMapKeyUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"key1",
+								{ num: 55 },
+								3,
+								1040,
+							),
 							false,
 						);
 
@@ -868,20 +768,14 @@ describe("Presence", () => {
 						// First send invalid key data
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1030,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									items: {
-										key: "key1",
-										value: "invalid1" as unknown as TestData,
-										rev: 2,
-									},
-								}),
-							}),
+							createMapKeyUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"key1",
+								"invalid1" as unknown as TestData,
+								2,
+							),
 							false,
 						);
 
@@ -895,20 +789,15 @@ describe("Presence", () => {
 						// Send different invalid key data from remote client
 						presence.processSignal(
 							[],
-							createDatastoreUpdateSignal({
-								clientId: connectionId2,
-								sendTimestamp: 1040,
-								avgLatency: 10,
-								workspaceData: createMapStateSignal({
-									stateName: "count",
-									attendeeId: attendeeId2,
-									items: {
-										key: "key1",
-										value: "invalid2" as unknown as TestData,
-										rev: 3,
-									},
-								}),
-							}),
+							createMapKeyUpdateSignal(
+								connectionId2,
+								"count",
+								attendeeId2,
+								"key1",
+								"invalid2" as unknown as TestData,
+								3,
+								1040,
+							),
 							false,
 						);
 
