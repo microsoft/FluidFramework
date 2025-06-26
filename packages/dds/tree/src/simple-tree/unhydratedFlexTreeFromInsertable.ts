@@ -52,7 +52,10 @@ import { convertFieldKind } from "./toStoredSchema.js";
 /* eslint-disable import/no-internal-modules */
 import { isArrayNodeSchema, type ArrayNodeSchema } from "./node-kinds/array/arrayNodeTypes.js";
 import { isMapNodeSchema, type MapNodeSchema } from "./node-kinds/map/mapNodeTypes.js";
-import { isObjectNodeSchema, type ObjectNodeSchemaPrivate } from "./node-kinds/object/objectNodeTypes.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchemaPrivate,
+} from "./node-kinds/object/objectNodeTypes.js";
 import { isRecordNodeSchema } from "./node-kinds/record/recordNodeTypes.js";
 /* eslint-enable import/no-internal-modules */
 
