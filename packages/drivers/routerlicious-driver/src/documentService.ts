@@ -39,13 +39,13 @@ import { Historian } from "./historian.js";
 import { NullBlobStorageService } from "./nullBlobStorageService.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { IRouterliciousDriverPolicies } from "./policies.js";
+import { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";
 import {
 	RouterliciousOrdererRestWrapper,
 	RouterliciousStorageRestWrapper,
 	TokenFetcher,
 } from "./restWrapper.js";
 import { RestWrapper } from "./restWrapperBase.js";
-import { r11sDriverCompatDetailsForLoader } from "./routerliciousLayerCompatState.js";
 import type { IGetSessionInfoResponse } from "./sessionInfoManager.js";
 import { SocketIOClientStatic } from "./socketModule.js";
 import { ITokenProvider } from "./tokens.js";
@@ -98,7 +98,7 @@ export class DocumentService
 	}
 
 	/**
-	 * The compatibility details of the ODSP Driver layer that is exposed to the Loader layer
+	 * The compatibility details of the Routerlicious Driver layer that is exposed to the Loader layer
 	 * for validating Loader-Driver compatibility.
 	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
