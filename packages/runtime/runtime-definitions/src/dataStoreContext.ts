@@ -539,10 +539,15 @@ export interface IPendingMessagesState {
 }
 
 /**
- * Represents the context for the data store like objects. It is used by the data store runtime to
- * get information and call functionality to its parent.
+ * Context for an {@link IDataStore}.
+ * This context is provided to implementation of {@link IFluidDataStoreChannel} which powers the datastore.
+ *
+ * @remarks
+ * This context does NOT represent common information provided to all channels under a specific parent.
+ * Each implementation of {@link IFluidDataStoreChannel} will receive its own instance of this context that contains specifically the data it needs.
  *
  * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
+ * Therefore the semantics of these two interfaces is not really distinct.
  *
  * @legacy
  * @alpha
@@ -672,8 +677,7 @@ export interface IFluidParentContext
 }
 
 /**
- * Represents the context for the data store. It is used by the data store runtime to
- * get information and call functionality to the container.
+ * {@inheritDoc IFluidParentContext}
  * @legacy
  * @alpha
  */
@@ -690,6 +694,8 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly isLocalDataStore: boolean;
 	/**
 	 * The package path of the data store as per the package factory.
+	 * @remarks
+	 * This defines what {@link IFluidDataStoreFactory} would be used to create the {@link IDataStore.entryPoint} of the {@link IDataStore}.
 	 */
 	readonly packagePath: readonly string[];
 	readonly baseSnapshot: ISnapshotTree | undefined;

@@ -239,11 +239,11 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 }
 
 /**
- * Context for an {@link IDataStore}. This context is provided to the FluidDataStoreRuntime.
+ * {@link IFluidParentContext} for the implementations of {@link IFluidDataStoreChannel} which powers the {@link IDataStore}s.
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable
+	implements IFluidDataStoreContextInternal, IFluidDataStoreContext, IDisposable
 {
 	public get packagePath(): readonly string[] {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -418,7 +418,7 @@ export abstract class FluidDataStoreContext
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
 	/**
-	 * ???
+	 * This provides information about the parent of this data store. This is either be the container runtime if it is under it or a data store context if it is nested under another data store.
 	 */
 	private readonly parentContext: IFluidParentContextPrivate;
 	public readonly storage: IDocumentStorageService;
@@ -428,11 +428,14 @@ export abstract class FluidDataStoreContext
 	 */
 	public readonly loadingGroupId: string | undefined;
 	/**
-	 * ???
+	 * This is the package name of this data store which is the key for this data store's entry in {@link @fluidframework/runtime-definitions#NamedFluidDataStoreRegistryEntries}.
+	 *
+	 * This can be undefined when a data store is delay loaded, i.e., the attributes of this data store in the snapshot are not fetched until this data store is actually used.
+	 * At that time, the attributes blob is fetched and the pkg is updated from it.
 	 */
 	protected pkg?: readonly string[];
 
-	constructor(
+	public constructor(
 		props: IFluidDataStoreContextProps,
 		private readonly existing: boolean,
 		public readonly isLocalDataStore: boolean,
@@ -537,7 +540,7 @@ export abstract class FluidDataStoreContext
 	/**
 	 * ???
 	 */
-	private rejectDeferredRealize(
+	private factoryFromPackagePathError(
 		reason: string,
 		failedPkgPath?: string,
 		fullPackageName?: readonly string[],
@@ -581,7 +584,7 @@ export abstract class FluidDataStoreContext
 	protected async factoryFromPackagePath(): Promise<IFluidDataStoreFactory> {
 		const packages = this.pkg;
 		if (packages === undefined) {
-			this.rejectDeferredRealize("packages is undefined");
+			this.factoryFromPackagePathError("packages is undefined");
 		}
 
 		let entry: FluidDataStoreRegistryEntry | undefined;
@@ -591,12 +594,12 @@ export abstract class FluidDataStoreContext
 		// ???
 		for (const pkg of packages) {
 			if (!registry) {
-				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
+				this.factoryFromPackagePathError("No registry for package", lastPkg, packages);
 			}
 			lastPkg = pkg;
 			entry = registry.getSync?.(pkg) ?? (await registry.get(pkg));
 			if (!entry) {
-				this.rejectDeferredRealize(
+				this.factoryFromPackagePathError(
 					"Registry does not contain entry for the package",
 					pkg,
 					packages,
@@ -606,7 +609,7 @@ export abstract class FluidDataStoreContext
 		}
 		const factory = entry?.IFluidDataStoreFactory;
 		if (factory === undefined) {
-			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
+			this.factoryFromPackagePathError("Can't find factory for package", lastPkg, packages);
 		}
 
 		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
@@ -615,7 +618,7 @@ export abstract class FluidDataStoreContext
 		return factory;
 	}
 
-	createChildDataStore<T extends IFluidDataStoreFactory>(
+	public createChildDataStore<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>> {
 		const maybe = this.registry?.getSync?.(childFactory.type);
