@@ -260,6 +260,16 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
+	#manualFlushCalls: number = 0;
+	public async runWithManualFlush(act: () => void | Promise<void>) {
+		this.#manualFlushCalls++;
+		try {
+			await act();
+		} finally {
+			this.#manualFlushCalls--;
+		}
+	}
+
 	public submit(messageContent: any, localOpMetadata?: unknown): number {
 		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
 		const message: IInternalMockRuntimeMessage = {
@@ -270,7 +280,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
 
-		switch (this.runtimeOptions.flushMode) {
+		const currentFlushMode =
+			this.#manualFlushCalls > 0 ? FlushMode.TurnBased : this.runtimeOptions.flushMode;
+
+		switch (currentFlushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
 					const idAllocationOp = this.generateIdAllocationOp();
