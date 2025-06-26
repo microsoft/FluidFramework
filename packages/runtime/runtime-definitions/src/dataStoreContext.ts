@@ -240,10 +240,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(
-		pkg: string | readonly string[],
-		loadingGroupId?: string,
-	): Promise<IDataStore>;
+	createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -677,6 +674,17 @@ export interface IFluidParentContext
 }
 
 /**
+ * A path which selects a {@link (IFluidDataStoreFactory:interface)} within a hierarchial registry.
+ * @remarks
+ * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a {@link NamedFluidDataStoreRegistryEntries}.
+ *
+ * Due to some usages joining this array with "/", it is recommended to avoid using "/" in the strings.
+ * @legacy
+ * @alpha
+ */
+export type PackagePath = readonly string[];
+
+/**
  * {@inheritDoc IFluidParentContext}
  * @legacy
  * @alpha
@@ -693,11 +701,11 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 */
 	readonly isLocalDataStore: boolean;
 	/**
-	 * The package path of the data store as per the package factory.
+	 * The {@link PackagePath} of the data store as per the package factory.
 	 * @remarks
-	 * This defines what {@link IFluidDataStoreFactory} would be used to create the {@link IDataStore.entryPoint} of the {@link IDataStore}.
+	 * This defines what {@link (IFluidDataStoreFactory:interface)} would be used to create the {@link IDataStore.entryPoint} of the {@link IDataStore}.
 	 */
-	readonly packagePath: readonly string[];
+	readonly packagePath: PackagePath;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 
 	/**

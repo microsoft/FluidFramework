@@ -62,7 +62,7 @@ import {
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
-	type IFluidParentContext,
+	type PackagePath,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -150,9 +150,9 @@ export interface IFluidDataStoreContextProps {
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	/**
-	 * ???
+	 * See {@link FluidDataStoreContext.pkg}.
 	 */
-	readonly pkg?: readonly string[];
+	readonly pkg?: PackagePath;
 	/**
 	 * See {@link FluidDataStoreContext.loadingGroupId}.
 	 */
@@ -245,7 +245,7 @@ export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
 	implements IFluidDataStoreContextInternal, IFluidDataStoreContext, IDisposable
 {
-	public get packagePath(): readonly string[] {
+	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
 		return this.pkg;
 	}
@@ -432,8 +432,12 @@ export abstract class FluidDataStoreContext
 	 *
 	 * This can be undefined when a data store is delay loaded, i.e., the attributes of this data store in the snapshot are not fetched until this data store is actually used.
 	 * At that time, the attributes blob is fetched and the pkg is updated from it.
+	 *
+	 * @see {@link PackagePath}.
+	 * @see {@link IFluidDataStoreContext.packagePath}.
+	 * @see {@link factoryFromPackagePath}.
 	 */
-	protected pkg?: readonly string[];
+	protected pkg?: PackagePath;
 
 	public constructor(
 		props: IFluidDataStoreContextProps,
@@ -543,7 +547,7 @@ export abstract class FluidDataStoreContext
 	private factoryFromPackagePathError(
 		reason: string,
 		failedPkgPath?: string,
-		fullPackageName?: readonly string[],
+		fullPackageName?: PackagePath,
 	): never {
 		throw new LoggingError(
 			reason,
@@ -579,41 +583,44 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Gets the factory that would be used to create the entry point for this datastore.
+	 * Gets the factory that would be used to create the entry point for this datastore based on {@link pkg}.
+	 * @remarks
+	 * Also populates {@link registry}.
 	 *
-	 * @see {@link @fluidframework/container-runtime-definitions#IContainerRuntimeBase}.
+	 * Must be called after {@link pkg} is set, and only called once.
+	 *
+	 * @see {@link @fluidframework/container-runtime-definitions#IContainerRuntimeBase.createDataStore}.
 	 * @see {@link FluidDataStoreContext.pkg}.
-	 * @see {@link IFluidDataStoreContext.packagePath}.
 	 */
 	protected async factoryFromPackagePath(): Promise<IFluidDataStoreFactory> {
-		const packages = this.pkg;
-		if (packages === undefined) {
+		const path = this.pkg;
+		if (path === undefined) {
 			this.factoryFromPackagePathError("packages is undefined");
 		}
 
 		let entry: FluidDataStoreRegistryEntry | undefined;
 		let registry: IFluidDataStoreRegistry | undefined =
 			this.parentContext.IFluidDataStoreRegistry;
-		let lastPkg: string | undefined;
-		// ???
-		for (const pkg of packages) {
+		let lastIdentifier: string | undefined;
+		// Follow the path, looking up each identifier in the registry along the way:
+		for (const identifier of path) {
 			if (!registry) {
-				this.factoryFromPackagePathError("No registry for package", lastPkg, packages);
+				this.factoryFromPackagePathError("No registry for package", lastIdentifier, path);
 			}
-			lastPkg = pkg;
-			entry = registry.getSync?.(pkg) ?? (await registry.get(pkg));
+			lastIdentifier = identifier;
+			entry = registry.getSync?.(identifier) ?? (await registry.get(identifier));
 			if (!entry) {
 				this.factoryFromPackagePathError(
 					"Registry does not contain entry for the package",
-					pkg,
-					packages,
+					identifier,
+					path,
 				);
 			}
 			registry = entry.IFluidDataStoreRegistry;
 		}
 		const factory = entry?.IFluidDataStoreFactory;
 		if (factory === undefined) {
-			this.factoryFromPackagePathError("Can't find factory for package", lastPkg, packages);
+			this.factoryFromPackagePathError("Can't find factory for package", lastIdentifier, path);
 		}
 
 		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
