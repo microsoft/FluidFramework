@@ -483,6 +483,13 @@ export const baseModel: Omit<
 					break;
 				case "removeRange":
 				case "annotateRange":
+					if (op.start > 0) {
+						op.start--;
+					}
+					if (op.end > 0) {
+						op.end--;
+					}
+					break;
 				case "addInterval":
 				case "changeInterval": {
 					const { startPos, endPos, startSide, endSide } = endpointPosAndSide(

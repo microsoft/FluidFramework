@@ -18,14 +18,14 @@ import {
 	type IResolvedUrl,
 	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 
 import { Loader } from "../loader.js";
 import {
-	driverSupportRequirements,
+	driverSupportRequirementsForLoader,
 	loaderCoreCompatDetails,
-	runtimeSupportRequirements,
+	runtimeSupportRequirementsForLoader,
 	validateDriverCompatibility,
 	validateRuntimeCompatibility,
 } from "../loaderLayerCompatState.js";
@@ -51,7 +51,10 @@ function validateFailureProperties(
 	layerType: "Runtime" | "Driver",
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(error instanceof UsageError, "The error should be a UsageError");
+	assert(
+		isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
+		"Error should be a usageError",
+	);
 	assert.strictEqual(
 		error.errorType,
 		FluidErrorTypes.usageError,
@@ -99,6 +102,19 @@ function validateFailureProperties(
 	return true;
 }
 
+function validateDisposeCall(
+	layerType: "Runtime" | "Driver",
+	disposeFn: Sinon.SinonSpy,
+): void {
+	if (layerType === "Runtime") {
+		// In case of "Runtime", the dispose is not called during validation. It is called as part of the overall
+		// container creation / load.
+		assert(disposeFn.notCalled, `Dispose should not be called for ${layerType} layer`);
+	} else {
+		assert(disposeFn.calledOnce, `Dispose should be called for ${layerType} layer`);
+	}
+}
+
 describe("Loader Layer compatibility", () => {
 	/**
 	 * These tests ensure that the validation logic for layer compatibility is correct
@@ -117,13 +133,13 @@ describe("Loader Layer compatibility", () => {
 				layerType: "Runtime",
 				validateCompatibility: validateRuntimeCompatibility,
 				layerSupportRequirements:
-					runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					runtimeSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 			{
 				layerType: "Driver",
 				validateCompatibility: validateDriverCompatibility,
 				layerSupportRequirements:
-					driverSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					driverSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 		];
 
@@ -131,7 +147,7 @@ describe("Loader Layer compatibility", () => {
 			const layerSupportRequirements = testCase.layerSupportRequirements;
 			let originalRequiredFeatures: readonly string[];
 			beforeEach(() => {
-				originalRequiredFeatures = layerSupportRequirements.requiredFeatures;
+				originalRequiredFeatures = [...layerSupportRequirements.requiredFeatures];
 			});
 
 			afterEach(() => {
@@ -186,7 +202,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 
 				it(`Loader features are incompatible with ${testCase.layerType}`, () => {
@@ -213,7 +229,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 
 				it(`Loader generation and features are both incompatible with ${testCase.layerType}`, () => {
@@ -240,7 +256,7 @@ describe("Loader Layer compatibility", () => {
 							),
 						`Loader should be incompatible with ${testCase.layerType} layer`,
 					);
-					assert(disposeFn.calledOnce, "Dispose should be called");
+					validateDisposeCall(testCase.layerType, disposeFn);
 				});
 			});
 		}
@@ -257,12 +273,12 @@ describe("Loader Layer compatibility", () => {
 			{
 				layerType: "Runtime",
 				layerSupportRequirements:
-					runtimeSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					runtimeSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 			{
 				layerType: "Driver",
 				layerSupportRequirements:
-					driverSupportRequirements as ILayerCompatSupportRequirementsOverride,
+					driverSupportRequirementsForLoader as ILayerCompatSupportRequirementsOverride,
 			},
 		];
 

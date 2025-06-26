@@ -1,5 +1,194 @@
 # fluid-framework
 
+## 2.43.0
+
+### Minor Changes
+
+- Tree's enum schema utility are now beta ([#24749](https://github.com/microsoft/FluidFramework/pull/24749)) [a23bc9e4d02](https://github.com/microsoft/FluidFramework/commit/a23bc9e4d025f0925d09daadc2952bf0bfacc06b)
+
+  The functions [singletonSchema](https://fluidframework.com/docs/api/tree/#singletonschema-function), [adaptEnum](https://fluidframework.com/docs/api/tree/#adaptenum-function) and [enumFromStrings](https://fluidframework.com/docs/api/tree/#enumfromstrings-function) are now `@beta` instead of `@alpha`.
+
+- Add TreeAlpha.child and TreeAlpha.children APIs for generic tree traversal ([#24723](https://github.com/microsoft/FluidFramework/pull/24723)) [87941b7fa05](https://github.com/microsoft/FluidFramework/commit/87941b7fa0575e030344079a25f65d25d8457367)
+
+  #### TreeAlpha.child
+
+  Access a child node or value of a `TreeNode` by its property key.
+
+  ```typescript
+  class MyObject extends schemaFactory.object("MyObject", {
+  	foo: schemaFactory.string;
+  	bar: schemaFactory.optional(schemaFactory.string);
+  }) {}
+
+  const myObject = new MyObject({
+  	foo: "Hello world!"
+  });
+
+  const foo = TreeAlpha.child(myObject, "foo"); // "Hello world!"
+  const bar = TreeAlpha.child(myObject, "bar"); // undefined
+  const baz = TreeAlpha.child(myObject, "baz"); // undefined
+  ```
+
+  ```typescript
+  class MyArray extends schemaFactory.array("MyArray", schemaFactory.string) {}
+
+  const myArray = new MyArray("Hello", "World");
+
+  const child0 = TreeAlpha.child(myArray, 0); // "Hello"
+  const child1 = TreeAlpha.child(myArray, 1); // "World
+  const child2 = TreeAlpha.child(myArray, 2); // undefined
+  ```
+
+  #### TreeAlpha.children
+
+  Get all child nodes / values of a `TreeNode`, keyed by their property keys.
+
+  ```typescript
+  class MyObject extends schemaFactory.object("MyObject", {
+  	foo: schemaFactory.string;
+  	bar: schemaFactory.optional(schemaFactory.string);
+  	baz: schemaFactory.optional(schemaFactory.number);
+  }) {}
+
+  const myObject = new MyObject({
+  	foo: "Hello world!",
+  	baz: 42,
+  });
+
+  const children = TreeAlpha.children(myObject); // [["foo", "Hello world!"], ["baz", 42]]
+  ```
+
+  ```typescript
+  class MyArray extends schemaFactory.array("MyArray", schemaFactory.string) {}
+
+  const myArray = new MyArray("Hello", "World");
+
+  const children = TreeAlpha.children(myObject); // [[0, "Hello"], [1, "World"]]
+  ```
+
+- Rename and change type of annotatedAllowedTypeSet on FieldSchemaAlpha to more closely align with allowedTypesSet ([#24820](https://github.com/microsoft/FluidFramework/pull/24820)) [f4e8dc8cd09](https://github.com/microsoft/FluidFramework/commit/f4e8dc8cd09f052f21e436e2c0584a1a34d2be77)
+
+  This changes the `annotatedAllowedTypeSet` property on [`FieldSchemaAlpha`](https://fluidframework.com/docs/api/fluid-framework/fieldschemaalpha-class).
+  It is now called `annotatedAllowedTypesNormalized` and stores evaluated schemas along with their annotations in a list of objects rather than as a mapping from the schemas to their annotations. This makes the API easier to use and better aligns with the current public APIs.
+
+- Persisted metadata for Shared Tree schemas (Alpha) ([#24812](https://github.com/microsoft/FluidFramework/pull/24812)) [3f81ab52ff7](https://github.com/microsoft/FluidFramework/commit/3f81ab52ff7265a8533c0e192c8b77d298b70eea)
+
+  The persisted metadata feature for Shared Tree allows an application author to write document-persisted metadata along with the schema. This feature is supported for both node and field schemas.
+
+  #### Using the persisted metadata feature
+
+  As of now, persisted metadata support is available via the SchemaFactoryAlpha API:
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+  ```
+
+  Persisted metadata can take the shape of any JSON-serializable object, e.g.:
+
+  ```ts
+  const persistedMetadata = { a: 2 };
+  ```
+
+  #### Feature flag
+
+  To enable persisted metadata, use `configuredSharedTree` to specify the format version. The tree that is returned can be substituted in place of the default `SharedTree` object exported by the Fluid Framework. For example:
+
+  ```ts
+  const tree = configuredSharedTree({
+    formatVersion: SharedTreeFormatVersion.v5,
+  }).create(runtime);
+
+  export const MyContainerSchema = {
+    initialObjects: {
+      appData: tree,
+    },
+  } satisfies ContainerSchema;
+  ```
+
+  #### Examples
+
+  ##### Field schemas with persisted metadata
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+  // Define metadata. This can take the shape of any JSON-serializable object.
+  const persistedMetadata = { a: 2 };
+
+  // Foo is an object type with metadata
+  class Foo extends schemaFactory.objectAlpha(
+    "Foo",
+    {
+      // Metadata for a required number field
+      bar: schemaFactory.required(schemaFactory.number, { persistedMetadata }),
+
+      // Metadata for an optional string field
+      baz: schemaFactory.optional(schemaFactory.string, { persistedMetadata }),
+      // Metadata for the object type Foo
+    },
+    { persistedMetadata },
+  ) {}
+  ```
+
+  ##### Recursive field schemas
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+  // Define metadata. This can take the shape of any JSON-serializable object.
+  const persistedMetadata = { a: 2 };
+
+  // Recursive object schema with persisted metadata
+  class RecursiveObject extends schemaFactory.objectRecursive(
+    "RecursiveObject",
+    {
+      x: [() => RecursiveObject, schemaFactory.number],
+    },
+    { persistedMetadata },
+  ) {}
+
+  // Recursive field schema with metadata
+  const recursiveField = schemaFactory.optionalRecursive(
+    [() => RecursiveObject, schemaFactory.number],
+    { persistedMetadata },
+  );
+  ```
+
+  ##### Recursive object schemas
+
+  ```ts
+  // Construct a schema factory with alpha APIs
+  const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+  // Define metadata. This can take the shape of any JSON-serializable object.
+  const persistedMetadata = { a: 2 };
+
+  // Recursive array schema
+  class Foos extends schemaFactory.arrayRecursive("FooList", [() => Foo], {
+    persistedMetadata,
+  }) {}
+
+  // Recursive object schema
+  class Foo extends schemaFactory.objectRecursive(
+    "Foo",
+    { fooList: Foos },
+    { persistedMetadata },
+  ) {}
+
+  // Recursive map schema
+  class FooMap extends schemaFactory.mapRecursive("FooMap", [() => Foo], {
+    persistedMetadata,
+  }) {}
+  ```
+
+- Improved Schema Validation ([#24866](https://github.com/microsoft/FluidFramework/pull/24866)) [caae4ae15ed](https://github.com/microsoft/FluidFramework/commit/caae4ae15edeb8aeae33b0520b18dbb1993965f6)
+
+  When constructing a [`TreeViewConfiguration`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class), the same schema listed more than once in a given [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) is now an error even when [`preventAmbiguity`](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class#preventambiguity-property) is false.
+  Previously a bug resulted in this only being rejected when `preventAmbiguity` was true.
+
 ## 2.42.0
 
 ### Minor Changes

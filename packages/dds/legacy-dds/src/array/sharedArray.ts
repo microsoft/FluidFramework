@@ -49,7 +49,7 @@ const snapshotFileName = "header";
  *
  * @internal
  */
-export class SharedArray<T extends SerializableTypeForSharedArray>
+export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	extends SharedObject<ISharedArrayEvents>
 	implements ISharedArray<T>, ISharedArrayRevertible
 {
@@ -78,8 +78,8 @@ export class SharedArray<T extends SerializableTypeForSharedArray>
 	public static create<T extends SerializableTypeForSharedArray>(
 		runtime: IFluidDataStoreRuntime,
 		id?: string,
-	): SharedArray<T> {
-		return runtime.createChannel(id, SharedArrayFactory.Type) as SharedArray<T>;
+	): SharedArrayClass<T> {
+		return runtime.createChannel(id, SharedArrayFactory.Type) as SharedArrayClass<T>;
 	}
 
 	/**
