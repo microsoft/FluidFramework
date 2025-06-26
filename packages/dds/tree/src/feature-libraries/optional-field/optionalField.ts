@@ -50,6 +50,8 @@ import type {
 	Replace,
 } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
+// eslint-disable-next-line import/no-internal-modules
+import type { ReplaceRevisionIdInfo } from "../modular-schema/modularChangeFamily.js";
 
 export interface IRegisterMap<T> {
 	set(id: RegisterId, childChange: T): void;
@@ -435,26 +437,28 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		change: OptionalChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
 		newRevision: RevisionTag | undefined,
+		replacedRevisionIdInfo: ReplaceRevisionIdInfo,
 	): OptionalChangeset => {
 		const valueReplace = replaceReplaceRevisions(
 			change.valueReplace,
 			oldRevisions,
 			newRevision,
+			replacedRevisionIdInfo,
 		);
 
 		const childChanges: ChildChange[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			childChanges.push([
-				replaceRegisterRevisions(id, oldRevisions, newRevision),
-				replaceAtomRevisions(childChange, oldRevisions, newRevision),
+				replaceRegisterRevisions(id, oldRevisions, newRevision, replacedRevisionIdInfo),
+				replaceAtomRevisions(childChange, oldRevisions, newRevision, replacedRevisionIdInfo),
 			]);
 		}
 
 		const moves: Move[] = [];
 		for (const [src, dst] of change.moves) {
 			moves.push([
-				replaceAtomRevisions(src, oldRevisions, newRevision),
-				replaceAtomRevisions(dst, oldRevisions, newRevision),
+				replaceAtomRevisions(src, oldRevisions, newRevision, replacedRevisionIdInfo),
+				replaceAtomRevisions(dst, oldRevisions, newRevision, replacedRevisionIdInfo),
 			]);
 		}
 
@@ -471,6 +475,7 @@ function replaceReplaceRevisions(
 	replace: Replace | undefined,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
+	replacedRevisionIdInfo: ReplaceRevisionIdInfo,
 ): Replace | undefined {
 	if (replace === undefined) {
 		return undefined;
@@ -478,11 +483,16 @@ function replaceReplaceRevisions(
 
 	const updated: Mutable<Replace> = {
 		...replace,
-		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision),
+		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision, replacedRevisionIdInfo),
 	};
 
 	if (replace.src !== undefined) {
-		updated.src = replaceRegisterRevisions(replace.src, oldRevisions, newRevision);
+		updated.src = replaceRegisterRevisions(
+			replace.src,
+			oldRevisions,
+			newRevision,
+			replacedRevisionIdInfo,
+		);
 	}
 
 	return updated;
@@ -492,10 +502,11 @@ function replaceRegisterRevisions(
 	register: RegisterId,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
+	replacedRevisionIdInfo: ReplaceRevisionIdInfo,
 ): RegisterId {
 	return register === "self"
 		? register
-		: replaceAtomRevisions(register, oldRevisions, newRevision);
+		: replaceAtomRevisions(register, oldRevisions, newRevision, replacedRevisionIdInfo);
 }
 
 function getComposedReplaceDst(

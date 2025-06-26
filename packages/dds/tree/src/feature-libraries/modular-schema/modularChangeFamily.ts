@@ -1508,30 +1508,89 @@ export class ModularChangeFamily
 				? [undefined]
 				: change.revisions.map((revInfo) => revInfo.revision),
 		);
+		// TODO: remove after debugging
+		const test = JSON.stringify(change);
+
+		// Create idAllocator for new revision ids.
+		const idAllocator = idAllocatorFromMaxId();
+
+		// Map to keep track of the replaced (revision tag, old id) to the new id.
+		const newRevisionMap: ChangeAtomIdBTree<ChangesetLocalId> = newTupleBTree();
+
+		const replaceRevisionIdInfo: ReplaceRevisionIdInfo = {
+			idAllocator,
+			newRevisionMap,
+		};
+
 		const updatedFields = this.replaceFieldMapRevisions(
 			change.fieldChanges,
 			oldRevisions,
 			newRevision,
+			replaceRevisionIdInfo,
 		);
 
 		const updatedNodes: ChangeAtomIdBTree<NodeChangeset> = newTupleBTree();
 		for (const [[revision, id], nodeChangeset] of change.nodeChanges.entries()) {
-			updatedNodes.set(
-				[replaceRevision(revision, oldRevisions, newRevision), id],
-				this.replaceNodeChangesetRevisions(nodeChangeset, oldRevisions, newRevision),
-			);
+			if (oldRevisions.has(revision)) {
+				// If revision, id tuple exists in map, use the new id stored on that map.
+				// Otherwise, assign a new id and update the map.
+				const newId =
+					replaceRevisionIdInfo.newRevisionMap.get([revision, id]) ??
+					(replaceRevisionIdInfo.idAllocator.allocate() as ChangesetLocalId);
+				if (!replaceRevisionIdInfo.newRevisionMap.has([revision, id])) {
+					replaceRevisionIdInfo.newRevisionMap.set([revision, id], newId);
+				}
+				updatedNodes.set(
+					[replaceRevision(revision, oldRevisions, newRevision), newId],
+					this.replaceNodeChangesetRevisions(
+						nodeChangeset,
+						oldRevisions,
+						newRevision,
+						replaceRevisionIdInfo,
+					),
+				);
+			} else {
+				updatedNodes.set(
+					[replaceRevision(revision, oldRevisions, newRevision), id],
+					this.replaceNodeChangesetRevisions(
+						nodeChangeset,
+						oldRevisions,
+						newRevision,
+						replaceRevisionIdInfo,
+					),
+				);
+			}
 		}
 
 		const updatedNodeToParent: ChangeAtomIdBTree<FieldId> = newTupleBTree();
 		for (const [[revision, id], fieldId] of change.nodeToParent.entries()) {
-			updatedNodeToParent.set(
-				[replaceRevision(revision, oldRevisions, newRevision), id],
-				replaceFieldIdRevision(
-					normalizeFieldId(fieldId, change.nodeAliases),
-					oldRevisions,
-					newRevision,
-				),
-			);
+			if (oldRevisions.has(revision)) {
+				const newId =
+					replaceRevisionIdInfo.newRevisionMap.get([revision, id]) ??
+					(replaceRevisionIdInfo.idAllocator.allocate() as ChangesetLocalId);
+				if (!replaceRevisionIdInfo.newRevisionMap.has([revision, id])) {
+					replaceRevisionIdInfo.newRevisionMap.set([revision, id], newId);
+				}
+				updatedNodeToParent.set(
+					[replaceRevision(revision, oldRevisions, newRevision), newId],
+					replaceFieldIdRevision(
+						normalizeFieldId(fieldId, change.nodeAliases),
+						oldRevisions,
+						newRevision,
+						replaceRevisionIdInfo,
+					),
+				);
+			} else {
+				updatedNodeToParent.set(
+					[replaceRevision(revision, oldRevisions, newRevision), id],
+					replaceFieldIdRevision(
+						normalizeFieldId(fieldId, change.nodeAliases),
+						oldRevisions,
+						newRevision,
+						replaceRevisionIdInfo,
+					),
+				);
+			}
 		}
 
 		const updated: Mutable<ModularChangeset> = {
@@ -1551,15 +1610,30 @@ export class ModularChangeFamily
 		};
 
 		if (change.builds !== undefined) {
-			updated.builds = replaceIdMapRevisions(change.builds, oldRevisions, newRevision);
+			updated.builds = replaceIdMapRevisions(
+				change.builds,
+				oldRevisions,
+				newRevision,
+				replaceRevisionIdInfo,
+			);
 		}
 
 		if (change.destroys !== undefined) {
-			updated.destroys = replaceIdMapRevisions(change.destroys, oldRevisions, newRevision);
+			updated.destroys = replaceIdMapRevisions(
+				change.destroys,
+				oldRevisions,
+				newRevision,
+				replaceRevisionIdInfo,
+			);
 		}
 
 		if (change.refreshers !== undefined) {
-			updated.refreshers = replaceIdMapRevisions(change.refreshers, oldRevisions, newRevision);
+			updated.refreshers = replaceIdMapRevisions(
+				change.refreshers,
+				oldRevisions,
+				newRevision,
+				replaceRevisionIdInfo,
+			);
 		}
 
 		if (newRevision !== undefined) {
@@ -1573,6 +1647,8 @@ export class ModularChangeFamily
 			delete updated.revisions;
 		}
 
+		// TODO: remove after debugging
+		const test2 = JSON.stringify(updated);
 		return updated;
 	}
 
@@ -1580,6 +1656,7 @@ export class ModularChangeFamily
 		nodeChangeset: NodeChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
 		newRevision: RevisionTag | undefined,
+		replacedRevisionIdInfo?: ReplaceRevisionIdInfo,
 	): NodeChangeset {
 		const updated = { ...nodeChangeset };
 		if (nodeChangeset.fieldChanges !== undefined) {
@@ -1587,6 +1664,7 @@ export class ModularChangeFamily
 				nodeChangeset.fieldChanges,
 				oldRevisions,
 				newRevision,
+				replacedRevisionIdInfo,
 			);
 		}
 
@@ -1597,13 +1675,19 @@ export class ModularChangeFamily
 		fields: FieldChangeMap,
 		oldRevisions: Set<RevisionTag | undefined>,
 		newRevision: RevisionTag | undefined,
+		replacedRevisionIdInfo?: ReplaceRevisionIdInfo,
 	): FieldChangeMap {
 		const updatedFields: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of fields) {
 			const updatedFieldChange = getChangeHandler(
 				this.fieldKinds,
 				fieldChange.fieldKind,
-			).rebaser.replaceRevisions(fieldChange.change, oldRevisions, newRevision);
+			).rebaser.replaceRevisions(
+				fieldChange.change,
+				oldRevisions,
+				newRevision,
+				replacedRevisionIdInfo,
+			);
 
 			updatedFields.set(field, { ...fieldChange, change: brand(updatedFieldChange) });
 		}
@@ -1758,10 +1842,21 @@ function replaceIdMapRevisions<T>(
 	map: ChangeAtomIdBTree<T>,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
+	replacedRevisionIdInfo?: ReplaceRevisionIdInfo,
 ): ChangeAtomIdBTree<T> {
 	const updated: ChangeAtomIdBTree<T> = newTupleBTree();
 	for (const [[revision, id], value] of map.entries()) {
-		updated.set([replaceRevision(revision, oldRevisions, newRevision), id], value);
+		if (oldRevisions.has(revision) && replacedRevisionIdInfo !== undefined) {
+			const newId =
+				replacedRevisionIdInfo.newRevisionMap.get([revision, id]) ??
+				(replacedRevisionIdInfo.idAllocator.allocate() as ChangesetLocalId);
+			if (!replacedRevisionIdInfo.newRevisionMap.has([revision, id])) {
+				replacedRevisionIdInfo.newRevisionMap.set([revision, id], newId);
+			}
+			updated.set([replaceRevision(revision, oldRevisions, newRevision), newId], value);
+		} else {
+			updated.set([replaceRevision(revision, oldRevisions, newRevision), id], value);
+		}
 	}
 
 	return updated;
@@ -3040,6 +3135,7 @@ function replaceFieldIdRevision(
 	fieldId: FieldId,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
+	replacedRevisionIdInfo: ReplaceRevisionIdInfo,
 ): FieldId {
 	if (fieldId.nodeId === undefined) {
 		return fieldId;
@@ -3047,7 +3143,12 @@ function replaceFieldIdRevision(
 
 	return {
 		...fieldId,
-		nodeId: replaceAtomRevisions(fieldId.nodeId, oldRevisions, newRevision),
+		nodeId: replaceAtomRevisions(
+			fieldId.nodeId,
+			oldRevisions,
+			newRevision,
+			replacedRevisionIdInfo,
+		),
 	};
 }
 
@@ -3119,4 +3220,9 @@ function setInChangeAtomIdMap<T>(map: ChangeAtomIdBTree<T>, id: ChangeAtomId, va
 
 function areEqualFieldIds(a: FieldId, b: FieldId): boolean {
 	return areEqualChangeAtomIdOpts(a.nodeId, b.nodeId) && a.field === b.field;
+}
+
+export interface ReplaceRevisionIdInfo {
+	idAllocator: IdAllocator;
+	newRevisionMap: ChangeAtomIdBTree<ChangesetLocalId>;
 }
