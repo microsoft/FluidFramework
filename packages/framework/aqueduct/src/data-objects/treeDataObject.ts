@@ -36,11 +36,6 @@ const uninitializedErrorString =
  * }
  * ```
  *
- * @privateRemarks
- * TODO: Before promoting this beyond internal, we should consider alternative API patterns that don't depend on
- * sub-classing and don't leak Fluid concepts that should ideally be internal.
- * See `tree-react-api` for an example of a pattern that avoids unnecessary leakage of implementation details.
- *
  * @internal
  */
 export abstract class TreeDataObject<TTreeView> extends PureDataObject {
@@ -58,8 +53,11 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 
 	/**
 	 * Gets the underlying {@link @fluidframework/tree#ITree | tree}.
+	 * @remarks
+	 * Note: in most cases, you will want to use {@link TreeDataObject.treeView} instead.
+	 * Created once during initialization.
 	 */
-	public get sharedTree(): ITree {
+	protected get sharedTree(): ITree {
 		if (this.#sharedTree === undefined) {
 			throw new UsageError(uninitializedErrorString);
 		}

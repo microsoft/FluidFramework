@@ -1,5 +1,22 @@
 # @fluidframework/shared-object-base
 
+## 2.43.0
+
+### Minor Changes
+
+- Added an optional boolean parameter "fullTree" to SharedObject's summarizeCore method ([#24761](https://github.com/microsoft/FluidFramework/pull/24761)) [1e24967a8f9](https://github.com/microsoft/FluidFramework/commit/1e24967a8f943b0616d765c253fe079fc9c43619)
+
+  This parameter tells the shared object that it should generate a full tree summary, i.e., it must not summarize incrementally.
+  Currently no known `SharedObject`'s do incremental summaries; however, any that do exist or are made in the future must take this "fullTree" parameter into consideration to function correctly.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+Dependency updates only.
+
 ## 2.40.0
 
 ### Minor Changes

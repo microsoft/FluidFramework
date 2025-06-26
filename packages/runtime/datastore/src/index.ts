@@ -11,3 +11,8 @@ export {
 	mixinRequestHandler,
 	mixinSummaryHandler,
 } from "./dataStoreRuntime.js";
+export {
+	dataStoreCoreCompatDetails,
+	dataStoreCompatDetailsForRuntime,
+	runtimeSupportRequirementsForDataStore,
+} from "./dataStoreLayerCompatState.js";

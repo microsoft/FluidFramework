@@ -488,6 +488,24 @@ declare type current_as_old_for_Interface_Tagged = requireAssignableTo<TypeOnly<
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_TypedMessage": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_TypedMessage = requireAssignableTo<TypeOnly<old.TypedMessage>, TypeOnly<current.TypedMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_TypedMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_TypedMessage = requireAssignableTo<TypeOnly<current.TypedMessage>, TypeOnly<old.TypedMessage>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "TypeAlias_ConfigTypes": {"forwardCompat": false}
  */
 declare type old_as_current_for_TypeAlias_ConfigTypes = requireAssignableTo<TypeOnly<old.ConfigTypes>, TypeOnly<current.ConfigTypes>>

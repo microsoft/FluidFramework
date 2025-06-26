@@ -5,9 +5,7 @@
 
 import type { Heading } from "../Heading.js";
 
-import { DocumentationParentNodeBase, type DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
+import type { DocumentationNode } from "./DocumentationNode.js";
 
 /**
  * A document heading.
@@ -28,49 +26,48 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <h1>Documentation 101</h1>
  * ```
  *
+ * @sealed
  * @public
  */
-export class HeadingNode
-	extends DocumentationParentNodeBase
-	implements Omit<Heading, "title">
-{
+export class HeadingNode implements DocumentationNode, Heading {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Heading;
+	public readonly type = "heading";
 
 	/**
-	 * {@inheritDoc Heading.id}
+	 * {@inheritDoc DocumentationNode.isLiteral}
 	 */
-	public readonly id?: string;
+	public readonly isLiteral = false;
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
+	 * {@inheritDoc DocumentationNode.isParent}
 	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
-	public constructor(content: DocumentationNode[], id?: string) {
-		super(content);
-
-		this.id = id;
-	}
+	public readonly isParent = false;
 
 	/**
-	 * Generates a `HeadingNode` from the provided string.
-	 * @param text - The node contents. Note: this must not contain newline characters.
-	 * @param id - See {@link Heading.id}
-	 * @param level - See {@link Heading.level}
+	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
-	public static createFromPlainText(text: string, id?: string): HeadingNode {
-		return new HeadingNode([new PlainTextNode(text)], id);
+	public get isEmpty(): boolean {
+		return this.title.length === 0;
 	}
+
+	public constructor(
+		/**
+		 * {@inheritDoc Heading.title}
+		 */
+		public readonly title: string,
+
+		/**
+		 * {@inheritDoc Heading.id}
+		 */
+		public readonly id?: string,
+	) {}
 
 	/**
 	 * Generates a `HeadingNode` from the provided {@link Heading}.
 	 */
 	public static createFromPlainTextHeading(heading: Heading): HeadingNode {
-		return HeadingNode.createFromPlainText(heading.title, heading.id);
+		return new HeadingNode(heading.title, heading.id);
 	}
 }

@@ -34,6 +34,7 @@ import {
 	MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
 import { EpochTracker } from "./epochTracker.js";
@@ -60,6 +61,8 @@ export class OdspDelayLoadedDeltaStream {
 	private currentConnection?: OdspDocumentDeltaConnection;
 
 	private _relayServiceTenantAndSessionId: string | undefined;
+
+	private firstConnectionAttempt = true;
 
 	// Tracks the time at which the Policy Labels were updated the last time. This is used to resolve race conditions
 	// between label updates from the join session and the Fluid signals and they could have same or different timestamps.
@@ -180,6 +183,19 @@ export class OdspDelayLoadedDeltaStream {
 					sensitivityLabelsInfo: websocketEndpoint.sensitivityLabelsInfo,
 				});
 			}
+
+			const connectionId = uuid();
+			if (this.firstConnectionAttempt) {
+				this.firstConnectionAttempt = false;
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "FirstConnectionAttemptDetails",
+					details: {
+						connectionId,
+						tenantId: websocketEndpoint.tenantId,
+						documentId: websocketEndpoint.id,
+					},
+				});
+			}
 			try {
 				const connection = await this.createDeltaConnection(
 					websocketEndpoint.tenantId,
@@ -187,6 +203,7 @@ export class OdspDelayLoadedDeltaStream {
 					finalWebsocketToken,
 					client,
 					websocketEndpoint.deltaStreamSocketUrl,
+					connectionId,
 				);
 				connection.on("op", (documentId, ops: ISequencedDocumentMessage[]) => {
 					this.opsReceived(ops);
@@ -511,6 +528,7 @@ export class OdspDelayLoadedDeltaStream {
 	 * @param token - authorization token for delta service
 	 * @param client - information about the client
 	 * @param webSocketUrl - websocket URL
+	 * @param connectionId - connection ID for the connection
 	 */
 	private async createDeltaConnection(
 		tenantId: string,
@@ -518,6 +536,7 @@ export class OdspDelayLoadedDeltaStream {
 		token: string | null,
 		client: IClient,
 		webSocketUrl: string,
+		connectionId: string,
 	): Promise<OdspDocumentDeltaConnection> {
 		const startTime = performanceNow();
 		const connection = await OdspDocumentDeltaConnection.create(
@@ -530,6 +549,7 @@ export class OdspDelayLoadedDeltaStream {
 			60000,
 			this.epochTracker,
 			this.socketReferenceKeyPrefix,
+			connectionId,
 		);
 		const duration = performanceNow() - startTime;
 		// This event happens rather often, so it adds up to cost of telemetry.

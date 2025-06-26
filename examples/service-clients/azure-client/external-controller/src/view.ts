@@ -4,7 +4,7 @@
  */
 
 import { AzureMember, IAzureAudience } from "@fluidframework/azure-client";
-import type { LatestRaw, Presence } from "@fluidframework/presence/alpha";
+import type { LatestRaw, Presence } from "@fluidframework/presence/beta";
 
 import { ICustomUserDetails } from "./app.js";
 import { IDiceRollerController } from "./controller.js";

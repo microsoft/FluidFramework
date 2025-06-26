@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
 import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { decode, sign } from "jsonwebtoken";
-import { v4 as uuid, validate } from "uuid";
 import {
 	NetworkError,
 	isNetworkError,
@@ -25,13 +20,19 @@ import {
 	type IRevokedTokenChecker,
 	type ITenantManager,
 } from "@fluidframework/server-services-core";
-import type { RequestHandler, Request, Response } from "express";
-import type { Provider } from "nconf";
 import {
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import type { RequestHandler, Request, Response } from "express";
+// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
+// eslint-disable-next-line import/no-unresolved
+import { Params } from "express-serve-static-core";
+import { decode, sign } from "jsonwebtoken";
+import type { Provider } from "nconf";
+import { v4 as uuid, validate } from "uuid";
+
 import { getBooleanFromConfig, getNumberFromConfig } from "./configUtils";
 
 interface IKeylessTokenClaims extends ITokenClaims {
@@ -234,6 +235,7 @@ export async function verifyToken(
 	token: string,
 	tenantManager: ITenantManager,
 	options: IVerifyTokenOptions,
+	requiredScopes?: string[],
 ): Promise<void> {
 	if (options.requireDocumentId && !documentId) {
 		throw new NetworkError(403, "Missing documentId.");
@@ -264,6 +266,18 @@ export async function verifyToken(
 			);
 			if (isTokenRevoked) {
 				throw new NetworkError(403, "Permission denied. Access token has been revoked.");
+			}
+		}
+
+		if (requiredScopes) {
+			const hasAllRequiredScopes = requiredScopes.every((scope) =>
+				claims.scopes.includes(scope),
+			);
+			if (!hasAllRequiredScopes) {
+				throw new NetworkError(
+					403,
+					`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
+				);
 			}
 		}
 
@@ -335,6 +349,7 @@ export async function verifyToken(
 export function verifyStorageToken(
 	tenantManager: ITenantManager,
 	config: Provider,
+	requiredScopes: string[],
 	options: IVerifyTokenOptions = {
 		requireDocumentId: true,
 		ensureSingleUseToken: false,
@@ -381,6 +396,7 @@ export function verifyStorageToken(
 				getTokenFromRequest(request),
 				tenantManager,
 				moreOptions,
+				requiredScopes,
 			);
 			// Riddler is known to take too long sometimes. Check timeout before continuing.
 			getGlobalTimeoutContext().checkTimeout();

@@ -4,7 +4,6 @@
  */
 
 import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 
 /**
  * Plain text.
@@ -16,6 +15,7 @@ import { DocumentationNodeType } from "./DocumentationNodeType.js";
  * To include line breaks in your text, use {@link LineBreakNode} in a container node like
  * {@link SpanNode} or {@link ParagraphNode}.
  *
+ * @sealed
  * @public
  */
 export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
@@ -27,12 +27,7 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.PlainText;
-
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = true;
+	public readonly type = "text";
 
 	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}
@@ -40,11 +35,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 	public get isEmpty(): boolean {
 		return this.value.length === 0;
 	}
-
-	/**
-	 * Whether or not the text content has already been escaped.
-	 */
-	public readonly escaped: boolean;
 
 	/**
 	 * The text to display.
@@ -55,13 +45,11 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 		return this.value;
 	}
 
-	public constructor(text: string, escaped?: boolean) {
+	public constructor(text: string) {
 		super(text);
 
 		if (text.includes("\n")) {
 			throw new Error("Invalid value: Plain text nodes may not contain newline characters");
 		}
-
-		this.escaped = escaped ?? false;
 	}
 }

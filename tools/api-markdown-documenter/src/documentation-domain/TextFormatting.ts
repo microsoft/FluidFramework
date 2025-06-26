@@ -6,6 +6,7 @@
 /**
  * Text formatting options.
  *
+ * @sealed
  * @public
  */
 export interface TextFormatting {

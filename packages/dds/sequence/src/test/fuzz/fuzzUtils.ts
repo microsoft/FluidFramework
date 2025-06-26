@@ -483,6 +483,13 @@ export const baseModel: Omit<
 					break;
 				case "removeRange":
 				case "annotateRange":
+					if (op.start > 0) {
+						op.start--;
+					}
+					if (op.end > 0) {
+						op.end--;
+					}
+					break;
 				case "addInterval":
 				case "changeInterval": {
 					const { startPos, endPos, startSide, endSide } = endpointPosAndSide(
@@ -529,6 +536,7 @@ export const defaultFuzzOptions: Partial<DDSFuzzSuiteOptions> = {
 	},
 	defaultTestCount: 100,
 	saveFailures: { directory: path.join(_dirname, "../../src/test/fuzz/results") },
+	testSquashResubmit: true,
 };
 
 export function makeIntervalOperationGenerator(

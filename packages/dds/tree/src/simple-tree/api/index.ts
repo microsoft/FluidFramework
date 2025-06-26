@@ -45,19 +45,14 @@ export {
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
 export {
+	getIdentifierFromNode,
+	getPropertyKeyFromStoredKey,
+	getStoredKey,
 	treeNodeApi,
 	type TreeNodeApi,
 	tryGetSchema,
-	getStoredKey,
-	getPropertyKeyFromStoredKey,
-	getIdentifierFromNode,
 } from "./treeNodeApi.js";
-export {
-	createFromInsertable,
-	cursorFromInsertable,
-	createFromCursor,
-	createFromMapTree,
-} from "./create.js";
+export { createFromCursor } from "./create.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
