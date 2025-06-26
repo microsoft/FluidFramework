@@ -96,7 +96,7 @@ describe("Loader", () => {
 
 				await new Promise((resolve) => {
 					deltaManager.on("connect", resolve);
-					deltaManager.connect({ reason: { text: "test" } });
+					deltaManager.connect({ reason: { text: "test", error: undefined } });
 				});
 			}
 

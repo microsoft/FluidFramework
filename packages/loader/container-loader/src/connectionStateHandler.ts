@@ -317,6 +317,7 @@ export class ConnectionStateCatchup extends ConnectionStateHandlerPassThrough {
 		this._connectionState = ConnectionState.Connected;
 		this.inputs.connectionStateChanged(ConnectionState.Connected, ConnectionState.CatchingUp, {
 			text: "caught up",
+			error: undefined,
 		});
 	};
 }

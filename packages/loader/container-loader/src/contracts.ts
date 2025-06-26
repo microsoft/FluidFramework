@@ -28,9 +28,9 @@ export enum ReconnectMode {
 	Enabled = "Enabled",
 }
 
-export interface IConnectionStateChangeReason<T extends IErrorBase = IErrorBase> {
+export interface IConnectionStateChangeReason<T extends IErrorBase | undefined = IErrorBase> {
 	text: string;
-	error?: T | undefined;
+	error: T | undefined;
 }
 
 /**
