@@ -172,6 +172,26 @@ function createDatastoreSignal(
 	};
 }
 
+// Helper for creating signals that would be submitted by the runtime (no clientId)
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createExpectedDatastoreSignal(
+	clientId: string,
+	workspaceData: Record<string, unknown>,
+	timestamp = 1030,
+) {
+	return {
+		type: "Pres:DatastoreUpdate" as const,
+		content: {
+			sendTimestamp: timestamp,
+			avgLatency: 10,
+			data: {
+				...systemWorkspace,
+				...workspaceData,
+			},
+		},
+	};
+}
+
 // Convenience functions for common patterns
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createStateUpdateSignal(
@@ -219,6 +239,35 @@ function createMapKeyUpdateSignal(
 		rev,
 		timestamp,
 	);
+}
+
+// Convenience functions for expected signals (no clientId)
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createExpectedStateUpdateSignal(
+	clientId: string,
+	stateName: string,
+	attendeeId: string,
+	value: TestData,
+	rev = 0,
+	timestamp = 1030,
+) {
+	const stateData = createStateData(attendeeId, value, rev, timestamp);
+	const workspaceData = createWorkspaceData(stateName, stateData);
+	return createExpectedDatastoreSignal(clientId, workspaceData, timestamp);
+}
+
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function createExpectedMapUpdateSignal(
+	clientId: string,
+	stateName: string,
+	attendeeId: string,
+	items: Record<string, TestData>,
+	rev = 0,
+	timestamp = 1030,
+) {
+	const mapData = createMapStateData(attendeeId, items, rev, timestamp);
+	const workspaceData = createWorkspaceData(stateName, mapData);
+	return createExpectedDatastoreSignal(clientId, workspaceData, timestamp);
 }
 
 interface ValidatorTestParams {
@@ -526,7 +575,7 @@ describe("Presence", () => {
 
 			beforeEach(() => {
 				// Setup workspace initialization signal
-				const sig = createStateUpdateSignal(connectionId2, "count", attendeeId2, { num: 0 });
+				const sig = createExpectedStateUpdateSignal(connectionId2, "count", attendeeId2, { num: 0 });
 				runtime.signalsExpected.push([
 					sig,
 					// {
@@ -791,7 +840,7 @@ describe("Presence", () => {
 			beforeEach(() => {
 				// Add expected workspace initialization signal
 				runtime.signalsExpected.push([
-					createMapUpdateSignal(connectionId2, "count", attendeeId2, {
+					createExpectedMapUpdateSignal(connectionId2, "count", attendeeId2, {
 						"key1": { num: 0 },
 						"key2": { num: 0 },
 					}),

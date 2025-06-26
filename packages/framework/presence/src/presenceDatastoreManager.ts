@@ -178,7 +178,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				avgLatency: this.averageLatency,
 				// @ts-expect-error -- FIXME - Type 'PresenceDatastore' is not assignable to type '{ [x: `s:${string}:${string}`]: { [x: string]: { [x: string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58"; } & { readonly AttendeeId: "AttendeeId"; }]: { ...; } | { ...; }; }; }; [x: `n:${string}:${string}`]: { ...; }; "system:presence...'.
 				// '`s:${string}:${string}`' index signatures are incompatible.
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 				updateProviders,
 			},
 		});
@@ -331,6 +331,61 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
+	/**
+	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
+	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
+	 */
+	private stripValidationMetadata(datastore: PresenceDatastore): PresenceDatastore {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		const stripped = {} as PresenceDatastore;
+
+		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
+			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			stripped[workspaceAddress] = {} as any;
+
+			for (const [valueKey, clientRecord] of Object.entries(workspace)) {
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				(stripped[workspaceAddress] as any)[valueKey] = {};
+
+				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
+					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					(stripped[workspaceAddress] as any)[valueKey][attendeeId] =
+						this.stripValidationFromValueData(valueData);
+				}
+			}
+		}
+
+		return stripped;
+	}
+
+	/**
+	 * Strips validation metadata from individual value data entries.
+	 */
+	private stripValidationFromValueData(valueData: any): any {
+		if (valueData === null || typeof valueData !== "object") {
+			return valueData;
+		}
+
+		// Handle directory structures (with "items" property)
+		if ("items" in valueData && typeof valueData.items === "object") {
+			const stripped = {
+				rev: valueData.rev,
+				items: {} as any,
+			};
+
+			for (const [key, item] of Object.entries(valueData.items)) {
+				stripped.items[key] = this.stripValidationFromValueData(item);
+			}
+
+			return stripped;
+		}
+
+		// Handle value states - remove validatedValue but keep other properties
+		const stripped = { ...valueData };
+		delete stripped.validatedValue;
+		return stripped;
+	}
+
 	private broadcastAllKnownState(): void {
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
@@ -340,7 +395,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				isComplete: true,
 				// @ts-expect-error -- FIXME - Type 'PresenceDatastore' is not assignable to type '{ [x: `s:${string}:${string}`]: { [x: string]: { [x: string & { readonly StableId: "53172b0d-a3d5-41ea-bd75-b43839c97f5a"; } & { readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58"; } & { readonly AttendeeId: "AttendeeId"; }]: { ...; } | { ...; }; }; }; [x: `n:${string}:${string}`]: { ...; }; "system:presence...'.
 				// '`s:${string}:${string}`' index signatures are incompatible.
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 			},
 		});
 		this.refreshBroadcastRequested = false;
