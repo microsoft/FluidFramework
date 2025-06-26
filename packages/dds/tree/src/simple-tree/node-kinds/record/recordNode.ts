@@ -72,6 +72,9 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 				if (key === typeNameSymbol) {
 					return schema.identifier;
 				}
+				if (key === Symbol.iterator) {
+					return () => recordIterator(proxy);
+				}
 
 				return false;
 			}
@@ -120,6 +123,7 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 			if (typeof key === "symbol") {
 				return undefined;
 			}
+
 			const innerNode = getOrCreateInnerNode(proxy);
 			const field = innerNode.tryGetField(brand(key));
 
@@ -164,19 +168,6 @@ abstract class CustomRecordNodeBase<
 		input?: InternalTreeNode | RecordNodeInsertableData<TAllowedTypes> | undefined,
 	) {
 		super(input ?? {});
-	}
-
-	public *[Symbol.iterator](): IterableIterator<
-		[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
-	> {
-		// TODO: this is silly
-		const entries = Object.entries(this) as [
-			string,
-			TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
-		][];
-		for (const [key, value] of entries) {
-			yield [key, value];
-		}
 	}
 }
 
@@ -335,6 +326,12 @@ export function recordSchema<
 		public get [typeSchemaSymbol](): Output {
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
+
+		public [Symbol.iterator](): IterableIterator<
+			[string, TreeNodeFromImplicitAllowedTypes<TUnannotatedAllowedTypes>]
+		> {
+			return recordIterator(this);
+		}
 	}
 
 	type Output = RecordNodeCustomizableSchema<
@@ -352,4 +349,12 @@ export function recordSchema<
 
 	const output: Output = Schema;
 	return output;
+}
+
+function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
+	record: TreeRecordNode<TAllowedTypes>,
+): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
+	for (const [key, value] of Object.entries(record)) {
+		yield [key, value];
+	}
 }

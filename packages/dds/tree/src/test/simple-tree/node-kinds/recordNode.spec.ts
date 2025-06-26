@@ -110,6 +110,24 @@ describe("RecordNode", () => {
 					["bar", 2],
 				]);
 			});
+
+			it("spread into array", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+				const spread = [...record];
+				assert.deepEqual(spread, [
+					["foo", 1],
+					["bar", 2],
+				]);
+			});
+
+			it("spread into object", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+				const spread = { ...record };
+				assert.deepEqual(spread, {
+					foo: 1,
+					bar: 2,
+				});
+			});
 		});
 	}
 
@@ -304,6 +322,26 @@ describe("RecordNode", () => {
 				["foo", 1],
 				["bar", bar],
 			]);
+		});
+
+		it("spread into array", () => {
+			const bar = new RecursiveRecordSchema({ x: 42 });
+			const record = new RecursiveRecordSchema({ foo: 1, bar });
+			const spread = [...record];
+			assert.deepEqual(spread, [
+				["foo", 1],
+				["bar", bar],
+			]);
+		});
+
+		it("spread into object", () => {
+			const bar = new RecursiveRecordSchema({ x: 42 });
+			const record = new RecursiveRecordSchema({ foo: 1, bar });
+			const spread = { ...record };
+			assert.deepEqual(spread, {
+				foo: 1,
+				bar,
+			});
 		});
 	});
 });
