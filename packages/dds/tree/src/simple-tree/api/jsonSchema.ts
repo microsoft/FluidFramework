@@ -126,7 +126,8 @@ export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, 
  */
 export interface JsonStringKeyPatternProperties {
 	/**
-	 * This format allows for any (JSON-compliant) key, but restricts the allowed types to only those specified.
+	 * This format allows for any string key that can appear in tree schema in a way that is JSON schema compatible,
+	 * but restricts the value to the specified allowed types of the value to only those specified.
 	 */
 	"^.*$": JsonFieldSchema;
 }
