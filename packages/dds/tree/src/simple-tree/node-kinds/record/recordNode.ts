@@ -56,9 +56,6 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
  * @param dispatchTarget - Provides the functionally of the node, implementing all fields.
  */
 function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): TreeRecordNode {
-	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
-	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
-	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
 	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
 		get: (target, key, receiver): unknown => {
 			if (typeof key === "symbol") {
