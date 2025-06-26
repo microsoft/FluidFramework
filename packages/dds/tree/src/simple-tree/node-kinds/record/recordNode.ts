@@ -160,18 +160,22 @@ abstract class CustomRecordNodeBase<
 > extends TreeNodeValid<RecordNodeInsertableData<TAllowedTypes>> {
 	public static readonly kind = NodeKind.Record;
 
-	public constructor(input?: InternalTreeNode | RecordNodeInsertableData<TAllowedTypes> | undefined) {
+	public constructor(
+		input?: InternalTreeNode | RecordNodeInsertableData<TAllowedTypes> | undefined,
+	) {
 		super(input ?? {});
 	}
 
-	public *[Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
+	public *[Symbol.iterator](): IterableIterator<
+		[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
+	> {
 		// TODO: this is silly
-		const entries = Object.entries(this) as [string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>][];
+		const entries = Object.entries(this) as [
+			string,
+			TreeNodeFromImplicitAllowedTypes<TAllowedTypes>,
+		][];
 		for (const [key, value] of entries) {
-			yield [
-				key,
-				value,
-			];
+			yield [key, value];
 		}
 	}
 }
