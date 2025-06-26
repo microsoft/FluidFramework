@@ -186,6 +186,18 @@ export interface IFluidContainer<TContainerSchema extends ContainerSchema = Cont
 	attach(props?: ContainerAttachProps): Promise<string>;
 
 	/**
+	 * Capture the state of a container that is not attached or closed.
+	 *
+	 * @remarks
+	 *
+	 * This should only be called when the container is in the
+	 * {@link @fluidframework/container-definitions#AttachState.Detached} state.
+	 *
+	 * This can be determined by observing {@link IFluidContainer.attachState}.
+	 */
+	serialize(): string;
+
+	/**
 	 * Attempts to connect the container to the delta stream and process operations.
 	 *
 	 * @throws Will throw an error if connection is unsuccessful.
@@ -387,6 +399,16 @@ class FluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema>
 
 	public async create<T extends IFluidLoadable>(objectClass: SharedObjectKind<T>): Promise<T> {
 		return this.rootDataObject.create(objectClass);
+	}
+
+	public serialize(): string {
+		if (this.container.attachState !== AttachState.Detached) {
+			throw new Error("Cannot serialize container. Container is not in detached state.");
+		}
+		if (this.container.closed) {
+			throw new Error("Cannot serialize container. Container is closed.");
+		}
+		return this.container.serialize();
 	}
 
 	public dispose(): void {
