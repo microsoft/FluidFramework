@@ -1245,6 +1245,8 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly disconnectHandlerInternal = (disconnectReason?: IAnyDriverError): void => {
 		// Note: we might get multiple disconnect calls on same socket, as early disconnect notification
 		// ("server_disconnect", ODSP-specific) is mapped to "disconnect"
+		// Before 2.50 we used to always include a genericNetworkError on the disconnect event even during clean
+		// disconnects; now we don't, but a full refactor/rename in this space was out of scope for that PR.
 		this.reconnectOnError(this.defaultReconnectionMode, disconnectReason);
 	};
 
