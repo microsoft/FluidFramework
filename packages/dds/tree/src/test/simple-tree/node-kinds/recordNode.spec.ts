@@ -90,6 +90,20 @@ describe("RecordNode", () => {
 					["bar", 2],
 				]);
 			});
+
+			it("iteration", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+
+				const output: [string, number][] = [];
+				for (const entry of record) {
+					output.push(entry);
+				}
+
+				assert.deepEqual(output, [
+					["foo", 1],
+					["bar", 2],
+				]);
+			});
 		});
 	}
 

@@ -30,9 +30,11 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
  *
  * @alpha
  */
-export interface TreeRecordNode<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
+export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends TreeNode,
-		Record<string, TreeNodeFromImplicitAllowedTypes<T>> {}
+		Record<string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>> {
+			[Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]>
+		}
 
 /**
  * Content which can be used to construct a Record node, explicitly or implicitly.

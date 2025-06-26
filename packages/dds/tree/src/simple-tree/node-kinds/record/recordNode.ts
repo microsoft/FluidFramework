@@ -156,12 +156,23 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 }
 
 abstract class CustomRecordNodeBase<
-	const T extends ImplicitAllowedTypes,
-> extends TreeNodeValid<RecordNodeInsertableData<T>> {
+	const TAllowedTypes extends ImplicitAllowedTypes,
+> extends TreeNodeValid<RecordNodeInsertableData<TAllowedTypes>> {
 	public static readonly kind = NodeKind.Record;
 
-	public constructor(input?: InternalTreeNode | RecordNodeInsertableData<T> | undefined) {
+	public constructor(input?: InternalTreeNode | RecordNodeInsertableData<TAllowedTypes> | undefined) {
 		super(input ?? {});
+	}
+
+	public *[Symbol.iterator](): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
+		// TODO: this is silly
+		const entries = Object.entries(this) as [string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>][];
+		for (const [key, value] of entries) {
+			yield [
+				key,
+				value,
+			];
+		}
 	}
 }
 
