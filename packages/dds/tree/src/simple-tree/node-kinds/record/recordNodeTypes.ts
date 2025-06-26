@@ -26,7 +26,9 @@ import type { RestrictiveStringRecord } from "../../../util/index.js";
  * A {@link TreeNode} which models a TypeScript {@link https://www.typescriptlang.org/docs/handbook/utility-types.html#recordkeys-type | record}.
  *
  * @remarks
- * Record nodes consist of a type which specifies which {@link TreeNodeSchema} may appear as child elements (see {@link TreeNodeApi.schema} and {@link SchemaFactoryAlpha.recordAlpha}).
+ * Due to {@link https://github.com/microsoft/TypeScript/issues/43826}, we can't enable implicit construction of {@link TreeNode|TreeNodes} for setters.
+ * Therefore code assigning to these fields must explicitly construct nodes using the schema's constructor or create method,
+ * or using some other method like {@link (TreeAlpha:interface).create}.
  *
  * @alpha
  */
