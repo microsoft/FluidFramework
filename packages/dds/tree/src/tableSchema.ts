@@ -422,7 +422,7 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- The record's values are non-optional, so setting `undefined` is not supported.
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- The record's values are non-optional, so setting `undefined` as a means to remove the cell is not supported.
 				delete this.cells[columnId];
 
 				return cell;
