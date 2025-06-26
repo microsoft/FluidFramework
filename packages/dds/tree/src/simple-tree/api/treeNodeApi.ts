@@ -38,7 +38,7 @@ import {
 	getOrCreateInnerNode,
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
@@ -193,7 +193,7 @@ export const treeNodeApi: TreeNodeApi = {
 						);
 						listener({ changedProperties });
 					});
-				} else if (nodeSchema.kind === NodeKind.Array) {
+				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
