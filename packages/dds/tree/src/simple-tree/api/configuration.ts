@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, fail, oob } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	debugAssert,
+	fail,
+	oob,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -15,9 +21,8 @@ import {
 	markSchemaMostDerived,
 	normalizeFieldSchema,
 } from "../schemaTypes.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
@@ -316,20 +321,37 @@ export function checkUnion(
 		}
 		checked.add(schema);
 
-		if (schema instanceof LeafNodeSchema) {
-			// nothing to do
-		} else if (isObjectNodeSchema(schema)) {
-			objects.push(schema);
-			for (const key of schema.fields.keys()) {
-				getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
+		switch (schema.kind) {
+			case NodeKind.Leaf: {
+				// nothing to do
+				break;
 			}
-		} else if (isArrayNodeSchema(schema)) {
-			arrays.push(schema);
-		} else if (isMapNodeSchema(schema)) {
-			maps.push(schema);
-		} else {
-			assert(isRecordNodeSchema(schema), 0x9e7 /* invalid schema */);
-			records.push(schema);
+			case NodeKind.Object: {
+				assert(isObjectNodeSchema(schema), "Expected object schema.");
+				objects.push(schema);
+				for (const key of schema.fields.keys()) {
+					getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
+				}
+				break;
+			}
+			case NodeKind.Array: {
+				assert(isArrayNodeSchema(schema), "Expected array schema.");
+				arrays.push(schema);
+				break;
+			}
+			case NodeKind.Map: {
+				assert(isMapNodeSchema(schema), "Expected map schema.");
+				maps.push(schema);
+				break;
+			}
+			case NodeKind.Record: {
+				assert(isRecordNodeSchema(schema), "Expected record schema.");
+				records.push(schema);
+				break;
+			}
+			default: {
+				unreachableCase(schema.kind);
+			}
 		}
 	}
 
