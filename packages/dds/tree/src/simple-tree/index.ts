@@ -211,6 +211,7 @@ export {
 	type InsertableObjectFromSchemaRecord,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaPrivate,
 	isObjectNodeSchema,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,

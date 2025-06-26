@@ -15,12 +15,16 @@ import {
 	markSchemaMostDerived,
 	normalizeFieldSchema,
 } from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 import {
+	isArrayNodeSchema,
+	isMapNodeSchema,
 	isObjectNodeSchema,
 	isRecordNodeSchema,
+	type ArrayNodeSchema,
+	type MapNodeSchema,
 	type ObjectNodeSchema,
 	type RecordNodeSchema,
 } from "../node-kinds/index.js";
@@ -298,8 +302,8 @@ export function checkUnion(
 	ambiguityErrors: string[],
 ): void {
 	const checked: Set<TreeNodeSchema> = new Set();
-	const maps: TreeNodeSchema[] = [];
-	const arrays: TreeNodeSchema[] = [];
+	const maps: MapNodeSchema[] = [];
+	const arrays: ArrayNodeSchema[] = [];
 	const records: RecordNodeSchema[] = [];
 	const objects: ObjectNodeSchema[] = [];
 
@@ -319,9 +323,9 @@ export function checkUnion(
 			for (const key of schema.fields.keys()) {
 				getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
 			}
-		} else if (schema.kind === NodeKind.Array) {
+		} else if (isArrayNodeSchema(schema)) {
 			arrays.push(schema);
-		} else if (schema.kind === NodeKind.Map) {
+		} else if (isMapNodeSchema(schema)) {
 			maps.push(schema);
 		} else {
 			assert(isRecordNodeSchema(schema), 0x9e7 /* invalid schema */);
