@@ -57,7 +57,7 @@ export class ReplayDocumentService
 		 * The compatibility details of the base Driver layer that is exposed to the Loader layer
 		 * for validating Loader-Driver compatibility.
 		 */
-		public readonly ILayerCompatDetails: ILayerCompatDetails | undefined,
+		public readonly ILayerCompatDetails?: ILayerCompatDetails,
 	) {
 		super();
 	}
