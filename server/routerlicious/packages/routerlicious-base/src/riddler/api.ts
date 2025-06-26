@@ -115,7 +115,7 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
+		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant, bypassCache);
 		handleResponse(tenantP, response);
 	});
 

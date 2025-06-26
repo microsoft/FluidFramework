@@ -277,6 +277,7 @@ export class TenantManager {
 			[BaseTelemetryProperties.tenantId]: tenantId,
 			includeDisabledTenant,
 			isKeylessAccessValidation,
+			bypassCache,
 		};
 
 		// Try validating with Key 1
