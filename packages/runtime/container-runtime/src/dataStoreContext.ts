@@ -579,7 +579,11 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * ???
+	 * Gets the factory that would be used to create the entry point for this datastore.
+	 *
+	 * @see {@link @fluidframework/container-runtime-definitions#IContainerRuntimeBase}.
+	 * @see {@link FluidDataStoreContext.pkg}.
+	 * @see {@link IFluidDataStoreContext.packagePath}.
 	 */
 	protected async factoryFromPackagePath(): Promise<IFluidDataStoreFactory> {
 		const packages = this.pkg;
