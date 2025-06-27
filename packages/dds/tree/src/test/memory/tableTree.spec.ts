@@ -33,14 +33,14 @@ function createUndoBenchmark({
 	tableSize,
 	initialValue,
 	operationCount,
-	stackCount,
+	editsPerOperation,
 	operation,
 }: {
 	title: string;
 	tableSize: number;
 	initialValue: string;
 	operationCount: number;
-	stackCount: number;
+	editsPerOperation: number;
 	operation: (tree: TableTreeDefinition, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
@@ -50,7 +50,7 @@ function createUndoBenchmark({
 
 		public async run(): Promise<void> {
 			assert(this.undoRedoManager !== undefined, "undoRedoManager is not initialized");
-			for (let i = 0; i < stackCount; i++) {
+			for (let i = 0; i < operationCount * editsPerOperation; i++) {
 				this.undoRedoManager.undo();
 			}
 			assert(!this.undoRedoManager.canUndo);
@@ -78,14 +78,14 @@ function createRedoBenchmark({
 	tableSize,
 	initialValue,
 	operationCount,
-	stackCount,
+	editsPerOperation,
 	operation,
 }: {
 	title: string;
 	tableSize: number;
 	initialValue: string;
 	operationCount: number;
-	stackCount: number;
+	editsPerOperation: number;
 	operation: (tree: TableTreeDefinition, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
@@ -95,7 +95,7 @@ function createRedoBenchmark({
 
 		public async run(): Promise<void> {
 			assert(this.undoRedoManager !== undefined, "undoRedoManager is not initialized");
-			for (let i = 0; i < stackCount; i++) {
+			for (let i = 0; i < operationCount * editsPerOperation; i++) {
 				this.undoRedoManager.redo();
 			}
 			assert(!this.undoRedoManager.canRedo);
@@ -105,10 +105,10 @@ function createRedoBenchmark({
 			this.localTree = createTableTree(tableSize, initialValue);
 			this.undoRedoManager = new UndoRedoManager(this.localTree.treeView);
 			operation(this.localTree, operationCount);
-			for (let i = 0; i < stackCount; i++) {
+			for (let i = 0; i < operationCount * editsPerOperation; i++) {
 				this.undoRedoManager.undo();
 			}
-			assert(this.undoRedoManager.canUndo);
+			assert(!this.undoRedoManager.canUndo);
 		}
 
 		public afterIteration(): void {
@@ -189,7 +189,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -207,7 +207,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -248,7 +248,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -266,7 +266,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -309,7 +309,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 2,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -329,7 +329,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 2,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -375,7 +375,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -393,7 +393,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -434,7 +434,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -452,7 +452,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -495,7 +495,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 2,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -515,7 +515,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 2,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -563,7 +563,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 4,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -585,7 +585,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 4,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -637,7 +637,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
@@ -662,7 +662,7 @@ describe("SharedTree table APIs memory usage", () => {
 						tableSize,
 						initialValue: cellValue,
 						operationCount: count,
-						stackCount: count,
+						editsPerOperation: 1,
 						operation: (tree, operationCount) => {
 							const { table } = tree;
 							for (let i = 0; i < operationCount; i++) {
