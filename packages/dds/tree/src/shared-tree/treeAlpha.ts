@@ -587,12 +587,12 @@ export const TreeAlpha: TreeAlpha = {
 				return getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
 			}
 			case NodeKind.Map:
-			case NodeKind.Record:
 				if (typeof propertyKey !== "string") {
-					// Map and record nodes only support string keys.
+					// Map nodes only support string keys.
 					return undefined;
 				}
 			// Fall through
+			case NodeKind.Record:
 			case NodeKind.Object: {
 				let storedKey: string | number = propertyKey;
 				if (isObjectNodeSchema(schema)) {
