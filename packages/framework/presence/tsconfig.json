@@ -6,7 +6,7 @@
 	// Ideally, tsconfig.main.json would be the tsconfig.json, but there are plenty of
 	// tools including api-extractor that would need reconfigured to use that pattern.
 	"extends": "./tsconfig.main.json",
-	"include": ["src/experimentalAccess.ts", "src/index.ts"],
+	"include": ["src/getPresence.ts", "src/index.ts"],
 	"exclude": [],
 	"compilerOptions": {
 		// Could alternatively build with exactOptionalPropertyTypes: false.
