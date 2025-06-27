@@ -231,7 +231,7 @@ describe("RecordNode", () => {
 				assert(!("baz" in record));
 			});
 
-			it("iteration", () => {
+			it("for...of", () => {
 				const record = init(schemaType, { foo: 1, bar: 2 });
 
 				const output: [string, number][] = [];
@@ -243,6 +243,18 @@ describe("RecordNode", () => {
 					["foo", 1],
 					["bar", 2],
 				]);
+			});
+
+			it("for...in", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+
+				const output: string[] = [];
+				// eslint-disable-next-line guard-for-in, no-restricted-syntax -- Explicitly testing this scenario
+				for (const key in record) {
+					output.push(key);
+				}
+
+				assert.deepEqual(output, ["foo", "bar"]);
 			});
 
 			it("spread into array", () => {
@@ -380,7 +392,7 @@ describe("RecordNode", () => {
 			assert(!("y" in record.bar));
 		});
 
-		it("iteration", () => {
+		it("for...of", () => {
 			const bar = new RecursiveRecordSchema({ x: 42 });
 			const record = new RecursiveRecordSchema({ foo: 1, bar });
 
@@ -393,6 +405,19 @@ describe("RecordNode", () => {
 				["foo", 1],
 				["bar", bar],
 			]);
+		});
+
+		it("for...in", () => {
+			const bar = new RecursiveRecordSchema({ x: 42 });
+			const record = new RecursiveRecordSchema({ foo: 1, bar });
+
+			const output: string[] = [];
+			// eslint-disable-next-line guard-for-in, no-restricted-syntax -- Explicitly testing this scenario
+			for (const key in record) {
+				output.push(key);
+			}
+
+			assert.deepEqual(output, ["foo", "bar"]);
 		});
 
 		it("spread into array", () => {
