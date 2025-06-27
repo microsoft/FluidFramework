@@ -412,7 +412,9 @@ export function convertSummaryTreeToITree(summaryTree: ISummaryTree): ITree {
 			}
 
 			case SummaryType.Handle: {
-				throw new Error("Should not have Handle type in summary tree");
+				throw new Error(
+					`Should not have Handle type in summary tree. Handle: ${value.handle}`,
+				);
 			}
 
 			default:

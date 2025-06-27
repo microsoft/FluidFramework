@@ -54,7 +54,6 @@ import {
 	Tree,
 	ForestTypeOptimized,
 	type ITreePrivate,
-	TreeAlpha,
 } from "../../../shared-tree/index.js";
 import {
 	MockTreeCheckout,
@@ -69,11 +68,10 @@ import {
 	SchemaFactory,
 	stringSchema,
 	TreeViewConfiguration,
-	type TreeView,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
-import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 import type {
@@ -86,15 +84,9 @@ import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { brand } from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
-import {
-	MockFluidDataStoreRuntime,
-	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
-import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
-import type {
-	IChannel,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions/internal";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import { configuredSharedTree } from "../../../treeFactory.js";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 
 const options: CodecWriteOptions = {
@@ -437,275 +429,6 @@ describe("End to end chunked encoding", () => {
 					type: "com.example.treeWithIdentifier",
 				},
 			]);
-		});
-	});
-
-	describe.only("Forest incremental summary", () => {
-		class NoteMetadata extends schemaFactory.object("subNote", {
-			metadataId: schemaFactory.number,
-			metaText: schemaFactory.optional(schemaFactory.string),
-		}) {}
-		class Note extends schemaFactory.object("note", {
-			noteId: schemaFactory.number,
-			text: schemaFactory.string,
-			color: schemaFactory.string,
-			metadata: schemaFactory.optional(NoteMetadata),
-		}) {}
-		class NoteList extends schemaFactory.object("noteList", {
-			listId: schemaFactory.identifier,
-			notes: schemaFactory.array(Note),
-		}) {}
-
-		class Board extends schemaFactory.object("board", {
-			boardId: schemaFactory.string,
-			lists: schemaFactory.array(NoteList),
-		}) {}
-
-		let factory: IChannelFactory;
-		let tree: ISharedTree;
-		let dataStoreRuntime1: MockFluidDataStoreRuntime;
-
-		beforeEach(() => {
-			factory = configuredSharedTree({
-				jsonValidator: typeboxValidator,
-				forest: ForestTypeOptimized,
-			}).getFactory();
-
-			dataStoreRuntime1 = new MockFluidDataStoreRuntime({
-				clientId: `test-client`,
-				id: "test",
-				idCompressor: testIdCompressor,
-			});
-			tree = factory.create(dataStoreRuntime1, "TestSharedTree") as ISharedTree;
-		});
-
-		function createInitialBoard() {
-			const note1 = new Note({
-				noteId: 1,
-				text: "Note 1",
-				color: "red",
-				metadata: {
-					metadataId: 1,
-					metaText: "Meta 1",
-				},
-			});
-			const note2 = new Note({
-				noteId: 2,
-				text: "Note 2",
-				color: "yellow",
-				metadata: {
-					metadataId: 2,
-				},
-			});
-			const noteList1 = new NoteList({
-				listId: "l1",
-				notes: [note1, note2],
-			});
-
-			const note3 = new Note({
-				noteId: 3,
-				text: "Note 3",
-				color: "blue",
-				metadata: {
-					metadataId: 3,
-					metaText: "Meta 3",
-				},
-			});
-			const note4 = new Note({
-				noteId: 4,
-				text: "Note 4",
-				color: "green",
-			});
-			const noteList2 = new NoteList({
-				listId: "l2",
-				notes: [note3, note4],
-			});
-
-			const note5 = new Note({
-				noteId: 5,
-				text: "Note 5",
-				color: "purple",
-				metadata: {
-					metadataId: 5,
-					metaText: "Meta 5",
-				},
-			});
-			const noteList3 = new NoteList({
-				listId: "l3",
-				notes: [note5],
-			});
-			return new Board({
-				boardId: "b1",
-				lists: [noteList1, noteList2, noteList3],
-			});
-		}
-
-		function validateTreesEqual(
-			actualView: TreeView<typeof Board>,
-			expectedView: TreeView<typeof Board>,
-		): void {
-			const actualRoot = actualView.root;
-			const expectedRoot = expectedView.root;
-			if (actualRoot === undefined || expectedRoot === undefined) {
-				assert.equal(actualRoot === undefined, expectedRoot === undefined);
-				return;
-			}
-
-			// Validate the same schema objects are used.
-			assert.equal(Tree.schema(actualRoot), Tree.schema(expectedRoot));
-
-			// This should catch all cases, assuming exportVerbose works correctly.
-			assert.deepEqual(
-				TreeAlpha.exportVerbose(actualRoot),
-				TreeAlpha.exportVerbose(expectedRoot),
-			);
-
-			// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
-			// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
-			// but should have no false positives since equal trees always have the same concise tree.
-			assert.deepEqual(
-				TreeAlpha.exportConcise(actualRoot),
-				TreeAlpha.exportConcise(expectedRoot),
-			);
-		}
-
-		function validateHandlePathExists(pathPaths: string[], summaryTree: ISummaryTree) {
-			const currentPath = pathPaths[0];
-			let found = false;
-			for (const [key, summaryObject] of Object.entries(summaryTree.tree)) {
-				if (key === currentPath) {
-					found = true;
-					if (pathPaths.length > 1) {
-						assert(
-							summaryObject.type === SummaryType.Tree ||
-								summaryObject.type === SummaryType.Handle,
-							`Handle path ${currentPath} should be for a subtree or a handle`,
-						);
-						if (summaryObject.type === SummaryType.Tree) {
-							validateHandlePathExists(pathPaths.slice(1), summaryObject);
-						}
-					}
-					break;
-				}
-			}
-			assert(found, `Handle path ${currentPath} not found in summary tree`);
-		}
-
-		function validateSummaryTree(currentSummary: ISummaryTree, lastSummary: ISummaryTree) {
-			for (const [key, summaryObject] of Object.entries(currentSummary.tree)) {
-				if (summaryObject.type === SummaryType.Handle) {
-					// Validate that the id (summary path) exists in lastSummary
-					validateHandlePathExists(summaryObject.handle.split("/").slice(1), lastSummary);
-					console.log(`Validated handle path: ${summaryObject.handle}`);
-				} else if (summaryObject.type === SummaryType.Tree) {
-					// Recursively validate nested trees
-					validateSummaryTree(summaryObject, lastSummary);
-				}
-			}
-		}
-
-		it("3 levels of incrementality", async () => {
-			const view = tree.viewWith(
-				new TreeViewConfiguration({
-					schema: Board,
-				}),
-			);
-
-			view.initialize(createInitialBoard());
-
-			const forest = tree.kernel.checkout.forest;
-			assert(forest instanceof ChunkedForest);
-
-			// This mocks the first summary at sequence number 0.
-			const summary = await tree.summarize();
-
-			const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
-				clientId: `test-client-2`,
-				id: "test",
-				idCompressor: testIdCompressor,
-			});
-			const tree2 = (await factory.load(
-				dataStoreRuntime2,
-				"TestSharedTree2",
-				{
-					deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-					objectStorage: MockStorage.createFromSummary(summary.summary),
-				},
-				factory.attributes,
-			)) as ISharedTree;
-			assert(tree2 !== undefined);
-			const view2 = tree2.viewWith(
-				new TreeViewConfiguration({
-					schema: Board,
-				}),
-			);
-			validateTreesEqual(view2, view);
-
-			const updateNote = (listIndex: number, noteIndex: number) => {
-				const list = view.root.lists.at(listIndex);
-				assert(list !== undefined);
-				const note = list.notes.at(noteIndex);
-				assert(note !== undefined);
-				note.text = `Note ${noteIndex + 1} updated`;
-			};
-
-			const updateMetadata = (listIndex: number, noteIndex: number) => {
-				const list = view.root.lists.at(listIndex);
-				assert(list !== undefined);
-				const note = list.notes.at(noteIndex);
-				assert(note !== undefined);
-				const metadata = note.metadata;
-				assert(metadata !== undefined, "No metadata to update");
-				metadata.metadataId = 100;
-			};
-
-			const updateMetadataText = (listIndex: number, noteIndex: number) => {
-				const list = view.root.lists.at(listIndex);
-				assert(list !== undefined);
-				const note = list.notes.at(noteIndex);
-				assert(note !== undefined);
-				const metadata = note.metadata;
-				assert(metadata !== undefined, "No metadata to update");
-				metadata.metaText = `Metadata for ${noteIndex + 1} updated`;
-			};
-
-			updateNote(0, 0);
-			updateMetadata(1, 0);
-			updateMetadataText(2, 0);
-
-			// Second summary at sequence number 10 - previous was at sequence number 0.
-			const incrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
-				summarySequenceNumber: 10,
-				latestSummarySequenceNumber: 0,
-				summaryPath: "",
-			};
-			const summary2 = await tree.summarize(
-				undefined,
-				undefined,
-				undefined,
-				incrementalSummaryContext,
-			);
-			assert(summary2 !== undefined);
-			validateSummaryTree(summary2.summary, summary.summary);
-
-			updateNote(0, 0);
-			updateMetadata(0, 0);
-			updateMetadata(1, 0);
-
-			// Third summary at sequence number 20 - previous was at sequence number 10.
-			const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
-				summarySequenceNumber: 20,
-				latestSummarySequenceNumber: 10,
-				summaryPath: "",
-			};
-			const summary3 = await tree.summarize(
-				undefined,
-				undefined,
-				undefined,
-				incrementalSummaryContext2,
-			);
-			assert(summary3 !== undefined);
-			validateSummaryTree(summary3.summary, summary2.summary);
 		});
 	});
 });

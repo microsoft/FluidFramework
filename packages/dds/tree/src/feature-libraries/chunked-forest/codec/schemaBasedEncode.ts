@@ -31,13 +31,9 @@ import {
 	compressedEncode,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import {
-	type EncodedFieldBatch,
-	type EncodedFieldBatchFormat,
-	type EncodedValueShape,
-	SpecialField,
-} from "./format.js";
+import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
+import type { IncrementalEncodingParameters } from "./codecs.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -50,7 +46,7 @@ export function schemaCompressedEncode(
 	policy: FullSchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
-	outputIncrementalFieldsBatch?: Map<string, EncodedFieldBatchFormat>,
+	incrementalEncodingParams?: IncrementalEncodingParameters,
 ): EncodedFieldBatch {
 	return compressedEncode(
 		fieldBatch,
@@ -58,9 +54,9 @@ export function schemaCompressedEncode(
 			schema,
 			policy,
 			idCompressor,
-			outputIncrementalFieldsBatch !== undefined /* encodeIncrementally */,
+			incrementalEncodingParams !== undefined /* encodeIncrementally */,
 		),
-		outputIncrementalFieldsBatch,
+		incrementalEncodingParams,
 	);
 }
 

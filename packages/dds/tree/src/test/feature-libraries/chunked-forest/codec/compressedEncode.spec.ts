@@ -157,7 +157,11 @@ describe("compressedEncode", () => {
 		for (const [name, value, shape, encoded] of testValues) {
 			it(name, () => {
 				const buffer: BufferFormat<EncodedChunkShape> = [];
-				encodeValue(value, shape, new EncodedDataBuilder(false, buffer));
+				encodeValue(
+					value,
+					shape,
+					new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, buffer),
+				);
 				assert.deepEqual(buffer, encoded);
 				const processed = updateShapesAndIdentifiersEncoding(version, [buffer]);
 				assert(processed.data.length === 1);

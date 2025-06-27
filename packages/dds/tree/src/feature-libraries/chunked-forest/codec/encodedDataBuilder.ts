@@ -22,6 +22,11 @@ export interface IEncodedDataBuilder {
 	 */
 	readonly encodeIncrementally: boolean;
 	/**
+	 * Indicates whether fields should be encoded irrespective of whether they have changed or not.
+	 * If true, all fields will be encoded in the batch, even if they have not changed since the last encoding.
+	 */
+	readonly fullTree: boolean;
+	/**
 	 * Add data to the main buffer.
 	 * @param data - The data to add.
 	 */
@@ -62,6 +67,7 @@ export interface IEncodedDataBuilder {
 export class EncodedDataBuilder implements IEncodedDataBuilder {
 	public constructor(
 		public readonly encodeIncrementally: boolean,
+		public readonly fullTree: boolean,
 		private readonly mainBuffer: BufferFormat = [],
 		private readonly incrementalFieldBuffers: Map<string, FieldBufferFormat> = new Map(),
 	) {}
@@ -95,18 +101,20 @@ export class EncodedDataBuilder implements IEncodedDataBuilder {
 			this.encodeIncrementally,
 			"Cannot add unchanged incremental field when encodeIncrementally is false",
 		);
+		assert(!this.fullTree, "Fields must be fully encoded in full tree mode");
 		this.incrementalFieldBuffers.set(fieldSummaryRefId, FieldUnchanged);
 	}
 
 	/** {@inheritdoc IEncodedDataBuilder.createChild} */
 	public createChild(): EncodedDataBuilder {
-		return new EncodedDataBuilder(this.encodeIncrementally);
+		return new EncodedDataBuilder(this.encodeIncrementally, this.fullTree);
 	}
 
 	/** {@inheritdoc IEncodedDataBuilder.createSiblingFromBuffer} */
 	public createSiblingFromBuffer(mainBuffer: BufferFormat): EncodedDataBuilder {
 		return new EncodedDataBuilder(
 			this.encodeIncrementally,
+			this.fullTree,
 			mainBuffer,
 			this.incrementalFieldBuffers,
 		);
