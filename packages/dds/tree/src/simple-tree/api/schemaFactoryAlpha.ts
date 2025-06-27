@@ -415,7 +415,12 @@ export class SchemaFactoryAlpha<
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Record", types);
 			return this.getStructuralType(fullName, types, () =>
-				this.namedRecord(fullName, nameOrAllowedTypes as T, true),
+				this.namedRecord(
+					fullName,
+					nameOrAllowedTypes as T,
+					/* customizable */ false,
+					/* implicitlyConstructable */ true,
+				),
 			) as TreeNodeSchemaClass<
 				/* Name */ ScopedSchemaName<TScope, string>,
 				/* Kind */ NodeKind.Record,
@@ -434,7 +439,12 @@ export class SchemaFactoryAlpha<
 			/* ImplicitlyConstructable */ true,
 			/* Info */ T,
 			/* TConstructorExtra */ undefined
-		> = this.namedRecord(nameOrAllowedTypes as TName, maybeAllowedTypes, true);
+		> = this.namedRecord(
+			nameOrAllowedTypes as TName,
+			maybeAllowedTypes,
+			/* customizable */ true,
+			/* implicitlyConstructable */ true,
+		);
 		return out;
 	}
 
@@ -454,6 +464,7 @@ export class SchemaFactoryAlpha<
 	>(
 		name: Name,
 		allowedTypes: T,
+		customizable: boolean,
 		implicitlyConstructable: ImplicitlyConstructable,
 	): TreeNodeSchemaBoth<
 		/* Name */ ScopedSchemaName<TScope, Name>,
@@ -468,6 +479,7 @@ export class SchemaFactoryAlpha<
 		const record = recordSchema({
 			identifier: this.scoped2(name),
 			info: allowedTypes,
+			customizable,
 			implicitlyConstructable,
 		});
 
@@ -507,6 +519,7 @@ export class SchemaFactoryAlpha<
 		return recordSchema({
 			identifier: this.scoped2(name),
 			info: allowedTypes,
+			customizable: true,
 			implicitlyConstructable: true,
 			metadata: options?.metadata,
 			persistedMetadata: options?.persistedMetadata,
@@ -528,9 +541,10 @@ export class SchemaFactoryAlpha<
 		const RecordSchema = this.namedRecord(
 			name,
 			allowedTypes as T & ImplicitAllowedTypes,
-			// Setting this (implicitlyConstructable) to true seems to work ok currently, but not for other node kinds.
+			/* customizable */ true,
+			// Setting this to true seems to work ok currently, but not for other node kinds.
 			// Supporting this could be fragile and might break other future changes, so it's being kept as false for now.
-			false,
+			/* implicitlyConstructable */ false,
 		);
 
 		return RecordSchema as TreeNodeSchemaClass<

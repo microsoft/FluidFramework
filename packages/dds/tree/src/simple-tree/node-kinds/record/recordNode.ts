@@ -183,6 +183,8 @@ export interface RecordSchemaOptions<
 	 */
 	readonly identifier: TName;
 
+	readonly customizable: boolean;
+
 	/**
 	 * The kinds of nodes that are allowed as children of this record.
 	 */
@@ -223,7 +225,14 @@ export function recordSchema<
 ) {
 	type TUnannotatedAllowedTypes = UnannotateImplicitAllowedTypes<TAllowedTypes>;
 
-	const { identifier, info, implicitlyConstructable, metadata, persistedMetadata } = options;
+	const {
+		identifier,
+		info,
+		customizable,
+		implicitlyConstructable,
+		metadata,
+		persistedMetadata,
+	} = options;
 
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
@@ -249,7 +258,25 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
-			const proxyTarget = {}; // TODO: instance
+			// Differentiate between the following cases:
+			//
+			// Case 1: Direct construction (POJO emulation)
+			//
+			//     const Foo = schemaFactory.record("Foo", schemaFactory.number);
+			//
+			//     assert.deepEqual(new Foo({ bar: 42 }), { bar: 42 },
+			//		   "Prototype chain equivalent to POJO.");
+			//
+			// Case 2: Subclass construction (Customizable Record)
+			//
+			// 	   class Foo extends schemaFactory.record("Foo", schemaFactory.number) {}
+			//
+			// 	   assert.notDeepEqual(new Foo({ bar: 42 }), { bar: 42 },
+			// 	       "Subclass prototype chain differs from POJO.");
+			//
+			// In Case 1 (POJO emulation), the prototype chain match '{}' (proxyTarget = undefined)
+			// In Case 2 (Customizable Object), the prototype chain include the user's subclass (proxyTarget = this)
+			const proxyTarget = customizable ? instance : {};
 			return createRecordNodeProxy(
 				proxyTarget,
 				this as unknown as RecordNodeSchema,
