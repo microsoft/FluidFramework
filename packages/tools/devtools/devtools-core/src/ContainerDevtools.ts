@@ -52,7 +52,7 @@ import {
  */
 export interface ContainerDevtoolsProps extends HasContainerKey {
 	/**
-	 * The container to register with the Devtools.
+	 * The Container to register with the Devtools.
 	 */
 	container: IContainer;
 

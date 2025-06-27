@@ -5,6 +5,7 @@
 
 import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
@@ -326,22 +327,22 @@ export class FluidDevtools implements IFluidDevtools {
 	public registerDataObject(props: DataObjectProps): void {
 		const { dataObject } = props;
 
-		// Extract runtime from the data object internally
-		const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
-		const runtimeId = `${runtime.id}-${Math.random().toString(36).slice(2, 11)}`;
+		// Treating document unique id as container key.
+		const contextId = (dataObject as unknown as { context: IFluidDataStoreContext }).context.containerRuntime.generateDocumentUniqueId() as string;
 
 		const decomposedIContainer = toDecomposedIContainer(dataObject);
 
-		if (this.containers.has(runtimeId)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(runtimeId));
+		// Check if the data object is already registered.
+		if (this.containers.has(contextId)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(contextId));
 		}
 
 		const containerDevtools = ContainerDevtools.createFromDecomposedContainer({
-			containerKey: runtimeId,
+			containerKey: contextId,
 			container: decomposedIContainer,
 			containerData: { appData: dataObject },
 		});
-		this.containers.set(runtimeId, containerDevtools);
+		this.containers.set(contextId, containerDevtools);
 
 		this.postContainerList();
 	}
