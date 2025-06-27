@@ -18,8 +18,6 @@ export function horizontalRuleToMarkdown(
 	node: HorizontalRuleNode,
 	context: TransformationContext,
 ): [MdastThematicBreak] {
-	// TODO: Do we need to do anything special in tables?
-
 	return [
 		{
 			type: "thematicBreak",
