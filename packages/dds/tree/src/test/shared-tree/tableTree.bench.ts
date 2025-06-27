@@ -418,9 +418,13 @@ describe("SharedTree table APIs execution time", () => {
 							table.removeRow(row);
 						}
 						for (let i = 0; i < count; i++) {
+							// Undo remove row
 							undoRedoManager.undo();
+							// Undo remove column
 							undoRedoManager.undo();
+							// Undo insert row
 							undoRedoManager.undo();
+							// Undo insert column
 							undoRedoManager.undo();
 						}
 						assert(!undoRedoManager.canUndo);
@@ -619,7 +623,9 @@ describe("SharedTree table APIs execution time", () => {
 							table.removeRow(row);
 						}
 						for (let i = 0; i < count; i++) {
+							// Undo remove column
 							undoRedoManager.undo();
+							// Undo remove row
 							undoRedoManager.undo();
 						}
 						assert(!undoRedoManager.canUndo);
