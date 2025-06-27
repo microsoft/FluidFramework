@@ -87,7 +87,7 @@ describe("RecordNode", () => {
 	): void {
 		describeHydration(title, (init) => {
 			it("stringifies in the same way as a POJO record", () => {
-				const tsRecord = { foo: 1, bar: 2 };
+				const tsRecord = { foo: 1, bar: 2, toJson: 3 };
 				const recordNode = init(schemaType, tsRecord);
 				assert.equal(JSON.stringify(recordNode), JSON.stringify(tsRecord));
 			});
@@ -274,9 +274,11 @@ describe("RecordNode", () => {
 		});
 
 		it("stringifies in the same way as a POJO record", () => {
-			const tsRecord = { foo: 1, bar: 2 };
-			const recordNode = new RecursiveRecordSchema(tsRecord);
-			assert.equal(JSON.stringify(recordNode), JSON.stringify(tsRecord));
+			const recordNode = new RecursiveRecordSchema({
+				foo: 1,
+				bar: new RecursiveRecordSchema({ x: 42 }),
+			});
+			assert.equal(JSON.stringify(recordNode), JSON.stringify({ foo: 1, bar: { x: 42 } }));
 		});
 
 		it("can get and set values", () => {
