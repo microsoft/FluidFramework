@@ -31,7 +31,7 @@ export interface ISharedSignalEvents<T extends SerializableTypeForSharedSignal>
 	extends ISharedObjectEvents {
 	/* eslint-disable-next-line @typescript-eslint/no-explicit-any
 -- TODO: Using 'any' type defeats the purpose of TypeScript. Consider replacing it with a concrete type, or 'unknown'. */
-	(event: "notify", listener: (value: T) => void): any;
+	(event: "notify", listener: (value: T, isLocal: boolean) => void): any;
 }
 
 /**
