@@ -17,9 +17,6 @@ describe("IntervalCollection fuzz testing", () => {
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
 		skip: [23],
-		// Note: there are some known eventual consistency issues which the tests don't currently reproduce.
-		// Search this package for AB#6552 (or look at that work item) for a skipped test and further details.
-		// Other relevant work items are AB#7806 and #7807.
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
