@@ -14,7 +14,7 @@ import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerato
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
 // AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
-export const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
+const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	set: 3,
 	clear: 1,
 	insert: 5,
@@ -30,7 +30,7 @@ export const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
 	fork: 1,
 	merge: 1,
 };
-export const generatorFactory = () => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
+const generatorFactory = () => takeAsync(100, makeOpGenerator(editGeneratorOpWeights));
 
 export const baseTreeModel: DDSFuzzModel<
 	SharedTreeFuzzTestFactory,
