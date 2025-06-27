@@ -40,6 +40,7 @@ import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
 	type ObjectNodeSchemaInternalData,
+	type ObjectNodeSchemaPrivate,
 } from "./objectNodeTypes.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
@@ -216,7 +217,7 @@ function createFlexKeyMapping(
  * If not provided `{}` is used for the target.
  */
 function createProxyHandler(
-	schema: ObjectNodeSchema & ObjectNodeSchemaInternalData,
+	schema: ObjectNodeSchemaPrivate,
 	allowAdditionalProperties: boolean,
 ): ProxyHandler<TreeNode> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
@@ -476,7 +477,7 @@ export function objectSchema<
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
-			const schema = this as unknown as ObjectNodeSchema & ObjectNodeSchemaInternalData;
+			const schema = this as unknown as ObjectNodeSchemaPrivate;
 			handler = createProxyHandler(schema, customizable);
 			unhydratedContext = getUnhydratedContext(schema);
 

@@ -252,8 +252,6 @@ export interface ITreeSubscriptionCursor extends ITreeCursor {
 	// getParentInfo(id: NodeId): TreeLocation;
 }
 
-/**
- */
 export enum ITreeSubscriptionCursorState {
 	/**
 	 * On the current revision of the forest.
@@ -269,8 +267,6 @@ export enum ITreeSubscriptionCursorState {
 	Freed,
 }
 
-/**
- */
 export const enum TreeNavigationResult {
 	/**
 	 * Attempt to navigate cursor to a key or index that is outside the client's view.

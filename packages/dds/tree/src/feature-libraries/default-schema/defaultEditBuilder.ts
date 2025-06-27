@@ -410,8 +410,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	}
 }
 
-/**
- */
 export interface ValueFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`.
@@ -421,8 +419,6 @@ export interface ValueFieldEditBuilder<TContent> {
 	set(newContent: TContent): void;
 }
 
-/**
- */
 export interface OptionalFieldEditBuilder<TContent> {
 	/**
 	 * Issues a change which replaces the current newContent of the field with `newContent`

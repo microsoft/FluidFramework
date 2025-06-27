@@ -21,10 +21,12 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   create-release:
+    permissions:
+      contents: write  # for ncipollo/release-action to create a release
     name: Create GitHub release
     runs-on: ubuntu-latest
     steps:

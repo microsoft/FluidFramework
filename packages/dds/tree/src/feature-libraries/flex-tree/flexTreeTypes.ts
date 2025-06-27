@@ -47,8 +47,6 @@ export function isFlexTreeNode(t: unknown): t is FlexTreeNode {
 	return isFlexTreeEntity(t) && t[flexTreeMarker] === FlexTreeEntityKind.Node;
 }
 
-/**
- */
 export enum FlexTreeEntityKind {
 	Node,
 	Field,

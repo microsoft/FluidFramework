@@ -6,11 +6,13 @@ on:
       - completed
 
 permissions:
-  actions: read
-  pull-requests: write
+  contents: read
+  actions: read  # for dawidd6/action-download-artifact to query and download artifacts
 
 jobs:
   load_report:
+    permissions:
+      pull-requests: write  # for marocchino/sticky-pull-request-comment to create or update PR comment
     runs-on: ubuntu-latest
     steps:
       - name: Download results

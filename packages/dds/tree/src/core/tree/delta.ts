@@ -158,8 +158,6 @@ export interface DetachedNodeId {
 	readonly minor: number;
 }
 
-/**
- */
 export type FieldMap = ReadonlyMap<FieldKey, FieldChanges>;
 
 /**

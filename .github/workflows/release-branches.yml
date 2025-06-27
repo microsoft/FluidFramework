@@ -31,7 +31,7 @@ on:
       - dismissed
 
 permissions:
-  pull-requests: read
+  contents: read
 
 jobs:
   check_branch:

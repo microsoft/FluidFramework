@@ -13,11 +13,12 @@ on:
       - test/release/**
 
 permissions:
-  # Needed to write the comments to the PRs themselves
-  pull-requests: write
+  contents: read # for actions/checkout to fetch code
 
 jobs:
   warning:
+    permissions:
+      pull-requests: write  # for marocchino/sticky-pull-request-comment to create or update PR comment
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # ratchet:actions/checkout@v4
