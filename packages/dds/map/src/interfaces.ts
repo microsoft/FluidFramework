@@ -373,6 +373,9 @@ export interface ISharedMap extends ISharedObject<ISharedMapEvents>, ISharedMapC
  * Unlike JavaScript maps, `ISharedMapCore` does not make any guarantees regarding enumeration order.
  * Unlike TypeScript maps, `ISharedMapCore` is not generic: no compiler enforcement of value types is provided, and keys must be strings.
  * @privateRemarks
+ * This is currently marked `@system` to avoid stabilizing it:
+ * if there is a need to allow direct use of this type externally the `@system` tag can be removed.
+ *
  * @sealed
  * @legacy
  * @alpha

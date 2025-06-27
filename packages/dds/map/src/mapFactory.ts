@@ -30,10 +30,16 @@ const type = "https://graph.microsoft.com/types/map";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
- * @privateRemarks
- * TODO: AB#35245: Deprecate and stop exporting this class. `makeSharedObjectKind` should be used instead.
+ * @remarks
+ * Prefer using {@link (SharedMap:variable)} instead of this.
  *
- * The clean way to export this is to do `class MapFactory extends ...` but that hits https://github.com/microsoft/rushstack/issues/4429.
+ * @privateRemarks
+ * TODO: AB#35245: Deprecate and stop exporting this class.
+ *
+ * `makeSharedObjectKind` should be used below to define `SharedMap` and this factory should be removed.
+ *
+ * For now this factory is kept as a class to support legacy code.
+ * A cleaner way to export this would be to do `class MapFactory extends ...` but that hits https://github.com/microsoft/rushstack/issues/4429.
  * @sealed
  * @legacy
  * @alpha
@@ -47,9 +53,10 @@ export const MapFactory = makeChannelFactory<ISharedMap>({
 	},
 	telemetryContextPrefix: "fluid_map_",
 	// This cast is used only to fix the return type of `.set` to be the desired `this` type.
-	// THe use of `thisWrap` makes this work at runtime.
+	// The use of `thisWrap` makes this work at runtime.
 	factory: mapKernelFactory as SharedKernelFactory<ISharedMap>,
 });
+
 /**
  * {@inheritdoc (MapFactory:variable)}
  * @sealed
