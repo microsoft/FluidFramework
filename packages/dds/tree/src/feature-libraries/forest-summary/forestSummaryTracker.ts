@@ -21,20 +21,20 @@ export const incrementalFieldsTreeKey = "IncrementalFields";
 /**
  * State that tells whether a summary is currently being tracked.
  */
-export const TreeSummaryState = {
+export const ForestSummaryState = {
 	// A summary is currently being tracked.
 	Tracking: "Tracking",
 	// A summary is ready to be tracked.
 	ReadyToTrack: "ReadyToTrack",
 } as const;
-export type TreeSummaryState = (typeof TreeSummaryState)[keyof typeof TreeSummaryState];
+export type ForestSummaryState = (typeof ForestSummaryState)[keyof typeof ForestSummaryState];
 
 /**
  * This class tracks the reference IDs of subtrees in the incremental summary tree for a forest.
  * It allows us to generate summary handle paths for subtrees that are not included in the current summary
  * but were included in the previous one.
  */
-export class TreeIncrementalSummaryTracker {
+export class ForestIncrementalSummaryTracker {
 	/**
 	 * For a given summary sequence number, keeps track of the parent tree's reference ID for a subtree's reference Id
 	 * in that summary's incremental summary tree.
@@ -69,7 +69,33 @@ export class TreeIncrementalSummaryTracker {
 	/**
 	 * The state indicating whether a summary is currently being tracked or not.
 	 */
-	private summaryState: TreeSummaryState = TreeSummaryState.ReadyToTrack;
+	private summaryState: ForestSummaryState = ForestSummaryState.ReadyToTrack;
+
+	/**
+	 * Returns whether a full tree summary should be performed as per the incrementalSummaryContext and previous summary
+	 * state.
+	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers
+	 * for the current and latest summaries.
+	 * @returns whether a full tree summary should be performed.
+	 */
+	public shouldPerformFullTreeSummary(
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+	): boolean {
+		// Incremental summaries should be generated if the previously tracked summary is the same as the latest
+		// successful summary. Otherwise, either the previous summary failed or the previous summary was not tracked
+		// at all. In either case, we should generate a full tree summary because we may not have the correct reference
+		// ID mappings for the subtrees in the incremental summary tree.
+
+		// Note: This disables incremental summaries completely if the previous summary was not tracked at all. We can
+		// optimize this by allowing incremental summaries to be generated for subtrees (fields) that haven't changed
+		// since the last successful summary. This will require plumbing additional logic to the encoders and we can do
+		// it in the future if needed.
+		return (
+			incrementalSummaryContext === undefined ||
+			this.previousSummarySequenceNumber !==
+				incrementalSummaryContext.latestSummarySequenceNumber
+		);
+	}
 
 	/**
 	 * Must be called before starting to track a new summary.
@@ -80,11 +106,11 @@ export class TreeIncrementalSummaryTracker {
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext,
 	): void {
 		assert(
-			this.summaryState === TreeSummaryState.ReadyToTrack,
+			this.summaryState === ForestSummaryState.ReadyToTrack,
 			"Summary tracking must be ready before starting a new tracking session.",
 		);
 
-		this.summaryState = TreeSummaryState.Tracking;
+		this.summaryState = ForestSummaryState.Tracking;
 		this.currentSummarySequenceNumber = incrementalSummaryContext.summarySequenceNumber;
 		this.latestSummarySequenceNumber = incrementalSummaryContext.latestSummarySequenceNumber;
 	}
@@ -96,7 +122,7 @@ export class TreeIncrementalSummaryTracker {
 	 */
 	public trackReferenceId(refId: string, parentRefId: string): void {
 		assert(
-			this.summaryState === TreeSummaryState.Tracking,
+			this.summaryState === ForestSummaryState.Tracking,
 			"Summary tracking must be in progress to track a reference ID.",
 		);
 
@@ -150,7 +176,7 @@ export class TreeIncrementalSummaryTracker {
 	 */
 	public completeTracking(): void {
 		assert(
-			this.summaryState === TreeSummaryState.Tracking,
+			this.summaryState === ForestSummaryState.Tracking,
 			"Summary tracking must be in progress to update summary sequence numbers.",
 		);
 
@@ -208,6 +234,6 @@ export class TreeIncrementalSummaryTracker {
 			}
 		});
 
-		this.summaryState = TreeSummaryState.ReadyToTrack;
+		this.summaryState = ForestSummaryState.ReadyToTrack;
 	}
 }

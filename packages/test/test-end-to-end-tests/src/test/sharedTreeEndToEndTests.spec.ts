@@ -48,64 +48,37 @@ class Board extends schemaFactory.object("board", {
 	lists: schemaFactory.array(NoteList),
 }) {}
 
-function createInitialBoard() {
-	const note1 = new Note({
-		noteId: 1,
-		text: "Note 1",
-		color: "red",
-		metadata: {
-			metadataId: 1,
-			metaText: "Meta 1",
-		},
-	});
-	const note2 = new Note({
-		noteId: 2,
-		text: "Note 2",
-		color: "yellow",
-		metadata: {
-			metadataId: 2,
-		},
-	});
-	const noteList1 = new NoteList({
-		listId: "l1",
-		notes: [note1, note2],
-	});
-
-	const note3 = new Note({
-		noteId: 3,
-		text: "Note 3",
-		color: "blue",
-		metadata: {
-			metadataId: 3,
-			metaText: "Meta 3",
-		},
-	});
-	const note4 = new Note({
-		noteId: 4,
-		text: "Note 4",
-		color: "green",
-	});
-	const noteList2 = new NoteList({
-		listId: "l2",
-		notes: [note3, note4],
-	});
-
-	const note5 = new Note({
-		noteId: 5,
-		text: "Note 5",
-		color: "purple",
-		metadata: {
-			metadataId: 5,
-			metaText: "Meta 5",
-		},
-	});
-	const noteList3 = new NoteList({
-		listId: "l3",
-		notes: [note5],
-	});
+function createInitialBoard(noteListCount: number, notesInListCount: number) {
+	let nextNoteId = 1;
+	const noteLists: NoteList[] = [];
+	for (let i = 0; i < noteListCount; i++) {
+		const notes: Note[] = [];
+		for (let j = 0; j < notesInListCount; j++) {
+			const addMetadata = j % 2 === 0; // Add metadata to every even number note in a list
+			const addMetadataText: boolean = addMetadata && j % 4 === 0; // Add metadata text to every 2nd note with metadata
+			const note = new Note({
+				noteId: nextNoteId,
+				text: `Note ${nextNoteId}`,
+				color: `Color ${nextNoteId}`,
+				metadata: addMetadata
+					? {
+							metadataId: nextNoteId,
+							metaText: addMetadataText ? `Meta for Note ${nextNoteId}` : undefined,
+						}
+					: undefined,
+			});
+			notes.push(note);
+			nextNoteId++;
+		}
+		const noteList = new NoteList({
+			listId: `l${i}`,
+			notes,
+		});
+		noteLists.push(noteList);
+	}
 	return new Board({
 		boardId: "b1",
-		lists: [noteList1, noteList2, noteList3],
+		lists: noteLists,
 	});
 }
 
@@ -141,10 +114,12 @@ function updateMetadataText(
 	metadata.metaText = `Metadata for ${noteIndex + 1} updated`;
 }
 
-function validateTreesEqual(
-	actualView: TreeView<typeof Board>,
-	expectedView: TreeView<typeof Board>,
-): void {
+function validateTreesEqual(actualTree: ITree, expectedView: TreeView<typeof Board>): void {
+	const actualView = actualTree.viewWith(
+		new TreeViewConfiguration({
+			schema: Board,
+		}),
+	);
 	const actualRoot = actualView.root;
 	const expectedRoot = expectedView.root;
 	if (actualRoot === undefined || expectedRoot === undefined) {
@@ -194,6 +169,19 @@ function validateSummaryTree(currentSummary: ISummaryTree, lastSummary: ISummary
 		} else if (summaryObject.type === SummaryType.Tree) {
 			// Recursively validate nested trees
 			validateSummaryTree(summaryObject, lastSummary);
+		}
+	}
+}
+
+function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
+	for (const [key, summaryObject] of Object.entries(summary.tree)) {
+		assert(
+			summaryObject.type !== SummaryType.Handle,
+			`Unexpected handle in summary tree at key: ${key}`,
+		);
+		if (summaryObject.type === SummaryType.Tree) {
+			// Recursively validate nested trees
+			validateSummaryTree(summaryObject, summary);
 		}
 	}
 }
@@ -296,11 +284,11 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 
 		beforeEach(async () => {
 			treeViewClient1 = tree1.viewWith(treeViewConfig);
-			treeViewClient1.initialize(createInitialBoard());
+			treeViewClient1.initialize(createInitialBoard(3, 2));
 			await provider.ensureSynchronized();
 		});
 
-		it("3 levels of incrementality", async () => {
+		const testWithSuccessfulSummaries = async () => {
 			const { summarizer } = await loadSummarizer(container1);
 			await provider.ensureSynchronized();
 			const summary1 = await summarizeNow(summarizer);
@@ -308,35 +296,21 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			const { container: container2, tree: treeClient2 } = await loadContainerAndTree(
 				summary1.summaryVersion,
 			);
-			assert(treeClient2 !== undefined, "Tree treeClient2 is undefined");
-			const treeViewClient2 = treeClient2.viewWith(
-				new TreeViewConfiguration({
-					schema: Board,
-				}),
-			);
-			validateTreesEqual(treeViewClient2, treeViewClient1);
+			validateTreesEqual(treeClient2, treeViewClient1);
 			container2.close();
 
-			updateNote(treeViewClient1, 0, 0);
+			updateNote(treeViewClient1, 1, 0);
 			updateMetadata(treeViewClient1, 1, 0);
 			updateMetadataText(treeViewClient1, 2, 0);
 
 			// Second summary at sequence number 10 - previous was at sequence number 0.
 			await provider.ensureSynchronized();
 			const summary2 = await summarizeNow(summarizer);
-			assert(summary2 !== undefined);
-			validateSummaryTree(summary2.summaryTree, summary1.summaryTree);
-
 			const { container: container3, tree: treeClient3 } = await loadContainerAndTree(
 				summary2.summaryVersion,
 			);
-			assert(treeClient3 !== undefined, "Tree treeClient3 is undefined");
-			const treeViewClient3 = treeClient3.viewWith(
-				new TreeViewConfiguration({
-					schema: Board,
-				}),
-			);
-			validateTreesEqual(treeViewClient3, treeViewClient1);
+			validateSummaryTree(summary2.summaryTree, summary1.summaryTree);
+			validateTreesEqual(treeClient3, treeViewClient1);
 			container3.close();
 
 			updateNote(treeViewClient1, 0, 0);
@@ -346,21 +320,17 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			// Third summary at sequence number 20 - previous was at sequence number 10.
 			await provider.ensureSynchronized();
 			const summary3 = await summarizeNow(summarizer);
-			assert(summary3 !== undefined);
-			validateSummaryTree(summary3.summaryTree, summary2.summaryTree);
-
 			const { container: container4, tree: treeClient4 } = await loadContainerAndTree(
 				summary3.summaryVersion,
 			);
-			assert(treeClient4 !== undefined, "Tree treeClient4 is undefined");
-			const treeViewClient4 = treeClient4.viewWith(
-				new TreeViewConfiguration({
-					schema: Board,
-				}),
-			);
-			validateTreesEqual(treeViewClient4, treeViewClient1);
+			validateSummaryTree(summary3.summaryTree, summary2.summaryTree);
+			validateTreesEqual(treeClient4, treeViewClient1);
 			container4.close();
 			validateSummaryTree(summary3.summaryTree, summary2.summaryTree);
+		};
+
+		it("incremental summaries", async () => {
+			await testWithSuccessfulSummaries();
 		});
 	});
 });
