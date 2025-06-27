@@ -53,7 +53,7 @@ interface IOdspTestDriverConfig extends TokenConfig {
 	options: HostStoragePolicy | undefined;
 }
 
-// specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same passwordAdd commentMore actions
+// specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
 interface LoginTenantRange {
 	prefix: string;
 	start: number;
@@ -139,7 +139,7 @@ export function getOdspCredentials(
 			if (tenantInfo === undefined) {
 				throw new Error("tenantInfo should not be undefined when getting odsp credentials");
 			}
-			// Translate all the user from that user to the full user principle name by appending the tenant domainAdd commentMore actions
+			// Translate all the user from that user to the full user principal name by appending the tenant domain
 			const range = tenantInfo.range;
 
 			// Return the set of account to choose from a single tenant
