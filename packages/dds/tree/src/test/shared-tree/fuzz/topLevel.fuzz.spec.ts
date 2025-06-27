@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import {
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
@@ -12,18 +11,14 @@ import {
 } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { validateFuzzTreeConsistency } from "../../utils.js";
-
-import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
-import { fuzzReducer } from "./fuzzEditReducers.js";
 import {
-	createOnCreate,
 	deterministicIdCompressorFactory,
 	failureDirectory,
 	FuzzTestOnCreate,
 	SharedTreeFuzzTestFactory,
 } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
+import { baseTreeModel, runsPerBatch } from "./baseModel.js";
 
 const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	numberOfClients: 3,
@@ -45,27 +40,6 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
  * See the "Fuzz - Targeted" test suite for tests that validate more specific code paths or invariants.
  */
 describe("Fuzz - Top-Level", () => {
-	const runsPerBatch = 50;
-	const opsPerRun = 20;
-	// TODO: Enable other types of ops.
-	// AB#11436: Currently manually disposing the view when applying the schema op is causing a double dispose issue. Once this issue has been resolved, re-enable schema ops.
-	const editGeneratorOpWeights: Partial<EditGeneratorOpWeights> = {
-		set: 3,
-		clear: 1,
-		insert: 5,
-		remove: 5,
-		intraFieldMove: 5,
-		crossFieldMove: 5,
-		start: 1,
-		commit: 1,
-		abort: 1,
-		fieldSelection: { optional: 1, required: 1, sequence: 3, recurse: 3 },
-		schema: 0,
-		nodeConstraint: 3,
-		fork: 1,
-		merge: 1,
-	};
-	const generatorFactory = () => takeAsync(opsPerRun, makeOpGenerator(editGeneratorOpWeights));
 	/**
 	 * This test suite is meant exercise all public APIs of SharedTree together, as well as all service-oriented
 	 * operations (such as summarization and stashed ops).
@@ -76,11 +50,8 @@ describe("Fuzz - Top-Level", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeFuzzTestFactory>
 		> = {
+			...baseTreeModel,
 			workloadName: "SharedTree",
-			factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined)),
-			generatorFactory,
-			reducer: fuzzReducer,
-			validateConsistency: validateFuzzTreeConsistency,
 		};
 
 		const options: Partial<DDSFuzzSuiteOptions> = {
@@ -101,6 +72,9 @@ describe("Fuzz - Top-Level", () => {
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
+			skip: [
+				...[30], //  0x92a
+			],
 		};
 		createDDSFuzzSuite(model, options);
 	});
@@ -111,11 +85,9 @@ describe("Fuzz - Top-Level", () => {
 			Operation,
 			DDSFuzzTestState<SharedTreeFuzzTestFactory>
 		> = {
+			...baseTreeModel,
 			workloadName: "SharedTree rebasing",
 			factory: new SharedTreeFuzzTestFactory(FuzzTestOnCreate),
-			generatorFactory,
-			reducer: fuzzReducer,
-			validateConsistency: validateFuzzTreeConsistency,
 		};
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,

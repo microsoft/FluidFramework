@@ -69,6 +69,14 @@ interface LoginTenants {
 }
 
 /**
+ * A simplified version of the credentials returned by the tenant pool containing only username and password values.
+ */
+export interface UserPassCredentials {
+	UserPrincipalName: string;
+	Password: string;
+}
+
+/**
  * @internal
  */
 export function assertOdspEndpoint(
@@ -96,25 +104,50 @@ export function getOdspCredentials(
 		odspEndpointName === "odsp"
 			? process.env.login__odsp__test__tenants
 			: process.env.login__odspdf__test__tenants;
-	if (loginTenants !== undefined) {
-		const tenants: LoginTenants = JSON.parse(loginTenants);
-		const tenantNames = Object.keys(tenants);
-		const tenant = tenantNames[tenantIndex % tenantNames.length];
-		if (tenant === undefined) {
-			throw new Error("tenant should not be undefined when getting odsp credentials");
-		}
-		const tenantInfo = tenants[tenant];
-		if (tenantInfo === undefined) {
-			throw new Error("tenantInfo should not be undefined when getting odsp credentials");
-		}
-		// Translate all the user from that user to the full user principle name by appending the tenant domain
-		const range = tenantInfo.range;
 
-		// Return the set of account to choose from a single tenant
-		for (let i = 0; i < range.count; i++) {
-			const username = `${range.prefix}${range.start + i}@${tenant}`;
-			if (requestedUserName === undefined || requestedUserName === username) {
-				creds.push({ username, password: range.password });
+	if (loginTenants !== undefined) {
+		/**
+		 * Parse login credentials using the new tenant format for e2e tests.
+		 * For the expected format of loginTenants, see {@link UserPassCredentials}
+		 */
+		if (loginTenants.includes("UserPrincipalName")) {
+			const output: UserPassCredentials[] = JSON.parse(loginTenants);
+			if (output?.[tenantIndex] === undefined) {
+				throw new Error("No resources found in the login tenants");
+			}
+
+			// Return the set of accounts to choose from a single tenant
+			for (const account of output) {
+				const username = account.UserPrincipalName;
+				const password = account.Password;
+				if (requestedUserName === undefined || requestedUserName === username) {
+					creds.push({ username, password });
+				}
+			}
+		} else {
+			/**
+			 * Parse login credentials using the tenant format for stress tests.
+			 * For the expected format of loginTenants, see {@link LoginTenants}
+			 */
+			const tenants: LoginTenants = JSON.parse(loginTenants);
+			const tenantNames = Object.keys(tenants);
+			const tenant = tenantNames[tenantIndex % tenantNames.length];
+			if (tenant === undefined) {
+				throw new Error("tenant should not be undefined when getting odsp credentials");
+			}
+			const tenantInfo = tenants[tenant];
+			if (tenantInfo === undefined) {
+				throw new Error("tenantInfo should not be undefined when getting odsp credentials");
+			}
+			// Translate all the user from that user to the full user principal name by appending the tenant domain
+			const range = tenantInfo.range;
+
+			// Return the set of account to choose from a single tenant
+			for (let i = 0; i < range.count; i++) {
+				const username = `${range.prefix}${range.start + i}@${tenant}`;
+				if (requestedUserName === undefined || requestedUserName === username) {
+					creds.push({ username, password: range.password });
+				}
 			}
 		}
 	} else {
