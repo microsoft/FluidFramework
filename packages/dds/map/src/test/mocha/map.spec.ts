@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { ListNode } from "@fluidframework/core-utils/internal";
 import type { ISummaryBlob } from "@fluidframework/driver-definitions";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
@@ -23,10 +24,8 @@ import {
 
 import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
 import type {
-	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
-	IMapKeyEditLocalOpMetadata,
 	IMapSetOperation,
 	ISerializableValue,
 	MapLocalOpMetadata,
@@ -420,10 +419,12 @@ describe("Map", () => {
 				const map1 = factory.create(dataStoreRuntime1, "testMap1") as SharedMap & SharedObject;
 
 				// The last op metadata provided to submitLocalMessage (used by testApplyStashedOp)
-				let lastMetadata: MapLocalOpMetadata | undefined;
+				let lastMetadata: ListNode<MapLocalOpMetadata> | undefined;
 
 				// Apply a stashed op, returning the metadata that was provided to submitLocalMessage.
-				function testApplyStashedOp(content: IMapOperation): MapLocalOpMetadata | undefined {
+				function testApplyStashedOp(
+					content: IMapOperation,
+				): ListNode<MapLocalOpMetadata> | undefined {
 					lastMetadata = undefined;
 					Hack.originalApplyStashedOp(content);
 					return lastMetadata;
@@ -434,7 +435,7 @@ describe("Map", () => {
 					theOp: unknown,
 					localOpMetadata: unknown,
 				): void {
-					lastMetadata = localOpMetadata as MapLocalOpMetadata;
+					lastMetadata = localOpMetadata as ListNode<MapLocalOpMetadata>;
 					return Hack.submitLocalMessage(theOp, localOpMetadata);
 				}
 
@@ -455,26 +456,26 @@ describe("Map", () => {
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				});
-				let metadata = testApplyStashedOp(op);
+				let metadata = testApplyStashedOp(op)?.data;
 				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 0);
-				const editMetadata = testApplyStashedOp(op) as IMapKeyEditLocalOpMetadata;
-				assert.equal(editMetadata.type, "edit");
+				const editMetadata = testApplyStashedOp(op)?.data;
+				assert.equal(editMetadata?.type, "edit");
 				assert.equal(editMetadata.pendingMessageId, 1);
 				assert.equal(editMetadata.previousValue.value, "value");
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
 				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
-				metadata = testApplyStashedOp(op2);
+				metadata = testApplyStashedOp(op2)?.data;
 				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = testApplyStashedOp(op3) as IMapKeyEditLocalOpMetadata;
-				assert.equal(metadata.type, "edit");
+				metadata = testApplyStashedOp(op3)?.data;
+				assert.equal(metadata?.type, "edit");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.previousValue.value, "value2");
 				const op4: IMapClearOperation = { type: "clear" };
-				metadata = testApplyStashedOp(op4) as IMapClearLocalOpMetadata;
-				assert.equal(metadata.pendingMessageId, 4);
+				metadata = testApplyStashedOp(op4)?.data;
+				assert.equal(metadata?.pendingMessageId, 4);
 				assert.equal(metadata.type, "clear");
 				assert.equal(metadata.previousMap?.get("key")?.value, "value");
 				assert.equal(metadata.previousMap?.has("key2"), false);

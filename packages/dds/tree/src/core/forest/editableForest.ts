@@ -32,8 +32,6 @@ export interface IEditableForest extends IForestSubscription {
  */
 export type ForestLocation = ITreeSubscriptionCursor | Anchor;
 
-/**
- */
 export interface TreeLocation {
 	readonly range: FieldLocation | DetachedField;
 	readonly index: number;

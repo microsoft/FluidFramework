@@ -9,14 +9,23 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
+	evaluateLazySchema,
 	FieldKind,
+	isAnnotatedAllowedType,
 	markSchemaMostDerived,
 	normalizeFieldSchema,
 } from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { isObjectNodeSchema, type ObjectNodeSchema } from "../node-kinds/index.js";
+import {
+	isArrayNodeSchema,
+	isMapNodeSchema,
+	isObjectNodeSchema,
+	type ArrayNodeSchema,
+	type MapNodeSchema,
+	type ObjectNodeSchema,
+} from "../node-kinds/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
@@ -202,8 +211,12 @@ export class TreeViewConfiguration<
 				debugAssert(() => !definitions.has(schema.identifier));
 				definitions.set(schema.identifier, schema as SimpleNodeSchema & TreeNodeSchema);
 			},
-			allowedTypes(types): void {
-				checkUnion(types, config.preventAmbiguity, ambiguityErrors);
+			allowedTypes({ types }): void {
+				checkUnion(
+					types.map((t) => evaluateLazySchema(isAnnotatedAllowedType(t) ? t.type : t)),
+					config.preventAmbiguity,
+					ambiguityErrors,
+				);
 			},
 		});
 
@@ -287,10 +300,10 @@ export function checkUnion(
 	ambiguityErrors: string[],
 ): void {
 	const checked: Set<TreeNodeSchema> = new Set();
-	const maps: TreeNodeSchema[] = [];
-	const arrays: TreeNodeSchema[] = [];
-
+	const maps: MapNodeSchema[] = [];
+	const arrays: ArrayNodeSchema[] = [];
 	const objects: ObjectNodeSchema[] = [];
+
 	// Map from key to schema using that key
 	const allObjectKeys: Map<string, Set<TreeNodeSchema>> = new Map();
 
@@ -307,10 +320,10 @@ export function checkUnion(
 			for (const key of schema.fields.keys()) {
 				getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
 			}
-		} else if (schema.kind === NodeKind.Array) {
+		} else if (isArrayNodeSchema(schema)) {
 			arrays.push(schema);
 		} else {
-			assert(schema.kind === NodeKind.Map, 0x9e7 /* invalid schema */);
+			assert(isMapNodeSchema(schema), 0x9e7 /* invalid schema */);
 			maps.push(schema);
 		}
 	}
