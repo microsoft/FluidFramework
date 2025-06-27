@@ -375,6 +375,15 @@ export class SchemaFactoryAlpha<
 	 * @param name - Unique identifier for this schema within this factory's scope.
 	 * @param allowedTypes - The types that may appear in the record.
 	 *
+	 * @remarks
+	 * Like TypeScript `Record`s, record nodes have some potential pitfalls.
+	 * For example: TypeScript makes assumptions about built-in keys being present (e.g. `toString`, `hasOwnProperty`, etc.).
+	 * Since these are otherwise valid keys in a record, this can lead to unexpected behavior.
+	 * To prevent inconsistent behavior, these built-ins are hidden by record nodes.
+	 * This means that if you try to call these built-ins (e.g. `toString()`) on a record node, you will get an error.
+	 *
+	 * In most cases, it is probably preferable to use {@link SchemaFactory.map} instead.
+	 *
 	 * @example
 	 * ```typescript
 	 * class NamedRecord extends factory.record("name", factory.number) {}
