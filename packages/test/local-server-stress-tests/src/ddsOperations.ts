@@ -40,6 +40,12 @@ const createDDSClient = (channel: IChannel): DDSClient<IChannelFactory> => {
 	};
 };
 
+export function clearCachedDdsStates() {
+	channelToDdsState.clear();
+}
+
+const channelToDdsState = new Map<IChannel, DDSFuzzTestState<IChannelFactory>>();
+
 export const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
@@ -50,38 +56,45 @@ export const covertLocalServerStateToDdsState = async (
 			(v) => v.handle !== undefined,
 		),
 	];
-	return {
-		clients: makeUnreachableCodePathProxy("clients"),
-		client: createDDSClient(state.channel),
-		containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-		isDetached: state.client.container.attachState === AttachState.Detached,
-		summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-		random: {
-			...state.random,
-			handle: () => {
-				/**
-				 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
-				 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
-				 * handles.
-				 */
-				const { tag, handle } = state.random.pick(allHandles);
-				const realHandle = toFluidHandleInternal(handle);
-				return {
-					tag,
-					absolutePath: realHandle.absolutePath,
-					get [fluidHandleSymbol]() {
-						return realHandle[fluidHandleSymbol];
-					},
-					async get() {
-						return realHandle.get();
-					},
-					get isAttached() {
-						return realHandle.isAttached;
-					},
-				};
-			},
+
+	const random = {
+		...state.random,
+		handle: () => {
+			/**
+			 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
+			 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
+			 * handles.
+			 */
+			const { tag, handle } = state.random.pick(allHandles);
+			const realHandle = toFluidHandleInternal(handle);
+			return {
+				tag,
+				absolutePath: realHandle.absolutePath,
+				get [fluidHandleSymbol]() {
+					return realHandle[fluidHandleSymbol];
+				},
+				async get() {
+					return realHandle.get();
+				},
+				get isAttached() {
+					return realHandle.isAttached;
+				},
+			};
 		},
 	};
+
+	const baseState = {
+		...(channelToDdsState.get(state.channel) ?? {
+			clients: makeUnreachableCodePathProxy("clients"),
+			client: createDDSClient(state.channel),
+			containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
+			isDetached: state.client.container.attachState === AttachState.Detached,
+			summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
+		}),
+		random,
+	};
+	channelToDdsState.set(state.channel, baseState);
+	return baseState;
 };
 
 export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (
