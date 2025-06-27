@@ -8,4 +8,6 @@ export {
 	makeVersionedCodec,
 	makeVersionedValidatedCodec,
 	makeVersionDispatchingCodec,
+	ClientVersionDispatchingCodecBuilder,
+	type CodecVersion,
 } from "./codec.js";
