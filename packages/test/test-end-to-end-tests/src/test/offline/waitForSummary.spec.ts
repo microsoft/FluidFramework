@@ -62,7 +62,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-describeCompat.only(
+describeCompat(
 	"Offline tests that wait for a summary",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
