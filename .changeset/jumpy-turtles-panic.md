@@ -11,7 +11,7 @@ TODO: note NodeKind compat
 Record node kind was added (alpha)
 
 Adds a new node kind to SharedTree to represent record-like data.
-Like map nodes, only string keys are supported.
+As is the case with map nodes, record nodes only support string keys.
 
 ```typescript
 class MyRecord extends schemaFactory.record("my-record", [schemaFactory.number, schemaFactory.string]) {}
