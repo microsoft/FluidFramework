@@ -94,9 +94,12 @@ describe("Unhydrated nodes", () => {
 		const record = new TestRecord({ [recordKey]: recordLeaf });
 		assert.equal(record[recordKey], recordLeaf);
 		assert.equal(record[recordKey]?.value, recordValue);
-		assert.deepEqual(record, {
-			[recordKey]: recordLeaf,
-		});
+		assert.deepEqual(
+			{ ...record },
+			{
+				[recordKey]: recordLeaf,
+			},
+		);
 		// Object
 		const object = new TestObject({ map, array, record });
 		assert.equal(object.map, map);
