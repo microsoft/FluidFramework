@@ -28,6 +28,84 @@ describe("RecordNode", () => {
 		const _record2: Record<string, number> = new CustomizableNumberRecord({});
 	}
 
+	describe("construction", () => {
+		it("constructor - empty", () => {
+			class Schema extends schemaFactory.record("x", schemaFactory.number) {}
+			const _fromRecord: Schema = new Schema({});
+		});
+
+		it("create - NonClass", () => {
+			const Schema = schemaFactory.record(schemaFactory.number);
+			type Schema = NodeFromSchema<typeof Schema>;
+			const _fromRecord: Schema = Schema.create({});
+		});
+
+		describe("implicit construction", () => {
+			it("named", () => {
+				class Schema extends schemaFactory.record("x", schemaFactory.number) {}
+				class Root extends schemaFactory.object("root", { data: Schema }) {}
+				const fromPojo = new Root({ data: { foo: 42 } });
+				assert.deepEqual(fromPojo.data, { foo: 42 });
+			});
+
+			it("structural", () => {
+				class Root extends schemaFactory.object("root", {
+					data: schemaFactory.record(schemaFactory.number),
+				}) {}
+				const fromPojo = new Root({ data: { foo: 42 } });
+				assert.deepEqual(fromPojo.data, { foo: 42 });
+			});
+		});
+
+		it("nested (named)", () => {
+			class MyRecord extends schemaFactory.record(
+				"x",
+				schemaFactory.record("y", [schemaFactory.number, schemaFactory.string]),
+			) {}
+			const data = { a: { foo: 42, bar: "Hello world!" }, b: {} } as const;
+			const json = JSON.stringify(data);
+			const myRecord = new MyRecord(data);
+			assert.equal(JSON.stringify(myRecord), json);
+		});
+
+		it("nested (structural)", () => {
+			class MyRecord extends schemaFactory.record(
+				"x",
+				schemaFactory.record([schemaFactory.number, schemaFactory.string]),
+			) {}
+			const data = { a: { foo: 42, bar: "Hello world!" }, b: {} } as const;
+			const json = JSON.stringify(data);
+			const myRecord = new MyRecord(data);
+			assert.equal(JSON.stringify(myRecord), json);
+		});
+
+		it("complex children", () => {
+			class InnerObject extends schemaFactory.object("y", {
+				foo: schemaFactory.number,
+				bar: schemaFactory.string,
+			}) {}
+			class MyRecord extends schemaFactory.record("x", InnerObject) {}
+
+			const myRecord = new MyRecord({
+				a: { foo: 42, bar: "Hello world!" },
+				b: { foo: 37, bar: "Everybody dance now!" },
+			});
+
+			delete myRecord.b;
+			myRecord.a.foo = 100;
+
+			myRecord.c = new InnerObject({ foo: 200, bar: "New entry!" });
+
+			assert.equal(
+				JSON.stringify(myRecord),
+				JSON.stringify({
+					a: { foo: 100, bar: "Hello world!" },
+					c: { foo: 200, bar: "New entry!" },
+				}),
+			);
+		});
+	});
+
 	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
 	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
@@ -179,84 +257,6 @@ describe("RecordNode", () => {
 			});
 		});
 	}
-
-	describe("construction", () => {
-		it("constructor - empty", () => {
-			class Schema extends schemaFactory.record("x", schemaFactory.number) {}
-			const _fromRecord: Schema = new Schema({});
-		});
-
-		it("create - NonClass", () => {
-			const Schema = schemaFactory.record(schemaFactory.number);
-			type Schema = NodeFromSchema<typeof Schema>;
-			const _fromRecord: Schema = Schema.create({});
-		});
-
-		describe("implicit construction", () => {
-			it("named", () => {
-				class Schema extends schemaFactory.record("x", schemaFactory.number) {}
-				class Root extends schemaFactory.object("root", { data: Schema }) {}
-				const fromPojo = new Root({ data: { foo: 42 } });
-				assert.deepEqual(fromPojo.data, { foo: 42 });
-			});
-
-			it("structural", () => {
-				class Root extends schemaFactory.object("root", {
-					data: schemaFactory.record(schemaFactory.number),
-				}) {}
-				const fromPojo = new Root({ data: { foo: 42 } });
-				assert.deepEqual(fromPojo.data, { foo: 42 });
-			});
-		});
-
-		it("nested (named)", () => {
-			class MyRecord extends schemaFactory.record(
-				"x",
-				schemaFactory.record("y", [schemaFactory.number, schemaFactory.string]),
-			) {}
-			const data = { a: { foo: 42, bar: "Hello world!" }, b: {} } as const;
-			const json = JSON.stringify(data);
-			const myRecord = new MyRecord(data);
-			assert.equal(JSON.stringify(myRecord), json);
-		});
-
-		it("nested (structural)", () => {
-			class MyRecord extends schemaFactory.record(
-				"x",
-				schemaFactory.record([schemaFactory.number, schemaFactory.string]),
-			) {}
-			const data = { a: { foo: 42, bar: "Hello world!" }, b: {} } as const;
-			const json = JSON.stringify(data);
-			const myRecord = new MyRecord(data);
-			assert.equal(JSON.stringify(myRecord), json);
-		});
-
-		it("complex children", () => {
-			class InnerObject extends schemaFactory.object("y", {
-				foo: schemaFactory.number,
-				bar: schemaFactory.string,
-			}) {}
-			class MyRecord extends schemaFactory.record("x", InnerObject) {}
-
-			const myRecord = new MyRecord({
-				a: { foo: 42, bar: "Hello world!" },
-				b: { foo: 37, bar: "Everybody dance now!" },
-			});
-
-			delete myRecord.b;
-			myRecord.a.foo = 100;
-
-			myRecord.c = new InnerObject({ foo: 200, bar: "New entry!" });
-
-			assert.equal(
-				JSON.stringify(myRecord),
-				JSON.stringify({
-					a: { foo: 100, bar: "Hello world!" },
-					c: { foo: 200, bar: "New entry!" },
-				}),
-			);
-		});
-	});
 
 	describe("recursive", () => {
 		class RecursiveRecordSchema extends schemaFactory.recordRecursive("x", [
