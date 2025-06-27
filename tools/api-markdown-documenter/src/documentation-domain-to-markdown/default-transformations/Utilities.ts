@@ -5,8 +5,6 @@
 
 import type {
 	Html as MdastHtml,
-	List as MdastList,
-	ListItem as MdastListItem,
 	PhrasingContent as MdastPhrasingContent,
 } from "mdast";
 
@@ -40,33 +38,6 @@ export function transformAsHtml(
 	return {
 		type: "html",
 		value: htmlString,
-	};
-}
-
-/**
- * TODO
- */
-export function createList(
-	items: readonly MdastPhrasingContent[],
-	ordered: boolean,
-): MdastList {
-	const wrappedChildren: MdastListItem[] = items.map((item) => {
-		const listItem: MdastListItem = {
-			type: "listItem",
-			children: [
-				{
-					type: "paragraph",
-					children: [item],
-				},
-			],
-		};
-		return listItem;
-	});
-
-	return {
-		type: "list",
-		ordered,
-		children: wrappedChildren,
 	};
 }
 

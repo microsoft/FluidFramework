@@ -29,6 +29,7 @@ import type { BlockContent as BlockContent_2 } from 'mdast';
 import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
+import type { ListItem } from 'mdast';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -885,6 +886,7 @@ export type ToMarkdownTransformation<TIn extends DocumentationNode = Documentati
 // @public
 export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & PhrasingContentToMarkdownTransformations & {
     readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
+    readonly ["listItem"]: ToMarkdownTransformation<ListItemNode, [ListItem]>;
     readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;
     readonly ["tableCell"]: ToMarkdownTransformation<TableCellNode, [TableCell]>;
     readonly ["tableRow"]: ToMarkdownTransformation<TableRowNode, [TableRow]>;

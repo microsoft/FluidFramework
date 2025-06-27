@@ -6,6 +6,7 @@
 import type {
 	Nodes as MdastTree,
 	BlockContent as MdastBlockContent,
+	ListItem as MdastListItem,
 	PhrasingContent as MdastPhrasingContent,
 	RootContent as MdastRootContent,
 	TableCell as MdastTableCell,
@@ -20,6 +21,7 @@ import type {
 	TableCellNode,
 	TableRowNode,
 	HeadingNode,
+	ListItemNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -30,14 +32,14 @@ import {
 	sectionToMarkdown,
 	lineBreakToMarkdown,
 	linkToMarkdown,
-	orderedListToMarkdown,
 	paragraphToMarkdown,
 	plainTextToMarkdown,
 	spanToMarkdown,
 	tableToMarkdown,
 	tableCellToMarkdown,
 	tableRowToMarkdown,
-	unorderedListToMarkdown,
+	listToMarkdown,
+	listItemToMarkdown,
 } from "../default-transformations/index.js";
 
 /**
@@ -72,6 +74,7 @@ export type PhrasingContentTransformations = {
 export type Transformations = BlockContentTransformations &
 	PhrasingContentTransformations & {
 		readonly ["heading"]: Transformation<HeadingNode, MdastBlockContent[]>;
+		readonly ["listItem"]: Transformation<ListItemNode, [MdastListItem]>;
 		readonly ["section"]: Transformation<SectionNode, MdastRootContent[]>;
 		readonly ["tableCell"]: Transformation<TableCellNode, [MdastTableCell]>;
 		readonly ["tableRow"]: Transformation<TableRowNode, [MdastTableRow]>;
@@ -99,14 +102,14 @@ export const defaultTransformations: Transformations = {
 	heading: headingToMarkdown,
 	lineBreak: lineBreakToMarkdown,
 	link: linkToMarkdown,
+	list: listToMarkdown,
+	listItem: listItemToMarkdown,
 	section: sectionToMarkdown,
 	horizontalRule: horizontalRuleToMarkdown,
-	orderedList: orderedListToMarkdown,
 	paragraph: paragraphToMarkdown,
 	text: plainTextToMarkdown,
 	span: spanToMarkdown,
 	table: tableToMarkdown,
 	tableCell: tableCellToMarkdown,
 	tableRow: tableRowToMarkdown,
-	unorderedList: unorderedListToMarkdown,
 };
