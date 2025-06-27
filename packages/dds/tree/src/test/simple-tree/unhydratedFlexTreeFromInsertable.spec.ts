@@ -50,8 +50,6 @@ import { getUnhydratedContext } from "../../simple-tree/createContext.js";
 import { prepareContentForHydration } from "../../simple-tree/prepareForInsertion.js";
 import { hydrate } from "./utils.js";
 
-// TODO: Record node tests
-
 describe("unhydratedFlexTreeFromInsertable", () => {
 	it("string", () => {
 		const schemaFactory = new SchemaFactory("test");

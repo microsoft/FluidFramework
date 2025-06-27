@@ -53,8 +53,6 @@ import type {
 import { hydrate } from "../utils.js";
 import { getView, validateUsageError } from "../../utils.js";
 
-// TODO: Implement property access for Record nodes and fix modified test below
-
 {
 	const schema = new SchemaFactory("Blah");
 
