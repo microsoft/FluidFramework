@@ -78,7 +78,7 @@ steps:
     # COREPACK_NPM_REGISTRY: $(ado-feeds-primary-registry)
 
 # Authenticate to npm feed if required
-- task: npmAuthenticate@0
+- task: npmAuthenticate@0.251.2
   displayName: 'Npm authenticate'
   condition: and(succeeded(), eq(variables['registryType'], 'private'))
   retryCountOnTaskFailure: 1
