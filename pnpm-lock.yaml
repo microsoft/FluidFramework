@@ -26565,7 +26565,7 @@ packages:
     engines: {node: '>=12.0.0'}
 
   tinylicious@file:tinylicious-6.0.0.tgz:
-    resolution: {integrity: sha512-QOpv0Q4XiTpAQN7+F9Ld7qAOkODJszcz86TST8wAntSKqx2eKa+98XBbDZQaZLvk0Uy9THFVRk12nz6TtKrJjQ==, tarball: file:tinylicious-6.0.0.tgz}
+    resolution: {integrity: sha512-mo1YmyZ65FvuMOrJ7Ipy8ODDq5NR32iHkX0VTWdNtOweArpddl865VIYjgOkOlr5BrInTTQQeGTXb5/F+voLgA==, tarball: file:tinylicious-6.0.0.tgz}
     version: 6.0.0
     engines: {node: '>=14.0.0'}
     hasBin: true
