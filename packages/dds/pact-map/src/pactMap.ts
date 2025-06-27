@@ -287,8 +287,10 @@ export class PactMapClass<T = unknown>
 		sequenceNumber: number,
 	): void => {
 		const pending = this.values.get(key)?.pending;
-		// We don't resubmit accepts on reconnect so this should only run for expected accepts.
-		assert(pending !== undefined, 0x2f8 /* Unexpected accept op, nothing pending */);
+		if (pending === undefined) {
+			// If there is no pending value, we already accepted it, so we can ignore the accept op.
+			return;
+		}
 		assert(
 			pending.expectedSignoffs.includes(clientId),
 			0x2f9 /* Unexpected accept op, client not in expectedSignoffs */,
@@ -368,16 +370,13 @@ export class PactMapClass<T = unknown>
 	 */
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const pactMapOp = content as IPactMapOperation<T>;
-		// Filter out accept messages - if we're coming back from a disconnect, our acceptance is never required
-		// because we're implicitly removed from the list of expected accepts.
-		if (pactMapOp.type === "accept") {
-			return;
-		}
+
 
 		// Filter out set messages that have no chance of being accepted because there's another value pending
 		// or another value was accepted while we were disconnected.
 		const currentValue = this.values.get(pactMapOp.key);
 		if (
+			pactMapOp.type === "set" &&
 			currentValue !== undefined &&
 			(currentValue.pending !== undefined ||
 				pactMapOp.refSeq < currentValue.accepted?.sequenceNumber)
