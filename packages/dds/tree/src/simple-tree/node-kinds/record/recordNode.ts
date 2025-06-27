@@ -70,17 +70,19 @@ function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): T
 				if (key === Symbol.iterator) {
 					return () => recordIterator(proxy);
 				}
-
-				return false;
 			}
 
-			const innerNode = getOrCreateInnerNode(receiver);
-			const field = innerNode.tryGetField(brand(key));
-			if (field === undefined) {
-				return undefined;
+			if (typeof key === "string") {
+				const innerNode = getOrCreateInnerNode(receiver);
+				const field = innerNode.tryGetField(brand(key));
+				if (field === undefined) {
+					return undefined;
+				}
+
+				return tryGetTreeNodeForField(field);
 			}
 
-			return tryGetTreeNodeForField(field);
+			return false;
 		},
 		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
 			if (typeof key === "symbol") {
@@ -247,7 +249,7 @@ export function recordSchema<
 			instance: TreeNodeValid<T2>,
 			flexNode: FlexTreeNode,
 		): TreeNodeValid<T2> {
-			const proxyTarget = {};
+			const proxyTarget = {}; // TODO: instance
 			return createRecordNodeProxy(
 				proxyTarget,
 				this as unknown as RecordNodeSchema,
