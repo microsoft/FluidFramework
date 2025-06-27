@@ -5,9 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { DoublyLinkedList, walkList } from "../collections/index.js";
+import { DoublyLinkedList, walkList } from "../index.js";
 
-describe("Collections.DoublyLinkedList", () => {
+describe("DoublyLinkedList", () => {
 	const listCount = 5;
 	let list: DoublyLinkedList<number>;
 
