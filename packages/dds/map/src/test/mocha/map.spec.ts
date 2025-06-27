@@ -10,6 +10,11 @@ import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import type { ListNode } from "@fluidframework/core-utils/internal";
 import type { ISummaryBlob } from "@fluidframework/driver-definitions";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import {
+	SharedObjectCore,
+	type SharedObject,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
@@ -25,7 +30,6 @@ import type {
 	ISerializableValue,
 	MapLocalOpMetadata,
 } from "../../internalInterfaces.js";
-import { SharedMap as SharedMapInternal } from "../../map.js";
 import type { IMapOperation } from "../../mapKernel.js";
 
 /**
@@ -48,26 +52,12 @@ export function createConnectedMap(
 	return map;
 }
 
-function createLocalMap(id: string): SharedMapInternal {
+function createLocalMap(id: string): SharedMap {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime({
 		registry: [SharedMap.getFactory()],
 	});
 	const map = SharedMap.create(dataStoreRuntime, id);
-	return map as SharedMapInternal;
-}
-
-class TestSharedMap extends SharedMapInternal {
-	private lastMetadata?: ListNode<MapLocalOpMetadata>;
-	public testApplyStashedOp(content: IMapOperation): ListNode<MapLocalOpMetadata> | undefined {
-		this.lastMetadata = undefined;
-		this.applyStashedOp(content);
-		return this.lastMetadata;
-	}
-
-	public submitLocalMessage(op: IMapOperation, localOpMetadata: unknown): void {
-		this.lastMetadata = localOpMetadata as ListNode<MapLocalOpMetadata>;
-		super.submitLocalMessage(op, localOpMetadata);
-	}
+	return map;
 }
 
 describe("Map", () => {
@@ -159,6 +149,18 @@ describe("Map", () => {
 					map.set(null as unknown as string, "two");
 				}, "Should throw for key of null");
 			});
+
+			it("entries", () => {
+				assert.deepEqual([...map.entries()], []);
+				map.set("key1", "value1");
+				assert.deepEqual([...map.entries()], [["key1", "value1"]]);
+			});
+
+			it("Can iterate", () => {
+				assert.deepEqual([...map], []);
+				map.set("key1", "value1");
+				assert.deepEqual([...map], [["key1", "value1"]]);
+			});
 		});
 
 		describe("Serialize", () => {
@@ -171,7 +173,7 @@ describe("Map", () => {
 
 				const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob)
 					.content;
-				const subMapHandleUrl = subMap.handle.absolutePath;
+				const subMapHandleUrl = toFluidHandleInternal(subMap.handle).absolutePath;
 				assert.equal(
 					summaryContent,
 					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain","value":"sixth"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
@@ -188,7 +190,7 @@ describe("Map", () => {
 
 				const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob)
 					.content;
-				const subMapHandleUrl = subMap.handle.absolutePath;
+				const subMapHandleUrl = toFluidHandleInternal(subMap.handle).absolutePath;
 				assert.equal(
 					summaryContent,
 					`{"blobs":[],"content":{"first":{"type":"Plain","value":"second"},"third":{"type":"Plain","value":"fourth"},"fifth":{"type":"Plain"},"object":{"type":"Plain","value":{"type":"__fluid_handle__","url":"${subMapHandleUrl}"}}}}`,
@@ -206,8 +208,8 @@ describe("Map", () => {
 				};
 				map.set("object", containingObject);
 
-				const subMapHandleUrl = subMap.handle.absolutePath;
-				const subMap2HandleUrl = subMap2.handle.absolutePath;
+				const subMapHandleUrl = toFluidHandleInternal(subMap.handle).absolutePath;
+				const subMap2HandleUrl = toFluidHandleInternal(subMap2.handle).absolutePath;
 				const summaryContent = (map.getAttachSummary().summary.tree.header as ISummaryBlob)
 					.content;
 				assert.equal(
@@ -412,32 +414,67 @@ describe("Map", () => {
 				const serializable: ISerializableValue = { type: "Plain", value: "value" };
 				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
 				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
-				const map1 = new TestSharedMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
+
+				const factory = SharedMap.getFactory();
+				const map1 = factory.create(dataStoreRuntime1, "testMap1") as SharedMap & SharedObject;
+
+				// The last op metadata provided to submitLocalMessage (used by testApplyStashedOp)
+				let lastMetadata: ListNode<MapLocalOpMetadata> | undefined;
+
+				// Apply a stashed op, returning the metadata that was provided to submitLocalMessage.
+				function testApplyStashedOp(
+					content: IMapOperation,
+				): ListNode<MapLocalOpMetadata> | undefined {
+					lastMetadata = undefined;
+					Hack.originalApplyStashedOp(content);
+					return lastMetadata;
+				}
+
+				// Replacement for submitLocalMessage that captures the metadata.
+				function submitLocalMessageReplacement(
+					theOp: unknown,
+					localOpMetadata: unknown,
+				): void {
+					lastMetadata = localOpMetadata as ListNode<MapLocalOpMetadata>;
+					return Hack.submitLocalMessage(theOp, localOpMetadata);
+				}
+
+				// A hack to access protected methods.
+				// This is safer than casting to `any` as it will actually break if the methods are changed.
+				abstract class Hack extends SharedObjectCore {
+					public static originalApplyStashedOp = (map1 as Hack).applyStashedOp.bind(map1);
+					public static submitLocalMessage = (map1 as Hack).submitLocalMessage.bind(map1);
+					static {
+						// Swap in the replacement for submitLocalMessage to capture the metadata.
+						(map1 as Hack).submitLocalMessage = submitLocalMessageReplacement;
+					}
+				}
+
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
 				map1.connect({
 					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 					objectStorage: new MockStorage(undefined),
 				});
-				let metadata = map1.testApplyStashedOp(op)?.data;
+				let metadata = testApplyStashedOp(op)?.data;
 				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 0);
-				const editMetadata = map1.testApplyStashedOp(op)?.data;
+				const editMetadata = testApplyStashedOp(op)?.data;
 				assert.equal(editMetadata?.type, "edit");
 				assert.equal(editMetadata.pendingMessageId, 1);
 				assert.equal(editMetadata.previousValue.value, "value");
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
 				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
-				metadata = map1.testApplyStashedOp(op2)?.data;
+				metadata = testApplyStashedOp(op2)?.data;
 				assert.equal(metadata?.type, "add");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3)?.data;
+				metadata = testApplyStashedOp(op3)?.data;
 				assert.equal(metadata?.type, "edit");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.previousValue.value, "value2");
 				const op4: IMapClearOperation = { type: "clear" };
-				metadata = map1.testApplyStashedOp(op4)?.data;
+				metadata = testApplyStashedOp(op4)?.data;
 				assert.equal(metadata?.pendingMessageId, 4);
 				assert.equal(metadata.type, "clear");
 				assert.equal(metadata.previousMap?.get("key")?.value, "value");
@@ -524,7 +561,7 @@ describe("Map", () => {
 					assert(localSubMap);
 					assert.equal(
 						localSubMap.absolutePath,
-						subMap.handle.absolutePath,
+						toFluidHandleInternal(subMap.handle).absolutePath,
 						"could not get the handle's path",
 					);
 
@@ -533,7 +570,7 @@ describe("Map", () => {
 					assert(remoteSubMap);
 					assert.equal(
 						remoteSubMap.absolutePath,
-						subMap.handle.absolutePath,
+						toFluidHandleInternal(subMap.handle).absolutePath,
 						"could not get the handle's path in remote map",
 					);
 				});
@@ -901,7 +938,7 @@ describe("Map", () => {
 				const newSubMapId = `subMap-${++this.subMapCount}`;
 				const subMap = createLocalMap(newSubMapId);
 				this.map1.set(newSubMapId, subMap.handle);
-				this._expectedRoutes.push(subMap.handle.absolutePath);
+				this._expectedRoutes.push(toFluidHandleInternal(subMap.handle).absolutePath);
 				this.containerRuntimeFactory.processAllMessages();
 			}
 
@@ -937,7 +974,10 @@ describe("Map", () => {
 					},
 				};
 				this.map1.set(subMapId2, containingObject);
-				this._expectedRoutes.push(subMap.handle.absolutePath, subMap2.handle.absolutePath);
+				this._expectedRoutes.push(
+					toFluidHandleInternal(subMap.handle).absolutePath,
+					toFluidHandleInternal(subMap2.handle).absolutePath,
+				);
 				this.containerRuntimeFactory.processAllMessages();
 			}
 		}
