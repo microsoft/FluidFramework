@@ -575,29 +575,10 @@ describe("Presence", () => {
 
 			beforeEach(() => {
 				// Setup workspace initialization signal
-				const sig = createExpectedStateUpdateSignal(connectionId2, "count", attendeeId2, { num: 0 });
 				runtime.signalsExpected.push([
-					sig,
-					// {
-					// 	"type": "Pres:DatastoreUpdate",
-					// 	"content": {
-					// 		"sendTimestamp": 1030,
-					// 		"avgLatency": 10,
-					// 		"data": {
-					// 			"system:presence": {
-					// 				"clientToSessionId": {
-					// 					"client2": { "rev": 0, "timestamp": 1000, "value": attendeeId2 },
-					// 				},
-					// 			},
-					// 			"s:name:testStateWorkspace": {
-					// 				"count": {
-					// 					// @ts-expect-error
-					// 					[attendeeId2]: { "rev": 0, "timestamp": 1030, "value": { "num": 0 } },
-					// 				},
-					// 			},
-					// 		},
-					// 	},
-					// },
+					createExpectedStateUpdateSignal(connectionId2, "count", attendeeId2, {
+						num: 0,
+					}),
 				]);
 
 				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
@@ -884,7 +865,7 @@ describe("Presence", () => {
 					});
 
 					// FIXME: Test should pass
-					it.skip("for unchanged key when different key is updated", () => {
+					it("for unchanged key when different key is updated", () => {
 						// Set up both keys with some initial data
 						presence.processSignal(
 							[],

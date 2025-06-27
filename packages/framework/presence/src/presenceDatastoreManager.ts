@@ -10,6 +10,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
@@ -361,29 +362,54 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	/**
 	 * Strips validation metadata from individual value data entries.
 	 */
-	private stripValidationFromValueData(valueData: any): any {
+	private stripValidationFromValueData(
+		valueData:
+			| InternalTypes.ValueDirectoryOrState<unknown>
+			| InternalTypes.ValueOptionalState<unknown>,
+	): InternalTypes.ValueDirectoryOrState<unknown> | InternalTypes.ValueOptionalState<unknown> {
 		if (valueData === null || typeof valueData !== "object") {
 			return valueData;
 		}
 
 		// Handle directory structures (with "items" property)
 		if ("items" in valueData && typeof valueData.items === "object") {
-			const stripped = {
+			const stripped: InternalTypes.ValueDirectory<unknown> = {
 				rev: valueData.rev,
-				items: {} as any,
+				items: {},
 			};
 
 			for (const [key, item] of Object.entries(valueData.items)) {
-				stripped.items[key] = this.stripValidationFromValueData(item);
+				stripped.items[key] = this.stripValidationFromValueData(item) as
+					| InternalTypes.ValueOptionalState<unknown>
+					| InternalTypes.ValueDirectory<unknown>;
 			}
 
 			return stripped;
 		}
 
+		if ("validatedValue" in valueData) {
+			delete valueData.validatedValue;
+		}
+		return valueData;
+
 		// Handle value states - remove validatedValue but keep other properties
-		const stripped = { ...valueData };
-		delete stripped.validatedValue;
-		return stripped;
+		// if ("value" in valueData) {
+		// 	const stripped: InternalTypes.ValueRequiredState<unknown> = {
+		// 		rev: valueData.rev,
+		// 		timestamp: valueData.timestamp,
+		// 		value: valueData.value,
+		// 	};
+		// 	return stripped;
+		// } else if ("timestamp" in valueData) {
+		// 	const stripped: InternalTypes.ValueOptionalState<unknown> = {
+		// 		rev: valueData.rev,
+		// 		timestamp: valueData.timestamp,
+		// 	};
+		// 	return stripped;
+		// } else {
+		// 	// This should not happen for valid value data, but return as-is for safety
+		// 	return valueData;
+		// }
 	}
 
 	private broadcastAllKnownState(): void {
