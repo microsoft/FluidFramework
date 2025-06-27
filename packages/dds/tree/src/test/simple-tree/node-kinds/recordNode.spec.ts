@@ -20,7 +20,7 @@ import { Tree, TreeAlpha } from "../../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
-const CustomizableNumberRecord = schemaFactory.record("Record", schemaFactory.number);
+class CustomizableNumberRecord extends schemaFactory.record("Record", schemaFactory.number) {}
 
 /**
  * Compares a tree with an expected "concise" tree representation.
@@ -116,7 +116,52 @@ describe("RecordNode", () => {
 		});
 	});
 
+	describeHydration("POJO emulation", (init) => {
+		it("deep equality", () => {
+			const aInsertable = { foo: 42, bar: 100 };
+			const aNode = PojoEmulationNumberRecord.create(aInsertable);
+			assert.deepEqual(aNode, aNode);
+			assert.deepEqual(aNode, aInsertable);
+
+			// Structurally equivalent node
+			const bNode = PojoEmulationNumberRecord.create(aInsertable);
+			assert.deepEqual(bNode, aNode);
+
+			// Structurally nonequivalent node
+			const cNode = PojoEmulationNumberRecord.create({});
+			assert.notDeepEqual(cNode, aNode);
+			assert.notDeepEqual(cNode, aInsertable);
+
+			// Structurally equivalent node with different schema
+			const OtherSchema = schemaFactory.record(schemaFactory.number);
+			const dNode = OtherSchema.create(aInsertable);
+			assert.deepEqual(dNode, aNode);
+		});
+	});
+
 	describeHydration("customizable", (init) => {
+		it("deep equality", () => {
+			const aInsertable = { foo: 42, bar: 100 };
+			const aNode = new CustomizableNumberRecord(aInsertable);
+			assert.deepEqual(aNode, aNode);
+			assert.notDeepEqual(aNode, aInsertable);
+
+			// Structurally equivalent node
+			const bNode = new CustomizableNumberRecord(aInsertable);
+			assert.deepEqual(bNode, aNode);
+			assert.notDeepEqual(bNode, aInsertable);
+
+			// Structurally nonequivalent node
+			const cNode = new CustomizableNumberRecord({});
+			assert.notDeepEqual(cNode, aNode);
+			assert.notDeepEqual(cNode, aInsertable);
+
+			// Structurally equivalent node with different schema
+			class OtherSchema extends schemaFactory.record("other", schemaFactory.number) {}
+			const dNode = new OtherSchema(aInsertable);
+			assert.notDeepEqual(dNode, aNode);
+		});
+
 		describe("doesn't allow extra properties", () => {
 			function assertConstructionFails<
 				TInsertable,
@@ -171,12 +216,6 @@ describe("RecordNode", () => {
 		schemaType: typeof PojoEmulationNumberRecord | typeof CustomizableNumberRecord,
 	): void {
 		describeHydration(title, (init) => {
-			it("stringifies in the same way as a POJO record", () => {
-				const tsRecord = { foo: 1, bar: 2, toJson: 3 };
-				const recordNode = init(schemaType, tsRecord);
-				assert.equal(JSON.stringify(recordNode), JSON.stringify(tsRecord));
-			});
-
 			it("can get and set values", () => {
 				const record = init(schemaType, { foo: 1, bar: 2 });
 				assert.equal(record.foo, 1);
@@ -204,6 +243,12 @@ describe("RecordNode", () => {
 						/The provided data is incompatible with all of the types allowed by the schema/,
 					),
 				);
+			});
+
+			it("JSON.stringify", () => {
+				const tsRecord = { foo: 1, bar: 2, toJson: 3 };
+				const recordNode = init(schemaType, tsRecord);
+				assert.equal(JSON.stringify(recordNode), '{"foo":1,"bar":2,"toJson":3}');
 			});
 
 			it("Object.keys", () => {
@@ -295,14 +340,6 @@ describe("RecordNode", () => {
 			});
 		});
 
-		it("stringifies in the same way as a POJO record", () => {
-			const recordNode = new RecursiveRecordSchema({
-				foo: 1,
-				bar: new RecursiveRecordSchema({ x: 42 }),
-			});
-			assert.equal(JSON.stringify(recordNode), JSON.stringify({ foo: 1, bar: { x: 42 } }));
-		});
-
 		it("can get and set values", () => {
 			const record = new RecursiveRecordSchema({
 				foo: 1,
@@ -356,6 +393,14 @@ describe("RecordNode", () => {
 				},
 				validateUsageError(/Invalid schema for this context/),
 			);
+		});
+
+		it("JSON.stringify", () => {
+			const recordNode = new RecursiveRecordSchema({
+				foo: 1,
+				bar: new RecursiveRecordSchema({ x: 42 }),
+			});
+			assert.equal(JSON.stringify(recordNode), '{"foo":1,"bar":{"x":42}}');
 		});
 
 		it("Object.keys", () => {
