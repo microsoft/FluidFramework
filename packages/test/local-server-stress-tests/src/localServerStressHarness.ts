@@ -65,6 +65,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { saveFluidOps } from "./baseModel.js";
+import { clearCachedDdsStates } from "./ddsOperations.js";
 import {
 	createRuntimeFactory,
 	StressDataObject,
@@ -985,6 +986,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 
 			finalState.validationClient.container.dispose();
 			await finalState.localDeltaConnectionServer.close();
+			clearCachedDdsStates();
 		}
 	}
 
