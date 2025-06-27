@@ -341,16 +341,17 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		const stripped = {} as PresenceDatastore;
 
 		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
-			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			stripped[workspaceAddress] = {} as any;
 
 			for (const [valueKey, clientRecord] of Object.entries(workspace)) {
-				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 				(stripped[workspaceAddress] as any)[valueKey] = {};
 
 				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
-					// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 					(stripped[workspaceAddress] as any)[valueKey][attendeeId] =
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						this.stripValidationFromValueData(valueData);
 				}
 			}
