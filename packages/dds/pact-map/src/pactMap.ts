@@ -371,7 +371,6 @@ export class PactMapClass<T = unknown>
 	protected reSubmitCore(content: unknown, localOpMetadata: unknown): void {
 		const pactMapOp = content as IPactMapOperation<T>;
 
-
 		// Filter out set messages that have no chance of being accepted because there's another value pending
 		// or another value was accepted while we were disconnected.
 		const currentValue = this.values.get(pactMapOp.key);
