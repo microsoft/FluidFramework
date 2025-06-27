@@ -50,7 +50,8 @@ function createUndoBenchmark({
 
 		public async run(): Promise<void> {
 			assert(this.undoRedoManager !== undefined, "undoRedoManager is not initialized");
-			for (let i = 0; i < operationCount * editsPerOperation; i++) {
+			const stackOperationCount = operationCount * editsPerOperation;
+			for (let i = 0; i < stackOperationCount; i++) {
 				this.undoRedoManager.undo();
 			}
 			assert(!this.undoRedoManager.canUndo);
@@ -105,7 +106,8 @@ function createRedoBenchmark({
 			this.localTree = createTableTree(tableSize, initialValue);
 			this.undoRedoManager = new UndoRedoManager(this.localTree.treeView);
 			operation(this.localTree, operationCount);
-			for (let i = 0; i < operationCount * editsPerOperation; i++) {
+			const stackOperationCount = operationCount * editsPerOperation;
+			for (let i = 0; i < stackOperationCount; i++) {
 				this.undoRedoManager.undo();
 			}
 			assert(!this.undoRedoManager.canUndo);
