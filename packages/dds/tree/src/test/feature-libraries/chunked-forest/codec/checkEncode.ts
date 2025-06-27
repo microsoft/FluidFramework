@@ -42,7 +42,11 @@ export function checkNodeEncode(
 ): BufferFormat {
 	const mainBuffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
-	shape.encodeNode(cursor, cache, new EncodedDataBuilder(false, mainBuffer));
+	shape.encodeNode(
+		cursor,
+		cache,
+		new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, mainBuffer),
+	);
 
 	// Check round-trip
 	checkDecode([mainBuffer], [[tree]]);
@@ -58,7 +62,11 @@ export function checkFieldEncode(
 ): BufferFormat {
 	const mainBuffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeField(tree);
-	shape.encodeField(cursor, cache, new EncodedDataBuilder(false, mainBuffer));
+	shape.encodeField(
+		cursor,
+		cache,
+		new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, mainBuffer),
+	);
 
 	// Check round-trip
 	checkDecode([mainBuffer], [tree], idCompressor);

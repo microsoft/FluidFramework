@@ -40,6 +40,7 @@ import {
 	version,
 } from "./format.js";
 import { EncodedDataBuilder, type IEncodedDataBuilder } from "./encodedDataBuilder.js";
+import type { IncrementalEncodingParameters } from "./codecs.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`. Fields that support incremental encoding
@@ -55,9 +56,9 @@ import { EncodedDataBuilder, type IEncodedDataBuilder } from "./encodedDataBuild
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	cache: EncoderCache,
-	outputIncrementalFieldsBatch?: Map<string, EncodedFieldBatchFormat>,
+	incrementalEncodingParams?: IncrementalEncodingParameters,
 ): EncodedFieldBatch {
-	const encodeIncrementally = outputIncrementalFieldsBatch !== undefined;
+	const encodeIncrementally = incrementalEncodingParams !== undefined;
 	const batchBuffer: BufferFormat[] = [];
 	const incrementalFieldBuffers: Map<string, FieldBufferFormat> = new Map();
 
@@ -65,6 +66,7 @@ export function compressedEncode(
 	for (const cursor of fieldBatch) {
 		const encodedDataBuilder = new EncodedDataBuilder(
 			encodeIncrementally,
+			incrementalEncodingParams?.fullTree ?? true,
 			[],
 			incrementalFieldBuffers,
 		);
@@ -81,7 +83,6 @@ export function compressedEncode(
 			incrementalBuffer.mainBuffer,
 		);
 		if (incrementalBuffer.incrementalFieldBuffers !== undefined) {
-			// assert(encodeIncrementally, "expected incremental encoding");
 			incrementalBuffer.incrementalFieldBuffers.forEach((fieldBufferFormat, summaryRefId) => {
 				if (fieldBufferFormat === FieldUnchanged) {
 					incrementalFieldsBatch.set(summaryRefId, fieldBufferFormat);
@@ -103,7 +104,7 @@ export function compressedEncode(
 
 	return encodeShapes(
 		{ mainBuffer: batchBuffer, incrementalFieldBuffers },
-		encodeIncrementally ? outputIncrementalFieldsBatch : new Map(),
+		encodeIncrementally ? incrementalEncodingParams.outputIncrementalFieldsBatch : new Map(),
 	);
 }
 
@@ -493,10 +494,10 @@ export class IncrementalFieldShape
 		cache: EncoderCache,
 		dataBuilder: IEncodedDataBuilder,
 	): void {
-		// If encodeIncrementally is false, incremental encoding is not supported; encode using anyFieldEncoder.
-		if (dataBuilder.encodeIncrementally === false) {
-			return anyFieldEncoder.encodeField(cursor, cache, dataBuilder);
-		}
+		assert(
+			dataBuilder.encodeIncrementally,
+			"incremental encoding must be enabled to use IncrementalFieldShape",
+		);
 
 		// If there are no nodes in the field, there is no need to do incremental encoding. Encode a zero length field.
 		if (cursor.getFieldLength() === 0) {
@@ -507,10 +508,6 @@ export class IncrementalFieldShape
 		// Find whether the field has changed since the last encoding. If the field changed, the chunks for at least
 		// one of the nodes in the field will have summaryRefId undefined due to copy-on-write semantics.
 		// Otherwise, all nodes in the field should have the same summaryRefId from the previous encoding.
-
-		// TODO: Checking for summary ref id is not sufficient to determine if the field has changed. The sequence
-		// number of the last summary also needs to be tracked. During summarization, the sequence number of the
-		// last successful summary needs to be compared with the tracked last summary sequence number in the chunk.
 		let fieldChanged: boolean = false;
 		let summaryRefId: string | undefined;
 		forEachNode(cursor, (nodeCursor) => {
@@ -530,9 +527,9 @@ export class IncrementalFieldShape
 			}
 		});
 
-		// If the field has not changed since the last encoding, store the previous summaryRefId in the main buffer
-		// and set the incremental field buffer for this field to the summary ref id in its previous summary.
-		if (!fieldChanged) {
+		// If the field has not changed since the last encoding and fullTree is false, store the previous summaryRefId
+		// in the main buffer and set incremental field buffer for this field to unchanged.
+		if (!fieldChanged && !dataBuilder.fullTree) {
 			assert(
 				summaryRefId !== undefined,
 				"if field is unchanged, summary ref id must be defined",

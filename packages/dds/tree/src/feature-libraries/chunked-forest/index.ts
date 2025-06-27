@@ -23,4 +23,5 @@ export {
 	fluidVersionToFieldBatchCodecWriteVersion,
 	type EncodedFieldBatchFormat,
 	FieldUnchanged,
+	type IncrementalEncodingParameters,
 } from "./codec/index.js";
