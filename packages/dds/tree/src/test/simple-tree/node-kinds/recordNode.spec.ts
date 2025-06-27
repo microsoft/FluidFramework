@@ -8,6 +8,7 @@ import { strict as assert } from "node:assert";
 import { describeHydration } from "../utils.js";
 import {
 	SchemaFactoryAlpha,
+	type ConciseTree,
 	type NodeFromSchema,
 	type NodeKind,
 	type TreeLeafValue,
@@ -15,11 +16,20 @@ import {
 	type TreeNodeSchema,
 } from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
-import { Tree } from "../../../shared-tree/index.js";
+import { Tree, TreeAlpha } from "../../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
 const CustomizableNumberRecord = schemaFactory.record("Record", schemaFactory.number);
+
+/**
+ * Compares a tree with an expected "concise" tree representation.
+ * Fails if they are not equivalent.
+ */
+function assertEqualTrees(actual: TreeNode, expected: ConciseTree): void {
+	const actualVerbose = TreeAlpha.exportConcise(actual);
+	assert.deepEqual(actualVerbose, expected);
+}
 
 describe("RecordNode", () => {
 	{
@@ -45,7 +55,7 @@ describe("RecordNode", () => {
 				class Schema extends schemaFactory.record("x", schemaFactory.number) {}
 				class Root extends schemaFactory.object("root", { data: Schema }) {}
 				const fromPojo = new Root({ data: { foo: 42 } });
-				assert.deepEqual(fromPojo.data, { foo: 42 });
+				assertEqualTrees(fromPojo.data, { foo: 42 });
 			});
 
 			it("structural", () => {
@@ -53,7 +63,7 @@ describe("RecordNode", () => {
 					data: schemaFactory.record(schemaFactory.number),
 				}) {}
 				const fromPojo = new Root({ data: { foo: 42 } });
-				assert.deepEqual(fromPojo.data, { foo: 42 });
+				assertEqualTrees(fromPojo.data, { foo: 42 });
 			});
 		});
 
@@ -347,7 +357,7 @@ describe("RecordNode", () => {
 		it("Object.values", () => {
 			const bar = new RecursiveRecordSchema({ x: 42 });
 			const record = new RecursiveRecordSchema({ foo: 1, bar });
-			assert.deepEqual(Object.values(record), [1, { x: 42 }]);
+			assert.deepEqual(Object.values(record), [1, bar]);
 		});
 
 		it("Object.entries", () => {
@@ -355,7 +365,7 @@ describe("RecordNode", () => {
 			const record = new RecursiveRecordSchema({ foo: 1, bar });
 			assert.deepEqual(Object.entries(record), [
 				["foo", 1],
-				["bar", { x: 42 }],
+				["bar", bar],
 			]);
 		});
 
