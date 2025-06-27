@@ -454,6 +454,11 @@ describe("PactMap", () => {
 			containerRuntimeFactory.processAllMessages(); // Process the accept from client 2
 			containerRuntime1.connected = true;
 			assert.strictEqual(
+				containerRuntimeFactory.outstandingMessageCount,
+				1,
+				"Should have client 1 accept",
+			);
+			assert.strictEqual(
 				pactMap1.get(targetKey),
 				"expected",
 				"PactMap1 should see the expected value",
@@ -471,6 +476,11 @@ describe("PactMap", () => {
 			containerRuntimeFactory.processOneMessage(); // pactMap1 "set"
 			containerRuntime1.connected = false;
 			containerRuntime1.connected = true;
+			assert.strictEqual(
+				containerRuntimeFactory.outstandingMessageCount,
+				2,
+				"Should only have client 1 and client 2 accept",
+			);
 			assert.strictEqual(
 				pactMap1.get(targetKey),
 				undefined,
