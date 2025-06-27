@@ -6,15 +6,22 @@
 import { strict as assert } from "node:assert";
 
 import { describeHydration } from "../utils.js";
-import { SchemaFactoryAlpha, type NodeFromSchema } from "../../../simple-tree/index.js";
+import {
+	SchemaFactoryAlpha,
+	type NodeFromSchema,
+	type NodeKind,
+	type TreeLeafValue,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
-import { Tree } from "../../../shared-tree/tree.js";
+import { Tree } from "../../../shared-tree/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("RecordNodeTest");
 const PojoEmulationNumberRecord = schemaFactory.record(schemaFactory.number);
 const CustomizableNumberRecord = schemaFactory.record("Record", schemaFactory.number);
 
-describe.only("RecordNode", () => {
+describe("RecordNode", () => {
 	{
 		// Assignable to TypeScript record
 		const _record1: Record<string, number> = PojoEmulationNumberRecord.create({});
@@ -25,17 +32,51 @@ describe.only("RecordNode", () => {
 	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
 	describeHydration("customizable", (init) => {
-		it("doesn't allow extra properties", () => {
-			class Test extends schemaFactory.record("test", schemaFactory.number) {
-				public get foo(): number {
-					return this.foo;
-				}
+		describe("doesn't allow extra properties", () => {
+			function assertConstructionFails<
+				TInsertable,
+				TSchema extends TreeNodeSchema<
+					string,
+					NodeKind,
+					TreeNode | TreeLeafValue,
+					TInsertable
+				>,
+			>(schema: TSchema, data: TInsertable): void {
+				assert.throws(
+					() => init(schema, data),
+					validateUsageError(/[Ss]hadowing properties of record nodes is not permitted/),
+				);
 			}
 
-			assert.throws(
-				() => init(Test, { bar: 1, baz: 2 }),
-				validateUsageError(/[Ss]hadowing properties of record nodes is not permitted/),
-			);
+			it("shadowed property with compatible type", () => {
+				class Test extends schemaFactory.record("test", schemaFactory.number) {
+					// Note: ideally this would not compile, but there isn't a way to prevent this for properties whose types are compatible with the schema's allowed types.
+					public get foo(): number {
+						return this.foo;
+					}
+				}
+				assertConstructionFails(Test, { foo: 42 });
+			});
+
+			it("shadowed property with incompatible type", () => {
+				class Test extends schemaFactory.record("test", schemaFactory.number) {
+					// @ts-expect-error: Intentionally testing unsupported scenario.
+					public get foo(): string {
+						return this.foo;
+					}
+				}
+				assertConstructionFails(Test, { foo: 42 });
+			});
+
+			it("shadowed method with compatible type", () => {
+				class Test extends schemaFactory.record("test", schemaFactory.number) {
+					// @ts-expect-error: Intentionally testing unsupported scenario.
+					public foo(): number | undefined {
+						return this.bar;
+					}
+				}
+				assertConstructionFails(Test, { foo: 42 });
+			});
 		});
 	});
 
