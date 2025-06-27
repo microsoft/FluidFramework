@@ -3,17 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import assert from "node:assert";
-
 // eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
-import { SchemaFactoryAlpha, TreeViewConfiguration } from "../simple-tree/index.js";
+import {
+	SchemaFactoryAlpha,
+	TreeViewConfiguration,
+	type TreeNodeFromImplicitAllowedTypes,
+	type TreeView,
+} from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
 import { DefaultTestSharedTreeKind } from "./utils.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { CommitKind, type Revertible } from "../core/index.js";
 import { Tree } from "../shared-tree/index.js";
+import assert from "node:assert";
 
 /**
  * Define a return type for table tree creation.
@@ -22,19 +26,11 @@ export interface TableTreeDefinition {
 	/**
 	 * The table tree instance.
 	 */
-	table: InstanceType<typeof Table>;
+	table: TreeNodeFromImplicitAllowedTypes<typeof Table>;
 	/**
-	 * The undo stack for the table tree.
+	 * The tree view associated with the table.
 	 */
-	undoStack: Revertible[];
-	/**
-	 * The redo stack for the table tree.
-	 */
-	redoStack: Revertible[];
-	/**
-	 * Unsubscribe from the table tree events and dispose of the undo/redo stacks.
-	 */
-	unsubscribe: () => void;
+	treeView: TreeView<typeof Table>;
 }
 
 /**
@@ -47,9 +43,7 @@ const schemaFactory = new SchemaFactoryAlpha("test");
 /**
  * Defines the schema for a table cell.
  */
-export class Cell extends schemaFactory.object("table-cell", {
-	cellValue: schemaFactory.string,
-}) {}
+export const Cell = schemaFactory.string;
 
 /**
  * Defines the schema for a table column.
@@ -103,70 +97,30 @@ export function createTableTree(tableSize: number, cellValue: string): TableTree
 	);
 
 	treeView.initialize(Table.empty());
-	const undoStack: Revertible[] = [];
-	const redoStack: Revertible[] = [];
-
-	function onDispose(disposed: Revertible): void {
-		const redoIndex = redoStack.indexOf(disposed);
-		if (redoIndex !== -1) {
-			redoStack.splice(redoIndex, 1);
-		} else {
-			const undoIndex = undoStack.indexOf(disposed);
-			if (undoIndex !== -1) {
-				undoStack.splice(undoIndex, 1);
-			}
-		}
-	}
-
-	const unsubscribeFromCommitAppliedEvent = treeView.events.on(
-		"commitApplied",
-		(commit, getRevertible) => {
-			if (getRevertible !== undefined) {
-				const revertible = getRevertible(onDispose);
-				if (commit.kind === CommitKind.Undo) {
-					redoStack.push(revertible);
-				} else {
-					undoStack.push(revertible);
-				}
-			}
-		},
-	);
-	const unsubscribe = (): void => {
-		unsubscribeFromCommitAppliedEvent();
-		for (const revertible of undoStack) {
-			revertible.dispose();
-		}
-		for (const revertible of redoStack) {
-			revertible.dispose();
-		}
-	};
-
 	const table = treeView.root;
 	for (let i = 0; i < tableSize; i++) {
-		const column = new Column({ id: `column-${i}` });
+		const column = new Column({});
 		table.insertColumn({ index: i, column });
 	}
 	for (let i = 0; i < tableSize; i++) {
-		const row = new Row({ id: `row-${i}`, cells: {} });
+		const row = new Row({ cells: {} });
 		table.insertRow({ index: i, row });
 	}
-	for (let i = 0; i < tableSize; i++) {
-		for (let j = 0; j < tableSize; j++) {
+	for (const row of table.rows) {
+		for (const column of table.columns) {
 			table.setCell({
 				key: {
-					column: `column-${i}`,
-					row: `row-${j}`,
+					column,
+					row,
 				},
-				cell: { cellValue },
+				cell: cellValue,
 			});
 		}
 	}
 
 	return {
 		table,
-		undoStack,
-		redoStack,
-		unsubscribe,
+		treeView,
 	};
 }
 
@@ -175,16 +129,83 @@ export function createTableTree(tableSize: number, cellValue: string): TableTree
  * This function provides a way to remove a column and its associated cells from the table. Might remove in the future
  * if the table schema is updated to handle this automatically.
  */
-export function removeColumnAndCells(
-	table: InstanceType<typeof Table>,
-	columnId: string,
-): void {
+export function removeColumnAndCells(table: InstanceType<typeof Table>, column: Column): void {
 	Tree.runTransaction(table, () => {
-		const column = table.getColumn(columnId);
-		assert(column !== undefined, `Column with ID "${columnId}" does not exist.`);
 		table.removeColumn(column);
 		for (const row of table.rows) {
 			table.removeCell({ column, row });
 		}
 	});
+}
+
+/**
+ * Undo/Redo manager for a table tree.
+ * This class manages the undo and redo operations for a table tree, allowing users to revert changes
+ * and reapply them as needed. It listens to commit events from the tree view and maintains stacks
+ * for undo and redo operations.
+ */
+export class UndoRedoManager {
+	private readonly unsubscribeFromTreeEvents: () => void;
+
+	private undoStack: Revertible[] = [];
+	private redoStack: Revertible[] = [];
+
+	public get canUndo(): boolean {
+		return this.undoStack.length > 0;
+	}
+	public get canRedo(): boolean {
+		return this.redoStack.length > 0;
+	}
+
+	public constructor(treeView: TreeView<typeof Table>) {
+		this.unsubscribeFromTreeEvents = treeView.events.on(
+			"commitApplied",
+			(commit, getRevertible) => {
+				if (getRevertible === undefined) {
+					return;
+				}
+				const revertible = getRevertible();
+				if (commit.kind === CommitKind.Undo) {
+					// If the new commit is an undo, push it to the redo stack.
+					this.redoStack.push(revertible);
+				} else {
+					if (commit.kind === CommitKind.Default) {
+						// If the new commit is not an undo/redo, clear the redo stack.
+						for (const redo of this.redoStack) {
+							redo.dispose();
+						}
+						this.redoStack = [];
+					}
+					this.undoStack.push(revertible);
+				}
+			},
+		);
+	}
+
+	public undo(): void {
+		const revertible = this.undoStack.pop();
+		assert(revertible !== undefined);
+		revertible.revert();
+	}
+
+	public redo(): void {
+		const revertible = this.redoStack.pop();
+		assert(revertible !== undefined);
+		revertible.revert();
+	}
+
+	public dispose(): void {
+		// Dispose of undo/redo stacks
+		for (const undo of this.undoStack) {
+			undo.dispose();
+		}
+		this.undoStack = [];
+		for (const redo of this.redoStack) {
+			redo.dispose();
+		}
+		this.redoStack = [];
+
+		// Unsubscribe from tree events
+		this.unsubscribeFromTreeEvents();
+	}
 }
