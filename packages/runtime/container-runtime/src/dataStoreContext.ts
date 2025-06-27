@@ -418,7 +418,10 @@ export abstract class FluidDataStoreContext
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
 	/**
-	 * This provides information about the parent of this data store. This is either be the container runtime if it is under it or a data store context if it is nested under another data store.
+	 * Information for this data store from its parent.
+	 *
+	 * @remarks
+	 * The parent which provided this information currently can be the container runtime or a datastore (if the datastore this context is for is nested under another one).
 	 */
 	private readonly parentContext: IFluidParentContextPrivate;
 	public readonly storage: IDocumentStorageService;
