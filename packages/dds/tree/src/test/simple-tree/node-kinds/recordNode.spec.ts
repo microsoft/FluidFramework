@@ -116,9 +116,6 @@ describe("RecordNode", () => {
 		});
 	});
 
-	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
-	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
-
 	describeHydration("customizable", (init) => {
 		describe("doesn't allow extra properties", () => {
 			function assertConstructionFails<
@@ -267,6 +264,9 @@ describe("RecordNode", () => {
 			});
 		});
 	}
+
+	testRecordFromSchemaType("created in pojo-emulation mode", PojoEmulationNumberRecord);
+	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
 	describe("recursive", () => {
 		class RecursiveRecordSchema extends schemaFactory.recordRecursive("x", [
