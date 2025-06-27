@@ -198,14 +198,14 @@ describe("RecordNode", () => {
 				assertConstructionFails(Test, { foo: 42 });
 			});
 
-			it("shadowed method with compatible type", () => {
-				class Test extends schemaFactory.record("test", schemaFactory.number) {
+			it("shadowed built-in", () => {
+				class Test extends schemaFactory.record("test", schemaFactory.string) {
 					// @ts-expect-error: Intentionally testing unsupported scenario.
-					public foo(): number | undefined {
-						return this.bar;
+					public toString(): string {
+						return "Hello world";
 					}
 				}
-				assertConstructionFails(Test, { foo: 42 });
+				assertConstructionFails(Test, { foo: "bar" });
 			});
 		});
 	});
@@ -245,6 +245,24 @@ describe("RecordNode", () => {
 				);
 			});
 
+			it("toString (not supported)", () => {
+				const record = new CustomizableNumberRecord({ foo: 1, bar: 2 });
+				assert.throws(
+					// eslint-disable-next-line @typescript-eslint/no-base-to-string -- Explicitly testing this scenario
+					() => record.toString(),
+				);
+			});
+
+			it("String interpolation", () => {
+				const input = { foo: 1, bar: 2, toString: 3 };
+				const node = new CustomizableNumberRecord(input);
+				/* eslint-disable @typescript-eslint/no-base-to-string -- Explicitly testing this scenario */
+				assert.equal(`${node}`, "[object RecordNodeTest.Record]");
+				assert.equal(String(node), "[object RecordNodeTest.Record]");
+				assert.equal(Object.prototype.toString.call(node), "[object RecordNodeTest.Record]");
+				/* eslint-enable @typescript-eslint/no-base-to-string */
+			});
+
 			it("JSON.stringify", () => {
 				const tsRecord = { foo: 1, bar: 2, toJson: 3 };
 				const recordNode = init(schemaType, tsRecord);
@@ -269,7 +287,14 @@ describe("RecordNode", () => {
 				]);
 			});
 
-			it("in", () => {
+			it("can check property existence using equals operator", () => {
+				const record = init(schemaType, { foo: 1, bar: 2 });
+				assert(record.foo !== undefined);
+				assert(record.bar !== undefined);
+				assert(record.baz === undefined);
+			});
+
+			it("can check property existence using `in`", () => {
 				const record = init(schemaType, { foo: 1, bar: 2 });
 				assert("foo" in record);
 				assert("bar" in record);
@@ -326,7 +351,7 @@ describe("RecordNode", () => {
 	testRecordFromSchemaType("created in customizable mode", CustomizableNumberRecord);
 
 	describe("recursive", () => {
-		class RecursiveRecordSchema extends schemaFactory.recordRecursive("x", [
+		class RecursiveRecordSchema extends schemaFactory.recordRecursive("RecursiveRecord", [
 			schemaFactory.number,
 			() => RecursiveRecordSchema,
 		]) {}
@@ -393,6 +418,32 @@ describe("RecordNode", () => {
 				},
 				validateUsageError(/Invalid schema for this context/),
 			);
+		});
+
+		it("toString (not supported)", () => {
+			const node = new RecursiveRecordSchema({
+				foo: 1,
+				bar: new RecursiveRecordSchema({ x: 42 }),
+			});
+			assert.throws(
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string -- Explicitly testing this scenario
+				() => node.toString(),
+			);
+		});
+
+		it("String interpolation", () => {
+			const node = new RecursiveRecordSchema({
+				foo: 1,
+				toString: new RecursiveRecordSchema({ x: 42 }),
+			});
+			/* eslint-disable @typescript-eslint/no-base-to-string -- Explicitly testing this scenario */
+			assert.equal(`${node}`, "[object RecordNodeTest.RecursiveRecord]");
+			assert.equal(String(node), "[object RecordNodeTest.RecursiveRecord]");
+			assert.equal(
+				Object.prototype.toString.call(node),
+				"[object RecordNodeTest.RecursiveRecord]",
+			);
+			/* eslint-enable @typescript-eslint/no-base-to-string */
 		});
 
 		it("JSON.stringify", () => {

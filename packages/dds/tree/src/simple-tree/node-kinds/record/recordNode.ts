@@ -53,36 +53,58 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
  * @param proxyTarget - Target object of the proxy.
- * @param dispatchTarget - Provides the functionally of the node, implementing all fields.
+ * @param customizable - See {@link RecordNodeSchemaOptions.customizable}.
+ * @param schema - The schema of the record node.
  */
-function createRecordNodeProxy(proxyTarget: object, schema: RecordNodeSchema): TreeRecordNode {
+function createRecordNodeProxy(
+	proxyTarget: object,
+	customizable: boolean,
+	schema: RecordNodeSchema,
+): TreeRecordNode {
 	const proxy: TreeRecordNode = new Proxy<TreeRecordNode>(proxyTarget as TreeRecordNode, {
 		get: (target, key, receiver): unknown => {
 			if (typeof key === "symbol") {
-				// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
-				if (key === typeSchemaSymbol) {
-					return schema;
-				}
-				// eslint-disable-next-line import/no-deprecated
-				if (key === typeNameSymbol) {
-					return schema.identifier;
-				}
-				if (key === Symbol.iterator) {
-					return () => recordIterator(proxy);
+				switch (key) {
+					// POJO mode records don't have TreeNode's build in members on their targets, so special case them:
+					case typeSchemaSymbol: {
+						return schema;
+					}
+					// eslint-disable-next-line import/no-deprecated
+					case typeNameSymbol: {
+						return schema.identifier;
+					}
+					case Symbol.iterator: {
+						return () => recordIterator(proxy);
+					}
+					case Symbol.toPrimitive: {
+						// Handle string interpolation and coercion to string
+						return () => Object.prototype.toString.call(proxy);
+					}
+					case Symbol.toStringTag: {
+						// In order to satisfy deep equality checks in POJO (non-customizable) mode,
+						// we cannot override the behavior of this.
+						if (customizable) {
+							// Generates nicer toString behavior for customizable records.
+							// E.g. `[object My.Record]` instead of `[object Object]`.
+							return schema.identifier;
+						}
+						break;
+					}
+					default: {
+						// No-op
+					}
 				}
 			}
 
 			if (typeof key === "string") {
 				const innerNode = getOrCreateInnerNode(receiver);
 				const field = innerNode.tryGetField(brand(key));
-				if (field === undefined) {
-					return undefined;
+				if (field !== undefined) {
+					return tryGetTreeNodeForField(field);
 				}
-
-				return tryGetTreeNodeForField(field);
 			}
 
-			return false;
+			return undefined;
 		},
 		set: (target, key, value: InsertableContent | undefined, receiver): boolean => {
 			if (typeof key === "symbol") {
@@ -279,6 +301,7 @@ export function recordSchema<
 			const proxyTarget = customizable ? instance : {};
 			return createRecordNodeProxy(
 				proxyTarget,
+				customizable,
 				this as unknown as RecordNodeSchema,
 			) as unknown as Schema;
 		}
@@ -355,6 +378,9 @@ export function recordSchema<
 			[string, TreeNodeFromImplicitAllowedTypes<TUnannotatedAllowedTypes>]
 		> {
 			return recordIterator(this);
+		}
+		public get [Symbol.toStringTag](): string {
+			return identifier;
 		}
 	}
 
