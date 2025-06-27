@@ -948,7 +948,7 @@ export class Container
 					// For "read" connections, we get here due to join signal for "self" not arriving on time.
 					// Attempt to recover by reconnecting.
 					if (mode === "read" && category === "error") {
-						const reason = { text: "NoJoinSignal", error: undefined };
+						const reason = { text: "NoJoinSignal" };
 						this.disconnectInternal(reason);
 						this.connectInternal({ reason, fetchOpsFromStorage: false });
 					}
@@ -1371,7 +1371,7 @@ export class Container
 						this.detachedBlobStorage?.dispose?.();
 						this.handleDeltaConnectionArg(attachProps?.deltaConnection, {
 							fetchOpsFromStorage: false,
-							reason: { text: "createDetached", error: undefined },
+							reason: { text: "createDetached" },
 						});
 					}
 				},
@@ -1415,7 +1415,7 @@ export class Container
 			// If there is gap, we will learn about it once connected, but the gap should be small (if any),
 			// assuming that connect() is called quickly after initial container boot.
 			this.connectInternal({
-				reason: { text: "DocumentConnect", error: undefined },
+				reason: { text: "DocumentConnect" },
 				fetchOpsFromStorage: false,
 			});
 		}
@@ -1440,7 +1440,7 @@ export class Container
 		if (this.closed) {
 			throw new UsageError(`The Container is closed and cannot be disconnected`);
 		} else {
-			this.disconnectInternal({ text: "DocumentDisconnect", error: undefined });
+			this.disconnectInternal({ text: "DocumentDisconnect" });
 		}
 	}
 
@@ -1655,7 +1655,7 @@ export class Container
 				? "write"
 				: "read";
 		const connectionArgs: IConnectionArgs = {
-			reason: { text: "DocumentOpen", error: undefined },
+			reason: { text: "DocumentOpen" },
 			mode,
 			fetchOpsFromStorage: false,
 		};

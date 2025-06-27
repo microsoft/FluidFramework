@@ -80,7 +80,7 @@ describe("Container Runtime", () => {
 		const startDeltaManager = async (): Promise<void> =>
 			new Promise((resolve) => {
 				deltaManager.on("connect", resolve);
-				deltaManager.connect({ reason: { text: "test", error: undefined } });
+				deltaManager.connect({ reason: { text: "test" } });
 			});
 
 		// Function to yield control in the Javascript event loop.
@@ -376,7 +376,7 @@ describe("Container Runtime", () => {
 			});
 			await new Promise((resolve) => {
 				deltaManager2.on("connect", resolve);
-				deltaManager2.connect({ reason: { text: "test", error: undefined } });
+				deltaManager2.connect({ reason: { text: "test" } });
 			});
 
 			assert.strictEqual(

@@ -500,15 +500,12 @@ export class ConnectionManager implements IConnectionManager {
 					this.logger.sendErrorEvent({ eventName: "ForceReadonlyPendingChanged" });
 				}
 
-				reconnect = this.disconnectFromDeltaStream({
-					text: "Force readonly",
-					error: undefined,
-				});
+				reconnect = this.disconnectFromDeltaStream({ text: "Force readonly" });
 			}
 			this.props.readonlyChangeHandler(this.readonly);
 			if (reconnect) {
 				// reconnect if we disconnected from before.
-				this.triggerConnect({ text: "Force Readonly", error: undefined }, "read");
+				this.triggerConnect({ text: "Force Readonly" }, "read");
 			}
 		}
 	}
@@ -894,10 +891,7 @@ export class ConnectionManager implements IConnectionManager {
 
 		if (this._disposed) {
 			// Raise proper events, Log telemetry event and close connection.
-			this.disconnectFromDeltaStream({
-				text: "ConnectionManager already closed",
-				error: undefined,
-			});
+			this.disconnectFromDeltaStream({ text: "ConnectionManager already closed" });
 			return;
 		}
 
@@ -1154,7 +1148,7 @@ export class ConnectionManager implements IConnectionManager {
 							// still valid?
 							await this.reconnect(
 								"write", // connectionMode
-								{ text: "Switch to write", error: undefined }, // message
+								{ text: "Switch to write" }, // message
 							);
 						}
 					})
@@ -1208,7 +1202,7 @@ export class ConnectionManager implements IConnectionManager {
 				// Note - this may close container!
 				this.reconnect(
 					"read", // connectionMode
-					{ text: "Switch to read", error: undefined }, // message
+					{ text: "Switch to read" }, // message
 				).catch((error) => {
 					this.logger.sendErrorEvent({ eventName: "SwitchToReadConnection" }, error);
 				});
