@@ -71,6 +71,12 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 */
 	containerData?: Record<string, IFluidLoadable>;
 
+	/**
+	 * (optional) Indicates whether this container was registered as a data object.
+	 * When true, the UI will show "Data Objects" instead of "Containers" and hide action buttons.
+	 */
+	isDataObject?: boolean;
+
 	// TODO: Add ability for customers to specify custom visualizer overrides
 }
 
@@ -160,6 +166,12 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 * This map is assumed to be immutable. The devtools will not make any modifications to its contents.
 	 */
 	public readonly containerData?: Record<string, IFluidLoadable>;
+
+	/**
+	 * (optional) Indicates whether this container was registered as a data object.
+	 * When true, the UI will show "Data Objects" instead of "Containers" and hide action buttons.
+	 */
+	public readonly isDataObject?: boolean;
 
 	// #region Accumulated log state
 
@@ -460,6 +472,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.containerKey = props.containerKey;
 		this.containerData = props.containerData;
 		this.container = props.container;
+		this.isDataObject = props.isDataObject;
 
 		// TODO: would it be useful to log the states (and timestamps) at time of devtools initialize?
 		this._connectionStateLog = [];
@@ -545,6 +558,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		return {
 			// If no container data was provided to the devtools, we cannot support data visualization.
 			containerDataVisualization: this.containerData !== undefined,
+			// Indicate if this container was registered as a data object
+			dataObjects: this.isDataObject === true,
 		};
 	}
 

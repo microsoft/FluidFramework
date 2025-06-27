@@ -56,7 +56,13 @@ import { Waiting } from "./Waiting.js";
 /**
  * {@link ContainerSummaryView} input props.
  */
-export type ContainerSummaryViewProps = HasContainerKey;
+export type ContainerSummaryViewProps = HasContainerKey & {
+	/**
+	 * Whether this represents a data object instead of a container.
+	 * When true, action buttons (Connect/Disconnect/Close) will be hidden.
+	 */
+	isDataObject?: boolean;
+};
 
 const columnsDef: TableColumnDefinition<Item>[] = [
 	createTableColumn<Item>({
@@ -197,7 +203,7 @@ const useContainerSummaryViewStyles = makeStyles({
  * View displaying a simple summary of the Container state.
  */
 export function ContainerSummaryView(props: ContainerSummaryViewProps): React.ReactElement {
-	const { containerKey } = props;
+	const { containerKey, isDataObject } = props;
 	const items: Item[] = [];
 	const messageRelay: IMessageRelay = useMessageRelay();
 	const usageLogger = useLogger();
@@ -339,15 +345,17 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					</TableBody>
 				</Table>
 			</div>
-			<div className={styles.actions}>
-				<ActionsBar
-					isContainerConnected={containerState.connectionState === ConnectionState.Connected}
-					containerState={containerState}
-					tryConnect={tryConnect}
-					forceDisconnect={forceDisconnect}
-					closeContainer={closeContainer}
-				/>
-			</div>
+			{isDataObject !== true && (
+				<div className={styles.actions}>
+					<ActionsBar
+						isContainerConnected={containerState.connectionState === ConnectionState.Connected}
+						containerState={containerState}
+						tryConnect={tryConnect}
+						forceDisconnect={forceDisconnect}
+						closeContainer={closeContainer}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

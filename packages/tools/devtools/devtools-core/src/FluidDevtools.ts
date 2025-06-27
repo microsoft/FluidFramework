@@ -143,6 +143,12 @@ export class FluidDevtools implements IFluidDevtools {
 	private readonly containers: Map<ContainerKey, ContainerDevtools>;
 
 	/**
+	 * Tracks which containers were registered via registerDataObject vs registerContainerDevtools.
+	 * Maps from a {@link ContainerKey} to a boolean indicating if it's a data object.
+	 */
+	private readonly dataObjectRegistry: Map<ContainerKey, boolean>;
+
+	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
 	 */
 	private _disposed: boolean;
@@ -235,12 +241,14 @@ export class FluidDevtools implements IFluidDevtools {
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
 		this.containers = new Map<string, ContainerDevtools>();
+		this.dataObjectRegistry = new Map<string, boolean>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
 					containerConfig.containerKey,
 					new ContainerDevtools(containerConfig),
 				);
+				this.dataObjectRegistry.set(containerConfig.containerKey, false);
 			}
 		}
 
@@ -313,8 +321,10 @@ export class FluidDevtools implements IFluidDevtools {
 
 		const containerDevtools = new ContainerDevtools({
 			...props,
+			isDataObject: false,
 		});
 		this.containers.set(containerKey, containerDevtools);
+		this.dataObjectRegistry.set(containerKey, false);
 
 		// Post message for container list change
 		this.postContainerList();
@@ -328,7 +338,9 @@ export class FluidDevtools implements IFluidDevtools {
 		const { dataObject } = props;
 
 		// Treating document unique id as container key.
-		const contextId = (dataObject as unknown as { context: IFluidDataStoreContext }).context.containerRuntime.generateDocumentUniqueId() as string;
+		const contextId = (
+			dataObject as unknown as { context: IFluidDataStoreContext }
+		).context.containerRuntime.generateDocumentUniqueId() as string;
 
 		const decomposedIContainer = toDecomposedIContainer(dataObject);
 
@@ -341,8 +353,10 @@ export class FluidDevtools implements IFluidDevtools {
 			containerKey: contextId,
 			container: decomposedIContainer,
 			containerData: { appData: dataObject },
+			isDataObject: true,
 		});
 		this.containers.set(contextId, containerDevtools);
+		this.dataObjectRegistry.set(contextId, true);
 
 		this.postContainerList();
 	}
@@ -361,6 +375,7 @@ export class FluidDevtools implements IFluidDevtools {
 		} else {
 			containerDevtools.dispose();
 			this.containers.delete(containerKey);
+			this.dataObjectRegistry.delete(containerKey);
 
 			// Post message for container list change
 			this.postContainerList();
@@ -391,6 +406,19 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
+	 * Checks if a container was registered as a data object.
+	 * @param containerKey - The container key to check.
+	 * @returns `true` if the container was registered via `registerDataObject`, `false` otherwise.
+	 */
+	public isDataObject(containerKey: ContainerKey): boolean {
+		if (this.disposed) {
+			throw new UsageError(useAfterDisposeErrorText);
+		}
+
+		return this.dataObjectRegistry.get(containerKey) ?? false;
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
@@ -413,6 +441,7 @@ export class FluidDevtools implements IFluidDevtools {
 			containerDevtools.dispose();
 		}
 		this.containers.clear();
+		this.dataObjectRegistry.clear();
 
 		// Notify listeners that the list of Containers changed.
 		this.postContainerList();
@@ -431,10 +460,14 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Gets the set of features supported by this instance.
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
+		// Check if any containers were registered as data objects
+		const hasDataObjects = [...this.dataObjectRegistry.values()].some(Boolean);
+
 		return {
 			telemetry: this.logger !== undefined,
 			// Most work completed, but not ready to completely enable.
 			opLatencyTelemetry: true,
+			dataObjects: hasDataObjects,
 		};
 	}
 }

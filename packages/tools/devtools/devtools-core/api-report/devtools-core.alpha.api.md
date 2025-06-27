@@ -8,6 +8,7 @@
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
+    isDataObject?: boolean;
 }
 
 // @beta
