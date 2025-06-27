@@ -466,7 +466,7 @@ export class Outbox {
 			// and eventual consistency at the DDS level.
 			// Note: Since this is happening in the same turn the ops were originally created with,
 			// and they haven't gone to PendingStateManager yet, we can just let them respect
-			// ContainerRuntime.inStagingMode
+			// ContainerRuntime.inStagingMode.  So we do not plumb local 'staged' variable through here.
 			this.rebase(rawBatch, batchManager);
 			return;
 		}

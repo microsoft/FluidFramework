@@ -31,7 +31,7 @@ export {
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
-export type { MinimumVersionForCollab } from "./compatUtils.js";
+export type { MinimumVersionForCollab, SemanticVersion } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -91,6 +91,7 @@ export {
 	IRetriableFailureError,
 	IdCompressorMode,
 	IDocumentSchema,
+	IDocumentSchemaInfo,
 	DocumentSchemaValueType,
 	IDocumentSchemaCurrent,
 	currentDocumentVersionSchema,
@@ -111,3 +112,10 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export {
+	runtimeCoreCompatDetails,
+	runtimeCompatDetailsForLoader,
+	runtimeCompatDetailsForDataStore,
+	loaderSupportRequirementsForRuntime,
+	dataStoreSupportRequirementsForRuntime,
+} from "./runtimeLayerCompatState.js";

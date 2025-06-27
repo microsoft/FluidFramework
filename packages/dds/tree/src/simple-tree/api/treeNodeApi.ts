@@ -38,8 +38,8 @@ import {
 	getOrCreateInnerNode,
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
-import { getTreeNodeForField } from "../getTreeNodeForField.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
@@ -83,6 +83,9 @@ export interface TreeNodeApi {
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
 	 *
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
+	 *
+	 * @see {@link (TreeAlpha:interface).child}
+	 * @see {@link (TreeAlpha:interface).children}
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
 
@@ -190,7 +193,7 @@ export const treeNodeApi: TreeNodeApi = {
 						);
 						listener({ changedProperties });
 					});
-				} else if (nodeSchema.kind === NodeKind.Array) {
+				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
@@ -316,7 +319,7 @@ export function getIdentifierFromNode(
 			const key = identifierFieldKeys[0] ?? oob();
 			const identifierField = flexNode.tryGetField(key);
 			assert(identifierField !== undefined, 0xbb5 /* missing identifier field */);
-			const identifierValue = getTreeNodeForField(identifierField);
+			const identifierValue = tryGetTreeNodeForField(identifierField);
 			assert(typeof identifierValue === "string", 0xbb6 /* identifier not a string */);
 
 			const context = flexNode.context;

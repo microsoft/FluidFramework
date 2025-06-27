@@ -35,11 +35,6 @@ export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
 	public readonly type = "codeSpan";
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public readonly singleLine = true;
-
-	/**
 	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
 	public get isEmpty(): boolean {

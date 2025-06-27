@@ -160,6 +160,7 @@ import {
 	tagCodeArtifacts,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
+import { gt } from "semver-ts";
 import { v4 as uuid } from "uuid";
 
 import { BindBatchTracker } from "./batchTracker.js";
@@ -183,6 +184,7 @@ import {
 	isValidMinVersionForCollab,
 	type RuntimeOptionsAffectingDocSchema,
 	type MinimumVersionForCollab,
+	type SemanticVersion,
 	validateRuntimeOptions,
 } from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
@@ -1114,7 +1116,18 @@ export class ContainerRuntime
 			(schema) => {
 				runtime.onSchemaChange(schema);
 			},
+			{ minVersionForCollab },
+			logger,
 		);
+
+		// If the minVersionForCollab for this client is greater than the existing one, we should use that one going forward.
+		const existingMinVersionForCollab =
+			documentSchemaController.sessionSchema.info.minVersionForCollab;
+		const updatedMinVersionForCollab =
+			existingMinVersionForCollab === undefined ||
+			gt(minVersionForCollab, existingMinVersionForCollab)
+				? minVersionForCollab
+				: existingMinVersionForCollab;
 
 		if (compressionLz4 && !enableGroupedBatching) {
 			throw new UsageError("If compression is enabled, op grouping must be enabled too");
@@ -1154,7 +1167,7 @@ export class ContainerRuntime
 			documentSchemaController,
 			featureGatesForTelemetry,
 			provideEntryPoint,
-			minVersionForCollab,
+			updatedMinVersionForCollab,
 			requestHandler,
 			undefined, // summaryConfiguration
 			recentBatchInfo,
@@ -1491,7 +1504,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		private readonly minVersionForCollab: MinimumVersionForCollab,
+		private readonly minVersionForCollab: SemanticVersion,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -3402,7 +3415,7 @@ export class ContainerRuntime
 					try {
 						checkpoint.rollback((message: LocalBatchMessage) =>
 							// These changes are staged since we entered staging mode above
-							this.rollbackStagedChanges(message.runtimeOp, message.localOpMetadata),
+							this.rollbackStagedChange(message.runtimeOp, message.localOpMetadata),
 						);
 						this.updateDocumentDirtyState();
 						stageControls?.discardChanges();
@@ -3468,51 +3481,57 @@ export class ContainerRuntime
 	// eslint-disable-next-line import/no-deprecated
 	public enterStagingMode = (): StageControlsExperimental => {
 		if (this.stageControls !== undefined) {
-			throw new UsageError("already in staging mode");
+			throw new UsageError("Already in staging mode");
 		}
 		if (this.attachState === AttachState.Detached) {
-			throw new UsageError("cannot enter staging mode while detached");
+			throw new UsageError("Cannot enter staging mode while Detached");
 		}
 
-		// Make sure all BatchManagers are empty before entering staging mode,
+		// Make sure Outbox is empty before entering staging mode,
 		// since we mark whole batches as "staged" or not to indicate whether to submit them.
-		this.outbox.flush();
+		this.flush();
 
-		const exitStagingMode = (discardOrCommit: () => void) => (): void => {
-			// Final flush of any last staged changes
-			this.outbox.flush();
+		const exitStagingMode = (discardOrCommit: () => void): void => {
+			try {
+				// Final flush of any last staged changes
+				// NOTE: We can't use this.flush() here, because orderSequentially uses StagingMode and in the rollback case we'll hit assert 0x24c
+				this.outbox.flush();
 
-			this.stageControls = undefined;
+				this.stageControls = undefined;
 
-			// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
-			// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
-			this.submitIdAllocationOpIfNeeded({ staged: false });
-			discardOrCommit();
+				// During Staging Mode, we avoid submitting any ID Allocation ops (apart from resubmitting pre-staging ops).
+				// Now that we've exited, we need to submit an ID Allocation op for any IDs that were generated while in Staging Mode.
+				this.submitIdAllocationOpIfNeeded({ staged: false });
+				discardOrCommit();
 
-			this.channelCollection.notifyStagingMode(false);
+				this.channelCollection.notifyStagingMode(false);
+			} catch (error) {
+				const normalizedError = normalizeError(error);
+				this.closeFn(normalizedError);
+				throw normalizedError;
+			}
 		};
 
 		// eslint-disable-next-line import/no-deprecated
 		const stageControls: StageControlsExperimental = {
-			discardChanges: exitStagingMode(() => {
-				// Pop all staged batches from the PSM and roll them back in LIFO order
-				this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
-					assert(
-						runtimeOp !== undefined,
-						0xb82 /* Staged batches expected to have runtimeOp defined */,
-					);
-					this.rollbackStagedChanges(runtimeOp, localOpMetadata);
-				});
-				this.updateDocumentDirtyState();
-			}),
-			commitChanges: (optionsParam) => {
-				const options = { ...defaultStagingCommitOptions, ...optionsParam };
-				return exitStagingMode(() => {
-					this.pendingStateManager.replayPendingStates({
-						onlyStagedBatches: true,
-						squash: options.squash ?? false,
+			discardChanges: () =>
+				exitStagingMode(() => {
+					// Pop all staged batches from the PSM and roll them back in LIFO order
+					this.pendingStateManager.popStagedBatches(({ runtimeOp, localOpMetadata }) => {
+						this.rollbackStagedChange(runtimeOp, localOpMetadata);
 					});
-				})();
+					this.updateDocumentDirtyState();
+				}),
+			commitChanges: (options) => {
+				const { squash } = { ...defaultStagingCommitOptions, ...options };
+				exitStagingMode(() => {
+					// Replay all staged batches in typical FIFO order.
+					// We'll be out of staging mode so they'll be sent to the service finally.
+					this.pendingStateManager.replayPendingStates({
+						committingStagedBatches: true,
+						squash,
+					});
+				});
 			},
 		};
 
@@ -4572,6 +4591,7 @@ export class ContainerRuntime
 					newRuntimeSchema: JSON.stringify(schemaChangeMessage.runtime),
 					sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
 					oldRuntimeSchema: JSON.stringify(this.metadata?.documentSchema?.runtime),
+					minVersionForCollab: schemaChangeMessage.info?.minVersionForCollab,
 				});
 				const msg: OutboundContainerRuntimeDocumentSchemaMessage = {
 					type: ContainerMessageType.DocumentSchemaChange,
@@ -4811,7 +4831,7 @@ export class ContainerRuntime
 	/**
 	 * Rollback the given op which was only staged but not yet submitted.
 	 */
-	private rollbackStagedChanges(
+	private rollbackStagedChange(
 		{ type, contents }: LocalContainerRuntimeMessage,
 		localOpMetadata: unknown,
 	): void {
@@ -4849,7 +4869,6 @@ export class ContainerRuntime
 	/**
 	 * Implementation of ISummarizerInternalsProvider.refreshLatestSummaryAck
 	 */
-
 	public async refreshLatestSummaryAck(options: IRefreshSummaryAckOptions): Promise<void> {
 		const { proposalHandle, ackHandle, summaryRefSeq, summaryLogger } = options;
 		// proposalHandle is always passed from RunningSummarizer.
