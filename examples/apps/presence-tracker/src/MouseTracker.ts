@@ -51,7 +51,7 @@ export class MouseTracker extends TypedEventEmitter<IMouseTrackerEvents> {
 		// Create a Latest state object to track the mouse position.
 		statesWorkspace.add(
 			"cursor",
-			StateFactory.latest<MousePosition>({
+			StateFactory.latest({
 				local: { x: 0, y: 0 },
 				validator: MousePositionValidator,
 			}),

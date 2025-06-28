@@ -72,7 +72,7 @@ function usePresence(container: IFluidContainer): void {
 ### Runtime data validation
 
 The Presence API provides a simple mechanism (added in version 2.50.0) to validate that state data
-received within session from other clients matches the types declared. The schema of workspace addresses and states
+received within session from other clients matches the types declared.
 
 When creating State objects using `StateFactory.latest` or `StateFactory.latestMap`, you can pass a validator function
 that will be called at runtime to verify that the data is valid. This is especially useful when changing the schema of
@@ -83,7 +83,8 @@ value access. This is reflected in the types.
 
 #### Example
 
-You can configure the grouping and throttling behavior using the `allowableUpdateLatencyMs` property as in the following example:
+In the following example, we create a `Latest` state with a validator function that checks if the value is valid
+according to our expectations.
 
 ```ts
 // Configure a states workspace
