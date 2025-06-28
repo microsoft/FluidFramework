@@ -22,21 +22,27 @@ describe("spanToMarkdown", () => {
 		const input = new SpanNode([new PlainTextNode("Hello world!")], { italic: true });
 
 		const result = phrasingContentToMarkdown(input, transformationContext);
-		expect(result).to.deep.equal([{type: "emphasis", children: [{ type: "text", value: "Hello world!" }] }]);
+		expect(result).to.deep.equal([
+			{ type: "emphasis", children: [{ type: "text", value: "Hello world!" }] },
+		]);
 	});
 
 	it("Bold", () => {
 		const input = new SpanNode([new PlainTextNode("Hello world!")], { bold: true });
 
 		const result = phrasingContentToMarkdown(input, transformationContext);
-		expect(result).to.deep.equal([{type: "strong", children: [{ type: "text", value: "Hello world!" }] }]);
+		expect(result).to.deep.equal([
+			{ type: "strong", children: [{ type: "text", value: "Hello world!" }] },
+		]);
 	});
 
-	it("Strikethrough", ()=> {
+	it("Strikethrough", () => {
 		const input = new SpanNode([new PlainTextNode("Hello world!")], { strikethrough: true });
 
 		const result = phrasingContentToMarkdown(input, transformationContext);
-		expect(result).to.deep.equal([{type: "delete", children: [{ type: "text", value: "Hello world!" }] }]);
+		expect(result).to.deep.equal([
+			{ type: "delete", children: [{ type: "text", value: "Hello world!" }] },
+		]);
 	});
 
 	it("complex", () => {
@@ -61,10 +67,10 @@ describe("spanToMarkdown", () => {
 								type: "emphasis",
 								children: [{ type: "text", value: "world!" }],
 							},
-						]
-					}
+						],
+					},
 				],
 			},
 		]);
-	})
+	});
 });
