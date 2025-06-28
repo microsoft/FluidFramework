@@ -5,8 +5,10 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import { LoaderHeader, type IContainer } from "@fluidframework/container-definitions/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
 import {
@@ -165,7 +167,6 @@ function validateSummaryTree(currentSummary: ISummaryTree, lastSummary: ISummary
 		if (summaryObject.type === SummaryType.Handle) {
 			// Validate that the id (summary path) exists in lastSummary
 			validateHandlePathExists(summaryObject.handle.split("/").slice(1), lastSummary);
-			console.log(`Validated handle path: ${summaryObject.handle}`);
 		} else if (summaryObject.type === SummaryType.Tree) {
 			// Recursively validate nested trees
 			validateSummaryTree(summaryObject, lastSummary);
@@ -173,7 +174,7 @@ function validateSummaryTree(currentSummary: ISummaryTree, lastSummary: ISummary
 	}
 }
 
-function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
+function validateNoHandlesInForestTree(summary: ISummaryTree) {
 	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		assert(
 			summaryObject.type !== SummaryType.Handle,
@@ -181,7 +182,20 @@ function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
 		);
 		if (summaryObject.type === SummaryType.Tree) {
 			// Recursively validate nested trees
-			validateSummaryTree(summaryObject, summary);
+			validateNoHandlesInForestTree(summaryObject);
+		}
+	}
+}
+
+function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
+	for (const [key, summaryObject] of Object.entries(summary.tree)) {
+		if (summaryObject.type === SummaryType.Tree) {
+			if (key === "Forest") {
+				validateNoHandlesInForestTree(summaryObject);
+			} else {
+				// Recursively find forest tree
+				validateNoHandlesInSummaryTree(summaryObject);
+			}
 		}
 	}
 }
@@ -281,18 +295,18 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 	describe("Incremental tree summary", () => {
 		const treeViewConfig = new TreeViewConfiguration({ schema: Board });
 		let treeViewClient1: TreeView<typeof Board>;
+		let summarizer: ISummarizer;
 
 		beforeEach(async () => {
 			treeViewClient1 = tree1.viewWith(treeViewConfig);
 			treeViewClient1.initialize(createInitialBoard(3, 2));
+			summarizer = (await loadSummarizer(container1)).summarizer;
 			await provider.ensureSynchronized();
 		});
 
-		const testWithSuccessfulSummaries = async () => {
-			const { summarizer } = await loadSummarizer(container1);
-			await provider.ensureSynchronized();
+		const testWithSuccessfulSummaries = async (failLastSummary: boolean) => {
+			// First summary.
 			const summary1 = await summarizeNow(summarizer);
-
 			const { container: container2, tree: treeClient2 } = await loadContainerAndTree(
 				summary1.summaryVersion,
 			);
@@ -303,7 +317,7 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			updateMetadata(treeViewClient1, 1, 0);
 			updateMetadataText(treeViewClient1, 2, 0);
 
-			// Second summary at sequence number 10 - previous was at sequence number 0.
+			// Second summary.
 			await provider.ensureSynchronized();
 			const summary2 = await summarizeNow(summarizer);
 			const { container: container3, tree: treeClient3 } = await loadContainerAndTree(
@@ -312,25 +326,76 @@ describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 			validateSummaryTree(summary2.summaryTree, summary1.summaryTree);
 			validateTreesEqual(treeClient3, treeViewClient1);
 			container3.close();
-
-			updateNote(treeViewClient1, 0, 0);
-			updateMetadata(treeViewClient1, 0, 0);
-			updateMetadata(treeViewClient1, 1, 0);
-
-			// Third summary at sequence number 20 - previous was at sequence number 10.
-			await provider.ensureSynchronized();
-			const summary3 = await summarizeNow(summarizer);
-			const { container: container4, tree: treeClient4 } = await loadContainerAndTree(
-				summary3.summaryVersion,
-			);
-			validateSummaryTree(summary3.summaryTree, summary2.summaryTree);
-			validateTreesEqual(treeClient4, treeViewClient1);
-			container4.close();
-			validateSummaryTree(summary3.summaryTree, summary2.summaryTree);
 		};
 
 		it("incremental summaries", async () => {
-			await testWithSuccessfulSummaries();
+			// First summary.
+			const summary1 = await summarizeNow(summarizer);
+			const { container: container2, tree: treeClient2 } = await loadContainerAndTree(
+				summary1.summaryVersion,
+			);
+			validateTreesEqual(treeClient2, treeViewClient1);
+			container2.close();
+
+			updateNote(treeViewClient1, 1, 0);
+			updateMetadata(treeViewClient1, 1, 0);
+			updateMetadataText(treeViewClient1, 2, 0);
+
+			// Second summary.
+			await provider.ensureSynchronized();
+			const summary2 = await summarizeNow(summarizer);
+			const { container: container3, tree: treeClient3 } = await loadContainerAndTree(
+				summary2.summaryVersion,
+			);
+			validateSummaryTree(summary2.summaryTree, summary1.summaryTree);
+			validateTreesEqual(treeClient3, treeViewClient1);
+			container3.close();
 		});
+
+		itExpects(
+			"incremental summaries with a failed summary in between",
+			[
+				{ eventName: "fluid:telemetry:Summarizer:Running:Summarize_cancel" },
+				{ eventName: "fluid:telemetry:Summarizer:Running:SummarizeFailed" },
+			],
+			async () => {
+				// First summary.
+				const summary1 = await summarizeNow(summarizer);
+				const { container: container2, tree: treeClient2 } = await loadContainerAndTree(
+					summary1.summaryVersion,
+				);
+				validateTreesEqual(treeClient2, treeViewClient1);
+				container2.close();
+
+				updateNote(treeViewClient1, 1, 0);
+				updateMetadata(treeViewClient1, 1, 0);
+				updateMetadataText(treeViewClient1, 2, 0);
+
+				await provider.ensureSynchronized();
+
+				// Second summary - simulate failure.
+				const summaryFailErrorMessage = "Simulated failed summary upload";
+				const containerRuntime = (summarizer as any).runtime as IContainerRuntime;
+				const uploadSummaryUploaderFunc = containerRuntime.storage.uploadSummaryWithContext;
+				const failUploadSummaryWithContext = async (...args: any[]) => {
+					throw new Error(summaryFailErrorMessage);
+				};
+				containerRuntime.storage.uploadSummaryWithContext = failUploadSummaryWithContext;
+				await assert.rejects(summarizeNow(summarizer), (error: any) => {
+					assert(error.message === summaryFailErrorMessage);
+					return true;
+				});
+
+				// Restore the original upload summary function.
+				containerRuntime.storage.uploadSummaryWithContext = uploadSummaryUploaderFunc;
+
+				// Third summary. This should be a full summary since the previous one failed.
+				await provider.ensureSynchronized();
+				const summary3 = await summarizeNow(summarizer);
+				const { tree: treeClient3 } = await loadContainerAndTree(summary3.summaryVersion);
+				validateTreesEqual(treeClient3, treeViewClient1);
+				validateNoHandlesInSummaryTree(summary3.summaryTree);
+			},
+		);
 	});
 });
