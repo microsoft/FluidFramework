@@ -69,6 +69,8 @@ export {
 	type JsonTreeSchema,
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 	type TreeSchemaEncodingOptions,
 	getJsonSchema,
 	getSimpleSchema,
@@ -83,6 +85,7 @@ export {
 	type System_Unsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
+	type TreeRecordNodeUnsafe,
 	type TreeViewAlpha,
 	type TreeBranch,
 	type TreeBranchEvents,
@@ -136,6 +139,7 @@ export type {
 	SimpleNodeSchemaBase,
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
+	SimpleRecordNodeSchema,
 } from "./simpleSchema.js";
 export {
 	type NodeFromSchema,
@@ -213,6 +217,12 @@ export {
 	type TreeObjectNode,
 	setField,
 	createUnknownOptionalFieldPolicy,
+	isRecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	RecordNodeSchema,
+	type TreeRecordNode,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,

@@ -776,16 +776,8 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
-			return this.getStructuralType(
-				fullName,
-				types,
-				() =>
-					this.namedMap(
-						fullName as TName,
-						nameOrAllowedTypes as T,
-						false,
-						true,
-					) as TreeNodeSchema,
+			return this.getStructuralType(fullName, types, () =>
+				this.namedMap(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
@@ -796,7 +788,7 @@ export class SchemaFactory<
 				undefined
 			>;
 		}
-		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		// To actually have type safety, assign to the type this method should return before implicitly up-casting when returning.
 		const out: TreeNodeSchemaBoth<
 			string,
 			NodeKind.Map,
@@ -997,7 +989,7 @@ export class SchemaFactory<
 	 * @returns The structural {@link TreeNodeSchema} associated with the given name and types.
 	 * @throws `UsageError` if a schema structurally named schema with the same name is cached in `structuralTypes` but had different input types.
 	 */
-	private getStructuralType(
+	protected getStructuralType(
 		fullName: string,
 		types: TreeNodeSchema | readonly TreeNodeSchema[],
 		builder: () => TreeNodeSchema,

@@ -19,11 +19,10 @@ describe("JsonDomainSchema", () => {
 
 		{
 			// Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
-			const fromArray = new JsonAsTree.JsonObject([["a", 0]]);
+			const fromRecord = new JsonAsTree.JsonObject({ a: 0 });
 			// Using `importConcise` can work better for JSON data:
 			const imported = TreeAlpha.importConcise(JsonAsTree.JsonObject, { a: 0 });
-			// Node API is like a Map:
-			const value = imported.get("a");
+			const value = imported.a;
 			assert.equal(value, 0);
 		}
 

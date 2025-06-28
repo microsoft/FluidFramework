@@ -56,6 +56,7 @@ import {
 	isObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
 } from "./node-kinds/object/objectNodeTypes.js";
+import { isRecordNodeSchema } from "./node-kinds/record/recordNodeTypes.js";
 /* eslint-enable import/no-internal-modules */
 
 /**
@@ -156,6 +157,9 @@ function unhydratedFlexTreeFromInsertableNode(
 		case NodeKind.Object:
 			assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 			result = objectToFlexContent(data, schema);
+			break;
+		case NodeKind.Record:
+			result = recordToFlexContent(data, schema);
 			break;
 		default:
 			unreachableCase(schema.kind);
@@ -407,6 +411,44 @@ function objectToFlexContent(
 }
 
 /**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ */
+function recordToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
+	assert(isRecordNodeSchema(schema), "Expected a Record schema.");
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
+	}
+
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+
+	const context = getUnhydratedContext(schema).flexContext;
+
+	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
+	for (const item of fieldsIterator) {
+		const [key, value] = item;
+		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
+
+		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
+		if (value !== undefined) {
+			const child = unhydratedFlexTreeFromInsertableNode(value, allowedChildTypes);
+			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
+			transformedFields.set(brand(key), field);
+		}
+	}
+
+	return [
+		{
+			type: brand(schema.identifier),
+		},
+		transformedFields,
+	];
+}
+
+/**
  * Check {@link FactoryContentObject} for a property which could be store a field.
  *
  * @returns If the property exists, return its value. Otherwise, returns undefined.
@@ -559,6 +601,10 @@ function shallowCompatibilityTest(
 	}
 
 	// At this point, it is assumed data is a record-like object since all the other cases have been eliminated.
+
+	if (schema.kind === NodeKind.Record) {
+		return CompatibilityLevel.Normal;
+	}
 
 	if (schema.kind === NodeKind.Array) {
 		return CompatibilityLevel.None;

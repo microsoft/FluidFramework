@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { type TreeNodeSchema, SchemaFactory } from "../../../simple-tree/index.js";
+import {
+	type TreeNodeSchema,
+	SchemaFactory,
+	SchemaFactoryAlpha,
+} from "../../../simple-tree/index.js";
 import { validateUsageError } from "../../utils.js";
 import { independentView } from "../../../shared-tree/index.js";
 
@@ -94,7 +98,7 @@ describe("simple-tree configuration", () => {
 	});
 
 	describe("checkUnion", () => {
-		const schemaFactory = new SchemaFactory("test");
+		const schemaFactory = new SchemaFactoryAlpha("test");
 
 		function getErrors(schemaToCheck: Iterable<TreeNodeSchema>): string[] {
 			const errors: string[] = [];
@@ -136,6 +140,17 @@ describe("simple-tree configuration", () => {
 				],
 			);
 		});
+		it("records", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.record("A", schemaFactory.string),
+					schemaFactory.record("B", schemaFactory.number),
+				]),
+				[
+					`More than one kind of record allowed within union (["test.A", "test.B"]). This would require type disambiguation which is not supported by records during import or export.`,
+				],
+			);
+		});
 		it("array and map", () => {
 			assert.deepEqual(
 				getErrors([
@@ -154,7 +169,39 @@ describe("simple-tree configuration", () => {
 					schemaFactory.object("B", {}),
 				]),
 				[
-					`Both a object and a map allowed within union (["test.B", "test.A"]). Both can be constructed from objects and can be ambiguous.`,
+					`A combination of objects and maps is allowed within union (["test.B", "test.A"]). These can be constructed from objects and can be ambiguous.`,
+				],
+			);
+		});
+		it("object and record", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.object("A", { a: schemaFactory.string }),
+					schemaFactory.record("B", schemaFactory.string),
+				]),
+				[
+					`A combination of objects and records is allowed within union (["test.A", "test.B"]). These can be constructed from objects and can be ambiguous.`,
+				],
+			);
+		});
+		it("array and record", () => {
+			// No potential ambiguity, so this should pass.
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.array("A", schemaFactory.string),
+					schemaFactory.record("B", schemaFactory.string),
+				]),
+				[],
+			);
+		});
+		it("map and record", () => {
+			assert.deepEqual(
+				getErrors([
+					schemaFactory.map("A", schemaFactory.string),
+					schemaFactory.record("B", schemaFactory.string),
+				]),
+				[
+					`A combination of maps and records is allowed within union (["test.A", "test.B"]). These can be constructed from objects and can be ambiguous.`,
 				],
 			);
 		});
