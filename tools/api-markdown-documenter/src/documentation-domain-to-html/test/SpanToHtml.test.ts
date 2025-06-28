@@ -25,7 +25,7 @@ describe("Span to HTML transformation tests", () => {
 		const node1 = new PlainTextNode(text1);
 		const node2 = new PlainTextNode(text2);
 
-		const span = new SpanNode([node1, node2]);
+		const span = new SpanNode([node1, node2], {});
 		const expected = h("span", [text1, text2]);
 		assertTransformation(span, expected);
 	});
@@ -62,7 +62,6 @@ describe("Span to HTML transformation tests", () => {
 				node1,
 				new SpanNode([node2, node3], {
 					bold: true,
-					strikethrough: false,
 				}),
 			],
 			{ strikethrough: true },

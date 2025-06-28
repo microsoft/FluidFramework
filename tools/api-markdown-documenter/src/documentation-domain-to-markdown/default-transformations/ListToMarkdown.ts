@@ -14,10 +14,7 @@ import type { TransformationContext } from "../TransformationContext.js";
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
  */
-export function listToMarkdown(
-	node: ListNode,
-	context: TransformationContext,
-): [MdastList] {
+export function listToMarkdown(node: ListNode, context: TransformationContext): [MdastList] {
 	const { transformations } = context;
 
 	const transformedChildren: MdastListItem[] = [];
@@ -25,9 +22,11 @@ export function listToMarkdown(
 		transformedChildren.push(...transformations.listItem(item, context));
 	}
 
-		return [{
+	return [
+		{
 			type: "list",
 			ordered: node.ordered,
 			children: transformedChildren,
-		}];
+		},
+	];
 }

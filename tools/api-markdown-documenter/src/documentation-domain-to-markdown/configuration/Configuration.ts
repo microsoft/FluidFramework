@@ -5,7 +5,6 @@
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
-import type { TextFormatting } from "../../documentation-domain/index.js";
 
 import type { Transformations } from "./Transformation.js";
 
@@ -30,11 +29,6 @@ export interface TransformationConfiguration extends LoggingConfiguration {
 	 * @defaultValue 1
 	 */
 	readonly startingHeadingLevel?: number;
-
-	/**
-	 * Optional formatting to apply to the root of the document.
-	 */
-	readonly rootFormatting?: TextFormatting;
 }
 
 /**

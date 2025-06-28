@@ -8,8 +8,7 @@ import type {
 	Break as MdastBreak,
 	Heading as MdastHeading,
 	Html as MdastHtml,
-	Paragraph as MdastParagraph,
-	PhrasingContent as MdastPhrasingContent,
+	Strong as MdastStrong,
 } from "mdast";
 
 import type { HeadingNode } from "../../documentation-domain/index.js";
@@ -47,55 +46,54 @@ function transformAsHeading(
 	headingNode: HeadingNode,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
 ): MdastBlockContent[] {
-	const transformedChildren: MdastPhrasingContent[] = [
-		{
-			type: "text",
-			value: headingNode.title,
-		},
-	];
-
+	let headingText: string = headingNode.title;
 	if (headingNode.id !== undefined) {
-		transformedChildren.push({ type: "text", value: ` {#${headingNode.id}}` });
+		headingText = `${headingText} {#${headingNode.id}}`;
 	}
 
 	const heading: MdastHeading = {
 		type: "heading",
 		depth: headingLevel,
-		children: transformedChildren,
+		children: [
+			{
+				type: "text",
+				value: headingText,
+			},
+		],
 	};
 
 	return [heading];
 }
 
 function transformAsBoldText(headingNode: HeadingNode): MdastBlockContent[] {
-	const boldTitle: MdastParagraph = {
-		type: "paragraph",
+	const boldText: MdastStrong = {
+		type: "strong",
 		children: [
 			{
-				type: "strong",
-				children: [
-					{
-						type: "text",
-						value: headingNode.title,
-					},
-				],
+				type: "text",
+				value: headingNode.title,
 			},
 		],
 	};
 
 	if (headingNode.id === undefined) {
-		return [boldTitle];
+		return [
+			{
+				type: "paragraph",
+				children: [boldText],
+			},
+		];
 	}
 
 	const anchorHtml: MdastHtml = {
 		type: "html",
-		value: `<a id="${headingNode.id ?? ""}"></a>`,
+		value: `<a id="${headingNode.id}"></a>`,
 	};
 	const lineBreak: MdastBreak = { type: "break" };
 	return [
 		{
 			type: "paragraph",
-			children: [anchorHtml, lineBreak, ...boldTitle.children],
+			children: [anchorHtml, lineBreak, boldText],
 		},
 	];
 }

@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { PhrasingContent as MdastPhrasingContent, Text as MdastText } from "mdast";
+import type { Text as MdastText } from "mdast";
 
 import type { PlainTextNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-
-import { applyFormatting } from "./Utilities.js";
 
 /**
  * Transform a {@link PlainTextNode} to Markdown.
@@ -19,11 +17,9 @@ import { applyFormatting } from "./Utilities.js";
 export function plainTextToMarkdown(
 	node: PlainTextNode,
 	context: TransformationContext,
-): MdastPhrasingContent[] {
-	const transformed: MdastText = {
+): [MdastText] {
+	return [{
 		type: "text",
 		value: node.value,
-	};
-
-	return [applyFormatting(transformed, context)];
+	}];
 }

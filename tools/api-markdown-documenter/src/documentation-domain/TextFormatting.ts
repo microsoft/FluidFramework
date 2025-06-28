@@ -11,23 +11,17 @@
  */
 export interface TextFormatting {
 	/**
-	 * Whether or not the text should be rendered in italics.
-	 *
-	 * @defaultValue Inherit formatting from ancestry, if any exists.
+	 * Render the associated content with a bold formatting.
 	 */
-	readonly italic?: boolean;
+	readonly bold?: true;
 
 	/**
-	 * Whether or not the text should be rendered in bold.
-	 *
-	 * @defaultValue Inherit formatting from ancestry, if any exists.
+	 * Render the associated content with a italic formatting.
 	 */
-	readonly bold?: boolean;
+	readonly italic?: true;
 
 	/**
-	 * Whether or not the text should be rendered with a strikethrough.
-	 *
-	 * @defaultValue Inherit formatting from ancestry, if any exists.
+	 * Render the associated content with a strikethrough formatting.
 	 */
-	readonly strikethrough?: boolean;
+	readonly strikethrough?: true;
 }

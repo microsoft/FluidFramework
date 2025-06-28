@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { ListItem as MdastListItem, BlockContent as MdastBlockContent, Paragraph } from "mdast";
+import type {
+	ListItem as MdastListItem,
+	BlockContent as MdastBlockContent,
+	Paragraph,
+} from "mdast";
 
 import type { ListItemNode } from "../../documentation-domain/index.js";
 import { phrasingContentToMarkdown } from "../ToMarkdown.js";
@@ -20,20 +24,18 @@ export function listItemToMarkdown(
 	context: TransformationContext,
 ): [MdastListItem] {
 	const transformedChildren: MdastBlockContent[] = [];
-		for (const child of node.children) {
-			const paragraph: Paragraph = {
-				type: "paragraph",
-				children: [
-					...phrasingContentToMarkdown(child, context)
-				]
-			}
-			transformedChildren.push(paragraph);
-		}
+	for (const child of node.children) {
+		const paragraph: Paragraph = {
+			type: "paragraph",
+			children: [...phrasingContentToMarkdown(child, context)],
+		};
+		transformedChildren.push(paragraph);
+	}
 
-		return [
-			{
-				type: "listItem",
-				children: transformedChildren,
-			},
-		];
+	return [
+		{
+			type: "listItem",
+			children: transformedChildren,
+		},
+	];
 }

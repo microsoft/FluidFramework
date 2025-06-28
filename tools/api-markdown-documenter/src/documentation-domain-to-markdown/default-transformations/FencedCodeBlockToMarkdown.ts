@@ -31,11 +31,13 @@ export function fencedCodeBlockToMarkdown(
 		}
 	}
 
-	return [
-		{
-			type: "code",
-			value: text.join(""),
-			lang: node.language,
-		},
-	];
+	const result: MdastCode = {
+		type: "code",
+		value: text.join(""),
+	};
+	if (node.language !== undefined) {
+		result.lang = node.language;
+	}
+
+	return [result];
 }

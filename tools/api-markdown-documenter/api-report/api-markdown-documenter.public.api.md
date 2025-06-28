@@ -379,6 +379,7 @@ export namespace DocumentWriter {
 export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
     constructor(children: FencedCodeBlockNodeContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
+    static readonly Empty: FencedCodeBlockNode;
     readonly language?: string;
     readonly type = "fencedCode";
 }
@@ -766,10 +767,10 @@ function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], formatting?: TextFormatting);
-    static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
+    constructor(children: PhrasingContent[], formatting: TextFormatting);
+    static createFromPlainText(text: string, formatting: TextFormatting): SpanNode;
     static readonly Empty: SpanNode;
-    readonly textFormatting?: TextFormatting;
+    readonly textFormatting: TextFormatting;
     readonly type = "span";
 }
 
@@ -838,9 +839,9 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
 
 // @public @sealed
 export interface TextFormatting {
-    readonly bold?: boolean;
-    readonly italic?: boolean;
-    readonly strikethrough?: boolean;
+    readonly bold?: true;
+    readonly italic?: true;
+    readonly strikethrough?: true;
 }
 
 // @public
@@ -869,12 +870,11 @@ export interface ToHtmlTransformations {
 // @public
 export interface ToMarkdownConfiguration extends LoggingConfiguration {
     readonly customTransformations?: Partial<ToMarkdownTransformations>;
-    readonly rootFormatting?: TextFormatting;
     readonly startingHeadingLevel?: number;
 }
 
 // @public
-export interface ToMarkdownContext extends TextFormatting {
+export interface ToMarkdownContext {
     readonly headingLevel: number;
     readonly logger: Logger;
     readonly transformations: ToMarkdownTransformations;
