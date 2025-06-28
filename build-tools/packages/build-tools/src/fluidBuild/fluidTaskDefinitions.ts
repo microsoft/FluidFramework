@@ -290,7 +290,7 @@ export function normalizeGlobalTaskDefinitions(
 				true,
 			);
 			if (full.files !== undefined) {
-				// "..." not allowed, global config don't have anything to inheriting from.
+				// "..." not allowed because the global config inherits from nothing.
 				detectInvalid(
 					full.files.inputGlobs,
 					(value) => value === "...",
