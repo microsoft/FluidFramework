@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IAudience } from "@fluidframework/container-definitions";
 import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 
@@ -25,6 +24,7 @@ import type { AnyWorkspace, StatesWorkspaceSchema } from "./types.js";
  */
 interface ConnectionValueState extends InternalTypes.ValueStateMetadata {
 	value: AttendeeId;
+	disconnected?: true;
 }
 
 /**
@@ -113,7 +113,6 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		attendeeId: AttendeeId,
 		private readonly datastore: SystemWorkspaceDatastore,
 		public readonly events: Listenable<AttendeesEvents> & IEmitter<AttendeesEvents>,
-		private readonly audience: IAudience,
 	) {
 		this.selfAttendee = new SessionClient(attendeeId);
 		this.attendees.set(attendeeId, this.selfAttendee);
@@ -142,25 +141,24 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			clientToSessionId: {
 				[ConnectionId: ClientConnectionId]: InternalTypes.ValueRequiredState<
 					ConnectionValueState["value"]
-				>;
+				> & { disconnected?: true };
 			};
 		},
 		senderConnectionId: ClientConnectionId,
 	): PostUpdateAction[] {
-		const audienceMembers = this.audience.getMembers();
 		const postUpdateActions: PostUpdateAction[] = [];
-		for (const [clientConnectionId, value] of Object.entries(
+		for (const [clientConnectionId, connectionValueState] of Object.entries(
 			revealOpaqueJson(remoteDatastore.clientToSessionId),
 		)) {
-			const attendeeId = value.value;
+			const attendeeId = connectionValueState.value;
+			const disconnected = connectionValueState.disconnected === true;
 			const { attendee, isJoining } = this.ensureAttendee(
 				attendeeId,
 				clientConnectionId,
-				/* order */ value.rev,
-				// If the attendee is present in audience OR if the attendee update is from the sending remote client itself,
+				/* order */ connectionValueState.rev,
+				// If the attendee is present not marked as disconnected OR if the attendee update is from the sending remote client itself,
 				// then the attendee is considered connected.
-				/* isConnected */ senderConnectionId === clientConnectionId ||
-					audienceMembers.has(clientConnectionId),
+				/* isConnected */ senderConnectionId === clientConnectionId || !disconnected,
 			);
 			// If the attendee is joining the session, add them to the list of joining attendees to be announced later.
 			if (isJoining) {
@@ -169,9 +167,12 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 
 			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
-				this.datastore.clientToSessionId[clientConnectionId] = value;
+				this.datastore.clientToSessionId[clientConnectionId] = connectionValueState;
 			} else {
-				assert(knownSessionId.value === value.value, 0xa5a /* Mismatched SessionId */);
+				assert(
+					knownSessionId.value === connectionValueState.value,
+					0xa5a /* Mismatched SessionId */,
+				);
 			}
 		}
 
@@ -218,6 +219,11 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 		if (!attendee) {
 			return;
 		}
+
+		const knownSessionID = this.datastore.clientToSessionId[clientConnectionId];
+		assert(knownSessionID !== undefined, "Known attendee not found in datastore");
+		// Mark this client connection ID as disconnected.
+		knownSessionID.disconnected = true;
 
 		// If the local connection is being removed, clear the stale connection timer
 		if (attendee === this.selfAttendee) {
@@ -310,7 +316,6 @@ export function createSystemWorkspace(
 	attendeeId: AttendeeId,
 	datastore: SystemWorkspaceDatastore,
 	events: Listenable<AttendeesEvents> & IEmitter<AttendeesEvents>,
-	audience: IAudience,
 ): {
 	workspace: SystemWorkspace;
 	statesEntry: {
@@ -318,7 +323,7 @@ export function createSystemWorkspace(
 		public: AnyWorkspace<StatesWorkspaceSchema>;
 	};
 } {
-	const workspace = new SystemWorkspaceImpl(attendeeId, datastore, events, audience);
+	const workspace = new SystemWorkspaceImpl(attendeeId, datastore, events);
 	return {
 		workspace,
 		statesEntry: {

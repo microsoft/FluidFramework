@@ -5107,6 +5107,12 @@ export class ContainerRuntime
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
 		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
 		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		this.deltaManager.inboundSignal.on("op", (message) => {
+			const messageContent = message.content as { content: unknown; type: string };
+			if (messageContent.type === MessageType.ClientLeave && message.clientId !== null) {
+				eventEmitter.emit("remoteDisconnected", message.clientId);
+			}
+		});
 		return eventEmitter;
 	});
 
@@ -5139,7 +5145,6 @@ export class ContainerRuntime
 					this.submitExtensionSignal(id, addressChain, message);
 				},
 				getQuorum: this.getQuorum.bind(this),
-				getAudience: this.getAudience.bind(this),
 				supportedFeatures: this.ILayerCompatDetails.supportedFeatures,
 			} satisfies ExtensionHost<TRuntimeProperties>;
 			entry = new factory(runtime, ...useContext);

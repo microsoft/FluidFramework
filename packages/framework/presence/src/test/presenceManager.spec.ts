@@ -96,7 +96,7 @@ describe("Presence", () => {
 			describe("attendee", () => {
 				const attendeeSessionId = "attendeeId-4";
 				const initialAttendeeConnectionId = "client4";
-				// Note: this connection id exists in the mock runtime audience since
+				// Note: this connection id exists in the mock runtime quorum since
 				// initialization, but should go unnoticed by the presence manager
 				// until there is a join signal related to it.
 				const rejoinAttendeeConnectionId = "client7";
@@ -177,7 +177,7 @@ describe("Presence", () => {
 					});
 
 					// Act & Verify - remove connection unknown to presence
-					runtime.removeMember("client5");
+					runtime.remoteDisconnect("client5");
 				});
 
 				describe("that is joining", () => {
@@ -195,7 +195,7 @@ describe("Presence", () => {
 
 					it('second time is announced once via `attendeeConnected` with status "Connected" when prior is unknown', () => {
 						// Setup
-						runtime.removeMember(initialAttendeeConnectionId);
+						runtime.remoteDisconnect(initialAttendeeConnectionId);
 
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
@@ -223,10 +223,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], rejoinAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it('first time is announced via `attendeeConnected` with status "Connected" even if unknown to audience', () => {
-						// Setup - remove connection from audience
-						runtime.removeMember(initialAttendeeConnectionId);
-
+					it('first time is announced via `attendeeConnected` with status "Connected"', () => {
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([initialAttendeeSignal]);
 
@@ -240,10 +237,7 @@ describe("Presence", () => {
 						verifyAttendee(joinedAttendees[0], initialAttendeeConnectionId, attendeeSessionId);
 					});
 
-					it('second time is announced once via `attendeeConnected` with status "Connected" even if most recent unknown to audience', () => {
-						// Setup - remove connection from audience
-						runtime.removeMember(rejoinAttendeeConnectionId);
-
+					it('second time is announced once via `attendeeConnected` with status "Connected"', () => {
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([rejoinAttendeeSignal]);
 						assert.strictEqual(
@@ -256,7 +250,6 @@ describe("Presence", () => {
 					});
 
 					it("as collateral and disconnected is NOT announced via `attendeeConnected`", () => {
-						// Setup - remove connections from audience
 						const collateralAttendeeConnectionId = "client3";
 						const collateralAttendeeSignal = generateBasicClientJoin(clock.now - 10, {
 							averageLatency: 40,
@@ -270,11 +263,10 @@ describe("Presence", () => {
 									rev: 0,
 									timestamp: 0,
 									value: collateralSessionId,
+									disconnected: true,
 								},
 							},
 						});
-						runtime.removeMember(initialAttendeeConnectionId);
-						runtime.removeMember(collateralAttendeeConnectionId);
 
 						// Act - simulate join message from client
 						const joinedAttendees = processJoinSignals([collateralAttendeeSignal]);
@@ -291,12 +283,10 @@ describe("Presence", () => {
 
 					it("as collateral with old connection info and connected is NOT announced via `attendeeConnected`", () => {
 						// Setup - generate signals
-
-						// Both connection Id's unkonwn to audience
 						const oldAttendeeConnectionId = "client9";
 						const newAttendeeConnectionId = "client10";
 
-						// Rejoin signal for the collateral attendee unknown to audience
+						// Rejoin signal for the collateral attendee
 						const rejoinSignal = generateBasicClientJoin(clock.now - 10, {
 							averageLatency: 40,
 							attendeeId: collateralSessionId,
@@ -389,7 +379,7 @@ describe("Presence", () => {
 
 					// To retain symmetry across Joined and Disconnected events, do not announce
 					// attendeeConnected when the attendee is already connected and we only see
-					// a connection id update. This can happen when audience removal is late.
+					// a connection id update.
 					it('is not announced via `attendeeConnected` when already "Connected"', () => {
 						// Setup
 						afterCleanUp.push(
@@ -405,7 +395,7 @@ describe("Presence", () => {
 						[AttendeeStatus.Connected, () => {}] as const,
 						[
 							AttendeeStatus.Disconnected,
-							() => runtime.removeMember(initialAttendeeConnectionId),
+							() => runtime.remoteDisconnect(initialAttendeeConnectionId),
 						] as const,
 					]) {
 						for (const [desc, id] of [
@@ -451,7 +441,7 @@ describe("Presence", () => {
 					// When local client disconnects, we lose the connectivity status updates for remote attendees in the session.
 					// Upon reconnect, we mark all remote attendees connections as "stale".
 					// Remote attendees with stale connections are given 30 seconds after local reconnection to prove they are connected
-					// (e.g. being in audience, sending an update, or (re)joining the session) before their connection status set to "Disconnected".
+					// before their connection status set to "Disconnected".
 					// If an attendee with a stale connection becomes active, their "stale" status is removed.
 					describe("and then local client disconnects", () => {
 						let remoteDisconnectedAttendees: Attendee[];
@@ -617,7 +607,7 @@ describe("Presence", () => {
 							clock.tick(1000);
 							runtime.connect("client6");
 							clock.tick(15_001);
-							runtime.audience.removeMember(initialAttendeeConnectionId); // Remove remote client connection before 30s timeout
+							runtime.remoteDisconnect(initialAttendeeConnectionId); // Remove remote client connection before 30s timeout
 							// Confirm that `attendeeDisconnected` is announced for when active attendee disconnects
 							assert.strictEqual(
 								remoteDisconnectedAttendees.length,
@@ -698,12 +688,12 @@ describe("Presence", () => {
 							);
 
 							// Act - remove client connection id
-							runtime.removeMember(initialAttendeeConnectionId);
+							runtime.remoteDisconnect(initialAttendeeConnectionId);
 
 							// Verify
 							assert(
 								disconnectedAttendee !== undefined,
-								"No attendee was disconnected during `removeMember`",
+								"No attendee was disconnected during `remoteDisconnect`",
 							);
 							verifyAttendee(
 								disconnectedAttendee,
@@ -715,14 +705,13 @@ describe("Presence", () => {
 
 						it('is not announced via `attendeeDisconnected` when already "Disconnected"', () => {
 							// Setup
-
-							const clientToDisconnect = runtime.audience.getMember(
+							const clientToDisconnect = presence.attendees.getAttendee(
 								initialAttendeeConnectionId,
 							);
 							assert(clientToDisconnect !== undefined, "No client to disconnect");
 
 							// Remove client connection id
-							runtime.removeMember(initialAttendeeConnectionId);
+							runtime.remoteDisconnect(initialAttendeeConnectionId);
 
 							afterCleanUp.push(
 								presence.attendees.events.on("attendeeDisconnected", (attendee) => {
@@ -733,11 +722,7 @@ describe("Presence", () => {
 							);
 
 							// Act & Verify - fake event to remove client connection id again
-							runtime.audience.emit(
-								"removeMember",
-								initialAttendeeConnectionId,
-								clientToDisconnect,
-							);
+							runtime.remoteDisconnect(initialAttendeeConnectionId);
 						});
 					});
 				});
@@ -754,7 +739,7 @@ describe("Presence", () => {
 						priorAttendee = joinedAttendees[0];
 
 						// Disconnect the attendee
-						runtime.removeMember(initialAttendeeConnectionId);
+						runtime.remoteDisconnect(initialAttendeeConnectionId);
 					});
 
 					it("is NOT announced when rejoined with same connection (duplicate signal)", () => {
