@@ -169,7 +169,6 @@ function validateSummaryTree(currentSummary: ISummaryTree, lastSummary: ISummary
 		if (summaryObject.type === SummaryType.Handle) {
 			// Validate that the id (summary path) exists in lastSummary
 			validateHandlePathExists(summaryObject.handle.split("/").slice(1), lastSummary);
-			console.log(`Validated handle path: ${summaryObject.handle}`);
 		} else if (summaryObject.type === SummaryType.Tree) {
 			// Recursively validate nested trees
 			validateSummaryTree(summaryObject, lastSummary);
@@ -177,7 +176,7 @@ function validateSummaryTree(currentSummary: ISummaryTree, lastSummary: ISummary
 	}
 }
 
-function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
+function validateNoHandlesInForestTree(summary: ISummaryTree) {
 	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		assert(
 			summaryObject.type !== SummaryType.Handle,
@@ -185,7 +184,20 @@ function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
 		);
 		if (summaryObject.type === SummaryType.Tree) {
 			// Recursively validate nested trees
-			validateSummaryTree(summaryObject, summary);
+			validateNoHandlesInForestTree(summaryObject);
+		}
+	}
+}
+
+function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
+	for (const [key, summaryObject] of Object.entries(summary.tree)) {
+		if (summaryObject.type === SummaryType.Tree) {
+			if (key === "Forest") {
+				validateNoHandlesInForestTree(summaryObject);
+			} else {
+				// Recursively find forest tree
+				validateNoHandlesInSummaryTree(summaryObject);
+			}
 		}
 	}
 }
