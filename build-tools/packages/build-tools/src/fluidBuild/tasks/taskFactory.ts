@@ -74,11 +74,11 @@ const executableToLeafTask: {
  * If the task has file dependencies specified, or the executable is a declarative task, create a declarative task.
  * Otherwise, find a known executable task handler for the executable, or use the UnknownLeafTask as a fallback.
  *
- * @param node build package for the target task
- * @param command the command to create the task for
- * @param context the build context
- * @param taskName target name
- * @param files file dependencies for the task, if any
+ * @param node - build package for the target task
+ * @param command - the command to create the task for
+ * @param context - the build context
+ * @param taskName - target name
+ * @param files - file dependencies for the task, if any
  * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
 function getLeafTaskForCommand(
