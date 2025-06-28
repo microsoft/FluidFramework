@@ -67,7 +67,10 @@ describe("Span to HTML transformation tests", () => {
 			{ strikethrough: true },
 		);
 
-		const expected = h("span", [h("s", [text1]), h("span", [h("br"), h("b", [text2])])]);
+		const expected = h("span", [
+			h("s", [text1]),
+			h("span", [h("br"), h("b", h("s", [text2]))]),
+		]);
 
 		assertTransformation(span, expected);
 	});
