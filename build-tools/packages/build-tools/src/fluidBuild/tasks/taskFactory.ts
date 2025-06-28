@@ -71,7 +71,7 @@ const executableToLeafTask: {
 
 /**
  * Create a leaf task for the given command.
- * If the task has file dependencies specified, or the executable is a declarative task create a declarative task.
+ * If the task has file dependencies specified, or the executable is a declarative task, create a declarative task.
  * Otherwise, find a known executable task handler for the executable, or use the UnknownLeafTask as a fallback.
  *
  * @param node build package for the target task
