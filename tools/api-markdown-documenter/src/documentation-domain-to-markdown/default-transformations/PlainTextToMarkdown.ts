@@ -18,8 +18,10 @@ export function plainTextToMarkdown(
 	node: PlainTextNode,
 	context: TransformationContext,
 ): [MdastText] {
-	return [{
-		type: "text",
-		value: node.value,
-	}];
+	return [
+		{
+			type: "text",
+			value: node.value,
+		},
+	];
 }
