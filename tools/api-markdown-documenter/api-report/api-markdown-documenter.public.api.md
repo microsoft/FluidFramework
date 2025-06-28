@@ -749,10 +749,10 @@ function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], formatting?: TextFormatting);
-    static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
+    constructor(children: PhrasingContent[], formatting: TextFormatting);
+    static createFromPlainText(text: string, formatting: TextFormatting): SpanNode;
     static readonly Empty: SpanNode;
-    readonly textFormatting?: TextFormatting;
+    readonly textFormatting: TextFormatting;
     readonly type = "span";
 }
 
