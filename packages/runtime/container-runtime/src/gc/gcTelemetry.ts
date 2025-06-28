@@ -77,7 +77,9 @@ interface INodeUsageProps extends ICommonProps {
 	 */
 	currentReferenceTimestampMs: number;
 	/**
-	 * The package path of the node. This may not be available if the node hasn't been loaded yet
+	 * The package path of the node. This may not be available if the node hasn't been loaded yet.
+	 *
+	 * @see {@link @fluidframework/runtime-definitions#IFluidDataStoreContext.packagePath} for more details.
 	 */
 	packagePath: readonly string[] | undefined;
 	/**
