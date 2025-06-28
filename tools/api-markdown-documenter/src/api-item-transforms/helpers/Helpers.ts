@@ -351,8 +351,7 @@ export function createTypeParametersSection(
  * @param excerpt - The TSDoc excerpt to render.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns A span containing the rendered contents, if non-empty.
- * Otherwise, will return `undefined`.
+ * @returns The rendered contents, if any.
  */
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
