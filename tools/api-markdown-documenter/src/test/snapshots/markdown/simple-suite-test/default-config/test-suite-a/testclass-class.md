@@ -129,6 +129,8 @@ Test class property with both a getter and a setter.
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+
+
 set testClassGetterProperty(newValue: number);
 ```
 
@@ -227,7 +229,7 @@ static testClassStaticMethod(foo: number): string;
 
 #### Returns {#testclassstaticmethod-returns}
 
-- Some string
+\- Some string
 
 **Return type**: string
 

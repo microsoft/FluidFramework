@@ -44,7 +44,7 @@ export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Span Text node.
 	 */
-	public static readonly Empty: SpanNode = new SpanNode([]);
+	public static readonly Empty: SpanNode = new SpanNode([], {});
 
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
@@ -56,9 +56,9 @@ export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
 	 *
 	 * @defaultValue Inherit formatting from ancestry, if any exists.
 	 */
-	public readonly textFormatting?: TextFormatting;
+	public readonly textFormatting: TextFormatting;
 
-	public constructor(children: PhrasingContent[], formatting?: TextFormatting) {
+	public constructor(children: PhrasingContent[], formatting: TextFormatting) {
 		super(children);
 		this.textFormatting = formatting;
 	}
@@ -67,7 +67,7 @@ export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
 	 * Generates an `SpanNode` from the provided string.
 	 * @param text - The node contents.
 	 */
-	public static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode {
+	public static createFromPlainText(text: string, formatting: TextFormatting): SpanNode {
 		return new SpanNode(createNodesFromPlainText(text), formatting);
 	}
 }

@@ -136,13 +136,11 @@ function transformTsdocSectionContent(
 			return transformed === undefined ? [] : [transformed];
 		}
 		default: {
-			// TODO
-			throw new Error(`Unsupported DocNode kind under section node: "${node.kind}".`);
-			// options.logger?.error(
-			// 	`Unsupported DocNode kind under section node: "${node.kind}".`,
-			// 	node,
-			// );
-			// return [];
+			options.logger.error(
+				`Unsupported DocNode kind under section node: "${node.kind}".`,
+				node,
+			);
+			return [];
 		}
 	}
 }
@@ -176,11 +174,6 @@ function transformTsdocParagraph(
 	for (const child of node.nodes) {
 		transformedChildren.push(...transformTsdocParagraphContent(child, options));
 	}
-
-	// Filter out `undefined` values resulting from transformation errors.
-	transformedChildren = transformedChildren.filter(
-		(child) => child !== undefined && !child.isEmpty,
-	);
 
 	// Collapse groups of adjacent line breaks to reduce unnecessary clutter in the output.
 	transformedChildren = collapseAdjacentLineBreaks(transformedChildren);
@@ -255,13 +248,11 @@ function transformTsdocParagraphContent(
 			return [LineBreakNode.Singleton];
 		}
 		default: {
-			// TODO
-			throw new Error(`Unsupported DocNode kind under paragraph node: "${node.kind}".`);
-			// options.logger?.error(
-			// 	`Unsupported DocNode kind under paragraph node: "${node.kind}".`,
-			// 	node,
-			// );
-			// return [];
+			options.logger.error(
+				`Unsupported DocNode kind under paragraph node: "${node.kind}".`,
+				node,
+			);
+			return [];
 		}
 	}
 }
