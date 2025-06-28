@@ -360,7 +360,6 @@ export namespace DocumentWriter {
 export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
     constructor(children: FencedCodeBlockNodeContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
-    static readonly Empty: FencedCodeBlockNode;
     readonly language?: string;
     readonly type = "fencedCode";
 }
