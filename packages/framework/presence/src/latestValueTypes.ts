@@ -165,8 +165,14 @@ export function createValidatedGetter<T>(
 	clientState: InternalTypes.ValueRequiredState<T>,
 	validator: StateSchemaValidator<T> | undefined,
 ): (() => DeepReadonly<JsonDeserialized<T>> | undefined) | DeepReadonly<JsonDeserialized<T>> {
+	// No validator
 	if (validator === undefined) {
 		return asDeeplyReadonlyDeserializedJson(clientState.value);
+	}
+
+	// Avoid creating another function since one already exists on the item
+	if (typeof clientState.value === "function") {
+		return clientState.value;
 	}
 
 	// FIXME: is this cast safe?

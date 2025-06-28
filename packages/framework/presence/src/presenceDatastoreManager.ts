@@ -345,11 +345,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			stripped[workspaceAddress] = {} as any;
 
 			for (const [valueKey, clientRecord] of Object.entries(workspace)) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				(stripped[workspaceAddress] as any)[valueKey] = {};
 
 				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 					(stripped[workspaceAddress] as any)[valueKey][attendeeId] =
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 						this.stripValidationFromValueData(valueData);
@@ -392,25 +392,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			delete valueData.validatedValue;
 		}
 		return valueData;
-
-		// Handle value states - remove validatedValue but keep other properties
-		// if ("value" in valueData) {
-		// 	const stripped: InternalTypes.ValueRequiredState<unknown> = {
-		// 		rev: valueData.rev,
-		// 		timestamp: valueData.timestamp,
-		// 		value: valueData.value,
-		// 	};
-		// 	return stripped;
-		// } else if ("timestamp" in valueData) {
-		// 	const stripped: InternalTypes.ValueOptionalState<unknown> = {
-		// 		rev: valueData.rev,
-		// 		timestamp: valueData.timestamp,
-		// 	};
-		// 	return stripped;
-		// } else {
-		// 	// This should not happen for valid value data, but return as-is for safety
-		// 	return valueData;
-		// }
 	}
 
 	private broadcastAllKnownState(): void {

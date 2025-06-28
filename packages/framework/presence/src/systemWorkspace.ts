@@ -10,7 +10,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction } from "./internalTypes.js";
-import { revealOpaqueJson } from "./internalUtils.js";
+import { objectEntries, revealOpaqueJson } from "./internalUtils.js";
 import type { Attendee, AttendeesEvents, AttendeeId, Presence } from "./presence.js";
 import { AttendeeStatus } from "./presence.js";
 import type { PresenceStatesInternal } from "./presenceStates.js";
@@ -149,7 +149,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 	): PostUpdateAction[] {
 		const audienceMembers = this.audience.getMembers();
 		const postUpdateActions: PostUpdateAction[] = [];
-		for (const [clientConnectionId, value] of Object.entries(
+		for (const [clientConnectionId, value] of objectEntries(
 			revealOpaqueJson(remoteDatastore.clientToSessionId),
 		)) {
 			const attendeeId = value.value;
@@ -170,8 +170,7 @@ class SystemWorkspaceImpl implements PresenceStatesInternal, SystemWorkspace {
 			const knownSessionId = this.datastore.clientToSessionId[clientConnectionId];
 			if (knownSessionId === undefined) {
 				this.datastore.clientToSessionId[clientConnectionId] =
-					// FIXME: Why is the roundtrip through unknown needed?
-					value as unknown as ConnectionValueState;
+					value satisfies ConnectionValueState;
 			} else {
 				assert(knownSessionId.value === attendeeId, 0xa5a /* Mismatched SessionId */);
 			}
