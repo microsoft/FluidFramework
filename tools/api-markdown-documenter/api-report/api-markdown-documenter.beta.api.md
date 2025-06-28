@@ -360,6 +360,7 @@ export namespace DocumentWriter {
 export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
     constructor(children: FencedCodeBlockNodeContent[], language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
+    static readonly Empty: FencedCodeBlockNode;
     readonly language?: string;
     readonly type = "fencedCode";
 }
@@ -771,10 +772,10 @@ function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationCon
 
 // @public
 export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], formatting?: TextFormatting);
-    static createFromPlainText(text: string, formatting?: TextFormatting): SpanNode;
+    constructor(children: PhrasingContent[], formatting: TextFormatting);
+    static createFromPlainText(text: string, formatting: TextFormatting): SpanNode;
     static readonly Empty: SpanNode;
-    readonly textFormatting?: TextFormatting;
+    readonly textFormatting: TextFormatting;
     readonly type = "span";
 }
 
