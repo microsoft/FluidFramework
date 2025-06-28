@@ -89,6 +89,10 @@ export namespace InternalTypes {
     export class StateValueBrand<T> {
     }
     // @system
+    export interface ValidatedValueState<TValue> {
+        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+    }
+    // @system
     export interface ValueDirectory<T> {
         // (undocumented)
         items: {
@@ -100,12 +104,12 @@ export namespace InternalTypes {
     // @system
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
     // @system
-    export interface ValueOptionalState<TValue> extends ValueStateMetadata {
+    export interface ValueOptionalState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system
-    export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+    export interface ValueRequiredState<TValue> extends ValueStateMetadata, ValidatedValueState<TValue> {
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
@@ -128,6 +132,11 @@ export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedVal
     get local(): DeepReadonly<JsonDeserialized<T>>;
     set local(value: JsonSerializable<T>);
     readonly presence: Presence;
+}
+
+// @beta @input
+export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
+    validator: StateSchemaValidator<T>;
 }
 
 // @beta @input
@@ -159,6 +168,7 @@ export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T> =
 
 // @beta @sealed
 export interface LatestFactory {
+    <T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
     <T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
 }
 
@@ -171,6 +181,11 @@ export interface LatestMap<T, Keys extends string | number = string | number, TR
     getStateAttendees(): Attendee[];
     readonly local: StateMap<Keys, T>;
     readonly presence: Presence;
+}
+
+// @beta @input
+export interface LatestMapArguments<T, Keys extends string | number = string | number> extends LatestMapArgumentsRaw<T, Keys> {
+    validator: StateSchemaValidator<T>;
 }
 
 // @beta @input
@@ -208,6 +223,7 @@ export interface LatestMapEvents<T, K extends string | number, TRemoteValueAcces
 
 // @beta @sealed
 export interface LatestMapFactory {
+    <T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args: LatestMapArguments<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMap<T, Keys>>;
     <T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
 }
 
@@ -278,8 +294,8 @@ export interface RawValueAccessor<T> {
 
 // @beta
 export const StateFactory: {
-    latest: LatestFactory;
-    latestMap: LatestMapFactory;
+    latest: LatestFactory_2;
+    latestMap: LatestMapFactory_2;
 };
 
 // @beta @sealed

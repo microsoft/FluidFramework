@@ -25,6 +25,22 @@ export namespace InternalTypes {
 	}
 
 	/**
+	 * Represents data that may have been validated by a {@link StateSchemaValidator} function.
+	 *
+	 * @system
+	 */
+	export interface ValidatedValueState<TValue> {
+		/**
+		 * Contains a validated value or undefined if `value` is invalid.
+		 *
+		 * This property will not be present if the data has not been validated.
+		 * If it is present and `undefined`, the value has been checked and found to be invalid.
+		 * Otherwise it will be the validated value.
+		 */
+		validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+	}
+
+	/**
 	 * Represents a state that may have a value.
 	 * And it includes standard metadata.
 	 *
@@ -33,7 +49,9 @@ export namespace InternalTypes {
 	 *
 	 * @system
 	 */
-	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
+	export interface ValueOptionalState<TValue>
+		extends ValueStateMetadata,
+			ValidatedValueState<TValue> {
 		value?: OpaqueJsonDeserialized<TValue>;
 	}
 
@@ -52,7 +70,9 @@ export namespace InternalTypes {
 	 *
 	 * @system
 	 */
-	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+	export interface ValueRequiredState<TValue>
+		extends ValueStateMetadata,
+			ValidatedValueState<TValue> {
 		value: OpaqueJsonDeserialized<TValue>;
 	}
 
@@ -150,4 +170,18 @@ export namespace InternalTypes {
 		name: string;
 		args: unknown[];
 	}
+}
+
+/**
+ * Type guard to check if a state is a required state (has a value).
+ *
+ * @param state - The state to check
+ * @returns True if the state has a value and is therefore a ValueRequiredState
+ *
+ * @system
+ */
+export function isValueRequiredState<T>(
+	state: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
+): state is InternalTypes.ValueRequiredState<T> {
+	return state.value !== undefined;
 }

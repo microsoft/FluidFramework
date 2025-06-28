@@ -1,0 +1,12 @@
+`$obj as $type` => `$obj satisfies $type` where {
+  $type <: !`const`,
+  $type <: !`unknown`,
+  $type <: !`any`,
+  $type <: !`never`,
+  $obj <: !within import_statement(),
+  $obj <: !`$_ as $_`,
+  // Only allow certain types of expressions to avoid complex typing issues
+  $obj <: identifier(),
+  // Avoid return statements which often have complex typing
+  $obj <: !within return_statement()
+}

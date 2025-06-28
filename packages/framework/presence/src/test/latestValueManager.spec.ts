@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { createPresenceManager } from "../presenceManager.js";
-import { StateFactoryInternal } from "../stateFactory.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -162,7 +161,7 @@ export function checkCompiles(): void {
 		cursor: StateFactory.latest({ local: { x: 0, y: 0 } }),
 		camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 		nullablePoint: StateFactory.latest<null | { x: number; y: number }>({ local: null }),
-		validated: StateFactoryInternal.latest({
+		validated: StateFactory.latest({
 			local: { num: 22 },
 			validator: (data: unknown) => data as { num: number },
 		}),

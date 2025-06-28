@@ -71,8 +71,47 @@ function usePresence(container: IFluidContainer): void {
 
 ### Runtime data validation
 
-Runtime data validation is not yet implemented. The StateFactory.latest and StateFactory.latestMap APIs do not yet
-accept a `validator` argument. The validator argument is reserved for future use. **Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
+The Presence API provides a simple mechanism (added in version 2.50.0) to validate that state data
+received within session from other clients matches the types declared.
+
+When creating State objects using `StateFactory.latest` or `StateFactory.latestMap`, you can pass a validator function
+that will be called at runtime to verify that the data is valid. This is especially useful when changing the schema of
+presence data.
+
+When you provide a validator function, the data in a State object must be accessed via a function instead of a direct
+value access. This is reflected in the types.
+
+#### Example
+
+In the following example, we create a `Latest` state with a validator function that checks if the value is valid
+according to our expectations.
+
+```ts
+// Configure a states workspace
+const stateWorkspace = presence.states.getWorkspace(
+	"app:v1states",
+	{
+		// This Latest state has an allowable latency of 100ms.
+		position: StateFactory.latest({
+			local: { x: 0, y: 0 },
+			validator: (value: unknown) => {
+			// ...implement validation and return the validated value or `undefined` if value is invalid.
+			},
+		}),
+	},
+);
+```
+
+:::important
+
+If no validator function is provided, then the data shared in Presence is assumed to be compatible. This may result in
+runtime errors if the data does not match the expected type. It is recommended to always provide a validator function
+to ensure that the data is valid and to prevent runtime errors.
+
+Note that here are important considerations around data compatibility that should be considered regardless of whether
+you provide a validator function or not. See [Compatibility and Versioning](#compatibility-and-versioning) for more details.
+
+:::
 
 ## Limitations
 
