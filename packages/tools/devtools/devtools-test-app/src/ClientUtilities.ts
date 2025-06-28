@@ -6,7 +6,7 @@
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { IDevtoolsLogger } from "@fluidframework/devtools-core/internal";
+import type { IDevtoolsLogger, IFluidDevtools } from "@fluidframework/devtools-core/internal";
 
 import { type IAppModel, RuntimeFactory } from "./Container.js";
 import type { AppData } from "./FluidObject.js";
@@ -38,8 +38,11 @@ export interface ContainerInfo {
 /**
  * Creates a new Container from the provided client and container schema.
  */
-export function createLoader(logger?: IDevtoolsLogger): SessionStorageModelLoader<IAppModel> {
-	const codeLoader = new StaticCodeLoader(new RuntimeFactory());
+export function createLoader(
+	logger?: IDevtoolsLogger,
+	devtools?: IFluidDevtools,
+): SessionStorageModelLoader<IAppModel> {
+	const codeLoader = new StaticCodeLoader(new RuntimeFactory(logger, devtools));
 	const loader = new SessionStorageModelLoader<IAppModel>(codeLoader, logger);
 
 	return loader;

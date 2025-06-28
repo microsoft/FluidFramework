@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import type { IAudience } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -12,6 +13,7 @@ import type { AudienceClientMetadata } from "./AudienceMetadata.js";
 import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
 import type { ContainerStateMetadata } from "./ContainerMetadata.js";
+import type { DecomposedIContainer } from "./DecomposedContainer.js";
 import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
 import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
@@ -69,7 +71,25 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 	 */
 	containerData?: Record<string, IFluidLoadable>;
 
+	/**
+	 * (optional) Indicates whether this container was registered as a data object.
+	 * When true, the UI will show "Data Objects" instead of "Containers" and hide action buttons.
+	 */
+	isDataObject?: boolean;
+
 	// TODO: Add ability for customers to specify custom visualizer overrides
+}
+
+/**
+ * Properties for registering a {@link @fluidframework/aqueduct#PureDataObject} with the Devtools.
+ *
+ * @alpha
+ */
+export interface DataObjectProps {
+	/**
+	 * The data object to register with the Devtools.
+	 */
+	dataObject: PureDataObject;
 }
 
 /**
@@ -146,6 +166,12 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 	 * This map is assumed to be immutable. The devtools will not make any modifications to its contents.
 	 */
 	public readonly containerData?: Record<string, IFluidLoadable>;
+
+	/**
+	 * (optional) Indicates whether this container was registered as a data object.
+	 * When true, the UI will show "Data Objects" instead of "Containers" and hide action buttons.
+	 */
+	public readonly isDataObject?: boolean;
 
 	// #region Accumulated log state
 
@@ -289,9 +315,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[DisconnectContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as DisconnectContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.disconnect(
-					/* TODO: Specify devtools reason here once it is supported */
-				);
+				this.container.disconnect();
 				return true;
 			}
 			return false;
@@ -299,7 +323,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		[CloseContainer.MessageType]: async (untypedMessage) => {
 			const message = untypedMessage as CloseContainer.Message;
 			if (message.data.containerKey === this.containerKey) {
-				this.container.close(/* TODO: Specify devtools reason here once it is supported */);
+				this.container.close();
 				return true;
 			}
 			return false;
@@ -448,6 +472,7 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		this.containerKey = props.containerKey;
 		this.containerData = props.containerData;
 		this.container = props.container;
+		this.isDataObject = props.isDataObject;
 
 		// TODO: would it be useful to log the states (and timestamps) at time of devtools initialize?
 		this._connectionStateLog = [];
@@ -533,6 +558,8 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		return {
 			// If no container data was provided to the devtools, we cannot support data visualization.
 			containerDataVisualization: this.containerData !== undefined,
+			// Indicate if this container was registered as a data object
+			dataObjects: this.isDataObject === true,
 		};
 	}
 
@@ -561,5 +588,14 @@ export class ContainerDevtools implements IContainerDevtools, HasContainerKey {
 		fluidObjectId: FluidObjectId,
 	): Promise<FluidObjectNode | undefined> {
 		return this.dataVisualizer?.render(fluidObjectId) ?? undefined;
+	}
+
+	/**
+	 * Creates a ContainerDevtools instance from a DecomposedIContainer for internal use.
+	 */
+	public static createFromDecomposedContainer(
+		props: Omit<ContainerDevtoolsProps, "container"> & { container: DecomposedIContainer },
+	): ContainerDevtools {
+		return new ContainerDevtools(props as ContainerDevtoolsProps);
 	}
 }

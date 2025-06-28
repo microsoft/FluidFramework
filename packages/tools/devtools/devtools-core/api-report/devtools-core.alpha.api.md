@@ -8,6 +8,7 @@
 export interface ContainerDevtoolsProps extends HasContainerKey {
     container: IContainer;
     containerData?: Record<string, IFluidLoadable>;
+    isDataObject?: boolean;
 }
 
 // @beta
@@ -15,6 +16,11 @@ export type ContainerKey = string;
 
 // @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
+
+// @alpha
+export interface DataObjectProps {
+    dataObject: PureDataObject;
+}
 
 // @alpha
 export interface FluidDevtoolsProps {
@@ -35,6 +41,7 @@ export interface IDevtoolsLogger extends ITelemetryBaseLogger {
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
+    registerDataObject(props: DataObjectProps): void;
 }
 
 // @alpha

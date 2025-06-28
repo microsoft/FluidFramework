@@ -132,7 +132,7 @@ const getContainerListMessage = GetContainerList.createMessage();
 /**
  * A refresh button to retrieve the latest list of containers.
  */
-function RefreshButton(): React.ReactElement {
+function RefreshButton(props?: { tooltip?: string }): React.ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
 
@@ -149,12 +149,12 @@ function RefreshButton(): React.ReactElement {
 	}
 
 	return (
-		<Tooltip content="Refresh Containers list" relationship="label">
+		<Tooltip content={props?.tooltip ?? "Refresh Containers list"} relationship="label">
 			<Button
 				icon={<ArrowSync24Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
-				aria-label="Refresh Containers list"
+				aria-label={props?.tooltip ?? "Refresh Containers list"}
 			></Button>
 		</Tooltip>
 	);
@@ -411,6 +411,11 @@ interface ContainersMenuSectionProps {
 	 * @remarks Passing `undefined` clears the selection.
 	 */
 	selectContainer(containerKey: ContainerKey | undefined): void;
+
+	/**
+	 * Whether to show as "Data Objects" instead of "Containers".
+	 */
+	isDataObjects?: boolean;
 }
 
 /**
@@ -420,12 +425,27 @@ interface ContainersMenuSectionProps {
  * and displays a note when there are no registered Containers (if the list is empty).
  */
 function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
-	const { containers, selectContainer, currentContainerSelection } = props;
+	const {
+		containers,
+		selectContainer,
+		currentContainerSelection,
+		isDataObjects = false,
+	} = props;
+
+	const sectionLabel = isDataObjects ? "Data Objects" : "Containers";
+	const refreshTooltip = isDataObjects
+		? "Refresh Data Objects list"
+		: "Refresh Containers list";
+	const waitingLabel = isDataObjects
+		? "Fetching Data Objects list"
+		: "Fetching Container list";
+	const noItemsMessage = isDataObjects ? "No Data Objects found." : "No Containers found.";
+
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
-		containerSectionInnerView = <Waiting label="Fetching Container list" />;
+		containerSectionInnerView = <Waiting label={waitingLabel} />;
 	} else if (containers.length === 0) {
-		containerSectionInnerView = <div>No Containers found.</div>;
+		containerSectionInnerView = <div>{noItemsMessage}</div>;
 	} else {
 		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
@@ -446,7 +466,12 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 
 	return (
 		<MenuSection
-			header={<MenuSectionLabelHeader label="Containers" icon={<RefreshButton />} />}
+			header={
+				<MenuSectionLabelHeader
+					label={sectionLabel}
+					icon={<RefreshButton tooltip={refreshTooltip} />}
+				/>
+			}
 			key="container-selection-menu-section"
 		>
 			{containerSectionInnerView}
@@ -526,6 +551,7 @@ export function Menu(props: MenuProps): React.ReactElement {
 					: undefined
 			}
 			selectContainer={onContainerClicked}
+			isDataObjects={supportedFeatures.dataObjects === true}
 		/>,
 	);
 
