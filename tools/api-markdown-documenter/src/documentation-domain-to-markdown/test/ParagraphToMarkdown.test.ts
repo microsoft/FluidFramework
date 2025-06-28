@@ -9,7 +9,7 @@ import { ParagraphNode, PlainTextNode } from "../../documentation-domain/index.j
 import { blockContentToMarkdown } from "../ToMarkdown.js";
 import { createTransformationContext } from "../TransformationContext.js";
 
-describe("ParagraphNode to Markdown transformation tests", () => {
+describe("paragraphToMarkdown", () => {
 	const transformationContext = createTransformationContext({});
 
 	it("Empty paragraph", () => {

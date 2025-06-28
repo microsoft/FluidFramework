@@ -16,7 +16,7 @@ import {
 } from "../../documentation-domain/index.js";
 import { documentToMarkdown } from "../ToMarkdown.js";
 
-describe("documentToMarkdown tests", () => {
+describe("documentToMarkdown", () => {
 	it("Transforms a simple document", () => {
 		const document = new DocumentNode({
 			children: [
