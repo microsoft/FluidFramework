@@ -484,14 +484,17 @@ module.exports = {
 			"npm-package-license": [
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepoNoConfig/",
 			],
 			"npm-private-packages": [
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepoNoConfig/",
 			],
 			"pnpm-npm-package-json-preinstall": [
 				// test packages
 				"^build-tools/packages/build-infrastructure/src/test/data/testRepo/",
+				"^build-tools/packages/build-infrastructure/src/test/data/testRepoNoConfig/",
 			],
 		},
 		packageNames: {

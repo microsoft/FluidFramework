@@ -30,7 +30,7 @@ const EmptyFilter: PackageFilterOptions = {
 };
 
 async function getBuildProject(): Promise<IBuildProject> {
-	const fluidRepo = loadBuildProject(testRepoRoot, "microsoft/FluidFramework");
+	const fluidRepo = loadBuildProject(testRepoRoot, false, "microsoft/FluidFramework");
 	return fluidRepo;
 }
 

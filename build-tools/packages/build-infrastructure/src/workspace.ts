@@ -5,12 +5,16 @@
 
 import path from "node:path";
 
-import { getPackagesSync } from "@manypkg/get-packages";
 import execa from "execa";
+import resolveWorkspacePkg from "resolve-workspace-root";
+import { globSync } from "tinyglobby";
+
+// eslint-disable-next-line import/no-named-as-default-member -- import is done this way for ESM/CJS interop
+const { getWorkspaceGlobs, resolveWorkspaceRoot } = resolveWorkspacePkg;
 
 import type { ReleaseGroupDefinition, WorkspaceDefinition } from "./config.js";
 import { loadPackageFromWorkspaceDefinition } from "./package.js";
-import { createPackageManager } from "./packageManagers.js";
+import { detectPackageManager } from "./packageManagers.js";
 import { ReleaseGroup } from "./releaseGroup.js";
 import type {
 	IBuildProject,
@@ -21,6 +25,7 @@ import type {
 	ReleaseGroupName,
 	WorkspaceName,
 } from "./types.js";
+import { WriteOnceMap } from "./writeOnceMap.js";
 
 /**
  * {@inheritDoc IWorkspace}
@@ -51,7 +56,10 @@ export class Workspace implements IWorkspace {
 	 */
 	public readonly directory: string;
 
-	private readonly packageManager: IPackageManager;
+	/**
+	 * {@inheritDoc IWorkspace.packageManager}
+	 */
+	public readonly packageManager: IPackageManager;
 
 	/**
 	 * Construct a new workspace object.
@@ -73,70 +81,82 @@ export class Workspace implements IWorkspace {
 		this.name = name as WorkspaceName;
 		this.directory = path.resolve(root, definition.directory);
 
-		const {
-			tool,
-			packages: foundPackages,
-			rootPackage: foundRootPackage,
-			rootDir: foundRoot,
-		} = getPackagesSync(this.directory);
-		if (foundRoot !== this.directory) {
+		// Find the workspace root
+		const foundWorkspaceRootPath = resolveWorkspaceRoot(this.directory);
+		if (foundWorkspaceRootPath === null) {
+			throw new Error(
+				`Could not find a workspace root. Started looking at '${this.directory}'.`,
+			);
+		} else if (foundWorkspaceRootPath !== this.directory) {
 			// This is a sanity check. directory is the path passed in when creating the Workspace object, while rootDir is
 			// the dir that `getPackagesSync` found. They should be the same.
 			throw new Error(
-				`The root dir found by manypkg, '${foundRoot}', does not match the configured directory '${this.directory}'`,
+				`The root dir found by resolve-workspace-root, '${foundWorkspaceRootPath}', does not match the configured directory '${this.directory}'`,
 			);
 		}
 
-		if (foundRootPackage === undefined) {
-			throw new Error(`No root package found for workspace in '${foundRoot}'`);
+		this.packageManager = detectPackageManager(foundWorkspaceRootPath);
+
+		const rootPackageJsonPath = path.join(this.directory, "package.json");
+		const workspaceGlobs = getWorkspaceGlobs(foundWorkspaceRootPath);
+		if (workspaceGlobs === null) {
+			throw new Error(`Couldn't find workspace globs.`);
 		}
 
-		switch (tool.type) {
-			case "npm":
-			case "pnpm":
-			case "yarn": {
-				this.packageManager = createPackageManager(tool.type);
-				break;
-			}
-			default: {
-				throw new Error(`Unknown package manager '${tool.type}'`);
-			}
-		}
+		const packageGlobs = workspaceGlobs.map((g) => `${g}/package.json`);
+		const packageJsonPaths = globSync(packageGlobs, {
+			cwd: foundWorkspaceRootPath,
+			ignore: ["**/node_modules/**"],
+			onlyFiles: true,
+			absolute: true,
+		});
+
+		// Load the workspace root IPackage
+		// this.rootPackage = loadPackageFromWorkspaceDefinition(
+		// 	path.join(foundRoot, "package.json"),
+		// 	/* isWorkspaceRoot */ true,
+		// 	definition,
+		// 	this,
+		// );
+		// this.packages.unshift(this.rootPackage);
 
 		this.packages = [];
-		for (const pkg of foundPackages) {
-			const loadedPackage = loadPackageFromWorkspaceDefinition(
-				path.join(pkg.dir, "package.json"),
-				this.packageManager,
-				/* isWorkspaceRoot */ foundPackages.length === 1,
-				definition,
-				this,
-			);
-			this.packages.push(loadedPackage);
+
+		// Load all the workspace packages
+		// if (this.packages.length > 1) {
+		for (const pkgJsonPath of packageJsonPaths) {
+			const isWorkspaceRoot = pkgJsonPath === rootPackageJsonPath;
+
+			// Add all packages except the root; we'll add it after the other packages.
+			if (!isWorkspaceRoot) {
+				const loadedPackage = loadPackageFromWorkspaceDefinition(
+					pkgJsonPath,
+					/* isWorkspaceRoot */ false,
+					definition,
+					this,
+				);
+				this.packages.push(loadedPackage);
+			}
 		}
 
-		// Load the workspace root IPackage; only do this if more than one package was found in the workspace; otherwise the
-		// single package loaded will be the workspace root.
-		if (foundPackages.length > 1) {
-			this.rootPackage = loadPackageFromWorkspaceDefinition(
-				path.join(this.directory, "package.json"),
-				this.packageManager,
-				/* isWorkspaceRoot */ true,
-				definition,
-				this,
-			);
+		this.rootPackage = loadPackageFromWorkspaceDefinition(
+			rootPackageJsonPath,
+			/* isWorkspaceRoot */ true,
+			definition,
+			this,
+		);
 
-			// Prepend the root package to the list of packages
-			this.packages.unshift(this.rootPackage);
-		} else {
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			this.rootPackage = this.packages[0]!;
+		if (this.rootPackage === undefined) {
+			throw new Error(`No root package found for workspace in '${foundWorkspaceRootPath}'`);
 		}
+
+		// Prepend the root package to the package list.
+		this.packages.unshift(this.rootPackage);
 
 		const rGroupDefinitions: Map<ReleaseGroupName, ReleaseGroupDefinition> =
 			definition.releaseGroups === undefined
-				? new Map<ReleaseGroupName, ReleaseGroupDefinition>()
-				: new Map(
+				? new WriteOnceMap<ReleaseGroupName, ReleaseGroupDefinition>()
+				: new WriteOnceMap(
 						Object.entries(definition.releaseGroups).map(([rgName, group]) => {
 							return [rgName as ReleaseGroupName, group];
 						}),
@@ -187,7 +207,7 @@ export class Workspace implements IWorkspace {
 	public async install(updateLockfile: boolean): Promise<boolean> {
 		const commandArgs = this.packageManager.getInstallCommandWithArgs(updateLockfile);
 
-		const output = await execa(this.packageManager.name, commandArgs, {
+		const output = await execa(this.packageManager.name.toString(), commandArgs, {
 			cwd: this.directory,
 		});
 
