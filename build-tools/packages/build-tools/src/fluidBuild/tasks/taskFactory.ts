@@ -108,7 +108,7 @@ function getLeafTaskForCommand(
 		return new DeclarativeLeafTask(node, command, context, taskName, taskMatch);
 	}
 
-	// Create a task using task handler of a know executable, or use the UnknownLeafTask as a fallback
+	// Create a task using task handler of a known executable, or use the UnknownLeafTask as a fallback
 	const handler = executableToLeafTask[executable] ?? UnknownLeafTask;
 	return new handler(node, command, context, taskName);
 }
