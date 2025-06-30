@@ -70,7 +70,11 @@ const myRecord = new MyRecord({
 The [TableSchema](https://fluidframework.com/docs/api/fluid-framework/tableschema-namespace/) APIs have been updated to use record nodes in the schema they generate.
 Specifically, the `Row` representation now uses a record to store its column-cell pairs, rather than a map.
 
-The node types derived from these APIs
+The node types derived from these APIs model their data in a row-major format.
+That is, each row in the table contains the set of cells that belong to that row, where each cell is indexed by its corresponding column.
+
+Previously, this was modeled using a [MapNode](https://fluidframework.com/docs/api/fluid-framework/treemapnode-interface).
+This format proved cumbersome to interop with popular table rendering libraries like [tanstack](https://tanstack.com/table), which expect a record-like format.
 
 The persisted format of documents containing trees derived from these APIs is the same, so this change is forward and backward compatible.
 
