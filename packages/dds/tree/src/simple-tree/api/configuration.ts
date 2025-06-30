@@ -404,20 +404,17 @@ export function checkUnion(
 		}
 	}
 
-	if (
-		(objects.length > 0 ? 1 : 0) + (maps.length > 0 ? 1 : 0) + (records.length > 0 ? 1 : 0) >
-		1
-	) {
-		const nodeKindListEntries = [];
-		if (objects.length > 0) {
-			nodeKindListEntries.push("objects");
-		}
-		if (maps.length > 0) {
-			nodeKindListEntries.push("maps");
-		}
-		if (records.length > 0) {
-			nodeKindListEntries.push("records");
-		}
+	const nodeKindListEntries = [];
+	if (objects.length > 0) {
+		nodeKindListEntries.push("objects");
+	}
+	if (maps.length > 0) {
+		nodeKindListEntries.push("maps");
+	}
+	if (records.length > 0) {
+		nodeKindListEntries.push("records");
+	}
+	if (nodeKindListEntries.length > 1) {
 		const nodeKindListString = sentenceList(nodeKindListEntries);
 		ambiguityErrors.push(
 			`A combination of ${nodeKindListString} is allowed within union (${formatTypes([...objects, ...maps, ...records])}). These can be constructed from objects and can be ambiguous.`,
