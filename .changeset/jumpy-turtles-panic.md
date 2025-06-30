@@ -10,7 +10,7 @@ TODO: note NodeKind compat
 
 Record node kind was added (alpha)
 
-Adds a new node kind to SharedTree that models a TypeScript record.
+Adds a new [node kind](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum) to SharedTree that models a TypeScript record.
 As is the case with map nodes, record nodes only support string keys.
 
 ```typescript
