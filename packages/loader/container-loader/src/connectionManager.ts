@@ -1008,7 +1008,7 @@ export class ConnectionManager implements IConnectionManager {
 		requestedMode: ConnectionMode,
 		error: IAnyDriverError | undefined,
 	): void {
-		const disconnectError: IConnectionStateChangeReason<IAnyDriverError> = error
+		const disconnectError = error
 			? {
 				text: error.message,
 				error,
