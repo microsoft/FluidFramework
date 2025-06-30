@@ -6,7 +6,7 @@
 import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { Tree } from "./shared-tree/index.js";
+import { Tree, TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
@@ -28,6 +28,7 @@ import {
 	type ImplicitAnnotatedFieldSchema,
 	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
+	type InsertableField,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -389,6 +390,7 @@ export namespace System_TableSchema {
 				columnOrId: TableSchema.Column<TCellSchema> | string,
 			): CellValueType | undefined {
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+				// Unlike most objects, RecordNodes don't have the default inherited object properties, so this is safe
 				return this.cells[columnId];
 			}
 
@@ -403,10 +405,12 @@ export namespace System_TableSchema {
 				} else {
 					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 
-					// Record nodes' typing does not support setting properties with their insertable types,
-					// but doing so is supported at runtime.
-					// So we will cast the insertable type to the expected value type.
-					this.cells[columnId] = value as CellValueType;
+					// TypeScript is unable to narrow the types correctly here, hence the casts.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					this.cells[columnId] = TreeAlpha.create(
+						cellSchema,
+						value as InsertableField<TCellSchema>,
+					) as CellValueType;
 				}
 			}
 
