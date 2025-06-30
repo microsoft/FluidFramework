@@ -353,6 +353,11 @@ export namespace System_TableSchema {
 		// See definition of `RowInsertableType` below.
 		const rowFieldsBuiltInParts = {
 			id: schemaFactory.identifier,
+			/**
+			 * The cells of the table row, keyed by column ID.
+			 * @remarks
+			 * The table row models its cells as a record, where each key is the ID of the column it belongs to. The choice of record (as opposed to a map) is intended to make interop with common table rendering libraries in TypeScript/JavaScript easier.
+			 */
 			cells: schemaFactory.required(schemaFactory.record("Row.cells", cellSchema), {
 				metadata: {
 					description: "The cells of the table row, keyed by column ID.",
