@@ -136,6 +136,7 @@ export function treeShaper(
 
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
+			// TODO: Remove this hardcoded check and do this based on either heuristic or schema.
 			const fieldEncoder =
 				encodeIncrementally && (key === "notes" || key === "metadata" || key === "metaText")
 					? new IncrementalFieldShape()
