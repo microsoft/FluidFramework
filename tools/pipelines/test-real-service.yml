@@ -100,7 +100,6 @@ stages:
         r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
       ${{ else }}:
         r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
-      lockBehavior: sequential
       stageVariables:
         - group: e2e-r11s-lock
       splitTestVariants:
@@ -136,7 +135,6 @@ stages:
       continueOnError: true
       testCommand: test:realsvc:frs:report
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
-      lockBehavior: sequential
       stageVariables:
         - group: e2e-frs-lock
       splitTestVariants:

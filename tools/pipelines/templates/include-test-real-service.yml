@@ -111,6 +111,8 @@ parameters:
 
 stages:
 - stage: ${{ parameters.stageId}}
+  ${{ if or(eq(parameters.stageId, 'e2e_routerlicious'), eq(parameters.stageId, 'e2e_frs') }}:
+    lockBehavior: sequential
   condition: ${{ parameters.condition }}
   displayName: ${{ parameters.stageDisplayName }}
   dependsOn: ${{ parameters.stageDependencies }}
