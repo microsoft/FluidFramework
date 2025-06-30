@@ -1022,6 +1022,8 @@ export class ConnectionManager implements IConnectionManager {
 						{ driverVersion },
 					),
 				};
+		// We're passing this error to not change the old behavior.
+		// At some point we should try to refactor so there's no error passed to reconnect.
 		this.reconnect(requestedMode, disconnectError).catch(this.props.closeHandler);
 	}
 
