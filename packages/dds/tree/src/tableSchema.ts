@@ -421,7 +421,7 @@ export namespace System_TableSchema {
 
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 
-				const cell: CellValueType | undefined = this.cells[columnId];
+				const cell: CellValueType | undefined = this.getCell(columnId);
 				if (cell === undefined) {
 					return undefined;
 				}
