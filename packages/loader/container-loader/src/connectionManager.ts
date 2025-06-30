@@ -1016,7 +1016,6 @@ export class ConnectionManager implements IConnectionManager {
 			: {
 					text: "Client closing delta connection",
 					error: createGenericNetworkError(
-						// pre-0.58 error message: clientClosingConnection
 						"Client closing delta connection",
 						{ canRetry: true },
 						{ driverVersion },
