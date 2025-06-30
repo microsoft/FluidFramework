@@ -163,6 +163,7 @@ function unhydratedFlexTreeFromInsertableNode(
 			result = objectToFlexContent(data, schema);
 			break;
 		case NodeKind.Record:
+			assert(isRecordNodeSchema(schema), "Expected a Record schema.");
 			result = recordToFlexContent(data, schema);
 			break;
 		default:
@@ -394,8 +395,7 @@ function objectToFlexContent(
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
  */
-function recordToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
-	assert(isRecordNodeSchema(schema), "Expected a Record schema.");
+function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {
 		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
 	}
