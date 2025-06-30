@@ -116,7 +116,24 @@ module.exports = {
 			 * We try to avoid duplicate packages, but sometimes we have to allow them since the duplication is coming from a third party library we do not control
 			 * IMPORTANT: Do not add any new exceptions to this list without first doing a deep investigation on why a PR adds a new duplication, this hides a bundle size issue
 			 */
-			exclude: (instance) => false,
+			// TODO: Revert after testing
+			exclude: (instance) => {
+				const excludedPackages = [
+					"uuid",
+					"@fluidframework/gitresources",
+					"@fluidframework/protocol-base",
+					"@fluidframework/server-lambdas",
+					"@fluidframework/server-local-server",
+					"@fluidframework/server-memory-orderer",
+					"@fluidframework/server-services-client",
+					"@fluidframework/server-services-core",
+					"@fluidframework/server-services-shared",
+					"@fluidframework/server-services-telemetry",
+					"@fluidframework/server-services-utils",
+					"@fluidframework/server-test-utils",
+				];
+				return excludedPackages.includes(instance.name);
+			},
 		}),
 		new BundleAnalyzerPlugin({
 			analyzerMode: "static",
