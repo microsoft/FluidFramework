@@ -68,7 +68,7 @@ describe("Fuzz - Top-Level", () => {
 			// and using the default number of ops before attach.
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-				rehydrateDisabled: true,
+				attachingBeforeRehydrateDisable: true,
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
