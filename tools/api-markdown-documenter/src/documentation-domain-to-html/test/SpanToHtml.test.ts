@@ -62,13 +62,15 @@ describe("Span to HTML transformation tests", () => {
 				node1,
 				new SpanNode([node2, node3], {
 					bold: true,
-					strikethrough: false,
 				}),
 			],
 			{ strikethrough: true },
 		);
 
-		const expected = h("span", [h("s", [text1]), h("span", [h("br"), h("b", [text2])])]);
+		const expected = h("span", [
+			h("s", [text1]),
+			h("span", [h("br"), h("b", [h("s", [text2])])]),
+		]);
 
 		assertTransformation(span, expected);
 	});
