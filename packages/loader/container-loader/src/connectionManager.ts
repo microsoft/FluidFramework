@@ -1010,18 +1010,18 @@ export class ConnectionManager implements IConnectionManager {
 	): void {
 		const disconnectError = error
 			? {
-				text: error.message,
-				error,
-			}
+					text: error.message,
+					error,
+				}
 			: {
-				text: "Client closing delta connection",
-				error: createGenericNetworkError(
-					// pre-0.58 error message: clientClosingConnection
-					"Client closing delta connection",
-					{ canRetry: true },
-					{ driverVersion },
-				),
-			};
+					text: "Client closing delta connection",
+					error: createGenericNetworkError(
+						// pre-0.58 error message: clientClosingConnection
+						"Client closing delta connection",
+						{ canRetry: true },
+						{ driverVersion },
+					),
+				};
 		this.reconnect(requestedMode, disconnectError).catch(this.props.closeHandler);
 	}
 
