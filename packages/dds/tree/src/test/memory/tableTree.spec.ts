@@ -295,7 +295,10 @@ describe("SharedTree table APIs memory usage", () => {
 							}
 						},
 						stackOperation: (undoRedoManager) => {
-							for (let i = 0; i < 2 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Undo row insertion
+								undoRedoManager.undo();
+								// Undo column insertion
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
@@ -316,13 +319,19 @@ describe("SharedTree table APIs memory usage", () => {
 								const row = new Row({ id: `row-${i}`, cells: {} });
 								table.insertRow({ index: Math.floor(table.rows.length / 2), row });
 							}
-							for (let i = 0; i < 2 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Undo row insertion
+								undoRedoManager.undo();
+								// Undo column insertion
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
 						},
 						stackOperation: (undoRedoManager) => {
-							for (let i = 0; i < 2 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Redo column insertion
+								undoRedoManager.redo();
+								// Redo row insertion
 								undoRedoManager.redo();
 							}
 							assert(!undoRedoManager.canRedo);
@@ -511,7 +520,10 @@ describe("SharedTree table APIs memory usage", () => {
 							}
 						},
 						stackOperation: (undoRedoManager) => {
-							for (let i = 0; i < 2 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Undo row removal
+								undoRedoManager.undo();
+								// Undo column removal
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
@@ -532,13 +544,19 @@ describe("SharedTree table APIs memory usage", () => {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								table.removeRow(row);
 							}
-							for (let i = 0; i < 2 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Undo row removal
+								undoRedoManager.undo();
+								// Undo column removal
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
 						},
 						stackOperation: (undoRedoManager) => {
-							for (let i = 0; i < 2 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Redo column removal
+								undoRedoManager.redo();
+								// Redo row removal
 								undoRedoManager.redo();
 							}
 							assert(!undoRedoManager.canRedo);
@@ -591,7 +609,14 @@ describe("SharedTree table APIs memory usage", () => {
 							}
 						},
 						stackOperation: (undoRedoManager) => {
-							for (let i = 0; i < 4 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Undo row removal
+								undoRedoManager.undo();
+								// Undo column removal
+								undoRedoManager.undo();
+								// Undo row insertion
+								undoRedoManager.undo();
+								// Undo column insertion
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
@@ -614,13 +639,27 @@ describe("SharedTree table APIs memory usage", () => {
 								removeColumnAndCells(table, column);
 								table.removeRow(row);
 							}
-							for (let i = 0; i < 4 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Undo row removal
+								undoRedoManager.undo();
+								// Undo column removal
+								undoRedoManager.undo();
+								// Undo row insertion
+								undoRedoManager.undo();
+								// Undo column insertion
 								undoRedoManager.undo();
 							}
 							assert(!undoRedoManager.canUndo);
 						},
 						stackOperation: (undoRedoManager) => {
-							for (let i = 0; i < 4 * count; i++) {
+							for (let i = 0; i < count; i++) {
+								// Redo column insertion
+								undoRedoManager.redo();
+								// Redo row insertion
+								undoRedoManager.redo();
+								// Redo column removal
+								undoRedoManager.redo();
+								// Redo row removal
 								undoRedoManager.redo();
 							}
 							assert(!undoRedoManager.canRedo);
