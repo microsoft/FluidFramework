@@ -26,6 +26,23 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 
 const schemaFactory = new SchemaFactory("com.example");
 
+/* eslint-disable jsdoc/check-indentation */
+/**
+ * A schema that has the following structure to test 3 levels in the tree where incremental summaries
+ * is possible:
+ * Board
+ * ├── boardId: string
+ * └── lists: NoteList[]
+ *     ├── listId: string
+ *     └── notes: Note[] ---- supports incremental summaries
+ *         ├── noteId: number
+ *         ├── text: string
+ *         ├── color: string
+ *         └── metadata: NoteMetadata (optional) ---- supports incremental summaries
+ *             ├── metadataId: number
+ *             └── metaText: string (optional) ---- supports incremental summaries
+ */
+/* eslint-enable jsdoc/check-indentation */
 class NoteMetadata extends schemaFactory.object("subNote", {
 	metadataId: schemaFactory.number,
 	metaText: schemaFactory.optional(schemaFactory.string),
@@ -79,42 +96,50 @@ function createInitialBoard(noteListCount: number, notesInListCount: number) {
 	});
 }
 
-const updateNote = (view: TreeView<typeof Board>, listIndex: number, noteIndex: number) => {
+/**
+ * Helper function to update a note at noteIndex in list at listIndex in the given view.
+ */
+function updateNote(view: TreeView<typeof Board>, listIndex: number, noteIndex: number) {
 	const list = view.root.lists.at(listIndex);
-	assert(list !== undefined);
+	assert(list !== undefined, `List at index ${listIndex} not found`);
 	const note = list.notes.at(noteIndex);
-	assert(note !== undefined);
+	assert(note !== undefined, `Note at index ${noteIndex} not found in list ${listIndex}`);
 	note.text = `Note ${noteIndex + 1} updated`;
-};
+}
 
-const updateMetadata = (
-	view: TreeView<typeof Board>,
-	listIndex: number,
-	noteIndex: number,
-) => {
+/**
+ * Helper function to update metadata for a note at noteIndex in list at listIndex in the given view.
+ */
+function updateMetadata(view: TreeView<typeof Board>, listIndex: number, noteIndex: number) {
 	const list = view.root.lists.at(listIndex);
-	assert(list !== undefined);
+	assert(list !== undefined, `List at index ${listIndex} not found`);
 	const note = list.notes.at(noteIndex);
-	assert(note !== undefined);
+	assert(note !== undefined, `Note at index ${noteIndex} not found in list ${listIndex}`);
 	const metadata = note.metadata;
-	assert(metadata !== undefined, "No metadata to update");
+	assert(metadata !== undefined, `No metadata found for note at index ${noteIndex}`);
 	metadata.metadataId = 100;
-};
+}
 
-const updateMetadataText = (
+/**
+ * Helper function to update metadata text for a note at noteIndex in list at listIndex in the given view.
+ */
+function updateMetadataText(
 	view: TreeView<typeof Board>,
 	listIndex: number,
 	noteIndex: number,
-) => {
+) {
 	const list = view.root.lists.at(listIndex);
-	assert(list !== undefined);
+	assert(list !== undefined, `List at index ${listIndex} not found`);
 	const note = list.notes.at(noteIndex);
-	assert(note !== undefined);
+	assert(note !== undefined, `Note at index ${noteIndex} not found in list ${listIndex}`);
 	const metadata = note.metadata;
-	assert(metadata !== undefined, "No metadata to update");
+	assert(metadata !== undefined, `No metadata found for note at index ${noteIndex}`);
 	metadata.metaText = `Metadata for ${noteIndex + 1} updated`;
-};
+}
 
+/**
+ * Validates that the data in actual tree matches the data in the tree with expected view.
+ */
 function validateTreesEqual(
 	actualTree: ISharedTree,
 	expectedView: TreeView<typeof Board>,
@@ -131,18 +156,16 @@ function validateTreesEqual(
 		return;
 	}
 
-	// Validate the same schema objects are used.
 	assert.equal(Tree.schema(actualRoot), Tree.schema(expectedRoot));
-
-	// This should catch all cases, assuming exportVerbose works correctly.
 	assert.deepEqual(TreeAlpha.exportVerbose(actualRoot), TreeAlpha.exportVerbose(expectedRoot));
-
-	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
-	// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
-	// but should have no false positives since equal trees always have the same concise tree.
 	assert.deepEqual(TreeAlpha.exportConcise(actualRoot), TreeAlpha.exportConcise(expectedRoot));
 }
 
+/**
+ * Validates that the handle path exists in the summary tree. The handle path is split by "/" into
+ * pathPaths where the first element should exist in the root of the summary tree, the second element
+ * in the first element's subtree, and so on.
+ */
 function validateHandlePathExists(pathPaths: string[], summaryTree: ISummaryTree) {
 	const currentPath = pathPaths[0];
 	let found = false;
@@ -164,45 +187,55 @@ function validateHandlePathExists(pathPaths: string[], summaryTree: ISummaryTree
 	assert(found, `Handle path ${currentPath} not found in summary tree`);
 }
 
-function validateSummaryTree(currentSummary: ISummaryTree, lastSummary: ISummaryTree) {
-	for (const [key, summaryObject] of Object.entries(currentSummary.tree)) {
+/**
+ * Validates that for each handle in the current summary, it's path exists in the last summary. This basically
+ * validates that the handle paths in the current summary are valid.
+ */
+function validateHandlesInSummary(summary: ISummaryTree, lastSummary: ISummaryTree) {
+	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		if (summaryObject.type === SummaryType.Handle) {
 			// Validate that the id (summary path) exists in lastSummary
 			validateHandlePathExists(summaryObject.handle.split("/").slice(1), lastSummary);
 		} else if (summaryObject.type === SummaryType.Tree) {
 			// Recursively validate nested trees
-			validateSummaryTree(summaryObject, lastSummary);
+			validateHandlesInSummary(summaryObject, lastSummary);
 		}
 	}
 }
 
-function validateNoHandlesInForestTree(summary: ISummaryTree) {
-	for (const [key, summaryObject] of Object.entries(summary.tree)) {
+/**
+ * Validates that there are no handles in the forest's summary tree.
+ */
+function validateNoHandlesInForest(forestSummary: ISummaryTree) {
+	for (const [key, summaryObject] of Object.entries(forestSummary.tree)) {
 		assert(
 			summaryObject.type !== SummaryType.Handle,
 			`Unexpected handle in summary tree at key: ${key}`,
 		);
 		if (summaryObject.type === SummaryType.Tree) {
 			// Recursively validate nested trees
-			validateNoHandlesInForestTree(summaryObject);
+			validateNoHandlesInForest(summaryObject);
 		}
 	}
 }
 
-function validateNoHandlesInSummaryTree(summary: ISummaryTree) {
+/**
+ * Validates that are no handles in the forest's summary subtree in the given summary tree.
+ */
+function validateNoHandlesInSummary(summary: ISummaryTree) {
 	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		if (summaryObject.type === SummaryType.Tree) {
 			if (key === "Forest") {
-				validateNoHandlesInForestTree(summaryObject);
+				validateNoHandlesInForest(summaryObject);
 			} else {
 				// Recursively find forest tree
-				validateNoHandlesInSummaryTree(summaryObject);
+				validateNoHandlesInSummary(summaryObject);
 			}
 		}
 	}
 }
 
-describe.only("Forest incremental summary", () => {
+describe("Forest incremental summary", () => {
 	let factory: IChannelFactory;
 	let tree1: ISharedTree;
 	let view1: TreeView<typeof Board>;
@@ -253,9 +286,9 @@ describe.only("Forest incremental summary", () => {
 		)) as ISharedTree;
 		validateTreesEqual(tree2, view1);
 
-		updateNote(view1, 0, 0);
-		updateMetadata(view1, 1, 0);
-		updateMetadataText(view1, 2, 0);
+		updateNote(view1, 0 /* listIndex */, 0 /* noteIndex */);
+		updateMetadata(view1, 1 /* listIndex */, 0 /* noteIndex */);
+		updateMetadataText(view1, 2 /* listIndex */, 0 /* noteIndex */);
 
 		// Second summary at sequence number 10 - previous was at sequence number 0.
 		const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
@@ -270,11 +303,11 @@ describe.only("Forest incremental summary", () => {
 			incrementalSummaryContext2,
 		);
 		assert(summary2 !== undefined);
-		validateSummaryTree(summary2.summary, summary1.summary);
+		validateHandlesInSummary(summary2.summary, summary1.summary);
 
-		updateNote(view1, 0, 0);
-		updateMetadata(view1, 0, 0);
-		updateMetadata(view1, 1, 0);
+		updateNote(view1, 0 /* listIndex */, 0 /* noteIndex */);
+		updateMetadata(view1, 0 /* listIndex */, 0 /* noteIndex */);
+		updateMetadata(view1, 1 /* listIndex */, 0 /* noteIndex */);
 
 		// Third summary at sequence number 20 - previous was at sequence number 10.
 		const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
@@ -289,7 +322,7 @@ describe.only("Forest incremental summary", () => {
 			incrementalSummaryContext3,
 		);
 		assert(summary3 !== undefined);
-		validateSummaryTree(summary3.summary, summary2.summary);
+		validateHandlesInSummary(summary3.summary, summary2.summary);
 
 		return incrementalSummaryContext3;
 	};
@@ -318,6 +351,6 @@ describe.only("Forest incremental summary", () => {
 			newIncrementalSummaryContext,
 		);
 		assert(newSummary !== undefined);
-		validateNoHandlesInSummaryTree(newSummary.summary);
+		validateNoHandlesInSummary(newSummary.summary);
 	});
 });
