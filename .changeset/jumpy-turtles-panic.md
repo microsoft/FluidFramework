@@ -33,7 +33,7 @@ const entries = Object.entries(myRecord); // [["bar", "Hello world!"], ["baz", 3
 
 #### Additional features
 
-In addition to standard operations afforded by standard TypeScript records, SharedTree record nodes can also be iterated (equivalent to Object.entries).
+In addition to the operations afforded by TypeScript records, SharedTree record nodes can be iterated (equivalent to Object.entries).
 
 ```typescript
 class MyRecord extends schemaFactory.record("my-record", [schemaFactory.number, schemaFactory.string]) {}
