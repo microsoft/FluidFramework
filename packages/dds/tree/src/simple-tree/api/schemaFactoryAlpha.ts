@@ -346,7 +346,7 @@ export class SchemaFactoryAlpha<
 	 *
 	 * @privateRemarks
 	 * The name produced at the type-level here is not as specific as it could be; however, doing type-level sorting and escaping is a real mess.
-	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
+	 * There are cases where not having this full type provided will be less than ideal, since TypeScript's structural types will allow assignment between runtime incompatible types at compile time.
 	 * For example, attempts to narrow unions of structural records by name won't work.
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
