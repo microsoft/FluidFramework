@@ -384,26 +384,6 @@ export function checkUnion(
 		);
 	}
 
-	/**
-	 * Constructs a sentence-formatted list of entries, using commas and "and" as appropriate.
-	 */
-	function sentenceList(entries: readonly string[]): string {
-		switch (entries.length) {
-			case 0: {
-				return "";
-			}
-			case 1: {
-				return entries[0] ?? oob();
-			}
-			case 2: {
-				return `${entries[0] ?? oob()} and ${entries[1] ?? oob()}`;
-			}
-			default: {
-				return `${entries.slice(0, -1).join(", ")}, and ${entries[entries.length - 1]}`;
-			}
-		}
-	}
-
 	const nodeKindListEntries = [];
 	if (objects.length > 0) {
 		nodeKindListEntries.push("objects");
@@ -415,7 +395,10 @@ export function checkUnion(
 		nodeKindListEntries.push("records");
 	}
 	if (nodeKindListEntries.length > 1) {
-		const nodeKindListString = sentenceList(nodeKindListEntries);
+		const nodeKindListString =
+			nodeKindListEntries.length === 2
+				? `${nodeKindListEntries[0] ?? oob()} and ${nodeKindListEntries[1] ?? oob()}`
+				: `${nodeKindListEntries.slice(0, -1).join(", ")}, and ${nodeKindListEntries[nodeKindListEntries.length - 1]}`;
 		ambiguityErrors.push(
 			`A combination of ${nodeKindListString} is allowed within union (${formatTypes([...objects, ...maps, ...records])}). These can be constructed from objects and can be ambiguous.`,
 		);
