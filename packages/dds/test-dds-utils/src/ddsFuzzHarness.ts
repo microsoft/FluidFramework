@@ -47,7 +47,10 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	isISharedObjectHandle,
+	type IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -1558,7 +1561,16 @@ export async function runTestForSeed<
 		initialState.summarizerClient.dataStoreRuntime.id,
 		false,
 	);
-	const rootHandle = new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime);
+
+	// This is unfortunately needed to pass to the Serializer, even though we don't do any handle binding.
+	const dummyHandleBindSource = Object.assign(
+		new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime),
+		{ bind: () => {} },
+	);
+	assert(
+		isISharedObjectHandle(dummyHandleBindSource),
+		"PRECONDITION: must satisfy this for serializer",
+	);
 
 	let operationCount = 0;
 	const generator = model.generatorFactory();
@@ -1568,7 +1580,7 @@ export async function runTestForSeed<
 		// to encode here and decode in the reducer.
 		async (state) => {
 			const operation = await generator(state);
-			return serializer.encode(operation, rootHandle) as TOperation;
+			return serializer.encode(operation, dummyHandleBindSource) as TOperation;
 		},
 		async (state, operation) => {
 			const decodedHandles = serializer.decode(operation) as TOperation;
