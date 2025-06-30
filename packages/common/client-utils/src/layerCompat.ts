@@ -47,6 +47,13 @@ export interface ILayerCompatDetails extends Partial<IProvideLayerCompatDetails>
 	/**
 	 * The generation of the layer. The other layer at the layer boundary uses this to check if this satisfies
 	 * the minimum generation it requires to be compatible.
+	 *
+	 * @remarks Generation is updated on a regular cadence, say, monthly. This will allow us to determine how
+	 * far apart two layers are in terms of time and whether they are compatible.
+	 * For example, say generation is updated every month and the compatibility window between layer1 and layer2 is
+	 * 6 months. Now, if layer1 is at generation 1 and layer2 is at generation 5, then they are 4 months apart and are
+	 * compatible. But if layer1 is at generation 1 and layer2 is at generation 8, then they are 7 months apart and
+	 * are not compatible.
 	 */
 	readonly generation: number;
 	/**

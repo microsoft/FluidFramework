@@ -82,14 +82,37 @@ describe("simple-tree configuration", () => {
 		view.initialize({ meters: 5 });
 	});
 
+	it("detects duplicate schema identifiers", () => {
+		const schemaFactory = new SchemaFactory("test");
+		assert.throws(
+			() =>
+				new TreeViewConfiguration({
+					schema: [schemaFactory.map("x", []), schemaFactory.array("x", [])],
+				}),
+			validateUsageError(/Multiple schema/),
+		);
+	});
+
 	describe("checkUnion", () => {
 		const schemaFactory = new SchemaFactory("test");
 
 		function getErrors(schemaToCheck: Iterable<TreeNodeSchema>): string[] {
 			const errors: string[] = [];
-			checkUnion(schemaToCheck, errors);
+			checkUnion(schemaToCheck, true, errors);
 			return errors;
 		}
+
+		it("duplicates", () => {
+			checkUnion([schemaFactory.string], true, []);
+			assert.throws(
+				() => checkUnion([schemaFactory.string, schemaFactory.string], true, []),
+				validateUsageError(/Duplicate schema/),
+			);
+			assert.throws(
+				() => checkUnion([schemaFactory.string, schemaFactory.string], false, []),
+				validateUsageError(/Duplicate schema/),
+			);
+		});
 
 		it("arrays", () => {
 			assert.deepEqual(

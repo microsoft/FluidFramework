@@ -66,3 +66,6 @@ export {
 	ISnapshotContentsWithProps,
 	parseCompactSnapshotResponse,
 } from "./compactSnapshotParser.js";
+
+// Layer Compat details
+export { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
