@@ -74,7 +74,7 @@ export function compressedEncode(
 		batchBuffer.push(encodedDataBuilder.getBufferIncremental().mainBuffer);
 	}
 
-	const encodeShapes = (
+	const recursiveUpdateShapesAndIdentifiersEncoding = (
 		incrementalBuffer: BufferFormatIncremental,
 		incrementalFieldsBatch: Map<string, EncodedFieldBatchFormat>,
 	): EncodedFieldBatch => {
@@ -88,7 +88,7 @@ export function compressedEncode(
 					incrementalFieldsBatch.set(summaryRefId, fieldBufferFormat);
 				} else {
 					const innerFieldBufferFormats: Map<string, EncodedFieldBatchFormat> = new Map();
-					const innerEncodedFieldBatch = encodeShapes(
+					const innerEncodedFieldBatch = recursiveUpdateShapesAndIdentifiersEncoding(
 						fieldBufferFormat,
 						innerFieldBufferFormats,
 					);
@@ -102,7 +102,7 @@ export function compressedEncode(
 		return encodedFieldBatch;
 	};
 
-	return encodeShapes(
+	return recursiveUpdateShapesAndIdentifiersEncoding(
 		{ mainBuffer: batchBuffer, incrementalFieldBuffers },
 		encodeIncrementally ? incrementalEncodingParams.outputIncrementalFieldsBatch : new Map(),
 	);
