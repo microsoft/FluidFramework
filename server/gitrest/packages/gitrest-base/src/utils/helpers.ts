@@ -57,6 +57,7 @@ export function getFilesystemManagerFactory(
 	useHybridFs: boolean = false,
 ) {
 	if (isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory) {
+		Lumberjack.info("Using **ephemeral** file system manager factory for the request");
 		return fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
 	}
 
@@ -65,9 +66,10 @@ export function getFilesystemManagerFactory(
 		useHybridFs &&
 		fileSystemManagerFactories.hybridFileSystemManagerFactory
 	) {
+		Lumberjack.info("Using **hybrid** file system manager factory for the request");
 		return fileSystemManagerFactories.hybridFileSystemManagerFactory;
 	}
-
+	Lumberjack.info("Using **default** file system manager factory for the request");
 	return fileSystemManagerFactories.defaultFileSystemManagerFactory;
 }
 
