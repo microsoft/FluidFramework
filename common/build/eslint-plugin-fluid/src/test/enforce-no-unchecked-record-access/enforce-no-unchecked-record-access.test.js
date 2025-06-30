@@ -7,7 +7,7 @@ const assert = require("assert");
 const path = require("path");
 const { ESLint } = require("eslint");
 
-describe("ESLint Rule Tests", function () {
+describe("no-unchecked-record-access rule", function () {
 	async function lintFile(file) {
 		const eslint = new ESLint({
 			useEslintrc: false,
