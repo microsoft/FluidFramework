@@ -1010,7 +1010,7 @@ export class ConnectionManager implements IConnectionManager {
 	): void {
 		const disconnectError: IConnectionStateChangeReason<IAnyDriverError> = error
 			? {
-				text: error?.message ?? "Client closing delta connection",
+				text: error.message,
 				error,
 			}
 			: {
