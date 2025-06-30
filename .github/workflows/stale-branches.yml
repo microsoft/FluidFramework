@@ -5,10 +5,12 @@ name: Delete Stale Branches
 on: workflow_dispatch
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   stale_branches:
+    permissions:
+      contents: write
     name: Cleanup old branches
     runs-on: ubuntu-latest
     steps:
