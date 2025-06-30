@@ -5,12 +5,9 @@
 ---
 section: tree
 ---
-
-TODO: note NodeKind compat
-
 Record node kind was added (alpha)
 
-Adds a new [node kind](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum) to SharedTree that models a TypeScript record.
+Adds a new kind of node to SharedTree that models a TypeScript record.
 As is the case with map nodes, record nodes only support string keys.
 
 ```typescript
@@ -30,6 +27,19 @@ const keys = Object.keys(myRecord); // ["bar", "baz"]
 const values = Object.values(myRecord); // ["Hello world!", 37]
 const entries = Object.entries(myRecord); // [["bar", "Hello world!"], ["baz", 37]]
 ```
+
+#### `NodeKind` enum update
+
+This change includes the addition of a new flag to the [NodeKind](https://fluidframework.com/docs/api/fluid-framework/nodekind-enum) enum.
+This API notes in its documentation that users should not treat its flags as an exhaustive set.
+
+If you have code that treats it that way, this change may break you.
+We recommend updating your code to be more tolerant of unknown node kinds going forward.
+
+Also see alternative options for schema-agnostic tree traversal if needed:
+- [Tree.parent](https://fluidframework.com/docs/api/fluid-framework/treenodeapi-interface#parent-methodsignature)
+- [TreeAlpha.child](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#child-methodsignature)
+- [TreeAlpha.children](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#children-methodsignature)
 
 #### Additional features
 
