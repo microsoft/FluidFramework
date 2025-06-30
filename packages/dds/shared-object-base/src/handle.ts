@@ -36,15 +36,14 @@ export function isISharedObjectHandle(handle: unknown): handle is ISharedObjectH
 }
 
 /**
- * Handle for a shared object.
+ * Handle for a shared object (DDS).
  *
  * @remarks
  *
- * This object is used for already loaded (in-memory) shared objects and is used only for serialization purposes.
+ * This object is used for already loaded (in-memory) shared objects.
  *
- * De-serialization process goes through {@link @fluidframework/datastore#FluidObjectHandle}, and request flow:
- * {@link @fluidframework/datastore#FluidDataStoreRuntime.request} recognizes requests in the form of
- * '/\<shared object id\>' and loads shared object.
+ * It provides a "bind" function that is expected to be invoked on all handles stored in this DDS,
+ * ensuring the target object becomes attached along with this DDS.
  */
 export class SharedObjectHandle
 	extends FluidObjectHandle<ISharedObject>
@@ -56,6 +55,32 @@ export class SharedObjectHandle
 	public get isAttached(): boolean {
 		return this.value.isAttached();
 	}
+
+	/**
+	 * Tells whether the object of this handle is visible in the container locally or globally.
+	 */
+	private get isVisible(): boolean {
+		/**
+		 * If the object of this handle is attached, it is visible in the container. Ideally, checking local visibility
+		 * should be enough for a handle. However, there are scenarios where the object becomes locally visible but the
+		 * handle does not know this - This will happen is attachGraph is never called on the handle. Couple of examples
+		 * where this can happen:
+		 *
+		 * 1. Handles to DDS other than the default handle won't know if the DDS becomes visible after the handle was
+		 * created.
+		 *
+		 * 2. Handles to root data stores will never know that it was visible because the handle will not be stores in
+		 * another DDS and so, attachGraph will never be called on it.
+		 */
+		return this.isAttached || this.isLocallyVisible;
+	}
+
+	/**
+	 * Tracks whether this handle is locally visible in the container.
+	 */
+	private isLocallyVisible: boolean = false;
+
+	private readonly pendingHandles: Set<IFluidHandleInternal> = new Set();
 
 	/**
 	 * Creates a new SharedObjectHandle.
@@ -78,7 +103,21 @@ export class SharedObjectHandle
 	 * When attaching the handle, it registers the associated shared object.
 	 */
 	public attachGraph(): void {
+		if (this.isVisible) {
+			return;
+		}
+
+		// Recursively attach all pending handles
+		this.isLocallyVisible = true;
+		for (const handle of this.pendingHandles) {
+			handle.attachGraph();
+		}
+		this.pendingHandles.clear();
+
+		// Bind this SharedObject to its context (typically the DataStore) so it attaches with it
 		this.value.bindToContext();
+
+		// This will trigger the context (typically the DataStore) to attach its graph
 		super.attachGraph();
 	}
 
@@ -86,8 +125,17 @@ export class SharedObjectHandle
 		// We don't bind handles in staging mode to defer the attachment of any new objects
 		// until we've exited staging mode. This way if we discard changes or a new handle is not present in the final
 		// committed state, we will never end up attaching the discarded object.
-		if (this.runtime.inStagingMode !== true) {
-			super.bind(handle);
+		if (this.runtime.inStagingMode === true) {
+			return;
 		}
+
+		// If this handle is visible, attach the graph of the incoming handle as well.
+		if (this.isVisible) {
+			handle.attachGraph();
+			return;
+		}
+
+		// If this handle is not visible, we will attach it later when this handle's attachGraph is called.
+		this.pendingHandles.add(handle);
 	}
 }
