@@ -60,6 +60,7 @@ import {
 	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
@@ -1007,10 +1008,21 @@ export class ConnectionManager implements IConnectionManager {
 		requestedMode: ConnectionMode,
 		error: IAnyDriverError | undefined,
 	): void {
-		this.reconnect(requestedMode, {
-			text: error?.message ?? "Client closing delta connection",
-			error,
-		}).catch(this.props.closeHandler);
+		const disconnectError: IConnectionStateChangeReason<IAnyDriverError> = error
+			? {
+				text: error?.message ?? "Client closing delta connection",
+				error,
+			}
+			: {
+				text: "Client closing delta connection",
+				error: createGenericNetworkError(
+					// pre-0.58 error message: clientClosingConnection
+					"Client closing delta connection",
+					{ canRetry: true },
+					{ driverVersion },
+				),
+			};
+		this.reconnect(requestedMode, disconnectError).catch(this.props.closeHandler);
 	}
 
 	/**
