@@ -37,6 +37,8 @@ import { unknownTypeError } from "./customTree.js";
  * @remarks
  * Does not support defaults.
  * Validates the field is in schema.
+ *
+ * TODO: How this handles unknown optional fields needs to be figured out, tested and documented.
  */
 export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,

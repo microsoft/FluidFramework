@@ -82,6 +82,9 @@ export function isNodeInSchema(
 			// The node has fields that we did not check as part of looking at every field defined in the node's schema
 			if (
 				uncheckedFieldsFromNode.size !== 0 &&
+				// TODO: This check is wrong. If a given view schema allows an unknown optional field, that does NOT mean the stored schema should allow unknown:
+				// In-fact, any data the view schema does not know about must still comply with the stored schema:
+				// if this were not the case schema evolution could not add any fields since they might already have out of schema data.
 				!schemaAndPolicy.policy.allowUnknownOptionalFields(node.type)
 			) {
 				return SchemaValidationError.ObjectNode_FieldNotInSchema;
