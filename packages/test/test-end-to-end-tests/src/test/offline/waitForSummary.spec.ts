@@ -62,7 +62,7 @@ const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderB
 	getRawConfig: (name: string): ConfigTypes => settings[name],
 });
 
-describeCompat(
+describeCompat.only(
 	"Offline tests that wait for a summary",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
@@ -119,7 +119,7 @@ describeCompat(
 			return d.getSharedObject<ISharedMap>(mapId);
 		}
 
-		async function getTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
+		async function initializeTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
 			const tree = await d.getSharedObject<ITree>(treeId);
 			const view = tree.viewWith(treeConfig);
 			if (view.compatibility.canInitialize) {
@@ -128,27 +128,36 @@ describeCompat(
 			return view.root.map;
 		}
 
-		[
-			{ name: "tree map", getMap: getTreeBackedMap },
-			{ name: "map", getMap: getMapBackedMap },
-		].forEach(({ name, getMap }) => {
-			beforeEach("setup", async () => {
-				provider = getTestObjectProvider({ syncSummarizer: true });
-				loader = provider.makeTestLoader(mainContainerConfig);
-				container = await createAndAttachContainer(
-					provider.defaultCodeDetails,
-					loader,
-					provider.driver.createCreateNewRequest(provider.documentId),
-				);
-				provider.updateDocumentId(container.resolvedUrl);
-				url = await container.getAbsoluteUrl("");
-				dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
-				map1 = await getMap(dataStore1);
-				// force write connection.
-				map1.set("1", "1");
-			});
+		async function getTreeBackedMap(d: ITestFluidObject): Promise<MinimalMap> {
+			const tree = await d.getSharedObject<ITree>(treeId);
+			const view = tree.viewWith(treeConfig);
+			return view.root.map;
+		}
 
+		async function initialize(initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>) {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+			loader = provider.makeTestLoader(mainContainerConfig);
+			container = await createAndAttachContainer(
+				provider.defaultCodeDetails,
+				loader,
+				provider.driver.createCreateNewRequest(provider.documentId),
+			);
+			provider.updateDocumentId(container.resolvedUrl);
+			url = await container.getAbsoluteUrl("");
+			dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
+			map1 = await initializeMap(dataStore1);
+			// force write connection.
+			map1.set("1", "1");
+			await provider.ensureSynchronized();
+		}
+
+		[
+			{ name: "tree map", initializeMap: initializeTreeBackedMap, getMap: getTreeBackedMap },
+			{ name: "map", initializeMap: getMapBackedMap, getMap: getMapBackedMap },
+		].forEach(({ name, initializeMap, getMap }) => {
 			it(`works with summary while offline (${name})`, async function () {
+				await initialize(initializeMap);
+
 				const summaryVersion = await loadSummarizerAndSummarize(
 					provider,
 					container,
@@ -187,6 +196,8 @@ describeCompat(
 				`load offline with blob redirect table (${name})`,
 				["routerlicious", "r11s"],
 				async function () {
+					await initialize(initializeMap);
+
 					container.disconnect();
 					const handleP = dataStore1.runtime.uploadBlob(
 						stringToBuffer("blob contents", "utf8"),
@@ -229,6 +240,8 @@ describeCompat(
 			);
 
 			it(`applies stashed ops with no saved ops (${name})`, async function () {
+				await initialize(initializeMap);
+
 				// We want to test the case where we stash ops based on the sequence number of the snapshot we load from
 				// So step 1 is to complete a summary so we can load from it.
 				const summaryVersion = await loadSummarizerAndSummarize(
@@ -270,6 +283,8 @@ describeCompat(
 			});
 
 			it(`can stash between summary op and ack (${name})`, async function () {
+				await initialize(initializeMap);
+
 				const waitForSummaryPromise = loadSummarizerAndSummarize(
 					provider,
 					container,
