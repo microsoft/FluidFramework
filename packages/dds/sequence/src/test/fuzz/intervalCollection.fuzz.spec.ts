@@ -16,7 +16,6 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...defaultFuzzOptions,
-		skip: [23],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});
@@ -35,7 +34,6 @@ describe("IntervalCollection with stashing", () => {
 			maxNumberOfClients: Number.MAX_SAFE_INTEGER,
 			stashableClientProbability: 0.2,
 		},
-		skip: [23],
 		// Uncomment this line to replay a specific seed from its failure file:
 		// replay: 0,
 	});

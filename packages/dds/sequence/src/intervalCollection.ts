@@ -766,7 +766,6 @@ export class IntervalCollection
 			if (md.type === "add" || (md.type === "change" && hasEndpointChanges(op.value))) {
 				const endpointChanges = (pending.endpointChanges ??= new DoublyLinkedList());
 				md.endpointChangesNode = endpointChanges.push(md).last;
-				md.rebased = undefined;
 			}
 			submitDelta(op, pending.local.push(md).last);
 		};
@@ -1048,7 +1047,7 @@ export class IntervalCollection
 				for (const pending of Object.values(this.pending)) {
 					if (pending?.endpointChanges !== undefined) {
 						for (const local of pending.endpointChanges) {
-							local.data.rebased = this.computeRebasedPositions(local.data, squash);
+							this.rebaseLocalInterval(local.data.interval.serialize(), local.data, squash);
 						}
 					}
 				}
@@ -1480,10 +1479,8 @@ export class IntervalCollection
 
 		const { localSeq, interval } = localOpMetadata;
 		const { id } = getSerializedProperties(original);
-		const rebasedEndpoint = (localOpMetadata.rebased ??= this.computeRebasedPositions(
-			localOpMetadata,
-			squash,
-		));
+
+		const rebasedEndpoint = this.computeRebasedPositions(localOpMetadata, squash);
 		const localInterval = this.getIntervalById(id);
 
 		// if the interval slid off the string, rebase the op to be a noop and delete the interval.
