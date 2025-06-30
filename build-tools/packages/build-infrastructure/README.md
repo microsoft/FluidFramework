@@ -80,7 +80,7 @@ clear what has happened.
 > [!NOTE]
 >
 > This design addresses a major problem with build-tools v0, which was that code often made assumptions that it was
-> operating within a Git repo. That's often true, and some fetures can and should only work in that context, but the
+> operating within a Git repo. That's often true, and some features can and should only work in that context, but the
 > implementation attempted to load the Git functionality blindly and would fail outright outside a Git context. With
 > `IBuildProject`, the Git integration is more loosely coupled and the APIs make it clearer that it is not safe to assume
 > the presence of a Git repo.

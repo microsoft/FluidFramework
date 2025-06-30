@@ -4,6 +4,7 @@
  */
 
 import { IQueuedMessage } from "@fluidframework/server-services-core";
+
 import { ICheckpoint } from "./checkpointHelper";
 
 interface IDocumentCheckpointManager {

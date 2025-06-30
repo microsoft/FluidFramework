@@ -9,4 +9,4 @@ get setterProperty(): boolean;
 set setterProperty(newValue: boolean);
 ```
 
-**Type:** boolean
+**Type**: boolean

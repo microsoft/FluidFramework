@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
+
 import {
 	type ChangeAtomId,
 	type DeltaDetachedNodeId,
@@ -10,7 +12,6 @@ import {
 	forbiddenFieldKindIdentifier,
 	Multiplicity,
 } from "../../core/index.js";
-import { fail } from "../../util/index.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeHandler,
@@ -256,20 +257,10 @@ export const fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindWithEditor> =
 // TODO: Find a way to make docs like {@inheritDoc required} work in vscode.
 // TODO: ensure thy work in generated docs.
 // TODO: add these comments to the rest of the cases below.
-/**
- */
 export interface Required extends FlexFieldKind<"Value", Multiplicity.Single> {}
-/**
- */
 export interface Optional extends FlexFieldKind<"Optional", Multiplicity.Optional> {}
-/**
- */
 export interface Sequence extends FlexFieldKind<"Sequence", Multiplicity.Sequence> {}
-/**
- */
 export interface Identifier extends FlexFieldKind<"Identifier", Multiplicity.Single> {}
-/**
- */
 export interface Forbidden
 	extends FlexFieldKind<typeof forbiddenFieldKindIdentifier, Multiplicity.Forbidden> {}
 

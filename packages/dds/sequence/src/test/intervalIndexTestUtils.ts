@@ -6,7 +6,11 @@
 import { strict as assert } from "assert";
 
 import { IRandom } from "@fluid-private/stochastic-test-utils";
-import { type SequencePlace, Side } from "@fluidframework/merge-tree/internal";
+import {
+	DetachedReferencePosition,
+	type SequencePlace,
+	Side,
+} from "@fluidframework/merge-tree/internal";
 import type { TestClient } from "@fluidframework/merge-tree/internal/test";
 
 import {
@@ -16,8 +20,6 @@ import {
 	type SequenceInterval,
 } from "../intervals/index.js";
 import type { ISharedString } from "../sharedString.js";
-
-const reservedIntervalIdKey = "intervalId";
 
 export interface RandomIntervalOptions {
 	random: IRandom;
@@ -66,8 +68,14 @@ let currentId = 0;
  */
 export function createTestSequenceInterval(client: TestClient, p1: number, p2: number) {
 	const id = `${currentId++}`;
-	const interval = createSequenceInterval(id, p1, p2, client, IntervalType.SlideOnRemove);
-	interval.properties[reservedIntervalIdKey] = id;
+	const interval = createSequenceInterval(
+		"test",
+		id,
+		p1,
+		p2,
+		client,
+		IntervalType.SlideOnRemove,
+	);
 	return interval;
 }
 
@@ -203,7 +211,14 @@ export function assertInterval(
 		"unexpected start side",
 	);
 	const actualStart = sharedString.localReferencePositionToPosition(actual.start);
-	assert.equal(actualStart, expectedPositionFromSequencePlace(expectedStart, -1));
+	assert.equal(
+		actualStart,
+		expectedPositionFromSequencePlace(
+			expectedStart,
+			actual.start.canSlideToEndpoint ? sharedString.getLength() : DetachedReferencePosition,
+		),
+		`unexpected start position(${sharedString.getLength()})`,
+	);
 	assert.equal(
 		actual.endSide,
 		typeof expectedEnd === "object" ? expectedEnd.side : Side.Before,

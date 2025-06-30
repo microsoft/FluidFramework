@@ -5,11 +5,6 @@
 
 import { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	IFluidDataStoreFactory,
-	IFluidDataStoreRegistry,
-	IProvideFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions/internal";
 import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
@@ -133,41 +128,5 @@ export function createResponseError(
 			return errWithStack.stack;
 		},
 		headers,
-	};
-}
-
-/**
- * @internal
- */
-export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
-
-/**
- * Creates a combined {@link @fluidframework/runtime-definitions#IFluidDataStoreFactory} and {@link @fluidframework/runtime-definitions#IFluidDataStoreRegistry} implementation
- * from a factory type and implementation
- * @param type - The unique identifier for this data store factory
- * @param factory - The factory implementation or promise that resolves to one
- * @returns A combined factory and registry implementation
- * @internal
- */
-export function createDataStoreFactory(
-	type: string,
-	factory: Factory | Promise<Factory>,
-): IFluidDataStoreFactory & IFluidDataStoreRegistry {
-	return {
-		type,
-		get IFluidDataStoreFactory() {
-			return this;
-		},
-		get IFluidDataStoreRegistry() {
-			return this;
-		},
-		instantiateDataStore: async (context, existing) => {
-			const resolvedFactory = await factory;
-			return resolvedFactory.instantiateDataStore(context, existing);
-		},
-		get: async (name: string) => {
-			const resolvedFactory = await factory;
-			return resolvedFactory.IFluidDataStoreRegistry?.get(name);
-		},
 	};
 }

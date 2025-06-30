@@ -35,6 +35,7 @@ parameters:
   type: object
   default:
     - "@fluidframework/tree"
+    - "@fluidframework/matrix"
     - "@fluid-experimental/tree"
     - "@fluidframework/merge-tree"
     - "@fluidframework/container-runtime"
@@ -100,6 +101,7 @@ stages:
     - job: perf_unit_tests_runtime
       displayName: Perf unit tests - runtime
       pool: ${{ parameters.poolBuild }}
+      timeoutInMinutes: ${{ coalesce(endpointObject.timeoutInMinutes, 90) }}
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:

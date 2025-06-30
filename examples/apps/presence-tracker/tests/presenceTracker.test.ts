@@ -185,7 +185,7 @@ describe("presence-tracker", () => {
 					const attendeeData = await page.evaluate(() => ({
 						attendeeCount: `${window["fluidSessionAttendeeCount"]}`,
 						attendees: window["fluidSessionAttendees"] ?? {},
-						attendeeJoinedCalled: `${window["fluidAttendeeJoinedCalled"]}`,
+						attendeeConnectedCalled: `${window["fluidattendeeConnectedCalled"]}`,
 						attendeeDisconnectedCalled: `${window["fluidAttendeeDisconnectedCalled"]}`,
 					}));
 					throw new Error(`${timeoutErrorMessage} (${JSON.stringify(attendeeData)})`);

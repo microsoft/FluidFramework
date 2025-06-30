@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import { PackageCommand } from "../../BasePackageCommand.js";
+// eslint-disable-next-line import/no-internal-modules -- AB#8118 tracks removing the barrel files and importing directly from the submodules, including disabling this rule.
+import { writeFileWithLineFeeds } from "../../library/text.js";
 
 /**
  * JSON results from running npm pack --json.
@@ -96,6 +97,6 @@ export default class GeneratePackListCommand extends PackageCommand<
 		});
 
 		const output = files.join("\n");
-		await writeFile(outFile, output);
+		await writeFileWithLineFeeds(outFile, output);
 	}
 }

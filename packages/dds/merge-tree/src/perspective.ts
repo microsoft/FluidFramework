@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { NonCollabClient } from "./constants.js";
 import { seqLTE, type ISegment } from "./mergeTreeNodes.js";
 import { isInserted, isRemoved } from "./segmentInfos.js";
 import * as opstampUtils from "./stamps.js";
@@ -117,6 +118,52 @@ export class LocalReconnectingPerspective extends PerspectiveBase implements Per
 }
 
 /**
+ * This perspective is used when rebasing obliterate endpoints to find the segment to slide to when squash is enabled.
+ *
+ * TODO:AB#39357: This class would not be necessary if obliterate rebasing occurred as resubmit was called rather than
+ * precomputed before segment normalization. It also adds more dependencies on all ops being resubmitted (the squash
+ * parameter coming from rebasing an obliterate does not necessarily align with an inserted segment), which is not
+ * fully correct.
+ */
+export class LocalSquashPerspective extends LocalReconnectingPerspective {
+	public constructor(
+		readonly refSeq: number,
+		readonly clientId: number,
+		readonly localSeq: number,
+	) {
+		super(refSeq, clientId, localSeq);
+	}
+
+	public override isSegmentPresent(seg: ISegment): boolean {
+		// Avoid sliding to segments whose insertion will be squashed.
+		if (isInserted(seg) && opstampUtils.isLocal(seg.insert) && isRemoved(seg)) {
+			return false;
+		}
+		return super.isSegmentPresent(seg);
+	}
+}
+
+/**
+ * A perspective which includes edits which were either:
+ * - acked and at or before some reference sequence number
+ * - unacked, but at or before some local sequence number
+ *
+ * @internal
+ */
+export function createLocalReconnectingPerspective(
+	refSeq: number,
+	clientId: number,
+	localSeq: number,
+	squash: boolean = false,
+): Perspective {
+	return new (squash ? LocalSquashPerspective : LocalReconnectingPerspective)(
+		refSeq,
+		clientId,
+		localSeq,
+	);
+}
+
+/**
  * A perspective which includes all known edits.
  *
  * This is the perspective that the application sees.
@@ -169,3 +216,8 @@ function isRemoveOperationStamp(stamp: OperationStamp): stamp is RemoveOperation
 	const { type } = stamp as unknown as RemoveOperationStamp;
 	return type === "setRemove" || type === "sliceRemove";
 }
+
+export const allAckedChangesPerspective = new PriorPerspective(
+	Number.MAX_SAFE_INTEGER,
+	NonCollabClient,
+);

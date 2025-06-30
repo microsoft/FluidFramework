@@ -8,30 +8,35 @@ import { strict as assert } from "node:assert";
 import {
 	type FieldAnchor,
 	type IEditableForest,
-	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	TreeNavigationResult,
 	TreeStoredSchemaRepository,
 	rootFieldKey,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { type Context, getTreeContext } from "../../../feature-libraries/flex-tree/context.js";
+import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	defaultSchemaPolicy,
 	MockNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
-import { MockTreeCheckout, forestWithContent } from "../../utils.js";
+import {
+	MockTreeCheckout,
+	fieldCursorFromInsertable,
+	forestWithContent,
+} from "../../utils.js";
 import {
 	toStoredSchema,
 	type ImplicitFieldSchema,
+	type InsertableContent,
 	type InsertableField,
+	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
 
 export function getReadonlyContext(
 	forest: IEditableForest,
 	schema: ImplicitFieldSchema,
 ): Context {
-	return getTreeContext(
+	return new Context(
 		defaultSchemaPolicy,
 		new MockTreeCheckout(forest, {
 			schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
@@ -48,7 +53,14 @@ export function getReadonlyContext(
  * @returns The created context.
  */
 export function contextWithContentReadonly(content: TreeSimpleContent): Context {
-	const forest = forestWithContent({ ...content, schema: toStoredSchema(content.schema) });
+	const cursor = fieldCursorFromInsertable<UnsafeUnknownSchema>(
+		content.schema,
+		content.initialTree,
+	);
+	const forest = forestWithContent({
+		initialTree: cursor,
+		schema: toStoredSchema(content.schema),
+	});
 	return getReadonlyContext(forest, content.schema);
 }
 
@@ -58,10 +70,9 @@ export function contextWithContentReadonly(content: TreeSimpleContent): Context 
 export interface TreeSimpleContent {
 	readonly schema: ImplicitFieldSchema;
 	/**
-	 * Default tree content to initialize the tree with iff the tree is uninitialized
-	 * (meaning it does not even have any schema set at all).
+	 * Content to initialize the tree with.
 	 */
-	readonly initialTree: readonly ITreeCursorSynchronous[] | ITreeCursorSynchronous | undefined;
+	readonly initialTree: InsertableContent | undefined;
 }
 
 /**

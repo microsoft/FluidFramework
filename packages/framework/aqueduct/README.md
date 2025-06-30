@@ -141,12 +141,11 @@ In the below example we build a `DataObjectFactory` for the [Clicker](#dataobjec
 `SharedCounter`.
 
 ```typescript
-export const ClickerInstantiationFactory = new DataObjectFactory(
-	Clicker.Name,
-	Clicker,
-	[SharedCounter.getFactory()], // distributed data structures
-	{}, // Provider Symbols see below
-);
+export const ClickerInstantiationFactory = new DataObjectFactory({
+	type: Clicker.Name,
+	ctor: Clicker,
+	sharedObjects: [SharedCounter.getFactory()],
+});
 ```
 
 This factory can then create Clickers when provided a creating instance context.
@@ -185,12 +184,11 @@ export class MyExample extends DataObject<IFluidUserInfo> {
 }
 
 // Note: we have to define the symbol to the IFluidUserInfo that we declared above. This is compile time checked.
-export const ClickerInstantiationFactory = new DataObjectFactory(
-    Clicker.Name
-    Clicker,
-    [], // distributed data structures
-    {IFluidUserInfo}, // Provider Symbols see below
-);
+export const ClickerInstantiationFactory = new DataObjectFactory({
+    type: Clicker.Name
+    ctor: Clicker,
+    optionalProviders: { IFluidUserInfo }, // Provider Symbols see below
+});
 ```
 
 ## Container development

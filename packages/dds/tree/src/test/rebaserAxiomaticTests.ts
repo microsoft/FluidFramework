@@ -16,7 +16,6 @@ import {
 } from "../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { rebaseRevisionMetadataFromInfo } from "../feature-libraries/modular-schema/index.js";
-import { fail } from "../util/index.js";
 
 import {
 	type BoundFieldChangeRebaser,
@@ -601,13 +600,13 @@ function verifyComposeAssociativity<TChangeset>(
 	const metadata = defaultRevisionMetadataFromChanges(edits);
 	const singlyComposed = makeAnonChange(composeArray(fieldRebaser, edits, metadata));
 	const leftPartialCompositions: TaggedChange<TChangeset>[] = [
-		edits.at(0) ?? fail("Expected at least one edit"),
+		edits.at(0) ?? assert.fail("Expected at least one edit"),
 	];
 	for (let i = 1; i < edits.length; i++) {
 		leftPartialCompositions.push(
 			makeAnonChange(
 				fieldRebaser.compose(
-					leftPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+					leftPartialCompositions.at(-1) ?? assert.fail("Expected at least one edit"),
 					edits[i],
 					metadata,
 				),
@@ -616,14 +615,14 @@ function verifyComposeAssociativity<TChangeset>(
 	}
 
 	const rightPartialCompositions: TaggedChange<TChangeset>[] = [
-		edits.at(-1) ?? fail("Expected at least one edit"),
+		edits.at(-1) ?? assert.fail("Expected at least one edit"),
 	];
 	for (let i = edits.length - 2; i >= 0; i--) {
 		rightPartialCompositions.push(
 			makeAnonChange(
 				fieldRebaser.compose(
 					edits[i],
-					rightPartialCompositions.at(-1) ?? fail("Expected at least one edit"),
+					rightPartialCompositions.at(-1) ?? assert.fail("Expected at least one edit"),
 					metadata,
 				),
 			),

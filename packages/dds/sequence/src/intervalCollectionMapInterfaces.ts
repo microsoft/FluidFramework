@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { ListNode } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import type { IMergeTreeOptions } from "@fluidframework/merge-tree/internal";
+import { IMergeTreeOptions, type ISegmentInternal } from "@fluidframework/merge-tree/internal";
 
 import type {
 	IntervalCollection,
@@ -15,12 +16,39 @@ import {
 	ISerializedInterval,
 	IntervalDeltaOpType,
 	SerializedIntervalDelta,
+	type SequenceIntervalClass,
 } from "./intervals/index.js";
 
-export interface IMapMessageLocalMetadata {
+export interface IntervalAddLocalMetadata {
+	type: typeof IntervalDeltaOpType.ADD;
 	localSeq: number;
+	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
+	rebased?:
+		| Record<"start" | "end", { segment: ISegmentInternal; offset: number }>
+		| "detached";
+	interval: SequenceIntervalClass;
 }
-
+export interface IntervalChangeLocalMetadata {
+	type: typeof IntervalDeltaOpType.CHANGE;
+	localSeq: number;
+	previous: ISerializedInterval;
+	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
+	rebased?:
+		| Record<"start" | "end", { segment: ISegmentInternal; offset: number }>
+		| "detached";
+	interval: SequenceIntervalClass;
+}
+export interface IntervalDeleteLocalMetadata {
+	type: typeof IntervalDeltaOpType.DELETE;
+	localSeq: number;
+	previous: ISerializedInterval;
+	endpointChangesNode?: undefined;
+	interval?: undefined;
+}
+export type IntervalMessageLocalMetadata =
+	| IntervalAddLocalMetadata
+	| IntervalChangeLocalMetadata
+	| IntervalDeleteLocalMetadata;
 /**
  * Optional flags that configure options for sequence DDSs
  * @internal
@@ -72,27 +100,8 @@ export interface IIntervalCollectionOperation {
 		params: ISerializedInterval,
 		local: boolean,
 		message: ISequencedDocumentMessage | undefined,
-		localOpMetadata: IMapMessageLocalMetadata | undefined,
+		localOpMetadata: IntervalMessageLocalMetadata | undefined,
 	): void;
-
-	/**
-	 * Rebases an `op` on `value` from its original perspective (ref/local seq) to the current
-	 * perspective. Should be invoked on reconnection.
-	 * @param value - The current value stored at the given key, which should be the value type.
-	 * @param op - The op to be rebased.
-	 * @param localOpMetadata - Any local metadata that was originally submitted with the op.
-	 * @returns A rebased version of the op and any local metadata that should be submitted with it.
-	 */
-	rebase(
-		value: IntervalCollection,
-		op: IIntervalCollectionTypeOperationValue,
-		localOpMetadata: IMapMessageLocalMetadata,
-	):
-		| {
-				rebasedOp: IIntervalCollectionTypeOperationValue;
-				rebasedLocalOpMetadata: IMapMessageLocalMetadata;
-		  }
-		| undefined;
 }
 
 /**
@@ -138,14 +147,37 @@ export interface ISerializedIntervalCollection {
  * serializable via JSON.stringify/parse but differs in that it has no equivalency with an in-memory value - rather
  * it just describes an operation to be applied to an already-in-memory value.
  */
-export interface IIntervalCollectionTypeOperationValue {
-	/**
-	 * The name of the operation.
-	 */
-	opName: IntervalDeltaOpType;
+export type IIntervalCollectionTypeOperationValue =
+	| {
+			/**
+			 * The name of the operation.
+			 */
+			opName: typeof IntervalDeltaOpType.ADD;
 
-	/**
-	 * The payload that is submitted along with the operation.
-	 */
-	value: SerializedIntervalDelta;
-}
+			/**
+			 * The payload that is submitted along with the operation.
+			 */
+			value: ISerializedInterval;
+	  }
+	| {
+			/**
+			 * The name of the operation.
+			 */
+			opName: typeof IntervalDeltaOpType.CHANGE;
+
+			/**
+			 * The payload that is submitted along with the operation.
+			 */
+			value: SerializedIntervalDelta;
+	  }
+	| {
+			/**
+			 * The name of the operation.
+			 */
+			opName: typeof IntervalDeltaOpType.DELETE;
+
+			/**
+			 * The payload that is submitted along with the operation.
+			 */
+			value: SerializedIntervalDelta;
+	  };

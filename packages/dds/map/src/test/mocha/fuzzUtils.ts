@@ -12,6 +12,7 @@ import {
 	combineReducers,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
+	isOperationType,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
@@ -509,4 +510,18 @@ export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 	reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
 	validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 	factory: new DirectoryFactory(),
+	minimizationTransforms: [
+		(op: DirOperation): void => {
+			if (
+				isOperationType<DirSetKey>("set", op) ||
+				isOperationType<DirDeleteKey>("delete", op) ||
+				isOperationType<DirClearKeys>("clear", op)
+			) {
+				const lastPath = op.path.lastIndexOf("/");
+				if (lastPath !== -1) {
+					op.path = op.path.slice(0, lastPath + 1);
+				}
+			}
+		},
+	],
 };

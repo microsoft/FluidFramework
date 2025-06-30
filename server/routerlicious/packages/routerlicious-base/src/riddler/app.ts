@@ -3,20 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
 import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
-import { BaseTelemetryProperties } from "@fluidframework/server-services-telemetry";
-import * as bodyParser from "body-parser";
-import express from "express";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import {
+	BaseTelemetryProperties,
+	CommonProperties,
+} from "@fluidframework/server-services-telemetry";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 	ITenantKeyGenerator,
 } from "@fluidframework/server-services-utils";
+import * as bodyParser from "body-parser";
+import express from "express";
+
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
+
 import * as api from "./api";
 import { ITenantRepository } from "./mongoTenantRepository";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 
 export function create(
 	tenantRepository: ITenantRepository,
@@ -31,6 +37,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	readinessCheck?: IReadinessCheck,
+	bypassCache: boolean = false,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -38,19 +45,23 @@ export function create(
 	// Running behind iisnode
 	app.set("trust proxy", 1);
 
-	app.use(bindTelemetryContext());
+	app.use(bindTelemetryContext("riddler"));
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("riddler", (tokens, req, res) => {
 				return {
 					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+					[CommonProperties.callingServiceName]:
+						req.headers[CallingServiceHeaderName] ?? "",
 				};
 			}),
 		);
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.json());
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.urlencoded({ extended: false }));
 
 	app.use(
@@ -65,6 +76,7 @@ export function create(
 			riddlerStorageRequestMetricInterval,
 			tenantKeyGenerator,
 			cache,
+			bypassCache,
 		),
 	);
 

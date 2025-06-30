@@ -443,5 +443,8 @@
 	"getSession": {
 		"readDocumentRetryDelay": 150,
 		"readDocumentMaxRetries": 2
-	}
+	},
+	"documentDenyList": ["cc002893-ab9c-437b-b3d6-8aa4b68946fd"],
+	"tenantDenyList": [],
+	"axiosAbortSignalEnabled": true
 }

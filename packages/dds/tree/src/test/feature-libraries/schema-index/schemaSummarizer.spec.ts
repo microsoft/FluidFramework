@@ -11,21 +11,27 @@ import {
 import { toStoredSchema } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { supportedSchemaFormats } from "./codecUtil.js";
 
 describe("schemaSummarizer", () => {
 	describe("encodeTreeSchema", () => {
 		useSnapshotDirectory("encodeTreeSchema");
-		it("empty", () => {
-			const encoded = encodeTreeSchema({
-				rootFieldSchema: storedEmptyFieldSchema,
-				nodeSchema: new Map(),
+		for (const schemaFormat of supportedSchemaFormats) {
+			it(`empty - schema v${schemaFormat}`, () => {
+				const encoded = encodeTreeSchema(
+					{
+						rootFieldSchema: storedEmptyFieldSchema,
+						nodeSchema: new Map(),
+					},
+					schemaFormat,
+				);
+				takeJsonSnapshot(encoded);
 			});
-			takeJsonSnapshot(encoded);
-		});
 
-		it("simple encoded schema", () => {
-			const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree));
-			takeJsonSnapshot(encoded);
-		});
+			it(`simple encoded schema - schema v${schemaFormat}`, () => {
+				const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree), schemaFormat);
+				takeJsonSnapshot(encoded);
+			});
+		}
 	});
 });

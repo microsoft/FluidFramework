@@ -18,7 +18,7 @@ import {
 	generateRandomIntervals,
 } from "./intervalIndexTestUtils.js";
 
-class TestEndpointInRangeIndex implements IEndpointInRangeIndex<SequenceInterval> {
+class TestEndpointInRangeIndex implements IEndpointInRangeIndex {
 	private readonly intervals: {
 		start: Lazy<number>;
 		end: Lazy<number>;

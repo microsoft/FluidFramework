@@ -58,6 +58,7 @@ declare type current_as_old_for_Class_AsyncLocalStorageTelemetryContext = requir
  * typeValidation.broken:
  * "Class_AsyncLocalStorageTimeoutContext": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_AsyncLocalStorageTimeoutContext = requireAssignableTo<TypeOnly<old.AsyncLocalStorageTimeoutContext>, TypeOnly<current.AsyncLocalStorageTimeoutContext>>
 
 /*

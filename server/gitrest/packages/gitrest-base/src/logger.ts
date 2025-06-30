@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import nconf, { Provider } from "nconf";
-import { WinstonLumberjackEngine } from "@fluidframework/server-services-utils";
 import {
 	ILumberjackEngine,
 	ILumberjackOptions,
 	ILumberjackSchemaValidator,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import { WinstonLumberjackEngine } from "@fluidframework/server-services-utils";
+import nconf, { Provider } from "nconf";
 
 // TODO: this is duplicate code from `@fluidframework/server-services-utils` configureLogging()
 // to avoid adding duplicate transports to the global `winston` instance. This should just call

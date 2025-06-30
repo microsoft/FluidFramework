@@ -4,8 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import { fail } from "../../util/index.js";
+import { fail } from "@fluidframework/core-utils/internal";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 import type { NodeFromSchema } from "../schemaTypes.js";
@@ -33,7 +32,7 @@ import type { UnionToTuple } from "../../util/index.js";
  * This is commonly used in unions when the only information needed is which kind of node the value is.
  * Enums are a common example of this pattern.
  * @see {@link adaptEnum}
- * @alpha
+ * @beta
  */
 // Return type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -108,7 +107,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * @privateRemarks
  * Maybe provide `SchemaFactory.nested` to ease creating nested scopes?
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
- * @alpha
+ * @beta
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function adaptEnum<
@@ -187,7 +186,7 @@ export function adaptEnum<
  * class Parent extends schemaFactory.object("Parent", { mode: Mode.schema }) {}
  * ```
  * @see {@link adaptEnum} for a similar function that works on enums instead of arrays of strings.
- * @alpha
+ * @beta
  */
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function enumFromStrings<

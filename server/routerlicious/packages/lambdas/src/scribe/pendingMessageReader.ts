@@ -6,6 +6,7 @@
 import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 import { IDeltaService } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { IPendingMessageReader } from "./interfaces";
 
 export class PendingMessageReader implements IPendingMessageReader {

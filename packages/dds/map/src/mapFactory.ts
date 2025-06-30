@@ -17,7 +17,8 @@ import { pkgVersion } from "./packageVersion.js";
 
 /**
  * {@link @fluidframework/datastore-definitions#IChannelFactory} for {@link ISharedMap}.
- *
+ * @privateRemarks
+ * TODO: AB#35245: Deprecate and stop exporting this class.
  * @sealed
  * @legacy
  * @alpha

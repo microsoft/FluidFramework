@@ -7,6 +7,7 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
 import type {
 	SimpleArrayNodeSchema,
+	SimpleFieldSchema,
 	SimpleLeafNodeSchema,
 	SimpleMapNodeSchema,
 	SimpleNodeSchema,
@@ -14,12 +15,10 @@ import type {
 	SimpleObjectNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
-import { ObjectNodeSchema } from "../objectNodeTypes.js";
 import { NodeKind } from "../core/index.js";
+import { ArrayNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../node-kinds/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
-import { ArrayNodeSchema } from "../arrayNodeTypes.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
-import { MapNodeSchema } from "../mapNodeTypes.js";
 
 /**
  * Converts an {@link ImplicitFieldSchema} to a "simple" schema representation.
@@ -59,10 +58,15 @@ export function toSimpleTreeSchema(
 	});
 
 	return {
-		kind: normalizedSchema.kind,
-		allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
+		root: copySchemaObjects
+			? ({
+					allowedTypesIdentifiers: normalizedSchema.allowedTypesIdentifiers,
+					kind: normalizedSchema.kind,
+					metadata: normalizedSchema.metadata,
+					persistedMetadata: normalizedSchema.persistedMetadata,
+				} satisfies SimpleFieldSchema)
+			: normalizedSchema,
 		definitions,
-		metadata: normalizedSchema.metadata,
 	};
 }
 
@@ -91,6 +95,7 @@ function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchem
 		kind: NodeKind.Leaf,
 		leafKind: schema.leafKind,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 
@@ -101,6 +106,7 @@ function copySimpleMapOrArraySchema(
 		kind: schema.kind,
 		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }
 
@@ -112,6 +118,7 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 			kind: field.kind,
 			allowedTypesIdentifiers: field.allowedTypesIdentifiers,
 			metadata: field.metadata,
+			persistedMetadata: field.persistedMetadata,
 			storedKey: field.storedKey,
 		});
 	}
@@ -120,5 +127,6 @@ function copySimpleObjectSchema(schema: SimpleObjectNodeSchema): SimpleObjectNod
 		kind: NodeKind.Object,
 		fields,
 		metadata: schema.metadata,
+		persistedMetadata: schema.persistedMetadata,
 	};
 }

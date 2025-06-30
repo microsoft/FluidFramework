@@ -28,28 +28,15 @@ export {
 } from "./intervals/index.js";
 export {
 	DeserializeCallback,
-	IIntervalCollectionEvent,
-	IIntervalCollection,
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
-	IntervalLocator,
-	intervalLocatorFromEndpoint,
 } from "./intervalCollection.js";
 export {
-	IntervalIndex,
 	SequenceIntervalIndex,
 	SequenceIntervalIndexes,
-	IOverlappingIntervalsIndex,
 	ISequenceOverlappingIntervalsIndex,
-	createOverlappingIntervalsIndex,
-	createOverlappingSequenceIntervalsIndex,
-	IEndpointInRangeIndex,
-	IStartpointInRangeIndex,
-	createEndpointInRangeIndex,
-	createStartpointInRangeIndex,
-	IIdIntervalIndex,
-	createIdIntervalIndex,
 	IEndpointIndex,
+	createOverlappingIntervalsIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
 export {
@@ -81,7 +68,6 @@ export {
 	SharedStringSegment,
 	SharedStringClass,
 } from "./sharedString.js";
-export { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 
 export {

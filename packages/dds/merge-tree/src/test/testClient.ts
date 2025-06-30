@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
@@ -20,7 +21,6 @@ import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
-import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions, ReferencePosition } from "../index.js";
 import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
@@ -419,8 +419,8 @@ export class TestClient extends Client {
 		});
 
 		assert(segment !== undefined, "No segment found");
-		const segoff = getSlideToSegoff({ segment, offset }) ?? segment;
-		if (segoff.segment === undefined || segoff.offset === undefined) {
+		const segoff = getSlideToSegoff({ segment, offset }, undefined, perspective);
+		if (segoff === undefined) {
 			return DetachedReferencePosition;
 		}
 
@@ -537,7 +537,7 @@ export class TestClient extends Client {
 	): ReferencePosition | undefined {
 		let foundMarker: Marker | undefined;
 
-		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos);
+		const { segment } = this.getContainingSegment<ISegmentPrivate>(startPos) ?? {};
 		assertSegmentLeaf(segment);
 		if (Marker.is(segment)) {
 			if (refHasTileLabel(segment, markerLabel)) {

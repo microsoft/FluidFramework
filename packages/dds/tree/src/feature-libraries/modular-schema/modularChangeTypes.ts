@@ -14,10 +14,9 @@ import {
 } from "../../core/index.js";
 import { brand, RangeMap, type Brand, type TupleBTree } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
+
 import type { CrossFieldTarget } from "./crossFieldQueries.js";
 
-/**
- */
 export interface ModularChangeset extends HasFieldChanges {
 	/**
 	 * The numerically highest `ChangesetLocalId` used in this changeset.
@@ -109,8 +108,6 @@ export interface FieldId {
 	readonly field: FieldKey;
 }
 
-/**
- */
 export interface NodeExistsConstraint {
 	violated: boolean;
 }
@@ -127,23 +124,15 @@ export interface NodeChangeset extends HasFieldChanges {
 
 export type NodeId = ChangeAtomId;
 
-/**
- */
 export interface HasFieldChanges {
 	fieldChanges?: FieldChangeMap;
 }
 
-/**
- */
 export type FieldChangeMap = Map<FieldKey, FieldChange>;
 
-/**
- */
 export interface FieldChange {
 	fieldKind: FieldKindIdentifier;
 	change: FieldChangeset;
 }
 
-/**
- */
 export type FieldChangeset = Brand<unknown, "FieldChangeset">;

@@ -5,55 +5,44 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { reservedIntervalIdKey } from "../intervalCollection.js";
-import { type SequenceInterval } from "../intervals/index.js";
+import { type SequenceIntervalClass } from "../intervals/index.js";
 
 import { type SequenceIntervalIndex } from "./intervalIndex.js";
 
-/**
- * @internal
- */
-export interface IIdIntervalIndex extends SequenceIntervalIndex, Iterable<SequenceInterval> {
-	getIntervalById(id: string): SequenceInterval | undefined;
+export interface IIdIntervalIndex
+	extends SequenceIntervalIndex,
+		Iterable<SequenceIntervalClass> {
+	getIntervalById(id: string): SequenceIntervalClass | undefined;
 
-	[Symbol.iterator](): Iterator<SequenceInterval>;
+	[Symbol.iterator](): Iterator<SequenceIntervalClass>;
 }
-class IdIntervalIndex implements IIdIntervalIndex, Iterable<SequenceInterval> {
-	private readonly intervalIdMap = new Map<string, SequenceInterval>();
+class IdIntervalIndex implements IIdIntervalIndex, Iterable<SequenceIntervalClass> {
+	private readonly intervalIdMap = new Map<string, SequenceIntervalClass>();
 
-	public add(interval: SequenceInterval) {
+	public add(interval: SequenceIntervalClass) {
 		const id = interval.getIntervalId();
 		assert(
 			id !== undefined,
 			0x2c0 /* "ID must be created before adding interval to collection" */,
 		);
-		// Make the ID immutable.
-		Object.defineProperty(interval.properties, reservedIntervalIdKey, {
-			configurable: false,
-			enumerable: true,
-			writable: false,
-		});
 		this.intervalIdMap.set(id, interval);
 	}
 
-	public remove(interval: SequenceInterval) {
+	public remove(interval: SequenceIntervalClass) {
 		const id = interval.getIntervalId();
 		assert(id !== undefined, 0x311 /* expected id to exist on interval */);
 		this.intervalIdMap.delete(id);
 	}
 
-	public getIntervalById(id: string): SequenceInterval | undefined {
+	public getIntervalById(id: string): SequenceIntervalClass | undefined {
 		return this.intervalIdMap.get(id);
 	}
 
-	public [Symbol.iterator](): IterableIterator<SequenceInterval> {
+	public [Symbol.iterator](): IterableIterator<SequenceIntervalClass> {
 		return this.intervalIdMap.values();
 	}
 }
 
-/**
- * @internal
- */
 export function createIdIntervalIndex(): IIdIntervalIndex {
 	return new IdIntervalIndex();
 }

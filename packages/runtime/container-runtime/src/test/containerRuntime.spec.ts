@@ -14,6 +14,7 @@ import { AttachState, ICriticalContainerError } from "@fluidframework/container-
 import {
 	ContainerErrorTypes,
 	IContainerContext,
+	type IBatchMessage,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -26,6 +27,7 @@ import {
 	ISignalEnvelope,
 	type IErrorBase,
 	type ITelemetryBaseLogger,
+	type JsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
@@ -69,25 +71,32 @@ import {
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
-import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
+import { defaultMinVersionForCollab } from "../compatUtils.js";
+import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
-	CompressionAlgorithms,
 	ContainerRuntime,
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
 	type InboundSequencedContainerRuntimeMessage,
-	type OutboundContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { BatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
+import type {
+	BatchResubmitInfo,
+	InboundMessageResult,
+	LocalBatchMessage,
+} from "../opLifecycle/index.js";
+import { pkgVersion } from "../packageVersion.js";
 import {
 	IPendingLocalState,
 	IPendingMessage,
@@ -99,6 +108,13 @@ import {
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
+
+type Patch<T, U> = Omit<T, keyof U> & U;
+
+type ContainerRuntime_WithPrivates = Patch<
+	ContainerRuntime,
+	{ flush: (resubmitInfo?: BatchResubmitInfo) => void; channelCollection: ChannelCollection }
+>;
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
@@ -131,12 +147,14 @@ const changeConnectionState = (
 };
 
 interface ISignalEnvelopeWithClientIds {
-	envelope: ISignalEnvelope;
+	envelope: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
 	clientId: string;
 	targetClientId?: string;
 }
 
-function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
+function isSignalEnvelope(
+	obj: unknown,
+): obj is ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }> {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
@@ -152,20 +170,34 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope {
 	);
 }
 
-function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
-	(containerRuntime as any).channelCollection = {
-		setConnectionState: (_connected: boolean, _clientId?: string) => {},
-		// Pass data store op right back to ContainerRuntime
-		reSubmit: (type: string, envelope: IEnvelope, localOpMetadata: unknown) => {
+let sandbox: Sinon.SinonSandbox;
+
+function stubChannelCollection(
+	containerRuntime: ContainerRuntime_WithPrivates,
+): Sinon.SinonStubbedInstance<ChannelCollection> {
+	// Pass data store op right back to ContainerRuntime
+	const reSubmitFake = sandbox
+		.stub<[type: string, content: unknown, localOpMetadata: unknown, squash: boolean], void>()
+		.callsFake((type: string, content: unknown, localOpMetadata: unknown, squash: boolean) => {
+			const envelope = content as IEnvelope;
 			submitDataStoreOp(
 				containerRuntime,
 				envelope.address,
 				envelope.contents,
 				localOpMetadata,
 			);
-		},
-	} as ChannelCollection;
+		});
+
+	const stub = Sinon.createStubInstance(ChannelCollection, {
+		setConnectionState: sandbox.stub(),
+		reSubmit: reSubmitFake,
+		rollback: sandbox.stub(),
+		notifyStagingMode: sandbox.stub(),
+		dispose: sandbox.stub(),
+	});
+
+	containerRuntime.channelCollection = stub;
+	return stub;
 }
 
 describe("Runtime", () => {
@@ -180,13 +212,14 @@ describe("Runtime", () => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = Sinon.useFakeTimers();
 	});
 
 	beforeEach(() => {
 		submittedOps = [];
 		opFakeSequenceNumber = 1;
 		submittedSignals = [];
+		sandbox = Sinon.createSandbox();
 	});
 
 	afterEach(() => {
@@ -212,6 +245,8 @@ describe("Runtime", () => {
 			mockStorage?: Partial<IDocumentStorageService>;
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
+			connected?: boolean;
+			attachState?: AttachState;
 		} = {},
 		clientId: string = mockClientId,
 	): Partial<IContainerContext> => {
@@ -221,10 +256,12 @@ describe("Runtime", () => {
 			mockStorage = defaultMockStorage,
 			loadedFromVersion,
 			baseSnapshot,
+			connected = true,
+			attachState = AttachState.Attached,
 		} = params;
 
 		const mockContext = {
-			attachState: AttachState.Attached,
+			attachState,
 			deltaManager: new MockDeltaManager(),
 			audience: new MockAudience(),
 			quorum: new MockQuorumClients(),
@@ -251,7 +288,7 @@ describe("Runtime", () => {
 				}); // Note: this object shape is for testing only. Not representative of real signals.
 			},
 			clientId,
-			connected: true,
+			connected,
 			storage: mockStorage as IDocumentStorageService,
 			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
@@ -304,7 +341,7 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("Flushing and Replaying", () => {
+		describe("Batching", () => {
 			it("Default flush mode", async () => {
 				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: getMockContext() as IContainerContext,
@@ -383,7 +420,7 @@ describe("Runtime", () => {
 
 			for (const enableOfflineLoad of [true, undefined])
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
-					const containerRuntime = await ContainerRuntime.loadRuntime({
+					const containerRuntime = (await ContainerRuntime.loadRuntime({
 						context: getMockContext({
 							settings: {
 								"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
@@ -393,9 +430,9 @@ describe("Runtime", () => {
 						existing: false,
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
-					});
+					})) as unknown as ContainerRuntime_WithPrivates;
 
-					defineResubmitAndSetConnectionState(containerRuntime);
+					stubChannelCollection(containerRuntime);
 
 					changeConnectionState(containerRuntime, false, mockClientId);
 
@@ -445,9 +482,135 @@ describe("Runtime", () => {
 						assert(submittedOps[1].metadata?.batchId === undefined, "Expected no batchId (1)");
 					}
 				});
+
+			// NOTE: This test is examining a case that only occurs with an old Loader that doesn't tell ContainerRuntime when processing system ops.
+			// In other words, when the MockDeltaManager bumps its lastSequenceNumber, ContainerRuntime.process would be called in the current code, but not with legacy loader.
+			for (const skipSafetyFlushDuringProcessStack of [true, undefined]) {
+				it(`Inbound (non-runtime) op triggers flush due to refSeq changing [skipSafetyFlush=${skipSafetyFlushDuringProcessStack}]`, async () => {
+					const submittedBatches: {
+						messages: IBatchMessage[];
+						referenceSequenceNumber: number;
+					}[] = [];
+
+					const mockContext = getMockContext({
+						settings: {
+							"Fluid.ContainerRuntime.DisableFlushBeforeProcess":
+								skipSafetyFlushDuringProcessStack,
+						},
+					});
+					(
+						mockContext as { submitBatchFn: IContainerContext["submitBatchFn"] }
+					).submitBatchFn = (
+						messages: IBatchMessage[],
+						referenceSequenceNumber: number = -1,
+					) => {
+						submittedOps.push(...messages); // Reusing submittedOps since submitFn won't be invoked due to submitBatchFn's presence
+						submittedBatches.push({ messages, referenceSequenceNumber });
+						return 999; // CSN not used in test asserts below
+					};
+
+					const containerRuntime = await ContainerRuntime.loadRuntime({
+						context: mockContext as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					// Submit the first message
+					submitDataStoreOp(containerRuntime, "1", "testMessage1");
+					assert.strictEqual(submittedOps.length, 0, "No ops submitted yet");
+
+					// Bump lastSequenceNumber and trigger the "op" event artificially to simulate processing a non-runtime op
+					// When [skipSafetyFlushDuringProcessStack: FALSE], this will trigger a flush, which allows us to safely submit more ops next
+					const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+					++mockDeltaManager.lastSequenceNumber;
+					mockDeltaManager.emit("op", {
+						clientId: mockClientId,
+						sequenceNumber: mockDeltaManager.lastSequenceNumber,
+						clientSequenceNumber: 1,
+						type: MessageType.ClientJoin,
+						contents: "test content",
+					});
+
+					const expectedSubmitCount = skipSafetyFlushDuringProcessStack ? 0 : 1;
+					assert.equal(
+						submittedOps.length,
+						expectedSubmitCount,
+						"Submitted op count wrong after first op",
+					);
+
+					// Submit the second message
+					// When [skipSafetyFlushDuringProcessStack: TRUE], this will trigger a flush via Outbox.maybeFlushPartialBatch
+					submitDataStoreOp(containerRuntime, "2", "testMessage2");
+					assert.equal(
+						submittedOps.length,
+						1,
+						"By now we expect the first op to have been submitted in both configurations",
+					);
+
+					// Wait for the next tick for the second message to be flushed
+					await Promise.resolve();
+
+					// Validate that the messages were submitted
+					assert.equal(submittedOps.length, 2, "Two messages should be submitted");
+					assert.deepEqual(
+						submittedBatches,
+						[
+							{ messages: [submittedOps[0]], referenceSequenceNumber: 0 }, // The first op
+							{ messages: [submittedOps[1]], referenceSequenceNumber: 1 }, // The second op
+						],
+						"Two batches should be submitted with different refSeq",
+					);
+				});
+			}
+
+			it("IdAllocation op from replayPendingStates is flushed, preventing outboxSequenceNumberCoherencyCheck error", async () => {
+				// Start out disconnected since step 1 is to trigger ID Allocation op on reconnect
+				const connected = false;
+				const mockContext = getMockContext({ connected }) as IContainerContext;
+				const mockDeltaManager = mockContext.deltaManager as MockDeltaManager;
+
+				const containerRuntime = await ContainerRuntime.loadRuntime({
+					context: mockContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: { enableRuntimeIdCompressor: "on" },
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// 1st compressed id – queued while disconnected (goes to idAllocationBatch).
+				containerRuntime.idCompressor?.generateCompressedId();
+
+				// Re-connect – replayPendingStates will submit only an idAllocation op.
+				// It's now in the Outbox and a flush is scheduled (including this flush was a bug fix)
+				changeConnectionState(containerRuntime, true, mockClientId);
+
+				// Simulate a remote op arriving before we submit anything else.
+				// Bump refSeq and continue execution at the end of the microtask queue.
+				// This is how Inbound Queue works, and this is necessary to simulate here to allow scheduled flush to happen
+				++mockDeltaManager.lastSequenceNumber;
+				await Promise.resolve();
+
+				// 2nd compressed id – its idAllocation op will enter Outbox *after* the ref seq# bumped.
+				const id2 = containerRuntime.idCompressor?.generateCompressedId();
+
+				// This would throw a DataProcessingError from codepath "outboxSequenceNumberCoherencyCheck"
+				// if we didn't schedule a flush after the idAllocation op submitted during the reconnect.
+				// (On account of the two ID Allocation ops having different refSeqs but being in the same batch)
+				submitDataStoreOp(containerRuntime, "someDS", { id: id2 });
+
+				// Let the Outbox flush so we can check submittedOps length
+				await Promise.resolve();
+				assert(
+					submittedOps.length === 3,
+					"Expected 3 ops to be submitted (2 ID Allocation, 1 data)",
+				);
+			});
 		});
 
-		describe("orderSequentially", () => {
+		const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
+		describe("orderSequentially (rollback not enabled)", () => {
 			for (const flushMode of [
 				FlushMode.TurnBased,
 				FlushMode.Immediate,
@@ -458,7 +621,7 @@ describe("Runtime", () => {
 				describe(`orderSequentially with flush mode: ${
 					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
 				}`, () => {
-					let containerRuntime: ContainerRuntime;
+					let containerRuntime: ContainerRuntime_WithPrivates;
 					let mockContext: Partial<IContainerContext>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const submittedOpsMetadata: any[] = [];
@@ -508,8 +671,6 @@ describe("Runtime", () => {
 						return containerErrors[0];
 					};
 
-					const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
-
 					beforeEach(async () => {
 						mockContext = getMockContextForOrderSequentially();
 						const runtimeOptions: IContainerRuntimeOptionsInternal = {
@@ -521,13 +682,13 @@ describe("Runtime", () => {
 							flushMode,
 						};
 
-						containerRuntime = await ContainerRuntime.loadRuntime({
+						containerRuntime = (await ContainerRuntime.loadRuntime({
 							context: mockContext as IContainerContext,
 							registryEntries: [],
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
-						});
+						})) as unknown as ContainerRuntime_WithPrivates;
 						containerErrors.length = 0;
 						submittedOpsMetadata.length = 0;
 					});
@@ -543,10 +704,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 1);
 					});
 
@@ -563,10 +721,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
@@ -585,10 +740,7 @@ describe("Runtime", () => {
 						const error = getFirstContainerError();
 						assert(isFluidError(error));
 						assert.strictEqual(error.errorType, ContainerErrorTypes.genericError);
-						assert.strictEqual(
-							error.message,
-							`${expectedOrderSequentiallyErrorMessage}: 0x24c`,
-						);
+						assert.strictEqual(error.message, "0x24c");
 						assert.strictEqual(error.getTelemetryProperties().orderSequentiallyCalls, 2);
 					});
 
@@ -652,7 +804,7 @@ describe("Runtime", () => {
 					});
 
 					it("Resubmitting batch preserves original batches", async () => {
-						defineResubmitAndSetConnectionState(containerRuntime);
+						stubChannelCollection(containerRuntime);
 
 						changeConnectionState(containerRuntime, false, fakeClientId);
 
@@ -706,11 +858,15 @@ describe("Runtime", () => {
 				describe(`orderSequentially with flush mode: ${
 					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
 				}`, () => {
-					let containerRuntime: ContainerRuntime;
+					let containerRuntime: ContainerRuntime_WithPrivates;
 					const containerErrors: ICriticalContainerError[] = [];
+					let submittedOpsCount: number = 0;
 
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => ({
 						attachState: AttachState.Attached,
+						connected: true,
+						clientId: "client-id",
+						supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
 						deltaManager: new MockDeltaManager(),
 						audience: new MockAudience(),
 						quorum: new MockQuorumClients(),
@@ -726,6 +882,9 @@ describe("Runtime", () => {
 								containerErrors.push(error);
 							}
 						},
+						submitFn: (...args) => {
+							return ++submittedOpsCount; // clientSequenceNumber
+						},
 						updateDirtyContainerState: (dirty: boolean) => {},
 						getLoadedFromVersion: () => undefined,
 					});
@@ -737,14 +896,15 @@ describe("Runtime", () => {
 							},
 							flushMode,
 						};
-						containerRuntime = await ContainerRuntime.loadRuntime({
+						containerRuntime = (await ContainerRuntime.loadRuntime({
 							context: getMockContextForOrderSequentially() as IContainerContext,
 							registryEntries: [],
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
-						});
+						})) as unknown as ContainerRuntime_WithPrivates;
 						containerErrors.length = 0;
+						submittedOpsCount = 0;
 					});
 
 					it("No errors propagate to the container on rollback", () => {
@@ -753,12 +913,84 @@ describe("Runtime", () => {
 								throw new Error("Any");
 							}),
 						);
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+						assert.equal(containerRuntime.isDirty, false, "Dirty after rollback");
 
 						assert.strictEqual(containerErrors.length, 0);
 					});
 
 					it("No errors on successful callback with rollback set", () => {
 						containerRuntime.orderSequentially(() => {});
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+
+						assert.strictEqual(containerErrors.length, 0);
+					});
+
+					it("orderSequentially while in StagingMode works", async () => {
+						stubChannelCollection(containerRuntime);
+
+						const stageControls = containerRuntime.enterStagingMode();
+
+						containerRuntime.orderSequentially(() => {
+							submitDataStoreOp(containerRuntime, "1", "test");
+						});
+						assert.strictEqual(
+							submittedOpsCount,
+							0,
+							"No ops should be submitted in Staging Mode",
+						);
+
+						stageControls.commitChanges();
+
+						assert.strictEqual(
+							submittedOpsCount,
+							1,
+							"One (Grouped) op should have been submitted",
+						);
+					});
+
+					// The purpose of these tests is to illustrate the current behavior of this unspecified scenario
+					describe("Exiting staging mode under orderSequentially - expected behavior has not been specified", () => {
+						it("commitChanges under orderSequentially (happens to fail)", async () => {
+							stubChannelCollection(containerRuntime);
+
+							const stageControls = containerRuntime.enterStagingMode();
+
+							assert.throws(() => {
+								containerRuntime.orderSequentially(() => {
+									submitDataStoreOp(containerRuntime, "1", "test");
+									stageControls.commitChanges();
+								});
+							});
+						});
+
+						it("discardChanges under orderSequentially (does not happen to fail)", async () => {
+							stubChannelCollection(containerRuntime);
+
+							const stageControls = containerRuntime.enterStagingMode();
+
+							assert.doesNotThrow(() => {
+								containerRuntime.orderSequentially(() => {
+									submitDataStoreOp(containerRuntime, "1", "test");
+									stageControls.discardChanges();
+								});
+							});
+						});
+					});
+
+					it("Entering Staging Mode under orderSequentially not supported", async () => {
+						assert.throws(
+							() =>
+								containerRuntime.orderSequentially(() => {
+									containerRuntime.enterStagingMode();
+								}),
+							(e: Error & IErrorBase) =>
+								e.errorType === ContainerErrorTypes.usageError &&
+								e.message === "Already in staging mode",
+							"Entering Staging Mode inside orderSequentially should throw",
+						);
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+						assert.equal(containerRuntime.isDirty, false, "Dirty after rollback");
 
 						assert.strictEqual(containerErrors.length, 0);
 					});
@@ -767,7 +999,6 @@ describe("Runtime", () => {
 		});
 
 		describe("Dirty flag", () => {
-			const sandbox = createSandbox();
 			const createMockContext = (
 				attachState: AttachState,
 				addPendingMsg: boolean,
@@ -888,6 +1119,7 @@ describe("Runtime", () => {
 				return {
 					replayPendingStates: () => {},
 					hasPendingMessages: (): boolean => pendingMessages > 0,
+					hasPendingUserChanges: (): boolean => pendingMessages > 0,
 					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {
 						const messages =
 							inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
@@ -902,7 +1134,7 @@ describe("Runtime", () => {
 					get pendingMessagesCount() {
 						return pendingMessages;
 					},
-					onFlushBatch: (batch: BatchMessage[], _csn?: number) =>
+					onFlushBatch: (batch: LocalBatchMessage[], _csn?: number) =>
 						(pendingMessages += batch.length),
 				} satisfies Partial<PendingStateManager> as unknown as PendingStateManager;
 			};
@@ -940,7 +1172,7 @@ describe("Runtime", () => {
 			function patchRuntime(
 				pendingStateManager: PendingStateManager,
 				_maxReconnects: number | undefined = undefined,
-			) {
+			): void {
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment -- Modifying private properties
 				const runtime = containerRuntime as any;
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
@@ -949,7 +1181,6 @@ describe("Runtime", () => {
 				runtime.channelCollection = getMockChannelCollection();
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-assignment
 				runtime.maxConsecutiveReconnects = _maxReconnects ?? runtime.maxConsecutiveReconnects;
-				return runtime as ContainerRuntime;
 			}
 
 			/**
@@ -963,7 +1194,20 @@ describe("Runtime", () => {
 			};
 
 			const addPendingMessage = (pendingStateManager: PendingStateManager): void =>
-				pendingStateManager.onFlushBatch([{ referenceSequenceNumber: 0 }], 1);
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+							runtimeOp: {
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: "" as unknown,
+							} as LocalContainerRuntimeMessage,
+							referenceSequenceNumber: 0,
+						},
+					],
+					1,
+					false /* staged */,
+				);
 
 			// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 			it(
@@ -1477,7 +1721,7 @@ describe("Runtime", () => {
 				mockLogger = new MockLogger();
 			});
 
-			const runtimeOptions: IContainerRuntimeOptionsInternal = {
+			const runtimeOptions = {
 				compressionOptions: {
 					minimumBatchSizeInBytes: 1024 * 1024,
 					compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -1485,9 +1729,9 @@ describe("Runtime", () => {
 				chunkSizeInBytes: 800 * 1024,
 				flushMode: FlushModeExperimental.Async as unknown as FlushMode,
 				enableGroupedBatching: true,
-			};
+			} as const satisfies IContainerRuntimeOptionsInternal;
 
-			const defaultRuntimeOptions: IContainerRuntimeOptionsInternal = {
+			const defaultRuntimeOptions = {
 				summaryOptions: {},
 				gcOptions: {},
 				loadSequenceNumberVerification: "close",
@@ -1501,8 +1745,9 @@ describe("Runtime", () => {
 				enableRuntimeIdCompressor: undefined,
 				enableGroupedBatching: true, // Redundant, but makes the JSON.stringify yield the same result as the logs
 				explicitSchemaControl: false,
-			};
-			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions };
+				createBlobPayloadPending: undefined,
+			} as const satisfies ContainerRuntimeOptionsInternal;
+			const mergedRuntimeOptions = { ...defaultRuntimeOptions, ...runtimeOptions } as const;
 
 			it("Container load stats", async () => {
 				await ContainerRuntime.loadRuntime({
@@ -1770,7 +2015,7 @@ describe("Runtime", () => {
 				// processing requires creation of data store context and runtime as well.
 				type ContainerRuntimeWithSubmit = Omit<ContainerRuntime, "submit"> & {
 					submit(
-						containerRuntimeMessage: OutboundContainerRuntimeMessage,
+						containerRuntimeMessage: LocalContainerRuntimeMessage,
 						localOpMetadata: unknown,
 						metadata: Record<string, unknown> | undefined,
 					): void;
@@ -1870,7 +2115,10 @@ describe("Runtime", () => {
 					 * This always returns the same snapshot. Basically, when container runtime receives an ack for the
 					 * deleted snapshot and tries to fetch the latest snapshot, return the latest snapshot.
 					 */
-					async getSnapshotTree(version?: IVersion, scenarioName?: string) {
+					async getSnapshotTree(
+						version?: IVersion,
+						scenarioName?: string,
+					): Promise<ISnapshotTree> {
 						assert.strictEqual(
 							version,
 							latestVersion,
@@ -1885,7 +2133,7 @@ describe("Runtime", () => {
 						count: number,
 						scenarioName?: string,
 						fetchSource?: FetchSource,
-					) {
+					): Promise<IVersion[]> {
 						return [latestVersion];
 					}
 
@@ -1893,7 +2141,10 @@ describe("Runtime", () => {
 					 * Validates that this is not called by container runtime with the deleted snapshot id even
 					 * though it received an ack for it.
 					 */
-					async uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext) {
+					async uploadSummaryWithContext(
+						summary: ISummaryTree,
+						context: ISummaryContext,
+					): Promise<string> {
 						assert.notStrictEqual(
 							context.ackHandle,
 							deletedSnapshotId,
@@ -1906,7 +2157,7 @@ describe("Runtime", () => {
 					 * Called by container runtime to read document attributes. Return the sequence number as 0 which
 					 * is lower than the deleted snapshot's reference sequence number.
 					 */
-					async readBlob(id: string) {
+					async readBlob(id: string): Promise<ArrayBufferLike> {
 						assert.strictEqual(id, "attributesBlob", "Not implemented");
 						const attributes: IDocumentAttributes = {
 							sequenceNumber: 0,
@@ -2002,7 +2253,8 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2050,7 +2302,8 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2124,7 +2377,8 @@ describe("Runtime", () => {
 					referenceSequenceNumber: 0,
 					localOpMetadata: undefined,
 					opMetadata: undefined,
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5 },
+					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2280,7 +2534,6 @@ describe("Runtime", () => {
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
-			const sandbox = createSandbox();
 			let snapshotWithContents: ISnapshot;
 			let blobContents: Map<string, ArrayBuffer>;
 			let ops: ISequencedDocumentMessage[];
@@ -2407,7 +2660,7 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true) {
+			function createSnapshot(addMissingDatastore: boolean, setGroupId: boolean = true): void {
 				if (addMissingDatastore) {
 					snapshotTree.trees[".channels"].trees.missingDataStore = {
 						blobs: { ".component": "id" },
@@ -2731,26 +2984,26 @@ describe("Runtime", () => {
 		});
 
 		describe("Signal Telemetry", () => {
-			let containerRuntime: ContainerRuntime;
+			let containerRuntime: ContainerRuntime_WithPrivates;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelopeWithClientIds[];
-			let runtimes: Map<string, ContainerRuntime>;
+			let runtimes: Map<string, ContainerRuntime | ContainerRuntime_WithPrivates>;
 
 			beforeEach(async () => {
-				runtimes = new Map<string, ContainerRuntime>();
+				runtimes = new Map();
 				logger = new MockLogger();
 				droppedSignals = [];
 				const runtimeOptions: IContainerRuntimeOptionsInternal = {
 					enableGroupedBatching: false,
 				};
-				containerRuntime = await ContainerRuntime.loadRuntime({
+				containerRuntime = (await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				})) as unknown as ContainerRuntime_WithPrivates;
 				// Assert that clientId is not undefined
 				assert(containerRuntime.clientId !== undefined, "clientId should not be undefined");
 
@@ -2758,7 +3011,7 @@ describe("Runtime", () => {
 				logger.clear();
 			});
 
-			function sendSignals(count: number) {
+			function sendSignals(count: number): void {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
 					assert(
@@ -2774,7 +3027,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number) {
+			function processSignals(signals: ISignalEnvelopeWithClientIds[], count: number): void {
 				const signalsToProcess = signals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					if (signal.targetClientId === undefined) {
@@ -2812,7 +3065,7 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processWithNoTargetSupport(count: number) {
+			function processWithNoTargetSupport(count: number): void {
 				const signalsToProcess = submittedSignals.splice(0, count);
 				for (const signal of signalsToProcess) {
 					for (const runtime of runtimes.values()) {
@@ -2831,15 +3084,15 @@ describe("Runtime", () => {
 				}
 			}
 
-			function processSubmittedSignals(count: number) {
+			function processSubmittedSignals(count: number): void {
 				processSignals(submittedSignals, count);
 			}
 
-			function processDroppedSignals(count: number) {
+			function processDroppedSignals(count: number): void {
 				processSignals(droppedSignals, count);
 			}
 
-			function dropSignals(count: number) {
+			function dropSignals(count: number): void {
 				const signalsToDrop = submittedSignals.splice(0, count);
 				droppedSignals.push(...signalsToDrop);
 			}
@@ -2995,7 +3248,7 @@ describe("Runtime", () => {
 			it("ignores signals sent before disconnect and resets stats on reconnect", () => {
 				// Define resubmit and setConnectionState on channel collection
 				// This is needed to submit test data store ops
-				defineResubmitAndSetConnectionState(containerRuntime);
+				stubChannelCollection(containerRuntime);
 
 				sendSignals(4);
 
@@ -3051,7 +3304,7 @@ describe("Runtime", () => {
 				// SETUP - define resubmit and setConnectionState on channel collection.
 				// This is needed to submit test data store ops. Once defined, submit a test data store op
 				// so that message is queued in PendingStateManager and reconnect count is increased.
-				defineResubmitAndSetConnectionState(containerRuntime);
+				stubChannelCollection(containerRuntime);
 				// Send and process an initial signal to prime the system.
 				submitDataStoreOp(containerRuntime, "1", "test");
 				sendSignals(1); // 1st signal (#1)
@@ -3302,7 +3555,7 @@ describe("Runtime", () => {
 				let remoteContainerRuntime: ContainerRuntime;
 				let remoteLogger: MockLogger;
 
-				function sendRemoteSignals(count: number) {
+				function sendRemoteSignals(count: number): void {
 					for (let i = 0; i < count; i++) {
 						remoteContainerRuntime.submitSignal(
 							"TestSignalType",
@@ -3536,6 +3789,618 @@ describe("Runtime", () => {
 						"Container should throw when op compression is on and op grouping is off",
 					);
 				});
+			});
+		});
+
+		describe("Default Configurations", () => {
+			it("minVersionForCollab not provided", async () => {
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab: defaultMinVersionForCollab,
+					},
+				]);
+			});
+
+			// These are examples of minVersionForCollab inputs that are not valid.
+			// minVersionForCollab should be at least 1.0.0 and less than or equal to
+			// the current pkgVersion.
+			const invalidVersions = ["0.50.0", "100.0.0"] as const;
+			for (const version of invalidVersions) {
+				it(`throws when minVersionForCollab = ${version}`, async () => {
+					const logger = new MockLogger();
+					await assert.rejects(async () => {
+						await ContainerRuntime.loadRuntime({
+							context: getMockContext({ logger }) as IContainerContext,
+							registryEntries: [],
+							existing: false,
+							runtimeOptions: {},
+							provideEntryPoint: mockProvideEntryPoint,
+							// @ts-expect-error - Invalid version strings are not castable to MinimumVersionForCollab
+							minVersionForCollab: version,
+						});
+					});
+				});
+			}
+
+			it("minVersionForCollab = 1.0.0", async () => {
+				const minVersionForCollab = "1.0.0";
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.Immediate,
+					compressionOptions: {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: false,
+					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
+					},
+				]);
+			});
+
+			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
+				const minVersionForCollab = "2.0.0-defaults";
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab: defaultMinVersionForCollab,
+					},
+				]);
+			});
+
+			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
+				const minVersionForCollab = "2.0.0";
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
+					},
+				]);
+			});
+
+			it("minVersionForCollab = 2.20.0", async () => {
+				const minVersionForCollab = "2.20.0";
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
+					},
+				]);
+			});
+
+			it("minVersionForCollab not provided, with manual configs", async () => {
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {
+						summaryOptions: { initialSummarizerDelayMs: 1 },
+						gcOptions: { enableGCSweep: true },
+						loadSequenceNumberVerification: "bypass",
+						flushMode: FlushMode.Immediate,
+						maxBatchSizeInBytes: 100,
+						chunkSizeInBytes: 200,
+						enableRuntimeIdCompressor: "on",
+						enableGroupedBatching: false, // By turning off batching, we will also disable compression automatically
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: { initialSummarizerDelayMs: 1 },
+					gcOptions: { enableGCSweep: true },
+					loadSequenceNumberVerification: "bypass",
+					flushMode: FlushMode.Immediate,
+					compressionOptions: {
+						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 100,
+					chunkSizeInBytes: 200,
+					enableRuntimeIdCompressor: "on",
+					enableGroupedBatching: false,
+					explicitSchemaControl: false,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab: defaultMinVersionForCollab,
+					},
+				]);
+			});
+
+			for (const { desc, runtimeOptions } of [
+				{ desc: "all options unspecified", runtimeOptions: {} },
+				{
+					// This case tests degenerate specification that is permissible
+					// with exactOptionalPropertyTypes disabled. Even when enabled,
+					// this should be tested in case callers violate exactness.
+					// (use @ts-expect-error or `as` to ignore when needed)
+					desc: "all options explicitly undefined",
+					runtimeOptions: {
+						summaryOptions: undefined,
+						gcOptions: undefined,
+						loadSequenceNumberVerification: undefined,
+						flushMode: undefined,
+						maxBatchSizeInBytes: undefined,
+						chunkSizeInBytes: undefined,
+						enableRuntimeIdCompressor: undefined,
+						enableGroupedBatching: undefined,
+						compressionOptions: undefined,
+						explicitSchemaControl: undefined,
+						createBlobPayloadPending: undefined,
+					},
+				},
+			])
+				it(desc, async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime({
+						context: getMockContext({ logger }) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						runtimeOptions,
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+
+					const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+						summaryOptions: {},
+						gcOptions: {},
+						loadSequenceNumberVerification: "close",
+						flushMode: FlushMode.TurnBased,
+						compressionOptions: {
+							minimumBatchSizeInBytes: 614400,
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
+						maxBatchSizeInBytes: 716800,
+						chunkSizeInBytes: 204800,
+						enableRuntimeIdCompressor: undefined, // idCompressor is undefined, since that represents a logical state (off)
+						enableGroupedBatching: true,
+						explicitSchemaControl: false,
+					};
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:ContainerLoadStats",
+							category: "generic",
+							options: JSON.stringify(expectedRuntimeOptions),
+							minVersionForCollab: defaultMinVersionForCollab,
+						},
+					]);
+				});
+
+			// Note: We may need to update `expectedRuntimeOptions` for this test
+			// when we bump to certain versions.
+			it("minVersionForCollab = pkgVersion", async () => {
+				const minVersionForCollab = pkgVersion;
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime({
+					context: getMockContext({ logger }) as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+					minVersionForCollab,
+				});
+
+				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+					summaryOptions: {},
+					gcOptions: {},
+					loadSequenceNumberVerification: "close",
+					flushMode: FlushMode.TurnBased,
+					compressionOptions: {
+						minimumBatchSizeInBytes: 614400,
+						compressionAlgorithm: CompressionAlgorithms.lz4,
+					},
+					maxBatchSizeInBytes: 716800,
+					chunkSizeInBytes: 204800,
+					enableRuntimeIdCompressor: undefined,
+					enableGroupedBatching: true,
+					explicitSchemaControl: true,
+				};
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						options: JSON.stringify(expectedRuntimeOptions),
+						minVersionForCollab,
+					},
+				]);
+			});
+
+			for (const runtimeOption of [
+				{ enableGroupedBatching: true },
+				{ enableGroupedBatching: true, compressionOptions: enabledCompressionConfig },
+				{ explicitSchemaControl: true },
+				{ gcOptions: { enableGCSweep: true } },
+				// Adding in an arbitrary entry into the IGCRuntimeOptions object
+				{ gcOptions: { enableGCSweep: true, sweepGracePeriodMs: 1 } },
+				{ enableRuntimeIdCompressor: "on" },
+				{ enableRuntimeIdCompressor: "delayed" },
+				{ createBlobPayloadPending: true },
+				{ flushMode: FlushMode.TurnBased },
+			]) {
+				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
+					const runtimeOptions = {
+						...runtimeOption,
+					} as unknown as IContainerRuntimeOptionsInternal;
+					const logger = new MockLogger();
+					const minVersionForCollab = "1.0.0";
+					await assert.rejects(async () => {
+						await ContainerRuntime.loadRuntime({
+							context: getMockContext({ logger }) as IContainerContext,
+							registryEntries: [],
+							existing: false,
+							runtimeOptions,
+							provideEntryPoint: mockProvideEntryPoint,
+							minVersionForCollab,
+						});
+					});
+				});
+			}
+			it("does not throw if minVersionForCollab is not set and the default is incompatible with runtimeOptions", async () => {
+				const logger = new MockLogger();
+				await assert.doesNotReject(async () => {
+					await ContainerRuntime.loadRuntime({
+						context: getMockContext({ logger }) as IContainerContext,
+						registryEntries: [],
+						existing: false,
+						// We would normally throw (since `createBlobPayloadPending` requires 2.40), but since we did
+						// not explicity set minVersionForCollab, we allow it.
+						runtimeOptions: { createBlobPayloadPending: true },
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+				});
+			});
+		});
+
+		describe("Staging Mode", () => {
+			let containerRuntime: ContainerRuntime_WithPrivates;
+
+			beforeEach("init", async () => {
+				containerRuntime = (await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+				submittedOps.length = 0; // reuse array defined higher in this file
+			});
+
+			afterEach("dispose", () => {
+				containerRuntime.dispose();
+				containerRuntime = undefined as unknown as ContainerRuntime_WithPrivates;
+			});
+
+			it("entering and exiting updates inStagingMode flag", () => {
+				assert(
+					containerRuntime.attachState === AttachState.Attached,
+					"PRECONDITION: Expected Attached container",
+				);
+				const controls = containerRuntime.enterStagingMode();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					true,
+					"Runtime should be in staging mode after entry",
+				);
+
+				controls.commitChanges();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					false,
+					"Runtime should exit staging mode after commit",
+				);
+
+				// Enter / discard as a second exit-path
+				containerRuntime.enterStagingMode().discardChanges();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					false,
+					"Runtime should exit staging mode after discard",
+				);
+			});
+
+			it("entering staging mode twice not allowed", () => {
+				const controls = containerRuntime.enterStagingMode();
+				assert.throws(
+					() => containerRuntime.enterStagingMode(),
+					(error: Error & IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Already in staging mode",
+					"Should not allow entering staging mode while already in staging mode",
+				);
+				controls.discardChanges();
+				// Now we can enter staging mode again
+				containerRuntime.enterStagingMode();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					true,
+					"Runtime should be in staging mode after re-entry",
+				);
+			});
+
+			it("can enter staging mode while attaching", async () => {
+				const mockContext = getMockContext({
+					attachState: AttachState.Attaching,
+				}) as IContainerContext;
+				containerRuntime = (await ContainerRuntime.loadRuntime({
+					context: mockContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+
+				assert.doesNotThrow(
+					() => containerRuntime.enterStagingMode(),
+					"Should allow entering staging mode while Attaching",
+				);
+			});
+
+			it("cannot enter staging mode while detached", async () => {
+				const mockContext = getMockContext({
+					attachState: AttachState.Detached,
+				}) as IContainerContext;
+				containerRuntime = (await ContainerRuntime.loadRuntime({
+					context: mockContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+
+				assert.throws(
+					() => containerRuntime.enterStagingMode(),
+					(error: Error & IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Cannot enter staging mode while Detached",
+					"Should not allow entering staging mode while Detached",
+				);
+			});
+
+			it("commitChanges submits staged ops", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+
+				// Won't be resubmitted when exiting staging mode
+				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
+
+				const controls = containerRuntime.enterStagingMode();
+				assert(
+					channelCollectionStub.notifyStagingMode.calledOnceWithExactly(true),
+					"Expected notifyStagingMode to be called with true",
+				);
+
+				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
+				// but not the staged op (even with flush)
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
+
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				containerRuntime.flush();
+				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
+
+				// default options: { squash: false }
+				controls.commitChanges();
+
+				assert(
+					channelCollectionStub.reSubmit.calledOnce,
+					"Expected reSubmit to be called once. Prestaging op should not be resubmitted",
+				);
+				assert(
+					channelCollectionStub.reSubmit.calledWithExactly(
+						"component",
+						{ address: "2", contents: "staged-op" },
+						"LOCAL_OP_METADATA",
+						/* squash: */ false, // False by default on commitChanges
+					),
+					"Unexpected args for reSubmit",
+				);
+				assert(
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
+					"Expected notifyStagingMode to be called with false on the second call",
+				);
+
+				assert.equal(
+					submittedOps.length,
+					2,
+					"Staged op should be resubmitted after commitChanges",
+				);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(submittedOps[1].contents.address, "2", "Unexpected staged op address");
+			});
+
+			it("discardChanges drops staged ops", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+
+				// Won't be rolled back when exiting staging mode
+				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
+
+				const controls = containerRuntime.enterStagingMode();
+
+				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
+				// but not the staged op (even with flush)
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
+
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "3", "staged-op", "LOCAL_OP_METADATA");
+				containerRuntime.flush();
+				assert.equal(submittedOps.length, 1, "No more ops expected while staged");
+
+				controls.discardChanges();
+
+				assert.deepEqual(
+					channelCollectionStub.rollback.getCalls().map((call) => call.args),
+					[
+						// LIFO order for rolling back
+						["component", { address: "3", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+						["component", { address: "2", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+						// Doesn't rollback the op from before staging mode
+					],
+					"Unexpected args for rollback",
+				);
+				assert(
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
+					"Expected notifyStagingMode to be called with false on the second call",
+				);
+
+				assert.equal(
+					submittedOps.length,
+					1, // From before staging mode
+					"Staged op should NOT be submitted after discardChanges",
+				);
+			});
+
+			it("discardChanges resets isDirty state", () => {
+				stubChannelCollection(containerRuntime);
+
+				const controls = containerRuntime.enterStagingMode();
+
+				submitDataStoreOp(containerRuntime, "1", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from Outbox)");
+				containerRuntime.flush();
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from PSM)");
+
+				controls.discardChanges();
+
+				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
 		});
 	});

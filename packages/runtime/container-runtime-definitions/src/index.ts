@@ -4,9 +4,26 @@
  */
 
 export type {
+	ClientConnectionId,
+	ContainerExtensionFactory,
+	ContainerExtensionId,
+	ContainerExtensionStore,
+	ContainerExtension,
+	ExtensionHost,
+	ExtensionHostEvents,
+	ExtensionMessage,
+	ExtensionRuntimeProperties,
+	InboundExtensionMessage,
+	OutboundExtensionMessage,
+	RawInboundExtensionMessage,
+	UnverifiedBrand,
+	VerifiedInboundExtensionMessage,
+} from "./containerExtension.js";
+export type {
 	IContainerRuntime,
 	IContainerRuntimeBaseWithCombinedEvents,
 	IContainerRuntimeEvents,
+	IContainerRuntimeInternal,
 	IContainerRuntimeWithResolveHandle_Deprecated,
 	SummarizerStopReason,
 	ISummarizeEventProps,

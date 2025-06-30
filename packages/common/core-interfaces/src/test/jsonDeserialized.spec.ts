@@ -10,10 +10,11 @@ import { strict as assert } from "node:assert";
 import {
 	assertIdenticalTypes,
 	createInstanceOf,
+	exposeFromOpaqueJson,
 	replaceBigInt,
 	reviveBigInt,
 } from "./testUtils.js";
-import type { SimpleObjectWithOptionalRecursion } from "./testValues.js";
+import type { ObjectWithOptionalRecursion } from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -51,9 +52,12 @@ import {
 	arrayOfFunctions,
 	arrayOfFunctionsWithProperties,
 	arrayOfObjectAndFunctions,
-	arrayOfBigintAndObjects,
-	arrayOfSymbolsAndObjects,
+	arrayOfBigintOrObjects,
+	arrayOfSymbolOrObjects,
+	arrayOfBigintOrSymbols,
+	arrayOfNumberBigintOrSymbols,
 	readonlyArrayOfNumbers,
+	readonlyArrayOfObjects,
 	object,
 	emptyObject,
 	objectWithBoolean,
@@ -74,8 +78,9 @@ import {
 	objectWithUndefined,
 	objectWithOptionalUndefined,
 	objectWithOptionalBigint,
-	objectWithSymbolKey,
 	objectWithNumberKey,
+	objectWithSymbolKey,
+	objectWithUniqueSymbolKey,
 	objectWithArrayOfNumbers,
 	objectWithArrayOfNumbersSparse,
 	objectWithArrayOfNumbersOrUndefined,
@@ -85,8 +90,8 @@ import {
 	objectWithArrayOfFunctions,
 	objectWithArrayOfFunctionsWithProperties,
 	objectWithArrayOfObjectAndFunctions,
-	objectWithArrayOfBigintAndObjects,
-	objectWithArrayOfSymbolsAndObjects,
+	objectWithArrayOfBigintOrObjects,
+	objectWithArrayOfSymbolOrObjects,
 	objectWithReadonlyArrayOfNumbers,
 	objectWithOptionalNumberNotPresent,
 	objectWithOptionalNumberUndefined,
@@ -108,6 +113,7 @@ import {
 	stringRecordOfUndefined,
 	stringRecordOfUnknown,
 	stringOrNumberRecordOfStrings,
+	stringOrNumberRecordOfObjects,
 	partialStringRecordOfNumbers,
 	partialStringRecordOfUnknown,
 	templatedRecordOfNumbers,
@@ -136,6 +142,9 @@ import {
 	selfRecursiveObjectAndFunction,
 	objectInheritingOptionalRecursionAndWithNestedSymbol,
 	simpleJson,
+	simpleImmutableJson,
+	jsonObject,
+	immutableJsonObject,
 	classInstanceWithPrivateData,
 	classInstanceWithPrivateMethod,
 	classInstanceWithPrivateGetter,
@@ -164,6 +173,15 @@ import {
 	objectWithBrandedString,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
+	opaqueSerializableObject,
+	opaqueDeserializedObject,
+	opaqueSerializableAndDeserializedObject,
+	opaqueSerializableObjectRequiringBigintSupport,
+	opaqueDeserializedObjectRequiringBigintSupport,
+	opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
+	opaqueSerializableObjectExpectingBigintSupport,
+	opaqueDeserializedObjectExpectingBigintSupport,
+	opaqueSerializableAndDeserializedObjectExpectingBigintSupport,
 } from "./testValues.js";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -172,6 +190,7 @@ import type {
 	JsonDeserialized,
 	JsonTypeWith,
 	NonNullJsonObjectWith,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
@@ -187,7 +206,7 @@ import type {
  * `expected` parameter type would ideally be `JsonDeserialized<T>` but that
  * may influence the type inference of the test. So, instead, use `unknown`.
  */
-function passThru<T>(v: T, expected?: unknown): JsonDeserialized<T> {
+function passThru<const T>(v: T, expected?: unknown): JsonDeserialized<T> {
 	const stringified = JSON.stringify(v);
 	if (stringified === undefined) {
 		throw new Error("JSON.stringify returned undefined");
@@ -206,7 +225,7 @@ function passThru<T>(v: T, expected?: unknown): JsonDeserialized<T> {
  * @param error - error expected during serialization round-trip
  * @returns dummy result to allow further type checking
  */
-function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
+function passThruThrows<const T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
 	assert.throws(() => passThru(v), expectedThrow);
 	return undefined as unknown as JsonDeserialized<T>;
 }
@@ -214,7 +233,7 @@ function passThruThrows<T>(v: T, expectedThrow: Error): JsonDeserialized<T> {
 /**
  * Similar to {@link passThru} but specifically handles `bigint` values.
  */
-function passThruHandlingBigint<T>(
+function passThruHandlingBigint<const T>(
 	v: T,
 	expected?: unknown,
 ): JsonDeserialized<T, { AllowExactly: [bigint] }> {
@@ -233,7 +252,7 @@ function passThruHandlingBigint<T>(
 /**
  * Similar to {@link passThruThrows} but specifically handles `bigint` values.
  */
-function passThruHandlingBigintThrows<T>(
+function passThruHandlingBigintThrows<const T>(
 	v: T,
 	expectedThrow: Error,
 ): JsonDeserialized<T, { AllowExactly: [bigint] }> {
@@ -244,7 +263,7 @@ function passThruHandlingBigintThrows<T>(
 /**
  * Similar to {@link passThru} but specifically handles certain function signatures.
  */
-function passThruHandlingSpecificFunction<T>(
+function passThruHandlingSpecificFunction<const T>(
 	_v: T,
 ): JsonDeserialized<T, { AllowExactly: [(_: string) => number] }> {
 	return undefined as unknown as JsonDeserialized<
@@ -256,7 +275,7 @@ function passThruHandlingSpecificFunction<T>(
 /**
  * Similar to {@link passThru} but specifically handles any Fluid handle.
  */
-function passThruHandlingFluidHandle<T>(
+function passThruHandlingFluidHandle<const T>(
 	_v: T,
 ): JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }> {
 	return undefined as unknown as JsonDeserialized<T, { AllowExtensionOf: IFluidHandle }>;
@@ -265,7 +284,7 @@ function passThruHandlingFluidHandle<T>(
 /**
  * Similar to {@link passThru} but preserves `unknown` instead of substituting `JsonTypeWith`.
  */
-function passThruPreservingUnknown<T>(
+function passThruPreservingUnknown<const T>(
 	_v: T,
 ): JsonDeserialized<T, { AllowExactly: [unknown] }> {
 	return undefined as unknown as JsonDeserialized<T, { AllowExactly: [unknown] }>;
@@ -407,13 +426,13 @@ describe("JsonDeserialized", () => {
 			});
 			it("array of partially supported (bigint or basic object) becomes basic object only", () => {
 				const resultRead = passThruThrows(
-					arrayOfBigintAndObjects,
+					arrayOfBigintOrObjects,
 					new TypeError("Do not know how to serialize a BigInt"),
 				);
 				assertIdenticalTypes(resultRead, createInstanceOf<{ property: string }[]>());
 			});
 			it("array of partially supported (symbols or basic object) is modified with null", () => {
-				const resultRead = passThru(arrayOfSymbolsAndObjects, [null]);
+				const resultRead = passThru(arrayOfSymbolOrObjects, [null]);
 				assertIdenticalTypes(resultRead, createInstanceOf<({ property: string } | null)[]>());
 			});
 			it("array of unsupported (bigint) becomes never[]", () => {
@@ -440,11 +459,11 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, createInstanceOf<({ property: number } | null)[]>());
 			});
 			it("array of `bigint | symbol` becomes null[]", () => {
-				const resultRead = passThru([bigintOrSymbol], [null]);
+				const resultRead = passThru(arrayOfBigintOrSymbols, [null]);
 				assertIdenticalTypes(resultRead, createInstanceOf<null[]>());
 			});
 			it("array of `number | bigint | symbol` becomes (number|null)[]", () => {
-				const resultRead = passThru([numberOrBigintOrSymbol], [7]);
+				const resultRead = passThru(arrayOfNumberBigintOrSymbols, [7]);
 				assertIdenticalTypes(resultRead, createInstanceOf<(number | null)[]>());
 			});
 			it("readonly array of supported types (numbers) are preserved", () => {
@@ -454,6 +473,14 @@ describe("JsonDeserialized", () => {
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 				resultRead.push(0);
 				assert.deepStrictEqual(resultRead, [...readonlyArrayOfNumbers, 0]);
+			});
+			it("readonly array of supported types (simple object) are preserved", () => {
+				const resultRead = passThru(readonlyArrayOfObjects);
+				assertIdenticalTypes(resultRead, readonlyArrayOfObjects);
+				// @ts-expect-error readonly array does not appear to support `push`, but works at runtime.
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+				resultRead.push("not even an object");
+				assert.deepStrictEqual(resultRead, [...readonlyArrayOfObjects, "not even an object"]);
 			});
 		});
 
@@ -508,6 +535,10 @@ describe("JsonDeserialized", () => {
 			it("`string`|`number` indexed record of `string`s", () => {
 				const resultRead = passThru(stringOrNumberRecordOfStrings);
 				assertIdenticalTypes(resultRead, stringOrNumberRecordOfStrings);
+			});
+			it("`string`|`number` indexed record of objects", () => {
+				const resultRead = passThru(stringOrNumberRecordOfObjects);
+				assertIdenticalTypes(resultRead, stringOrNumberRecordOfObjects);
 			});
 			it("`string` indexed record of `number`|`string`s with known properties", () => {
 				const resultRead = passThru(stringRecordOfNumbersOrStringsWithKnownProperties);
@@ -565,9 +596,13 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, objectWithAlternatingRecursion);
 			});
 
-			it("simple json (`JsonTypeWith<never>`)", () => {
-				const resultRead = passThru(simpleJson);
-				assertIdenticalTypes(resultRead, simpleJson);
+			it("simple non-null object json (`NonNullJsonObjectWith<never>`)", () => {
+				const resultRead = passThru(jsonObject);
+				assertIdenticalTypes(resultRead, jsonObject);
+			});
+			it("simple read-only non-null object json (`ReadonlyNonNullJsonObjectWith<never>`)", () => {
+				const resultRead = passThru(immutableJsonObject);
+				assertIdenticalTypes(resultRead, immutableJsonObject);
 			});
 
 			it("non-const enum", () => {
@@ -642,6 +677,13 @@ describe("JsonDeserialized", () => {
 					assertIdenticalTypes(resultRead, objectWithOptionalNumberDefined);
 				});
 			});
+
+			it("OpaqueJsonDeserialized<{number:number}>", () => {
+				const resultRead = passThru(opaqueDeserializedObject);
+				assertIdenticalTypes(resultRead, opaqueDeserializedObject);
+				const transparentResult = exposeFromOpaqueJson(resultRead);
+				assertIdenticalTypes(transparentResult, objectWithNumber);
+			});
 		});
 
 		describe("partially supported object types are modified", () => {
@@ -675,20 +717,20 @@ describe("JsonDeserialized", () => {
 				});
 
 				it("object with inherited recursion extended with unsupported properties", () => {
-					const resultRead = passThru(
-						{ outer: objectInheritingOptionalRecursionAndWithNestedSymbol },
-						{
-							outer: {
-								recursive: { recursive: { recursive: {} } },
-								complex: { number: 0 },
-							},
+					const objectWithInheritedRecursionAndNestedSymbol = {
+						outer: objectInheritingOptionalRecursionAndWithNestedSymbol,
+					};
+					const resultRead = passThru(objectWithInheritedRecursionAndNestedSymbol, {
+						outer: {
+							recursive: { recursive: { recursive: {} } },
+							complex: { number: 0 },
 						},
-					);
+					});
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
 							outer: {
-								recursive?: SimpleObjectWithOptionalRecursion;
+								recursive?: ObjectWithOptionalRecursion;
 								complex: { number: number };
 							};
 						}>(),
@@ -713,6 +755,16 @@ describe("JsonDeserialized", () => {
 					// @ts-expect-error `never` property (type never) should not be preserved
 					resultRead satisfies typeof objectWithNever;
 				});
+
+				it("object with `symbol` key", () => {
+					const resultRead = passThru(objectWithSymbolKey, {});
+					assertIdenticalTypes(resultRead, {});
+				});
+				it("object with [unique] symbol key", () => {
+					const resultRead = passThru(objectWithUniqueSymbolKey, {});
+					assertIdenticalTypes(resultRead, {});
+				});
+
 				it("`string` indexed record of `undefined`", () => {
 					const resultRead = passThru(stringRecordOfUndefined, {});
 					assertIdenticalTypes(resultRead, {});
@@ -792,11 +844,6 @@ describe("JsonDeserialized", () => {
 					);
 				});
 
-				it("object with symbol key", () => {
-					const resultRead = passThru(objectWithSymbolKey, {});
-					assertIdenticalTypes(resultRead, {});
-				});
-
 				it("object with recursion and `symbol` unrolls 4 times and then has generic Json", () => {
 					const resultRead = passThru(objectWithSymbolOrRecursion, { recurse: {} });
 					assertIdenticalTypes(
@@ -840,7 +887,10 @@ describe("JsonDeserialized", () => {
 					);
 				});
 				it("object with function object with recursion", () => {
-					const resultRead = passThru({ outerFnOjb: selfRecursiveFunctionWithProperties }, {});
+					const objectWithFunctionObjectAndRecursion = {
+						outerFnOjb: selfRecursiveFunctionWithProperties,
+					};
+					const resultRead = passThru(objectWithFunctionObjectAndRecursion, {});
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
@@ -859,10 +909,12 @@ describe("JsonDeserialized", () => {
 					);
 				});
 				it("object with object and function with recursion", () => {
-					const resultRead = passThru(
-						{ outerFnOjb: selfRecursiveObjectAndFunction },
-						{ outerFnOjb: { recurse: {} } },
-					);
+					const objectWithObjectAndFunctionWithRecursion = {
+						outerFnOjb: selfRecursiveObjectAndFunction,
+					};
+					const resultRead = passThru(objectWithObjectAndFunctionWithRecursion, {
+						outerFnOjb: { recurse: {} },
+					});
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
@@ -924,21 +976,21 @@ describe("JsonDeserialized", () => {
 				});
 				it("object with array of partially supported (bigint or basic object) becomes basic object only", () => {
 					const resultRead = passThruThrows(
-						objectWithArrayOfBigintAndObjects,
+						objectWithArrayOfBigintOrObjects,
 						new TypeError("Do not know how to serialize a BigInt"),
 					);
 					assertIdenticalTypes(
 						resultRead,
-						createInstanceOf<{ arrayOfBigintAndObjects: { property: string }[] }>(),
+						createInstanceOf<{ arrayOfBigintOrObjects: { property: string }[] }>(),
 					);
 				});
 				it("object with array of partially supported (symbols or basic object) is modified with null", () => {
-					const resultRead = passThru(objectWithArrayOfSymbolsAndObjects, {
-						arrayOfSymbolsAndObjects: [null],
+					const resultRead = passThru(objectWithArrayOfSymbolOrObjects, {
+						arrayOfSymbolOrObjects: [null],
 					});
 					assertIdenticalTypes(
 						resultRead,
-						createInstanceOf<{ arrayOfSymbolsAndObjects: ({ property: string } | null)[] }>(),
+						createInstanceOf<{ arrayOfSymbolOrObjects: ({ property: string } | null)[] }>(),
 					);
 				});
 				it("object with array of unsupported (bigint) becomes never[]", () => {
@@ -979,11 +1031,13 @@ describe("JsonDeserialized", () => {
 					);
 				});
 				it("object with array of `bigint | symbol` becomes null[]", () => {
-					const resultRead = passThru({ array: [bigintOrSymbol] }, { array: [null] });
+					const objectWithArrayOfBigintOrSymbols = { array: [bigintOrSymbol] };
+					const resultRead = passThru(objectWithArrayOfBigintOrSymbols, { array: [null] });
 					assertIdenticalTypes(resultRead, createInstanceOf<{ array: null[] }>());
 				});
 				it("object with array of `number | bigint | symbol` becomes (number|null)[]", () => {
-					const resultRead = passThru({ array: [numberOrBigintOrSymbol] }, { array: [7] });
+					const objectWithArrayOfNumberBigintOrSymbols = { array: [numberOrBigintOrSymbol] };
+					const resultRead = passThru(objectWithArrayOfNumberBigintOrSymbols, { array: [7] });
 					assertIdenticalTypes(resultRead, createInstanceOf<{ array: (number | null)[] }>());
 				});
 				it("object with readonly array of supported types (numbers) are preserved", () => {
@@ -1092,9 +1146,12 @@ describe("JsonDeserialized", () => {
 					const instanceRead = passThru(classInstanceWithPublicMethod, {
 						public: "public",
 					});
-					assertIdenticalTypes(instanceRead, {
-						public: "public",
-					});
+					assertIdenticalTypes(
+						instanceRead,
+						createInstanceOf<{
+							public: string;
+						}>(),
+					);
 					// @ts-expect-error getSecret is missing, but required
 					instanceRead satisfies typeof classInstanceWithPublicMethod;
 					// @ts-expect-error getSecret is missing, but required
@@ -1112,9 +1169,12 @@ describe("JsonDeserialized", () => {
 					const instanceRead = passThru(classInstanceWithPrivateMethod, {
 						public: "public",
 					});
-					assertIdenticalTypes(instanceRead, {
-						public: "public",
-					});
+					assertIdenticalTypes(
+						instanceRead,
+						createInstanceOf<{
+							public: string;
+						}>(),
+					);
 					// @ts-expect-error getSecret is missing, but required
 					instanceRead satisfies typeof classInstanceWithPrivateMethod;
 					// @ts-expect-error getSecret is missing, but required
@@ -1132,9 +1192,12 @@ describe("JsonDeserialized", () => {
 					const instanceRead = passThru(classInstanceWithPrivateGetter, {
 						public: "public",
 					});
-					assertIdenticalTypes(instanceRead, {
-						public: "public",
-					});
+					assertIdenticalTypes(
+						instanceRead,
+						createInstanceOf<{
+							public: string;
+						}>(),
+					);
 					// @ts-expect-error secret is missing, but required
 					instanceRead satisfies typeof classInstanceWithPrivateGetter;
 					// @ts-expect-error secret is missing, but required
@@ -1152,9 +1215,12 @@ describe("JsonDeserialized", () => {
 					const instanceRead = passThru(classInstanceWithPrivateSetter, {
 						public: "public",
 					});
-					assertIdenticalTypes(instanceRead, {
-						public: "public",
-					});
+					assertIdenticalTypes(
+						instanceRead,
+						createInstanceOf<{
+							public: string;
+						}>(),
+					);
 					// @ts-expect-error secret is missing, but required
 					instanceRead satisfies typeof classInstanceWithPrivateSetter;
 					// @ts-expect-error secret is missing, but required
@@ -1173,9 +1239,12 @@ describe("JsonDeserialized", () => {
 						public: "public",
 						secret: 0,
 					});
-					assertIdenticalTypes(instanceRead, {
-						public: "public",
-					});
+					assertIdenticalTypes(
+						instanceRead,
+						createInstanceOf<{
+							public: string;
+						}>(),
+					);
 					// @ts-expect-error secret is missing, but required
 					instanceRead satisfies typeof classInstanceWithPrivateData;
 					// @ts-expect-error secret is missing, but required
@@ -1325,6 +1394,114 @@ describe("JsonDeserialized", () => {
 				);
 				assertIdenticalTypes(resultRead, createInstanceOf<NonNullJsonObjectWith<never>>());
 			});
+
+			describe("OpaqueJsonSerialized becomes OpaqueJsonDeserialized counterpart", () => {
+				it("OpaqueJsonSerializable<{number:number}> becomes OpaqueJsonDeserialized<{number:number}>", () => {
+					const resultRead = passThru(opaqueSerializableObject);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<OpaqueJsonDeserialized<{ number: number }>>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, objectWithNumber);
+				});
+				it("OpaqueJsonSerializable<{number:number}>&OpaqueJsonDeserialized<{number:number}> becomes OpaqueJsonDeserialized<{number:number}>", () => {
+					const resultRead = passThru(opaqueSerializableAndDeserializedObject);
+
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<OpaqueJsonDeserialized<{ number: number }>>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, objectWithNumber);
+				});
+			});
+
+			describe("opaque Json types requiring extra allowed types have extras removed", () => {
+				it("opaque serializable object with `bigint`", () => {
+					const resultRead = passThruThrows(
+						opaqueSerializableObjectRequiringBigintSupport,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<OpaqueJsonDeserialized<{ bigint: bigint }>>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, {});
+				});
+				it("opaque deserialized object with `bigint`", () => {
+					const resultRead = passThruThrows(
+						opaqueDeserializedObjectRequiringBigintSupport,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<OpaqueJsonDeserialized<{ bigint: bigint }>>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, {});
+				});
+				it("opaque serializable and deserialized object with `bigint`", () => {
+					const resultRead = passThruThrows(
+						opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
+						new TypeError("Do not know how to serialize a BigInt"),
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<OpaqueJsonDeserialized<{ bigint: bigint }>>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, {});
+				});
+
+				it("opaque serializable object with number array expecting `bigint` support", () => {
+					const resultRead = passThru(opaqueSerializableObjectExpectingBigintSupport);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<
+							OpaqueJsonDeserialized<{ readonlyArrayOfNumbers: readonly number[] }>
+						>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, objectWithReadonlyArrayOfNumbers);
+				});
+				it("opaque deserialized object with number array expecting `bigint` support", () => {
+					const resultRead = passThru(opaqueDeserializedObjectExpectingBigintSupport);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<
+							OpaqueJsonDeserialized<{ readonlyArrayOfNumbers: readonly number[] }>
+						>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, objectWithReadonlyArrayOfNumbers);
+				});
+				it("opaque serializable and deserialized object with number array expecting `bigint` support", () => {
+					const resultRead = passThru(
+						opaqueSerializableAndDeserializedObjectExpectingBigintSupport,
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<
+							OpaqueJsonDeserialized<{ readonlyArrayOfNumbers: readonly number[] }>
+						>(),
+					);
+					const transparentResult = exposeFromOpaqueJson(resultRead);
+					assertIdenticalTypes(transparentResult, objectWithReadonlyArrayOfNumbers);
+				});
+			});
+		});
+
+		describe("fully supported union types are preserved", () => {
+			it("simple json (`JsonTypeWith<never>`)", () => {
+				const resultRead = passThru(simpleJson);
+				assertIdenticalTypes(resultRead, simpleJson);
+			});
+			it("simple read-only json (`ReadonlyJsonTypeWith<never>`)", () => {
+				const resultRead = passThru(simpleImmutableJson);
+				assertIdenticalTypes(resultRead, simpleImmutableJson);
+			});
 		});
 
 		describe("unsupported object types", () => {
@@ -1398,6 +1575,8 @@ describe("JsonDeserialized", () => {
 		});
 	});
 
+	// These test cases are not really negative compilation test like they are to JsonSerializable.
+	// These cases are for instances of notable loss of original information.
 	describe("negative compilation tests", () => {
 		describe("assumptions", () => {
 			it("const enums are never readable", () => {
@@ -1642,11 +1821,35 @@ describe("JsonDeserialized", () => {
 					assertIdenticalTypes(resultRead, arrayOfBigints);
 				});
 				it("array of `bigint` or basic object", () => {
-					const resultRead = passThruHandlingBigint(arrayOfBigintAndObjects);
-					assertIdenticalTypes(resultRead, arrayOfBigintAndObjects);
+					const resultRead = passThruHandlingBigint(arrayOfBigintOrObjects);
+					assertIdenticalTypes(resultRead, arrayOfBigintOrObjects);
+				});
+				it("opaque serializable object with `bigint`", () => {
+					const resultRead = passThruHandlingBigint(
+						opaqueSerializableObjectRequiringBigintSupport,
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<OpaqueJsonDeserialized<{ bigint: bigint }, [bigint]>>(),
+					);
+				});
+				it("opaque deserialized object with `bigint`", () => {
+					const resultRead = passThruHandlingBigint(
+						opaqueDeserializedObjectRequiringBigintSupport,
+					);
+					assertIdenticalTypes(resultRead, opaqueDeserializedObjectRequiringBigintSupport);
+				});
+				it("opaque serializable and deserialized object with `bigint`", () => {
+					const resultRead = passThruHandlingBigint(
+						opaqueSerializableAndDeserializedObjectRequiringBigintSupport,
+					);
+					assertIdenticalTypes(
+						resultRead,
+						createInstanceOf<OpaqueJsonDeserialized<{ bigint: bigint }, [bigint]>>(),
+					);
 				});
 				it("object with specific function", () => {
-					const resultRead = passThruHandlingSpecificFunction({
+					const objectWithSpecificFunction = {
 						genericFn: () => undefined as unknown,
 						specificFn: (v: string) => v.length,
 						specificFnOrAnother: ((v: string) => v.length) as
@@ -1657,9 +1860,10 @@ describe("JsonDeserialized", () => {
 							otherFn: () => undefined as unknown,
 						}),
 						lessRequirementsFn: () => 0 as number,
-						moreSpecificOutputFn: (_v: string) => 0,
+						moreSpecificOutputFn: (_v: string) => 0 as const,
 						nestedWithNumberAndGenericFn: { number: 4, otherFn: () => undefined as unknown },
-					});
+					};
+					const resultRead = passThruHandlingSpecificFunction(objectWithSpecificFunction);
 					assertIdenticalTypes(
 						resultRead,
 						createInstanceOf<{
@@ -1776,7 +1980,7 @@ describe("JsonDeserialized", () => {
 				});
 			});
 
-			describe("continue rejecting unsupported that are not alternately allowed", () => {
+			describe("continues rejecting unsupported that are not alternately allowed", () => {
 				it("`unknown` (simple object) becomes `JsonTypeWith<bigint>`", () => {
 					const resultRead = passThruHandlingBigint(
 						unknownValueOfSimpleRecord,

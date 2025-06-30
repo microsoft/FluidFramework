@@ -16,12 +16,17 @@ export {
 } from "./createAndLoadContainerUtils.js";
 export {
 	ICodeDetailsLoader,
-	IDetachedBlobStorage,
 	IFluidModuleWithDetails,
 	ILoaderProps,
 	ILoaderServices,
 	Loader,
 } from "./loader.js";
+export {
+	driverSupportRequirementsForLoader,
+	loaderCoreCompatDetails,
+	runtimeSupportRequirementsForLoader,
+	loaderCompatDetailsForRuntime,
+} from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {
 	isLocationRedirectionError,
