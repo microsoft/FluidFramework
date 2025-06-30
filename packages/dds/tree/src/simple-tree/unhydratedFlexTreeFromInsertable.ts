@@ -29,6 +29,7 @@ import {
 	type TreeLeafValue,
 	extractFieldProvider,
 	type ContextualFieldProvider,
+	unannotateImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	createField,
@@ -326,7 +327,7 @@ function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexCont
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(unannotateImplicitAllowedTypes(schema.info));
 
 	const fieldsIterator = (
 		Symbol.iterator in data
@@ -421,7 +422,7 @@ function recordToFlexContent(data: FactoryContent, schema: TreeNodeSchema): Flex
 		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+	const allowedChildTypes = normalizeAllowedTypes(unannotateImplicitAllowedTypes(schema.info));
 
 	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
 
