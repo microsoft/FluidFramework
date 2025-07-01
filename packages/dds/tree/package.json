@@ -121,6 +121,8 @@
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",
+		"test:mocha:prod": "mocha --emulateProduction",
+		"test:mocha:prod-help": "echo run tests simulating production configurations as much as possible.",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
 		"test:snapshots:regen": "pnpm test:mocha:esm --snapshot",
 		"test:stress": "cross-env FUZZ_TEST_COUNT=20 FUZZ_STRESS_RUN=normal mocha --ignore \"lib/test/memory/**/*\" --recursive \"lib/test/**/*.spec.js\"",

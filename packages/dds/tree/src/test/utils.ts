@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	HasListeners,
 	IEmitter,
@@ -176,7 +177,6 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
 import type {
 	ISharedObjectKind,
@@ -1429,13 +1429,14 @@ export function moveWithin(
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	let debugBefore: boolean;
-	before(() => {
-		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
-	});
-	after(() => {
-		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
-	});
+	if (isInPerformanceTestingMode) {
+		before(() => {
+			emulateProductionBuild();
+		});
+		after(() => {
+			emulateProductionBuild(false);
+		});
+	}
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {
@@ -1484,4 +1485,27 @@ export function fieldCursorFromInsertable<
 		schema,
 	);
 	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
+}
+
+/**
+ * Allow running test with development only logic disabled.
+ * @remarks
+ * Ideally testing for production style use would be done by producing an actual production bundle and testing that,
+ * but configuring that is more difficult and this is a useful approximation for now.
+ *
+ * Currently this configuration is not run automatically.
+ * As this currently only disables debugAsserts and development only assert messages, the changes of regressions are low.
+ * Currently its considered better to send the testing time on running more fuzz tests.
+ * Some test suites where regressions are more likely do their own testing with and without `emulateProductionBuild`,
+ * further reducing the need to run this configuration regularly.
+ */
+const emulateProduction = process.argv.includes("--emulateProduction");
+
+if (emulateProduction) {
+	before(() => {
+		emulateProductionBuild();
+	});
+	after(() => {
+		emulateProductionBuild(false);
+	});
 }
