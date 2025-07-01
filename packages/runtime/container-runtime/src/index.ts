@@ -112,3 +112,10 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export {
+	runtimeCoreCompatDetails,
+	runtimeCompatDetailsForLoader,
+	runtimeCompatDetailsForDataStore,
+	loaderSupportRequirementsForRuntime,
+	dataStoreSupportRequirementsForRuntime,
+} from "./runtimeLayerCompatState.js";

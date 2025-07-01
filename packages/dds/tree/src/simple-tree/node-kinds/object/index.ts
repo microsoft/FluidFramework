@@ -16,5 +16,5 @@ export {
 export {
 	isObjectNodeSchema,
 	ObjectNodeSchema,
-	type ObjectNodeSchemaInternalData,
+	type ObjectNodeSchemaPrivate,
 } from "./objectNodeTypes.js";
