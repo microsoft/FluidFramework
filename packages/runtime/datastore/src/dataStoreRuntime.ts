@@ -1171,21 +1171,6 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Do not use.
-	 * @deprecated Use `IFluidDataStoreContext.submitMessage` instead.
-	 * @see https://github.com/microsoft/FluidFramework/issues/24406
-	 */
-	public submitMessage(
-		type: DataStoreMessageType,
-		// TODO: use something other than `any` here (breaking change)
-		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-		content: any,
-		localOpMetadata: unknown,
-	): void {
-		this.submit(type, content, localOpMetadata);
-	}
-
-	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
 	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
