@@ -33,34 +33,42 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 	}
 
 	/**
-	 * Initializes the tree with an empty table.
+	 * Initializes the tree with a starter table.
 	 * @remarks Called during the initial creation of the data object.
 	 */
 	public override async initializingFirstTime(): Promise<void> {
-		this.treeView.initialize(
-			new Table({
-				columns: [
-					new Column({
-						id: "column-0",
-						props: {
-							label: "Column 0",
-							hint: "text",
-						},
-					}),
-					new Column({ props: { label: "Column 1", hint: "date" } }),
-					new Column({ props: { label: "Column 2", hint: "checkbox" } }),
-				],
-				rows: [
-					{ id: "row-0", cells: {}, props: {} },
-					{
-						id: "row-1",
-						cells: {
-							"column-1": "Hello world!",
-						},
-						props: {},
-					},
-				],
-			}),
-		);
+		this.treeView.initialize(getInitialTree());
 	}
+}
+
+/**
+ * Gets the initial content for a new table tree.
+ */
+function getInitialTree(): Table {
+	return new Table({
+		columns: [
+			new Column({
+				props: {
+					label: "Column 0",
+					hint: "text",
+				},
+			}),
+			new Column({ props: { label: "Column 1", hint: "date" } }),
+			new Column({ props: { label: "Column 2", hint: "checkbox" } }),
+		],
+		rows: [
+			{
+				cells: {},
+				props: {
+					label: "Row 0",
+				},
+			},
+			{
+				cells: {
+					"column-1": "Hello world!",
+				},
+				props: { label: "Row 1" },
+			},
+		],
+	});
 }
