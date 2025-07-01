@@ -776,16 +776,8 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
-			return this.getStructuralType(
-				fullName,
-				types,
-				() =>
-					this.namedMap(
-						fullName as TName,
-						nameOrAllowedTypes as T,
-						false,
-						true,
-					) as TreeNodeSchema,
+			return this.getStructuralType(fullName, types, () =>
+				this.namedMap(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
@@ -796,7 +788,7 @@ export class SchemaFactory<
 				undefined
 			>;
 		}
-		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		// To actually have type safety, assign to the type this method should return before implicitly up-casting when returning.
 		const out: TreeNodeSchemaBoth<
 			string,
 			NodeKind.Map,
@@ -895,7 +887,7 @@ export class SchemaFactory<
 	 * ```
 	 * @privateRemarks
 	 * The name produced at the type level here is not as specific as it could be, however doing type level sorting and escaping is a real mess.
-	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
+	 * There are cases where not having this full type provided will be less than ideal, since TypeScript's structural types will allow assignment between runtime incompatible types at compile time.
 	 * For example attempts to narrow unions of structural arrays by name won't work.
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
@@ -997,7 +989,7 @@ export class SchemaFactory<
 	 * @returns The structural {@link TreeNodeSchema} associated with the given name and types.
 	 * @throws `UsageError` if a schema structurally named schema with the same name is cached in `structuralTypes` but had different input types.
 	 */
-	private getStructuralType(
+	protected getStructuralType(
 		fullName: string,
 		types: TreeNodeSchema | readonly TreeNodeSchema[],
 		builder: () => TreeNodeSchema,
