@@ -712,7 +712,7 @@ export class ConnectionManager implements IConnectionManager {
 
 					if (delayMs >= remainingTime) {
 						this.logger.sendTelemetryEvent({
-							eventName: "ConnectionCalculatedDelayExceedsTimeout",
+							eventName: "RetryDelayExceedsConnectionTimeout",
 							attempts: connectRepeatCount,
 							duration: formatTick(elapsedTime),
 							calculatedDelayMs: delayMs,
