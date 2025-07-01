@@ -1183,13 +1183,12 @@ export class ContainerRuntime
 			},
 			(error: IErrorBase) => runtime.closeFn(error),
 		);
+		// Initialize the base state of the runtime before it's returned.
+		await runtime.initializeBaseState(context.loader);
 
 		// Apply stashed ops with a reference sequence number equal to the sequence number of the snapshot,
 		// or zero. This must be done before Container replays saved ops.
 		await runtime.pendingStateManager.applyStashedOpsAt(runtimeSequenceNumber ?? 0);
-
-		// Initialize the base state of the runtime before it's returned.
-		await runtime.initializeBaseState(context.loader);
 
 		return runtime;
 	}
@@ -2117,8 +2116,6 @@ export class ContainerRuntime
 	 * Initializes the state from the base snapshot this container runtime loaded from.
 	 */
 	private async initializeBaseState(loader: ILoader): Promise<void> {
-		await this.initializeSummarizer(loader);
-
 		if (
 			this.sessionSchema.idCompressorMode === "on" ||
 			(this.sessionSchema.idCompressorMode === "delayed" && this.connected)
@@ -2139,6 +2136,7 @@ export class ContainerRuntime
 			assert(this.pendingIdCompressorOps.length === 0, 0x8ec /* no pending ops */);
 		}
 
+		await this.initializeSummarizer(loader);
 		await this.garbageCollector.initializeBaseState();
 	}
 

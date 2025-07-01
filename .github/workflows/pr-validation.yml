@@ -12,7 +12,7 @@ on:
       - release/**/*
 
 permissions:
-  pull-requests: write
+  contents: read # for actions/checkout to fetch code
 
 jobs:
   validate-codeowners:
@@ -29,6 +29,8 @@ jobs:
 
   # This job checks that PR template placeholder content has been removed from the PR body.
   placeholder-content:
+    permissions:
+      pull-requests: write # for sitezen/pr-comment-checker to add comments to PRs
     name: PR template placeholder content
     runs-on: ubuntu-latest
     steps:
