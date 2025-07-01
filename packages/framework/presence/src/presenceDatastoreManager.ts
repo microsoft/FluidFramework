@@ -10,6 +10,7 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
@@ -329,6 +330,68 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
+	/**
+	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
+	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
+	 */
+	private stripValidationMetadata(datastore: PresenceDatastore): PresenceDatastore {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		const stripped = {} as PresenceDatastore;
+
+		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			stripped[workspaceAddress] = {} as any;
+
+			for (const [valueKey, clientRecord] of Object.entries(workspace)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				(stripped[workspaceAddress] as any)[valueKey] = {};
+
+				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					(stripped[workspaceAddress] as any)[valueKey][attendeeId] =
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+						this.stripValidationFromValueData(valueData);
+				}
+			}
+		}
+
+		return stripped;
+	}
+
+	/**
+	 * Strips validation metadata from individual value data entries.
+	 */
+	private stripValidationFromValueData(
+		valueData:
+			| InternalTypes.ValueDirectoryOrState<unknown>
+			| InternalTypes.ValueOptionalState<unknown>,
+	): InternalTypes.ValueDirectoryOrState<unknown> | InternalTypes.ValueOptionalState<unknown> {
+		if (valueData === null || typeof valueData !== "object") {
+			return valueData;
+		}
+
+		// Handle directory structures (with "items" property)
+		if ("items" in valueData && typeof valueData.items === "object") {
+			const stripped: InternalTypes.ValueDirectory<unknown> = {
+				rev: valueData.rev,
+				items: {},
+			};
+
+			for (const [key, item] of Object.entries(valueData.items)) {
+				stripped.items[key] = this.stripValidationFromValueData(item) as
+					| InternalTypes.ValueOptionalState<unknown>
+					| InternalTypes.ValueDirectory<unknown>;
+			}
+
+			return stripped;
+		}
+
+		if ("validatedValue" in valueData) {
+			delete valueData.validatedValue;
+		}
+		return valueData;
+	}
+
 	private broadcastAllKnownState(): void {
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
@@ -336,7 +399,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 			},
 		});
 		this.refreshBroadcastRequested = false;

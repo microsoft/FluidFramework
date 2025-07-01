@@ -87,6 +87,7 @@ export function asDeeplyReadonly<T>(value: T): DeepReadonly<T> {
 	return value as DeepReadonly<T>;
 }
 
+// function overloads
 export function asDeeplyReadonlyDeserializedJson<T>(
 	value: OpaqueJsonDeserialized<T>,
 ): DeepReadonly<JsonDeserialized<T>>;
@@ -103,6 +104,10 @@ export function asDeeplyReadonlyDeserializedJson<T>(
 	return value as DeepReadonly<JsonDeserialized<T>> | undefined;
 }
 
+/**
+ * Conditional type that reveals the underlying JSON type of an opaque JSON value. If `T` is an object, the key values
+ * will be revealed.
+ */
 type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
 	? JsonDeserialized<U>
 	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
