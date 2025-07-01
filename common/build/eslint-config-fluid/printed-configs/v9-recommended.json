@@ -1,0 +1,10 @@
+{
+  "info": "ESLint v9 configuration - v9-recommended",
+  "configType": "flat-config",
+  "description": "ESLint v9 uses a flat configuration format exported as an array of configuration objects",
+  "configFile": "v9/recommended.js",
+  "usage": {
+    "legacyFormat": "// .eslintrc.js\nmodule.exports = {\n  extends: [\"@fluidframework/eslint-config-fluid/v9/recommended\"],\n  // ...rest of your config\n}",
+    "flatFormat": "// eslint.config.js\nimport fluidConfig from \"@fluidframework/eslint-config-fluid/v9/recommended\";\n\nexport default [\n  ...fluidConfig,\n  // ...your other configs\n];"
+  }
+}
