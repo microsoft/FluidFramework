@@ -586,7 +586,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Gets the factory that would be used to create the entry point for this datastore based on {@link pkg}.
+	 * Gets the factory that would be used to instantiate this data store by calling `instantiateDataStore` based on {@link pkg}.
 	 * @remarks
 	 * Also populates {@link registry}.
 	 *
