@@ -31,6 +31,7 @@ export function create(
 	riddlerStorageRequestMetricInterval: number,
 	tenantKeyGenerator: ITenantKeyGenerator,
 	cache?: ICache,
+	bypassCache: boolean = false,
 ): Router {
 	const router: Router = Router();
 	const manager = new TenantManager(
@@ -61,6 +62,7 @@ export function create(
 					tenantId,
 					request.body.token,
 					includeDisabledTenant,
+					bypassCache,
 				);
 				handleResponse(validP, response);
 			},
@@ -113,7 +115,7 @@ export function create(
 	router.get("/tenants/:id/keys", (request, response) => {
 		const tenantId = request.params.id;
 		const includeDisabledTenant = getIncludeDisabledFlag(request);
-		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant);
+		const tenantP = manager.getTenantKeys(tenantId, includeDisabledTenant, bypassCache);
 		handleResponse(tenantP, response);
 	});
 
