@@ -248,7 +248,7 @@ export interface IContainerCreateProps {
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
 
 	/**
-	 * Optional property for specifiying a timeout for retry connection loop.
+	 * Optional property for specifying a timeout for retry connection loop.
 	 * If provided, the connection manager will use this value as the maximum time to wait
 	 * for a successful connection before giving up throwing the most recent error.
 	 */
