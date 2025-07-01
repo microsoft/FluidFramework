@@ -836,7 +836,6 @@ export class IntervalCollection
 					assert(previous !== undefined, "must have existed to change");
 					this.localCollection?.add(previous);
 					this.emitChange(previous, interval, true, true);
-					// maybe dispose the interval
 				}
 				if (previous !== interval) {
 					interval.dispose();
