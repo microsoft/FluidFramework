@@ -75,7 +75,7 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 					icon={<Delete24Regular />}
 					style={{ padding: 0, minWidth: "auto" }}
 				/>
-				{row.id}
+				{row.props.label}
 			</span>
 		</TableCell>
 		{columns.map((col) => {
