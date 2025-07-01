@@ -15,6 +15,7 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import { isValueRequiredState } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
@@ -23,6 +24,7 @@ import {
 	objectKeys,
 	toOpaqueJson,
 } from "./internalUtils.js";
+import { createValidatedGetter } from "./latestValueTypes.js";
 import type {
 	LatestClientData,
 	LatestData,
@@ -326,8 +328,12 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 			}
 		}
 	}
+
 	public get(key: K): DeepReadonly<JsonDeserialized<T>> | undefined {
-		return asDeeplyReadonlyDeserializedJson(this.value.items[key]?.value);
+		return this.value.items[key]?.value === undefined
+			? undefined
+			: // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- ternary ensures this is non-null
+				asDeeplyReadonlyDeserializedJson(this.value.items[key]!.value!);
 	}
 	public has(key: K): boolean {
 		return this.value.items[key]?.value !== undefined;
@@ -336,7 +342,11 @@ class ValueMapImpl<T, K extends string | number> implements StateMap<K, T> {
 		const value = toOpaqueJson<T>(inValue);
 		if (!(key in this.value.items)) {
 			this.countDefined += 1;
-			this.value.items[key] = { rev: 0, timestamp: 0, value };
+			this.value.items[key] = {
+				rev: 0,
+				timestamp: 0,
+				value,
+			};
 		}
 		this.updateItem(key, value);
 		this.emitter.emit("localItemUpdated", { key, value: asDeeplyReadonly(inValue) });
@@ -431,7 +441,7 @@ class LatestMapValueManagerImpl<
 		LatestMap<T, Keys>,
 		Required<ValueManager<T, InternalTypes.MapValueState<T, Keys>>>
 {
-	public readonly events = createEmitter<LatestMapEvents<T, Keys, RawValueAccessor<T>>>();
+	public readonly events = createEmitter<LatestMapEvents<T, Keys, ValueAccessor<T>>>();
 	public readonly controls: OptionalBroadcastControl;
 
 	public constructor(
@@ -442,6 +452,7 @@ class LatestMapValueManagerImpl<
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
+		private readonly validator: StateSchemaValidator<T> | undefined,
 	) {
 		this.controls = new OptionalBroadcastControl(controlSettings);
 
@@ -481,6 +492,7 @@ class LatestMapValueManagerImpl<
 	}
 
 	public getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, ValueAccessor<T>>> {
+		const validator = this.validator;
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const attendeeId = attendee.attendeeId;
 		const clientStateMap = allKnownStates.states[attendeeId];
@@ -489,10 +501,9 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			const value = item.value;
-			if (value !== undefined) {
+			if (isValueRequiredState(item)) {
 				items.set(key, {
-					value: asDeeplyReadonlyDeserializedJson(value),
+					value: createValidatedGetter(item, validator),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -545,16 +556,18 @@ class LatestMapValueManagerImpl<
 				revision: item.rev,
 				timestamp: item.timestamp,
 			};
-			if (item.value !== undefined) {
-				const itemValue = asDeeplyReadonlyDeserializedJson(item.value);
+			if (isValueRequiredState(item)) {
 				const updatedItem = {
 					attendee,
 					key,
-					value: itemValue,
+					value: createValidatedGetter(item, this.validator),
 					metadata,
-				} satisfies LatestMapItemUpdatedClientData<T, Keys, RawValueAccessor<T>>;
+				} satisfies LatestMapItemUpdatedClientData<T, Keys, ValueAccessor<T>>;
 				postUpdateActions.push(() => this.events.emit("remoteItemUpdated", updatedItem));
-				allUpdates.items.set(key, { value: itemValue, metadata });
+				allUpdates.items.set(key, {
+					value: updatedItem.value,
+					metadata,
+				});
 			} else if (hadPriorValue !== undefined) {
 				postUpdateActions.push(() =>
 					this.events.emit("remoteItemRemoved", {
@@ -600,8 +613,8 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 export interface LatestMapArguments<T, Keys extends string | number = string | number>
 	extends LatestMapArgumentsRaw<T, Keys> {
 	/**
-	 * A validator function that will be called to do runtime validation of the custom data stored in a presence state
-	 * workspace.
+	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
+	 * recommended. See {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
 }
@@ -610,20 +623,34 @@ export interface LatestMapArguments<T, Keys extends string | number = string | n
 // Overloads should be ordered from most specific to least specific when combined.
 
 /**
- * Factory for creating a {@link LatestMapRaw} State object.
+ * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
  *
  * @beta
  * @sealed
  */
 export interface LatestMapFactory {
 	/**
+	 * Factory for creating a {@link LatestMap} State object.
+	 *
+	 * @remarks
+	 * This overload is used when called with {@link LatestMapArguments}.
+	 * That is, if a validator function is provided.
+	 */
+	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
+		args: LatestMapArguments<T, Keys>,
+	): InternalTypes.ManagerFactory<
+		RegistrationKey,
+		InternalTypes.MapValueState<T, Keys>,
+		LatestMap<T, Keys>
+	>;
+
+	/**
 	 * Factory for creating a {@link LatestMapRaw} State object.
 	 *
-	 * @privateRemarks (change to `remarks` when adding signature overload)
+	 * @remarks
 	 * This overload is used when called with {@link LatestMapArgumentsRaw}.
 	 * That is, if a validator function is _not_ provided.
 	 */
-	// eslint-disable-next-line @typescript-eslint/prefer-function-type -- interface to allow for clean overload evolution
 	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
 		args?: LatestMapArgumentsRaw<T, Keys>,
 	): InternalTypes.ManagerFactory<
@@ -633,31 +660,12 @@ export interface LatestMapFactory {
 	>;
 }
 
-/**
- * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
- */
-export interface LatestMapFactoryInternal extends LatestMapFactory {
-	/**
-	 * Factory for creating a {@link LatestMap} State object.
-	 *
-	 * @remarks
-	 * This overload is used when called with {@link LatestMapArguments}. That is, if a validator function is provided.
-	 */
-	<T, Keys extends string | number = string | number, RegistrationKey extends string = string>(
-		args: LatestMapArguments<T, Keys>,
-	): InternalTypes.ManagerFactory<
-		RegistrationKey,
-		InternalTypes.MapValueState<T, Keys>,
-		LatestMap<T, Keys>
-	>;
-}
-
 // #endregion
 
 /**
  * Factory for creating a {@link LatestMap} or {@link LatestMapRaw} State object.
  */
-export const latestMap: LatestMapFactoryInternal = <
+export const latestMap: LatestMapFactory = <
 	T,
 	Keys extends string | number = string | number,
 	RegistrationKey extends string = string,
@@ -671,10 +679,6 @@ export const latestMap: LatestMapFactoryInternal = <
 	const settings = args?.settings;
 	const initialValues = args?.local;
 	const validator = args?.validator;
-
-	if (validator !== undefined) {
-		throw new Error(`Validators are not yet implemented.`);
-	}
 
 	const timestamp = Date.now();
 	const value: InternalTypes.MapValueState<
@@ -713,6 +717,7 @@ export const latestMap: LatestMapFactoryInternal = <
 				datastoreFromHandle(datastoreHandle),
 				value,
 				settings,
+				validator,
 			),
 		),
 	});
