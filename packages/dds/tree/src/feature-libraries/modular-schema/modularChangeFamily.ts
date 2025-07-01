@@ -757,7 +757,6 @@ export class ModularChangeFamily
 			invalidatedFields: new Set(),
 			invertedRoots: invertRootTable(change.change, isRollback),
 			attachToDetachId: newChangeAtomIdTransform(),
-			detachToAttachId: newChangeAtomIdTransform(),
 		};
 		const { revInfos: oldRevInfos } = getRevInfoFromTaggedChanges([change]);
 		const revisionMetadata = revisionMetadataSourceFromInfo(oldRevInfos);
@@ -926,21 +925,6 @@ export class ModularChangeFamily
 				newAttachId,
 				length,
 				table.invertedRoots.newToOldId,
-			);
-		}
-
-		for (const {
-			start: newDetachId,
-			value: originalAttachId,
-			length,
-		} of table.detachToAttachId.entries()) {
-			renameNodes(
-				table.invertedRoots,
-				newDetachId,
-				originalAttachId,
-				length,
-				undefined,
-				table.invertedRoots.oldToNewId,
 			);
 		}
 	}
@@ -2467,11 +2451,6 @@ interface InvertTable {
 	 * Maps from attach ID in the inverted changeset to the corresponding detach ID in the base changeset.
 	 */
 	attachToDetachId: ChangeAtomIdRangeMap<ChangeAtomId>;
-
-	/**
-	 * Maps from detach ID in the inverted changeset to the corresponding attach ID in the base changeset.
-	 */
-	detachToAttachId: ChangeAtomIdRangeMap<ChangeAtomId>;
 }
 
 interface InvertContext {
@@ -2637,10 +2616,6 @@ class InvertNodeManagerI implements InvertNodeManager {
 		nodeChange: NodeId | undefined,
 		newAttachId: ChangeAtomId,
 	): void {
-		if (!areEqualChangeAtomIds(detachId, newAttachId)) {
-			this.table.attachToDetachId.set(newAttachId, count, detachId);
-		}
-
 		if (nodeChange !== undefined) {
 			assert(count === 1, "A node change should only affect one node");
 
@@ -2672,13 +2647,24 @@ class InvertNodeManagerI implements InvertNodeManager {
 				});
 			}
 		}
+
+		if (!areEqualChangeAtomIds(detachId, newAttachId)) {
+			for (const entry of doesChangeAttachNodes(
+				this.table.change.crossFieldKeys,
+				detachId,
+				count,
+			)) {
+				if (!entry.value) {
+					this.table.attachToDetachId.set(newAttachId, count, detachId);
+				}
+			}
+		}
 	}
 
 	public invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
-		newDetachId: ChangeAtomId,
-	): RangeQueryResult<ChangeAtomId, NodeId> {
+	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
 		let countToProcess = count;
 
 		const detachIdEntry = firstDetachIdFromAttachId(
@@ -2689,40 +2675,35 @@ class InvertNodeManagerI implements InvertNodeManager {
 
 		countToProcess = detachIdEntry.length;
 
-		if (!areEqualChangeAtomIdOpts(attachId, newDetachId)) {
-			const detachEntry = this.table.change.crossFieldKeys.getFirst(
-				{ target: CrossFieldTarget.Source, ...detachIdEntry.value },
+		const detachEntry = getFirstFieldForCrossFieldKey(
+			this.table.change,
+			{ target: CrossFieldTarget.Source, ...detachIdEntry.value },
+			countToProcess,
+		);
+		countToProcess = detachEntry.length;
+
+		let result: RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
+		if (detachEntry.value !== undefined) {
+			const moveEntry = this.table.entries.getFirst(attachId, countToProcess);
+			result = { ...moveEntry, value: { nodeChange: moveEntry.value } };
+		} else {
+			// This node is detached in the input context of the original change.
+			const nodeIdEntry = rangeQueryChangeAtomIdMap(
+				this.table.change.rootNodes.nodeChanges,
+				detachIdEntry.value,
 				countToProcess,
 			);
 
-			countToProcess = detachEntry.length;
-
-			if (detachEntry.value === undefined) {
-				// The original changeset does not reattach these nodes, and we can discard any existing renames.
-				deleteNodeRename(this.table.invertedRoots, attachId, countToProcess);
-			} else {
-				// The original changeset moves these nodes.
-				// If the original changeset has a rename between the detach and the attach,
-				// we need to make sure that the inverted attach and detach are still linked by a rename.
-				this.table.detachToAttachId.set(newDetachId, countToProcess, attachId);
-			}
+			countToProcess = nodeIdEntry.length;
+			result = {
+				start: attachId,
+				value: { nodeChange: nodeIdEntry.value, detachId: detachIdEntry.value },
+				length: countToProcess,
+			};
 		}
 
-		const nodeIdEntry = rangeQueryChangeAtomIdMap(
-			this.table.change.rootNodes.nodeChanges,
-			detachIdEntry.value,
-			countToProcess,
-		);
-
-		countToProcess = nodeIdEntry.length;
-
-		const result: RangeQueryResult<ChangeAtomId, NodeId> =
-			nodeIdEntry.value !== undefined
-				? { start: attachId, value: nodeIdEntry.value, length: countToProcess }
-				: this.table.entries.getFirst(attachId, countToProcess);
-
-		if (result.value !== undefined) {
-			setInChangeAtomIdMap(this.table.invertedNodeToParent, result.value, {
+		if (result.value?.nodeChange !== undefined) {
+			setInChangeAtomIdMap(this.table.invertedNodeToParent, result.value.nodeChange, {
 				field: this.fieldId,
 			});
 		}
@@ -2827,7 +2808,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 
 		const attachFieldEntry = getFirstFieldForCrossFieldKey(
 			this.table.baseChange,
-			{ ...attachIdEntry.value, target: CrossFieldTarget.Destination },
+			{ ...baseAttachId, target: CrossFieldTarget.Destination },
 			countToProcess,
 		);
 
@@ -3140,12 +3121,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
-		preserveRename: boolean,
+		convertToPin: boolean,
 	): void {
-		if (preserveRename) {
-			return;
-		}
-
 		const areSameEntry = this.areSameNodes(baseDetachId, newAttachId, count);
 
 		const countToProcess = areSameEntry.length;
@@ -3154,6 +3131,26 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			// Note that deleting the rename from `this.table.composedRootNodes` would change the result of this method
 			// if it were rerun due to the field being invalidated, so we instead record that the rename should be deleted later.
 			this.table.renamesToDelete.set(baseDetachId, countToProcess, true);
+		}
+
+		this.table.removedCrossFieldKeys.set(
+			{ target: CrossFieldTarget.Source, ...baseDetachId },
+			countToProcess,
+			true,
+		);
+
+		if (convertToPin) {
+			this.table.movedCrossFieldKeys.set(
+				{ target: CrossFieldTarget.Source, ...newAttachId },
+				countToProcess,
+				this.fieldId,
+			);
+		} else {
+			this.table.removedCrossFieldKeys.set(
+				{ target: CrossFieldTarget.Destination, ...newAttachId },
+				countToProcess,
+				true,
+			);
 		}
 
 		if (countToProcess < count) {
@@ -4061,7 +4058,7 @@ function cloneRootTable(table: RootNodeTable): RootNodeTable {
 }
 
 function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNodeTable {
-	const invertedNodeChanges: ChangeAtomIdBTree<NodeId> = newTupleBTree();
+	const invertedRoots: RootNodeTable = newRootTable();
 	for (const [[revision, localId], nodeId] of change.rootNodes.nodeChanges.entries()) {
 		const detachId: ChangeAtomId = { revision, localId };
 		const renamedId = firstAttachIdFromDetachId(change.rootNodes, detachId, 1).value;
@@ -4072,36 +4069,35 @@ function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNod
 			change.crossFieldKeys.getFirst({ ...renamedId, target: CrossFieldTarget.Destination }, 1)
 				.value === undefined
 		) {
-			setInChangeAtomIdMap(invertedNodeChanges, renamedId, nodeId);
+			setInChangeAtomIdMap(invertedRoots.nodeChanges, renamedId, nodeId);
 		}
 	}
 
-	const invertedRoots: RootNodeTable = {
-		oldToNewId: change.rootNodes.newToOldId.clone(),
-		newToOldId: change.rootNodes.oldToNewId.clone(),
-		nodeChanges: invertedNodeChanges,
-	};
-
-	if (!isRollback) {
-		// Renames which do not have an associated attach or detach should not be undone.
+	if (isRollback) {
+		// We only invert renames of nodes which are not attached or detached by this changeset.
+		// When we invert an attach we will create a detach which incorporates the rename.
 		for (const {
 			start: oldId,
 			value: newId,
 			length,
 		} of change.rootNodes.oldToNewId.entries()) {
+			for (const detachEntry of doesChangeDetachNodes(change.crossFieldKeys, newId, length)) {
+				assert(
+					!detachEntry.value,
+					"A changeset should not have a rename and detach for the same node.",
+				);
+			}
+
 			for (const attachEntry of doesChangeAttachNodes(change.crossFieldKeys, newId, length)) {
 				if (!attachEntry.value) {
 					// XXX: Improve range map API
 					const offset = subtractChangeAtomIds(attachEntry.start, newId);
-					for (const detachEntry of doesChangeDetachNodes(
-						change.crossFieldKeys,
+					renameNodes(
+						invertedRoots,
+						offsetChangeAtomId(newId, offset),
 						offsetChangeAtomId(oldId, offset),
 						attachEntry.length,
-					)) {
-						if (!detachEntry.value) {
-							deleteNodeRename(invertedRoots, attachEntry.start, detachEntry.length);
-						}
-					}
+					);
 				}
 			}
 		}

@@ -65,18 +65,16 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		}
 
 		if (change.valueReplace?.src !== undefined) {
-			const detachIdForInverse = isRollback
-				? change.valueReplace.src
-				: makeChangeAtomId(change.valueReplace.src.localId, revision);
-
-			const attachEntry = nodeManager.invertAttach(
+			const attachEntry = nodeManager.invertAttach(change.valueReplace.src, 1);
+			const detachIdForInverse = invertAttachId(
 				change.valueReplace.src,
-				1,
-				detachIdForInverse,
+				revision,
+				isRollback,
+				attachEntry.value?.detachId,
 			);
 
-			if (attachEntry.value !== undefined) {
-				inverted.childChange = attachEntry.value;
+			if (attachEntry.value?.nodeChange !== undefined) {
+				inverted.childChange = attachEntry.value.nodeChange;
 			}
 
 			inverted.nodeDetach = detachIdForInverse;
@@ -209,6 +207,7 @@ function compose(
 		change1.nodeDetach !== undefined &&
 		areEqualChangeAtomIdOpts(change1.nodeDetach, change2.valueReplace?.src)
 	) {
+		nodeManager.composeDetachAttach(change1.nodeDetach, change1.nodeDetach, 1, false);
 		return makeChangeset(undefined, undefined, composedChildChange);
 	}
 
@@ -503,4 +502,17 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
 	}
 
 	return [[change.childChange, 0]];
+}
+
+function invertAttachId(
+	attachId: ChangeAtomId,
+	revision: RevisionTag | undefined,
+	isRollback: boolean,
+	detachId: ChangeAtomId | undefined,
+): ChangeAtomId {
+	if (!isRollback) {
+		return makeChangeAtomId(attachId.localId, revision);
+	}
+
+	return detachId ?? attachId;
 }

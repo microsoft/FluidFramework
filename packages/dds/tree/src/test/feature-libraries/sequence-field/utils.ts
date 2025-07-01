@@ -818,7 +818,7 @@ function newInvertManager(): TestInvertManager {
 		invertAttach(
 			attachId: ChangeAtomId,
 			count: number,
-		): RangeQueryResult<ChangeAtomId, NodeId> {
+		): RangeQueryResult<ChangeAtomId, DetachedNodeEntry> {
 			throw new Error("Function not implemented.");
 		},
 	};

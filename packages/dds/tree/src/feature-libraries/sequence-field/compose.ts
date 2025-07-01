@@ -179,12 +179,16 @@ function composeMarksIgnoreChild(
 		assert(newMark.type === "Insert", "Unexpected mark type");
 		const detachId = getDetachedNodeId(baseMark);
 		const attachId = getAttachedNodeId(newMark);
+		const areInverses = areEqualChangeAtomIds(
+			getAttachedNodeId(newMark),
+			getDetachedNodeId(baseMark),
+		);
 
 		// Note that we cannot assert that this returns true,
 		// as it may not be until a second pass that MCF can tell that this is a reattach of the same node.
-		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, false);
+		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, !areInverses);
 
-		if (areEqualChangeAtomIds(getAttachedNodeId(newMark), getDetachedNodeId(baseMark))) {
+		if (areInverses) {
 			// These are inverses which cancel out.
 			return createNoopMark(baseMark.count, undefined);
 		}

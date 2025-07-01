@@ -50,13 +50,11 @@ export interface InvertNodeManager {
 	 * This implies that all attaches in the field must be inverted.
 	 * @param attachId - The ID of the attach to invert.
 	 * @param count - The number of nodes being attached.
-	 * @param newDetachId - The ID of the detach in the inverted changeset.
 	 */
 	invertAttach(
 		attachId: ChangeAtomId,
 		count: number,
-		newDetachId: ChangeAtomId,
-	): RangeQueryResult<ChangeAtomId, NodeId>;
+	): RangeQueryResult<ChangeAtomId, DetachedNodeEntry>;
 }
 
 export interface ComposeNodeManager {
@@ -102,14 +100,14 @@ export interface ComposeNodeManager {
 	 * @param baseDetachId - The ID of the detach in the base changeset.
 	 * @param newAttachId - The ID of the attach in the new changeset.
 	 * @param count - The number of nodes being detached then attached.
-	 * @param preserveRename - When false, the rename from `baseDetachId` to `newAttachId` (if any) will be removed.
-	 * Preserving the rename is needed when the field changeset need to keep referring to the node by both IDs.
+	 * @param convertToPin - Should be set to true if the composed change will include a detach and attach with `newAttachId`.
+	 * Otherwise the composed change should not include either `baseDetachId` or `newAttachId`.
 	 */
 	composeDetachAttach(
 		baseDetachId: ChangeAtomId,
 		newAttachId: ChangeAtomId,
 		count: number,
-		preserveRename: boolean,
+		convertToPin: boolean,
 	): void;
 
 	areSameNodes(

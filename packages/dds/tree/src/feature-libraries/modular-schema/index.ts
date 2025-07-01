@@ -16,6 +16,7 @@ export {
 	type ComposeNodeManager,
 	type CrossFieldMap,
 	type CrossFieldQuerySet,
+	type DetachedNodeEntry,
 	CrossFieldTarget,
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
