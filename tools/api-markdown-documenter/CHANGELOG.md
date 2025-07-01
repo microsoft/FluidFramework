@@ -60,6 +60,9 @@ This functionality was unused, does not align with Markdown nor HTML, and made t
 
 This support has been removed.
 
+Additionally, the `toHtml` transformations no longer accept "rootFormatting" as an argument.
+Contents may be formatted using `SpanNode`s to introduce formatting to the tree instead.
+
 ## 0.20.0
 
 ### Add stronger type restrictions to Documentation Domain
