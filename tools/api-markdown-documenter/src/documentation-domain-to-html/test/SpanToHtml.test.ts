@@ -42,11 +42,7 @@ describe("Span to HTML transformation tests", () => {
 		const node3 = new PlainTextNode(text2);
 
 		const span = new SpanNode([node1, node2, node3], formatting);
-		const expected = h("span", [
-			h("b", [h("i", [text1])]),
-			h("br"),
-			h("b", [h("i", [text2])]),
-		]);
+		const expected = h("b", h("i", [[text1, h("br"), text2]]));
 		assertTransformation(span, expected);
 	});
 
@@ -67,10 +63,7 @@ describe("Span to HTML transformation tests", () => {
 			{ strikethrough: true },
 		);
 
-		const expected = h("span", [
-			h("s", [text1]),
-			h("span", [h("br"), h("b", h("s", [text2]))]),
-		]);
+		const expected = h("s", [text1, h("b", [h("br"), text2])]);
 
 		assertTransformation(span, expected);
 	});
