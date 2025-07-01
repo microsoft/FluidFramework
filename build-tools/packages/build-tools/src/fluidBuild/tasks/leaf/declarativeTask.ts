@@ -34,6 +34,10 @@ export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
 		return this.taskDefinition.gitignore ?? gitignoreDefaultValue;
 	}
 
+	protected override get includeLockFile(): boolean {
+		return this.taskDefinition.includeLockFile ?? super.includeLockFile;
+	}
+
 	protected async getInputGlobs(): Promise<readonly string[]> {
 		return this.taskDefinition.inputGlobs;
 	}

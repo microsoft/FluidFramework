@@ -77,6 +77,17 @@ export interface TaskFileDependencies {
 	 * @defaultValue `["input"]`
 	 */
 	gitignore?: GitIgnoreSetting;
+
+	/**
+	 * Specify whether the task will depend on the package/workspace lock file, this task will be rebuilt if the lock file
+	 * is changed. Provide an economical but broad way to ensure rebuild when tools or package dependencies changes.
+	 *
+	 * Default is true, and it is equivalent to putting the lock file in the `inputGlobs`.
+	 *
+	 * For fine-grained control, use `inputGlobs` and `outputGlobs` to specify the dependencies in `node_modules`
+	 * and set this to false.
+	 */
+	includeLockFile?: boolean;
 }
 
 export interface TaskConfig {
