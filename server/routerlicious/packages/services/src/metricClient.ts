@@ -4,8 +4,8 @@
  */
 
 import { ITrace } from "@fluidframework/protocol-definitions";
-import * as telegraf from "telegrafjs";
 import { DefaultMetricClient, IMetricClient } from "@fluidframework/server-services-core";
+import * as telegraf from "telegrafjs";
 
 class TelegrafClient implements IMetricClient {
 	private readonly telegrafClient: any;

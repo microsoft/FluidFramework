@@ -28,8 +28,8 @@
 	},
 	"dependencies": {
 		"@fluidframework/gitrest-base": "workspace:~",
-		"@fluidframework/server-services-shared": "6.0.0-287165",
-		"@fluidframework/server-services-utils": "6.0.0-287165",
+		"@fluidframework/server-services-shared": "6.0.0-340759",
+		"@fluidframework/server-services-utils": "6.0.0-340759",
 		"body-parser": "^1.20.3",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
@@ -43,7 +43,7 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@types/async": "^3.2.9",
 		"@types/cors": "^2.8.4",
 		"@types/debug": "^4.1.5",

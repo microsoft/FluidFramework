@@ -10,9 +10,15 @@ import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
 import type { Attendee, WorkspaceAddress } from "../index.js";
+import { toOpaqueJson } from "../internalUtils.js";
+import type { GeneralDatastoreMessageContent, InternalWorkspaceAddress } from "../protocol.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
-import { assertFinalExpectations, prepareConnectedPresence } from "./testUtils.js";
+import {
+	assertFinalExpectations,
+	prepareConnectedPresence,
+	attendeeId1,
+} from "./testUtils.js";
 
 import type {
 	LatestRaw,
@@ -23,6 +29,7 @@ import { Notifications, StateFactory } from "@fluidframework/presence/alpha";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";
 
+type StatesObjectUpdateContent = GeneralDatastoreMessageContent[InternalWorkspaceAddress];
 /**
  * Workspace updates
  */
@@ -31,50 +38,50 @@ const attendeeUpdate = {
 		"client1": {
 			"rev": 0,
 			"timestamp": 0,
-			"value": "attendeeId-1",
+			"value": attendeeId1,
 		},
 	},
 } as const;
 const latestUpdate = {
 	"latest": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 1,
 			"timestamp": 0,
-			"value": { x: 1, y: 1, z: 1 },
+			"value": toOpaqueJson({ x: 1, y: 1, z: 1 }),
 		},
 	},
-} as const;
+} as const satisfies StatesObjectUpdateContent;
 const latestMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 1,
 			"items": {
 				"key1": {
 					"rev": 1,
 					"timestamp": 0,
-					"value": { a: 1, b: 1 },
+					"value": toOpaqueJson({ a: 1, b: 1 }),
 				},
 				"key2": {
 					"rev": 1,
 					"timestamp": 0,
-					"value": { c: 1, d: 1 },
+					"value": toOpaqueJson({ c: 1, d: 1 }),
 				},
 			},
 		},
 	},
-} as const;
+} as const satisfies StatesObjectUpdateContent;
 const latestUpdateRev2 = {
 	"latest": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"timestamp": 50,
-			"value": { x: 2, y: 2, z: 2 },
+			"value": toOpaqueJson({ x: 2, y: 2, z: 2 }),
 		},
 	},
-} as const;
+} as const satisfies StatesObjectUpdateContent;
 const itemRemovedMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -84,10 +91,10 @@ const itemRemovedMapUpdate = {
 			},
 		},
 	},
-} as const;
+} as const satisfies StatesObjectUpdateContent;
 const itemRemovedAndItemUpdatedMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"items": {
 				"key2": {
@@ -97,21 +104,21 @@ const itemRemovedAndItemUpdatedMapUpdate = {
 				"key1": {
 					"rev": 2,
 					"timestamp": 50,
-					"value": { a: 2, b: 2 },
+					"value": toOpaqueJson({ a: 2, b: 2 }),
 				},
 			},
 		},
 	},
-};
-const itemUpdatedAndItemRemoveddMapUpdate = {
+} as const satisfies StatesObjectUpdateContent;
+const itemUpdatedAndItemRemovedMapUpdate = {
 	"latestMap": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 2,
 			"items": {
 				"key1": {
 					"rev": 2,
 					"timestamp": 50,
-					"value": { a: 2, b: 2 },
+					"value": toOpaqueJson({ a: 2, b: 2 }),
 				},
 				"key2": {
 					"rev": 2,
@@ -120,21 +127,17 @@ const itemUpdatedAndItemRemoveddMapUpdate = {
 			},
 		},
 	},
-};
-const latestMapItemRemovedAndLatestUpdate = {
-	latestUpdateRev2,
-	itemRemovedMapUpdate,
-} as const;
+} as const satisfies StatesObjectUpdateContent;
 const notificationsUpdate = {
 	"testEvents": {
-		"attendeeId-1": {
+		[attendeeId1]: {
 			"rev": 0,
 			"timestamp": 0,
-			"value": { "name": "newId", "args": [42] },
+			"value": toOpaqueJson({ "name": "newId", "args": [42] }),
 			"ignoreUnmonitored": true,
 		},
 	},
-};
+} as const satisfies StatesObjectUpdateContent;
 
 describe("Presence", () => {
 	describe("events are fired with consistent and final state when", () => {
@@ -230,18 +233,6 @@ describe("Presence", () => {
 			clock.restore();
 		});
 
-		type UpdateContent =
-			| typeof attendeeUpdate
-			| typeof latestUpdate
-			| typeof latestMapUpdate
-			| typeof latestMapItemRemovedAndLatestUpdate
-			| (typeof latestUpdate & typeof latestMapUpdate)
-			| typeof latestUpdateRev2
-			| typeof itemRemovedMapUpdate
-			| typeof itemRemovedAndItemUpdatedMapUpdate
-			| typeof itemUpdatedAndItemRemoveddMapUpdate
-			| typeof notificationsUpdate;
-
 		function setupSharedStatesWorkspace({
 			notifications,
 		}: { notifications?: true } = {}): void {
@@ -290,11 +281,11 @@ describe("Presence", () => {
 			notificationManager = notificationsWorkspace.notifications.testEvents;
 		}
 
-		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
+		function processUpdates(valueManagerUpdates: GeneralDatastoreMessageContent): void {
 			const updates = { "system:presence": attendeeUpdate, ...valueManagerUpdates };
 
 			presence.processSignal(
-				"",
+				[],
 				{
 					type: datastoreUpdateType,
 					content: {
@@ -533,12 +524,13 @@ describe("Presence", () => {
 						setupSpiesAndListeners();
 						const itemRemovedAndItemUpdatedUpdate = {
 							"s:name:testWorkspace": itemRemovedAndItemUpdatedMapUpdate,
-						};
+						} as const satisfies GeneralDatastoreMessageContent;
 						// Act
 						processUpdates(itemRemovedAndItemUpdatedUpdate);
 						// Verify
 						assertSpies();
 					});
+
 					it("with update first", () => {
 						// Setup
 						setupSharedStatesWorkspace();
@@ -548,7 +540,7 @@ describe("Presence", () => {
 						processUpdates(workspace);
 						setupSpiesAndListeners();
 						const itemUpdatedAndItemRemovedUpdate = {
-							"s:name:testWorkspace": itemUpdatedAndItemRemoveddMapUpdate,
+							"s:name:testWorkspace": itemUpdatedAndItemRemovedMapUpdate,
 						};
 						// Act
 						processUpdates(itemUpdatedAndItemRemovedUpdate);
@@ -707,7 +699,7 @@ describe("Presence", () => {
 				const secondWorkspaceUpdate = {
 					"s:name:testWorkspace1": latestUpdateRev2,
 					"n:name:testWorkspace": notificationsUpdate,
-					"s:name:testWorkspace2": itemUpdatedAndItemRemoveddMapUpdate,
+					"s:name:testWorkspace2": itemUpdatedAndItemRemovedMapUpdate,
 				};
 
 				presence.events.on("workspaceActivated", (_, type) => {

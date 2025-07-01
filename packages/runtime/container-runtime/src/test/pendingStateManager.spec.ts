@@ -7,6 +7,7 @@
 
 import assert from "node:assert";
 
+import { booleanCases, generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import {
 	ContainerErrorTypes,
 	type IErrorBase,
@@ -15,8 +16,10 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
+import Sinon from "sinon";
 
 import {
 	ContainerMessageType,
@@ -24,19 +27,31 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import {
+	addBatchMetadata,
 	BatchManager,
 	LocalBatchMessage,
+	OpGroupingManager,
 	type InboundMessageResult,
 } from "../opLifecycle/index.js";
 import {
 	findFirstCharacterMismatched,
 	IPendingMessage,
 	PendingStateManager,
+	type IPendingLocalState,
+	type IRuntimeStateHandler,
+	type PendingBatchResubmitMetadata,
+	type PendingMessageResubmitData,
 } from "../pendingStateManager.js";
 
-type PendingStateManager_WithPrivates = Omit<PendingStateManager, "initialMessages"> & {
-	initialMessages: Deque<IPendingMessage>;
-};
+type Patch<T, U> = Omit<T, keyof U> & U;
+
+type PendingStateManager_WithPrivates = Patch<
+	PendingStateManager,
+	{
+		pendingMessages: Deque<IPendingMessage>;
+		initialMessages: Deque<IPendingMessage>;
+	}
+>;
 
 // Make a mock op with distinguishable contents
 function op(data: string = ""): LocalContainerRuntimeMessage {
@@ -46,9 +61,56 @@ function op(data: string = ""): LocalContainerRuntimeMessage {
 	} as LocalContainerRuntimeMessage;
 }
 
+function withBatchMetadata(
+	messages: LocalBatchMessage[],
+	batchId?: string,
+): LocalBatchMessage[] {
+	return addBatchMetadata({ messages, referenceSequenceNumber: -1 }, batchId).messages;
+}
+
+type StubbedRuntimeStateHandler = {
+	[K in keyof IRuntimeStateHandler]: Sinon.SinonStub<
+		Parameters<IRuntimeStateHandler[K]>,
+		ReturnType<IRuntimeStateHandler[K]>
+	>;
+};
+
 describe("Pending State Manager", () => {
+	const sandbox = Sinon.createSandbox();
+	function getStateHandlerStub(): StubbedRuntimeStateHandler {
+		const stubs: StubbedRuntimeStateHandler = {
+			applyStashedOp: sandbox.stub(),
+			clientId: sandbox.stub(),
+			connected: sandbox.stub(),
+			reSubmitBatch: sandbox.stub(),
+			isActiveConnection: sandbox.stub(),
+			isAttached: sandbox.stub(),
+		};
+		stubs.applyStashedOp.resolves(undefined);
+		stubs.clientId.returns("clientId");
+		stubs.connected.returns(true);
+		stubs.isActiveConnection.returns(true);
+		stubs.isAttached.returns(true);
+		return stubs;
+	}
 	const mockLogger = new MockLogger();
 	const logger = createChildLogger({ logger: mockLogger });
+	const opGroupingManager = new OpGroupingManager({ groupedBatchingEnabled: true }, logger);
+
+	function newPendingStateManager(
+		stubs: IRuntimeStateHandler,
+		stashedLocalState?: IPendingLocalState,
+	): PendingStateManager_WithPrivates {
+		return new PendingStateManager(
+			stubs,
+			stashedLocalState,
+			logger,
+		) as unknown as PendingStateManager_WithPrivates;
+	}
+
+	afterEach("Sinon sandbox restore", () => {
+		sandbox.restore();
+	});
 
 	afterEach("ThrowOnErrorLogs", () => {
 		// Note: If mockLogger is used within a test,
@@ -293,19 +355,13 @@ describe("Pending State Manager", () => {
 		});
 
 		it("empty batch is processed correctly", () => {
-			// Empty batch is reflected in the pending state manager as a single message
-			// with the following metadata:
-			submitBatch(
-				[
-					{
-						contents: JSON.stringify({ type: "groupedBatch", contents: [] }),
-						referenceSequenceNumber: 0,
-						metadata: { batchId: "batchId" },
-					},
-				],
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			pendingStateManager.onFlushEmptyBatch(
+				placeholderMessage,
 				1 /* clientSequenceNumber */,
-				{ emptyBatch: true },
+				false /* staged */,
 			);
+
 			// A groupedBatch is supposed to have nested messages inside its contents,
 			// but an empty batch has no nested messages. When processing en empty grouped batch,
 			// the psm will expect the next pending message to be an "empty" message as portrayed above.
@@ -692,75 +748,6 @@ describe("Pending State Manager", () => {
 		});
 	});
 
-	describe("replayPendingStates", () => {
-		let pendingStateManager: PendingStateManager;
-		const resubmittedBatchIds: (string | undefined)[] = [];
-		const clientId = "clientId";
-
-		beforeEach(async () => {
-			resubmittedBatchIds.length = 0;
-			pendingStateManager = new PendingStateManager(
-				{
-					applyStashedOp: async () => undefined,
-					clientId: () => clientId,
-					connected: () => true,
-					reSubmitBatch: (batch, { batchId }) => {
-						resubmittedBatchIds.push(batchId);
-					},
-					isActiveConnection: () => false,
-					isAttached: () => true,
-				},
-				undefined /* initialLocalState */,
-				logger,
-			);
-		});
-
-		it("replays pending states", () => {
-			const messages = [
-				{
-					type: ContainerMessageType.Rejoin,
-					clientSequenceNumber: 0,
-					referenceSequenceNumber: 0,
-					contents: undefined,
-				},
-				{
-					type: ContainerMessageType.Rejoin,
-					clientSequenceNumber: 1,
-					referenceSequenceNumber: 0,
-					contents: undefined,
-				},
-			] as const;
-			pendingStateManager.onFlushBatch(
-				messages.map<LocalBatchMessage>((message) => ({
-					runtimeOp: {
-						type: message.type,
-						contents: message.contents,
-					},
-					referenceSequenceNumber: message.referenceSequenceNumber,
-				})),
-				0,
-				false /* staged */,
-			);
-			pendingStateManager.replayPendingStates();
-			assert.strictEqual(resubmittedBatchIds[0], `${clientId}_[0]`);
-			assert.strictEqual(resubmittedBatchIds[1], `${clientId}_[0]`);
-		});
-
-		it("replays pending states with empty batch", () => {
-			pendingStateManager.onFlushEmptyBatch(
-				{
-					localOpMetadata: { emptyBatch: true },
-					referenceSequenceNumber: 0,
-					metadata: { batchId: "batchId" },
-				},
-				0,
-				false /* staged */,
-			);
-			pendingStateManager.replayPendingStates();
-			assert.strictEqual(resubmittedBatchIds[0], "batchId");
-		});
-	});
-
 	describe("applyStashedOpsAt", () => {
 		it("applyStashedOpsAt", async () => {
 			const applyStashedOps: string[] = [];
@@ -772,6 +759,7 @@ describe("Pending State Manager", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					runtimeOp: undefined,
 				},
 				{
 					type: "message",
@@ -780,6 +768,7 @@ describe("Pending State Manager", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+					runtimeOp: undefined,
 				},
 			];
 
@@ -801,18 +790,23 @@ describe("Pending State Manager", () => {
 		});
 
 		it("applyStashedOpsAt for empty batch", async () => {
-			const applyStashedOps: string[] = [];
-			const messages: IPendingMessage[] = [
+			const oldPsm = new PendingStateManager(
 				{
-					type: "message",
-					content: '{"type":"groupedBatch", "contents": []}',
-					referenceSequenceNumber: 10,
-					opMetadata: undefined,
-					localOpMetadata: { emptyBatch: true },
-					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+					applyStashedOp: async () => undefined,
+					clientId: () => "1",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
 				},
-			];
+				undefined /* initialLocalState */,
+				logger,
+			);
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
+			const localStateWithEmptyBatch = oldPsm.getLocalState(0);
 
+			const applyStashedOps: string[] = [];
 			const pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: async (content) => applyStashedOps.push(content),
@@ -822,7 +816,7 @@ describe("Pending State Manager", () => {
 					isActiveConnection: () => false,
 					isAttached: () => true,
 				},
-				{ pendingStates: messages },
+				localStateWithEmptyBatch,
 				logger,
 			);
 			await pendingStateManager.applyStashedOpsAt();
@@ -960,6 +954,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 			{
 				type: "message",
@@ -968,6 +963,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 2, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 			{
 				type: "message",
@@ -976,6 +972,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 3, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 			{
 				type: "message",
@@ -984,6 +981,7 @@ describe("Pending State Manager", () => {
 				localOpMetadata: undefined,
 				opMetadata: undefined,
 				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 4, length: 1, staged: false },
+				runtimeOp: undefined,
 			},
 		];
 		const forFlushedMessages = forInitialMessages.map<LocalBatchMessage>(
@@ -1061,6 +1059,564 @@ describe("Pending State Manager", () => {
 				pendingStateManager.minimumPendingMessageSequenceNumber,
 				undefined,
 				"Should no minimum sequence number as there are no messages",
+			);
+		});
+	});
+
+	describe("hasPendingUserChanges", () => {
+		// eslint-disable-next-line unicorn/consistent-function-scoping
+		function createPendingStateManager(
+			pendingMessages: IPendingMessage[] = [],
+			initialMessages: IPendingMessage[] = [],
+		): PendingStateManager_WithPrivates {
+			const psm: PendingStateManager_WithPrivates = new PendingStateManager(
+				{
+					applyStashedOp: async () => undefined,
+					clientId: () => "CLIENT_ID",
+					connected: () => true,
+					reSubmitBatch: () => {},
+					isActiveConnection: () => false,
+					isAttached: () => true,
+				},
+				{ pendingStates: initialMessages },
+				logger,
+			) as unknown as PendingStateManager_WithPrivates;
+
+			psm.pendingMessages.push(...pendingMessages);
+			return psm;
+		}
+		const dirtyableOp = {
+			type: ContainerMessageType.Alias,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+		const nonDirtyableOp = {
+			type: ContainerMessageType.GC,
+		} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage;
+
+		it("returns false when there are no pending or initial messages", () => {
+			const psm = createPendingStateManager();
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false with no messages",
+			);
+		});
+
+		it("returns true if any pending message is dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: dirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				true,
+				"Should be true with dirtyable op",
+			);
+		});
+
+		it("returns false if all pending messages are not dirtyable", () => {
+			const pendingMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: nonDirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false with non-dirtyable op",
+			);
+		});
+
+		it("returns false if all pending messages are empty batches (runtimeOp undefined)", () => {
+			const psm = createPendingStateManager();
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
+			psm.onFlushEmptyBatch(placeholderMessage, 0, false);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				false,
+				"Should be false for empty batch",
+			);
+		});
+
+		it("returns true if there are any initial messages, even if non-dirtyable", () => {
+			const initialMessages: Partial<IPendingMessage>[] = [
+				{
+					runtimeOp: nonDirtyableOp,
+				},
+			];
+			const psm = createPendingStateManager([], initialMessages as IPendingMessage[]);
+			assert.strictEqual(
+				psm.hasPendingUserChanges(),
+				true,
+				"Should be true with initial messages",
+			);
+		});
+	});
+
+	describe("replayPendingStates", () => {
+		const clientId = "clientId";
+
+		for (const {
+			firstBatchSize,
+			secondBatchSize,
+			secondBatchStaged,
+		} of generatePairwiseOptions({
+			firstBatchSize: [0, 1] as const, // 0 means no ops resubmitted so it becomes an empty batch during replay
+			secondBatchSize: [undefined, 1, 2] as const, // undefined means no second batch
+			secondBatchStaged: booleanCases,
+		})) {
+			it(`should replay all pending states as batches [batch sizes: ${firstBatchSize} / ${secondBatchSize} ${secondBatchStaged ? "(staged)" : ""}]`, () => {
+				const stubs = getStateHandlerStub();
+				const pendingStateManager = newPendingStateManager(stubs);
+				const RefSeqInitial_10 = 10;
+				const refSeqResubmit_15 = 15;
+
+				stubs.reSubmitBatch.callsFake((batch, metadata) => {
+					// Here's where we implement [firstBatchSize === 0] case - Flush an empty batch on resubmit
+					if (firstBatchSize === 0 && stubs.reSubmitBatch.callCount === 1) {
+						assert(metadata.batchId, "PRECONDITION: Expected batchId for empty batch");
+						const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
+							metadata.batchId,
+							refSeqResubmit_15,
+						);
+						pendingStateManager.onFlushEmptyBatch(
+							placeholderMessage,
+							/* clientSequenceNumber: */ 1,
+							/* staged: */ metadata.staged,
+						);
+						return;
+					}
+
+					// Otherwise, simulate the typical re-submission of the batch through the ContainerRuntime
+					pendingStateManager.onFlushBatch(
+						withBatchMetadata(
+							batch.map(({ runtimeOp, opMetadata, localOpMetadata }) => ({
+								runtimeOp,
+								referenceSequenceNumber: refSeqResubmit_15,
+								metadata: opMetadata,
+								localOpMetadata: `${localOpMetadata}_RESUBMITTED`,
+							})),
+							metadata.batchId,
+						),
+						/* clientSequenceNumber: */ metadata.staged ? undefined : 1,
+						/* staged: */ metadata.staged,
+					);
+				});
+
+				// First batch - Always starts with 1 op, but will become empty on replay if firstBatchSize is 0
+				pendingStateManager.onFlushBatch(
+					[
+						{
+							runtimeOp: {
+								type: ContainerMessageType.FluidDataStoreOp,
+								contents: {} as IEnvelope,
+							},
+							referenceSequenceNumber: RefSeqInitial_10,
+							metadata: undefined, // Single message batch has no batch metadata
+							localOpMetadata: "FIRST_BATCH_MSG1",
+						},
+					],
+					/* clientSequenceNumber: */ 1,
+					/* staged: */ false,
+				);
+				// Second batch (if applicable) - May have multiple ops or be skipped altogether
+				if (secondBatchSize !== undefined) {
+					pendingStateManager.onFlushBatch(
+						withBatchMetadata(
+							Array.from<unknown, LocalBatchMessage>({ length: secondBatchSize }, (_, i) => ({
+								runtimeOp: {
+									type: ContainerMessageType.FluidDataStoreOp,
+									contents: {} as IEnvelope,
+								},
+								referenceSequenceNumber: RefSeqInitial_10,
+								localOpMetadata: `SECOND_BATCH_MSG${i + 1}`,
+							})),
+						),
+						/* clientSequenceNumber: */ secondBatchStaged ? undefined : 2,
+						/* staged: */ secondBatchStaged,
+					);
+				}
+				pendingStateManager.replayPendingStates();
+
+				const resubmittedMessages = pendingStateManager.pendingMessages.toArray();
+				assert.equal(
+					resubmittedMessages.length,
+					1 + (secondBatchSize ?? 0), // Even if firstBatchSize is 0, we still have the empty batch placeholder
+					"Incorrect number of resubmitted messages",
+				);
+
+				// First batch expectations - Should be 1 pending message, either the empty batch placeholder or the first message
+				const [firstResubmittedBatchPendingMessage] = resubmittedMessages.splice(0, 1);
+				(({
+					batchInfo: { length, staged },
+					opMetadata,
+					referenceSequenceNumber,
+				}: IPendingMessage) => {
+					assert.strictEqual(length, 1, "First batch size incorrect");
+					assert.strictEqual(opMetadata?.batchId, `${clientId}_[1]`);
+					assert.strictEqual(staged, false);
+					assert.strictEqual(referenceSequenceNumber, refSeqResubmit_15);
+				})(firstResubmittedBatchPendingMessage);
+
+				// Second batch expectations
+				if (secondBatchSize === undefined) {
+					assert(resubmittedMessages.length === 0, "No second batch expected");
+					return;
+				}
+				const secondResubmittedBatchPendingMessages = resubmittedMessages.splice(
+					0,
+					secondBatchSize,
+				);
+				// The first messages should have batchInfo and batchId on it
+				(({ batchInfo: { length, staged }, opMetadata }: IPendingMessage) => {
+					assert.strictEqual(length, secondBatchSize, "Wrong batch size (2nd)");
+					if (secondBatchStaged) {
+						assert((opMetadata?.batchId as string)?.length === 41, "Wrong clientId (2nd)");
+						assert((opMetadata?.batchId as string)?.includes("-1"), "Wrong clientId (2nd)");
+					} else {
+						assert.strictEqual(opMetadata?.batchId, `${clientId}_[2]`, "Wrong clientId (2nd)");
+					}
+					assert.strictEqual(staged, secondBatchStaged, "Wrong staged flag (2nd)");
+				})(secondResubmittedBatchPendingMessages[0]);
+				// Every message should have the same reference sequence number
+				assert(
+					secondResubmittedBatchPendingMessages.every(
+						(m) => m.referenceSequenceNumber === refSeqResubmit_15,
+					),
+					"Second batch reference sequence number incorrect",
+				);
+			});
+		}
+
+		it("should replay only staged batches when committingStagedBatches is true", () => {
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = newPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+
+			// Enqueue an unstaged one first, then staged.  The opposite order is not possible/supported
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 13,
+						metadata: undefined,
+						localOpMetadata: { foo: "unstaged" },
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 12,
+						metadata: undefined,
+						localOpMetadata: { foo: "staged" },
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			pendingStateManager.replayPendingStates({
+				committingStagedBatches: true,
+				squash: false,
+			});
+			// We should only resubmit the staged batch, with the staged flag cleared
+			assert.strictEqual(
+				reSubmittedBatches.length,
+				1,
+				"Should resubmit only the staged batch when committingStagedBatches is true",
+			);
+			assert.deepStrictEqual(
+				reSubmittedBatches[0].batch[0].localOpMetadata,
+				{ foo: "staged" },
+				"Should resubmit the staged batch",
+			);
+			assert.strictEqual(
+				reSubmittedBatches[0].metadata.staged,
+				false,
+				"Staged flag should be cleared on resubmission",
+			);
+			// The unstaged batch should remain in the pendingMessages queue
+			assert.strictEqual(
+				pendingStateManager.pendingMessages.length,
+				1,
+				"Unstaged batch should remain in the queue",
+			);
+			assert.deepStrictEqual(
+				pendingStateManager.pendingMessages.peekFront()?.localOpMetadata,
+				{
+					foo: "unstaged",
+				},
+			);
+		});
+
+		it("should throw if replayPendingStates is called twice for same clientId without committingStagedBatches", () => {
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = newPendingStateManager(stubs);
+			const reSubmittedBatches: {
+				batch: PendingMessageResubmitData[];
+				metadata: PendingBatchResubmitMetadata;
+			}[] = [];
+			stubs.reSubmitBatch.callsFake((batch, metadata) => {
+				reSubmittedBatches.push({ batch, metadata });
+			});
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 15,
+						metadata: undefined,
+						localOpMetadata: { foo: "bar" },
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			// This will set clientIdFromLastReplay
+			pendingStateManager.replayPendingStates();
+			// Add another batch to allow replay again
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 15,
+						metadata: undefined,
+						localOpMetadata: { foo: "bar" },
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			// This will throw since clientIdFromLastReplay is already set to the same clientId
+			assert.throws(
+				() => pendingStateManager.replayPendingStates(),
+				/0x173/,
+				"Should throw if replayPendingStates is called twice for same clientId",
+			);
+		});
+
+		it("should set squash flag when replayPendingStates is called with squash: true", () => {
+			const stubs = getStateHandlerStub();
+			const pendingStateManager = newPendingStateManager(stubs);
+			pendingStateManager.onFlushBatch(
+				[
+					{
+						runtimeOp: {
+							type: ContainerMessageType.FluidDataStoreOp,
+							contents: {} as IEnvelope,
+						},
+						referenceSequenceNumber: 16,
+						metadata: undefined,
+						localOpMetadata: { foo: "bar" },
+					},
+				],
+				/* clientSequenceNumber: */ 1,
+				/* staged: */ false,
+			);
+			pendingStateManager.replayPendingStates({
+				squash: true,
+				committingStagedBatches: false,
+			});
+			assert(
+				stubs.reSubmitBatch.calledOnceWith(Sinon.match.any, {
+					squash: true,
+					staged: Sinon.match.bool,
+					batchId: Sinon.match.string,
+				}),
+				"Squash flag should be set to true",
+			);
+		});
+	});
+
+	describe("popStagedBatches", () => {
+		it("should pop all staged batch messages in LIFO order and invoke callback", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add staged batch 1
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo1"),
+						referenceSequenceNumber: 1,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			// Add staged batch 2
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo2"),
+						referenceSequenceNumber: 2,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.contents as string);
+			});
+			assert.deepStrictEqual(popped, ["foo2", "foo1"], "Should pop in LIFO order");
+			assert.strictEqual(
+				psm.hasPendingMessages(),
+				false,
+				"All staged messages should be popped",
+			);
+		});
+
+		it("should not pop unstaged messages", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add unstaged batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo1"),
+						referenceSequenceNumber: 1,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ false,
+			);
+			// Add staged batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo2"),
+						referenceSequenceNumber: 2,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.contents as string);
+			});
+			assert.deepStrictEqual(popped, ["foo2"], "Should only pop staged messages");
+			assert.strictEqual(psm.hasPendingMessages(), true, "Unstaged message should remain");
+			assert.strictEqual(
+				psm.pendingMessages.length,
+				1,
+				"Only unstaged message should remain in queue",
+			);
+		});
+
+		it("should not invoke callback for empty batch or messages without runtimeOp", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add staged empty batch
+			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 3);
+			psm.onFlushEmptyBatch(
+				placeholderMessage,
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			// Add staged message with no runtimeOp (simulate by direct mutation after adding)
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo2"),
+						referenceSequenceNumber: 4,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			psm.pendingMessages.peekBack()!.runtimeOp = undefined;
+			// Add staged normal batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo3"),
+						referenceSequenceNumber: 5,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ true,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.contents as string);
+			});
+			assert.deepStrictEqual(
+				popped,
+				["foo3"],
+				"Should only invoke the callback on staged messages with typical runtimeOp",
+			);
+			assert.strictEqual(
+				psm.pendingMessages.length,
+				0,
+				"Non-typical staged messages should also be popped, just without invoking callback",
+			);
+		});
+
+		it("should do nothing if there are no staged messages", () => {
+			const stubs = getStateHandlerStub();
+			const psm = newPendingStateManager(stubs);
+
+			// Add unstaged batch
+			psm.onFlushBatch(
+				[
+					{
+						runtimeOp: op("foo1"),
+						referenceSequenceNumber: 1,
+						metadata: undefined,
+						localOpMetadata: undefined,
+					},
+				],
+				/* clientSequenceNumber: */ undefined,
+				/* staged: */ false,
+			);
+			const popped: string[] = [];
+			psm.popStagedBatches((msg) => {
+				popped.push(msg.runtimeOp.type as string);
+			});
+			assert.deepStrictEqual(popped, [], "Should not pop any messages");
+			assert.strictEqual(
+				psm.pendingMessages.length,
+				1,
+				"Unstaged message should remain in queue",
 			);
 		});
 	});

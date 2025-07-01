@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	makeSchemaCodecs,
-	type SchemaCodecVersion,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/schema-index/index.js";
+import type { SchemaVersion } from "../../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { makeSchemaCodecs } from "../../../feature-libraries/schema-index/index.js";
 import { ajvValidator } from "../../codec/index.js";
 
 /*
@@ -15,4 +13,4 @@ import { ajvValidator } from "../../codec/index.js";
  */
 export const supportedSchemaFormats = Array.from(
 	makeSchemaCodecs({ jsonValidator: ajvValidator }).getSupportedFormats(),
-).filter((format) => format !== undefined) as SchemaCodecVersion[];
+).filter((format) => format !== undefined) as SchemaVersion[];

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -22,12 +22,11 @@ import {
 	TreeStatus,
 } from "../feature-libraries/index.js";
 import {
-	type FieldSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type TreeView,
 	type TreeViewEvents,
-	getTreeNodeForField,
+	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
 	SchemaCompatibilityTester,
@@ -53,6 +52,7 @@ import {
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 	prepareForInsertionContextless,
+	type FieldSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -61,9 +61,9 @@ import {
 	type WithBreakable,
 } from "../util/index.js";
 
+import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 import { canInitialize, ensureSchema, initialize } from "./schematizeTree.js";
 import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
-import { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -247,28 +247,7 @@ export class SchematizingSimpleTreeView<
 			constraintsOnRevert: boolean,
 			constraints: readonly TransactionConstraint[] = [],
 		): void => {
-			for (const constraint of constraints) {
-				switch (constraint.type) {
-					case "nodeInDocument": {
-						const node = getOrCreateInnerNode(constraint.node);
-						const nodeStatus = getKernel(constraint.node).getStatus();
-						if (nodeStatus !== TreeStatus.InDocument) {
-							const revertText = constraintsOnRevert ? " on revert" : "";
-							throw new UsageError(
-								`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-							);
-						}
-						if (constraintsOnRevert) {
-							this.checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
-						} else {
-							this.checkout.editor.addNodeExistsConstraint(node.anchorNode);
-						}
-						break;
-					}
-					default:
-						unreachableCase(constraint.type);
-				}
-			}
+			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
 		};
 
 		this.checkout.transaction.start();
@@ -374,7 +353,10 @@ export class SchematizingSimpleTreeView<
 			);
 			this.checkout.forest.anchors.slots.set(
 				SimpleContextSlot,
-				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
+				new HydratedContext(
+					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
+					view.context,
+				),
 			);
 
 			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
@@ -449,7 +431,7 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getView();
-		return getTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
+		return tryGetTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
@@ -519,4 +501,43 @@ export function requireSchema(
 	assert(slots.has(ContextSlot), 0x90d /* Context should be tracked in slot */);
 
 	return view;
+}
+
+/**
+ * Adds constraints to a `checkout`'s pending transaction.
+ *
+ * @param checkout - The checkout's who's transaction will have the constraints added to it.
+ * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
+ * @param constraints - The constraints to add to the transaction.
+ *
+ * @see {@link RunTransactionParams.preconditions}.
+ */
+export function addConstraintsToTransaction(
+	checkout: ITreeCheckout,
+	constraintsOnRevert: boolean,
+	constraints: readonly TransactionConstraint[] = [],
+): void {
+	for (const constraint of constraints) {
+		switch (constraint.type) {
+			case "nodeInDocument": {
+				const node = getOrCreateInnerNode(constraint.node);
+				const nodeStatus = getKernel(constraint.node).getStatus();
+				if (nodeStatus !== TreeStatus.InDocument) {
+					const revertText = constraintsOnRevert ? " on revert" : "";
+					throw new UsageError(
+						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
+					);
+				}
+				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
+				if (constraintsOnRevert) {
+					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
+				} else {
+					checkout.editor.addNodeExistsConstraint(node.anchorNode);
+				}
+				break;
+			}
+			default:
+				unreachableCase(constraint.type);
+		}
+	}
 }

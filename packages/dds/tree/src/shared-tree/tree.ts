@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { TreeStatus } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
@@ -18,9 +16,12 @@ import {
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
-import type { ITreeCheckout } from "./treeCheckout.js";
 import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
+import {
+	addConstraintsToTransaction,
+	SchematizingSimpleTreeView,
+} from "./schematizingTreeView.js";
+import type { ITreeCheckout } from "./treeCheckout.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
@@ -463,23 +464,7 @@ function runTransactionInCheckout<TResult>(
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
 	checkout.transaction.start();
-	for (const constraint of preconditions) {
-		switch (constraint.type) {
-			case "nodeInDocument": {
-				const node = getOrCreateInnerNode(constraint.node);
-				const nodeStatus = Tree.status(constraint.node);
-				if (nodeStatus !== TreeStatus.InDocument) {
-					throw new UsageError(
-						`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
-					);
-				}
-				checkout.editor.addNodeExistsConstraint(node.anchorNode);
-				break;
-			}
-			default:
-				unreachableCase(constraint.type);
-		}
-	}
+	addConstraintsToTransaction(checkout, false, preconditions);
 
 	let result: ReturnType<typeof transaction>;
 	try {

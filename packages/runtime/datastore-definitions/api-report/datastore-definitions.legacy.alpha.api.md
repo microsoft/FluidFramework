@@ -128,6 +128,8 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
     // (undocumented)
     readonly inStagingMode?: boolean;
+    // (undocumented)
+    readonly isDirty?: boolean;
 }
 
 // @alpha @legacy (undocumented)

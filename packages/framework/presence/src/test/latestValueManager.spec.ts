@@ -6,16 +6,21 @@
 import { strict as assert } from "node:assert";
 
 import { createPresenceManager } from "../presenceManager.js";
+import { StateFactoryInternal } from "../stateFactory.js";
 
 import { addControlsTests } from "./broadcastControlsTests.js";
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { assertIdenticalTypes, createInstanceOf } from "./testUtils.js";
 
 import type {
 	BroadcastControlSettings,
+	Latest,
 	LatestClientData,
+	LatestRaw,
 	Presence,
-} from "@fluidframework/presence/alpha";
-import { StateFactory } from "@fluidframework/presence/alpha";
+	RawValueAccessor,
+} from "@fluidframework/presence/beta";
+import { StateFactory } from "@fluidframework/presence/beta";
 
 const testWorkspaceName = "name:testWorkspaceA";
 
@@ -84,6 +89,22 @@ describe("Presence", () => {
 				assert.deepStrictEqual(workspace.states.nullable.local, null);
 			});
 
+			it("can set and get inferred nullable type as initial value", () => {
+				// Setup
+				// Use a function to generate the initial value so that TypeScript
+				// can't statically infer the type as exactly null.
+				function generateInitialValue(): { x: number; y: number } | null {
+					return { x: 0, y: 0 };
+				}
+				const initialValue = generateInitialValue();
+				// Act
+				const workspace = presence.states.getWorkspace(testWorkspaceName, {
+					nullable: StateFactory.latest({ local: initialValue }),
+				});
+				// Verify
+				assert.deepStrictEqual(workspace.states.nullable.local, initialValue);
+			});
+
 			it(".presence provides Presence it was created under", () => {
 				const workspace = presence.states.getWorkspace(testWorkspaceName, {
 					camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
@@ -141,6 +162,10 @@ export function checkCompiles(): void {
 		cursor: StateFactory.latest({ local: { x: 0, y: 0 } }),
 		camera: StateFactory.latest({ local: { x: 0, y: 0, z: 0 } }),
 		nullablePoint: StateFactory.latest<null | { x: number; y: number }>({ local: null }),
+		validated: StateFactoryInternal.latest({
+			local: { num: 22 },
+			validator: (data: unknown) => data as { num: number },
+		}),
 	});
 	// Workaround ts(2775): Assertions require every name in the call target to be declared with an explicit type annotation.
 	const workspace: typeof statesWorkspace = statesWorkspace;
@@ -158,8 +183,15 @@ export function checkCompiles(): void {
 	function logClientValue<T>({
 		attendee,
 		value,
-	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
+	}: Pick<LatestClientData<T, RawValueAccessor<T>>, "attendee" | "value">): void {
 		console.log(attendee.attendeeId, value);
+	}
+
+	function logRemoteValue<T>({
+		attendee,
+		value,
+	}: Pick<LatestClientData<T>, "attendee" | "value">): void {
+		console.log(attendee.attendeeId, value());
 	}
 
 	// Create new cursor state
@@ -185,6 +217,29 @@ export function checkCompiles(): void {
 	for (const { attendee, value } of cursor.getRemotes()) {
 		logClientValue({ attendee, value });
 	}
+
+	// Get a reference to one of the remote attendees
+	const attendee2 = [...cursor.getStateAttendees()].find(
+		(attendee) => attendee !== presence.attendees.getMyself(),
+	);
+	assert(attendee2 !== undefined);
+
+	// Get a remote raw value
+	const remoteCursor = cursor.getRemote(attendee2);
+	logClientValue({ attendee: attendee2, value: remoteCursor.value });
+
+	assertIdenticalTypes(props.cursor, createInstanceOf<LatestRaw<{ x: number; y: number }>>());
+	assertIdenticalTypes(props.validated, createInstanceOf<Latest<{ num: number }>>());
+
+	// Get a remote validated value
+	const latestData = props.validated.getRemote(attendee2);
+
+	// The next line correctly does not compile because the value argument must be a RawValueAccessor
+	// @ts-expect-error Type '() => { readonly num: number; } | undefined' is not assignable to type 'never'.
+	logClientValue({ attendee: attendee2, value: latestData.value });
+
+	// This line correctly compiles because logRemoteValue expects a ProxiedValueAccessor
+	logRemoteValue({ attendee: attendee2, value: latestData.value });
 }
 
 /* eslint-enable unicorn/no-null */

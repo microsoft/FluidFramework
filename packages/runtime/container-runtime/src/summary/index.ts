@@ -103,10 +103,12 @@ export {
 	IdCompressorMode,
 	IDocumentSchemaCurrent,
 	IDocumentSchema,
+	IDocumentSchemaInfo,
 	currentDocumentVersionSchema,
 	DocumentSchemaValueType,
 	DocumentsSchemaController,
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 	IDocumentSchemaFeatures,
 } from "./documentSchema.js";
 export {

@@ -4,6 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
+
 import type { TreeValue } from "../core/index.js";
 import {
 	FieldKinds,
@@ -12,12 +13,15 @@ import {
 	type FlexTreeRequiredField,
 	type FlexTreeOptionalField,
 } from "../feature-libraries/index.js";
+
 import { type TreeNode, getOrCreateNodeFromInnerNode } from "./core/index.js";
 
 /**
  * Retrieve the associated {@link TreeNode} for the given field's content.
  */
-export function getTreeNodeForField(field: FlexTreeField): TreeNode | TreeValue | undefined {
+export function tryGetTreeNodeForField(
+	field: FlexTreeField,
+): TreeNode | TreeValue | undefined {
 	function tryToUnboxLeaves(
 		flexField: FlexTreeOptionalField | FlexTreeRequiredField,
 	): TreeNode | TreeValue | undefined {

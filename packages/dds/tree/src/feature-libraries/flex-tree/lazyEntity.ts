@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import {
+	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	ITreeSubscriptionCursorState,
 	TreeNavigationResult,
@@ -48,7 +49,10 @@ export abstract class LazyEntity<TAnchor = unknown> implements FlexTreeEntity, I
 		this.context.withAnchors.add(this);
 	}
 
-	public abstract boxedIterator(): IterableIterator<FlexTreeEntity>;
+	public borrowCursor(): ITreeCursorSynchronous {
+		return this.cursor as ITreeCursorSynchronous;
+	}
+
 	public abstract get [flexTreeMarker](): FlexTreeEntityKind;
 
 	public [disposeSymbol](): void {

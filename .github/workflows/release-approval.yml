@@ -21,14 +21,8 @@ on:
         required: true
 
 permissions:
-  # Needed to read artifacts from upstream workflows
-  actions: read
-
-  # Needed to check pull request metadata for review status
-  pull-requests: read
-
-  # Needed to update the PR check status to permit/prevent merge
-  statuses: write
+  actions: read  # Needed to download artifacts from the release-branches workflow
+  pull-requests: read  # Needed to read the PR details, such as the head commit SHA and the PR number.
 
 jobs:
   metadata:
@@ -71,9 +65,11 @@ jobs:
 
       ### These steps run on workflow_dispatch event only ###
       - name: "workflow_dispatch: Load PR number"
+        env:
+          PR: ${{ github.event.inputs.pr }}
         id: workflow_dispatch_load_pr
         if: github.event_name == 'workflow_dispatch'
-        run: echo "pr_num=${{ github.event.inputs.pr }}" >> $GITHUB_OUTPUT
+        run: echo "pr_num=$PR" >> $GITHUB_OUTPUT
 
       - name: "workflow_dispatch: Load is_release_branch"
         id: workflow_dispatch_is_release_branch
@@ -100,6 +96,8 @@ jobs:
             return pr.head.sha;
 
   check_approval:
+    permissions:
+      statuses: write # Needed to set the commit status on the PR's head commit to permit/prevent merge
     name: Check PR approval
     if: needs.metadata.outputs.is_release_branch == 'true'
     needs: metadata

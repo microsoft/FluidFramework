@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { ITaskManager } from "./interfaces.js";
+import type { ITaskManager } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 import { TaskManagerClass } from "./taskManager.js";
 
@@ -27,11 +27,11 @@ export class TaskManagerFactory implements IChannelFactory<ITaskManager> {
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): typeof TaskManagerFactory.Type {
 		return TaskManagerFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): typeof TaskManagerFactory.Attributes {
 		return TaskManagerFactory.Attributes;
 	}
 

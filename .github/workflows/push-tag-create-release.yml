@@ -21,10 +21,12 @@ on:
         required: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   create-release:
+    permissions:
+      contents: write  # for ncipollo/release-action to create a release
     name: Create GitHub release
     runs-on: ubuntu-latest
     steps:
@@ -63,7 +65,9 @@ jobs:
         run: echo "TAG_NAME=${GITHUB_REF}" >> $GITHUB_ENV
       - name: Set tag name from manual input
         if: github.event_name == 'workflow_dispatch'
-        run: echo "TAG_NAME=refs/tags/${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+        env:
+          TAG: ${{ github.event.inputs.tag }}
+        run: echo "TAG_NAME=refs/tags/$TAG" >> $GITHUB_ENV
 
       - name: Get release metadata JSON
         run: |
@@ -86,12 +90,20 @@ jobs:
 
       - name: Check out tag from push
         if: github.event_name == 'push'
-        run: |
-          git checkout ${{ github.ref }}
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0 # all history
+          persist-credentials: false
       - name: Check out tag from manual input
         if: github.event_name == 'workflow_dispatch'
-        run: |
-          git checkout refs/tags/${{ github.event.inputs.tag }}
+        env:
+          TAG: ${{ github.event.inputs.tag }}
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # ratchet:actions/checkout@v3
+        with:
+          ref: refs/tags/$TAG
+          fetch-depth: 0 # all history
+          persist-credentials: false
 
       # Generate release reports
       - name: Create release reports (manifests)

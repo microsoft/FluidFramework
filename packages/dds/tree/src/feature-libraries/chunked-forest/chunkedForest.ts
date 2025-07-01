@@ -468,7 +468,7 @@ class Cursor extends BasicChunkCursor implements ITreeSubscriptionCursor {
 }
 
 /**
- * @returns an implementation of {@link IEditableForest} with no data or schema.
+ * Creates an implementation of {@link IEditableForest} with no data or schema.
  */
 export function buildChunkedForest(
 	chunker: IChunker,

@@ -4,13 +4,16 @@
  */
 
 import type { TreeValue } from "../../core/index.js";
+import { isFlexTreeNode, type FlexTreeUnknownUnboxed } from "../../feature-libraries/index.js";
+import type { TreeLeafValue } from "../schemaTypes.js";
+
+import type { TreeNode } from "./treeNode.js";
 import {
 	type InnerNode,
-	unhydratedFlexTreeNodeToTreeNode,
 	simpleTreeNodeSlot,
 	createTreeNodeFromInner,
+	splitInnerNodeType,
 } from "./treeNodeKernel.js";
-import type { TreeNode } from "./treeNode.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 /**
@@ -20,9 +23,11 @@ import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
  * This supports both hydrated and unhydrated nodes.
  */
 export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | TreeValue {
+	splitInnerNodeType(flexNode);
+
 	const cached =
 		flexNode instanceof UnhydratedFlexTreeNode
-			? unhydratedFlexTreeNodeToTreeNode.get(flexNode)
+			? flexNode.treeNode
 			: flexNode.anchorNode.slots.get(simpleTreeNodeSlot);
 
 	if (cached !== undefined) {
@@ -30,4 +35,16 @@ export function getOrCreateNodeFromInnerNode(flexNode: InnerNode): TreeNode | Tr
 	}
 
 	return createTreeNodeFromInner(flexNode);
+}
+
+/**
+ * Returns the TreeNode or TreeValue for the provided {@link FlexTreeUnknownUnboxed}.
+ * This will allocate a new one if needed, and otherwise return one from cache.
+ * @remarks
+ * This supports both hydrated and unhydrated nodes.
+ */
+export function getOrCreateNodeFromInnerUnboxedNode(
+	flexTree: FlexTreeUnknownUnboxed,
+): TreeNode | TreeLeafValue {
+	return isFlexTreeNode(flexTree) ? getOrCreateNodeFromInnerNode(flexTree) : flexTree;
 }

@@ -3,24 +3,26 @@
  * Licensed under the MIT License.
  */
 
+import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
 import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
-import * as bodyParser from "body-parser";
-import express from "express";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 	ITenantKeyGenerator,
 } from "@fluidframework/server-services-utils";
+import * as bodyParser from "body-parser";
+import express from "express";
+
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
+
 import * as api from "./api";
 import { ITenantRepository } from "./mongoTenantRepository";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
-import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
 
 export function create(
 	tenantRepository: ITenantRepository,
@@ -35,6 +37,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	readinessCheck?: IReadinessCheck,
+	bypassCache: boolean = false,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -56,7 +59,9 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.json());
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.urlencoded({ extended: false }));
 
 	app.use(
@@ -71,6 +76,7 @@ export function create(
 			riddlerStorageRequestMetricInterval,
 			tenantKeyGenerator,
 			cache,
+			bypassCache,
 		),
 	);
 

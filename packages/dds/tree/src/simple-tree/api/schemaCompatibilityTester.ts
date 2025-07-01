@@ -4,6 +4,7 @@
  */
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+
 import {
 	AdaptedViewSchema,
 	type TreeNodeStoredSchema,
@@ -24,6 +25,7 @@ import {
 } from "../../feature-libraries/index.js";
 import type { FieldSchema } from "../schemaTypes.js";
 import { toStoredSchema } from "../toStoredSchema.js";
+
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -273,7 +275,7 @@ export class SchemaCompatibilityTester {
 				}
 			}
 
-			return { kind: original.kind, types };
+			return { kind: original.kind, types, persistedMetadata: undefined };
 		}
 		return original;
 	}

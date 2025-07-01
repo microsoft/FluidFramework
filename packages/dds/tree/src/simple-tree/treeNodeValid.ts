@@ -4,6 +4,9 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -17,11 +20,8 @@ import {
 	type InnerNode,
 	type Context,
 	type UnhydratedFlexTreeNode,
+	getSimpleNodeSchemaFromInnerNode,
 } from "./core/index.js";
-import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-
-import { getSimpleNodeSchemaFromInnerNode } from "./core/index.js";
 import { markEager } from "./flexList.js";
 
 /**
