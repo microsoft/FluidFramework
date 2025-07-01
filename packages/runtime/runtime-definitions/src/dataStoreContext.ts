@@ -536,15 +536,16 @@ export interface IPendingMessagesState {
 }
 
 /**
- * Context for an {@link IDataStore}.
- * This context is provided to implementation of {@link IFluidDataStoreChannel} which powers the datastore.
- *
+ * Context for an {@link IDataStore} like object.
  * @remarks
  * This context does NOT represent common information provided to all channels under a specific parent.
  * Each implementation of {@link IFluidDataStoreChannel} will receive its own instance of this context that contains specifically the data it needs.
  *
  * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
  * Therefore the semantics of these two interfaces is not really distinct.
+ *
+ * @privateRemarks
+ * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy
  * @alpha
@@ -685,7 +686,11 @@ export interface IFluidParentContext
 export type PackagePath = readonly string[];
 
 /**
- * {@inheritDoc IFluidParentContext}
+ * Extension to {@link IFluidParentContext} specifically for {@link IDataStore}s.
+ *
+ * @remarks
+ * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
+ *
  * @legacy
  * @alpha
  */

@@ -239,7 +239,7 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
 }
 
 /**
- * {@link IFluidParentContext} for the implementations of {@link IFluidDataStoreChannel} which powers the {@link IDataStore}s.
+ * {@link IFluidDataStoreContext} for the implementations of {@link IFluidDataStoreChannel} which powers the {@link IDataStore}s.
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
