@@ -22,7 +22,6 @@ import {
 	TreeStatus,
 } from "../feature-libraries/index.js";
 import {
-	type FieldSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	type TreeView,
@@ -53,6 +52,7 @@ import {
 	areImplicitFieldSchemaEqual,
 	createUnknownOptionalFieldPolicy,
 	prepareForInsertionContextless,
+	type FieldSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -353,7 +353,10 @@ export class SchematizingSimpleTreeView<
 			);
 			this.checkout.forest.anchors.slots.set(
 				SimpleContextSlot,
-				new HydratedContext(this.rootFieldSchema.allowedTypeSet, view.context),
+				new HydratedContext(
+					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
+					view.context,
+				),
 			);
 
 			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
@@ -525,7 +528,7 @@ export function addConstraintsToTransaction(
 						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
 					);
 				}
-				assert(node.isHydrated(), "In document node must be hydrated.");
+				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
 				if (constraintsOnRevert) {
 					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
 				} else {

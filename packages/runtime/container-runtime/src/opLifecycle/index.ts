@@ -4,6 +4,7 @@
  */
 
 export {
+	addBatchMetadata,
 	BatchId,
 	BatchManager,
 	BatchSequenceNumbers,

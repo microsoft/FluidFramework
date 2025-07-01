@@ -2415,83 +2415,84 @@ export class Container
 	): Promise<void> {
 		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);
 
-		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-		// are set. Global requests will still go directly to the loader
-		const maybeLoader: FluidObject<ILoader> = this.scope;
-		const loader = new RelativeLoader(this, maybeLoader.ILoader);
+		try {
+			// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
+			// are set. Global requests will still go directly to the loader
+			const maybeLoader: FluidObject<ILoader> = this.scope;
+			const loader = new RelativeLoader(this, maybeLoader.ILoader);
 
-		const loadCodeResult = await PerformanceEvent.timedExecAsync(
-			this.subLogger,
-			{ eventName: "CodeLoad" },
-			async () => this.codeLoader.load(codeDetails),
-		);
+			const loadCodeResult = await PerformanceEvent.timedExecAsync(
+				this.subLogger,
+				{ eventName: "CodeLoad" },
+				async () => this.codeLoader.load(codeDetails),
+			);
 
-		this._loadedModule = {
-			module: loadCodeResult.module,
-			// An older interface ICodeLoader could return an IFluidModule which didn't have details.
-			// If we're using one of those older ICodeLoaders, then we fix up the module with the specified details here.
-			// TODO: Determine if this is still a realistic scenario or if this fixup could be removed.
-			details: loadCodeResult.details ?? codeDetails,
-		};
+			this._loadedModule = {
+				module: loadCodeResult.module,
+				// An older interface ICodeLoader could return an IFluidModule which didn't have details.
+				// If we're using one of those older ICodeLoaders, then we fix up the module with the specified details here.
+				// TODO: Determine if this is still a realistic scenario or if this fixup could be removed.
+				details: loadCodeResult.details ?? codeDetails,
+			};
 
-		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
-			this._loadedModule.module.fluidExport;
-		const runtimeFactory = fluidExport?.IRuntimeFactory;
-		if (runtimeFactory === undefined) {
-			throw new Error(packageNotFactoryError);
+			const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
+				this._loadedModule.module.fluidExport;
+			const runtimeFactory = fluidExport?.IRuntimeFactory;
+			if (runtimeFactory === undefined) {
+				throw new Error(packageNotFactoryError);
+			}
+
+			const existing = snapshotTree !== undefined;
+
+			const context = new ContainerContext(
+				this.options,
+				this.scope,
+				snapshotTree,
+				this._loadedFromVersion,
+				this._deltaManager,
+				this.storageAdapter,
+				this.protocolHandler.quorum,
+				this.protocolHandler.audience,
+				loader,
+				(type, contents, batch, metadata) =>
+					this.submitContainerMessage(type, contents, batch, metadata),
+				(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+					this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
+				(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+					this.submitBatch(batch, referenceSequenceNumber),
+				(content, targetClientId) => this.submitSignal(content, targetClientId),
+				(error?: ICriticalContainerError) => this.dispose(error),
+				(error?: ICriticalContainerError) => this.close(error),
+				this.updateDirtyContainerState,
+				this.getAbsoluteUrl,
+				() => this.resolvedUrl?.id,
+				() => this.clientId,
+				() => this.attachState,
+				() => this.connected,
+				this._deltaManager.clientDetails,
+				existing,
+				this.subLogger,
+				pendingLocalState,
+				snapshot,
+			);
+
+			const runtime = await PerformanceEvent.timedExecAsync(
+				this.subLogger,
+				{ eventName: "InstantiateRuntime" },
+				async () => runtimeFactory.instantiateRuntime(context, existing),
+			);
+
+			// Validate that the Runtime is compatible with this Loader.
+			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
+			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails);
+
+			this._runtime = runtime;
+			this._lifecycleEvents.emit("runtimeInstantiated");
+			this._loadedCodeDetails = codeDetails;
+		} catch (error) {
+			this.dispose(normalizeError(error));
+			throw error;
 		}
-
-		const existing = snapshotTree !== undefined;
-
-		const context = new ContainerContext(
-			this.options,
-			this.scope,
-			snapshotTree,
-			this._loadedFromVersion,
-			this._deltaManager,
-			this.storageAdapter,
-			this.protocolHandler.quorum,
-			this.protocolHandler.audience,
-			loader,
-			(type, contents, batch, metadata) =>
-				this.submitContainerMessage(type, contents, batch, metadata),
-			(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
-				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
-			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
-				this.submitBatch(batch, referenceSequenceNumber),
-			(content, targetClientId) => this.submitSignal(content, targetClientId),
-			(error?: ICriticalContainerError) => this.dispose(error),
-			(error?: ICriticalContainerError) => this.close(error),
-			this.updateDirtyContainerState,
-			this.getAbsoluteUrl,
-			() => this.resolvedUrl?.id,
-			() => this.clientId,
-			() => this.attachState,
-			() => this.connected,
-			this._deltaManager.clientDetails,
-			existing,
-			this.subLogger,
-			pendingLocalState,
-			snapshot,
-		);
-
-		const runtime = await PerformanceEvent.timedExecAsync(
-			this.subLogger,
-			{ eventName: "InstantiateRuntime" },
-			async () => runtimeFactory.instantiateRuntime(context, existing),
-		);
-
-		// Validate that the Runtime is compatible with this Loader.
-		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
-			this.dispose(error),
-		);
-
-		this._runtime = runtime;
-
-		this._lifecycleEvents.emit("runtimeInstantiated");
-
-		this._loadedCodeDetails = codeDetails;
 	}
 
 	private readonly updateDirtyContainerState = (dirty: boolean): void => {
