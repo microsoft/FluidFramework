@@ -14,7 +14,7 @@ import {
 	type TreeView,
 } from "@fluidframework/tree/legacy";
 
-import { Column, Table } from "./schema.js";
+import { Column, DateTime, Row, Table } from "./schema.js";
 
 /**
  * A data object for managing a shared table using `SharedTree`.
@@ -45,30 +45,45 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
  * Gets the initial content for a new table tree.
  */
 function getInitialTree(): Table {
+	const taskNameColumn = new Column({
+		props: {
+			label: "Task",
+			hint: "text",
+		},
+	});
+	const dateColumn = new Column({
+		props: {
+			label: "Date",
+			hint: "date",
+		},
+	});
+	const completedColumn = new Column({
+		props: {
+			label: "Completed?",
+			hint: "checkbox",
+		},
+	});
+
+	const row0 = new Row({
+		cells: {
+			[taskNameColumn.id]: "Clean laundry",
+			[dateColumn.id]: DateTime.fromDate(new Date()),
+			[completedColumn.id]: true,
+		}
+	});
+	const row1 = new Row({
+		cells: {
+			[taskNameColumn.id]: "Walk the dog",
+			[dateColumn.id]: DateTime.fromDate(new Date()),
+			[completedColumn.id]: false,
+		}
+	});
+
 	return new Table({
-		columns: [
-			new Column({
-				props: {
-					label: "Column 0",
-					hint: "text",
-				},
-			}),
-			new Column({ props: { label: "Column 1", hint: "date" } }),
-			new Column({ props: { label: "Column 2", hint: "checkbox" } }),
-		],
+		columns: [taskNameColumn, dateColumn, completedColumn],
 		rows: [
-			{
-				cells: {},
-				props: {
-					label: "Row 0",
-				},
-			},
-			{
-				cells: {
-					"column-1": "Hello world!",
-				},
-				props: { label: "Row 1" },
-			},
+			row0,
+			row1,
 		],
 	});
 }

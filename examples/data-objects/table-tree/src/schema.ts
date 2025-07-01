@@ -78,22 +78,11 @@ export class Column extends TableSchema.column({
 }) {}
 
 /**
- * {@link Row} properties.
- */
-export class RowProps extends schemaFactory.object("table-row-props", {
-	/**
-	 * Row label.
-	 */
-	label: schemaFactory.optional(schemaFactory.string),
-}) {}
-
-/**
  * A row in the table.
  */
 export class Row extends TableSchema.row({
 	schemaFactory,
 	cell: Cell,
-	props: RowProps,
 }) {}
 
 export class Table extends TableSchema.table({
