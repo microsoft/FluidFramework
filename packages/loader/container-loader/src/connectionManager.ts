@@ -406,6 +406,7 @@ export class ConnectionManager implements IConnectionManager {
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
+		private readonly _retryConnectionTimeoutMs?: number,
 	) {
 		this.clientDetails = this.client.details;
 		this.defaultReconnectionMode = this.client.mode;
@@ -702,6 +703,25 @@ export class ConnectionManager implements IConnectionManager {
 				// Raise event in case the delay was there from the error.
 				if (retryDelayFromError !== undefined) {
 					this.props.reconnectionDelayHandler(delayMs, origError);
+				}
+
+				// Check if the calculated delay would exceed the remaining timeout
+				if (this._retryConnectionTimeoutMs !== undefined) {
+					const elapsedTime = performanceNow() - connectStartTime;
+					const remainingTime = this._retryConnectionTimeoutMs - elapsedTime;
+
+					if (delayMs >= remainingTime) {
+						this.logger.sendTelemetryEvent({
+							eventName: "ConnectionCalculatedDelayExceedsTimeout",
+							attempts: connectRepeatCount,
+							duration: formatTick(elapsedTime),
+							calculatedDelayMs: delayMs,
+							remainingTimeMs: remainingTime,
+							timeoutMs: this._retryConnectionTimeoutMs,
+						});
+						// Throw the error immediately since waiting would exceed our timeout
+						throw normalizeError(origError, { props: fatalConnectErrorProp });
+					}
 				}
 
 				await new Promise<void>((resolve) => {

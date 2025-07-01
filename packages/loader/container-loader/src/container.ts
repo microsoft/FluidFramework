@@ -246,6 +246,13 @@ export interface IContainerCreateProps {
 	 * protocol implementation for handling the quorum and/or the audience.
 	 */
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
+
+	/**
+	 * Optional property for specifiying a timeout for retry connection loop.
+	 * If provided, the connection manager will use this value as the maximum time to wait
+	 * for a successful connection before giving up throwing the most recent error.
+	 */
+	readonly retryConnectionTimeoutMs?: number;
 }
 
 /**
@@ -608,6 +615,7 @@ export class Container
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
+	private readonly _retryConnectionTimeoutMs: number | undefined;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -790,12 +798,14 @@ export class Container
 			scope,
 			subLogger,
 			protocolHandlerBuilder,
+			retryConnectionTimeoutMs,
 		} = createProps;
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
+		this._retryConnectionTimeoutMs = retryConnectionTimeoutMs;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -2061,6 +2071,7 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
+					this._retryConnectionTimeoutMs,
 				),
 		);
 
