@@ -7,8 +7,8 @@ import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from 
 import { Node, SyntaxKind } from "ts-morph";
 
 import type { ApiLevel } from "./apiLevel.js";
-import type { ApiTag } from "./apiTag.js";
-import { isKnownApiTag } from "./apiTag.js";
+import type { ReleaseTag } from "./apiTag.js";
+import { isReleaseTag } from "./apiTag.js";
 
 interface ExportRecord {
 	name: string;
@@ -16,10 +16,13 @@ interface ExportRecord {
 }
 interface ExportRecords {
 	public: ExportRecord[];
-	legacy: ExportRecord[];
+	// legacy: ExportRecord[];
 	beta: ExportRecord[];
 	alpha: ExportRecord[];
 	internal: ExportRecord[];
+	legacyPublic: ExportRecord[];
+	legacyBeta: ExportRecord[];
+	legacyAlpha: ExportRecord[];
 	/**
 	 * Entries here represent exports with unrecognized tags.
 	 * These may be errors or just concerns depending on context.
@@ -43,22 +46,38 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 	return false;
 }
 
+interface ReleaseInfoTags {
+	releaseTag: ReleaseTag;
+	isLegacy: boolean;
+}
+
 /**
  * Searches given JSDocs for known {@link ApiTag} tags.
  *
  * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiTag[] | undefined {
-	const tags: ApiTag[] = [];
+function getApiTagsFromDocs(jsdocs: JSDoc[]): ReleaseInfoTags | undefined {
+	const tags: ReleaseTag[] = [];
+
+	let releaseTag: ReleaseTag | undefined;
+	let isLegacy = false;
 	for (const jsdoc of jsdocs) {
-		for (const tag of jsdoc.getTags()) {
+		const tags = jsdoc.getTags();
+		for (const tag of tags) {
 			const tagName = tag.getTagName();
-			if (isKnownApiTag(tagName)) {
-				tags.push(tagName);
+			if (isReleaseTag(tagName)) {
+				if (releaseTag !== undefined) {
+					throw new Error(
+						`Multiple release tags found in JSDoc: ${releaseTag} and ${tagName}. An API must have at most 1 release tag.`,
+					);
+				}
+				releaseTag = tagName;
+			} else if (tagName === "legacy") {
+				isLegacy = true;
 			}
 		}
 	}
-	return tags.length > 0 ? tags : undefined;
+	return releaseTag === undefined ? undefined : { releaseTag, isLegacy };
 }
 
 /**
@@ -66,7 +85,7 @@ function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiTag[] | undefined {
  *
  * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getNodeApiTags(node: Node): ApiTag[] | undefined {
+function getNodeApiTags(node: Node): ReleaseInfoTags | undefined {
 	if (Node.isJSDocable(node)) {
 		return getApiTagsFromDocs(node.getJsDocs());
 	}
@@ -88,6 +107,22 @@ function getNodeApiTags(node: Node): ApiTag[] | undefined {
 	return undefined;
 }
 
+function getApiLevelFromTags(tags: ReleaseInfoTags): ApiLevel {
+	const { releaseTag, isLegacy } = tags;
+	switch (releaseTag) {
+		case "public":
+			return isLegacy ? "legacyPublic" : "public";
+		case "beta":
+			return isLegacy ? "legacyBeta" : "beta";
+		case "alpha":
+			return isLegacy ? "legacyAlpha" : "alpha";
+		case "internal":
+			return "internal";
+		default:
+			throw new Error(`Unknown release tag: ${releaseTag}`);
+	}
+}
+
 /**
  * Searches given Node's JSDocs for known {@link ApiTag} tags and derive export level.
  *
@@ -102,17 +137,16 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 	if (apiTags === undefined) {
 		return undefined;
 	}
-	if (apiTags.includes("legacy")) {
-		return "legacy";
+
+	const apiLevel = getApiLevelFromTags(apiTags);
+	if (apiLevel === undefined) {
+		throw new Error(
+			`No known level map from ${node.getSymbol()} with tags [${apiTags.releaseTag}${apiTags.isLegacy ? ", legacy" : ""}] at ${node
+				.getSourceFile()
+				.getFilePath()}:${node.getStartLineNumber()}.`,
+		);
 	}
-	if (apiTags.length === 1) {
-		return apiTags[0];
-	}
-	throw new Error(
-		`No known level map from ${node.getSymbol()} with tags [${apiTags.join(",")}] at ${node
-			.getSourceFile()
-			.getFilePath()}:${node.getStartLineNumber()}.`,
-	);
+	return apiLevel;
 }
 
 /**
@@ -123,9 +157,12 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const exported = sourceFile.getExportedDeclarations();
 	const records: ExportRecords = {
 		public: [],
-		legacy: [],
+		// legacy: [],
 		beta: [],
 		alpha: [],
+		legacyPublic: [],
+		legacyBeta: [],
+		legacyAlpha: [],
 		internal: [],
 		unknown: new Map(),
 	};

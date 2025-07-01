@@ -625,6 +625,8 @@ class ApiLevelReader {
 			}
 		}
 
+		// TODO
+
 		const memberData = new Map<string, ApiLevel>();
 		addUniqueNamedExportsToMap(exports.public, memberData, ApiLevel.public);
 		if (this.onlyInternal) {
