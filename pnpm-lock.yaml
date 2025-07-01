@@ -19,11 +19,7 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   socket.io-client: ~4.7.5
   axios@<0.30.0: ^0.30.0
-  tinylicious: file:./tinylicious-6.0.0.tgz
-  '@fluidframework/gitresources': ^5.0.0
-  '@fluidframework/server-local-server': ^5.0.0
-  '@fluidframework/server-services-core': ^5.0.0
-  '@fluidframework/server-test-utils': ^5.0.0
+  '@fluidframework/server-memory-orderer': ^5.0.0
 
 pnpmfileChecksum: jsbnis4v7zlhs4t7yscsd3mtxe
 
@@ -121,8 +117,8 @@ importers:
   azure/packages/azure-local-service:
     dependencies:
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -315,8 +311,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
@@ -454,8 +450,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -1101,8 +1097,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
@@ -1170,8 +1166,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -2282,8 +2278,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
@@ -2415,8 +2411,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4388,8 +4384,8 @@ importers:
         specifier: ^3.4.2
         version: 3.4.2
       tinylicious:
-        specifier: file:../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4470,8 +4466,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/drivers/local-driver
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -4530,8 +4526,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4820,8 +4816,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -4984,8 +4980,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -5075,8 +5071,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/telemetry-utils
@@ -5534,8 +5530,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -5788,8 +5784,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.97.1)
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -5975,8 +5971,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -6487,8 +6483,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -9774,17 +9770,17 @@ importers:
         specifier: workspace:~
         version: link:../routerlicious-driver
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/server-services-client':
         specifier: ^6.0.0
         version: 6.0.0
       '@fluidframework/server-services-core':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/server-test-utils':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -11009,8 +11005,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
@@ -12983,8 +12979,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -13335,8 +13331,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -13554,8 +13550,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -13681,8 +13677,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base
@@ -13847,8 +13843,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -14066,8 +14062,8 @@ importers:
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
       '@fluidframework/server-local-server':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -14289,8 +14285,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -14480,8 +14476,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: file:../../../tinylicious-6.0.0.tgz
-        version: file:tinylicious-6.0.0.tgz
+        specifier: ^6.0.0
+        version: 6.0.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -17521,8 +17517,14 @@ packages:
   '@fluidframework/garbage-collector@1.4.0':
     resolution: {integrity: sha512-bwt1mv3B2PcvVN/JqBkm8MwdRydVboBM7MguQkANDGkmUPD56dRzjBYEdOl3yNZJEO/xJ2v15RPrkf1coI78Bg==}
 
+  '@fluidframework/gitresources@0.1036.5002':
+    resolution: {integrity: sha512-/xdmCca+arU9x9tDGdIl2CCk0DmpWlFjZdcTdWjLNiexKMVKDrHmSw9vCpUMlGmECq8EOO7fyzBnAGM+nu+i0g==}
+
   '@fluidframework/gitresources@5.0.0':
     resolution: {integrity: sha512-nfam1KT+EUqFCENHcxrU9VwUfbhUC83UcLuOsdLpn9I7VuClL+w8KMWosoYauZraO9gDhTo2kCErjgQji5GzGA==}
+
+  '@fluidframework/gitresources@6.0.0':
+    resolution: {integrity: sha512-/GOi0mLrjsrzFCIbMcEK9E8f64e1NBee6eScMrPJMj2oVljF2bAryrQm0SuZzC6x/lG3Ot5OXnBWHu+jSFyQiw==}
 
   '@fluidframework/id-compressor@2.43.0':
     resolution: {integrity: sha512-DfzZHlaJTJiCZKEF/cuU8WuDuAblzI8+945rrV1jZ04JdPhfXQdAdq5aACfAwIbRdM8/YbHJaYng9qq5e00Ltg==}
@@ -17626,11 +17628,11 @@ packages:
   '@fluidframework/server-local-server@5.0.0':
     resolution: {integrity: sha512-v+IBLojcZm1azQhiSEPCt3A2/xByiqDQ7/0gdkFenGrnEvnJ/9r/vv6ON0vAWFqDXov1Nu6kwEGA1bXIZTeHQw==}
 
+  '@fluidframework/server-local-server@6.0.0':
+    resolution: {integrity: sha512-lMCVqIRILvQDdC7fGeM1MZayX4HW0MMlbLQOrkk03CW/dqRTePMQSPF26nfEROrGEjbcSMEbynj2YBi8AHtYIg==}
+
   '@fluidframework/server-memory-orderer@5.0.0':
     resolution: {integrity: sha512-S5G2TwHXlewGkZ3jAtUKr/vpku0LPvhApktOVtAidIGHlKJP0kjLiom/KZihKZT5h2KqIhFBy56JgkXPFYkNeQ==}
-
-  '@fluidframework/server-memory-orderer@6.0.0':
-    resolution: {integrity: sha512-oUDdVcWT54xdxKPtIeb8h3bpP1icZfvAYcwBf4GeQx2WEjmykUQLbUYzVn8bAamEnw7QucR8IhrhHL8Do5XJ9w==}
 
   '@fluidframework/server-services-client@0.1036.5002':
     resolution: {integrity: sha512-2d0RSUXvfNlFgHVLiehiU4LgJheqGXlspIgug6U6nvPdwFGtQSbButh2SysBDFilIJ9E6Bacdd0P0e+4HRpCaQ==}
@@ -17643,6 +17645,9 @@ packages:
 
   '@fluidframework/server-services-core@5.0.0':
     resolution: {integrity: sha512-ztrGdRStwlfBFVsm+kChu6VuI764O4TbEEE1RX4gXpLlOsUVZfgYfeUiysdk5Zh7svDKT9n5LdE6VdjLvwb7IA==}
+
+  '@fluidframework/server-services-core@6.0.0':
+    resolution: {integrity: sha512-AIZ8QbT4BZOY21JvDZT9LT6vLdMiGsIXvD39C7EOuIfY4DwZSJ0Fmv083pvIJvBw3MQyUALqspCnrlzEfz2ibw==}
 
   '@fluidframework/server-services-shared@6.0.0':
     resolution: {integrity: sha512-Y5ihIvW4cyldaYaNnOQIYL2tsR0XEX7SDiNkE9PX66xzXNbKFiCeBC010pIoXLzQ+UxhIyNpXhzSJF2o1EErxg==}
@@ -17658,6 +17663,9 @@ packages:
 
   '@fluidframework/server-test-utils@5.0.0':
     resolution: {integrity: sha512-FOZ1Faw6x8VALUZh/nY6zKCfpgbPK/ylpKf/uQ2oOV9sxGNQfo5NXyHlQP1b78wfx2OYyHY5njtvYl7i9tz/zg==}
+
+  '@fluidframework/server-test-utils@6.0.0':
+    resolution: {integrity: sha512-fbopMKb7t/Sp1YtEoIMFpD/cdy5nan/XCy54ouL27DavRCBLdgLBY9OH+5VBsLiEGCOT+vKCSq5/hqnaP8dpQQ==}
 
   '@fluidframework/shared-object-base@1.4.0':
     resolution: {integrity: sha512-NI94dsIyZL7s76UN/UVawd0JqV106cS84MaW1r9Qv91+QGU8aq/KCS3j8R9ZZ8pWFQ46sX9BT4CKa4hy4xZedw==}
@@ -26546,9 +26554,8 @@ packages:
     resolution: {integrity: sha512-Zc+8eJlFMvgatPZTl6A9L/yht8QqdmUNtURHaKZLmKBE12hNPSrqNkUp2cs3M/UKmNVVAMFQYSjYIVHDjW5zew==}
     engines: {node: '>=12.0.0'}
 
-  tinylicious@file:tinylicious-6.0.0.tgz:
-    resolution: {integrity: sha512-1rHjQPtA5Mxjb+oUgYH69WegkWzfD3CTkQigKZ5eOgBEEzMbMPqitaNjrTBdfQqSdjpL5zTXBkLpushR4IZgTg==, tarball: file:tinylicious-6.0.0.tgz}
-    version: 6.0.0
+  tinylicious@6.0.0:
+    resolution: {integrity: sha512-E62tg0DA5tya85F+kIJd3SRjnwiXqME32IA4WmwcRxTm0dV+IgLGk3Gxs+ljJVcYxuh8OUmxFzrEgZwEHkl2xg==}
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -30296,7 +30303,7 @@ snapshots:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/core-interfaces': 1.4.0
       '@fluidframework/driver-definitions': 1.4.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
@@ -30435,7 +30442,11 @@ snapshots:
       '@fluidframework/common-utils': 0.32.2
       '@fluidframework/runtime-definitions': 1.4.0
 
+  '@fluidframework/gitresources@0.1036.5002': {}
+
   '@fluidframework/gitresources@5.0.0': {}
+
+  '@fluidframework/gitresources@6.0.0': {}
 
   '@fluidframework/id-compressor@2.43.0':
     dependencies:
@@ -30616,7 +30627,7 @@ snapshots:
   '@fluidframework/protocol-base@0.1036.5002':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       lodash: 4.17.21
 
@@ -30630,7 +30641,7 @@ snapshots:
   '@fluidframework/protocol-base@6.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 6.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       events_pkg: events@3.3.0
 
@@ -30698,7 +30709,7 @@ snapshots:
       '@fluidframework/driver-base': 1.4.0
       '@fluidframework/driver-definitions': 1.4.0
       '@fluidframework/driver-utils': 1.4.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/server-services-client': 0.1036.5002
@@ -30832,7 +30843,7 @@ snapshots:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/server-services-client': 6.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       assert: 2.1.0
       async: 3.2.6
@@ -30873,12 +30884,12 @@ snapshots:
   '@fluidframework/server-lambdas@6.0.0(debug@4.4.0)':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 6.0.0
       '@fluidframework/protocol-base': 6.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas-driver': 6.0.0
       '@fluidframework/server-services-client': 6.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       '@types/semver': 7.7.0
       assert: 2.1.0
@@ -30918,6 +30929,25 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluidframework/server-local-server@6.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas': 6.0.0(debug@4.4.0)
+      '@fluidframework/server-memory-orderer': 5.0.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
+      '@fluidframework/server-services-telemetry': 6.0.0
+      '@fluidframework/server-test-utils': 6.0.0
+      debug: 4.4.0(supports-color@8.1.1)
+      events_pkg: events@3.3.0
+      jsrsasign: 11.1.0
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/server-memory-orderer@5.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -30945,37 +30975,10 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-memory-orderer@6.0.0':
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/protocol-base': 6.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 6.0.0(debug@4.4.0)
-      '@fluidframework/server-services-client': 6.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 6.0.0
-      '@types/debug': 4.1.12
-      '@types/double-ended-queue': 2.1.7
-      '@types/lodash': 4.17.13
-      '@types/node': 18.19.67
-      '@types/ws': 6.0.4
-      assert: 2.1.0
-      debug: 4.4.0(supports-color@8.1.1)
-      double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      lodash: 4.17.21
-      sillyname: 0.1.0
-      uuid: 11.1.0
-      ws: 7.5.10
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   '@fluidframework/server-services-client@0.1036.5002':
     dependencies:
       '@fluidframework/common-utils': 0.32.2
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       axios: 0.30.0(debug@4.4.0)
@@ -31010,7 +31013,7 @@ snapshots:
   '@fluidframework/server-services-client@6.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 6.0.0
       '@fluidframework/protocol-base': 6.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       axios: 1.8.4(debug@4.4.0)
@@ -31039,14 +31042,29 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluidframework/server-services-core@6.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 6.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-telemetry': 6.0.0
+      '@types/nconf': 0.10.7
+      '@types/node': 18.19.67
+      debug: 4.4.0(supports-color@8.1.1)
+      events: 3.3.0
+      nconf: 0.12.1
+    transitivePeerDependencies:
+      - supports-color
+
   '@fluidframework/server-services-shared@6.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 6.0.0
       '@fluidframework/protocol-base': 6.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 6.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       '@fluidframework/server-services-utils': 6.0.0
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
@@ -31091,7 +31109,7 @@ snapshots:
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 6.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       debug: 4.4.0(supports-color@8.1.1)
       express: 4.21.2
@@ -31127,6 +31145,27 @@ snapshots:
       lodash: 4.17.21
       string-hash: 1.1.3
       uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-test-utils@6.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 6.0.0
+      '@fluidframework/protocol-base': 6.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
+      '@fluidframework/server-services-telemetry': 6.0.0
+      '@types/ioredis-mock': 8.2.6(ioredis@5.6.1)
+      assert: 2.1.0
+      debug: 4.4.0(supports-color@8.1.1)
+      events: 3.3.0
+      ioredis: 5.6.1
+      ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.6(ioredis@5.6.1))(ioredis@5.6.1)
+      lodash: 4.17.21
+      string-hash: 1.1.3
+      uuid: 11.1.0
     transitivePeerDependencies:
       - supports-color
 
@@ -42829,21 +42868,21 @@ snapshots:
       fdir: 6.4.2(picomatch@4.0.2)
       picomatch: 4.0.2
 
-  tinylicious@file:tinylicious-6.0.0.tgz:
+  tinylicious@6.0.0:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 6.0.0
       '@fluidframework/protocol-base': 6.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas': 6.0.0(debug@4.4.0)
-      '@fluidframework/server-local-server': 5.0.0
-      '@fluidframework/server-memory-orderer': 6.0.0
+      '@fluidframework/server-local-server': 6.0.0
+      '@fluidframework/server-memory-orderer': 5.0.0
       '@fluidframework/server-services-client': 6.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-shared': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       '@fluidframework/server-services-utils': 6.0.0
-      '@fluidframework/server-test-utils': 5.0.0
+      '@fluidframework/server-test-utils': 6.0.0
       agentkeepalive: 4.5.0
       axios: 1.8.4(debug@4.4.0)
       body-parser: 1.20.3
@@ -42862,7 +42901,7 @@ snapshots:
       nconf: 0.12.1
       socket.io: 4.8.1
       split: 1.0.1
-      uuid: 9.0.1
+      uuid: 11.1.0
       winston: 3.17.0
     transitivePeerDependencies:
       - bufferutil
