@@ -423,7 +423,9 @@ export function getTaskDefinitions(
 				if (script === undefined) {
 					throw new Error(`Script not found for task definition '${name}'`);
 				} else if (script.startsWith("fluid-build ")) {
-					throw new Error(`Script task should not invoke 'fluid-build' in '${name}'`);
+					throw new Error(
+						`Script task should not invoke 'fluid-build' in '${name}'. Did you forget to set 'script: false' in the task definition?`,
+					);
 				}
 			} else {
 				if (full.before.length !== 0 || full.after.length !== 0) {
