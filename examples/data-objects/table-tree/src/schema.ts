@@ -46,22 +46,54 @@ export class DateTime extends schemaFactory.object("DateTime", {
 	}
 }
 
+/**
+ * The kinds of cells allowed in the table.
+ */
 export const Cell = [schemaFactory.string, schemaFactory.boolean, DateTime] as const;
 
+/**
+ * {@link Column} properties.
+ */
+export class ColumnProps extends schemaFactory.object("table-column-props", {
+	/**
+	 * Column label.
+	 */
+	label: schemaFactory.optional(schemaFactory.string),
+
+	/**
+	 * Type hint. Can be used to determine how the cell should be rendered.
+	 * For example, it can be "text", "date", or "checkbox".
+	 * @defaultValue Plain text.
+	 */
+	hint: schemaFactory.optional(schemaFactory.string),
+}) {}
+
+/**
+ * A column in the table.
+ */
 export class Column extends TableSchema.column({
 	schemaFactory,
 	cell: Cell,
-	props: schemaFactory.object("table-column-props", {
-		label: schemaFactory.optional(schemaFactory.string),
-		hint: schemaFactory.optional(schemaFactory.string),
-	}),
+	props: ColumnProps,
 }) {}
+
+/**
+ * {@link Row} properties.
+ */
+export class RowProps extends schemaFactory.object("table-row-props", {
+	/**
+	 * Row label.
+	 */
+	label: schemaFactory.optional(schemaFactory.string),
+}) {}
+
+/**
+ * A row in the table.
+ */
 export class Row extends TableSchema.row({
 	schemaFactory,
 	cell: Cell,
-	props: schemaFactory.object("table-row-props", {
-		label: schemaFactory.optional(schemaFactory.string),
-	}),
+	props: RowProps,
 }) {}
 
 export class Table extends TableSchema.table({
