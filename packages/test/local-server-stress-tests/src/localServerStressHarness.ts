@@ -986,7 +986,6 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 
 			finalState.validationClient.container.dispose();
 			await finalState.localDeltaConnectionServer.close();
-			clearCachedDdsStates();
 		}
 	}
 

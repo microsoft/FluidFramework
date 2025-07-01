@@ -40,11 +40,11 @@ const createDDSClient = (channel: IChannel): DDSClient<IChannelFactory> => {
 	};
 };
 
-export function clearCachedDdsStates() {
-	channelToDdsState.clear();
-}
-
-const channelToDdsState = new Map<IChannel, DDSFuzzTestState<IChannelFactory>>();
+/**
+ * we use a weak map here, so the lifetime of the DDS state is bound to the channel
+ * itself, so after the channel is no longer needed the state can also be garbage collected.
+ */
+const channelToDdsState = new WeakMap<IChannel, DDSFuzzTestState<IChannelFactory>>();
 
 export const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
