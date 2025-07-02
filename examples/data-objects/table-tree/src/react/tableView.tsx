@@ -58,8 +58,8 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 
 	const handleAppendNewColumn = (newColumn: Column): void => {
 		tableModel.treeView.root.insertColumn({
-				column: newColumn,
-			});
+			column: newColumn,
+		});
 	};
 
 	const handleRemoveColumn = (index: number): void => {
@@ -129,15 +129,15 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 					</TableBody>
 				</Table>
 			</div>
-				<Button
-					icon={<Add24Regular />}
-					appearance="subtle"
-					size="small"
-					onClick={() => handleAppendNewRow()}
-					className="add-row-toggle"
-				>
-					Add Row
-				</Button>
+			<Button
+				icon={<Add24Regular />}
+				appearance="subtle"
+				size="small"
+				onClick={() => handleAppendNewRow()}
+				className="add-row-toggle"
+			>
+				Add Row
+			</Button>
 		</div>
 	);
 };

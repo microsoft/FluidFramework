@@ -87,13 +87,15 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	};
 
 	const handleAddColumn = (): void => {
-		handleAppendColumn(new Column({
-			props: {
-				label: newColumnLabel,
-				hint: newColumnHint,
-			},
-		}));
-	}
+		handleAppendColumn(
+			new Column({
+				props: {
+					label: newColumnLabel,
+					hint: newColumnHint,
+				},
+			}),
+		);
+	};
 
 	return (
 		<TableHeader>

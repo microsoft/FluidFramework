@@ -69,21 +69,18 @@ function getInitialTree(): Table {
 			[taskNameColumn.id]: "Clean laundry",
 			[dateColumn.id]: DateTime.fromDate(new Date()),
 			[completedColumn.id]: true,
-		}
+		},
 	});
 	const row1 = new Row({
 		cells: {
 			[taskNameColumn.id]: "Walk the dog",
 			[dateColumn.id]: DateTime.fromDate(new Date()),
 			[completedColumn.id]: false,
-		}
+		},
 	});
 
 	return new Table({
 		columns: [taskNameColumn, dateColumn, completedColumn],
-		rows: [
-			row0,
-			row1,
-		],
+		rows: [row0, row1],
 	});
 }
