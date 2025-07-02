@@ -86,17 +86,6 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 		}
 	};
 
-	const handleAddColumn = (): void => {
-		handleAppendColumn(
-			new Column({
-				props: {
-					label: newColumnLabel,
-					hint: newColumnHint,
-				},
-			}),
-		);
-	};
-
 	return (
 		<TableHeader>
 			{showAddColumnInput && (
@@ -128,7 +117,16 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 								icon={<Checkmark24Regular />}
 								appearance="subtle"
 								size="small"
-								onClick={handleAddColumn}
+								onClick={() => {
+									handleAppendColumn(
+										new Column({
+											props: {
+												label: newColumnLabel,
+												hint: newColumnHint,
+											},
+										}),
+									);
+								}}
 							/>
 						</div>
 					</TableHeaderCell>
