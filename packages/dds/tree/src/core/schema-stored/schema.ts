@@ -107,7 +107,7 @@ export interface SchemaAndPolicy {
 /**
  * Extra data needed to interpret stored schema.
  * @remarks
- * This contains information which describes the semantics of things which can be referenced in stored schema.
+ * This contains information that describes the semantics of things which can be referenced in stored schema.
  * For example, field kind identifiers refer to specific field kinds, which imply specific rules around what is valid in a given field (the multiplicity).
  * This structure provides such information, allowing it to be possible to determine if a given tree complies with a particular stored schema.
  *
