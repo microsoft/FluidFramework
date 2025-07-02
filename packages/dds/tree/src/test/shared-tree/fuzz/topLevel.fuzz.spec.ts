@@ -66,7 +66,6 @@ describe("Fuzz - Top-Level", () => {
 			},
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-
 				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
 				attachingBeforeRehydrateDisable: true,
 			},
