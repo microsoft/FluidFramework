@@ -336,7 +336,7 @@ describe("Presence", () => {
 						"data": {
 							"system:presence": {
 								// Original response does not contain the requestor (attendeeId-4)
-								// information (for efficiency). Note the the efficiency might be
+								// information (for efficiency). Note that the efficiency might be
 								// compromising robust data and may change.
 								"clientToSessionId": {
 									[connectionId2]: {
