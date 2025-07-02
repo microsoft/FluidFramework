@@ -712,7 +712,7 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 		if (this.includeLockFile) {
 			const lockFilePath = this.node.pkg.getLockFilePath();
 			if (lockFilePath === undefined) {
-				throw new Error(`Lock file missing for ${this.node.pkg.nameColored}. `);
+				throw new Error(`Lock file missing for ${this.node.pkg.nameColored}.`);
 			}
 			inputs.push(lockFilePath);
 		}
