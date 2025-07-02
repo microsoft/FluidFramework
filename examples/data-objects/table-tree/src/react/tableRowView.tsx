@@ -112,7 +112,6 @@ export const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpda
 					}}
 				/>
 			);
-			break;
 		}
 		case "date": {
 			return (
@@ -126,7 +125,6 @@ export const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpda
 					}}
 				/>
 			);
-			break;
 		}
 		case "text":
 		case undefined: {
@@ -141,7 +139,6 @@ export const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpda
 					}}
 				/>
 			);
-			break;
 		}
 		default: {
 			throw new Error(`Unsupported cell hint: ${hint}`);
