@@ -143,10 +143,14 @@ describe("schemaCreationUtilities", () => {
 		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = 1,
-			b = "b",
+			b = "B",
 			c = 6.3,
 		}
-		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
+		const f = schemaFactory.scopedFactory("Mode");
+
+		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+
+		const ModeNodes = adaptEnum(f, Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
@@ -178,6 +182,37 @@ describe("schemaCreationUtilities", () => {
 		assert.equal(parent1.mode.value, Mode.a);
 		assert.equal(parent2.mode.value, Mode.b);
 		assert.equal(parent3.mode.value, Mode.c);
+
+		assert.deepEqual(ModeNodes.schema, [ModeNodes.a, ModeNodes.b, ModeNodes.c]);
+
+		const x = new ModeNodes.a().value;
+		const y = new ModeNodes.b().value;
+		const z = new ModeNodes.c().value;
+
+		type _check4 = requireTrue<areSafelyAssignable<typeof x, Mode.a>>;
+		type _check5 = requireTrue<areSafelyAssignable<typeof y, Mode.b>>;
+		type _check6 = requireTrue<areSafelyAssignable<typeof z, Mode.c>>;
+	});
+
+	it("scoping", () => {
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		enum Mode {
+			a,
+		}
+		const f = schemaFactory.scopedFactory("Mode");
+
+		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+
+		const ModeNodes = adaptEnum(f, Mode);
+
+		type AType = typeof ModeNodes.a.identifier;
+
+		assert.equal(ModeNodes.a.identifier, "com.myApp.Mode.0");
+
+		// TODO: AB#43345
+		// This should be just "com.myApp.Mode.0", but due to known issue.
+		// See comments on adaptEnum and "variance with respect to scope and alpha" test.
+		type _check = requireTrue<areSafelyAssignable<AType, "com.myApp.Mode.0" | "com.0">>;
 	});
 
 	it("adaptEnum - construction tests", () => {

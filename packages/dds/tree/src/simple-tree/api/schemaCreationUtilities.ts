@@ -47,6 +47,12 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 		public get value(): TName {
 			return name;
 		}
+
+		public static override toString(): string {
+			return `SingletonSchema(${name})`;
+		}
+
+		public static [Symbol.toStringTag] = `SingletonSchema(${name})`;
 	}
 
 	type SingletonNodeType = TreeNode & { readonly value: TName };
@@ -71,10 +77,16 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 
 /**
  * Converts an enum into a collection of schema which can be used in a union.
+ *
+ * @typeParam TScope - The scope of the provided factory.
+ * There is a known issue where if a factory is provided that is typed as a {@link SchemaFactoryAlpha}, and its scope contains a "." character,
+ * the inferred type for the scope will end up as a union of the scope up to the first "." character and the scope as it should be.
+ * This can be mitigated by explicitly providing the TScope type parameter or by typing the provided factory as a {@link SchemaFactory} instead of a {@link SchemaFactoryAlpha}.
+ *
  * @remarks
  * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
  * Numeric enums values have the value implicitly converted into a string.
- * Consider making a dedicated schema factory with a nested scope to avoid the enum members colliding with other schema.
+ * Consider making a dedicated schema factory with a nested scope (for example using {@link SchemaFactoryAlpha.scopedFactory}) to avoid the enum members colliding with other schema.
  * @example
  * ```typescript
  * const schemaFactory = new SchemaFactory("com.myApp");
@@ -105,7 +117,8 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * }
  * ```
  * @privateRemarks
- * Maybe provide `SchemaFactory.nested` to ease creating nested scopes?
+ * // TODO: AB#43345: see TScope known issue above, and other references to this work item.
+ *
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
  * @beta
  */
@@ -145,6 +158,11 @@ export function adaptEnum<
 	};
 	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
 	for (const [key, value] of Object.entries(members)) {
+		// Skip reverse mapping for numeric entries
+		if (typeof members[value] === "number") {
+			continue;
+		}
+
 		const schema = singletonSchema(factory, value);
 		schemaArray.push(schema);
 		Object.defineProperty(out, key, {
