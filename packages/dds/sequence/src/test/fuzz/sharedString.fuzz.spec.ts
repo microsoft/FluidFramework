@@ -66,7 +66,7 @@ describe("SharedString fuzz with obliterate", () => {
 			...defaultFuzzOptions,
 			// Uncomment this line to replay a specific seed from its failure file:
 			// replay: 0,
-
+			rollbackProbability: 0,
 			forceGlobalSeed: true,
 			skip: [
 				51, // AB#7220: This seed should be enabled. The failure here is unrelated to obliterate.
