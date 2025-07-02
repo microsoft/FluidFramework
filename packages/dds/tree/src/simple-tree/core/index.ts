@@ -42,6 +42,7 @@ export {
 	getOrCreateNodeFromInnerUnboxedNode,
 } from "./getOrCreateNode.js";
 export {
+	UnhydratedFlexTreeField,
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
 	UnhydratedContext,
