@@ -16,5 +16,5 @@
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*", "src/view/utilities.ts"],
+	"include": ["src/**/*"],
 }
