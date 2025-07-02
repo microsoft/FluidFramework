@@ -87,7 +87,7 @@ export interface TaskFileDependencies {
 	 * For fine-grained control, use `inputGlobs` and `outputGlobs` to specify the dependencies in `node_modules`
 	 * and set this to false.
 	 */
-	includeLockFile?: boolean;
+	includeLockFiles?: boolean;
 }
 
 export interface TaskConfig {

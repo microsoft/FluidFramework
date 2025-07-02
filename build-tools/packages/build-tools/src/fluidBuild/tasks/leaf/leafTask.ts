@@ -688,7 +688,7 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	/**
 	 * @returns If the lock file should be included as input files for this task.
 	 */
-	protected get includeLockFile(): boolean {
+	protected get includeLockFiles(): boolean {
 		// Include the lock file by default.
 		return true;
 	}
@@ -709,7 +709,7 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 
 	protected override async getInputFiles(): Promise<string[]> {
 		const inputs = await this.getFiles("input");
-		if (this.includeLockFile) {
+		if (this.includeLockFiles) {
 			const lockFilePath = this.node.pkg.getLockFilePath();
 			if (lockFilePath === undefined) {
 				throw new Error(`Lock file missing for ${this.node.pkg.nameColored}.`);
