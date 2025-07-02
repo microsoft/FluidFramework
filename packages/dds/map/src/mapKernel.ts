@@ -493,10 +493,6 @@ export class MapKernel {
 	public delete(key: string): boolean {
 		const previousOptimisticLocalValue = this.getOptimisticLocalValue(key);
 
-		if (previousOptimisticLocalValue === undefined) {
-			return false;
-		}
-
 		if (!this.isAttached()) {
 			const successfullyRemoved = this.sequencedData.delete(key);
 			this.eventEmitter.emit(
@@ -533,12 +529,17 @@ export class MapKernel {
 			type: "delete",
 		};
 		this.submitMessage(op, listNode);
-		this.eventEmitter.emit(
-			"valueChanged",
-			{ key, previousValue: previousOptimisticLocalValue.value },
-			true,
-			this.eventEmitter,
-		);
+		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
+		// (permitting speculative deletion even if we don't see anything locally) but don't emit
+		// a valueChanged since we in fact did not locally observe a value change.
+		if (previousOptimisticLocalValue !== undefined) {
+			this.eventEmitter.emit(
+				"valueChanged",
+				{ key, previousValue: previousOptimisticLocalValue.value },
+				true,
+				this.eventEmitter,
+			);
+		}
 
 		return true;
 	}
