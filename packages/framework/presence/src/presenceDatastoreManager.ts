@@ -5,11 +5,12 @@
 
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
@@ -58,7 +59,27 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	internal: PresenceStatesInternal;
 }
 
+/**
+ * Datastore structure used for broadcasting to other clients.
+ * Validation metadata is stripped before transmission.
+ */
 type PresenceDatastore = SystemDatastore & {
+	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
+};
+
+/**
+ * Internal system datastore that may contain validation metadata.
+ * Used internally but stripped before broadcasting.
+ */
+type SystemDatastoreInternal = SystemDatastore & {
+	// Same as SystemDatastore but can contain validation metadata
+};
+
+/**
+ * Internal datastore structure used within PresenceDatastoreManager.
+ * Contains validation metadata that must be stripped before broadcasting.
+ */
+type PresenceDatastoreInternal = SystemDatastoreInternal & {
 	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
@@ -138,7 +159,7 @@ function mergeGeneralDatastoreMessageContent(
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastore;
+	private readonly datastore: PresenceDatastoreInternal;
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -156,7 +177,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
+		this.datastore = {
+			"system:presence": systemWorkspaceDatastore,
+		} as PresenceDatastoreInternal;
 		this.workspaces.set("system:presence", systemWorkspace);
 		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
@@ -176,7 +199,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 				updateProviders,
 			},
 		});
@@ -329,6 +352,64 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
+	/**
+	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
+	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
+	 */
+	private stripValidationMetadata(datastore: PresenceDatastoreInternal): PresenceDatastore {
+		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+		const stripped = {} as PresenceDatastore;
+
+		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			stripped[workspaceAddress] = {} as any;
+
+			for (const [valueKey, clientRecord] of Object.entries(workspace)) {
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				(stripped[workspaceAddress] as any)[valueKey] = {};
+
+				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					(stripped[workspaceAddress] as any)[valueKey][attendeeId] =
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+						this.stripValidationFromValueData(valueData);
+				}
+			}
+		}
+
+		return stripped;
+	}
+
+	/**
+	 * Strips validation metadata from individual value data entries.
+	 */
+	private stripValidationFromValueData(
+		valueDataIn:
+			| InternalTypes.ValueDirectoryOrState<unknown>
+			| InternalTypes.ValueOptionalState<unknown>,
+	): InternalTypes.ValueDirectoryOrState<unknown> | InternalTypes.ValueOptionalState<unknown> {
+		// Clone the input object since we will mutate it
+		const valueData = shallowCloneObject(valueDataIn);
+		// Handle directory structures (with "items" property)
+		if ("items" in valueData && typeof valueData.items === "object") {
+			const stripped: InternalTypes.ValueDirectory<unknown> = {
+				rev: valueData.rev,
+				items: {},
+			};
+
+			for (const [key, item] of Object.entries(valueData.items)) {
+				stripped.items[key] = this.stripValidationFromValueData(item);
+			}
+
+			return stripped;
+		}
+
+		if ("validatedValue" in valueData) {
+			delete valueData.validatedValue;
+		}
+		return valueData;
+	}
+
 	private broadcastAllKnownState(): void {
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
@@ -336,7 +417,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 			},
 		});
 		this.refreshBroadcastRequested = false;

@@ -15,6 +15,7 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
+import { isValueRequiredState } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
@@ -489,10 +490,9 @@ class LatestMapValueManagerImpl<
 		}
 		const items = new Map<Keys, LatestData<T, ValueAccessor<T>>>();
 		for (const [key, item] of objectEntries(clientStateMap.items)) {
-			const value = item.value;
-			if (value !== undefined) {
+			if (isValueRequiredState(item)) {
 				items.set(key, {
-					value: asDeeplyReadonlyDeserializedJson(value),
+					value: asDeeplyReadonlyDeserializedJson(item.value),
 					metadata: { revision: item.rev, timestamp: item.timestamp },
 				});
 			}
@@ -545,7 +545,7 @@ class LatestMapValueManagerImpl<
 				revision: item.rev,
 				timestamp: item.timestamp,
 			};
-			if (item.value !== undefined) {
+			if (isValueRequiredState(item)) {
 				const itemValue = asDeeplyReadonlyDeserializedJson(item.value);
 				const updatedItem = {
 					attendee,
@@ -600,8 +600,8 @@ export interface LatestMapArgumentsRaw<T, Keys extends string | number = string 
 export interface LatestMapArguments<T, Keys extends string | number = string | number>
 	extends LatestMapArgumentsRaw<T, Keys> {
 	/**
-	 * A validator function that will be called to do runtime validation of the custom data stored in a presence state
-	 * workspace.
+	 * An optional function that will be called at runtime to validate the presence data. A runtime validator is strongly
+	 * recommended. See {@link StateSchemaValidator}.
 	 */
 	validator: StateSchemaValidator<T>;
 }
