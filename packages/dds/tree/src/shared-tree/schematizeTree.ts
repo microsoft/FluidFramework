@@ -19,7 +19,7 @@ import {
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import type { SchemaCompatibilityTester } from "../simple-tree/index.js";
+import { toStoredSchema, type SchemaCompatibilityTester } from "../simple-tree/index.js";
 import { isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
@@ -80,7 +80,7 @@ export function initializeContent(
 	// );
 	assert(
 		allowsRepoSuperset(defaultSchemaPolicy, newSchema, incrementalSchemaUpdate),
-		0x5c9 /* Incremental Schema during update should be a allow a superset of the final schema */,
+		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,
 	);
 	// Update to intermediate schema
 	schemaRepository.updateSchema(incrementalSchemaUpdate);
@@ -223,7 +223,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(viewSchema.viewSchemaAsStored);
+			checkout.updateSchema(toStoredSchema(viewSchema.viewSchemaRoot));
 			return true;
 		}
 		default: {

@@ -46,8 +46,8 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const { type } of annotatedAllowedTypes.types) {
-		walkNodeSchema(type, visitor, visitedSet);
+	for (const { metadata, type } of annotatedAllowedTypes.types) {
+		walkNodeSchema(type, metadata, visitor, visitedSet);
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
 }

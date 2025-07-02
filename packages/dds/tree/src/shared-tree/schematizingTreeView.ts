@@ -53,6 +53,7 @@ import {
 	createUnknownOptionalFieldPolicy,
 	prepareForInsertionContextless,
 	type FieldSchema,
+	toStoredSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -174,7 +175,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = this.viewSchema.viewSchemaAsStored;
+			const schema = toStoredSchema(this.viewSchema.viewSchemaRoot);
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,

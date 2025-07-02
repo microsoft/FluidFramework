@@ -19,21 +19,22 @@ import {
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
-} from "../../core/index.js";
-import { brand } from "../../util/index.js";
+} from "../core/index.js";
+import { brand } from "../util/index.js";
+import {
+	asTreeNodeSchemaCorePrivate,
+	NodeKind,
+	type AnnotatedAllowedType,
+	type TreeNodeSchema,
+} from "./core/index.js";
+import { normalizeFieldSchema, type FieldSchema } from "./schemaTypes.js";
 import {
 	isMapNodeSchema,
 	isObjectNodeSchema,
-	NodeKind,
-	normalizeFieldSchema,
-	type FieldSchema,
-	type TreeNodeSchema,
-	type AnnotatedAllowedType,
-	asLeafNodeSchema,
-	type ObjectNodeSchemaInternalData,
-	convertFieldKind,
-	asTreeNodeSchemaCorePrivate,
-} from "../../simple-tree/index.js";
+	type ObjectNodeSchemaPrivate,
+} from "./node-kinds/index.js";
+import { asLeafNodeSchema } from "./leafNodeSchema.js";
+import { convertFieldKind } from "./toStoredSchema.js";
 
 // TODO:
 // The comparisons in this file seem redundant with those in comparison.ts.
@@ -389,7 +390,7 @@ function* getFieldDiscrepancies(
 
 function* trackObjectNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
-	view: ObjectNodeSchemaInternalData,
+	view: ObjectNodeSchemaPrivate,
 	stored: ObjectNodeStoredSchema,
 ): Iterable<FieldDiscrepancy> {
 	/**
