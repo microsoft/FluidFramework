@@ -5,7 +5,7 @@
 ---
 Fix adaptEnum's handling of numeric enums
 
-Enum entries who's values are numeric get additional properties on TypeScript's generated Enum object.
+Enum entries whose values are numeric get additional properties on TypeScript's generated Enum object.
 These values were getting treated like enum entries at runtime by `adaptEnum` (`@beta`).
 This has been fixed and the runtime behavior now matches the types in this case.
 
