@@ -5,8 +5,6 @@
 
 import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
 
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
-import { NetworkError } from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -15,12 +13,8 @@ import {
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 import express from "express";
-// eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
-import { decode } from "jsonwebtoken";
 import morgan from "morgan";
 
-import { getParam } from "./auth";
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
@@ -74,66 +68,6 @@ function getEventLoopMetrics(histogram: IntervalHistogram) {
 		min: (histogram.min / 1e6).toFixed(3),
 		mean: (histogram.mean / 1e6).toFixed(3),
 	};
-}
-
-export function parseToken(
-	tenantId: string,
-	authorization: string | undefined,
-): string | undefined {
-	let token: string | undefined;
-	if (!authorization) {
-		return undefined;
-	}
-
-	if (authorization.startsWith("Basic ")) {
-		const base64TokenMatch = authorization.match(/Basic (.+)/);
-		if (!base64TokenMatch) {
-			throw new NetworkError(403, "Malformed authorization token");
-		}
-		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
-
-		const tokenMatch = encoded.match(/(.+):(.+)/);
-		if (!tokenMatch || tenantId !== tokenMatch[1]) {
-			throw new NetworkError(403, "Malformed authorization token");
-		}
-
-		token = tokenMatch[2];
-	}
-
-	if (authorization.startsWith("Bearer ")) {
-		token = authorization.slice("Bearer ".length).trim();
-	}
-
-	return token;
-}
-
-export function getTenantIdFromRequest(params: Params) {
-	const tenantId = getParam(params, "tenantId");
-	if (tenantId !== undefined) {
-		return tenantId;
-	}
-	const id = getParam(params, "id");
-	if (id !== undefined) {
-		return id;
-	}
-
-	return "-";
-}
-
-function getDocumentIdFromRequest(tenantId: string, authorization: string | undefined) {
-	if (!authorization) {
-		return "-";
-	}
-	try {
-		const token = parseToken(tenantId, authorization);
-		if (token === undefined) {
-			throw new NetworkError(400, "Token undefined");
-		}
-		const decoded = decode(token) as unknown as ITokenClaims;
-		return decoded.documentId;
-	} catch (err) {
-		return "-";
-	}
 }
 
 /**
@@ -229,8 +163,7 @@ export function jsonMorganLoggerMiddleware(
 					statusCode = "STATUS_UNAVAILABLE";
 				}
 			}
-			const tenantId = getTenantIdFromRequest(req.params);
-			const authHeader = req.get("Authorization");
+
 			const properties = {
 				[HttpProperties.method]: tokens.method(req, res) ?? "METHOD_UNAVAILABLE",
 				[HttpProperties.pathCategory]: `${req.baseUrl}${
@@ -248,11 +181,8 @@ export function jsonMorganLoggerMiddleware(
 					req,
 					res,
 				).correlationId,
-				[BaseTelemetryProperties.tenantId]: tenantId,
-				[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
-					tenantId,
-					authHeader,
-				),
+				[BaseTelemetryProperties.tenantId]: res.locals.tenantId,
+				[BaseTelemetryProperties.documentId]: res.locals.documentId,
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
 				[HttpProperties.retryCount]: Number.parseInt(

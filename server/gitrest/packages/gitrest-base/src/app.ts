@@ -67,20 +67,24 @@ export function create(
 				"gitrest",
 				(tokens, req, res) => {
 					const params = getRepoManagerParamsFromRequest(req);
+					const tenantId = getTenantIdForGitRestRequest(
+							params,
+							req,
+						);
+					const documentId = params.storageRoutingId?.documentId
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
 							res,
 							DriverVersionHeaderName,
 						),
-						[BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(
-							params,
-							req,
-						),
-						[BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
 						[CommonProperties.callingServiceName]:
 							req.headers[CallingServiceHeaderName] ?? "",
 					};
+					res.locals.tenantId = tenantId;
+					res.locals.documentId = documentId;
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
 						additionalProperties.isEphemeralContainer = req.get(
 							Constants.IsEphemeralContainer,
