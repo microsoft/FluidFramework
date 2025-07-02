@@ -25,22 +25,6 @@ export namespace InternalTypes {
 	}
 
 	/**
-	 * Represents data that may have been validated by a {@link StateSchemaValidator} function.
-	 *
-	 * @system
-	 */
-	export interface ValidatedOptionalState<TValue> extends ValueOptionalState<TValue> {
-		/**
-		 * Contains a validated value or undefined if `value` is invalid.
-		 *
-		 * This property will not be present if the data has not been validated.
-		 * If it is present and `undefined`, the value has been checked and found to be invalid.
-		 * Otherwise it will be the validated value.
-		 */
-		validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
-	}
-
-	/**
 	 * Represents a state that may have a value.
 	 * And it includes standard metadata.
 	 *
@@ -73,19 +57,20 @@ export namespace InternalTypes {
 	}
 
 	/**
-	 * Utility type that makes the provided union of keys required in T.
-	 */
-	export type RequireKeys<T, K extends keyof T> = T & { [P in K]-?: T[P] };
-
-	/**
 	 * Represents data that may have been validated by a {@link StateSchemaValidator} function.
 	 *
 	 * @system
 	 */
-	export type ValidatedRequiredState<TValue> = RequireKeys<
-		ValidatedOptionalState<TValue>,
-		"value"
-	>;
+	export interface ValidatedRequiredState<TValue> extends ValueRequiredState<TValue> {
+		/**
+		 * Contains a validated value or undefined if `value` is invalid.
+		 *
+		 * This property will not be present if the data has not been validated.
+		 * If it is present and `undefined`, the value has been checked and found to be invalid.
+		 * Otherwise it will be the validated value.
+		 */
+		validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+	}
 
 	/**
 	 * A directory of values, where each value may be an optional state or another directory.

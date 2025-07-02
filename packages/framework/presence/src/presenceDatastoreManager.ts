@@ -5,7 +5,7 @@
 
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
@@ -384,14 +384,12 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * Strips validation metadata from individual value data entries.
 	 */
 	private stripValidationFromValueData(
-		valueData:
+		valueDataIn:
 			| InternalTypes.ValueDirectoryOrState<unknown>
 			| InternalTypes.ValueOptionalState<unknown>,
 	): InternalTypes.ValueDirectoryOrState<unknown> | InternalTypes.ValueOptionalState<unknown> {
-		if (valueData === null || typeof valueData !== "object") {
-			return valueData;
-		}
-
+		// Clone the input object since we will mutate it
+		const valueData = shallowCloneObject(valueDataIn);
 		// Handle directory structures (with "items" property)
 		if ("items" in valueData && typeof valueData.items === "object") {
 			const stripped: InternalTypes.ValueDirectory<unknown> = {
@@ -400,9 +398,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			};
 
 			for (const [key, item] of Object.entries(valueData.items)) {
-				stripped.items[key] = this.stripValidationFromValueData(item) as
-					| InternalTypes.ValueOptionalState<unknown>
-					| InternalTypes.ValueDirectory<unknown>;
+				stripped.items[key] = this.stripValidationFromValueData(item);
 			}
 
 			return stripped;

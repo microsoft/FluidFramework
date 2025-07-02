@@ -80,9 +80,6 @@ export namespace InternalTypes {
         // (undocumented)
         name: string;
     }
-    export type RequireKeys<T, K extends keyof T> = T & {
-        [P in K]-?: T[P];
-    };
     // @system
     export class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
     }
@@ -92,11 +89,9 @@ export namespace InternalTypes {
     export class StateValueBrand<T> {
     }
     // @system
-    export interface ValidatedOptionalState<TValue> extends ValueOptionalState<TValue> {
+    export interface ValidatedRequiredState<TValue> extends ValueRequiredState<TValue> {
         validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
     }
-    // @system
-    export type ValidatedRequiredState<TValue> = RequireKeys<ValidatedOptionalState<TValue>, "value">;
     // @system
     export interface ValueDirectory<T> {
         // (undocumented)
