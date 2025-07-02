@@ -11,7 +11,6 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../../internalUtils.js";
 import type { createPresenceManager } from "../../presenceManager.js";
-
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
