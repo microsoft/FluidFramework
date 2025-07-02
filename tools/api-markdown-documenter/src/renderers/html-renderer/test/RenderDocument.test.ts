@@ -56,7 +56,7 @@ describe("Document HTML rendering tests", () => {
 			"      <p>This is a sample document. It has very basic content.</p>",
 			"      <section>",
 			"        <h2>Section Heading</h2>",
-			"        <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <span><i>That's real neat-o.</i></span></p>",
+			"        <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <i>That's real neat-o.</i></p>",
 			"      </section>",
 			"    </section>",
 			"  </body>",

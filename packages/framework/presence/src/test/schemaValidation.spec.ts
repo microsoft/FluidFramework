@@ -11,6 +11,7 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../internalUtils.js";
 import type { createPresenceManager } from "../presenceManager.js";
+import { StateFactoryInternal } from "../stateFactory.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
@@ -23,7 +24,6 @@ import {
 	prepareConnectedPresence,
 } from "./testUtils.js";
 
-import { StateFactory } from "@fluidframework/presence/beta";
 import type {
 	InternalTypes,
 	Latest,
@@ -178,7 +178,7 @@ describe("Presence", () => {
 					]);
 
 					stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-						count: StateFactory.latest({
+						count: StateFactoryInternal.latest({
 							local: { num: 0 } satisfies TestData,
 							validator: validatorFunction,
 							settings: { allowableUpdateLatencyMs: 0 },
@@ -345,7 +345,7 @@ describe("Presence", () => {
 				assert.equal(validatorFunction.callCount, 0);
 
 				stateWorkspace = presence.states.getWorkspace("name:testStateWorkspace", {
-					count: StateFactory.latestMap({
+					count: StateFactoryInternal.latestMap({
 						local: { "key1": { num: 0 } },
 						validator: validatorFunction,
 						settings: { allowableUpdateLatencyMs: 0 },

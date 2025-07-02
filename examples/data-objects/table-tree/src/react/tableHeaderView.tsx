@@ -15,7 +15,7 @@ import {
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
 import React, { DragEvent } from "react";
 
-import type { Column } from "./tableSchema.js";
+import type { Column } from "../schema.js";
 
 /**
  * Props for the `TableHeaderView` component, which renders the header row of the table.
