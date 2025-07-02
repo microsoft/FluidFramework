@@ -7,12 +7,11 @@ import { Table, TableBody, Input, Button } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular } from "@fluentui/react-icons";
 import React, { useState, DragEvent } from "react";
 
-import { useTree } from "../utils/index.js";
+import { TableDataObject } from "../dataObject.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
-
-import { TableDataObject } from "./index.js";
+import { useTree } from "./utilities.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./tableView.css";

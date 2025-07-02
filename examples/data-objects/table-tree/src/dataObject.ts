@@ -14,7 +14,7 @@ import {
 	type TreeView,
 } from "@fluidframework/tree/legacy";
 
-import { Column, Table } from "./tableSchema.js";
+import { Column, Table } from "./schema.js";
 
 /**
  * A data object for managing a shared table using `SharedTree`.
@@ -29,7 +29,7 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 	>(`TreeDataObject`, TableDataObject, [SharedTree.getFactory()], {});
 
 	public override generateView(tree: ITree): TreeView<typeof Table> {
-		return tree.viewWith(this.config) as unknown as TreeView<typeof Table>;
+		return tree.viewWith(this.config);
 	}
 
 	/**
