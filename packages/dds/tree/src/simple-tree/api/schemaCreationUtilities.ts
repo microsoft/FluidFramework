@@ -4,7 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { fail } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
 import type { NodeFromSchema } from "../schemaTypes.js";
@@ -157,8 +157,7 @@ export function adaptEnum<
 			: never;
 	};
 	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
-	for (const [key, value] of Object.entries(members)) {
-		// Skip reverse mapping for numeric entries
+	for (const [key, value] of enumEntries(members)) {
 		if (typeof members[value] === "number") {
 			continue;
 		}
@@ -181,6 +180,32 @@ export function adaptEnum<
 	});
 
 	return out;
+}
+
+export function enumEntries(
+	enumObject: Record<string, string | number>,
+): [string, string | number][] {
+	// Skip reverse mapping for numeric entries.
+	// For numeric entries, TypeScript defines an additional property keyed with the number implicitly converted to a string.
+	// Note TypeScript can overwrite its own enum entries in some edge cases (see https://github.com/microsoft/TypeScript/issues/48956) so its not possible to handle all cases correctly.
+	return Object.entries(enumObject).filter(([key, value]) => {
+		// All reverse mapping must also have a inverse mapping (the regular forward mapping) to a number:
+		const inverse = enumObject[value];
+		if (typeof inverse !== "number") {
+			// Known not to be a reverse mapping, so keep it.
+			return true;
+		}
+		// At this point, it is expected that all remaining cases are reverse mappings,
+		// but do some asserts to ensure that the above logic is sufficient.
+		// All reverse mapping must have a string value:
+		assert(typeof value === "string", "expected reverse mapping and thus a string value");
+		assert(
+			Number.parseFloat(key).toString() === key,
+			"expected reverse mapping and key is normalizes string version of a number",
+		);
+		// Discard the reverse mapping.
+		return false;
+	});
 }
 
 /**

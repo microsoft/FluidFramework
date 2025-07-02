@@ -18,6 +18,7 @@ import {
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
+	enumEntries,
 	enumFromStrings,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
@@ -460,5 +461,78 @@ describe("schemaCreationUtilities", () => {
 				'Multiple schema encountered with the identifier "test.2". Remove or rename them to avoid the collision.',
 			),
 		);
+	});
+
+	describe("enumEntries", () => {
+		it("string enum", () => {
+			enum TestEnum {
+				A = "a",
+				B = "b",
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["A", "a"],
+				["B", "b"],
+			]);
+		});
+
+		it("numeric enum", () => {
+			enum TestEnum {
+				A = 1,
+				B = 2,
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["A", 1],
+				["B", 2],
+			]);
+		});
+
+		it("edge cases", () => {
+			enum TestEnum {
+				"1.0" = "a",
+				A = "b",
+				"-0" = "c",
+				// Due to https://github.com/microsoft/TypeScript/issues/61993 this produces 0 not -0
+				"+1.1" = -0,
+				// Actually -0
+				"1.10" = (() => -0)(),
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["1.0", "a"],
+				["A", "b"],
+				["-0", "c"],
+				["+1.1", 0],
+				["1.10", -0],
+			]);
+		});
+
+		it("malformed enums", () => {
+			// See https://github.com/microsoft/TypeScript/issues/48956
+			// TypeScript screws this case up in an undetectable way, but confirm it doesn't assert.
+			enum TestEnumNumber {
+				Infinity = Number.POSITIVE_INFINITY,
+				NaN = Number.NaN,
+			}
+
+			enum TestEnumString {
+				Infinity = "Infinity",
+				NaN = "NaN",
+			}
+
+			// Since these two enums are deeply equal (checked here),
+			// there is nothing we can do to to make the number case work correctly.
+			assert.deepEqual(TestEnumNumber, TestEnumString);
+
+			const entries = enumEntries(TestEnumNumber);
+			assert.deepEqual(entries, [
+				["Infinity", "Infinity"],
+				["NaN", "NaN"],
+			]);
+		});
 	});
 });
