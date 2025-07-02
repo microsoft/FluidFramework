@@ -20,7 +20,14 @@ export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
 // Duplicate of the ApiLevel type defined in build-cli/src/library/apiLevel.ts
 // AB#12469 tracks moving the type test infra into build-cli, at which point this duplicate type won't be needed.
-export type ApiLevel = "public" | "beta" | "alpha" | "internal" | "legacy";
+export type ApiLevel =
+	| "public"
+	| "beta"
+	| "alpha"
+	| "internal"
+	| "legacyPublic"
+	| "legacyBeta"
+	| "legacyAlpha";
 
 export interface ITypeValidationConfig {
 	/**
@@ -46,7 +53,7 @@ export interface ITypeValidationConfig {
 }
 
 export const defaultTypeValidationConfig: ITypeValidationConfig = {
-	entrypoint: "legacy",
+	entrypoint: "legacyBeta",
 	broken: {},
 	disabled: undefined,
 };

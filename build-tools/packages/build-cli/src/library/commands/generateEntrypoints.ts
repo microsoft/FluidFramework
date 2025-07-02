@@ -14,7 +14,7 @@ import { ModuleKind, Project, ScriptKind } from "ts-morph";
 import type { CommandLogger } from "../../logging.js";
 import { BaseCommand } from "./base.js";
 
-import { ApiLevel } from "../apiLevel.js";
+import { ApiLevel, isLegacy } from "../apiLevel.js";
 import { ReleaseTag } from "../apiTag.js";
 import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
@@ -138,18 +138,7 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
-		// When @alpha is mapped to /legacy, @beta should not be included in
-		// @alpha aka /legacy entrypoint.
-		const separateBetaFromAlpha = this.flags.outFileAlpha !== ApiLevel.alpha;
-		promises.push(
-			generateEntrypoints(
-				mainEntrypoint,
-				mapApiTagLevelToOutput,
-				this.logger,
-				separateBetaFromAlpha,
-			),
-		);
+		promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger));
 
 		if (node10TypeCompat) {
 			promises.push(
@@ -350,13 +339,11 @@ const generatedHeader: string = `/*!
  * @param mainEntrypoint - path to main entrypoint file
  * @param mapApiTagLevelToOutput - level oriented ApiTag to output file mapping
  * @param log - logger
- * @param separateBetaFromAlpha - if true, beta APIs will not be included in alpha outputs
  */
 async function generateEntrypoints(
 	mainEntrypoint: string,
-	mapApiTagLevelToOutput: Map<ReleaseTag, ExportData>,
+	mapApiTagLevelToOutput: Map<ApiLevel, ExportData>,
 	log: CommandLogger,
-	separateBetaFromAlpha: boolean, // TODO: remove
 ): Promise<void> {
 	/**
 	 * List of out file save promises. Used to collect generated file save
@@ -386,7 +373,6 @@ async function generateEntrypoints(
 	const packageDocumentationHeader = getPackageDocumentationText(mainSourceFile);
 	const newFileHeader = `${generatedHeader}${packageDocumentationHeader}`;
 
-	// TODO
 	// This order is critical as alpha should include beta should include public.
 	// Legacy is separate and should not be included in any other level. But it
 	// may include public.
@@ -394,13 +380,15 @@ async function generateEntrypoints(
 	//         ^                ^                  ^
 	//         |                |                  |
 	//      (public)    ->    (beta)       ->    (alpha)
-	const releaseTagLevels: readonly Exclude<ReleaseTag, typeof ReleaseTag.internal>[] = [
-		ReleaseTag.public,
-		// ReleaseTag.legacy,
-		ReleaseTag.beta,
-		ReleaseTag.alpha,
+	const releaseTagLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
+		ApiLevel.public,
+		ApiLevel.legacyPublic,
+		ApiLevel.beta,
+		ApiLevel.legacyBeta,
+		ApiLevel.alpha,
+		ApiLevel.legacyAlpha,
 	] as const;
-	let commonNamedExports: Omit<ExportSpecifierStructure, "kind">[] = [];
+	const commonNamedExports: Omit<ExportSpecifierStructure, "kind">[] = [];
 
 	if (exports.unknown.size > 0) {
 		log.errorLog(
@@ -424,68 +412,69 @@ async function generateEntrypoints(
 		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n";
 	}
 
+	let semVerExports = [...commonNamedExports];
+	let legacyExports = [...commonNamedExports];
+
 	for (const releaseTagLevel of releaseTagLevels) {
-		for (const isLegacy of [false, true]) {
-			const namedExports = [...commonNamedExports];
+		const isLegacyRelease = isLegacy(releaseTagLevel);
 
-			// Append this level's additional (or only) exports sorted by ascending case-sensitive name
-			const orgLength = namedExports.length;
-			const levelExports = [...exports[releaseTagLevel]].sort((a, b) =>
-				a.name > b.name ? 1 : -1,
-			);
-			for (const levelExport of levelExports) {
-				namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
-			}
-			if (namedExports.length > orgLength) {
-				namedExports[orgLength].leadingTrivia = `\n\t// @${releaseTagLevel} APIs\n\t`;
-				namedExports[namedExports.length - 1].trailingTrivia = "\n";
-			}
-
-			// TODO
-
-			// legacy APIs do not accumulate to non-legacy exports
-			if (!isLegacy) {
-				// Additionally, if beta should not accumulate to alpha (alpha may be
-				// treated specially such as mapped to /legacy) then skip beta too.
-				// eslint-disable-next-line unicorn/no-lonely-if
-				if (!separateBetaFromAlpha || releaseTagLevel !== "beta") {
-					// update common set
-					commonNamedExports = namedExports;
-				}
-			}
-
-			const output = mapApiTagLevelToOutput.get(releaseTagLevel);
-			if (output === undefined) {
-				continue;
-			}
-
-			const outFile = output.relPath;
-			log.info(`\tGenerating ${outFile}`);
-			const sourceFile = project.createSourceFile(outFile, undefined, {
-				overwrite: true,
-				scriptKind: ScriptKind.TS,
-			});
-
-			// Avoid adding export declaration unless there are exports.
-			// Adding one without any named exports results in a * export (everything).
-			if (namedExports.length > 0) {
-				sourceFile.insertText(0, newFileHeader);
-				sourceFile.addExportDeclaration({
-					leadingTrivia: "\n",
-					moduleSpecifier: `./${mainSourceFile
-						.getBaseName()
-						.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
-					namedExports,
-				});
-			} else {
-				// At this point we already know that package "export" has a request
-				// for this entrypoint. Warn of emptiness, but make it valid for use.
-				log.warning(`no exports for ${outFile} using API level tag ${releaseTagLevel}`);
-				sourceFile.insertText(0, `${newFileHeader}export {}\n\n`);
-			}
-
-			fileSavePromises.push(sourceFile.save());
+		const namedExports = [...semVerExports];
+		if (isLegacyRelease) {
+			namedExports.push(...legacyExports);
 		}
+
+		// Append this level's additional (or only) exports sorted by ascending case-sensitive name
+		const orgLength = namedExports.length;
+		const levelExports = [...exports[releaseTagLevel]].sort((a, b) =>
+			a.name > b.name ? 1 : -1,
+		);
+		for (const levelExport of levelExports) {
+			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
+		}
+		if (namedExports.length > orgLength) {
+			namedExports[orgLength].leadingTrivia = `\n\t// @${releaseTagLevel} APIs\n\t`;
+			namedExports[namedExports.length - 1].trailingTrivia = "\n";
+		}
+
+		// Accumulate exports for next applicable level(s).
+		// Note: non-legacy APIs accumulate to legacy exports, but
+		// legacy exports do not accumulate to non-legacy exports.
+		legacyExports = namedExports;
+		if (isLegacyRelease) {
+			semVerExports = namedExports;
+		}
+
+		const output = mapApiTagLevelToOutput.get(releaseTagLevel);
+		if (output === undefined) {
+			continue;
+		}
+
+		const outFile = output.relPath;
+		log.info(`\tGenerating ${outFile}`);
+		const sourceFile = project.createSourceFile(outFile, undefined, {
+			overwrite: true,
+			scriptKind: ScriptKind.TS,
+		});
+
+		// Avoid adding export declaration unless there are exports.
+		// Adding one without any named exports results in a * export (everything).
+		if (namedExports.length > 0) {
+			sourceFile.insertText(0, newFileHeader);
+			sourceFile.addExportDeclaration({
+				leadingTrivia: "\n",
+				moduleSpecifier: `./${mainSourceFile
+					.getBaseName()
+					.replace(/\.(?:d\.)?([cm]?)ts$/, ".$1js")}`,
+				namedExports,
+			});
+		} else {
+			// At this point we already know that package "export" has a request
+			// for this entrypoint. Warn of emptiness, but make it valid for use.
+			log.warning(`no exports for ${outFile} using API level tag ${releaseTagLevel}`);
+			sourceFile.insertText(0, `${newFileHeader}export {}\n\n`);
+		}
+
+		fileSavePromises.push(sourceFile.save());
 	}
 
 	await Promise.all(fileSavePromises);

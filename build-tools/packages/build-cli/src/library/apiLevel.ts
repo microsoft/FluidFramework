@@ -45,3 +45,11 @@ const knownApiLevelSet: ReadonlySet<string> = new Set(knownApiLevels);
 export function isKnownApiLevel(level: string): level is ApiLevel {
 	return knownApiLevelSet.has(level);
 }
+
+export function isLegacy(level: ApiLevel): boolean {
+	return (
+		level === ApiLevel.legacyAlpha ||
+		level === ApiLevel.legacyBeta ||
+		level === ApiLevel.legacyPublic
+	);
+}
