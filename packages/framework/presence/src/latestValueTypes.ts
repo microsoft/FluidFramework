@@ -9,7 +9,7 @@ import type {
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
-import type { InternalTypes } from "./exposedInternalTypes.js";
+import type { ValidatedRequiredState } from "./internalTypes.js";
 import { asDeeplyReadonlyDeserializedJson } from "./internalUtils.js";
 import type { Attendee } from "./presence.js";
 
@@ -139,7 +139,7 @@ type StateSchemaValidatorToOpaque<T> = (
 ) => OpaqueJsonDeserialized<T> | undefined;
 
 function createGetterFunction<T>(
-	clientState: InternalTypes.ValidatedRequiredState<T>,
+	clientState: ValidatedRequiredState<T>,
 	validator: StateSchemaValidatorToOpaque<T>,
 ): () => DeepReadonly<JsonDeserialized<T>> | undefined {
 	return (): DeepReadonly<JsonDeserialized<T>> | undefined => {
@@ -161,7 +161,7 @@ function createGetterFunction<T>(
  * validated data.
  */
 export function createValidatedGetter<T>(
-	clientState: InternalTypes.ValidatedRequiredState<T>,
+	clientState: ValidatedRequiredState<T>,
 	validator: StateSchemaValidator<T> | undefined,
 ): (() => DeepReadonly<JsonDeserialized<T>> | undefined) | DeepReadonly<JsonDeserialized<T>> {
 	// No validator

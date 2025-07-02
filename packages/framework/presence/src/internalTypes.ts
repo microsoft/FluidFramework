@@ -4,6 +4,7 @@
  */
 
 import type { ExtensionHost as ContainerExtensionHost } from "@fluidframework/container-runtime-definitions/internal";
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { AttendeeId, Attendee } from "./presence.js";
@@ -82,3 +83,20 @@ export interface ValueManager<
  * A function to be called at the end of an update frame
  */
 export type PostUpdateAction = () => void;
+
+/**
+ * Represents data that may have been validated by a {@link StateSchemaValidator} function.
+ *
+ * @system
+ */
+export interface ValidatedRequiredState<TValue>
+	extends InternalTypes.ValueRequiredState<TValue> {
+	/**
+	 * Contains a validated value or undefined if `value` is invalid.
+	 *
+	 * This property will not be present if the data has not been validated.
+	 * If it is present and `undefined`, the value has been checked and found to be invalid.
+	 * Otherwise it will be the validated value.
+	 */
+	validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+}
