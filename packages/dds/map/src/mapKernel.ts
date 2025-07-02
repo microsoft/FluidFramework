@@ -16,11 +16,8 @@ import { ValueType } from "@fluidframework/shared-object-base/internal";
 
 import type { ISharedMapEvents } from "./interfaces.js";
 import type {
-	IMapClearLocalOpMetadata,
 	IMapClearOperation,
 	IMapDeleteOperation,
-	IMapKeyAddLocalOpMetadata,
-	IMapKeyEditLocalOpMetadata,
 	IMapSetOperation,
 	// eslint-disable-next-line import/no-deprecated
 	ISerializableValue,
@@ -46,7 +43,7 @@ interface IMapMessageHandler {
 	process(
 		op: IMapOperation,
 		local: boolean,
-		localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+		localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
 	): void;
 
 	/**
@@ -54,7 +51,7 @@ interface IMapMessageHandler {
 	 * @param op - The map operation to resubmit
 	 * @param localOpMetadata - The metadata that was originally submitted with the message.
 	 */
-	resubmit(op: IMapOperation, localOpMetadata: ListNode<MapLocalOpMetadata>): void;
+	resubmit(op: IMapOperation, localOpMetadata: ListNode<PendingLocalOpMetadata>): void;
 }
 
 /**
@@ -83,52 +80,60 @@ export type IMapDataObjectSerializable = Record<string, ISerializableValue>;
  */
 export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 
-type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
-type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
-
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
-
-function isMapKeyLocalOpMetadata(metadata: any): metadata is MapKeyLocalOpMetadata {
-	return (
-		metadata !== undefined &&
-		typeof metadata.pendingMessageId === "number" &&
-		(metadata.type === "add" || metadata.type === "edit")
-	);
+interface PendingKeySet {
+	pendingMessageId: number;
+	type: "set";
+	value: ILocalValue;
 }
 
-function isClearLocalOpMetadata(metadata: any): metadata is IMapClearLocalOpMetadata {
-	return (
-		metadata !== undefined &&
-		metadata.type === "clear" &&
-		typeof metadata.pendingMessageId === "number"
-	);
+interface PendingKeyDelete {
+	pendingMessageId: number;
+	type: "delete";
 }
 
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
+type PendingKeyChange = PendingKeySet | PendingKeyDelete;
 
-function createClearLocalOpMetadata(
-	op: IMapClearOperation,
-	pendingClearMessageId: number,
-	previousMap?: Map<string, ILocalValue>,
-): IMapClearLocalOpMetadata {
-	const localMetadata: IMapClearLocalOpMetadata = {
-		type: "clear",
-		pendingMessageId: pendingClearMessageId,
-		previousMap,
-	};
-	return localMetadata;
+// TODO: Just exporting these for the metadata test, should they be exported and should that be tested?
+/**
+ * Metadata submitted along with set/delete operations.
+ */
+export interface PendingKeyChangeMetadata {
+	pendingMessageId: number;
+	// TODO: This is a weird type
+	type: "key";
+	change: PendingKeyChange;
+}
+/**
+ * Metadata submitted along with clear operations.
+ */
+export interface PendingClearMetadata {
+	pendingMessageId: number;
+	type: "clear";
+}
+/**
+ * Metadata submitted along with local operations.
+ */
+export type PendingLocalOpMetadata = PendingKeyChangeMetadata | PendingClearMetadata;
+
+interface PendingKeyLifetime {
+	key: string;
+	keyChanges: PendingKeyChange[]; // Expected to either be all sets or conclude with a delete.
 }
 
-function createKeyLocalOpMetadata(
-	op: IMapKeyOperation,
-	pendingMessageId: number,
-	previousValue?: ILocalValue,
-): MapKeyLocalOpMetadata {
-	const localMetadata: MapKeyLocalOpMetadata = previousValue
-		? { type: "edit", pendingMessageId, previousValue }
-		: { type: "add", pendingMessageId };
-	return localMetadata;
-}
+// Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
+const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number => {
+	for (let i = array.length - 1; i >= 0; i--) {
+		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+		if (callbackFn(array[i]!)) {
+			return i;
+		}
+	}
+	return -1;
+};
+
+// Rough polyfill for Array.findLast until we target ES2023 or greater.
+const findLast = <T>(array: T[], callbackFn: (value: T) => boolean): T | undefined =>
+	array[findLastIndex(array, callbackFn)];
 
 /**
  * A SharedMap is a map-like distributed data structure.
@@ -138,7 +143,9 @@ export class MapKernel {
 	 * The number of key/value pairs stored in the map.
 	 */
 	public get size(): number {
-		return this.data.size;
+		// TODO: Consider some better implementation
+		const iterableItems = [...this.internalIterator()];
+		return iterableItems.length;
 	}
 
 	/**
@@ -149,12 +156,12 @@ export class MapKernel {
 	/**
 	 * The in-memory data the map is storing.
 	 */
-	private readonly data = new Map<string, ILocalValue>();
-
+	private readonly sequencedData = new Map<string, ILocalValue>();
+	private readonly pendingData: PendingKeyLifetime[] = [];
 	/**
-	 * Keys that have been modified locally but not yet ack'd from the server.
+	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
 	 */
-	private readonly pendingKeys = new Map<string, number[]>();
+	private readonly pendingClearMessageIds: number[] = [];
 
 	/**
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
@@ -164,13 +171,8 @@ export class MapKernel {
 	/**
 	 * The pending metadata for any local operations that have not yet been ack'd from the server, in order.
 	 */
-	private readonly pendingMapLocalOpMetadata: DoublyLinkedList<MapLocalOpMetadata> =
-		new DoublyLinkedList<MapLocalOpMetadata>();
-
-	/**
-	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
-	 */
-	private readonly pendingClearMessageIds: number[] = [];
+	private readonly pendingLocalOpMetadata: DoublyLinkedList<PendingLocalOpMetadata> =
+		new DoublyLinkedList<PendingLocalOpMetadata>();
 
 	/**
 	 * Create a new shared map kernel.
@@ -191,29 +193,124 @@ export class MapKernel {
 		this.messageHandlers = this.getMessageHandlers();
 	}
 
-	/**
-	 * Get an iterator over the keys in this map.
-	 * @returns The iterator
-	 */
-	public keys(): IterableIterator<string> {
-		return this.data.keys();
-	}
+	private readonly internalIterator = (): IterableIterator<[string, ILocalValue]> => {
+		const sequencedDataIterator = this.sequencedData.entries();
+		const pendingDataIterator = this.pendingData.values();
+		const next = (): IteratorResult<[string, ILocalValue]> => {
+			if (this.pendingClearMessageIds.length === 0) {
+				let nextSequencedVal = sequencedDataIterator.next();
+				while (!nextSequencedVal.done) {
+					const [key] = nextSequencedVal.value;
+					// If we have any pending deletes, then we won't iterate to this key yet (if at all).
+					// Either it is optimistically deleted and will not be part of the iteration, or it was
+					// re-added later and we'll iterate to it when we get to the pending data.
+					if (
+						!this.pendingData.some(
+							(lifetime) =>
+								lifetime.key === key &&
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								lifetime.keyChanges[lifetime.keyChanges.length - 1]!.type === "delete",
+						)
+					) {
+						const optimisticValue = this.getOptimisticLocalValue(key);
+						assert(
+							optimisticValue !== undefined,
+							"optimisticValue should be skipped if undefined",
+						);
+						return { value: [key, optimisticValue], done: false };
+					}
+					nextSequencedVal = sequencedDataIterator.next();
+				}
+			}
+
+			let nextPendingVal = pendingDataIterator.next();
+			while (!nextPendingVal.done) {
+				const pendingLifetime = nextPendingVal.value;
+				const latestPendingValue =
+					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+					pendingLifetime.keyChanges[pendingLifetime.keyChanges.length - 1]!;
+				const latestPendingClearMessageId =
+					this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
+				// Skip iterating for lifetimes that have been terminated with a delete.
+				if (
+					latestPendingValue.type !== "delete" &&
+					(latestPendingClearMessageId === undefined ||
+						latestPendingClearMessageId < latestPendingValue.pendingMessageId)
+				) {
+					// TODO: clean up
+					// Skip iterating if we would have would have iterated it as part of the sequenced data.
+					// eslint-disable-next-line unicorn/no-lonely-if
+					if (
+						!this.sequencedData.has(pendingLifetime.key) ||
+						this.pendingData.some(
+							(lifetime) =>
+								lifetime.key === pendingLifetime.key &&
+								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+								lifetime.keyChanges[lifetime.keyChanges.length - 1]!.type === "delete",
+						)
+					) {
+						return { value: [pendingLifetime.key, latestPendingValue.value], done: false };
+					}
+				}
+				nextPendingVal = pendingDataIterator.next();
+			}
+
+			return { value: undefined, done: true };
+		};
+
+		// TODO: Consider just tracking sequenced adds and tacking them on at the end.
+		const iterator = {
+			next,
+			[Symbol.iterator](): IterableIterator<[string, ILocalValue]> {
+				return this;
+			},
+		};
+		return iterator;
+	};
 
 	/**
 	 * Get an iterator over the entries in this map.
 	 * @returns The iterator
 	 */
 	public entries(): IterableIterator<[string, unknown]> {
-		const localEntriesIterator = this.data.entries();
+		const internalIterator = this.internalIterator();
+		const next = (): IteratorResult<[string, unknown]> => {
+			const nextResult = internalIterator.next();
+			if (nextResult.done) {
+				return { value: undefined, done: true };
+			}
+			// Unpack the stored value
+			const [key, localValue] = nextResult.value;
+			return { value: [key, localValue.value], done: false };
+		};
+
+		// TODO: Consider just tracking sequenced adds and tacking them on at the end.
 		const iterator = {
-			next(): IteratorResult<[string, unknown]> {
-				const nextVal = localEntriesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: // Unpack the stored value
-						{ value: [nextVal.value[0], nextVal.value[1].value], done: false };
-			},
+			next,
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
+				return this;
+			},
+		};
+		return iterator;
+	}
+
+	/**
+	 * Get an iterator over the keys in this map.
+	 * @returns The iterator
+	 */
+	public keys(): IterableIterator<string> {
+		const internalIterator = this.internalIterator();
+		const next = (): IteratorResult<string> => {
+			const nextResult = internalIterator.next();
+			if (nextResult.done) {
+				return { value: undefined, done: true };
+			}
+			const [key] = nextResult.value;
+			return { value: key, done: false };
+		};
+		const iterator = {
+			next,
+			[Symbol.iterator](): IterableIterator<string> {
 				return this;
 			},
 		};
@@ -225,15 +322,17 @@ export class MapKernel {
 	 * @returns The iterator
 	 */
 	public values(): IterableIterator<unknown> {
-		const localValuesIterator = this.data.values();
+		const internalIterator = this.internalIterator();
+		const next = (): IteratorResult<unknown> => {
+			const nextResult = internalIterator.next();
+			if (nextResult.done) {
+				return { value: undefined, done: true };
+			}
+			const [, value] = nextResult.value;
+			return { value, done: false };
+		};
 		const iterator = {
-			next(): IteratorResult<unknown> {
-				const nextVal = localValuesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: // Unpack the stored value
-						{ value: nextVal.value.value, done: false };
-			},
+			next,
 			[Symbol.iterator](): IterableIterator<unknown> {
 				return this;
 			},
@@ -256,17 +355,51 @@ export class MapKernel {
 	public forEach(
 		callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void,
 	): void {
+		// TODO: Would be better to iterate over the data without a temp map.  However,
+		// we don't have a valid map to pass for the third argument here (really, it should probably should
+		// be a reference to the SharedMap). This is already kind of a bug since we leak access to this.data
+		// in the current implementation.
+		const tempMap = new Map(this.internalIterator());
 		// eslint-disable-next-line unicorn/no-array-for-each
-		this.data.forEach((localValue, key, m) => {
+		tempMap.forEach((localValue, key, m) => {
 			callbackFn(localValue.value, key, m);
 		});
 	}
+
+	private readonly getOptimisticLocalValue = (key: string): ILocalValue | undefined => {
+		const latestPendingLifetime = findLast(
+			this.pendingData,
+			(lifetime) => lifetime.key === key,
+		);
+		const latestPendingKeyChange =
+			latestPendingLifetime?.keyChanges[latestPendingLifetime.keyChanges.length - 1];
+		const latestPendingClearMessageId =
+			this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
+
+		if (latestPendingKeyChange === undefined) {
+			return latestPendingClearMessageId === undefined
+				? this.sequencedData.get(key)
+				: undefined;
+		} else {
+			if (
+				latestPendingClearMessageId !== undefined &&
+				latestPendingClearMessageId > latestPendingKeyChange.pendingMessageId
+			) {
+				return undefined;
+			} else if (latestPendingKeyChange.type === "set") {
+				return latestPendingKeyChange.value;
+			} else if (latestPendingKeyChange.type === "delete") {
+				return undefined;
+			}
+			unreachableCase(latestPendingKeyChange, "Unknown pending value type");
+		}
+	};
 
 	/**
 	 * {@inheritDoc ISharedMap.get}
 	 */
 	public get<T = unknown>(key: string): T | undefined {
-		const localValue = this.data.get(key);
+		const localValue = this.getOptimisticLocalValue(key);
 		return localValue === undefined ? undefined : (localValue.value as T);
 	}
 
@@ -276,7 +409,7 @@ export class MapKernel {
 	 * @returns True if the key exists, false otherwise
 	 */
 	public has(key: string): boolean {
-		return this.data.has(key);
+		return this.getOptimisticLocalValue(key) !== undefined;
 	}
 
 	/**
@@ -288,20 +421,68 @@ export class MapKernel {
 			throw new Error("Undefined and null keys are not supported");
 		}
 
-		// Set the value locally.
-		const previousValue = this.setCore(key, { value }, true);
+		const localValue: ILocalValue = { value };
+		const previousOptimisticLocalValue = this.getOptimisticLocalValue(key);
 
 		// If we are not attached, don't submit the op.
 		if (!this.isAttached()) {
+			this.sequencedData.set(key, localValue);
+			this.eventEmitter.emit(
+				"valueChanged",
+				{ key, previousValue: previousOptimisticLocalValue?.value },
+				true,
+				this.eventEmitter,
+			);
 			return;
 		}
+
+		// A new pending key lifetime is created if:
+		// 1. There isn't one yet
+		// 2. The most recent change was a deletion (as this terminates the prior lifetime)
+		// 3. A clear was sent after the last change (which also terminates the prior lifetime)
+		// TODO: Should I just check the optimistic value?
+		let pendingKeyLifetime = findLast(this.pendingData, (lifetime) => lifetime.key === key);
+		const latestPendingClearMessageId =
+			this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
+		if (
+			pendingKeyLifetime === undefined ||
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			pendingKeyLifetime.keyChanges[pendingKeyLifetime.keyChanges.length - 1]!.type ===
+				"delete" ||
+			(latestPendingClearMessageId !== undefined &&
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				pendingKeyLifetime.keyChanges[pendingKeyLifetime.keyChanges.length - 1]!
+					.pendingMessageId < latestPendingClearMessageId)
+		) {
+			pendingKeyLifetime = { key, keyChanges: [] };
+			this.pendingData.push(pendingKeyLifetime);
+		}
+		const pendingMessageId = this.nextPendingMessageId++;
+		const keyChange: PendingKeySet = {
+			pendingMessageId,
+			type: "set",
+			value: localValue,
+		};
+		pendingKeyLifetime.keyChanges.push(keyChange);
+		const localMetadata: PendingKeyChangeMetadata = {
+			pendingMessageId,
+			type: "key",
+			change: keyChange,
+		};
+		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
 
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
-			value: { type: ValueType[ValueType.Plain], value },
+			value: { type: ValueType[ValueType.Plain], value: localValue.value },
 		};
-		this.submitMapKeyMessage(op, previousValue);
+		this.submitMessage(op, listNode);
+		this.eventEmitter.emit(
+			"valueChanged",
+			{ key, previousValue: previousOptimisticLocalValue?.value },
+			true,
+			this.eventEmitter,
+		);
 	}
 
 	/**
@@ -310,44 +491,83 @@ export class MapKernel {
 	 * @returns True if the key existed and was deleted, false if it did not exist
 	 */
 	public delete(key: string): boolean {
-		// Delete the key locally first.
-		const previousValue = this.deleteCore(key, true);
+		const previousOptimisticLocalValue = this.getOptimisticLocalValue(key);
 
-		// If we are not attached, don't submit the op.
-		if (!this.isAttached()) {
-			return previousValue !== undefined;
+		if (previousOptimisticLocalValue === undefined) {
+			return false;
 		}
+
+		if (!this.isAttached()) {
+			const successfullyRemoved = this.sequencedData.delete(key);
+			this.eventEmitter.emit(
+				"valueChanged",
+				{ key, previousValue: previousOptimisticLocalValue?.value },
+				true,
+				this.eventEmitter,
+			);
+			// Should always return true here or else we would have early-exited above
+			return successfullyRemoved;
+		}
+
+		let pendingKeyLifetime = findLast(this.pendingData, (lifetime) => lifetime.key === key);
+		if (pendingKeyLifetime === undefined) {
+			// Deletion only creates a new lifetime in the case of directly deleting a sequenced value
+			pendingKeyLifetime = { key, keyChanges: [] };
+			this.pendingData.push(pendingKeyLifetime);
+		}
+		const pendingMessageId = this.nextPendingMessageId++;
+		const keyChange: PendingKeyDelete = {
+			pendingMessageId,
+			type: "delete",
+		};
+		pendingKeyLifetime.keyChanges.push(keyChange);
+		const localMetadata: PendingKeyChangeMetadata = {
+			pendingMessageId,
+			type: "key",
+			change: keyChange,
+		};
+		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
 
 		const op: IMapDeleteOperation = {
 			key,
 			type: "delete",
 		};
-		this.submitMapKeyMessage(op, previousValue);
+		this.submitMessage(op, listNode);
+		this.eventEmitter.emit(
+			"valueChanged",
+			{ key, previousValue: previousOptimisticLocalValue.value },
+			true,
+			this.eventEmitter,
+		);
 
-		return previousValue !== undefined;
+		return true;
 	}
 
 	/**
 	 * Clear all data from the map.
 	 */
 	public clear(): void {
-		const copy = this.isAttached() ? new Map<string, ILocalValue>(this.data) : undefined;
-
-		// Clear the data locally first.
-		this.clearCore(true);
-
-		// Clear the pendingKeys immediately, the local unack'd operations are aborted
-		this.pendingKeys.clear();
-
-		// If we are not attached, don't submit the op.
+		// TODO: Consider putting it in pending but then simulating an immediate ack instead
 		if (!this.isAttached()) {
+			this.sequencedData.clear();
+			// TODO: Should this also emit deletes or something?  Given the pending behavior.
+			this.eventEmitter.emit("clear", true, this.eventEmitter);
 			return;
 		}
 
 		const op: IMapClearOperation = {
 			type: "clear",
 		};
-		this.submitMapClearMessage(op, copy);
+
+		const pendingMessageId = this.nextPendingMessageId++;
+		this.pendingClearMessageIds.push(pendingMessageId);
+		const localMetadata: PendingClearMetadata = {
+			type: "clear",
+			pendingMessageId,
+		};
+		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+		this.submitMessage(op, listNode);
+		this.eventEmitter.emit("clear", true, this.eventEmitter);
 	}
 
 	/**
@@ -357,7 +577,7 @@ export class MapKernel {
 	 */
 	public getSerializedStorage(serializer: IFluidSerializer): IMapDataObjectSerialized {
 		const serializedMapData: IMapDataObjectSerialized = {};
-		for (const [key, localValue] of this.data.entries()) {
+		for (const [key, localValue] of this.sequencedData.entries()) {
 			serializedMapData[key] = serializeValue(localValue.value, serializer, this.handle);
 		}
 		return serializedMapData;
@@ -372,7 +592,7 @@ export class MapKernel {
 			this.serializer.decode(json) as IMapDataObjectSerializable,
 		)) {
 			migrateIfSharedSerializable(serializable, this.serializer, this.handle);
-			this.data.set(key, { value: serializable.value });
+			this.sequencedData.set(key, { value: serializable.value });
 		}
 	}
 
@@ -389,7 +609,7 @@ export class MapKernel {
 		if (handler === undefined) {
 			return false;
 		}
-		handler.resubmit(op, localOpMetadata as ListNode<MapLocalOpMetadata>);
+		handler.resubmit(op, localOpMetadata as ListNode<PendingLocalOpMetadata>);
 		return true;
 	}
 
@@ -438,7 +658,11 @@ export class MapKernel {
 		if (handler === undefined) {
 			return false;
 		}
-		handler.process(op, local, localOpMetadata as ListNode<MapLocalOpMetadata> | undefined);
+		handler.process(
+			op,
+			local,
+			localOpMetadata as ListNode<PendingLocalOpMetadata> | undefined,
+		);
 		return true;
 	}
 
@@ -449,167 +673,58 @@ export class MapKernel {
 	 */
 	public rollback(op: unknown, localOpMetadata: unknown): void {
 		const mapOp: IMapOperation = op as IMapOperation;
-		const listNodeLocalOpMetadata = localOpMetadata as ListNode<MapLocalOpMetadata>;
-		const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.pop();
+		const listNodeLocalOpMetadata = localOpMetadata as ListNode<PendingLocalOpMetadata>;
+		const removedListNode = this.pendingLocalOpMetadata.pop();
 		assert(
-			removedLocalOpMetadata !== undefined &&
-				removedLocalOpMetadata === listNodeLocalOpMetadata,
+			removedListNode !== undefined && removedListNode === listNodeLocalOpMetadata,
 			"Rolling back unexpected op",
 		);
+		const pendingLocalOpMetadata = removedListNode.data;
 
-		if (mapOp.type === "clear" && listNodeLocalOpMetadata.data.type === "clear") {
-			if (listNodeLocalOpMetadata.data.previousMap === undefined) {
-				throw new Error("Cannot rollback without previous map");
-			}
-			for (const [key, localValue] of listNodeLocalOpMetadata.data.previousMap.entries()) {
-				this.setCore(key, localValue, true);
-			}
-
-			const lastPendingClearId = this.pendingClearMessageIds.pop();
-			if (
-				lastPendingClearId === undefined ||
-				lastPendingClearId !== listNodeLocalOpMetadata.data.pendingMessageId
-			) {
-				throw new Error("Rollback op does match last clear");
-			}
-		} else if (mapOp.type === "delete" || mapOp.type === "set") {
-			if (listNodeLocalOpMetadata.data.type === "add") {
-				this.deleteCore(mapOp.key, true);
-			} else if (
-				listNodeLocalOpMetadata.data.type === "edit" &&
-				listNodeLocalOpMetadata.data.previousValue !== undefined
-			) {
-				this.setCore(mapOp.key, listNodeLocalOpMetadata.data.previousValue, true);
-			} else {
-				throw new Error("Cannot rollback without previous value");
-			}
-
-			const pendingMessageIds = this.pendingKeys.get(mapOp.key);
-			const lastPendingMessageId = pendingMessageIds?.pop();
-			if (
-				!pendingMessageIds ||
-				lastPendingMessageId !== listNodeLocalOpMetadata.data.pendingMessageId
-			) {
-				throw new Error("Rollback op does not match last pending");
-			}
-			if (pendingMessageIds.length === 0) {
-				this.pendingKeys.delete(mapOp.key);
+		if (mapOp.type === "clear") {
+			const pendingClear = this.pendingClearMessageIds.pop();
+			// TODO: Really need to assert all this?
+			assert(
+				pendingLocalOpMetadata.type === "clear" &&
+					pendingClear !== undefined &&
+					pendingClear === pendingLocalOpMetadata.pendingMessageId,
+				"Unexpected clear rollback",
+			);
+			for (const [key] of this.internalIterator()) {
+				// TODO: Consider if it's weird that all the values are immediately visible when the first
+				// event is emitted, rather than becoming visible one-by-one as the event is raised.
+				this.eventEmitter.emit(
+					"valueChanged",
+					{ key, previousValue: undefined },
+					true,
+					this.eventEmitter,
+				);
 			}
 		} else {
-			throw new Error("Unsupported op for rollback");
-		}
-	}
-
-	/**
-	 * Set implementation used for both locally sourced sets as well as incoming remote sets.
-	 * @param key - The key being set
-	 * @param value - The value being set
-	 * @param local - Whether the message originated from the local client
-	 * @returns Previous local value of the key, if any
-	 */
-	private setCore(key: string, value: ILocalValue, local: boolean): ILocalValue | undefined {
-		const previousLocalValue = this.data.get(key);
-		const previousValue: unknown = previousLocalValue?.value;
-		this.data.set(key, value);
-		this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
-		return previousLocalValue;
-	}
-
-	/**
-	 * Clear implementation used for both locally sourced clears as well as incoming remote clears.
-	 * @param local - Whether the message originated from the local client
-	 */
-	private clearCore(local: boolean): void {
-		this.data.clear();
-		this.eventEmitter.emit("clear", local, this.eventEmitter);
-	}
-
-	/**
-	 * Delete implementation used for both locally sourced deletes as well as incoming remote deletes.
-	 * @param key - The key being deleted
-	 * @param local - Whether the message originated from the local client
-	 * @returns Previous local value of the key if it existed, undefined if it did not exist
-	 */
-	private deleteCore(key: string, local: boolean): ILocalValue | undefined {
-		const previousLocalValue = this.data.get(key);
-		const previousValue: unknown = previousLocalValue?.value;
-		const successfullyRemoved = this.data.delete(key);
-		if (successfullyRemoved) {
-			this.eventEmitter.emit("valueChanged", { key, previousValue }, local, this.eventEmitter);
-		}
-		return previousLocalValue;
-	}
-
-	/**
-	 * Clear all keys in memory in response to a remote clear, but retain keys we have modified but not yet been ack'd.
-	 */
-	private clearExceptPendingKeys(): void {
-		// Assuming the pendingKeys is small and the map is large
-		// we will get the value for the pendingKeys and clear the map
-		const temp = new Map<string, ILocalValue>();
-		for (const key of this.pendingKeys.keys()) {
-			// Verify if the most recent pending operation is a delete op, no need to retain it if so.
-			// This ensures the map size remains consistent.
-			if (this.data.has(key)) {
-				temp.set(key, this.data.get(key) as ILocalValue);
+			const pendingLifetimeIndex = findLastIndex(
+				this.pendingData,
+				(lifetime) => lifetime.key === mapOp.key,
+			);
+			const pendingLifetime = this.pendingData[pendingLifetimeIndex];
+			assert(pendingLifetime !== undefined, "Unexpected rollback for key");
+			const previousLocalValue = this.getOptimisticLocalValue(mapOp.key);
+			const pendingKeyChange = pendingLifetime.keyChanges.pop();
+			if (pendingLifetime.keyChanges.length === 0) {
+				this.pendingData.splice(pendingLifetimeIndex, 1);
 			}
+			assert(
+				pendingKeyChange !== undefined &&
+					pendingLocalOpMetadata.type === "key" &&
+					pendingKeyChange === pendingLocalOpMetadata.change,
+				"Unexpected rollback for key",
+			);
+			this.eventEmitter.emit(
+				"valueChanged",
+				{ key: mapOp.key, previousValue: previousLocalValue?.value },
+				true,
+				this.eventEmitter,
+			);
 		}
-		this.clearCore(false);
-		for (const [key, value] of temp.entries()) {
-			this.setCore(key, value, true);
-		}
-	}
-
-	/**
-	 * If our local operations that have not yet been ack'd will eventually overwrite an incoming operation, we should
-	 * not process the incoming operation.
-	 * @param op - Operation to check
-	 * @param local - Whether the message originated from the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 * @returns True if the operation should be processed, false otherwise
-	 */
-	private needProcessKeyOperation(
-		op: IMapKeyOperation,
-		local: boolean,
-		localOpMetadata: MapLocalOpMetadata | undefined,
-	): boolean {
-		if (this.pendingClearMessageIds[0] !== undefined) {
-			if (local) {
-				assert(
-					localOpMetadata !== undefined &&
-						isMapKeyLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.pendingMessageId < this.pendingClearMessageIds[0],
-					0x013 /* "Received out of order op when there is an unackd clear message" */,
-				);
-			}
-			// If we have an unack'd clear, we can ignore all ops.
-			return false;
-		}
-
-		const pendingKeyMessageIds = this.pendingKeys.get(op.key);
-		if (pendingKeyMessageIds !== undefined) {
-			// Found an unack'd op. Clear it from the map if the pendingMessageId in the map matches this message's
-			// and don't process the op.
-			if (local) {
-				assert(
-					localOpMetadata !== undefined && isMapKeyLocalOpMetadata(localOpMetadata),
-					0x014 /* pendingMessageId is missing from the local client's operation */,
-				);
-				assert(
-					pendingKeyMessageIds[0] === localOpMetadata.pendingMessageId,
-					0x2fa /* Unexpected pending message received */,
-				);
-				pendingKeyMessageIds.shift();
-				if (pendingKeyMessageIds.length === 0) {
-					this.pendingKeys.delete(op.key);
-				}
-			}
-			return false;
-		}
-
-		// If we don't have a NACK op on the key, we need to process the remote ops.
-		return !local;
 	}
 
 	/**
@@ -622,16 +737,18 @@ export class MapKernel {
 			process: (
 				op: IMapClearOperation,
 				local: boolean,
-				localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
 			) => {
+				this.sequencedData.clear();
 				if (local) {
-					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
 						"Processing unexpected local clear op",
 					);
 					assert(
-						isClearLocalOpMetadata(localOpMetadata.data),
+						localOpMetadata.data.type === "clear" &&
+							typeof localOpMetadata.data.pendingMessageId === "number",
 						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
 					);
 					const pendingClearMessageId = this.pendingClearMessageIds.shift();
@@ -639,19 +756,21 @@ export class MapKernel {
 						pendingClearMessageId === localOpMetadata.data.pendingMessageId,
 						0x2fb /* pendingMessageId does not match */,
 					);
-					return;
+				} else {
+					// Only emit for remote ops, we would have already emitted for local ops.
+					// TODO: Should also only emit if there are no local pending clears which would mask the remote clear?
+					this.eventEmitter.emit("clear", local, this.eventEmitter);
 				}
-				if (this.pendingKeys.size > 0) {
-					this.clearExceptPendingKeys();
-					return;
-				}
-				this.clearCore(local);
 			},
-			resubmit: (op: IMapClearOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
+			resubmit: (
+				op: IMapClearOperation,
+				localOpMetadata: ListNode<PendingLocalOpMetadata>,
+			) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
 				assert(removedLocalOpMetadata !== undefined, "Resubmitting unexpected local clear op");
 				assert(
-					isClearLocalOpMetadata(localOpMetadata.data),
+					localOpMetadata.data.type === "clear" &&
+						typeof localOpMetadata.data.pendingMessageId === "number",
 					0x2fc /* Invalid localOpMetadata for clear */,
 				);
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
@@ -660,147 +779,152 @@ export class MapKernel {
 					pendingClearMessageId === localOpMetadata.data.pendingMessageId,
 					0x2fd /* pendingMessageId does not match */,
 				);
-				this.submitMapClearMessage(op, localOpMetadata.data.previousMap);
+				const pendingMessageId = this.nextPendingMessageId++;
+				this.pendingClearMessageIds.push(pendingMessageId);
+				const localMetadata: PendingClearMetadata = { type: "clear", pendingMessageId };
+				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+				this.submitMessage(op, listNode);
 			},
 		});
 		messageHandlers.set("delete", {
 			process: (
 				op: IMapDeleteOperation,
 				local: boolean,
-				localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
 			) => {
+				const { key } = op;
+				const pendingKeyLifetimeIndex = this.pendingData.findIndex(
+					(lifetime) => lifetime.key === key,
+				);
 				if (local) {
-					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
 						"Processing unexpected local delete op",
 					);
+					const pendingKeyLifetime = this.pendingData[pendingKeyLifetimeIndex];
+					assert(
+						pendingKeyLifetime !== undefined,
+						"Got a delete message we weren't expecting",
+					);
+					const pendingValue = pendingKeyLifetime.keyChanges.shift();
+					if (pendingKeyLifetime.keyChanges.length === 0) {
+						this.pendingData.splice(pendingKeyLifetimeIndex, 1);
+					}
+					assert(pendingValue !== undefined, "Got a delete message we weren't expecting");
+					assert(
+						localOpMetadata !== undefined &&
+							pendingValue.pendingMessageId === localOpMetadata.data.pendingMessageId,
+						"pendingMessageId does not match",
+					);
+					assert(pendingValue.type === "delete", "pendingValue type is incorrect");
+					this.sequencedData.delete(key);
+				} else {
+					const previousSequencedLocalValue = this.sequencedData.get(key);
+					const previousValue: unknown = previousSequencedLocalValue?.value;
+					this.sequencedData.delete(key);
+					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
+					if (pendingKeyLifetimeIndex === -1 && this.pendingClearMessageIds.length === 0) {
+						this.eventEmitter.emit(
+							"valueChanged",
+							{ key, previousValue },
+							local,
+							this.eventEmitter,
+						);
+					}
 				}
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata?.data)) {
-					return;
-				}
-				this.deleteCore(op.key, local);
 			},
-			resubmit: (op: IMapDeleteOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
+			resubmit: (
+				op: IMapDeleteOperation,
+				localOpMetadata: ListNode<PendingLocalOpMetadata>,
+			) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
 				assert(
-					removedLocalOpMetadata !== undefined,
-					"Resubmitting unexpected local delete op",
+					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "key",
+					"Resubmitting unexpected op",
 				);
-				this.resubmitMapKeyMessage(op, localOpMetadata.data);
+
+				const pendingMessageId = this.nextPendingMessageId++;
+
+				// TODO: How do I feel about mutating here?
+				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
+				const localMetadata: PendingKeyChangeMetadata = {
+					...removedLocalOpMetadata,
+					pendingMessageId,
+				};
+				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+
+				this.submitMessage(op, listNode);
 			},
 		});
 		messageHandlers.set("set", {
 			process: (
 				op: IMapSetOperation,
 				local: boolean,
-				localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
 			) => {
+				const { key, value } = op;
+				const pendingKeyLifetimeIndex = this.pendingData.findIndex(
+					(lifetime) => lifetime.key === key,
+				);
 				if (local) {
-					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
 						"Processing unexpected local set op",
 					);
+					const pendingKeyLifetime = this.pendingData[pendingKeyLifetimeIndex];
+					assert(pendingKeyLifetime !== undefined, "Got a set message we weren't expecting");
+					const pendingValue = pendingKeyLifetime.keyChanges.shift();
+					if (pendingKeyLifetime.keyChanges.length === 0) {
+						this.pendingData.splice(pendingKeyLifetimeIndex, 1);
+					}
+					assert(pendingValue !== undefined, "Got a set message we weren't expecting");
+					assert(
+						localOpMetadata !== undefined &&
+							pendingValue.pendingMessageId === localOpMetadata.data.pendingMessageId,
+						"pendingMessageId does not match",
+					);
+					assert(pendingValue.type === "set", "pendingValue type is incorrect");
+					// TODO: Choosing to reuse the object reference here rather than create a new one from the incoming op?
+					this.sequencedData.set(key, pendingValue.value);
+				} else {
+					const localValue: ILocalValue = { value: value.value };
+					const previousSequencedLocalValue = this.sequencedData.get(key);
+					const previousValue: unknown = previousSequencedLocalValue?.value;
+					this.sequencedData.set(key, localValue);
+					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
+					if (pendingKeyLifetimeIndex === -1 && this.pendingClearMessageIds.length === 0) {
+						this.eventEmitter.emit(
+							"valueChanged",
+							{ key, previousValue },
+							local,
+							this.eventEmitter,
+						);
+					}
 				}
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata?.data)) {
-					return;
-				}
-
-				// needProcessKeyOperation should have returned false if local is true
-				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
-				this.setCore(op.key, { value: op.value.value }, local);
 			},
-			resubmit: (op: IMapSetOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
+			resubmit: (op: IMapSetOperation, localOpMetadata: ListNode<PendingLocalOpMetadata>) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
-				assert(removedLocalOpMetadata !== undefined, "Resubmitting unexpected local set op");
-				this.resubmitMapKeyMessage(op, localOpMetadata.data);
+				assert(
+					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "key",
+					"Resubmitting unexpected op",
+				);
+
+				const pendingMessageId = this.nextPendingMessageId++;
+
+				// TODO: How do I feel about mutating here?
+				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
+				const localMetadata: PendingKeyChangeMetadata = {
+					...removedLocalOpMetadata,
+					pendingMessageId,
+				};
+				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+
+				this.submitMessage(op, listNode);
 			},
 		});
 
 		return messageHandlers;
-	}
-
-	private getMapClearMessageId(): number {
-		const pendingMessageId = this.nextPendingMessageId++;
-		this.pendingClearMessageIds.push(pendingMessageId);
-		return pendingMessageId;
-	}
-
-	/**
-	 * Submit a clear message to remote clients.
-	 * @param op - The clear message
-	 */
-	private submitMapClearMessage(
-		op: IMapClearOperation,
-		previousMap?: Map<string, ILocalValue>,
-	): void {
-		const pendingMessageId = this.getMapClearMessageId();
-		const localMetadata = createClearLocalOpMetadata(op, pendingMessageId, previousMap);
-		const listNode = this.pendingMapLocalOpMetadata.push(localMetadata).first;
-		this.submitMessage(op, listNode);
-	}
-
-	private getMapKeyMessageId(op: IMapKeyOperation): number {
-		const pendingMessageId = this.nextPendingMessageId++;
-		const pendingMessageIds = this.pendingKeys.get(op.key);
-		if (pendingMessageIds === undefined) {
-			this.pendingKeys.set(op.key, [pendingMessageId]);
-		} else {
-			pendingMessageIds.push(pendingMessageId);
-		}
-		return pendingMessageId;
-	}
-
-	/**
-	 * Submit a map key message to remote clients.
-	 * @param op - The map key message
-	 * @param previousValue - The value of the key before this op
-	 */
-	private submitMapKeyMessage(op: IMapKeyOperation, previousValue?: ILocalValue): void {
-		const pendingMessageId = this.getMapKeyMessageId(op);
-		const localMetadata = createKeyLocalOpMetadata(op, pendingMessageId, previousValue);
-		const listNode = this.pendingMapLocalOpMetadata.push(localMetadata).first;
-		this.submitMessage(op, listNode);
-	}
-
-	/**
-	 * Submit a map key message to remote clients based on a previous submit.
-	 * @param op - The map key message
-	 * @param localOpMetadata - Metadata from the previous submit
-	 */
-	private resubmitMapKeyMessage(
-		op: IMapKeyOperation,
-		localOpMetadata: MapLocalOpMetadata,
-	): void {
-		assert(
-			isMapKeyLocalOpMetadata(localOpMetadata),
-			0x2fe /* Invalid localOpMetadata in submit */,
-		);
-
-		// no need to submit messages for op's that have been aborted
-		const pendingMessageIds = this.pendingKeys.get(op.key);
-		if (pendingMessageIds === undefined) {
-			return;
-		}
-
-		const index = pendingMessageIds.indexOf(localOpMetadata.pendingMessageId);
-		if (index === -1) {
-			return;
-		}
-
-		pendingMessageIds.splice(index, 1);
-		if (pendingMessageIds.length === 0) {
-			this.pendingKeys.delete(op.key);
-		}
-
-		// We don't reuse the metadata pendingMessageId but send a new one on each submit.
-		const pendingMessageId = this.getMapKeyMessageId(op);
-		const localMetadata: MapKeyLocalOpMetadata =
-			localOpMetadata.type === "edit"
-				? { type: "edit", pendingMessageId, previousValue: localOpMetadata.previousValue }
-				: { type: "add", pendingMessageId };
-		const listNode = this.pendingMapLocalOpMetadata.push(localMetadata).first;
-		this.submitMessage(op, listNode);
 	}
 }
