@@ -10,19 +10,25 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { independentView, Tree, TreeAlpha } from "../shared-tree/index.js";
 import {
 	allowUnused,
+	getJsonSchema,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
 	type ConciseTree,
 	type TreeNode,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
-import type { areSafelyAssignable, requireTrue } from "../util/index.js";
+import type {
+	areSafelyAssignable,
+	JsonCompatibleReadOnly,
+	requireTrue,
+} from "../util/index.js";
 import { validateUsageError } from "./utils.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshots/index.js";
 
 const schemaFactory = new SchemaFactoryAlpha("test");
 
 describe("TableFactory unit tests", () => {
-	function createTableTree() {
+	function createTableSchema() {
 		class Cell extends schemaFactory.object("table-cell", {
 			value: schemaFactory.string,
 		}) {}
@@ -58,6 +64,17 @@ describe("TableFactory unit tests", () => {
 			column: Column,
 			row: Row,
 		}) {}
+
+		return {
+			Cell,
+			Column,
+			Row,
+			Table,
+		};
+	}
+
+	function createTableTree() {
+		const { Cell, Column, Row, Table } = createTableSchema();
 
 		const treeView = independentView(
 			new TreeViewConfiguration({
@@ -1453,6 +1470,52 @@ describe("TableFactory unit tests", () => {
 		assert.equal(cell, cell0);
 		assert.equal(row, row0);
 		assert.equal(column, column0);
+	});
+
+	describe("JSON serialization", () => {
+		useSnapshotDirectory("table-schema-json");
+
+		it("schema", () => {
+			const { Table } = createTableSchema();
+			takeJsonSnapshot(
+				getJsonSchema(Table, {
+					requireFieldsWithDefaults: false,
+					useStoredKeys: false,
+				}) as unknown as JsonCompatibleReadOnly,
+			);
+		});
+
+		it("data (verbose)", () => {
+			const { treeView, Cell, Column, Row } = createTableTree();
+
+			const cell0 = new Cell({ value: "Hello World!" });
+			const column0 = new Column({ id: "column-0", props: {} });
+			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
+			treeView.initialize({
+				columns: [column0],
+				rows: [row0],
+			});
+
+			takeJsonSnapshot(
+				TreeAlpha.exportVerbose(treeView.root, {}) as unknown as JsonCompatibleReadOnly,
+			);
+		});
+
+		it("data (concise)", () => {
+			const { treeView, Cell, Column, Row } = createTableTree();
+
+			const cell0 = new Cell({ value: "Hello World!" });
+			const column0 = new Column({ id: "column-0", props: {} });
+			const row0 = new Row({ id: "row-0", cells: { "column-0": cell0 }, props: {} });
+			treeView.initialize({
+				columns: [column0],
+				rows: [row0],
+			});
+
+			takeJsonSnapshot(
+				TreeAlpha.exportConcise(treeView.root, {}) as unknown as JsonCompatibleReadOnly,
+			);
+		});
 	});
 
 	// The code within the following tests is included in TSDoc comments in the source code.

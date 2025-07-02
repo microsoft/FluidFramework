@@ -45,7 +45,6 @@ variables:
 - name: DisableCodeQL
   value: true
 
-lockBehavior: sequential
 stages:
 
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
