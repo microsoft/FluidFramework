@@ -280,6 +280,30 @@ describe("schemaCreationUtilities", () => {
 		const _test2: InstanceType<typeof ModeNodes.a> = new ModeNodes.b();
 	});
 
+	it("adaptEnum workaround", () => {
+		const schemaFactory = new SchemaFactory("x");
+
+		// Old
+		{
+			enum Mode {
+				a = 1,
+			}
+			const ModeNodes = adaptEnum(schemaFactory, Mode);
+			const union = ModeNodes.schema;
+		}
+
+		// New
+		{
+			enum Mode {
+				a = 1,
+			}
+			const ModeNodes = adaptEnum(schemaFactory, Mode);
+			// Bugged version of adaptEnum used to include this: it should not be used.
+			class Workaround extends schemaFactory.object("a", {}) {}
+			const union = [...ModeNodes.schema, Workaround] as const;
+		}
+	});
+
 	it("enum value switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}
