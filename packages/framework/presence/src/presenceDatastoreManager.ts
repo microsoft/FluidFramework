@@ -59,7 +59,27 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	internal: PresenceStatesInternal;
 }
 
+/**
+ * Datastore structure used for broadcasting to other clients.
+ * Validation metadata is stripped before transmission.
+ */
 type PresenceDatastore = SystemDatastore & {
+	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
+};
+
+/**
+ * Internal system datastore that may contain validation metadata.
+ * Used internally but stripped before broadcasting.
+ */
+type SystemDatastoreInternal = SystemDatastore & {
+	// Same as SystemDatastore but can contain validation metadata
+};
+
+/**
+ * Internal datastore structure used within PresenceDatastoreManager.
+ * Contains validation metadata that must be stripped before broadcasting.
+ */
+type PresenceDatastoreInternal = SystemDatastoreInternal & {
 	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
@@ -139,7 +159,7 @@ function mergeGeneralDatastoreMessageContent(
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastore;
+	private readonly datastore: PresenceDatastoreInternal;
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -157,7 +177,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
+		this.datastore = {
+			"system:presence": systemWorkspaceDatastore,
+		} as PresenceDatastoreInternal;
 		this.workspaces.set("system:presence", systemWorkspace);
 		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
@@ -177,7 +199,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 				updateProviders,
 			},
 		});
@@ -334,7 +356,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
 	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
 	 */
-	private stripValidationMetadata(datastore: PresenceDatastore): PresenceDatastore {
+	private stripValidationMetadata(datastore: PresenceDatastoreInternal): PresenceDatastore {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		const stripped = {} as PresenceDatastore;
 
