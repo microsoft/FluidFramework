@@ -32,10 +32,4 @@ export class MockHandle<T> extends FluidHandleBase<T> {
 	public attachGraph(): void {
 		this.graphAttachState = AttachState.Attached;
 	}
-	/**
-	 * See SharedObjectHandle.bind - Needs to be present for serializer to work properly
-	 */
-	public bind() {
-		throw Error("MockHandle.bind() unimplemented.");
-	}
 }
