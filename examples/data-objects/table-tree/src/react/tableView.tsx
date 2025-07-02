@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { Table, TableBody, Input, Button } from "@fluentui/react-components";
-import { Add24Regular, Checkmark24Regular } from "@fluentui/react-icons";
+import { Table, TableBody, Button } from "@fluentui/react-components";
+import { Add24Regular } from "@fluentui/react-icons";
 import React, { useState, DragEvent } from "react";
 
-import { useTree } from "../utils/index.js";
+import { TableDataObject } from "../dataObject.js";
+import { Column } from "../schema.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
-
-import { TableDataObject } from "./index.js";
+import { useTree } from "./utilities.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./tableView.css";
@@ -36,11 +36,6 @@ import "./tableView.css";
  * are used to determine how each cell is rendered.
  */
 export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
-	const [newRowId, setNewRowId] = useState("");
-	const [newColumnId, setNewColumnId] = useState("");
-	const [newColumnHint, setNewColumnHint] = useState("");
-	const [showAddRowInput, setShowAddRowInput] = useState(false);
-	const [showAddColumnInput, setShowAddColumnInput] = useState(false);
 	const [draggedRowIndex, setDraggedRowIndex] = useState<number | undefined>(undefined);
 	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 
@@ -49,15 +44,10 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 	const columns = [...tableModel.treeView.root.columns];
 	const rows = [...tableModel.treeView.root.rows];
 
-	const handleAddRow = (): void => {
-		if (newRowId.trim() !== "") {
-			tableModel.treeView.root.insertRows({
-				index: rows.length,
-				rows: [{ id: newRowId.trim(), cells: {}, props: {} }],
-			});
-			setNewRowId("");
-			setShowAddRowInput(false);
-		}
+	const handleAppendNewRow = (): void => {
+		tableModel.treeView.root.insertRow({
+			row: { cells: {} },
+		});
 	};
 
 	const handleRemoveRow = (index: number): void => {
@@ -66,21 +56,10 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 		}
 	};
 
-	const handleAddColumn = (): void => {
-		if (newColumnId.trim() !== "") {
-			tableModel.treeView.root.insertColumn({
-				index: 0,
-				column: {
-					props: {
-						label: newColumnId,
-						hint: newColumnHint || undefined,
-					},
-				},
-			});
-			setNewColumnId("");
-			setNewColumnHint("");
-			setShowAddColumnInput(false);
-		}
+	const handleAppendNewColumn = (newColumn: Column): void => {
+		tableModel.treeView.root.insertColumn({
+			column: newColumn,
+		});
 	};
 
 	const handleRemoveColumn = (index: number): void => {
@@ -132,13 +111,7 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 						onColumnDragOver={handleColumnDragOver}
 						onColumnDrop={handleColumnDrop}
 						onRemoveColumn={handleRemoveColumn}
-						showAddColumnInput={showAddColumnInput}
-						setShowAddColumnInput={setShowAddColumnInput}
-						newColumnId={newColumnId}
-						setNewColumnId={setNewColumnId}
-						newColumnHint={newColumnHint}
-						setNewColumnHint={setNewColumnHint}
-						handleAddColumn={handleAddColumn}
+						handleAppendColumn={handleAppendNewColumn}
 					/>
 					<TableBody>
 						{rows.map((row, index) => (
@@ -156,34 +129,15 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 					</TableBody>
 				</Table>
 			</div>
-			{showAddRowInput ? (
-				<div className="add-row-container">
-					<Input
-						type="text"
-						placeholder="Row ID"
-						value={newRowId}
-						onChange={(e) => setNewRowId(e.target.value)}
-						size="small"
-						className="add-row-input"
-					/>
-					<Button
-						icon={<Checkmark24Regular />}
-						appearance="subtle"
-						size="small"
-						onClick={handleAddRow}
-					/>
-				</div>
-			) : (
-				<Button
-					icon={<Add24Regular />}
-					appearance="subtle"
-					size="small"
-					onClick={() => setShowAddRowInput(true)}
-					className="add-row-toggle"
-				>
-					Add Row
-				</Button>
-			)}
+			<Button
+				icon={<Add24Regular />}
+				appearance="subtle"
+				size="small"
+				onClick={() => handleAppendNewRow()}
+				className="add-row-toggle"
+			>
+				Add Row
+			</Button>
 		</div>
 	);
 };

@@ -13,9 +13,9 @@ import {
 	Option,
 } from "@fluentui/react-components";
 import { Add24Regular, Checkmark24Regular, Delete24Regular } from "@fluentui/react-icons";
-import React, { DragEvent } from "react";
+import React, { DragEvent, useState } from "react";
 
-import type { Column } from "./tableSchema.js";
+import { Column } from "../schema.js";
 
 /**
  * Props for the `TableHeaderView` component, which renders the header row of the table.
@@ -27,7 +27,7 @@ export interface TableHeaderViewProps {
 	/**
 	 * The list of columns currently present in the table.
 	 */
-	readonly columns: Column[];
+	readonly columns: readonly Column[];
 
 	/**
 	 * Callback fired when a column drag operation starts. Receives the index of the dragged column.
@@ -51,39 +51,9 @@ export interface TableHeaderViewProps {
 	onRemoveColumn: (index: number) => void;
 
 	/**
-	 * Whether the "add column" input row is currently visible.
-	 */
-	showAddColumnInput: boolean;
-
-	/**
-	 * Function to toggle the visibility of the "add column" input row.
-	 */
-	setShowAddColumnInput: (value: boolean) => void;
-
-	/**
-	 * The user-entered label for the new column.
-	 */
-	newColumnId: string;
-
-	/**
-	 * Function to update the new column label state.
-	 */
-	setNewColumnId: (id: string) => void;
-
-	/**
-	 * The user-selected hint type for the new column (e.g., "text", "checkbox", "date").
-	 */
-	newColumnHint: string;
-
-	/**
-	 * Function to update the new column hint state.
-	 */
-	setNewColumnHint: (hint: string) => void;
-
-	/**
 	 * Handler invoked when the user confirms adding a new column.
 	 */
-	handleAddColumn: () => void;
+	handleAppendColumn: (newColumn: Column) => void;
 }
 
 /**
@@ -103,14 +73,10 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	onColumnDragOver,
 	onColumnDrop,
 	onRemoveColumn,
-	showAddColumnInput,
-	setShowAddColumnInput,
-	newColumnId,
-	setNewColumnId,
-	newColumnHint,
-	setNewColumnHint,
-	handleAddColumn,
+	handleAppendColumn,
 }) => {
+	const [showAddColumnInput, setShowAddColumnInput] = useState(false);
+
 	const handleChangeColumnHint = (index: number, hint: string): void => {
 		const column = columns[index];
 		if (column?.props !== undefined && column.getCells().length === 0) {
@@ -121,39 +87,13 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	return (
 		<TableHeader>
 			{showAddColumnInput && (
-				<TableRow className="custom-header-row">
-					<TableHeaderCell colSpan={columns.length + 1}>
-						<div style={{ display: "flex", gap: "8px" }}>
-							<Input
-								type="text"
-								placeholder="Column Label"
-								value={newColumnId}
-								onChange={(e) => setNewColumnId(e.target.value)}
-								size="small"
-							/>
-							<Dropdown
-								placeholder="Select hint"
-								value={newColumnHint}
-								onOptionSelect={(_, data) => {
-									if (data.optionValue !== undefined) {
-										setNewColumnHint(data.optionValue);
-									}
-								}}
-								size="small"
-							>
-								<Option value="text">Text</Option>
-								<Option value="checkbox">Checkbox</Option>
-								<Option value="date">Date</Option>
-							</Dropdown>
-							<Button
-								icon={<Checkmark24Regular />}
-								appearance="subtle"
-								size="small"
-								onClick={handleAddColumn}
-							/>
-						</div>
-					</TableHeaderCell>
-				</TableRow>
+				<InsertColumnDialogue
+					columns={columns}
+					handleAppendColumn={(newColumn) => {
+						handleAppendColumn(newColumn);
+						setShowAddColumnInput(false);
+					}}
+				/>
 			)}
 			<TableRow className="custom-header-row">
 				<TableHeaderCell className="custom-header-cell">
@@ -205,5 +145,69 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 				))}
 			</TableRow>
 		</TableHeader>
+	);
+};
+
+interface InsertColumnDialogueProps {
+	/**
+	 * The list of columns currently present in the table.
+	 */
+	readonly columns: readonly Column[];
+
+	/**
+	 * Handler invoked when the user confirms adding a new column.
+	 */
+	handleAppendColumn: (newColumn: Column) => void;
+}
+
+const InsertColumnDialogue: React.FC<InsertColumnDialogueProps> = ({
+	columns,
+	handleAppendColumn,
+}) => {
+	const [newColumnLabel, setNewColumnLabel] = useState("");
+	const [newColumnHint, setNewColumnHint] = useState("");
+
+	return (
+		<TableRow className="custom-header-row">
+			<TableHeaderCell colSpan={columns.length + 1}>
+				<div style={{ display: "flex", gap: "8px" }}>
+					<Input
+						type="text"
+						placeholder="Column Label"
+						value={newColumnLabel}
+						onChange={(e) => setNewColumnLabel(e.target.value)}
+						size="small"
+					/>
+					<Dropdown
+						placeholder="Select hint"
+						value={newColumnHint}
+						onOptionSelect={(_, data) => {
+							if (data.optionValue !== undefined) {
+								setNewColumnHint(data.optionValue);
+							}
+						}}
+						size="small"
+					>
+						<Option value="text">Text</Option>
+						<Option value="checkbox">Checkbox</Option>
+						<Option value="date">Date</Option>
+					</Dropdown>
+					<Button
+						icon={<Checkmark24Regular />}
+						appearance="subtle"
+						size="small"
+						onClick={() => {
+							handleAppendColumn(
+								new Column({
+									props: { label: newColumnLabel, hint: newColumnHint },
+								}),
+							);
+							setNewColumnLabel("");
+							setNewColumnHint("");
+						}}
+					/>
+				</div>
+			</TableHeaderCell>
+		</TableRow>
 	);
 };

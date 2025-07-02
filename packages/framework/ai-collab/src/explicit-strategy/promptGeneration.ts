@@ -220,7 +220,7 @@ export function getReviewSystemPrompt(
 export function getPromptFriendlyTreeSchema(jsonSchema: JsonTreeSchema): string {
 	let stringifiedSchema = "";
 	for (const [name, def] of Object.entries(jsonSchema.$defs)) {
-		if (def.type !== "object" || def._treeNodeSchemaKind === NodeKind.Map) {
+		if (def._treeNodeSchemaKind !== NodeKind.Object) {
 			continue;
 		}
 

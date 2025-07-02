@@ -37,6 +37,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	readinessCheck?: IReadinessCheck,
+	bypassCache: boolean = false,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -77,6 +78,7 @@ export function create(
 			riddlerStorageRequestMetricInterval,
 			tenantKeyGenerator,
 			cache,
+			bypassCache,
 		),
 	);
 

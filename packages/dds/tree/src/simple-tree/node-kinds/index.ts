@@ -33,7 +33,18 @@ export {
 	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaPrivate,
 	objectSchema,
 	setField,
 	type TreeObjectNode,
 } from "./object/index.js";
+
+export {
+	isRecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	RecordNodeSchema,
+	recordSchema,
+	type TreeRecordNode,
+} from "./record/index.js";

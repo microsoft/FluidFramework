@@ -97,7 +97,7 @@ services:
       additional_contexts:
         root: ../..
     ports:
-      - "5001:5001"
+      - "5000:5000"
     command: node packages/routerlicious/dist/riddler/www.js
     environment:
       - DEBUG=fluid:*
