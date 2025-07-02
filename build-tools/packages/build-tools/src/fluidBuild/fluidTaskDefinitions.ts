@@ -77,6 +77,17 @@ export interface TaskFileDependencies {
 	 * @defaultValue `["input"]`
 	 */
 	gitignore?: GitIgnoreSetting;
+
+	/**
+	 * Specify whether the task will depend on the package/workspace lock file, this task will be rebuilt if the lock file
+	 * is changed. Provides an economical but broad way to ensure rebuild when tools or package dependencies changes.
+	 *
+	 * Default is true, and it is equivalent to putting the lock file in the `inputGlobs`.
+	 *
+	 * For fine-grained control, use `inputGlobs` and `outputGlobs` to specify the dependencies in `node_modules`
+	 * and set this to false.
+	 */
+	includeLockFiles?: boolean;
 }
 
 export interface TaskConfig {
@@ -412,7 +423,9 @@ export function getTaskDefinitions(
 				if (script === undefined) {
 					throw new Error(`Script not found for task definition '${name}'`);
 				} else if (script.startsWith("fluid-build ")) {
-					throw new Error(`Script task should not invoke 'fluid-build' in '${name}'`);
+					throw new Error(
+						`Script task should not invoke 'fluid-build' in '${name}'. Did you forget to set 'script: false' in the task definition?`,
+					);
 				}
 			} else {
 				if (full.before.length !== 0 || full.after.length !== 0) {
