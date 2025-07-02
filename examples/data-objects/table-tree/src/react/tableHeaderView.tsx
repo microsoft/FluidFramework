@@ -27,7 +27,7 @@ export interface TableHeaderViewProps {
 	/**
 	 * The list of columns currently present in the table.
 	 */
-	readonly columns: Column[];
+	readonly columns: readonly Column[];
 
 	/**
 	 * Callback fired when a column drag operation starts. Receives the index of the dragged column.
@@ -75,8 +75,6 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	onRemoveColumn,
 	handleAppendColumn,
 }) => {
-	const [newColumnLabel, setNewColumnLabel] = useState("");
-	const [newColumnHint, setNewColumnHint] = useState("");
 	const [showAddColumnInput, setShowAddColumnInput] = useState(false);
 
 	const handleChangeColumnHint = (index: number, hint: string): void => {
@@ -89,48 +87,10 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	return (
 		<TableHeader>
 			{showAddColumnInput && (
-				<TableRow className="custom-header-row">
-					<TableHeaderCell colSpan={columns.length + 1}>
-						<div style={{ display: "flex", gap: "8px" }}>
-							<Input
-								type="text"
-								placeholder="Column Label"
-								value={newColumnLabel}
-								onChange={(e) => setNewColumnLabel(e.target.value)}
-								size="small"
-							/>
-							<Dropdown
-								placeholder="Select hint"
-								value={newColumnHint}
-								onOptionSelect={(_, data) => {
-									if (data.optionValue !== undefined) {
-										setNewColumnHint(data.optionValue);
-									}
-								}}
-								size="small"
-							>
-								<Option value="text">Text</Option>
-								<Option value="checkbox">Checkbox</Option>
-								<Option value="date">Date</Option>
-							</Dropdown>
-							<Button
-								icon={<Checkmark24Regular />}
-								appearance="subtle"
-								size="small"
-								onClick={() => {
-									handleAppendColumn(
-										new Column({
-											props: {
-												label: newColumnLabel,
-												hint: newColumnHint,
-											},
-										}),
-									);
-								}}
-							/>
-						</div>
-					</TableHeaderCell>
-				</TableRow>
+				<InsertColumnDialogue columns={columns} handleAppendColumn={(newColumn) => {
+					handleAppendColumn(newColumn);
+					setShowAddColumnInput(false);
+				}} />
 			)}
 			<TableRow className="custom-header-row">
 				<TableHeaderCell className="custom-header-cell">
@@ -182,5 +142,69 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 				))}
 			</TableRow>
 		</TableHeader>
+	);
+};
+
+interface InsertColumnDialogueProps {
+	/**
+	 * The list of columns currently present in the table.
+	 */
+	readonly columns: readonly Column[];
+
+	/**
+	 * Handler invoked when the user confirms adding a new column.
+	 */
+	handleAppendColumn: (newColumn: Column) => void;
+}
+
+const InsertColumnDialogue: React.FC<InsertColumnDialogueProps> = ({
+	columns,
+	handleAppendColumn,
+}) => {
+	const [newColumnLabel, setNewColumnLabel] = useState("");
+	const [newColumnHint, setNewColumnHint] = useState("");
+
+	return (
+		<TableRow className="custom-header-row">
+			<TableHeaderCell colSpan={columns.length + 1}>
+				<div style={{ display: "flex", gap: "8px" }}>
+					<Input
+						type="text"
+						placeholder="Column Label"
+						value={newColumnLabel}
+						onChange={(e) => setNewColumnLabel(e.target.value)}
+						size="small"
+					/>
+					<Dropdown
+						placeholder="Select hint"
+						value={newColumnHint}
+						onOptionSelect={(_, data) => {
+							if (data.optionValue !== undefined) {
+								setNewColumnHint(data.optionValue);
+							}
+						}}
+						size="small"
+					>
+						<Option value="text">Text</Option>
+						<Option value="checkbox">Checkbox</Option>
+						<Option value="date">Date</Option>
+					</Dropdown>
+					<Button
+						icon={<Checkmark24Regular />}
+						appearance="subtle"
+						size="small"
+						onClick={() => {
+							handleAppendColumn(
+								new Column({
+									props: { label: newColumnLabel, hint: newColumnHint },
+								}),
+							);
+							setNewColumnLabel("");
+							setNewColumnHint("");
+						}}
+					/>
+				</div>
+			</TableHeaderCell>
+		</TableRow>
 	);
 };
