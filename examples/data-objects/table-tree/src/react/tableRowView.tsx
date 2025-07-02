@@ -100,7 +100,7 @@ interface TableCellViewProps {
 	onUpdateCell: (newValue: string) => void;
 }
 
-export const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpdateCell }) => {
+const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpdateCell }) => {
 	// TODO: highlight cells in red when data is invalid
 	switch (hint) {
 		case "checkbox": {
