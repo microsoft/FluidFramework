@@ -80,7 +80,7 @@ export interface TaskFileDependencies {
 
 	/**
 	 * Specify whether the task will depend on the package/workspace lock file, this task will be rebuilt if the lock file
-	 * is changed. Provide an economical but broad way to ensure rebuild when tools or package dependencies changes.
+	 * is changed. Provides an economical but broad way to ensure rebuild when tools or package dependencies changes.
 	 *
 	 * Default is true, and it is equivalent to putting the lock file in the `inputGlobs`.
 	 *
