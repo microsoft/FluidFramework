@@ -118,6 +118,7 @@ function convertOptionPaths(
 		"outDir",
 		"rootDir",
 		"project",
+		"tsBuildInfoFile",
 	]) {
 		const value = result[key] as string;
 		if (value !== undefined) {
