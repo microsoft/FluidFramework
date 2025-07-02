@@ -5,6 +5,7 @@
 
 import type {
 	DeepReadonly,
+	InternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
 	OpaqueJsonDeserialized,
@@ -138,3 +139,46 @@ export function toOpaqueJson<const T>(
 ): OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T> {
 	return value as OpaqueJsonSerializable<T> & OpaqueJsonDeserialized<T>;
 }
+
+/**
+ * Convert a union of types to an intersection of those types.
+ *
+ * @privateRemarks
+ * First an always true extends clause is used (T extends T) to distribute T
+ * into to a union of types contravariant over each member of the T union.
+ * Then the constraint on the type parameter in this new context is inferred,
+ * giving the intersection.
+ *
+ * Future: This definition is identical to one in `packages/dds/tree/src/util/typeUtils.ts`
+ * and should be consolidated.
+ */
+type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) extends (
+	k: infer U,
+) => unknown
+	? U
+	: never;
+
+/**
+ * Generates a union of types that are the remainder from a simple
+ * Pick combination (that is the set of common properties).
+ */
+type PickRemainder<T> = Pick<T, keyof T> extends infer Common
+	? T extends unknown
+		? Omit<T, keyof Common>
+		: never
+	: never;
+
+/**
+ * Combines union of structure into a single structure where common properties
+ * are unions of their respective types and optional properties are defined for
+ * properties that are not common to each union member.
+ *
+ * @remarks
+ * If a property is common to multiple, but not all union member and the
+ * types are incompatible, the resulting type will be `never` for that
+ * property. (This can be fixed, but might be best addressed by changing
+ * T to be a tuple of types to be combined.)
+ */
+export type FlattenUnionWithOptionals<T> = InternalUtilityTypes.FlattenIntersection<
+	Pick<T, keyof T> & UnionToIntersection<Partial<PickRemainder<T>>>
+>;

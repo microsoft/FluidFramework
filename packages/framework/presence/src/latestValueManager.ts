@@ -16,6 +16,7 @@ import type { BroadcastControls, BroadcastControlSettings } from "./broadcastCon
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
 import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
+import type { FlattenUnionWithOptionals } from "./internalUtils.js";
 import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
@@ -199,7 +200,7 @@ class LatestValueManagerImpl<T, Key extends string>
 		const allKnownStates = this.datastore.knownValues(this.key);
 		const clientState = allKnownStates.states[attendee.attendeeId];
 		if (clientState === undefined) {
-			throw new Error("No entry for attendeeId");
+			throw new Error("No entry for attendee");
 		}
 		return {
 			value: createValidatedGetter(clientState, this.validator),
@@ -314,13 +315,13 @@ export interface LatestFactory {
  * Factory for creating a {@link Latest} or {@link LatestRaw} State object.
  */
 export const latest: LatestFactory = <T extends object | null, Key extends string = string>(
-	args: LatestArguments<T> | LatestArgumentsRaw<T>,
+	args: FlattenUnionWithOptionals<LatestArguments<T> | LatestArgumentsRaw<T>>,
 ): InternalTypes.ManagerFactory<
 	Key,
 	InternalTypes.ValueRequiredState<T>,
 	LatestRaw<T> & Latest<T>
 > => {
-	const { local, settings } = args;
+	const { local, settings, validator } = args;
 	// Latest takes ownership of the initial local value but makes a shallow
 	// copy for basic protection.
 	const opaqueLocal = toOpaqueJson<T>(local);
@@ -346,8 +347,7 @@ export const latest: LatestFactory = <T extends object | null, Key extends strin
 				datastoreFromHandle(datastoreHandle),
 				value,
 				settings,
-				// eslint-disable-next-line unicorn/consistent-destructuring -- false positive
-				"validator" in args ? args.validator : undefined,
+				validator,
 			),
 		),
 	});
