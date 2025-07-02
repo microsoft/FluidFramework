@@ -253,8 +253,7 @@ export interface IContainerCreateProps {
 	 * If provided, container will use this value as the maximum time to wait
 	 * for a successful connection before giving up throwing the most recent error.
 	 *
-	 * If not provided, default behavior will be to retry until non-retryable error occurs
-	 * OR if connection attempt is cancelled.
+	 * If not provided, default behavior will be to retry until non-retryable error occurs.
 	 */
 	readonly retryConnectionTimeoutMs?: number;
 }
