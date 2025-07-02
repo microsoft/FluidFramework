@@ -378,9 +378,7 @@
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"socket.io-client": "~4.7.5",
 			"axios@<0.30.0": "^0.30.0",
-			"@fluidframework/server-local-server": "^5.0.0",
-			"@fluidframework/server-services-core": "^5.0.0",
-			"@fluidframework/server-test-utils": "^5.0.0"
+			"@fluidframework/server-memory-orderer": "^5.0.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
