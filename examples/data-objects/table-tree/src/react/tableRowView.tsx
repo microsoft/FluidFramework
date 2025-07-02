@@ -7,7 +7,7 @@ import { TableRow, TableCell, Input, Button, Checkbox } from "@fluentui/react-co
 import { Delete24Regular } from "@fluentui/react-icons";
 import React, { DragEvent } from "react";
 
-import { DateTime, type Column, type Row } from "../schema.js";
+import { type Column, type Row } from "../schema.js";
 
 /**
  * Props for the `TableRowView` component, which renders a single row in the table.
@@ -83,39 +83,68 @@ export const TableRowView: React.FC<TableRowViewProps> = ({
 
 			return (
 				<TableCell key={col.id} className="custom-cell">
-					{hint === "checkbox" ? (
-						<Checkbox
-							checked={cell === "true"}
-							onChange={(_, data) => {
-								const newValue = data.checked?.toString() ?? "false";
-								row.setCell(col, newValue);
-							}}
-						/>
-					) : hint === "date" ? (
-						<Input
-							type="date"
-							className="custom-input"
-							value={cell instanceof DateTime ? cell.value.toISOString().split("T")[0] : ""}
-							onChange={(e) => {
-								const date = new Date(e.target.value);
-								const dateObj = DateTime.fromDate(date);
-								row.setCell(col, dateObj);
-							}}
-						/>
-					) : (
-						<Input
-							type="text"
-							appearance="underline"
-							className="custom-input"
-							value={typeof cell === "string" ? cell : ""}
-							onChange={(e) => {
-								const newVal = e.target.value;
-								row.setCell(col, newVal);
-							}}
-						/>
-					)}
+					<TableCellView
+						cell={cell}
+						hint={hint}
+						onUpdateCell={(newValue) => row.setCell(col, newValue)}
+					/>
 				</TableCell>
 			);
 		})}
 	</TableRow>
 );
+
+interface TableCellViewProps {
+	readonly cell: string | undefined;
+	readonly hint: string | undefined;
+	onUpdateCell: (newValue: string) => void;
+}
+
+export const TableCellView: React.FC<TableCellViewProps> = ({ cell, hint, onUpdateCell }) => {
+	// TODO: highlight cells in red when data is invalid
+	switch (hint) {
+		case "checkbox": {
+			return (
+				<Checkbox
+					checked={cell === "true"}
+					onChange={(_, data) => {
+						onUpdateCell(data.checked === true ? "true" : "false");
+					}}
+				/>
+			);
+			break;
+		}
+		case "date": {
+			return (
+				<Input
+					type="date"
+					className="custom-input"
+					value={cell?.split("T")[0] ?? ""}
+					onChange={(e) => {
+						const date = new Date(e.target.value);
+						onUpdateCell(date.toISOString());
+					}}
+				/>
+			);
+			break;
+		}
+		case "text":
+		case undefined: {
+			return (
+				<Input
+					type="text"
+					appearance="underline"
+					className="custom-input"
+					value={cell ?? ""}
+					onChange={(e) => {
+						onUpdateCell(e.target.value);
+					}}
+				/>
+			);
+			break;
+		}
+		default: {
+			throw new Error(`Unsupported cell hint: ${hint}`);
+		}
+	}
+};

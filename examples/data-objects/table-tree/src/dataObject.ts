@@ -14,7 +14,7 @@ import {
 	type TreeView,
 } from "@fluidframework/tree/legacy";
 
-import { Column, DateTime, Row, Table } from "./schema.js";
+import { Column, Row, Table } from "./schema.js";
 
 /**
  * A data object for managing a shared table using `SharedTree`.
@@ -67,15 +67,14 @@ function getInitialTree(): Table {
 	const row0 = new Row({
 		cells: {
 			[taskNameColumn.id]: "Clean laundry",
-			[dateColumn.id]: DateTime.fromDate(new Date()),
-			[completedColumn.id]: true,
+			[dateColumn.id]: new Date().toISOString(),
+			[completedColumn.id]: "true",
 		},
 	});
 	const row1 = new Row({
 		cells: {
 			[taskNameColumn.id]: "Walk the dog",
-			[dateColumn.id]: DateTime.fromDate(new Date()),
-			[completedColumn.id]: false,
+			[dateColumn.id]: new Date().toISOString(),
 		},
 	});
 
