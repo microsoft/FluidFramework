@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { Nodes as HastTree } from "hast";
+import type { Text as HastText } from "hast";
 
 import type { PlainTextNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-
-import { applyFormatting } from "./Utilities.js";
 
 /**
  * Transform a {@link PlainTextNode} to HTML.
@@ -19,11 +17,9 @@ import { applyFormatting } from "./Utilities.js";
 export function plainTextToHtml(
 	node: PlainTextNode,
 	context: TransformationContext,
-): HastTree {
-	const transformed: HastTree = {
+): HastText {
+	return {
 		type: "text",
 		value: node.text,
 	};
-
-	return applyFormatting(transformed, context);
 }

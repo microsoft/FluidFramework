@@ -21,6 +21,7 @@ import {
 	TaskDefinition,
 	TaskDefinitions,
 	TaskDefinitionsOnDisk,
+	TaskFileDependencies,
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
@@ -158,6 +159,7 @@ export class BuildPackage {
 				before: [],
 				children: [],
 				after: [],
+				files: undefined,
 			};
 		}
 		return undefined;
@@ -172,16 +174,27 @@ export class BuildPackage {
 			this.targetTasks.set(taskName, task);
 			return task;
 		}
-		return this.createScriptTask(taskName, pendingInitDep);
+		return this.createScriptTask(taskName, pendingInitDep, config?.files);
 	}
 
-	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
+	private createScriptTask(
+		taskName: string,
+		pendingInitDep: Task[],
+		files: TaskFileDependencies | undefined,
+	) {
 		const command = this.pkg.getScript(taskName);
 		if (command !== undefined && !command.startsWith("fluid-build ")) {
 			// Find the script task (without the lifecycle task)
 			let scriptTask = this.scriptTasks.get(taskName);
 			if (scriptTask === undefined) {
-				scriptTask = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
+				scriptTask = TaskFactory.Create(
+					this,
+					command,
+					this.context,
+					pendingInitDep,
+					taskName,
+					files,
+				);
 				pendingInitDep.push(scriptTask);
 				this.tasks.push(scriptTask);
 				this.scriptTasks.set(taskName, scriptTask);
@@ -221,7 +234,14 @@ export class BuildPackage {
 			throw new Error(`${this.pkg.nameColored}: '${taskName}' must be a script task`);
 		}
 
-		const task = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
+		const task = TaskFactory.Create(
+			this,
+			command,
+			this.context,
+			pendingInitDep,
+			taskName,
+			config?.files,
+		);
 		pendingInitDep.push(task);
 		this.tasks.push(task);
 		this.scriptTasks.set(taskName, task);
@@ -254,7 +274,7 @@ export class BuildPackage {
 			return existing;
 		}
 
-		return this.createScriptTask(taskName, pendingInitDep);
+		return this.createScriptTask(taskName, pendingInitDep, config?.files);
 	}
 
 	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]) {

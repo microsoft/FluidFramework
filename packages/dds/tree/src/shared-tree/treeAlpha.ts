@@ -598,6 +598,7 @@ export const TreeAlpha: TreeAlpha = {
 					return undefined;
 				}
 			// Fall through
+			case NodeKind.Record:
 			case NodeKind.Object: {
 				let storedKey: string | number = propertyKey;
 				if (isObjectNodeSchema(schema)) {
@@ -649,7 +650,8 @@ export const TreeAlpha: TreeAlpha = {
 				}
 				break;
 			}
-			case NodeKind.Map: {
+			case NodeKind.Map:
+			case NodeKind.Record: {
 				for (const [key, flexField] of flexNode.fields) {
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {
