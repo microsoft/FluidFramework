@@ -5,7 +5,12 @@
 
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	type ListNode,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { ValueType } from "@fluidframework/shared-object-base/internal";
 
@@ -28,7 +33,7 @@ import {
 } from "./localValues.js";
 
 /**
- * Defines the means to process and submit a given op on a map.
+ * Defines the means to process and resubmit a given op on a map.
  */
 interface IMapMessageHandler {
 	/**
@@ -38,14 +43,18 @@ interface IMapMessageHandler {
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
-	process(op: IMapOperation, local: boolean, localOpMetadata: MapLocalOpMetadata): void;
+	process(
+		op: IMapOperation,
+		local: boolean,
+		localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+	): void;
 
 	/**
-	 * Communicate the operation to remote clients.
-	 * @param op - The map operation to submit
-	 * @param localOpMetadata - The metadata to be submitted with the message.
+	 * Resubmit a previously submitted operation that was not delivered.
+	 * @param op - The map operation to resubmit
+	 * @param localOpMetadata - The metadata that was originally submitted with the message.
 	 */
-	submit(op: IMapOperation, localOpMetadata: MapLocalOpMetadata): void;
+	resubmit(op: IMapOperation, localOpMetadata: ListNode<MapLocalOpMetadata>): void;
 }
 
 /**
@@ -92,14 +101,6 @@ function isClearLocalOpMetadata(metadata: any): metadata is IMapClearLocalOpMeta
 		metadata !== undefined &&
 		metadata.type === "clear" &&
 		typeof metadata.pendingMessageId === "number"
-	);
-}
-
-function isMapLocalOpMetadata(metadata: any): metadata is MapLocalOpMetadata {
-	return (
-		metadata !== undefined &&
-		typeof metadata.pendingMessageId === "number" &&
-		(metadata.type === "add" || metadata.type === "edit" || metadata.type === "clear")
 	);
 }
 
@@ -159,6 +160,12 @@ export class MapKernel {
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
 	 */
 	private nextPendingMessageId: number = 0;
+
+	/**
+	 * The pending metadata for any local operations that have not yet been ack'd from the server, in order.
+	 */
+	private readonly pendingMapLocalOpMetadata: DoublyLinkedList<MapLocalOpMetadata> =
+		new DoublyLinkedList<MapLocalOpMetadata>();
 
 	/**
 	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
@@ -370,19 +377,19 @@ export class MapKernel {
 	}
 
 	/**
-	 * Submit the given op if a handler is registered.
+	 * Resubmit the given op if a handler is registered.
 	 * @param op - The operation to attempt to submit
 	 * @param localOpMetadata - The local metadata associated with the op. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public trySubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
+	public tryResubmitMessage(op: IMapOperation, localOpMetadata: unknown): boolean {
 		const handler = this.messageHandlers.get(op.type);
 		if (handler === undefined) {
 			return false;
 		}
-		handler.submit(op, localOpMetadata as MapLocalOpMetadata);
+		handler.resubmit(op, localOpMetadata as ListNode<MapLocalOpMetadata>);
 		return true;
 	}
 
@@ -431,64 +438,67 @@ export class MapKernel {
 		if (handler === undefined) {
 			return false;
 		}
-		handler.process(op, local, localOpMetadata as MapLocalOpMetadata);
+		handler.process(op, local, localOpMetadata as ListNode<MapLocalOpMetadata> | undefined);
 		return true;
 	}
-
-	/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
 	/**
 	 * Rollback a local op
 	 * @param op - The operation to rollback
 	 * @param localOpMetadata - The local metadata associated with the op.
 	 */
-	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-	public rollback(op: any, localOpMetadata: unknown): void {
-		if (!isMapLocalOpMetadata(localOpMetadata)) {
-			throw new Error("Invalid localOpMetadata");
-		}
+	public rollback(op: unknown, localOpMetadata: unknown): void {
+		const mapOp: IMapOperation = op as IMapOperation;
+		const listNodeLocalOpMetadata = localOpMetadata as ListNode<MapLocalOpMetadata>;
+		const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.pop();
+		assert(
+			removedLocalOpMetadata !== undefined &&
+				removedLocalOpMetadata === listNodeLocalOpMetadata,
+			"Rolling back unexpected op",
+		);
 
-		if (op.type === "clear" && localOpMetadata.type === "clear") {
-			if (localOpMetadata.previousMap === undefined) {
+		if (mapOp.type === "clear" && listNodeLocalOpMetadata.data.type === "clear") {
+			if (listNodeLocalOpMetadata.data.previousMap === undefined) {
 				throw new Error("Cannot rollback without previous map");
 			}
-			for (const [key, localValue] of localOpMetadata.previousMap.entries()) {
+			for (const [key, localValue] of listNodeLocalOpMetadata.data.previousMap.entries()) {
 				this.setCore(key, localValue, true);
 			}
 
 			const lastPendingClearId = this.pendingClearMessageIds.pop();
 			if (
 				lastPendingClearId === undefined ||
-				lastPendingClearId !== localOpMetadata.pendingMessageId
+				lastPendingClearId !== listNodeLocalOpMetadata.data.pendingMessageId
 			) {
 				throw new Error("Rollback op does match last clear");
 			}
-		} else if (op.type === "delete" || op.type === "set") {
-			if (localOpMetadata.type === "add") {
-				this.deleteCore(op.key as string, true);
+		} else if (mapOp.type === "delete" || mapOp.type === "set") {
+			if (listNodeLocalOpMetadata.data.type === "add") {
+				this.deleteCore(mapOp.key, true);
 			} else if (
-				localOpMetadata.type === "edit" &&
-				localOpMetadata.previousValue !== undefined
+				listNodeLocalOpMetadata.data.type === "edit" &&
+				listNodeLocalOpMetadata.data.previousValue !== undefined
 			) {
-				this.setCore(op.key as string, localOpMetadata.previousValue, true);
+				this.setCore(mapOp.key, listNodeLocalOpMetadata.data.previousValue, true);
 			} else {
 				throw new Error("Cannot rollback without previous value");
 			}
 
-			const pendingMessageIds = this.pendingKeys.get(op.key as string);
+			const pendingMessageIds = this.pendingKeys.get(mapOp.key);
 			const lastPendingMessageId = pendingMessageIds?.pop();
-			if (!pendingMessageIds || lastPendingMessageId !== localOpMetadata.pendingMessageId) {
+			if (
+				!pendingMessageIds ||
+				lastPendingMessageId !== listNodeLocalOpMetadata.data.pendingMessageId
+			) {
 				throw new Error("Rollback op does not match last pending");
 			}
 			if (pendingMessageIds.length === 0) {
-				this.pendingKeys.delete(op.key as string);
+				this.pendingKeys.delete(mapOp.key);
 			}
 		} else {
 			throw new Error("Unsupported op for rollback");
 		}
 	}
-
-	/* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
 	/**
 	 * Set implementation used for both locally sourced sets as well as incoming remote sets.
@@ -562,7 +572,7 @@ export class MapKernel {
 	private needProcessKeyOperation(
 		op: IMapKeyOperation,
 		local: boolean,
-		localOpMetadata: MapLocalOpMetadata,
+		localOpMetadata: MapLocalOpMetadata | undefined,
 	): boolean {
 		if (this.pendingClearMessageIds[0] !== undefined) {
 			if (local) {
@@ -609,15 +619,24 @@ export class MapKernel {
 	private getMessageHandlers(): Map<string, IMapMessageHandler> {
 		const messageHandlers = new Map<string, IMapMessageHandler>();
 		messageHandlers.set("clear", {
-			process: (op: IMapClearOperation, local, localOpMetadata) => {
+			process: (
+				op: IMapClearOperation,
+				local: boolean,
+				localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+			) => {
 				if (local) {
+					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
-						isClearLocalOpMetadata(localOpMetadata),
+						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
+						"Processing unexpected local clear op",
+					);
+					assert(
+						isClearLocalOpMetadata(localOpMetadata.data),
 						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
 					);
 					const pendingClearMessageId = this.pendingClearMessageIds.shift();
 					assert(
-						pendingClearMessageId === localOpMetadata.pendingMessageId,
+						pendingClearMessageId === localOpMetadata.data.pendingMessageId,
 						0x2fb /* pendingMessageId does not match */,
 					);
 					return;
@@ -628,34 +647,63 @@ export class MapKernel {
 				}
 				this.clearCore(local);
 			},
-			submit: (op: IMapClearOperation, localOpMetadata: IMapClearLocalOpMetadata) => {
+			resubmit: (op: IMapClearOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
+				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
+				assert(removedLocalOpMetadata !== undefined, "Resubmitting unexpected local clear op");
 				assert(
-					isClearLocalOpMetadata(localOpMetadata),
+					isClearLocalOpMetadata(localOpMetadata.data),
 					0x2fc /* Invalid localOpMetadata for clear */,
 				);
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				const pendingClearMessageId = this.pendingClearMessageIds.shift();
 				assert(
-					pendingClearMessageId === localOpMetadata.pendingMessageId,
+					pendingClearMessageId === localOpMetadata.data.pendingMessageId,
 					0x2fd /* pendingMessageId does not match */,
 				);
-				this.submitMapClearMessage(op, localOpMetadata.previousMap);
+				this.submitMapClearMessage(op, localOpMetadata.data.previousMap);
 			},
 		});
 		messageHandlers.set("delete", {
-			process: (op: IMapDeleteOperation, local, localOpMetadata) => {
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+			process: (
+				op: IMapDeleteOperation,
+				local: boolean,
+				localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+			) => {
+				if (local) {
+					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+					assert(
+						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
+						"Processing unexpected local delete op",
+					);
+				}
+				if (!this.needProcessKeyOperation(op, local, localOpMetadata?.data)) {
 					return;
 				}
 				this.deleteCore(op.key, local);
 			},
-			submit: (op: IMapDeleteOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
-				this.resubmitMapKeyMessage(op, localOpMetadata);
+			resubmit: (op: IMapDeleteOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
+				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
+				assert(
+					removedLocalOpMetadata !== undefined,
+					"Resubmitting unexpected local delete op",
+				);
+				this.resubmitMapKeyMessage(op, localOpMetadata.data);
 			},
 		});
 		messageHandlers.set("set", {
-			process: (op: IMapSetOperation, local, localOpMetadata) => {
-				if (!this.needProcessKeyOperation(op, local, localOpMetadata)) {
+			process: (
+				op: IMapSetOperation,
+				local: boolean,
+				localOpMetadata: ListNode<MapLocalOpMetadata> | undefined,
+			) => {
+				if (local) {
+					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
+					assert(
+						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
+						"Processing unexpected local set op",
+					);
+				}
+				if (!this.needProcessKeyOperation(op, local, localOpMetadata?.data)) {
 					return;
 				}
 
@@ -663,8 +711,10 @@ export class MapKernel {
 				migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 				this.setCore(op.key, { value: op.value.value }, local);
 			},
-			submit: (op: IMapSetOperation, localOpMetadata: MapKeyLocalOpMetadata) => {
-				this.resubmitMapKeyMessage(op, localOpMetadata);
+			resubmit: (op: IMapSetOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
+				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
+				assert(removedLocalOpMetadata !== undefined, "Resubmitting unexpected local set op");
+				this.resubmitMapKeyMessage(op, localOpMetadata.data);
 			},
 		});
 
@@ -685,8 +735,10 @@ export class MapKernel {
 		op: IMapClearOperation,
 		previousMap?: Map<string, ILocalValue>,
 	): void {
-		const metadata = createClearLocalOpMetadata(op, this.getMapClearMessageId(), previousMap);
-		this.submitMessage(op, metadata);
+		const pendingMessageId = this.getMapClearMessageId();
+		const localMetadata = createClearLocalOpMetadata(op, pendingMessageId, previousMap);
+		const listNode = this.pendingMapLocalOpMetadata.push(localMetadata).first;
+		this.submitMessage(op, listNode);
 	}
 
 	private getMapKeyMessageId(op: IMapKeyOperation): number {
@@ -706,12 +758,10 @@ export class MapKernel {
 	 * @param previousValue - The value of the key before this op
 	 */
 	private submitMapKeyMessage(op: IMapKeyOperation, previousValue?: ILocalValue): void {
-		const localMetadata = createKeyLocalOpMetadata(
-			op,
-			this.getMapKeyMessageId(op),
-			previousValue,
-		);
-		this.submitMessage(op, localMetadata);
+		const pendingMessageId = this.getMapKeyMessageId(op);
+		const localMetadata = createKeyLocalOpMetadata(op, pendingMessageId, previousValue);
+		const listNode = this.pendingMapLocalOpMetadata.push(localMetadata).first;
+		this.submitMessage(op, listNode);
 	}
 
 	/**
@@ -746,10 +796,11 @@ export class MapKernel {
 
 		// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 		const pendingMessageId = this.getMapKeyMessageId(op);
-		const localMetadata =
+		const localMetadata: MapKeyLocalOpMetadata =
 			localOpMetadata.type === "edit"
 				? { type: "edit", pendingMessageId, previousValue: localOpMetadata.previousValue }
 				: { type: "add", pendingMessageId };
-		this.submitMessage(op, localMetadata);
+		const listNode = this.pendingMapLocalOpMetadata.push(localMetadata).first;
+		this.submitMessage(op, listNode);
 	}
 }

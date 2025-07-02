@@ -684,12 +684,12 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	/**
 	 * @returns The list of globs for all the files that this task depends on.
 	 */
-	protected abstract getInputGlobs(): Promise<string[]>;
+	protected abstract getInputGlobs(): Promise<readonly string[]>;
 
 	/**
 	 * @returns The list of globs for all the files that this task generates.
 	 */
-	protected abstract getOutputGlobs(): Promise<string[]>;
+	protected abstract getOutputGlobs(): Promise<readonly string[]>;
 
 	/**
 	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to

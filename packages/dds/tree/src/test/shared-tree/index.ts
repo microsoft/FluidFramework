@@ -3,5 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { TableView } from "./tableView.js";
-export { TableDataObject } from "./dataObject.js";
+export { baseTreeModel } from "./fuzz/index.js";

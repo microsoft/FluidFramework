@@ -388,6 +388,10 @@ export class TscTask extends LeafTask {
 			return undefined;
 		}
 
+		if (options.options.tsBuildInfoFile) {
+			return options.options.tsBuildInfoFile;
+		}
+
 		const outFile = options.options.out ? options.options.out : options.options.outFile;
 		if (outFile) {
 			return `${outFile}.tsbuildinfo`;

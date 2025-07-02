@@ -419,11 +419,11 @@ export function asTreeNodeSchemaCorePrivate(
 ): TreeNodeSchemaCorePrivate {
 	assert(
 		"childAnnotatedAllowedTypes" in schema,
-		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
+		0xbc9 /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
 	assert(
 		Array.isArray((schema as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes),
-		"All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate",
+		0xbca /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
 	return schema as TreeNodeSchemaCorePrivate;
 }
@@ -438,19 +438,23 @@ export enum NodeKind {
 	/**
 	 * A node which serves as a map, storing children under string keys.
 	 */
-	Map,
+	Map = 0,
 	/**
 	 * A node which serves as an array, storing children in an ordered sequence.
 	 */
-	Array,
+	Array = 1,
 	/**
 	 * A node which stores a heterogenous collection of children in named fields.
 	 * @remarks
 	 * Each field gets its own schema.
 	 */
-	Object,
+	Object = 2,
 	/**
 	 * A node which stores a single leaf value.
 	 */
-	Leaf,
+	Leaf = 3,
+	/**
+	 * A node which serves as a record, storing children under string keys.
+	 */
+	Record = 4,
 }

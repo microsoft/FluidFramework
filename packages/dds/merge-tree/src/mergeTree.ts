@@ -6,12 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-bitwise */
 
-import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Heap,
+	IComparer,
+	DoublyLinkedList,
+	ListNode,
+} from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
 import { Client } from "./client.js";
-import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
