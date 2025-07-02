@@ -378,6 +378,7 @@
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"socket.io-client": "~4.7.5",
 			"axios@<0.30.0": "^0.30.0",
+			"tinylicious": "file:./tinylicious-6.0.0.tgz",
 			"@fluidframework/server-memory-orderer": "^5.0.0"
 		},
 		"peerDependencyComments": [

@@ -19,6 +19,7 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   socket.io-client: ~4.7.5
   axios@<0.30.0: ^0.30.0
+  tinylicious: file:./tinylicious-6.0.0.tgz
   '@fluidframework/server-memory-orderer': ^5.0.0
 
 pnpmfileChecksum: jsbnis4v7zlhs4t7yscsd3mtxe
@@ -117,8 +118,8 @@ importers:
   azure/packages/azure-local-service:
     dependencies:
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -311,8 +312,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
@@ -1097,8 +1098,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
@@ -2278,8 +2279,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
@@ -2411,8 +2412,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4384,8 +4385,8 @@ importers:
         specifier: ^3.4.2
         version: 3.4.2
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4526,8 +4527,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
@@ -5784,8 +5785,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.97.1)
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -11005,8 +11006,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
@@ -12979,8 +12980,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -13331,8 +13332,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -14285,8 +14286,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -14476,8 +14477,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^6.0.0
-        version: 6.0.0
+        specifier: file:../../../tinylicious-6.0.0.tgz
+        version: file:tinylicious-6.0.0.tgz
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -26554,8 +26555,9 @@ packages:
     resolution: {integrity: sha512-Zc+8eJlFMvgatPZTl6A9L/yht8QqdmUNtURHaKZLmKBE12hNPSrqNkUp2cs3M/UKmNVVAMFQYSjYIVHDjW5zew==}
     engines: {node: '>=12.0.0'}
 
-  tinylicious@6.0.0:
-    resolution: {integrity: sha512-E62tg0DA5tya85F+kIJd3SRjnwiXqME32IA4WmwcRxTm0dV+IgLGk3Gxs+ljJVcYxuh8OUmxFzrEgZwEHkl2xg==}
+  tinylicious@file:tinylicious-6.0.0.tgz:
+    resolution: {integrity: sha512-1rHjQPtA5Mxjb+oUgYH69WegkWzfD3CTkQigKZ5eOgBEEzMbMPqitaNjrTBdfQqSdjpL5zTXBkLpushR4IZgTg==, tarball: file:tinylicious-6.0.0.tgz}
+    version: 6.0.0
     engines: {node: '>=14.0.0'}
     hasBin: true
 
@@ -42868,7 +42870,7 @@ snapshots:
       fdir: 6.4.2(picomatch@4.0.2)
       picomatch: 4.0.2
 
-  tinylicious@6.0.0:
+  tinylicious@file:tinylicious-6.0.0.tgz:
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 6.0.0
@@ -42901,7 +42903,7 @@ snapshots:
       nconf: 0.12.1
       socket.io: 4.8.1
       split: 1.0.1
-      uuid: 11.1.0
+      uuid: 9.0.1
       winston: 3.17.0
     transitivePeerDependencies:
       - bufferutil
