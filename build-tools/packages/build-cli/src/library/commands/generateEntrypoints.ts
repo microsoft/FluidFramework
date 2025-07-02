@@ -356,7 +356,7 @@ async function generateEntrypoints(
 	mainEntrypoint: string,
 	mapApiTagLevelToOutput: Map<ReleaseTag, ExportData>,
 	log: CommandLogger,
-	separateBetaFromAlpha: boolean,
+	separateBetaFromAlpha: boolean, // TODO: remove
 ): Promise<void> {
 	/**
 	 * List of out file save promises. Used to collect generated file save
@@ -386,11 +386,14 @@ async function generateEntrypoints(
 	const packageDocumentationHeader = getPackageDocumentationText(mainSourceFile);
 	const newFileHeader = `${generatedHeader}${packageDocumentationHeader}`;
 
+	// TODO
 	// This order is critical as alpha should include beta should include public.
 	// Legacy is separate and should not be included in any other level. But it
 	// may include public.
-	//   (public) -> (legacy)
-	//           `-> (beta) -> (alpha)
+	//   (legacyPublic) -> (legacyBeta)    -> (legacyAlpha)
+	//         ^                ^                  ^
+	//         |                |                  |
+	//      (public)    ->    (beta)       ->    (alpha)
 	const releaseTagLevels: readonly Exclude<ReleaseTag, typeof ReleaseTag.internal>[] = [
 		ReleaseTag.public,
 		// ReleaseTag.legacy,
@@ -440,16 +443,16 @@ async function generateEntrypoints(
 
 			// TODO
 
-			// // legacy APIs do not accumulate to others
-			// if (releaseTagLevel !== "legacy") {
-			// 	// Additionally, if beta should not accumulate to alpha (alpha may be
-			// 	// treated specially such as mapped to /legacy) then skip beta too.
-			// 	// eslint-disable-next-line unicorn/no-lonely-if
-			// 	if (!separateBetaFromAlpha || releaseTagLevel !== "beta") {
-			// 		// update common set
-			// 		commonNamedExports = namedExports;
-			// 	}
-			// }
+			// legacy APIs do not accumulate to non-legacy exports
+			if (!isLegacy) {
+				// Additionally, if beta should not accumulate to alpha (alpha may be
+				// treated specially such as mapped to /legacy) then skip beta too.
+				// eslint-disable-next-line unicorn/no-lonely-if
+				if (!separateBetaFromAlpha || releaseTagLevel !== "beta") {
+					// update common set
+					commonNamedExports = namedExports;
+				}
+			}
 
 			const output = mapApiTagLevelToOutput.get(releaseTagLevel);
 			if (output === undefined) {

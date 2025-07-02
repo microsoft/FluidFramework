@@ -57,8 +57,6 @@ interface ReleaseInfoTags {
  * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
 function getApiTagsFromDocs(jsdocs: JSDoc[]): ReleaseInfoTags | undefined {
-	const tags: ReleaseTag[] = [];
-
 	let releaseTag: ReleaseTag | undefined;
 	let isLegacy = false;
 	for (const jsdoc of jsdocs) {
@@ -110,16 +108,21 @@ function getNodeApiTags(node: Node): ReleaseInfoTags | undefined {
 function getApiLevelFromTags(tags: ReleaseInfoTags): ApiLevel {
 	const { releaseTag, isLegacy } = tags;
 	switch (releaseTag) {
-		case "public":
+		case "public": {
 			return isLegacy ? "legacyPublic" : "public";
-		case "beta":
+		}
+		case "beta": {
 			return isLegacy ? "legacyBeta" : "beta";
-		case "alpha":
+		}
+		case "alpha": {
 			return isLegacy ? "legacyAlpha" : "alpha";
-		case "internal":
+		}
+		case "internal": {
 			return "internal";
-		default:
+		}
+		default: {
 			throw new Error(`Unknown release tag: ${releaseTag}`);
+		}
 	}
 }
 

@@ -625,33 +625,22 @@ class ApiLevelReader {
 			}
 		}
 
-		// TODO
-
 		const memberData = new Map<string, ApiLevel>();
 		addUniqueNamedExportsToMap(exports.public, memberData, ApiLevel.public);
 		if (this.onlyInternal) {
-			addUniqueNamedExportsToMap(exports.legacy, memberData, ApiLevel.internal);
-			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.internal);
 			addUniqueNamedExportsToMap(exports.alpha, memberData, ApiLevel.internal);
+			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.internal);
+
+			addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ApiLevel.internal);
+			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ApiLevel.internal);
+			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ApiLevel.internal);
 		} else {
-			addUniqueNamedExportsToMap(exports.legacy, memberData, ApiLevel.legacy);
+			addUniqueNamedExportsToMap(exports.alpha, memberData, ApiLevel.alpha);
 			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.beta);
-			if (exports.alpha.length > 0) {
-				// @alpha APIs have been mapped to both /alpha and /legacy paths.
-				// Later @legacy tag was added explicitly.
-				// Check for a /alpha export to map @alpha as alpha.
-				const alphaExport =
-					this.tempSource
-						.addImportDeclaration({
-							moduleSpecifier: `${packageName}/alpha`,
-						})
-						.getModuleSpecifierSourceFile() !== undefined;
-				addUniqueNamedExportsToMap(
-					exports.alpha,
-					memberData,
-					alphaExport ? ApiLevel.alpha : ApiLevel.legacy,
-				);
-			}
+
+			addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ApiLevel.legacyAlpha);
+			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ApiLevel.legacyBeta);
+			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ApiLevel.legacyPublic);
 		}
 		addUniqueNamedExportsToMap(exports.internal, memberData, ApiLevel.internal);
 		return memberData;
@@ -690,10 +679,7 @@ async function loadData(dataFile: string, onlyInternal: boolean): Promise<MapDat
 			addUniqueNamedExportsToMap(
 				[member],
 				entry,
-				onlyInternal &&
-					(level === ApiLevel.beta || level === ApiLevel.alpha || level === ApiLevel.legacy)
-					? ApiLevel.internal
-					: level,
+				onlyInternal && level !== ApiLevel.public ? ApiLevel.internal : level,
 			);
 		}
 		apiLevelData.set(moduleName, entry);
