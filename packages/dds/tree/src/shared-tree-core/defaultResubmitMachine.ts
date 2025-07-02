@@ -60,11 +60,16 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	}
 
 	public onCommitRollback(commit: GraphCommit<TChange>): void {
+		assert(
+			this.inFlightQueue.length > 0 &&
+				commit.revision === this.inFlightQueue[this.inFlightQueue.length - 1]?.revision,
+			"must rollback latest commit in the in flight queue",
+		);
+
 		if (this.latestInFlightCommitWithStaleEnrichments === this.inFlightQueue.length - 1) {
 			this.latestInFlightCommitWithStaleEnrichments -= 1;
 		}
-		const tip = this.inFlightQueue.pop();
-		assert(commit.revision === tip?.revision, "must rollback from the tip");
+		this.inFlightQueue.pop();
 	}
 
 	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
