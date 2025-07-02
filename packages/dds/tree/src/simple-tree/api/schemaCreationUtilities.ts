@@ -158,10 +158,6 @@ export function adaptEnum<
 	};
 	const out = factoryOut as typeof factoryOut & TOut & { readonly schema: SchemaArray };
 	for (const [key, value] of enumEntries(members)) {
-		if (typeof members[value] === "number") {
-			continue;
-		}
-
 		const schema = singletonSchema(factory, value);
 		schemaArray.push(schema);
 		Object.defineProperty(out, key, {
