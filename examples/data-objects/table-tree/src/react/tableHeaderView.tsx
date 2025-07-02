@@ -87,10 +87,13 @@ export const TableHeaderView: React.FC<TableHeaderViewProps> = ({
 	return (
 		<TableHeader>
 			{showAddColumnInput && (
-				<InsertColumnDialogue columns={columns} handleAppendColumn={(newColumn) => {
-					handleAppendColumn(newColumn);
-					setShowAddColumnInput(false);
-				}} />
+				<InsertColumnDialogue
+					columns={columns}
+					handleAppendColumn={(newColumn) => {
+						handleAppendColumn(newColumn);
+						setShowAddColumnInput(false);
+					}}
+				/>
 			)}
 			<TableRow className="custom-header-row">
 				<TableHeaderCell className="custom-header-cell">
