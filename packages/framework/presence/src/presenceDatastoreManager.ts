@@ -11,7 +11,11 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
+import type {
+	IEphemeralRuntime,
+	PostUpdateAction,
+	ValidatedDirectoryOrState,
+} from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
@@ -386,7 +390,8 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private stripValidationFromValueData(
 		valueDataIn:
 			| InternalTypes.ValueDirectoryOrState<unknown>
-			| InternalTypes.ValueOptionalState<unknown>,
+			| InternalTypes.ValueOptionalState<unknown>
+			| ValidatedDirectoryOrState<unknown>,
 	): InternalTypes.ValueDirectoryOrState<unknown> | InternalTypes.ValueOptionalState<unknown> {
 		// Clone the input object since we will mutate it
 		const valueData = shallowCloneObject(valueDataIn);

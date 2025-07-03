@@ -9,7 +9,12 @@ import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import { RequiredBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientRecord, PostUpdateAction } from "./internalTypes.js";
+import type {
+	ClientRecord,
+	PostUpdateAction,
+	ValidatedDirectoryOrState,
+	ValidatedClientRecord,
+} from "./internalTypes.js";
 import type { RecordEntryTypes } from "./internalUtils.js";
 import { getOrCreateRecord, objectEntries } from "./internalUtils.js";
 import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
@@ -86,6 +91,16 @@ export interface ValueElementMap<_TSchema extends StatesWorkspaceSchema> {
 	[key: string]: ClientRecord<InternalTypes.ValueDirectoryOrState<unknown>>;
 }
 
+/**
+ * Internal version of ValueElementMap that may contain validation metadata.
+ * The validation metadata is stripped before broadcasting to other clients.
+ *
+ * @system
+ */
+export interface ValueElementMapInternal<_TSchema extends StatesWorkspaceSchema> {
+	[key: string]: ValidatedClientRecord<ValidatedDirectoryOrState<unknown>>;
+}
+
 // An attempt to make the type more precise, but it is not working.
 // If the casting in support code is too much we could keep two references to the same
 // complete datastore, but with the respective types desired.
@@ -114,7 +129,24 @@ export type ClientUpdateEntry = InternalTypes.ValueDirectoryOrState<unknown> & {
 	ignoreUnmonitored?: true;
 };
 
+/**
+ * Internal data content of a datastore entry that may contain validation metadata.
+ * The validation metadata is stripped before broadcasting to other clients.
+ *
+ * @system
+ */
+export type ClientUpdateEntryInternal = ValidatedDirectoryOrState<unknown> & {
+	ignoreUnmonitored?: true;
+};
+
 type ClientUpdateRecord = ClientRecord<ClientUpdateEntry>;
+
+/**
+ * Internal version of ClientUpdateRecord that may contain validation metadata.
+ *
+ * @system
+ */
+type ClientUpdateRecordInternal = ValidatedClientRecord<ClientUpdateEntryInternal>;
 
 interface ValueUpdateRecord {
 	[valueKey: string]: ClientUpdateRecord;
@@ -220,6 +252,43 @@ export function mergeUntrackedDatastore(
 				value,
 				timeModifier,
 			);
+		}
+	}
+}
+
+/**
+ * Internal version of mergeUntrackedDatastore that can handle validation metadata.
+ * Updates remote state into the local [untracked] internal datastore.
+ *
+ * @param key - The key of the datastore to merge the untracked data into.
+ * @param remoteAllKnownState - The remote state to merge into the datastore.
+ * @param datastore - The internal datastore to merge the untracked data into.
+ *
+ * @remarks
+ * In the case of ignored unmonitored data, the client entries are not stored,
+ * though the value keys will be populated and often remain empty.
+ * This version preserves validation metadata during the merge process.
+ *
+ * @system
+ */
+export function mergeUntrackedDatastoreInternal(
+	key: string,
+	remoteAllKnownState: ClientUpdateRecordInternal,
+	datastore: ValueElementMapInternal<StatesWorkspaceSchema>,
+	timeModifier: number,
+): void {
+	const localAllKnownState = getOrCreateRecord(
+		datastore,
+		key,
+		(): RecordEntryTypes<typeof datastore> => ({}),
+	);
+	for (const [attendeeId, value] of objectEntries(remoteAllKnownState)) {
+		if (!("ignoreUnmonitored" in value)) {
+			localAllKnownState[attendeeId] = mergeValueDirectory(
+				localAllKnownState[attendeeId],
+				value,
+				timeModifier,
+			) as ValidatedDirectoryOrState<unknown>;
 		}
 	}
 }

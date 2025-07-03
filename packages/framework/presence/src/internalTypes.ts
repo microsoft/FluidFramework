@@ -100,3 +100,50 @@ export interface ValidatedRequiredState<TValue>
 	 */
 	validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
 }
+
+/**
+ * Internal version of ValueOptionalState that may contain validation metadata.
+ * The `validatedValue` property is stripped before broadcasting.
+ *
+ * @system
+ */
+export interface ValidatedOptionalState<TValue>
+	extends InternalTypes.ValueOptionalState<TValue> {
+	/**
+	 * Contains a validated value or undefined if `value` is invalid.
+	 * This property is stripped before broadcasting to other clients.
+	 */
+	validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
+}
+
+/**
+ * Internal version of ValueDirectory that may contain validation metadata.
+ * The `validatedValue` properties in items are stripped before broadcasting.
+ *
+ * @system
+ */
+export interface ValidatedDirectory<T> {
+	rev: number;
+	items: {
+		[name: string | number]: ValidatedOptionalState<T> | ValidatedDirectory<T>;
+	};
+}
+
+/**
+ * Internal convenience type for a required state, optional state, or a directory of values with validation metadata.
+ *
+ * @system
+ */
+export type ValidatedDirectoryOrState<T> =
+	| ValidatedRequiredState<T>
+	| ValidatedOptionalState<T>
+	| ValidatedDirectory<T>;
+
+/**
+ * Internal version of ClientRecord that may contain validation metadata.
+ *
+ * @system
+ */
+export interface ValidatedClientRecord<TValue extends ValidatedDirectoryOrState<unknown>> {
+	[AttendeeId: AttendeeId]: TValue;
+}
