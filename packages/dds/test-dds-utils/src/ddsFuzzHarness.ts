@@ -158,6 +158,14 @@ export interface TriggerRebase {
 /**
  * @internal
  */
+export interface Rollback {
+	type: "rollback";
+	ddsOp: BaseOperation;
+}
+
+/**
+ * @internal
+ */
 export interface AddClient {
 	type: "addClient";
 	addedClientId: string;
@@ -180,7 +188,8 @@ export type HarnessOperation =
 	| ChangeConnectionState
 	| TriggerRebase
 	| Synchronize
-	| StashClient;
+	| StashClient
+	| Rollback;
 
 /**
  * Represents a generic fuzz model for testing eventual consistency of a DDS.
@@ -449,6 +458,8 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	rebaseProbability: number;
 
+	rollbackProbability: number;
+
 	/**
 	 * Seed which should be replayed from disk.
 	 *
@@ -572,6 +583,7 @@ export const defaultDDSFuzzSuiteOptions: DDSFuzzSuiteOptions = {
 	saveFailures: false,
 	saveSuccesses: false,
 	validationStrategy: { type: "random", probability: 0.05 },
+	rollbackProbability: 0.01,
 };
 
 /**
@@ -1130,6 +1142,53 @@ export function mixinClientSelection<
 	};
 	return {
 		...model,
+		generatorFactory,
+		reducer,
+	};
+}
+
+export function mixinRollback<
+	TChannelFactory extends IChannelFactory,
+	TOperation extends BaseOperation,
+	TState extends DDSFuzzTestState<TChannelFactory>,
+>(
+	model: DDSFuzzHarnessModel<TChannelFactory, TOperation, TState>,
+	options: DDSFuzzSuiteOptions,
+): DDSFuzzHarnessModel<TChannelFactory, TOperation | Rollback, TState> {
+	const generatorFactory: () => AsyncGenerator<TOperation | Rollback, TState> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (state): Promise<TOperation | Rollback | typeof done> => {
+			const baseOp = await baseGenerator(state);
+			if (baseOp !== done && state.random.bool(options.rollbackProbability)) {
+				return {
+					type: "rollback",
+					ddsOp: baseOp,
+				};
+			}
+
+			return baseOp;
+		};
+	};
+
+	const minimizationTransforms = model.minimizationTransforms as
+		| MinimizationTransform<TOperation | Rollback>[]
+		| undefined;
+
+	const reducer: AsyncReducer<TOperation | Rollback, TState> = async (state, operation) => {
+		if (isOperationType<Rollback>("rollback", operation)) {
+			state.client.containerRuntime.flush();
+			await state.client.containerRuntime.runWithManualFlush(async () => {
+				await model.reducer(state, operation.ddsOp as TOperation);
+			});
+			state.client.containerRuntime.rollback?.();
+			return state;
+		} else {
+			return model.reducer(state, operation);
+		}
+	};
+	return {
+		...model,
+		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
@@ -1741,7 +1800,7 @@ const getFullModel = <
 			mixinNewClient(
 				mixinStashedClient(
 					mixinClientSelection(
-						mixinReconnect(mixinRebase(ddsModel, options), options),
+						mixinReconnect(mixinRebase(mixinRollback(ddsModel, options), options), options),
 						options,
 					),
 					options,

@@ -154,17 +154,14 @@
 	},
 	"typeValidation": {
 		"broken": {
+			"Class_MockContainerRuntime": {
+				"forwardCompat": false
+			},
+			"Class_MockContainerRuntimeForReconnection": {
+				"forwardCompat": false
+			},
 			"Class_MockFluidDataStoreRuntime": {
-				"backCompat": false
-			},
-			"Class_MockHandle": {
-				"backCompat": false
-			},
-			"ClassStatics_MockFluidDataStoreRuntime": {
-				"backCompat": false
-			},
-			"ClassStatics_MockHandle": {
-				"backCompat": false
+				"forwardCompat": false
 			}
 		},
 		"entrypoint": "legacy"
