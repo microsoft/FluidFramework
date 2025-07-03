@@ -235,7 +235,6 @@ function getOutputConfiguration(
 		[`${pathPrefix}${outFileLegacyPublic}${outFileSuffix}`, ReleaseTag.public],
 	]);
 
-
 	if (node10TypeCompat) {
 		// /internal export may be supported without API level generation; so
 		// add query for such path for Node10 type compat generation.

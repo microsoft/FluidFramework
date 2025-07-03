@@ -241,8 +241,8 @@ FLAGS
   --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
   --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files.
   --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files.
-  --outFileLegacyAlpha=<value>   [default: legacy/alpha] Base file name for legacyAlpha entrypoint declaration files.
-  --outFileLegacyBeta=<value>    [default: legacy/beta] Base file name for legacyBeta entrypoint declaration files.
+  --outFileLegacyAlpha=<value>   [default: legacy-alpha] Base file name for legacyAlpha entrypoint declaration files.
+  --outFileLegacyBeta=<value>    [default: legacy-beta] Base file name for legacyBeta entrypoint declaration files.
   --outFileLegacyPublic=<value>  [default: legacy] Base file name for legacyPublic entrypoint declaration files.
   --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
                                  '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
