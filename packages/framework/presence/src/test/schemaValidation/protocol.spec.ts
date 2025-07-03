@@ -266,21 +266,6 @@ describe("Presence", () => {
 								},
 								"latestMap": {
 									...originalJoinResponseData["s:name:testWorkspace"].latestMap,
-									// [attendeeId2]: {
-									// 	"rev": 0,
-									// 	"items": {
-									// 		"key1": {
-									// 			"rev": 0,
-									// 			"timestamp": workspaceSetupTime,
-									// 			"value": toOpaqueJson({ a: 0, b: 0 }),
-									// 		},
-									// 		"key2": {
-									// 			"rev": 0,
-									// 			"timestamp": workspaceSetupTime,
-									// 			"value": toOpaqueJson({ c: 0, d: 0 }),
-									// 		},
-									// 	},
-									// },
 								},
 							},
 						},
