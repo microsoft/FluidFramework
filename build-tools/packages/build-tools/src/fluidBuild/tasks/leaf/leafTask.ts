@@ -678,12 +678,20 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	/**
 	 * @returns The list of globs for all the files that this task depends on.
 	 */
-	protected abstract getInputGlobs(): Promise<string[]>;
+	protected abstract getInputGlobs(): Promise<readonly string[]>;
 
 	/**
 	 * @returns The list of globs for all the files that this task generates.
 	 */
-	protected abstract getOutputGlobs(): Promise<string[]>;
+	protected abstract getOutputGlobs(): Promise<readonly string[]>;
+
+	/**
+	 * @returns If the lock file should be included as input files for this task.
+	 */
+	protected get includeLockFiles(): boolean {
+		// Include the lock file by default.
+		return true;
+	}
 
 	/**
 	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to
@@ -700,7 +708,15 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	}
 
 	protected override async getInputFiles(): Promise<string[]> {
-		return this.getFiles("input");
+		const inputs = await this.getFiles("input");
+		if (this.includeLockFiles) {
+			const lockFilePath = this.node.pkg.getLockFilePath();
+			if (lockFilePath === undefined) {
+				throw new Error(`Lock file missing for ${this.node.pkg.nameColored}.`);
+			}
+			inputs.push(lockFilePath);
+		}
+		return inputs;
 	}
 
 	protected override async getOutputFiles(): Promise<string[]> {
