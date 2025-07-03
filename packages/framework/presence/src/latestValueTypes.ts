@@ -174,6 +174,5 @@ export function createValidatedGetter<T>(
 		return clientState.value;
 	}
 
-	// FIXME: is this cast safe?
 	return createGetterFunction(clientState, validator as StateSchemaValidatorToOpaque<T>);
 }

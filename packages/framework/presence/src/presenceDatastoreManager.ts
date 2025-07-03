@@ -409,7 +409,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// only has optional properties over InternalTypes.ValueDirectory and
 			// thus readily does satisfy. If `validatedValue?: never` is uncommented
 			// in Value*State then this will fail.
-			// valueData satisfies InternalTypes.ValueDirectory<unknown>;
+			valueData satisfies InternalTypes.ValueDirectory<unknown>;
 			return valueData as T;
 		}
 
