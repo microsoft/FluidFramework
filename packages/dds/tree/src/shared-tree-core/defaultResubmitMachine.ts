@@ -63,6 +63,14 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		this.inFlightQueue.push({ commit, refSeq: this.staleEnrichmentsBeforeSeq });
 	}
 
+	public onCommitRollback(commit: GraphCommit<TChange>): void {
+		assert(
+			commit.revision === this.inFlightQueue.last?.data.commit.revision,
+			"must rollback latest commit in the in flight queue",
+		);
+		this.inFlightQueue.pop();
+	}
+
 	public prepareForResubmit(revision: RevisionTag): void {
 		assert(
 			!this.isInResubmitPhase,

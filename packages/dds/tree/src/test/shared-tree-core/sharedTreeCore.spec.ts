@@ -413,6 +413,9 @@ describe("SharedTreeCore", () => {
 			public onSequencedCommitApplied(isLocal: boolean): void {
 				this.sequencingLog.push(isLocal);
 			}
+			public onCommitRollback(): void {
+				throw new Error("not implemented");
+			}
 		}
 
 		interface Enrichment<T extends object> {
