@@ -48,6 +48,8 @@ import {
 	SharedObject,
 	type IChannelView,
 	type IFluidSerializer,
+	type ISharedObject,
+	type ISharedObjectHandle,
 } from "@fluidframework/shared-object-base/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -74,6 +76,12 @@ const codecOptions: ICodecOptions = {
 };
 const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
 
+class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {
+	public bind(): never {
+		throw new Error("MockSharedObjectHandle.bind() unimplemented.");
+	}
+}
+
 export function createTree<TIndexes extends readonly Summarizable[]>(
 	indexes: TIndexes,
 	resubmitMachine?: ResubmitMachine<DefaultChangeset>,
@@ -81,7 +89,9 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 ): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
-	const handle = new MockHandle({});
+	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- empty object is sufficient for this mock
+	const handle = new MockSharedObjectHandle({} as ISharedObject);
 	const dummyChannel: IChannelView & IFluidLoadable = {
 		attributes: { snapshotFormatVersion: "", type: "", packageVersion: "" },
 		get handle(): IFluidHandle {
