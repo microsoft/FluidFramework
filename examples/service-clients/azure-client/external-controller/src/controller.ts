@@ -39,7 +39,7 @@ export class DiceRollerController
 {
 	constructor(
 		private readonly dice: Dice,
-		private readonly onSet: (value: DieValue) => void, // TODO: rename
+		private readonly onChanged: (value: DieValue) => void,
 	) {
 		super();
 		Tree.on(this.dice, "nodeChanged", () => {
@@ -61,6 +61,6 @@ export class DiceRollerController
 		this.dice.value = rollValue;
 
 		// Also notify the caller of the local roll (local value setting).
-		this.onSet(rollValue);
+		this.onChanged(rollValue);
 	};
 }
