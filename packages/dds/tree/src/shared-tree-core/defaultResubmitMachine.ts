@@ -6,6 +6,7 @@
 import {
 	assert,
 	DoublyLinkedList,
+	oob,
 	type ListNode,
 	type ListNodeRange,
 } from "@fluidframework/core-utils/internal";
@@ -17,7 +18,7 @@ import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js
 
 interface PendingChange<TChange> {
 	commit: GraphCommit<TChange>;
-	refSeq: number;
+	lastEnrichment: number;
 }
 type PendingChangeNode<TChange> = ListNode<PendingChange<TChange>>;
 
@@ -33,7 +34,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 
 	private pendingResubmitRange: ListNodeRange<PendingChange<TChange>> | undefined;
 
-	private staleEnrichmentsBeforeSeq: number = 0;
+	private currentEnrichment: number = 0;
 
 	public constructor(
 		/**
@@ -50,20 +51,21 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	public onCommitSubmitted(commit: GraphCommit<TChange>): void {
 		if (this.pendingResubmitRange !== undefined) {
 			const toResubmit = this.pendingResubmitRange?.first;
-			if (toResubmit !== this.pendingResubmitRange.last) {
-				assert(this.pendingResubmitRange.first.next !== undefined, "must be more in the list");
-				this.pendingResubmitRange.first = this.pendingResubmitRange.first.next;
-			} else {
-				this.pendingResubmitRange = undefined;
-			}
-			toResubmit.remove();
-
 			assert(
 				toResubmit?.data.commit === commit,
 				0x981 /* Unexpected commit submitted during resubmit phase */,
 			);
+			// check if we are re-submitting the last commit and either
+			// update the range, or clear if we are done
+			if (toResubmit !== this.pendingResubmitRange.last) {
+				assert(toResubmit.next !== undefined, "must be more in the list");
+				this.pendingResubmitRange.first = toResubmit.next;
+			} else {
+				this.pendingResubmitRange = undefined;
+			}
+			toResubmit.remove();
 		}
-		this.inFlightQueue.push({ commit, refSeq: this.staleEnrichmentsBeforeSeq });
+		this.inFlightQueue.push({ commit, lastEnrichment: this.currentEnrichment });
 	}
 
 	public onCommitRollback(commit: GraphCommit<TChange>): void {
@@ -84,34 +86,31 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			return;
 		}
 
+		assert(
+			toResubmit.length <= this.inFlightQueue.length,
+			0x958 /* Unexpected resubmit of more or fewer commits than are in flight */,
+		);
+
+		// find the first inflight commit to resubmit
 		const first = this.inFlightQueue.find(
 			(v) => v.data.commit.revision === toResubmit[0].revision,
 		);
-
+		// we always resubmit to end of all outstanding ops, but the list will grow during
+		// resubmit as ops are resubmitted, so we must track the current end
 		const last = this.inFlightQueue.last;
 		assert(
 			first !== undefined && last !== undefined,
 			"there must be inflight commits to resubmit",
 		);
 
-		// No in-flight commits have stale enrichments, so we can resubmit them as is
 		this.pendingResubmitRange = { first, last };
-		if (first.data.refSeq < this.staleEnrichmentsBeforeSeq) {
-			let current: PendingChangeNode<TChange> | undefined = first;
-			for (const commit of toResubmit) {
-				assert(current !== undefined, "");
-				current.data.commit = commit;
-				current = current.next;
-			}
-
+		// If in-flight commits have stale enrichments, we need to re-compute them
+		if (first.data.lastEnrichment < this.currentEnrichment) {
 			const checkout = this.tip.fork();
 
-			for (
-				let iCommit = this.inFlightQueue.last;
-				iCommit !== undefined && iCommit !== first.prev;
-				iCommit = iCommit?.prev
-			) {
-				const { commit } = iCommit.data;
+			// Roll back the checkout to the state before the oldest commit
+			for (let iCommit = toResubmit.length - 1; iCommit >= 0; iCommit -= 1) {
+				const commit = toResubmit[iCommit] ?? oob();
 				const rollback = this.makeRollback(commit);
 				// WARNING: it's not currently possible to roll back past a schema change (see AB#7265).
 				// Either we have to make it possible to do so, or this logic will have to change to work
@@ -120,29 +119,31 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			}
 
 			// Update the enrichments of the stale commits
-			for (
-				let iCommit = first;
-				iCommit !== undefined && iCommit.data.refSeq < this.staleEnrichmentsBeforeSeq;
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				iCommit = iCommit.next!
-			) {
-				const { commit } = iCommit.data;
+			let current: PendingChangeNode<TChange> | undefined = first;
+			for (const commit of toResubmit) {
+				assert(
+					current !== undefined,
+					"there must be an inflight commit for each resubmit commit",
+				);
 				const enrichedChange = checkout.updateChangeEnrichments(
 					commit.change,
 					commit.revision,
 				);
 				const enrichedCommit = { ...commit, change: enrichedChange };
+
 				// this is an optimization to avoid applying changes that will
 				// never be leveraged. specifically, we only apply if
 				// subsequent commits also need enrichment
 				if (
-					iCommit.next !== undefined &&
-					iCommit.next.data.refSeq < this.staleEnrichmentsBeforeSeq
+					current.next !== undefined &&
+					current.next.data.lastEnrichment < this.currentEnrichment
 				) {
 					checkout.applyTipChange(enrichedChange, commit.revision);
 				}
-				iCommit.data.commit = enrichedCommit;
-				iCommit.data.refSeq = this.staleEnrichmentsBeforeSeq;
+
+				current.data.commit = enrichedCommit;
+				current.data.lastEnrichment = this.currentEnrichment;
+				current = current.next;
 			}
 			checkout[disposeSymbol]();
 		}
@@ -171,7 +172,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			this.inFlightQueue.shift();
 		} else {
 			// A peer commit has been sequenced
-			this.staleEnrichmentsBeforeSeq++;
+			this.currentEnrichment++;
 		}
 	}
 }
