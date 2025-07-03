@@ -489,6 +489,20 @@ export class IncrementalFieldShape
 		super();
 	}
 
+	// private forEachNod2<TCursor extends ITreeCursor = ITreeCursor>(
+	// 	cursor: TCursor,
+	// 	f: (cursor: TCursor) => void,
+	// ): void {
+	// 	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
+	// 	for (
+	// 		let inNodes = cursor.firstNode();
+	// 		inNodes;
+	// 		inNodes = cursor.seekNodes(cursor.chunkLength)
+	// 	) {
+	// 		f(cursor);
+	// 	}
+	// }
+
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
@@ -510,9 +524,15 @@ export class IncrementalFieldShape
 		// Otherwise, all nodes in the field should have the same summaryRefId from the previous encoding.
 		let fieldChanged: boolean = false;
 		let summaryRefId: string | undefined;
-		forEachNode(cursor, (nodeCursor) => {
-			const chunk = tryGetChunk(nodeCursor);
-			assert(chunk !== undefined, "could not find chunk for node cursor");
+		for (
+			let inNodes = cursor.firstNode();
+			inNodes;
+			inNodes = cursor.seekNodes(cursor.chunkLength)
+		) {
+			const chunk = tryGetChunk(cursor);
+			if (chunk === undefined) {
+				continue;
+			}
 			if (chunk.summaryRefId === undefined) {
 				fieldChanged = true;
 			} else {
@@ -525,7 +545,7 @@ export class IncrementalFieldShape
 					"expected all chunks to have the same summary ref id",
 				);
 			}
-		});
+		}
 
 		// If the field has not changed since the last encoding and fullTree is false, store the previous summaryRefId
 		// in the main buffer and set incremental field buffer for this field to unchanged.
@@ -541,6 +561,7 @@ export class IncrementalFieldShape
 
 		// If the field has changed, generate a new summaryRefId, store this into the main buffer and encode the field
 		// data in the incremental field buffer.
+		// TODO: Can we re-use previous summaryRefId in some cases for optimization?
 		const fieldSummaryId = `${cache.idCompressor.generateCompressedId()}`;
 		dataBuilder.addToBuffer(fieldSummaryId);
 
