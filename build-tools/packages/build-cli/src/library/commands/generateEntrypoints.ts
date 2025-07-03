@@ -67,10 +67,6 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			description: "Base file name for beta entrypoint declaration files.",
 			default: optionDefaults.outFileBeta,
 		}),
-		// outFileLegacy: Flags.string({
-		// 	description: "Base file name for legacy entrypoint declaration files.",
-		// 	default: optionDefaults.outFileLegacy,
-		// }),
 		outFilePublic: Flags.string({
 			description: "Base file name for public entrypoint declaration files.",
 			default: optionDefaults.outFilePublic,
