@@ -96,7 +96,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 
 		assert(
 			toResubmit.length <= this.inFlightQueue.length,
-			0x958 /* Unexpected resubmit of more or fewer commits than are in flight */,
+			"Unexpected resubmit of more commits than are in flight",
 		);
 
 		// Find the first in-flight commit to resubmit.
