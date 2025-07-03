@@ -405,22 +405,22 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				valueData.items[key] = this.stripValidationFromValueData(item);
 			}
 
-			// This `satisfies` test is rather weak while ValidatedValueDirectory
+			// This `satisfies` test is rather weak while ValidatableValueDirectory
 			// only has optional properties over InternalTypes.ValueDirectory and
 			// thus readily does satisfy. If `validatedValue?: never` is uncommented
 			// in Value*State then this will fail.
-			valueData satisfies InternalTypes.ValueDirectory<unknown>;
+			// valueData satisfies InternalTypes.ValueDirectory<unknown>;
 			return valueData as T;
 		}
 
 		delete valueData.validatedValue;
-		// This `satisfies` test is rather weak while Validated*State
+		// This `satisfies` test is rather weak while Validatable*State
 		// only has optional properties over InternalTypes.Value*State and
 		// thus readily does satisfy. If `validatedValue?: never` is uncommented
 		// in Value*State then this will fail.
-		valueData satisfies
-			| InternalTypes.ValueRequiredState<unknown>
-			| InternalTypes.ValueOptionalState<unknown>;
+		// valueData satisfies
+		// 	| InternalTypes.ValueRequiredState<unknown>
+		// 	| InternalTypes.ValueOptionalState<unknown>;
 		return valueData as T;
 	}
 

@@ -150,7 +150,7 @@ export type ValidatableValueDirectoryOrState<T> =
  * with validation support.
  *
  * @remarks
- * Use when then some more specific or parameterized type equivalent of
+ * Use when some more specific or parameterized type equivalent of
  * `InternalTypes.Value(Directory|RequiredState|OptionalState)` is needed.
  *
  * Basically, wherever a `*ValueState` appears it is extended with
