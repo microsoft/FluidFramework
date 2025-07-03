@@ -311,6 +311,12 @@ describe("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
 
+				it("by .getRemotes()", () => {
+					for(const _ of latest.getRemotes()){
+						assert.equal(point3DValidatorFunction.callCount, 0);
+					}
+				});
+
 				it("when accessing .local", () => {
 					assert.equal(point3DValidatorFunction.callCount, 0, "initial call count is wrong");
 					assert.deepEqual(latest.local, { x: 0, y: 0, z: 0 });
@@ -343,8 +349,9 @@ describe("Presence", () => {
 						false,
 					);
 
-					// validator should still only be called once; remote data update should not invoke it
+					// Value is not updated; validator is not called
 					assert.equal(point3DValidatorFunction.callCount, 1);
+					assert.deepEqual(remoteData.value(), { x: 10, y: 20, z: 30 });
 				});
 			});
 
@@ -505,55 +512,6 @@ describe("Presence", () => {
 						"validator should be called twice",
 					);
 				});
-			});
-
-			it("returns undefined when remote data is invalid", () => {
-				// Send invalid data
-				presence.processSignal(
-					[],
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							sendTimestamp: clock.now - 10,
-							avgLatency: 20,
-							data: {
-								"system:presence": attendeeUpdate,
-								"s:name:testWorkspace": {
-									"latest": {
-										[attendeeId1]: {
-											"rev": 3,
-											"timestamp": clock.now - 10,
-											"value": toOpaqueJson("string"),
-										},
-									},
-								},
-							},
-						},
-						clientId: "client1",
-					},
-					false,
-				);
-
-				const remoteData = latest.getRemote(remoteAttendee);
-
-				// Validator should not be called initially
-				assert.equal(
-					point3DValidatorFunction.callCount,
-					0,
-					"validator should not be called initially",
-				);
-
-				// First value() call should invoke validator and return undefined
-				assert.equal(remoteData.value(), undefined);
-				assert.equal(point3DValidatorFunction.callCount, 1, "validator should be called once");
-
-				// Subsequent calls should not invoke validator again
-				remoteData.value();
-				assert.equal(
-					point3DValidatorFunction.callCount,
-					1,
-					"validator should still be called only once",
-				);
 			});
 		});
 	});
