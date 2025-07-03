@@ -521,8 +521,6 @@ export class MockHandle<T> extends FluidHandleBase<T> {
     readonly absolutePath: string;
     // (undocumented)
     attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(): void;
     // (undocumented)
     get(): Promise<T>;
     // (undocumented)
