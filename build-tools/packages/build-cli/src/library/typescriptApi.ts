@@ -16,7 +16,6 @@ interface ExportRecord {
 }
 interface ExportRecords {
 	public: ExportRecord[];
-	// legacy: ExportRecord[];
 	beta: ExportRecord[];
 	alpha: ExportRecord[];
 	internal: ExportRecord[];
@@ -160,7 +159,6 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const exported = sourceFile.getExportedDeclarations();
 	const records: ExportRecords = {
 		public: [],
-		// legacy: [],
 		beta: [],
 		alpha: [],
 		legacyPublic: [],

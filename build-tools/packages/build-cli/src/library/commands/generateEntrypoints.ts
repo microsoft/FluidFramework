@@ -29,7 +29,6 @@ const optionDefaults = {
 	outFileAlpha: ApiLevel.alpha,
 	outFileBeta: ApiLevel.beta,
 	outFilePublic: ApiLevel.public,
-	// outFileLegacy: ApiLevel.legacy,
 	outFileLegacyAlpha: "legacy/alpha",
 	outFileLegacyBeta: "legacy/beta",
 	outFileLegacyPublic: "legacy",
@@ -222,7 +221,6 @@ function getOutputConfiguration(
 		outFileSuffix,
 		outFileAlpha,
 		outFileBeta,
-		// outFileLegacy,
 		outFilePublic,
 		outFileLegacyAlpha,
 		outFileLegacyBeta,
@@ -241,14 +239,6 @@ function getOutputConfiguration(
 		[`${pathPrefix}${outFileLegacyPublic}${outFileSuffix}`, ReleaseTag.public],
 	]);
 
-	// // In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
-	// // If @alpha is not mapped to same as @legacy, then @legacy can be mapped.
-	// if (outFileAlpha !== outFileLegacy) {
-	// 	mapQueryPathToApiTagLevel.set(
-	// 		`${pathPrefix}${outFileLegacy}${outFileSuffix}`,
-	// 		ApiTag.legacy,
-	// 	);
-	// }
 
 	if (node10TypeCompat) {
 		// /internal export may be supported without API level generation; so
