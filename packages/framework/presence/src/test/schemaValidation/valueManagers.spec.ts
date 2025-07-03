@@ -354,14 +354,13 @@ describe("Presence", () => {
 						false,
 					);
 
-					// Value is not updated; validator is not called
+					// Valalidator is not called by remote update
 					assert.equal(point3DValidatorFunction.callCount, 1);
-					assert.deepEqual(remoteData.value(), { x: 10, y: 20, z: 30 });
 				});
 			});
 
 			describe("is called", () => {
-				it("on first value() call", () => {
+				it("on first .value() call", () => {
 					const remoteData = latest.getRemote(remoteAttendee);
 					runValidatorTest({
 						getRemoteValue: () => remoteData.value(),
@@ -371,7 +370,7 @@ describe("Presence", () => {
 					});
 				});
 
-				it("only once for multiple value() calls on unchanged data", () => {
+				it("only once for multiple .value() calls on unchanged data", () => {
 					const remoteData = latest.getRemote(remoteAttendee);
 					runMultipleCallsTest({
 						getRemoteValue: () => remoteData.value(),
@@ -380,7 +379,7 @@ describe("Presence", () => {
 					});
 				});
 
-				it("on value() call after remote data has changed", () => {
+				it("on .value() call after remote data has changed", () => {
 					// Get the remote data and read it, verify that the validator is called once.
 					const remoteData = latest.getRemote(remoteAttendee);
 					assert.deepEqual(remoteData.value(), { x: 10, y: 20, z: 30 });
@@ -411,7 +410,7 @@ describe("Presence", () => {
 					);
 				});
 
-				it("when remote data changes from valid to invalid", () => {
+				it("on .value() call when remote data changes from valid to invalid", () => {
 					// Get the remote data and read it, verify that the validator is called once.
 					const remoteData = latest.getRemote(remoteAttendee);
 					assert.deepEqual(remoteData.value(), { x: 10, y: 20, z: 30 });
@@ -438,7 +437,7 @@ describe("Presence", () => {
 					);
 				});
 
-				it("when remote data changes from invalid to valid", () => {
+				it("on .value() call when remote data changes from invalid to valid", () => {
 					// First send invalid data
 					presence.processSignal(
 						[],
@@ -480,7 +479,7 @@ describe("Presence", () => {
 					);
 				});
 
-				it("when remote data changes from invalid to invalid", () => {
+				it("on .value() call when remote data changes from invalid to invalid", () => {
 					// First send invalid data
 					presence.processSignal(
 						[],

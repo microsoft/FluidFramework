@@ -107,8 +107,6 @@ export namespace InternalTypes {
     // @system
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        validatedValue?: never;
-        // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
     // @system
