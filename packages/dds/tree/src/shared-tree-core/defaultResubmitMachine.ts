@@ -96,7 +96,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 
 			// Update the enrichments of the stale commits
 			for (
-				let iCommit = this.pendingResubmitRange.first;
+				let iCommit = first;
 				iCommit !== undefined && iCommit.data.refSeq < this.staleEnrichmentsBeforeSeq;
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				iCommit = iCommit.next!
@@ -107,7 +107,15 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 					commit.revision,
 				);
 				const enrichedCommit = { ...commit, change: enrichedChange };
-				checkout.applyTipChange(enrichedChange, commit.revision);
+				// this is an optimization to avoid applying changes that will
+				// never be leveraged. specifically, we only apply if
+				// subsequent commits also need enrichment
+				if (
+					iCommit.next !== undefined &&
+					iCommit.next.data.refSeq < this.staleEnrichmentsBeforeSeq
+				) {
+					checkout.applyTipChange(enrichedChange, commit.revision);
+				}
 				iCommit.data.commit = enrichedCommit;
 				iCommit.data.refSeq = this.staleEnrichmentsBeforeSeq;
 			}
