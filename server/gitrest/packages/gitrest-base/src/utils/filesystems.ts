@@ -7,7 +7,9 @@ import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 
 import { closeRedisClientConnections } from "@fluidframework/server-services-shared";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { Queue } from "bullmq";
 import { Volume } from "memfs";
 import { Provider } from "nconf";
 
@@ -18,8 +20,8 @@ import {
 	type IFileSystemPromises,
 } from "./definitions";
 import { FsPromisesBase } from "./fileSystemBase";
+import { HybridFsManager } from "./hybridFs";
 import { RedisParams, RedisFsManager, RedisFsConfig } from "./redisFs";
-
 class SimpleFsPromisesWrapper extends FsPromisesBase {
 	constructor(
 		private readonly innerFsPromises: IFileSystemPromises,
@@ -149,5 +151,26 @@ export class RedisFsManagerFactory implements IFileSystemManagerFactory {
 
 	public async dispose(): Promise<void> {
 		await closeRedisClientConnections([this.redisClientConnectionManager]);
+	}
+}
+
+export class HybridFsManagerFactory implements IFileSystemManagerFactory {
+	constructor(
+		private readonly l1FileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly l2FileSystemManagerFactory: IFileSystemManagerFactory,
+		private readonly l2AsyncQueue: Queue,
+	) {}
+
+	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+		Lumberjack.info("[Xin] Creating Hybrid File System Manager", { params });
+		const l1FileSystem = this.l1FileSystemManagerFactory.create(params);
+		const l2FileSystem = this.l2FileSystemManagerFactory.create(params);
+		return new HybridFsManager(l1FileSystem, l2FileSystem, this.l2AsyncQueue, params);
+	}
+
+	public async dispose(): Promise<void> {
+		await this.l1FileSystemManagerFactory?.dispose?.();
+		await this.l2FileSystemManagerFactory?.dispose?.();
+		await this.l2AsyncQueue.close();
 	}
 }

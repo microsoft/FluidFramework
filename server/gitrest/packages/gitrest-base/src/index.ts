@@ -23,6 +23,7 @@ export {
 	getSoftDeletedMarkerPath,
 	GitObjectType,
 	GitWholeSummaryManager,
+	HybridFsManagerFactory,
 	IExternalWriterConfig,
 	IFileSystemManager,
 	IFileSystemManagerFactories,
@@ -45,6 +46,7 @@ export {
 	persistLatestFullSummaryInStorage,
 	RedisFsManagerFactory,
 	retrieveLatestFullSummaryFromStorage,
+	setupHybridFsHandler,
 	validateBlobContent,
 	validateBlobEncoding,
 } from "./utils";
