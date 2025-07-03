@@ -9,7 +9,7 @@ import {
 	type ListNodeRange,
 } from "@fluidframework/core-utils/internal";
 
-import type { GraphCommit, TaggedChange } from "../core/index.js";
+import type { GraphCommit, RevisionTag, TaggedChange } from "../core/index.js";
 import { disposeSymbol } from "../util/index.js";
 
 import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
@@ -63,14 +63,12 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		this.inFlightQueue.push({ commit, refSeq: this.staleEnrichmentsBeforeSeq });
 	}
 
-	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
+	public prepareForResubmit(revision: RevisionTag): void {
 		assert(
 			!this.isInResubmitPhase,
 			0x957 /* Invalid resubmit phase start during incomplete resubmit phase */,
 		);
-		const first = this.inFlightQueue.find(
-			(v) => v.data.commit.revision === toResubmit[0]?.revision,
-		);
+		const first = this.inFlightQueue.find((v) => v.data.commit.revision === revision);
 		const last = this.inFlightQueue.last;
 		assert(
 			first !== undefined && last !== undefined,

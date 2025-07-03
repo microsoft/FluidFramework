@@ -32,6 +32,7 @@ import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
+	type RevisionTag,
 	rootFieldKey,
 } from "../../core/index.js";
 import type {
@@ -387,9 +388,11 @@ describe("SharedTreeCore", () => {
 			public readonly submissionLog: EnrichedCommit[] = [];
 			public readonly resubmissionLog: GraphCommit<DefaultChangeset>[][] = [];
 
-			public prepareForResubmit(toResubmit: readonly GraphCommit<ModularChangeset>[]): void {
+			public prepareForResubmit(revision: RevisionTag): void {
 				assert.equal(this.resubmitQueue.length, 0);
-				assert.equal(toResubmit.length, this.submissionLog.length);
+				const revisionIndex = this.submissionLog.findIndex((e) => e.revision === revision);
+				assert.notEqual(revisionIndex, -1);
+				const toResubmit = this.submissionLog.slice(revisionIndex);
 				this.resubmitQueue.push(...Array.from(toResubmit, (c) => ({ ...c, original: c })));
 				this.isInResubmitPhase = true;
 				this.resubmissionLog.push(toResubmit.slice());
