@@ -12,6 +12,8 @@ import type {
 	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal";
 
+import type { ValidatableOptionalState, ValidatableRequiredState } from "./internalTypes.js";
+
 /**
  * Returns union of types of values in a record.
  */
@@ -182,3 +184,17 @@ type PickRemainder<T> = Pick<T, keyof T> extends infer Common
 export type FlattenUnionWithOptionals<T> = InternalUtilityTypes.FlattenIntersection<
 	Pick<T, keyof T> & UnionToIntersection<Partial<PickRemainder<T>>>
 >;
+
+/**
+ * Type guard to check if a state is a required state (has a value).
+ *
+ * @param state - The state to check
+ * @returns True if the state has a value and is therefore a {@link ValidatableRequiredState}
+ *
+ * @system
+ */
+export function isValueRequiredState<T>(
+	state: ValidatableRequiredState<T> | ValidatableOptionalState<T>,
+): state is ValidatableRequiredState<T> {
+	return state.value !== undefined;
+}

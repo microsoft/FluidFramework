@@ -35,6 +35,11 @@ export namespace InternalTypes {
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
 		value?: OpaqueJsonDeserialized<TValue>;
+
+		// Uncomment this property and rebuild to check more thoroughly
+		// for incompatibilities between this non-validatable state
+		// and ValidatableOptionalState.
+		// validatedValue?: never;
 	}
 
 	/**
@@ -54,6 +59,11 @@ export namespace InternalTypes {
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
 		value: OpaqueJsonDeserialized<TValue>;
+
+		// Uncomment this property and rebuild to check more thoroughly
+		// for incompatibilities between this non-validatable state
+		// and ValidatableOptionalState.
+		// validatedValue?: never;
 	}
 
 	/**
@@ -150,18 +160,4 @@ export namespace InternalTypes {
 		name: string;
 		args: unknown[];
 	}
-}
-
-/**
- * Type guard to check if a state is a required state (has a value).
- *
- * @param state - The state to check
- * @returns True if the state has a value and is therefore a ValueRequiredState
- *
- * @system
- */
-export function isValueRequiredState<T>(
-	state: InternalTypes.ValueRequiredState<T> | InternalTypes.ValueOptionalState<T>,
-): state is InternalTypes.ValueRequiredState<T> {
-	return state.value !== undefined;
 }

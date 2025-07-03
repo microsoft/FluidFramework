@@ -14,7 +14,7 @@ import type { InternalTypes } from "./exposedInternalTypes.js";
 import type {
 	IEphemeralRuntime,
 	PostUpdateAction,
-	ValidatedDirectoryOrState,
+	ValidatableValueDirectoryOrState,
 } from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
@@ -34,6 +34,7 @@ import {
 	mergeValueDirectory,
 } from "./presenceStates.js";
 import type {
+	DatastoreMessageContent,
 	GeneralDatastoreMessageContent,
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
@@ -68,22 +69,6 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
  * Validation metadata is stripped before transmission.
  */
 type PresenceDatastore = SystemDatastore & {
-	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
-};
-
-/**
- * Internal system datastore that may contain validation metadata.
- * Used internally but stripped before broadcasting.
- */
-type SystemDatastoreInternal = SystemDatastore & {
-	// Same as SystemDatastore but can contain validation metadata
-};
-
-/**
- * Internal datastore structure used within PresenceDatastoreManager.
- * Contains validation metadata that must be stripped before broadcasting.
- */
-type PresenceDatastoreInternal = SystemDatastoreInternal & {
 	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
@@ -163,7 +148,7 @@ function mergeGeneralDatastoreMessageContent(
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastoreInternal;
+	private readonly datastore: PresenceDatastore;
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -181,9 +166,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.datastore = {
-			"system:presence": systemWorkspaceDatastore,
-		} as PresenceDatastoreInternal;
+		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
 		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
@@ -360,9 +343,9 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
 	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
 	 */
-	private stripValidationMetadata(datastore: PresenceDatastoreInternal): PresenceDatastore {
+	private stripValidationMetadata(datastore: PresenceDatastore): DatastoreMessageContent {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const stripped = {} as PresenceDatastore;
+		const stripped = {} as DatastoreMessageContent;
 
 		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -391,7 +374,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		valueDataIn:
 			| InternalTypes.ValueDirectoryOrState<unknown>
 			| InternalTypes.ValueOptionalState<unknown>
-			| ValidatedDirectoryOrState<unknown>,
+			| ValidatableValueDirectoryOrState<unknown>,
 	): InternalTypes.ValueDirectoryOrState<unknown> | InternalTypes.ValueOptionalState<unknown> {
 		// Clone the input object since we will mutate it
 		const valueData = shallowCloneObject(valueDataIn);
