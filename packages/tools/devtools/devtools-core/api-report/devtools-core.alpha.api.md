@@ -20,6 +20,7 @@ export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoo
 // @alpha
 export interface DataObjectProps {
     dataObject: PureDataObject;
+    label?: string;
 }
 
 // @alpha

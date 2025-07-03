@@ -335,28 +335,30 @@ export class FluidDevtools implements IFluidDevtools {
 	 *
 	 */
 	public registerDataObject(props: DataObjectProps): void {
-		const { dataObject } = props;
+		const { dataObject, label } = props;
 
 		// Treating document unique id as container key.
-		const contextId = (
-			dataObject as unknown as { context: IFluidDataStoreContext }
-		).context.containerRuntime.generateDocumentUniqueId() as string;
+		const dataObjectKey =
+			label ??
+			((
+				dataObject as unknown as { context: IFluidDataStoreContext }
+			).context.containerRuntime.generateDocumentUniqueId() as string);
 
 		const decomposedIContainer = toDecomposedIContainer(dataObject);
 
 		// Check if the data object is already registered.
-		if (this.containers.has(contextId)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(contextId));
+		if (this.containers.has(dataObjectKey)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(dataObjectKey));
 		}
 
 		const containerDevtools = ContainerDevtools.createFromDecomposedContainer({
-			containerKey: contextId,
+			containerKey: dataObjectKey,
 			container: decomposedIContainer,
 			containerData: { appData: dataObject },
 			isDataObject: true,
 		});
-		this.containers.set(contextId, containerDevtools);
-		this.dataObjectRegistry.set(contextId, true);
+		this.containers.set(dataObjectKey, containerDevtools);
+		this.dataObjectRegistry.set(dataObjectKey, true);
 
 		this.postContainerList();
 	}

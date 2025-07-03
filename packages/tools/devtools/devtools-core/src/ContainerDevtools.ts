@@ -90,6 +90,11 @@ export interface DataObjectProps {
 	 * The data object to register with the Devtools.
 	 */
 	dataObject: PureDataObject;
+
+	/**
+	 * Optional label for the data object.
+	 */
+	label?: string;
 }
 
 /**
