@@ -291,9 +291,11 @@ export class RedisFs extends FsPromisesBase {
 	): Promise<undefined | string | void> {
 		const folderpathString = folderpath.toString();
 		const error = new Error();
- 		const stackLines = error.stack?.split('\n');
+		const stackLines = error.stack?.split("\n");
 		const recursive = options && typeof options === "object" && options.recursive;
-		Lumberjack.info(`RedisFsManager: mkdirCore called with recursive: ${recursive}, with stack: ${stackLines}`);
+		Lumberjack.info(
+			`RedisFsManager: mkdirCore called with recursive: ${recursive}, with stack: ${stackLines}`,
+		);
 		if (recursive) {
 			const folderSeparator = "/";
 			const subfolders = folderpathString.split(folderSeparator);
