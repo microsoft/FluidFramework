@@ -365,7 +365,7 @@ async function generateEntrypoints(
 	//         ^                ^                  ^
 	//         |                |                  |
 	//      (public)    ->    (beta)       ->    (alpha)
-	const releaseTagLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
+	const releaseLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
 		ApiLevel.public,
 		ApiLevel.legacyPublic,
 		ApiLevel.beta,
@@ -393,49 +393,55 @@ async function generateEntrypoints(
 		for (const name of [...exports.unknown.keys()].sort()) {
 			commonNamedExports.push({ name, leadingTrivia: "\n\t" });
 		}
-		commonNamedExports[0].leadingTrivia = `\n\t// Unrestricted APIs\n\t`;
-		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n";
+		commonNamedExports[0].leadingTrivia = `\n\t// #region Unrestricted APIs\n\t`;
+		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n\t// #endregion\n\t";
 	}
+
+	log.info(`Generating entrypoints...`);
+	log.info(`- Public APIs: ${exports.public.length}`);
+	log.info(`- Beta APIs: ${exports.beta.length}`);
+	log.info(`- Alpha APIs: ${exports.alpha.length}`);
+	log.info(`- Legacy Public APIs: ${exports.legacyPublic.length}`);
+	log.info(`- Legacy Beta APIs: ${exports.legacyBeta.length}`);
+	log.info(`- Legacy Alpha APIs: ${exports.legacyAlpha.length}`);
 
 	let semVerExports = [...commonNamedExports];
 	let legacyExports = [...commonNamedExports];
 
-	for (const releaseTagLevel of releaseTagLevels) {
-		const isLegacyRelease = isLegacy(releaseTagLevel);
+	for (const releaseLevel of releaseLevels) {
+		log.info(`\tProcessing @${releaseLevel} APIs...`);
 
-		const namedExports = [...semVerExports];
-		if (isLegacyRelease) {
-			namedExports.push(...legacyExports);
-		}
+		const isLegacyRelease = isLegacy(releaseLevel);
+
+		const namedExports = isLegacyRelease ? [...legacyExports] : [...semVerExports];
 
 		// Append this level's additional (or only) exports sorted by ascending case-sensitive name
 		const orgLength = namedExports.length;
-		const levelExports = [...exports[releaseTagLevel]].sort((a, b) =>
-			a.name > b.name ? 1 : -1,
-		);
+		const levelExports = [...exports[releaseLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
 		for (const levelExport of levelExports) {
 			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
 		}
 		if (namedExports.length > orgLength) {
-			namedExports[orgLength].leadingTrivia = `\n\t// @${releaseTagLevel} APIs\n\t`;
-			namedExports[namedExports.length - 1].trailingTrivia = "\n";
+			namedExports[orgLength].leadingTrivia = `\n\t// #region @${releaseLevel} APIs\n\t`;
+			namedExports[namedExports.length - 1].trailingTrivia = `\n\t// #endregion\n`;
 		}
 
 		// Accumulate exports for next applicable level(s).
 		// Note: non-legacy APIs accumulate to legacy exports, but
 		// legacy exports do not accumulate to non-legacy exports.
 		legacyExports = namedExports;
-		if (isLegacyRelease) {
+		if (!isLegacyRelease) {
 			semVerExports = namedExports;
 		}
 
-		const output = mapApiTagLevelToOutput.get(releaseTagLevel);
+		const output = mapApiTagLevelToOutput.get(releaseLevel);
 		if (output === undefined) {
+			log.info(`\tNo output for ${releaseLevel} APIs, skipping`);
 			continue;
 		}
 
 		const outFile = output.relPath;
-		log.info(`\tGenerating ${outFile}`);
+		log.info(`\tFound output for ${releaseLevel} APIs. Generating ${outFile}`);
 		const sourceFile = project.createSourceFile(outFile, undefined, {
 			overwrite: true,
 			scriptKind: ScriptKind.TS,
@@ -455,7 +461,7 @@ async function generateEntrypoints(
 		} else {
 			// At this point we already know that package "export" has a request
 			// for this entrypoint. Warn of emptiness, but make it valid for use.
-			log.warning(`no exports for ${outFile} using API level tag ${releaseTagLevel}`);
+			log.warning(`no exports for ${outFile} using API level tag ${releaseLevel}`);
 			sourceFile.insertText(0, `${newFileHeader}export {}\n\n`);
 		}
 
