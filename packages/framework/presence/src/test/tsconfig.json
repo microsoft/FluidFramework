@@ -7,7 +7,7 @@
 		"outDir": "../../lib/test",
 		"types": ["mocha", "node"],
 		"noImplicitAny": true,
-		"noUnusedLocals": false, //FIXME
+		"noUnusedLocals": true,
 		"noImplicitOverride": true,
 		"exactOptionalPropertyTypes": true,
 		"noUncheckedIndexedAccess": false,

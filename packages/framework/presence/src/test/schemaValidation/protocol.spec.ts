@@ -23,16 +23,20 @@ import {
 	prepareConnectedPresence,
 } from "../testUtils.js";
 
-import type { Point3D } from "./helpers.js";
-
 import { StateFactory } from "@fluidframework/presence/beta";
 
 /**
  * Workspace updates
  */
+interface Point3D {
+	x: number;
+	y: number;
+	z: number;
+}
+
 const attendeeUpdate = {
 	"clientToSessionId": {
-		[connectionId1]: {
+		"client1": {
 			"rev": 0,
 			"timestamp": 0,
 			"value": attendeeId1,
@@ -88,7 +92,7 @@ describe("Presence", () => {
 						avgLatency: 20,
 						data: updates,
 					},
-					clientId: connectionId1,
+					clientId: "client1",
 				},
 				false,
 			);
@@ -226,12 +230,6 @@ describe("Presence", () => {
 						local: { x: 0, y: 0, z: 0 },
 						validator: point3DValidatorFunction,
 					}),
-					latestMap: StateFactory.latestMap({
-						local: {
-							key1: toOpaqueJson({ a: 0, b: 0 }),
-							key2: toOpaqueJson({ c: 0, d: 0 }),
-						},
-					}),
 				});
 				const latest = statesWorkspace.states.latest;
 				const attendee1 = presence.attendees.getAttendee(attendeeId1);
@@ -268,21 +266,21 @@ describe("Presence", () => {
 								},
 								"latestMap": {
 									...originalJoinResponseData["s:name:testWorkspace"].latestMap,
-									[attendeeId2]: {
-										"rev": 0,
-										"items": {
-											"key1": {
-												"rev": 0,
-												"timestamp": workspaceSetupTime,
-												"value": toOpaqueJson({ a: 0, b: 0 }),
-											},
-											"key2": {
-												"rev": 0,
-												"timestamp": workspaceSetupTime,
-												"value": toOpaqueJson({ c: 0, d: 0 }),
-											},
-										},
-									},
+									// [attendeeId2]: {
+									// 	"rev": 0,
+									// 	"items": {
+									// 		"key1": {
+									// 			"rev": 0,
+									// 			"timestamp": workspaceSetupTime,
+									// 			"value": toOpaqueJson({ a: 0, b: 0 }),
+									// 		},
+									// 		"key2": {
+									// 			"rev": 0,
+									// 			"timestamp": workspaceSetupTime,
+									// 			"value": toOpaqueJson({ c: 0, d: 0 }),
+									// 		},
+									// 	},
+									// },
 								},
 							},
 						},
