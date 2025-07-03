@@ -139,8 +139,8 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		});
 
 		const hybridFileSystemManagerFactory = new HybridFsManagerFactory(
-			defaultFileSystemManagerFactory,
 			ephemeralFileSystemManagerFactory,
+			defaultFileSystemManagerFactory,
 			queue,
 		);
 

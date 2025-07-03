@@ -7,6 +7,7 @@ import fs from "node:fs";
 import fsPromises from "node:fs/promises";
 
 import { closeRedisClientConnections } from "@fluidframework/server-services-shared";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import type { Queue } from "bullmq";
 import { Volume } from "memfs";
@@ -161,6 +162,7 @@ export class HybridFsManagerFactory implements IFileSystemManagerFactory {
 	) {}
 
 	public create(params?: IFileSystemManagerParams): IFileSystemManager {
+		Lumberjack.info("[Xin] Creating Hybrid File System Manager", { params });
 		const l1FileSystem = this.l1FileSystemManagerFactory.create(params);
 		const l2FileSystem = this.l2FileSystemManagerFactory.create(params);
 		return new HybridFsManager(l1FileSystem, l2FileSystem, this.l2AsyncQueue, params);
