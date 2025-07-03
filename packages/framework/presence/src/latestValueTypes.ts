@@ -174,5 +174,9 @@ export function createValidatedGetter<T>(
 		return clientState.value;
 	}
 
+	// OpaqueJsonDeserialized<T> is just a branded alias of JsonDeserialized<T>. At runtime the functions are still passed
+	// JSON data, regardless of their type representation. Passing that data to a function that expects `unknown`, like
+	// the user-provided validator function, is always valid, so StateSchemaValidator and StateSchemaValidatorToOpaque are
+	// functionally equivalent.
 	return createGetterFunction(clientState, validator as StateSchemaValidatorToOpaque<T>);
 }
