@@ -25,7 +25,7 @@ import { v4 as uuid } from "uuid";
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 import { DiceRollerController, type DieValue } from "./controller.js";
 import { buildDicePresence } from "./presence.js";
-import { Dice } from "./schema.js";
+import { App, Dice } from "./schema.js";
 import { makeAppView } from "./view.js";
 
 export interface ICustomUserDetails {
@@ -71,60 +71,46 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 const containerSchema = {
 	initialObjects: {
 		/* [id]: DataObject */
-		tree1: SharedTree,
-		tree2: SharedTree,
+		tree: SharedTree,
 	},
 } as const satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;
 
-const treeViewConfig = new TreeViewConfiguration<typeof Dice>({
-	schema: Dice,
+const treeViewConfig = new TreeViewConfiguration<typeof App>({
+	schema: App,
 });
 
 export function loadExistingContainer(
 	container: IFluidContainer<DiceRollerContainerSchema>,
-): [Dice, Dice] {
-	const tree1 = container.initialObjects.tree1;
-	const tree1View = tree1.viewWith(treeViewConfig);
-	if (!tree1View.compatibility.canView) {
-		throw new Error("Expected container data to be compatible with Dice schema");
+): App {
+	const tree = container.initialObjects.tree;
+	const treeView = tree.viewWith(treeViewConfig);
+	if (!treeView.compatibility.canView) {
+		throw new Error("Expected container data to be compatible with app schema");
 	}
-
-	const tree2 = container.initialObjects.tree2;
-	const tree2View = tree2.viewWith(treeViewConfig);
-	if (!tree2View.compatibility.canView) {
-		throw new Error("Expected container data to be compatible with Dice schema");
-	}
-
-	return [tree1View.root, tree2View.root];
+	return treeView.root;
 }
 
 export function initializeNewContainer(
 	container: IFluidContainer<DiceRollerContainerSchema>,
-): [Dice, Dice] {
-	const tree1 = container.initialObjects.tree1;
-	const tree1View = tree1.viewWith(treeViewConfig);
-	if (!tree1View.compatibility.canInitialize) {
+): App {
+	const tree = container.initialObjects.tree;
+	const treeView = tree.viewWith(treeViewConfig);
+	if (!treeView.compatibility.canInitialize) {
 		throw new Error("Expected container data to be compatible with Dice schema");
 	}
-	tree1View.initialize(
-		new Dice({
-			value: 1,
+	treeView.initialize(
+		new App({
+			dice1: new Dice({
+				value: 1,
+			}),
+			dice2: new Dice({
+				value: 1,
+			}),
 		}),
 	);
 
-	const tree2 = container.initialObjects.tree2;
-	const tree2View = tree2.viewWith(treeViewConfig);
-	if (!tree2View.compatibility.canInitialize) {
-		throw new Error("Expected container data to be compatible with Dice schema");
-	}
-	tree2View.initialize(
-		new Dice({
-			value: 1,
-		}),
-	);
-
-	return [tree1View.root, tree2View.root];
+	return treeView.root;
 }
 
 async function start(): Promise<void> {
@@ -145,8 +131,7 @@ async function start(): Promise<void> {
 	let id: string;
 
 	// Get or create the document depending if we are running through the create new flow
-	let dice1: Dice;
-	let dice2: Dice;
+	let appModel: App;
 	const createNew = location.hash.length === 0;
 	if (createNew) {
 		// The client will create a new detached container using the schema
@@ -158,7 +143,7 @@ async function start(): Promise<void> {
 		// map2.set("diceValue", 1);
 		// console.log(map1.get("diceValue"));
 		// Initialize our models so they are ready for use with our controllers
-		[dice1, dice2] = initializeNewContainer(container);
+		appModel = initializeNewContainer(container);
 
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
@@ -171,7 +156,7 @@ async function start(): Promise<void> {
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
 		({ container, services } = await client.getContainer(id, containerSchema, "2"));
-		[dice1, dice2] = loadExistingContainer(container);
+		appModel = loadExistingContainer(container);
 	}
 
 	document.title = id;
@@ -193,12 +178,12 @@ async function start(): Promise<void> {
 	});
 
 	// Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
-	const diceRollerController1 = new DiceRollerController(dice1, (value) => {
+	const diceRollerController1 = new DiceRollerController(appModel.dice1, (value) => {
 		lastRoll.die1 = value;
 		states.lastRoll.local = lastRoll;
 		states.lastDiceRolls.local.set("die1", { value });
 	});
-	const diceRollerController2 = new DiceRollerController(dice2, (value) => {
+	const diceRollerController2 = new DiceRollerController(appModel.dice2, (value) => {
 		lastRoll.die2 = value;
 		states.lastRoll.local = lastRoll;
 		states.lastDiceRolls.local.set("die2", { value });

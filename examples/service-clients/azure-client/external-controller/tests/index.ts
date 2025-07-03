@@ -26,7 +26,7 @@ import { SharedTree } from "fluid-framework";
 
 import { initializeNewContainer, loadExistingContainer } from "../src/app.js";
 import { DiceRollerController } from "../src/controller.js";
-import type { Dice } from "../src/schema.js";
+import type { App } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
@@ -85,8 +85,7 @@ const containerConfig = {
 	name: "dice-roller-container",
 	initialObjects: {
 		/* [id]: DataObject */
-		tree1: SharedTree,
-		tree2: SharedTree,
+		tree: SharedTree,
 	},
 } satisfies ContainerSchema & { name: string };
 type TestContainerSchema = typeof containerConfig;
@@ -113,17 +112,16 @@ async function createContainerAndRenderInElement(
 
 	// Get the Default Object from the Container
 	const fluidContainer = await createFluidContainer<TestContainerSchema>({ container });
-	let dice1: Dice;
-	let dice2: Dice;
+	let appModel: App;
 	if (createNewFlag) {
-		[dice1, dice2] = initializeNewContainer(fluidContainer);
+		appModel = initializeNewContainer(fluidContainer);
 		await attach?.();
 	} else {
-		[dice1, dice2] = loadExistingContainer(fluidContainer);
+		appModel = loadExistingContainer(fluidContainer);
 	}
 
-	const diceRollerController = new DiceRollerController(dice1, () => {});
-	const diceRollerController2 = new DiceRollerController(dice2, () => {});
+	const diceRollerController = new DiceRollerController(appModel.dice1, () => {});
+	const diceRollerController2 = new DiceRollerController(appModel.dice2, () => {});
 
 	element.append(makeAppView([diceRollerController, diceRollerController2]));
 }

@@ -13,3 +13,14 @@ export class Dice extends schemaFactory.object("Dice", {
 	 */
 	value: schemaFactory.number,
 }) {}
+
+export class App extends schemaFactory.object("AppSchema", {
+	/**
+	 * The first die in the app.
+	 */
+	dice1: Dice,
+	/**
+	 * The second die in the app.
+	 */
+	dice2: Dice,
+}) {}
