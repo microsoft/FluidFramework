@@ -16,6 +16,8 @@ Here are some remarks about the namespace
 
 #### Example: TypeScript Example {#testnamespace-example1}
 
+
+
 ```typescript
 const foo: Foo = {
 	bar: "Hello world!";
@@ -24,6 +26,8 @@ const foo: Foo = {
 ```
 
 #### Example: JavaScript Example {#testnamespace-example2}
+
+
 
 ```javascript
 const foo = {
