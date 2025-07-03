@@ -115,10 +115,14 @@ export namespace InternalTypes {
     // @system
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
+        validatedValue?: never;
+        // (undocumented)
         value?: OpaqueJsonDeserialized<TValue>;
     }
     // @system
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
+        // (undocumented)
+        validatedValue?: never;
         // (undocumented)
         value: OpaqueJsonDeserialized<TValue>;
     }
