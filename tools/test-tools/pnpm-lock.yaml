@@ -12,8 +12,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
-        specifier: ^0.53.0
-        version: 0.53.0(@types/node@18.19.31)
+        specifier: ^0.56.0
+        version: 0.56.0(@types/node@18.19.31)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.4
         version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
@@ -96,18 +96,18 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.1.5':
     resolution: {integrity: sha512-p0nVeMiEfLL2deQJQaRUxid08jgV5wEkh9h9WXNosR1BRq9nFCjD8nZpC1K+YhjwQZEvgGDE+s+28VR2lAg61Q==}
 
-  '@fluid-tools/version-tools@0.53.0':
-    resolution: {integrity: sha512-jGxNBjWP9PYOh0v0kYs6sJ1kNiebyb+LqqsFvv7IfMDAVE8Qsd/bOj66ghRYJ7vREwn/hMj0gZw98mIwfVFHTg==}
-    engines: {node: '>=18.17.1'}
+  '@fluid-tools/version-tools@0.56.0':
+    resolution: {integrity: sha512-un3xHww/pvZEznO8InnlVs2dCyK+Qmjq7MFymsRKURK0C/l53325uWBK+ZcNlOTlxB/9ajrw6rRzaDmnTOd+LQ==}
+    engines: {node: '>=20.15.1'}
     hasBin: true
 
   '@fluidframework/build-common@2.0.3':
     resolution: {integrity: sha512-1LU/2uyCeMxf63z5rhFOFEBvFyBogZ7ZXwzXLxyBhSgq/fGiq8PLjBW7uX++r0LcVCdaWyopf7w060eJpANYdg==}
     hasBin: true
 
-  '@fluidframework/build-tools@0.53.0':
-    resolution: {integrity: sha512-mJ/x0dKM42z9WwTvgD2ZCLoMwPNvJkgSETLODynzukViykA4PsZaXG5H3bmL9oW9hjL66wKeNdJTs7UARB+7VA==}
-    engines: {node: '>=18.17.1'}
+  '@fluidframework/build-tools@0.56.0':
+    resolution: {integrity: sha512-8px5sXBRTW3u2bFVGcOH+bQbA8Kv84iKPGvDfOgwtjT3oC3u9+g8feCeIcEGWsT4U5P/69b31vLXHLXdMpnaYQ==}
+    engines: {node: '>=20.15.1'}
     hasBin: true
 
   '@fluidframework/eslint-config-fluid@5.7.4':
@@ -1884,6 +1884,11 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  semver@7.7.2:
+    resolution: {integrity: sha512-RF0Fw+rO5AMf9MAyaRXI4AV0Ulj5lMHqVxxdSgiVbixSCXoEmmX/jk0CuJw4+3SqroYO9VoUh+HcuJivvtJemA==}
+    engines: {node: '>=10'}
+    hasBin: true
+
   serialize-javascript@6.0.2:
     resolution: {integrity: sha512-Saa1xPByTTq2gdeFZYLLo+RFE35NHZkAbqZeWNd3BpzppeVisAqpDjcp8dyf6uIvEqJRd46jemmyA4iFIeVk8g==}
 
@@ -2282,14 +2287,14 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/version-tools@0.53.0(@types/node@18.19.31)':
+  '@fluid-tools/version-tools@0.56.0(@types/node@18.19.31)':
     dependencies:
       '@oclif/core': 4.0.33
       '@oclif/plugin-autocomplete': 3.2.11
       '@oclif/plugin-commands': 4.1.11
       '@oclif/plugin-help': 6.2.18
       '@oclif/plugin-not-found': 3.2.29(@types/node@18.19.31)
-      semver: 7.6.3
+      semver: 7.7.2
       table: 6.8.2
     transitivePeerDependencies:
       - '@types/node'
@@ -2300,9 +2305,9 @@ snapshots:
 
   '@fluidframework/build-common@2.0.3': {}
 
-  '@fluidframework/build-tools@0.53.0(@types/node@18.19.31)':
+  '@fluidframework/build-tools@0.56.0(@types/node@18.19.31)':
     dependencies:
-      '@fluid-tools/version-tools': 0.53.0(@types/node@18.19.31)
+      '@fluid-tools/version-tools': 0.56.0(@types/node@18.19.31)
       '@manypkg/get-packages': 2.2.2
       async: 3.2.6
       cosmiconfig: 8.3.6(typescript@5.4.5)
@@ -2322,7 +2327,7 @@ snapshots:
       picomatch: 2.3.1
       picospinner: 2.1.0
       rimraf: 4.4.1
-      semver: 7.6.3
+      semver: 7.7.2
       sort-package-json: 1.57.0
       ts-deepmerge: 7.0.1
       ts-morph: 22.0.0
@@ -2544,7 +2549,7 @@ snapshots:
       is-wsl: 2.2.0
       lilconfig: 3.1.2
       minimatch: 9.0.5
-      semver: 7.6.3
+      semver: 7.7.2
       string-width: 4.2.3
       supports-color: 8.1.1
       widest-line: 3.1.0
@@ -4363,6 +4368,8 @@ snapshots:
   semver@6.3.1: {}
 
   semver@7.6.3: {}
+
+  semver@7.7.2: {}
 
   serialize-javascript@6.0.2:
     dependencies:
