@@ -5,13 +5,19 @@
 
 import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEmitter } from "@fluidframework/core-interfaces/internal";
-import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
+import type {
+	IEphemeralRuntime,
+	PostUpdateAction,
+	ValidatableOptionalState,
+	ValidatableValueDirectory,
+	ValidatableValueStructure,
+} from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
@@ -30,6 +36,7 @@ import {
 	mergeValueDirectory,
 } from "./presenceStates.js";
 import type {
+	DatastoreMessageContent,
 	GeneralDatastoreMessageContent,
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
@@ -67,22 +74,6 @@ type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
 
-/**
- * Internal system datastore that may contain validation metadata.
- * Used internally but stripped before broadcasting.
- */
-type SystemDatastoreInternal = SystemDatastore & {
-	// Same as SystemDatastore but can contain validation metadata
-};
-
-/**
- * Internal datastore structure used within PresenceDatastoreManager.
- * Contains validation metadata that must be stripped before broadcasting.
- */
-type PresenceDatastoreInternal = SystemDatastoreInternal & {
-	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
-};
-
 const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
 	s: "States",
 	n: "Notifications",
@@ -97,6 +88,19 @@ function isPresenceMessage(
 	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
 	return knownMessageTypes.has(message.type);
+}
+
+/**
+ * Type guard to check if a value hierarchy object is a directory (has "items"
+ * property).
+ *
+ * @param obj - The object to check
+ * @returns True if the object is a {@link ValidatableValueDirectory}
+ */
+export function isValueDirectory<T>(
+	obj: ValidatableValueDirectory<T> | ValidatableOptionalState<T>,
+): obj is ValidatableValueDirectory<T> {
+	return "items" in obj;
 }
 
 /**
@@ -159,7 +163,7 @@ function mergeGeneralDatastoreMessageContent(
  * Manages singleton datastore for all Presence.
  */
 export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
-	private readonly datastore: PresenceDatastoreInternal;
+	private readonly datastore: PresenceDatastore;
 	private averageLatency = 0;
 	private returnedMessages = 0;
 	private refreshBroadcastRequested = false;
@@ -177,9 +181,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		systemWorkspace: AnyWorkspaceEntry<StatesWorkspaceSchema>,
 	) {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		this.datastore = {
-			"system:presence": systemWorkspaceDatastore,
-		} as PresenceDatastoreInternal;
+		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
 		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
@@ -356,58 +358,70 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
 	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
 	 */
-	private stripValidationMetadata(datastore: PresenceDatastoreInternal): PresenceDatastore {
-		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-		const stripped = {} as PresenceDatastore;
+	private stripValidationMetadata(datastore: PresenceDatastore): DatastoreMessageContent {
+		const messageContent: DatastoreMessageContent = {
+			["system:presence"]: datastore["system:presence"],
+		};
 
 		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			stripped[workspaceAddress] = {} as any;
+			// System workspace has no validation metadata and is already
+			// set in messageContent; so, it can be skipped.
+			if (workspaceAddress === "system:presence") continue;
 
-			for (const [valueKey, clientRecord] of Object.entries(workspace)) {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				(stripped[workspaceAddress] as any)[valueKey] = {};
+			const workspaceData: GeneralDatastoreMessageContent[typeof workspaceAddress] = {};
+
+			for (const [stateName, clientRecord] of objectEntries(workspace)) {
+				const cleanClientRecord: GeneralDatastoreMessageContent[typeof workspaceAddress][typeof stateName] =
+					{};
 
 				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-					(stripped[workspaceAddress] as any)[valueKey][attendeeId] =
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-						this.stripValidationFromValueData(valueData);
+					cleanClientRecord[attendeeId] = this.stripValidationFromValueData(valueData);
 				}
+
+				workspaceData[stateName] = cleanClientRecord;
 			}
+
+			messageContent[workspaceAddress] = workspaceData;
 		}
 
-		return stripped;
+		return messageContent;
 	}
 
 	/**
 	 * Strips validation metadata from individual value data entries.
 	 */
-	private stripValidationFromValueData(
-		valueDataIn:
-			| InternalTypes.ValueDirectoryOrState<unknown>
+	private stripValidationFromValueData<
+		T extends
+			| InternalTypes.ValueDirectory<unknown>
+			| InternalTypes.ValueRequiredState<unknown>
 			| InternalTypes.ValueOptionalState<unknown>,
-	): InternalTypes.ValueDirectoryOrState<unknown> | InternalTypes.ValueOptionalState<unknown> {
-		// Clone the input object since we will mutate it
-		const valueData = shallowCloneObject(valueDataIn);
-		// Handle directory structures (with "items" property)
-		if ("items" in valueData && typeof valueData.items === "object") {
-			const stripped: InternalTypes.ValueDirectory<unknown> = {
-				rev: valueData.rev,
-				items: {},
-			};
+	>(valueDataIn: ValidatableValueStructure<T>): T {
+		// Clone the input object since we may mutate it
+		const valueData = { ...valueDataIn };
 
+		// Handle directory structures (with "items" property)
+		if (isValueDirectory(valueData)) {
 			for (const [key, item] of Object.entries(valueData.items)) {
-				stripped.items[key] = this.stripValidationFromValueData(item);
+				valueData.items[key] = this.stripValidationFromValueData(item);
 			}
 
-			return stripped;
+			// This `satisfies` test is rather weak while ValidatableValueDirectory
+			// only has optional properties over InternalTypes.ValueDirectory and
+			// thus readily does satisfy. If `validatedValue?: never` is uncommented
+			// in Value*State then this will fail.
+			// valueData satisfies InternalTypes.ValueDirectory<unknown>;
+			return valueData as T;
 		}
 
-		if ("validatedValue" in valueData) {
-			delete valueData.validatedValue;
-		}
-		return valueData;
+		delete valueData.validatedValue;
+		// This `satisfies` test is rather weak while Validatable*State
+		// only has optional properties over InternalTypes.Value*State and
+		// thus readily does satisfy. If `validatedValue?: never` is uncommented
+		// in Value*State then this will fail.
+		// valueData satisfies
+		// 	| InternalTypes.ValueRequiredState<unknown>
+		// 	| InternalTypes.ValueOptionalState<unknown>;
+		return valueData as T;
 	}
 
 	private broadcastAllKnownState(): void {

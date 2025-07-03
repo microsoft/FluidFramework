@@ -102,10 +102,6 @@ export namespace InternalTypes {
     export class StateValueBrand<T> {
     }
     // @system
-    export interface ValidatedRequiredState<TValue> extends ValueRequiredState<TValue> {
-        validatedValue?: OpaqueJsonDeserialized<TValue> | undefined;
-    }
-    // @system
     export interface ValueDirectory<T> {
         // (undocumented)
         items: {

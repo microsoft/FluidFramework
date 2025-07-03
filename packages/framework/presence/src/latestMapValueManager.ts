@@ -15,11 +15,15 @@ import type {
 import type { BroadcastControls, BroadcastControlSettings } from "./broadcastControls.js";
 import { OptionalBroadcastControl } from "./broadcastControls.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import { isValueRequiredState } from "./exposedInternalTypes.js";
-import type { PostUpdateAction, ValueManager } from "./internalTypes.js";
+import type {
+	PostUpdateAction,
+	ValidatableOptionalState,
+	ValueManager,
+} from "./internalTypes.js";
 import {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
+	isValueRequiredState,
 	objectEntries,
 	objectKeys,
 	toOpaqueJson,
@@ -37,6 +41,22 @@ import type {
 import type { AttendeeId, Attendee, Presence, SpecificAttendee } from "./presence.js";
 import { datastoreFromHandle, type StateDatastore } from "./stateDatastore.js";
 import { brandIVM } from "./valueManager.js";
+
+/**
+ * Collection of validatable optional values in a "map" structure.
+ *
+ * @remarks
+ * Validatable equivalent of {@link InternalTypes.MapValueState}.
+ */
+interface ValidatableMapValueState<T, Keys extends string | number> {
+	rev: number;
+	items: {
+		// Caution: any particular item may or may not exist
+		// Typescript does not support absent keys without forcing type to also be undefined.
+		// See https://github.com/microsoft/TypeScript/issues/42810.
+		[name in Keys]: ValidatableOptionalState<T>;
+	};
+}
 
 /**
  * Collection of latest known values for a specific {@link Attendee}.
@@ -440,7 +460,8 @@ class LatestMapValueManagerImpl<
 		private readonly key: RegistrationKey,
 		private readonly datastore: StateDatastore<
 			RegistrationKey,
-			InternalTypes.MapValueState<T, Keys>
+			InternalTypes.MapValueState<T, Keys>,
+			ValidatableMapValueState<T, Keys>
 		>,
 		public readonly value: InternalTypes.MapValueState<T, Keys>,
 		controlSettings: BroadcastControlSettings | undefined,
@@ -514,7 +535,8 @@ class LatestMapValueManagerImpl<
 			// New attendee - prepare new attendee state directory
 			{
 				rev: value.rev,
-				items: {} as unknown as InternalTypes.MapValueState<T, Keys>["items"],
+				// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- items entries can't be optional per https://github.com/microsoft/TypeScript/issues/42810; so forced cast
+				items: {} as ValidatableMapValueState<T, Keys>["items"],
 			});
 		// Accumulate individual update keys
 		const updatedItemKeys: Keys[] = [];

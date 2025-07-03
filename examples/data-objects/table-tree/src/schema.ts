@@ -9,59 +9,42 @@ import { SchemaFactoryAlpha, TableSchema } from "@fluidframework/tree/internal";
 const schemaFactory = new SchemaFactoryAlpha("tree-table");
 
 /**
- * A node representing date and time information.
- * Uses javascript's {@link Date} type to represent the date.
+ * The kinds of cells allowed in the table.
  */
-export class DateTime extends schemaFactory.object("DateTime", {
-	raw: schemaFactory.number,
-}) {
+export const Cell = schemaFactory.string;
+
+/**
+ * {@link Column} properties.
+ */
+export class ColumnProps extends schemaFactory.object("table-column-props", {
 	/**
-	 * Converts a JavaScript `Date` object to a `DateTime` instance.
-	 * @param date - A valid JavaScript Date.
-	 * @returns A new `DateTime` instance.
+	 * Column label.
 	 */
-	static fromDate(date: Date): DateTime {
-		const dt = new DateTime({ raw: date.getTime() });
-		dt.value = date;
-		return dt;
-	}
+	label: schemaFactory.optional(schemaFactory.string),
 
 	/**
-	 * Get the date-time
+	 * Type hint. Can be used to determine how the cell should be rendered.
+	 * For example, it can be "text", "date", or "checkbox".
+	 * @defaultValue Plain text.
 	 */
-	get value(): Date {
-		return new Date(this.raw);
-	}
+	hint: schemaFactory.optional(schemaFactory.string),
+}) {}
 
-	/**
-	 * Set the raw date-time string
-	 */
-	set value(value: Date) {
-		const newRaw = value.getTime();
-		// Test if the value is a valid date
-		if (Number.isNaN(newRaw)) {
-			throw new TypeError("Date is an invalid type.");
-		}
-		this.raw = newRaw;
-	}
-}
-
-export const Cell = [schemaFactory.string, schemaFactory.boolean, DateTime] as const;
-
+/**
+ * A column in the table.
+ */
 export class Column extends TableSchema.column({
 	schemaFactory,
 	cell: Cell,
-	props: schemaFactory.object("table-column-props", {
-		label: schemaFactory.optional(schemaFactory.string),
-		hint: schemaFactory.optional(schemaFactory.string),
-	}),
+	props: ColumnProps,
 }) {}
+
+/**
+ * A row in the table.
+ */
 export class Row extends TableSchema.row({
 	schemaFactory,
 	cell: Cell,
-	props: schemaFactory.object("table-row-props", {
-		label: schemaFactory.optional(schemaFactory.string),
-	}),
 }) {}
 
 export class Table extends TableSchema.table({
