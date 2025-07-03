@@ -29,8 +29,8 @@ const optionDefaults = {
 	outFileAlpha: ApiLevel.alpha,
 	outFileBeta: ApiLevel.beta,
 	outFilePublic: ApiLevel.public,
-	outFileLegacyAlpha: "legacy/alpha",
-	outFileLegacyBeta: "legacy/beta",
+	outFileLegacyAlpha: "legacy-alpha",
+	outFileLegacyBeta: "legacy-beta",
 	outFileLegacyPublic: "legacy",
 	outFileSuffix: ".d.ts",
 } as const;
