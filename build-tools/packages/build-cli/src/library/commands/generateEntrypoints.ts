@@ -15,9 +15,9 @@ import type { CommandLogger } from "../../logging.js";
 import { BaseCommand } from "./base.js";
 
 import { ApiLevel, isLegacy } from "../apiLevel.js";
-import { ReleaseTag } from "../apiTag.js";
 import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
+import { ReleaseTag } from "../releaseTag.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
 import { unscopedPackageNameString } from "./constants.js";

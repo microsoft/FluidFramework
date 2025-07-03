@@ -7,8 +7,8 @@ import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from 
 import { Node, SyntaxKind } from "ts-morph";
 
 import type { ApiLevel } from "./apiLevel.js";
-import type { ReleaseTag } from "./apiTag.js";
-import { isReleaseTag } from "./apiTag.js";
+import type { ReleaseTag } from "./releaseTag.js";
+import { isReleaseTag } from "./releaseTag.js";
 
 interface ExportRecord {
 	name: string;
