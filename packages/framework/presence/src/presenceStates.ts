@@ -225,6 +225,7 @@ export function mergeValueDirectory<
 
 /**
  * Updates remote state into the local [untracked] datastore.
+ * Supports both external and internal (validation metadata) datastores.
  *
  * @param key - The key of the datastore to merge the untracked data into.
  * @param remoteAllKnownState - The remote state to merge into the datastore.
@@ -233,11 +234,29 @@ export function mergeValueDirectory<
  * @remarks
  * In the case of ignored unmonitored data, the client entries are not stored,
  * though the value keys will be populated and often remain empty.
+ * This function preserves validation metadata when working with internal types.
  */
 export function mergeUntrackedDatastore(
 	key: string,
 	remoteAllKnownState: ClientUpdateRecord,
 	datastore: ValueElementMap<StatesWorkspaceSchema>,
+	timeModifier: number,
+): void;
+export function mergeUntrackedDatastore(
+	key: string,
+	remoteAllKnownState: ClientUpdateRecordInternal,
+	datastore: ValueElementMapInternal<StatesWorkspaceSchema>,
+	timeModifier: number,
+): void;
+/**
+ * Implementation of mergeUntrackedDatastore that handles both external and internal types.
+ */
+export function mergeUntrackedDatastore(
+	key: string,
+	remoteAllKnownState: ClientUpdateRecord | ClientUpdateRecordInternal,
+	datastore:
+		| ValueElementMap<StatesWorkspaceSchema>
+		| ValueElementMapInternal<StatesWorkspaceSchema>,
 	timeModifier: number,
 ): void {
 	const localAllKnownState = getOrCreateRecord(
@@ -252,43 +271,6 @@ export function mergeUntrackedDatastore(
 				value,
 				timeModifier,
 			);
-		}
-	}
-}
-
-/**
- * Internal version of mergeUntrackedDatastore that can handle validation metadata.
- * Updates remote state into the local [untracked] internal datastore.
- *
- * @param key - The key of the datastore to merge the untracked data into.
- * @param remoteAllKnownState - The remote state to merge into the datastore.
- * @param datastore - The internal datastore to merge the untracked data into.
- *
- * @remarks
- * In the case of ignored unmonitored data, the client entries are not stored,
- * though the value keys will be populated and often remain empty.
- * This version preserves validation metadata during the merge process.
- *
- * @system
- */
-export function mergeUntrackedDatastoreInternal(
-	key: string,
-	remoteAllKnownState: ClientUpdateRecordInternal,
-	datastore: ValueElementMapInternal<StatesWorkspaceSchema>,
-	timeModifier: number,
-): void {
-	const localAllKnownState = getOrCreateRecord(
-		datastore,
-		key,
-		(): RecordEntryTypes<typeof datastore> => ({}),
-	);
-	for (const [attendeeId, value] of objectEntries(remoteAllKnownState)) {
-		if (!("ignoreUnmonitored" in value)) {
-			localAllKnownState[attendeeId] = mergeValueDirectory(
-				localAllKnownState[attendeeId],
-				value,
-				timeModifier,
-			) as ValidatedDirectoryOrState<unknown>;
 		}
 	}
 }
