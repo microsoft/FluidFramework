@@ -440,7 +440,7 @@ describe("DefaultResubmitMachine", () => {
 			currentRevision = revision1;
 			machine.onCommitSubmitted(commit2);
 			currentRevision = revision2;
-			// Simulate a peer commit that causes commit2 to be rebased, but not commit3
+			// Simulate a peer commit that causes commit1 and commit2 to be rebased, but not commit3
 			machine.onSequencedCommitApplied(false);
 
 			const rebased2: GraphCommit<MockEnrichableChange> = {
