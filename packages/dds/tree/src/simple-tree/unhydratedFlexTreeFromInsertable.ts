@@ -29,6 +29,7 @@ import {
 	type TreeLeafValue,
 	extractFieldProvider,
 	type ContextualFieldProvider,
+	unannotateImplicitAllowedTypes,
 } from "./schemaTypes.js";
 import {
 	createField,
@@ -56,6 +57,10 @@ import {
 	isObjectNodeSchema,
 	type ObjectNodeSchemaPrivate,
 } from "./node-kinds/object/objectNodeTypes.js";
+import {
+	isRecordNodeSchema,
+	type RecordNodeSchema,
+} from "./node-kinds/record/recordNodeTypes.js";
 /* eslint-enable import/no-internal-modules */
 
 /**
@@ -156,6 +161,10 @@ function unhydratedFlexTreeFromInsertableNode(
 		case NodeKind.Object:
 			assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 			result = objectToFlexContent(data, schema);
+			break;
+		case NodeKind.Record:
+			assert(isRecordNodeSchema(schema), "Expected a Record schema.");
+			result = recordToFlexContent(data, schema);
 			break;
 		default:
 			unreachableCase(schema.kind);
@@ -322,8 +331,6 @@ function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexCont
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
 
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
-
 	const fieldsIterator = (
 		Symbol.iterator in data
 			? // Support iterables of key value pairs (including Map objects)
@@ -332,30 +339,7 @@ function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexCont
 				Object.entries(data)
 	) as Iterable<readonly [string, InsertableContent]>;
 
-	const context = getUnhydratedContext(schema).flexContext;
-
-	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
-	for (const item of fieldsIterator) {
-		if (!isReadonlyArray(item) || item.length !== 2 || typeof item[0] !== "string") {
-			throw new UsageError(`Input data is incompatible with map entry: ${item}`);
-		}
-		const [key, value] = item;
-		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
-
-		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
-		if (value !== undefined) {
-			const child = unhydratedFlexTreeFromInsertableNode(value, allowedChildTypes);
-			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
-			transformedFields.set(brand(key), field);
-		}
-	}
-
-	return [
-		{
-			type: brand(schema.identifier),
-		},
-		transformedFields,
-	];
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
 }
 
 /**
@@ -404,6 +388,51 @@ function objectToFlexContent(
 	}
 
 	return [{ type: brand(schema.identifier) }, fields];
+}
+
+/**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ */
+function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
+	}
+
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
+}
+
+/**
+ * Converts record-like data to a FlexContent representation for map/record schema.
+ */
+function recordLikeDataToFlexContent(
+	fieldsIterator: Iterable<readonly [string, InsertableContent]>,
+	schema: MapNodeSchema | RecordNodeSchema,
+): FlexContent {
+	const allowedChildTypes = normalizeAllowedTypes(unannotateImplicitAllowedTypes(schema.info));
+	const context = getUnhydratedContext(schema).flexContext;
+
+	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
+	for (const item of fieldsIterator) {
+		const [key, value] = item;
+		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
+
+		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
+		if (value !== undefined) {
+			const child = unhydratedFlexTreeFromInsertableNode(value, allowedChildTypes);
+			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
+			transformedFields.set(brand(key), field);
+		}
+	}
+
+	return [
+		{
+			type: brand(schema.identifier),
+		},
+		transformedFields,
+	];
 }
 
 /**
@@ -559,6 +588,10 @@ function shallowCompatibilityTest(
 	}
 
 	// At this point, it is assumed data is a record-like object since all the other cases have been eliminated.
+
+	if (schema.kind === NodeKind.Record) {
+		return CompatibilityLevel.Normal;
+	}
 
 	if (schema.kind === NodeKind.Array) {
 		return CompatibilityLevel.None;
