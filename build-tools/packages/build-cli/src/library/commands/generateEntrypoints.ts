@@ -14,10 +14,10 @@ import { ModuleKind, Project, ScriptKind } from "ts-morph";
 import type { CommandLogger } from "../../logging.js";
 import { BaseCommand } from "./base.js";
 
-import { ApiLevel } from "../apiLevel.js";
-import { ApiTag } from "../apiTag.js";
+import { ApiLevel, isLegacy } from "../apiLevel.js";
 import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
+import { ReleaseTag } from "../releaseTag.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
 import { unscopedPackageNameString } from "./constants.js";
@@ -28,8 +28,10 @@ const optionDefaults = {
 	outFilePrefix: "",
 	outFileAlpha: ApiLevel.alpha,
 	outFileBeta: ApiLevel.beta,
-	outFileLegacy: ApiLevel.legacy,
 	outFilePublic: ApiLevel.public,
+	outFileLegacyAlpha: "legacy-alpha",
+	outFileLegacyBeta: "legacy-beta",
+	outFileLegacyPublic: "legacy",
 	outFileSuffix: ".d.ts",
 } as const;
 
@@ -65,13 +67,21 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			description: "Base file name for beta entrypoint declaration files.",
 			default: optionDefaults.outFileBeta,
 		}),
-		outFileLegacy: Flags.string({
-			description: "Base file name for legacy entrypoint declaration files.",
-			default: optionDefaults.outFileLegacy,
-		}),
 		outFilePublic: Flags.string({
 			description: "Base file name for public entrypoint declaration files.",
 			default: optionDefaults.outFilePublic,
+		}),
+		outFileLegacyAlpha: Flags.string({
+			description: "Base file name for legacyAlpha entrypoint declaration files.",
+			default: optionDefaults.outFileLegacyAlpha,
+		}),
+		outFileLegacyBeta: Flags.string({
+			description: "Base file name for legacyBeta entrypoint declaration files.",
+			default: optionDefaults.outFileLegacyBeta,
+		}),
+		outFileLegacyPublic: Flags.string({
+			description: "Base file name for legacyPublic entrypoint declaration files.",
+			default: optionDefaults.outFileLegacyPublic,
 		}),
 		outFileSuffix: Flags.string({
 			description:
@@ -123,18 +133,7 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			);
 		}
 
-		// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
-		// When @alpha is mapped to /legacy, @beta should not be included in
-		// @alpha aka /legacy entrypoint.
-		const separateBetaFromAlpha = this.flags.outFileAlpha !== ApiLevel.alpha;
-		promises.push(
-			generateEntrypoints(
-				mainEntrypoint,
-				mapApiTagLevelToOutput,
-				this.logger,
-				separateBetaFromAlpha,
-			),
-		);
+		promises.push(generateEntrypoints(mainEntrypoint, mapApiTagLevelToOutput, this.logger));
 
 		if (node10TypeCompat) {
 			promises.push(
@@ -210,35 +209,31 @@ function getOutputConfiguration(
 	packageJson: PackageJson,
 	logger?: CommandLogger,
 ): {
-	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined>;
-	mapApiTagLevelToOutput: Map<ApiTag, ExportData>;
+	mapQueryPathToApiTagLevel: Map<string | RegExp, ReleaseTag | undefined>;
+	mapApiTagLevelToOutput: Map<ReleaseTag, ExportData>;
 	mapNode10CompatExportPathToData: Map<string, Node10CompatExportData>;
 } {
 	const {
 		outFileSuffix,
 		outFileAlpha,
 		outFileBeta,
-		outFileLegacy,
 		outFilePublic,
+		outFileLegacyAlpha,
+		outFileLegacyBeta,
+		outFileLegacyPublic,
 		node10TypeCompat,
 	} = flags;
 
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
-	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiTag | undefined> = new Map([
-		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiTag.alpha],
-		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiTag.beta],
-		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiTag.public],
+	const mapQueryPathToApiTagLevel: Map<string | RegExp, ReleaseTag | undefined> = new Map([
+		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ReleaseTag.alpha],
+		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ReleaseTag.beta],
+		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ReleaseTag.public],
+		[`${pathPrefix}${outFileLegacyAlpha}${outFileSuffix}`, ReleaseTag.alpha],
+		[`${pathPrefix}${outFileLegacyBeta}${outFileSuffix}`, ReleaseTag.beta],
+		[`${pathPrefix}${outFileLegacyPublic}${outFileSuffix}`, ReleaseTag.public],
 	]);
-
-	// In the past @alpha APIs could be mapped to /legacy via --outFileAlpha.
-	// If @alpha is not mapped to same as @legacy, then @legacy can be mapped.
-	if (outFileAlpha !== outFileLegacy) {
-		mapQueryPathToApiTagLevel.set(
-			`${pathPrefix}${outFileLegacy}${outFileSuffix}`,
-			ApiTag.legacy,
-		);
-	}
 
 	if (node10TypeCompat) {
 		// /internal export may be supported without API level generation; so
@@ -329,13 +324,11 @@ const generatedHeader: string = `/*!
  * @param mainEntrypoint - path to main entrypoint file
  * @param mapApiTagLevelToOutput - level oriented ApiTag to output file mapping
  * @param log - logger
- * @param separateBetaFromAlpha - if true, beta APIs will not be included in alpha outputs
  */
 async function generateEntrypoints(
 	mainEntrypoint: string,
-	mapApiTagLevelToOutput: Map<ApiTag, ExportData>,
+	mapApiTagLevelToOutput: Map<ApiLevel, ExportData>,
 	log: CommandLogger,
-	separateBetaFromAlpha: boolean,
 ): Promise<void> {
 	/**
 	 * List of out file save promises. Used to collect generated file save
@@ -368,15 +361,19 @@ async function generateEntrypoints(
 	// This order is critical as alpha should include beta should include public.
 	// Legacy is separate and should not be included in any other level. But it
 	// may include public.
-	//   (public) -> (legacy)
-	//           `-> (beta) -> (alpha)
-	const apiTagLevels: readonly Exclude<ApiTag, typeof ApiTag.internal>[] = [
-		ApiTag.public,
-		ApiTag.legacy,
-		ApiTag.beta,
-		ApiTag.alpha,
+	//   (legacyPublic) -> (legacyBeta)    -> (legacyAlpha)
+	//         ^                ^                  ^
+	//         |                |                  |
+	//      (public)    ->    (beta)       ->    (alpha)
+	const releaseTagLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
+		ApiLevel.public,
+		ApiLevel.legacyPublic,
+		ApiLevel.beta,
+		ApiLevel.legacyBeta,
+		ApiLevel.alpha,
+		ApiLevel.legacyAlpha,
 	] as const;
-	let commonNamedExports: Omit<ExportSpecifierStructure, "kind">[] = [];
+	const commonNamedExports: Omit<ExportSpecifierStructure, "kind">[] = [];
 
 	if (exports.unknown.size > 0) {
 		log.errorLog(
@@ -400,32 +397,39 @@ async function generateEntrypoints(
 		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n";
 	}
 
-	for (const apiTagLevel of apiTagLevels) {
-		const namedExports = [...commonNamedExports];
+	let semVerExports = [...commonNamedExports];
+	let legacyExports = [...commonNamedExports];
+
+	for (const releaseTagLevel of releaseTagLevels) {
+		const isLegacyRelease = isLegacy(releaseTagLevel);
+
+		const namedExports = [...semVerExports];
+		if (isLegacyRelease) {
+			namedExports.push(...legacyExports);
+		}
 
 		// Append this level's additional (or only) exports sorted by ascending case-sensitive name
 		const orgLength = namedExports.length;
-		const levelExports = [...exports[apiTagLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
+		const levelExports = [...exports[releaseTagLevel]].sort((a, b) =>
+			a.name > b.name ? 1 : -1,
+		);
 		for (const levelExport of levelExports) {
 			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
 		}
 		if (namedExports.length > orgLength) {
-			namedExports[orgLength].leadingTrivia = `\n\t// @${apiTagLevel} APIs\n\t`;
+			namedExports[orgLength].leadingTrivia = `\n\t// @${releaseTagLevel} APIs\n\t`;
 			namedExports[namedExports.length - 1].trailingTrivia = "\n";
 		}
 
-		// legacy APIs do not accumulate to others
-		if (apiTagLevel !== "legacy") {
-			// Additionally, if beta should not accumulate to alpha (alpha may be
-			// treated specially such as mapped to /legacy) then skip beta too.
-			// eslint-disable-next-line unicorn/no-lonely-if
-			if (!separateBetaFromAlpha || apiTagLevel !== "beta") {
-				// update common set
-				commonNamedExports = namedExports;
-			}
+		// Accumulate exports for next applicable level(s).
+		// Note: non-legacy APIs accumulate to legacy exports, but
+		// legacy exports do not accumulate to non-legacy exports.
+		legacyExports = namedExports;
+		if (isLegacyRelease) {
+			semVerExports = namedExports;
 		}
 
-		const output = mapApiTagLevelToOutput.get(apiTagLevel);
+		const output = mapApiTagLevelToOutput.get(releaseTagLevel);
 		if (output === undefined) {
 			continue;
 		}
@@ -451,7 +455,7 @@ async function generateEntrypoints(
 		} else {
 			// At this point we already know that package "export" has a request
 			// for this entrypoint. Warn of emptiness, but make it valid for use.
-			log.warning(`no exports for ${outFile} using API level tag ${apiTagLevel}`);
+			log.warning(`no exports for ${outFile} using API level tag ${releaseTagLevel}`);
 			sourceFile.insertText(0, `${newFileHeader}export {}\n\n`);
 		}
 
