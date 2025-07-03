@@ -312,7 +312,7 @@ describe("Presence", () => {
 				});
 
 				it("by .getRemotes()", () => {
-					for(const _ of latest.getRemotes()){
+					for (const _ of latest.getRemotes()) {
 						assert.equal(point3DValidatorFunction.callCount, 0);
 					}
 				});
