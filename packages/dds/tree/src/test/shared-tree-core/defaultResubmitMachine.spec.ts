@@ -206,6 +206,41 @@ describe("DefaultResubmitMachine", () => {
 		});
 	});
 
+	it("can resubmit a subset of commits (skipping the first)", () => {
+		let currentRevision = revision0;
+		const changeEnricher = new MockChangeEnricher(() => currentRevision);
+		const machine = new DefaultResubmitMachine(inverter, changeEnricher);
+
+		// Submit three commits in order
+		machine.onCommitSubmitted(commit1);
+		currentRevision = revision1;
+		machine.onCommitSubmitted(commit2);
+		currentRevision = revision2;
+		machine.onCommitSubmitted(commit3);
+		currentRevision = revision3;
+
+		MockChangeEnricher.resetCounters();
+		assert.equal(machine.isInResubmitPhase, false);
+
+		// Prepare for resubmit, skipping the first commit
+		machine.prepareForResubmit([commit2, commit3]);
+		assert.equal(machine.isInResubmitPhase, true);
+
+		// Only the provided commits should be resubmitted, in order
+		assert.deepEqual(machine.peekNextCommit(), commit2);
+		machine.onCommitSubmitted(machine.peekNextCommit());
+		assert.equal(machine.isInResubmitPhase, true);
+
+		assert.deepEqual(machine.peekNextCommit(), commit3);
+		machine.onCommitSubmitted(commit3);
+		assert.equal(machine.isInResubmitPhase, false);
+
+		// No enrichment or checkout should be needed
+		assert.equal(MockChangeEnricher.checkoutsCreated, 0);
+		assert.equal(MockChangeEnricher.commitsEnriched, 0);
+		assert.equal(MockChangeEnricher.commitsApplied, 0);
+	});
+
 	describe("enriches commits for resubmit", () => {
 		it("when the commits do not undergo rebasing", () => {
 			let currentRevision = revision0;
