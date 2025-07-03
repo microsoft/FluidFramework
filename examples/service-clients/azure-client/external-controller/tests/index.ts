@@ -21,10 +21,12 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import type { IFluidContainer, ContainerSchema } from "fluid-framework";
-import { SharedMap } from "fluid-framework/legacy";
+import type { ContainerSchema } from "fluid-framework";
+import { SharedTree } from "fluid-framework";
 
+import { initializeNewContainer, loadExistingContainer } from "../src/app.js";
 import { DiceRollerController } from "../src/controller.js";
+import type { Dice } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
@@ -83,23 +85,11 @@ const containerConfig = {
 	name: "dice-roller-container",
 	initialObjects: {
 		/* [id]: DataObject */
-		map1: SharedMap,
-		map2: SharedMap,
+		tree1: SharedTree,
+		tree2: SharedTree,
 	},
 } satisfies ContainerSchema & { name: string };
 type TestContainerSchema = typeof containerConfig;
-
-async function initializeNewContainer(
-	container: IFluidContainer<TestContainerSchema>,
-): Promise<void> {
-	// We now get the first SharedMap from the container
-	const sharedMap1 = container.initialObjects.map1;
-	const sharedMap2 = container.initialObjects.map2;
-	await Promise.all([
-		DiceRollerController.initializeModel(sharedMap1),
-		DiceRollerController.initializeModel(sharedMap2),
-	]);
-}
 
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
@@ -123,15 +113,17 @@ async function createContainerAndRenderInElement(
 
 	// Get the Default Object from the Container
 	const fluidContainer = await createFluidContainer<TestContainerSchema>({ container });
+	let dice1: Dice;
+	let dice2: Dice;
 	if (createNewFlag) {
-		await initializeNewContainer(fluidContainer);
+		[dice1, dice2] = initializeNewContainer(fluidContainer);
 		await attach?.();
+	} else {
+		[dice1, dice2] = loadExistingContainer(fluidContainer);
 	}
 
-	const sharedMap1 = fluidContainer.initialObjects.map1;
-	const sharedMap2 = fluidContainer.initialObjects.map2;
-	const diceRollerController = new DiceRollerController(sharedMap1, () => {});
-	const diceRollerController2 = new DiceRollerController(sharedMap2, () => {});
+	const diceRollerController = new DiceRollerController(dice1, () => {});
+	const diceRollerController2 = new DiceRollerController(dice2, () => {});
 
 	element.append(makeAppView([diceRollerController, diceRollerController2]));
 }

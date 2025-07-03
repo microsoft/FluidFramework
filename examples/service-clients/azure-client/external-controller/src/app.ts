@@ -10,22 +10,22 @@ import {
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/legacy";
 import { getPresence } from "@fluidframework/presence/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 // eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import type { ContainerSchema } from "fluid-framework";
-import { IFluidContainer } from "fluid-framework";
+import {
+	type ContainerSchema,
+	type IFluidContainer,
+	SharedTree,
+	TreeViewConfiguration,
+} from "fluid-framework/beta";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
-import {
-	DiceRollerController,
-	DiceRollerControllerProps,
-	type DieValue,
-} from "./controller.js";
+import { DiceRollerController, type DieValue } from "./controller.js";
 import { buildDicePresence } from "./presence.js";
+import { Dice } from "./schema.js";
 import { makeAppView } from "./view.js";
 
 export interface ICustomUserDetails {
@@ -71,56 +71,60 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 const containerSchema = {
 	initialObjects: {
 		/* [id]: DataObject */
-		map1: SharedMap,
-		map2: SharedMap,
+		tree1: SharedTree,
+		tree2: SharedTree,
 	},
-} satisfies ContainerSchema;
+} as const satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;
 
-function createDiceRollerControllerProps(map: ISharedMap): DiceRollerControllerProps {
-	return {
-		get: (key: string) => map.get(key) as number,
-		set: (key: string, value: unknown) => map.set(key, value),
-		on(
-			event: "valueChanged",
-			listener: (args: IValueChanged) => void,
-		): DiceRollerControllerProps {
-			map.on(event, listener);
-			return this;
-		},
-		off(
-			event: "valueChanged",
-			listener: (args: IValueChanged) => void,
-		): DiceRollerControllerProps {
-			map.on(event, listener);
-			return this;
-		},
-	};
+const treeViewConfig = new TreeViewConfiguration<typeof Dice>({
+	schema: Dice,
+});
+
+export function loadExistingContainer(
+	container: IFluidContainer<DiceRollerContainerSchema>,
+): [Dice, Dice] {
+	const tree1 = container.initialObjects.tree1;
+	const tree1View = tree1.viewWith(treeViewConfig);
+	if (!tree1View.compatibility.canView) {
+		throw new Error("Expected container data to be compatible with Dice schema");
+	}
+
+	const tree2 = container.initialObjects.tree2;
+	const tree2View = tree2.viewWith(treeViewConfig);
+	if (!tree2View.compatibility.canView) {
+		throw new Error("Expected container data to be compatible with Dice schema");
+	}
+
+	return [tree1View.root, tree2View.root];
 }
 
-function createDiceRollerControllerPropsFromContainer(
+export function initializeNewContainer(
 	container: IFluidContainer<DiceRollerContainerSchema>,
-): [DiceRollerControllerProps, DiceRollerControllerProps] {
-	const diceRollerController1Props: DiceRollerControllerProps =
-		createDiceRollerControllerProps(container.initialObjects.map1);
-	const diceRollerController2Props: DiceRollerControllerProps =
-		createDiceRollerControllerProps(container.initialObjects.map2);
-	return [diceRollerController1Props, diceRollerController2Props];
-}
+): [Dice, Dice] {
+	const tree1 = container.initialObjects.tree1;
+	const tree1View = tree1.viewWith(treeViewConfig);
+	if (!tree1View.compatibility.canInitialize) {
+		throw new Error("Expected container data to be compatible with Dice schema");
+	}
+	tree1View.initialize(
+		new Dice({
+			value: 1,
+		}),
+	);
 
-async function initializeNewContainer(
-	container: IFluidContainer<DiceRollerContainerSchema>,
-): Promise<[DiceRollerControllerProps, DiceRollerControllerProps]> {
-	const [diceRollerController1Props, diceRollerController2Props] =
-		createDiceRollerControllerPropsFromContainer(container);
+	const tree2 = container.initialObjects.tree2;
+	const tree2View = tree2.viewWith(treeViewConfig);
+	if (!tree2View.compatibility.canInitialize) {
+		throw new Error("Expected container data to be compatible with Dice schema");
+	}
+	tree2View.initialize(
+		new Dice({
+			value: 1,
+		}),
+	);
 
-	// Initialize both of our SharedMaps for usage with a DiceRollerController
-	await Promise.all([
-		DiceRollerController.initializeModel(diceRollerController1Props),
-		DiceRollerController.initializeModel(diceRollerController2Props),
-	]);
-
-	return [diceRollerController1Props, diceRollerController2Props];
+	return [tree1View.root, tree2View.root];
 }
 
 async function start(): Promise<void> {
@@ -141,8 +145,8 @@ async function start(): Promise<void> {
 	let id: string;
 
 	// Get or create the document depending if we are running through the create new flow
-	let diceRollerController1Props: DiceRollerControllerProps;
-	let diceRollerController2Props: DiceRollerControllerProps;
+	let dice1: Dice;
+	let dice2: Dice;
 	const createNew = location.hash.length === 0;
 	if (createNew) {
 		// The client will create a new detached container using the schema
@@ -154,8 +158,7 @@ async function start(): Promise<void> {
 		// map2.set("diceValue", 1);
 		// console.log(map1.get("diceValue"));
 		// Initialize our models so they are ready for use with our controllers
-		[diceRollerController1Props, diceRollerController2Props] =
-			await initializeNewContainer(container);
+		[dice1, dice2] = initializeNewContainer(container);
 
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
@@ -168,8 +171,7 @@ async function start(): Promise<void> {
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
 		({ container, services } = await client.getContainer(id, containerSchema, "2"));
-		[diceRollerController1Props, diceRollerController2Props] =
-			createDiceRollerControllerPropsFromContainer(container);
+		[dice1, dice2] = loadExistingContainer(container);
 	}
 
 	document.title = id;
@@ -191,22 +193,16 @@ async function start(): Promise<void> {
 	});
 
 	// Here we are guaranteed that the maps have already been initialized for use with a DiceRollerController
-	const diceRollerController1 = new DiceRollerController(
-		diceRollerController1Props,
-		(value) => {
-			lastRoll.die1 = value;
-			states.lastRoll.local = lastRoll;
-			states.lastDiceRolls.local.set("die1", { value });
-		},
-	);
-	const diceRollerController2 = new DiceRollerController(
-		diceRollerController2Props,
-		(value) => {
-			lastRoll.die2 = value;
-			states.lastRoll.local = lastRoll;
-			states.lastDiceRolls.local.set("die2", { value });
-		},
-	);
+	const diceRollerController1 = new DiceRollerController(dice1, (value) => {
+		lastRoll.die1 = value;
+		states.lastRoll.local = lastRoll;
+		states.lastDiceRolls.local.set("die1", { value });
+	});
+	const diceRollerController2 = new DiceRollerController(dice2, (value) => {
+		lastRoll.die2 = value;
+		states.lastRoll.local = lastRoll;
+		states.lastDiceRolls.local.set("die2", { value });
+	});
 
 	// lastDiceRolls is here just to demonstrate an example of LatestMap
 	// Its updates are only logged to the console.
