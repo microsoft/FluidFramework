@@ -208,7 +208,7 @@ describe("Presence", () => {
 
 		describe("validator", () => {
 			let stateWorkspace: StatesWorkspace<{
-				position: InternalTypes.ManagerFactory<
+				latest: InternalTypes.ManagerFactory<
 					string,
 					InternalTypes.ValueRequiredState<Point3D>,
 					Latest<Point3D, ProxiedValueAccessor<Point3D>>
@@ -238,7 +238,7 @@ describe("Presence", () => {
 									},
 								},
 								"s:name:testWorkspace": {
-									"position": {
+									"latest": {
 										[attendeeId2]: {
 											"rev": 0,
 											"timestamp": clock.now,
@@ -252,7 +252,7 @@ describe("Presence", () => {
 				]);
 
 				stateWorkspace = presence.states.getWorkspace("name:testWorkspace", {
-					position: StateFactory.latest({
+					latest: StateFactory.latest({
 						local: { x: 0, y: 0, z: 0 } satisfies Point3D,
 						validator: point3DValidatorFunction,
 						settings: { allowableUpdateLatencyMs: 0 },
@@ -270,9 +270,9 @@ describe("Presence", () => {
 							data: {
 								"system:presence": attendeeUpdate,
 								"s:name:testWorkspace": {
-									"position": {
+									"latest": {
 										[attendeeId1]: {
-											"rev": 1,
+											"rev": 2,
 											"timestamp": clock.now - 10,
 											"value": toOpaqueJson({ x: 10, y: 20, z: 30 }),
 										},
@@ -289,13 +289,13 @@ describe("Presence", () => {
 			describe("is not called", () => {
 				it("by .getRemote()", () => {
 					// Calling getRemote should not invoke the validator (only a value read will).
-					stateWorkspace.states.position.getRemote(remoteAttendee);
+					stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
 
 				it("when accessing .local", () => {
 					assert.equal(point3DValidatorFunction.callCount, 0, "initial call count is wrong");
-					assert.deepEqual(stateWorkspace.states.position.local, { x: 0, y: 0, z: 0 });
+					assert.deepEqual(stateWorkspace.states.latest.local, { x: 0, y: 0, z: 0 });
 					assert.equal(
 						point3DValidatorFunction.callCount,
 						0,
@@ -306,7 +306,7 @@ describe("Presence", () => {
 
 			describe("is called", () => {
 				it("on first value() call", () => {
-					const remoteData = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const remoteData = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					runValidatorTest({
 						getRemoteValue: () => remoteData.value(),
 						expectedCallCount: 1,
@@ -316,7 +316,7 @@ describe("Presence", () => {
 				});
 
 				it("only once for multiple value() calls on unchanged data", () => {
-					const remoteData = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const remoteData = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					runMultipleCallsTest({
 						getRemoteValue: () => remoteData.value(),
 						expectedValue: { x: 10, y: 20, z: 30 },
@@ -326,7 +326,7 @@ describe("Presence", () => {
 
 				it("when remote data has changed", () => {
 					// Get the remote data and read it, verify that the validator is called once.
-					const remoteData = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const remoteData = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.deepEqual(remoteData.value(), { x: 10, y: 20, z: 30 });
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
@@ -341,9 +341,9 @@ describe("Presence", () => {
 								data: {
 									"system:presence": attendeeUpdate,
 									"s:name:testWorkspace": {
-										"position": {
+										"latest": {
 											[attendeeId1]: {
-												"rev": 2,
+												"rev": 3,
 												"timestamp": clock.now - 10,
 												"value": toOpaqueJson({ x: 50, y: 60, z: 70 }),
 											},
@@ -357,7 +357,7 @@ describe("Presence", () => {
 					);
 
 					// Reading the remote value should cause the validator to be called a second time since the data has been changed.
-					const data2 = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const data2 = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.deepEqual(
 						data2.value(),
 						{ x: 50, y: 60, z: 70 },
@@ -372,7 +372,7 @@ describe("Presence", () => {
 
 				it("when remote data changes from valid to invalid", () => {
 					// Get the remote data and read it, verify that the validator is called once.
-					const remoteData = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const remoteData = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.deepEqual(remoteData.value(), { x: 10, y: 20, z: 30 });
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
@@ -387,9 +387,9 @@ describe("Presence", () => {
 								data: {
 									"system:presence": attendeeUpdate,
 									"s:name:testWorkspace": {
-										"position": {
+										"latest": {
 											[attendeeId1]: {
-												"rev": 2,
+												"rev": 4,
 												"timestamp": clock.now - 10,
 												"value": toOpaqueJson("invalid" as unknown as Point3D),
 											},
@@ -403,7 +403,7 @@ describe("Presence", () => {
 					);
 
 					// Reading the remote value should cause the validator to be called a second time and return undefined
-					const data2 = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const data2 = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.equal(data2.value(), undefined, "invalid data should return undefined");
 					assert.equal(
 						point3DValidatorFunction.callCount,
@@ -424,9 +424,9 @@ describe("Presence", () => {
 								data: {
 									"system:presence": attendeeUpdate,
 									"s:name:testWorkspace": {
-										"position": {
+										"latest": {
 											[attendeeId1]: {
-												"rev": 2,
+												"rev": 3,
 												"timestamp": clock.now - 10,
 												"value": toOpaqueJson("invalid" as unknown as Point3D),
 											},
@@ -440,7 +440,7 @@ describe("Presence", () => {
 					);
 
 					// Get the remote data and read it, verify that the validator is called once and returns undefined
-					const remoteData = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const remoteData = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.equal(remoteData.value(), undefined);
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
@@ -455,9 +455,9 @@ describe("Presence", () => {
 								data: {
 									"system:presence": attendeeUpdate,
 									"s:name:testWorkspace": {
-										"position": {
+										"latest": {
 											[attendeeId1]: {
-												"rev": 3,
+												"rev": 4,
 												"timestamp": clock.now - 10,
 												"value": toOpaqueJson({ x: 100, y: 200, z: 300 }),
 											},
@@ -471,7 +471,7 @@ describe("Presence", () => {
 					);
 
 					// Reading the remote value should cause the validator to be called a second time and return valid data
-					const data2 = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const data2 = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.deepEqual(
 						data2.value(),
 						{ x: 100, y: 200, z: 300 },
@@ -496,9 +496,9 @@ describe("Presence", () => {
 								data: {
 									"system:presence": attendeeUpdate,
 									"s:name:testWorkspace": {
-										"position": {
+										"latest": {
 											[attendeeId1]: {
-												"rev": 2,
+												"rev": 3,
 												"timestamp": clock.now - 10,
 												"value": toOpaqueJson("invalid1" as unknown as Point3D),
 											},
@@ -512,7 +512,7 @@ describe("Presence", () => {
 					);
 
 					// Get the remote data and read it, verify that the validator is called once and returns undefined
-					const remoteData = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const remoteData = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.equal(remoteData.value(), undefined);
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
@@ -527,9 +527,9 @@ describe("Presence", () => {
 								data: {
 									"system:presence": attendeeUpdate,
 									"s:name:testWorkspace": {
-										"position": {
+										"latest": {
 											[attendeeId1]: {
-												"rev": 3,
+												"rev": 4,
 												"timestamp": clock.now - 10,
 												"value": toOpaqueJson("invalid2" as unknown as Point3D),
 											},
@@ -543,7 +543,7 @@ describe("Presence", () => {
 					);
 
 					// Reading the remote value should cause the validator to be called a second time and still return undefined
-					const data2 = stateWorkspace.states.position.getRemote(remoteAttendee);
+					const data2 = stateWorkspace.states.latest.getRemote(remoteAttendee);
 					assert.equal(data2.value(), undefined, "invalid data should return undefined");
 					assert.equal(
 						point3DValidatorFunction.callCount,
@@ -565,9 +565,9 @@ describe("Presence", () => {
 							data: {
 								"system:presence": attendeeUpdate,
 								"s:name:testWorkspace": {
-									"position": {
+									"latest": {
 										[attendeeId1]: {
-											"rev": 2,
+											"rev": 3,
 											"timestamp": clock.now - 10,
 											"value": toOpaqueJson("string" as unknown as Point3D),
 										},
@@ -580,7 +580,7 @@ describe("Presence", () => {
 					false,
 				);
 
-				const remoteData = stateWorkspace.states.position.getRemote(remoteAttendee);
+				const remoteData = stateWorkspace.states.latest.getRemote(remoteAttendee);
 
 				// Validator should not be called initially
 				assert.equal(
