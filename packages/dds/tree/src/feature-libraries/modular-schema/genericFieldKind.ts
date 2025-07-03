@@ -28,6 +28,7 @@ import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
+import type { ReplaceRevisionIdInfo } from "./modularChangeFamily.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -156,8 +157,11 @@ function replaceRevisions(
 	changeset: GenericChangeset,
 	oldRevisions: Set<RevisionTag | undefined>,
 	newRevision: RevisionTag | undefined,
+	replaceRevisionIdInfo: ReplaceRevisionIdInfo,
 ): GenericChangeset {
-	return changeset.mapValues((node) => replaceAtomRevisions(node, oldRevisions, newRevision));
+	return changeset.mapValues((node) =>
+		replaceAtomRevisions(node, oldRevisions, newRevision, replaceRevisionIdInfo),
+	);
 }
 
 /**

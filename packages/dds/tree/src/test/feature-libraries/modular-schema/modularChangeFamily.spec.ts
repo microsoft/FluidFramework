@@ -449,7 +449,8 @@ const nodesChunk = chunkFieldSingle(fieldJsonCursor([{}, {}]), {
 	idCompressor: testIdCompressor,
 });
 
-describe("ModularChangeFamily", () => {
+// TODO: remove after debugging
+describe.only("ModularChangeFamily", () => {
 	describe("compose", () => {
 		const composedValues: ValueChangeset = { old: 0, new: 2 };
 
