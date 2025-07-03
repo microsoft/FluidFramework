@@ -39,7 +39,7 @@ export namespace InternalTypes {
 		// Uncomment this property and rebuild to check more thoroughly
 		// for incompatibilities between this non-validatable state
 		// and ValidatableOptionalState.
-		validatedValue?: never;
+		// validatedValue?: never;
 	}
 
 	/**

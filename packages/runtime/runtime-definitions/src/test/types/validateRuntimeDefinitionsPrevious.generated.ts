@@ -157,6 +157,7 @@ declare type old_as_current_for_Interface_IDataStore = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IDataStore": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDataStore = requireAssignableTo<TypeOnly<current.IDataStore>, TypeOnly<old.IDataStore>>
 
 /*
@@ -211,6 +212,7 @@ declare type old_as_current_for_Interface_IFluidDataStoreChannel = requireAssign
  * typeValidation.broken:
  * "Interface_IFluidDataStoreChannel": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreChannel = requireAssignableTo<TypeOnly<current.IFluidDataStoreChannel>, TypeOnly<old.IFluidDataStoreChannel>>
 
 /*
