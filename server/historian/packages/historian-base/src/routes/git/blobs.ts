@@ -103,7 +103,6 @@ export function create(
 		},
 	);
 
-	// here
 	router.post(
 		"/repos/:ignored?/:tenantId/git/blobs",
 		validateRequestParams("tenantId"),
@@ -147,7 +146,6 @@ export function create(
 
 	/**
 	 * Retrieves the given blob as an image
-	 * here
 	 */
 	router.get(
 		"/repos/:ignored?/:tenantId/git/blobs/raw/:sha",
