@@ -19,9 +19,7 @@ overrides:
   oclif>@aws-sdk/client-s3: npm:empty-npm-package@1.0.0
   socket.io-client: ~4.7.5
   axios@<0.30.0: ^0.30.0
-  '@fluidframework/server-services-client': ^5.0.0
-  '@fluidframework/server-services-core': ^5.0.0
-  '@fluidframework/server-test-utils': ^5.0.0
+  '@fluidframework/server-services-shared': ^5.0.0
 
 pnpmfileChecksum: jsbnis4v7zlhs4t7yscsd3mtxe
 
@@ -9775,14 +9773,14 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       '@fluidframework/server-services-client':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/server-services-core':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/server-test-utils':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -10182,8 +10180,8 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/server-services-client':
-        specifier: ^5.0.0
-        version: 5.0.0
+        specifier: ^6.0.0
+        version: 6.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -17639,14 +17637,23 @@ packages:
   '@fluidframework/server-memory-orderer@6.0.0':
     resolution: {integrity: sha512-oUDdVcWT54xdxKPtIeb8h3bpP1icZfvAYcwBf4GeQx2WEjmykUQLbUYzVn8bAamEnw7QucR8IhrhHL8Do5XJ9w==}
 
+  '@fluidframework/server-services-client@0.1036.5002':
+    resolution: {integrity: sha512-2d0RSUXvfNlFgHVLiehiU4LgJheqGXlspIgug6U6nvPdwFGtQSbButh2SysBDFilIJ9E6Bacdd0P0e+4HRpCaQ==}
+
   '@fluidframework/server-services-client@5.0.0':
     resolution: {integrity: sha512-Cijcy/WUL4U20XAVmN3tDMCYmjmwAmAl6drXBYzN6QvnwMN4PsNjwgsZdEHN+2D7wEs4o/Wb+g9DNv+Lu5EmLg==}
+
+  '@fluidframework/server-services-client@6.0.0':
+    resolution: {integrity: sha512-NdrHLgA8LDk7XXEMWAXMWnGYgWAMwZDfHNzn6oIvR9Zp/X/r3FEgi+8XOpDKVyUODJfAsyPLjoQ6SxdLED/pAA==}
 
   '@fluidframework/server-services-core@5.0.0':
     resolution: {integrity: sha512-ztrGdRStwlfBFVsm+kChu6VuI764O4TbEEE1RX4gXpLlOsUVZfgYfeUiysdk5Zh7svDKT9n5LdE6VdjLvwb7IA==}
 
-  '@fluidframework/server-services-shared@6.0.0':
-    resolution: {integrity: sha512-Y5ihIvW4cyldaYaNnOQIYL2tsR0XEX7SDiNkE9PX66xzXNbKFiCeBC010pIoXLzQ+UxhIyNpXhzSJF2o1EErxg==}
+  '@fluidframework/server-services-core@6.0.0':
+    resolution: {integrity: sha512-AIZ8QbT4BZOY21JvDZT9LT6vLdMiGsIXvD39C7EOuIfY4DwZSJ0Fmv083pvIJvBw3MQyUALqspCnrlzEfz2ibw==}
+
+  '@fluidframework/server-services-shared@5.0.0':
+    resolution: {integrity: sha512-Qrmxq8IeUTq9n+5rpR4LY0MPZfKWXCw/MQj0Sc5xe0bx8tnPmqQ1W43uOC+or4HcWmigSYKkhPfp73BSzvNrfw==}
 
   '@fluidframework/server-services-telemetry@5.0.0':
     resolution: {integrity: sha512-lWymor6/GVgZpjtBOEUzCmjNJoro/oK2MKoT0MFgg70bhTgWKAOLRAkJZgq8GLGPCHW7ntZ/D+ve763kPu27CQ==}
@@ -17654,11 +17661,17 @@ packages:
   '@fluidframework/server-services-telemetry@6.0.0':
     resolution: {integrity: sha512-A5DN7CSJmIWnq1Q2Svjj7r2K5IJRfgCocA/JsjWzIyMoSWTRnyKs22Liqr+F5qhQXXrcEbh9TaLSGAANDLCJ/A==}
 
+  '@fluidframework/server-services-utils@5.0.0':
+    resolution: {integrity: sha512-5yuVl3Wqj8GpcT1NX+GFsvIwP3nSWD/KJP0J1EQi499T5RWwdsoCcDtZhe1T968NbPQAx/gnXyMtEVy5MfTkWA==}
+
   '@fluidframework/server-services-utils@6.0.0':
     resolution: {integrity: sha512-SPpre6V/umeg506PGjoQsUoVjYYxyHqnrOl6YMim9WyXhLlAp5EcbfRDjfU/meDAy8pYcQ1pfyAvG22PLLx8uQ==}
 
   '@fluidframework/server-test-utils@5.0.0':
     resolution: {integrity: sha512-FOZ1Faw6x8VALUZh/nY6zKCfpgbPK/ylpKf/uQ2oOV9sxGNQfo5NXyHlQP1b78wfx2OYyHY5njtvYl7i9tz/zg==}
+
+  '@fluidframework/server-test-utils@6.0.0':
+    resolution: {integrity: sha512-fbopMKb7t/Sp1YtEoIMFpD/cdy5nan/XCy54ouL27DavRCBLdgLBY9OH+5VBsLiEGCOT+vKCSq5/hqnaP8dpQQ==}
 
   '@fluidframework/shared-object-base@1.4.0':
     resolution: {integrity: sha512-NI94dsIyZL7s76UN/UVawd0JqV106cS84MaW1r9Qv91+QGU8aq/KCS3j8R9ZZ8pWFQ46sX9BT4CKa4hy4xZedw==}
@@ -23432,6 +23445,9 @@ packages:
 
   jws@4.0.0:
     resolution: {integrity: sha512-KDncfTmOZoOMTFG4mBlG0qUIOlc03fmzH+ru6RgYVZhPkyiy/92Owlt/8UEN+a4TXR1FQetfIpJE8ApdvdVxTg==}
+
+  jwt-decode@3.1.2:
+    resolution: {integrity: sha512-UfpWE/VZn0iP50d8cz9NrZLM9lSWhcJ+0Gt/nm4by88UL+J1SiKN8/5dkjMmbEzwL2CAe+67GsegCbIKtbp75A==}
 
   jwt-decode@4.0.0:
     resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
@@ -29836,8 +29852,8 @@ snapshots:
       '@fluidframework/protocol-definitions': 1.2.0
       '@fluidframework/routerlicious-driver': 1.4.0(encoding@0.1.13)
       '@fluidframework/runtime-utils': 1.4.0
-      '@fluidframework/server-services-client': 5.0.0
-      axios: 0.30.0
+      '@fluidframework/server-services-client': 0.1036.5002
+      axios: 0.30.0(debug@4.4.0)
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -30297,7 +30313,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.30.0
+      axios: 0.30.0(debug@4.4.0)
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -30702,7 +30718,7 @@ snapshots:
       '@fluidframework/gitresources': 0.1036.5002
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
-      '@fluidframework/server-services-client': 5.0.0
+      '@fluidframework/server-services-client': 0.1036.5002
       '@fluidframework/telemetry-utils': 1.4.0
       cross-fetch: 3.1.8(encoding@0.1.13)
       json-stringify-safe: 5.0.1
@@ -30832,8 +30848,8 @@ snapshots:
   '@fluidframework/server-lambdas-driver@6.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       assert: 2.1.0
       async: 3.2.6
@@ -30878,8 +30894,8 @@ snapshots:
       '@fluidframework/protocol-base': 6.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas-driver': 6.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       '@types/semver': 7.7.0
       assert: 2.1.0
@@ -30925,10 +30941,10 @@ snapshots:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas': 6.0.0(debug@4.4.0)
       '@fluidframework/server-memory-orderer': 6.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
-      '@fluidframework/server-test-utils': 5.0.0
+      '@fluidframework/server-test-utils': 6.0.0
       debug: 4.4.0(supports-color@8.1.1)
       events_pkg: events@3.3.0
       jsrsasign: 11.1.0
@@ -30971,8 +30987,8 @@ snapshots:
       '@fluidframework/protocol-base': 6.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-lambdas': 6.0.0(debug@4.4.0)
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
@@ -30992,6 +31008,24 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  '@fluidframework/server-services-client@0.1036.5002':
+    dependencies:
+      '@fluidframework/common-utils': 0.32.2
+      '@fluidframework/gitresources': 0.1036.5002
+      '@fluidframework/protocol-base': 0.1036.5002
+      '@fluidframework/protocol-definitions': 0.1028.2000
+      axios: 0.30.0(debug@4.4.0)
+      crc-32: 1.2.0
+      debug: 4.4.0(supports-color@8.1.1)
+      json-stringify-safe: 5.0.1
+      jsrsasign: 11.1.0
+      jwt-decode: 3.1.2
+      querystring: 0.2.1
+      sillyname: 0.1.0
+      uuid: 8.3.2
+    transitivePeerDependencies:
+      - supports-color
+
   '@fluidframework/server-services-client@5.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -31006,6 +31040,23 @@ snapshots:
       jwt-decode: 4.0.0
       sillyname: 0.1.0
       uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-services-client@6.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 6.0.0
+      '@fluidframework/protocol-base': 6.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      axios: 1.8.4(debug@4.4.0)
+      crc-32: 1.2.0
+      debug: 4.4.0(supports-color@8.1.1)
+      json-stringify-safe: 5.0.1
+      jsrsasign: 11.1.0
+      jwt-decode: 4.0.0
+      sillyname: 0.1.0
+      uuid: 11.1.0
     transitivePeerDependencies:
       - supports-color
 
@@ -31024,22 +31075,36 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-shared@6.0.0':
+  '@fluidframework/server-services-core@6.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/gitresources': 6.0.0
-      '@fluidframework/protocol-base': 6.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-telemetry': 6.0.0
+      '@types/nconf': 0.10.7
+      '@types/node': 18.19.67
+      debug: 4.4.0(supports-color@8.1.1)
+      events: 3.3.0
+      nconf: 0.12.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-services-shared@5.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/protocol-base': 5.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 6.0.0
-      '@fluidframework/server-services-utils': 6.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-utils': 5.0.0
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3
       debug: 4.4.0(supports-color@8.1.1)
       events: 3.3.0
-      express: 4.21.2
       fast-redact: 3.5.0
       ioredis: 5.6.1
       lodash: 4.17.21
@@ -31049,7 +31114,7 @@ snapshots:
       socket.io: 4.8.1
       socket.io-adapter: 2.5.5
       socket.io-parser: 4.2.4
-      uuid: 11.1.0
+      uuid: 9.0.1
       winston: 3.17.0
     transitivePeerDependencies:
       - bufferutil
@@ -31072,11 +31137,33 @@ snapshots:
       serialize-error: 8.1.0
       uuid: 11.1.0
 
-  '@fluidframework/server-services-utils@6.0.0':
+  '@fluidframework/server-services-utils@5.0.0':
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
       '@fluidframework/server-services-client': 5.0.0
       '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      debug: 4.4.0(supports-color@8.1.1)
+      express: 4.21.2
+      ioredis: 5.6.1
+      json-stringify-safe: 5.0.1
+      jsonwebtoken: 9.0.2
+      morgan: 1.10.0
+      nconf: 0.12.1
+      serialize-error: 8.1.0
+      sillyname: 0.1.0
+      split: 1.0.1
+      uuid: 9.0.1
+      winston: 3.17.0
+      winston-transport: 4.9.0
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-services-utils@6.0.0':
+    dependencies:
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       debug: 4.4.0(supports-color@8.1.1)
       express: 4.21.2
@@ -31112,6 +31199,27 @@ snapshots:
       lodash: 4.17.21
       string-hash: 1.1.3
       uuid: 9.0.1
+    transitivePeerDependencies:
+      - supports-color
+
+  '@fluidframework/server-test-utils@6.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 6.0.0
+      '@fluidframework/protocol-base': 6.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
+      '@fluidframework/server-services-telemetry': 6.0.0
+      '@types/ioredis-mock': 8.2.6(ioredis@5.6.1)
+      assert: 2.1.0
+      debug: 4.4.0(supports-color@8.1.1)
+      events: 3.3.0
+      ioredis: 5.6.1
+      ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.6(ioredis@5.6.1))(ioredis@5.6.1)
+      lodash: 4.17.21
+      string-hash: 1.1.3
+      uuid: 11.1.0
     transitivePeerDependencies:
       - supports-color
 
@@ -34492,7 +34600,7 @@ snapshots:
 
   axe-core@4.10.2: {}
 
-  axios@0.30.0:
+  axios@0.30.0(debug@4.4.0):
     dependencies:
       follow-redirects: 1.15.9(debug@4.4.0)
       form-data: 4.0.1
@@ -38831,6 +38939,8 @@ snapshots:
       jwa: 2.0.0
       safe-buffer: 5.2.1
 
+  jwt-decode@3.1.2: {}
+
   jwt-decode@4.0.0: {}
 
   keyborg@2.6.0: {}
@@ -42821,12 +42931,12 @@ snapshots:
       '@fluidframework/server-lambdas': 6.0.0(debug@4.4.0)
       '@fluidframework/server-local-server': 6.0.0
       '@fluidframework/server-memory-orderer': 6.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-shared': 6.0.0
+      '@fluidframework/server-services-client': 6.0.0
+      '@fluidframework/server-services-core': 6.0.0
+      '@fluidframework/server-services-shared': 5.0.0
       '@fluidframework/server-services-telemetry': 6.0.0
       '@fluidframework/server-services-utils': 6.0.0
-      '@fluidframework/server-test-utils': 5.0.0
+      '@fluidframework/server-test-utils': 6.0.0
       agentkeepalive: 4.5.0
       axios: 1.8.4(debug@4.4.0)
       body-parser: 1.20.3
