@@ -95,11 +95,8 @@ export type SharedArrayOperation<T> =
 	| SharedArrayInsertBulkAfter<T>;
 
 /**
- * Creates a generator that yields SharedArray operations.
- * @param model - The DDSFuzzModel to use for generating operations.
- * @param client -
- * The client to use for generating operations.
- * @param factory - The SharedArrayFactory to use for generating operations.
+ * Creates a reducer for SharedArray operations.
+ * @internal
  */
 export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>(): Reducer<
 	SharedArrayOperation<T>,
@@ -132,12 +129,6 @@ export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>
 
 /**
  * Creates a generator that yields SharedArray operations.
- *
- * @param model - The DDSFuzzModel to use for generating operations.
- * @param client - The client to use for generating operations.
- * @param factory - The SharedArrayFactory to use for generating operations.
- *
- * @returns An AsyncGenerator that yields SharedArray operations.
  *
  * @internal
  */
@@ -208,6 +199,7 @@ export function makeSharedArrayOperationGenerator<T extends SerializableTypeForS
 
 	return async (state: DDSFuzzTestState<SharedArrayFactory<T>>) => {
 		const op = syncGenerator(state);
+		// Work around
 		if (typeof op === "symbol") {
 			throw new TypeError("Operation generator returned done symbol unexpectedly.");
 		}
@@ -216,11 +208,6 @@ export function makeSharedArrayOperationGenerator<T extends SerializableTypeForS
 }
 
 /**
- * Creates a generator that yields SharedArray operations with default weights.
- *
- * @param valuesPool - The pool of values to use for generating insert operations.
- *
- * @returns An AsyncGenerator that yields SharedArray operations.
  *
  * @internal
  */
