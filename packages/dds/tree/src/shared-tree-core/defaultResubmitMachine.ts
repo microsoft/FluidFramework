@@ -32,8 +32,16 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	private readonly inFlightQueue: DoublyLinkedList<PendingChange<TChange>> =
 		new DoublyLinkedList();
 
+	/**
+	 * The range of in-flight commits that are currently being resubmitted.
+	 * Defined only during the resubmit phase.
+	 */
 	private pendingResubmitRange: ListNodeRange<PendingChange<TChange>> | undefined;
 
+	/**
+	 * The current enrichment version for in-flight commits.
+	 * Incremented when a peer commit is sequenced.
+	 */
 	private currentEnrichment: number = 0;
 
 	public constructor(
