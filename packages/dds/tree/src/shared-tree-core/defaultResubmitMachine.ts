@@ -6,6 +6,7 @@
 import {
 	assert,
 	DoublyLinkedList,
+	type ListNode,
 	type ListNodeRange,
 } from "@fluidframework/core-utils/internal";
 
@@ -14,6 +15,12 @@ import { disposeSymbol, hasSome } from "../util/index.js";
 
 import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
+interface PendingChange<TChange> {
+	commit: GraphCommit<TChange>;
+	refSeq: number;
+}
+type PendingChangeNode<TChange> = ListNode<PendingChange<TChange>>;
+
 /**
  * Default implementation of {@link ResubmitMachine}.
  */
@@ -21,14 +28,10 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	/**
 	 * The list of commits (from oldest to most recent) that have been submitted but not sequenced.
 	 */
-	private readonly inFlightQueue: DoublyLinkedList<{
-		commit: GraphCommit<TChange>;
-		refSeq: number;
-	}> = new DoublyLinkedList();
+	private readonly inFlightQueue: DoublyLinkedList<PendingChange<TChange>> =
+		new DoublyLinkedList();
 
-	private pendingResubmitRange:
-		| ListNodeRange<{ commit: GraphCommit<TChange>; refSeq: number }>
-		| undefined;
+	private pendingResubmitRange: ListNodeRange<PendingChange<TChange>> | undefined;
 
 	private staleEnrichmentsBeforeSeq: number = 0;
 
@@ -84,12 +87,6 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		const first = this.inFlightQueue.find(
 			(v) => v.data.commit.revision === toResubmit[0].revision,
 		);
-		let current = first;
-		for (const commit of toResubmit) {
-			assert(current !== undefined, "");
-			current.data.commit = commit;
-			current = current.next;
-		}
 
 		const last = this.inFlightQueue.last;
 		assert(
@@ -100,6 +97,13 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		// No in-flight commits have stale enrichments, so we can resubmit them as is
 		this.pendingResubmitRange = { first, last };
 		if (first.data.refSeq < this.staleEnrichmentsBeforeSeq) {
+			let current: PendingChangeNode<TChange> | undefined = first;
+			for (const commit of toResubmit) {
+				assert(current !== undefined, "");
+				current.data.commit = commit;
+				current = current.next;
+			}
+
 			const checkout = this.tip.fork();
 
 			for (
