@@ -400,7 +400,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		const [commit] = this.editManager.findLocalCommit(revision);
 		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 		if (this.resubmitMachine.isInResubmitPhase === false) {
-			this.resubmitMachine.prepareForResubmit(commit.revision);
+			const toResubmit = this.editManager.getLocalCommits();
+			assert(
+				commit === toResubmit[0],
+				0x95d /* Resubmit phase should start with the oldest local commit */,
+			);
+			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
 			isClonableSchemaPolicy(localOpMetadata),

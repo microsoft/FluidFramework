@@ -9,8 +9,8 @@ import {
 	type ListNodeRange,
 } from "@fluidframework/core-utils/internal";
 
-import type { GraphCommit, RevisionTag, TaggedChange } from "../core/index.js";
-import { disposeSymbol } from "../util/index.js";
+import type { GraphCommit, TaggedChange } from "../core/index.js";
+import { disposeSymbol, hasSome } from "../util/index.js";
 
 import type { ChangeEnricherReadonlyCheckout, ResubmitMachine } from "./index.js";
 
@@ -71,17 +71,32 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		this.inFlightQueue.pop();
 	}
 
-	public prepareForResubmit(revision: RevisionTag): void {
+	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
 		assert(
 			!this.isInResubmitPhase,
 			0x957 /* Invalid resubmit phase start during incomplete resubmit phase */,
 		);
-		const first = this.inFlightQueue.find((v) => v.data.commit.revision === revision);
+
+		if (!hasSome(toResubmit)) {
+			return;
+		}
+
+		const first = this.inFlightQueue.find(
+			(v) => v.data.commit.revision === toResubmit[0].revision,
+		);
+		let current = first;
+		for (const commit of toResubmit) {
+			assert(current !== undefined, "");
+			current.data.commit = commit;
+			current = current.next;
+		}
+
 		const last = this.inFlightQueue.last;
 		assert(
 			first !== undefined && last !== undefined,
 			"there must be inflight commits to resubmit",
 		);
+
 		// No in-flight commits have stale enrichments, so we can resubmit them as is
 		this.pendingResubmitRange = { first, last };
 		if (first.data.refSeq < this.staleEnrichmentsBeforeSeq) {
