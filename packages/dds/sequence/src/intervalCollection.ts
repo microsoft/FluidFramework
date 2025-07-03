@@ -846,9 +846,11 @@ export class IntervalCollection
 				break;
 			}
 			case "delete": {
-				assert(previous !== undefined, "must have existed to delete");
-				this.localCollection?.add(previous);
-				this.emit("addInterval", previous, true, undefined);
+				// a remote could delete the same interval, so it may not exist to re-add
+				if (previous !== undefined) {
+					this.localCollection?.add(previous);
+					this.emit("addInterval", previous, true, undefined);
+				}
 				break;
 			}
 			default:
