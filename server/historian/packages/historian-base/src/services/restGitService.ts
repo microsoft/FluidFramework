@@ -449,7 +449,7 @@ export class RestGitService {
 
 				const blobsP = Promise.all(
 					quorumValuesSha.map(async (quorumSha) => {
-						const blob = await this.getBlob(quorumSha, useCache);
+						const blob = await this.getBlob(this.tenantId, quorumSha, useCache);
 						blobs.set(blob.sha, blob);
 					}),
 				);
@@ -488,7 +488,7 @@ export class RestGitService {
 		const blobsP: Promise<git.IBlob>[] = [];
 		for (const entry of tree.tree) {
 			if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
-				const blobP = this.getBlob(entry.sha, useCache);
+				const blobP = this.getBlob(this.tenantId, entry.sha, useCache);
 				blobsP.push(blobP);
 			}
 		}
