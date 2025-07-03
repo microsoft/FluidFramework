@@ -63,8 +63,8 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 				toResubmit?.data.commit === commit,
 				0x981 /* Unexpected commit submitted during resubmit phase */,
 			);
-			// check if we are re-submitting the last commit and either
-			// update the range, or clear if we are done
+			// If we are not at the last commit to resubmit, advance the range to the next node.
+			// Otherwise, clear the resubmit range as we are done resubmitting.
 			if (toResubmit !== this.pendingResubmitRange.last) {
 				assert(toResubmit.next !== undefined, "must be more in the list");
 				this.pendingResubmitRange.first = toResubmit.next;
@@ -99,12 +99,12 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			0x958 /* Unexpected resubmit of more or fewer commits than are in flight */,
 		);
 
-		// find the first inflight commit to resubmit
+		// Find the first in-flight commit to resubmit.
 		const first = this.inFlightQueue.find(
 			(v) => v.data.commit.revision === toResubmit[0].revision,
 		);
-		// we always resubmit to end of all outstanding ops, but the list will grow during
-		// resubmit as ops are resubmitted, so we must track the current end
+		// Always resubmit to the end of all outstanding ops, but the list may grow during resubmit,
+		// so we must track the current end at the start of the phase.
 		const last = this.inFlightQueue.last;
 		assert(
 			first !== undefined && last !== undefined,
@@ -112,7 +112,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		);
 
 		this.pendingResubmitRange = { first, last };
-		// If in-flight commits have stale enrichments, we need to re-compute them
+		// If any in-flight commits have stale enrichments, recompute them.
 		if (first.data.lastEnrichment < this.currentEnrichment) {
 			const checkout = this.tip.fork();
 
@@ -126,7 +126,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 				checkout.applyTipChange(rollback);
 			}
 
-			// Update the enrichments of the stale commits
+			// Update the enrichments of the stale commits in the in-flight queue.
 			let current: PendingChangeNode<TChange> | undefined = first;
 			for (const commit of toResubmit) {
 				assert(
@@ -141,9 +141,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 					);
 					const enrichedCommit = { ...commit, change: enrichedChange };
 
-					// this is an optimization to avoid applying changes that will
-					// never be leveraged. specifically, we only apply if
-					// subsequent commits also need enrichment
+					// Optimization: only apply the enriched change if the next commit also needs enrichment.
 					if (
 						current.next !== undefined &&
 						current.next.data.lastEnrichment < this.currentEnrichment
