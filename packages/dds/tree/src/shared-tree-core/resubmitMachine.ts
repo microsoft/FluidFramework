@@ -37,7 +37,12 @@ export interface ResubmitMachine<TChange> {
 	 */
 	onCommitSubmitted(commit: GraphCommit<TChange>): void;
 
-	onCommitRollback?(commit: GraphCommit<TChange>): void;
+	/**
+	 * Must be called on a commit after rollback, so it can be removed
+	 * as it will never be (re)submitted.
+	 * @param commit - The commit that was rolled back
+	 */
+	onCommitRollback(commit: GraphCommit<TChange>): void;
 
 	/**
 	 * Must be called after a sequenced commit is applied.

@@ -430,7 +430,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		assert(parent !== undefined, "must have parent");
 		const [precedingCommit] = this.editManager.findLocalCommit(parent.revision);
 		this.editManager.localBranch.removeAfter(precedingCommit);
-		this.resubmitMachine.onCommitRollback?.(commit);
+		this.resubmitMachine.onCommitRollback(commit);
 	}
 
 	public applyStashedOp(content: JsonCompatibleReadOnly): void {
