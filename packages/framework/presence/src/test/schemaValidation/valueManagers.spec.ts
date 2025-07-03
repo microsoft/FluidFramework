@@ -5,12 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
+import type { OpaqueJsonDeserialized } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../../internalUtils.js";
 import type { createPresenceManager } from "../../presenceManager.js";
+import { SignalMessages } from "../../protocol.js";
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
@@ -72,6 +75,32 @@ const latestMapUpdate = {
 		},
 	},
 } as const;
+
+function datastoreUpdateSignal(
+	clock: SinonFakeTimers,
+	metadata: {
+		"rev": number;
+		"timestamp": number;
+		"value": OpaqueJsonDeserialized<unknown>;
+	},
+): InboundExtensionMessage<SignalMessages> {
+	return {
+		type: "Pres:DatastoreUpdate",
+		content: {
+			sendTimestamp: clock.now - 10,
+			avgLatency: 20,
+			data: {
+				"system:presence": attendeeUpdate,
+				"s:name:testWorkspace": {
+					"latest": {
+						[attendeeId1]: metadata,
+					},
+				},
+			},
+		},
+		clientId: connectionId1,
+	};
+}
 
 interface ValidatorTestParams {
 	getRemoteValue: () => Point3D | undefined;
@@ -291,6 +320,32 @@ describe("Presence", () => {
 						"validator was called on local data",
 					);
 				});
+
+				it("when remote data is updated", () => {
+					const remoteData = latest.getRemote(remoteAttendee);
+
+					// Should call validator
+					runValidatorTest({
+						getRemoteValue: () => remoteData.value(),
+						expectedCallCount: 1,
+						expectedValue: { x: 10, y: 20, z: 30 },
+						validatorFunction: point3DValidatorFunction,
+					});
+
+					// Send updated data from remote client
+					presence.processSignal(
+						[],
+						datastoreUpdateSignal(clock, {
+							"rev": 3,
+							"timestamp": clock.now - 10,
+							"value": toOpaqueJson({ x: 50, y: 60, z: 70 }),
+						}),
+						false,
+					);
+
+					// validator should still only be called once; remote data update should not invoke it
+					assert.equal(point3DValidatorFunction.callCount, 1);
+				});
 			});
 
 			describe("is called", () => {
@@ -322,26 +377,11 @@ describe("Presence", () => {
 					// Send updated data from remote client
 					presence.processSignal(
 						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latest": {
-											[attendeeId1]: {
-												"rev": 3,
-												"timestamp": clock.now - 10,
-												"value": toOpaqueJson({ x: 50, y: 60, z: 70 }),
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
+						datastoreUpdateSignal(clock, {
+							"rev": 3,
+							"timestamp": clock.now - 10,
+							"value": toOpaqueJson({ x: 50, y: 60, z: 70 }),
+						}),
 						false,
 					);
 
@@ -368,26 +408,11 @@ describe("Presence", () => {
 					// Send invalid data from remote client
 					presence.processSignal(
 						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latest": {
-											[attendeeId1]: {
-												"rev": 4,
-												"timestamp": clock.now - 10,
-												"value": toOpaqueJson("invalid"),
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
+						datastoreUpdateSignal(clock, {
+							"rev": 3,
+							"timestamp": clock.now - 10,
+							"value": toOpaqueJson("invalid"),
+						}),
 						false,
 					);
 
@@ -405,26 +430,11 @@ describe("Presence", () => {
 					// First send invalid data
 					presence.processSignal(
 						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latest": {
-											[attendeeId1]: {
-												"rev": 3,
-												"timestamp": clock.now - 10,
-												"value": toOpaqueJson("invalid"),
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
+						datastoreUpdateSignal(clock, {
+							"rev": 3,
+							"timestamp": clock.now - 10,
+							"value": toOpaqueJson("invalid"),
+						}),
 						false,
 					);
 
@@ -436,26 +446,11 @@ describe("Presence", () => {
 					// Send valid data from remote client
 					presence.processSignal(
 						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latest": {
-											[attendeeId1]: {
-												"rev": 4,
-												"timestamp": clock.now - 10,
-												"value": toOpaqueJson({ x: 100, y: 200, z: 300 }),
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
+						datastoreUpdateSignal(clock, {
+							"rev": 4,
+							"timestamp": clock.now - 10,
+							"value": toOpaqueJson({ x: 100, y: 200, z: 300 }),
+						}),
 						false,
 					);
 
@@ -477,26 +472,11 @@ describe("Presence", () => {
 					// First send invalid data
 					presence.processSignal(
 						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latest": {
-											[attendeeId1]: {
-												"rev": 3,
-												"timestamp": clock.now - 10,
-												"value": toOpaqueJson("invalid1"),
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
+						datastoreUpdateSignal(clock, {
+							"rev": 3,
+							"timestamp": clock.now - 10,
+							"value": toOpaqueJson("invalid"),
+						}),
 						false,
 					);
 
@@ -508,26 +488,11 @@ describe("Presence", () => {
 					// Send different invalid data from remote client
 					presence.processSignal(
 						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latest": {
-											[attendeeId1]: {
-												"rev": 4,
-												"timestamp": clock.now - 10,
-												"value": toOpaqueJson("invalid2"),
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
+						datastoreUpdateSignal(clock, {
+							"rev": 4,
+							"timestamp": clock.now,
+							"value": toOpaqueJson("also-invalid"),
+						}),
 						false,
 					);
 
