@@ -125,24 +125,27 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 					current !== undefined,
 					"there must be an inflight commit for each resubmit commit",
 				);
-				const enrichedChange = checkout.updateChangeEnrichments(
-					commit.change,
-					commit.revision,
-				);
-				const enrichedCommit = { ...commit, change: enrichedChange };
+				current.data.commit = commit;
+				if (current.data.lastEnrichment < this.currentEnrichment) {
+					const enrichedChange = checkout.updateChangeEnrichments(
+						commit.change,
+						commit.revision,
+					);
+					const enrichedCommit = { ...commit, change: enrichedChange };
 
-				// this is an optimization to avoid applying changes that will
-				// never be leveraged. specifically, we only apply if
-				// subsequent commits also need enrichment
-				if (
-					current.next !== undefined &&
-					current.next.data.lastEnrichment < this.currentEnrichment
-				) {
-					checkout.applyTipChange(enrichedChange, commit.revision);
+					// this is an optimization to avoid applying changes that will
+					// never be leveraged. specifically, we only apply if
+					// subsequent commits also need enrichment
+					if (
+						current.next !== undefined &&
+						current.next.data.lastEnrichment < this.currentEnrichment
+					) {
+						checkout.applyTipChange(enrichedChange, commit.revision);
+					}
+
+					current.data.commit = enrichedCommit;
+					current.data.lastEnrichment = this.currentEnrichment;
 				}
-
-				current.data.commit = enrichedCommit;
-				current.data.lastEnrichment = this.currentEnrichment;
 				current = current.next;
 			}
 			checkout[disposeSymbol]();
