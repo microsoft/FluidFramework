@@ -59,6 +59,19 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		this.inFlightQueue.push(commit);
 	}
 
+	public onCommitRollback(commit: GraphCommit<TChange>): void {
+		assert(
+			this.inFlightQueue.length > 0 &&
+				commit.revision === this.inFlightQueue[this.inFlightQueue.length - 1]?.revision,
+			"must rollback latest commit in the in flight queue",
+		);
+
+		if (this.latestInFlightCommitWithStaleEnrichments === this.inFlightQueue.length - 1) {
+			this.latestInFlightCommitWithStaleEnrichments -= 1;
+		}
+		this.inFlightQueue.pop();
+	}
+
 	public prepareForResubmit(toResubmit: readonly GraphCommit<TChange>[]): void {
 		assert(
 			!this.isInResubmitPhase,

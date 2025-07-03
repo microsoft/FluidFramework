@@ -130,6 +130,7 @@ export {
 	type FieldSchemaAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
+	type TreeRecordNodeUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -196,6 +197,8 @@ export {
 	type JsonRefPath,
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
@@ -209,6 +212,7 @@ export {
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
 	type SimpleObjectFieldSchema,
+	type SimpleRecordNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
 	type ReadonlyArrayNode,
@@ -249,6 +253,11 @@ export {
 	type ObjectFromSchemaRecord,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
+	RecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	type TreeRecordNode,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,

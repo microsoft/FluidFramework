@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { SchemaFactory } from "./simple-tree/index.js";
+import { SchemaFactory, SchemaFactoryAlpha } from "./simple-tree/index.js";
 import type {
 	AllowedTypes,
 	FixRecursiveArraySchema,
@@ -22,7 +22,7 @@ import type {
 	// #endregion
 } from "./simple-tree/index.js";
 
-const sf = new SchemaFactory("com.fluidframework.json");
+const sf = new SchemaFactoryAlpha("com.fluidframework.json");
 
 /**
  * Utilities for storing JSON data in {@link TreeNode}s.
@@ -80,7 +80,7 @@ export namespace JsonAsTree {
 	 * Do not use. Exists only as a workaround for {@link https://github.com/microsoft/TypeScript/issues/59550} and {@link https://github.com/microsoft/rushstack/issues/4429}.
 	 * @system @alpha
 	 */
-	export const _APIExtractorWorkaroundObjectBase = sf.mapRecursive("object", Tree);
+	export const _APIExtractorWorkaroundObjectBase = sf.recordRecursive("object", Tree);
 
 	/**
 	 * Arbitrary JSON object as a {@link TreeNode}.

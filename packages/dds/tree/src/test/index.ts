@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { useTree } from "./utilities.js";
+export { baseTreeModel } from "./shared-tree/index.js";
