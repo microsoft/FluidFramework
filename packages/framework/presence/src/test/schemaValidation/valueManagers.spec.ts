@@ -13,7 +13,7 @@ import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../../internalUtils.js";
 import type { createPresenceManager } from "../../presenceManager.js";
-import { SignalMessages } from "../../protocol.js";
+import type { SignalMessages } from "../../protocol.js";
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
 import {
 	assertFinalExpectations,
