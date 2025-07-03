@@ -83,10 +83,7 @@ export function create(
 				(tokens, req, res) => {
 					const tenantId = getTenantIdFromRequest(req.params);
 					const authHeader = req.get("Authorization");
-					const documentId = getDocumentIdFromRequest(
-							tenantId,
-							authHeader,
-						);
+					const documentId = getDocumentIdFromRequest(tenantId, authHeader);
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,

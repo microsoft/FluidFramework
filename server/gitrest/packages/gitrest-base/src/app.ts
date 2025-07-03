@@ -67,11 +67,8 @@ export function create(
 				"gitrest",
 				(tokens, req, res) => {
 					const params = getRepoManagerParamsFromRequest(req);
-					const tenantId = getTenantIdForGitRestRequest(
-							params,
-							req,
-						);
-					const documentId = params.storageRoutingId?.documentId
+					const tenantId = getTenantIdForGitRestRequest(params, req);
+					const documentId = params.storageRoutingId?.documentId;
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
