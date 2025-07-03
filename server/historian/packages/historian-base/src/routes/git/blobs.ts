@@ -85,7 +85,7 @@ export function create(
 			cache,
 			ephemeralDocumentTTLSec,
 		});
-		return service.getBlob(sha, useCache);
+		return service.getBlob(tenantId, sha, useCache);
 	}
 
 	/**
