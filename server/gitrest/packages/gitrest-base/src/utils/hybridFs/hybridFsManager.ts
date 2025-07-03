@@ -103,10 +103,12 @@ export class HybridFs implements IFileSystemPromises {
 		...args: Parameters<typeof fsPromises.mkdir>
 	): ReturnType<typeof fsPromises.mkdir> {
 		this.validFilePath(args[0]);
-		const l1Result = await this.l1FileSystem.mkdir(...args);
-		Lumberjack.info("HybridFs: l1Result for mkdir", { l1Result });
+		// Some fs like redisfs create a set of directories due to the way they are structured, so result is void here
+		await this.l1FileSystem.mkdir(...args);
+		Lumberjack.info("HybridFs mkdir called on l1FileSystem, dispatching to l2FileSystem");
 		await this.l2AsyncQueue.add("mkdir", { args, fileSystemParams: this.params });
-		return l1Result;
+		Lumberjack.info("HybridFs mkdir dispatched to l2FileSystem");
+		return;
 	}
 
 	public async rmdir(

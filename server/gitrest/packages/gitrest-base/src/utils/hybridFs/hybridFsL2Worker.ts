@@ -18,6 +18,12 @@ export function setupHybridFsHandler(
 		async (job) => {
 			const { args, fsParams }: { args: unknown; fsParams: IFileSystemManagerParams } =
 				job.data;
+			Lumberjack.info("HybridFsWorker: l2AsyncWorker job started", {
+				jobId: job.id,
+				operation: job.name,
+				args,
+				fsParams,
+			});
 			const operation = job.name;
 			const l2Fs = l2FileSystem.create(fsParams).promises;
 			switch (operation) {
