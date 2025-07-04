@@ -15,6 +15,8 @@ import {
 	baseIntervalModel,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/sequence/internal/test";
+// eslint-disable-next-line import/no-internal-modules
+import { baseTreeModel } from "@fluidframework/tree/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
@@ -68,4 +70,5 @@ export const ddsModelMap = generateSubModelMap(
 	baseSharedStringModel,
 	baseIntervalModel,
 	baseSharedMatrixModel,
+	baseTreeModel,
 );
