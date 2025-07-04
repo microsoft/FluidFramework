@@ -390,6 +390,11 @@ export interface MenuProps {
 	 * The set of Containers to offer as selection options.
 	 */
 	containers?: ContainerKey[];
+
+	/**
+	 * The set of Data Objects to offer as selection options.
+	 */
+	dataObjects?: ContainerKey[];
 }
 /**
  * {@link ContainersMenuSection} input props.
@@ -483,7 +488,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
  * Menu component for {@link DevtoolsView}.
  */
 export function Menu(props: MenuProps): React.ReactElement {
-	const { currentSelection, setSelection, supportedFeatures, containers } = props;
+	const { currentSelection, setSelection, supportedFeatures, containers, dataObjects } = props;
 	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
@@ -542,18 +547,41 @@ export function Menu(props: MenuProps): React.ReactElement {
 			}
 			key="home-menu-section"
 		/>,
-		<ContainersMenuSection
-			key="containers-menu-section"
-			containers={containers}
-			currentContainerSelection={
-				currentSelection?.type === "containerMenuSelection"
-					? currentSelection.containerKey
-					: undefined
-			}
-			selectContainer={onContainerClicked}
-			isDataObjects={supportedFeatures.dataObjects === true}
-		/>,
 	);
+
+	// Show Containers section if there are containers or if data objects feature is not enabled
+	if (containers && containers.length > 0) {
+		menuSections.push(
+			<ContainersMenuSection
+				key="containers-menu-section"
+				containers={containers}
+				currentContainerSelection={
+					currentSelection?.type === "containerMenuSelection"
+						? currentSelection.containerKey
+						: undefined
+				}
+				selectContainer={onContainerClicked}
+				isDataObjects={false}
+			/>,
+		);
+	}
+
+	// Show Data Objects section if there are data objects
+	if (dataObjects && dataObjects.length > 0) {
+		menuSections.push(
+			<ContainersMenuSection
+				key="data-objects-menu-section"
+				containers={dataObjects}
+				currentContainerSelection={
+					currentSelection?.type === "containerMenuSelection"
+						? currentSelection.containerKey
+						: undefined
+				}
+				selectContainer={onContainerClicked}
+				isDataObjects={true}
+			/>,
+		);
+	}
 
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
 	if (supportedFeatures.telemetry === true) {

@@ -7,7 +7,6 @@ import { ModelContainerRuntimeFactory } from "@fluid-example/example-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { IDevtoolsLogger, IFluidDevtools } from "@fluidframework/devtools-core/internal";
 
 import { AppData } from "./FluidObject.js";
 
@@ -32,19 +31,13 @@ const collaborativeObjId = "collaborative-obj";
  * The runtime factory for the app.
  */
 export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
-	private readonly logger?: IDevtoolsLogger;
-	private readonly devtools?: IFluidDevtools;
-
-	public constructor(logger?: IDevtoolsLogger, devtools?: IFluidDevtools) {
+	public constructor() {
 		super(
 			new Map([AppData.getFactory().registryEntry]), // registryEntries
 			{
 				enableRuntimeIdCompressor: "on",
 			},
-		);
-		this.logger = logger;
-		this.devtools = devtools;
-	}
+		);	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
@@ -70,10 +63,6 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 		}
 
 		const appData = await entryPointHandle.get();
-
-		if (this.devtools && this.logger) {
-			appData.registerDevtools(this.devtools, this.logger);
-		}
 
 		return new AppModel(appData, container);
 	}

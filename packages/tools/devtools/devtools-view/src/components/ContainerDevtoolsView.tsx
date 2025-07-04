@@ -161,6 +161,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 
 	React.useEffect(() => {
 		// Use the container's dataObjects feature flag to determine if this is a data object
+		// Default to false for backward compatibility if the flag is not present
 		setIsDataObject(supportedFeatures.dataObjects === true);
 	}, [supportedFeatures.dataObjects]);
 

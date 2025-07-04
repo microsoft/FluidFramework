@@ -92,10 +92,28 @@ function useContainerInfo(
 			}
 
 			setSharedContainerInfo(containerInfo);
+			devtools.registerContainerDevtools({
+				container: containerInfo.container,
+				containerKey: sharedContainerKey,
+				containerData: { appData: containerInfo.appData },
+			});
+			devtools.registerDataObject({
+				dataObject: containerInfo.appData.treeDataObject,
+				label: `${sharedContainerKey} - AppDataTree`,
+			});
 		}, console.error);
 
 		getPrivateContainerData().then((containerInfo) => {
 			setPrivateContainerInfo(containerInfo);
+			devtools.registerContainerDevtools({
+				container: containerInfo.container,
+				containerKey: privateContainerKey,
+				containerData: { appData: containerInfo.appData },
+			});
+			devtools.registerDataObject({
+				dataObject: containerInfo.appData.treeDataObject,
+				label: `${privateContainerKey} - AppDataTree`,
+			});
 		}, console.error);
 
 		return (): void => {
@@ -180,11 +198,11 @@ export function App(): React.ReactElement {
 	// Initialize the Devtools logger
 	const logger = React.useMemo(() => createDevtoolsLogger(), []);
 
+	// Initialize the Fluid Container loader
+	const loader = React.useMemo(() => createLoader(logger), [logger]);
+
 	// Initialize Devtools
 	const devtools = React.useMemo(() => initializeDevtools({ logger }), [logger]);
-
-	// Initialize the Fluid Container loader
-	const loader = React.useMemo(() => createLoader(logger, devtools), [logger, devtools]);
 
 	React.useEffect(() => {
 		// Dispose of devtools resources on teardown to ensure message listeners are notified.

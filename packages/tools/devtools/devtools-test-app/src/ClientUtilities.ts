@@ -42,7 +42,7 @@ export function createLoader(
 	logger?: IDevtoolsLogger,
 	devtools?: IFluidDevtools,
 ): SessionStorageModelLoader<IAppModel> {
-	const codeLoader = new StaticCodeLoader(new RuntimeFactory(logger, devtools));
+	const codeLoader = new StaticCodeLoader(new RuntimeFactory());
 	const loader = new SessionStorageModelLoader<IAppModel>(codeLoader, logger);
 
 	return loader;

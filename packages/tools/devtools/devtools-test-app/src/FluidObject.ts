@@ -96,6 +96,17 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 
 		this.treeView.root.items.set(id, todoItem);
 	}
+
+	/**
+	 * Sets the devtools and logger instances to be used by this AppData instance.
+	 * This method is called by the RuntimeFactory to inject the devtools from the React component.
+	 */
+	public registerDevtools(devtools: IFluidDevtools, logger: IDevtoolsLogger): void {
+		if (process.env.NODE_ENV === "development") {
+			console.log(`Running in development mode, registering ${AppDataTree.Name} with devtools!`);
+			devtools.registerDataObject({ dataObject: this });
+		}
+	}
 }
 
 /**
@@ -387,16 +398,5 @@ export class AppData extends DataObject {
 				},
 			}),
 		);
-	}
-
-	/**
-	 * Sets the devtools and logger instances to be used by this AppData instance.
-	 * This method is called by the RuntimeFactory to inject the devtools from the React component.
-	 */
-	public registerDevtools(devtools: IFluidDevtools, logger: IDevtoolsLogger): void {
-		if (process.env.NODE_ENV === "development") {
-			console.log(`Running in development mode, registering ${AppData.Name} with devtools!`);
-			devtools.registerDataObject({ dataObject: this });
-		}
 	}
 }

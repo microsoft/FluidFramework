@@ -219,14 +219,18 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Posts a {@link ContainerList.Message} to the window (globalThis).
 	 */
 	private readonly postContainerList = (): void => {
-		const containers: ContainerKey[] = this.getAllContainerDevtools().map(
-			(containerDevtools) => containerDevtools.containerKey,
+		const containers: ContainerKey[] = this.getContainers().map(
+			(container) => container.containerKey,
+		);
+		const dataObjects: ContainerKey[] = this.getDataObjects().map(
+			(dataObject) => dataObject.containerKey,
 		);
 
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			ContainerList.createMessage({
 				containers,
+				dataObjects,
 			}),
 		);
 	};
@@ -408,6 +412,32 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
+	 * Gets all regular container devtools instances (not data objects).
+	 */
+	public getContainers(): readonly IContainerDevtools[] {
+		if (this.disposed) {
+			throw new UsageError(useAfterDisposeErrorText);
+		}
+
+		return [...this.containers.values()].filter(
+			(containerDevtools) => !this.isDataObject(containerDevtools.containerKey),
+		);
+	}
+
+	/**
+	 * Gets all data object devtools instances.
+	 */
+	public getDataObjects(): readonly IContainerDevtools[] {
+		if (this.disposed) {
+			throw new UsageError(useAfterDisposeErrorText);
+		}
+
+		return [...this.containers.values()].filter((containerDevtools) =>
+			this.isDataObject(containerDevtools.containerKey),
+		);
+	}
+
+	/**
 	 * Checks if a container was registered as a data object.
 	 * @param containerKey - The container key to check.
 	 * @returns `true` if the container was registered via `registerDataObject`, `false` otherwise.
@@ -463,14 +493,24 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
 		// Check if any containers were registered as data objects
-		const hasDataObjects = [...this.dataObjectRegistry.values()].some(Boolean);
+		const hasDataObjects = this.hasDataObjects();
 
 		return {
 			telemetry: this.logger !== undefined,
 			// Most work completed, but not ready to completely enable.
 			opLatencyTelemetry: true,
+			// Enable dataObjects feature if there are data objects registered
+			// This allows both containers and data objects to coexist
 			dataObjects: hasDataObjects,
 		};
+	}
+
+	/**
+	 * Checks if any data objects are registered with the devtools.
+	 * @returns `true` if data objects are registered, `false` otherwise.
+	 */
+	private hasDataObjects(): boolean {
+		return [...this.dataObjectRegistry.values()].some(Boolean);
 	}
 }
 
