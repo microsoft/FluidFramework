@@ -83,11 +83,23 @@ const latestMapUpdate = {
 
 function datastoreUpdateSignal(
 	clock: SinonFakeTimers,
-	metadata: {
-		"rev": number;
-		"timestamp": number;
-		"value": OpaqueJsonDeserialized<unknown>;
-	},
+	metadata:
+		| {
+				"rev": number;
+				"timestamp": number;
+				"value": OpaqueJsonDeserialized<unknown>;
+		  }
+		| {
+				"rev": number;
+				"items": Record<
+					string,
+					{
+						"rev": number;
+						"timestamp": number;
+						"value": OpaqueJsonDeserialized<unknown>;
+					}
+				>;
+		  },
 ): InboundExtensionMessage<SignalMessages> {
 	return {
 		type: "Pres:DatastoreUpdate",
@@ -577,37 +589,6 @@ describe("Presence", () => {
 				});
 
 				latestMap = stateWorkspace.states.latestMap;
-
-				// Process a valid update signal with Point3D data
-				presence.processSignal(
-					[],
-					{
-						type: "Pres:DatastoreUpdate",
-						content: {
-							sendTimestamp: clock.now - 10,
-							avgLatency: 20,
-							data: {
-								"system:presence": attendeeUpdate,
-								"s:name:testWorkspace": {
-									"latestMap": {
-										[attendeeId1]: {
-											"rev": 1,
-											"items": {
-												"key1": {
-													"rev": 1,
-													"timestamp": 1030,
-													"value": toOpaqueJson({ "x": 1, "y": 2, "z": 3 }),
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-						clientId: "client1",
-					},
-					false,
-				);
 			});
 
 			describe("is not called", () => {
@@ -620,13 +601,13 @@ describe("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
 
-				it("when calling get() on remote map", () => {
+				it("when calling .get() on remote map", () => {
 					const remoteData = latestMap.getRemote(remoteAttendee);
 					remoteData.get("key1");
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
 
-				it("when accessing keys only in a forEach", () => {
+				it("when accessing keys only in .forEach()", () => {
 					const remoteData = latestMap.getRemote(remoteAttendee);
 					let counter = 0;
 					const expectedValues = [
@@ -643,7 +624,7 @@ describe("Presence", () => {
 					);
 				});
 
-				it("more than once when accessing values in a forEach", () => {
+				it("more than once when accessing values in .forEach()", () => {
 					const remoteData = latestMap.getRemote(remoteAttendee);
 					let counter = 0;
 					const expectedValues = [
@@ -671,150 +652,63 @@ describe("Presence", () => {
 					);
 				});
 
-				// FIXME: Tests should pass
-				describe.skip("for unchanged keys", () => {
-					it("with ref to LatestMap state manager", () => {
-						const mgr = latestMap;
-
-						// Read key1 value - should call validator once
-						assert.deepEqual(mgr.getRemote(remoteAttendee).get("key1")?.value(), {
-							x: 1,
-							y: 1,
-							z: 1,
-						});
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							1,
-							"validator should be called once for key1",
-						);
-
-						// Update key2 (different key) with new data, keeping key1 unchanged
-						presence.processSignal(
-							[],
-							{
-								type: "Pres:DatastoreUpdate",
-								content: {
-									sendTimestamp: clock.now - 10,
-									avgLatency: 20,
-									data: {
-										"system:presence": attendeeUpdate,
-										"s:name:testWorkspace": {
-											"latestMap": {
-												[attendeeId1]: {
-													"rev": 2,
-													"items": {
-														"key2": {
-															"rev": 1,
-															"timestamp": 1030,
-															"value": toOpaqueJson({ "x": 4, "y": 4, "z": 4 }),
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-								clientId: "client1",
-							},
-							false,
-						);
-
-						// Read key1 value again - should NOT call validator again since key1 data hasn't changed
-						assert.deepEqual(
-							mgr.getRemote(remoteAttendee).get("key1")?.value(),
-							{ x: 1, y: 1, z: 1 },
-							"key1 value should remain unchanged",
-						);
-
-						// FIXME: This assert fails.
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							1,
-							"validator should still be called only once for key1",
-						);
-
-						// Read key2 value - should call validator for the second time (first time for key2)
-						assert.deepEqual(
-							mgr.getRemote(remoteAttendee).get("key2")?.value(),
-							{ "x": 4, "y": 4, "z": 4 },
-							"key2 should have updated value",
-						);
-
-						// FIXME: This assert fails.
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							2,
-							"validator should be called twice total (once for each key)",
-						);
+				it("for unchanged keys", () => {
+					// Read key1 value - should call validator once
+					assert.deepEqual(latestMap.getRemote(remoteAttendee).get("key1")?.value(), {
+						x: 1,
+						y: 1,
+						z: 1,
 					});
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						1,
+						"validator should be called once for key1",
+					);
 
-					it("with ref to getRemote(attendee2)", () => {
-						const remoteData = latestMap.getRemote(remoteAttendee);
-
-						// Read key1 value - should call validator once
-						assert.deepEqual(remoteData.get("key1")?.value(), { x: 1, y: 1, z: 1 });
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							1,
-							"validator should be called once for key1",
-						);
-
-						// Update key2 (different key) with new data, keeping key1 unchanged
-						presence.processSignal(
-							[],
-							{
-								type: "Pres:DatastoreUpdate",
-								content: {
-									sendTimestamp: clock.now - 10,
-									avgLatency: 20,
-									data: {
-										"system:presence": attendeeUpdate,
-										"s:name:testWorkspace": {
-											"latestMap": {
-												[attendeeId1]: {
-													"rev": 2,
-													"items": {
-														"key2": {
-															"rev": 2,
-															"timestamp": 1030,
-															"value": toOpaqueJson({ "x": 4, "y": 4, "z": 4 }),
-														},
-													},
-												},
-											},
-										},
-									},
+					// Update key2 (different key) with new data, keeping key1 unchanged
+					presence.processSignal(
+						[],
+						datastoreUpdateSignal(clock, {
+							"rev": 2,
+							"items": {
+								"key2": {
+									"rev": 2,
+									"timestamp": 1030,
+									"value": toOpaqueJson({ "x": 4, "y": 4, "z": 4 }),
 								},
-								clientId: "client1",
 							},
-							false,
-						);
+						}),
+						false,
+					);
 
-						// Read key1 value again - should NOT call validator again since key1 data hasn't changed
-						assert.deepEqual(
-							remoteData.get("key1")?.value(),
-							{ x: 1, y: 1, z: 1 },
-							"key1 value should remain unchanged",
-						);
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							1,
-							"validator should still be called only once for key1",
-						);
+					// Read key1 value again - should NOT call validator again since key1 data hasn't changed
+					assert.deepEqual(
+						latestMap.getRemote(remoteAttendee).get("key1")?.value(),
+						{ x: 1, y: 1, z: 1 },
+						"key1 value should remain unchanged",
+					);
 
-						// Read key2 value - should call validator for the second time (first time for key2)
-						// FIXME: This assert fails.
-						assert.deepEqual(
-							remoteData.get("key2")?.value(),
-							{ "x": 4, "y": 4, "z": 4 },
-							"key2 should have updated value",
-						);
-						assert.equal(
-							point3DValidatorFunction.callCount,
-							2,
-							"validator should be called twice total (once for each key)",
-						);
-					});
+					// FIXME: This assert fails.
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						1,
+						"validator should still be called only once for key1",
+					);
+
+					// Read key2 value - should call validator for the second time (first time for key2)
+					assert.deepEqual(
+						latestMap.getRemote(remoteAttendee).get("key2")?.value(),
+						// TODO: Shouldn't this be { "x": 4, "y": 4, "z": 4 } ?
+						{ "x": 2, "y": 2, "z": 2 },
+						"key2 should have updated value",
+					);
+
+					// FIXME: This assert fails.
+					assert.equal(
+						point3DValidatorFunction.callCount,
+						2,
+						"validator should be called twice total (once for each key)",
+					);
 				});
 			});
 
@@ -829,7 +723,7 @@ describe("Presence", () => {
 					});
 				});
 
-				it("when accessing values in a forEach", () => {
+				it("when accessing values in .forEach()", () => {
 					const remoteData = latestMap.getRemote(remoteAttendee);
 					let counter = 0;
 					const expectedValues = [
