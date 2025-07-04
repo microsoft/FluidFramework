@@ -37,8 +37,7 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 			{
 				enableRuntimeIdCompressor: "on",
 			},
-		);
-	}
+		);	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}
@@ -63,6 +62,8 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 			throw new Error(`Default dataStore [${collaborativeObjId}] must exist`);
 		}
 
-		return new AppModel(await entryPointHandle.get(), container);
+		const appData = await entryPointHandle.get();
+
+		return new AppModel(appData, container);
 	}
 }

@@ -28,6 +28,10 @@ export interface DevtoolsFeatureFlags {
 	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid Op Latency telemetry events
 	 */
 	opLatencyTelemetry?: boolean;
+	/**
+	 * Indicates that the {@link IFluidDevtools} instance supports data object registration and visualization.
+	 */
+	dataObjects?: boolean;
 }
 
 /**
@@ -51,4 +55,8 @@ export interface ContainerDevtoolsFeatureFlags {
 	 * Indicates that the Container Devtools supports visualizing the data associated with the Container.
 	 */
 	containerDataVisualization?: boolean;
+	/**
+	 * Indicates that this container was registered as a data object via registerDataObject().
+	 */
+	dataObjects?: boolean;
 }
