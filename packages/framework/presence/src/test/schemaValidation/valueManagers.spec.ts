@@ -697,7 +697,7 @@ describe("Presence", () => {
 					// Read key2 value - should call validator for the second time (first time for key2)
 					assert.deepEqual(
 						latestMap.getRemote(remoteAttendee).get("key2")?.value(),
-						// TODO: Shouldn't this be { "x": 4, "y": 4, "z": 4 } ?
+						// FIXME: Shouldn't this be { "x": 4, "y": 4, "z": 4 } ?
 						{ "x": 2, "y": 2, "z": 2 },
 						"key2 should have updated value",
 					);
