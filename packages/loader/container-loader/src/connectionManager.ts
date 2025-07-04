@@ -60,6 +60,7 @@ import {
 	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
+import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
@@ -1003,10 +1004,26 @@ export class ConnectionManager implements IConnectionManager {
 	 * @param error - Error reconnect information including whether or not to reconnect
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
-	private reconnectOnError(requestedMode: ConnectionMode, error: IAnyDriverError): void {
-		this.reconnect(requestedMode, { text: error.message, error }).catch(
-			this.props.closeHandler,
-		);
+	private reconnectOnError(
+		requestedMode: ConnectionMode,
+		error: IAnyDriverError | undefined,
+	): void {
+		const disconnectError = error
+			? {
+					text: error.message,
+					error,
+				}
+			: {
+					text: "Client closing delta connection",
+					error: createGenericNetworkError(
+						"Client closing delta connection",
+						{ canRetry: true },
+						{ driverVersion },
+					),
+				};
+		// We're passing this error to not change the old behavior.
+		// At some point we should try to refactor so there's no error passed to reconnect.
+		this.reconnect(requestedMode, disconnectError).catch(this.props.closeHandler);
 	}
 
 	/**
@@ -1241,9 +1258,11 @@ export class ConnectionManager implements IConnectionManager {
 	};
 
 	// Connection mode is always read on disconnect/error unless the system mode was write.
-	private readonly disconnectHandlerInternal = (disconnectReason: IAnyDriverError): void => {
+	private readonly disconnectHandlerInternal = (disconnectReason?: IAnyDriverError): void => {
 		// Note: we might get multiple disconnect calls on same socket, as early disconnect notification
 		// ("server_disconnect", ODSP-specific) is mapped to "disconnect"
+		// Before 2.50 we used to always include a genericNetworkError on the disconnect event even during clean
+		// disconnects; now we don't, but a full refactor/rename in this space was out of scope for that PR.
 		this.reconnectOnError(this.defaultReconnectionMode, disconnectReason);
 	};
 
