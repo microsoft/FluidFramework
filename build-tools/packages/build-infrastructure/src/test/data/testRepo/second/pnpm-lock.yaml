@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@fluid-tools/build-infrastructure':
+      '@tylerbu/build-infrastructure':
         specifier: link:../../../../../../build-infrastructure
         version: link:../../../../..
 
