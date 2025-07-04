@@ -36,11 +36,11 @@ export interface ISerializedHandle {
 }
 
 /**
- * Is the input object a @see ISerializedHandle?
+ * Narrow a value to {@link ISerializedHandle} by checking its type property.
  * @internal
  */
-export const isSerializedHandle = (value: any): value is ISerializedHandle =>
-	value?.type === "__fluid_handle__";
+export const isSerializedHandle = (value: unknown): value is ISerializedHandle =>
+	(value as { type?: string } | undefined)?.type === "__fluid_handle__";
 
 /**
  * @internal
