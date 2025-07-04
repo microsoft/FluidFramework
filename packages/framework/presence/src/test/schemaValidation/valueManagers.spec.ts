@@ -688,7 +688,6 @@ describe("Presence", () => {
 						"key1 value should remain unchanged",
 					);
 
-					// FIXME: This assert fails.
 					assert.equal(
 						point3DValidatorFunction.callCount,
 						1,
@@ -703,7 +702,6 @@ describe("Presence", () => {
 						"key2 should have updated value",
 					);
 
-					// FIXME: This assert fails.
 					assert.equal(
 						point3DValidatorFunction.callCount,
 						2,
