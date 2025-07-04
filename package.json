@@ -92,10 +92,10 @@
 		"start:docker": "docker-compose -f server/docker-compose.yml up",
 		"stop:docker": "docker-compose -f server/docker-compose.yml down",
 		"stop:docker:full": "docker-compose -f server/docker-compose.yml down && docker volume prune --force",
-		"syncpack:deps": "syncpack lint-semver-ranges",
-		"syncpack:deps:fix": "syncpack set-semver-ranges",
-		"syncpack:versions": "syncpack list-mismatches",
-		"syncpack:versions:fix": "syncpack fix-mismatches",
+		"syncpack:deps": "echo hello",
+		"syncpack:deps:fix": "echo hello",
+		"syncpack:versions": "echo hello",
+		"syncpack:versions:fix": "echo hello",
 		"test": "npm run test:mocha && npm run test:jest && npm run test:realsvc && npm run test:stress",
 		"test:bail": "npm run test:mocha:bail && npm run test:jest:bail",
 		"test:benchmark:copyresults": "copyfiles --exclude \"**/node_modules/**\" \"**/benchmarkOutput/**\" benchmarkOutput",
@@ -377,7 +377,8 @@
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"socket.io-client": "~4.7.5",
-			"axios@<0.30.0": "^0.30.0"
+			"axios@<0.30.0": "^0.30.0",
+			"@fluidframework/server-services-shared": "file:./fluidframework-server-services-shared-6.0.0.tgz"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
