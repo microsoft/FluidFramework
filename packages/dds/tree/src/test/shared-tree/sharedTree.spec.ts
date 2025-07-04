@@ -112,7 +112,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -153,15 +152,6 @@ function treeTestFactory(): ISharedTree {
 }
 
 describe("SharedTree", () => {
-	let debugAssertsDefault: boolean;
-	beforeEach(() => {
-		debugAssertsDefault = configureDebugAsserts(true);
-	});
-
-	afterEach(() => {
-		configureDebugAsserts(debugAssertsDefault);
-	});
-
 	describe("viewWith", () => {
 		it("initialize tree", () => {
 			const tree = treeTestFactory();
