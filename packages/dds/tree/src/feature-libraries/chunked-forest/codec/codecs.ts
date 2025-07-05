@@ -18,15 +18,43 @@ import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions } from "./format.js";
+import { EncodedFieldBatch, validVersions, type EncodedFieldBatchFormat } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+
+export interface IncrementalEncodingParameters {
+	/**
+	 * The data for fields that support incremental encoding during encoding should be stored here.
+	 */
+	readonly outputIncrementalFieldsBatch: Map<string, EncodedFieldBatchFormat>;
+	/**
+	 * A flag indicating whether all fields should be encoded irrespective of whether they have changed or not.
+	 * If true, all fields will be encoded in the batch, even if they have not changed since the last encoding.
+	 * Defaults to false.
+	 */
+	readonly fullTree: boolean;
+}
+
+export interface IncrementalDecodingParameters {
+	/**
+	 * The data for fields that support incremental encoding should be retrieved from here during decoding.
+	 */
+	readonly getIncrementalFieldBatch: (fieldKey: string) => EncodedFieldBatch;
+}
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * The parameters for incremental encoding. Must be provided if doing incremental encoding.
+	 */
+	readonly incrementalEncodingParams?: IncrementalEncodingParameters;
+	/**
+	 * The parameters for incremental decoding. Must be provided if the data was encoded with incremental encoding.
+	 */
+	readonly incrementalDecodingParams?: IncrementalDecodingParameters;
 }
 /**
  * @remarks
@@ -86,6 +114,7 @@ export function makeFieldBatchCodec(
 							context.schema.policy,
 							data,
 							context.idCompressor,
+							context.incrementalEncodingParams,
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
@@ -102,10 +131,14 @@ export function makeFieldBatchCodec(
 		},
 		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data, {
-				idCompressor: context.idCompressor,
-				originatorId: context.originatorId,
-			}).map((chunk) => chunk.cursor());
+			return decode(
+				data,
+				{
+					idCompressor: context.idCompressor,
+					originatorId: context.originatorId,
+				},
+				context.incrementalDecodingParams?.getIncrementalFieldBatch,
+			).map((chunk) => chunk.cursor());
 		},
 	});
 }
