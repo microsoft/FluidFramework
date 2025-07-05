@@ -138,6 +138,7 @@ export type {
 	ISharedDirectory,
 	ISharedDirectoryEvents,
 	ISharedMap,
+	ISharedMapCore,
 	ISharedMapEvents,
 	IValueChanged,
 } from "@fluidframework/map/internal";
