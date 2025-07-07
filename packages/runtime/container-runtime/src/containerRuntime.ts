@@ -1338,7 +1338,7 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
-	private readonly canSendSignals: boolean | undefined;
+	private readonly canSendSignals: boolean;
 
 	private consecutiveReconnects = 0;
 
