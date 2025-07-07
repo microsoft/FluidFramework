@@ -44,9 +44,18 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 * This is useful when runtime options are overridden and change the minimum version for collab.
 	 */
 	minVersionForCollabOverride?: MinimumVersionForCollab;
+	/**
+	 * Optional flag to indicate whether to use tree-based data objects.
+	 * If not provided, we default to false, i.e. to use a directory-based data object.
+	 */
+	useTreeBasedDataObject?: boolean;
 }): IRuntimeFactory {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
 	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
+	if (props.useTreeBasedDataObject) {
+		throw new Error("Tree-based data objects are not yet supported in DOProviderContainerRuntimeFactory.");
+	}
 
 	return new DOProviderContainerRuntimeFactory(
 		props.schema,
