@@ -400,8 +400,11 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection and close the socket.
 	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
+	 *
+	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
+	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 */
-	public dispose() {
+	public dispose(error?: Error) {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -409,17 +412,18 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		this.disconnect(
-			createGenericNetworkError(
-				// pre-0.58 error message: clientClosingConnection
-				"Client closing delta connection",
-				{ canRetry: true },
-				{ driverVersion },
-			),
-		);
+		const disconnectError = error
+			? createGenericNetworkError(
+					// pre-0.58 error message: clientClosingConnection
+					error.message,
+					{ canRetry: true },
+					{ driverVersion },
+				)
+			: undefined;
+		this.disconnect(disconnectError);
 	}
 
-	protected disconnect(err: IAnyDriverError) {
+	protected disconnect = (err?: IAnyDriverError) => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -449,13 +453,13 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-	}
+	};
 
 	/**
 	 * Disconnect from the websocket.
 	 * @param reason - reason for disconnect
 	 */
-	protected disconnectCore(err: IAnyDriverError) {
+	protected disconnectCore(err?: IAnyDriverError): void {
 		this.socket.disconnect();
 	}
 
