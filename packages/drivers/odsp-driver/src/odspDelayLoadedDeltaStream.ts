@@ -162,7 +162,6 @@ export class OdspDelayLoadedDeltaStream {
 					eventName: "FirstJoinSessionAttemptDetails",
 					details: {
 						requestWebsocketToken: requestWebsocketTokenFromJoinSession,
-						driverVersion,
 					},
 				});
 			}
