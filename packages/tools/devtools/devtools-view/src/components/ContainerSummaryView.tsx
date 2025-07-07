@@ -58,9 +58,7 @@ import { Waiting } from "./Waiting.js";
  */
 export type ContainerSummaryViewProps = HasContainerKey & {
 	/**
-	 * Whether this represents a data object instead of a container.
-	 * When true, action buttons (Connect/Disconnect/Close) will be hidden.
-	 * Defaults to false for backward compatibility.
+	 * {@inheritDoc @fluidframework/devtools-core#ContainerDevtoolsProps.isDataObject}
 	 */
 	isDataObject?: boolean;
 };

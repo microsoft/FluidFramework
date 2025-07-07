@@ -73,7 +73,9 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 
 	/**
 	 * (optional) Indicates whether the data was registered as a data object or as a container.
-	 * When true, the UI will show "Data Objects" instead of "Containers" and hide action buttons.
+	 * When true, the UI will:
+	 * - Show "Data Objects" instead of "Containers"
+	 * - Hide action buttons
 	 */
 	isDataObject?: boolean;
 

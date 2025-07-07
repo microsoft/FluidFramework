@@ -160,8 +160,9 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const [isDataObject, setIsDataObject] = React.useState<boolean>(false);
 
 	React.useEffect(() => {
-		// Use the container's dataObjects feature flag to determine if this is a data object
-		// Default to false for backward compatibility if the flag is not present
+		/**
+		 * Uses the {@link ContainerDevtoolsFeatureFlags.dataObjects} flag to determine if this is a data object.
+		 */
 		setIsDataObject(supportedFeatures.dataObjects === true);
 	}, [supportedFeatures.dataObjects]);
 
