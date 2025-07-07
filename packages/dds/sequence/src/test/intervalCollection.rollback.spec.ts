@@ -340,4 +340,40 @@ describe("SharedString IntervalCollection rollback", () => {
 			"interval start reflects remote change after rollback",
 		);
 	});
+
+	it("should not restore interval if both clients delete and one rolls back after remote delete", () => {
+		const { sharedString, containerRuntimeFactory, containerRuntime, collection } =
+			setupRollbackTest();
+		// Create a second client
+		const { containerRuntime: containerRuntime2, collection: collection2 } =
+			createAdditionalClient(containerRuntimeFactory);
+
+		sharedString.insertText(0, "abcde");
+		// Client 1 adds an interval
+		const interval1 = collection.add({ start: 0, end: 3 });
+		const intervalId = interval1.getIntervalId();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		// Both clients delete the interval locally (not flushed yet)
+		collection.removeIntervalById(intervalId);
+		collection2.removeIntervalById(intervalId);
+
+		// Client 2 flushes its delete
+		containerRuntime2.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		// Client 1 rolls back its local delete after seeing remote delete
+		containerRuntime.rollback?.();
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		// The interval should not be restored, as it was deleted remotely
+		const found = collection.getIntervalById(intervalId);
+		assert.strictEqual(
+			found,
+			undefined,
+			"Interval should not be restored after remote delete and rollback",
+		);
+	});
 });

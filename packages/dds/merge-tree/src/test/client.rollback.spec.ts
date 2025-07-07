@@ -634,4 +634,22 @@ describe("client.rollback", () => {
 		}
 		logger.validate({ baseText: "BBBBBAAAAA" });
 	});
+	it("should not restore text if both clients delete and one rolls back after remote delete", () => {
+		const clients = createClientsAtInitialState({ initialState: "0123456789" }, "A", "B");
+		const logger = new TestClientLogger(clients.all);
+		let seq = 0;
+
+		// Both clients delete the same range locally (not yet sequenced)
+		const delA = clients.A.removeRangeLocal(1, 4); // deletes "123"
+		const delB = clients.B.removeRangeLocal(1, 4); // deletes "123"
+
+		// Client B flushes its delete (becomes sequenced)
+		const msgB = clients.B.makeOpMessage(delB, ++seq);
+		for (const c of clients.all) c.applyMsg(msgB);
+
+		// Client A attempts to rollback its local delete after seeing remote delete
+		clients.A.rollback(delA, clients.A.peekPendingSegmentGroups());
+
+		logger.validate({ baseText: "0456789" });
+	});
 });
