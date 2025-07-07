@@ -38,9 +38,7 @@ export interface ContainerInfo {
 /**
  * Creates a new Container from the provided client and container schema.
  */
-export function createLoader(
-	logger?: IDevtoolsLogger,
-): SessionStorageModelLoader<IAppModel> {
+export function createLoader(logger?: IDevtoolsLogger): SessionStorageModelLoader<IAppModel> {
 	const codeLoader = new StaticCodeLoader(new RuntimeFactory());
 	const loader = new SessionStorageModelLoader<IAppModel>(codeLoader, logger);
 
