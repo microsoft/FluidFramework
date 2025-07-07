@@ -85,8 +85,8 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	 */
 	nodeChanged: (
 		data: NodeChangedData<TNode> &
-			// For object and Map nodes, make properties specific to them required instead of optional:
-			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
+			// Make the properties of object, map, and record nodes required:
+			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
 				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
 				: unknown),
 	) => void;

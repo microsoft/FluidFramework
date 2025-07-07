@@ -159,7 +159,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_SharedObject": {
+				"backCompat": false
+			},
+			"Class_SharedObjectCore": {
+				"backCompat": false
+			},
+			"ClassStatics_SharedObject": {
+				"backCompat": false
+			},
+			"ClassStatics_SharedObjectCore": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

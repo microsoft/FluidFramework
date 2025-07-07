@@ -38,7 +38,7 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { getPresence, getPresenceAlpha } from "./experimentalAccess.js";
+export { getPresence, getPresenceAlpha } from "./getPresence.js";
 
 export {
 	getPresenceViaDataObject,
@@ -61,7 +61,7 @@ export type {
 } from "./latestMapValueManager.js";
 export type {
 	Latest,
-	// LatestArguments,
+	LatestArguments,
 	LatestArgumentsRaw,
 	LatestEvents,
 	LatestFactory,
