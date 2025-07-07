@@ -163,7 +163,7 @@ function unhydratedFlexTreeFromInsertableNode(
 			result = objectToFlexContent(data, schema);
 			break;
 		case NodeKind.Record:
-			assert(isRecordNodeSchema(schema), "Expected a Record schema.");
+			assert(isRecordNodeSchema(schema), 0xbdd /* Expected a Record schema. */);
 			result = recordToFlexContent(data, schema);
 			break;
 		default:
