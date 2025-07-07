@@ -73,7 +73,10 @@ export class DecomposedContainer
 	public constructor(runtime: IFluidDataStoreRuntime) {
 		super();
 		this.runtime = runtime;
-		// TODO: Figure out how to handle "closed" state.
+
+		/**
+		 * TODO: Investigate how to map {@link IContainerEvents.closed} event
+		 */
 		runtime.on("attached", this.attachedHandler);
 		runtime.on("connected", this.connectedHandler);
 		runtime.on("disconnected", this.disconnectedHandler);
@@ -102,7 +105,7 @@ export class DecomposedContainer
 	}
 
 	public get connectionState(): ConnectionState {
-		// TODO: Figure out if this is an accurate representation of the connection state.
+		// TODO: Investigate if this is an accurate mapping of the connection state.
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 

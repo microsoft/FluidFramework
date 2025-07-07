@@ -37,7 +37,8 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 			{
 				enableRuntimeIdCompressor: "on",
 			},
-		);	}
+		);
+	}
 
 	/**
 	 * {@inheritDoc ModelContainerRuntimeFactory.containerInitializingFirstTime}

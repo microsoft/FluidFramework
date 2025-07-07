@@ -103,7 +103,9 @@ export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
 	 */
 	public registerDevtools(devtools: IFluidDevtools, logger: IDevtoolsLogger): void {
 		if (process.env.NODE_ENV === "development") {
-			console.log(`Running in development mode, registering ${AppDataTree.Name} with devtools!`);
+			console.log(
+				`Running in development mode, registering ${AppDataTree.Name} with devtools!`,
+			);
 			devtools.registerDataObject({ dataObject: this });
 		}
 	}
