@@ -130,9 +130,9 @@ export type MenuSelection =
 const getContainerListMessage = GetContainerList.createMessage();
 
 /**
- * A refresh button to retrieve the latest list of containers.
+ * A refresh button to retrieve the latest list of containers or data objects.
  */
-function RefreshButton(props?: { tooltip?: string }): React.ReactElement {
+function RefreshButton(props?: { label?: string }): React.ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
 
@@ -142,6 +142,9 @@ function RefreshButton(props?: { tooltip?: string }): React.ReactElement {
 		cursor: "pointer",
 	};
 
+	const refreshTooltip =
+		props?.label === undefined ? "Refresh Containers list" : `Refresh ${props.label} list`;
+
 	function handleRefreshClick(): void {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
@@ -149,12 +152,12 @@ function RefreshButton(props?: { tooltip?: string }): React.ReactElement {
 	}
 
 	return (
-		<Tooltip content={props?.tooltip ?? "Refresh Containers list"} relationship="label">
+		<Tooltip content={refreshTooltip} relationship="label">
 			<Button
 				icon={<ArrowSync24Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
-				aria-label={props?.tooltip ?? "Refresh Containers list"}
+				aria-label={refreshTooltip}
 			></Button>
 		</Tooltip>
 	);
@@ -424,10 +427,10 @@ interface ContainersMenuSectionProps {
 }
 
 /**
- * Displays the Containers menu section, allowing the user to select the Container to display.
+ * Displays the Containers menu section, allowing the user to select the Container or Data Object to display.
  *
- * @remarks Displays a spinner while the Container list is being loaded (if the list is undefined),
- * and displays a note when there are no registered Containers (if the list is empty).
+ * @remarks Displays a spinner while the Container or Data Object list is being loaded (if the list is undefined),
+ * and displays a note when there are no registered Containers or Data Objects (if the list is empty).
  */
 function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
 	const {
@@ -438,19 +441,12 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	} = props;
 
 	const sectionLabel = isDataObjects ? "Data Objects" : "Containers";
-	const refreshTooltip = isDataObjects
-		? "Refresh Data Objects list"
-		: "Refresh Containers list";
-	const waitingLabel = isDataObjects
-		? "Fetching Data Objects list"
-		: "Fetching Container list";
-	const noItemsMessage = isDataObjects ? "No Data Objects found." : "No Containers found.";
 
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
-		containerSectionInnerView = <Waiting label={waitingLabel} />;
+		containerSectionInnerView = <Waiting label={`Fetching ${sectionLabel} list`} />;
 	} else if (containers.length === 0) {
-		containerSectionInnerView = <div>{noItemsMessage}</div>;
+		containerSectionInnerView = <div>{`No ${sectionLabel} found.`}</div>;
 	} else {
 		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
@@ -474,7 +470,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 			header={
 				<MenuSectionLabelHeader
 					label={sectionLabel}
-					icon={<RefreshButton tooltip={refreshTooltip} />}
+					icon={<RefreshButton label={sectionLabel} />}
 				/>
 			}
 			key="container-selection-menu-section"
