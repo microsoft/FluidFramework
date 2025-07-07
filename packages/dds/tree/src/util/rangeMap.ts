@@ -255,9 +255,9 @@ export class RangeMap<K, V> {
 
 		// TODO: Is there a good pattern that lets us make `tree` readonly?
 		merged.tree = a.tree.clone();
-		for (const [key, value] of b.tree.entries()) {
+		for (const entry of b.entries()) {
 			// TODO: Handle key collisions
-			merged.tree.set(key, value);
+			merged.set(entry.start, entry.length, entry.value);
 		}
 
 		return merged;

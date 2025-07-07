@@ -3761,7 +3761,7 @@ export function normalizeFieldId(
  */
 function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
 	let currentId = nodeId;
-	let count = 0;
+	let cycleProbeId: NodeId | undefined = nodeId;
 
 	// eslint-disable-next-line no-constant-condition
 	while (true) {
@@ -3770,9 +3770,17 @@ function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>)
 			return currentId;
 		}
 
-		assert(count++ < 10, "Long alias chain");
-
 		currentId = dealiased;
+
+		if (cycleProbeId !== undefined) {
+			cycleProbeId = getFromChangeAtomIdMap(nodeAliases, cycleProbeId);
+		}
+
+		if (cycleProbeId !== undefined) {
+			cycleProbeId = getFromChangeAtomIdMap(nodeAliases, cycleProbeId);
+		}
+
+		assert(!areEqualChangeAtomIdOpts(cycleProbeId, currentId), "Alias cycle detected");
 	}
 }
 
