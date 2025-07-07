@@ -11,6 +11,7 @@ import {
 	ISequencedOperationMessage,
 	ITenantManager,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * @internal
@@ -81,6 +82,13 @@ export class DeltaService implements IDeltaService {
 			const size = Buffer.byteLength(JSON.stringify(delta.operation), "utf8");
 
 			if (maxSizeBytes !== undefined && totalSize + size > maxSizeBytes) {
+				Lumberjack.error("queryDeltas: response size limit exceeded", {
+					collectionName,
+					query,
+					opsReturned: result.length, // The number of ops that were successfully added to the result before hitting the size limit.
+					totalSizeBytes: totalSize,
+					maxSizeBytes,
+				});
 				break;
 			}
 
