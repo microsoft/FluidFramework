@@ -71,6 +71,10 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return this._getConnected();
 	}
 
+	public get canSendSignals(): boolean {
+		return this._canSendSignals();
+	}
+
 	/**
 	 * The compatibility details of the Loader layer that is exposed to the Runtime layer
 	 * for validating Runtime-Loader compatibility.
@@ -124,6 +128,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
+		private readonly _canSendSignals: () => boolean,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,
 		public readonly taggedLogger: ITelemetryLoggerExt,

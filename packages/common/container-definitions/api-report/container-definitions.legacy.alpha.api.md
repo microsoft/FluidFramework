@@ -128,6 +128,8 @@ export interface IContainerContext {
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
     // (undocumented)
+    readonly canSendSignals?: boolean;
+    // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
     readonly clientId: string | undefined;

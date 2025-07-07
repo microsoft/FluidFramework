@@ -157,6 +157,7 @@ export interface IContainerContext {
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
+	readonly canSendSignals?: boolean;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
