@@ -141,7 +141,6 @@ export class OdspDelayLoadedDeltaStream {
 			this.currentConnection === undefined,
 			0x4ad /* Should not be called when connection is already present! */,
 		);
-
 		// Attempt to connect twice, in case we used expired token.
 		return getWithRetryForTokenRefresh<IDocumentDeltaConnection>(async (options) => {
 			// Presence of getWebsocketToken callback dictates whether callback is used for fetching
