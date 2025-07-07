@@ -63,8 +63,6 @@ export class RuntimeFactory extends ModelContainerRuntimeFactory<IAppModel> {
 			throw new Error(`Default dataStore [${collaborativeObjId}] must exist`);
 		}
 
-		const appData = await entryPointHandle.get();
-
-		return new AppModel(appData, container);
+		return new AppModel(await entryPointHandle.get(), container);
 	}
 }
