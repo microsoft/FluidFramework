@@ -1396,7 +1396,7 @@ export class IntervalCollection
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
 
 		if (local) {
-			assert(localOpMetadata !== undefined, "local must have metadata");
+			assert(localOpMetadata !== undefined, 0xbd4 /* local must have metadata */);
 			const { interval } = localOpMetadata;
 			interval.ackPropertiesChange(properties, op);
 

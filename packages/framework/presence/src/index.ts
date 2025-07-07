@@ -61,7 +61,7 @@ export type {
 } from "./latestMapValueManager.js";
 export type {
 	Latest,
-	// LatestArguments,
+	LatestArguments,
 	LatestArgumentsRaw,
 	LatestEvents,
 	LatestFactory,
