@@ -832,16 +832,17 @@ export class IntervalCollection
 					? interval.changeProperties(properties, undefined, true)
 					: undefined;
 				if (localOpMetadata.endpointChangesNode !== undefined) {
-					this.localCollection?.removeExistingInterval(interval);
-					assert(previous !== undefined, "must have existed to change");
-					this.localCollection?.add(previous);
-					this.emitChange(previous, interval, true, true);
-				}
-				if (previous !== interval) {
-					interval.dispose();
-				}
-				if (changeProperties) {
-					this.emit("propertyChanged", previous, deltaProps, true, undefined);
+					if (previous !== undefined) {
+						this.localCollection?.removeExistingInterval(interval);
+						this.localCollection?.add(previous);
+						this.emitChange(previous, interval, true, true);
+					}
+					if (previous !== interval) {
+						interval.dispose();
+					}
+					if (changeProperties) {
+						this.emit("propertyChanged", previous, deltaProps, true, undefined);
+					}
 				}
 				break;
 			}
