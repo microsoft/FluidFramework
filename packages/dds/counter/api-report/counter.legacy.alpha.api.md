@@ -4,22 +4,22 @@
 
 ```ts
 
-// @alpha
+// @alpha @legacy
 export interface ISharedCounter extends ISharedObject<ISharedCounterEvents> {
     increment(incrementAmount: number): void;
     value: number;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ISharedCounterEvents extends ISharedObjectEvents {
     // @eventProperty
     (event: "incremented", listener: (incrementAmount: number, newValue: number) => void): any;
 }
 
-// @alpha
+// @alpha @legacy
 export const SharedCounter: ISharedObjectKind<ISharedCounter> & SharedObjectKind<ISharedCounter>;
 
-// @alpha
+// @alpha @legacy
 export type SharedCounter = ISharedCounter;
 
 ```

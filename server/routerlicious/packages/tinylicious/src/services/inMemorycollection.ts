@@ -47,6 +47,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			throw new Error("Not found");
 		}
+		// eslint-disable-next-line import/namespace
 		_.extend(value, set);
 	}
 
@@ -56,6 +57,7 @@ export class Collection<T> implements ICollection<T> {
 			this.collection.push(set);
 		}
 
+		// eslint-disable-next-line import/namespace
 		_.extend(value, set);
 	}
 

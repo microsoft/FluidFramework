@@ -8,6 +8,7 @@ import {
 	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
@@ -16,10 +17,13 @@ import {
 	type StableNodeIdentifier,
 } from "../../../feature-libraries/index.js";
 import {
+	type InsertableField,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
 	isTreeNode,
 	type NodeFromSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
+	toStoredSchema,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -28,8 +32,15 @@ import {
 	TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
-import { chunkFromJsonableTrees, getView, validateUsageError } from "../../utils.js";
-import { getViewForForkedBranch, hydrate } from "../utils.js";
+import {
+	checkoutWithContent,
+	chunkFromJsonableTrees,
+	fieldCursorFromInsertable,
+	getView,
+	TestTreeProviderLite,
+	validateUsageError,
+} from "../../utils.js";
+import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
@@ -45,9 +56,14 @@ import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
 import { testSimpleTrees } from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
-import { TreeAlpha } from "../../../shared-tree/index.js";
+import {
+	SchematizingSimpleTreeView,
+	TreeAlpha,
+	type TreeCheckout,
+	type TreeStoredContent,
+} from "../../../shared-tree/index.js";
 
-const schema = new SchemaFactory("com.example");
+const schema = new SchemaFactoryAlpha("com.example");
 
 class Point extends schema.object("Point", {}) {}
 
@@ -159,39 +175,104 @@ describe("treeNodeApi", () => {
 		});
 	});
 
-	it("key", () => {
-		class Child extends schema.object("Child", {
-			x: Point,
-			y: schema.optional(Point, { key: "stable-y" }),
-		}) {}
-		const Root = schema.array(Child);
-		const config = new TreeViewConfiguration({ schema: Root });
-		const view = getView(config);
-		view.initialize([
-			{ x: {}, y: undefined },
-			{ x: {}, y: {} },
-		]);
-		const { root } = view;
-		assert.equal(Tree.key(root), rootFieldKey);
-		assert.equal(Tree.key(root[0]), 0);
-		assert.equal(Tree.key(root[0].x), "x");
-		assert.equal(Tree.key(root[1]), 1);
-		assert.equal(Tree.key(root[1].x), "x");
-		assert(root[1].y !== undefined);
-		assert.equal(Tree.key(root[1].y), "y");
-	});
+	describeHydration("upward path", (init) => {
+		for (const [name, keyApi] of [
+			["key", (n: TreeNode): string | undefined | number => Tree.key(n)],
+			["key2", (n: TreeNode): string | undefined | number => TreeAlpha.key2(n)],
+		] as const) {
+			it(name, () => {
+				class Child extends schema.object("Child", {
+					x: Point,
+					y: schema.optional(Point, { key: "stable-y" }),
+				}) {}
+				class Root extends schema.array("Root", Child) {}
+				const root = init(Root, [
+					{ x: {}, y: undefined },
+					{ x: {}, y: {} },
+				]);
 
-	it("parent", () => {
-		class Child extends schema.object("Child", { x: Point }) {}
-		const Root = schema.array(Child);
-		const config = new TreeViewConfiguration({ schema: Root });
-		const view = getView(config);
-		view.initialize([{ x: {} }, { x: {} }]);
-		const { root } = view;
-		assert.equal(Tree.parent(root), undefined);
-		assert.equal(Tree.parent(root[0]), root);
-		assert.equal(Tree.parent(root[1]), root);
-		assert.equal(Tree.parent(root[1].x), root[1]);
+				// This is this how we handle root keys.
+				// Seems odd for detached fields other than root to have `rootFieldKey` key though.
+				// Exactly which key is given in this case is undocumented, it could change in the future.
+				// TreeAlpha.key2 just gives undefined, which is documented.
+				const rootKey = name === "key" ? rootFieldKey : undefined;
+
+				assert.equal(keyApi(root), rootKey);
+				assert.equal(keyApi(root[0]), 0);
+				assert.equal(keyApi(root[0].x), "x");
+				assert.equal(keyApi(root[1]), 1);
+				assert.equal(keyApi(root[1].x), "x");
+				assert(root[1].y !== undefined);
+				assert.equal(keyApi(root[1].y), "y");
+
+				const added = new Child({ x: {}, y: {} });
+
+				assert.equal(keyApi(added), rootKey);
+
+				// Check index is updated after insert.
+				root.insertAtStart(added);
+				assert.equal(keyApi(root[2]), 2);
+				assert.equal(keyApi(added), 0);
+
+				// Check index is updated after removal.
+				root.removeRange(0, 1);
+				assert.equal(keyApi(root[1]), 1);
+				assert.equal(keyApi(added), rootKey);
+			});
+		}
+
+		it("parent", () => {
+			class Child extends schema.object("Child", { x: Point }) {}
+			class Root extends schema.array("Root", Child) {}
+			const config = new TreeViewConfiguration({ schema: Root });
+			const view = getView(config);
+			const root = new Root([{ x: {} }, { x: {} }]);
+			view.initialize(root);
+
+			assert.equal(Tree.parent(root), undefined);
+			assert.equal(Tree.parent(root[0]), root);
+			assert.equal(Tree.parent(root[1]), root);
+			assert.equal(Tree.parent(root[1].x), root[1]);
+
+			const added = new Child({ x: {} });
+
+			assert.equal(Tree.parent(added), undefined);
+			root.insertAtStart(added);
+			assert.equal(Tree.parent(added), root);
+			root.removeRange(0, 1);
+			assert.equal(Tree.parent(added), undefined);
+
+			view.dispose();
+			assert.throws(
+				() => Tree.parent(root),
+				validateUsageError(/Cannot access a deleted node/),
+			);
+		});
+
+		it("key", () => {
+			class Child extends schema.object("Child", { x: Point }) {}
+			class Root extends schema.array("Root", Child) {}
+			const config = new TreeViewConfiguration({ schema: Root });
+			const view = getView(config);
+			const root = new Root([{ x: {} }, { x: {} }]);
+			view.initialize(root);
+
+			assert.equal(Tree.key(root), rootFieldKey);
+			assert.equal(Tree.key(root[0]), 0);
+			assert.equal(Tree.key(root[1]), 1);
+			assert.equal(Tree.key(root[1].x), "x");
+
+			const added = new Child({ x: {} });
+
+			assert.equal(Tree.key(added), rootFieldKey);
+			root.insertAtStart(added);
+			assert.equal(Tree.key(added), 0);
+			root.removeRange(0, 1);
+			assert.equal(Tree.key(added), rootFieldKey);
+
+			view.dispose();
+			assert.throws(() => Tree.key(root), validateUsageError(/Cannot access a deleted node/));
+		});
 	});
 
 	it("treeStatus", () => {
@@ -209,7 +290,826 @@ describe("treeNodeApi", () => {
 		assert.equal(Tree.status(root), TreeStatus.InDocument);
 		assert.equal(Tree.status(child), TreeStatus.Removed);
 		assert.equal(Tree.status(newChild), TreeStatus.InDocument);
-		// TODO: test Deleted status.
+
+		view.dispose();
+		assert.equal(Tree.status(root), TreeStatus.Deleted);
+		assert.equal(Tree.status(child), TreeStatus.Deleted);
+		assert.equal(Tree.status(newChild), TreeStatus.Deleted);
+
+		// TODO: test Deleted status when caused by removal from the tree + expiring from removed status.
+	});
+
+	describe("child", () => {
+		describe("object", () => {
+			it("Simple", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: schema.string,
+					bar: schema.optional(schema.string),
+					"0": schema.number,
+					"1": SchemaFactory.optional(schema.number),
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+					0: 42,
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "foo"), "test");
+				assert.equal(TreeAlpha.child(tree, 0), 42);
+				assert.equal(TreeAlpha.child(tree, "0"), 42);
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+				assert.equal(TreeAlpha.child(tree, 1), undefined);
+				assert.equal(TreeAlpha.child(tree, "1"), undefined);
+
+				assert.equal(TreeAlpha.child(tree, "baz"), undefined);
+				assert.equal(TreeAlpha.child(tree, 2), undefined);
+				assert.equal(TreeAlpha.child(tree, "2"), undefined);
+			});
+
+			it("IDs of unhydrated nodes are considered", () => {
+				class TestObject extends schema.object("TestObject", {
+					id: schema.identifier,
+				}) {}
+				const tree: TestObject = new TestObject({});
+
+				assert(TreeAlpha.child(tree, "id") !== undefined);
+			});
+
+			it("Fields are accessed by property key and not stored key", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: SchemaFactory.optional(schema.string, { key: "bar" }),
+				}) {}
+				const tree: TestObject = new TestObject({
+					foo: "Hello world!",
+				});
+
+				assert(TreeAlpha.child(tree, "foo") === "Hello world!");
+				assert(TreeAlpha.child(tree, "bar") === undefined);
+			});
+
+			it("Unknown optional fields not considered", () => {
+				class TestObjectOld extends schema.objectAlpha(
+					"TestObject",
+					{
+						foo: schema.string,
+					},
+					{
+						allowUnknownOptionalFields: true,
+					},
+				) {}
+
+				class TestObjectNew extends schema.objectAlpha("TestObject", {
+					foo: schema.string,
+					bar: schema.optional(schema.string),
+				}) {}
+
+				const oldViewConfig = new TreeViewConfiguration({
+					schema: TestObjectOld,
+				});
+				const newViewConfig = new TreeViewConfiguration({
+					schema: TestObjectNew,
+				});
+
+				const checkoutWithNewSchema = checkoutWithInitialTree(
+					newViewConfig,
+					new TestObjectNew({ foo: "Hello", bar: "World" }),
+				);
+
+				const viewWithOldSchema = new SchematizingSimpleTreeView(
+					checkoutWithNewSchema,
+					oldViewConfig,
+					new MockNodeIdentifierManager(),
+				);
+
+				assert(viewWithOldSchema.compatibility.canView);
+
+				const tree = viewWithOldSchema.root;
+
+				assert.equal(TreeAlpha.child(tree, "foo"), "Hello");
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
+
+			it("Subclass properties are not considered", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: schema.string,
+				}) {
+					public readonly bar: string = "Bar";
+				}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
+
+			it("Shadowed properties", () => {
+				class TestObject extends schema.object("TestObject", {
+					toString: schema.string,
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					toString: "test",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "toString"), "test");
+			});
+
+			it("Recursive", () => {
+				class TestObject extends schema.objectRecursive("TestObject", {
+					label: schema.string,
+					data: schema.optionalRecursive([() => TestObject]),
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize(
+					new TestObject({
+						label: "A",
+						data: new TestObject({
+							label: "B",
+							data: new TestObject({
+								label: "C",
+								data: undefined,
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "label"), "A");
+				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
+				assert.equal(TreeAlpha.child(tree, 0), undefined);
+
+				const b = TreeAlpha.child(tree, "data");
+				assert(b !== undefined && isTreeNode(b));
+
+				assert.equal(TreeAlpha.child(b, "label"), "B");
+				assert.equal(TreeAlpha.child(b, "foo"), undefined);
+				assert.equal(TreeAlpha.child(b, 0), undefined);
+
+				const c = TreeAlpha.child(b, "data");
+				assert(c !== undefined && isTreeNode(c));
+
+				assert.equal(TreeAlpha.child(c, "label"), "C");
+				assert.equal(TreeAlpha.child(c, "data"), undefined);
+				assert.equal(TreeAlpha.child(c, "foo"), undefined);
+				assert.equal(TreeAlpha.child(c, 0), undefined);
+			});
+		});
+
+		describe("map", () => {
+			it("Simple", () => {
+				class TestMap extends schema.map("TestObject", schema.string) {}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize({
+					foo: "Hello",
+					0: "World",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "foo"), "Hello");
+				assert.equal(TreeAlpha.child(tree, "0"), "World");
+				assert.equal(TreeAlpha.child(tree, 0), undefined); // Numeric keys are not supported by Map nodes
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+				assert.equal(TreeAlpha.child(tree, "1"), undefined);
+				assert.equal(TreeAlpha.child(tree, 1), undefined);
+			});
+
+			it("Subclass properties are not considered", () => {
+				class TestMap extends schema.map("TestObject", schema.string) {
+					public readonly bar: string = "Bar";
+				}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize({
+					foo: "Hello",
+					0: "World",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
+
+			it("Recursive", () => {
+				class TestMap extends schema.mapRecursive("TestObject", [
+					schema.string,
+					() => TestMap,
+				]) {}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize(
+					new TestMap({
+						label: "A",
+						data: new TestMap({
+							label: "B",
+							data: new TestMap({
+								label: "C",
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "label"), "A");
+				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
+				assert.equal(TreeAlpha.child(tree, 0), undefined);
+
+				const b = TreeAlpha.child(tree, "data");
+				assert(b !== undefined && isTreeNode(b));
+
+				assert.equal(TreeAlpha.child(b, "label"), "B");
+				assert.equal(TreeAlpha.child(b, "foo"), undefined);
+				assert.equal(TreeAlpha.child(b, 0), undefined);
+
+				const c = TreeAlpha.child(b, "data");
+				assert(c !== undefined && isTreeNode(c));
+
+				assert.equal(TreeAlpha.child(c, "label"), "C");
+				assert.equal(TreeAlpha.child(c, "data"), undefined);
+				assert.equal(TreeAlpha.child(c, "foo"), undefined);
+				assert.equal(TreeAlpha.child(c, 0), undefined);
+			});
+		});
+
+		describe("record", () => {
+			it("Simple", () => {
+				class TestRecord extends schema.record("TestRecord", schema.string) {}
+				const config = new TreeViewConfiguration({ schema: TestRecord });
+				const view = getView(config);
+				view.initialize({
+					foo: "Hello",
+					0: "World",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "foo"), "Hello");
+				assert.equal(TreeAlpha.child(tree, "0"), "World");
+				assert.equal(TreeAlpha.child(tree, 0), "World");
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+				assert.equal(TreeAlpha.child(tree, "1"), undefined);
+				assert.equal(TreeAlpha.child(tree, 1), undefined);
+			});
+
+			it("Recursive", () => {
+				class TestRecord extends schema.recordRecursive("TestRecord", [
+					schema.string,
+					() => TestRecord,
+				]) {}
+				const config = new TreeViewConfiguration({ schema: TestRecord });
+				const view = getView(config);
+				view.initialize(
+					new TestRecord({
+						label: "A",
+						data: new TestRecord({
+							label: "B",
+							data: new TestRecord({
+								label: "C",
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "label"), "A");
+				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
+				assert.equal(TreeAlpha.child(tree, 0), undefined);
+
+				const b = TreeAlpha.child(tree, "data");
+				assert(b !== undefined && isTreeNode(b));
+
+				assert.equal(TreeAlpha.child(b, "label"), "B");
+				assert.equal(TreeAlpha.child(b, "foo"), undefined);
+				assert.equal(TreeAlpha.child(b, 0), undefined);
+
+				const c = TreeAlpha.child(b, "data");
+				assert(c !== undefined && isTreeNode(c));
+
+				assert.equal(TreeAlpha.child(c, "label"), "C");
+				assert.equal(TreeAlpha.child(c, "data"), undefined);
+				assert.equal(TreeAlpha.child(c, "foo"), undefined);
+				assert.equal(TreeAlpha.child(c, 0), undefined);
+			});
+		});
+
+		describe("array", () => {
+			it("Simple", () => {
+				class TestArray extends schema.array("TestObject", schema.string) {}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(["Hello", "World"]);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, 0), "Hello");
+				assert.equal(TreeAlpha.child(tree, "0"), "Hello");
+				assert.equal(TreeAlpha.child(tree, 1), "World");
+				assert.equal(TreeAlpha.child(tree, "1"), "World");
+				assert.equal(TreeAlpha.child(tree, 2), undefined);
+				assert.equal(TreeAlpha.child(tree, "2"), undefined);
+				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
+				assert.equal(TreeAlpha.child(tree, ""), undefined);
+			});
+
+			it("Subclass properties are not considered", () => {
+				class TestArray extends schema.array("TestObject", schema.string) {
+					public readonly bar: string = "Bar";
+				}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(["Hello", "World"]);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+			});
+
+			it("Recursive", () => {
+				class TestArray extends schema.arrayRecursive("TestObject", [
+					schema.string,
+					() => TestArray,
+				]) {}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(
+					new TestArray(["Hello", new TestArray(["World", new TestArray(["!"])])]),
+				);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, 0), "Hello");
+				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
+				assert.equal(TreeAlpha.child(tree, 2), undefined);
+
+				const root1 = TreeAlpha.child(tree, 1);
+				assert(root1 !== undefined && isTreeNode(root1));
+
+				assert.equal(TreeAlpha.child(root1, 0), "World");
+				assert.equal(TreeAlpha.child(root1, "foo"), undefined);
+				assert.equal(TreeAlpha.child(root1, 2), undefined);
+
+				const child1 = TreeAlpha.child(root1, 1);
+				assert(child1 !== undefined && isTreeNode(child1));
+
+				assert.equal(TreeAlpha.child(child1, 0), "!");
+				assert.equal(TreeAlpha.child(child1, "foo"), undefined);
+				assert.equal(TreeAlpha.child(child1, 1), undefined);
+			});
+		});
+
+		it("Throws if provided a disposed node", () => {
+			class TestObject extends schema.object("TestObject", {
+				foo: schema.string,
+			}) {}
+			const config = new TreeViewConfiguration({ schema: TestObject });
+			const view = getView(config);
+			view.initialize({
+				foo: "test",
+			});
+			const tree = view.root;
+
+			// Dispose the tree view
+			view.dispose();
+
+			assert.throws(
+				() => TreeAlpha.child(tree, "foo"),
+				validateUsageError(/Cannot access a deleted node/),
+			);
+		});
+
+		it("parent of child is original node", () => {
+			class TestChildObject extends schema.object("TestChildObject", {}) {}
+			class TestObject extends schema.object("TestObject", {
+				data: TestChildObject,
+			}) {}
+
+			const config = new TreeViewConfiguration({ schema: TestObject });
+			const view = getView(config);
+			view.initialize({
+				data: {},
+			});
+			const tree = view.root;
+
+			const child = TreeAlpha.child(tree, "data");
+			assert(child !== undefined && isTreeNode(child));
+			assert.equal(Tree.parent(child), tree);
+		});
+	});
+
+	describe("children", () => {
+		describe("object", () => {
+			function getObjectSchema() {
+				return schema.object("TestObject", {
+					foo: schema.optional(schema.string),
+					bar: schema.optional(schema.string),
+					"0": SchemaFactory.optional(schema.number),
+				});
+			}
+
+			function initializeObjectTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getObjectSchema>>,
+			) {
+				class TestObject extends getObjectSchema() {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestObject, tree: view.root };
+			}
+
+			it("Empty", () => {
+				const { tree } = initializeObjectTree({});
+
+				const children = [...TreeAlpha.children(tree)];
+				assert.equal(children.length, 0);
+			});
+
+			it("Non-empty", () => {
+				const { tree } = initializeObjectTree({
+					foo: "test",
+					0: 42,
+				});
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get("foo"), "test");
+				assert.equal(children.get("0"), 42);
+			});
+
+			it("Unknown optional fields not included", () => {
+				class TestObjectOld extends schema.objectAlpha(
+					"TestObject",
+					{
+						foo: schema.string,
+					},
+					{
+						allowUnknownOptionalFields: true,
+					},
+				) {}
+
+				class TestObjectNew extends schema.objectAlpha("TestObject", {
+					foo: schema.string,
+					bar: schema.optional(schema.string),
+				}) {}
+
+				const checkoutWithNewSchema = checkoutWithInitialTree(
+					new TreeViewConfiguration({
+						schema: TestObjectNew,
+					}),
+					new TestObjectNew({ foo: "Hello", bar: "World" }),
+				);
+
+				const viewWithOldSchema = new SchematizingSimpleTreeView(
+					checkoutWithNewSchema,
+					new TreeViewConfiguration({
+						schema: TestObjectOld,
+					}),
+					new MockNodeIdentifierManager(),
+				);
+
+				assert(viewWithOldSchema.compatibility.canView);
+
+				const tree = viewWithOldSchema.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("foo"), "Hello");
+				assert.equal(children.get("bar"), undefined); // The extra property should not be included
+			});
+
+			it("ID fields of unhydrated nodes are included", () => {
+				class TestObject extends schema.object("TestObject", {
+					id: schema.identifier,
+				}) {}
+				const tree: TestObject = new TestObject({});
+
+				const children = [...TreeAlpha.children(tree)];
+				assert(children.length === 1);
+				assert(children[0][0] === "id");
+				assert(children[0][1] !== undefined);
+			});
+
+			it("Fields with stored keys are returned with their property keys", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: SchemaFactory.optional(schema.string, { key: "bar" }),
+				}) {}
+				const tree: TestObject = new TestObject({
+					foo: "Hello world!",
+				});
+
+				const children = [...TreeAlpha.children(tree)];
+				assert(children.length === 1);
+				assert(children[0][0] === "foo");
+				assert(children[0][1] === "Hello world!");
+			});
+
+			it("Subclass properties are not included", () => {
+				class TestObject extends schema.object("TestObject", {
+					foo: schema.optional(schema.string),
+				}) {
+					public readonly bar: string = "Bar"; // Subclass property
+				}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+				});
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("bar"), undefined);
+			});
+
+			it("Shadowed properties are included", () => {
+				class TestObject extends schema.object("TestObject", {
+					toString: schema.string,
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize({
+					toString: "test",
+				});
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("toString"), "test");
+			});
+
+			it("Recursive", () => {
+				class TestObject extends schema.objectRecursive("TestObject", {
+					label: schema.string,
+					data: schema.optionalRecursive([() => TestObject]),
+				}) {}
+				const config = new TreeViewConfiguration({ schema: TestObject });
+				const view = getView(config);
+				view.initialize(
+					new TestObject({
+						label: "A",
+						data: new TestObject({
+							label: "B",
+							data: new TestObject({
+								label: "C",
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				const rootChildren = [...TreeAlpha.children(tree)];
+				assert.equal(rootChildren.length, 2);
+				assert.deepEqual(rootChildren[0], ["label", "A"]);
+				assert.equal(rootChildren[1][0], "data");
+				const sub1Node = rootChildren[1][1];
+				assert(sub1Node !== undefined && isTreeNode(sub1Node));
+
+				const sub1Children = [...TreeAlpha.children(sub1Node)];
+				assert.equal(sub1Children.length, 2);
+				assert.deepEqual(sub1Children[0], ["label", "B"]);
+				assert.equal(sub1Children[1][0], "data");
+				const sub2Node = sub1Children[1][1];
+				assert(sub2Node !== undefined && isTreeNode(sub2Node));
+
+				const sub2Children = [...TreeAlpha.children(sub2Node)];
+				assert.equal(sub2Children.length, 1);
+				assert.deepEqual(sub2Children[0], ["label", "C"]);
+			});
+		});
+
+		describe("map", () => {
+			function getMapSchema() {
+				return schema.map("TestMap", schema.string);
+			}
+
+			function initializeMapTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getMapSchema>>,
+			) {
+				class TestMap extends getMapSchema() {}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestMap, tree: view.root };
+			}
+
+			it("empty", () => {
+				const { tree } = initializeMapTree({});
+
+				const children = [...TreeAlpha.children(tree)];
+				assert.equal(children.length, 0);
+			});
+
+			it("non-empty", () => {
+				const { tree } = initializeMapTree({
+					foo: "Hello",
+					bar: "World",
+				});
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get("foo"), "Hello");
+				assert.equal(children.get("bar"), "World");
+			});
+
+			it("Subclass properties are not included", () => {
+				class TestMap extends schema.map("TestMap", schema.string) {
+					public readonly bar: string = "Bar"; // Subclass property
+				}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize({
+					foo: "test",
+				});
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 1);
+				assert.equal(children.get("bar"), undefined);
+			});
+
+			it("Recursive", () => {
+				class TestMap extends schema.mapRecursive("TestMap", [schema.string, () => TestMap]) {}
+				const config = new TreeViewConfiguration({ schema: TestMap });
+				const view = getView(config);
+				view.initialize(
+					new TestMap({
+						label: "A",
+						data: new TestMap({
+							label: "B",
+							data: new TestMap({
+								label: "C",
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				const rootChildren = [...TreeAlpha.children(tree)];
+				assert.equal(rootChildren.length, 2);
+				assert.deepEqual(rootChildren[0], ["label", "A"]);
+				assert.equal(rootChildren[1][0], "data");
+				const sub1Node = rootChildren[1][1];
+				assert(sub1Node !== undefined && isTreeNode(sub1Node));
+
+				const sub1Children = [...TreeAlpha.children(sub1Node)];
+				assert.equal(sub1Children.length, 2);
+				assert.deepEqual(sub1Children[0], ["label", "B"]);
+				assert.equal(sub1Children[1][0], "data");
+				const sub2Node = sub1Children[1][1];
+				assert(sub2Node !== undefined && isTreeNode(sub2Node));
+
+				const sub2Children = [...TreeAlpha.children(sub2Node)];
+				assert.equal(sub2Children.length, 1);
+				assert.deepEqual(sub2Children[0], ["label", "C"]);
+			});
+		});
+
+		describe("array", () => {
+			function getArraySchema() {
+				return schema.array("TestArray", schema.string);
+			}
+
+			function initializeArrayTree(
+				input: InsertableTreeNodeFromImplicitAllowedTypes<ReturnType<typeof getArraySchema>>,
+			) {
+				class TestArray extends getArraySchema() {}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(input);
+
+				return { TestArray, tree: view.root };
+			}
+
+			it("empty", () => {
+				const { tree } = initializeArrayTree([]);
+
+				const children = [...TreeAlpha.children(tree)];
+				assert.equal(children.length, 0);
+			});
+
+			it("non-empty", () => {
+				const { tree } = initializeArrayTree(["Hello", "World"]);
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get(0), "Hello");
+				assert.equal(children.get(1), "World");
+			});
+
+			it("Subclass properties are not included", () => {
+				class TestArray extends schema.array("TestArray", schema.string) {
+					public readonly bar: string = "Bar"; // Subclass property
+				}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(["Hello", "World"]);
+				const tree = view.root;
+
+				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+					TreeAlpha.children(tree),
+				);
+				assert.equal(children.size, 2);
+				assert.equal(children.get("bar"), undefined);
+			});
+
+			it("Recursive", () => {
+				class TestArray extends schema.arrayRecursive("TestArray", [
+					schema.string,
+					() => TestArray,
+				]) {}
+				const config = new TreeViewConfiguration({ schema: TestArray });
+				const view = getView(config);
+				view.initialize(
+					new TestArray(["Hello", new TestArray(["World", new TestArray(["!"])])]),
+				);
+				const tree = view.root;
+
+				const rootChildren = [...TreeAlpha.children(tree)];
+				assert.equal(rootChildren.length, 2);
+				assert.deepEqual(rootChildren[0], [0, "Hello"]);
+
+				const sub1Node = rootChildren[1][1];
+				assert(sub1Node !== undefined && isTreeNode(sub1Node));
+
+				const sub1Children = [...TreeAlpha.children(sub1Node)];
+				assert.equal(sub1Children.length, 2);
+				assert.deepEqual(sub1Children[0], [0, "World"]);
+
+				const sub2Node = sub1Children[1][1];
+				assert(sub2Node !== undefined && isTreeNode(sub2Node));
+
+				const sub2Children = [...TreeAlpha.children(sub2Node)];
+				assert.equal(sub2Children.length, 1);
+				assert.deepEqual(sub2Children[0], [0, "!"]);
+			});
+		});
+
+		it("Throws if provided a disposed node", () => {
+			class TestObject extends schema.object("TestObject", {
+				foo: schema.string,
+			}) {}
+			const config = new TreeViewConfiguration({ schema: TestObject });
+			const view = getView(config);
+			view.initialize({
+				foo: "test",
+			});
+			const tree = view.root;
+
+			// Dispose the tree view
+			view.dispose();
+
+			assert.throws(
+				() => {
+					const children = TreeAlpha.children(tree);
+					for (const [key, child] of children) {
+						// Accessing the first child should result in an error
+					}
+				},
+				validateUsageError(/Cannot access a deleted node/),
+			);
+		});
+
+		it("parent of each child is original node", () => {
+			class TestChildObject extends schema.object("TestChildObject", {}) {}
+			class TestArray extends schema.array("TestObject", TestChildObject) {}
+
+			const config = new TreeViewConfiguration({ schema: TestArray });
+			const view = getView(config);
+			view.initialize([
+				new TestChildObject({}),
+				new TestChildObject({}),
+				new TestChildObject({}),
+			]);
+			const tree = view.root;
+
+			const children = [...TreeAlpha.children(tree)];
+			assert(children.length === 3);
+			for (const [, child] of children) {
+				assert(isTreeNode(child));
+				assert.equal(Tree.parent(child), tree);
+			}
+		});
 	});
 
 	describe("shortID", () => {
@@ -217,12 +1117,12 @@ describe("treeNodeApi", () => {
 			const schemaWithIdentifier = schema.object("parent", {
 				identifier: schema.identifier,
 			});
-			const nodeKeyManager = new MockNodeIdentifierManager();
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			const nodeKeyManager = view.nodeKeyManager;
 			const id = nodeKeyManager.stabilizeNodeIdentifier(
 				nodeKeyManager.generateLocalNodeIdentifier(),
 			);
-			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
-			const view = getView(config, nodeKeyManager);
 			view.initialize({ identifier: id });
 
 			assert.equal(Tree.shortId(view.root), nodeKeyManager.localizeNodeIdentifier(id));
@@ -303,21 +1203,16 @@ describe("treeNodeApi", () => {
 				const node = new HasIdentifier({ identifier: "x" });
 				assert.equal(Tree.shortId(node), "x");
 			});
-			it("errors accessing defaulted", () => {
+			it("accessing defaulted", () => {
 				const node = new HasIdentifier({});
-				assert.throws(
-					() => {
-						Tree.shortId(node);
-					},
-					validateUsageError(/default/),
-				);
+				assert(typeof Tree.shortId(node) === "string");
 			});
 
 			// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
 			it("returns string when unhydrated then local id when hydrated", () => {
-				const nodeKeyManager = new MockNodeIdentifierManager();
 				const config = new TreeViewConfiguration({ schema: HasIdentifier });
-				const view = getView(config, nodeKeyManager);
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
 				view.initialize({});
 				const identifier = view.root.identifier;
 				const shortId = Tree.shortId(view.root);
@@ -334,7 +1229,391 @@ describe("treeNodeApi", () => {
 		});
 	});
 
+	describe("identifier", () => {
+		it("returns stable id when an identifier fieldkind exists.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.identifier,
+			});
+
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			const nodeKeyManager = view.nodeKeyManager;
+			const id = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
+			view.initialize({ identifier: id });
+
+			assert.equal(TreeAlpha.identifier(view.root), id);
+		});
+
+		it("returns undefined when an identifier fieldkind does not exist.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.string,
+			});
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			view.initialize({ identifier: "testID" });
+
+			assert.equal(TreeAlpha.identifier(view.root), undefined);
+		});
+
+		it("returns the original identifier value when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
+			const schemaWithIdentifier = schema.object("parent", {
+				identifier: schema.identifier,
+			});
+			// Create a valid stableNodeKey which is not known by the tree's idCompressor.
+			const nodeKeyManager = new MockNodeIdentifierManager();
+			const stableNodeKey = nodeKeyManager.stabilizeNodeIdentifier(
+				nodeKeyManager.generateLocalNodeIdentifier(),
+			);
+
+			const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+			const view = getView(config);
+			view.initialize({ identifier: stableNodeKey });
+
+			assert.equal(TreeAlpha.identifier(view.root), stableNodeKey);
+		});
+
+		it("errors if multiple identifiers exist on the same node", () => {
+			const config = new TreeViewConfiguration({
+				schema: schema.object("parent", {
+					identifier: schema.identifier,
+					identifier2: schema.identifier,
+				}),
+			});
+
+			const view = getView(config);
+			view.initialize({
+				identifier: "a",
+				identifier2: "b",
+			});
+			assert.throws(
+				() => TreeAlpha.identifier(view.root),
+				(error: Error) =>
+					validateAssertionError(
+						error,
+						/may not be called on a node with more than one identifier/,
+					),
+			);
+		});
+
+		it("Returns undefined for non-object nodes", () => {
+			const config = new TreeViewConfiguration({
+				schema: schema.array("parent", schema.number),
+			});
+			const view = getView(config);
+			view.initialize([1, 2, 3]);
+			assert.equal(TreeAlpha.identifier(view.root), undefined);
+		});
+
+		describe("unhydrated", () => {
+			it("accessing defaulted", () => {
+				class HasIdentifier extends schema.object("HasIdentifier", {
+					identifier: schema.identifier,
+				}) {}
+				const node = new HasIdentifier({});
+				assert(typeof TreeAlpha.identifier(node) === "string");
+			});
+		});
+
+		describe("getShort", () => {
+			it("returns local id when an identifier fieldkind exists.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+				view.initialize({ identifier: id });
+
+				assert.equal(
+					TreeAlpha.identifier.getShort(view.root),
+					nodeKeyManager.localizeNodeIdentifier(id),
+				);
+			});
+
+			it("returns undefined when an identifier fieldkind does not exist.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.string,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "testID" });
+
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
+			});
+
+			it("returns the undefined when the provided identifier is an invalid stable id.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "invalidUUID" });
+
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
+			});
+
+			it("returns the undefined when the provided identifier is a valid stable id, but unknown by the idCompressor.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+				// Create a valid stableNodeKey which is not known by the tree's idCompressor.
+				const nodeKeyManager = new MockNodeIdentifierManager();
+				const stableNodeKey = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: stableNodeKey });
+
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
+			});
+
+			it("errors if multiple identifiers exist on the same node", () => {
+				const config = new TreeViewConfiguration({
+					schema: schema.object("parent", {
+						identifier: schema.identifier,
+						identifier2: schema.identifier,
+					}),
+				});
+
+				const view = getView(config);
+				view.initialize({
+					identifier: "a",
+					identifier2: "b",
+				});
+				assert.throws(
+					() => TreeAlpha.identifier.getShort(view.root),
+					(error: Error) =>
+						validateAssertionError(
+							error,
+							/may not be called on a node with more than one identifier/,
+						),
+				);
+			});
+
+			it("Returns undefined for non-object nodes", () => {
+				const config = new TreeViewConfiguration({
+					schema: schema.array("parent", schema.number),
+				});
+				const view = getView(config);
+				view.initialize([1, 2, 3]);
+				assert.equal(TreeAlpha.identifier.getShort(view.root), undefined);
+			});
+
+			describe("unhydrated", () => {
+				class HasIdentifier extends schema.object("HasIdentifier", {
+					identifier: schema.identifier,
+				}) {}
+				it("returns undefined for unhydrated nodes", () => {
+					const node = new HasIdentifier({ identifier: "x" });
+					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
+				});
+				it("returns undefined accessing defaulted for unhydrated nodes", () => {
+					const node = new HasIdentifier({});
+					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
+				});
+
+				// TODO: this policy seems questionable, but its whats implemented, and is documented in TreeStatus.new
+				it("returns undefined when unhydrated then local id when hydrated", () => {
+					const config = new TreeViewConfiguration({ schema: HasIdentifier });
+					const view = getView(config);
+					view.initialize({});
+					const identifier = view.root.identifier;
+					const nodeKeyManager = view.nodeKeyManager;
+					const shortId = TreeAlpha.identifier.getShort(view.root);
+					assert.equal(
+						shortId,
+						nodeKeyManager.localizeNodeIdentifier(identifier as StableNodeIdentifier),
+					);
+
+					const node = new HasIdentifier({ identifier });
+					assert.equal(TreeAlpha.identifier.getShort(node), undefined);
+					view.root = node;
+					assert.equal(TreeAlpha.identifier.getShort(node), shortId);
+				});
+			});
+		});
+
+		describe("shorten", () => {
+			it("returns the local identifier for a known, stable identifier.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+				view.initialize({ identifier: id });
+
+				assert.equal(
+					TreeAlpha.identifier.shorten(view, id),
+					nodeKeyManager.localizeNodeIdentifier(id),
+				);
+			});
+
+			it("returns undefined for a valid, but unknown stable identifier", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.string,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "testID" });
+
+				// create an nodeKeyManager unknown by the view.
+				const nodeKeyManager = new MockNodeIdentifierManager();
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+				const test = TreeAlpha.identifier.shorten(view, id);
+				assert.equal(TreeAlpha.identifier.shorten(view, id), undefined);
+			});
+
+			it("returns undefined when the provided identifier is an invalid stable id.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const invalidId = "invalidUUID";
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: invalidId });
+
+				assert.equal(TreeAlpha.identifier.shorten(view, invalidId), undefined);
+			});
+
+			it("returns the original stable id when shortened and then lengthened.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
+				const id = nodeKeyManager.stabilizeNodeIdentifier(
+					nodeKeyManager.generateLocalNodeIdentifier(),
+				);
+				view.initialize({ identifier: id });
+
+				const localId = TreeAlpha.identifier.shorten(view, id);
+				assert(typeof localId === "number");
+				assert.equal(TreeAlpha.identifier.lengthen(view, localId), id);
+			});
+		});
+
+		describe("lengthen", () => {
+			it("returns the stable identifier for a known, local identifier.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+
+				const nodeKeyManager = view.nodeKeyManager;
+				const localId = nodeKeyManager.generateLocalNodeIdentifier();
+				const id = nodeKeyManager.stabilizeNodeIdentifier(localId);
+				view.initialize({ identifier: id });
+
+				assert.equal(TreeAlpha.identifier.lengthen(view, localId as unknown as number), id);
+			});
+
+			it("unknown local identifier, throws usage error", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.string,
+				});
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				view.initialize({ identifier: "testID" });
+				assert.throws(() => TreeAlpha.identifier.lengthen(view, 98));
+			});
+
+			it("returns the original local id when lengthened and then shortened.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+				const nodeKeyManager = view.nodeKeyManager;
+				const id = nodeKeyManager.generateLocalNodeIdentifier();
+				assert(typeof id === "number");
+				const stableId = TreeAlpha.identifier.lengthen(view, id);
+
+				view.initialize({ identifier: stableId });
+
+				assert.equal(TreeAlpha.identifier.shorten(view, stableId), id);
+			});
+		});
+
+		describe("create", () => {
+			it("generates and returns a stable identifier.", () => {
+				const schemaWithIdentifier = schema.object("parent", {
+					identifier: schema.identifier,
+				});
+
+				const config = new TreeViewConfiguration({ schema: schemaWithIdentifier });
+				const view = getView(config);
+
+				const generatedIdentifier = TreeAlpha.identifier.create(view);
+				const shortIdentifier = TreeAlpha.identifier.shorten(view, generatedIdentifier);
+				assert(typeof shortIdentifier === "number");
+			});
+		});
+	});
+
 	describe("on", () => {
+		it("Editing a node without an anchor still triggers 'treeChanged' event above it", () => {
+			// Notes:
+			// * For this bug to occur, the edit must change a node that does not have an anchor (and thus hasn't been viewed yet).
+			// * Using the public API this can only be done via collaborative editing or branch merging.
+			const sf = new SchemaFactory(undefined);
+			class Child extends sf.object("Child", {
+				value: sf.number,
+			}) {}
+			class Parent extends sf.object("Parent", {
+				node: Child,
+			}) {}
+
+			const config = new TreeViewConfiguration({ schema: Parent });
+			const provider = new TestTreeProviderLite(2);
+			const [tree1, tree2] = provider.trees;
+			// Initialize the first tree with a value of "0"
+			const view1 = tree1.viewWith(config);
+			view1.initialize(
+				new Parent({
+					node: new Child({
+						value: 0,
+					}),
+				}),
+			);
+			provider.synchronizeMessages();
+			const view2 = tree2.viewWith(config);
+			// Count the number of times treeChanged fires
+			let invalidations = 0;
+			Tree.on(view2.root, "treeChanged", () => {
+				invalidations += 1;
+			});
+			// Change the first tree to a value of "3"
+			view1.root.node.value = 3;
+			// Remove the no longer needed view1 to simplify debugging.
+			view1.dispose();
+			provider.synchronizeMessages();
+			// Ensure that the second tree received the change...
+			assert.equal(view2.root.node.value, 3);
+			// ...and also that the event fired
+			assert.equal(invalidations, 1);
+		});
+
 		describe("object node", () => {
 			const sb = new SchemaFactory("object-node-in-root");
 			class myObject extends sb.object("object", {
@@ -1192,6 +2471,57 @@ describe("treeNodeApi", () => {
 			const a = TreeAlpha.create(A, { x: 1 });
 			assert.deepEqual(a, { x: 1 });
 		});
+
+		it("unhydrated object with defaulted read identifier field", () => {
+			const A = schema.object("A", { x: schema.identifier });
+			const node = TreeAlpha.create(A, { x: undefined });
+
+			// TODO: make this work instead of error:
+			const id = node.x;
+			// Check allocated id is saved on node, and thus not regenerated on second access.
+			assert.equal(id, node.x);
+			// Id should be a valid UUID.
+			assert(isStableId(id));
+			// Since no id compressor is associated with the node, Tree.shortId should give back a UUID string.
+			assert.equal(Tree.shortId(node), node.x);
+
+			hydrate(A, node);
+
+			assert.equal(Tree.shortId(node), node.x);
+		});
+
+		it("hydrated object with defaulted unread identifier field", () => {
+			const A = schema.object("A", { x: schema.identifier });
+			const node = TreeAlpha.create(A, { x: undefined });
+
+			hydrate(A, node);
+			assert(isStableId(node.x));
+			const short = Tree.shortId(node);
+			assert.equal(typeof short, "number");
+		});
+
+		it("object with explicit identifier field", () => {
+			const A = schema.object("A", { x: schema.identifier });
+			const node = TreeAlpha.create(A, { x: "id" });
+			assert.deepEqual(node, { x: "id" });
+		});
+
+		// TODO: implement this case
+		it.skip("identifier field", () => {
+			const a = TreeAlpha.create(SchemaFactoryAlpha.identifier(), undefined);
+			assert(isStableId(a));
+		});
+
+		it("reuses existing nodes", () => {
+			const A = schema.object("A", {});
+			const a = new A({});
+			const node = TreeAlpha.create(A, a);
+			assert.equal(node, a);
+
+			const Parent = schema.object("P", { child: A });
+			const parent = TreeAlpha.create(Parent, { child: a });
+			assert.equal(parent.child, a);
+		});
 	});
 
 	describe("concise", () => {
@@ -1278,6 +2608,47 @@ describe("treeNodeApi", () => {
 
 	describe("verbose", () => {
 		describe("importVerbose", () => {
+			it("unknown schema: leaf", () => {
+				// Input using schema not included in the context
+				assert.throws(
+					() => TreeAlpha.importVerbose(SchemaFactory.number, "x"),
+					validateUsageError(
+						/type "com.fluidframework.leaf.string" which is not defined in this context/,
+					),
+				);
+			});
+
+			it("unknown schema: non-leaf", () => {
+				const factory = new SchemaFactory("Test");
+				class A extends factory.object("A", {}) {}
+				class B extends factory.object("B", {}) {}
+				// Input using schema not included in the context
+				assert.throws(
+					() => TreeAlpha.importVerbose(A, { type: B.identifier, fields: {} }),
+					validateUsageError(/type "Test.B" which is not defined/),
+				);
+			});
+
+			it("invalid with known schema", () => {
+				const factory = new SchemaFactory("Test");
+				class A extends factory.object("A", { a: SchemaFactory.string }) {}
+				assert.throws(
+					() => TreeAlpha.importVerbose(A, { type: A.identifier, fields: { wrong: "x" } }),
+					validateUsageError(
+						`Failed to parse VerboseTree due to unexpected key "wrong" on type "Test.A".`,
+					),
+				);
+			});
+
+			it("missing field with default", () => {
+				const factory = new SchemaFactory("Test");
+				class A extends factory.object("A", { a: factory.identifier }) {}
+				assert.throws(
+					() => TreeAlpha.importVerbose(A, { type: A.identifier, fields: {} }),
+					validateUsageError(/Field_MissingRequiredChild/),
+				);
+			});
+
 			it("undefined", () => {
 				// Valid
 				assert.equal(TreeAlpha.importVerbose(schema.optional([]), undefined), undefined);
@@ -1289,7 +2660,7 @@ describe("treeNodeApi", () => {
 				// Undefined required, not provided
 				assert.throws(
 					() => TreeAlpha.importVerbose(schema.optional([]), 1),
-					validateUsageError(/does not conform to schema/),
+					validateUsageError(/Failed to parse tree/),
 				);
 			});
 
@@ -1299,7 +2670,7 @@ describe("treeNodeApi", () => {
 				// invalid
 				assert.throws(
 					() => TreeAlpha.importVerbose([schema.null, schema.number], "x"),
-					validateUsageError(/does not conform to schema/),
+					validateUsageError(/Failed to parse tree/),
 				);
 			});
 
@@ -1331,7 +2702,7 @@ describe("treeNodeApi", () => {
 					// (because stored keys are not being used, see analogous test in roundtrip-stored)
 					const sf1 = new SchemaFactoryAlpha("com.example");
 					const sf2 = new SchemaFactoryAlpha("com.example");
-					class Point2D extends sf1.object(
+					class Point2D extends sf1.objectAlpha(
 						"Point",
 						{
 							x: sf1.number,
@@ -1339,7 +2710,7 @@ describe("treeNodeApi", () => {
 						},
 						{ allowUnknownOptionalFields: true },
 					) {}
-					class Point3D extends sf2.object("Point", {
+					class Point3D extends sf2.objectAlpha("Point", {
 						x: sf2.number,
 						y: sf2.number,
 						z: sf2.optional(sf2.number),
@@ -1348,10 +2719,14 @@ describe("treeNodeApi", () => {
 					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
 					const exported = TreeAlpha.exportVerbose(testTree);
 
-					// TODO:AB#26720 The error here should be more clear.
+					// TODO:AB#26720 The error here should be more clear:
+					// perhaps reference allowUnknownOptionalFields and stored keys specifically.
 					assert.throws(
 						() => TreeAlpha.importVerbose(Point2D, exported),
-						(error: Error) => validateAssertionError(error, /missing field info/),
+
+						validateUsageError(
+							`Failed to parse VerboseTree due to unexpected key "z" on type "com.example.Point".`,
+						),
 					);
 				});
 			});
@@ -1377,7 +2752,7 @@ describe("treeNodeApi", () => {
 
 			describe("with misaligned view and stored schema", () => {
 				const sf1 = new SchemaFactoryAlpha("com.example");
-				class Point3D extends sf1.object("Point", {
+				class Point3D extends sf1.objectAlpha("Point", {
 					x: sf1.number,
 					y: sf1.number,
 					z: sf1.optional(sf1.number),
@@ -1386,7 +2761,7 @@ describe("treeNodeApi", () => {
 				it("preserves additional allowed optional fields", () => {
 					const sf2 = new SchemaFactoryAlpha("com.example");
 
-					class Point2D extends sf2.object(
+					class Point2D extends sf2.objectAlpha(
 						"Point",
 						{
 							x: sf2.number,
@@ -1410,7 +2785,7 @@ describe("treeNodeApi", () => {
 				it("errors on additional disallowed optional fields", () => {
 					const sf2 = new SchemaFactoryAlpha("com.example");
 
-					class Point2D extends sf2.object(
+					class Point2D extends sf2.objectAlpha(
 						"Point",
 						{
 							x: sf2.number,
@@ -1453,6 +2828,21 @@ describe("treeNodeApi", () => {
 		});
 	});
 });
+
+function checkoutWithInitialTree(
+	viewConfig: TreeViewConfiguration,
+	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
+): TreeCheckout {
+	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
+		viewConfig.schema,
+		unhydratedInitialTree,
+	);
+	const treeContent: TreeStoredContent = {
+		schema: toStoredSchema(viewConfig.schema),
+		initialTree,
+	};
+	return checkoutWithContent(treeContent);
+}
 
 function expectTreesEqual(
 	a: TreeNode | TreeLeafValue | undefined,

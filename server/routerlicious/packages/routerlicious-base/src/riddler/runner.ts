@@ -4,6 +4,7 @@
  */
 
 import cluster from "cluster";
+
 import { Deferred } from "@fluidframework/common-utils";
 import {
 	IRunner,
@@ -13,10 +14,11 @@ import {
 	ICache,
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
-import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
-import { Provider } from "nconf";
+import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
+import { Provider } from "nconf";
+
 import * as app from "./app";
 import { ITenantRepository } from "./mongoTenantRepository";
 
@@ -55,6 +57,8 @@ export class RiddlerRunner implements IRunner {
 		// Don't include application logic in primary thread when Node.js cluster module is enabled.
 		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
+		const bypassCache: boolean = this.config?.get("riddler:bypassCache") ?? false;
+
 		if (includeAppLogic) {
 			// Create the HTTP server and attach alfred to it
 			const riddler = app.create(
@@ -70,6 +74,7 @@ export class RiddlerRunner implements IRunner {
 				this.startupCheck,
 				this.cache,
 				this.readinessCheck,
+				bypassCache,
 			);
 			riddler.set("port", this.port);
 

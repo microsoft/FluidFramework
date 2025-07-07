@@ -4,39 +4,70 @@
 
 ```ts
 
-// @alpha
-export function acquirePresence(fluidContainer: IFluidContainer): IPresence;
+// @beta @system
+export type Accessor<T, BaseAccessor extends ValueAccessor<T>> = BaseAccessor extends ProxiedValueAccessor<T> ? () => DeepReadonly<JsonDeserialized<T>> | undefined : BaseAccessor extends RawValueAccessor<T> ? DeepReadonly<JsonDeserialized<T>> : never;
 
-// @alpha
-export function acquirePresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): IPresence;
+// @beta @sealed
+export interface Attendee<SpecificAttendeeId extends AttendeeId = AttendeeId> {
+    readonly attendeeId: SpecificAttendeeId;
+    getConnectionId(): ClientConnectionId;
+    getConnectionStatus(): AttendeeStatus;
+}
 
-// @alpha @sealed
+// @beta
+export type AttendeeId = SessionId & {
+    readonly AttendeeId: "AttendeeId";
+};
+
+// @beta @sealed
+export interface AttendeesEvents {
+    // @eventProperty
+    attendeeConnected: (attendee: Attendee) => void;
+    // @eventProperty
+    attendeeDisconnected: (attendee: Attendee) => void;
+}
+
+// @beta
+export const AttendeeStatus: {
+    readonly Connected: "Connected";
+    readonly Disconnected: "Disconnected";
+};
+
+// @beta
+export type AttendeeStatus = (typeof AttendeeStatus)[keyof typeof AttendeeStatus];
+
+// @beta @sealed
 export interface BroadcastControls {
     allowableUpdateLatencyMs: number | undefined;
 }
 
-// @alpha
+// @beta
 export interface BroadcastControlSettings {
     readonly allowableUpdateLatencyMs?: number;
 }
 
-// @alpha
+// @beta
 export type ClientConnectionId = string;
 
-// @alpha
-export type ClientSessionId = SessionId & {
-    readonly ClientSessionId: "ClientSessionId";
-};
-
-// @alpha @sealed
+// @alpha @sealed @deprecated
 export class ExperimentalPresenceDO {
 }
 
-// @alpha
+// @alpha @deprecated
 export const ExperimentalPresenceManager: SharedObjectKind<IFluidLoadable & ExperimentalPresenceDO>;
 
+// @beta
+export const getPresence: (fluidContainer: IFluidContainer) => Presence;
+
 // @alpha
+export function getPresenceAlpha(fluidContainer: IFluidContainer): PresenceWithNotifications;
+
+// @alpha @deprecated
+export function getPresenceViaDataObject(fluidLoadable: ExperimentalPresenceDO): PresenceWithNotifications;
+
+// @beta @system
 export namespace InternalTypes {
+    // @system
     export type ManagerFactory<TKey extends string, TValue extends ValueDirectoryOrState<any>, TManager> = {
         instanceBase: new (...args: any[]) => any;
     } & ((key: TKey, datastoreHandle: StateDatastoreHandle<TKey, TValue>) => {
@@ -46,7 +77,7 @@ export namespace InternalTypes {
         };
         manager: StateValue<TManager>;
     });
-    // (undocumented)
+    // @system
     export interface MapValueState<T, Keys extends string | number> {
         // (undocumented)
         items: {
@@ -55,20 +86,22 @@ export namespace InternalTypes {
         // (undocumented)
         rev: number;
     }
-    // (undocumented)
+    // @system
     export interface NotificationType {
         // (undocumented)
-        args: (JsonSerializable<unknown> & JsonDeserialized<unknown>)[];
+        args: unknown[];
         // (undocumented)
         name: string;
     }
-    // (undocumented)
+    // @system
     export class StateDatastoreHandle<TKey, TValue extends ValueDirectoryOrState<any>> {
     }
+    // @system
     export type StateValue<T> = T & StateValueBrand<T>;
+    // @system
     export class StateValueBrand<T> {
     }
-    // (undocumented)
+    // @system
     export interface ValueDirectory<T> {
         // (undocumented)
         items: {
@@ -77,19 +110,19 @@ export namespace InternalTypes {
         // (undocumented)
         rev: number;
     }
-    // (undocumented)
+    // @system
     export type ValueDirectoryOrState<T> = ValueRequiredState<T> | ValueDirectory<T>;
-    // (undocumented)
+    // @system
     export interface ValueOptionalState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value?: JsonDeserialized<TValue>;
+        value?: OpaqueJsonDeserialized<TValue>;
     }
-    // (undocumented)
+    // @system
     export interface ValueRequiredState<TValue> extends ValueStateMetadata {
         // (undocumented)
-        value: JsonDeserialized<TValue>;
+        value: OpaqueJsonDeserialized<TValue>;
     }
-    // (undocumented)
+    // @system
     export interface ValueStateMetadata {
         // (undocumented)
         rev: number;
@@ -98,147 +131,159 @@ export namespace InternalTypes {
     }
 }
 
-// @alpha
+// @alpha @system
 export namespace InternalUtilityTypes {
-    export type FullyReadonly<T> = {
-        readonly [K in keyof T]: FullyReadonly<T[K]>;
-    };
-    export type IsNotificationListener<Event> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P> & JsonDeserialized<P>, true, false> : false;
-    export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
-    export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
+    // @system
+    export type IfNotificationListener<Event, IfListener, Else> = Event extends (...args: infer P) => void ? InternalUtilityTypes_2.IfSameType<P, JsonSerializable<P>, IfListener, Else> : Else;
+    // @system
+    export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonDeserialized<P> : never;
+    // @system
+    export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (...args: infer P) => any ? JsonSerializable<P> : never;
+    // @system
     export type NotificationListeners<E> = {
-        [P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
+        [P in keyof E as IfNotificationListener<E[P], P, never>]: E[P];
     };
 }
 
-// @alpha @sealed
-export interface IPresence {
-    readonly events: Listenable<PresenceEvents>;
-    getAttendee(clientId: ClientConnectionId | ClientSessionId): ISessionClient;
-    getAttendees(): ReadonlySet<ISessionClient>;
-    getMyself(): ISessionClient;
-    getNotifications<NotificationsSchema extends PresenceNotificationsSchema>(notificationsId: PresenceWorkspaceAddress, requestedContent: NotificationsSchema): PresenceNotifications<NotificationsSchema>;
-    getStates<StatesSchema extends PresenceStatesSchema>(workspaceAddress: PresenceWorkspaceAddress, requestedContent: StatesSchema, controls?: BroadcastControlSettings): PresenceStates<StatesSchema>;
-}
-
-// @alpha @sealed
-export interface ISessionClient<SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    getConnectionId(): ClientConnectionId;
-    getConnectionStatus(): SessionClientStatus;
-    readonly sessionId: SpecificSessionClientId;
-}
-
-// @alpha
-export function Latest<T extends object, Key extends string = string>(initialValue: JsonSerializable<T> & JsonDeserialized<T> & object, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestValueManager<T>>;
-
-// @alpha
-export function LatestMap<T extends object, Keys extends string | number = string | number, RegistrationKey extends string = string>(initialValues?: {
-    [K in Keys]: JsonSerializable<T> & JsonDeserialized<T>;
-}, controls?: BroadcastControlSettings): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapValueManager<T, Keys>>;
-
-// @alpha @sealed
-export interface LatestMapItemRemovedClientData<K extends string | number> {
-    // (undocumented)
-    client: ISessionClient;
-    // (undocumented)
-    key: K;
-    // (undocumented)
-    metadata: LatestValueMetadata;
-}
-
-// @alpha @sealed
-export interface LatestMapItemValueClientData<T, K extends string | number> extends LatestValueClientData<T> {
-    // (undocumented)
-    key: K;
-}
-
-// @alpha @sealed
-export interface LatestMapValueClientData<T, Keys extends string | number, SpecificSessionClientId extends ClientSessionId = ClientSessionId> {
-    client: ISessionClient<SpecificSessionClientId>;
-    // (undocumented)
-    items: ReadonlyMap<Keys, LatestValueData<T>>;
-}
-
-// @alpha @sealed
-export interface LatestMapValueManager<T, Keys extends string | number = string | number> {
-    clients(): ISessionClient[];
-    clientValue(client: ISessionClient): ReadonlyMap<Keys, LatestValueData<T>>;
-    clientValues(): IterableIterator<LatestMapValueClientData<T, Keys>>;
+// @beta @sealed
+export interface Latest<T, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestMapValueManagerEvents<T, Keys>>;
-    readonly local: ValueMap<Keys, T>;
+    readonly events: Listenable<LatestEvents<T, TRemoteAccessor>>;
+    getRemote(attendee: Attendee): LatestData<T, TRemoteAccessor>;
+    getRemotes(): IterableIterator<LatestClientData<T, TRemoteAccessor>>;
+    getStateAttendees(): Attendee[];
+    get local(): DeepReadonly<JsonDeserialized<T>>;
+    set local(value: JsonSerializable<T>);
+    readonly presence: Presence;
 }
 
-// @alpha @sealed (undocumented)
-export interface LatestMapValueManagerEvents<T, K extends string | number> {
+// @beta @input
+export interface LatestArguments<T extends object | null> extends LatestArgumentsRaw<T> {
+    validator: StateSchemaValidator<T>;
+}
+
+// @beta @input
+export interface LatestArgumentsRaw<T extends object | null> {
+    local: JsonSerializable<T>;
+    settings?: BroadcastControlSettings | undefined;
+}
+
+// @beta @sealed
+export interface LatestClientData<T, TValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> extends LatestData<T, TValueAccessor> {
+    attendee: Attendee;
+}
+
+// @beta @sealed
+export interface LatestData<T, TValueAccessor extends ValueAccessor<T>> {
+    metadata: LatestMetadata;
+    value: Accessor<T, TValueAccessor>;
+}
+
+// @beta @sealed
+export interface LatestEvents<T, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
-    itemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
+    localUpdated: (update: {
+        value: DeepReadonly<JsonSerializable<T>>;
+    }) => void;
     // @eventProperty
-    itemUpdated: (updatedItem: LatestMapItemValueClientData<T, K>) => void;
+    remoteUpdated: (update: LatestClientData<T, TRemoteValueAccessor>) => void;
+}
+
+// @beta @sealed
+export interface LatestFactory {
+    <T extends object | null, Key extends string = string>(args: LatestArguments<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, Latest<T>>;
+    <T extends object | null, Key extends string = string>(args: LatestArgumentsRaw<T>): InternalTypes.ManagerFactory<Key, InternalTypes.ValueRequiredState<T>, LatestRaw<T>>;
+}
+
+// @beta @sealed
+export interface LatestMap<T, Keys extends string | number = string | number, TRemoteAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
+    readonly controls: BroadcastControls;
+    readonly events: Listenable<LatestMapEvents<T, Keys, TRemoteAccessor>>;
+    getRemote(attendee: Attendee): ReadonlyMap<Keys, LatestData<T, TRemoteAccessor>>;
+    getRemotes(): IterableIterator<LatestMapClientData<T, Keys, TRemoteAccessor>>;
+    getStateAttendees(): Attendee[];
+    readonly local: StateMap<Keys, T>;
+    readonly presence: Presence;
+}
+
+// @beta @input
+export interface LatestMapArgumentsRaw<T, Keys extends string | number = string | number> {
+    local?: {
+        [K in Keys]: JsonSerializable<T>;
+    };
+    settings?: BroadcastControlSettings | undefined;
+}
+
+// @beta @sealed
+export interface LatestMapClientData<T, Keys extends string | number, TValueAccessor extends ValueAccessor<T>, SpecificAttendeeId extends AttendeeId = AttendeeId> {
+    attendee: Attendee<SpecificAttendeeId>;
+    items: ReadonlyMap<Keys, LatestData<T, TValueAccessor>>;
+}
+
+// @beta @sealed
+export interface LatestMapEvents<T, K extends string | number, TRemoteValueAccessor extends ValueAccessor<T> = ProxiedValueAccessor<T>> {
     // @eventProperty
     localItemRemoved: (removedItem: {
         key: K;
     }) => void;
     // @eventProperty
     localItemUpdated: (updatedItem: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
+        value: DeepReadonly<JsonSerializable<T>>;
         key: K;
     }) => void;
     // @eventProperty
-    updated: (updates: LatestMapValueClientData<T, K>) => void;
-}
-
-// @alpha @sealed
-export interface LatestValueClientData<T> extends LatestValueData<T> {
-    // (undocumented)
-    client: ISessionClient;
-}
-
-// @alpha @sealed
-export interface LatestValueData<T> {
-    // (undocumented)
-    metadata: LatestValueMetadata;
-    // (undocumented)
-    value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-}
-
-// @alpha @sealed
-export interface LatestValueManager<T> {
-    clients(): ISessionClient[];
-    clientValue(client: ISessionClient): LatestValueData<T>;
-    clientValues(): IterableIterator<LatestValueClientData<T>>;
-    readonly controls: BroadcastControls;
-    readonly events: Listenable<LatestValueManagerEvents<T>>;
-    get local(): InternalUtilityTypes.FullyReadonly<JsonDeserialized<T>>;
-    set local(value: JsonSerializable<T> & JsonDeserialized<T>);
-}
-
-// @alpha @sealed (undocumented)
-export interface LatestValueManagerEvents<T> {
+    remoteItemRemoved: (removedItem: LatestMapItemRemovedClientData<K>) => void;
     // @eventProperty
-    localUpdated: (update: {
-        value: InternalUtilityTypes.FullyReadonly<JsonSerializable<T> & JsonDeserialized<T>>;
-    }) => void;
+    remoteItemUpdated: (updatedItem: LatestMapItemUpdatedClientData<T, K, TRemoteValueAccessor>) => void;
     // @eventProperty
-    updated: (update: LatestValueClientData<T>) => void;
+    remoteUpdated: (updates: LatestMapClientData<T, K, TRemoteValueAccessor>) => void;
 }
 
-// @alpha @sealed
-export interface LatestValueMetadata {
+// @beta @sealed
+export interface LatestMapFactory {
+    <T, Keys extends string | number = string | number, RegistrationKey extends string = string>(args?: LatestMapArgumentsRaw<T, Keys>): InternalTypes.ManagerFactory<RegistrationKey, InternalTypes.MapValueState<T, Keys>, LatestMapRaw<T, Keys>>;
+}
+
+// @beta @sealed
+export interface LatestMapItemRemovedClientData<K extends string | number> {
+    attendee: Attendee;
+    key: K;
+    metadata: LatestMetadata;
+}
+
+// @beta @sealed
+export interface LatestMapItemUpdatedClientData<T, K extends string | number, TValueAccessor extends ValueAccessor<T>> extends LatestClientData<T, TValueAccessor> {
+    key: K;
+}
+
+// @beta @sealed
+export type LatestMapRaw<T, Keys extends string | number = string | number> = LatestMap<T, Keys, RawValueAccessor<T>>;
+
+// @beta @sealed
+export type LatestMapRawEvents<T, K extends string | number> = LatestMapEvents<T, K, RawValueAccessor<T>>;
+
+// @beta @sealed
+export interface LatestMetadata {
     revision: number;
     timestamp: number;
 }
 
+// @beta @sealed
+export type LatestRaw<T> = Latest<T, RawValueAccessor<T>>;
+
+// @beta @sealed
+export type LatestRawEvents<T> = LatestEvents<T, RawValueAccessor<T>>;
+
 // @alpha @sealed
 export interface NotificationEmitter<E extends InternalUtilityTypes.NotificationListeners<E>> {
-    broadcast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
-    unicast<K extends string & keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetClient: ISessionClient, ...args: Parameters<E[K]>): void;
+    broadcast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, ...args: Parameters<E[K]>): void;
+    unicast<K extends keyof InternalUtilityTypes.NotificationListeners<E>>(notificationName: K, targetAttendee: Attendee, ...args: Parameters<E[K]>): void;
 }
 
 // @alpha @sealed
 export interface NotificationListenable<TListeners extends InternalUtilityTypes.NotificationListeners<TListeners>> {
-    off<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(notificationName: K, listener: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void): void;
-    on<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(notificationName: K, listener: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void): Off;
+    off<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(notificationName: K, listener: (sender: Attendee, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void): void;
+    on<K extends keyof InternalUtilityTypes.NotificationListeners<TListeners>>(notificationName: K, listener: (sender: Attendee, ...args: InternalUtilityTypes.JsonDeserializedParameters<TListeners[K]>) => void): Off;
 }
 
 // @alpha
@@ -249,89 +294,126 @@ export interface NotificationsManager<T extends InternalUtilityTypes.Notificatio
     readonly emit: NotificationEmitter<T>;
     readonly events: Listenable<NotificationsManagerEvents>;
     readonly notifications: NotificationListenable<T>;
+    readonly presence: PresenceWithNotifications;
 }
 
 // @alpha @sealed (undocumented)
 export interface NotificationsManagerEvents {
     // @eventProperty
-    unattendedNotification: (name: string, sender: ISessionClient, ...content: unknown[]) => void;
+    unattendedNotification: (name: string, sender: Attendee, ...content: unknown[]) => void;
 }
 
 // @alpha @sealed
 export type NotificationSubscriptions<E extends InternalUtilityTypes.NotificationListeners<E>> = {
-    [K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (sender: ISessionClient, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
+    [K in string & keyof InternalUtilityTypes.NotificationListeners<E>]: (sender: Attendee, ...args: InternalUtilityTypes.JsonDeserializedParameters<E[K]>) => void;
 };
 
-// @alpha @sealed (undocumented)
-export interface PresenceEvents {
-    // @eventProperty
-    attendeeDisconnected: (attendee: ISessionClient) => void;
-    // @eventProperty
-    attendeeJoined: (attendee: ISessionClient) => void;
-    workspaceActivated: (workspaceAddress: PresenceWorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
-}
-
 // @alpha @sealed
-export interface PresenceNotifications<TSchema extends PresenceNotificationsSchema> {
-    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends NotificationsManager<any>>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is PresenceNotifications<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
-    readonly props: PresenceStatesEntries<TSchema>;
+export interface NotificationsWorkspace<TSchema extends NotificationsWorkspaceSchema> {
+    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends NotificationsManager<any>>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is NotificationsWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>>;
+    readonly notifications: StatesWorkspaceEntries<TSchema>;
+    readonly presence: PresenceWithNotifications;
 }
 
 // @alpha
-export interface PresenceNotificationsSchema {
+export interface NotificationsWorkspaceSchema {
     // (undocumented)
     [key: string]: InternalTypes.ManagerFactory<typeof key, InternalTypes.ValueRequiredState<InternalTypes.NotificationType>, NotificationsManager<any>>;
 }
 
-// @alpha @sealed
-export interface PresenceStates<TSchema extends PresenceStatesSchema, TManagerConstraints = unknown> {
-    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is PresenceStates<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
-    readonly controls: BroadcastControls;
-    readonly props: PresenceStatesEntries<TSchema>;
+// @beta @sealed
+export interface Presence {
+    readonly attendees: {
+        readonly events: Listenable<AttendeesEvents>;
+        getAttendees(): ReadonlySet<Attendee>;
+        getAttendee(clientId: ClientConnectionId | AttendeeId): Attendee;
+        getMyself(): Attendee;
+    };
+    readonly events: Listenable<PresenceEvents>;
+    readonly states: {
+        getWorkspace<StatesSchema extends StatesWorkspaceSchema>(workspaceAddress: WorkspaceAddress, requestedStates: StatesSchema, controls?: BroadcastControlSettings): StatesWorkspace<StatesSchema>;
+    };
+}
+
+// @beta @sealed
+export interface PresenceEvents {
+    workspaceActivated: (workspaceAddress: WorkspaceAddress, type: "States" | "Notifications" | "Unknown") => void;
 }
 
 // @alpha @sealed
-export type PresenceStatesEntries<TSchema extends PresenceStatesSchema> = {
+export interface PresenceWithNotifications extends Presence {
+    // (undocumented)
+    readonly notifications: {
+        getWorkspace<NotificationsSchema extends NotificationsWorkspaceSchema>(notificationsId: WorkspaceAddress, requestedNotifications: NotificationsSchema): NotificationsWorkspace<NotificationsSchema>;
+    };
+}
+
+// @beta @system
+export interface ProxiedValueAccessor<T> {
+    // (undocumented)
+    readonly data: T;
+    // (undocumented)
+    readonly kind: "proxied";
+}
+
+// @beta @system
+export interface RawValueAccessor<T> {
+    // (undocumented)
+    readonly data: T;
+    // (undocumented)
+    readonly kind: "raw";
+}
+
+// @beta
+export const StateFactory: {
+    latest: LatestFactory;
+    latestMap: LatestMapFactory;
+};
+
+// @beta @sealed
+export interface StateMap<K extends string | number, V> {
+    clear(): void;
+    delete(key: K): boolean;
+    forEach(callbackfn: (value: DeepReadonly<JsonDeserialized<V>>, key: K, map: StateMap<K, V>) => void, thisArg?: unknown): void;
+    get(key: K): DeepReadonly<JsonDeserialized<V>> | undefined;
+    has(key: K): boolean;
+    keys(): IterableIterator<K>;
+    set(key: K, value: JsonSerializable<V>): this;
+    readonly size: number;
+}
+
+// @beta
+export type StateSchemaValidator<T> = (
+unvalidatedData: unknown) => JsonDeserialized<T> | undefined;
+
+// @beta @sealed
+export interface StatesWorkspace<TSchema extends StatesWorkspaceSchema, TManagerConstraints = unknown> {
+    add<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<any>, TManager extends TManagerConstraints>(key: TKey, manager: InternalTypes.ManagerFactory<TKey, TValue, TManager>): asserts this is StatesWorkspace<TSchema & Record<TKey, InternalTypes.ManagerFactory<TKey, TValue, TManager>>, TManagerConstraints>;
+    readonly controls: BroadcastControls;
+    readonly presence: Presence;
+    readonly states: StatesWorkspaceEntries<TSchema>;
+}
+
+// @beta @sealed
+export type StatesWorkspaceEntries<TSchema extends StatesWorkspaceSchema> = {
     /**
-    * Registered `Value Manager`s
+    * Registered State objects.
     */
     readonly [Key in keyof TSchema]: ReturnType<TSchema[Key]>["manager"] extends InternalTypes.StateValue<infer TManager> ? TManager : never;
 };
 
-// @alpha
-export interface PresenceStatesSchema {
-    // (undocumented)
-    [key: string]: PresenceWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
+// @beta
+export type StatesWorkspaceEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
+
+// @beta
+export interface StatesWorkspaceSchema {
+    [key: string]: StatesWorkspaceEntry<typeof key, InternalTypes.ValueDirectoryOrState<any>>;
 }
 
-// @alpha
-export type PresenceWorkspaceAddress = `${string}:${string}`;
+// @beta @system
+export type ValueAccessor<T> = RawValueAccessor<T> | ProxiedValueAccessor<T>;
 
-// @alpha
-export type PresenceWorkspaceEntry<TKey extends string, TValue extends InternalTypes.ValueDirectoryOrState<unknown>, TManager = unknown> = InternalTypes.ManagerFactory<TKey, TValue, TManager>;
-
-// @alpha
-export const SessionClientStatus: {
-    readonly Connected: "Connected";
-    readonly Disconnected: "Disconnected";
-};
-
-// @alpha
-export type SessionClientStatus = (typeof SessionClientStatus)[keyof typeof SessionClientStatus];
-
-// @alpha @sealed
-export interface ValueMap<K extends string | number, V> {
-    clear(): void;
-    // (undocumented)
-    delete(key: K): boolean;
-    forEach(callbackfn: (value: InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>>, key: K, map: ValueMap<K, V>) => void, thisArg?: unknown): void;
-    get(key: K): InternalUtilityTypes.FullyReadonly<JsonDeserialized<V>> | undefined;
-    // (undocumented)
-    has(key: K): boolean;
-    keys(): IterableIterator<K>;
-    set(key: K, value: JsonSerializable<V> & JsonDeserialized<V>): this;
-    // (undocumented)
-    readonly size: number;
-}
+// @beta
+export type WorkspaceAddress = `${string}:${string}`;
 
 ```

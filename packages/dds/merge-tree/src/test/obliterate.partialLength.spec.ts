@@ -406,4 +406,65 @@ describe("obliterate partial lengths", () => {
 			]);
 		});
 	});
+
+	describe("Overlapping remote/local obliterate with insertion within the collab window", () => {
+		it("acked insertion", () => {
+			let seq = client.getCurrentSeq();
+			const initialSeq = seq;
+			client.insertTextRemote(
+				0,
+				"more ",
+				undefined,
+				++seq,
+				refSeq,
+				client.getLongClientId(remoteClientId),
+			);
+			const insertSeq = seq;
+
+			client.obliterateRangeLocal(0, 5);
+			const localRemoveLocalSeq = client.getCollabWindow().localSeq;
+			client.obliterateRangeRemote(
+				0,
+				5,
+				++seq,
+				insertSeq,
+				client.getLongClientId(remoteClientId),
+			);
+			const obliterateSeq = seq;
+			validatePartialLengths(localClientId, client.mergeTree, [
+				{ seq: initialSeq, localSeq: initialLocalSeq, len: "hello world".length },
+				{ seq: insertSeq, localSeq: initialLocalSeq, len: "more hello world".length },
+				{ seq: obliterateSeq, localSeq: initialLocalSeq, len: "hello world".length },
+				{ seq: initialSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
+				{ seq: insertSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
+				{ seq: obliterateSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
+			]);
+		});
+
+		it("local insertion", () => {
+			let seq = client.getCurrentSeq();
+			const initialSeq = seq;
+			client.insertTextLocal(6, "more ");
+			const insertLocalSeq = client.getCollabWindow().localSeq;
+
+			client.obliterateRangeLocal(6, 11); // Remove the added "more "
+			const localRemoveLocalSeq = client.getCollabWindow().localSeq;
+			client.obliterateRangeRemote(
+				0,
+				"hello world".length,
+				++seq,
+				initialSeq,
+				client.getLongClientId(remoteClientId),
+			);
+			const obliterateSeq = seq;
+			validatePartialLengths(localClientId, client.mergeTree, [
+				{ seq: initialSeq, localSeq: initialLocalSeq, len: "hello world".length },
+				{ seq: initialSeq, localSeq: insertLocalSeq, len: "hello more world".length },
+				{ seq: initialSeq, localSeq: localRemoveLocalSeq, len: "hello world".length },
+				{ seq: obliterateSeq, localSeq: initialLocalSeq, len: "".length },
+				{ seq: obliterateSeq, localSeq: insertLocalSeq, len: "".length },
+				{ seq: obliterateSeq, localSeq: localRemoveLocalSeq, len: "".length },
+			]);
+		});
+	});
 });

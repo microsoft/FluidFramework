@@ -70,7 +70,10 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 
 	const testDataObjectType = "TestDataObject";
-	const dataObjectFactory = new DataObjectFactory(testDataObjectType, TestDataObject, [], {});
+	const dataObjectFactory = new DataObjectFactory({
+		type: testDataObjectType,
+		ctor: TestDataObject,
+	});
 
 	// The 1st runtime factory, V1 of the code
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
@@ -218,6 +221,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			{ configProvider },
 			{ [LoaderHeader.version]: summaryVersion },
 		)) as IContainerExperimental;
+		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 		const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");

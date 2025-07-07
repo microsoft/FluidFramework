@@ -19,13 +19,11 @@ export class LastEditedTrackerDataObject
 	implements IProvideFluidLastEditedTracker
 {
 	private static readonly factory: DataObjectFactory<LastEditedTrackerDataObject> =
-		new DataObjectFactory(
-			"@fluid-experimental/last-edited",
-			LastEditedTrackerDataObject,
-			[SharedSummaryBlock.getFactory()],
-			{},
-			undefined,
-		);
+		new DataObjectFactory({
+			type: "@fluid-experimental/last-edited",
+			ctor: LastEditedTrackerDataObject,
+			sharedObjects: [SharedSummaryBlock.getFactory()],
+		});
 
 	public static getFactory(): DataObjectFactory<LastEditedTrackerDataObject> {
 		return LastEditedTrackerDataObject.factory;

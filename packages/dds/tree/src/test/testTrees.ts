@@ -23,21 +23,19 @@ import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	fieldKinds,
-	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
 import type { TreeStoredContent } from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	cursorFromInsertable,
 	getStoredSchema,
 	numberSchema,
 	SchemaFactoryAlpha,
 	stringSchema,
 	toStoredSchema,
+	type UnsafeUnknownSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
-	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -48,6 +46,8 @@ import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
+import { schemaStatics } from "../simple-tree/index.js";
+import { fieldCursorFromInsertable } from "./utils.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -82,11 +82,12 @@ function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 }
 
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
-	const cursor = cursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root());
 	return test(
 		data.name,
 		toStoredSchema(data.schema),
-		cursor === undefined ? [] : [jsonableTreeFromCursor(cursor)],
+		jsonableTreesFromFieldCursor(
+			fieldCursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root()),
+		),
 	);
 }
 
@@ -124,16 +125,16 @@ export function treeContentFromTestTree(testData: TestTree): TreeStoredContent {
 }
 
 const factory = new SchemaFactoryAlpha("test");
-export class Minimal extends factory.object("minimal", {}) {}
-export class Minimal2 extends factory.object("minimal2", {}) {}
-export class HasMinimalValueField extends factory.object("hasMinimalValueField", {
+export class Minimal extends factory.objectAlpha("minimal", {}) {}
+export class Minimal2 extends factory.objectAlpha("minimal2", {}) {}
+export class HasMinimalValueField extends factory.objectAlpha("hasMinimalValueField", {
 	field: Minimal,
 }) {}
-export class HasRenamedField extends factory.object("hasRenamedField", {
+export class HasRenamedField extends factory.objectAlpha("hasRenamedField", {
 	field: factory.required(Minimal, { key: "stored-name" }),
 }) {}
 
-export class HasDescriptions extends factory.object(
+export class HasDescriptions extends factory.objectAlpha(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, { metadata: { description: "the field" } }),
@@ -141,7 +142,7 @@ export class HasDescriptions extends factory.object(
 	{ metadata: { description: "root object" } },
 ) {}
 
-export class HasAllMetadata extends factory.object(
+export class HasAllMetadata extends factory.objectAlpha(
 	"hasDescriptions",
 	{
 		field: factory.required(Minimal, {
@@ -155,19 +156,19 @@ export class HasAllMetadata extends factory.object(
 	},
 ) {}
 
-export class HasAmbiguousField extends factory.object("hasAmbiguousField", {
+export class HasAmbiguousField extends factory.objectAlpha("hasAmbiguousField", {
 	field: [Minimal, Minimal2],
 }) {}
-export class HasNumericValueField extends factory.object("hasNumericValueField", {
+export class HasNumericValueField extends factory.objectAlpha("hasNumericValueField", {
 	field: factory.number,
 }) {}
-export class HasPolymorphicValueField extends factory.object("hasPolymorphicValueField", {
+export class HasPolymorphicValueField extends factory.objectAlpha("hasPolymorphicValueField", {
 	field: [factory.number, Minimal],
 }) {}
-export class HasOptionalField extends factory.object("hasOptionalField", {
+export class HasOptionalField extends factory.objectAlpha("hasOptionalField", {
 	field: factory.optional(factory.number),
 }) {}
-export class HasIdentifierField extends factory.object("hasIdentifierField", {
+export class HasIdentifierField extends factory.objectAlpha("hasIdentifierField", {
 	field: factory.identifier,
 }) {}
 
@@ -179,6 +180,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.optional.identifier,
 				types: numberSet,
+				persistedMetadata: undefined,
 			},
 		],
 		[
@@ -186,6 +188,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.required.identifier,
 				types: numberSet,
+				persistedMetadata: undefined,
 			},
 		],
 		[
@@ -193,12 +196,14 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.sequence.identifier,
 				types: numberSet,
+				persistedMetadata: undefined,
 			},
 		],
 	]),
 );
 
 export class NumericMap extends factory.map("numericMap", factory.number) {}
+export class NumericRecord extends factory.record("numericRecord", factory.number) {}
 
 export class RecursiveType extends factory.objectRecursive("recursiveType", {
 	field: factory.optionalRecursive([() => RecursiveType]),
@@ -213,7 +218,7 @@ const library = {
 	nodeSchema: new Map([
 		[brand(Minimal.identifier), getStoredSchema(Minimal)],
 		[allTheFieldsName, allTheFields],
-		[brand(factory.number.identifier), getStoredSchema(factory.number)],
+		[brand(factory.number.identifier), getStoredSchema(schemaStatics.number)],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
@@ -248,6 +253,8 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 	testSimpleTree("hasOptionalField-empty", HasOptionalField, {}),
 	testSimpleTree("numericMap-empty", NumericMap, {}),
 	testSimpleTree("numericMap-full", NumericMap, { a: 5, b: 6 }),
+	testSimpleTree("numericRecord-empty", NumericRecord, {}),
+	testSimpleTree("numericRecord-full", NumericRecord, { a: 5, b: 6 }),
 	testSimpleTree("recursiveType-empty", RecursiveType, new RecursiveType({})),
 	testSimpleTree(
 		"recursiveType-recursive",
@@ -269,7 +276,11 @@ export const testTrees: readonly TestTree[] = [
 		"numericSequence",
 		{
 			...toStoredSchema(factory.number),
-			rootFieldSchema: { kind: FieldKinds.sequence.identifier, types: numberSet },
+			rootFieldSchema: {
+				kind: FieldKinds.sequence.identifier,
+				types: numberSet,
+				persistedMetadata: undefined,
+			},
 		},
 		jsonableTreesFromFieldCursor(fieldJsonCursor([1, 2, 3])),
 	),
@@ -279,7 +290,9 @@ export const testTrees: readonly TestTree[] = [
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
-			return [jsonableTreeFromCursor(cursorFromInsertable(HasIdentifierField, { field: id }))];
+			return jsonableTreesFromFieldCursor(
+				fieldCursorFromInsertable(HasIdentifierField, { field: id }),
+			);
 		},
 		policy: defaultSchemaPolicy,
 	},
@@ -301,6 +314,7 @@ export const testTrees: readonly TestTree[] = [
 			rootFieldSchema: {
 				kind: FieldKinds.required.identifier,
 				types: new Set([allTheFieldsName]),
+				persistedMetadata: undefined,
 			},
 		},
 		[
@@ -317,6 +331,7 @@ export const testTrees: readonly TestTree[] = [
 			rootFieldSchema: {
 				kind: FieldKinds.required.identifier,
 				types: new Set([allTheFieldsName]),
+				persistedMetadata: undefined,
 			},
 		},
 		[

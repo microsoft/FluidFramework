@@ -141,5 +141,5 @@ export {
 	revertMergeTreeDeltaRevertibles,
 } from "./revertibles.js";
 export type { OperationStamp } from "./stamps.js";
-export type { Perspective } from "./perspective.js";
+export { createLocalReconnectingPerspective, type Perspective } from "./perspective.js";
 export type { IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";

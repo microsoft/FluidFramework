@@ -14,21 +14,23 @@
 export type { ClientConnectionId } from "./baseTypes.js";
 
 export type {
-	PresenceNotifications,
-	PresenceNotificationsSchema,
-	PresenceStates,
-	PresenceStatesEntries,
-	PresenceStatesSchema,
-	PresenceWorkspaceAddress,
-	PresenceWorkspaceEntry,
+	NotificationsWorkspace,
+	NotificationsWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceEntries,
+	StatesWorkspaceSchema,
+	StatesWorkspaceEntry,
+	WorkspaceAddress,
 } from "./types.js";
 
 export {
-	type ClientSessionId,
-	type IPresence,
-	type ISessionClient,
+	type Attendee,
+	type AttendeesEvents,
+	type AttendeeId,
+	AttendeeStatus,
+	type Presence,
 	type PresenceEvents,
-	SessionClientStatus,
+	type PresenceWithNotifications,
 } from "./presence.js";
 
 export type {
@@ -36,32 +38,45 @@ export type {
 	BroadcastControlSettings,
 } from "./broadcastControls.js";
 
-export { acquirePresence } from "./experimentalAccess.js";
+export { getPresence, getPresenceAlpha } from "./getPresence.js";
 
 export {
-	acquirePresenceViaDataObject,
+	getPresenceViaDataObject,
 	type ExperimentalPresenceDO,
 	ExperimentalPresenceManager,
 } from "./datastorePresenceManagerFactory.js";
 
-export {
+export type {
 	LatestMap,
-	type LatestMapItemRemovedClientData,
-	type LatestMapItemValueClientData,
-	type LatestMapValueClientData,
-	type LatestMapValueManager,
-	type LatestMapValueManagerEvents,
-	type ValueMap,
+	// LatestMapArguments,
+	LatestMapArgumentsRaw,
+	LatestMapClientData,
+	LatestMapEvents,
+	LatestMapFactory,
+	LatestMapItemRemovedClientData,
+	LatestMapItemUpdatedClientData,
+	LatestMapRaw,
+	LatestMapRawEvents,
+	StateMap,
 } from "./latestMapValueManager.js";
-export {
+export type {
 	Latest,
-	type LatestValueManager,
-	type LatestValueManagerEvents,
+	LatestArguments,
+	LatestArgumentsRaw,
+	LatestEvents,
+	LatestFactory,
+	LatestRaw,
+	LatestRawEvents,
 } from "./latestValueManager.js";
 export type {
-	LatestValueClientData,
-	LatestValueData,
-	LatestValueMetadata,
+	Accessor,
+	LatestClientData,
+	LatestData,
+	LatestMetadata,
+	ProxiedValueAccessor,
+	RawValueAccessor,
+	StateSchemaValidator,
+	ValueAccessor,
 } from "./latestValueTypes.js";
 
 export {
@@ -72,6 +87,8 @@ export {
 	type NotificationsManager,
 	type NotificationsManagerEvents,
 } from "./notificationsManager.js";
+
+export { StateFactory } from "./stateFactory.js";
 
 export type { InternalTypes } from "./exposedInternalTypes.js";
 export type { InternalUtilityTypes } from "./exposedUtilityTypes.js";

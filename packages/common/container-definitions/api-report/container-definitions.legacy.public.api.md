@@ -49,6 +49,4 @@ export interface ISelf {
     readonly clientId: string;
 }
 
-export { IThrottlingWarning }
-
 ```

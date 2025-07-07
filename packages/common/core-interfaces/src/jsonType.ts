@@ -35,3 +35,39 @@ export type JsonTypeWith<T> =
 export type NonNullJsonObjectWith<T> =
 	| { [key: string | number]: JsonTypeWith<T> }
 	| JsonTypeWith<T>[];
+
+/**
+ * Deeply immutable type that is encodable as JSON and deserializable from JSON.
+ *
+ * @typeParam TReadonlyAlternates - Additional [immutable] types that are supported.
+ *
+ * @remarks
+ * If `TReadonlyAlternates` is allowed as-is. So if it is not immutable, then result type
+ * is not wholly immutable.
+ *
+ * A `const` variable is still required to avoid top-level mutability. I.e.
+ * ```typescript
+ * let x: ReadonlyJsonTypeWith<never> = { a: 1 };
+ * ```
+ * does not prevent later `x = 5`. (Does prevent `x.a = 2`.)
+ *
+ * @beta
+ */
+export type ReadonlyJsonTypeWith<TReadonlyAlternates> =
+	// eslint-disable-next-line @rushstack/no-new-null
+	| null
+	| boolean
+	| number
+	| string
+	| TReadonlyAlternates
+	| { readonly [key: string | number]: ReadonlyJsonTypeWith<TReadonlyAlternates> }
+	| readonly ReadonlyJsonTypeWith<TReadonlyAlternates>[];
+
+/**
+ * Portion of {@link ReadonlyJsonTypeWith} that is an object (including array) and not null.
+ *
+ * @internal
+ */
+export type ReadonlyNonNullJsonObjectWith<TReadonlyAlternates> =
+	| { readonly [key: string | number]: ReadonlyJsonTypeWith<TReadonlyAlternates> }
+	| readonly ReadonlyJsonTypeWith<TReadonlyAlternates>[];

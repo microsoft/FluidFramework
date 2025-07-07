@@ -4,6 +4,7 @@
  */
 
 import type { ValueSchema } from "../core/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 import type { NodeKind } from "./core/index.js";
 import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schemaTypes.js";
 
@@ -37,13 +38,30 @@ export interface SimpleNodeSchemaBase<
 }
 
 /**
+ * A {@link SimpleNodeSchema} containing fields for alpha features.
+ *
+ * @system
+ * @alpha
+ * @sealed
+ */
+export interface SimpleNodeSchemaBaseAlpha<
+	out TNodeKind extends NodeKind,
+	out TCustomMetadata = unknown,
+> extends SimpleNodeSchemaBase<TNodeKind, TCustomMetadata> {
+	/**
+	 * Persisted metadata for this node schema.
+	 */
+	readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined;
+}
+
+/**
  * A {@link SimpleNodeSchema} for an object node.
  *
  * @alpha
  * @sealed
  */
 export interface SimpleObjectNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Object, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Object, TCustomMetadata> {
 	/**
 	 * Schemas for each of the object's fields, keyed off of schema's keys.
 	 * @remarks
@@ -81,7 +99,7 @@ export interface SimpleObjectFieldSchema extends SimpleFieldSchema {
  * @sealed
  */
 export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Array, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Array, TCustomMetadata> {
 	/**
 	 * The types allowed in the array.
 	 *
@@ -98,9 +116,26 @@ export interface SimpleArrayNodeSchema<out TCustomMetadata = unknown>
  * @sealed
  */
 export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
-	extends SimpleNodeSchemaBase<NodeKind.Map, TCustomMetadata> {
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Map, TCustomMetadata> {
 	/**
 	 * The types allowed as values in the map.
+	 *
+	 * @remarks Refers to the types by identifier.
+	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
+	 */
+	readonly allowedTypesIdentifiers: ReadonlySet<string>;
+}
+
+/**
+ * A {@link SimpleNodeSchema} for a map node.
+ *
+ * @alpha
+ * @sealed
+ */
+export interface SimpleRecordNodeSchema<out TCustomMetadata = unknown>
+	extends SimpleNodeSchemaBaseAlpha<NodeKind.Record, TCustomMetadata> {
+	/**
+	 * The types allowed as values in the record.
 	 *
 	 * @remarks Refers to the types by identifier.
 	 * A {@link SimpleTreeSchema} is needed to resolve these identifiers to their schema {@link SimpleTreeSchema.definitions}.
@@ -114,7 +149,7 @@ export interface SimpleMapNodeSchema<out TCustomMetadata = unknown>
  * @alpha
  * @sealed
  */
-export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBase<NodeKind.Leaf> {
+export interface SimpleLeafNodeSchema extends SimpleNodeSchemaBaseAlpha<NodeKind.Leaf> {
 	/**
 	 * The kind of leaf node.
 	 */
@@ -139,7 +174,8 @@ export type SimpleNodeSchema =
 	| SimpleLeafNodeSchema
 	| SimpleMapNodeSchema
 	| SimpleArrayNodeSchema
-	| SimpleObjectNodeSchema;
+	| SimpleObjectNodeSchema
+	| SimpleRecordNodeSchema;
 
 /**
  * A simple, shallow representation of a schema for a field.
@@ -169,6 +205,11 @@ export interface SimpleFieldSchema {
 	 * {@inheritDoc FieldSchemaMetadata}
 	 */
 	readonly metadata: FieldSchemaMetadata;
+
+	/**
+	 * Persisted metadata for this field schema.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }
 
 /**
@@ -180,22 +221,14 @@ export interface SimpleFieldSchema {
  * @alpha
  * @sealed
  */
-export interface SimpleTreeSchema extends SimpleFieldSchema {
+export interface SimpleTreeSchema {
 	/**
-	 * The kind of tree field representing the root of the tree.
+	 * The tree field representing the root of the tree.
 	 */
-	readonly kind: FieldKind;
+	readonly root: SimpleFieldSchema;
 
 	/**
-	 * The types allowed under the tree root.
-	 *
-	 * @remarks Refers to the types by identifier.
-	 * Can be resolved via {@link SimpleTreeSchema.definitions}.
-	 */
-	readonly allowedTypesIdentifiers: ReadonlySet<string>;
-
-	/**
-	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.allowedTypesIdentifiers}.
+	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
 	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
 	 */

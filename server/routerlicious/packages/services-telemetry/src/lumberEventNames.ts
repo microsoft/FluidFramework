@@ -74,4 +74,5 @@ export enum LumberEventName {
 	ReadinessProbe = "ReadinessProbe",
 	CircuitBreaker = "CircuitBreaker",
 	RestWrapper = "RestWrapper",
+	SocketIoRequest = "SocketIoRequest",
 }

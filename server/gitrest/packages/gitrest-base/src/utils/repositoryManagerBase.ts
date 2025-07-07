@@ -4,16 +4,17 @@
  */
 
 import type * as git from "@fluidframework/gitresources";
+import { NetworkError } from "@fluidframework/server-services-client";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { executeApiWithMetric } from "@fluidframework/server-services-utils";
+import sizeof from "object-sizeof";
+
 import { IExternalWriterConfig, IRepositoryManager } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,
 	GitRestLumberEventName,
 	GitRestRepositoryApiCategory,
 } from "./gitrestTelemetryDefinitions";
-import sizeof from "object-sizeof";
-import { NetworkError } from "@fluidframework/server-services-client";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 export interface IRepositoryManagerBaseOptions {
 	/**

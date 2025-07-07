@@ -4,13 +4,13 @@
  */
 
 import { delay } from "@fluidframework/common-utils";
+import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
 	LogLevel,
 	Lumber,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 
 /**
  * Executes a given API while providing support to retry on failures, ignore failures, and taking action on error.
@@ -26,6 +26,7 @@ import { isNetworkError, NetworkError } from "@fluidframework/server-services-cl
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
  * @param shouldLogInitialSuccessVerbose - whether to log successful telemetry as verbose level if there is no retry, default is false
+ * @param maxRetryDelayMs - Maximum cumulative delay time in milliseconds across all retry attempts
  * @internal
  */
 export async function runWithRetry<T>(
@@ -41,8 +42,10 @@ export async function runWithRetry<T>(
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
 	shouldLogInitialSuccessVerbose = false,
+	maxRetryDelayMs = 30 * 1000, // 30 seconds
 ): Promise<T> {
 	let retryCount = 0;
+	let totalRetryDelayMs = 0;
 	let success = false;
 	let metric: Lumber<LumberEventName.RunWithRetry> | undefined;
 	let latestResultError: unknown;
@@ -104,6 +107,23 @@ export async function runWithRetry<T>(
 				}
 
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+				if (totalRetryDelayMs + intervalMs > maxRetryDelayMs) {
+					Lumberjack.error(
+						"Max retry delay will be exceeded, rejecting",
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+							intervalMs,
+							totalRetryDelayMs,
+							maxRetryDelayMs,
+						},
+						error,
+					);
+					throw error;
+				}
+				totalRetryDelayMs += intervalMs;
 				await delay(intervalMs);
 				retryCount++;
 			}
@@ -114,6 +134,8 @@ export async function runWithRetry<T>(
 			metric.setProperty("callName", callName);
 			metric.setProperty("maxRetries", maxRetries);
 			metric.setProperty("retryAfterMs", retryAfterMs);
+			metric.setProperty("totalRetryDelayMs", totalRetryDelayMs);
+			metric.setProperty("maxRetryDelayMs", maxRetryDelayMs);
 			if (success) {
 				// If we turn on the flag of shouldLogInitialSuccessVerbose and there is no retry,
 				// log as verbose level, otherwise log as info level. By default the flag is off.
@@ -156,6 +178,7 @@ export async function runWithRetry<T>(
  * and retries so far
  * @param onErrorFn - function allowing caller to define custom logic to run on error e.g. custom logs
  * @param telemetryEnabled - whether to log telemetry metric, default is false
+ * @param maxRetryDelayMs - Maximum cumulative delay time in milliseconds across all retry attempts
  * @internal
  */
 export async function requestWithRetry<T>(
@@ -172,8 +195,10 @@ export async function requestWithRetry<T>(
 	) => number = calculateRetryIntervalForNetworkError,
 	onErrorFn?: (error) => void,
 	telemetryEnabled = false,
+	maxRetryDelayMs = 30 * 1000, // 30 seconds
 ): Promise<T> {
 	let retryCount = 0;
+	let totalRetryDelayMs = 0;
 	let success = false;
 	let metric: Lumber<LumberEventName.RequestWithRetry> | undefined;
 	let latestResultError: unknown;
@@ -236,6 +261,23 @@ export async function requestWithRetry<T>(
 				// TODO: if error is a NetworkError, we should respect NetworkError.retryAfter
 				// or NetworkError.retryAfterMs
 				const intervalMs = calculateIntervalMs(error, retryCount, retryAfterMs);
+				if (totalRetryDelayMs + intervalMs > maxRetryDelayMs) {
+					Lumberjack.error(
+						"Max retry delay will be exceeded, rejecting",
+						{
+							...telemetryProperties,
+							callName,
+							retryCount,
+							maxRetries,
+							intervalMs,
+							totalRetryDelayMs,
+							maxRetryDelayMs,
+						},
+						error,
+					);
+					throw error;
+				}
+				totalRetryDelayMs += intervalMs;
 				await delay(intervalMs);
 				retryCount++;
 			}

@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
@@ -12,25 +13,14 @@ import { ValueType, IFluidSerializer } from "@fluidframework/shared-object-base/
 import { makeSerializable } from "./IntervalCollectionValues.js";
 import {
 	IntervalCollection,
-	opsMap,
-	reservedIntervalIdKey,
-	toOptionalSequencePlace,
-	toSequencePlace,
+	type ISerializedIntervalCollectionV1,
+	type ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
 import {
 	IIntervalCollectionTypeOperationValue,
-	IMapMessageLocalMetadata,
 	ISerializableIntervalCollection,
-	ISharedDefaultMapEvents,
-	IValueChanged,
-	IValueOpEmitter,
 	SequenceOptions,
 } from "./intervalCollectionMapInterfaces.js";
-import {
-	IntervalDeltaOpType,
-	sequenceIntervalHelpers,
-	SerializedIntervalDelta,
-} from "./intervals/index.js";
 
 function isMapOperation(op: unknown): op is IMapOperation {
 	return typeof op === "object" && op !== null && "type" in op && op.type === "act";
@@ -63,6 +53,10 @@ export interface IMapDataObjectSerializable {
 	[key: string]: ISerializableIntervalCollection;
 }
 
+export interface IntervalCollectionMapEvents extends IEvent {
+	(event: "createIntervalCollection", listener: (key: string, local: boolean) => void): void;
+}
+
 /**
  * A DefaultMap is a map-like distributed data structure, supporting operations on values stored by
  * string key locations.
@@ -83,6 +77,11 @@ export class IntervalCollectionMap {
 	 */
 	private readonly data = new Map<string, IntervalCollection>();
 
+	private readonly eventEmitter = new TypedEventEmitter<IntervalCollectionMapEvents>();
+	public get events(): IEventProvider<IntervalCollectionMapEvents> {
+		return this.eventEmitter;
+	}
+
 	/**
 	 * Create a new default map.
 	 * @param serializer - The serializer to serialize / parse handles
@@ -94,12 +93,8 @@ export class IntervalCollectionMap {
 	constructor(
 		private readonly serializer: IFluidSerializer,
 		private readonly handle: IFluidHandle,
-		private readonly submitMessage: (
-			op: IMapOperation,
-			localOpMetadata: IMapMessageLocalMetadata,
-		) => void,
+		private readonly submitMessage: (op: IMapOperation, localOpMetadata: unknown) => void,
 		private readonly options?: Partial<SequenceOptions>,
-		public readonly eventEmitter = new TypedEventEmitter<ISharedDefaultMapEvents>(),
 	) {}
 
 	/**
@@ -175,70 +170,59 @@ export class IntervalCollectionMap {
 			// collection. See https://github.com/microsoft/FluidFramework/issues/10557 for more context.
 			const normalizedKey = key.startsWith("intervalCollections/") ? key.substring(20) : key;
 
-			this.data.set(normalizedKey, this.makeLocal(key, serializable));
+			assert(
+				serializable.type !== ValueType[ValueType.Plain] &&
+					serializable.type !== ValueType[ValueType.Shared],
+				0x2e1 /* "Support for plain value types removed." */,
+			);
+
+			this.createCore(normalizedKey, false, serializable.value);
 		}
 	}
 
 	/**
 	 * Submit the given op if a handler is registered.
-	 * @param op - The operation to attempt to submit
+	 * @param content - The operation to attempt to submit
 	 * @param localOpMetadata - The local metadata associated with the op. This is kept locally by the runtime
 	 * and not sent to the server. This will be sent back when this message is received back from the server. This is
 	 * also sent if we are asked to resubmit the message.
 	 * @returns True if the operation was submitted, false otherwise.
 	 */
-	public tryResubmitMessage(op: unknown, localOpMetadata: IMapMessageLocalMetadata): boolean {
-		if (isMapOperation(op)) {
-			const localValue = this.data.get(op.key);
-
+	public tryResubmitMessage(
+		content: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): boolean {
+		if (isMapOperation(content)) {
+			const { value, key } = content;
+			const localValue = this.data.get(key);
 			assert(localValue !== undefined, 0x3f8 /* Local value expected on resubmission */);
-
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			const handler = opsMap[op.value.opName];
-			const rebased = handler.rebase(localValue, op.value, localOpMetadata);
-			if (rebased !== undefined) {
-				const { rebasedOp, rebasedLocalOpMetadata } = rebased;
-				this.submitMessage({ ...op, value: rebasedOp }, rebasedLocalOpMetadata);
-			}
+			localValue.resubmitMessage(value, localOpMetadata, squash);
 			return true;
 		}
 		return false;
 	}
 
-	public tryApplyStashedOp(op: unknown): boolean {
-		if (isMapOperation(op)) {
-			const { value, key } = op;
+	public tryRollback(content: any, localOpMetadata: unknown) {
+		if (isMapOperation(content)) {
+			const localValue = this.data.get(content.key);
+
+			assert(localValue !== undefined, 0xb7e /* Local value expected on rollback */);
+
+			localValue.rollback(content.value, localOpMetadata);
+
+			return true;
+		}
+		return false;
+	}
+
+	public tryApplyStashedOp(content: unknown): boolean {
+		if (isMapOperation(content)) {
+			const { value, key } = content;
 			const map = this.get(key);
 
-			switch (value.opName) {
-				case "add": {
-					map.add({
-						// Todo: we should improve typing so we know add ops always have start and end
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						start: toSequencePlace(value.value.start!, value.value.startSide),
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						end: toSequencePlace(value.value.end!, value.value.endSide),
-						props: value.value.properties,
-					});
-					return true;
-				}
-				case "change": {
-					const { [reservedIntervalIdKey]: id, ...props } = value.value.properties ?? {};
-					map.change(id, {
-						start: toOptionalSequencePlace(value.value.start, value.value.startSide),
-						end: toOptionalSequencePlace(value.value.end, value.value.endSide),
-						props,
-					});
-					return true;
-				}
-				case "delete": {
-					const { [reservedIntervalIdKey]: id } = value.value.properties ?? {};
-					map.removeIntervalById(id);
-					return true;
-				}
-				default:
-					throw new Error("unknown ops should not be stashed");
-			}
+			map.applyStashedOp(value);
+			return true;
 		}
 		return false;
 	}
@@ -259,25 +243,15 @@ export class IntervalCollectionMap {
 	 * (since its data no longer matches what other clients think the data should be) and will avoid overriding document content or misleading the users into thinking their current state is accurate.
 	 */
 	public tryProcessMessage(
-		op: unknown,
+		content: unknown,
 		local: boolean,
 		message: ISequencedDocumentMessage,
 		localOpMetadata: unknown,
 	): boolean {
-		if (isMapOperation(op)) {
-			const localValue = this.data.get(op.key) ?? this.createCore(op.key, local);
-			const handler = opsMap[op.value.opName];
-			const previousValue = localValue;
-			const translatedValue = op.value.value as any;
-			handler.process(
-				previousValue,
-				translatedValue,
-				local,
-				message,
-				localOpMetadata as IMapMessageLocalMetadata,
-			);
-			const event: IValueChanged = { key: op.key, previousValue };
-			this.eventEmitter.emit("valueChanged", event, local, message, this.eventEmitter);
+		if (isMapOperation(content)) {
+			const { value, key } = content;
+			const localValue = this.data.get(key) ?? this.createCore(key, local);
+			localValue.process(value, local, message, localOpMetadata);
 			return true;
 		}
 		return false;
@@ -287,81 +261,30 @@ export class IntervalCollectionMap {
 	 * Initializes a default ValueType at the provided key.
 	 * Should be used when a map operation incurs creation.
 	 * @param key - The key being initialized
-	 * @param local - Whether the message originated from the local client
 	 */
-	private createCore(key: string, local: boolean): IntervalCollection {
-		const localValue = new IntervalCollection(
-			sequenceIntervalHelpers,
-			true,
-			this.makeMapValueOpEmitter(key),
-			[],
-			this.options,
-		);
-		const previousValue = this.data.get(key);
-		this.data.set(key, localValue);
-		const event: IValueChanged = { key, previousValue };
-		this.eventEmitter.emit("create", event, local, this.eventEmitter);
-		return localValue;
-	}
-
-	/**
-	 * The remote ISerializableValue we're receiving (either as a result of a load or an incoming set op) will
-	 * have the information we need to create a real object, but will not be the real object yet.  For example,
-	 * we might know it's a map and the map's ID but not have the actual map or its data yet.  makeLocal's
-	 * job is to convert that information into a real object for local usage.
-	 * @param key - The key that the caller intends to store the local value into (used for ops later).  But
-	 * doesn't actually store the local value into that key.  So better not lie!
-	 * @param serializable - The remote information that we can convert into a real object
-	 * @returns The local value that was produced
-	 */
-	private makeLocal(
+	private createCore(
 		key: string,
-		serializable: ISerializableIntervalCollection,
+		local: boolean,
+		serializedIntervals?: ISerializedIntervalCollectionV1 | ISerializedIntervalCollectionV2,
 	): IntervalCollection {
-		assert(
-			serializable.type !== ValueType[ValueType.Plain] &&
-				serializable.type !== ValueType[ValueType.Shared],
-			0x2e1 /* "Support for plain value types removed." */,
-		);
-
 		const localValue = new IntervalCollection(
-			sequenceIntervalHelpers,
-			true,
-			this.makeMapValueOpEmitter(key),
-			serializable.value,
+			(op, md) => {
+				{
+					this.submitMessage(
+						{
+							key,
+							type: "act",
+							value: op,
+						},
+						md,
+					);
+				}
+			},
+			serializedIntervals ?? [],
 			this.options,
 		);
-
+		this.data.set(key, localValue);
+		this.eventEmitter.emit("createIntervalCollection", key, local, this.eventEmitter);
 		return localValue;
-	}
-
-	/**
-	 * Create an emitter for a value type to emit ops from the given key.
-	 * @param key - The key of the map that the value type will be stored on
-	 * @returns A value op emitter for the given key
-	 */
-	private makeMapValueOpEmitter(key: string): IValueOpEmitter {
-		const emit: IValueOpEmitter["emit"] = (
-			opName: IntervalDeltaOpType,
-			previousValue: unknown,
-			params: SerializedIntervalDelta,
-			localOpMetadata: IMapMessageLocalMetadata,
-		): void => {
-			const op: IMapOperation = {
-				key,
-				type: "act",
-				value: {
-					opName,
-					value: params,
-				},
-			};
-
-			this.submitMessage(op, localOpMetadata);
-
-			const event: IValueChanged = { key, previousValue };
-			this.eventEmitter.emit("valueChanged", event, true, null, this.eventEmitter);
-		};
-
-		return { emit };
 	}
 }

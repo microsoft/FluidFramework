@@ -29,11 +29,6 @@ import {
 } from "./container/index.js";
 import { BlobCollectionView, DebugView } from "./view.js";
 
-// To allow blob creation while the container is detached, we need the container to provide
-// us with memory blob storage.  This is currently controlled by a feature flag which we
-// can control by setting this value in sessionStorage.
-sessionStorage.setItem("Fluid.Container.MemoryBlobStorageEnabled", "true");
-
 const urlResolver = createInsecureTinyliciousTestUrlResolver();
 const tokenProvider = createInsecureTinyliciousTestTokenProvider();
 const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
@@ -71,7 +66,7 @@ if (location.hash.length === 0) {
 			.catch(console.error);
 	};
 } else {
-	const id = location.hash.substring(1);
+	const id = location.hash.slice(1);
 	container = await loadExistingContainer({
 		request: { url: id },
 		urlResolver,
@@ -86,10 +81,10 @@ if (location.hash.length === 0) {
 const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
 
 // Render view
-const debugDiv = document.getElementById("debug") as HTMLDivElement;
+const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 const debugRoot = createRoot(debugDiv);
 debugRoot.render(createElement(DebugView, { attach }));
 
-const appDiv = document.getElementById("app") as HTMLDivElement;
+const appDiv = document.querySelector("#app") as HTMLDivElement;
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(BlobCollectionView, { blobCollection }));

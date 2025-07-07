@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 import {
 	FieldKind,
-	getSimpleSchema,
 	NodeKind,
 	SchemaFactory,
+	SchemaFactoryAlpha,
 	type SimpleLeafNodeSchema,
 	type SimpleNodeSchema,
 	type SimpleObjectFieldSchema,
@@ -16,68 +16,97 @@ import {
 	type SimpleTreeSchema,
 } from "../../../simple-tree/index.js";
 import { ValueSchema } from "../../../core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { toSimpleTreeSchema } from "../../../simple-tree/api/viewSchemaToSimpleSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { schemaStatics } from "../../../simple-tree/api/schemaFactory.js";
 
 const simpleString: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.String,
 	kind: NodeKind.Leaf,
 	metadata: {},
+	persistedMetadata: undefined,
 };
 
 const simpleNumber: SimpleLeafNodeSchema = {
 	leafKind: ValueSchema.Number,
 	kind: NodeKind.Leaf,
 	metadata: {},
+	persistedMetadata: undefined,
 };
 
 describe("getSimpleSchema", () => {
-	it("Field Schema", async () => {
+	it("non-copying", () => {
+		const Schema = schemaStatics.string;
+		const root = schemaStatics.optional(Schema);
+
+		const actual = toSimpleTreeSchema(root, false);
+
+		const expected: SimpleTreeSchema = {
+			root,
+			definitions: new Map([[Schema.identifier, Schema]]),
+		};
+		assert.deepEqual(actual, expected);
+
+		assert.equal(actual.root, root);
+		assert.equal(actual.definitions.get(Schema.identifier), Schema);
+	});
+
+	it("Field Schema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		const Schema = schemaFactory.optional(schemaFactory.string, {
 			metadata: { description: "An optional string." },
 		});
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Optional,
+			root: {
+				kind: FieldKind.Optional,
+				metadata: { description: "An optional string." },
+				allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+				persistedMetadata: undefined,
+			},
 			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
-			metadata: { description: "An optional string." },
-			allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
 
-	it("Leaf node", async () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.string;
+	it("Leaf node", () => {
+		const Schema = SchemaFactory.string;
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+				persistedMetadata: undefined,
+			},
 			definitions: new Map([["com.fluidframework.leaf.string", simpleString]]),
-			allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
 
-	it("Union root", async () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = [schemaFactory.number, schemaFactory.string];
+	it("Union root", () => {
+		const Schema = [SchemaFactory.number, SchemaFactory.string];
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set([
+					"com.fluidframework.leaf.number",
+					"com.fluidframework.leaf.string",
+				]),
+			},
 			definitions: new Map([
 				["com.fluidframework.leaf.number", simpleNumber],
 				["com.fluidframework.leaf.string", simpleString],
-			]),
-			allowedTypesIdentifiers: new Set([
-				"com.fluidframework.leaf.number",
-				"com.fluidframework.leaf.string",
 			]),
 		};
 		assert.deepEqual(actual, expected);
@@ -87,11 +116,15 @@ describe("getSimpleSchema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.array("array", schemaFactory.string) {}
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.array"]),
+			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.array",
@@ -99,11 +132,11 @@ describe("getSimpleSchema", () => {
 						kind: NodeKind.Array,
 						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 						metadata: {},
+						persistedMetadata: undefined,
 					},
 				],
 				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypesIdentifiers: new Set(["test.array"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -112,22 +145,54 @@ describe("getSimpleSchema", () => {
 		const schemaFactory = new SchemaFactory("test");
 		class Schema extends schemaFactory.map("map", schemaFactory.string) {}
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.map"]),
+			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.map",
 					{
 						kind: NodeKind.Map,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 					},
 				],
 				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypesIdentifiers: new Set(["test.map"]),
+		};
+		assert.deepEqual(actual, expected);
+	});
+
+	it("Record schema", () => {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		class Schema extends schemaFactory.record("record", schemaFactory.string) {}
+
+		const actual = toSimpleTreeSchema(Schema, true);
+		const expected: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.record"]),
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
+					},
+				],
+				["com.fluidframework.leaf.string", simpleString],
+			]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -139,23 +204,29 @@ describe("getSimpleSchema", () => {
 			bar: schemaFactory.required(schemaFactory.string),
 		}) {}
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.object"]),
+			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map<string, SimpleObjectFieldSchema>([
 							[
 								"foo",
 								{
 									kind: FieldKind.Optional,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.number"]),
 									storedKey: "foo",
 								},
@@ -165,6 +236,7 @@ describe("getSimpleSchema", () => {
 								{
 									kind: FieldKind.Required,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 									storedKey: "bar",
 								},
@@ -175,7 +247,6 @@ describe("getSimpleSchema", () => {
 				["com.fluidframework.leaf.number", simpleNumber],
 				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypesIdentifiers: new Set(["test.object"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -186,23 +257,29 @@ describe("getSimpleSchema", () => {
 			id: schemaFactory.identifier,
 		}) {}
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.object"]),
+			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"id",
 								{
 									kind: FieldKind.Identifier,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set(["com.fluidframework.leaf.string"]),
 									storedKey: "id",
 								},
@@ -212,7 +289,6 @@ describe("getSimpleSchema", () => {
 				],
 				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypesIdentifiers: new Set(["test.object"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -223,23 +299,30 @@ describe("getSimpleSchema", () => {
 			foo: schemaFactory.required([schemaFactory.number, schemaFactory.string]),
 		}) {}
 
-		const actual = getSimpleSchema(Schema);
+		// Must enable copy so deep equality passes.
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.object"]),
+			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.object",
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Required,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set([
 										"com.fluidframework.leaf.number",
 										"com.fluidframework.leaf.string",
@@ -253,7 +336,6 @@ describe("getSimpleSchema", () => {
 				["com.fluidframework.leaf.number", simpleNumber],
 				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypesIdentifiers: new Set(["test.object"]),
 		};
 		assert.deepEqual(actual, expected);
 	});
@@ -264,23 +346,29 @@ describe("getSimpleSchema", () => {
 			foo: schemaFactory.optionalRecursive([schemaFactory.string, () => Schema]),
 		}) {}
 
-		const actual = getSimpleSchema(Schema);
+		const actual = toSimpleTreeSchema(Schema, true);
 
 		const expected: SimpleTreeSchema = {
-			kind: FieldKind.Required,
-			metadata: {},
+			root: {
+				kind: FieldKind.Required,
+				metadata: {},
+				persistedMetadata: undefined,
+				allowedTypesIdentifiers: new Set(["test.recursive-object"]),
+			},
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.recursive-object",
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Optional,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set([
 										"com.fluidframework.leaf.string",
 										"test.recursive-object",
@@ -293,19 +381,7 @@ describe("getSimpleSchema", () => {
 				],
 				["com.fluidframework.leaf.string", simpleString],
 			]),
-			allowedTypesIdentifiers: new Set(["test.recursive-object"]),
 		};
 		assert.deepEqual(actual, expected);
-	});
-
-	it("Simple Schema cached on node schema", () => {
-		const schemaFactory = new SchemaFactory("test");
-		const Schema = schemaFactory.string;
-
-		const firstQuery = getSimpleSchema(Schema);
-		const secondQuery = getSimpleSchema(Schema);
-
-		// Object equality to ensure the same object is returned by subsequent calls.
-		return assert.equal(firstQuery, secondQuery);
 	});
 });

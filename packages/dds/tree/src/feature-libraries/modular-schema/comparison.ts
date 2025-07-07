@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	LeafNodeStoredSchema,
@@ -16,7 +16,7 @@ import {
 	type ValueSchema,
 	storedEmptyFieldSchema,
 } from "../../core/index.js";
-import { compareSets, fail } from "../../util/index.js";
+import { compareSets } from "../../util/index.js";
 
 import type { FullSchemaPolicy } from "./fieldKind.js";
 import { withEditor } from "./fieldKindWithEditor.js";

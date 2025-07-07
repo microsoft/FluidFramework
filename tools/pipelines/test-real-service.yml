@@ -8,6 +8,16 @@ name: $(Build.BuildId)
 trigger: none
 pr: none
 
+parameters:
+# If true, the routerlicious tests will run against the PPE (aka non-prod) environment.
+# This can be useful when we need to make changes to the routerlicious cluster
+# and we can make them in the PPE environment first before making them in the "prod" environment
+# that the tests normally target.
+- name: useR11sPpeEnvironment
+  displayName: Use PPE Routerlicious environment?
+  type: boolean
+  default: false
+
 resources:
   pipelines:
   - pipeline: client   # Name of the pipeline resource
@@ -35,7 +45,6 @@ variables:
 - name: DisableCodeQL
   value: true
 
-lockBehavior: sequential
 stages:
 
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
@@ -87,7 +96,10 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       testCommand: test:realsvc:routerlicious:report
       continueOnError: true
-      r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
+      ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
+        r11sSelfSignedCertSecureFile: wu2-ppe-tls-certificate.pem
+      ${{ else }}:
+        r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
       stageVariables:
         - group: e2e-r11s-lock
       splitTestVariants:
@@ -97,13 +109,16 @@ stages:
           flags: --compatVersion=-1
         - name: LTS
           flags: --compatVersion=LTS
-        - name: Cross-version
-          flags: --compatVersion=CROSS_VERSION
+        - name: Cross-Client
+          flags: --compatVersion=CROSS_CLIENT
       cacheCompatVersionsInstalls: true
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
+        ${{ if eq(parameters.useR11sPpeEnvironment, true) }}:
+          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s-ppe)
+        ${{ else }}:
+          fluid__test__driver__r11s: $(automation-fluid-test-driver-r11s)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
 
@@ -129,8 +144,8 @@ stages:
           flags: --compatVersion=-1
         - name: LTS
           flags: --compatVersion=LTS
-        - name: Cross-Version
-          flags: --compatVersion=CROSS_VERSION
+        - name: Cross-Client
+          flags: --compatVersion=CROSS_CLIENT
       cacheCompatVersionsInstalls: true
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
@@ -151,15 +166,13 @@ stages:
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:odsp:report
-      stageVariables:
-        - group: e2e-odsp-lock
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0 --tenantIndex=0
         - name: N-1
           flags: --compatVersion=-1 --tenantIndex=1
-        - name: Cross-Version
-          flags: --compatVersion=CROSS_VERSION
+        - name: Cross-Client
+          flags: --compatVersion=CROSS_CLIENT
         # Assumes Non-compat and N-1 scenarios are covered
         # Tests N-2 to LTS+1 back compat for loader
         # Tests N-2 to LTS+3 back compat for loader + driver
@@ -169,7 +182,5 @@ stages:
       uploadTestPassRateTelemetry: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
       env:
-        login__microsoft__clientId: $(login-microsoft-clientId)
-        login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
         FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'

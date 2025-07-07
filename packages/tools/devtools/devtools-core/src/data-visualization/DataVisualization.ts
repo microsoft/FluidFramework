@@ -7,6 +7,7 @@
 /* eslint-disable @typescript-eslint/consistent-indexed-object-style */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { DataObject, TreeDataObject } from "@fluidframework/aqueduct/internal";
 import type {
 	IDisposable,
 	IEvent,
@@ -15,11 +16,17 @@ import type {
 } from "@fluidframework/core-interfaces";
 // eslint-disable-next-line import/no-deprecated
 import type { IProvideFluidHandle } from "@fluidframework/core-interfaces/internal";
-import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedObject, SharedObject } from "@fluidframework/shared-object-base/internal";
 
 import type { FluidObjectId } from "../CommonInterfaces.js";
+import { getKeyForFluidObject } from "../FluidObjectKey.js";
 
-import { visualizeUnknownSharedObject } from "./DefaultVisualizers.js";
+import {
+	visualizeDataObject,
+	visualizeTreeDataObject,
+	visualizeUnknownSharedObject,
+} from "./DefaultVisualizers.js";
 import {
 	type FluidObjectNode,
 	type Primitive,
@@ -83,6 +90,11 @@ export type VisualizeSharedObject = (
 export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 
 /**
+ * Utility type for a union of things that can be visualized.
+ */
+export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject<unknown>;
+
+/**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
  *
  * @remarks
@@ -110,7 +122,7 @@ export interface DataVisualizerEvents extends IEvent {
 	 *
 	 * @eventProperty
 	 */
-	(event: "update", listener: (visualTree: FluidObjectNode) => void);
+	(event: "update", listener: (visualTree: FluidObjectNode) => void): unknown;
 }
 
 /**
@@ -187,6 +199,8 @@ export class DataVisualizerGraph
 	 * {@link DataVisualizerGraph.rootData | root shared objects}.
 	 */
 	public async renderRootHandles(): Promise<Record<string, RootHandleNode>> {
+		// TODO: We should be rendering the DataObject from the root, but this requires change in the devtools package in general.
+
 		// Rendering the root entries amounts to initializing visualizer nodes for each of them, and returning
 		// a list of handle nodes. Consumers can request data for each of these handles as needed.
 		const rootDataEntries = Object.entries(this.rootData);
@@ -222,16 +236,41 @@ export class DataVisualizerGraph
 
 	/**
 	 * Adds a visualizer node to the collection for the specified
-	 * {@link @fluidframework/shared-object-base#ISharedObject} if one does not already exist.
+	 * {@link VisualizableFluidObject} if one does not already exist.
 	 */
-	private registerVisualizerForSharedObject(sharedObject: ISharedObject): FluidObjectId {
-		if (!this.visualizerNodes.has(sharedObject.id)) {
-			// Create visualizer node for the shared object
-			const visualizationFunction =
-				this.visualizers[sharedObject.attributes.type] ?? visualizeUnknownSharedObject;
+	private registerVisualizerForVisualizableObject(
+		visualizableObject: VisualizableFluidObject,
+	): FluidObjectId {
+		// Store type check results to avoid recomputing
+		const isDataObj = isDataObject(visualizableObject);
+		const isTreeDataObj = isTreeDataObject(visualizableObject);
 
+		let visualizationFunction: VisualizeSharedObject;
+		let rootSharedObject: ISharedObject;
+		let objectId: FluidObjectId;
+
+		if (isDataObj) {
+			rootSharedObject = (visualizableObject as unknown as { readonly root: ISharedDirectory })
+				.root;
+			objectId = getKeyForFluidObject(rootSharedObject);
+			visualizationFunction = visualizeDataObject;
+		} else if (isTreeDataObj) {
+			rootSharedObject = (
+				visualizableObject as unknown as { readonly sharedTree: ISharedObject }
+			).sharedTree;
+			objectId = getKeyForFluidObject(rootSharedObject);
+			visualizationFunction = visualizeTreeDataObject;
+		} else {
+			rootSharedObject = visualizableObject;
+			objectId = getKeyForFluidObject(visualizableObject);
+			visualizationFunction =
+				(this.visualizers[visualizableObject.attributes.type] as VisualizeSharedObject) ??
+				visualizeUnknownSharedObject;
+		}
+
+		if (!this.visualizerNodes.has(objectId)) {
 			const visualizerNode = new VisualizerNode(
-				sharedObject,
+				rootSharedObject,
 				visualizationFunction,
 				async (handle) => this.registerVisualizerForHandle(handle),
 			);
@@ -240,9 +279,10 @@ export class DataVisualizerGraph
 			visualizerNode.on("update", this.onVisualUpdateHandler);
 
 			// Add the visualizer node to our collection
-			this.visualizerNodes.set(sharedObject.id, visualizerNode);
+			this.visualizerNodes.set(objectId, visualizerNode);
 		}
-		return sharedObject.id;
+
+		return objectId;
 	}
 
 	/**
@@ -261,13 +301,19 @@ export class DataVisualizerGraph
 	): Promise<FluidObjectId | undefined> {
 		const resolvedObject = await handle.get();
 
+		if (isDataObject(resolvedObject) || isTreeDataObject(resolvedObject)) {
+			return this.registerVisualizerForVisualizableObject(resolvedObject);
+		}
+
 		// TODO: is this the right type check for this?
 		const sharedObject = resolvedObject as Partial<ISharedObject>;
 		if (isSharedObject(sharedObject)) {
-			return this.registerVisualizerForSharedObject(sharedObject);
+			return this.registerVisualizerForVisualizableObject(sharedObject);
 		} else {
 			// Unknown data.
-			console.warn("Fluid Handle resolved to data that is not a Shared Object.");
+			console.warn(
+				"Fluid Handle resolved to data that is not a SharedObject or a DataObject.",
+			);
 			return undefined;
 		}
 	}
@@ -482,8 +528,65 @@ export async function visualizeChildData(
  * Determines whether or not the provided value is an {@link ISharedObject}, for the purposes of this library.
  * @remarks Implemented by checking for the particular properties / methods we use in this module.
  */
-function isSharedObject(value: Partial<ISharedObject>): value is ISharedObject {
+function isSharedObject(value: unknown): value is ISharedObject {
 	return (
-		value.id !== undefined && value.attributes?.type !== undefined && value.on !== undefined
+		(value as SharedObject).id !== undefined &&
+		(value as SharedObject).attributes?.type !== undefined &&
+		(value as SharedObject).on !== undefined
 	);
+}
+
+/**
+ * Determines whether or not the provided value is an {@link DataObject} using `instanceof`, for the purposes of this library.
+ * @remarks
+ * Uses `instanceof` over checking specific properties or methods, because we decided that a version mix-up with
+ * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
+ */
+function isDataObject(value: unknown): value is DataObject {
+	if (
+		value instanceof DataObject ||
+		(typeof (value as DataObject).initializeInternal === "function" &&
+			typeof (value as { getUninitializedErrorString(): string })
+				.getUninitializedErrorString) === "function"
+	) {
+		// If root is missing, throw an error instead of returning false
+		const root = (value as { readonly root?: ISharedDirectory }).root;
+		if (!root) {
+			throw new Error("DataObject must have a `root` property, but it was undefined.");
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * Determines whether or not the provided value is a {@link TreeDataObject} using `instanceof`, for the purposes of this library.
+ * @remarks
+ * Tries to use `instanceof` because we decided that a version mix-up with
+ * {@link @fluidframework/aqueduct#} is unlikely between devtools and end-user applications, and we don't support it anyway.
+ * In addition, we check for the presence of key properties that make a `TreeDataObject` unique:
+ * - {@link TreeDataObject#sharedTree | sharedTree} getter
+ * - {@link TreeDataObject#treeView | treeView} getter
+ * - {@link TreeDataObject#initializeInternal | initializeInternal} method
+ */
+function isTreeDataObject(value: unknown): value is TreeDataObject<unknown> {
+	if (
+		value instanceof TreeDataObject ||
+		(typeof (value as TreeDataObject<unknown>).initializeInternal === "function" &&
+			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "sharedTree")?.get !==
+				undefined)
+	) {
+		const tree = (value as { readonly sharedTree?: ISharedObject }).sharedTree;
+		if (tree === undefined) {
+			throw new Error(
+				"TreeDataObject must have a `sharedTree` property, but it was undefined.",
+			);
+		}
+
+		return true;
+	}
+
+	return false;
 }

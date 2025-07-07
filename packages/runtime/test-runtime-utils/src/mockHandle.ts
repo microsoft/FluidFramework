@@ -32,7 +32,4 @@ export class MockHandle<T> extends FluidHandleBase<T> {
 	public attachGraph(): void {
 		this.graphAttachState = AttachState.Attached;
 	}
-	public bind() {
-		throw Error("MockHandle.bind() unimplemented.");
-	}
 }

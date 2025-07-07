@@ -25,14 +25,14 @@ import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/inte
 export function createSharedMapWithInterception(
 	sharedMap: ISharedMap,
 	context: IFluidDataStoreContext,
-	setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: any) => void,
+	setInterceptionCallback: (sharedMap: ISharedMap, key: string, value: unknown) => void,
 ): ISharedMap {
-	const sharedMapWithInterception = Object.create(sharedMap);
+	const sharedMapWithInterception = Object.create(sharedMap) as ISharedMap;
 
 	// executingCallback keeps track of whether set is called recursively from the setInterceptionCallback.
 	let executingCallback: boolean = false;
 
-	sharedMapWithInterception.set = (key: string, value: any) => {
+	sharedMapWithInterception.set = (key: string, value: unknown) => {
 		let map;
 		// Set should not be called on the wrapped object from the interception callback as this will lead to
 		// infinite recursion.
@@ -54,5 +54,5 @@ export function createSharedMapWithInterception(
 		return map;
 	};
 
-	return sharedMapWithInterception as ISharedMap;
+	return sharedMapWithInterception;
 }

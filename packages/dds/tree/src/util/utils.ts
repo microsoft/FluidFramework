@@ -47,9 +47,6 @@ export function asMutable<T>(readonly: T): Mutable<T> {
 
 export const clone = structuredClone;
 
-// TODO: update usages of this to use @fluidframework/core-utils/internal directly.
-export { fail } from "@fluidframework/core-utils/internal";
-
 /**
  * Checks whether or not the given object is a `readonly` array.
  *
@@ -99,6 +96,13 @@ export function hasSome<T>(array: T[]): array is [T, ...T[]];
 export function hasSome<T>(array: readonly T[]): array is readonly [T, ...T[]];
 export function hasSome<T>(array: readonly T[]): array is [T, ...T[]] {
 	return array.length > 0;
+}
+
+/**
+ * Returns true if and only if the given iterable has at least one element.
+ */
+export function iterableHasSome<T>(iterable: Iterable<T>): boolean {
+	return iterable[Symbol.iterator]().next().done === false;
 }
 
 /**
@@ -313,6 +317,7 @@ export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompati
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleReadOnly =
 	| string
@@ -328,6 +333,7 @@ export type JsonCompatibleReadOnly =
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
+ * @alpha
  */
 export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompatibleReadOnly };
 

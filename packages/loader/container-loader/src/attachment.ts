@@ -9,8 +9,7 @@ import { ISummaryTree } from "@fluidframework/driver-definitions";
 import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { CombinedAppAndProtocolSummary } from "@fluidframework/driver-utils/internal";
 
-// eslint-disable-next-line import/no-deprecated
-import { IDetachedBlobStorage } from "./loader.js";
+import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import type { SnapshotWithBlobs } from "./serializedStateManager.js";
 import { getSnapshotTreeAndBlobsFromSerializedContainer } from "./utils.js";
 
@@ -113,8 +112,7 @@ export interface AttachProcessProps {
 	 * The detached blob storage if it exists.
 	 */
 	readonly detachedBlobStorage?: Pick<
-		// eslint-disable-next-line import/no-deprecated
-		IDetachedBlobStorage,
+		MemoryDetachedBlobStorage,
 		"getBlobIds" | "readBlob" | "size"
 	>;
 

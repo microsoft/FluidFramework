@@ -22,6 +22,7 @@ import { makeUnreachableCodePathProxy } from "./utils.js";
 export interface DDSModelOp {
 	type: "DDSModelOp";
 	op: unknown;
+	channelType: string;
 }
 
 export interface OrderSequentially {
@@ -39,6 +40,12 @@ const createDDSClient = (channel: IChannel): DDSClient<IChannelFactory> => {
 	};
 };
 
+/**
+ * we use a weak map here, so the lifetime of the DDS state is bound to the channel
+ * itself, so after the channel is no longer needed the state can also be garbage collected.
+ */
+const channelToDdsState = new WeakMap<IChannel, DDSFuzzTestState<IChannelFactory>>();
+
 export const covertLocalServerStateToDdsState = async (
 	state: LocalServerStressState,
 ): Promise<DDSFuzzTestState<IChannelFactory>> => {
@@ -49,57 +56,66 @@ export const covertLocalServerStateToDdsState = async (
 			(v) => v.handle !== undefined,
 		),
 	];
-	return {
-		clients: makeUnreachableCodePathProxy("clients"),
-		client: createDDSClient(state.channel),
-		containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-		isDetached: state.client.container.attachState === AttachState.Detached,
-		summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
-		random: {
-			...state.random,
-			handle: () => {
-				/**
-				 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
-				 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
-				 * handles.
-				 */
-				const { tag, handle } = state.random.pick(allHandles);
-				const realHandle = toFluidHandleInternal(handle);
-				return {
-					tag,
-					absolutePath: realHandle.absolutePath,
-					get [fluidHandleSymbol]() {
-						return realHandle[fluidHandleSymbol];
-					},
-					async get() {
-						return realHandle.get();
-					},
-					get isAttached() {
-						return realHandle.isAttached;
-					},
-				};
-			},
+
+	const random = {
+		...state.random,
+		handle: () => {
+			/**
+			 * here we do some funky stuff with handles so we can serialize them like json for output, but not bind them,
+			 * as they may not be attached. look at the reduce code to see how we deserialized these fake handles into real
+			 * handles.
+			 */
+			const { tag, handle } = state.random.pick(allHandles);
+			const realHandle = toFluidHandleInternal(handle);
+			return {
+				tag,
+				absolutePath: realHandle.absolutePath,
+				get [fluidHandleSymbol]() {
+					return realHandle[fluidHandleSymbol];
+				},
+				async get() {
+					return realHandle.get();
+				},
+				get isAttached() {
+					return realHandle.isAttached;
+				},
+			};
 		},
 	};
+
+	const baseState = {
+		...(channelToDdsState.get(state.channel) ?? {
+			clients: makeUnreachableCodePathProxy("clients"),
+			client: createDDSClient(state.channel),
+			containerRuntimeFactory: makeUnreachableCodePathProxy("containerRuntimeFactory"),
+			isDetached: state.client.container.attachState === AttachState.Detached,
+			summarizerClient: makeUnreachableCodePathProxy("containerRuntimeFactory"),
+		}),
+		random,
+	};
+	channelToDdsState.set(state.channel, baseState);
+	return baseState;
 };
 
 export const DDSModelOpGenerator: AsyncGenerator<DDSModelOp, LocalServerStressState> = async (
 	state,
 ) => {
 	const channel = state.channel;
-	const model = ddsModelMap.get(channel.attributes.type);
+	const channelType = channel.attributes.type;
+	const model = ddsModelMap.get(channelType);
 	assert(model !== undefined, "must have model");
 
 	const op = await timeoutAwait(
 		model.generator(await covertLocalServerStateToDdsState(state)),
 		{
-			errorMsg: `Timed out waiting for dds generator: ${state.channel.attributes.type}`,
+			errorMsg: `Timed out waiting for dds generator: ${channelType}`,
 		},
 	);
 
 	return {
 		type: "DDSModelOp",
 		op,
+		channelType,
 	} satisfies DDSModelOp;
 };
 
@@ -153,17 +169,16 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 		 * and then reuse the per dds validators to ensure eventual consistency.
 		 */
 		const channelMap = new Map<string, IChannel>();
-		for (const entry of (await client.entryPoint.getContainerObjects()).map((v) =>
-			v.type === "stressDataObject" ? v : undefined,
+		for (const entry of (await client.entryPoint.getContainerObjects()).filter(
+			(v) => v.type === "stressDataObject",
 		)) {
-			if (entry !== undefined) {
-				const stressDataObject = entry?.stressDataObject;
-				if (stressDataObject?.attached === true) {
-					const channels = await stressDataObject.getChannels();
-					for (const channel of channels) {
-						if (channel.isAttached()) {
-							channelMap.set(`${entry.tag}/${channel.id}`, channel);
-						}
+			assert(entry.type === "stressDataObject", "type narrowing");
+			const stressDataObject = entry.stressDataObject;
+			if (stressDataObject.attached === true) {
+				const channels = await stressDataObject.getChannels();
+				for (const channel of channels) {
+					if (channel.isAttached()) {
+						channelMap.set(`${entry.tag}/${channel.id}`, channel);
 					}
 				}
 			}
@@ -180,6 +195,13 @@ export const validateConsistencyOfAllDDS = async (clientA: Client, clientB: Clie
 		assert(aChannel.attributes.type === bChannel?.attributes.type, "channel types must match");
 		const model = ddsModelMap.get(aChannel.attributes.type);
 		assert(model !== undefined, "model must exist");
-		await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+		try {
+			await model.validateConsistency(createDDSClient(aChannel), createDDSClient(bChannel));
+		} catch (error) {
+			if (error instanceof Error) {
+				error.message = `comparing ${clientA.tag} and ${clientB.tag}: ${error.message}`;
+			}
+			throw error;
+		}
 	}
 };

@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionSpaceCompressedId, StableId } from "@fluidframework/id-compressor";
 import { assertIsStableId } from "@fluidframework/id-compressor/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import { brand, extractFromOpaque } from "../../util/index.js";
+
 import type { LocalNodeIdentifier, StableNodeIdentifier } from "./nodeIdentifier.js";
 import {
 	isStableNodeIdentifier,
 	type NodeIdentifierManager,
 } from "./nodeIdentifierManager.js";
-import { brand, extractFromOpaque, fail } from "../../util/index.js";
 
 /**
  * Mock {@link NodeIdentifierManager} that generates deterministic {@link StableNodeIdentifier}s and {@link LocalNodeIdentifier}s.
@@ -50,10 +53,13 @@ export class MockNodeIdentifierManager implements NodeIdentifierManager {
 	}
 
 	public getId(offset: number): StableId {
-		assert(offset >= 0, 0x6e7 /* UUID offset may not be negative */);
 		assert(offset < 281_474_976_710_656, 0x6e8 /* UUID offset must be at most 16^12 */);
-		return assertIsStableId(
-			`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,
-		);
+		if (offset >= 0 && offset < this.count) {
+			return assertIsStableId(
+				`a110ca7e-add1-4000-8000-${Math.round(offset).toString(16).padStart(12, "0")}`,
+			);
+		} else {
+			throw new UsageError("Local ID offset out of bounds");
+		}
 	}
 }

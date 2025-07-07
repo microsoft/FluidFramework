@@ -33,7 +33,7 @@ import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
  * - Send response messages including any relevant data back to the orchestrator to verify expected behavior.
  *
  * This particular test suite tests the following E2E functionality for Presence:
- * - Announce 'attendeeJoined' when remote client joins session.
+ * - Announce 'attendeeConnected' when remote client joins session.
  * - Announce 'attendeeDisconnected' when remote client disconnects.
  */
 describe(`Presence with AzureClient`, () => {
@@ -63,7 +63,7 @@ describe(`Presence with AzureClient`, () => {
 					(resolve, reject) => {
 						child.once("message", (msg: MessageFromChild) => {
 							if (msg.event === "ready" && msg.containerId) {
-								containerCreatorSessionId = msg.sessionId;
+								containerCreatorSessionId = msg.attendeeId;
 								resolve(msg.containerId);
 							} else {
 								reject(new Error(`Non-ready message from child0: ${JSON.stringify(msg)}`));
@@ -119,13 +119,13 @@ describe(`Presence with AzureClient`, () => {
 		afterCleanUp.length = 0;
 	});
 
-	it("announces 'attendeeJoined' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
+	it("announces 'attendeeConnected' when remote client joins session and 'attendeeDisconnected' when remote client disconnects", async () => {
 		// Setup
-		const attendeeJoinedPromise = timeoutPromise(
+		const attendeeConnectedPromise = timeoutPromise(
 			(resolve) => {
 				let attendeesJoinedEvents = 0;
 				children[0].on("message", (msg: MessageFromChild) => {
-					if (msg.event === "attendeeJoined") {
+					if (msg.event === "attendeeConnected") {
 						attendeesJoinedEvents++;
 						if (attendeesJoinedEvents === numClients - 1) {
 							resolve();
@@ -135,15 +135,15 @@ describe(`Presence with AzureClient`, () => {
 			},
 			{
 				durationMs,
-				errorMsg: "did not receive all 'attendeeJoined' events",
+				errorMsg: "did not receive all 'attendeeConnected' events",
 			},
 		);
 
 		// Act - connect all child processes
 		const creatorSessionId = await connectChildProcesses(children);
 
-		// Verify - wait for all 'attendeeJoined' events
-		await Promise.race([attendeeJoinedPromise, childErrorPromise]);
+		// Verify - wait for all 'attendeeConnected' events
+		await Promise.race([attendeeConnectedPromise, childErrorPromise]);
 
 		// Setup
 		const waitForDisconnected = children
@@ -152,7 +152,10 @@ describe(`Presence with AzureClient`, () => {
 				timeoutPromise(
 					(resolve) => {
 						child.on("message", (msg: MessageFromChild) => {
-							if (msg.event === "attendeeDisconnected" && msg.sessionId === creatorSessionId) {
+							if (
+								msg.event === "attendeeDisconnected" &&
+								msg.attendeeId === creatorSessionId
+							) {
 								resolve();
 							}
 						});

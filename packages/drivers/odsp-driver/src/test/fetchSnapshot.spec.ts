@@ -561,16 +561,21 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "RedeemShareLink_end" },
+				{
+					eventName: "RedeemShareLink_end",
+					details:
+						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":false}',
+				},
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),
 		);
 	});
 
-	it("RedeemFallback behavior when fallback succeeds with using siteUrl", async () => {
+	it("nonDurableRedeem header is set during RedeemFallback behavior", async () => {
 		resolved.shareLinkInfo = {
 			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+			isRedemptionNonDurable: true,
 		};
 		hostPolicy.enableRedeemFallback = true;
 
@@ -594,7 +599,6 @@ describe("Tests1 for snapshot fetch", () => {
 					async () => service.getSnapshot({}),
 					[
 						notFound,
-						notFound,
 						async (): Promise<MockResponse> => okResponse({}, {}),
 						async (): Promise<Response> => {
 							return response;
@@ -606,8 +610,11 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "ShareLinkRedeemFailedWithTenantDomain", statusCode: 404 },
-				{ eventName: "RedeemShareLink_end" },
+				{
+					eventName: "RedeemShareLink_end",
+					details:
+						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":true}',
+				},
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),

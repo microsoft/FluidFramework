@@ -31,6 +31,7 @@ declare type old_as_current_for_Class_FluidDataStoreRuntime = requireAssignableT
  * typeValidation.broken:
  * "Class_FluidDataStoreRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.FluidDataStoreRuntime>, TypeOnly<old.FluidDataStoreRuntime>>
 
 /*
@@ -49,6 +50,7 @@ declare type old_as_current_for_Class_FluidObjectHandle = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_FluidObjectHandle": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<TypeOnly<current.FluidObjectHandle>, TypeOnly<old.FluidObjectHandle>>
 
 /*
@@ -58,6 +60,7 @@ declare type current_as_old_for_Class_FluidObjectHandle = requireAssignableTo<Ty
  * typeValidation.broken:
  * "ClassStatics_FluidDataStoreRuntime": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.FluidDataStoreRuntime>, TypeOnly<typeof old.FluidDataStoreRuntime>>
 
 /*
@@ -67,6 +70,7 @@ declare type current_as_old_for_ClassStatics_FluidDataStoreRuntime = requireAssi
  * typeValidation.broken:
  * "ClassStatics_FluidObjectHandle": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_FluidObjectHandle = requireAssignableTo<TypeOnly<typeof current.FluidObjectHandle>, TypeOnly<typeof old.FluidObjectHandle>>
 
 /*

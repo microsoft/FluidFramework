@@ -333,6 +333,8 @@ export type GarbageCollectionMessage = ISweepMessage | ITombstoneLoadedMessage;
 
 /**
  * Defines the APIs for the runtime object to be passed to the garbage collector.
+ *
+ * @internal
  */
 export interface IGarbageCollectionRuntime {
 	/**
@@ -446,7 +448,7 @@ export interface IGarbageCollector {
 	 * Returns true if this node has been deleted by GC during sweep phase.
 	 */
 	isNodeDeleted(nodePath: string): boolean;
-	setConnectionState(connected: boolean, clientId?: string): void;
+	setConnectionState(canSendOps: boolean, clientId?: string): void;
 	dispose(): void;
 }
 

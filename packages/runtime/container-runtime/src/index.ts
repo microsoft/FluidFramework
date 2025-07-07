@@ -4,6 +4,8 @@
  */
 
 export {
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
 	ISummaryRuntimeOptions,
 	IContainerRuntimeOptions,
 	IContainerRuntimeOptionsInternal,
@@ -14,11 +16,10 @@ export {
 	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
-	ICompressionRuntimeOptions,
-	CompressionAlgorithms,
 	RuntimeHeaderData,
-	disabledCompressionConfig,
 } from "./containerRuntime.js";
+export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
@@ -27,15 +28,16 @@ export { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
-	RuntimeHeaders,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
+export type { MinimumVersionForCollab, SemanticVersion } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,
 	GCFeatureMatrix,
 	GCVersion,
+	IGarbageCollectionRuntime,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
@@ -89,11 +91,13 @@ export {
 	IRetriableFailureError,
 	IdCompressorMode,
 	IDocumentSchema,
+	IDocumentSchemaInfo,
 	DocumentSchemaValueType,
 	IDocumentSchemaCurrent,
 	currentDocumentVersionSchema,
 	DocumentsSchemaController,
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 	IDocumentSchemaFeatures,
 	ReadFluidDataStoreAttributes,
 	IFluidDataStoreAttributes0,
@@ -108,16 +112,10 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-export { ChannelCollection } from "./channelCollection.js";
 export {
-	IFluidDataStoreContextInternal,
-	ISnapshotDetails,
-	LocalFluidDataStoreContext,
-	LocalFluidDataStoreContextBase,
-	FluidDataStoreContext,
-	IFluidDataStoreContextProps,
-	ILocalFluidDataStoreContextProps,
-	ILocalDetachedFluidDataStoreContextProps,
-	IFluidDataStoreContextEvents,
-} from "./dataStoreContext.js";
-export { DataStoreContexts } from "./dataStoreContexts.js";
+	runtimeCoreCompatDetails,
+	runtimeCompatDetailsForLoader,
+	runtimeCompatDetailsForDataStore,
+	loaderSupportRequirementsForRuntime,
+	dataStoreSupportRequirementsForRuntime,
+} from "./runtimeLayerCompatState.js";

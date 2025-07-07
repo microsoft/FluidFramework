@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { RequestHandler, Request, Response, NextFunction } from "express";
-import safeStringify from "json-stringify-safe";
 import {
 	IThrottler,
 	ILogger,
@@ -17,6 +15,8 @@ import {
 	Lumberjack,
 	ThrottlingTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
+import { RequestHandler, Request, Response, NextFunction } from "express";
+import safeStringify from "json-stringify-safe";
 
 /**
  * @internal

@@ -18,7 +18,7 @@ import { EmptyKey, rootFieldKey, type NormalizedUpPath } from "../../core/index.
 import { typeboxValidator } from "../../external-utilities/typeboxValidator.js";
 import {
 	TreeCompressionStrategy,
-	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 } from "../../feature-libraries/index.js";
 import { Tree, type CheckoutFlexTreeView } from "../../shared-tree/index.js";
 import {
@@ -50,10 +50,11 @@ import {
 	flexTreeViewWithContent,
 	toJsonableTree,
 	type SharedTreeWithContainerRuntime,
+	fieldCursorFromInsertable,
 } from "../utils.js";
 import { insert } from "../sequenceRootUtils.js";
-import { cursorFromInsertable, TreeViewConfiguration } from "../../simple-tree/index.js";
-import { TreeFactory } from "../../treeFactory.js";
+import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 import { makeArray } from "../../util/index.js";
 
 // number of nodes in test for wide trees
@@ -70,10 +71,10 @@ const nodesCountDeep = [
 ];
 
 // TODO: ADO#7111 Schema should be fixed to enable schema based encoding.
-const factory = new TreeFactory({
+const factory = configuredSharedTree({
 	jsonValidator: typeboxValidator,
 	treeEncodeType: TreeCompressionStrategy.Uncompressed,
-});
+}).getFactory();
 
 // TODO: Once the "BatchTooLarge" error is no longer an issue, extend tests for larger trees.
 describe("SharedTree benchmarks", () => {
@@ -260,14 +261,14 @@ describe("SharedTree benchmarks", () => {
 						duration = state.timer.toSeconds(before, after);
 
 						// Cleanup + validation
-						const expected = jsonableTreeFromCursor(
-							cursorFromInsertable(
+						const expected = jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(
 								LinkedList,
 								makeJsDeepTree(numberOfNodes, setCount) as LinkedList,
 							),
 						);
 						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, [expected]);
+						assert.deepEqual(actual, expected);
 
 						// Collect data
 					} while (state.recordBatch(duration));
@@ -311,14 +312,14 @@ describe("SharedTree benchmarks", () => {
 						duration = state.timer.toSeconds(before, after);
 
 						// Cleanup + validation
-						const expected = jsonableTreeFromCursor(
-							cursorFromInsertable(
+						const expected = jsonableTreeFromFieldCursor(
+							fieldCursorFromInsertable(
 								WideRoot,
 								makeJsWideTreeWithEndValue(numberOfNodes, setCount),
 							),
 						);
 						const actual = toJsonableTree(tree);
-						assert.deepEqual(actual, [expected]);
+						assert.deepEqual(actual, expected);
 
 						// Collect data
 					} while (state.recordBatch(duration));
@@ -402,7 +403,10 @@ describe("SharedTree benchmarks", () => {
 							// This block generates commits that are all out of date to the same degree
 							for (let iCommit = 0; iCommit < commitCount; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
-									provider.synchronizeMessages({ count: opsPerCommit });
+									provider.synchronizeMessages({
+										count: opsPerCommit,
+									});
+
 									const peer = provider.trees[iPeer];
 									insert(peer.kernel.checkout, 0, `p${iPeer}c${iCommit}`);
 								}
@@ -415,7 +419,10 @@ describe("SharedTree benchmarks", () => {
 							for (let iCommit = 0; iCommit < sampleSize; iCommit++) {
 								for (let iPeer = 0; iPeer < peerCount; iPeer++) {
 									const before = state.timer.now();
-									provider.synchronizeMessages({ count: opsPerCommit });
+									provider.synchronizeMessages({
+										count: opsPerCommit,
+									});
+
 									const after = state.timer.now();
 									timeSum += state.timer.toSeconds(before, after);
 									// We still generate commits because it affects local branch rebasing
@@ -525,8 +532,62 @@ describe("SharedTree benchmarks", () => {
 								receiver.containerRuntime.resumeInboundProcessing();
 
 								const before = state.timer.now();
-								// Process the bunched commits. This should force the local branch to be rebased over the bunch.
+								// Synchronize the bunched commits. This should force the local branch to be rebased over the bunch.
 								// The receiver will not process its local commits since they were never flushed.
+								provider.synchronizeMessages({ flush: false });
+								const after = state.timer.now();
+								duration = state.timer.toSeconds(before, after);
+							} while (state.recordBatch(duration));
+						},
+						// Force batch size of 1
+						minBatchDurationSeconds: 0,
+					});
+					if (!isInPerformanceTestingMode) {
+						test.timeout(5000);
+					}
+				}
+			}
+		});
+
+		describe("Rebasing inbound bunch over trunk changes", () => {
+			// The number of commits in a bunch for a given run of this test suite.
+			const bunchSizes = isInPerformanceTestingMode ? [10, 100] : [2];
+			// Number of local commits to rebase over the inbound bunch
+			const localTrunkSizes = isInPerformanceTestingMode ? [1, 10, 100] : [2];
+			for (const bunchSize of bunchSizes) {
+				for (const localTrunkSize of localTrunkSizes) {
+					const test = benchmark({
+						type: BenchmarkType.Measurement,
+						title: `Rebase ${bunchSize} inbound commits over ${localTrunkSize} trunk commits`,
+						benchmarkFnCustom: async <T>(state: BenchmarkTimer<T>) => {
+							let duration: number;
+							do {
+								// Since this setup collects data from one iteration, assert that this is what is expected.
+								assert.equal(state.iterationsPerBatch, 1);
+
+								const { provider, sender, receiver } = setupSenderAndReceiver();
+								// Send local commits from the receiver and flush them so they are sequenced. These are
+								// the commits that will be in the trunk.
+								sendLocalCommits(receiver, localTrunkSize, "r");
+								receiver.containerRuntime.flush();
+								// Send local commits from the sender but don't sequence them yet. We want them to be
+								// sequenced after the receiver has received its local commits and they are in its trunk.
+								// These are sent before the receiver's commits are processed so that their reference
+								// sequence number is older the receiver's commits.
+								sendLocalCommits(sender, bunchSize, "s");
+
+								// Synchronize the messages. The receiver will receive its local commits and they will
+								// be in the trunk.
+								receiver.containerRuntime.resumeInboundProcessing();
+								provider.synchronizeMessages({ flush: false });
+
+								// Flush the sender's local commits now to sequence them. These will be rebased by the
+								// receiver over its trunk when it receives them.
+								sender.containerRuntime.flush();
+
+								const before = state.timer.now();
+								// Synchronize the message. The receiver will received the bunched commits from the
+								// sender which will be rebased over the trunk.
 								provider.synchronizeMessages({ flush: false });
 								const after = state.timer.now();
 								duration = state.timer.toSeconds(before, after);

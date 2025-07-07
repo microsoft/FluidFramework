@@ -39,8 +39,8 @@ importers:
         specifier: ^3.6.2
         version: 3.6.2(acorn@8.14.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@fluid-tools/api-markdown-documenter':
-        specifier: ^0.19.0
-        version: 0.19.0(@types/node@22.9.1)
+        specifier: ^0.20.0
+        version: 0.20.0(@types/node@22.9.1)
       '@fluid-tools/markdown-magic':
         specifier: file:../tools/markdown-magic
         version: file:../tools/markdown-magic(@types/node@22.9.1)(markdown-magic@2.6.1)
@@ -95,6 +95,9 @@ importers:
       docusaurus-theme-search-typesense:
         specifier: 0.23.1-0
         version: 0.23.1-0(@algolia/client-search@5.15.0)(@babel/runtime@7.26.0)(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@18.3.12)(react@18.3.1))(acorn@8.14.0)(eslint@8.55.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(@docusaurus/theme-common@3.6.2(@docusaurus/plugin-content-docs@3.6.2(@mdx-js/react@3.1.0(@types/react@18.3.12)(react@18.3.1))(acorn@8.14.0)(eslint@8.55.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(acorn@8.14.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(@mdx-js/react@3.1.0(@types/react@18.3.12)(react@18.3.1))(@types/react@18.3.12)(acorn@8.14.0)(algoliasearch@4.24.0)(eslint@8.55.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
+      dompurify:
+        specifier: ^3.2.6
+        version: 3.2.6
       dotenv:
         specifier: ^16.4.7
         version: 16.4.7
@@ -117,8 +120,8 @@ importers:
         specifier: ^11.2.0
         version: 11.2.0
       linkcheck-bin:
-        specifier: 3.0.0-1
-        version: 3.0.0-1
+        specifier: 3.0.0-2
+        version: 3.0.0-2
       lunr:
         specifier: ^2.3.9
         version: 2.3.9
@@ -1448,8 +1451,8 @@ packages:
   '@fluid-internal/eslint-plugin-fluid@0.1.3':
     resolution: {integrity: sha512-l3MPEQ34lYP9QOIQ9vx9ncyvkYqR7ci7ZixxD4RdOmGBnAFOqipBjn5Je9AJfztQ3jWgcT3jiV+AVT3rBjc2Yw==}
 
-  '@fluid-tools/api-markdown-documenter@0.19.0':
-    resolution: {integrity: sha512-SxAJ5rhfCVlHh8wJsl8annHVHCNR+J3CPU7R5Rlr6VRzAqLhFySM8Nwufx2YrppWkFnfQtdMn61u5ZltwvWMoA==}
+  '@fluid-tools/api-markdown-documenter@0.20.0':
+    resolution: {integrity: sha512-zSeyfHLV7DLJ8B7OjTJCG6CTc+CffijT6oIlhXO3w1QDblcvE62DcT+Cb4vUPsN4AA2m9mznb8q+ArG9FBIXTQ==}
 
   '@fluid-tools/markdown-magic@file:../tools/markdown-magic':
     resolution: {directory: ../tools/markdown-magic, type: directory}
@@ -2360,6 +2363,9 @@ packages:
 
   '@types/tmp@0.0.33':
     resolution: {integrity: sha512-gVC1InwyVrO326wbBZw+AO3u2vRXz/iRWq9jYhpG4W8LXyIgDv3ZmcLQ5Q4Gs+gFMyqx+viFoFT+l3p61QFCmQ==}
+
+  '@types/trusted-types@2.0.7':
+    resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
 
   '@types/unist@2.0.11':
     resolution: {integrity: sha512-CmBKiL6NNo/OqgmMn95Fk9Whlp2mtvIv+KNpQKN2F4SjvrEesubTRWGYSg+BnWZOnlCaSTU1sMpsBOzgbYhnsA==}
@@ -3835,6 +3841,9 @@ packages:
   dompurify@3.1.6:
     resolution: {integrity: sha512-cTOAhc36AalkjtBpfG6O8JimdTMWNXjiePT2xQH/ppBGi/4uIpmj8eKyIkMJErXWARyINV/sB38yf8JCLF5pbQ==}
 
+  dompurify@3.2.6:
+    resolution: {integrity: sha512-/2GogDQlohXPZe6D6NOgQvXLPSYBqIWMnZ8zzOhn09REE4eyAzb+Hed3jhoM9OkuaJ8P6ZGTTVWQKAi8ieIzfQ==}
+
   domutils@2.8.0:
     resolution: {integrity: sha512-w96Cjofp72M5IIhpjgobBimYEfoPjx1Vx0BSX9P30WBdZW2WIKU0T1Bd0kz2eNZ9ikjKgHbEyKx8BB6H1L3h3A==}
 
@@ -4076,6 +4085,7 @@ packages:
   eslint-plugin-i@2.29.1:
     resolution: {integrity: sha512-ORizX37MelIWLbMyqI7hi8VJMf7A0CskMmYkB+lkCX3aF4pkGV7kwx5bSEb4qx7Yce2rAf9s34HqDRPjGRZPNQ==}
     engines: {node: '>=12'}
+    deprecated: Please migrate to the brand new `eslint-plugin-import-x` instead
     peerDependencies:
       eslint: ^7.2.0 || ^8
 
@@ -5211,9 +5221,9 @@ packages:
     resolution: {integrity: sha512-knxG2q4UC3u8stRGyAVJCOdxFmv5DZiRcdlIaAQXAbSfJya+OhopNotLQrstBhququ4ZpuKbDc/8S6mgXgPFPw==}
     engines: {node: '>=10'}
 
-  is-unicode-supported@1.3.0:
-    resolution: {integrity: sha512-43r2mRvz+8JRIKnWJ+3j8JtjRKZ6GmjzfaE/qiBJnikNnYv/6bagRJ1kUhNk8R5EX/GkobD+r+sfxCPJsiKBLQ==}
-    engines: {node: '>=12'}
+  is-unicode-supported@2.1.0:
+    resolution: {integrity: sha512-mE00Gnza5EEB3Ds0HfMyllZzbBrmLOX3vfWoj9A9PEnTfratQ/BcaJOuMhnkhjXvb2+FkY3VuHqtAGpTPmglFQ==}
+    engines: {node: '>=18'}
 
   is-valid-domain@0.1.6:
     resolution: {integrity: sha512-ZKtq737eFkZr71At8NxOFcP9O1K89gW3DkdrGMpp1upr/ueWjj+Weh4l9AI4rN0Gt8W2M1w7jrG2b/Yv83Ljpg==}
@@ -5457,8 +5467,8 @@ packages:
     resolution: {integrity: sha512-wM1+Z03eypVAVUCE7QdSqpVIvelbOakn1M0bPDoA4SGWPx3sNDVUiMo3L6To6WWGClB7VyXnhQ4Sn7gxiJbE6A==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
-  linkcheck-bin@3.0.0-1:
-    resolution: {integrity: sha512-Qj4ag9fCcEKMdMzwKQoRt1ZUQUxGgx8OoseWJ3O+4Ph21O2TBU9m8+tmRPXYFnvSJUYYE7/hfbI5hPHAb8RY3w==}
+  linkcheck-bin@3.0.0-2:
+    resolution: {integrity: sha512-hIWZ07CG+QAZEmLafQ9q4KMFTf40WRcLGn0OsgTjbFie77RPaQtjaYK8RtjYfZtnjWBjTnIMC0kuQfSpXaAPFw==}
     engines: {node: '>=18.0.0'}
     hasBin: true
 
@@ -5505,6 +5515,7 @@ packages:
 
   lodash.get@4.4.2:
     resolution: {integrity: sha512-z+Uw/vLuy6gQe8cfaFWD7p0wVv8fJl3mbzXh33RS+0oW2wvUqiRXiQ69gLWSLpgB5/6sU+r6BlQR0MBILadqTQ==}
+    deprecated: This package is deprecated. Use the optional chaining (?.) operator instead.
 
   lodash.includes@4.3.0:
     resolution: {integrity: sha512-W3Bx6mdkRTGtlJISOvVD/lbqjTlPPUDTMnlXZFnVwi9NKJ6tiAk6LVdlhZMm17VZisqhKcgzpO5Wz91PCt5b0w==}
@@ -5514,6 +5525,7 @@ packages:
 
   lodash.isequal@4.5.0:
     resolution: {integrity: sha512-pDo3lu8Jhfjqls6GkMgpahsF9kCyayhgykjyLMNFTKWrpVdAQtYyB4muAMWozBB4ig/dtWAmsMxLEI8wuz+DYQ==}
+    deprecated: This package is deprecated. Use require('node:util').isDeepStrictEqual instead.
 
   lodash.isinteger@4.0.4:
     resolution: {integrity: sha512-DBwtEWN2caHQ9/imiNeEA5ys1JoRtRfY3d7V9wkqtbycnAmTvRRmbHKDV4a0EYc678/dia0jrte4tjYwVBaZUA==}
@@ -5546,8 +5558,8 @@ packages:
     resolution: {integrity: sha512-8XPvpAA8uyhfteu8pIvQxpJZ7SYYdpUivZpGy6sFsBuKRY/7rQGavedeB8aK+Zkyq6upMFVL/9AW6vOYzfRyLg==}
     engines: {node: '>=10'}
 
-  log-symbols@6.0.0:
-    resolution: {integrity: sha512-i24m8rpwhmPIS4zscNzK6MSEhk0DUWa/8iYQWxhffV8jkI4Phvs3F+quL5xvS0gdQR0FyTCMMH33Y78dDTzzIw==}
+  log-symbols@7.0.0:
+    resolution: {integrity: sha512-zrc91EDk2M+2AXo/9BTvK91pqb7qrPg2nX/Hy+u8a5qQlbaOflCKO+6SqgZ+M+xUFxGdKTgwnGiL96b1W3ikRA==}
     engines: {node: '>=18'}
 
   loglevel@1.9.2:
@@ -7725,8 +7737,8 @@ packages:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
     engines: {node: '>=6'}
 
-  tar-fs@2.1.1:
-    resolution: {integrity: sha512-V0r2Y9scmbDRLCNex/+hYzvp/zyYjvFbHPNgVTKfQvVrb6guiE/fxP+XblDNR011utopbkex2nM4dHNV6GDsng==}
+  tar-fs@2.1.2:
+    resolution: {integrity: sha512-EsaAXwxmx8UB7FRKqeozqEPop69DXcmYwTQwXvyAPF352HJsPdkVhvTaDPYqfNgruveJIJy3TA2l+2zj8LJIJA==}
 
   tar-stream@1.6.2:
     resolution: {integrity: sha512-rzS0heiNf8Xn7/mpdSVVSMAWAoy9bfb1WOTYC78Z0UQKeKa/CWS8FOq0lKGNa8DWKAn9gxjCvMLYc5PGXYlK2A==}
@@ -8437,6 +8449,10 @@ packages:
   yocto-queue@1.1.1:
     resolution: {integrity: sha512-b4JR1PFR10y1mKjhHY9LaGo6tmrgjit7hxVIeAmyMw3jegXR4dhYqLaQF5zMXZxY7tLpMyJeLjr1C4rLmkVe8g==}
     engines: {node: '>=12.20'}
+
+  yoctocolors@2.1.1:
+    resolution: {integrity: sha512-GQHQqAopRhwU8Kt1DDM8NjibDXHC8eoh1erhGAJPEyveY9qqVeXvVikNKrDz69sHowPMorbPUrH/mx8c50eiBQ==}
+    engines: {node: '>=18'}
 
   z-schema@5.0.5:
     resolution: {integrity: sha512-D7eujBWkLa3p2sIpJA0d1pr7es+a7m0vFAnZLlCEKq/Ij2k0MLi9Br2UPxoxdYystm5K1yeBGzub0FlYUEWj2Q==}
@@ -10725,7 +10741,7 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluid-tools/api-markdown-documenter@0.19.0(@types/node@22.9.1)':
+  '@fluid-tools/api-markdown-documenter@0.20.0(@types/node@22.9.1)':
     dependencies:
       '@microsoft/api-extractor-model': 7.28.21(@types/node@22.9.1)
       '@microsoft/tsdoc': 0.14.2
@@ -11714,7 +11730,7 @@ snapshots:
 
   '@types/dompurify@3.2.0':
     dependencies:
-      dompurify: 3.1.6
+      dompurify: 3.2.6
 
   '@types/eslint-scope@3.7.7':
     dependencies:
@@ -11917,6 +11933,9 @@ snapshots:
   '@types/supports-color@8.1.3': {}
 
   '@types/tmp@0.0.33': {}
+
+  '@types/trusted-types@2.0.7':
+    optional: true
 
   '@types/unist@2.0.11': {}
 
@@ -13734,6 +13753,10 @@ snapshots:
 
   dompurify@3.1.6: {}
 
+  dompurify@3.2.6:
+    optionalDependencies:
+      '@types/trusted-types': 2.0.7
+
   domutils@2.8.0:
     dependencies:
       dom-serializer: 1.4.1
@@ -15380,7 +15403,7 @@ snapshots:
 
   is-unicode-supported@0.1.0: {}
 
-  is-unicode-supported@1.3.0: {}
+  is-unicode-supported@2.1.0: {}
 
   is-valid-domain@0.1.6:
     dependencies:
@@ -15638,10 +15661,10 @@ snapshots:
 
   lines-and-columns@2.0.4: {}
 
-  linkcheck-bin@3.0.0-1:
+  linkcheck-bin@3.0.0-2:
     dependencies:
       careful-downloader: 3.0.0
-      log-symbols: 6.0.0
+      log-symbols: 7.0.0
       read-package-up: 11.0.0
     transitivePeerDependencies:
       - supports-color
@@ -15720,10 +15743,10 @@ snapshots:
       chalk: 4.1.2
       is-unicode-supported: 0.1.0
 
-  log-symbols@6.0.0:
+  log-symbols@7.0.0:
     dependencies:
-      chalk: 5.3.0
-      is-unicode-supported: 1.3.0
+      is-unicode-supported: 2.1.0
+      yoctocolors: 2.1.1
 
   loglevel@1.9.2: {}
 
@@ -17423,7 +17446,7 @@ snapshots:
       pump: 3.0.2
       rc: 1.2.8
       simple-get: 4.0.1
-      tar-fs: 2.1.1
+      tar-fs: 2.1.2
       tunnel-agent: 0.6.0
 
   prelude-ls@1.2.1: {}
@@ -18522,7 +18545,7 @@ snapshots:
 
   tapable@2.2.1: {}
 
-  tar-fs@2.1.1:
+  tar-fs@2.1.2:
     dependencies:
       chownr: 1.1.4
       mkdirp-classic: 0.5.3
@@ -19383,6 +19406,8 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yocto-queue@1.1.1: {}
+
+  yoctocolors@2.1.1: {}
 
   z-schema@5.0.5:
     dependencies:

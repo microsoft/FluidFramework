@@ -75,6 +75,14 @@ export interface ICollaborationSession {
 	 */
 	firstClientJoinTime: number;
 	/**
+	 * Time when the most recent client joined the session.
+	 *
+	 * @remarks
+	 * Use this value to determine if/when a session should expire.
+	 * Possibly undefined for backwards compatibility.
+	 */
+	latestClientJoinTime: number | undefined;
+	/**
 	 * Time when the last client left the session.
 	 * Undefined if the session is still active and the last client has not left
 	 * or a new client re-joined the session before it expired.
@@ -122,6 +130,18 @@ export interface ICollaborationSessionManager {
 	 * Get a list of all active sessions.
 	 */
 	getAllSessions(): Promise<ICollaborationSession[]>;
+	/**
+	 * Iterate over all active sessions, calling the provided callback for each session.
+	 *
+	 * @remarks
+	 * This is useful for cases where the number of sessions is large and you want to process
+	 * them in smaller batches to avoid memory issues or timeouts.
+	 *
+	 * The callback should be designed to handle each session independently and not rely on the order of processing.
+	 *
+	 * @param callback - Function to call for each session.
+	 */
+	iterateAllSessions<T>(callback: (session: ICollaborationSession) => Promise<T>): Promise<T[]>;
 }
 
 /**
@@ -165,7 +185,7 @@ export interface ICollaborationSessionTracker {
 	 * @param otherConnectedClients - Optional list of other clients currently connected to the document session.
 	 */
 	endClientSession(
-		client: ICollaborationSessionClient,
+		client: Omit<ICollaborationSessionClient, "joinedTime">,
 		sessionId: Pick<ICollaborationSession, "tenantId" | "documentId">,
 		knownConnectedClients?: ISignalClient[],
 	): Promise<void>;

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -20,28 +20,31 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, fail, getOrCreate } from "../util/index.js";
-import { NodeKind, type TreeNodeSchema } from "./core/index.js";
-import {
-	FieldKind,
-	FieldSchema,
-	normalizeAllowedTypes,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-} from "./schemaTypes.js";
-import { walkFieldSchema } from "./walkFieldSchema.js";
+import { brand, getOrCreate } from "../util/index.js";
+
+import { NodeKind } from "./core/index.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
-import { isObjectNodeSchema } from "./objectNodeTypes.js";
+import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
+import type {
+	SimpleFieldSchema,
+	SimpleNodeSchema,
+	SimpleNodeSchemaBase,
+	SimpleTreeSchema,
+} from "./simpleSchema.js";
+import { walkFieldSchema } from "./walkFieldSchema.js";
 
 const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ * @throws
+ * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
 export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 	return getOrCreate(viewToStoredCache, root, () => {
+		const normalized = normalizeFieldSchema(root);
 		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-		walkFieldSchema(root, {
+		walkFieldSchema(normalized, {
 			node(schema) {
 				if (nodeSchema.has(brand(schema.identifier))) {
 					// Use JSON.stringify to quote and escape identifier string.
@@ -51,83 +54,103 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 						)}. Remove or rename them to avoid the collision.`,
 					);
 				}
-				nodeSchema.set(brand(schema.identifier), getStoredSchema(schema));
+				nodeSchema.set(
+					brand(schema.identifier),
+					getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
+				);
 			},
 		});
 
 		const result: TreeStoredSchema = {
 			nodeSchema,
-			rootFieldSchema: convertField(root),
+			rootFieldSchema: convertField(normalized),
 		};
-		viewToStoredCache.set(root, result);
 		return result;
 	});
 }
 
 /**
- * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
+ * Converts a {@link SimpleTreeSchema} into a {@link TreeStoredSchema}.
  */
-export function convertField(schema: ImplicitFieldSchema): TreeFieldStoredSchema {
-	let kind: FieldKindIdentifier;
-	let allowedTypes: ImplicitAllowedTypes;
-	if (schema instanceof FieldSchema) {
-		kind =
-			convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
-		allowedTypes = schema.allowedTypes;
-	} else {
-		kind = FieldKinds.required.identifier;
-		allowedTypes = schema;
+export function simpleToStoredSchema(root: SimpleTreeSchema): TreeStoredSchema {
+	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
+	for (const [identifier, schema] of root.definitions) {
+		nodeSchema.set(brand(identifier), getStoredSchema(schema));
 	}
-	const types = convertAllowedTypes(allowedTypes);
-	return { kind, types };
+
+	const result: TreeStoredSchema = {
+		nodeSchema,
+		rootFieldSchema: convertField(root.root),
+	};
+	return result;
 }
 
-const convertFieldKind = new Map<FieldKind, FlexFieldKind>([
+/**
+ * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
+ */
+export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
+	const kind: FieldKindIdentifier =
+		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
+	const types: TreeTypeSet = schema.allowedTypesIdentifiers as TreeTypeSet;
+	return { kind, types, persistedMetadata: schema.persistedMetadata };
+}
+
+/**
+ * A map that converts {@link FieldKind} to {@link FlexFieldKind}.
+ */
+export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
+	FieldKind,
+	FlexFieldKind
+>([
 	[FieldKind.Optional, FieldKinds.optional],
 	[FieldKind.Required, FieldKinds.required],
 	[FieldKind.Identifier, FieldKinds.identifier],
 ]);
 
 /**
- * Normalizes an {@link ImplicitAllowedTypes} into an {@link TreeTypeSet}.
- */
-export function convertAllowedTypes(schema: ImplicitAllowedTypes): TreeTypeSet {
-	return new Set([...normalizeAllowedTypes(schema)].map((item) => brand(item.identifier)));
-}
-
-/**
  * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.
+ * @privateRemarks
+ * TODO: Persist node metadata once schema FormatV2 is supported.
  */
-export function getStoredSchema(schema: TreeNodeSchema): TreeNodeStoredSchema {
+export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
 			assert(schema instanceof LeafNodeSchema, 0xa4a /* invalid kind */);
-			return new LeafNodeStoredSchema(schema.info);
+			return new LeafNodeStoredSchema(schema.leafKind);
 		}
-		case NodeKind.Map: {
-			const fieldInfo = schema.info as ImplicitAllowedTypes;
-			const types = convertAllowedTypes(fieldInfo);
-			return new MapNodeStoredSchema({ kind: FieldKinds.optional.identifier, types });
+		case NodeKind.Map:
+		case NodeKind.Record: {
+			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
+			return new MapNodeStoredSchema(
+				{
+					kind: FieldKinds.optional.identifier,
+					types,
+					persistedMetadata: schema.persistedMetadata,
+				},
+				// TODO: Find a way to avoid injecting persistedMetadata twice in these constructor calls.
+				schema.persistedMetadata,
+			);
 		}
 		case NodeKind.Array: {
-			const fieldInfo = schema.info as ImplicitAllowedTypes;
+			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
 			const field = {
 				kind: FieldKinds.sequence.identifier,
-				types: convertAllowedTypes(fieldInfo),
+				types,
+				persistedMetadata: schema.persistedMetadata,
 			};
 			const fields = new Map([[EmptyKey, field]]);
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
-			assert(isObjectNodeSchema(schema), 0xa4b /* invalid kind */);
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
-			for (const field of schema.flexKeyMap.values()) {
-				fields.set(field.storedKey, convertField(field.schema));
+			for (const fieldSchema of schema.fields.values()) {
+				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
 			}
-			return new ObjectNodeStoredSchema(fields);
+			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
-		default:
+		default: {
 			unreachableCase(kind);
+		}
 	}
 }

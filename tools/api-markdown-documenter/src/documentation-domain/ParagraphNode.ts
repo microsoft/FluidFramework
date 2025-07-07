@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type DocumentationNode,
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
@@ -35,12 +31,10 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </p>
  * ```
  *
+ * @sealed
  * @public
  */
-export class ParagraphNode
-	extends DocumentationParentNodeBase
-	implements MultiLineDocumentationNode
-{
+export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
 	/**
 	 * Static singleton representing an empty Paragraph node.
 	 */
@@ -49,16 +43,9 @@ export class ParagraphNode
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Paragraph;
+	public readonly type = "paragraph";
 
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
-	public constructor(children: DocumentationNode[]) {
+	public constructor(children: PhrasingContent[]) {
 		super(children);
 	}
 
