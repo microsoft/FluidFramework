@@ -143,8 +143,8 @@ export class FluidDevtools implements IFluidDevtools {
 	private readonly containers: Map<ContainerKey, ContainerDevtools>;
 
 	/**
-	 * Tracks which containers were registered via registerDataObject vs registerContainerDevtools.
-	 * Maps from a {@link ContainerKey} to a boolean indicating if it's a data object.
+	 * Tracks if the {@link ContainerDevtools} instaces were registered via {@link IFluidDevtools.registerDataObject} vs {@link IFluidDevtools.registerContainerDevtools}.
+	 * Maps {@link ContainerKey} to true if the instance was registered via {@link IFluidDevtools.registerDataObject}, false otherwise.
 	 */
 	private readonly dataObjectRegistry: Map<ContainerKey, boolean>;
 
@@ -219,10 +219,10 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Posts a {@link ContainerList.Message} to the window (globalThis).
 	 */
 	private readonly postContainerList = (): void => {
-		const containers: ContainerKey[] = this.getContainers().map(
+		const containers: ContainerKey[] = this.getAllContainers().map(
 			(container) => container.containerKey,
 		);
-		const dataObjects: ContainerKey[] = this.getDataObjects().map(
+		const dataObjects: ContainerKey[] = this.getAllDataObjects().map(
 			(dataObject) => dataObject.containerKey,
 		);
 
@@ -244,8 +244,8 @@ export class FluidDevtools implements IFluidDevtools {
 
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
-		this.containers = new Map<string, ContainerDevtools>();
-		this.dataObjectRegistry = new Map<string, boolean>();
+		this.containers = new Map<ContainerKey, ContainerDevtools>();
+		this.dataObjectRegistry = new Map<ContainerKey, boolean>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
@@ -401,39 +401,28 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets all Container-level devtools instances.
+	 * Gets all container devtools instances (not data objects).
 	 */
-	public getAllContainerDevtools(): readonly IContainerDevtools[] {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		return [...this.containers.values()];
-	}
-
-	/**
-	 * Gets all regular container devtools instances (not data objects).
-	 */
-	public getContainers(): readonly IContainerDevtools[] {
+	public getAllContainers(): readonly IContainerDevtools[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
 		return [...this.containers.values()].filter(
-			(containerDevtools) => !this.isDataObject(containerDevtools.containerKey),
+			(container) => !this.isDataObject(container.containerKey),
 		);
 	}
 
 	/**
-	 * Gets all data object devtools instances.
+	 * Gets all data object devtools instances (not containers).
 	 */
-	public getDataObjects(): readonly IContainerDevtools[] {
+	public getAllDataObjects(): readonly IContainerDevtools[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		return [...this.containers.values()].filter((containerDevtools) =>
-			this.isDataObject(containerDevtools.containerKey),
+		return [...this.containers.values()].filter((dataObject) =>
+			this.isDataObject(dataObject.containerKey),
 		);
 	}
 
@@ -492,21 +481,19 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Gets the set of features supported by this instance.
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
-		// Check if any containers were registered as data objects
 		const hasDataObjects = this.hasDataObjects();
 
 		return {
 			telemetry: this.logger !== undefined,
 			// Most work completed, but not ready to completely enable.
 			opLatencyTelemetry: true,
-			// Enable dataObjects feature if there are data objects registered
-			// This allows both containers and data objects to coexist
+			// Enable dataObjects feature if there are data objects registered allowing both containers and data objects to coexist.
 			dataObjects: hasDataObjects,
 		};
 	}
 
 	/**
-	 * Checks if any data objects are registered with the devtools.
+	 * Checks if any {@link ContainerDevtools} instances were registered using {@link IFluidDevtools.registerDataObject}.
 	 * @returns `true` if data objects are registered, `false` otherwise.
 	 */
 	private hasDataObjects(): boolean {
@@ -538,8 +525,9 @@ export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 }
 
 /**
- * Converts a {@link PureDataObject} into a {@link DecomposedIContainer} by wrapping its runtime.
- * This enables data objects to be registered with devtools as if they were containers.
+ * Converts a {@link PureDataObject} into a {@link DecomposedIContainer} by wrapping its underlying {@link IFluidDataStoreRuntime}.
+ * This allows data objects to be registered with devtools by exposing their runtime properties and events
+ * through a {@link IContainer}-compatible interface.
  */
 export function toDecomposedIContainer(dataObject: PureDataObject): DecomposedIContainer {
 	const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
