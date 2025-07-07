@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/routerlicious-driver",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Socket.IO + Git implementation of Fluid service API",
 	"homepage": "https://fluidframework.com",
 	"repository": {
