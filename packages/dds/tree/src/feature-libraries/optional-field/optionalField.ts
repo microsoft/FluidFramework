@@ -15,7 +15,6 @@ import {
 	type RevisionTag,
 	areEqualChangeAtomIds,
 	makeChangeAtomId,
-	replaceAtomRevisions,
 	taggedAtomId,
 } from "../../core/index.js";
 import {
@@ -40,6 +39,7 @@ import {
 	type ToDelta,
 	type NestedChangesIndices,
 	type FieldChangeDelta,
+	type RevisionReplacer,
 } from "../modular-schema/index.js";
 
 import type {
@@ -50,8 +50,6 @@ import type {
 	Replace,
 } from "./optionalFieldChangeTypes.js";
 import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { ReplaceRevisionIdInfo } from "../modular-schema/modularChangeFamily.js";
 
 export interface IRegisterMap<T> {
 	set(id: RegisterId, childChange: T): void;
@@ -435,31 +433,21 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 	replaceRevisions: (
 		change: OptionalChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevision: RevisionTag | undefined,
-		replacedRevisionIdInfo: ReplaceRevisionIdInfo,
+		replacer: RevisionReplacer,
 	): OptionalChangeset => {
-		const valueReplace = replaceReplaceRevisions(
-			change.valueReplace,
-			oldRevisions,
-			newRevision,
-			replacedRevisionIdInfo,
-		);
+		const valueReplace = replaceReplaceRevisions(change.valueReplace, replacer);
 
 		const childChanges: ChildChange[] = [];
 		for (const [id, childChange] of change.childChanges) {
 			childChanges.push([
-				replaceRegisterRevisions(id, oldRevisions, newRevision, replacedRevisionIdInfo),
-				replaceAtomRevisions(childChange, oldRevisions, newRevision, replacedRevisionIdInfo),
+				replaceRegisterRevisions(id, replacer),
+				replacer.replaceAtomId(childChange),
 			]);
 		}
 
 		const moves: Move[] = [];
 		for (const [src, dst] of change.moves) {
-			moves.push([
-				replaceAtomRevisions(src, oldRevisions, newRevision, replacedRevisionIdInfo),
-				replaceAtomRevisions(dst, oldRevisions, newRevision, replacedRevisionIdInfo),
-			]);
+			moves.push([replacer.replaceAtomId(src), replacer.replaceAtomId(dst)]);
 		}
 
 		const updated: Mutable<OptionalChangeset> = { childChanges, moves };
@@ -473,9 +461,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 
 function replaceReplaceRevisions(
 	replace: Replace | undefined,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-	replacedRevisionIdInfo: ReplaceRevisionIdInfo,
+	replacer: RevisionReplacer,
 ): Replace | undefined {
 	if (replace === undefined) {
 		return undefined;
@@ -483,16 +469,11 @@ function replaceReplaceRevisions(
 
 	const updated: Mutable<Replace> = {
 		...replace,
-		dst: replaceAtomRevisions(replace.dst, oldRevisions, newRevision, replacedRevisionIdInfo),
+		dst: replacer.replaceAtomId(replace.dst),
 	};
 
 	if (replace.src !== undefined) {
-		updated.src = replaceRegisterRevisions(
-			replace.src,
-			oldRevisions,
-			newRevision,
-			replacedRevisionIdInfo,
-		);
+		updated.src = replaceRegisterRevisions(replace.src, replacer);
 	}
 
 	return updated;
@@ -500,13 +481,9 @@ function replaceReplaceRevisions(
 
 function replaceRegisterRevisions(
 	register: RegisterId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-	replacedRevisionIdInfo: ReplaceRevisionIdInfo,
+	replacer: RevisionReplacer,
 ): RegisterId {
-	return register === "self"
-		? register
-		: replaceAtomRevisions(register, oldRevisions, newRevision, replacedRevisionIdInfo);
+	return register === "self" ? register : replacer.replaceAtomId(register);
 }
 
 function getComposedReplaceDst(

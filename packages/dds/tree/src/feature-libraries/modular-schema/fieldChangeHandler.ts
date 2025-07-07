@@ -5,6 +5,7 @@
 
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type {
+	ChangeAtomId,
 	ChangeEncodingContext,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
@@ -18,7 +19,6 @@ import type {
 import type { IdAllocator, Invariant } from "../../util/index.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
-import type { ReplaceRevisionIdInfo } from "./modularChangeFamily.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
@@ -165,12 +165,13 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 
-	replaceRevisions(
-		change: TChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevisions: RevisionTag | undefined,
-		replaceRevisionIdInfo?: ReplaceRevisionIdInfo,
-	): TChangeset;
+	replaceRevisions(change: TChangeset, replacer: RevisionReplacer): TChangeset;
+}
+
+export interface RevisionReplacer {
+	readonly newRevision: RevisionTag | undefined;
+	isOldRevision(revision: RevisionTag | undefined): boolean;
+	replaceAtomId<T extends ChangeAtomId>(id: T): T;
 }
 
 /**

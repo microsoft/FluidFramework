@@ -31,6 +31,8 @@ import type {
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const dummyDetachId: ChangeAtomId = { localId: brand(0) };
 
@@ -326,5 +328,8 @@ export function inlineRevision(
 	change: OptionalChangeset,
 	revision: RevisionTag,
 ): OptionalChangeset {
-	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return optionalChangeRebaser.replaceRevisions(
+		change,
+		new DefaultRevisionReplacer(revision, new Set([undefined])),
+	);
 }

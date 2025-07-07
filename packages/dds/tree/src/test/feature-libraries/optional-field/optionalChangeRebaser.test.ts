@@ -64,6 +64,8 @@ import { TestNodeId } from "../../testNodeId.js";
 import { Change, assertTaggedEqual, verifyContextChain } from "./optionalFieldUtils.js";
 import { ChangesetWrapper } from "../../changesetWrapper.js";
 import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 type RevisionTagMinter = () => RevisionTag;
 
@@ -605,7 +607,10 @@ function inlineRevisionWrapped(
 }
 
 function inlineRevision(change: OptionalChangeset, revision: RevisionTag): OptionalChangeset {
-	return optionalChangeRebaser.replaceRevisions(change, new Set([undefined]), revision);
+	return optionalChangeRebaser.replaceRevisions(
+		change,
+		new DefaultRevisionReplacer(revision, new Set([undefined])),
+	);
 }
 
 function tagWrappedChangeInline(

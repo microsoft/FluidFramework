@@ -11,6 +11,8 @@ import { mintRevisionTag } from "../../utils.js";
 import { type Mutable, brand } from "../../../util/index.js";
 import { assertChangesetsEqual } from "./utils.js";
 import { MarkMaker as Mark } from "./testEdits.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -46,7 +48,8 @@ function runCases(outputRev: RevisionTag | undefined) {
 
 	function process(changeset: SF.Changeset): SF.Changeset {
 		deepFreeze(changeset);
-		return SF.sequenceFieldChangeRebaser.replaceRevisions(changeset, inputRevs, outputRev);
+		const replacer = new DefaultRevisionReplacer(outputRev, inputRevs);
+		return SF.sequenceFieldChangeRebaser.replaceRevisions(changeset, replacer);
 	}
 
 	it("tombstones", () => {

@@ -6,13 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
-import {
-	type DeltaDetachedNodeId,
-	type DeltaMark,
-	Multiplicity,
-	type RevisionTag,
-	replaceAtomRevisions,
-} from "../../core/index.js";
+import { type DeltaDetachedNodeId, type DeltaMark, Multiplicity } from "../../core/index.js";
 
 import type {
 	FieldChangeDelta,
@@ -22,13 +16,13 @@ import type {
 	NodeChangePruner,
 	NodeChangeRebaser,
 	RelevantRemovedRootsFromChild,
+	RevisionReplacer,
 	ToDelta,
 } from "./fieldChangeHandler.js";
 import { FieldKindWithEditor } from "./fieldKindWithEditor.js";
 import { makeGenericChangeCodec } from "./genericFieldKindCodecs.js";
 import { newGenericChangeset, type GenericChangeset } from "./genericFieldKindTypes.js";
 import type { NodeId } from "./modularChangeTypes.js";
-import type { ReplaceRevisionIdInfo } from "./modularChangeFamily.js";
 
 /**
  * {@link FieldChangeHandler} implementation for {@link GenericChangeset}.
@@ -155,13 +149,9 @@ function pruneGenericChange(
 
 function replaceRevisions(
 	changeset: GenericChangeset,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-	replaceRevisionIdInfo: ReplaceRevisionIdInfo,
+	replacer: RevisionReplacer,
 ): GenericChangeset {
-	return changeset.mapValues((node) =>
-		replaceAtomRevisions(node, oldRevisions, newRevision, replaceRevisionIdInfo),
-	);
+	return changeset.mapValues((node) => replacer.replaceAtomId(node));
 }
 
 /**

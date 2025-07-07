@@ -18,7 +18,6 @@ import {
 	brandedNumberType,
 	brandedStringType,
 } from "../../util/index.js";
-import type { ReplaceRevisionIdInfo } from "../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 /**
  * The identifier for a particular session/user/client that can generate `GraphCommit`s
@@ -121,35 +120,6 @@ export function taggedOptAtomId(
 
 export function offsetChangeAtomId(id: ChangeAtomId, offset: number): ChangeAtomId {
 	return { ...id, localId: brand(id.localId + offset) };
-}
-
-export function replaceAtomRevisions(
-	id: ChangeAtomId,
-	oldRevisions: Set<RevisionTag | undefined>,
-	newRevision: RevisionTag | undefined,
-	replaceRevisionIdInfo?: ReplaceRevisionIdInfo,
-): ChangeAtomId {
-	if (oldRevisions.has(id.revision)) {
-		if (replaceRevisionIdInfo !== undefined) {
-			const newId =
-				replaceRevisionIdInfo.newRevisionMap.get([id.revision, id.localId]) ??
-				(replaceRevisionIdInfo.idAllocator.allocate() as ChangesetLocalId);
-			if (!replaceRevisionIdInfo.newRevisionMap.has([id.revision, id.localId])) {
-				replaceRevisionIdInfo.newRevisionMap.set([id.revision, id.localId], newId);
-			}
-		}
-		return atomWithRevision(id, newRevision);
-	}
-	return id;
-}
-
-function atomWithRevision(id: ChangeAtomId, revision: RevisionTag | undefined): ChangeAtomId {
-	const updated = { ...id, revision };
-	if (revision === undefined) {
-		delete updated.revision;
-	}
-
-	return updated;
 }
 
 /**

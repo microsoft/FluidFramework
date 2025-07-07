@@ -12,6 +12,8 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/optional-field/index.js";
 import { Change, assertEqual } from "./optionalFieldUtils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { DefaultRevisionReplacer } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const tag0: RevisionTag = mintRevisionTag();
 const tag1: RevisionTag = mintRevisionTag();
@@ -46,7 +48,8 @@ function runCases(outputRev: RevisionTag | undefined) {
 	}
 
 	function process(changeset: OptionalChangeset): OptionalChangeset {
-		return optionalChangeRebaser.replaceRevisions(changeset, inputRevs, outputRev);
+		const replacer = new DefaultRevisionReplacer(outputRev, inputRevs);
+		return optionalChangeRebaser.replaceRevisions(changeset, replacer);
 	}
 
 	it("moves", () => {

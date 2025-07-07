@@ -39,6 +39,7 @@ export {
 	referenceFreeFieldChangeRebaser,
 	type RebaseRevisionMetadata,
 	type RelevantRemovedRootsFromChild,
+	type RevisionReplacer,
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,

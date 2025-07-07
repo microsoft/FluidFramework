@@ -24,7 +24,6 @@ export {
 	taggedOptAtomId,
 	offsetChangeAtomId,
 	subtractChangeAtomIds,
-	replaceAtomRevisions,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
 	compareRevisions,
