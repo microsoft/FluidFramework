@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	InternalUtilityTypes,
 	JsonDeserialized,
@@ -13,7 +14,11 @@ import { spy } from "sinon";
 import type { SinonFakeTimers } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
-import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
+import type {
+	InboundClientJoinMessage,
+	OutboundClientJoinMessage,
+	SignalMessages,
+} from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
@@ -21,6 +26,7 @@ import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type {
 	AttendeeId,
 	ClientConnectionId,
+	PresenceWithNotifications,
 	StateSchemaValidator,
 } from "@fluidframework/presence/alpha";
 
@@ -116,6 +122,11 @@ export function generateBasicClientJoin(
 }
 
 /**
+ * Function signature for sending a signal to the presence manager.
+ */
+export type ProcessSignalFunction = ReturnType<typeof createPresenceManager>["processSignal"];
+
+/**
  * Prepares an instance of presence as it would be if initialized while connected.
  *
  * @param runtime - the mock runtime
@@ -130,7 +141,10 @@ export function prepareConnectedPresence(
 	clientConnectionId: ClientConnectionId,
 	clock: Omit<SinonFakeTimers, "restore">,
 	logger?: EventAndErrorTrackingLogger,
-): ReturnType<typeof createPresenceManager> {
+): {
+	presence: PresenceWithNotifications;
+	processSignal: ProcessSignalFunction;
+} {
 	// Set runtime to connected state
 	runtime.clientId = clientConnectionId;
 	// TODO: runtime.connected has been hacked in past to lie about true connection.
@@ -158,6 +172,23 @@ export function prepareConnectedPresence(
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 
+	const processSignal = (
+		addressChain: string[],
+		signalMessage: InboundExtensionMessage<SignalMessages>,
+		local: boolean,
+	): void => {
+		// Pass on to presence manager, but first clone the message to avoid
+		// possibility of Presence mutating the original message which often
+		// contains reference to general (shared) test data.
+		// In production environment, the message is always extracted from
+		// the network and Presence can safely mutate it.
+		presence.processSignal(
+			addressChain,
+			JSON.parse(JSON.stringify(signalMessage)) as InboundExtensionMessage<SignalMessages>,
+			local,
+		);
+	};
+
 	// Validate expectations post initialization to make sure logger
 	// and runtime are left in a clean expectation state.
 	const logErrors = getUnexpectedLogErrorException(logger);
@@ -170,9 +201,12 @@ export function prepareConnectedPresence(
 	clock.tick(10);
 
 	// Return the join signal
-	presence.processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
 
-	return presence;
+	return {
+		presence,
+		processSignal,
+	};
 }
 
 /**

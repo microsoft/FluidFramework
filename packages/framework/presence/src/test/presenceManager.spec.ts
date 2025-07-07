@@ -10,10 +10,12 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
 
 import type { ClientConnectionId } from "../baseTypes.js";
-import { AttendeeStatus, type Attendee } from "../presence.js";
+import type { Attendee, Presence } from "../presence.js";
+import { AttendeeStatus } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	createSpecificAttendeeId,
@@ -79,11 +81,18 @@ describe("Presence", () => {
 		});
 
 		describe("when connected", () => {
-			let presence: ReturnType<typeof createPresenceManager>;
+			let presence: Presence;
+			let processSignal: ProcessSignalFunction;
 			const afterCleanUp: (() => void)[] = [];
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+				({ presence, processSignal } = prepareConnectedPresence(
+					runtime,
+					"attendeeId-2",
+					"client2",
+					clock,
+					logger,
+				));
 			});
 
 			afterEach(() => {
@@ -116,7 +125,7 @@ describe("Presence", () => {
 					);
 
 					for (const signal of signals) {
-						presence.processSignal([], signal, false);
+						processSignal([], signal, false);
 					}
 
 					cleanUpListener();
@@ -577,7 +586,7 @@ describe("Presence", () => {
 							clock.tick(1000);
 							runtime.connect("client6");
 							clock.tick(15_000);
-							presence.processSignal(
+							processSignal(
 								[],
 								{
 									type: "Pres:DatastoreUpdate",
