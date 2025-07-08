@@ -661,7 +661,10 @@ describe("client.rollback", () => {
 			clients.A.insertTextLocal(0, "0123456789")!,
 			clients.A.peekPendingSegmentGroups(),
 		]);
-		ops.push([clients.A.removeRangeLocal(3, 4)!, clients.A.peekPendingSegmentGroups()]);
+		ops.push([
+			clients.A.annotateRangeLocal(3, 4, { prop: "splitTheRange" })!,
+			clients.A.peekPendingSegmentGroups(),
+		]);
 
 		for (const [op, md] of ops.splice(0)) {
 			const newOp = clients.A.regeneratePendingOp(op, md, false);
@@ -672,6 +675,8 @@ describe("client.rollback", () => {
 				),
 			]);
 		}
+
+		logger.validate({ baseText: "0123456789" });
 
 		for (const [op, md] of ops.splice(0).reverse()) {
 			clients.A.rollback(op, md);
