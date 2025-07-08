@@ -255,26 +255,28 @@ export class IncrementalFieldDecoder implements ChunkDecoder {
 		stream: StreamCursor,
 		getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
 	): TreeChunk {
-		const data = readStream(stream);
-		if (typeof data === "number") {
-			assert(data === 0, "expected 0 for empty incremental blob");
-			return emptyChunk;
-		}
+		const chunkSummaryRefIds = readStream(stream);
+		assert(
+			Array.isArray(chunkSummaryRefIds),
+			"Expected the data to be an array of incremental blob ids",
+		);
 
-		assert(typeof data === "string", "expected incremental blob id");
-		const batch = getIncrementalFieldBatch?.(data);
-		assert(batch !== undefined, `Can't find incremental field batch for field ${data}`);
-
-		const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, this.cache));
 		const chunks: TreeChunk[] = [];
-		for (const field of batch.data) {
-			const innerStream = { data: field, offset: 0 };
-			const result = anyDecoder.decode(decoders, innerStream, getIncrementalFieldBatch);
-			assert(
-				innerStream.offset === innerStream.data.length,
-				0x73a /* expected decode to consume full stream */,
-			);
-			chunks.push(result);
+		for (const chunkSummaryRefId of chunkSummaryRefIds) {
+			assert(typeof chunkSummaryRefId === "string", "expected incremental blob id");
+			const batch = getIncrementalFieldBatch?.(chunkSummaryRefId);
+			assert(batch !== undefined, "Can't find incremental field batch for field");
+
+			const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, this.cache));
+			for (const field of batch.data) {
+				const innerStream = { data: field, offset: 0 };
+				const result = anyDecoder.decode(decoders, innerStream, getIncrementalFieldBatch);
+				assert(
+					innerStream.offset === innerStream.data.length,
+					0x73a /* expected decode to consume full stream */,
+				);
+				chunks.push(result);
+			}
 		}
 
 		return aggregateChunks(chunks);

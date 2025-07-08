@@ -32,7 +32,6 @@ import {
 	type EncodedChunkShape,
 	type EncodedFieldBatch,
 	type EncodedFieldBatchFormat,
-	type EncodedIncrementalShape,
 	type EncodedNestedArray,
 	type EncodedValueShape,
 	FieldUnchanged,
@@ -489,20 +488,6 @@ export class IncrementalFieldShape
 		super();
 	}
 
-	// private forEachNod2<TCursor extends ITreeCursor = ITreeCursor>(
-	// 	cursor: TCursor,
-	// 	f: (cursor: TCursor) => void,
-	// ): void {
-	// 	assert(cursor.mode === CursorLocationType.Fields, 0x3bd /* should be in fields */);
-	// 	for (
-	// 		let inNodes = cursor.firstNode();
-	// 		inNodes;
-	// 		inNodes = cursor.seekNodes(cursor.chunkLength)
-	// 	) {
-	// 		f(cursor);
-	// 	}
-	// }
-
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
@@ -513,83 +498,65 @@ export class IncrementalFieldShape
 			"incremental encoding must be enabled to use IncrementalFieldShape",
 		);
 
-		// If there are no nodes in the field, there is no need to do incremental encoding. Encode a zero length field.
-		if (cursor.getFieldLength() === 0) {
-			dataBuilder.addToBuffer(0);
-			return;
-		}
+		// Encode all the nodes in the chunk at the cursor position.
+		const encodeChunkNodes = (
+			chunkCursor: ITreeCursorSynchronous,
+			chunkDataBuilder: EncodedDataBuilder,
+		): void => {
+			const inlineArrayShape = new InlineArrayShape(
+				chunkCursor.chunkLength,
+				asNodesEncoder(anyNodeEncoder),
+			);
+			inlineArrayShape.encodeNodes(cursor, cache, chunkDataBuilder);
+		};
 
-		// Find whether the field has changed since the last encoding. If the field changed, the chunks for at least
-		// one of the nodes in the field will have summaryRefId undefined due to copy-on-write semantics.
-		// Otherwise, all nodes in the field should have the same summaryRefId from the previous encoding.
-		let fieldChanged: boolean = false;
-		let summaryRefId: string | undefined;
-		for (
-			let inNodes = cursor.firstNode();
-			inNodes;
-			inNodes = cursor.seekNodes(cursor.chunkLength)
-		) {
+		const chunkReferenceIds: string[] = [];
+		let inNodes = cursor.firstNode();
+		while (inNodes && cursor.chunkLength !== 0) {
 			const chunk = tryGetChunk(cursor);
 			if (chunk === undefined) {
 				continue;
 			}
+
+			let chunkSummaryRefId: string | undefined;
+			let chunkChanged: boolean = false;
 			if (chunk.summaryRefId === undefined) {
-				fieldChanged = true;
+				chunkChanged = true;
+				chunkSummaryRefId = `${cache.idCompressor.generateCompressedId()}`;
+				chunk.updateSummaryRefId(chunkSummaryRefId);
+				chunk.referenceAdded();
 			} else {
-				chunk.updateSummaryRefId(chunk.summaryRefId);
-				if (summaryRefId === undefined) {
-					summaryRefId = chunk.summaryRefId;
-				}
-				assert(
-					summaryRefId === chunk.summaryRefId,
-					"expected all chunks to have the same summary ref id",
+				chunkSummaryRefId = chunk.summaryRefId;
+			}
+
+			chunkReferenceIds.push(chunkSummaryRefId);
+			if (chunkChanged || dataBuilder.fullTree) {
+				const chunkDataBuilder = dataBuilder.createChild();
+				encodeChunkNodes(cursor, chunkDataBuilder);
+				dataBuilder.addIncrementalFieldChanged(
+					chunkSummaryRefId,
+					chunkDataBuilder.getBufferIncremental(),
 				);
+				// While encoding the nodes in the chunk, if the cursor seeks to exactly past either end,
+				// the cursor navigates up to the parent field (setting mode to `Fields`). In that case,
+				// there are no more chunks to encode in this field.
+				if (cursor.mode === CursorLocationType.Fields) {
+					inNodes = false;
+				}
+			} else {
+				dataBuilder.addIncrementalFieldUnchanged(chunkSummaryRefId);
+				inNodes = cursor.seekNodes(cursor.chunkLength);
 			}
 		}
-
-		// If the field has not changed since the last encoding and fullTree is false, store the previous summaryRefId
-		// in the main buffer and set incremental field buffer for this field to unchanged.
-		if (!fieldChanged && !dataBuilder.fullTree) {
-			assert(
-				summaryRefId !== undefined,
-				"if field is unchanged, summary ref id must be defined",
-			);
-			dataBuilder.addToBuffer(summaryRefId);
-			dataBuilder.addIncrementalFieldUnchanged(summaryRefId);
-			return;
-		}
-
-		// If the field has changed, generate a new summaryRefId, store this into the main buffer and encode the field
-		// data in the incremental field buffer.
-		// TODO: Can we re-use previous summaryRefId in some cases for optimization?
-		const fieldSummaryId = `${cache.idCompressor.generateCompressedId()}`;
-		dataBuilder.addToBuffer(fieldSummaryId);
-
-		const fieldDataBuilder = dataBuilder.createChild();
-		anyFieldEncoder.encodeField(cursor, cache, fieldDataBuilder);
-		dataBuilder.addIncrementalFieldChanged(
-			fieldSummaryId,
-			fieldDataBuilder.getBufferIncremental(),
-		);
-
-		// Update the chunks of all nodes in the field with the new summaryRefId. Also, add a reference to the chunks
-		// which represents a ref to the chunk from the summary tree that holds its contents. This will ensure that if
-		// the chunk changes, a copy will be created, removing the reference, summaryRefId and other incremental state.
-		forEachNode(cursor, (nodeCursor) => {
-			const chunk = tryGetChunk(nodeCursor);
-			assert(chunk !== undefined, "could not find chunk for node cursor");
-			chunk.updateSummaryRefId(fieldSummaryId);
-			chunk.referenceAdded();
-		});
+		dataBuilder.addToBuffer(chunkReferenceIds);
 	}
 
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
-		const encodedIncrementalShape: EncodedIncrementalShape = 0;
 		return {
-			e: encodedIncrementalShape,
+			e: 0 /* EncodedIncrementalShape */,
 		};
 	}
 
