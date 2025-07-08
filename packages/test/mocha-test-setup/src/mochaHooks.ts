@@ -157,7 +157,7 @@ export const mochaHooks = {
 		testLogger.clearCurrentTest();
 	},
 	async afterAll() {
-		// Flush the logger to ensure all events are sent before the next test runs.
+		// After all tests ran, flush the logger to ensure all events are sent before the process exits.  
 		await testLogger.flush();
 	},
 };
