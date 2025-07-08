@@ -63,7 +63,7 @@ export function validateTokenClaimsExpiration(
 	if (lifeTimeMSec < 0) {
 		throw new NetworkError(401, "Expired token");
 	}
-	return lifeTimeMSec;
+	return Math.floor(lifeTimeMSec / 1000);
 }
 
 /**
