@@ -129,9 +129,10 @@ export class RestGitService {
 		);
 	}
 
-	public async getBlob(sha: string, useCache: boolean): Promise<git.IBlob> {
+	public async getBlob(tenantId: string, sha: string, useCache: boolean): Promise<git.IBlob> {
+		const cacheKey = `${tenantId}:${sha}`;
 		return this.resolve(
-			sha,
+			cacheKey,
 			async () =>
 				this.get<git.IBlob>(
 					`/repos/${this.getRepoPath()}/git/blobs/${encodeURIComponent(sha)}`,
@@ -147,7 +148,7 @@ export class RestGitService {
 		);
 
 		// Fetch the full blob so we can have it in cache
-		this.getBlob(createResults.sha, true).catch((error) => {
+		this.getBlob(this.tenantId, createResults.sha, true).catch((error) => {
 			winston.error(`Error fetching blob ${createResults.sha}`);
 			Lumberjack.error(`Error fetching blob: ${createResults.sha}`, this.lumberProperties);
 		});
@@ -448,7 +449,7 @@ export class RestGitService {
 
 				const blobsP = Promise.all(
 					quorumValuesSha.map(async (quorumSha) => {
-						const blob = await this.getBlob(quorumSha, useCache);
+						const blob = await this.getBlob(this.tenantId, quorumSha, useCache);
 						blobs.set(blob.sha, blob);
 					}),
 				);
@@ -487,7 +488,7 @@ export class RestGitService {
 		const blobsP: Promise<git.IBlob>[] = [];
 		for (const entry of tree.tree) {
 			if (entry.type === "blob" && endsWith(entry.path, includeBlobs)) {
-				const blobP = this.getBlob(entry.sha, useCache);
+				const blobP = this.getBlob(this.tenantId, entry.sha, useCache);
 				blobsP.push(blobP);
 			}
 		}
