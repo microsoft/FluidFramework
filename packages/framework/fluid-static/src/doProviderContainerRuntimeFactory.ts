@@ -54,7 +54,9 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	if (props.useTreeBasedDataObject) {
-		throw new Error("Tree-based data objects are not yet supported in DOProviderContainerRuntimeFactory.");
+		throw new Error(
+			"Tree-based data objects are not yet supported in DOProviderContainerRuntimeFactory.",
+		);
 	}
 
 	return new DOProviderContainerRuntimeFactory(
