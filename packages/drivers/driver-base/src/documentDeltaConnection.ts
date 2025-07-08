@@ -413,11 +413,7 @@ export class DocumentDeltaConnection
 			}),
 		});
 		const disconnectError = error
-			? createGenericNetworkError(
-					error.message,
-					{ canRetry: true },
-					{ driverVersion },
-				)
+			? createGenericNetworkError(error.message, { canRetry: true }, { driverVersion })
 			: createGenericNetworkError(
 					// pre-0.58 error message: clientClosingConnection
 					"Client closing delta connection",
