@@ -9,7 +9,8 @@ Enum entries whose values are numeric get additional properties on TypeScript's 
 These values were getting treated like enum entries at runtime by `adaptEnum` (`@beta`).
 This has been fixed and the runtime behavior now matches the types in this case.
 
-If any documents were created with this API and keeping them openable is required, places using the returned schema union from `adaptEnum` may need to be updated to explicitly include the previously erroneously generated schema.
+If any documents were created with this API which were impacted by this bug and keeping them openable is required, they will need a workaround.
+Impacted schema using the union from `adaptEnum` can need to be updated to explicitly include the previously erroneously generated schema.
 
 Before:
 ```typescript
@@ -31,7 +32,7 @@ class Workaround extends schemaFactory.object("a", {}) {}
 const union = [...ModeNodes.schema, Workaround] as const;
 ```
 
-To help detect when schema contain unexpected content, and to ensure workarounds like this are implemented properly, applications should include tests which check the schema form compatibility.
+To help detect when schema contain unexpected content, and to ensure workarounds like this are implemented properly, applications should include tests which check the schema for compatibility.
 See [tree-cli-app's schema tests](https://github.com/microsoft/FluidFramework/blob/main/examples/apps/tree-cli-app/src/test/schema.spec.ts) for an example of how to do this.
 
-The schema returned by adaptEnum have also been updated to `toString` more usefully, including the value of the particular enum entry: this has no effect on the nodes, just the schema.
+The schema returned by `adaptEnum` have also been updated to `toString` more usefully, including the value of the particular enum entry: this has no effect on the nodes, just the schema.
