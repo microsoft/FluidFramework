@@ -1004,13 +1004,9 @@ export class ConnectionManager implements IConnectionManager {
 	 * @returns A promise that resolves when the connection is reestablished or we stop trying
 	 */
 	private reconnectOnError(requestedMode: ConnectionMode, error: IAnyDriverError): void {
-		const disconnectError = {
-			text: error.message,
-			error,
-		};
-		// We're passing this error to not change the old behavior.
-		// At some point we should try to refactor so there's no error passed to reconnect.
-		this.reconnect(requestedMode, disconnectError).catch(this.props.closeHandler);
+		this.reconnect(requestedMode, { text: error.message, error }).catch(
+			this.props.closeHandler,
+		);
 	}
 
 	/**
@@ -1248,8 +1244,6 @@ export class ConnectionManager implements IConnectionManager {
 	private readonly disconnectHandlerInternal = (disconnectReason: IAnyDriverError): void => {
 		// Note: we might get multiple disconnect calls on same socket, as early disconnect notification
 		// ("server_disconnect", ODSP-specific) is mapped to "disconnect"
-		// Before 2.50 we used to always include a genericNetworkError on the disconnect event even during clean
-		// disconnects; now we don't, but a full refactor/rename in this space was out of scope for that PR.
 		this.reconnectOnError(this.defaultReconnectionMode, disconnectReason);
 	};
 
