@@ -128,6 +128,9 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		private readonly _getClientId: () => string | undefined,
 		private readonly _getAttachState: () => AttachState,
 		private readonly _getConnected: () => boolean,
+		/**
+		 * @returns true if signals can be sent and received (container is loaded and connected to service), false otherwise.
+		 */
 		private readonly _canSendSignals: () => boolean,
 		public readonly clientDetails: IClientDetails,
 		public readonly existing: boolean,

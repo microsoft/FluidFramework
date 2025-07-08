@@ -597,7 +597,7 @@ export class Container
 		return this._protocolHandler;
 	}
 
-	private get canSendSignals(): boolean {
+	private canSendSignals(): boolean {
 		return (
 			this.connectionStateHandler.connectionState === ConnectionState.Connected ||
 			this.connectionStateHandler.connectionState === ConnectionState.CatchingUp
@@ -2476,7 +2476,7 @@ export class Container
 				() => this.clientId,
 				() => this.attachState,
 				() => this.connected,
-				() => this.canSendSignals,
+				() => this.canSendSignals(),
 				this._deltaManager.clientDetails,
 				existing,
 				this.subLogger,
