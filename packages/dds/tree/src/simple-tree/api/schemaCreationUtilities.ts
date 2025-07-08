@@ -117,7 +117,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * }
  * ```
  * @privateRemarks
- * // TODO: AB#43345: see TScope known issue above, and other references to this work item.
+ * TODO: AB#43345: see TScope known issue above, and other references to this work item.
  *
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
  * @beta
@@ -187,7 +187,7 @@ export function enumEntries(
 ): [string, string | number][] {
 	// Skip reverse mapping for numeric entries.
 	// For numeric entries, TypeScript defines an additional property keyed with the number implicitly converted to a string.
-	// Note TypeScript can overwrite its own enum entries in some edge cases (see https://github.com/microsoft/TypeScript/issues/48956) so its not possible to handle all cases correctly.
+	// Note TypeScript can overwrite its own enum entries in some edge cases (see https://github.com/microsoft/TypeScript/issues/48956), so it's not possible to handle all cases correctly.
 	return Object.entries(enumObject).filter(([key, value]) => {
 		// All reverse mapping must also have a inverse mapping (the regular forward mapping) to a number:
 		const inverse = enumObject[value];
