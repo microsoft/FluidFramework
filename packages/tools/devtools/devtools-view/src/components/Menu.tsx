@@ -11,7 +11,7 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
+import { ArrowSync24Regular, Info24Regular } from "@fluentui/react-icons";
 import type {
 	HasContainerKey,
 	DevtoolsFeatureFlags,
@@ -22,6 +22,8 @@ import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
+
+import { containersInfoTooltipText, dataObjectsInfoTooltipText } from "./TooltipTexts.js";
 
 import { Waiting } from "./index.js";
 
@@ -164,6 +166,27 @@ function RefreshButton(props?: { label?: string }): React.ReactElement {
 }
 
 /**
+ * An info icon with tooltip explaining what the section contains.
+ */
+function InfoIcon(props: { content: React.ReactElement }): React.ReactElement {
+	const transparentButtonStyle = {
+		backgroundColor: "transparent",
+		border: "none",
+		cursor: "pointer",
+	};
+
+	return (
+		<Tooltip content={props.content} relationship="label">
+			<Button
+				icon={<Info24Regular />}
+				style={transparentButtonStyle}
+				aria-label="Information"
+			></Button>
+		</Tooltip>
+	);
+}
+
+/**
  * Props for {@link MenuSection}
  */
 export type MenuSectionProps = React.PropsWithChildren<{
@@ -206,9 +229,9 @@ export interface MenuSectionLabelHeaderProps {
 	label: string;
 
 	/**
-	 * The icon to display in the header of the menu section.
+	 * The icon or icons to display in the header of the menu section.
 	 */
-	icon?: React.ReactElement;
+	icon?: React.ReactElement | React.ReactElement[];
 }
 
 const useMenuSectionLabelHeaderStyles = makeStyles({
@@ -232,7 +255,9 @@ export function MenuSectionLabelHeader(
 	return (
 		<div className={styles.root}>
 			{label}
-			{icon}
+			{Array.isArray(icon)
+				? icon.map((i, index) => <React.Fragment key={index}>{i}</React.Fragment>)
+				: icon}
 		</div>
 	);
 }
@@ -465,12 +490,19 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		);
 	}
 
+	const infoTooltipContent = isDataObjects
+		? dataObjectsInfoTooltipText
+		: containersInfoTooltipText;
+
 	return (
 		<MenuSection
 			header={
 				<MenuSectionLabelHeader
 					label={sectionLabel}
-					icon={<RefreshButton label={sectionLabel} />}
+					icon={[
+						<InfoIcon key="info" content={infoTooltipContent} />,
+						<RefreshButton key="refresh" label={sectionLabel} />,
+					]}
 				/>
 			}
 			key="container-selection-menu-section"

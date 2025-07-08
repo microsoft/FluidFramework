@@ -66,3 +66,25 @@ export const clientModeTooltipText = (
 export const clientScopesTooltipText = (
 	<div>{"Enumerates actions allowed for the client connection."}</div>
 );
+
+/**
+ * Description of what Containers are.
+ */
+export const containersInfoTooltipText = (
+	<div>
+		{
+			"Containers are the primary unit of collaboration in Fluid Framework. They hold the shared data and manage the synchronization of changes between clients."
+		}
+	</div>
+);
+
+/**
+ * Description of what Data Objects are.
+ */
+export const dataObjectsInfoTooltipText = (
+	<div>
+		{
+			"Data Objects are individual collaborative components within a Container. They provide specific functionality and can be shared independently."
+		}
+	</div>
+);
