@@ -24,7 +24,7 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 import type { ContainerSchema } from "fluid-framework";
 import { SharedTree } from "fluid-framework";
 
-import { initializeNewContainer, loadExistingContainer } from "../src/app.js";
+import { initializeAppForNewContainer, loadAppFromExistingContainer } from "../src/app.js";
 import { DiceRollerController } from "../src/controller.js";
 import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
@@ -114,10 +114,10 @@ async function createContainerAndRenderInElement(
 	const fluidContainer = await createFluidContainer<TestContainerSchema>({ container });
 	let appModel: TwoDiceApp;
 	if (createNewFlag) {
-		appModel = initializeNewContainer(fluidContainer);
+		appModel = initializeAppForNewContainer(fluidContainer);
 		await attach?.();
 	} else {
-		appModel = loadExistingContainer(fluidContainer);
+		appModel = loadAppFromExistingContainer(fluidContainer);
 	}
 
 	const diceRollerController = new DiceRollerController(appModel.dice1, () => {});

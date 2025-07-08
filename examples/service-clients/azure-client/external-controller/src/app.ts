@@ -80,7 +80,7 @@ const treeViewConfig = new TreeViewConfiguration<typeof TwoDiceApp>({
 	schema: TwoDiceApp,
 });
 
-export function loadExistingContainer(
+export function loadAppFromExistingContainer(
 	container: IFluidContainer<DiceRollerContainerSchema>,
 ): TwoDiceApp {
 	const tree = container.initialObjects.tree;
@@ -91,7 +91,7 @@ export function loadExistingContainer(
 	return treeView.root;
 }
 
-export function initializeNewContainer(
+export function initializeAppForNewContainer(
 	container: IFluidContainer<DiceRollerContainerSchema>,
 ): TwoDiceApp {
 	const tree = container.initialObjects.tree;
@@ -143,7 +143,7 @@ async function start(): Promise<void> {
 		// map2.set("diceValue", 1);
 		// console.log(map1.get("diceValue"));
 		// Initialize our models so they are ready for use with our controllers
-		appModel = initializeNewContainer(container);
+		appModel = initializeAppForNewContainer(container);
 
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
@@ -156,7 +156,7 @@ async function start(): Promise<void> {
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
 		({ container, services } = await client.getContainer(id, containerSchema, "2"));
-		appModel = loadExistingContainer(container);
+		appModel = loadAppFromExistingContainer(container);
 	}
 
 	document.title = id;
