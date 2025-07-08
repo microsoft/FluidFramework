@@ -117,7 +117,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * }
  * ```
  * @privateRemarks
- * // TODO: AB#43345: see TScope known issue above, and other references to this work item.
+ * TODO: AB#43345: see TScope known issue above, and other references to this work item.
  *
  * @see {@link enumFromStrings} for a similar function that works on arrays of strings instead of an enum.
  * @beta
