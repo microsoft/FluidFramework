@@ -37,8 +37,10 @@ export function create(
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("nexus", (tokens, req, res) => {
+				const tenantId = getTenantIdFromRequest(req.params);
+				res.locals.tenantId = tenantId;
 				return {
-					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+					[BaseTelemetryProperties.tenantId]: tenantId,
 					[CommonProperties.callingServiceName]:
 						req.headers[CallingServiceHeaderName] ?? "",
 				};
