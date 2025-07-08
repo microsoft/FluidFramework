@@ -19,7 +19,7 @@ import {
 	type IFluidContainer,
 	SharedTree,
 	TreeViewConfiguration,
-} from "fluid-framework/beta";
+} from "fluid-framework";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
