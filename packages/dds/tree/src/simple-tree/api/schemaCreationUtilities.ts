@@ -178,6 +178,10 @@ export function adaptEnum<
 	return out;
 }
 
+/**
+ * Returns en "entries" (like Object.entries) for an enum object, omitting the
+ * {@link https://www.typescriptlang.org/docs/handbook/enums.html#reverse-mappings|reverse mappings}
+ */
 export function enumEntries(
 	enumObject: Record<string, string | number>,
 ): [string, string | number][] {
