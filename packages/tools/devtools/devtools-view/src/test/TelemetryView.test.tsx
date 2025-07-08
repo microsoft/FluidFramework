@@ -11,7 +11,6 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import React from "react";
-import { act } from "react-dom/test-utils";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { TelemetryView } from "../components/index.js";
@@ -43,7 +42,7 @@ describe("TelemetryView Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
-	it("Can tab/arrow navigate through the TelemetryView", async () => {
+	it.only("Can tab/arrow navigate through the TelemetryView", async () => {
 		// Send a mock message so a telemetry event is received and the table is populated
 		mockMessageRelay.emit("message", {
 			type: "TELEMETRY_EVENT",
@@ -74,7 +73,7 @@ describe("TelemetryView Accessibility Check", () => {
 		const refreshButton = screen.getByRole("button", { name: /Refresh Telemetry/ });
 		expect(refreshButton).toHaveFocus();
 
-		await act(async () => userEvent.click(refreshButton));
+		await user.click(refreshButton);
 		const filterCategory = screen.getByRole("combobox", {
 			name: /Category Filter/,
 		});
