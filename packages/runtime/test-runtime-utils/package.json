@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/test-runtime-utils",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Fluid runtime test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -153,7 +153,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_MockFluidDataStoreRuntime": {
+				"backCompat": false
+			},
+			"Class_MockHandle": {
+				"backCompat": false
+			},
+			"ClassStatics_MockFluidDataStoreRuntime": {
+				"backCompat": false
+			},
+			"ClassStatics_MockHandle": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

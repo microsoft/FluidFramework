@@ -106,7 +106,6 @@ describe("Local Server Stress with rollback", () => {
 			...[], // have different number of keys (map)
 			...[25, 53], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
-			...[65, 67], // 0x2f5 (op create references must be SlideOnRemove)
 			...[], // 0x2fa (Unexpected pending message received)
 		],
 	});

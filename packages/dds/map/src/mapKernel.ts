@@ -678,7 +678,7 @@ export class MapKernel {
 		const removedListNode = this.pendingLocalOpMetadata.pop();
 		assert(
 			removedListNode !== undefined && removedListNode === listNodeLocalOpMetadata,
-			"Rolling back unexpected op",
+			0xbcb /* Rolling back unexpected op */,
 		);
 		const pendingLocalOpMetadata = removedListNode.data;
 
@@ -745,7 +745,7 @@ export class MapKernel {
 					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						"Processing unexpected local clear op",
+						0xbcc /* Processing unexpected local clear op */,
 					);
 					assert(
 						localOpMetadata.data.type === "clear" &&
@@ -768,7 +768,10 @@ export class MapKernel {
 				localOpMetadata: ListNode<PendingLocalOpMetadata>,
 			) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
-				assert(removedLocalOpMetadata !== undefined, "Resubmitting unexpected local clear op");
+				assert(
+					removedLocalOpMetadata !== undefined,
+					0xbcd /* Resubmitting unexpected local clear op */,
+				);
 				assert(
 					localOpMetadata.data.type === "clear" &&
 						typeof localOpMetadata.data.pendingMessageId === "number",
@@ -801,7 +804,7 @@ export class MapKernel {
 					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						"Processing unexpected local delete op",
+						0xbce /* Processing unexpected local delete op */,
 					);
 					const pendingKeyLifetime = this.pendingData[pendingKeyLifetimeIndex];
 					assert(
@@ -842,14 +845,18 @@ export class MapKernel {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
 				assert(
 					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "key",
-					"Resubmitting unexpected op",
+					0xbcf /* Resubmitting unexpected local delete op */,
 				);
 
 				const pendingMessageId = this.nextPendingMessageId++;
 
 				// TODO: How do I feel about mutating here?
 				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const listNode = this.pendingLocalOpMetadata.push(removedLocalOpMetadata).first;
+				const localMetadata: PendingKeyChangeMetadata = {
+					...removedLocalOpMetadata,
+					pendingMessageId,
+				};
+				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
 
 				this.submitMessage(op, listNode);
 			},
@@ -868,7 +875,7 @@ export class MapKernel {
 					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						"Processing unexpected local set op",
+						0xbd0 /* Processing unexpected local set op */,
 					);
 					const pendingKeyLifetime = this.pendingData[pendingKeyLifetimeIndex];
 					assert(pendingKeyLifetime !== undefined, "Got a set message we weren't expecting");
@@ -905,14 +912,18 @@ export class MapKernel {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
 				assert(
 					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "key",
-					"Resubmitting unexpected op",
+					0xbd1 /* Resubmitting unexpected local set op */,
 				);
 
 				const pendingMessageId = this.nextPendingMessageId++;
 
 				// TODO: How do I feel about mutating here?
 				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const listNode = this.pendingLocalOpMetadata.push(removedLocalOpMetadata).first;
+				const localMetadata: PendingKeyChangeMetadata = {
+					...removedLocalOpMetadata,
+					pendingMessageId,
+				};
+				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
 
 				this.submitMessage(op, listNode);
 			},

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-definitions",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Fluid Runtime definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -107,7 +107,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IDataStore": {
+				"backCompat": false
+			},
+			"Interface_IFluidDataStoreChannel": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

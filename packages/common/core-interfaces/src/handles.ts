@@ -94,14 +94,6 @@ export interface IFluidHandleInternal<
 	 * Runs through the graph and attach the bounded handles.
 	 */
 	attachGraph(): void;
-
-	/**
-	 * Binds the given handle to this one or attach the given handle if this handle is attached.
-	 * A bound handle will also be attached once this handle is attached.
-	 *
-	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
-	 */
-	bind(handle: IFluidHandleInternal): void;
 }
 
 /**

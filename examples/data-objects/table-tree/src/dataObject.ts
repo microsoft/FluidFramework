@@ -14,7 +14,7 @@ import {
 	type TreeView,
 } from "@fluidframework/tree/legacy";
 
-import { Column, Table } from "./tableSchema.js";
+import { Column, Row, Table } from "./schema.js";
 
 /**
  * A data object for managing a shared table using `SharedTree`.
@@ -29,38 +29,57 @@ export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 	>(`TreeDataObject`, TableDataObject, [SharedTree.getFactory()], {});
 
 	public override generateView(tree: ITree): TreeView<typeof Table> {
-		return tree.viewWith(this.config) as unknown as TreeView<typeof Table>;
+		return tree.viewWith(this.config);
 	}
 
 	/**
-	 * Initializes the tree with an empty table.
+	 * Initializes the tree with a starter table.
 	 * @remarks Called during the initial creation of the data object.
 	 */
 	public override async initializingFirstTime(): Promise<void> {
-		this.treeView.initialize(
-			new Table({
-				columns: [
-					new Column({
-						id: "column-0",
-						props: {
-							label: "Column 0",
-							hint: "text",
-						},
-					}),
-					new Column({ props: { label: "Column 1", hint: "date" } }),
-					new Column({ props: { label: "Column 2", hint: "checkbox" } }),
-				],
-				rows: [
-					{ id: "row-0", cells: {}, props: {} },
-					{
-						id: "row-1",
-						cells: {
-							"column-1": "Hello world!",
-						},
-						props: {},
-					},
-				],
-			}),
-		);
+		this.treeView.initialize(getInitialTree());
 	}
+}
+
+/**
+ * Gets the initial content for a new table tree.
+ */
+function getInitialTree(): Table {
+	const taskNameColumn = new Column({
+		props: {
+			label: "Task",
+			hint: "text",
+		},
+	});
+	const dateColumn = new Column({
+		props: {
+			label: "Date",
+			hint: "date",
+		},
+	});
+	const completedColumn = new Column({
+		props: {
+			label: "Completed?",
+			hint: "checkbox",
+		},
+	});
+
+	const row0 = new Row({
+		cells: {
+			[taskNameColumn.id]: "Clean laundry",
+			[dateColumn.id]: new Date().toISOString(),
+			[completedColumn.id]: "true",
+		},
+	});
+	const row1 = new Row({
+		cells: {
+			[taskNameColumn.id]: "Walk the dog",
+			[dateColumn.id]: new Date().toISOString(),
+		},
+	});
+
+	return new Table({
+		columns: [taskNameColumn, dateColumn, completedColumn],
+		rows: [row0, row1],
+	});
 }

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/aqueduct",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "A set of implementations for Fluid Framework interfaces.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -154,7 +154,23 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_DataObject": {
+				"backCompat": false
+			},
+			"Class_PureDataObject": {
+				"backCompat": false
+			},
+			"ClassStatics_DataObject": {
+				"backCompat": false
+			},
+			"ClassStatics_PureDataObject": {
+				"backCompat": false
+			},
+			"Interface_DataObjectFactoryProps": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
