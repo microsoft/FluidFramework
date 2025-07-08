@@ -731,6 +731,8 @@ function createArrayNodeProxy(
 					return field.length;
 				}
 
+				// In NodeJS 22, assert.strict.deepEqual started special casing well known constructors like Array.
+				// That made this necessary, ensuring that in POJO mode, TreeArrayNode are still deepEqual to arrays.
 				if (key === "constructor") {
 					return proxyTarget.constructor;
 				}
