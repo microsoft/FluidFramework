@@ -35,6 +35,7 @@ variables:
 - name: DisableCodeQL
   value: true
 
+lockBehavior: sequential
 stages:
   # stress tests odsp
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
@@ -131,38 +132,9 @@ stages:
       testCommand: start:frs:canary
       skipTestResultPublishing: true
       pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
+      stageVariables:
+        - group: stress-frs-canary
       env:
-        fluid__test__driver__frs: $(automation-fluid-test-driver-frs)
+        fluid__test__driver__frsCanary: $(automation-fluid-driver-frs-canary-stress-test)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains getTestLogger impl to inject
-        FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
-
-  # end-to-end tests odsp
-  - template: /tools/pipelines/templates/include-test-real-service.yml@self
-    parameters:
-      stageId: e2e_odsp
-      stageDisplayName: e2e - odsp
-      poolBuild: Small-eastus2
-      testPackage: ${{ variables.testPackage }}
-      testWorkspace: ${{ variables.testWorkspace }}
-      artifactBuildId: $(resources.pipeline.client.runID)
-      timeoutInMinutes: 360
-      continueOnError: true
-      testCommand: test:realsvc:odsp:report
-      splitTestVariants:
-        - name: Non-compat
-          flags: --compatVersion=0 --tenantIndex=0
-        - name: N-1
-          flags: --compatVersion=-1 --tenantIndex=1
-        - name: Cross-Client
-          flags: --compatVersion=CROSS_CLIENT
-        # Assumes Non-compat and N-1 scenarios are covered
-        # Tests N-2 to LTS+1 back compat for loader
-        # Tests N-2 to LTS+3 back compat for loader + driver
-        - name: N-2ToLTS+1-back-compat
-          flags: --compatVersion=V2_INT_3 --tenantIndex=3
-      cacheCompatVersionsInstalls: true
-      uploadTestPassRateTelemetry: true
-      pipelineIdentifierForTelemetry: ${{ variables.pipelineIdentifierForTelemetry }}
-      env:
-        FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
