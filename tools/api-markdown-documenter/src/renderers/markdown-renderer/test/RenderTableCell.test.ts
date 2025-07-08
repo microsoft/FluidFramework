@@ -36,11 +36,9 @@ describe("Table Markdown rendering tests", () => {
 			const input = new TableBodyCellNode([
 				new PlainTextNode("Hello world!"),
 				LineBreakNode.Singleton,
-				new SpanNode([
-					SpanNode.createFromPlainText("Meaning of life", { bold: true }),
-					new PlainTextNode(": "),
-					SpanNode.createFromPlainText("42", { italic: true }),
-				]),
+				SpanNode.createFromPlainText("Meaning of life", { bold: true }),
+				new PlainTextNode(": "),
+				SpanNode.createFromPlainText("42", { italic: true }),
 			]);
 
 			const result = testRender(input);

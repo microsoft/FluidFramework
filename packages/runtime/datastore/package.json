@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Fluid data store implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -158,7 +158,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_FluidDataStoreRuntime": {
+				"backCompat": false
+			},
+			"Class_FluidObjectHandle": {
+				"backCompat": false
+			},
+			"ClassStatics_FluidDataStoreRuntime": {
+				"backCompat": false
+			},
+			"ClassStatics_FluidObjectHandle": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

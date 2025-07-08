@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	debugAssert,
+	fail,
+	oob,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -15,16 +21,17 @@ import {
 	markSchemaMostDerived,
 	normalizeFieldSchema,
 } from "../schemaTypes.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
-import { LeafNodeSchema } from "../leafNodeSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
+	isRecordNodeSchema,
 	type ArrayNodeSchema,
 	type MapNodeSchema,
 	type ObjectNodeSchema,
+	type RecordNodeSchema,
 } from "../node-kinds/index.js";
 import { getOrCreate } from "../../util/index.js";
 import type { MakeNominal } from "../../util/index.js";
@@ -302,6 +309,7 @@ export function checkUnion(
 	const checked: Set<TreeNodeSchema> = new Set();
 	const maps: MapNodeSchema[] = [];
 	const arrays: ArrayNodeSchema[] = [];
+	const records: RecordNodeSchema[] = [];
 	const objects: ObjectNodeSchema[] = [];
 
 	// Map from key to schema using that key
@@ -313,18 +321,37 @@ export function checkUnion(
 		}
 		checked.add(schema);
 
-		if (schema instanceof LeafNodeSchema) {
-			// nothing to do
-		} else if (isObjectNodeSchema(schema)) {
-			objects.push(schema);
-			for (const key of schema.fields.keys()) {
-				getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
+		switch (schema.kind) {
+			case NodeKind.Leaf: {
+				// nothing to do
+				break;
 			}
-		} else if (isArrayNodeSchema(schema)) {
-			arrays.push(schema);
-		} else {
-			assert(isMapNodeSchema(schema), 0x9e7 /* invalid schema */);
-			maps.push(schema);
+			case NodeKind.Object: {
+				assert(isObjectNodeSchema(schema), 0xbde /* Expected object schema. */);
+				objects.push(schema);
+				for (const key of schema.fields.keys()) {
+					getOrCreate(allObjectKeys, key, () => new Set()).add(schema);
+				}
+				break;
+			}
+			case NodeKind.Array: {
+				assert(isArrayNodeSchema(schema), 0xbdf /* Expected array schema. */);
+				arrays.push(schema);
+				break;
+			}
+			case NodeKind.Map: {
+				assert(isMapNodeSchema(schema), 0xbe0 /* Expected map schema. */);
+				maps.push(schema);
+				break;
+			}
+			case NodeKind.Record: {
+				assert(isRecordNodeSchema(schema), 0xbe1 /* Expected record schema. */);
+				records.push(schema);
+				break;
+			}
+			default: {
+				unreachableCase(schema.kind);
+			}
 		}
 	}
 
@@ -345,15 +372,35 @@ export function checkUnion(
 		);
 	}
 
+	if (records.length > 1) {
+		ambiguityErrors.push(
+			`More than one kind of record allowed within union (${formatTypes(records)}). This would require type disambiguation which is not supported by records during import or export.`,
+		);
+	}
+
 	if (maps.length > 0 && arrays.length > 0) {
 		ambiguityErrors.push(
 			`Both a map and an array allowed within union (${formatTypes([...arrays, ...maps])}). Both can be implicitly constructed from iterables like arrays, which are ambiguous when the array is empty.`,
 		);
 	}
 
-	if (objects.length > 0 && maps.length > 0) {
+	const nodeKindListEntries = [];
+	if (objects.length > 0) {
+		nodeKindListEntries.push("objects");
+	}
+	if (maps.length > 0) {
+		nodeKindListEntries.push("maps");
+	}
+	if (records.length > 0) {
+		nodeKindListEntries.push("records");
+	}
+	if (nodeKindListEntries.length > 1) {
+		const nodeKindListString =
+			nodeKindListEntries.length === 2
+				? `${nodeKindListEntries[0] ?? oob()} and ${nodeKindListEntries[1] ?? oob()}`
+				: `${nodeKindListEntries.slice(0, -1).join(", ")}, and ${nodeKindListEntries[nodeKindListEntries.length - 1]}`;
 		ambiguityErrors.push(
-			`Both a object and a map allowed within union (${formatTypes([...objects, ...maps])}). Both can be constructed from objects and can be ambiguous.`,
+			`A combination of ${nodeKindListString} is allowed within union (${formatTypes([...objects, ...maps, ...records])}). These can be constructed from objects and can be ambiguous.`,
 		);
 	}
 

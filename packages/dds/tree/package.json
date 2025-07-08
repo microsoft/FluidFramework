@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -124,7 +124,7 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"pack:tests": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
-		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 90000",
+		"test:benchmark:report": "mocha --exit --perfMode --parentProcess --fgrep @Benchmark --fgrep @ExecutionTime --reporter @fluid-tools/benchmark/dist/MochaReporter.js --timeout 60000",
 		"test:coverage": "c8 npm test",
 		"test:customBenchmarks": "mocha --config ./.mocharc.customBenchmarks.cjs",
 		"test:customBenchmarks:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:customBenchmarks",

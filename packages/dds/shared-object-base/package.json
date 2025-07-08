@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-object-base",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Fluid base class for shared distributed data structures",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -160,7 +160,20 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_SharedObject": {
+				"backCompat": false
+			},
+			"Class_SharedObjectCore": {
+				"backCompat": false
+			},
+			"ClassStatics_SharedObject": {
+				"backCompat": false
+			},
+			"ClassStatics_SharedObjectCore": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
