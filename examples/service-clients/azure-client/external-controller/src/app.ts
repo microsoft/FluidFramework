@@ -76,7 +76,7 @@ const containerSchema = {
 } as const satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;
 
-const treeViewConfig = new TreeViewConfiguration<typeof TwoDiceApp>({
+const treeViewConfig = new TreeViewConfiguration({
 	schema: TwoDiceApp,
 });
 
