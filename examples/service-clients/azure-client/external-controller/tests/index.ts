@@ -22,13 +22,13 @@ import {
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
+import { DiceRollerController } from "../src/controller.js";
 import {
 	diceRollerContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
 	type DiceRollerContainerSchema,
-} from "../src/app.js";
-import { DiceRollerController } from "../src/controller.js";
+} from "../src/fluid.js";
 import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
 
@@ -106,7 +106,6 @@ async function createContainerAndRenderInElement(
 
 	// Get the Default Object from the Container
 	const fluidContainer = await createFluidContainer<DiceRollerContainerSchema>({ container });
-
 
 	let appModel: TwoDiceApp;
 	if (createNewFlag) {

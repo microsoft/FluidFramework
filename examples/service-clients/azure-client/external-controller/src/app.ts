@@ -3,118 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AzureClient,
-	AzureContainerServices,
-	AzureLocalConnectionConfig,
-	AzureRemoteConnectionConfig,
-} from "@fluidframework/azure-client";
+import { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { getPresence } from "@fluidframework/presence/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
-// eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
-import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import {
-	type ContainerSchema,
-	type IFluidContainer,
-	SharedTree,
-	TreeViewConfiguration,
-} from "fluid-framework";
-import { v4 as uuid } from "uuid";
+import { type IFluidContainer } from "fluid-framework";
 
-import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 import { DiceRollerController, type DieValue } from "./controller.js";
+import {
+	connectionConfig,
+	diceRollerContainerSchema,
+	initializeAppForNewContainer,
+	loadAppFromExistingContainer,
+	type DiceRollerContainerSchema,
+} from "./fluid.js";
 import { buildDicePresence } from "./presence.js";
-import { TwoDiceApp, Dice } from "./schema.js";
+import { TwoDiceApp } from "./schema.js";
 import { makeAppView } from "./view.js";
-
-export interface ICustomUserDetails {
-	gender: string;
-	email: string;
-}
-
-const userDetails: ICustomUserDetails = {
-	gender: "female",
-	email: "xyz@microsoft.com",
-};
-
-// Define the server we will be using and initialize Fluid
-const useAzure = process.env.FLUID_CLIENT === "azure";
-
-const user = {
-	id: uuid(),
-	name: uuid(),
-};
-
-const azureUser = {
-	id: user.id,
-	name: user.name,
-	additionalDetails: userDetails,
-};
-
-const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig = useAzure
-	? {
-			type: "remote",
-			tenantId: "",
-			tokenProvider: new AzureFunctionTokenProvider("", azureUser),
-			endpoint: "",
-		}
-	: {
-			type: "local",
-			tokenProvider: new InsecureTokenProvider("fooBar", user),
-			endpoint: "http://localhost:7070",
-		};
-
-/**
- * Schema for the Dice Roller Container.
- * This includes the DataObjects we support and any initial DataObjects we want created
- * when the Container is first created.
- */
-export const diceRollerContainerSchema = {
-	initialObjects: {
-		/* [id]: DataObject */
-		tree: SharedTree,
-	},
-} as const satisfies ContainerSchema;
-export type DiceRollerContainerSchema = typeof diceRollerContainerSchema;
-
-const treeViewConfig = new TreeViewConfiguration({
-	schema: TwoDiceApp,
-	enableSchemaValidation: true,
-});
-
-export function loadAppFromExistingContainer(
-	container: IFluidContainer<DiceRollerContainerSchema>,
-): TwoDiceApp {
-	const tree = container.initialObjects.tree;
-	const treeView = tree.viewWith(treeViewConfig);
-	if (!treeView.compatibility.canView) {
-		throw new Error("Expected container data to be compatible with app schema");
-	}
-	return treeView.root;
-}
-
-export function initializeAppForNewContainer(
-	container: IFluidContainer<DiceRollerContainerSchema>,
-): TwoDiceApp {
-	const tree = container.initialObjects.tree;
-	const treeView = tree.viewWith(treeViewConfig);
-	if (!treeView.compatibility.canInitialize) {
-		throw new Error("Expected container data to be compatible with Dice schema");
-	}
-	treeView.initialize(
-		new TwoDiceApp({
-			dice1: new Dice({
-				value: 1,
-			}),
-			dice2: new Dice({
-				value: 1,
-			}),
-		}),
-	);
-
-	return treeView.root;
-}
 
 async function start(): Promise<void> {
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
