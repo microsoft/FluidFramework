@@ -155,6 +155,16 @@ export class OdspDelayLoadedDeltaStream {
 				throw this.annotateConnectionError(error, step, !requestWebsocketTokenFromJoinSession);
 			};
 
+			// Log telemetry for join session attempt
+			if (this.firstConnectionAttempt) {
+				this.mc.logger.sendTelemetryEvent({
+					eventName: "FirstJoinSessionAttemptDetails",
+					details: {
+						requestWebsocketToken: requestWebsocketTokenFromJoinSession,
+					},
+				});
+			}
+
 			const joinSessionPromise = this.joinSession(
 				requestWebsocketTokenFromJoinSession,
 				options,
