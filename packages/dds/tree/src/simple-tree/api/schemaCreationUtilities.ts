@@ -193,7 +193,6 @@ export function enumEntries(
 		}
 		// At this point, it is expected that all remaining cases are reverse mappings,
 		// but do some asserts to ensure that the above logic is sufficient.
-		// All reverse mapping must have a string value:
 		assert(typeof value === "string", "expected reverse mapping and thus a string value");
 		assert(
 			Number.parseFloat(key).toString() === key,
