@@ -840,9 +840,9 @@ export class IntervalCollection
 					if (previous !== interval) {
 						interval.dispose();
 					}
-					if (changeProperties) {
-						this.emit("propertyChanged", previous, deltaProps, true, undefined);
-					}
+				}
+				if (changeProperties) {
+					this.emit("propertyChanged", previous, deltaProps, true, undefined);
 				}
 				break;
 			}
