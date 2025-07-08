@@ -412,14 +412,12 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		const disconnectError = error
-			? createGenericNetworkError(error.message, { canRetry: true }, { driverVersion })
-			: createGenericNetworkError(
-					// pre-0.58 error message: clientClosingConnection
-					"Client closing delta connection",
-					{ canRetry: true },
-					{ driverVersion },
-				);
+		const disconnectError = createGenericNetworkError(
+			// pre-0.58 error message: clientClosingConnection
+			error?.message ?? "Client closing delta connection",
+			{ canRetry: error === undefined },
+			{ driverVersion },
+		);
 		this.disconnect(disconnectError);
 	}
 
