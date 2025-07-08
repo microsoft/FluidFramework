@@ -893,6 +893,7 @@ export class MapKernel {
 					// TODO: Choosing to reuse the object reference here rather than create a new one from the incoming op?
 					this.sequencedData.set(key, pendingValue.value);
 				} else {
+					migrateIfSharedSerializable(value, this.serializer, this.handle);
 					const localValue: ILocalValue = { value: value.value };
 					const previousSequencedLocalValue = this.sequencedData.get(key);
 					const previousValue: unknown = previousSequencedLocalValue?.value;
