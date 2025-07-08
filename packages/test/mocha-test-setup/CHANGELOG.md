@@ -1,5 +1,9 @@
 # @fluid-internal/mocha-test-setup
 
+## 2.50.0
+
+Dependency updates only.
+
 ## 2.43.0
 
 Dependency updates only.
