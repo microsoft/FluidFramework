@@ -12,9 +12,10 @@ import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
 import { toOpaqueJson } from "../../internalUtils.js";
-import type { createPresenceManager } from "../../presenceManager.js";
+import type { Presence } from "../../presence.js";
 import type { SignalMessages } from "../../protocol.js";
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
+import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
@@ -153,7 +154,7 @@ describe("Presence", () => {
 		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
 			const updates = { "system:presence": attendeeUpdate, ...valueManagerUpdates };
 
-			presence.processSignal(
+			processSignal(
 				[],
 				{
 					type: "Pres:DatastoreUpdate",
@@ -170,7 +171,8 @@ describe("Presence", () => {
 
 		let clock: SinonFakeTimers;
 		let logger: EventAndErrorTrackingLogger;
-		let presence: ReturnType<typeof createPresenceManager>;
+		let presence: Presence;
+		let processSignal: ProcessSignalFunction;
 		let runtime: MockEphemeralRuntime;
 		let remoteAttendee: Attendee;
 		let point3DValidatorFunction: ReturnType<typeof createSpiedValidator<Point3D>>;
@@ -192,7 +194,13 @@ describe("Presence", () => {
 			});
 
 			// Create Presence joining session as attendeeId-2. Tests will act as attendee2
-			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger);
+			({ presence, processSignal } = prepareConnectedPresence(
+				runtime,
+				attendeeId2,
+				connectionId2,
+				clock,
+				logger,
+			));
 
 			// Pass a little time (to mimic reality)
 			clock.tick(10);
@@ -278,7 +286,7 @@ describe("Presence", () => {
 				latest = stateWorkspace.states.latest;
 
 				// Process a valid update signal with Point3D data
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -339,7 +347,7 @@ describe("Presence", () => {
 					});
 
 					// Send updated data from remote client
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 3,
@@ -381,7 +389,7 @@ describe("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send updated data from remote client
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 3,
@@ -412,7 +420,7 @@ describe("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send invalid data from remote client
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 3,
@@ -434,7 +442,7 @@ describe("Presence", () => {
 
 				it("on .value() call when remote data changes from invalid to valid", () => {
 					// First send invalid data
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 3,
@@ -450,7 +458,7 @@ describe("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send valid data from remote client
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 4,
@@ -476,7 +484,7 @@ describe("Presence", () => {
 
 				it("on .value() call when remote data changes from invalid to invalid", () => {
 					// First send invalid data
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 3,
@@ -492,7 +500,7 @@ describe("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send different invalid data from remote client
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 4,
