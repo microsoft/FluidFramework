@@ -35,4 +35,4 @@ const union = [...ModeNodes.schema, Workaround] as const;
 To help detect when schema contain unexpected content, and to ensure workarounds like this are implemented properly, applications should include tests which check the schema for compatibility.
 See [tree-cli-app's schema tests](https://github.com/microsoft/FluidFramework/blob/main/examples/apps/tree-cli-app/src/test/schema.spec.ts) for an example of how to do this.
 
-The schema returned by `adaptEnum` have also been updated to `toString` more usefully, including the value of the particular enum entry: this has no effect on the nodes, just the schema.
+The schema returned by `adaptEnum` have also been updated to `toString` to include the value of the particular enum entry: this has no effect on the nodes, just the schema.
