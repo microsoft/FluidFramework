@@ -21,7 +21,7 @@ export class Dice extends schemaFactory.object("Dice", {
 /**
  * Represents the application state containing two dice.
  */
-export class App extends schemaFactory.object("AppSchema", {
+export class TwoDiceApp extends schemaFactory.object("AppSchema", {
 	/**
 	 * The first die in the app.
 	 */

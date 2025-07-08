@@ -25,7 +25,7 @@ import { v4 as uuid } from "uuid";
 import { AzureFunctionTokenProvider } from "./AzureFunctionTokenProvider.js";
 import { DiceRollerController, type DieValue } from "./controller.js";
 import { buildDicePresence } from "./presence.js";
-import { App, Dice } from "./schema.js";
+import { TwoDiceApp, Dice } from "./schema.js";
 import { makeAppView } from "./view.js";
 
 export interface ICustomUserDetails {
@@ -76,13 +76,13 @@ const containerSchema = {
 } as const satisfies ContainerSchema;
 type DiceRollerContainerSchema = typeof containerSchema;
 
-const treeViewConfig = new TreeViewConfiguration<typeof App>({
-	schema: App,
+const treeViewConfig = new TreeViewConfiguration<typeof TwoDiceApp>({
+	schema: TwoDiceApp,
 });
 
 export function loadExistingContainer(
 	container: IFluidContainer<DiceRollerContainerSchema>,
-): App {
+): TwoDiceApp {
 	const tree = container.initialObjects.tree;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canView) {
@@ -93,14 +93,14 @@ export function loadExistingContainer(
 
 export function initializeNewContainer(
 	container: IFluidContainer<DiceRollerContainerSchema>,
-): App {
+): TwoDiceApp {
 	const tree = container.initialObjects.tree;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canInitialize) {
 		throw new Error("Expected container data to be compatible with Dice schema");
 	}
 	treeView.initialize(
-		new App({
+		new TwoDiceApp({
 			dice1: new Dice({
 				value: 1,
 			}),
@@ -131,7 +131,7 @@ async function start(): Promise<void> {
 	let id: string;
 
 	// Get or create the document depending if we are running through the create new flow
-	let appModel: App;
+	let appModel: TwoDiceApp;
 	const createNew = location.hash.length === 0;
 	if (createNew) {
 		// The client will create a new detached container using the schema

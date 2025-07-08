@@ -26,7 +26,7 @@ import { SharedTree } from "fluid-framework";
 
 import { initializeNewContainer, loadExistingContainer } from "../src/app.js";
 import { DiceRollerController } from "../src/controller.js";
-import type { App } from "../src/schema.js";
+import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
@@ -112,7 +112,7 @@ async function createContainerAndRenderInElement(
 
 	// Get the Default Object from the Container
 	const fluidContainer = await createFluidContainer<TestContainerSchema>({ container });
-	let appModel: App;
+	let appModel: TwoDiceApp;
 	if (createNewFlag) {
 		appModel = initializeNewContainer(fluidContainer);
 		await attach?.();
