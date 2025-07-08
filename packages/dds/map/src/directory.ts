@@ -1529,8 +1529,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 		// eslint-disable-next-line unicorn/no-array-for-each
-		this._storage.forEach((value, key, map) => {
-			callback(value, key, map);
+		this._storage.forEach((value, key) => {
+			callback(value, key, this);
 		});
 	}
 
@@ -1548,19 +1548,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public entries(): IterableIterator<[string, unknown]> {
 		this.throwIfDisposed();
-		const localEntriesIterator = this._storage.entries();
-		const iterator = {
-			next(): IteratorResult<[string, unknown]> {
-				const nextVal = localEntriesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: { value: [nextVal.value[0], nextVal.value[1]], done: false };
-			},
-			[Symbol.iterator](): IterableIterator<[string, unknown]> {
-				return this;
-			},
-		};
-		return iterator;
+		return this._storage.entries();
 	}
 
 	/**
@@ -1578,19 +1566,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public values(): IterableIterator<unknown> {
 		this.throwIfDisposed();
-		const localValuesIterator = this._storage.values();
-		const iterator = {
-			next(): IteratorResult<unknown> {
-				const nextVal = localValuesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: { value: nextVal.value, done: false };
-			},
-			[Symbol.iterator](): IterableIterator<unknown> {
-				return this;
-			},
-		};
-		return iterator;
+		return this._storage.values();
 	}
 
 	/**
