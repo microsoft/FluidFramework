@@ -11,6 +11,7 @@ import {
 	tryGetFromNestedMap,
 	type NestedMap,
 } from "../../util/index.js";
+import type { TreeChunk } from "../chunked-forest/index.js";
 
 /**
  * The key for the incremental summary tree in the forest summary.
@@ -235,5 +236,107 @@ export class ForestIncrementalSummaryTracker {
 		});
 
 		this.summaryState = ForestSummaryState.ReadyToTrack;
+	}
+}
+
+interface ChunkSummaryState {
+	encodedChunk: TreeChunk;
+	referenceId: number;
+	summaryPath: string;
+}
+
+interface ReferenceIdState {
+	encodedChunk: TreeChunk;
+	childrenReferenceIds: Set<number>;
+}
+
+export class ForestSummaryTracker2 {
+	private readonly chunkToStateTracker: NestedMap<number, TreeChunk, ChunkSummaryState> =
+		new Map();
+
+	/**
+	 * The sequence number of the previous summary. This is tracked so that we can copy the reference ID mappings of
+	 * subtrees that did not change since the previous summary. These subtrees won't be encoded in the current summary
+	 * so the encoded data will not include their reference IDs, but we still need to track them in case we need to
+	 * generate a summary handle path for them in the future.
+	 */
+	private previousSummarySequenceNumber: number = -1;
+
+	/**
+	 * The sequence number of the summary currently in progress.
+	 */
+	private currentSummarySequenceNumber: number = -1;
+
+	private currentReferenceIdToSummaryState: Map<number, ReferenceIdState> = new Map();
+
+	/**
+	 * The sequence number of the latest summary that was successful.
+	 */
+	private latestSummarySequenceNumber: number = -1;
+
+	/**
+	 * The state indicating whether a summary is currently being tracked or not.
+	 */
+	private summaryState: ForestSummaryState = ForestSummaryState.ReadyToTrack;
+
+	/**
+	 * Must be called before starting to track a new summary.
+	 * @param incrementalSummaryContext - The context for the incremental summary that contains the sequence numbers
+	 * for the current and latest summaries.
+	 */
+	public startTracking(
+		incrementalSummaryContext: IExperimentalIncrementalSummaryContext,
+	): void {
+		assert(
+			this.summaryState === ForestSummaryState.ReadyToTrack,
+			"Summary tracking must be ready before starting a new tracking session.",
+		);
+
+		this.summaryState = ForestSummaryState.Tracking;
+		this.currentSummarySequenceNumber = incrementalSummaryContext.summarySequenceNumber;
+		this.latestSummarySequenceNumber = incrementalSummaryContext.latestSummarySequenceNumber;
+		this.currentReferenceIdToSummaryState = new Map();
+	}
+
+	public addIncrementalChunk(chunk: TreeChunk, chunkPathParts: number[]): void {
+		const parentId = chunkPathParts[chunkPathParts.length - 2];
+		assert(
+			parentId !== undefined,
+			"Chunk path must have at least two parts to identify the parent chunk.",
+		);
+		const previousChunkState = tryGetFromNestedMap(
+			this.chunkToStateTracker,
+			this.previousSummarySequenceNumber,
+			chunk,
+		);
+		const referenceId = previousChunkState?.referenceId ?? 1;
+		const chunkState: ChunkSummaryState =
+			previousChunkState ??
+			({
+				encodedChunk: chunk,
+				referenceId,
+				summaryPath: chunkPathParts.join("/"),
+			} satisfies ChunkSummaryState);
+		setInNestedMap(
+			this.chunkToStateTracker,
+			this.currentSummarySequenceNumber,
+			chunk,
+			chunkState,
+		);
+		this.currentReferenceIdToSummaryState.set(referenceId, {
+			encodedChunk: chunk,
+			childrenReferenceIds: new Set(),
+		});
+		const parentSummaryState = this.currentReferenceIdToSummaryState.get(parentId);
+		assert(
+			parentSummaryState !== undefined,
+			`Parent must exist in the current summary state.`,
+		);
+		parentSummaryState.childrenReferenceIds.add(referenceId);
+	}
+
+	public completeTracking(): void {
+		this.summaryState = ForestSummaryState.ReadyToTrack;
+		this.previousSummarySequenceNumber = this.currentSummarySequenceNumber;
 	}
 }

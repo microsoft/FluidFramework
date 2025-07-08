@@ -68,8 +68,8 @@ export const EncodedFieldShape = Type.Tuple([
 export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
 
 /**
- * Encoded shape for types that can be incrementally encoded, i.e., their content will be in a separate buffer.
- * This can be used for incrementally summarizing these fields.
+ * The content of the encoded field is an array of reference ids. The number of reference ids is equal to the number of
+ * chunks in the field. The content for these chunks is encoded separately and is referenced by its reference id.
  */
 export const EncodedIncrementalShape = Type.Literal(0);
 
