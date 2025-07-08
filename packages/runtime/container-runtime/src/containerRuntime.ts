@@ -1338,7 +1338,7 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
-	private readonly canSendSignals: boolean | undefined;
+	private readonly getCanSendSignals: () => boolean | undefined;
 
 	private consecutiveReconnects = 0;
 
@@ -1520,11 +1520,12 @@ export class ContainerRuntime
 	) {
 		super();
 
+		this.getCanSendSignals = () => context.canSendSignals;
+
 		const {
 			options,
 			clientDetails,
 			connected,
-			canSendSignals,
 			baseSnapshot,
 			submitFn,
 			submitBatchFn,
@@ -1682,7 +1683,6 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
-		this.canSendSignals = canSendSignals;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -5129,7 +5129,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.canSendSignals ?? this.connected,
+				isConnected: () => this.getCanSendSignals() ?? this.connected,
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
