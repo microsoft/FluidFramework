@@ -225,13 +225,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testParameter"),
 										TableBodyCellNode.Empty,
-										new TableBodyCellNode([SpanNode.createFromPlainText("TTypeParameter")]),
+										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
 										TableBodyCellNode.createFromPlainText("A test parameter"),
 									]),
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testOptionalParameter"),
 										TableBodyCellNode.createFromPlainText("optional"),
-										new TableBodyCellNode([SpanNode.createFromPlainText("TTypeParameter")]),
+										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
 										TableBodyCellNode.createFromPlainText("An optional parameter"),
 									]),
 								],
@@ -256,7 +256,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							new ParagraphNode([
 								SpanNode.createFromPlainText("Return type", { bold: true }),
 								new PlainTextNode(": "),
-								SpanNode.createFromPlainText("TTypeParameter"),
+								new PlainTextNode("TTypeParameter"),
 							]),
 						],
 						{
@@ -333,7 +333,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								]),
 								new TableBodyCellNode([new CodeSpanNode("optional")]),
 								TableBodyCellNode.createFromPlainText("0"),
-								new TableBodyCellNode([SpanNode.createFromPlainText("number")]),
+								new TableBodyCellNode([new PlainTextNode("number")]),
 								TableBodyCellNode.createFromPlainText("Test optional property"),
 							]),
 						],
@@ -364,11 +364,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 										"typescript",
 									),
 									new ParagraphNode([
-										new SpanNode([
-											SpanNode.createFromPlainText("Type", { bold: true }),
-											new PlainTextNode(": "),
-											SpanNode.createFromPlainText("number"),
-										]),
+										SpanNode.createFromPlainText("Type", { bold: true }),
+										new PlainTextNode(": "),
+										new PlainTextNode("number"),
 									]),
 								],
 								{

@@ -63,7 +63,7 @@ describe("documentToHtml tests", () => {
 							h("p", [
 								"This is test inside of a paragraph. ",
 								"It is also inside of a hierarchical section node. ",
-								h("span", [h("i", "That's real neat-o.")]),
+								h("i", "That's real neat-o."),
 							]),
 						]),
 					]),

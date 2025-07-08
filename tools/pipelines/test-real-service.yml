@@ -45,7 +45,6 @@ variables:
 - name: DisableCodeQL
   value: true
 
-lockBehavior: sequential
 stages:
 
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
@@ -167,8 +166,6 @@ stages:
       timeoutInMinutes: 360
       continueOnError: true
       testCommand: test:realsvc:odsp:report
-      stageVariables:
-        - group: e2e-odsp-lock
       splitTestVariants:
         - name: Non-compat
           flags: --compatVersion=0 --tenantIndex=0
@@ -188,4 +185,5 @@ stages:
         login__microsoft__clientId: $(login-microsoft-clientId)
         login__odsp__test__tenants: $(automation-e2e-login-odsp-test-tenants)
         FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
+
         FLUID_LOGGER_PROPS: '{ "displayName": "${{variables.pipelineIdentifierForTelemetry}}"}'
