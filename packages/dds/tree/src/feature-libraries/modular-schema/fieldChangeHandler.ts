@@ -18,6 +18,7 @@ import type {
 import type { IdAllocator, Invariant } from "../../util/index.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
+import type { ReplaceRevisionIdInfo } from "./modularChangeFamily.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
@@ -168,6 +169,7 @@ export interface FieldChangeRebaser<TChangeset> {
 		change: TChangeset,
 		oldRevisions: Set<RevisionTag | undefined>,
 		newRevisions: RevisionTag | undefined,
+		replaceRevisionIdInfo?: ReplaceRevisionIdInfo,
 	): TChangeset;
 }
 
