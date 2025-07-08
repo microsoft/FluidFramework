@@ -180,6 +180,8 @@ export function prepareConnectedPresence(
 		// Pass on to presence manager, but first clone the message to avoid
 		// possibility of Presence mutating the original message which often
 		// contains reference to general (shared) test data.
+		// Additionally JSON.parse(JSON.stringify(signalMessage)) is used to
+		// ensure only regular JSON-serializable data is passed to Presence.
 		// In production environment, the message is always extracted from
 		// the network and Presence can safely mutate it.
 		presence.processSignal(

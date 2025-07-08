@@ -252,15 +252,13 @@ describe("Presence", () => {
 			} as const;
 
 			beforeEach(() => {
-				const result = prepareConnectedPresence(
+				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
 					attendeeId2,
 					connectionId2,
 					clock,
 					logger,
-				);
-				presence = result.presence;
-				processSignal = result.processSignal;
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
