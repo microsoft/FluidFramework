@@ -21,10 +21,13 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import type { ContainerSchema } from "fluid-framework";
-import { SharedTree } from "fluid-framework";
 
-import { initializeAppForNewContainer, loadAppFromExistingContainer } from "../src/app.js";
+import {
+	diceRollerContainerSchema,
+	initializeAppForNewContainer,
+	loadAppFromExistingContainer,
+	type DiceRollerContainerSchema,
+} from "../src/app.js";
 import { DiceRollerController } from "../src/controller.js";
 import type { TwoDiceApp } from "../src/schema.js";
 import { makeAppView } from "../src/view.js";
@@ -81,22 +84,13 @@ export async function getSessionStorageContainer(
 	return { container, attach };
 }
 
-const containerConfig = {
-	name: "dice-roller-container",
-	initialObjects: {
-		/* [id]: DataObject */
-		tree: SharedTree,
-	},
-} satisfies ContainerSchema & { name: string };
-type TestContainerSchema = typeof containerConfig;
-
 /**
  * This is a helper function for loading the page. It's required because getting the Fluid Container
  * requires making async calls.
  */
 async function createContainerAndRenderInElement(
 	containerId: string,
-	element: HTMLDivElement,
+	element: Element,
 	createNewFlag: boolean,
 ): Promise<void> {
 	// The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
@@ -104,14 +98,16 @@ async function createContainerAndRenderInElement(
 	const { container, attach } = await getSessionStorageContainer(
 		containerId,
 		createDOProviderContainerRuntimeFactory({
-			schema: containerConfig,
+			schema: diceRollerContainerSchema,
 			compatibilityMode: "2",
 		}),
 		createNewFlag,
 	);
 
 	// Get the Default Object from the Container
-	const fluidContainer = await createFluidContainer<TestContainerSchema>({ container });
+	const fluidContainer = await createFluidContainer<DiceRollerContainerSchema>({ container });
+
+
 	let appModel: TwoDiceApp;
 	if (createNewFlag) {
 		appModel = initializeAppForNewContainer(fluidContainer);
@@ -138,13 +134,13 @@ async function setup(): Promise<void> {
 	}
 	const containerId = window.location.hash.substring(1);
 
-	const leftElement = document.getElementById("sbs-left") as HTMLDivElement;
-	if (leftElement === undefined) {
+	const leftElement = document.querySelector("#sbs-left");
+	if (!leftElement) {
 		throw new Error("sbs-left does not exist");
 	}
 	await createContainerAndRenderInElement(containerId, leftElement, createNew);
-	const rightElement = document.getElementById("sbs-right") as HTMLDivElement;
-	if (rightElement === undefined) {
+	const rightElement = document.querySelector("#sbs-right");
+	if (!rightElement) {
 		throw new Error("sbs-right does not exist");
 	}
 	// The second time we don't need to createNew because we know a Container exists.

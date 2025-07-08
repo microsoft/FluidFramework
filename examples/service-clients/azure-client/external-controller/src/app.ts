@@ -65,19 +65,22 @@ const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig
 			endpoint: "http://localhost:7070",
 		};
 
-// Define the schema of our Container.
-// This includes the DataObjects we support and any initial DataObjects we want created
-// when the Container is first created.
-const containerSchema = {
+/**
+ * Schema for the Dice Roller Container.
+ * This includes the DataObjects we support and any initial DataObjects we want created
+ * when the Container is first created.
+ */
+export const diceRollerContainerSchema = {
 	initialObjects: {
 		/* [id]: DataObject */
 		tree: SharedTree,
 	},
 } as const satisfies ContainerSchema;
-type DiceRollerContainerSchema = typeof containerSchema;
+export type DiceRollerContainerSchema = typeof diceRollerContainerSchema;
 
 const treeViewConfig = new TreeViewConfiguration({
 	schema: TwoDiceApp,
+	enableSchemaValidation: true,
 });
 
 export function loadAppFromExistingContainer(
@@ -136,7 +139,7 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(containerSchema, "2"));
+		({ container, services } = await client.createContainer(diceRollerContainerSchema, "2"));
 		// const map1 = container.initialObjects.map1 as ISharedMap;
 		// map1.set("diceValue", 1);
 		// const map2 = container.initialObjects.map1 as ISharedMap;
@@ -155,7 +158,7 @@ async function start(): Promise<void> {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(id, containerSchema, "2"));
+		({ container, services } = await client.getContainer(id, diceRollerContainerSchema, "2"));
 		appModel = loadAppFromExistingContainer(container);
 	}
 
