@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { DoublyLinkedList, walkList } from "./collections/index.js";
+import { DoublyLinkedList, walkList } from "@fluidframework/core-utils/internal";
+
 import { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
 
 export class SegmentGroupCollection {

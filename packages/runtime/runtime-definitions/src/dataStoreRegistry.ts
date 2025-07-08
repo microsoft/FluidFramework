@@ -15,16 +15,16 @@ export type FluidDataStoreRegistryEntry = Readonly<
 	Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>
 >;
 /**
- * An associated pair of an identifier and registry entry.  Registry entries
- * may be dynamically loaded.
+ * An associated pair of an identifier and registry entry.
+ * Registry entries may be dynamically loaded.
  * @legacy
  * @alpha
  */
 export type NamedFluidDataStoreRegistryEntry = [string, Promise<FluidDataStoreRegistryEntry>];
 
 /**
- * An associated pair of an identifier and registry entry.  Registry entries
- * may be dynamically loaded.
+ * An associated pair of an identifier and registry entry.
+ * Registry entries may be dynamically loaded.
  * @legacy
  * @alpha
  */

@@ -3,19 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import * as assert from "assert";
+import * as assert from "node:assert";
+import { existsSync } from "node:fs";
+import { readFile, stat, unlink, writeFile } from "node:fs/promises";
+
 import crypto from "crypto";
 import * as path from "path";
 import { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
+import globby from "globby";
 import chalk from "picocolors";
 
-import { existsSync } from "node:fs";
-import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 import { defaultLogger } from "../../../common/logging";
 import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
 import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
+import {
+	type GitIgnoreSetting,
+	type GitIgnoreSettingValue,
+	gitignoreDefaultValue,
+} from "../../fluidBuildConfig";
 import { options } from "../../options";
 import { Task, TaskExec } from "../task";
 
@@ -567,6 +574,12 @@ export class UnknownLeafTask extends LeafTask {
 	}
 }
 
+/**
+ * A Leaf task base that can be used for tasks that have a list of input and output file paths to include in the
+ * donefile. By default, the donefile will contain the filestat information, like last modified time, as the values in
+ * the donefile. Despite its name, this class can be used for hash-based donefiles by overriding the `useHashes`
+ * property.
+ */
 export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask {
 	/**
 	 * @returns the list of absolute paths to files that this task depends on.
@@ -654,6 +667,79 @@ export abstract class LeafWithFileStatDoneFileTask extends LeafWithDoneFileTask 
 			this.traceTrigger("failed to get file hash");
 			return undefined;
 		}
+	}
+}
+
+/**
+ * A Leaf task that uses a list of globs to determine the input and output files for a donefile. For tasks that have a
+ * list of files as input/output, use the {@link LeafWithFileStatDoneFileTask} instead.
+ */
+export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileStatDoneFileTask {
+	/**
+	 * @returns The list of globs for all the files that this task depends on.
+	 */
+	protected abstract getInputGlobs(): Promise<readonly string[]>;
+
+	/**
+	 * @returns The list of globs for all the files that this task generates.
+	 */
+	protected abstract getOutputGlobs(): Promise<readonly string[]>;
+
+	/**
+	 * @returns If the lock file should be included as input files for this task.
+	 */
+	protected get includeLockFiles(): boolean {
+		// Include the lock file by default.
+		return true;
+	}
+
+	/**
+	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to
+	 * the output, and including both values will apply the gitignore rules to both the input and output globs.
+	 *
+	 * The default value, `["input"]` applies gitignore rules to the input, but not the output. This is the right behavior
+	 * for many tasks since most tasks use source-controlled files as input but generate gitignored build output. However,
+	 * it can be adjusted on a per-task basis depending on the needs of the task.
+	 *
+	 * @defaultValue `["input"]`
+	 */
+	protected get gitIgnore(): GitIgnoreSetting {
+		return gitignoreDefaultValue;
+	}
+
+	protected override async getInputFiles(): Promise<string[]> {
+		const inputs = await this.getFiles("input");
+		if (this.includeLockFiles) {
+			const lockFilePath = this.node.pkg.getLockFilePath();
+			if (lockFilePath === undefined) {
+				throw new Error(`Lock file missing for ${this.node.pkg.nameColored}.`);
+			}
+			inputs.push(lockFilePath);
+		}
+		return inputs;
+	}
+
+	protected override async getOutputFiles(): Promise<string[]> {
+		return this.getFiles("output");
+	}
+
+	/**
+	 * Gets all the input or output files for the task based on the globs configured for that task.
+	 *
+	 * @param mode - Whether to use the input or output globs.
+	 * @returns An array of absolute paths to all files that match the globs.
+	 */
+	private async getFiles(mode: GitIgnoreSettingValue): Promise<string[]> {
+		const globs = mode === "input" ? await this.getInputGlobs() : await this.getOutputGlobs();
+		const excludeGitIgnoredFiles: boolean = this.gitIgnore.includes(mode);
+
+		const files = await globby(globs, {
+			cwd: this.node.pkg.directory,
+			// file paths returned from getInputFiles and getOutputFiles should always be absolute
+			absolute: true,
+			gitignore: excludeGitIgnoredFiles,
+		});
+		return files;
 	}
 }
 

@@ -44,8 +44,6 @@ export function getFirstFromCrossFieldMap<T>(
 	return map.getFirst({ revision, localId: id }, count);
 }
 
-/**
- */
 export enum CrossFieldTarget {
 	Source,
 	Destination,

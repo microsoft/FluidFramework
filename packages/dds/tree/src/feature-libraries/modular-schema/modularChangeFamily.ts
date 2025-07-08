@@ -2285,8 +2285,6 @@ function newCrossFieldTable<T>(): CrossFieldTable<T> {
 	};
 }
 
-/**
- */
 interface ConstraintState {
 	violationCount: number;
 }
@@ -2913,8 +2911,6 @@ function buildModularChangesetFromNode(props: {
 	});
 }
 
-/**
- */
 export interface FieldEditDescription {
 	type: "field";
 	field: FieldUpPath;
@@ -2923,16 +2919,12 @@ export interface FieldEditDescription {
 	revision: RevisionTag;
 }
 
-/**
- */
 export interface GlobalEditDescription {
 	type: "global";
 	revision: RevisionTag;
 	builds?: ChangeAtomIdBTree<TreeChunk>;
 }
 
-/**
- */
 export type EditDescription = FieldEditDescription | GlobalEditDescription;
 
 function getRevInfoFromTaggedChanges(changes: TaggedChange<ModularChangeset>[]): {

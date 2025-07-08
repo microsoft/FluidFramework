@@ -372,7 +372,7 @@ export function splitInnerNodeType(
 ): asserts innerNode is UnhydratedFlexTreeNode | HydratedFlexTreeNode {
 	assert(
 		innerNode instanceof UnhydratedFlexTreeNode || innerNode.isHydrated(),
-		"Invalid inner node type",
+		0xbc8 /* Invalid inner node type */,
 	);
 }
 

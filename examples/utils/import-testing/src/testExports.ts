@@ -104,6 +104,14 @@ export class RecursiveMap extends schema.mapRecursive("RM", [() => RecursiveMap]
 	type _check = ValidateRecursiveSchema<typeof RecursiveMap>;
 }
 
+export class RecursiveRecord extends schemaAlpha.recordRecursive("RR", [
+	SchemaFactory.number,
+	() => RecursiveRecord,
+]) {}
+{
+	type _check = ValidateRecursiveSchema<typeof RecursiveRecord>;
+}
+
 /**
  * Workaround to avoid
  * `error TS2310: Type 'RecursiveArray' recursively references itself as a base type.` in the d.ts file.

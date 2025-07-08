@@ -9,6 +9,9 @@ metadata:
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
 spec:
+  securityContext:
+    runAsUser: 1000
+    runAsNonRoot: true
   selector:
     matchLabels:
       app: {{ template "redis.fullname" . }}

@@ -5,6 +5,7 @@
 
 /* eslint-disable no-bitwise */
 
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
@@ -27,15 +28,12 @@ import {
 	Side,
 	endpointPosAndSide,
 	addProperties,
-	copyPropertiesAndManager,
 	type ISegmentInternal,
 	UnassignedSequenceNumber,
 	UniversalSequenceNumber,
 } from "@fluidframework/merge-tree/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
-
-import { computeStickinessFromSide } from "../intervalCollection.js";
 
 import {
 	// eslint-disable-next-line import/no-deprecated
@@ -43,6 +41,7 @@ import {
 	ISerializedInterval,
 	IntervalStickiness,
 	IntervalType,
+	computeStickinessFromSide,
 	endReferenceSlidingPreference,
 	startReferenceSlidingPreference,
 	type SerializedIntervalDelta,
@@ -180,7 +179,7 @@ export interface SequenceInterval extends ISerializableInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		useNewSlidingBehavior?: boolean,
+		canSlideToEndpoint?: boolean,
 	): SequenceInterval | undefined;
 	/**
 	 * @returns whether this interval overlaps with `b`.
@@ -223,8 +222,10 @@ export interface SequenceInterval extends ISerializableInterval {
 	getIntervalId(): string;
 }
 
-// eslint-disable-next-line import/no-deprecated
-export class SequenceIntervalClass implements SequenceInterval, ISerializableInterval {
+export class SequenceIntervalClass
+	// eslint-disable-next-line import/no-deprecated
+	implements SequenceInterval, ISerializableInterval, IDisposable
+{
 	readonly #props: {
 		propertyManager?: PropertiesManager;
 		properties: PropertySet;
@@ -234,6 +235,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc ISerializableInterval.properties}
 	 */
 	public get properties(): Readonly<PropertySet> {
+		this.verifyNotDispose();
 		return this.#props.properties;
 	}
 
@@ -242,6 +244,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		op?: ISequencedDocumentMessage,
 		rollback?: boolean,
 	) {
+		this.verifyNotDispose();
+
 		if (props !== undefined) {
 			this.#props.propertyManager ??= new PropertiesManager();
 			return this.#props.propertyManager.handleProperties(
@@ -259,6 +263,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 	/***/
 	public get stickiness(): IntervalStickiness {
+		this.verifyNotDispose();
+
 		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
 		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		return computeStickinessFromSide(
@@ -292,6 +298,24 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 			this.#props.properties = addProperties(this.#props.properties, props);
 		}
 	}
+	#disposed = false;
+	public get disposed() {
+		return this.#disposed;
+	}
+	public dispose(error?: Error): void {
+		if (this.#disposed) return;
+		this.#disposed = true;
+		this.client.removeLocalReferencePosition(this.start);
+		this.client.removeLocalReferencePosition(this.end);
+		this.removePositionChangeListeners();
+		this.#props.propertyManager = undefined;
+	}
+
+	private verifyNotDispose() {
+		if (this.#disposed) {
+			throw new LoggingError("Invalid interval access after dispose");
+		}
+	}
 
 	private callbacks?: Record<"beforePositionChange" | "afterPositionChange", () => void>;
 
@@ -302,6 +326,7 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		beforePositionChange: () => void,
 		afterPositionChange: () => void,
 	): void {
+		this.verifyNotDispose();
 		if (this.callbacks === undefined) {
 			this.callbacks = {
 				beforePositionChange,
@@ -330,6 +355,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc ISerializableInterval.serialize}
 	 */
 	public serialize(): ISerializedInterval {
+		this.verifyNotDispose();
+
 		return this.serializeDelta({
 			props: this.properties,
 			includeEndpoints: true,
@@ -343,6 +370,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		props: PropertySet | undefined;
 		includeEndpoints: boolean;
 	}): SerializedIntervalDelta {
+		this.verifyNotDispose();
+
 		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
 		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
 		const startPosition = includeEndpoints
@@ -372,6 +401,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.clone}
 	 */
 	public clone(): SequenceIntervalClass {
+		this.verifyNotDispose();
+
 		return new SequenceIntervalClass(
 			this.client,
 			this.id,
@@ -414,6 +445,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.compareStart}
 	 */
 	public compareStart(b: SequenceInterval) {
+		this.verifyNotDispose();
+
 		const dist = compareReferencePositions(this.start, b.start);
 
 		if (dist === 0) {
@@ -427,6 +460,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.compareEnd}
 	 */
 	public compareEnd(b: SequenceInterval): number {
+		this.verifyNotDispose();
+
 		const dist = compareReferencePositions(this.end, b.end);
 
 		if (dist === 0) {
@@ -440,6 +475,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.overlaps}
 	 */
 	public overlaps(b: SequenceInterval) {
+		this.verifyNotDispose();
+
 		const result =
 			compareReferencePositions(this.start, b.end) <= 0 &&
 			compareReferencePositions(this.end, b.start) >= 0;
@@ -457,6 +494,8 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * {@inheritDoc IInterval.union}
 	 */
 	public union(b: SequenceIntervalClass) {
+		this.verifyNotDispose();
+
 		const newStart = minReferencePosition(this.start, b.start);
 		const newEnd = maxReferencePosition(this.end, b.end);
 
@@ -493,9 +532,41 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	 * @returns whether this interval overlaps two numerical positions.
 	 */
 	public overlapsPos(bstart: number, bend: number) {
+		this.verifyNotDispose();
+
 		const startPos = this.client.localReferencePositionToPosition(this.start);
 		const endPos = this.client.localReferencePositionToPosition(this.end);
 		return endPos > bstart && startPos < bend;
+	}
+
+	public moveEndpointReferences(
+		rebased: Record<"start" | "end", { segment: ISegment; offset: number }>,
+	) {
+		this.verifyNotDispose();
+
+		const startRef = createPositionReferenceFromSegoff({
+			client: this.client,
+			segoff: rebased.start,
+			refType: this.start.refType,
+			slidingPreference: this.start.slidingPreference,
+			canSlideToEndpoint: this.start.canSlideToEndpoint,
+		});
+		if (this.start.properties) {
+			startRef.addProperties(this.start.properties);
+		}
+		this.start = startRef;
+
+		const endRef = createPositionReferenceFromSegoff({
+			client: this.client,
+			segoff: rebased.end,
+			refType: this.end.refType,
+			slidingPreference: this.end.slidingPreference,
+			canSlideToEndpoint: this.end.canSlideToEndpoint,
+		});
+		if (this.end.properties) {
+			endRef.addProperties(this.end.properties);
+		}
+		this.end = endRef;
 	}
 
 	/**
@@ -507,39 +578,41 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		useNewSlidingBehavior: boolean = false,
+		canSlideToEndpoint: boolean = false,
 	) {
+		this.verifyNotDispose();
+
 		const { startSide, endSide, startPos, endPos } = endpointPosAndSide(start, end);
-		const startSegment: ISegmentInternal | undefined = this.start.getSegment();
-		const endSegment: ISegmentInternal | undefined = this.end.getSegment();
-		const stickiness = computeStickinessFromSide(
-			startPos ?? startSegment?.endpointType,
-			startSide ?? this.startSide,
-			endPos ?? endSegment?.endpointType,
-			endSide ?? this.endSide,
-		);
 		const getRefType = (baseType: ReferenceType): ReferenceType => {
 			let refType = baseType;
 			if (op === undefined) {
 				refType &= ~ReferenceType.SlideOnRemove;
 				refType |= ReferenceType.StayOnRemove;
+			} else {
+				refType &= ~ReferenceType.StayOnRemove;
+				refType |= ReferenceType.SlideOnRemove;
 			}
 			return refType;
 		};
 
 		let startRef = this.start;
 		if (startPos !== undefined) {
-			startRef = createPositionReference(
-				this.client,
+			const slidingPreference = startReferenceSlidingPreference(
 				startPos,
-				getRefType(this.start.refType),
-				op,
-				undefined,
-				localSeq,
-				startReferenceSlidingPreference(stickiness),
-				startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
-				useNewSlidingBehavior,
+				startSide ?? Side.Before,
+				endPos,
+				endSide ?? Side.Before,
 			);
+			startRef = createPositionReference({
+				client: this.client,
+				pos: startPos,
+				refType: getRefType(this.start.refType),
+				op,
+				localSeq,
+				slidingPreference,
+				canSlideToEndpoint:
+					canSlideToEndpoint && slidingPreference === SlidingPreference.BACKWARD,
+			});
 			if (this.start.properties) {
 				startRef.addProperties(this.start.properties);
 			}
@@ -547,17 +620,22 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 
 		let endRef = this.end;
 		if (endPos !== undefined) {
-			endRef = createPositionReference(
-				this.client,
+			const slidingPreference = endReferenceSlidingPreference(
+				startPos,
+				startSide ?? Side.Before,
 				endPos,
-				getRefType(this.end.refType),
-				op,
-				undefined,
-				localSeq,
-				endReferenceSlidingPreference(stickiness),
-				endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
-				useNewSlidingBehavior,
+				endSide ?? Side.Before,
 			);
+			endRef = createPositionReference({
+				client: this.client,
+				pos: endPos,
+				refType: getRefType(this.end.refType),
+				op,
+				localSeq,
+				slidingPreference,
+				canSlideToEndpoint:
+					canSlideToEndpoint && slidingPreference === SlidingPreference.FORWARD,
+			});
 			if (this.end.properties) {
 				endRef.addProperties(this.end.properties);
 			}
@@ -574,12 +652,23 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 			startSide ?? this.startSide,
 			endSide ?? this.endSide,
 		);
-		copyPropertiesAndManager(this.#props, newInterval.#props);
+		newInterval.#props.propertyManager = this.#props.propertyManager ??=
+			new PropertiesManager();
+		newInterval.#props.properties = this.#props.properties;
 		return newInterval;
 	}
 
 	public ackPropertiesChange(newProps: PropertySet, op: ISequencedDocumentMessage) {
-		this.#props.propertyManager ??= new PropertiesManager();
+		this.verifyNotDispose();
+
+		if (Object.keys(newProps).length === 0) {
+			return;
+		}
+
+		assert(
+			this.#props.propertyManager !== undefined,
+			0xbd5 /* must have property manager to ack */,
+		);
 		// Let the propertyManager prune its pending change-properties set.
 		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
 			props: newProps,
@@ -587,17 +676,27 @@ export class SequenceIntervalClass implements SequenceInterval, ISerializableInt
 	}
 }
 
-export function createPositionReferenceFromSegoff(
-	client: Client,
-	segoff: { segment: ISegment; offset: number } | undefined | "start" | "end",
-	refType: ReferenceType,
-	op?: ISequencedDocumentMessage,
-	localSeq?: number,
-	fromSnapshot?: boolean,
-	slidingPreference?: SlidingPreference,
-	canSlideToEndpoint?: boolean,
-	rollback?: boolean,
-): LocalReferencePosition {
+export function createPositionReferenceFromSegoff({
+	client,
+	segoff,
+	refType,
+	op,
+	localSeq,
+	fromSnapshot,
+	slidingPreference,
+	canSlideToEndpoint,
+	rollback,
+}: {
+	client: Client;
+	segoff: { segment: ISegment; offset: number } | undefined | "start" | "end";
+	refType: ReferenceType;
+	op?: ISequencedDocumentMessage;
+	localSeq?: number;
+	fromSnapshot?: boolean;
+	slidingPreference: SlidingPreference | undefined;
+	canSlideToEndpoint: boolean | undefined;
+	rollback?: boolean;
+}): LocalReferencePosition {
 	if (segoff === "start" || segoff === "end") {
 		return client.createLocalReferencePosition(
 			segoff,
@@ -639,18 +738,27 @@ export function createPositionReferenceFromSegoff(
 	return createDetachedLocalReferencePosition(slidingPreference, refType);
 }
 
-function createPositionReference(
-	client: Client,
-	pos: number | "start" | "end",
-	refType: ReferenceType,
-	op?: ISequencedDocumentMessage,
-	fromSnapshot?: boolean,
-	localSeq?: number,
-	slidingPreference?: SlidingPreference,
-	exclusive: boolean = false,
-	useNewSlidingBehavior: boolean = false,
-	rollback?: boolean,
-): LocalReferencePosition {
+function createPositionReference({
+	client,
+	pos,
+	refType,
+	op,
+	fromSnapshot,
+	localSeq,
+	slidingPreference,
+	canSlideToEndpoint,
+	rollback,
+}: {
+	client: Client;
+	pos: number | "start" | "end";
+	refType: ReferenceType;
+	op?: ISequencedDocumentMessage;
+	fromSnapshot?: boolean;
+	localSeq?: number;
+	slidingPreference: SlidingPreference;
+	canSlideToEndpoint: boolean;
+	rollback?: boolean;
+}): LocalReferencePosition {
 	let segoff;
 
 	if (op) {
@@ -665,7 +773,7 @@ function createPositionReference(
 				referenceSequenceNumber: op.referenceSequenceNumber,
 				clientId: op.clientId,
 			});
-			segoff = getSlideToSegoff(segoff, slidingPreference, undefined, useNewSlidingBehavior);
+			segoff = getSlideToSegoff(segoff, slidingPreference, undefined, canSlideToEndpoint);
 		}
 	} else {
 		assert(
@@ -678,7 +786,7 @@ function createPositionReference(
 				: client.getContainingSegment(pos, undefined, localSeq);
 	}
 
-	return createPositionReferenceFromSegoff(
+	return createPositionReferenceFromSegoff({
 		client,
 		segoff,
 		refType,
@@ -686,9 +794,9 @@ function createPositionReference(
 		localSeq,
 		fromSnapshot,
 		slidingPreference,
-		exclusive,
+		canSlideToEndpoint,
 		rollback,
-	);
+	});
 }
 
 export function createTransientInterval(
@@ -715,7 +823,7 @@ export function createSequenceInterval(
 	intervalType: IntervalType,
 	op?: ISequencedDocumentMessage,
 	fromSnapshot?: boolean,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 	props?: PropertySet,
 	rollback?: boolean,
 ): SequenceIntervalClass {
@@ -730,7 +838,6 @@ export function createSequenceInterval(
 			endSide !== undefined,
 		0x794 /* start and end cannot be undefined because they were not passed in as undefined */,
 	);
-	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	let beginRefType = ReferenceType.RangeBegin;
 	let endRefType = ReferenceType.RangeEnd;
 	if (intervalType === IntervalType.Transient) {
@@ -749,31 +856,43 @@ export function createSequenceInterval(
 		}
 	}
 
-	const startLref = createPositionReference(
-		client,
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+
+	const startSlidingPreference = startReferenceSlidingPreference(
 		startPos,
-		beginRefType,
-		op,
-		fromSnapshot,
-		undefined,
-		startReferenceSlidingPreference(stickiness),
-		startReferenceSlidingPreference(stickiness) === SlidingPreference.BACKWARD,
-		useNewSlidingBehavior,
-		rollback,
+		startSide,
+		endPos,
+		endSide,
 	);
 
-	const endLref = createPositionReference(
+	const startLref = createPositionReference({
 		client,
-		endPos,
-		endRefType,
+		pos: startPos,
+		refType: beginRefType,
 		op,
 		fromSnapshot,
-		undefined,
-		endReferenceSlidingPreference(stickiness),
-		endReferenceSlidingPreference(stickiness) === SlidingPreference.FORWARD,
-		useNewSlidingBehavior,
+		slidingPreference: startSlidingPreference,
+		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
 		rollback,
+	});
+
+	const endSlidingPreference = endReferenceSlidingPreference(
+		startPos,
+		startSide,
+		endPos,
+		endSide,
 	);
+
+	const endLref = createPositionReference({
+		client,
+		pos: endPos,
+		refType: endRefType,
+		op,
+		fromSnapshot,
+		slidingPreference: endSlidingPreference,
+		canSlideToEndpoint: canSlideToEndpoint && stickiness !== IntervalStickiness.NONE,
+		rollback,
+	});
 
 	const rangeProp = {
 		[reservedRangeLabelsKey]: [label],

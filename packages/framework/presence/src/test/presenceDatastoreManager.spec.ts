@@ -15,12 +15,13 @@ import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
 import { toOpaqueJson } from "../internalUtils.js";
-import type { AttendeeId } from "../presence.js";
+import type { AttendeeId, PresenceWithNotifications } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
 import type { InternalWorkspaceAddress, SignalMessages } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	connectionId2,
@@ -82,10 +83,16 @@ describe("Presence", () => {
 		});
 
 		describe("responds to ClientJoin", () => {
-			let presence: ReturnType<typeof createPresenceManager>;
+			let processSignal: ProcessSignalFunction;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+				({ processSignal } = prepareConnectedPresence(
+					runtime,
+					"attendeeId-2",
+					"client2",
+					clock,
+					logger,
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -124,7 +131,7 @@ describe("Presence", () => {
 				]);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:ClientJoin",
@@ -148,7 +155,7 @@ describe("Presence", () => {
 			it("with broadcast after delay when NOT preferred responder", () => {
 				// #region Part 1 (no response)
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:ClientJoin",
@@ -210,7 +217,8 @@ describe("Presence", () => {
 		});
 
 		describe("receiving DatastoreUpdate", () => {
-			let presence: ReturnType<typeof createPresenceManager>;
+			let presence: PresenceWithNotifications;
+			let processSignal: ProcessSignalFunction;
 
 			const systemWorkspaceUpdate = {
 				"clientToSessionId": {
@@ -244,13 +252,13 @@ describe("Presence", () => {
 			} as const;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(
+				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
 					attendeeId2,
 					connectionId2,
 					clock,
 					logger,
-				);
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -262,7 +270,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -290,7 +298,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -321,7 +329,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -359,7 +367,7 @@ describe("Presence", () => {
 				presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -387,7 +395,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -416,7 +424,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -444,7 +452,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -460,7 +468,7 @@ describe("Presence", () => {
 					},
 					false,
 				);
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -491,7 +499,7 @@ describe("Presence", () => {
 				]);
 
 				// Act - send generic datastore update with acknowledgement id specified
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -515,7 +523,8 @@ describe("Presence", () => {
 		});
 
 		describe("receiving unrecognized message", () => {
-			let presence: ReturnType<typeof createPresenceManager>;
+			let presence: PresenceWithNotifications;
+			let processSignal: ProcessSignalFunction;
 
 			const systemWorkspaceUpdate = {
 				"clientToSessionId": {
@@ -538,13 +547,13 @@ describe("Presence", () => {
 			};
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(
+				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
 					attendeeId2,
 					connectionId2,
 					clock,
 					logger,
-				);
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -575,7 +584,7 @@ describe("Presence", () => {
 				} as const satisfies Omit<InboundExtensionMessage<SignalMessages>, "type"> & {
 					type: string;
 				};
-				presence.processSignal(
+				processSignal(
 					optional ? ["?"] : [],
 					markUnverifiedIncomingMessage(unrecognizedMessage),
 					false,

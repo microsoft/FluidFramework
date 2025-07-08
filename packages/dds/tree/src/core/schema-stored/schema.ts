@@ -185,8 +185,6 @@ export const storedEmptyFieldSchema: TreeFieldStoredSchema = {
  */
 export const identifierFieldKindIdentifier = "Identifier";
 
-/**
- */
 export abstract class TreeNodeStoredSchema {
 	protected _typeCheck!: MakeNominal;
 
@@ -213,8 +211,6 @@ export abstract class TreeNodeStoredSchema {
 	public abstract getFieldSchema(field: FieldKey): TreeFieldStoredSchema;
 }
 
-/**
- */
 export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
 	 * @param objectNodeFields -
@@ -272,8 +268,6 @@ export class ObjectNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
-/**
- */
 export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
 	 * @param mapFields -
@@ -306,8 +300,6 @@ export class MapNodeStoredSchema extends TreeNodeStoredSchema {
 	}
 }
 
-/**
- */
 export class LeafNodeStoredSchema extends TreeNodeStoredSchema {
 	/**
 	 * @param leafValue -

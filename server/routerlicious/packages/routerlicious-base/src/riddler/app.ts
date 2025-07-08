@@ -37,6 +37,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	readinessCheck?: IReadinessCheck,
+	bypassCache: boolean = false,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -48,8 +49,10 @@ export function create(
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("riddler", (tokens, req, res) => {
+				const tenantId = getTenantIdFromRequest(req.params);
+				res.locals.tenantId = tenantId;
 				return {
-					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+					[BaseTelemetryProperties.tenantId]: tenantId,
 					[CommonProperties.callingServiceName]:
 						req.headers[CallingServiceHeaderName] ?? "",
 				};
@@ -75,6 +78,7 @@ export function create(
 			riddlerStorageRequestMetricInterval,
 			tenantKeyGenerator,
 			cache,
+			bypassCache,
 		),
 	);
 

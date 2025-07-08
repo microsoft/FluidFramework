@@ -31,6 +31,7 @@ declare type old_as_current_for_Class_SharedObject = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_SharedObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SharedObject = requireAssignableTo<TypeOnly<current.SharedObject>, TypeOnly<old.SharedObject>>
 
 /*
@@ -49,6 +50,7 @@ declare type old_as_current_for_Class_SharedObjectCore = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Class_SharedObjectCore": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_SharedObjectCore = requireAssignableTo<TypeOnly<current.SharedObjectCore>, TypeOnly<old.SharedObjectCore>>
 
 /*
@@ -58,6 +60,7 @@ declare type current_as_old_for_Class_SharedObjectCore = requireAssignableTo<Typ
  * typeValidation.broken:
  * "ClassStatics_SharedObject": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_SharedObject = requireAssignableTo<TypeOnly<typeof current.SharedObject>, TypeOnly<typeof old.SharedObject>>
 
 /*
@@ -67,6 +70,7 @@ declare type current_as_old_for_ClassStatics_SharedObject = requireAssignableTo<
  * typeValidation.broken:
  * "ClassStatics_SharedObjectCore": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_SharedObjectCore = requireAssignableTo<TypeOnly<typeof current.SharedObjectCore>, TypeOnly<typeof old.SharedObjectCore>>
 
 /*

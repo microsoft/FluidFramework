@@ -1,0 +1,46 @@
+{
+  "type": "test.table.Table",
+  "fields": {
+    "rows": {
+      "type": "test.table.Table.rows",
+      "fields": [
+        {
+          "type": "test.table.Row",
+          "fields": {
+            "id": "row-0",
+            "cells": {
+              "type": "test.table.Row.cells",
+              "fields": {
+                "column-0": {
+                  "type": "test.table-cell",
+                  "fields": {
+                    "value": "Hello World!"
+                  }
+                }
+              }
+            },
+            "props": {
+              "type": "test.table-row-props",
+              "fields": {}
+            }
+          }
+        }
+      ]
+    },
+    "columns": {
+      "type": "test.table.Table.columns",
+      "fields": [
+        {
+          "type": "test.table.Column",
+          "fields": {
+            "id": "column-0",
+            "props": {
+              "type": "test.table-column-props",
+              "fields": {}
+            }
+          }
+        }
+      ]
+    }
+  }
+}

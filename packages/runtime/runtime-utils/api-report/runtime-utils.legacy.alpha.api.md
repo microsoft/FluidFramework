@@ -21,8 +21,6 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     abstract absolutePath: string;
     // (undocumented)
     abstract attachGraph(): void;
-    // @deprecated (undocumented)
-    abstract bind(handle: IFluidHandleInternal): void;
     // (undocumented)
     abstract get(): Promise<T>;
     get IFluidHandle(): IFluidHandleInternal;

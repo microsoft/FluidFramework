@@ -47,7 +47,10 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	isISharedObjectHandle,
+	type IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -382,6 +385,12 @@ export interface DDSFuzzSuiteOptions {
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
 		rehydrateDisabled?: true;
+		/**
+		 * If true, disable rehydrating DDSes while they are in the "attaching" state.
+		 *
+		 * BEWARE: The harness has known correctness issues with rehydration when there are outstanding id compressor ops. DDSes that use id-compressor
+		 * should set this to `true` if they test rehydration. AB#43127 has more context.
+		 */
 		attachingBeforeRehydrateDisable?: true;
 	};
 
@@ -774,7 +783,9 @@ export function mixinAttach<
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<TChannelFactory> = state.clients[0];
-			finalizeAllocatedIds(clientA);
+			if (clientA.dataStoreRuntime.attachState === AttachState.Detached) {
+				finalizeAllocatedIds(clientA);
+			}
 			clientA.dataStoreRuntime.setAttachState(AttachState.Attached);
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
@@ -818,6 +829,11 @@ export function mixinAttach<
 
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
+			// TODO: AB#43127: Using a detached load here is not right with respect to id compressor ops in all cases.
+			// The general strategy that the mocks use for resubmit does not align with the production implementation,
+			// and that should probably be rectified here. The immediate problem with using `loadDetached` here is that
+			// it finalizes IDs, which is only OK if this rehydrate is happening while the container is detached (not attaching).
+			// See comment on `attachingBeforeRehydrateDisable` for more context.
 			const summarizerClient = await loadDetached(
 				state.containerRuntimeFactory,
 				clientA,
@@ -1499,7 +1515,16 @@ export async function runTestForSeed<
 		initialState.summarizerClient.dataStoreRuntime.id,
 		false,
 	);
-	const rootHandle = new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime);
+
+	// This is unfortunately needed to pass to the Serializer, even though we don't do any handle binding.
+	const dummyHandleBindSource = Object.assign(
+		new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime),
+		{ bind: () => {} },
+	);
+	assert(
+		isISharedObjectHandle(dummyHandleBindSource),
+		"PRECONDITION: must satisfy this for serializer",
+	);
 
 	let operationCount = 0;
 	const generator = model.generatorFactory();
@@ -1509,7 +1534,7 @@ export async function runTestForSeed<
 		// to encode here and decode in the reducer.
 		async (state) => {
 			const operation = await generator(state);
-			return serializer.encode(operation, rootHandle) as TOperation;
+			return serializer.encode(operation, dummyHandleBindSource) as TOperation;
 		},
 		async (state, operation) => {
 			const decodedHandles = serializer.decode(operation) as TOperation;

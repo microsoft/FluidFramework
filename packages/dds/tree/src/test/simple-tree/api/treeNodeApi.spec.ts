@@ -540,6 +540,67 @@ describe("treeNodeApi", () => {
 			});
 		});
 
+		describe("record", () => {
+			it("Simple", () => {
+				class TestRecord extends schema.record("TestRecord", schema.string) {}
+				const config = new TreeViewConfiguration({ schema: TestRecord });
+				const view = getView(config);
+				view.initialize({
+					foo: "Hello",
+					0: "World",
+				});
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "foo"), "Hello");
+				assert.equal(TreeAlpha.child(tree, "0"), "World");
+				assert.equal(TreeAlpha.child(tree, 0), "World");
+
+				assert.equal(TreeAlpha.child(tree, "bar"), undefined);
+				assert.equal(TreeAlpha.child(tree, "1"), undefined);
+				assert.equal(TreeAlpha.child(tree, 1), undefined);
+			});
+
+			it("Recursive", () => {
+				class TestRecord extends schema.recordRecursive("TestRecord", [
+					schema.string,
+					() => TestRecord,
+				]) {}
+				const config = new TreeViewConfiguration({ schema: TestRecord });
+				const view = getView(config);
+				view.initialize(
+					new TestRecord({
+						label: "A",
+						data: new TestRecord({
+							label: "B",
+							data: new TestRecord({
+								label: "C",
+							}),
+						}),
+					}),
+				);
+				const tree = view.root;
+
+				assert.equal(TreeAlpha.child(tree, "label"), "A");
+				assert.equal(TreeAlpha.child(tree, "foo"), undefined);
+				assert.equal(TreeAlpha.child(tree, 0), undefined);
+
+				const b = TreeAlpha.child(tree, "data");
+				assert(b !== undefined && isTreeNode(b));
+
+				assert.equal(TreeAlpha.child(b, "label"), "B");
+				assert.equal(TreeAlpha.child(b, "foo"), undefined);
+				assert.equal(TreeAlpha.child(b, 0), undefined);
+
+				const c = TreeAlpha.child(b, "data");
+				assert(c !== undefined && isTreeNode(c));
+
+				assert.equal(TreeAlpha.child(c, "label"), "C");
+				assert.equal(TreeAlpha.child(c, "data"), undefined);
+				assert.equal(TreeAlpha.child(c, "foo"), undefined);
+				assert.equal(TreeAlpha.child(c, 0), undefined);
+			});
+		});
+
 		describe("array", () => {
 			it("Simple", () => {
 				class TestArray extends schema.array("TestObject", schema.string) {}

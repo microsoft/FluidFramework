@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { DoublyLinkedList } from "../collections/index.js";
 import { UnassignedSequenceNumber } from "../constants.js";
 import { IMergeTreeOptions } from "../index.js";
 import {

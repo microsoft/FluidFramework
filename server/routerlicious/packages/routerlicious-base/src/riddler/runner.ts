@@ -57,6 +57,8 @@ export class RiddlerRunner implements IRunner {
 		// Don't include application logic in primary thread when Node.js cluster module is enabled.
 		const includeAppLogic = !(cluster.isPrimary && usingClusterModule);
 
+		const bypassCache: boolean = this.config?.get("riddler:bypassCache") ?? false;
+
 		if (includeAppLogic) {
 			// Create the HTTP server and attach alfred to it
 			const riddler = app.create(
@@ -72,6 +74,7 @@ export class RiddlerRunner implements IRunner {
 				this.startupCheck,
 				this.cache,
 				this.readinessCheck,
+				bypassCache,
 			);
 			riddler.set("port", this.port);
 

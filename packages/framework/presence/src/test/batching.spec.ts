@@ -7,10 +7,9 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
-import type { NotificationsWorkspace } from "../index.js";
+import type { NotificationsWorkspace, PresenceWithNotifications } from "../index.js";
 import { Notifications, StateFactory } from "../index.js";
 import { toOpaqueJson } from "../internalUtils.js";
-import type { createPresenceManager } from "../presenceManager.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import {
@@ -26,7 +25,7 @@ describe("Presence", () => {
 		let logger: EventAndErrorTrackingLogger;
 		const initialTime = 1000;
 		let clock: SinonFakeTimers;
-		let presence: ReturnType<typeof createPresenceManager>;
+		let presence: PresenceWithNotifications;
 
 		before(async () => {
 			clock = useFakeTimers();
@@ -41,7 +40,13 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Set up the presence connection.
-			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger);
+			presence = prepareConnectedPresence(
+				runtime,
+				attendeeId2,
+				connectionId2,
+				clock,
+				logger,
+			).presence;
 		});
 
 		afterEach(() => {

@@ -114,17 +114,22 @@ export function create(
 			jsonMorganLoggerMiddleware(
 				"alfred",
 				(tokens, req, res) => {
+					const tenantId = getTenantIdFromRequest(req.params);
+					const documentId = getIdFromRequest(req.params);
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
 							res,
 							DriverVersionHeaderName,
 						),
-						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
 						[CommonProperties.callingServiceName]:
 							req.headers[CallingServiceHeaderName] ?? "",
 					};
+
+					res.locals.tenantId = tenantId;
+					res.locals.documentId = documentId;
 					if (enableClientIPLogging === true) {
 						const hashedClientIP = req.ip
 							? shajs("sha256").update(`${req.ip}`).digest("hex")

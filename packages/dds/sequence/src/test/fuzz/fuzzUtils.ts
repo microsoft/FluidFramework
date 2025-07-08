@@ -509,18 +509,16 @@ export const baseModel: Omit<
 			}
 		},
 		(op) => {
-			if (
-				op.type !== "removeRange" &&
-				op.type !== "annotateRange" &&
-				op.type !== "addInterval" &&
-				op.type !== "changeInterval"
-			) {
-				return;
-			}
-			const { endPos, endSide } = endpointPosAndSide(op.start, op.end);
+			if (op.type === "removeRange" || op.type === "annotateRange") {
+				if (op.end > 0) {
+					op.end--;
+				}
+			} else if (op.type === "addInterval" || op.type === "changeInterval") {
+				const { endPos, endSide } = endpointPosAndSide(op.start, op.end);
 
-			if (typeof endPos === "number" && endPos > 0) {
-				op.end = toSequencePlace(endPos - 1, endSide);
+				if (typeof endPos === "number" && endPos > 0) {
+					op.end = toSequencePlace(endPos - 1, endSide);
+				}
 			}
 		},
 	],

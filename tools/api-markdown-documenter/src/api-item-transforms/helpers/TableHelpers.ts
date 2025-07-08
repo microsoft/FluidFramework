@@ -329,9 +329,7 @@ export function createTypeParametersSummaryTable(
 			apiParameter.constraintExcerpt,
 			config,
 		);
-		return constraintSpan === undefined
-			? TableBodyCellNode.Empty
-			: new TableBodyCellNode([constraintSpan]);
+		return new TableBodyCellNode(constraintSpan);
 	}
 
 	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
@@ -339,9 +337,7 @@ export function createTypeParametersSummaryTable(
 			apiParameter.defaultTypeExcerpt,
 			config,
 		);
-		return excerptSpan === undefined
-			? TableBodyCellNode.Empty
-			: new TableBodyCellNode([excerptSpan]);
+		return new TableBodyCellNode(excerptSpan);
 	}
 
 	const bodyRows: TableBodyRowNode[] = [];
@@ -798,7 +794,7 @@ export function createTypeParameterSummaryCell(
  * @remarks This content will be generated as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param typeExcerpty - An excerpt describing the type to be displayed in the cell.
+ * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createTypeExcerptCell(
@@ -806,9 +802,7 @@ export function createTypeExcerptCell(
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-	return excerptSpan === undefined
-		? TableBodyCellNode.Empty
-		: new TableBodyCellNode([excerptSpan]);
+	return new TableBodyCellNode(excerptSpan);
 }
 
 /**

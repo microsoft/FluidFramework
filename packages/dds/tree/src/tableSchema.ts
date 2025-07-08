@@ -6,7 +6,7 @@
 import { oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { Tree } from "./shared-tree/index.js";
+import { Tree, TreeAlpha } from "./shared-tree/index.js";
 import {
 	type FieldHasDefault,
 	type ImplicitAllowedTypes,
@@ -28,6 +28,7 @@ import {
 	type ImplicitAnnotatedFieldSchema,
 	type UnannotateImplicitFieldSchema,
 	isArrayNodeSchema,
+	type InsertableField,
 } from "./simple-tree/index.js";
 
 // Future improvement TODOs:
@@ -352,7 +353,12 @@ export namespace System_TableSchema {
 		// See definition of `RowInsertableType` below.
 		const rowFieldsBuiltInParts = {
 			id: schemaFactory.identifier,
-			cells: schemaFactory.required(schemaFactory.map("Row.cells", cellSchema), {
+			/**
+			 * The cells of the table row, keyed by column ID.
+			 * @remarks
+			 * The table row models its cells as a record, where each key is the ID of the column it belongs to. The choice of record (as opposed to a map) is intended to make interop with common table rendering libraries in TypeScript/JavaScript easier.
+			 */
+			cells: schemaFactory.required(schemaFactory.record("Row.cells", cellSchema), {
 				metadata: {
 					description: "The cells of the table row, keyed by column ID.",
 				},
@@ -389,7 +395,8 @@ export namespace System_TableSchema {
 				columnOrId: TableSchema.Column<TCellSchema> | string,
 			): CellValueType | undefined {
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-				return this.cells.get(columnId) as CellValueType | undefined;
+				// Unlike most objects, RecordNodes don't have the default inherited object properties, so this is safe
+				return this.cells[columnId];
 			}
 
 			public setCell(
@@ -398,8 +405,18 @@ export namespace System_TableSchema {
 			): void {
 				// TODO: throw if column does not exist in the owning table.
 
-				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
-				this.cells.set(columnId, value);
+				if (value === undefined) {
+					this.removeCell(columnOrId);
+				} else {
+					const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
+
+					// TypeScript is unable to narrow the types correctly here, hence the casts.
+					// See: https://github.com/microsoft/TypeScript/issues/52144
+					this.cells[columnId] = TreeAlpha.create(
+						cellSchema,
+						value as InsertableField<TCellSchema>,
+					) as CellValueType;
+				}
 			}
 
 			public removeCell(
@@ -409,12 +426,14 @@ export namespace System_TableSchema {
 
 				const columnId = typeof columnOrId === "string" ? columnOrId : columnOrId.id;
 
-				const cell: CellValueType | undefined = this.cells.get(columnId);
+				const cell: CellValueType | undefined = this.getCell(columnId);
 				if (cell === undefined) {
 					return undefined;
 				}
 
-				this.cells.delete(columnId);
+				// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- The record's values are non-optional, so setting `undefined` as a means to remove the cell is not supported.
+				delete this.cells[columnId];
+
 				return cell;
 			}
 
@@ -423,7 +442,7 @@ export namespace System_TableSchema {
 				cell: CellValueType;
 			}[] {
 				const result = [];
-				for (const [columnId, cell] of this.cells.entries()) {
+				for (const [columnId, cell] of Object.entries(this.cells)) {
 					if (cell !== undefined) {
 						result.push({
 							columnId,

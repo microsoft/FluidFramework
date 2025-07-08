@@ -32,8 +32,10 @@ import type {
 	TreeNodeSchemaCore,
 	TreeNodeSchemaNonClass,
 	UnhydratedFlexTreeNode,
+	AnnotatedAllowedType,
+	NormalizedAnnotatedAllowedTypes,
 } from "./core/index.js";
-import { inPrototypeChain } from "./core/index.js";
+import { inPrototypeChain, isAnnotatedAllowedTypes } from "./core/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 import type { SimpleFieldSchema, SimpleObjectFieldSchema } from "./simpleSchema.js";
@@ -107,17 +109,6 @@ export interface AnnotatedAllowedTypes {
 }
 
 /**
- * Checks if the input is an {@link AnnotatedAllowedTypes}.
- */
-export function isAnnotatedAllowedTypes(
-	allowedTypes: ImplicitAnnotatedAllowedTypes,
-): allowedTypes is AnnotatedAllowedTypes {
-	return (
-		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
-	);
-}
-
-/**
  * Annotations that apply to a set of allowed types.
  * @remarks
  * Additional optionals may be added to this as non-breaking changes, so implementations of it should be simple object literals with no unlisted members.
@@ -128,21 +119,6 @@ export interface AllowedTypesMetadata {
 	 * User defined metadata
 	 */
 	readonly custom?: unknown;
-}
-
-/**
- * Stores annotations for an individual allowed type.
- * @alpha
- */
-export interface AnnotatedAllowedType<T extends TreeNodeSchema = TreeNodeSchema> {
-	/**
-	 * Annotations for the allowed type.
-	 */
-	readonly metadata: AllowedTypeMetadata;
-	/**
-	 * The allowed type the annotations apply to in a particular schema.
-	 */
-	readonly type: LazyItem<T>;
 }
 
 /**
@@ -207,7 +183,10 @@ export enum FieldKind {
  * If an explicit stored key was specified in the schema, it will be used.
  * Otherwise, the stored key is the same as the property key.
  */
-export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSchema): FieldKey {
+export function getStoredKey(
+	propertyKey: string,
+	fieldSchema: ImplicitAnnotatedFieldSchema,
+): FieldKey {
 	return brand(getExplicitStoredKey(fieldSchema) ?? propertyKey);
 }
 
@@ -215,7 +194,9 @@ export function getStoredKey(propertyKey: string, fieldSchema: ImplicitFieldSche
  * Gets the {@link FieldProps.key | stored key} specified by the schema, if one was explicitly specified.
  * Otherwise, returns undefined.
  */
-export function getExplicitStoredKey(fieldSchema: ImplicitFieldSchema): string | undefined {
+export function getExplicitStoredKey(
+	fieldSchema: ImplicitAnnotatedFieldSchema,
+): string | undefined {
 	return fieldSchema instanceof FieldSchema ? fieldSchema.props?.key : undefined;
 }
 
@@ -541,7 +522,7 @@ export class FieldSchemaAlpha<
 	implements SimpleFieldSchema
 {
 	private readonly lazyIdentifiers: Lazy<ReadonlySet<string>>;
-	private readonly lazyAnnotatedTypes: Lazy<ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata>>;
+	private readonly lazyAnnotatedTypes: Lazy<NormalizedAnnotatedAllowedTypes>;
 	private readonly propsAlpha: FieldPropsAlpha<TCustomMetadata> | undefined;
 
 	/**
@@ -586,7 +567,7 @@ export class FieldSchemaAlpha<
 			? annotatedAllowedTypes.metadata
 			: {};
 		this.lazyAnnotatedTypes = new Lazy(() =>
-			extractAnnotationsFromAllowedTypes(this.annotatedAllowedTypes),
+			normalizeAnnotatedAllowedTypes(annotatedAllowedTypes),
 		);
 		this.lazyIdentifiers = new Lazy(
 			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
@@ -602,7 +583,7 @@ export class FieldSchemaAlpha<
 	 * What types of tree nodes are allowed in this field and their annotations.
 	 * @remarks Counterpart to {@link FieldSchemaAlpha.annotatedAllowedTypes}, with any lazy definitions evaluated.
 	 */
-	public get annotatedAllowedTypeSet(): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
+	public get annotatedAllowedTypesNormalized(): NormalizedAnnotatedAllowedTypes {
 		return this.lazyAnnotatedTypes.value;
 	}
 }
@@ -671,14 +652,54 @@ export function normalizeAllowedTypes(
  * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  */
 export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
-	type: T | AnnotatedAllowedType<T>,
-): AnnotatedAllowedType<T> {
+	type: T | AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>>,
+): AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>> {
 	return isAnnotatedAllowedType(type)
 		? type
 		: {
 				metadata: {},
 				type,
 			};
+}
+
+/**
+ * Normalizes a {@link ImplicitAnnotatedAllowedTypes} to a set of {@link AnnotatedAllowedSchema}s, by eagerly evaluating any
+ * lazy schema declarations and adding empty metadata if it doesn't already exist.
+ *
+ * @remarks Note: this must only be called after all required schemas have been declared, otherwise evaluation of
+ * recursive schemas may fail.
+ */
+export function normalizeAnnotatedAllowedTypes(
+	types: ImplicitAnnotatedAllowedTypes,
+): NormalizedAnnotatedAllowedTypes {
+	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
+	const annotatedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
+	if (isReadonlyArray(typesWithoutAnnotation)) {
+		for (const annotatedType of typesWithoutAnnotation) {
+			if (isAnnotatedAllowedType(annotatedType)) {
+				annotatedTypes.push({
+					type: evaluateLazySchema(annotatedType.type),
+					metadata: annotatedType.metadata,
+				});
+			} else {
+				annotatedTypes.push({ type: evaluateLazySchema(annotatedType), metadata: {} });
+			}
+		}
+	} else {
+		if (isAnnotatedAllowedType(typesWithoutAnnotation)) {
+			annotatedTypes.push({
+				type: evaluateLazySchema(typesWithoutAnnotation.type),
+				metadata: typesWithoutAnnotation.metadata,
+			});
+		} else {
+			annotatedTypes.push({ type: evaluateLazySchema(typesWithoutAnnotation), metadata: {} });
+		}
+	}
+
+	return {
+		metadata: isAnnotatedAllowedTypes(types) ? types.metadata : {},
+		types: annotatedTypes,
+	};
 }
 
 /**
@@ -717,36 +738,6 @@ export function unannotateSchemaRecord<
 			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
 		]),
 	) as UnannotateSchemaRecord<Schema>;
-}
-
-/**
- * Converts annotated allowed types into a mapping between the type schema and their associated annotations.
- */
-export function extractAnnotationsFromAllowedTypes(
-	types: ImplicitAnnotatedAllowedTypes,
-): ReadonlyMap<TreeNodeSchema, AllowedTypeMetadata> {
-	const typesWithoutAnnotation = isAnnotatedAllowedTypes(types) ? types.types : types;
-	const annotations = new Map<TreeNodeSchema, AllowedTypeMetadata>();
-	if (isReadonlyArray(typesWithoutAnnotation)) {
-		for (const annotatedType of typesWithoutAnnotation) {
-			if (isAnnotatedAllowedType(annotatedType)) {
-				annotations.set(evaluateLazySchema(annotatedType.type), annotatedType.metadata);
-			} else {
-				annotations.set(evaluateLazySchema(annotatedType), {});
-			}
-		}
-	} else {
-		if (isAnnotatedAllowedType(typesWithoutAnnotation)) {
-			annotations.set(
-				evaluateLazySchema(typesWithoutAnnotation.type),
-				typesWithoutAnnotation.metadata,
-			);
-		} else {
-			annotations.set(evaluateLazySchema(typesWithoutAnnotation), {});
-		}
-	}
-
-	return annotations;
 }
 
 /**

@@ -12,7 +12,7 @@ import { ISequencedClient } from "./clients.js";
  * Consensus on the proposal is achieved if the MSN is \>= the sequence number
  * at which the proposal is made and no client within the collaboration window rejects
  * the proposal.
- * @alpha
+ * @legacy @alpha
  */
 export interface IProposal {
 	/**
@@ -28,19 +28,19 @@ export interface IProposal {
 
 /**
  * Similar to {@link IProposal} except it also includes the sequence number when it was made.
- * @alpha
+ * @legacy @alpha
  */
 export type ISequencedProposal = { sequenceNumber: number } & IProposal;
 
 /**
  * Adds the sequence number at which the message was approved to an {@link ISequencedProposal}.
- * @alpha
+ * @legacy @alpha
  */
 export type IApprovedProposal = { approvalSequenceNumber: number } & ISequencedProposal;
 
 /**
  * Adds the sequence number at which the message was committed to an {@link IApprovedProposal}.
- * @alpha
+ * @legacy @alpha
  */
 export type ICommittedProposal = { commitSequenceNumber: number } & IApprovedProposal;
 
@@ -101,7 +101,7 @@ export interface IQuorumClients {
 
 /**
  * Interface for tracking proposals in the Quorum.
- * @alpha
+ * @legacy @alpha
  */
 export interface IQuorumProposals {
 	propose(key: string, value: unknown): Promise<void>;
@@ -128,7 +128,7 @@ export interface IQuorumProposals {
 
 /**
  * Interface combining tracking of clients as well as proposals in the Quorum.
- * @alpha
+ * @legacy @alpha
  */
 export interface IQuorum
 	extends Omit<IQuorumClients, "on" | "once" | "off">,
@@ -150,7 +150,7 @@ export interface IProtocolState {
 }
 
 /**
- * @alpha
+ * @legacy @alpha
  */
 export interface IProcessMessageResult {
 	immediateNoOp?: boolean;

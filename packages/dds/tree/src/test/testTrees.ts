@@ -203,6 +203,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 );
 
 export class NumericMap extends factory.map("numericMap", factory.number) {}
+export class NumericRecord extends factory.record("numericRecord", factory.number) {}
 
 export class RecursiveType extends factory.objectRecursive("recursiveType", {
 	field: factory.optionalRecursive([() => RecursiveType]),
@@ -252,6 +253,8 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 	testSimpleTree("hasOptionalField-empty", HasOptionalField, {}),
 	testSimpleTree("numericMap-empty", NumericMap, {}),
 	testSimpleTree("numericMap-full", NumericMap, { a: 5, b: 6 }),
+	testSimpleTree("numericRecord-empty", NumericRecord, {}),
+	testSimpleTree("numericRecord-full", NumericRecord, { a: 5, b: 6 }),
 	testSimpleTree("recursiveType-empty", RecursiveType, new RecursiveType({})),
 	testSimpleTree(
 		"recursiveType-recursive",

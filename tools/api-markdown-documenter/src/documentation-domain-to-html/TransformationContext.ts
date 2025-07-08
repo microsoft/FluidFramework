@@ -4,7 +4,6 @@
  */
 
 import { defaultConsoleLogger, type Logger } from "../Logging.js";
-import type { TextFormatting } from "../documentation-domain/index.js";
 
 import {
 	defaultTransformations,
@@ -17,7 +16,7 @@ import {
  *
  * @public
  */
-export interface TransformationContext extends TextFormatting {
+export interface TransformationContext {
 	/**
 	 * Contextual heading level.
 	 *
@@ -51,11 +50,9 @@ export function createTransformationContext(
 		...defaultTransformations,
 		...config?.customTransformations,
 	};
-	const formatting = config?.rootFormatting;
 	return {
 		headingLevel,
 		transformations,
 		logger: config?.logger ?? defaultConsoleLogger,
-		...formatting,
 	};
 }

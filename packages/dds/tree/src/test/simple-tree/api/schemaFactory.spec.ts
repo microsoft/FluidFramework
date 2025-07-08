@@ -699,6 +699,73 @@ describe("schemaFactory", () => {
 		});
 	});
 
+	describe("Record", () => {
+		it("Structural", () => {
+			const factory = new SchemaFactoryAlpha("test");
+
+			// Explicit structural example
+			const MyRecord = factory.record(factory.number);
+			type MyRecord = NodeFromSchema<typeof MyRecord>;
+
+			// Inline structural example
+			factory.object("Foo", { myMap: factory.record(factory.number) });
+
+			function broken() {
+				// @ts-expect-error structural map schema are not typed as classes.
+				class NotAClass extends factory.record(factory.number) {}
+			}
+		});
+
+		it("Named", () => {
+			const factory = new SchemaFactoryAlpha("test");
+			class NamedRecord extends factory.record("name", factory.number) {}
+
+			// Due to missing unhydrated map support, make a wrapper object
+			class Parent extends factory.object("parent", { child: NamedRecord }) {}
+
+			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the map node:
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
+			const view = getView(treeConfiguration);
+			view.initialize(new Parent({ child: { x: 5 } }));
+
+			const recordNode = view.root.child;
+			assert(recordNode instanceof NamedRecord);
+			assert(isTreeNode(recordNode));
+
+			// Test record property access
+			assert.equal(recordNode.x, 5);
+			recordNode.x = 42;
+			assert.equal(recordNode.x, 42);
+		});
+
+		it("Unhydrated", () => {
+			const factory = new SchemaFactoryAlpha("test");
+			class NamedRecord extends factory.record("name", factory.number) {}
+			const namedInstance = new NamedRecord({ x: 5 });
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "A map of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.recordAlpha("Foo", factory.number, {
+				metadata: fooMetadata,
+			}) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
+	});
+
 	describe("produces proxies that can be read after insertion for trees of", () => {
 		// This suite ensures that proxies created via `new X(...)` are "hydrated" after they are inserted into the tree.
 		// After insertion, each of those proxies should be the same object as the corresponding proxy in the tree.

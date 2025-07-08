@@ -48,9 +48,9 @@ export interface IPendingMessage {
 	content: string;
 	/**
 	 * The original runtime op that was submitted to the ContainerRuntime
-	 * Unless this pending message came from stashed content, in which case this was roundtripped through string
+	 * Unless this pending message came from stashed content, in which case this is undefined at first and then deserialized from the contents string
 	 */
-	runtimeOp?: LocalContainerRuntimeMessage | EmptyGroupedBatch | undefined; // Undefined for initial messages before parsing
+	runtimeOp: LocalContainerRuntimeMessage | EmptyGroupedBatch | undefined; // Undefined for initial messages before parsing
 	/**
 	 * Local Op Metadata that was passed to the ContainerRuntime when the op was submitted.
 	 * This contains state needed when processing the ack, or to resubmit or rollback the op.
@@ -234,10 +234,11 @@ function toSerializableForm(
 
 interface ReplayPendingStateOptions {
 	/**
-	 * If true, only replay staged batches. This is used when we are exiting staging mode and want to rebase and submit the staged batches.
+	 * If true, only replay staged batches, clearing the "staged" flag.
+	 * This is used when we are exiting staging mode and want to rebase and submit the staged batches without resubmitting pre-staged messages.
 	 * Default: false
 	 */
-	onlyStagedBatches: boolean;
+	committingStagedBatches: boolean;
 	/**
 	 * @param squash - If true, edits should be squashed when resubmitting.
 	 * Default: false
@@ -246,7 +247,7 @@ interface ReplayPendingStateOptions {
 }
 
 const defaultReplayPendingStatesOptions: ReplayPendingStateOptions = {
-	onlyStagedBatches: false,
+	committingStagedBatches: false,
 	squash: false,
 };
 
@@ -300,8 +301,8 @@ export class PendingStateManager implements IDisposable {
 		for (let i = 0; i < this.pendingMessages.length; i++) {
 			const element = this.pendingMessages.get(i);
 			if (
-				element?.runtimeOp !== undefined &&
-				isNotEmptyGroupedBatch(element) &&
+				element !== undefined &&
+				hasTypicalRuntimeOp(element) && // Empty batches don't count towards user changes
 				isContainerMessageDirtyable(element.runtimeOp)
 			) {
 				return true;
@@ -742,16 +743,18 @@ export class PendingStateManager implements IDisposable {
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
 	 */
-	public replayPendingStates(optionsParam?: ReplayPendingStateOptions): void {
-		const options = { ...defaultReplayPendingStatesOptions, ...optionsParam };
-		const { onlyStagedBatches, squash } = options;
+	public replayPendingStates(options?: ReplayPendingStateOptions): void {
+		const { committingStagedBatches, squash } = {
+			...defaultReplayPendingStatesOptions,
+			...options,
+		};
 		assert(
-			this.stateHandler.connected() || onlyStagedBatches === true,
+			this.stateHandler.connected() || committingStagedBatches === true,
 			0x172 /* "The connection state is not consistent with the runtime" */,
 		);
 
 		// Staged batches have not yet been submitted so check doesn't apply
-		if (!onlyStagedBatches) {
+		if (!committingStagedBatches) {
 			// This assert suggests we are about to send same ops twice, which will result in data loss.
 			assert(
 				this.clientIdFromLastReplay !== this.stateHandler.clientId(),
@@ -778,8 +781,8 @@ export class PendingStateManager implements IDisposable {
 			let pendingMessage = this.pendingMessages.shift()!;
 			remainingPendingMessagesCount--;
 
-			// Re-queue pre-staging messages if we are only processing staged batches
-			if (onlyStagedBatches) {
+			// Re-queue pre-staging messages - we are only to replay staged batches
+			if (committingStagedBatches) {
 				if (!pendingMessage.batchInfo.staged) {
 					assert(!seenStagedBatch, 0xb86 /* Staged batch was followed by non-staged batch */);
 					this.pendingMessages.push(pendingMessage);
@@ -807,8 +810,8 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			assert(
-				pendingMessage.runtimeOp !== undefined && isNotEmptyGroupedBatch(pendingMessage),
-				0xb87 /* viableOp is only undefined for empty batches */,
+				hasTypicalRuntimeOp(pendingMessage),
+				0xb87 /* runtimeOp is only undefined for empty batches */,
 			);
 
 			/**
@@ -843,8 +846,8 @@ export class PendingStateManager implements IDisposable {
 			// check is >= because batch end may be last pending message
 			while (remainingPendingMessagesCount >= 0) {
 				assert(
-					pendingMessage.runtimeOp !== undefined && isNotEmptyGroupedBatch(pendingMessage),
-					0xb88 /* viableOp is only undefined for empty batches */,
+					hasTypicalRuntimeOp(pendingMessage),
+					0xb88 /* runtimeOp is only undefined for empty batches */,
 				);
 				batch.push({
 					runtimeOp: pendingMessage.runtimeOp,
@@ -890,15 +893,17 @@ export class PendingStateManager implements IDisposable {
 	 */
 	public popStagedBatches(
 		callback: (
-			stagedMessage: IPendingMessage & { runtimeOp?: LocalContainerRuntimeMessage }, // exclude empty grouped batches
+			// callback will only be given staged messages with a valid runtime op (i.e. not empty batch and not an initial message with only serialized content)
+			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
 	): void {
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
 			if (stagedMessage?.batchInfo.staged === true) {
-				if (isNotEmptyGroupedBatch(stagedMessage)) {
+				this.pendingMessages.pop();
+
+				if (hasTypicalRuntimeOp(stagedMessage)) {
 					callback(stagedMessage);
-					this.pendingMessages.pop();
 				}
 			} else {
 				break; // no more staged messages
@@ -924,7 +929,10 @@ function patchbatchInfo(
 	}
 }
 
-function isNotEmptyGroupedBatch(
+/**
+ * This filters out messages that are not "typical" runtime ops, i.e. empty batches or initial messages (which only have serialized content).
+ */
+function hasTypicalRuntimeOp(
 	message: IPendingMessage,
 ): message is IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage } {
 	return message.runtimeOp !== undefined && message.runtimeOp.type !== "groupedBatch";

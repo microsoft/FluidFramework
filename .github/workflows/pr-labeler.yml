@@ -5,10 +5,12 @@ on:
     branches: [main, next, release/**/*]
 
 permissions:
-  pull-requests: write
+  contents: read  # for actions/labeler to determine modified files
 
 jobs:
   areas_label:
+    permissions:
+      pull-requests: write  # for actions/labeler to add labels to PRs
     runs-on: ubuntu-latest
     name: Label areas
     # Skip labeling main-next merge PRs. The area labels are noisy and distracting for main-next PRs because they can
@@ -27,6 +29,8 @@ jobs:
   # Changes to some paths should automatically add the changeset-required label. This label is often added manually, so
   # this CI job calls the labeler action wuth sync-labels=false, so the label won't be removed automatically.
   changesets_label:
+    permissions:
+      pull-requests: write  # for actions/labeler to add labels to PRs
     runs-on: ubuntu-latest
     name: Label changeset-required
     steps:
@@ -36,6 +40,8 @@ jobs:
           repo-token: "${{ github.token }}"
           sync-labels: false # The changeset-required label is often added manually, so don't remove it.
   branches_label:
+    permissions:
+      pull-requests: write  # for actions/labeler to add labels to PRs
     runs-on: ubuntu-latest
     name: Label base branches and external contributors
     steps:

@@ -60,7 +60,7 @@ declare type current_as_old_for_Class_Buffer = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "Class_Deferred": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Deferred = requireAssignableTo<TypeOnly<old.Deferred<any>>, TypeOnly<current.Deferred<any>>>
+declare type old_as_current_for_Class_Deferred = requireAssignableTo<TypeOnly<old.Deferred<never>>, TypeOnly<current.Deferred<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -69,7 +69,7 @@ declare type old_as_current_for_Class_Deferred = requireAssignableTo<TypeOnly<ol
  * typeValidation.broken:
  * "Class_Deferred": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Deferred = requireAssignableTo<TypeOnly<current.Deferred<any>>, TypeOnly<old.Deferred<any>>>
+declare type current_as_old_for_Class_Deferred = requireAssignableTo<TypeOnly<current.Deferred<never>>, TypeOnly<old.Deferred<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -98,7 +98,7 @@ declare type current_as_old_for_Class_EventForwarder = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_Heap": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Heap = requireAssignableTo<TypeOnly<old.Heap<any>>, TypeOnly<current.Heap<any>>>
+declare type old_as_current_for_Class_Heap = requireAssignableTo<TypeOnly<old.Heap<never>>, TypeOnly<current.Heap<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -107,7 +107,7 @@ declare type old_as_current_for_Class_Heap = requireAssignableTo<TypeOnly<old.He
  * typeValidation.broken:
  * "Class_Heap": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Heap = requireAssignableTo<TypeOnly<current.Heap<any>>, TypeOnly<old.Heap<any>>>
+declare type current_as_old_for_Class_Heap = requireAssignableTo<TypeOnly<current.Heap<never>>, TypeOnly<old.Heap<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -116,7 +116,7 @@ declare type current_as_old_for_Class_Heap = requireAssignableTo<TypeOnly<curren
  * typeValidation.broken:
  * "Class_Lazy": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_Lazy = requireAssignableTo<TypeOnly<old.Lazy<any>>, TypeOnly<current.Lazy<any>>>
+declare type old_as_current_for_Class_Lazy = requireAssignableTo<TypeOnly<old.Lazy<never>>, TypeOnly<current.Lazy<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -125,7 +125,7 @@ declare type old_as_current_for_Class_Lazy = requireAssignableTo<TypeOnly<old.La
  * typeValidation.broken:
  * "Class_Lazy": {"backCompat": false}
  */
-declare type current_as_old_for_Class_Lazy = requireAssignableTo<TypeOnly<current.Lazy<any>>, TypeOnly<old.Lazy<any>>>
+declare type current_as_old_for_Class_Lazy = requireAssignableTo<TypeOnly<current.Lazy<never>>, TypeOnly<old.Lazy<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -134,7 +134,7 @@ declare type current_as_old_for_Class_Lazy = requireAssignableTo<TypeOnly<curren
  * typeValidation.broken:
  * "Class_LazyPromise": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<TypeOnly<old.LazyPromise<any>>, TypeOnly<current.LazyPromise<any>>>
+declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<TypeOnly<old.LazyPromise<never>>, TypeOnly<current.LazyPromise<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -143,7 +143,7 @@ declare type old_as_current_for_Class_LazyPromise = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_LazyPromise": {"backCompat": false}
  */
-declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<TypeOnly<current.LazyPromise<any>>, TypeOnly<old.LazyPromise<any>>>
+declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<TypeOnly<current.LazyPromise<never>>, TypeOnly<old.LazyPromise<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -152,7 +152,7 @@ declare type current_as_old_for_Class_LazyPromise = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Class_PromiseCache": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<TypeOnly<old.PromiseCache<any,any>>, TypeOnly<current.PromiseCache<any,any>>>
+declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<TypeOnly<old.PromiseCache<never,never>>, TypeOnly<current.PromiseCache<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -161,7 +161,7 @@ declare type old_as_current_for_Class_PromiseCache = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_PromiseCache": {"backCompat": false}
  */
-declare type current_as_old_for_Class_PromiseCache = requireAssignableTo<TypeOnly<current.PromiseCache<any,any>>, TypeOnly<old.PromiseCache<any,any>>>
+declare type current_as_old_for_Class_PromiseCache = requireAssignableTo<TypeOnly<current.PromiseCache<never,never>>, TypeOnly<old.PromiseCache<never,never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -280,7 +280,7 @@ declare type current_as_old_for_Class_Trace = requireAssignableTo<TypeOnly<curre
  * typeValidation.broken:
  * "Class_TypedEventEmitter": {"forwardCompat": false}
  */
-declare type old_as_current_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<old.TypedEventEmitter<any>>, TypeOnly<current.TypedEventEmitter<any>>>
+declare type old_as_current_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<old.TypedEventEmitter<never>>, TypeOnly<current.TypedEventEmitter<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -289,7 +289,7 @@ declare type old_as_current_for_Class_TypedEventEmitter = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_TypedEventEmitter": {"backCompat": false}
  */
-declare type current_as_old_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<current.TypedEventEmitter<any>>, TypeOnly<old.TypedEventEmitter<any>>>
+declare type current_as_old_for_Class_TypedEventEmitter = requireAssignableTo<TypeOnly<current.TypedEventEmitter<never>>, TypeOnly<old.TypedEventEmitter<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -526,7 +526,7 @@ declare type current_as_old_for_Function_unreachableCase = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IComparer": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IComparer = requireAssignableTo<TypeOnly<old.IComparer<any>>, TypeOnly<current.IComparer<any>>>
+declare type old_as_current_for_Interface_IComparer = requireAssignableTo<TypeOnly<old.IComparer<never>>, TypeOnly<current.IComparer<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -535,7 +535,7 @@ declare type old_as_current_for_Interface_IComparer = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IComparer": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IComparer = requireAssignableTo<TypeOnly<current.IComparer<any>>, TypeOnly<old.IComparer<any>>>
+declare type current_as_old_for_Interface_IComparer = requireAssignableTo<TypeOnly<current.IComparer<never>>, TypeOnly<old.IComparer<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -544,7 +544,7 @@ declare type current_as_old_for_Interface_IComparer = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IHeapNode": {"forwardCompat": false}
  */
-declare type old_as_current_for_Interface_IHeapNode = requireAssignableTo<TypeOnly<old.IHeapNode<any>>, TypeOnly<current.IHeapNode<any>>>
+declare type old_as_current_for_Interface_IHeapNode = requireAssignableTo<TypeOnly<old.IHeapNode<never>>, TypeOnly<current.IHeapNode<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -553,7 +553,7 @@ declare type old_as_current_for_Interface_IHeapNode = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IHeapNode": {"backCompat": false}
  */
-declare type current_as_old_for_Interface_IHeapNode = requireAssignableTo<TypeOnly<current.IHeapNode<any>>, TypeOnly<old.IHeapNode<any>>>
+declare type current_as_old_for_Interface_IHeapNode = requireAssignableTo<TypeOnly<current.IHeapNode<never>>, TypeOnly<old.IHeapNode<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -760,7 +760,7 @@ declare type current_as_old_for_TypeAlias_PromiseCacheExpiry = requireAssignable
  * typeValidation.broken:
  * "TypeAlias_TypedEventTransform": {"forwardCompat": false}
  */
-declare type old_as_current_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<old.TypedEventTransform<any,any>>, TypeOnly<current.TypedEventTransform<any,any>>>
+declare type old_as_current_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<old.TypedEventTransform<never,never>>, TypeOnly<current.TypedEventTransform<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -769,7 +769,7 @@ declare type old_as_current_for_TypeAlias_TypedEventTransform = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_TypedEventTransform": {"backCompat": false}
  */
-declare type current_as_old_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<current.TypedEventTransform<any,any>>, TypeOnly<old.TypedEventTransform<any,any>>>
+declare type current_as_old_for_TypeAlias_TypedEventTransform = requireAssignableTo<TypeOnly<current.TypedEventTransform<never,never>>, TypeOnly<old.TypedEventTransform<never,never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

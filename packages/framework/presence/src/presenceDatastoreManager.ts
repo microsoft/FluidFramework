@@ -10,7 +10,14 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
+import type {
+	IEphemeralRuntime,
+	PostUpdateAction,
+	ValidatableOptionalState,
+	ValidatableValueDirectory,
+	ValidatableValueStructure,
+} from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
@@ -29,6 +36,7 @@ import {
 	mergeValueDirectory,
 } from "./presenceStates.js";
 import type {
+	DatastoreMessageContent,
 	GeneralDatastoreMessageContent,
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
@@ -58,6 +66,10 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	internal: PresenceStatesInternal;
 }
 
+/**
+ * Datastore structure used for broadcasting to other clients.
+ * Validation metadata is stripped before transmission.
+ */
 type PresenceDatastore = SystemDatastore & {
 	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
@@ -76,6 +88,19 @@ function isPresenceMessage(
 	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
 	return knownMessageTypes.has(message.type);
+}
+
+/**
+ * Type guard to check if a value hierarchy object is a directory (has "items"
+ * property).
+ *
+ * @param obj - The object to check
+ * @returns True if the object is a {@link ValidatableValueDirectory}
+ */
+export function isValueDirectory<T>(
+	obj: ValidatableValueDirectory<T> | ValidatableOptionalState<T>,
+): obj is ValidatableValueDirectory<T> {
+	return "items" in obj;
 }
 
 /**
@@ -176,7 +201,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 				updateProviders,
 			},
 		});
@@ -329,6 +354,76 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
+	/**
+	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
+	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
+	 */
+	private stripValidationMetadata(datastore: PresenceDatastore): DatastoreMessageContent {
+		const messageContent: DatastoreMessageContent = {
+			["system:presence"]: datastore["system:presence"],
+		};
+
+		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
+			// System workspace has no validation metadata and is already
+			// set in messageContent; so, it can be skipped.
+			if (workspaceAddress === "system:presence") continue;
+
+			const workspaceData: GeneralDatastoreMessageContent[typeof workspaceAddress] = {};
+
+			for (const [stateName, clientRecord] of objectEntries(workspace)) {
+				const cleanClientRecord: GeneralDatastoreMessageContent[typeof workspaceAddress][typeof stateName] =
+					{};
+
+				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
+					cleanClientRecord[attendeeId] = this.stripValidationFromValueData(valueData);
+				}
+
+				workspaceData[stateName] = cleanClientRecord;
+			}
+
+			messageContent[workspaceAddress] = workspaceData;
+		}
+
+		return messageContent;
+	}
+
+	/**
+	 * Strips validation metadata from individual value data entries.
+	 */
+	private stripValidationFromValueData<
+		T extends
+			| InternalTypes.ValueDirectory<unknown>
+			| InternalTypes.ValueRequiredState<unknown>
+			| InternalTypes.ValueOptionalState<unknown>,
+	>(valueDataIn: ValidatableValueStructure<T>): T {
+		// Clone the input object since we may mutate it
+		const valueData = { ...valueDataIn };
+
+		// Handle directory structures (with "items" property)
+		if (isValueDirectory(valueData)) {
+			for (const [key, item] of Object.entries(valueData.items)) {
+				valueData.items[key] = this.stripValidationFromValueData(item);
+			}
+
+			// This `satisfies` test is rather weak while ValidatableValueDirectory
+			// only has optional properties over InternalTypes.ValueDirectory and
+			// thus readily does satisfy. If `validatedValue?: never` is uncommented
+			// in Value*State then this will fail.
+			valueData satisfies InternalTypes.ValueDirectory<unknown>;
+			return valueData as T;
+		}
+
+		delete valueData.validatedValue;
+		// This `satisfies` test is rather weak while Validatable*State
+		// only has optional properties over InternalTypes.Value*State and
+		// thus readily does satisfy. If `validatedValue?: never` is uncommented
+		// in Value*State then this will fail.
+		valueData satisfies
+			| InternalTypes.ValueRequiredState<unknown>
+			| InternalTypes.ValueOptionalState<unknown>;
+		return valueData as T;
+	}
+
 	private broadcastAllKnownState(): void {
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
@@ -336,7 +431,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 			},
 		});
 		this.refreshBroadcastRequested = false;

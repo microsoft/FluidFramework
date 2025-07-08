@@ -22,9 +22,10 @@ export {
 	Loader,
 } from "./loader.js";
 export {
-	driverSupportRequirements,
+	driverSupportRequirementsForLoader,
 	loaderCoreCompatDetails,
-	runtimeSupportRequirements,
+	runtimeSupportRequirementsForLoader,
+	loaderCompatDetailsForRuntime,
 } from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {

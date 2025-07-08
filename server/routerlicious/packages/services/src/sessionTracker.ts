@@ -227,32 +227,30 @@ export class CollaborationSessionTracker implements ICollaborationSessionTracker
 	}
 
 	private async pruneInactiveSessionsCore(): Promise<void> {
-		const allSessions = await this.sessionManager.getAllSessions();
 		// Add a buffer to the session activity timeout to prevent pruning sessions that are already
 		// being closed or have just been closed normally.
 		const inactiveSessionPruningBuffer = Math.round(0.1 * this.sessionActivityTimeoutMs);
-		const inactiveSessionsToPrune = allSessions.filter((session) =>
-			this.isSessionExpired(session, inactiveSessionPruningBuffer),
-		);
-		const clientSessionTimeoutPs: Promise<void>[] = inactiveSessionsToPrune.map(
-			async (session) =>
-				// Depending on how frequently pruning occurs, this could cause the session's
-				// telemetry to indicate the session's duration was longer than it actually was.
-				// However, we can ignore that because it is technically correct that the session
-				// was tracked as "active" for that duration. We log lastClientLeaveTime in the
-				// telemetry so that the actual end time is known.
-				this.handleClientSessionTimeout(session, "pruning").catch((error) => {
-					Lumberjack.error(
-						"Failed to cleanup session on timeout detected by pruning",
-						{
-							...getLumberBaseProperties(session.documentId, session.tenantId),
-							...session.telemetryProperties,
-						},
-						error,
-					);
-				}),
-		);
-		await Promise.all(clientSessionTimeoutPs);
+		await this.sessionManager.iterateAllSessions(async (session: ICollaborationSession) => {
+			if (!this.isSessionExpired(session, inactiveSessionPruningBuffer)) {
+				// Session is not expired, so we don't need to prune it
+				return;
+			}
+			// Depending on how frequently pruning occurs, this could cause the session's
+			// telemetry to indicate the session's duration was longer than it actually was.
+			// However, we can ignore that because it is technically correct that the session
+			// was tracked as "active" for that duration. We log lastClientLeaveTime in the
+			// telemetry so that the actual end time is known.
+			return this.handleClientSessionTimeout(session, "pruning").catch((error) => {
+				Lumberjack.error(
+					"Failed to cleanup session on timeout detected by pruning",
+					{
+						...getLumberBaseProperties(session.documentId, session.tenantId),
+						...session.telemetryProperties,
+					},
+					error,
+				);
+			});
+		});
 	}
 
 	private async getSessionAndClients(

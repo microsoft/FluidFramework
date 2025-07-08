@@ -1,6 +1,6 @@
 {
 	"extends": "./tsconfig.main.cjs.json",
-	"include": ["src/experimentalAccess.ts", "src/index.ts"],
+	"include": ["src/getPresence.ts", "src/index.ts"],
 	"exclude": [],
 	"compilerOptions": {
 		// Could alternatively build with exactOptionalPropertyTypes: false. See tsconfig.json.

@@ -65,8 +65,6 @@ export interface ChangeAtomId {
 
 export type EncodedChangeAtomId = [ChangesetLocalId, EncodedRevisionTag] | ChangesetLocalId;
 
-/**
- */
 export type ChangeAtomIdMap<T> = NestedMap<RevisionTag | undefined, ChangesetLocalId, T>;
 
 /**

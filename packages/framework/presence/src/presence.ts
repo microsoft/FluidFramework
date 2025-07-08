@@ -161,7 +161,9 @@ export interface PresenceEvents {
 }
 
 /**
- * Presence represents known clients within a session and their custom states.
+ * Provides top-level access to Presence feature set including known
+ * {@link Attendee}s within a session and their custom states kept
+ * under {@link StatesWorkspace}s.
  *
  * @sealed
  * @beta
@@ -172,6 +174,15 @@ export interface Presence {
 	 */
 	readonly events: Listenable<PresenceEvents>;
 
+	/**
+	 * Container-wide {@link Attendee} information and event provider.
+	 *
+	 * @remarks
+	 * This provides access to all {@link Attendee}s in the session, including
+	 * the current client. As {@link StatesWorkspace} aren't required to be
+	 * uniform across an application, some {@link Attendee}s may be enumerated
+	 * here while not being present in any particular {@link StatesWorkspace}.
+	 */
 	readonly attendees: {
 		/**
 		 * Events for {@link Attendee}s.
@@ -202,6 +213,10 @@ export interface Presence {
 		getMyself(): Attendee;
 	};
 
+	/**
+	 * Provides access to {@link StatesWorkspace}s that allow clients to
+	 * manage custom states.
+	 */
 	readonly states: {
 		/**
 		 * Acquires a {@link StatesWorkspace} from store or adds new one.
@@ -220,7 +235,10 @@ export interface Presence {
 }
 
 /**
- * Presence represents known clients within a session and their custom states and notifications.
+ * Provides top-level access to Presence feature set including known
+ * {@link Attendee}s within a session and their custom states and
+ * notifications kept under {@link StatesWorkspace}s and
+ * {@link NotificationsWorkspace}s.
  *
  * @remarks
  * To access this alpha API, cast any `{@link Presence}` to `PresenceWithNotifications`.

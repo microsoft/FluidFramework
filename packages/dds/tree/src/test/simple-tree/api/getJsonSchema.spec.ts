@@ -219,6 +219,62 @@ describe("getJsonSchema", () => {
 		);
 	});
 
+	it("Record schema", () => {
+		const schemaFactory = new SchemaFactoryAlpha("test");
+		const Schema = schemaFactory.recordAlpha("record", schemaFactory.string, {
+			metadata: {
+				description: "A record containing strings",
+			},
+		});
+
+		const actual = getJsonSchema(Schema, {
+			useStoredKeys: false,
+			requireFieldsWithDefaults: true,
+		});
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.record": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Record,
+					description: "A record containing strings",
+					patternProperties: {
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+				},
+				"com.fluidframework.leaf.string": {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.record",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator(hydrate(Schema, { foo: "Hello", bar: "World" }), true);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator("Hello world", false);
+		validator([], false);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
 	it("Object schema", () => {
 		const schemaFactory = new SchemaFactoryAlpha("test");
 		const Schema = schemaFactory.objectAlpha(

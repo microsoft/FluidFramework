@@ -10,7 +10,7 @@ import type {
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import type { NormalizedAnnotatedAllowedTypes, TreeNodeSchema } from "./treeNodeSchema.js";
 import { walkAllowedTypes } from "./walkSchema.js";
 
 /**
@@ -52,7 +52,7 @@ export class Context {
 	 * Since this walks the schema, it must not be invoked during schema declaration or schema forward references could fail to be resolved.
 	 */
 	public constructor(
-		rootSchema: Iterable<TreeNodeSchema>,
+		rootSchema: NormalizedAnnotatedAllowedTypes,
 		public readonly flexContext: FlexTreeContext,
 	) {
 		const schema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
@@ -71,7 +71,7 @@ export class Context {
  */
 export class HydratedContext extends Context {
 	public constructor(
-		rootSchema: Iterable<TreeNodeSchema>,
+		rootSchema: NormalizedAnnotatedAllowedTypes,
 		public override readonly flexContext: FlexTreeHydratedContext,
 	) {
 		super(rootSchema, flexContext);

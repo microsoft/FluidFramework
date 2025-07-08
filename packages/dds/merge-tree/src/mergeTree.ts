@@ -6,12 +6,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-bitwise */
 
-import { assert, Heap, IComparer } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	Heap,
+	IComparer,
+	DoublyLinkedList,
+	ListNode,
+} from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { IAttributionCollectionSerializer } from "./attributionCollection.js";
 import { Client } from "./client.js";
-import { DoublyLinkedList, ListNode } from "./collections/index.js";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
@@ -395,7 +400,7 @@ function getSlideToSegment(
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective,
 	cache?: Map<ISegmentLeaf, { seg?: ISegmentLeaf }>,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 ): [ISegmentLeaf | undefined, "start" | "end" | undefined] {
 	if (
 		!segment ||
@@ -443,7 +448,7 @@ function getSlideToSegment(
 	//
 	// in both of these cases detached may be substituted for one of the special
 	// endpoint segments, if such behavior is enabled
-	if (!useNewSlidingBehavior) {
+	if (!canSlideToEndpoint) {
 		if (slidingPreference === SlidingPreference.BACKWARD) {
 			forwardExcursion(segment, goFurtherToFindSlideToSegment);
 		} else {
@@ -472,7 +477,7 @@ export function getSlideToSegoff(
 	segoff: { segment: ISegmentInternal; offset: number } | undefined,
 	slidingPreference: SlidingPreference = SlidingPreference.FORWARD,
 	perspective: Perspective = allAckedChangesPerspective,
-	useNewSlidingBehavior: boolean = false,
+	canSlideToEndpoint: boolean = false,
 ):
 	| {
 			segment: ISegmentInternal;
@@ -487,7 +492,7 @@ export function getSlideToSegoff(
 		slidingPreference,
 		perspective,
 		undefined,
-		useNewSlidingBehavior,
+		canSlideToEndpoint,
 	);
 	if (segment === segoff.segment) {
 		return segoff;
