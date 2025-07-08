@@ -571,7 +571,7 @@ stages:
                 exit 1;
               fi
           env:
-            FLUID_TEST_LOGGER_PKG_PATH: ${{ variables.testWorkspace }}/node_modules/@ff-internal/aria-logger # Contains getTestLogger impl to inject
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger' # Contains createTestLogger impl to inject
             FLUID_BUILD_ID: $(Build.BuildId)
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
             FLUID_LOGGER_PROPS: '{ "hostName": "Benchmark", "displayName": "${{variables.pipelineIdentifierForTelemetry}}" }'
