@@ -132,13 +132,14 @@ async function setup(): Promise<void> {
 	if (createNew) {
 		window.location.hash = Date.now().toString();
 	}
-	const containerId = window.location.hash.substring(1);
+	const containerId = window.location.hash.slice(1);
 
 	const leftElement = document.querySelector("#sbs-left");
 	if (!leftElement) {
 		throw new Error("sbs-left does not exist");
 	}
 	await createContainerAndRenderInElement(containerId, leftElement, createNew);
+
 	const rightElement = document.querySelector("#sbs-right");
 	if (!rightElement) {
 		throw new Error("sbs-right does not exist");
