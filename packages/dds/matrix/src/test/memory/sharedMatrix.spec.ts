@@ -16,6 +16,12 @@ import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 import { createLocalMatrix } from "../utils.js";
 
 /**
+ * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
+ * If you modify or add tests here, consider updating the corresponding SharedTree benchmarks as well
+ * to ensure consistency and comparability between the two implementations.
+ */
+
+/**
  * Creates a benchmark for undo operations on a SharedMatrix.
  */
 function createUndoBenchmark({
