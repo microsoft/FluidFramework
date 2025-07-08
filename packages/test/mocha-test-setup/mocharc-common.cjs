@@ -41,17 +41,6 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		return mod;
 	});
 
-	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
-		const modulePath = path.join(moduleDir, process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
-		// Inject implementation of createTestLogger, put it first before mocha-test-setup
-		if (existsSync(modulePath)) {
-			requiredModulePaths.unshift(modulePath);
-			process.stdout.write(`Using test logger from ${modulePath}\n`);
-		} else {
-			process.stdout.write(`Warning: Test logger package ${modulePath} was not found\n`);
-		}
-	}
-
 	const config = {
 		"recursive": true,
 		"require": requiredModulePaths,
