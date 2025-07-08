@@ -150,6 +150,7 @@ describe("schemaCreationUtilities", () => {
 		const f = schemaFactory.scopedFactory("Mode");
 
 		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
 
 		const ModeNodes = adaptEnum(f, Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
@@ -203,6 +204,7 @@ describe("schemaCreationUtilities", () => {
 		const f = schemaFactory.scopedFactory("Mode");
 
 		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
 
 		const ModeNodes = adaptEnum(f, Mode);
 
