@@ -454,7 +454,7 @@ export class MapKernel {
 		assert(
 			removedLocalOpMetadata !== undefined &&
 				removedLocalOpMetadata === listNodeLocalOpMetadata,
-			"Rolling back unexpected op",
+			0xbcb /* Rolling back unexpected op */,
 		);
 
 		if (mapOp.type === "clear" && listNodeLocalOpMetadata.data.type === "clear") {
@@ -628,7 +628,7 @@ export class MapKernel {
 					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						"Processing unexpected local clear op",
+						0xbcc /* Processing unexpected local clear op */,
 					);
 					assert(
 						isClearLocalOpMetadata(localOpMetadata.data),
@@ -649,7 +649,10 @@ export class MapKernel {
 			},
 			resubmit: (op: IMapClearOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
-				assert(removedLocalOpMetadata !== undefined, "Resubmitting unexpected local clear op");
+				assert(
+					removedLocalOpMetadata !== undefined,
+					0xbcd /* Resubmitting unexpected local clear op */,
+				);
 				assert(
 					isClearLocalOpMetadata(localOpMetadata.data),
 					0x2fc /* Invalid localOpMetadata for clear */,
@@ -673,7 +676,7 @@ export class MapKernel {
 					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						"Processing unexpected local delete op",
+						0xbce /* Processing unexpected local delete op */,
 					);
 				}
 				if (!this.needProcessKeyOperation(op, local, localOpMetadata?.data)) {
@@ -685,7 +688,7 @@ export class MapKernel {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
 				assert(
 					removedLocalOpMetadata !== undefined,
-					"Resubmitting unexpected local delete op",
+					0xbcf /* Resubmitting unexpected local delete op */,
 				);
 				this.resubmitMapKeyMessage(op, localOpMetadata.data);
 			},
@@ -700,7 +703,7 @@ export class MapKernel {
 					const removedLocalOpMetadata = this.pendingMapLocalOpMetadata.shift();
 					assert(
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						"Processing unexpected local set op",
+						0xbd0 /* Processing unexpected local set op */,
 					);
 				}
 				if (!this.needProcessKeyOperation(op, local, localOpMetadata?.data)) {
@@ -713,7 +716,10 @@ export class MapKernel {
 			},
 			resubmit: (op: IMapSetOperation, localOpMetadata: ListNode<MapLocalOpMetadata>) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
-				assert(removedLocalOpMetadata !== undefined, "Resubmitting unexpected local set op");
+				assert(
+					removedLocalOpMetadata !== undefined,
+					0xbd1 /* Resubmitting unexpected local set op */,
+				);
 				this.resubmitMapKeyMessage(op, localOpMetadata.data);
 			},
 		});

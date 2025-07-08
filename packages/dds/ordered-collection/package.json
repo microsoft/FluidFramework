@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/ordered-collection",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Consensus Collection",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -152,7 +152,23 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ConsensusOrderedCollection": {
+				"backCompat": false
+			},
+			"Class_ConsensusQueueClass": {
+				"backCompat": false
+			},
+			"ClassStatics_ConsensusOrderedCollection": {
+				"backCompat": false
+			},
+			"ClassStatics_ConsensusQueueClass": {
+				"backCompat": false
+			},
+			"TypeAlias_ConsensusQueue": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

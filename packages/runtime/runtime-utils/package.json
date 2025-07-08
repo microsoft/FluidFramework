@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/runtime-utils",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Collection of utility functions for Fluid Runtime",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -151,7 +151,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_FluidHandleBase": {
+				"backCompat": false
+			},
+			"ClassStatics_FluidHandleBase": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
