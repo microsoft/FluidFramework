@@ -42,7 +42,7 @@ describe("TelemetryView Accessibility Check", () => {
 		await assertNoAccessibilityViolations(container);
 	});
 
-	it.only("Can tab/arrow navigate through the TelemetryView", async () => {
+	it("Can tab/arrow navigate through the TelemetryView", async () => {
 		// Send a mock message so a telemetry event is received and the table is populated
 		mockMessageRelay.emit("message", {
 			type: "TELEMETRY_EVENT",
