@@ -197,7 +197,7 @@ export function enumEntries(
 		assert(typeof value === "string", "expected reverse mapping and thus a string value");
 		assert(
 			Number.parseFloat(key).toString() === key,
-			"expected reverse mapping and key is normalizes string version of a number",
+			"expected reverse mapping and thus a key that is a normalized number",
 		);
 		// Discard the reverse mapping.
 		return false;
