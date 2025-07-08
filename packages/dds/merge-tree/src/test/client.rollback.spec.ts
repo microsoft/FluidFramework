@@ -13,7 +13,7 @@ import {
 	SegmentGroup,
 	reservedMarkerIdKey,
 } from "../mergeTreeNodes.js";
-import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { MergeTreeDeltaType, ReferenceType, type IMergeTreeOp } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -651,5 +651,32 @@ describe("client.rollback", () => {
 		clients.A.rollback(delA, clients.A.peekPendingSegmentGroups());
 
 		logger.validate({ baseText: "0456789" });
+	});
+
+	it("should rollback group op after re-submit split", () => {
+		const clients = createClientsAtInitialState({ initialState: "" }, "A");
+		const logger = new TestClientLogger(clients.all);
+		const ops: [IMergeTreeOp, SegmentGroup | SegmentGroup[] | undefined][] = [];
+		ops.push([
+			clients.A.insertTextLocal(0, "0123456789")!,
+			clients.A.peekPendingSegmentGroups(),
+		]);
+		ops.push([clients.A.removeRangeLocal(3, 4)!, clients.A.peekPendingSegmentGroups()]);
+
+		for (const [op, md] of ops.splice(0)) {
+			const newOp = clients.A.regeneratePendingOp(op, md, false);
+			ops.push([
+				newOp,
+				clients.A.peekPendingSegmentGroups(
+					newOp.type === MergeTreeDeltaType.GROUP ? newOp.ops.length : 1,
+				),
+			]);
+		}
+
+		for (const [op, md] of ops.splice(0).reverse()) {
+			clients.A.rollback(op, md);
+		}
+
+		logger.validate({ baseText: "" });
 	});
 });
