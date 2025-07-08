@@ -849,11 +849,7 @@ export class MapKernel {
 
 				// TODO: How do I feel about mutating here?
 				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const localMetadata: PendingKeyChangeMetadata = {
-					...removedLocalOpMetadata,
-					pendingMessageId,
-				};
-				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+				const listNode = this.pendingLocalOpMetadata.push(removedLocalOpMetadata).first;
 
 				this.submitMessage(op, listNode);
 			},
@@ -916,11 +912,7 @@ export class MapKernel {
 
 				// TODO: How do I feel about mutating here?
 				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const localMetadata: PendingKeyChangeMetadata = {
-					...removedLocalOpMetadata,
-					pendingMessageId,
-				};
-				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+				const listNode = this.pendingLocalOpMetadata.push(removedLocalOpMetadata).first;
 
 				this.submitMessage(op, listNode);
 			},
