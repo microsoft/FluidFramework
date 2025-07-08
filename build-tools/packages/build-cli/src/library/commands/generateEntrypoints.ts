@@ -17,7 +17,6 @@ import { BaseCommand } from "./base.js";
 import { ApiLevel, isLegacy } from "../apiLevel.js";
 import type { ExportData, Node10CompatExportData } from "../packageExports.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import { ReleaseTag } from "../releaseTag.js";
 import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js";
 
 import { unscopedPackageNameString } from "./constants.js";
@@ -209,8 +208,8 @@ function getOutputConfiguration(
 	packageJson: PackageJson,
 	logger?: CommandLogger,
 ): {
-	mapQueryPathToApiTagLevel: Map<string | RegExp, ReleaseTag | undefined>;
-	mapApiTagLevelToOutput: Map<ReleaseTag, ExportData>;
+	mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined>;
+	mapApiTagLevelToOutput: Map<ApiLevel, ExportData>;
 	mapNode10CompatExportPathToData: Map<string, Node10CompatExportData>;
 } {
 	const {
@@ -226,13 +225,13 @@ function getOutputConfiguration(
 
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
-	const mapQueryPathToApiTagLevel: Map<string | RegExp, ReleaseTag | undefined> = new Map([
-		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ReleaseTag.alpha],
-		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ReleaseTag.beta],
-		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ReleaseTag.public],
-		[`${pathPrefix}${outFileLegacyAlpha}${outFileSuffix}`, ReleaseTag.alpha],
-		[`${pathPrefix}${outFileLegacyBeta}${outFileSuffix}`, ReleaseTag.beta],
-		[`${pathPrefix}${outFileLegacyPublic}${outFileSuffix}`, ReleaseTag.public],
+	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map([
+		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiLevel.alpha],
+		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiLevel.beta],
+		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiLevel.public],
+		[`${pathPrefix}${outFileLegacyAlpha}${outFileSuffix}`, ApiLevel.legacyAlpha],
+		[`${pathPrefix}${outFileLegacyBeta}${outFileSuffix}`, ApiLevel.legacyBeta],
+		[`${pathPrefix}${outFileLegacyPublic}${outFileSuffix}`, ApiLevel.legacyPublic],
 	]);
 
 	if (node10TypeCompat) {
