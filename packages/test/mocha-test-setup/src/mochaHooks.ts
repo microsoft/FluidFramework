@@ -97,7 +97,9 @@ export const mochaHooks = {
 		// through it. See the documentation on `FluidTestRunLogger` for details.
 		let originalLogger: ITelemetryBufferedLogger;
 		try {
-			const createTestLogger = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER ?? "");
+			const { createTestLogger } = await import(
+				process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER ?? ""
+			);
 			if (typeof createTestLogger !== "function") {
 				throw new TypeError(
 					`Expected the module at ${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER} to export a function, but got ${typeof createTestLogger}`,
