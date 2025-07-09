@@ -99,6 +99,11 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Events to unregister upon flex-tree view disposal.
 	 */
+	private readonly flexTreeViewUnregisterCallbacks = new Set<() => void>();
+
+	/**
+	 * Events to unregister upon disposal.
+	 */
 	private readonly unregisterCallbacks = new Set<() => void>();
 
 	public disposed = false;
@@ -320,7 +325,7 @@ export class SchematizingSimpleTreeView<
 			// As a workaround for the above, trigger "rootChanged" in "afterBatch"
 			// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
 			// TODO: provide a better event: this.view.flexTree.on(????)
-			this.unregisterCallbacks.add(
+			this.flexTreeViewUnregisterCallbacks.add(
 				this.checkout.events.on("afterBatch", () => {
 					// In the initialization flow, this event is raised before the correct compatibility w.r.t the new schema is calculated.
 					// Accessing `this.root` in that case can throw. It's OK to ignore this because:
@@ -345,24 +350,12 @@ export class SchematizingSimpleTreeView<
 					view,
 				),
 			);
-
-			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
-				assert(!this.disposed, "disposal should unsubscribe from events");
-				// Will dispose the old view
-				this.update();
-			});
-			this.unregisterCallbacks.add(unregister);
-		} else {
-			this.flexView = undefined;
-			slots.delete(SimpleContextSlot);
-
-			const unregister = this.checkout.storedSchema.events.on("afterSchemaChange", () => {
-				unregister();
-				this.unregisterCallbacks.delete(unregister);
-				this.update();
-			});
-			this.unregisterCallbacks.add(unregister);
 		}
+
+		this.flexTreeViewUnregisterCallbacks.add(
+			// Will dispose the old view (if there is one) when its no longer valid, and create a new one if appropriate.
+			this.checkout.storedSchema.events.on("afterSchemaChange", () => this.update()),
+		);
 
 		if (!this.midUpgrade) {
 			this.events.emit("schemaChanged");
@@ -391,8 +384,9 @@ export class SchematizingSimpleTreeView<
 
 			this.flexView[disposeSymbol]();
 			this.flexView = undefined;
-			this.unregisterCallbacks.forEach((unregister) => unregister());
 		}
+		this.flexTreeViewUnregisterCallbacks.forEach((unregister) => unregister());
+		this.flexTreeViewUnregisterCallbacks.clear();
 		anchors.slots.delete(SimpleContextSlot);
 	}
 
@@ -406,6 +400,7 @@ export class SchematizingSimpleTreeView<
 	public dispose(): void {
 		this.disposed = true;
 		this.disposeFlexView();
+		this.unregisterCallbacks.forEach((unregister) => unregister());
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
