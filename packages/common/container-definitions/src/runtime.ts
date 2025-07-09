@@ -157,6 +157,9 @@ export interface IContainerContext {
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
+	/**
+	 * @returns true if the container can send signals (loaded and connected to service), false otherwise.
+	 */
 	readonly canSendSignals?: boolean;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
