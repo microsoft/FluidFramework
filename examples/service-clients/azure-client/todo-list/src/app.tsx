@@ -44,11 +44,6 @@ async function start(): Promise<void> {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
 		({ container } = await client.createContainer(todoListContainerSchema, "2"));
-		// const map1 = container.initialObjects.map1 as ISharedMap;
-		// map1.set("diceValue", 1);
-		// const map2 = container.initialObjects.map1 as ISharedMap;
-		// map2.set("diceValue", 1);
-		// console.log(map1.get("diceValue"));
 		// Initialize our models so they are ready for use with our controllers
 		appModel = await initializeAppForNewContainer(container);
 

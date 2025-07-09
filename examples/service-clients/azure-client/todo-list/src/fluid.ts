@@ -103,7 +103,7 @@ export async function initializeAppForNewContainer(
 	const tree = container.initialObjects.todoList;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canInitialize) {
-		throw new Error("Expected container data to be compatible with Dice schema");
+		throw new Error("Expected container data to be compatible with TodoList schema");
 	}
 
 	const initialTodoList = await createInitialTodoList(container);
