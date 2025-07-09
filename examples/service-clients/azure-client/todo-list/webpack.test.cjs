@@ -10,7 +10,7 @@ const webpack = require("webpack");
 module.exports = (env) => {
 	return {
 		entry: {
-			app: "./tests/index.ts",
+			app: "./tests/index.tsx",
 		},
 		resolve: {
 			extensions: [".ts", ".tsx", ".js"],
@@ -23,6 +23,13 @@ module.exports = (env) => {
 				{
 					test: /\.tsx?$/,
 					loader: "ts-loader",
+				},
+				{
+					test: /\.css$/,
+					use: [
+						"style-loader", // creates style nodes from JS strings
+						"css-loader", // translates CSS into CommonJS
+					],
 				},
 			],
 		},

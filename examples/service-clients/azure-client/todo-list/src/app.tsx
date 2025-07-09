@@ -80,7 +80,8 @@ async function start(): Promise<void> {
 	});
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
-	contentDiv.append(ReactDOM.render(<TodoListView todoList={appModel} />));
+	const root = ReactDOM.createRoot(contentDiv);
+	root.render(<TodoListView todoList={appModel} />);
 }
 
 await start();

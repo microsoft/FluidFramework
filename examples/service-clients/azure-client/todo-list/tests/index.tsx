@@ -121,7 +121,9 @@ async function createContainerAndRenderInElement(
 		appModel = loadAppFromExistingContainer(fluidContainer);
 	}
 
-	element.append(ReactDOM.render(<TodoListView todoList={appModel} />, element));
+	const contentDiv = document.querySelector("#content") as HTMLDivElement;
+	const root = ReactDOM.createRoot(contentDiv);
+	root.render(<TodoListView todoList={appModel} />);
 }
 
 /**

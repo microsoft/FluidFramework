@@ -15,7 +15,7 @@ module.exports = (env) => {
 	return merge(
 		{
 			entry: {
-				app: "./src/app.ts",
+				app: "./src/app.tsx",
 			},
 			resolve: {
 				extensions: [".ts", ".tsx", ".js", ".cjs", ".mjs"],
@@ -31,6 +31,13 @@ module.exports = (env) => {
 					{
 						test: /\.tsx?$/,
 						loader: "ts-loader",
+					},
+					{
+						test: /\.css$/,
+						use: [
+							"style-loader", // creates style nodes from JS strings
+							"css-loader", // translates CSS into CommonJS
+						],
 					},
 					{
 						test: /\.m?js$/,
