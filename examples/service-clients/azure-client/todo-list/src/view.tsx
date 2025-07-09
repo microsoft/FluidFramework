@@ -55,9 +55,15 @@ const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => 
 	const todoListTitleHandle = todoList.title;
 
 	useEffect(() => {
-		Promise.resolve(todoListTitleHandle.get()).then((title) => {
-			setTitleString(title as ISharedString);
-		});
+		todoListTitleHandle
+			.get()
+			.then((title) => {
+				setTitleString(title as ISharedString);
+			})
+			.catch((error) => {
+				console.error("Failed to get TODO list title:", error);
+				throw error;
+			});
 		return () => {};
 	}, [todoListTitleHandle]);
 
@@ -84,7 +90,7 @@ const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => 
 				}
 			})
 			.catch((error) => {
-				console.error("Failed to create todo item:", error);
+				console.error("Failed to create TODO item:", error);
 				throw error;
 			});
 	};
@@ -141,16 +147,28 @@ const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => 
 
 	const todoItemTitleHandle = todoItem.title;
 	useEffect(() => {
-		todoItemTitleHandle.get().then((text) => {
-			setItemTitle(text as SharedString);
-		});
+		todoItemTitleHandle
+			.get()
+			.then((text) => {
+				setItemTitle(text as SharedString);
+			})
+			.catch((error) => {
+				console.error("Failed to get TODO item title:", error);
+				throw error;
+			});
 	}, [todoItemTitleHandle]);
 
 	const todoItemDescriptionHandle = todoItem.description;
 	useEffect(() => {
-		todoItemDescriptionHandle.get().then((text) => {
-			setItemDescription(text as SharedString);
-		});
+		todoItemDescriptionHandle
+			.get()
+			.then((text) => {
+				setItemDescription(text as SharedString);
+			})
+			.catch((error) => {
+				console.error("Failed to get TODO item description:", error);
+				throw error;
+			});
 	}, [todoItemDescriptionHandle]);
 
 	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
