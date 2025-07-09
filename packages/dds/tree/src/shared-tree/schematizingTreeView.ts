@@ -79,11 +79,11 @@ export class SchematizingSimpleTreeView<
 > implements TreeBranch, TreeViewAlpha<TRootSchema>, WithBreakable
 {
 	/**
-	 * The view is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
+	 * This is set to undefined when this object is disposed or the view schema does not support viewing the document's stored schema.
 	 *
 	 * The view schema may be incompatible with the stored schema. Use `compatibility` to check.
 	 */
-	private flexView: Context | undefined;
+	private flexTreeContext: Context | undefined;
 
 	/**
 	 * Undefined iff uninitialized or disposed.
@@ -207,7 +207,7 @@ export class SchematizingSimpleTreeView<
 
 		if (!compatibility.canUpgrade) {
 			throw new UsageError(
-				"Existing stored schema can not be upgraded (see TreeView.compatibility.canUpgrade).",
+				"Existing stored schema cannot be upgraded (see TreeView.compatibility.canUpgrade).",
 			);
 		}
 
@@ -218,12 +218,12 @@ export class SchematizingSimpleTreeView<
 	}
 
 	/**
-	 * Gets the view. Throws when disposed.
+	 * Gets the flex-tree context. Throws when disposed or out of schema.
 	 */
-	public getFlexView(): Context {
+	public getFlexTreeContext(): Context {
 		this.ensureUndisposed();
-		assert(this.flexView !== undefined, 0x8c0 /* unexpected getViewOrError */);
-		return this.flexView;
+		assert(this.flexTreeContext !== undefined, 0x8c0 /* unexpected getViewOrError */);
+		return this.flexTreeContext;
 	}
 
 	/**
@@ -309,7 +309,6 @@ export class SchematizingSimpleTreeView<
 
 		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
 
-		let lastRoot: ReadableField<TRootSchema> | undefined;
 		this.currentCompatibility = {
 			...compatibility,
 			canInitialize: canInitialize(this.checkout),
@@ -319,37 +318,45 @@ export class SchematizingSimpleTreeView<
 		const slots = anchors.slots;
 
 		if (compatibility.canView) {
-			// Trigger "rootChanged" if the root changes in the future.
-			// Currently there is no good way to do this as FlexTreeField has no events for changes.
-			// this.view.flexTree.on(????)
-			// As a workaround for the above, trigger "rootChanged" in "afterBatch"
-			// which isn't the correct time since we normally do events during the batch when the forest is modified, but its better than nothing.
-			// TODO: provide a better event: this.view.flexTree.on(????)
-			this.flexTreeViewUnregisterCallbacks.add(
-				this.checkout.events.on("afterBatch", () => {
-					// In the initialization flow, this event is raised before the correct compatibility w.r.t the new schema is calculated.
-					// Accessing `this.root` in that case can throw. It's OK to ignore this because:
-					// - The rootChanged event will already be raised at the end of the current upgrade
-					// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
-					//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
-					if (!this.midUpgrade && lastRoot !== this.root) {
-						lastRoot = this.root;
-						this.events.emit("rootChanged");
-					}
-				}),
+			this.flexTreeContext = new Context(
+				this.schemaPolicy,
+				this.checkout,
+				this.nodeKeyManager,
 			);
-
-			const view = new Context(this.schemaPolicy, this.checkout, this.nodeKeyManager);
-
-			this.flexView = view;
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
 			slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
 					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
-					view,
+					this.flexTreeContext,
 				),
 			);
+
+			// Trigger "rootChanged" events if the root changes in the future.
+			{
+				// Currently there is no good way to do this as FlexTreeField has no events for changes.
+				// this.root.on(????)
+				// As a workaround for the above, trigger "rootChanged" in "afterBatch".
+				// Ideally these events would be just events for changes within the root.
+				// TODO: provide a better event: this.view.flexTree.on(????) and/or integrate with with the normal event code paths.
+
+				// Track what the root was before to be able to detect changes.
+				let lastRoot: ReadableField<TRootSchema> = this.root;
+
+				this.flexTreeViewUnregisterCallbacks.add(
+					this.checkout.events.on("afterBatch", () => {
+						// In the initialization flow, this event is raised before the correct compatibility w.r.t the new schema is calculated.
+						// Accessing `this.root` in that case can throw. It's OK to ignore this because:
+						// - The rootChanged event will already be raised at the end of the current upgrade
+						// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
+						//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
+						if (!this.midUpgrade && lastRoot !== this.root) {
+							lastRoot = this.root;
+							this.events.emit("rootChanged");
+						}
+					}),
+				);
+			}
 		}
 
 		this.flexTreeViewUnregisterCallbacks.add(
@@ -376,14 +383,14 @@ export class SchematizingSimpleTreeView<
 
 	private disposeFlexView(): void {
 		const anchors = this.checkout.forest.anchors;
-		if (this.flexView !== undefined) {
+		if (this.flexTreeContext !== undefined) {
 			// Cleanup any TreeNodes cached in the AnchorSet when disposing the flex-tree which they wrap.
 			for (const anchorNode of anchors) {
 				tryDisposeTreeNode(anchorNode);
 			}
 
-			this.flexView[disposeSymbol]();
-			this.flexView = undefined;
+			this.flexTreeContext[disposeSymbol]();
+			this.flexTreeContext = undefined;
 		}
 		this.flexTreeViewUnregisterCallbacks.forEach((unregister) => unregister());
 		this.flexTreeViewUnregisterCallbacks.clear();
@@ -417,7 +424,7 @@ export class SchematizingSimpleTreeView<
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
 			);
 		}
-		const view = this.getFlexView();
+		const view = this.getFlexTreeContext();
 		return tryGetTreeNodeForField(view.root) as ReadableField<TRootSchema>;
 	}
 
@@ -428,7 +435,7 @@ export class SchematizingSimpleTreeView<
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
 			);
 		}
-		const view = this.getFlexView();
+		const view = this.getFlexTreeContext();
 		setField(view.root, this.rootFieldSchema, newRoot as InsertableContent | undefined);
 	}
 
