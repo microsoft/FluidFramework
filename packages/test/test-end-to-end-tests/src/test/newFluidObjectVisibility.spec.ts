@@ -11,10 +11,8 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
-	IContainerRuntime,
-	IContainerRuntimeWithResolveHandle_Deprecated,
-} from "@fluidframework/container-runtime-definitions/internal";
+import type { ContainerRuntime } from "@fluidframework/container-runtime/internal";
+import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { type FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
@@ -26,7 +24,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 async function resolveHandleWithoutWait(
-	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
+	containerRuntime: ContainerRuntime,
 	id: string,
 ): Promise<ITestDataObject> {
 	try {
@@ -48,7 +46,7 @@ async function resolveHandleWithoutWait(
  * Creates a non-root data object and validates that it is not visible from the root of the container.
  */
 async function createNonRootDataObject(
-	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
+	containerRuntime: ContainerRuntime,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
 	const dataObject = await getDataStoreEntryPointBackCompat<ITestDataObject>(dataStore);
@@ -65,7 +63,7 @@ async function createNonRootDataObject(
  * Creates a root data object and validates that it is visible from the root of the container.
  */
 async function createRootDataObject(
-	containerRuntime: IContainerRuntimeWithResolveHandle_Deprecated,
+	containerRuntime: ContainerRuntime,
 	rootDataStoreId: string,
 ): Promise<ITestDataObject> {
 	const dataStore = await containerRuntime.createDataStore(TestDataObjectType);
@@ -81,16 +79,18 @@ async function createRootDataObject(
 async function getAndValidateDataObject(
 	fromDataObject: ITestDataObject,
 	key: string,
+	detachedMode: TestMode,
 ): Promise<ITestDataObject> {
 	const dataObjectHandle = fromDataObject._root.get<IFluidHandle<ITestDataObject>>(key);
 	assert(dataObjectHandle !== undefined, `Data object handle for key ${key} not found`);
 	const dataObject = await dataObjectHandle.get();
-	const runtime = dataObject._context
-		.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
-	await assert.doesNotReject(
-		resolveHandleWithoutWait(runtime, dataObject._context.id),
-		`Data object for key ${key} must be visible`,
-	);
+	if (detachedMode !== "Detached") {
+		const runtime = dataObject._context.containerRuntime as ContainerRuntime;
+		await assert.doesNotReject(
+			resolveHandleWithoutWait(runtime, dataObject._context.id),
+			`Data object for key ${key} must be visible`,
+		);
+	}
 	return dataObject;
 }
 
@@ -119,32 +119,45 @@ async function getAliasedDataStoreBackCompat(
 }
 
 /**
+ * The mode in which to run the test.
+ * Attached mode:
+ * - The container is attached at the start of the test, therefore attaching the root data object as well.
+ * - A second container is loaded and the state of both containers is validated.
+ * Detached mode:
+ * - The container is created in detached mode, but attaches and validates its state.
+ * Rehydrate mode:
+ * - The container is created in detached mode and serializes and closes before a new container is loaded from the snapshot of the initial container.
+ * - The new container is attached and its state is validated.
+ */
+type TestMode = "Attached" | "Detached" | "Rehydrate";
+
+/**
  * These tests validate that new Fluid objects such as data stores and DDSes become visible correctly. For example,
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeCompat(
+describeCompat.only(
 	"New Fluid objects visibility",
-	"FullCompat",
+	// dont leave this
+	"NoCompat",
 	(getTestObjectProvider, { dds }) => {
 		const { SharedMap } = dds;
 		let provider: ITestObjectProvider;
 		let container1: IContainer;
-		let containerRuntime1: IContainerRuntimeWithResolveHandle_Deprecated;
+		let containerRuntime1: ContainerRuntime;
 		let dataObject1: ITestDataObject;
 
 		/**
-		 * If detachedMode is true, the test creates new data stores in detached container and validates their visibility.
-		 * If detachedMode is false, the tests creates new data stores in attached container and validates their visibility.
+		 * See {@link TestMode} for the description of the test modes.
 		 */
-		const tests = (detachedMode: boolean) => {
+		const tests = (detachedMode: TestMode) => {
 			beforeEach("setup", async function () {
 				provider = getTestObjectProvider();
 				if (provider.driver.type !== "local") {
 					this.skip();
 				}
 
-				if (detachedMode) {
+				if (detachedMode === "Detached" || detachedMode === "Rehydrate") {
 					const loader1 = provider.makeTestLoader();
 					container1 = await loader1.createDetachedContainer(provider.defaultCodeDetails);
 				} else {
@@ -153,8 +166,7 @@ describeCompat(
 				}
 
 				dataObject1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
-				containerRuntime1 = dataObject1._context
-					.containerRuntime as IContainerRuntimeWithResolveHandle_Deprecated;
+				containerRuntime1 = dataObject1._context.containerRuntime as ContainerRuntime;
 			});
 
 			/**
@@ -172,7 +184,7 @@ describeCompat(
 					"Data object 2 must be visible from root after its handle is added",
 				);
 
-				if (detachedMode) {
+				if (detachedMode !== "Attached") {
 					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					await waitForContainerConnection(container1);
 				}
@@ -182,7 +194,11 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const dataObject1C2 =
 					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
+				const dataObject2C2 = await getAndValidateDataObject(
+					dataObject1C2,
+					"dataObject2",
+					detachedMode,
+				);
 
 				// Send ops for the data store in both local and remote container and validate that the ops are successfully
 				// processed.
@@ -197,7 +213,10 @@ describeCompat(
 			 * Validates that non-root data stores that have other non-root data stores as dependencies are not visible
 			 * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
 			 */
-			it("validates that non-root data store and its dependencies become visible correctly", async function () {
+			it("validates that non-root data store and its dependencies become visible correctly in attached mode", async function () {
+				if (detachedMode !== "Attached") {
+					this.skip();
+				}
 				const dataObject2 = await createNonRootDataObject(containerRuntime1);
 				const dataObject3 = await createNonRootDataObject(containerRuntime1);
 
@@ -221,18 +240,22 @@ describeCompat(
 					"Data object 3 must be visible from root after its parent's handle is added",
 				);
 
-				if (detachedMode) {
-					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
-					await waitForContainerConnection(container1);
-				}
-
 				// Load a second container and validate that both the non-root data stores are visible in it.
 				const container2 = await provider.loadTestContainer();
 				await provider.ensureSynchronized();
 				const dataObject1C2 =
 					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
-				const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+				const containerRuntime2 = dataObject1C2._context.containerRuntime as ContainerRuntime;
+				const dataObject2C2 = await getAndValidateDataObject(
+					dataObject1C2,
+					"dataObject2",
+					detachedMode,
+				);
+				const dataObject3C2 = await getAndValidateDataObject(
+					dataObject2C2,
+					"dataObject3",
+					detachedMode,
+				);
 
 				// Send ops for the data stores in both local and remote container and validate that the ops are
 				// successfully processed.
@@ -245,6 +268,97 @@ describeCompat(
 				assert.strictEqual(dataObject2C2._root.get("key1"), "value1");
 				assert.strictEqual(dataObject3._root.get("key2"), "value2");
 				assert.strictEqual(dataObject3C2._root.get("key1"), "value1");
+				await assert.doesNotReject(
+					resolveHandleWithoutWait(containerRuntime2, dataObject2C2._context.id),
+					"Data object 2 must be reachable from container 2",
+				);
+				await assert.doesNotReject(
+					resolveHandleWithoutWait(containerRuntime2, dataObject3C2._context.id),
+					"Data object 3 must be reachable from container 2",
+				);
+			});
+
+			it("validates that non-root data store and its dependencies become visible correctly in detached or rehydrate mode", async function () {
+				if (detachedMode === "Attached") {
+					this.skip();
+				}
+				const dataObject2 = await createNonRootDataObject(containerRuntime1);
+				const dataObject3 = await createNonRootDataObject(containerRuntime1);
+
+				// Add the handle of dataObject3 to dataObject2's DDS. Since dataObject2 and its DDS are not visible yet,
+				// dataObject2 should also be not visible (reachable).
+				dataObject2._root.set("dataObject3", dataObject3.handle);
+				await assert.rejects(
+					resolveHandleWithoutWait(containerRuntime1, dataObject3._context.id),
+					"Data object 3 must not be visible from root yet",
+				);
+
+				// Adding handle of dataObject2 to a visible DDS should make it and dataObject3 visible (reachable)
+				// from the root.
+				dataObject1._root.set("dataObject2", dataObject2.handle);
+				await assert.doesNotReject(
+					dataObject2.handle.get(),
+					"Data object 2 must be visible from root after its handle is added",
+				);
+				await assert.doesNotReject(
+					dataObject3.handle.get(),
+					"Data object 3 must be visible from root after its parent's handle is added",
+				);
+
+				let container2: IContainer;
+				if (detachedMode === "Rehydrate") {
+					// Rehydrate a second container from the snapshot of the first container to validate the visibility of the non-root data stores.
+					const loader = provider.makeTestLoader();
+					const snapshot = container1.serialize();
+					container1.close();
+
+					container2 = await loader.rehydrateDetachedContainerFromSnapshot(snapshot);
+					await container2.attach(provider.driver.createCreateNewRequest(provider.documentId));
+					await waitForContainerConnection(container2);
+				} /** Detached */ else {
+					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
+					await waitForContainerConnection(container1);
+					// Load a second container and validate that both the non-root data stores are visible in it.
+					container2 = await provider.loadTestContainer();
+				}
+
+				await provider.ensureSynchronized();
+				const dataObject1C2 =
+					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
+				const containerRuntime2 = dataObject1C2._context.containerRuntime as ContainerRuntime;
+				const dataObject2C2 = await getAndValidateDataObject(
+					dataObject1C2,
+					"dataObject2",
+					detachedMode,
+				);
+				const dataObject3C2 = await getAndValidateDataObject(
+					dataObject2C2,
+					"dataObject3",
+					detachedMode,
+				);
+
+				if (detachedMode === "Detached") {
+					// Send ops for the data stores in both local and remote container and validate that the ops are
+					// successfully processed.
+					// This testing cannot be done in rehydrated mode since container1 has been closed.
+					dataObject2._root.set("key1", "value1");
+					dataObject2C2._root.set("key2", "value2");
+					dataObject3._root.set("key1", "value1");
+					dataObject3C2._root.set("key2", "value2");
+					await provider.ensureSynchronized();
+					assert.strictEqual(dataObject2._root.get("key2"), "value2");
+					assert.strictEqual(dataObject2C2._root.get("key1"), "value1");
+					assert.strictEqual(dataObject3._root.get("key2"), "value2");
+					assert.strictEqual(dataObject3C2._root.get("key1"), "value1");
+				}
+				await assert.doesNotReject(
+					resolveHandleWithoutWait(containerRuntime2, dataObject2C2._context.id),
+					"Data object 2 must be reachable from container 2",
+				);
+				await assert.doesNotReject(
+					resolveHandleWithoutWait(containerRuntime2, dataObject3C2._context.id),
+					"Data object 3 must be reachable from container 2",
+				);
 			});
 
 			/**
@@ -263,7 +377,7 @@ describeCompat(
 					"Data object 2 must be visible from root",
 				);
 
-				if (detachedMode) {
+				if (detachedMode !== "Attached") {
 					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					await waitForContainerConnection(container1);
 				}
@@ -278,7 +392,11 @@ describeCompat(
 					"rootDataStore",
 				);
 				const dataObject2C2 = (await dsEntryPoint?.get()) as ITestDataObject;
-				const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
+				const dataObject3C2 = await getAndValidateDataObject(
+					dataObject2C2,
+					"dataObject3",
+					detachedMode,
+				);
 
 				// Send ops for both data stores in both local and remote container and validate that the ops are
 				// successfully processed.
@@ -310,7 +428,7 @@ describeCompat(
 				const map2 = SharedMap.create(dataObject2._runtime);
 				dataObject2._root.set("map2", map2.handle);
 
-				if (detachedMode) {
+				if (detachedMode !== "Attached") {
 					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					await waitForContainerConnection(container1);
 				}
@@ -324,7 +442,11 @@ describeCompat(
 				await provider.ensureSynchronized();
 				const dataObject1C2 =
 					await getContainerEntryPointBackCompat<ITestDataObject>(container2);
-				const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
+				const dataObject2C2 = await getAndValidateDataObject(
+					dataObject1C2,
+					"dataObject2",
+					detachedMode,
+				);
 
 				// Validate that the DDSes are present in the second container.
 				const map1C2 = await dataObject2C2._root.get<IFluidHandle<ISharedMap>>("map1")?.get();
@@ -369,7 +491,7 @@ describeCompat(
 					"Data object 2 must be visible from root after its handle is added",
 				);
 
-				if (detachedMode) {
+				if (detachedMode !== "Attached") {
 					await container1.attach(provider.driver.createCreateNewRequest(provider.documentId));
 					await waitForContainerConnection(container1);
 				}
@@ -414,11 +536,15 @@ describeCompat(
 		};
 
 		describe("Detached container", () => {
-			tests(true /* detachedMode */);
+			tests("Detached" /* detachedMode */);
 		});
 
 		describe("Attached container", () => {
-			tests(false /* detachedMode */);
+			tests("Attached" /* detachedMode */);
+		});
+
+		describe("Rehydrated container", () => {
+			tests("Rehydrate" /* detachedMode */);
 		});
 	},
 );
