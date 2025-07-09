@@ -19,7 +19,7 @@ import { SharedString } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 
 import { AzureFunctionTokenProvider } from "./azureFunctionTokenProvider.js";
-import { TodoList, TodoItem } from "./schema.js";
+import { TodoItem, TodoList } from "./schema.js";
 
 export interface ICustomUserDetails {
 	gender: string;
@@ -98,6 +98,15 @@ export async function initializeAppForNewContainer(
 		throw new Error("Expected container data to be compatible with Dice schema");
 	}
 
+	const initialTodoList = await createInitialTodoList(container);
+	treeView.initialize(initialTodoList);
+
+	return treeView.root;
+}
+
+async function createInitialTodoList(
+	container: IFluidContainer<TodoListContainerSchema>,
+): Promise<TodoList> {
 	const listTitle = await container.create(SharedString);
 	listTitle.insertText(0, "My Todo List");
 
@@ -119,12 +128,8 @@ export async function initializeAppForNewContainer(
 		completed: true,
 	});
 
-	treeView.initialize(
-		new TodoList({
-			title: listTitle.handle,
-			items: [todoItem1, todoItem2],
-		}),
-	);
-
-	return treeView.root;
+	return new TodoList({
+		title: listTitle.handle,
+		items: [todoItem1, todoItem2],
+	});
 }
