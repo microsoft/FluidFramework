@@ -17,9 +17,14 @@ import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 import { createLocalMatrix } from "../utils.js";
 
 /**
- * This file contains benchmarks for measuring the execution time of operations on SharedMatrix.
+ * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
+ * If you modify or add tests here, consider updating the corresponding SharedTree benchmarks as well
+ * to ensure consistency and comparability between the two implementations.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+
+/**
+ * Runs a benchmark for measuring the execution time of operations on a SharedMatrix.
+ */
 function runBenchmark({
 	title,
 	matrixSize,
@@ -40,7 +45,7 @@ function runBenchmark({
 	operation: (matrix: SharedMatrix) => void;
 	minBatchDurationSeconds?: number;
 	maxBenchmarkDurationSeconds: number;
-}) {
+}): void {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title,
@@ -77,7 +82,6 @@ function runBenchmark({
 /**
  * This function runs a benchmark for undo/redo operations on a SharedMatrix.
  */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function runUndoRedoBenchmark({
 	title,
 	matrixSize,
@@ -101,7 +105,7 @@ function runUndoRedoBenchmark({
 	stackOperation: (stack: UndoRedoStackManager) => void;
 	minBatchDurationSeconds?: number;
 	maxBenchmarkDurationSeconds: number;
-}) {
+}): void {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title,

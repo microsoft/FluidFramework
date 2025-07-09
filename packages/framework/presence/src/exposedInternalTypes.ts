@@ -35,6 +35,11 @@ export namespace InternalTypes {
 	 */
 	export interface ValueOptionalState<TValue> extends ValueStateMetadata {
 		value?: OpaqueJsonDeserialized<TValue>;
+
+		// Uncomment this property and rebuild to check more thoroughly
+		// for incompatibilities between this non-validatable state
+		// and ValidatableOptionalState.
+		// validatedValue?: never;
 	}
 
 	/**
@@ -54,6 +59,11 @@ export namespace InternalTypes {
 	 */
 	export interface ValueRequiredState<TValue> extends ValueStateMetadata {
 		value: OpaqueJsonDeserialized<TValue>;
+
+		// Uncomment this property and rebuild to check more thoroughly
+		// for incompatibilities between this non-validatable state
+		// and ValidatableOptionalState.
+		// validatedValue?: never;
 	}
 
 	/**

@@ -8,3 +8,6 @@ TypeScript
 namespace
 UUID
 UUIDs
+enum
+Enum
+openable
