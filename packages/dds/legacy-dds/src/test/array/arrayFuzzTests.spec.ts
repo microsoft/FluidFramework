@@ -10,7 +10,7 @@ import { describe } from "mocha";
 import { _dirname } from "./dirname.cjs";
 import { baseSharedArrayModel } from "./fuzzUtils.js";
 
-describe.skip("SharedArray fuzz", () => {
+describe("SharedArray fuzz", () => {
 	createDDSFuzzSuite(baseSharedArrayModel, {
 		validationStrategy: { type: "fixedInterval", interval: 10 },
 		reconnectProbability: 0.15,
@@ -19,7 +19,12 @@ describe.skip("SharedArray fuzz", () => {
 			maxNumberOfClients: 5,
 			clientAddProbability: 0.1,
 		},
+		detachedStartOptions: {
+			numOpsBeforeAttach: 5,
+			rehydrateDisabled: true,
+		},
 		defaultTestCount: 50,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
+		skip: [6, 10, 17, 31, 40],
 	});
 });

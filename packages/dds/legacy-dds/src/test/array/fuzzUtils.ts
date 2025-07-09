@@ -20,7 +20,6 @@ import { SharedArrayFactory } from "../../index.js";
 /**
  * Type for the SharedArray operation
  *
- * @internal
  */
 export interface SharedArrayInsert<T> {
 	type: "insert";
@@ -31,7 +30,6 @@ export interface SharedArrayInsert<T> {
 /**
  * Type for the SharedArray operation
  *
- * @internal
  */
 export interface SharedArrayDelete {
 	type: "delete";
@@ -41,7 +39,6 @@ export interface SharedArrayDelete {
 /**
  * Type for the SharedArray operation
  *
- * @internal
  */
 export interface SharedArrayMove {
 	type: "move";
@@ -52,7 +49,6 @@ export interface SharedArrayMove {
 /**
  * Type for the SharedArray operation
  *
- * @internal
  */
 export interface SharedArrayToggle {
 	type: "toggle";
@@ -62,7 +58,6 @@ export interface SharedArrayToggle {
 /**
  * Type for the SharedArray operation
  *
- * @internal
  */
 export interface SharedArrayToggleMove {
 	type: "toggleMove";
@@ -73,7 +68,6 @@ export interface SharedArrayToggleMove {
 /**
  * Type for the SharedArray operation
  *
- * @internal
  */
 export interface SharedArrayInsertBulkAfter<T> {
 	type: "insertBulkAfter";
@@ -84,7 +78,6 @@ export interface SharedArrayInsertBulkAfter<T> {
 /**
  * SharedArray operations union type.
  *
- * @internal
  */
 export type SharedArrayOperation<T> =
 	| SharedArrayInsert<T>
@@ -96,7 +89,6 @@ export type SharedArrayOperation<T> =
 
 /**
  * Creates a reducer for SharedArray operations.
- * @internal
  */
 export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>(): Reducer<
 	SharedArrayOperation<T>,
@@ -130,25 +122,27 @@ export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>
 /**
  * Creates a generator that yields SharedArray operations.
  *
- * @internal
  */
-export function makeSharedArrayOperationGenerator<T extends SerializableTypeForSharedArray>(
-	valuesPool: T[],
-	weights: { insert: number; delete: number; move: number },
-): (state: DDSFuzzTestState<SharedArrayFactory<T>>) => Promise<SharedArrayOperation<T>> {
+export function makeSharedArrayOperationGenerator(weights: {
+	insert: number;
+	delete: number;
+	move: number;
+}): (
+	state: DDSFuzzTestState<SharedArrayFactory<string>>,
+) => Promise<SharedArrayOperation<string>> {
 	const insertOp = ({
 		random,
 		client,
-	}: DDSFuzzTestState<SharedArrayFactory<T>>): SharedArrayInsert<T> => ({
+	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayInsert<string> => ({
 		type: "insert",
 		index: random.integer(0, Math.max(0, client.channel.get().length)),
-		value: random.pick(valuesPool),
+		value: random.string(random.integer(1, 5)),
 	});
 
 	const deleteOp = ({
 		random,
 		client,
-	}: DDSFuzzTestState<SharedArrayFactory<T>>): SharedArrayDelete => ({
+	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayDelete => ({
 		type: "delete",
 		index: random.integer(0, Math.max(0, client.channel.get().length - 1)),
 	});
@@ -156,48 +150,22 @@ export function makeSharedArrayOperationGenerator<T extends SerializableTypeForS
 	const moveOp = ({
 		random,
 		client,
-	}: DDSFuzzTestState<SharedArrayFactory<T>>): SharedArrayMove => ({
+	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayMove => ({
 		type: "move",
 		oldIndex: random.integer(0, Math.max(0, client.channel.get().length - 1)),
 		newIndex: random.integer(0, Math.max(0, client.channel.get().length)),
 	});
 
-	// const toggleOp = ({
-	// 	random,
-	// 	client,
-	// }: DDSFuzzTestState<SharedArrayFactory<T>>): SharedArrayToggle => ({
-	// 	type: "toggle",
-	// 	entryId: random.pick([...client.channel.get()]).id,
-	// });
-
-	// const toggleMoveOp = ({
-	// 	random,
-	// 	client,
-	// }: DDSFuzzTestState<SharedArrayFactory<T>>): SharedArrayToggleMove => ({
-	// 	type: "toggleMove",
-	// 	oldEntryId: random.pick([...client.channel.get()]).id,
-	// 	newEntryId: random.pick([...client.channel.get()]).id,
-	// });
-
-	// const insertBulkAfterOp = ({
-	// 	random,
-	// 	client,
-	// }: DDSFuzzTestState<SharedArrayFactory<T>>): SharedArrayInsertBulkAfter<T> => ({
-	// 	type: "insertBulkAfter",
-	// 	ref: random.pick(client.channel.get()) ?? undefined,
-	// 	values: random.shuffle(valuesPool).slice(0, random.integer(1, 3)),
-	// });
-
 	const syncGenerator = createWeightedGenerator<
-		SharedArrayOperation<T>,
-		DDSFuzzTestState<SharedArrayFactory<T>>
+		SharedArrayOperation<string>,
+		DDSFuzzTestState<SharedArrayFactory<string>>
 	>([
 		[insertOp, weights.insert],
 		[deleteOp, weights.delete],
 		[moveOp, weights.move],
 	]);
 
-	return async (state: DDSFuzzTestState<SharedArrayFactory<T>>) => {
+	return async (state: DDSFuzzTestState<SharedArrayFactory<string>>) => {
 		const op = syncGenerator(state);
 		// Work around
 		if (typeof op === "symbol") {
@@ -209,7 +177,7 @@ export function makeSharedArrayOperationGenerator<T extends SerializableTypeForS
 
 /**
  *
- * @internal
+ * Base SharedArray fuzz model for testing.
  */
 export const baseSharedArrayModel: DDSFuzzModel<
 	SharedArrayFactory<string>,
@@ -219,7 +187,7 @@ export const baseSharedArrayModel: DDSFuzzModel<
 	generatorFactory: () =>
 		takeAsync(
 			100,
-			makeSharedArrayOperationGenerator(["A", "B", "C"], {
+			makeSharedArrayOperationGenerator({
 				insert: 5,
 				delete: 1,
 				move: 1,
