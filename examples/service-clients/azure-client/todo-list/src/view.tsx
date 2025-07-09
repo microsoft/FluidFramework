@@ -53,9 +53,9 @@ export const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewPro
 	};
 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.
-	const todoItemViews = Array.from(todoList.items).map((todoItem, index) => (
+	const todoItemViews = todoList.items.map((todoItem, index) => (
 		<div className="item-wrap" key={todoItem.id}>
-			<TodoItemView todoItemModel={todoItem} className="todo-item-view" />
+			<TodoItemView todoItem={todoItem} className="todo-item-view" />
 			<button
 				className="action-button"
 				onClick={() => {
@@ -102,17 +102,19 @@ const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => 
 
 	useTree(todoItem);
 
+	const todoItemTitleHandle = todoItem.title;
 	useEffect(() => {
-		void Promise.resolve(todoItem.title.get()).then((text) => {
+		todoItemTitleHandle.get().then((text) => {
 			setItemTitle(text as SharedString);
 		});
-	}, [todoItem.title]);
+	}, [todoItemTitleHandle]);
 
+	const todoItemDescriptionHandle = todoItem.description;
 	useEffect(() => {
-		void Promise.resolve(todoItem.description.get()).then((text) => {
+		todoItemDescriptionHandle.get().then((text) => {
 			setItemDescription(text as SharedString);
 		});
-	}, [todoItem.description]);
+	}, [todoItemDescriptionHandle]);
 
 	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
 		todoItem.completed = e.target.checked;
