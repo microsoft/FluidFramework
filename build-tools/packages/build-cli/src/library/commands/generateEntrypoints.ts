@@ -225,14 +225,25 @@ function getOutputConfiguration(
 
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
-	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map([
-		[`${pathPrefix}${outFileAlpha}${outFileSuffix}`, ApiLevel.alpha],
-		[`${pathPrefix}${outFileBeta}${outFileSuffix}`, ApiLevel.beta],
-		[`${pathPrefix}${outFilePublic}${outFileSuffix}`, ApiLevel.public],
-		[`${pathPrefix}${outFileLegacyAlpha}${outFileSuffix}`, ApiLevel.legacyAlpha],
-		[`${pathPrefix}${outFileLegacyBeta}${outFileSuffix}`, ApiLevel.legacyBeta],
-		[`${pathPrefix}${outFileLegacyPublic}${outFileSuffix}`, ApiLevel.legacyPublic],
-	]);
+	const outFileToApiLevelEntries: [string, ApiLevel][] = [
+		[outFileAlpha, ApiLevel.alpha],
+		[outFileBeta, ApiLevel.beta],
+		[outFilePublic, ApiLevel.public],
+		[outFileLegacyAlpha, ApiLevel.legacyAlpha],
+		[outFileLegacyBeta, ApiLevel.legacyBeta],
+		[outFileLegacyPublic, ApiLevel.legacyPublic],
+	];
+
+	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map();
+	for (const [outFile, apiLevel] of outFileToApiLevelEntries) {
+		const queryPath = `${pathPrefix}${outFile}${outFileSuffix}`;
+		if (mapQueryPathToApiTagLevel.has(queryPath)) {
+			throw new Error(
+				`The same outFile "${outFile}" is requested for multiple API levels: ${mapQueryPathToApiTagLevel.get(queryPath)} and ${apiLevel}. Please ensure that each API level is configured with a unique outFile.`,
+			);
+		}
+		mapQueryPathToApiTagLevel.set(queryPath, apiLevel);
+	}
 
 	if (node10TypeCompat) {
 		// /internal export may be supported without API level generation; so
@@ -326,7 +337,7 @@ const generatedHeader: string = `/*!
  */
 async function generateEntrypoints(
 	mainEntrypoint: string,
-	mapApiTagLevelToOutput: Map<ApiLevel, ExportData>,
+	mapApiTagLevelToOutput: ReadonlyMap<ApiLevel, ExportData>,
 	log: CommandLogger,
 ): Promise<void> {
 	/**
@@ -471,7 +482,7 @@ async function generateEntrypoints(
 }
 
 async function generateNode10TypeEntrypoints(
-	mapExportPathToData: Map<string, Node10CompatExportData>,
+	mapExportPathToData: ReadonlyMap<string, Node10CompatExportData>,
 	log: CommandLogger,
 ): Promise<void> {
 	/**
