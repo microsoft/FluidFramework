@@ -665,7 +665,10 @@ export class SequenceIntervalClass
 			return;
 		}
 
-		assert(this.#props.propertyManager !== undefined, "must have property manager to ack");
+		assert(
+			this.#props.propertyManager !== undefined,
+			0xbd5 /* must have property manager to ack */,
+		);
 		// Let the propertyManager prune its pending change-properties set.
 		this.#props.propertyManager.ack(op.sequenceNumber, op.minimumSequenceNumber, {
 			props: newProps,
