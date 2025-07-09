@@ -136,7 +136,7 @@ type TestMode = "Attached" | "Detached" | "Rehydrate";
  * new non-root data stores should not become visible (or reachable from root) until their handles are added to a
  * visible DDS.
  */
-describeCompat.only(
+describeCompat(
 	"New Fluid objects visibility",
 	"FullCompat",
 	(getTestObjectProvider, { dds }) => {
