@@ -9,25 +9,48 @@ import {
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
 import { useTree } from "@fluid-experimental/tree-react-api";
+import type { IFluidContainer } from "fluid-framework";
 import { SharedString, type ISharedString } from "fluid-framework/legacy";
-import React, { useEffect, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+
+import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
+import { TodoList, TodoItem } from "./schema.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
-import { TodoList, TodoItem } from "./schema.js";
+const ContainerContext = createContext<IFluidContainer | undefined>(undefined);
 
-export interface TodoListViewProps {
+export interface TodoListAppViewProps {
+	readonly todoList: TodoList;
+	readonly container: IFluidContainer<TodoListContainerSchema>;
+}
+
+export const TodoListAppView: React.FC<TodoListAppViewProps> = (
+	props: TodoListAppViewProps,
+) => {
+	const { todoList, container } = props;
+
+	// Use the container context to provide the container to child components.
+	// This allows child components to create DDSs dynamically.
+	return (
+		<ContainerContext.Provider value={container}>
+			<TodoListView todoList={todoList} />
+		</ContainerContext.Provider>
+	);
+};
+
+interface TodoListViewProps {
 	readonly todoList: TodoList;
 }
 
-export const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => {
+const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => {
 	const { todoList } = props;
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
 	const newItemTextInputRef = useRef<HTMLInputElement>(null);
-
 	useTree(todoList);
+	const container = useContext(ContainerContext);
 
 	const todoListTitleHandle = todoList.title;
 
@@ -45,11 +68,25 @@ export const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewPro
 		ev.preventDefault();
 
 		const input = newItemTextInputRef.current;
-		if (!input) {
+		if (input === null) {
 			throw new Error("New item text field missing");
 		}
 
-		// TODO: insert new TODO item
+		createTodoItem({
+			container,
+			initialTitleText: input.value,
+			completed: false,
+		})
+			.then((todoItem) => {
+				todoList.items.insertAtEnd(todoItem);
+				if (input !== null) {
+					input.value = "";
+				}
+			})
+			.catch((error) => {
+				console.error("Failed to create todo item:", error);
+				throw error;
+			});
 	};
 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.

@@ -67,7 +67,7 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
 export const todoListContainerSchema = {
 	initialObjects: {
 		/* [id]: DataObject */
-		tree: SharedTree,
+		todoList: SharedTree,
 	},
 	dynamicObjectTypes: [SharedString],
 } as const satisfies ContainerSchema;
@@ -81,7 +81,7 @@ const treeViewConfig = new TreeViewConfiguration({
 export function loadAppFromExistingContainer(
 	container: IFluidContainer<TodoListContainerSchema>,
 ): TodoList {
-	const tree = container.initialObjects.tree;
+	const tree = container.initialObjects.todoList;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canView) {
 		throw new Error("Expected container data to be compatible with app schema");
@@ -92,7 +92,7 @@ export function loadAppFromExistingContainer(
 export async function initializeAppForNewContainer(
 	container: IFluidContainer<TodoListContainerSchema>,
 ): Promise<TodoList> {
-	const tree = container.initialObjects.tree;
+	const tree = container.initialObjects.todoList;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canInitialize) {
 		throw new Error("Expected container data to be compatible with Dice schema");
@@ -110,26 +110,44 @@ async function createInitialTodoList(
 	const listTitle = await container.create(SharedString);
 	listTitle.insertText(0, "My Todo List");
 
-	const todoItem1Title = await container.create(SharedString);
-	todoItem1Title.insertText(0, "Buy groceries");
-	const todoItem1Description = await container.create(SharedString);
-	const todoItem1 = new TodoItem({
-		title: todoItem1Title.handle,
-		description: todoItem1Description.handle,
+	const todoItem1 = await createTodoItem({
+		container,
+		initialTitleText: "Buy groceries",
 		completed: false,
 	});
-
-	const todoItem2Title = await container.create(SharedString);
-	todoItem2Title.insertText(0, "Walk the dog");
-	const todoItem2Description = await container.create(SharedString);
-	const todoItem2 = new TodoItem({
-		title: todoItem2Title.handle,
-		description: todoItem2Description.handle,
+	const todoItem2 = await createTodoItem({
+		container,
+		initialTitleText: "Walk the dog",
 		completed: true,
 	});
-
 	return new TodoList({
 		title: listTitle.handle,
 		items: [todoItem1, todoItem2],
+	});
+}
+
+export async function createTodoItem({
+	container,
+	completed,
+	initialTitleText,
+	initialDescriptionText,
+}: {
+	container: IFluidContainer;
+	completed: boolean;
+	initialTitleText?: string;
+	initialDescriptionText?: string;
+}): Promise<TodoItem> {
+	const title = await container.create(SharedString);
+	if (initialTitleText !== undefined) {
+		title.insertText(0, initialTitleText);
+	}
+	const description = await container.create(SharedString);
+	if (initialDescriptionText !== undefined) {
+		description.insertText(0, initialDescriptionText);
+	}
+	return new TodoItem({
+		title: title.handle,
+		description: description.handle,
+		completed,
 	});
 }

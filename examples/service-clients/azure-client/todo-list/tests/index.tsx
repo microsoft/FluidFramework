@@ -32,7 +32,7 @@ import {
 	type TodoListContainerSchema,
 } from "../src/fluid.js";
 import type { TodoList } from "../src/schema.js";
-import { TodoListView } from "../src/view.js";
+import { TodoListAppView } from "../src/view.js";
 
 // The local server needs to be shared across the Loader instances for collaboration to happen
 const localServer = LocalDeltaConnectionServer.create(new LocalSessionStorageDbFactory());
@@ -124,7 +124,7 @@ async function createContainerAndRenderInElement(
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	const root = createRoot(contentDiv);
-	root.render(<TodoListView todoList={appModel} />);
+	root.render(<TodoListAppView todoList={appModel} container={container} />);
 }
 
 /**

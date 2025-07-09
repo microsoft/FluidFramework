@@ -20,7 +20,7 @@ import {
 	type TodoListContainerSchema,
 } from "./fluid.js";
 import { TodoList } from "./schema.js";
-import { TodoListView } from "./view.js";
+import { TodoListAppView } from "./view.js";
 
 async function start(): Promise<void> {
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
@@ -75,14 +75,14 @@ async function start(): Promise<void> {
 		initialContainers: [
 			{
 				container,
-				containerKey: "Dice Roller Container",
+				containerKey: "Todo List Container",
 			},
 		],
 	});
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	const root = createRoot(contentDiv);
-	root.render(<TodoListView todoList={appModel} />);
+	root.render(<TodoListAppView todoList={appModel} container={container} />);
 }
 
 await start();
