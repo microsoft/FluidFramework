@@ -9,11 +9,9 @@ import {
 	type DataObjectKind,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import {
-	FluidDataStoreRegistry,
-	type IContainerRuntimeOptions,
-	type MinimumVersionForCollab,
+import type {
+	IContainerRuntimeOptions,
+	MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
@@ -44,11 +42,7 @@ import type {
 	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
-import {
-	isDataObjectKind,
-	isSharedObjectKind,
-	parseDataObjectsFromSharedObjects,
-} from "./utils.js";
+import { isDataObjectKind, isSharedObjectKind } from "./utils.js";
 
 /**
  * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
@@ -78,7 +72,7 @@ interface IProvideRootDataObject {
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-class RootDataObject
+export class RootDataObject
 	extends DataObject<{ InitialState: RootDataObjectProps }>
 	implements IRootDataObject, IProvideRootDataObject
 {
@@ -184,55 +178,6 @@ class RootDataObject
 
 const rootDataStoreId = "rootDOId";
 
-/**
- * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} which constructs containers
- * with an entry point containing single IRootDataObject (entry point is opaque to caller),
- * where the root data object's registry and initial objects are configured based on the provided
- * schema (and optionally, data store registry).
- *
- * @internal
- */
-export function createDOProviderContainerRuntimeFactory(props: {
-	/**
-	 * The schema for the container.
-	 */
-	schema: ContainerSchema;
-	/**
-	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
-	 */
-	compatibilityMode: CompatibilityMode;
-	/**
-	 * Optional registry of data stores to pass to the DataObject factory.
-	 * If not provided, one will be created based on the schema.
-	 */
-	rootDataStoreRegistry?: IFluidDataStoreRegistry;
-	/**
-	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given compatibilityMode will be used.
-	 */
-	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collab.
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * @remarks
-	 * This is useful when runtime options are overridden and change the minimum version for collab.
-	 */
-	minVersionForCollabOverride?: MinimumVersionForCollab;
-}): IRuntimeFactory {
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
-	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
-
-	return new DOProviderContainerRuntimeFactory(
-		props.schema,
-		props.compatibilityMode,
-		new RootDataObjectFactory(sharedObjects, registry),
-		{
-			runtimeOptions: props.runtimeOptionOverrides,
-			minVersionForCollab: props.minVersionForCollabOverride,
-		},
-	);
-}
-
 function makeFluidObject<T extends object, K extends FluidObjectKeys<T> = FluidObjectKeys<T>>(
 	object: Omit<T, K>,
 	providerKey: K,
@@ -263,7 +208,7 @@ async function provideEntryPoint(
  * Factory for Container Runtime instances that provide a {@link IStaticEntryPoint}
  * (containing single {@link IRootDataObject}) as their entry point.
  */
-class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
 		RootDataObject,
 		{
@@ -325,7 +270,7 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 /**
  * Factory that creates instances of a root data object.
  */
-class RootDataObjectFactory extends DataObjectFactory<
+export class RootDataObjectFactory extends DataObjectFactory<
 	RootDataObject,
 	{ InitialState: RootDataObjectProps }
 > {

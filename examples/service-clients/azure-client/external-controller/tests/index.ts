@@ -22,6 +22,7 @@ import {
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
+import { initializeNewContainer, loadExistingContainer } from "../src/app.js";
 import { DiceRollerController } from "../src/controller.js";
 import {
 	diceRollerContainerSchema,
