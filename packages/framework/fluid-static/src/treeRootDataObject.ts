@@ -5,13 +5,15 @@
 
 import { BaseContainerRuntimeFactory, PureDataObjectFactory, TreeDataObject } from "@fluidframework/aqueduct/internal";
 import type { IContainerRuntime, IContainerRuntimeInternal } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, FluidObjectKeys, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { FluidObject, FluidObjectKeys, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/internal";
-import type { ISharedObjectKind, SharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree/internal";
+import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
-import type { CompatibilityMode, ContainerSchema, IRootDataObject, IProvideRootDataObject, IStaticEntryPoint, LoadableObjectRecord } from "./types.js";
+import type { CompatibilityMode, ContainerSchema, IRootDataObject, IStaticEntryPoint, LoadableObjectRecord } from "./types.js";
 
 interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
@@ -97,19 +99,48 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 	public constructor(
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
-		treeKind: ISharedObjectKind<IFluidLoadable>,
-		registryEntries: NamedFluidDataStoreRegistryEntries
+		treeFactory: IChannelFactory<ITree>
 	) {
 		super({
-			registryEntries,
+			registryEntries: [],
 			provideEntryPoint
 		});
 		this.#treeRootDataObjectFactory = new PureDataObjectFactory<TreeRootDataObject>(
 			`TreeRootDataObject`,
 			TreeRootDataObject,
-			[treeKind.getFactory()],
+			[treeFactory],
 			{},
 		);
 	}
 
+}
+
+/**
+ * Validates the container schema and extracts the factory for the tree-based data object.
+ * Throws an error if the schema is invalid or does not contain a valid SharedTree.
+ *
+ * @param schema - The container schema to validate and extract from.
+ * @returns An {@link IChannelFactory} for the tree-based data object.
+ */
+export function validateAndExtractTreeFactory(
+	registryEntries: NamedFluidDataStoreRegistryEntry[],
+	sharedObjects: IChannelFactory[]
+): IChannelFactory<ITree> {
+	if (registryEntries.length > 0) {
+		throw new Error(
+			"Container schema must not have any data store registry entries for tree-based data object.",
+		);
+	}
+	if (sharedObjects.length !== 1) {
+		throw new Error(
+			"Container schema must have exactly one entry for tree-based data object.",
+		);
+	}
+	const factory = sharedObjects[0];
+	if (!factory || factory.type !== SharedTreeFactoryType) {
+		throw new Error(
+			"Container schema must contain a shared tree for tree-based data object.",
+		);
+	}
+	return factory as IChannelFactory<ITree>;;
 }

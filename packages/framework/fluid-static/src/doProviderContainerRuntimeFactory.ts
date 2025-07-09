@@ -5,14 +5,12 @@ import type {
 } from "@fluidframework/container-runtime/internal";
 import { FluidDataStoreRegistry } from "@fluidframework/container-runtime/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
-import type { SharedObjectKind } from "@fluidframework/shared-object-base";
-import type { ITree } from "@fluidframework/tree/internal";
 
 
 import { DOProviderContainerRuntimeFactory, RootDataObjectFactory } from "./rootDataObject.js";
-import { TreeDOProviderContainerRuntimeFactory } from "./treeRootDataObject.js";
-import type { CompatibilityMode, ContainerSchema, LoadableObjectKind } from "./types.js";
-import { isSharedObjectKind, parseDataObjectsFromSharedObjects } from "./utils.js";
+import { TreeDOProviderContainerRuntimeFactory, validateAndExtractTreeFactory } from "./treeRootDataObject.js";
+import type { CompatibilityMode, ContainerSchema } from "./types.js";
+import { parseDataObjectsFromSharedObjects } from "./utils.js";
 
 /**
  * Creates an {@link @fluidframework/aqueduct#BaseContainerRuntimeFactory} which constructs containers
@@ -58,30 +56,21 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	if (props.useTreeBasedDataObject) {
-		const containerKinds = Object.values(props.schema.initialObjects);
-		if (containerKinds.length !== 1 || !containerKinds[0] || !(containerKinds[0] as SharedObjectKind<ITree>)) {
-			throw new Error(
-				"Tree based data object currently only support container schema with a single tree.",
-			);
-		}
-		const treeKind = containerKinds[0] as unknown as LoadableObjectKind;
-		if (isSharedObjectKind(treeKind)){
-			return new TreeDOProviderContainerRuntimeFactory(
-				props.schema,
-				props.compatibilityMode,
-				treeKind,
-				registryEntries);
-		}
-
+		const treeFactory = validateAndExtractTreeFactory(registryEntries, sharedObjects);
+		return new TreeDOProviderContainerRuntimeFactory(
+			props.schema,
+			props.compatibilityMode,
+			treeFactory);
 	}
-
-	return new DOProviderContainerRuntimeFactory(
-		props.schema,
-		props.compatibilityMode,
-		new RootDataObjectFactory(sharedObjects, registry),
-		{
-			runtimeOptions: props.runtimeOptionOverrides,
-			minVersionForCollab: props.minVersionForCollabOverride,
-		},
-	);
+	else {
+		return new DOProviderContainerRuntimeFactory(
+			props.schema,
+			props.compatibilityMode,
+			new RootDataObjectFactory(sharedObjects, registry),
+			{
+				runtimeOptions: props.runtimeOptionOverrides,
+				minVersionForCollab: props.minVersionForCollabOverride,
+			}
+		);
+	}
 }
