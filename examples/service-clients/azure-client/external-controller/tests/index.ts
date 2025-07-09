@@ -90,9 +90,14 @@ export async function getSessionStorageContainer(
  */
 async function createContainerAndRenderInElement(
 	containerId: string,
-	element: Element,
+	elementId: string,
 	createNewFlag: boolean,
 ): Promise<void> {
+	const element = document.querySelector(`#${elementId}`);
+	if (element === null) {
+		throw new Error(`${elementId} does not exist`);
+	}
+
 	// The SessionStorage Container is an in-memory Fluid container that uses the local browser SessionStorage
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
@@ -133,18 +138,10 @@ async function setup(): Promise<void> {
 	}
 	const containerId = window.location.hash.slice(1);
 
-	const leftElement = document.querySelector("#sbs-left");
-	if (leftElement === null) {
-		throw new Error("sbs-left does not exist");
-	}
-	await createContainerAndRenderInElement(containerId, leftElement, createNew);
+	await createContainerAndRenderInElement(containerId, "sbs-left", createNew);
 
-	const rightElement = document.querySelector("#sbs-right");
-	if (rightElement === null) {
-		throw new Error("sbs-right does not exist");
-	}
 	// The second time we don't need to createNew because we know a Container exists.
-	await createContainerAndRenderInElement(containerId, rightElement, false);
+	await createContainerAndRenderInElement(containerId, "sbs-right", false);
 
 	// Setting "fluidStarted" is just for our test automation
 	// eslint-disable-next-line @typescript-eslint/dot-notation
