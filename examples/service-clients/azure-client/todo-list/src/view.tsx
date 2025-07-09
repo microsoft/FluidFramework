@@ -11,15 +11,13 @@ import {
 import { useTree } from "@fluid-experimental/tree-react-api";
 import type { IFluidContainer } from "fluid-framework";
 import type { ISharedString, SharedString } from "fluid-framework/legacy";
-import React, { createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
 import type { TodoList, TodoItem } from "./schema.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
-
-const ContainerContext = createContext<IFluidContainer | undefined>(undefined);
 
 /**
  * {@link TodoListAppView} input props.
@@ -37,32 +35,10 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 ) => {
 	const { todoList, container } = props;
 
-	// Use the container context to provide the container to child components.
-	// This allows child components to create DDSs dynamically.
-	return (
-		<ContainerContext.Provider value={container}>
-			<TodoListView todoList={todoList} />
-		</ContainerContext.Provider>
-	);
-};
-
-/**
- * {@link TodoListView} input props.
- */
-interface TodoListViewProps {
-	readonly todoList: TodoList;
-}
-
-/**
- * TODO list view component.
- */
-const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => {
-	const { todoList } = props;
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
 	const newItemTextInputRef = useRef<HTMLInputElement>(null);
 	useTree(todoList);
-	const container = useContext(ContainerContext) ?? fail("Container context is not defined.");
 
 	const todoListTitleHandle = todoList.title;
 
