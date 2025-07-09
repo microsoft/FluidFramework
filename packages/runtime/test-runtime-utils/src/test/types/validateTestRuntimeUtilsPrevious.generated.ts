@@ -196,7 +196,6 @@ declare type old_as_current_for_Class_MockFluidDataStoreRuntime = requireAssigna
  * typeValidation.broken:
  * "Class_MockFluidDataStoreRuntime": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<current.MockFluidDataStoreRuntime>, TypeOnly<old.MockFluidDataStoreRuntime>>
 
 /*
@@ -215,7 +214,6 @@ declare type old_as_current_for_Class_MockHandle = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_MockHandle": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_MockHandle = requireAssignableTo<TypeOnly<current.MockHandle<never>>, TypeOnly<old.MockHandle<never>>>
 
 /*
@@ -378,7 +376,6 @@ declare type current_as_old_for_ClassStatics_MockFluidDataStoreContext = require
  * typeValidation.broken:
  * "ClassStatics_MockFluidDataStoreRuntime": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_MockFluidDataStoreRuntime = requireAssignableTo<TypeOnly<typeof current.MockFluidDataStoreRuntime>, TypeOnly<typeof old.MockFluidDataStoreRuntime>>
 
 /*
@@ -388,7 +385,6 @@ declare type current_as_old_for_ClassStatics_MockFluidDataStoreRuntime = require
  * typeValidation.broken:
  * "ClassStatics_MockHandle": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_MockHandle = requireAssignableTo<TypeOnly<typeof current.MockHandle>, TypeOnly<typeof old.MockHandle>>
 
 /*

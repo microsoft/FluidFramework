@@ -106,6 +106,7 @@ describe("Local Server Stress with rollback", () => {
 			...[25, 53], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
+			...[29], // 0x88f (tree) AB#43469
 		],
 	});
 });
