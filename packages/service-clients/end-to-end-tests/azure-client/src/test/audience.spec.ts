@@ -440,6 +440,7 @@ for (const testOpts of testMatrix) {
 		 * user with id as null/undefined after all collaborators have left the session.
 		 */
 		it("should not return users with null/undefined ids after all collaborators leave", async function () {
+			const numCollaborators = 10; // Variable number of collaborators to test with - can be changed to test different scenarios
 			let containerId: string;
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
@@ -464,60 +465,59 @@ for (const testOpts of testMatrix) {
 			}
 
 			// Add multiple collaborators
-			const collaborator1Client = createAzureClient(
-				"test-user-id-collaborator-1",
-				"test-user-name-collaborator-1",
-				undefined,
-				configProvider({
-					"Fluid.Container.ForceWriteConnection": true,
-				}),
-			);
-			const { container: collaborator1Container, services: collaborator1Services } =
-				await collaborator1Client.getContainer(containerId, schema, "2");
+			const collaboratorClients: AzureClient[] = [];
+			const collaboratorContainers: IFluidContainer[] = [];
+			const collaboratorServices: AzureContainerServices[] = [];
 
-			if (collaborator1Container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => collaborator1Container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "collaborator1 container connect() timeout",
-					},
+			for (let i = 1; i <= numCollaborators; i++) {
+				const collaboratorClient = createAzureClient(
+					`test-user-id-collaborator-${i}`,
+					`test-user-name-collaborator-${i}`,
+					undefined,
+					configProvider({
+						"Fluid.Container.ForceWriteConnection": true,
+					}),
 				);
-			}
+				collaboratorClients.push(collaboratorClient);
 
-			const collaborator2Client = createAzureClient(
-				"test-user-id-collaborator-2",
-				"test-user-name-collaborator-2",
-				undefined,
-				configProvider({
-					"Fluid.Container.ForceWriteConnection": true,
-				}),
-			);
-			const { container: collaborator2Container, services: collaborator2Services } =
-				await collaborator2Client.getContainer(containerId, schema, "2");
+				const { container: collaboratorContainer, services: collaboratorServicesInstance } =
+					await collaboratorClient.getContainer(containerId, schema, "2");
 
-			if (collaborator2Container.connectionState !== ConnectionState.Connected) {
-				await timeoutPromise(
-					(resolve) => collaborator2Container.once("connected", () => resolve()),
-					{
-						durationMs: connectTimeoutMs,
-						errorMsg: "collaborator2 container connect() timeout",
-					},
-				);
+				if (collaboratorContainer.connectionState !== ConnectionState.Connected) {
+					await timeoutPromise(
+						(resolve) => collaboratorContainer.once("connected", () => resolve()),
+						{
+							durationMs: connectTimeoutMs,
+							errorMsg: `collaborator${i} container connect() timeout`,
+						},
+					);
+				}
+
+				collaboratorContainers.push(collaboratorContainer);
+				collaboratorServices.push(collaboratorServicesInstance);
 			}
 
 			// Wait for all members to be visible
 			await waitForMember(services.audience, "test-user-id-1");
-			await waitForMember(collaborator1Services.audience, "test-user-id-collaborator-1");
-			await waitForMember(collaborator2Services.audience, "test-user-id-collaborator-2");
+			for (let i = 1; i <= numCollaborators; i++) {
+				await waitForMember(
+					collaboratorServices[i - 1].audience,
+					`test-user-id-collaborator-${i}`,
+				);
+			}
 
-			// Verify we have all 3 members
+			// Verify we have all members (original + collaborators)
 			const members = services.audience.getMembers();
-			assert.strictEqual(members.size, 3, "We should have three members at this point.");
+			assert.strictEqual(
+				members.size,
+				numCollaborators + 1,
+				`We should have ${numCollaborators + 1} members at this point.`,
+			);
 
 			// Have all collaborators leave
-			collaborator1Container.disconnect();
-			collaborator2Container.disconnect();
+			for (const collaboratorContainer of collaboratorContainers) {
+				collaboratorContainer.disconnect();
+			}
 			container.disconnect();
 
 			// Wait a bit for the disconnections to be processed
