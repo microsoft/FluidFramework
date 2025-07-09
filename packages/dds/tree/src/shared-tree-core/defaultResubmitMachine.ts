@@ -66,7 +66,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			// If we are not at the last commit to resubmit, advance the range to the next node.
 			// Otherwise, clear the resubmit range as we are done resubmitting.
 			if (toResubmit !== this.pendingResubmitRange.last) {
-				assert(toResubmit.next !== undefined, "must be more in the list");
+				assert(toResubmit.next !== undefined, 0xbd6 /* must be more in the list */);
 				this.pendingResubmitRange.first = toResubmit.next;
 			} else {
 				this.pendingResubmitRange = undefined;
@@ -79,7 +79,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 	public onCommitRollback(commit: GraphCommit<TChange>): void {
 		assert(
 			commit.revision === this.inFlightQueue.last?.data.commit.revision,
-			"must rollback latest commit in the in flight queue",
+			0xbd7 /* must rollback latest commit in the in flight queue */,
 		);
 		this.inFlightQueue.pop();
 	}
@@ -96,7 +96,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 
 		assert(
 			toResubmit.length <= this.inFlightQueue.length,
-			0x958 /* Unexpected resubmit of more or fewer commits than are in flight */,
+			0xbd8 /* Unexpected resubmit of more commits than are in flight */,
 		);
 
 		// Find the first in-flight commit to resubmit.
@@ -108,7 +108,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 		const last = this.inFlightQueue.last;
 		assert(
 			first !== undefined && last !== undefined,
-			"there must be inflight commits to resubmit",
+			0xbd9 /* there must be inflight commits to resubmit */,
 		);
 
 		this.pendingResubmitRange = { first, last };
@@ -131,7 +131,7 @@ export class DefaultResubmitMachine<TChange> implements ResubmitMachine<TChange>
 			for (const commit of toResubmit) {
 				assert(
 					current !== undefined,
-					"there must be an inflight commit for each resubmit commit",
+					0xbda /* there must be an inflight commit for each resubmit commit */,
 				);
 				current.data.commit = commit;
 				if (current.data.lastEnrichment < this.currentEnrichment) {
