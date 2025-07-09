@@ -5,7 +5,7 @@
 
 import { BaseContainerRuntimeFactory, PureDataObjectFactory, TreeDataObject } from "@fluidframework/aqueduct/internal";
 import type { IContainerRuntime, IContainerRuntimeInternal } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, FluidObjectKeys, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
@@ -13,7 +13,8 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base/intern
 import type { ITree } from "@fluidframework/tree/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
-import type { CompatibilityMode, ContainerSchema, IRootDataObject, IStaticEntryPoint, LoadableObjectRecord } from "./types.js";
+import type { CompatibilityMode, ContainerSchema, IRootDataObject, IStaticEntryPoint, LoadableObjectKindRecord, LoadableObjectRecord } from "./types.js";
+import { makeFluidObject } from "./utils.js";
 
 interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
@@ -63,13 +64,6 @@ export class TreeRootDataObject extends TreeDataObject<ITree> implements IRootDa
 
 const treeRootDataStoreId = "treeRootDOId";
 
-function makeFluidObject<T extends object, K extends FluidObjectKeys<T> = FluidObjectKeys<T>>(
-	object: Omit<T, K>,
-	providerKey: K,
-): T {
-	return Object.defineProperty(object, providerKey, { value: object }) as T;
-}
-
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
 ): Promise<IStaticEntryPoint> {
@@ -79,7 +73,7 @@ async function provideEntryPoint(
 	}
 	const treeRootDataObject = ((await entryPoint.get()) as FluidObject<TreeRootDataObject>)
 		.TreeRootDataObject;
-	assert(treeRootDataObject !== undefined, 0xb9f /* entryPoint must be of type RootDataObject */);
+	assert(treeRootDataObject !== undefined, 0xb9f /* entryPoint must be of type TreeRootDataObject */);
 	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject: treeRootDataObject,
@@ -94,8 +88,8 @@ async function provideEntryPoint(
  * (containing single {@link IRootDataObject}) as their entry point.
  */
 export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
-	// TODO: use for runtime factory.
 	readonly #treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>;
+	readonly #initialObjects: LoadableObjectKindRecord;
 
 	public constructor(
 		schema: ContainerSchema,
@@ -112,6 +106,14 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 			[treeFactory],
 			{},
 		);
+		this.#initialObjects = schema.initialObjects;
+	}
+
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
+		// The first time we create the container we create the RootDataObject
+		await this.#treeRootDataObjectFactory.createRootInstance(treeRootDataStoreId, runtime, {
+			initialObjects: this.#initialObjects,
+		});
 	}
 
 }

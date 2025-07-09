@@ -19,7 +19,6 @@ import type {
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
-	FluidObjectKeys,
 	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
@@ -42,7 +41,7 @@ import type {
 	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
-import { isDataObjectKind, isSharedObjectKind } from "./utils.js";
+import { isDataObjectKind, isSharedObjectKind, makeFluidObject } from "./utils.js";
 
 /**
  * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
@@ -177,13 +176,6 @@ export class RootDataObject
 }
 
 const rootDataStoreId = "rootDOId";
-
-function makeFluidObject<T extends object, K extends FluidObjectKeys<T> = FluidObjectKeys<T>>(
-	object: Omit<T, K>,
-	providerKey: K,
-): T {
-	return Object.defineProperty(object, providerKey, { value: object }) as T;
-}
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
