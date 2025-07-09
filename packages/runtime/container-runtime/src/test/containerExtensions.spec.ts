@@ -118,9 +118,9 @@ async function createContainerRuntime(
 	return containerRuntime;
 }
 
-describe("ContainerRuntime Extensions", () => {
-	describe("Extension isConnected behavior", () => {
-		it("should return true when CONNECTED and canSendSignals is true", async () => {
+describe("Container Extension", () => {
+	describe("isConnected", () => {
+		it("should return true when 'Connected' and canSendSignals is true", async () => {
 			const context = createMockContext(true, ConnectionState.Connected);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
@@ -128,7 +128,7 @@ describe("ContainerRuntime Extensions", () => {
 			assert.strictEqual(extension.isConnected, true, "Extension should be connected");
 		});
 
-		it("should return true when CATCHING_UP and canSendSignals is true", async () => {
+		it("should return true when 'CatchingUp' and canSendSignals is true", async () => {
 			const context = createMockContext(true, ConnectionState.CatchingUp);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
@@ -140,7 +140,7 @@ describe("ContainerRuntime Extensions", () => {
 			);
 		});
 
-		it("should return false when DISCONNECTED", async () => {
+		it("should return false when 'Disconnected'", async () => {
 			const context = createMockContext(false, ConnectionState.Disconnected);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
@@ -152,7 +152,7 @@ describe("ContainerRuntime Extensions", () => {
 			);
 		});
 
-		it("should return false when ESTABLISHING_CONNECTION", async () => {
+		it("should return false when 'EstablishingConnection'", async () => {
 			const context = createMockContext(false, ConnectionState.EstablishingConnection);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
