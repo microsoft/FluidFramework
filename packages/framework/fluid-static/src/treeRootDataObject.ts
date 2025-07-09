@@ -29,8 +29,10 @@ import type {
 	ContainerSchema,
 	IRootDataObject,
 	IStaticEntryPoint,
+	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
+import { makeFluidObject } from "./utils.js";
 
 interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
@@ -82,13 +84,6 @@ export class TreeRootDataObject
 
 const treeRootDataStoreId = "treeRootDOId";
 
-function makeFluidObject<T extends object, K extends FluidObjectKeys<T> = FluidObjectKeys<T>>(
-	object: Omit<T, K>,
-	providerKey: K,
-): T {
-	return Object.defineProperty(object, providerKey, { value: object }) as T;
-}
-
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
 ): Promise<IStaticEntryPoint> {
@@ -117,8 +112,8 @@ async function provideEntryPoint(
  */
 export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	// TODO: use for runtime factory.
-	// TODO: make private
-	public readonly treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>;
+	readonly #treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>;
+	readonly #initialObjects: LoadableObjectKindRecord;
 
 	public constructor(
 		schema: ContainerSchema,
@@ -129,12 +124,20 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 			registryEntries: [],
 			provideEntryPoint,
 		});
-		this.treeRootDataObjectFactory = new PureDataObjectFactory<TreeRootDataObject>(
+		this.#treeRootDataObjectFactory = new PureDataObjectFactory<TreeRootDataObject>(
 			`TreeRootDataObject`,
 			TreeRootDataObject,
 			[treeFactory],
 			{},
 		);
+		this.#initialObjects = schema.initialObjects;
+	}
+
+	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
+		// The first time we create the container we create the RootDataObject
+		await this.#treeRootDataObjectFactory.createRootInstance(treeRootDataStoreId, runtime, {
+			initialObjects: this.#initialObjects,
+		});
 	}
 }
 
