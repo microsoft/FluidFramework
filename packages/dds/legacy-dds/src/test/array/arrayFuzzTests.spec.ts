@@ -2,6 +2,7 @@
  * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
  * Licensed under the MIT License.
  */
+
 import * as path from "node:path";
 
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
