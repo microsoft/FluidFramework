@@ -610,6 +610,8 @@ export class MockStorage implements IChannelStorageService {
     // (undocumented)
     static createFromSummary(summaryTree: ISummaryTree): MockStorage;
     // (undocumented)
+    getSnapshotTree(): ISnapshotTree | undefined;
+    // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)
     readBlob(path: string): Promise<ArrayBufferLike>;
