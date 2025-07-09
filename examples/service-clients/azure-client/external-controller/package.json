@@ -41,7 +41,6 @@
 	},
 	"dependencies": {
 		"@fluidframework/azure-client": "workspace:~",
-		"@fluidframework/map": "workspace:~",
 		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
