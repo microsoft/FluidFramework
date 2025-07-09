@@ -94,6 +94,7 @@ async function provideEntryPoint(
  * (containing single {@link IRootDataObject}) as their entry point.
  */
 export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+	// TODO: use for runtime factory.
 	readonly #treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>;
 
 	public constructor(
