@@ -864,7 +864,6 @@ export function flexTreeViewWithContent(
 	return new Context(
 		defaultSchemaPolicy,
 		view,
-
 		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }

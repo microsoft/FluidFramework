@@ -749,7 +749,7 @@ describeHydration(
 					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 					const view = getView(config);
 					view.initialize({ leaf: 1 });
-					const context = view.getFlexView().context;
+					const context = view.getFlexView();
 					// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
 					// accessing the root as part of the allocations from the leaf access. Also, store it to avoid additional computation
 					// from any intermediate getters when accessing the leaf.
@@ -773,7 +773,7 @@ describeHydration(
 					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 					const view = getView(config);
 					view.initialize(new Map([["1", 1]]));
-					const context = view.getFlexView().context;
+					const context = view.getFlexView();
 					// Note: access the map that contains leaves before trying to access just the leaf at one of the keys, to not
 					// count any object allocations that result from accessing the root/map as part of the allocations from the leaf
 					// access. Also, store it to avoid additional computation from any intermediate getters when accessing the leaf.
@@ -797,7 +797,7 @@ describeHydration(
 					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 					const view = getView(config);
 					view.initialize([1, 2]);
-					const context = view.getFlexView().context;
+					const context = view.getFlexView();
 					// Note: prior to taking the "before count", access the array that contains leaves *and the first leaf in it*,
 					// to ensure that the sequence field for the array is allocated and accounted for. We expect the sequence field
 					// to be required anyway (vs the field for a leaf property on an object node, for example, where we might be able

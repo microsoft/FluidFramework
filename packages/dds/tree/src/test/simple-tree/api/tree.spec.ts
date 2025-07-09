@@ -163,7 +163,7 @@ describe("simple-tree tree", () => {
 		const view = getView(config);
 		view.initialize({ stuff: [] });
 		const _unused = view.root;
-		const context = view.getFlexView().context;
+		const context = view.getFlexView();
 		const countBefore = context.withAnchors.size;
 		for (let index = 0; index < 10; index++) {
 			const _unused2 = view.root;
@@ -179,7 +179,7 @@ describe("simple-tree tree", () => {
 		view.initialize({ stuff: [] });
 		const child = view.root.stuff;
 		Tree.parent(child);
-		const context = view.getFlexView().context;
+		const context = view.getFlexView();
 		const countBefore = context.withAnchors.size;
 		for (let index = 0; index < 10; index++) {
 			Tree.parent(child);

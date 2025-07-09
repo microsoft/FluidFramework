@@ -89,7 +89,7 @@ export interface FlexTreeHydratedContext
 export const ContextSlot = anchorSlot<Context>();
 
 /**
- * Implementation of `FlexTreeContext`.
+ * Implementation of `FlexTreeHydratedContext`.
  *
  * @remarks An editor is required to edit the FlexTree.
  *
@@ -125,10 +125,8 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		 * An object which handles node key generation and conversion
 		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
-		onDispose: () => void = () => {},
 	) {
 		this.onDispose = [
-			onDispose,
 			this.checkout.forest.events.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
