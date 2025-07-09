@@ -10,22 +10,28 @@ import {
 } from "@fluid-example/example-utils";
 import { useTree } from "@fluid-experimental/tree-react-api";
 import type { IFluidContainer } from "fluid-framework";
-import { SharedString, type ISharedString } from "fluid-framework/legacy";
+import type { ISharedString, SharedString } from "fluid-framework/legacy";
 import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
-import { TodoList, TodoItem } from "./schema.js";
+import type { TodoList, TodoItem } from "./schema.js";
 
 // eslint-disable-next-line import/no-unassigned-import
 import "./style.css";
 
 const ContainerContext = createContext<IFluidContainer | undefined>(undefined);
 
+/**
+ * {@link TodoListAppView} input props.
+ */
 export interface TodoListAppViewProps {
 	readonly todoList: TodoList;
 	readonly container: IFluidContainer<TodoListContainerSchema>;
 }
 
+/**
+ * TODO list application view component.
+ */
 export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 	props: TodoListAppViewProps,
 ) => {
@@ -40,17 +46,23 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 	);
 };
 
+/**
+ * {@link TodoListView} input props.
+ */
 interface TodoListViewProps {
 	readonly todoList: TodoList;
 }
 
+/**
+ * TODO list view component.
+ */
 const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => {
 	const { todoList } = props;
 	const [titleString, setTitleString] = useState<SharedString | undefined>();
 
 	const newItemTextInputRef = useRef<HTMLInputElement>(null);
 	useTree(todoList);
-	const container = useContext(ContainerContext);
+	const container = useContext(ContainerContext) ?? fail("Container context is not defined.");
 
 	const todoListTitleHandle = todoList.title;
 
@@ -98,7 +110,7 @@ const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => 
 	// Using the list of TodoItem objects, make a list of TodoItemViews.
 	const todoItemViews = todoList.items.map((todoItem, index) => (
 		<div className="item-wrap" key={todoItem.id}>
-			<TodoItemView todoItem={todoItem} className="todo-item-view" />
+			<TodoItemView todoItem={todoItem} />
 			<button
 				className="action-button"
 				onClick={() => {
@@ -132,10 +144,16 @@ const TodoListView: React.FC<TodoListViewProps> = (props: TodoListViewProps) => 
 	);
 };
 
+/**
+ * {@link TodoItemView} input props.
+ */
 interface TodoItemViewProps {
 	readonly todoItem: TodoItem;
 }
 
+/**
+ * TODO list item view component.
+ */
 const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItem } = props;
 

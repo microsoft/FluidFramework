@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
-// eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
-import { createRoot } from "react-dom/client";
-import {
+import type {
 	IContainer,
 	IFluidModuleWithDetails,
 	IRuntimeFactory,
@@ -24,6 +21,9 @@ import {
 	LocalResolver,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import React from "react";
+// eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
+import { createRoot } from "react-dom/client";
 
 import {
 	todoListContainerSchema,
@@ -124,7 +124,7 @@ async function createContainerAndRenderInElement(
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
 	const root = createRoot(contentDiv);
-	root.render(<TodoListAppView todoList={appModel} container={container} />);
+	root.render(<TodoListAppView todoList={appModel} container={fluidContainer} />);
 }
 
 /**
@@ -145,7 +145,7 @@ async function setup(): Promise<void> {
 	await createContainerAndRenderInElement(containerId, "sbs-right", false);
 
 	// Setting "fluidStarted" is just for our test automation
-	// eslint-disable-next-line @typescript-eslint/dot-notation
+	// eslint-disable-next-line @typescript-eslint/dot-notation, require-atomic-updates
 	window["fluidStarted"] = true;
 }
 

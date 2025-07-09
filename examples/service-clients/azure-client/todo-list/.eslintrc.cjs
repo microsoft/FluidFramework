@@ -5,7 +5,7 @@
 
 module.exports = {
 	extends: [
-		require.resolve("@fluidframework/eslint-config-fluid"), // TODO: strict
+		require.resolve("@fluidframework/eslint-config-fluid/strict"),
 		"../../../.eslintrc.cjs",
 	],
 	rules: {

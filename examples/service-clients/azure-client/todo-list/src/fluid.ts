@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
@@ -21,7 +21,7 @@ import { v4 as uuid } from "uuid";
 import { AzureFunctionTokenProvider } from "./azureFunctionTokenProvider.js";
 import { TodoItem, TodoList } from "./schema.js";
 
-export interface ICustomUserDetails {
+interface ICustomUserDetails {
 	gender: string;
 	email: string;
 }
@@ -45,6 +45,9 @@ const azureUser = {
 	additionalDetails: userDetails,
 };
 
+/**
+ * Azure Fluid Relay connection configuration.
+ */
 export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig =
 	useAzure
 		? {
@@ -60,7 +63,8 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
 			};
 
 /**
- * Schema for the Dice Roller Container.
+ * Schema for the TODO list application.
+ * @remarks
  * This includes the DataObjects we support and any initial DataObjects we want created
  * when the Container is first created.
  */
@@ -71,6 +75,9 @@ export const todoListContainerSchema = {
 	},
 	dynamicObjectTypes: [SharedString],
 } as const satisfies ContainerSchema;
+/**
+ * Container schema type for the Todo List application.
+ */
 export type TodoListContainerSchema = typeof todoListContainerSchema;
 
 const treeViewConfig = new TreeViewConfiguration({
@@ -78,6 +85,9 @@ const treeViewConfig = new TreeViewConfiguration({
 	enableSchemaValidation: true,
 });
 
+/**
+ * Loads the application model from an existing Fluid Container.
+ */
 export function loadAppFromExistingContainer(
 	container: IFluidContainer<TodoListContainerSchema>,
 ): TodoList {
@@ -89,6 +99,11 @@ export function loadAppFromExistingContainer(
 	return treeView.root;
 }
 
+/**
+ * Initializes the application model for a newly created Fluid Container.
+ * @remarks
+ * Includes population of the initial TodoList contents.
+ */
 export async function initializeAppForNewContainer(
 	container: IFluidContainer<TodoListContainerSchema>,
 ): Promise<TodoList> {
@@ -126,6 +141,10 @@ async function createInitialTodoList(
 	});
 }
 
+/**
+ * Creates a new {@link TodoItem}, using the provided Fluid container to generate `SharedString`
+ * DDSs for use as the item's title and description.
+ */
 export async function createTodoItem({
 	container,
 	completed,

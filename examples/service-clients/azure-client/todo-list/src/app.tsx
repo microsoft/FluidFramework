@@ -6,7 +6,7 @@
 import { AzureClient } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
-import { type IFluidContainer } from "fluid-framework";
+import type { IFluidContainer } from "fluid-framework";
 import React from "react";
 // eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
 import { createRoot } from "react-dom/client";
@@ -18,7 +18,7 @@ import {
 	loadAppFromExistingContainer,
 	type TodoListContainerSchema,
 } from "./fluid.js";
-import { TodoList } from "./schema.js";
+import type { TodoList } from "./schema.js";
 import { TodoListAppView } from "./view.js";
 
 async function start(): Promise<void> {
