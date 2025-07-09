@@ -4,7 +4,8 @@
  */
 
 import React from "react";
-import ReactDOM from "react-dom";
+// eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
+import { createRoot } from "react-dom/client";
 
 import { AzureClient } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
@@ -80,7 +81,7 @@ async function start(): Promise<void> {
 	});
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
-	const root = ReactDOM.createRoot(contentDiv);
+	const root = createRoot(contentDiv);
 	root.render(<TodoListView todoList={appModel} />);
 }
 

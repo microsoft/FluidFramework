@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import ReactDOM from "react-dom";
 import React from "react";
+// eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
+import { createRoot } from "react-dom/client";
 import {
 	IContainer,
 	IFluidModuleWithDetails,
@@ -122,7 +123,7 @@ async function createContainerAndRenderInElement(
 	}
 
 	const contentDiv = document.querySelector("#content") as HTMLDivElement;
-	const root = ReactDOM.createRoot(contentDiv);
+	const root = createRoot(contentDiv);
 	root.render(<TodoListView todoList={appModel} />);
 }
 
