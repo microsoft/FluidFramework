@@ -194,12 +194,12 @@ const config: Config = {
 			typesenseServerConfig: {
 			  nodes: [
 				{
-				  host: 'typesense.fluidframework.com',
+				  host: process.env.TYPESENSE_HOST,
 				  port: 443,
 				  protocol: 'https',
 				},
 			  ],
-			  apiKey: 'abcxyz',
+			  apiKey: process.env.TYPESENSE_API_KEY,
 			},
 			// Optional
 			contextualSearch: true,
