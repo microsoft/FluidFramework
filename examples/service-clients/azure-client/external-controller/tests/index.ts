@@ -134,13 +134,13 @@ async function setup(): Promise<void> {
 	const containerId = window.location.hash.slice(1);
 
 	const leftElement = document.querySelector("#sbs-left");
-	if (!leftElement) {
+	if (leftElement === null) {
 		throw new Error("sbs-left does not exist");
 	}
 	await createContainerAndRenderInElement(containerId, leftElement, createNew);
 
 	const rightElement = document.querySelector("#sbs-right");
-	if (!rightElement) {
+	if (rightElement === null) {
 		throw new Error("sbs-right does not exist");
 	}
 	// The second time we don't need to createNew because we know a Container exists.
