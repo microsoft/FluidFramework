@@ -11,13 +11,21 @@ import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime
 import type { ISharedObjectKind, SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree/internal";
 
-import type { CompatibilityMode, ContainerSchema, IRootDataObject, IStaticEntryPoint, LoadableObjectRecord } from "./types.js";
+import type { CompatibilityMode, ContainerSchema, IRootDataObject, IProvideRootDataObject, IStaticEntryPoint, LoadableObjectRecord } from "./types.js";
+
+interface IProvideTreeRootDataObject {
+	readonly TreeRootDataObject: TreeRootDataObject;
+}
 
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class TreeRootDataObject extends TreeDataObject<ITree> implements IRootDataObject {
+export class TreeRootDataObject extends TreeDataObject<ITree> implements IRootDataObject, IProvideTreeRootDataObject {
+
+	public get TreeRootDataObject(): TreeRootDataObject {
+		return this;
+	}
 
 	protected generateView(tree: ITree): ITree {
 		// Return the tree directly as the view
