@@ -12,11 +12,7 @@ import type {
 	IContainerRuntime,
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type {
-	FluidObject,
-	FluidObjectKeys,
-	IFluidHandle,
-} from "@fluidframework/core-interfaces";
+import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
@@ -93,10 +89,7 @@ async function provideEntryPoint(
 	}
 	const treeRootDataObject = ((await entryPoint.get()) as FluidObject<TreeRootDataObject>)
 		.TreeRootDataObject;
-	assert(
-		treeRootDataObject !== undefined,
-		0xb9f /* entryPoint must be of type RootDataObject */,
-	);
+	assert(treeRootDataObject !== undefined, "entryPoint must be of type TreeRootDataObject");
 	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject: treeRootDataObject,
