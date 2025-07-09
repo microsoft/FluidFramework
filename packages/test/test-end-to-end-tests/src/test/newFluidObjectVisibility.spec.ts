@@ -138,8 +138,7 @@ type TestMode = "Attached" | "Detached" | "Rehydrate";
  */
 describeCompat.only(
 	"New Fluid objects visibility",
-	// dont leave this
-	"NoCompat",
+	"FullCompat",
 	(getTestObjectProvider, { dds }) => {
 		const { SharedMap } = dds;
 		let provider: ITestObjectProvider;
