@@ -1,16 +1,9 @@
 # @fluid-example/app-integration-todo-list
 
-**_This demo is a work-in-progress_**
+This app is a basic example that allows the user to manage a simple TODO list comprised of items containing a title, a description, and a flag indicating whether or not they are complete.
+New items may be inserted, and existing items may be edited and/or deleted.
 
-**Dice Roller** is a basic example that has a die and a button. Clicking the button re-rolls the die and persists
-the value in the root SharedDirectory. The Fluid Container is defined in container/, the data object is defined in dataObject/.
-
-This implementation demonstrates plugging that Container into a standalone application, rather than using the
-`webpack-fluid-loader` environment that most of our packages use. This implementation relies on
-[Tinylicious](/server/routerlicious/packages/tinylicious), so there are a few extra steps to get started. We bring our own view that we will
-bind to the data in the container.
-
-It also demonstrates use of Presence features to share each clients' local activity.
+It leverages the [SharedTree]() distributed data store (DDS) as its core data model, but also demonstrates leveraging nested [SharedString] DDSs to enable live, collaborative text within the TODO list and its items.
 
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
@@ -57,12 +50,6 @@ For in browser testing update `./jest-puppeteer.config.js` to:
     headless: false,
   },
 ```
-
-## Data model
-
-Dice Roller uses the following distributed data structures:
-
--   SharedDirectory - root
 
 ## Backed Locally and running with live Azure Fluid Relay service instance
 
