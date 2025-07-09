@@ -21,16 +21,6 @@ import { v4 as uuid } from "uuid";
 import { AzureFunctionTokenProvider } from "./azureFunctionTokenProvider.js";
 import { TodoItem, TodoList } from "./schema.js";
 
-interface ICustomUserDetails {
-	gender: string;
-	email: string;
-}
-
-const userDetails: ICustomUserDetails = {
-	gender: "female",
-	email: "xyz@microsoft.com",
-};
-
 // Define the server we will be using and initialize Fluid
 const useAzure = process.env.FLUID_CLIENT === "azure";
 
@@ -42,7 +32,10 @@ const user = {
 const azureUser = {
 	id: user.id,
 	name: user.name,
-	additionalDetails: userDetails,
+	additionalDetails: {
+		gender: "female",
+		email: "xyz@microsoft.com",
+	},
 };
 
 /**
