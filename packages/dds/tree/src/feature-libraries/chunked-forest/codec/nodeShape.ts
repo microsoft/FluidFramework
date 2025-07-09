@@ -25,6 +25,7 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import type { IEncodedDataBuilder } from "./encodedDataBuilder.js";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
@@ -74,21 +75,22 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		outputBuffer: BufferFormat<EncodedChunkShape>,
+		dataBuilder: IEncodedDataBuilder,
 	): void {
 		if (this.type === undefined) {
-			outputBuffer.push(new IdentifierToken(cursor.type));
+			dataBuilder.addToBuffer(new IdentifierToken(cursor.type));
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
+		encodeValue(this.getValueToEncode(cursor, cache), this.value, dataBuilder);
 		for (const fieldEncoder of this.specializedFieldEncoders) {
 			cursor.enterField(brand(fieldEncoder.key));
-			fieldEncoder.encoder.encodeField(cursor, cache, outputBuffer);
+			fieldEncoder.encoder.encodeField(cursor, cache, dataBuilder);
 			cursor.exitField();
 		}
 
 		const otherFieldsBuffer: BufferFormat<EncodedChunkShape> = [];
+		const otherFieldsDataBuilder = dataBuilder.createSiblingFromBuffer(otherFieldsBuffer);
 
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
@@ -98,12 +100,13 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 					0x742 /* had extra local fields when shape does not support them */,
 				);
 				otherFieldsBuffer.push(new IdentifierToken(key));
-				this.otherFieldsEncoder.encodeField(cursor, cache, otherFieldsBuffer);
+				// TODO: Does this need its own incremental field buffers?
+				this.otherFieldsEncoder.encodeField(cursor, cache, otherFieldsDataBuilder);
 			}
 		});
 
 		if (this.otherFieldsEncoder !== undefined) {
-			outputBuffer.push(otherFieldsBuffer);
+			dataBuilder.addToBuffer(otherFieldsBuffer);
 		}
 	}
 

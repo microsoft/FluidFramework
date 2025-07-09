@@ -19,6 +19,8 @@ import type {
 	NodeEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
+// eslint-disable-next-line import/no-internal-modules
+import { EncodedDataBuilder } from "../../../../feature-libraries/chunked-forest/codec/encodedDataBuilder.js";
 import {
 	type EncodedFieldBatch,
 	version,
@@ -38,14 +40,18 @@ export function checkNodeEncode(
 	cache: EncoderCache,
 	tree: JsonableTree,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const mainBuffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
-	shape.encodeNode(cursor, cache, buffer);
+	shape.encodeNode(
+		cursor,
+		cache,
+		new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, mainBuffer),
+	);
 
 	// Check round-trip
-	checkDecode([buffer], [[tree]]);
+	checkDecode([mainBuffer], [[tree]]);
 
-	return buffer.slice(1);
+	return mainBuffer.slice(1);
 }
 
 export function checkFieldEncode(
@@ -54,14 +60,18 @@ export function checkFieldEncode(
 	tree: JsonableTree[],
 	idCompressor?: IIdCompressor,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const mainBuffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeField(tree);
-	shape.encodeField(cursor, cache, buffer);
+	shape.encodeField(
+		cursor,
+		cache,
+		new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, mainBuffer),
+	);
 
 	// Check round-trip
-	checkDecode([buffer], [tree], idCompressor);
+	checkDecode([mainBuffer], [tree], idCompressor);
 
-	return buffer.slice(1);
+	return mainBuffer.slice(1);
 }
 
 function checkDecode(
