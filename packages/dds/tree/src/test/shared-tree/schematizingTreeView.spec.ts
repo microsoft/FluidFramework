@@ -35,7 +35,6 @@ import {
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
-	CheckoutFlexTreeView,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
@@ -769,11 +768,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getView();
-				assert(checkoutView instanceof CheckoutFlexTreeView);
-				const { undoStack, redoStack } = createTestUndoRedoStacks(
-					checkoutView.checkout.events,
-				);
+				const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
 
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;

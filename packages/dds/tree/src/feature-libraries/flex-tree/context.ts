@@ -102,7 +102,12 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
 	public readonly withAnchors: Set<LazyEntity> = new Set();
 
-	private readonly eventUnregister: (() => void)[];
+	/**
+	 * Callbacks to run when disposing.
+	 *
+	 * Mainly event un-registration.
+	 */
+	private readonly onDispose: (() => void)[];
 	private disposed = false;
 
 	/**
@@ -120,8 +125,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		 * An object which handles node key generation and conversion
 		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
+		onDispose: () => void = () => {},
 	) {
-		this.eventUnregister = [
+		this.onDispose = [
+			onDispose,
 			this.checkout.forest.events.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
@@ -163,10 +170,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		assert(this.disposed === false, 0x803 /* double dispose */);
 		this.disposed = true;
 		this.clear();
-		for (const unregister of this.eventUnregister) {
+		for (const unregister of this.onDispose) {
 			unregister();
 		}
-		this.eventUnregister.length = 0;
+		this.onDispose.length = 0;
 
 		const deleted = this.checkout.forest.anchors.slots.delete(ContextSlot);
 		assert(deleted, 0x8c4 /* unexpected dispose */);

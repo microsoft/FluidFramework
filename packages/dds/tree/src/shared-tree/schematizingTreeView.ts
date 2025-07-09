@@ -216,7 +216,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Gets the view. Throws when disposed.
 	 */
-	public getView(): CheckoutFlexTreeView {
+	public getFlexView(): CheckoutFlexTreeView {
 		this.ensureUndisposed();
 		assert(this.view !== undefined, 0x8c0 /* unexpected getViewOrError */);
 		return this.view;
@@ -430,7 +430,7 @@ export class SchematizingSimpleTreeView<
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
 			);
 		}
-		const view = this.getView();
+		const view = this.getFlexView();
 		return tryGetTreeNodeForField(view.flexTree) as ReadableField<TRootSchema>;
 	}
 
@@ -441,7 +441,7 @@ export class SchematizingSimpleTreeView<
 				"Document is out of schema. Check TreeView.compatibility before accessing TreeView.root.",
 			);
 		}
-		const view = this.getView();
+		const view = this.getFlexView();
 		setField(
 			view.context.root,
 			this.rootFieldSchema,

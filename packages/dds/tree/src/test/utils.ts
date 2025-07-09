@@ -98,6 +98,7 @@ import {
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
+	Context,
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	jsonableTreeFromFieldCursor,
@@ -120,7 +121,6 @@ import {
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
-	CheckoutFlexTreeView,
 	type ITreePrivate,
 	type ITreeCheckout,
 	type SharedTreeContentSnapshot,
@@ -850,7 +850,7 @@ export function flexTreeViewWithContent(
 			HasListeners<CheckoutEvents>;
 		nodeKeyManager?: NodeIdentifierManager;
 	},
-): CheckoutFlexTreeView {
+): Context {
 	const view = checkoutWithContent(
 		{
 			initialTree: fieldCursorFromInsertable<UnsafeUnknownSchema>(
@@ -861,9 +861,10 @@ export function flexTreeViewWithContent(
 		},
 		args,
 	);
-	return new CheckoutFlexTreeView(
-		view,
+	return new Context(
 		defaultSchemaPolicy,
+		view,
+
 		args?.nodeKeyManager ?? new MockNodeIdentifierManager(),
 	);
 }
