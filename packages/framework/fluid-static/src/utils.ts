@@ -4,7 +4,7 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
-import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -94,3 +94,14 @@ export const parseDataObjectsFromSharedObjects = (
 
 	return [[...registryEntries], [...sharedObjects]];
 };
+
+/**
+ * Creates a Fluid object that has a property with the key `providerKey` that points to itself.
+ * This is useful for creating objects that need to reference themselves, such as DataObjects.
+ */
+export function makeFluidObject<
+	T extends object,
+	K extends FluidObjectKeys<T> = FluidObjectKeys<T>,
+>(object: Omit<T, K>, providerKey: K): T {
+	return Object.defineProperty(object, providerKey, { value: object }) as T;
+}
