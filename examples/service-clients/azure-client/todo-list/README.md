@@ -1,4 +1,4 @@
-# @fluid-example/app-integration-external-controller
+# @fluid-example/app-integration-todo-list
 
 **_This demo is a work-in-progress_**
 
@@ -24,7 +24,7 @@ You can run this example using the following steps:
 1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
 1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `pnpm run build:fast --nolint @fluid-example/app-integration-external-controller`
+      `pnpm run build:fast --nolint @fluid-example/app-integration-todo-list`
 1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->
