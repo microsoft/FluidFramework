@@ -22,7 +22,6 @@ export {
 	snapshotWithLoadingGroupIdKey,
 } from "./odspCache.js";
 export {
-	IIfMatchMigrationKind,
 	IOdspResolvedUrl,
 	IOdspUrlParts,
 	ISharingLink,

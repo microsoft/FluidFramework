@@ -60,12 +60,6 @@ export interface IFileEntry {
 }
 
 // @alpha @legacy
-export interface IIfMatchMigrationKind {
-    eTag: string;
-    itemId: string;
-}
-
-// @alpha @legacy
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorTypes;
@@ -95,13 +89,15 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
         attachmentGETStorageUrl: string;
         deltaStorageUrl: string;
     };
+    fileMetadata?: {
+        eTag?: string;
+    };
     // (undocumented)
     fileName: string;
     // (undocumented)
     fileVersion: string | undefined;
     // (undocumented)
     hashedDocumentId: string;
-    ifMatchEtag?: string;
     // (undocumented)
     isClpCompliantApp?: boolean;
     // (undocumented)

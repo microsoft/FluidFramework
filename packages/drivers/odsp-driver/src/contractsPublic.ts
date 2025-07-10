@@ -59,24 +59,23 @@ export interface IClpCompliantAppHeader {
 /**
  * @internal
  */
-export enum IfMatchMigrationHeader {
-	// Can be used in request made to resolver, to provide the etag of the file.
-	// This is needed for migration scenarios where the file is being migrated to Fluid format.
-	ifMatch = "If-Match",
+export enum FileMetadataHeader {
+	// Can be used in request made to resolver, to provide the e-tag of the file.
+	eTag = "eTag",
 }
 /**
  * @internal
  */
-export interface IIfMatchMigrationHeader {
+export interface IFileMetadataHeader {
 	/**
-	 * ETag of the file, needed for migration scenarios where the file is being migrated to Fluid format.
+	 * E-tag identifier for the file.
 	 */
-	[IfMatchMigrationHeader.ifMatch]: string;
+	[FileMetadataHeader.eTag]: string;
 }
 
 declare module "@fluidframework/core-interfaces" {
 	export interface IRequestHeader
 		extends Partial<ISharingLinkHeader>,
 			Partial<IClpCompliantAppHeader>,
-			Partial<IIfMatchMigrationHeader> {}
+			Partial<IFileMetadataHeader> {}
 }

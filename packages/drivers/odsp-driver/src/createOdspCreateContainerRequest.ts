@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, type IRequestHeader } from "@fluidframework/core-interfaces";
+import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	DriverHeader,
 	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	ISharingLinkKind,
-	IIfMatchMigrationKind,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { IfMatchMigrationHeader } from "./contractsPublic.js";
 import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtils.js";
 
 /**
@@ -36,23 +32,17 @@ export function createOdspCreateContainerRequest(
 	fileName: string,
 	createShareLinkType?: ISharingLinkKind,
 	containerPackageInfo?: IContainerPackageInfo | undefined,
-	ifMatchMigration?: IIfMatchMigrationKind,
 ): IRequest {
 	const shareLinkRequestParams = buildOdspShareLinkReqParams(createShareLinkType);
-	const url = `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(
-		filePath,
-	)}${containerPackageInfo ? `&containerPackageName=${getContainerPackageName(containerPackageInfo)}` : ""}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}${ifMatchMigration ? `&itemId=${encodeURIComponent(ifMatchMigration.itemId)}` : ""}`;
-	const headers: IRequestHeader = {
-		[DriverHeader.createNew]: {
-			fileName,
-		},
-	};
-	if (ifMatchMigration?.eTag !== undefined) {
-		headers[IfMatchMigrationHeader.ifMatch] = ifMatchMigration.eTag;
-	}
 	const createNewRequest: IRequest = {
-		url,
-		headers,
+		url: `${siteUrl}?driveId=${encodeURIComponent(driveId)}&path=${encodeURIComponent(
+			filePath,
+		)}${containerPackageInfo ? `&containerPackageName=${getContainerPackageName(containerPackageInfo)}` : ""}${shareLinkRequestParams ? `&${shareLinkRequestParams}` : ""}`,
+		headers: {
+			[DriverHeader.createNew]: {
+				fileName,
+			},
+		},
 	};
 	return createNewRequest;
 }

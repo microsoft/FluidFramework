@@ -16,23 +16,6 @@ export interface IOdspUrlParts {
 }
 
 /**
- * Information about the file to be migrated.
- * Providing these properties to the /snapshot api will trigger the migration of the file to Fluid format.
- * @legacy
- * @alpha
- */
-export interface IIfMatchMigrationKind {
-	/**
-	 * The current eTag of the file to be migrated.
-	 */
-	eTag: string;
-	/**
-	 * The itemId of the file to be migrated.
-	 */
-	itemId: string;
-}
-
-/**
  * Sharing scope of the share links created for a file.
  * @legacy
  * @alpha
@@ -188,8 +171,9 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	appName?: string;
 
 	/**
-	 * ETag of the file item, if known. This is needed for migration scenarios where the file is being
-	 * migrated to Fluid format.
+	 * File metadata such as eTag.
 	 */
-	ifMatchEtag?: string;
+	fileMetadata?: {
+		eTag?: string;
+	};
 }

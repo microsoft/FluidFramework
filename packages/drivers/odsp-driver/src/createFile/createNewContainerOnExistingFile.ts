@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { IWriteSummaryResponse } from "./../contracts.js";
-import { ClpCompliantAppHeader, IfMatchMigrationHeader } from "./../contractsPublic.js";
+import { ClpCompliantAppHeader } from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
 import { EpochTracker } from "./../epochTracker.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
@@ -54,7 +54,7 @@ export async function createNewContainerOnExistingFile(
 	createNewCaching: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
-	ifMatchMigration?: string,
+	eTag?: string,
 ): Promise<IOdspResolvedUrl> {
 	if (createNewSummary === undefined) {
 		throw new UsageError("createNewSummary must exist to create a new container");
@@ -85,7 +85,8 @@ export async function createNewContainerOnExistingFile(
 		url: odspUrl,
 		headers: {
 			[ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp,
-			[IfMatchMigrationHeader.ifMatch]: ifMatchMigration,
+			// Passing e-tag to "If-Match" header triggers a conversion of the file to Fluid format.
+			"If-Match": eTag,
 		},
 	});
 	fileEntry.docId = odspResolvedUrl.hashedDocumentId;
