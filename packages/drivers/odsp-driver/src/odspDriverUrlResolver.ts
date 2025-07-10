@@ -17,7 +17,7 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { ClpCompliantAppHeader, IfMatchMigrationHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
@@ -109,6 +109,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			const searchParams = new URLSearchParams(queryString);
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 			const fileName: string = request.headers[DriverHeader.createNew].fileName;
+			const itemID = searchParams.get("itemId") ?? "";
 			const driveID = searchParams.get("driveId");
 			const filePath = searchParams.get("path");
 			const packageName = searchParams.get("containerPackageName");
@@ -135,7 +136,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 				siteUrl: siteURL,
 				hashedDocumentId: "",
 				driveId: driveID,
-				itemId: "",
+				itemId: itemID,
 				fileName,
 				summarizer: false,
 				codeHint: {
@@ -144,6 +145,7 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 				fileVersion: undefined,
 				shareLinkInfo: undefined,
 				isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
+				ifMatchEtag: request.headers?.[IfMatchMigrationHeader.ifMatch],
 			};
 		}
 		const { siteUrl, driveId, itemId, path, containerPackageName, fileVersion } =

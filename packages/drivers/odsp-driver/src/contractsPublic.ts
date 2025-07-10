@@ -56,8 +56,27 @@ export interface IClpCompliantAppHeader {
 	[ClpCompliantAppHeader.isClpCompliantApp]: boolean;
 }
 
+/**
+ * @internal
+ */
+export enum IfMatchMigrationHeader {
+	// Can be used in request made to resolver, to provide the etag of the file.
+	// This is needed for migration scenarios where the file is being migrated to Fluid format.
+	ifMatch = "If-Match",
+}
+/**
+ * @internal
+ */
+export interface IIfMatchMigrationHeader {
+	/**
+	 * ETag of the file, needed for migration scenarios where the file is being migrated to Fluid format.
+	 */
+	[IfMatchMigrationHeader.ifMatch]: string;
+}
+
 declare module "@fluidframework/core-interfaces" {
 	export interface IRequestHeader
 		extends Partial<ISharingLinkHeader>,
-			Partial<IClpCompliantAppHeader> {}
+			Partial<IClpCompliantAppHeader>,
+			Partial<IIfMatchMigrationHeader> {}
 }

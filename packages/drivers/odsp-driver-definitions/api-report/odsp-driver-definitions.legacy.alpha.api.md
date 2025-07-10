@@ -95,6 +95,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
     fileVersion: string | undefined;
     // (undocumented)
     hashedDocumentId: string;
+    ifMatchEtag?: string;
     // (undocumented)
     isClpCompliantApp?: boolean;
     // (undocumented)
