@@ -111,7 +111,7 @@ export interface ISequencedClient {
 }
 
 /**
- * @alpha
+ * @legacy @alpha
  */
 export interface ISignalClient {
 	/**

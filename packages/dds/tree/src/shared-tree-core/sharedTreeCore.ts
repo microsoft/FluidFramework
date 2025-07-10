@@ -397,14 +397,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		} = this.messageCodec.decode(this.serializer.decode(content), {
 			idCompressor: this.idCompressor,
 		});
-		const [commit] = this.editManager.findLocalCommit(revision);
 		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 		if (this.resubmitMachine.isInResubmitPhase === false) {
-			const toResubmit = this.editManager.getLocalCommits();
-			assert(
-				commit === toResubmit[0],
-				0x95d /* Resubmit phase should start with the oldest local commit */,
-			);
+			const localCommits = this.editManager.getLocalCommits();
+			const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
+			assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
+			const toResubmit = localCommits.slice(revisionIndex);
 			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
@@ -427,7 +425,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		});
 		const [commit] = this.editManager.findLocalCommit(revision);
 		const { parent } = commit;
-		assert(parent !== undefined, "must have parent");
+		assert(parent !== undefined, 0xbdc /* must have parent */);
 		const [precedingCommit] = this.editManager.findLocalCommit(parent.revision);
 		this.editManager.localBranch.removeAfter(precedingCommit);
 		this.resubmitMachine.onCommitRollback(commit);
