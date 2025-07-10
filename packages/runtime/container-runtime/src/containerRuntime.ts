@@ -5130,7 +5130,8 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.getCanSendSignals ? this.getCanSendSignals() : this.connected,
+				isConnected: () =>
+					this.getCanSendSignals ? this.getCanSendSignals() : this.connected,
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,

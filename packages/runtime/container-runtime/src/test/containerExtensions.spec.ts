@@ -28,7 +28,8 @@ interface TestExtensionRuntimeProperties extends ExtensionRuntimeProperties {
 
 interface ITestContainerContext extends IContainerContext {
 	connected: boolean;
-	canSendSignals: boolean | undefined;
+	canSendSignals: (() => boolean) | undefined;
+	setConnectionState: (state: ConnectionState) => void;
 }
 
 class TestExtension implements ContainerExtension<TestExtensionRuntimeProperties> {
@@ -59,6 +60,7 @@ const TestExtensionFactory = class extends TestExtension {
 };
 
 const testExtensionId: ContainerExtensionId = "test:extension";
+
 enum ConnectionState {
 	Disconnected = 0,
 	EstablishingConnection = 3,
@@ -66,14 +68,16 @@ enum ConnectionState {
 	Connected = 2,
 }
 
-/**
- * Creates a mock container context with the specified canSendSignals and connection state
- */
 function createMockContext(
-	canSendSignals: boolean | undefined,
 	connectionState: ConnectionState,
+	canSendSignals?: (() => boolean) | undefined,
 ): ITestContainerContext {
-	const connected = connectionState === ConnectionState.Connected;
+	let currentConnectionState = connectionState;
+
+	const updateConnectionState = (newState: ConnectionState): void => {
+		currentConnectionState = newState;
+	};
+
 	const mockContext: ITestContainerContext = {
 		attachState: AttachState.Attached,
 		deltaManager: new MockDeltaManager(),
@@ -85,12 +89,18 @@ function createMockContext(
 		submitSummaryFn: (): number => 1,
 		submitSignalFn: (): void => {},
 		clientId: "mockClientId",
-		connected,
+		get connected() {
+			return currentConnectionState === ConnectionState.Connected;
+		},
 		storage: {} as unknown as IContainerContext["storage"],
 		baseSnapshot: undefined,
 		options: {},
 		loader: {} as unknown as IContainerContext["loader"],
-		canSendSignals,
+		canSendSignals:
+			canSendSignals ??
+			(() =>
+				currentConnectionState === ConnectionState.Connected ||
+				currentConnectionState === ConnectionState.CatchingUp),
 		clientDetails: { capabilities: { interactive: true } },
 		submitFn: (): number => 1,
 		disposeFn: (): void => {},
@@ -99,13 +109,11 @@ function createMockContext(
 		scope: {},
 		getAbsoluteUrl: async (): Promise<string> => "mockUrl",
 		id: "mockId",
+		setConnectionState: updateConnectionState,
 	};
 	return mockContext;
 }
 
-/**
- * Creates a ContainerRuntime for testing
- */
 async function createContainerRuntime(
 	context: ITestContainerContext,
 ): Promise<ContainerRuntime> {
@@ -121,7 +129,7 @@ async function createContainerRuntime(
 describe("Container Extension", () => {
 	describe("isConnected", () => {
 		it("should return true when 'Connected' and canSendSignals is true", async () => {
-			const context = createMockContext(true, ConnectionState.Connected);
+			const context = createMockContext(ConnectionState.Connected);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 
@@ -129,7 +137,7 @@ describe("Container Extension", () => {
 		});
 
 		it("should return true when 'CatchingUp' and canSendSignals is true", async () => {
-			const context = createMockContext(true, ConnectionState.CatchingUp);
+			const context = createMockContext(ConnectionState.CatchingUp);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 
@@ -141,7 +149,7 @@ describe("Container Extension", () => {
 		});
 
 		it("should return false when 'Disconnected'", async () => {
-			const context = createMockContext(false, ConnectionState.Disconnected);
+			const context = createMockContext(ConnectionState.Disconnected);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 
@@ -153,7 +161,7 @@ describe("Container Extension", () => {
 		});
 
 		it("should return false when 'EstablishingConnection'", async () => {
-			const context = createMockContext(false, ConnectionState.EstablishingConnection);
+			const context = createMockContext(ConnectionState.EstablishingConnection);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 
@@ -164,8 +172,8 @@ describe("Container Extension", () => {
 			);
 		});
 
-		it("should fallback to runtime.connected when canSendSignals is undefined", async () => {
-			const context = createMockContext(undefined, ConnectionState.Connected);
+		it("should fallback to runtime.connected when canSendSignals is undefined and runtime is connected", async () => {
+			const context = createMockContext(ConnectionState.Connected, undefined);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 
@@ -173,6 +181,63 @@ describe("Container Extension", () => {
 				extension.isConnected,
 				true,
 				"Extension should fallback to runtime.connected when canSendSignals is undefined",
+			);
+		});
+
+		it("should fallback to runtime.connected when canSendSignals is undefined and runtime is disconnected", async () => {
+			const context = createMockContext(ConnectionState.Disconnected, undefined);
+			const runtime = await createContainerRuntime(context);
+			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
+
+			assert.strictEqual(
+				extension.isConnected,
+				false,
+				"Extension should fallback to runtime.connected when canSendSignals is undefined and runtime is disconnected",
+			);
+		});
+
+		it("should handle dynamic connection state transitions", async () => {
+			const context = createMockContext(ConnectionState.Disconnected);
+			const runtime = await createContainerRuntime(context);
+			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
+
+			// Initially disconnected
+			assert.strictEqual(
+				extension.isConnected,
+				false,
+				"Extension should initially be disconnected",
+			);
+
+			// Transition to EstablishingConnection
+			context.setConnectionState(ConnectionState.EstablishingConnection);
+			assert.strictEqual(
+				extension.isConnected,
+				false,
+				"Extension should remain disconnected during EstablishingConnection",
+			);
+
+			// Transition to CatchingUp
+			context.setConnectionState(ConnectionState.CatchingUp);
+			assert.strictEqual(
+				extension.isConnected,
+				true,
+				"Extension should be connected during CatchingUp",
+			);
+
+			// Transition to Connected
+			context.setConnectionState(ConnectionState.Connected);
+			assert.strictEqual(
+				extension.isConnected,
+				true,
+				"Extension should be connected when fully Connected",
+			);
+
+			// Transition back to Disconnected
+			context.setConnectionState(ConnectionState.Disconnected);
+			assert.strictEqual(
+				extension.isConnected,
+				false,
+				"Extension should be disconnected after transition back to Disconnected",
 			);
 		});
 	});
