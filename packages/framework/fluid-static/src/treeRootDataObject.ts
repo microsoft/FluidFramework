@@ -5,9 +5,9 @@
 
 import {
 	BaseContainerRuntimeFactory,
-	PureDataObjectFactory,
 	TreeDataObject,
 } from "@fluidframework/aqueduct/internal";
+import type { PureDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type {
 	IContainerRuntimeOptions,
 	MinimumVersionForCollab,
@@ -87,7 +87,12 @@ export class TreeRootDataObject
 }
 
 const treeRootDataStoreId = "treeRootDOId";
-const treeRootDataObjectType = "treeRootDO";
+
+/**
+ * Type of the {@link TreeRootDataObject}.
+ * Used in the PureDataObjectFactory to create the root data object.
+ */
+export const treeRootDataObjectType = "treeRootDO";
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
@@ -120,14 +125,14 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 	public constructor(
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
-		treeFactory: IChannelFactory<ITree>,
+		treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>,
 		overrides?: Partial<{
 			runtimeOptions: Partial<IContainerRuntimeOptions>;
 			minVersionForCollab: MinimumVersionForCollab;
 		}>,
 	) {
 		super({
-			registryEntries: [],
+			registryEntries: [treeRootDataObjectFactory.registryEntry],
 			runtimeOptions: {
 				...compatibilityModeRuntimeOptions[compatibilityMode],
 				...overrides?.runtimeOptions,
@@ -137,12 +142,7 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 				overrides?.minVersionForCollab ??
 				compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
-		this.#treeRootDataObjectFactory = new PureDataObjectFactory<TreeRootDataObject>(
-			treeRootDataObjectType,
-			TreeRootDataObject,
-			[treeFactory],
-			{},
-		);
+		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
 		this.#initialObjects = schema.initialObjects;
 	}
 
