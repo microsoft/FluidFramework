@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-cli-app",
-	"version": "2.50.0",
+	"version": "2.50.1",
 	"private": true,
 	"description": "SharedTree CLI app demo",
 	"homepage": "https://fluidframework.com",
