@@ -8099,6 +8099,12 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../../test/stochastic-test-utils
+      '@fluid-private/test-dds-utils':
+        specifier: workspace:~
+        version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
