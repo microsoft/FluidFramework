@@ -1,3 +1,9 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import { PureDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import type {
 	IContainerRuntimeOptions,
@@ -9,6 +15,8 @@ import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definition
 import { DOProviderContainerRuntimeFactory, RootDataObjectFactory } from "./rootDataObject.js";
 import {
 	TreeDOProviderContainerRuntimeFactory,
+	TreeRootDataObject,
+	treeRootDataObjectType,
 	validateAndExtractTreeFactory,
 } from "./treeRootDataObject.js";
 import type { CompatibilityMode, ContainerSchema } from "./types.js";
@@ -62,7 +70,11 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		return new TreeDOProviderContainerRuntimeFactory(
 			props.schema,
 			props.compatibilityMode,
-			treeFactory,
+			new PureDataObjectFactory<TreeRootDataObject>(
+				treeRootDataObjectType,
+				TreeRootDataObject,
+				[treeFactory]
+			),
 			{
 				runtimeOptions: props.runtimeOptionOverrides,
 				minVersionForCollab: props.minVersionForCollabOverride,
