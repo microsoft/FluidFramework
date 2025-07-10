@@ -137,9 +137,6 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 /**
  * Validates the container schema and extracts the factory for the tree-based data object.
  * Throws an error if the schema is invalid or does not contain a valid SharedTree.
- *
- * @param schema - The container schema to validate and extract from.
- * @returns An {@link IChannelFactory} for the tree-based data object.
  */
 export function validateAndExtractTreeFactory(
 	registryEntries: NamedFluidDataStoreRegistryEntry[],
