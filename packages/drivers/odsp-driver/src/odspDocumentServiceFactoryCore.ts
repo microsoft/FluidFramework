@@ -199,6 +199,7 @@ export class OdspDocumentServiceFactoryCore
 								this.hostPolicy.cacheCreateNewSummary ?? true,
 								!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 								odspResolvedUrl.isClpCompliantApp,
+								odspResolvedUrl.ifMatchEtag,
 							);
 				});
 				const docService = this.createDocumentServiceCore(
