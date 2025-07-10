@@ -36,7 +36,6 @@ export class TreeDataObjectFactory<
 		const newProps = {
 			...props,
 			sharedObjects: props.sharedObjects ? [...props.sharedObjects] : [],
-			optionalProviders: props.optionalProviders ?? {},
 		};
 
 		const maybeTreeFactory = props.sharedObjects?.find(
