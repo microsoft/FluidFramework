@@ -164,7 +164,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return this._getConnected();
 	}
 
-	public get canSendSignals(): boolean {
+	public canSendSignals(): boolean {
 		return this._canSendSignals();
 	}
 
