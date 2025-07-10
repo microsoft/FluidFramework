@@ -18,6 +18,7 @@ import {
 	WholeSummaryUploadManager,
 	type ISession,
 	getGlobalTimeoutContext,
+	type IGitManager,
 } from "@fluidframework/server-services-client";
 import {
 	type ICollection,
@@ -135,15 +136,17 @@ export class DocumentStorage implements IDocumentStorage {
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
 		isEphemeralContainer: boolean = false,
+		hybridContainerEnabled: boolean = false,
 		messageBrokerId?: string,
 	): Promise<IDocumentDetails> {
 		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
+		const uploadAsEphemeralContainer = isEphemeralContainer || hybridContainerEnabled;
 		const gitManager = await this.tenantManager.getTenantGitManager(
 			tenantId,
 			documentId,
 			storageName,
 			false /* includeDisabledTenant */,
-			isEphemeralContainer,
+			uploadAsEphemeralContainer,
 		);
 
 		const storageNameAssignerEnabled = !!this.storageNameAssigner;
@@ -153,6 +156,7 @@ export class DocumentStorage implements IDocumentStorage {
 			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
 			storageNameAssignerExists: storageNameAssignerEnabled,
 			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
+			[CommonProperties.uploadAsEphemeralContainer]: uploadAsEphemeralContainer,
 		};
 		if (storageNameAssignerEnabled && !storageName) {
 			// Using a warning instead of an error just in case there are some outliers that we don't know about.
@@ -174,42 +178,17 @@ export class DocumentStorage implements IDocumentStorage {
 			LumberEventName.CreateDocInitialSummaryWrite,
 			lumberjackProperties,
 		);
+
 		let initialSummaryVersionId: string;
 		try {
-			const handle = await uploadManager.writeSummaryTree(
-				fullTree /* summaryTree */,
-				"" /* parentHandle */,
-				"container" /* summaryType */,
-				0 /* sequenceNumber */,
-				true /* initial */,
+			const { summaryVersionId, summaryUploadMessage } = await this.uploadSummary(
+				uploadManager,
+				fullTree,
+				gitManager,
+				documentId,
 			);
-
-			let initialSummaryUploadSuccessMessage = `Tree reference: ${JSON.stringify(handle)}`;
-
-			if (!this.enableWholeSummaryUpload) {
-				const commitParams: ICreateCommitParams = {
-					author: {
-						date: new Date().toISOString(),
-						email: "dummy@microsoft.com",
-						name: "Routerlicious Service",
-					},
-					message: "New document",
-					parents: [],
-					tree: handle,
-				};
-
-				const commit = await gitManager.createCommit(commitParams);
-				await gitManager.createRef(documentId, commit.sha);
-				initialSummaryUploadSuccessMessage += ` - Commit sha: ${JSON.stringify(
-					commit.sha,
-				)}`;
-				// In the case of ShreddedSummary Upload, summary version is always the commit sha.
-				initialSummaryVersionId = commit.sha;
-			} else {
-				// In the case of WholeSummary Upload, summary tree handle is actually commit sha or version id.
-				initialSummaryVersionId = handle;
-			}
-			initialSummaryUploadMetric.success(initialSummaryUploadSuccessMessage);
+			initialSummaryVersionId = summaryVersionId;
+			initialSummaryUploadMetric.success(summaryUploadMessage);
 		} catch (error: any) {
 			initialSummaryUploadMetric.error("Error during initial summary upload", error);
 			throw error;
@@ -295,24 +274,101 @@ export class DocumentStorage implements IDocumentStorage {
 			documentDbValue.ttl = this.ephemeralDocumentTTLSec;
 		}
 
+		let dbResult: IDocumentDetails;
 		try {
-			const result = await this.documentRepository.findOneOrCreate(
+			dbResult = await this.documentRepository.findOneOrCreate(
 				{
 					documentId,
 					tenantId,
 				},
 				documentDbValue,
 			);
-			createDocumentCollectionMetric.setProperty(
-				CommonProperties.isEphemeralContainer,
-				isEphemeralContainer,
-			);
 			createDocumentCollectionMetric.success("Successfully created document");
-			return result;
 		} catch (error: any) {
 			createDocumentCollectionMetric.error("Error create document", error);
 			throw error;
 		}
+
+		if (!isEphemeralContainer && hybridContainerEnabled) {
+			const asyncInitialSummaryUploadMetric = Lumberjack.newLumberMetric(
+				LumberEventName.CreateDocInitialSummaryWrite,
+				lumberjackProperties,
+			);
+			try {
+				// If the document is not ephemeral, we want to asynchronously upload the initial summary to storage.
+				const asyncGitManager = await this.tenantManager.getTenantGitManager(
+					tenantId,
+					documentId,
+					storageName,
+					false /* includeDisabledTenant */,
+					false /* isEphemeralContainer */,
+				);
+				const asyncBlobsShaCache = new Map<string, string>();
+				const asyncUploadManager = this.enableWholeSummaryUpload
+					? new WholeSummaryUploadManager(asyncGitManager)
+					: new SummaryTreeUploadManager(
+							asyncGitManager,
+							asyncBlobsShaCache,
+							async () => undefined,
+					  );
+				const { summaryUploadMessage } = await this.uploadSummary(
+					asyncUploadManager,
+					fullTree /* summaryTree */,
+					asyncGitManager,
+					documentId,
+				);
+				asyncInitialSummaryUploadMetric.success(summaryUploadMessage);
+			} catch (error: any) {
+				asyncInitialSummaryUploadMetric.error(
+					"Error uploading initial async summary",
+					error,
+				);
+				throw error;
+			}
+		}
+
+		return dbResult;
+	}
+
+	private async uploadSummary(
+		uploadManager: WholeSummaryUploadManager | SummaryTreeUploadManager,
+		fullTree: ISummaryTree,
+		gitManager: IGitManager,
+		documentId: string,
+	) {
+		let summaryVersionId: string;
+		const handle = await uploadManager.writeSummaryTree(
+			fullTree /* summaryTree */,
+			"" /* parentHandle */,
+			"container" /* summaryType */,
+			0 /* sequenceNumber */,
+			true /* initial */,
+		);
+
+		let summaryUploadMessage = `Tree reference: ${JSON.stringify(handle)}`;
+
+		if (!this.enableWholeSummaryUpload) {
+			const commitParams: ICreateCommitParams = {
+				author: {
+					date: new Date().toISOString(),
+					email: "dummy@microsoft.com",
+					name: "Routerlicious Service",
+				},
+				message: "New document",
+				parents: [],
+				tree: handle,
+			};
+
+			const commit = await gitManager.createCommit(commitParams);
+			await gitManager.createRef(documentId, commit.sha);
+			// In the case of ShreddedSummary Upload, summary version is always the commit sha.
+			summaryVersionId = commit.sha;
+			summaryUploadMessage += ` - Commit sha: ${JSON.stringify(commit.sha)}`;
+		} else {
+			// In the case of WholeSummary Upload, summary tree handle is actually commit sha or version id.
+			summaryVersionId = handle;
+		}
+		return { summaryVersionId, summaryUploadMessage };
 	}
 
 	public async getLatestVersion(tenantId: string, documentId: string): Promise<ICommit | null> {
