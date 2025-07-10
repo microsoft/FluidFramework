@@ -161,7 +161,7 @@ export interface IContainerContext {
 	 * Container's ability to send and receive signals.
 	 * @returns true if the container can send signals (loaded and connected to service), false otherwise.
 	 */
-	readonly canSendSignals?: boolean;
+	readonly canSendSignals?: () => boolean;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */

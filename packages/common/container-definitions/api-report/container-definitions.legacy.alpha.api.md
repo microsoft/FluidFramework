@@ -127,7 +127,7 @@ export interface IContainerContext {
     readonly audience: IAudience;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly canSendSignals?: boolean;
+    readonly canSendSignals?: () => boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
