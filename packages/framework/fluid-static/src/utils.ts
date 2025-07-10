@@ -4,13 +4,14 @@
  */
 
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/container-runtime/internal";
 import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { ContainerSchema, LoadableObjectKind } from "./types.js";
+import type { CompatibilityMode, ContainerSchema, LoadableObjectKind } from "./types.js";
 
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
@@ -105,3 +106,11 @@ export function makeFluidObject<
 >(object: Omit<T, K>, providerKey: K): T {
 	return Object.defineProperty(object, providerKey, { value: object }) as T;
 }
+
+/**
+ * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
+ */
+export const compatibilityModeToMinVersionForCollab = {
+	"1": "1.0.0",
+	"2": "2.0.0",
+} as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;

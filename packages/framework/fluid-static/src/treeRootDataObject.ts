@@ -9,6 +9,10 @@ import {
 	TreeDataObject,
 } from "@fluidframework/aqueduct/internal";
 import type {
+	IContainerRuntimeOptions,
+	MinimumVersionForCollab,
+} from "@fluidframework/container-runtime/internal";
+import type {
 	IContainerRuntime,
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
@@ -20,6 +24,7 @@ import type { SharedObjectKind } from "@fluidframework/shared-object-base/intern
 import type { ITree } from "@fluidframework/tree/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
+import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	CompatibilityMode,
 	ContainerSchema,
@@ -28,7 +33,7 @@ import type {
 	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
-import { makeFluidObject } from "./utils.js";
+import { compatibilityModeToMinVersionForCollab, makeFluidObject } from "./utils.js";
 
 interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
@@ -79,6 +84,7 @@ export class TreeRootDataObject
 }
 
 const treeRootDataStoreId = "treeRootDOId";
+const treeRootDataObjectType = "treeRootDO";
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
@@ -112,13 +118,24 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
 		treeFactory: IChannelFactory<ITree>,
+		overrides?: Partial<{
+			runtimeOptions: Partial<IContainerRuntimeOptions>;
+			minVersionForCollab: MinimumVersionForCollab;
+		}>,
 	) {
 		super({
 			registryEntries: [],
+			runtimeOptions: {
+				...compatibilityModeRuntimeOptions[compatibilityMode],
+				...overrides?.runtimeOptions,
+			},
 			provideEntryPoint,
+			minVersionForCollab:
+				overrides?.minVersionForCollab ??
+				compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
 		this.#treeRootDataObjectFactory = new PureDataObjectFactory<TreeRootDataObject>(
-			`TreeRootDataObject`,
+			treeRootDataObjectType,
 			TreeRootDataObject,
 			[treeFactory],
 			{},

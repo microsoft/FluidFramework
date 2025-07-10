@@ -63,6 +63,10 @@ export function createDOProviderContainerRuntimeFactory(props: {
 			props.schema,
 			props.compatibilityMode,
 			treeFactory,
+			{
+				runtimeOptions: props.runtimeOptionOverrides,
+				minVersionForCollab: props.minVersionForCollabOverride,
+			}
 		);
 	} else {
 		return new DOProviderContainerRuntimeFactory(

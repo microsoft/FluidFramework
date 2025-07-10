@@ -41,15 +41,12 @@ import type {
 	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
-import { isDataObjectKind, isSharedObjectKind, makeFluidObject } from "./utils.js";
-
-/**
- * Maps CompatibilityMode to a semver valid string that can be passed to the container runtime.
- */
-const compatibilityModeToMinVersionForCollab = {
-	"1": "1.0.0",
-	"2": "2.0.0",
-} as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
+import {
+	compatibilityModeToMinVersionForCollab,
+	isDataObjectKind,
+	isSharedObjectKind,
+	makeFluidObject,
+} from "./utils.js";
 
 /**
  * Input props for {@link RootDataObject.initializingFirstTime}.
@@ -176,6 +173,7 @@ export class RootDataObject
 }
 
 const rootDataStoreId = "rootDOId";
+const rootDataObjectType = "rootDO";
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
@@ -273,7 +271,7 @@ export class RootDataObjectFactory extends DataObjectFactory<
 		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
 		// and instead we override the necessary methods in this class to use the registry received in the constructor.
 		super({
-			type: "rootDO",
+			type: rootDataObjectType,
 			ctor: RootDataObject,
 			sharedObjects,
 		});
