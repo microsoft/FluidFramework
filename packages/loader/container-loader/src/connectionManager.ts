@@ -717,12 +717,18 @@ export class ConnectionManager implements IConnectionManager {
 					this.props.reconnectionDelayHandler(delayMs, origError);
 				}
 
-				// Check if the calculated delay would exceed the remaining timeout
+				// Check if the calculated delay would exceed the remaining timeout with a conservative buffer
 				if (this.retryConnectionTimeoutMs !== undefined) {
 					const elapsedTime = performanceNow() - this.initialConnectionStartTime;
 					const remainingTime = this.retryConnectionTimeoutMs - elapsedTime;
+					const connectionAttemptDuration = performanceNow() - connectStartTime;
 
-					if (delayMs >= remainingTime) {
+					// Use a 75% buffer to be conservative about timeout usage
+					const timeoutBufferThreshold = remainingTime * 0.75;
+					// Estimate the next attempt time as the delay plus the time it took to connect
+					const estimatedNextAttemptTime = delayMs + connectionAttemptDuration;
+
+					if (estimatedNextAttemptTime >= timeoutBufferThreshold) {
 						this.logger.sendTelemetryEvent({
 							eventName: "RetryDelayExceedsConnectionTimeout",
 							attempts: connectRepeatCount,
@@ -731,7 +737,7 @@ export class ConnectionManager implements IConnectionManager {
 							remainingTimeMs: remainingTime,
 							timeoutMs: this.retryConnectionTimeoutMs,
 						});
-						// Throw the error immediately since waiting would exceed our timeout
+						// Throw the error immediately since the estimated time for delay + next connection attempt would exceed our conservative timeout buffer
 						throw normalizeError(origError, { props: fatalConnectErrorProp });
 					}
 				}
