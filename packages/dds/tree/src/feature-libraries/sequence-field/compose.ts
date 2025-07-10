@@ -139,9 +139,23 @@ function composeMarksIgnoreChild(
 		return updateBaseMarkId(moveEffects, { ...baseMark, idOverride: newMark.idOverride });
 	}
 
-	if (!markHasCellEffect(baseMark) && !markHasCellEffect(newMark)) {
-		return createNoopMark(newMark.count, undefined, getInputCellId(baseMark));
-	} else if (!markHasCellEffect(baseMark)) {
+	if (!markHasCellEffect(baseMark)) {
+		assert(baseMark.type === "Insert", "Expected baseMark to be a pin");
+
+		// `newMark` can be either a remove or another pin.
+		// A pin is treated as a detach and attach, so we call `composeAttachDetach` in either case.
+		moveEffects.composeAttachDetach(
+			getAttachedNodeId(baseMark),
+			{
+				revision: newMark.revision,
+				localId: newMark.id,
+			},
+			baseMark.count,
+		);
+
+		// XXX: This currently has a side effect of removing the detach cross-field key for `baseMark` and so must be called.
+		moveEffects.getNewChangesForBaseDetach(getAttachedNodeId(baseMark), baseMark.count);
+
 		return newMark;
 	} else if (!markHasCellEffect(newMark)) {
 		if (isAttach(newMark) && isAttach(baseMark)) {
@@ -179,19 +193,11 @@ function composeMarksIgnoreChild(
 		assert(newMark.type === "Insert", "Unexpected mark type");
 		const detachId = getDetachedNodeId(baseMark);
 		const attachId = getAttachedNodeId(newMark);
-		const areInverses = areEqualChangeAtomIds(
-			getAttachedNodeId(newMark),
-			getDetachedNodeId(baseMark),
-		);
 
 		// Note that we cannot assert that this returns true,
 		// as it may not be until a second pass that MCF can tell that this is a reattach of the same node.
-		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, !areInverses);
-
-		if (areInverses) {
-			// These are inverses which cancel out.
-			return createNoopMark(baseMark.count, undefined);
-		}
+		// moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, !areInverses);
+		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count, true);
 
 		// The composition has no net effect but we preserve the second change's intention to pin the nodes here.
 		const composedMark = { ...newMark };
