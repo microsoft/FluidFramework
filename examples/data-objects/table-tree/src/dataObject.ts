@@ -5,8 +5,7 @@
 
 // TODO: Update import once TreeDataObject is exported in our non-internal package.
 // eslint-disable-next-line import/no-internal-modules
-import { TreeDataObject } from "@fluidframework/aqueduct/internal";
-import { PureDataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import {
 	SharedTree,
 	TreeViewConfiguration,
@@ -24,9 +23,14 @@ import { Column, Row, Table } from "./schema.js";
  */
 export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 	public readonly config = new TreeViewConfiguration({ schema: Table });
-	public static readonly factory = new PureDataObjectFactory<
-		TreeDataObject<TreeView<typeof Table>>
-	>(`TreeDataObject`, TableDataObject, [SharedTree.getFactory()], {});
+	public static readonly factory = new TreeDataObjectFactory<
+		TreeDataObject<TreeView<typeof Table>>,
+		TreeView<typeof Table>
+	>({
+		type: `TreeDataObject`,
+		ctor: TableDataObject,
+		sharedObjects: [SharedTree.getFactory()],
+	});
 
 	public override generateView(tree: ITree): TreeView<typeof Table> {
 		return tree.viewWith(this.config);

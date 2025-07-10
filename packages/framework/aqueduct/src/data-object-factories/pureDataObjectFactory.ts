@@ -189,6 +189,8 @@ export interface DataObjectFactoryProps<
 	 * These policies define specific behaviors or constraints for the data object.
 	 */
 	readonly policies?: Partial<IFluidDataStorePolicies>;
+
+	readonly initialState?: I["InitialState"];
 }
 
 /**
@@ -261,6 +263,7 @@ export class PureDataObjectFactory<
 			sharedObjectRegistry: new Map(newProps.sharedObjects?.map((ext) => [ext.type, ext])),
 			runtimeClassArg: newProps.runtimeClass ?? FluidDataStoreRuntime,
 			policies: newProps.policies,
+			initialState: newProps.initialState,
 		};
 
 		if (newProps.registryEntries !== undefined) {
@@ -398,7 +401,10 @@ export class PureDataObjectFactory<
 			...this.createProps,
 			context,
 			existing: false,
-			initialState,
+			initialState: {
+				...this.createProps.initialState,
+				...initialState,
+			},
 		});
 		const dataStore = await context.attachRuntime(this, runtime);
 
@@ -428,7 +434,10 @@ export class PureDataObjectFactory<
 			...this.createProps,
 			context,
 			existing: false,
-			initialState,
+			initialState: {
+				...this.createProps.initialState,
+				...initialState,
+			},
 		});
 		const dataStore = await context.attachRuntime(this, dataStoreRuntime);
 		const result = await dataStore.trySetAlias(rootDataStoreId);
@@ -458,7 +467,10 @@ export class PureDataObjectFactory<
 			...this.createProps,
 			context,
 			existing: false,
-			initialState,
+			initialState: {
+				...this.createProps.initialState,
+				...initialState,
+			},
 		});
 
 		await context.attachRuntime(this, runtime);

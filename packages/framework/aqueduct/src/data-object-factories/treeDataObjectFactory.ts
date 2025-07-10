@@ -8,7 +8,6 @@ import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
 import type {
 	DataObjectTypes,
-	IDataObjectProps,
 	TreeDataObject,
 	TreeDataObjectProps,
 } from "../data-objects/index.js";
@@ -32,10 +31,15 @@ export class TreeDataObjectFactory<
 		DataObjectTypes<TreeDataObjectProps> = DataObjectTypes<TreeDataObjectProps>,
 > extends PureDataObjectFactory<TDataObject, DataObjectTypes<TreeDataObjectProps>> {
 	public constructor(props: DataObjectFactoryProps<TDataObject>) {
-		const baseCtor = props.ctor;
 		const newProps = {
 			...props,
 			sharedObjects: props.sharedObjects ? [...props.sharedObjects] : [],
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			initialState: props.initialState
+				? {
+						...props.initialState,
+					}
+				: {},
 		};
 
 		const maybeTreeFactory = props.sharedObjects?.find(
@@ -47,25 +51,11 @@ export class TreeDataObjectFactory<
 			newProps.sharedObjects.push(treeFactory);
 		}
 
-		type Newable = new (
-			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
-		) => TDataObject;
-
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const interceptedConstructor: Newable = function (
-			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
-		): TDataObject {
-			return new baseCtor({
-				..._props,
-				initProps: {
-					..._props.initProps,
-					treeFactory,
-				},
-			});
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} as any; // `as any` is used to bypass `new` constraint
-
-		newProps.ctor = interceptedConstructor;
+		newProps.initialState = {
+			...newProps.initialState,
+			treeFactory,
+		};
 
 		super(newProps);
 	}
