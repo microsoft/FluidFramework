@@ -1338,8 +1338,8 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
-	// Undefined for backwards compatibility with old loader layers that do not support this.
-	private readonly getCanSendSignals: (() => boolean) | undefined;
+
+	private readonly canSendSignals: () => boolean;
 
 	private consecutiveReconnects = 0;
 
@@ -1521,7 +1521,8 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.getCanSendSignals = context.canSendSignals;
+		this.canSendSignals = () =>
+			context.canSendSignals ? context.canSendSignals() : this.canSendOps;
 
 		const {
 			options,
@@ -5130,8 +5131,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () =>
-					this.getCanSendSignals ? this.getCanSendSignals() : this.connected,
+				isConnected: () => this.canSendSignals(),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
