@@ -31,7 +31,6 @@ declare type old_as_current_for_Class_ConsensusRegisterCollectionClass = require
  * typeValidation.broken:
  * "Class_ConsensusRegisterCollectionClass": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<current.ConsensusRegisterCollectionClass<never>>, TypeOnly<old.ConsensusRegisterCollectionClass<never>>>
 
 /*
@@ -59,7 +58,6 @@ declare type current_as_old_for_Class_ConsensusRegisterCollectionFactory = requi
  * typeValidation.broken:
  * "ClassStatics_ConsensusRegisterCollectionClass": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_ConsensusRegisterCollectionClass = requireAssignableTo<TypeOnly<typeof current.ConsensusRegisterCollectionClass>, TypeOnly<typeof old.ConsensusRegisterCollectionClass>>
 
 /*

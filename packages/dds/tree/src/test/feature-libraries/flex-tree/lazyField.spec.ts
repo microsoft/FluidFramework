@@ -365,25 +365,22 @@ describe("LazyField", () => {
 				schema: SchemaFactory.optional(JsonAsTree.Tree),
 				initialTree: 5,
 			});
-			assert(view.flexTree.is(FieldKinds.optional));
-			assert.equal(view.flexTree.content, 5);
-			view.flexTree.editor.set(
-				mapTreeFromCursor(singleJsonCursor(6)),
-				view.flexTree.length === 0,
-			);
-			assert.equal(view.flexTree.content, 6);
-			view.flexTree.editor.set(undefined, view.flexTree.length === 0);
-			assert.equal(view.flexTree.content, undefined);
-			view.flexTree.editor.set(
+			assert(view.root.is(FieldKinds.optional));
+			assert.equal(view.root.content, 5);
+			view.root.editor.set(mapTreeFromCursor(singleJsonCursor(6)), view.root.length === 0);
+			assert.equal(view.root.content, 6);
+			view.root.editor.set(undefined, view.root.length === 0);
+			assert.equal(view.root.content, undefined);
+			view.root.editor.set(
 				mapTreeFromCursor(
 					cursorForJsonableTreeNode({
 						type: brand(numberSchema.identifier),
 						value: 7,
 					}),
 				),
-				view.flexTree.length === 0,
+				view.root.length === 0,
 			);
-			assert.equal(view.flexTree.content, 7);
+			assert.equal(view.root.content, 7);
 		});
 	});
 
@@ -427,16 +424,16 @@ describe("LazyField", () => {
 				schema,
 				initialTree: "X",
 			});
-			assert(view.flexTree.is(FieldKinds.required));
-			assert.equal(view.flexTree.content, "X");
-			view.flexTree.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
-			assert.equal(view.flexTree.content, "Y");
+			assert(view.root.is(FieldKinds.required));
+			assert.equal(view.root.content, "X");
+			view.root.editor.set(mapTreeFromCursor(singleJsonCursor("Y")));
+			assert.equal(view.root.content, "Y");
 			const zCursor = cursorForJsonableTreeNode({
 				type: brand(stringSchema.identifier),
 				value: "Z",
 			});
-			view.flexTree.editor.set(mapTreeFromCursor(zCursor));
-			assert.equal(view.flexTree.content, "Z");
+			view.root.editor.set(mapTreeFromCursor(zCursor));
+			assert.equal(view.root.content, "Z");
 		});
 	});
 

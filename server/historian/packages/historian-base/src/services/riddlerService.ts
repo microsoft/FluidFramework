@@ -161,10 +161,12 @@ export class RiddlerService implements ITenantService, ITenantConfigManager {
 				.catch(getRequestErrorTranslator(tokenValidationUrl, "POST", lumberProperties));
 
 			const claims = decode(token) as ITokenClaims;
-			let tokenLifetimeInSec = validateTokenClaimsExpiration(
+			const tokenLifetimeInMSec = validateTokenClaimsExpiration(
 				claims,
 				this.maxTokenLifetimeSec,
 			);
+
+			let tokenLifetimeInSec = Math.floor(tokenLifetimeInMSec / 1000);
 			// in case the service clock is behind, reducing the lifetime of token by 5%
 			// to avoid using an expired token.
 			if (tokenLifetimeInSec) {

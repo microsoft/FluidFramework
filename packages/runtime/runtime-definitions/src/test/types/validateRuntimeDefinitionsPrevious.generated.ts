@@ -157,7 +157,6 @@ declare type old_as_current_for_Interface_IDataStore = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IDataStore": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDataStore = requireAssignableTo<TypeOnly<current.IDataStore>, TypeOnly<old.IDataStore>>
 
 /*
@@ -212,7 +211,6 @@ declare type old_as_current_for_Interface_IFluidDataStoreChannel = requireAssign
  * typeValidation.broken:
  * "Interface_IFluidDataStoreChannel": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreChannel = requireAssignableTo<TypeOnly<current.IFluidDataStoreChannel>, TypeOnly<old.IFluidDataStoreChannel>>
 
 /*
@@ -817,6 +815,24 @@ declare type old_as_current_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = re
  * "TypeAlias_NamedFluidDataStoreRegistryEntry2": {"backCompat": false}
  */
 declare type current_as_old_for_TypeAlias_NamedFluidDataStoreRegistryEntry2 = requireAssignableTo<TypeOnly<current.NamedFluidDataStoreRegistryEntry2>, TypeOnly<old.NamedFluidDataStoreRegistryEntry2>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_PackagePath": {"forwardCompat": false}
+ */
+declare type old_as_current_for_TypeAlias_PackagePath = requireAssignableTo<TypeOnly<old.PackagePath>, TypeOnly<current.PackagePath>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "TypeAlias_PackagePath": {"backCompat": false}
+ */
+declare type current_as_old_for_TypeAlias_PackagePath = requireAssignableTo<TypeOnly<current.PackagePath>, TypeOnly<old.PackagePath>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

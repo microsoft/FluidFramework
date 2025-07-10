@@ -18,6 +18,7 @@ import {
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
+	enumEntries,
 	enumFromStrings,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
@@ -143,10 +144,15 @@ describe("schemaCreationUtilities", () => {
 		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = 1,
-			b = "b",
+			b = "B",
 			c = 6.3,
 		}
-		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
+		const f = schemaFactory.scopedFactory("Mode");
+
+		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
+
+		const ModeNodes = adaptEnum(f, Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
@@ -178,6 +184,38 @@ describe("schemaCreationUtilities", () => {
 		assert.equal(parent1.mode.value, Mode.a);
 		assert.equal(parent2.mode.value, Mode.b);
 		assert.equal(parent3.mode.value, Mode.c);
+
+		assert.deepEqual(ModeNodes.schema, [ModeNodes.a, ModeNodes.b, ModeNodes.c]);
+
+		const x = new ModeNodes.a().value;
+		const y = new ModeNodes.b().value;
+		const z = new ModeNodes.c().value;
+
+		type _check4 = requireTrue<areSafelyAssignable<typeof x, Mode.a>>;
+		type _check5 = requireTrue<areSafelyAssignable<typeof y, Mode.b>>;
+		type _check6 = requireTrue<areSafelyAssignable<typeof z, Mode.c>>;
+	});
+
+	it("scoping", () => {
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		enum Mode {
+			a,
+		}
+		const f = schemaFactory.scopedFactory("Mode");
+
+		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
+
+		const ModeNodes = adaptEnum(f, Mode);
+
+		type AType = typeof ModeNodes.a.identifier;
+
+		assert.equal(ModeNodes.a.identifier, "com.myApp.Mode.0");
+
+		// TODO: AB#43345
+		// This should be just "com.myApp.Mode.0", but due to known issue.
+		// See comments on adaptEnum and "variance with respect to scope and alpha" test.
+		type _check = requireTrue<areSafelyAssignable<AType, "com.myApp.Mode.0" | "com.0">>;
 	});
 
 	it("adaptEnum - construction tests", () => {
@@ -243,6 +281,30 @@ describe("schemaCreationUtilities", () => {
 		const _test1: InstanceType<typeof ModeNodes.a> = new ModeNodes.a();
 		// @ts-expect-error Incompatible enums types should not be assignable.
 		const _test2: InstanceType<typeof ModeNodes.a> = new ModeNodes.b();
+	});
+
+	it("adaptEnum workaround", () => {
+		const schemaFactory = new SchemaFactory("x");
+
+		// Old
+		{
+			enum Mode {
+				a = 1,
+			}
+			const ModeNodes = adaptEnum(schemaFactory, Mode);
+			const union = ModeNodes.schema;
+		}
+
+		// New
+		{
+			enum Mode {
+				a = 1,
+			}
+			const ModeNodes = adaptEnum(schemaFactory, Mode);
+			// Bugged version of adaptEnum used to include this: it should not be used.
+			class Workaround extends schemaFactory.object("a", {}) {}
+			const union = [...ModeNodes.schema, Workaround] as const;
+		}
 	});
 
 	it("enum value switch", () => {
@@ -401,5 +463,78 @@ describe("schemaCreationUtilities", () => {
 				'Multiple schema encountered with the identifier "test.2". Remove or rename them to avoid the collision.',
 			),
 		);
+	});
+
+	describe("enumEntries", () => {
+		it("string enum", () => {
+			enum TestEnum {
+				A = "a",
+				B = "b",
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["A", "a"],
+				["B", "b"],
+			]);
+		});
+
+		it("numeric enum", () => {
+			enum TestEnum {
+				A = 1,
+				B = 2,
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["A", 1],
+				["B", 2],
+			]);
+		});
+
+		it("edge cases", () => {
+			enum TestEnum {
+				"1.0" = "a",
+				A = "b",
+				"-0" = "c",
+				// Due to https://github.com/microsoft/TypeScript/issues/61993 this produces 0 not -0
+				"+1.1" = -0,
+				// Actually -0
+				"1.10" = (() => -0)(),
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["1.0", "a"],
+				["A", "b"],
+				["-0", "c"],
+				["+1.1", 0],
+				["1.10", -0],
+			]);
+		});
+
+		it("malformed enums", () => {
+			// See https://github.com/microsoft/TypeScript/issues/48956
+			// TypeScript screws this case up in an undetectable way, but confirm it doesn't assert.
+			enum TestEnumNumber {
+				Infinity = Number.POSITIVE_INFINITY,
+				NaN = Number.NaN,
+			}
+
+			enum TestEnumString {
+				Infinity = "Infinity",
+				NaN = "NaN",
+			}
+
+			// Since these two enums are deeply equal (checked here),
+			// there is nothing we can do to to make the number case work correctly.
+			assert.deepEqual(TestEnumNumber, TestEnumString);
+
+			const entries = enumEntries(TestEnumNumber);
+			assert.deepEqual(entries, [
+				["Infinity", "Infinity"],
+				["NaN", "NaN"],
+			]);
+		});
 	});
 });

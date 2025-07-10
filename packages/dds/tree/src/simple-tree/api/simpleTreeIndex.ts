@@ -180,7 +180,7 @@ export function createSimpleTreeIndex<
 				};
 
 	const index = new AnchorTreeIndex<TKey, TValue>(
-		(view as SchematizingSimpleTreeView<TFieldSchema>).getView().checkout.forest,
+		(view as SchematizingSimpleTreeView<TFieldSchema>).checkout.forest,
 		schemaIndexer,
 		(anchorNodes) => {
 			const simpleTreeNodes: TreeNode[] = [];

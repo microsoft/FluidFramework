@@ -105,7 +105,14 @@ export interface SchemaAndPolicy {
 }
 
 /**
- * Extra data needed to interpret schema.
+ * Extra data needed to interpret stored schema.
+ * @remarks
+ * This contains information that describes the semantics of things which can be referenced in stored schema.
+ * For example, field kind identifiers refer to specific field kinds, which imply specific rules around what is valid in a given field (the multiplicity).
+ * This structure provides such information, allowing it to be possible to determine if a given tree complies with a particular stored schema.
+ *
+ * TODO: AB#43546
+ * Some additional data which is not needed to define compatibility with a given stored schema is currently included here, and should be removed.
  */
 export interface SchemaPolicy {
 	/**
@@ -119,6 +126,8 @@ export interface SchemaPolicy {
 
 	/**
 	 * If true, new content inserted into the tree should be validated against the stored schema.
+	 * @remarks
+	 * TODO: AB#43546: This is not information used to interpret the stored schema: this configuration should be moved elsewhere.
 	 */
 	readonly validateSchema: boolean;
 
@@ -129,6 +138,10 @@ export interface SchemaPolicy {
 	 * @privateRemarks
 	 * Plumbing this in via `SchemaPolicy` avoids needing to walk the view schema representation repeatedly in places
 	 * that need it (schema validation, view vs stored compatibility checks).
+	 *
+	 * TODO: AB#43546
+	 * This is not information used to interpret the stored schema: it is instead about view schema, and how compatible they are with a stored schema.
+	 * SchemaCompatibilityTester should be updated to not store this table in here, and then this field should be removed.
 	 */
 	allowUnknownOptionalFields(identifier: TreeNodeSchemaIdentifier): boolean;
 }

@@ -35,7 +35,6 @@ import {
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
-	CheckoutFlexTreeView,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
@@ -233,6 +232,26 @@ describe("SchematizingSimpleTreeView", () => {
 		view.root = 6;
 
 		assert.deepEqual(log, [["rootChanged", 6]]);
+	});
+
+	it("Modify root to undefined", () => {
+		const config2 = new TreeViewConfiguration({
+			schema: SchemaFactory.optional(schema.number),
+		});
+		const checkout = checkoutWithInitialTree(config2, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config2,
+			new MockNodeIdentifierManager(),
+		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
+		assert.equal(view.root, 5);
+		const log: [string, unknown][] = [];
+
+		view.root = undefined;
+
+		assert.deepEqual(log, [["rootChanged", undefined]]);
 	});
 
 	it("Schema becomes un-upgradeable then exact match again", () => {
@@ -769,11 +788,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getView();
-				assert(checkoutView instanceof CheckoutFlexTreeView);
-				const { undoStack, redoStack } = createTestUndoRedoStacks(
-					checkoutView.checkout.events,
-				);
+				const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
 
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;

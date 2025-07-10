@@ -31,7 +31,6 @@ declare type old_as_current_for_Class_FluidHandleBase = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_FluidHandleBase": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_FluidHandleBase = requireAssignableTo<TypeOnly<current.FluidHandleBase<never>>, TypeOnly<old.FluidHandleBase<never>>>
 
 /*
@@ -95,7 +94,6 @@ declare type current_as_old_for_Class_SummaryTreeBuilder = requireAssignableTo<T
  * typeValidation.broken:
  * "ClassStatics_FluidHandleBase": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_FluidHandleBase = requireAssignableTo<TypeOnly<typeof current.FluidHandleBase>, TypeOnly<typeof old.FluidHandleBase>>
 
 /*
