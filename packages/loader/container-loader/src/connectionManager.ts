@@ -248,6 +248,12 @@ export class ConnectionManager implements IConnectionManager {
 
 	private connectFirstConnection = true;
 
+	/**
+	 * Tracks the initial connection start time for the entire lifetime of the class.
+	 * This is used only for retryConnectionTimeoutMs checks and is never reset.
+	 */
+	private initialConnectionStartTime: number | undefined;
+
 	private _connectionVerboseProps: Record<string, string | number> = {};
 
 	private _connectionProps: ITelemetryBaseProperties = {};
@@ -585,6 +591,12 @@ export class ConnectionManager implements IConnectionManager {
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performanceNow();
+
+		// Set the initial connection start time only once for the entire lifetime of the class
+		if (this.initialConnectionStartTime === undefined) {
+			this.initialConnectionStartTime = connectStartTime;
+		}
+
 		let lastError: unknown;
 
 		const abortController = new AbortController();
@@ -707,7 +719,7 @@ export class ConnectionManager implements IConnectionManager {
 
 				// Check if the calculated delay would exceed the remaining timeout
 				if (this.retryConnectionTimeoutMs !== undefined) {
-					const elapsedTime = performanceNow() - connectStartTime;
+					const elapsedTime = performanceNow() - this.initialConnectionStartTime;
 					const remainingTime = this.retryConnectionTimeoutMs - elapsedTime;
 
 					if (delayMs >= remainingTime) {
