@@ -27,7 +27,12 @@ import {
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 } from "./core/index.js";
-import { normalizeFieldSchema, type FieldSchema } from "./schemaTypes.js";
+import {
+	createFieldSchema,
+	FieldKind,
+	normalizeFieldSchema,
+	type FieldSchema,
+} from "./schemaTypes.js";
 import {
 	isMapNodeSchema,
 	isObjectNodeSchema,
@@ -197,7 +202,7 @@ export function* getAllowedContentDiscrepancies(
 
 	// TODO is this actually the allowed types? why is the mismatch called nodeKind
 	const annotatedAllowedTypes = normalizeFieldSchema(view).annotatedAllowedTypesNormalized;
-	const storedAllowedTypes = stored.nodeSchema;
+	const storedAllowedTypes = stored.rootFieldSchema.types;
 
 	const viewAllowedTypes = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
 	for (const annotatedAllowedType of annotatedAllowedTypes.types) {
@@ -207,14 +212,14 @@ export function* getAllowedContentDiscrepancies(
 		const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
 		viewAllowedTypes.set(identifier, type);
 
-		const storedSchema = storedAllowedTypes.get(identifier);
+		const storedSchema = stored.nodeSchema.get(identifier);
 
 		// if the view schema has an allowed type that's not in the stored schema
-		if (storedSchema === undefined) {
+		if (!storedAllowedTypes.has(identifier) || storedSchema === undefined) {
 			const viewType = getViewNodeSchemaType(type);
+			// TODO does it make sense to have this mismatch when there will also be an allowedTypes mismatch?
 			yield {
 				identifier,
-				// TODO why is this a node kind mismatch and not an allowed types one?
 				mismatch: "nodeKind",
 				view: viewType,
 				stored: undefined,
@@ -226,9 +231,14 @@ export function* getAllowedContentDiscrepancies(
 		}
 	}
 
-	for (const [identifier, storedSchema] of storedAllowedTypes) {
+	for (const identifier of storedAllowedTypes) {
 		if (!viewAllowedTypes.has(identifier)) {
-			const storedType = getStoredNodeSchemaType(storedSchema);
+			const storedType = getStoredNodeSchemaType(
+				stored.nodeSchema.get(identifier) ??
+					fail(
+						"Stored schema should have a schema for an identifier present in the root schema types",
+					),
+			);
 			yield {
 				identifier,
 				mismatch: "nodeKind",
@@ -310,7 +320,7 @@ function* getNodeDiscrepancies(
 				"Map node schema should have a single field",
 			);
 			yield* getFieldDiscrepancies(
-				normalizeFieldSchema(mapAllowedTypes[0]),
+				createFieldSchema(FieldKind.Optional, mapAllowedTypes[0]),
 				(stored as MapNodeStoredSchema).mapFields,
 				identifier,
 				undefined,
