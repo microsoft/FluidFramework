@@ -10,7 +10,7 @@ import {
 	type MostDerivedData,
 	TreeNodeValid,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/treeNodeValid.js";
+} from "../../simple-tree/core/treeNodeValid.js";
 
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules

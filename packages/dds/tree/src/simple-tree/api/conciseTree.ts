@@ -6,9 +6,8 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { ITreeCursor } from "../../core/index.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue, ImplicitAllowedTypes } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
-import type { TreeLeafValue, ImplicitAllowedTypes } from "../fieldSchema.js";
 
 import {
 	customFromCursor,

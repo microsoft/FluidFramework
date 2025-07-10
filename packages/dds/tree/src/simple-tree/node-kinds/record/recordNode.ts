@@ -28,6 +28,8 @@ import {
 	normalizeAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -36,7 +38,6 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import type {
 	RecordNodeCustomizableSchema,
 	RecordNodeInsertableData,

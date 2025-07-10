@@ -4,16 +4,14 @@
  */
 
 import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
+import { NodeKind } from "../../core/index.js";
 import type {
+	TreeNodeSchemaClass,
+	TreeNodeSchema,
+	TreeNodeSchemaNonClass,
+	WithType,
 	ImplicitAnnotatedAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "../../fieldSchema.js";
-import {
-	NodeKind,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchema,
-	type TreeNodeSchemaNonClass,
-	type WithType,
 } from "../../core/index.js";
 
 import type { SimpleMapNodeSchema } from "../../simpleSchema.js";

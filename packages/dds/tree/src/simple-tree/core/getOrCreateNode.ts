@@ -5,7 +5,6 @@
 
 import type { TreeValue } from "../../core/index.js";
 import { isFlexTreeNode, type FlexTreeUnknownUnboxed } from "../../feature-libraries/index.js";
-import type { TreeLeafValue } from "../fieldSchema.js";
 
 import type { TreeNode } from "./treeNode.js";
 import {
@@ -14,6 +13,7 @@ import {
 	createTreeNodeFromInner,
 	splitInnerNodeType,
 } from "./treeNodeKernel.js";
+import type { TreeLeafValue } from "./treeNodeSchema.js";
 import { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
 
 /**

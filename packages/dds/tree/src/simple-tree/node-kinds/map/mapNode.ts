@@ -11,19 +11,7 @@ import type {
 	OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import {
-	createFieldSchema,
-	FieldKind,
-	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeSchemaMetadata,
-	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-} from "../../fieldSchema.js";
+import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
 import {
 	getKernel,
 	type InnerNode,
@@ -38,6 +26,17 @@ import {
 	type InternalTreeNode,
 	type UnhydratedFlexTreeNode,
 	type NormalizedAnnotatedAllowedTypes,
+	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
+	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
 } from "../../core/index.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -51,7 +50,6 @@ import {
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 } from "../../../util/index.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
 

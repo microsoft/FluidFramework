@@ -41,6 +41,7 @@ import {
 
 import type { SimpleFieldSchema } from "./simpleSchema.js";
 import type { UnsafeUnknownSchema } from "./unsafeUnknownSchema.js";
+import type { InsertableContent } from "./unhydratedFlexTreeFromInsertable.js";
 
 /**
  * Kind of a field on an {@link TreeObjectNode}.
@@ -660,6 +661,22 @@ export type InsertableTreeFieldFromImplicitField<
 	? ApplyKindInput<InsertableTreeNodeFromImplicitAllowedTypes<Types>, Kind, true>
 	: [TSchema] extends [ImplicitAllowedTypes]
 		? InsertableTreeNodeFromImplicitAllowedTypes<TSchema>
+		: never;
+
+/**
+ * Content which could be inserted into a field within a tree.
+ *
+ * @see {@link Input}
+ * @remarks
+ * Extended version of {@link InsertableTreeFieldFromImplicitField} that also allows {@link (UnsafeUnknownSchema:type)}.
+ * @alpha
+ */
+export type InsertableField<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema> = [
+	TSchema,
+] extends [ImplicitFieldSchema]
+	? InsertableTreeFieldFromImplicitField<TSchema>
+	: [TSchema] extends [UnsafeUnknownSchema]
+		? InsertableContent | undefined
 		: never;
 
 /**

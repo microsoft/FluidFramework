@@ -20,18 +20,19 @@ import {
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 } from "../feature-libraries/index.js";
-import {
-	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-} from "./fieldSchema.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 } from "./unhydratedFlexTreeFromInsertable.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
-import { getKernel, type TreeNode, type UnhydratedFlexTreeNode } from "./core/index.js";
+import {
+	getKernel,
+	type ImplicitAllowedTypes,
+	type TreeNode,
+	type UnhydratedFlexTreeNode,
+} from "./core/index.js";
 import { debugAssert, oob } from "@fluidframework/core-utils/internal";
 import { inSchemaOrThrow, isFieldInSchema } from "../feature-libraries/index.js";
 import { convertField } from "./toStoredSchema.js";

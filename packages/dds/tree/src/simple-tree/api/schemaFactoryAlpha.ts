@@ -20,16 +20,11 @@ import {
 	SchemaFactory,
 	schemaStatics,
 	structuralName,
+	type NodeSchemaOptionsAlpha,
 	type SchemaFactoryObjectOptions,
 	type ScopedSchemaName,
 } from "./schemaFactory.js";
-import type {
-	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	ImplicitAnnotatedFieldSchema,
-	ImplicitFieldSchema,
-	NodeSchemaOptionsAlpha,
-} from "../fieldSchema.js";
+import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,
@@ -38,6 +33,8 @@ import type {
 	TreeNodeSchemaClass,
 	TreeNodeSchemaNonClass,
 	WithType,
+	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
 } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,

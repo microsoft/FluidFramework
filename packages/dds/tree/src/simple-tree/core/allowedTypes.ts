@@ -6,7 +6,7 @@
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { getOrCreate, isReadonlyArray, type IsUnion } from "../../util/index.js";
-import { isLazy, type FlexListToUnion, type LazyItem } from "../flexList.js";
+import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import {
 	NodeKind,
 	type InsertableTypedNode,
@@ -14,7 +14,7 @@ import {
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
 import { inPrototypeChain } from "./treeNode.js";
-import { TreeNodeValid } from "../treeNodeValid.js";
+import { TreeNodeValid } from "./treeNodeValid.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).

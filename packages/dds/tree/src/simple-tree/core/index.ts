@@ -24,7 +24,7 @@ export {
 	privateToken,
 	inPrototypeChain,
 } from "./treeNode.js";
-export { NodeKind } from "./treeNodeSchema.js";
+export { NodeKind, isTreeNodeSchemaClass } from "./treeNodeSchema.js";
 export type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
@@ -33,6 +33,9 @@ export type {
 	TreeNodeSchemaBoth,
 	NodeSchemaMetadata,
 	TreeLeafValue,
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeFromSchema,
 } from "./treeNodeSchema.js";
 export {
 	isAnnotatedAllowedTypes,
@@ -40,6 +43,8 @@ export {
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
+	markSchemaMostDerived,
+	evaluateLazySchema,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
@@ -51,6 +56,14 @@ export type {
 	AllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
+	InsertableTreeNodeFromAllowedTypes,
+	Input,
+	UnannotateAllowedTypes,
+	UnannotateAllowedType,
+	UnannotateAllowedTypesList,
+	UnannotateAllowedTypeOrLazyItem,
+	AllowedTypeMetadata,
+	AnnotatedAllowedTypes,
 } from "./allowedTypes.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
@@ -65,3 +78,11 @@ export {
 	UnhydratedContext,
 	createField,
 } from "./unhydratedFlexTree.js";
+export type {
+	LazyItem,
+	FlexList,
+	FlexListToUnion,
+	ExtractItemType,
+} from "./flexList.js";
+export { isLazy } from "./flexList.js";
+export { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";

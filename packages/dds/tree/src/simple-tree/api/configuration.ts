@@ -15,13 +15,16 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
-	evaluateLazySchema,
 	FieldKind,
-	isAnnotatedAllowedType,
-	markSchemaMostDerived,
 	normalizeFieldSchema,
 } from "../fieldSchema.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	isAnnotatedAllowedType,
+	evaluateLazySchema,
+	markSchemaMostDerived,
+} from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,

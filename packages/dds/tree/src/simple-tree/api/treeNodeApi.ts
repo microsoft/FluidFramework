@@ -8,14 +8,7 @@ import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/i
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
-import {
-	type TreeLeafValue,
-	type ImplicitFieldSchema,
-	FieldSchema,
-	type ImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	normalizeAllowedTypes,
-} from "../fieldSchema.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -36,6 +29,10 @@ import {
 	getOrCreateNodeFromInnerNode,
 	typeSchemaSymbol,
 	getOrCreateInnerNode,
+	type TreeLeafValue,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../core/index.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";

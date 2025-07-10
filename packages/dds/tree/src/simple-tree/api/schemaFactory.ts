@@ -19,6 +19,7 @@ import {
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
+import { normalizeAllowedTypes, markSchemaMostDerived, isLazy } from "../core/index.js";
 import type {
 	NodeKind,
 	WithType,
@@ -31,8 +32,8 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	UnannotateImplicitAllowedTypes,
 	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
-import { isLazy } from "../flexList.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -50,20 +51,17 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
+	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
 	FieldKind,
 	type FieldSchema,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
-	markSchemaMostDerived,
 	type FieldSchemaAlpha,
-	type UnannotateSchemaRecord,
-	normalizeAllowedTypes,
 	type FieldPropsAlpha,
 } from "../fieldSchema.js";
 

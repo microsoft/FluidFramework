@@ -4,15 +4,20 @@
  */
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchema, WithType, TreeNode } from "../core/index.js";
+import type {
+	NodeKind,
+	TreeNodeSchema,
+	WithType,
+	TreeNode,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+} from "../core/index.js";
 import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 import {
 	type FieldKind,
 	type FieldProps,
 	createFieldSchema,
-	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../fieldSchema.js";
 
 import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";

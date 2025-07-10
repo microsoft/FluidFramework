@@ -13,18 +13,6 @@ import type {
 	FlexTreeSequenceField,
 } from "../../../feature-libraries/index.js";
 import {
-	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeSchemaMetadata,
-	type TreeLeafValue,
-	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-} from "../../fieldSchema.js";
-import {
 	type WithType,
 	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
@@ -43,13 +31,24 @@ import {
 	UnhydratedSequenceField,
 	getOrCreateNodeFromInnerUnboxedNode,
 	type NormalizedAnnotatedAllowedTypes,
+	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
+	type TreeLeafValue,
+	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
 } from "../../core/index.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import type { System_Unsafe } from "../../api/index.js";
 import type {

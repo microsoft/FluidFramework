@@ -20,41 +20,42 @@ import {
 	type TreeNode,
 	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
+// TODO: split up these tests into multiple files to align with what they import/test
 import {
-	type AllowedTypes,
-	type AllowedTypesMetadata,
-	type AnnotatedAllowedTypes,
 	FieldKind,
 	type FieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
 	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
+	type TreeFieldFromImplicitField,
+	type UnannotateImplicitFieldSchema,
+	areImplicitFieldSchemaEqual,
+	createFieldSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/fieldSchema.js";
+import {
+	type AllowedTypes,
+	type AllowedTypesMetadata,
+	type AnnotatedAllowedTypes,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
-	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateAllowedTypes,
 	type UnannotateAllowedTypesList,
 	type UnannotateImplicitAllowedTypes,
-	type UnannotateImplicitFieldSchema,
-	type UnannotateSchemaRecord,
-	areImplicitFieldSchemaEqual,
-	createFieldSchema,
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
-	normalizeToAnnotatedAllowedType,
 	unannotateImplicitAllowedTypes,
-	unannotateSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/fieldSchema.js";
+} from "../../simple-tree/core/index.js";
 import type {
 	areSafelyAssignable,
 	isAssignableTo,
@@ -64,10 +65,17 @@ import type {
 	RestrictiveStringRecord,
 	UnionToIntersection,
 } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { objectSchema } from "../../simple-tree/node-kinds/index.js";
+import {
+	objectSchema,
+	type UnannotateSchemaRecord,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/node-kinds/index.js";
 import { validateUsageError } from "../utils.js";
 import { TreeAlpha } from "../../shared-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { unannotateSchemaRecord } from "../../simple-tree/node-kinds/object/objectNode.js";
+// eslint-disable-next-line import/no-internal-modules
+import { normalizeToAnnotatedAllowedType } from "../../simple-tree/core/allowedTypes.js";
 
 const schema = new SchemaFactory("com.example");
 
