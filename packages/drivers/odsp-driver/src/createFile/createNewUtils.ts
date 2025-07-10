@@ -212,6 +212,7 @@ export async function createNewFluidContainerCore<T>(args: {
 	telemetryName: string;
 	fetchType: FetchType;
 	validateResponseCallback?: (content: T) => void;
+	additionalHeaders?: { [key: string]: string };
 }): Promise<T> {
 	const {
 		containerSnapshot,
@@ -222,6 +223,7 @@ export async function createNewFluidContainerCore<T>(args: {
 		telemetryName,
 		fetchType,
 		validateResponseCallback,
+		additionalHeaders = {},
 	} = args;
 	const internalFarmType = checkForKnownServerFarmType(initialUrl);
 
@@ -261,6 +263,7 @@ export async function createNewFluidContainerCore<T>(args: {
 				) {
 					url = authInBodyUrl;
 					headers = {
+						...additionalHeaders,
 						"Content-Type": `multipart/form-data;boundary=${formBoundary}`,
 					};
 					addInBody = true;
@@ -272,6 +275,7 @@ export async function createNewFluidContainerCore<T>(args: {
 						telemetryName,
 					);
 					headers = {
+						...additionalHeaders,
 						...getHeadersWithAuth(authHeaderNoUmp),
 						"Content-Type": "application/json",
 					};

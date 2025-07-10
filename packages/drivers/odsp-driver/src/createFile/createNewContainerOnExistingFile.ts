@@ -68,6 +68,12 @@ export async function createNewContainerOnExistingFile(
 
 	const initialUrl = `${baseUrl}/opStream/snapshots/snapshot`;
 
+	const additionalHeaders: { [key: string]: string } = {};
+	if (eTag !== undefined) {
+		// Sending the e-tag of the file in the If-Match triggers file conversion logic in the /snapshot api.
+		additionalHeaders["If-Match"] = eTag;
+	}
+
 	const { id: summaryHandle } = await createNewFluidContainerCore<IWriteSummaryResponse>({
 		containerSnapshot,
 		getAuthHeader,
@@ -77,6 +83,7 @@ export async function createNewContainerOnExistingFile(
 		epochTracker,
 		telemetryName: "CreateNewContainerOnExistingFile",
 		fetchType: "uploadSummary",
+		additionalHeaders,
 	});
 
 	const odspUrl = createOdspUrl({ ...fileInfo, dataStorePath: "/" });
@@ -85,8 +92,6 @@ export async function createNewContainerOnExistingFile(
 		url: odspUrl,
 		headers: {
 			[ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp,
-			// Passing e-tag to "If-Match" header triggers a conversion of the file to Fluid format.
-			"If-Match": eTag,
 		},
 	});
 	fileEntry.docId = odspResolvedUrl.hashedDocumentId;
