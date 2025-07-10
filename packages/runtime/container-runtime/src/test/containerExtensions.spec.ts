@@ -27,9 +27,7 @@ interface TestExtensionRuntimeProperties extends ExtensionRuntimeProperties {
 }
 
 interface ITestContainerContext extends IContainerContext {
-	connected: boolean;
-	canSendSignals: (() => boolean) | undefined;
-	setConnectionState: (state: ConnectionState) => void;
+	updateConnectionState: (state: ConnectionState) => void;
 }
 
 class TestExtension implements ContainerExtension<TestExtensionRuntimeProperties> {
@@ -109,7 +107,7 @@ function createMockContext(
 		scope: {},
 		getAbsoluteUrl: async (): Promise<string> => "mockUrl",
 		id: "mockId",
-		setConnectionState: updateConnectionState,
+		updateConnectionState,
 	};
 	return mockContext;
 }
@@ -209,7 +207,7 @@ describe("Container Extension", () => {
 			);
 
 			// Transition to EstablishingConnection
-			context.setConnectionState(ConnectionState.EstablishingConnection);
+			context.updateConnectionState(ConnectionState.EstablishingConnection);
 			assert.strictEqual(
 				extension.isConnected,
 				false,
@@ -217,7 +215,7 @@ describe("Container Extension", () => {
 			);
 
 			// Transition to CatchingUp
-			context.setConnectionState(ConnectionState.CatchingUp);
+			context.updateConnectionState(ConnectionState.CatchingUp);
 			assert.strictEqual(
 				extension.isConnected,
 				true,
@@ -225,7 +223,7 @@ describe("Container Extension", () => {
 			);
 
 			// Transition to Connected
-			context.setConnectionState(ConnectionState.Connected);
+			context.updateConnectionState(ConnectionState.Connected);
 			assert.strictEqual(
 				extension.isConnected,
 				true,
@@ -233,7 +231,7 @@ describe("Container Extension", () => {
 			);
 
 			// Transition back to Disconnected
-			context.setConnectionState(ConnectionState.Disconnected);
+			context.updateConnectionState(ConnectionState.Disconnected);
 			assert.strictEqual(
 				extension.isConnected,
 				false,
