@@ -158,6 +158,7 @@ export interface IContainerContext {
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	/**
+	 * Container's ability to send and receive signals.
 	 * @returns true if the container can send signals (loaded and connected to service), false otherwise.
 	 */
 	readonly canSendSignals?: boolean;
