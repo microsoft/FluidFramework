@@ -59,6 +59,7 @@ export function create(storage: IDocumentStorage): Router {
 			values,
 			false /* enableDiscovery */,
 			false /* isEphemeralContainer */,
+			false /* hybridCreationEnabled */,
 		);
 
 		createP.then(

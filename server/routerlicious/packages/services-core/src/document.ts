@@ -63,6 +63,7 @@ export interface IDocumentStorage {
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean,
 		isEphemeralContainer: boolean,
+		hybridCreationEnabled: boolean,
 		messageBrokerId?: string,
 	): Promise<IDocumentDetails>;
 }
