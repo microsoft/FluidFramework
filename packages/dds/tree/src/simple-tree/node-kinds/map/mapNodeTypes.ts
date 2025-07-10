@@ -7,7 +7,7 @@ import type { MapNodeInsertableData, TreeMapNode } from "./mapNode.js";
 import type {
 	ImplicitAnnotatedAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
+} from "../../fieldSchema.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,

@@ -20,7 +20,7 @@ import {
 	type KeyFinder,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-import type { ImplicitFieldSchema, NodeFromSchema } from "../schemaTypes.js";
+import type { ImplicitFieldSchema, NodeFromSchema } from "../fieldSchema.js";
 import { treeNodeFromAnchor, type TreeNode, type TreeNodeSchema } from "../core/index.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 import type { TreeView } from "./tree.js";

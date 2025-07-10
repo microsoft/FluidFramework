@@ -8,7 +8,7 @@ import type {
 	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
+} from "../../fieldSchema.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,

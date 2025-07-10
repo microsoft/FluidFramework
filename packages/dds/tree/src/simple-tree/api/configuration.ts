@@ -20,7 +20,7 @@ import {
 	isAnnotatedAllowedType,
 	markSchemaMostDerived,
 	normalizeFieldSchema,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import {

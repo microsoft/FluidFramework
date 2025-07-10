@@ -21,7 +21,7 @@ import type {
 	TreeLeafValue,
 	ImplicitFieldSchema,
 	ImplicitAllowedTypes,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import {
 	isTreeValue,

@@ -15,7 +15,7 @@ import {
 	type ImplicitAllowedTypes,
 	type TreeNodeFromImplicitAllowedTypes,
 	normalizeAllowedTypes,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,

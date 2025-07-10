@@ -9,7 +9,7 @@ import type {
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	TreeNodeFromImplicitAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
+} from "../../fieldSchema.js";
 import {
 	NodeKind,
 	type TreeNodeSchemaClass,

@@ -23,7 +23,7 @@ import {
 	type NodeSchemaMetadata,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
+} from "../../fieldSchema.js";
 import {
 	getKernel,
 	type InnerNode,

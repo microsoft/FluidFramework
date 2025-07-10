@@ -24,7 +24,7 @@ import {
 	normalizeFieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-} from "./schemaTypes.js";
+} from "./fieldSchema.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,

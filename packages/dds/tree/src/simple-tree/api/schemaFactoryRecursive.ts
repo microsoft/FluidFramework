@@ -13,7 +13,7 @@ import {
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 
 import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
 

@@ -15,7 +15,7 @@ import { stringSchema, toStoredSchema } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
 import { checkoutWithContent, chunkFromJsonableTrees } from "./utils.js";
 // eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
+import { normalizeAllowedTypes } from "../simple-tree/fieldSchema.js";
 import { fieldJsonCursor } from "./json/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 

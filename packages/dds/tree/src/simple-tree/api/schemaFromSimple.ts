@@ -12,7 +12,7 @@ import {
 	type FieldSchemaAlpha,
 	FieldKind,
 	type FieldProps,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,

@@ -29,7 +29,7 @@ import type {
 	ImplicitAnnotatedFieldSchema,
 	ImplicitFieldSchema,
 	NodeSchemaOptionsAlpha,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
 import type {
 	NodeKind,

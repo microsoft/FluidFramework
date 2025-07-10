@@ -31,7 +31,7 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeLeafValue } from "../schemaTypes.js";
+import type { TreeLeafValue } from "../fieldSchema.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.

@@ -4,7 +4,7 @@
  */
 
 import type { JsonTreeSchema } from "./jsonSchema.js";
-import type { ImplicitAllowedTypes } from "../schemaTypes.js";
+import type { ImplicitAllowedTypes } from "../fieldSchema.js";
 import { toJsonSchema } from "./simpleSchemaToJsonSchema.js";
 import type { TreeEncodingOptions } from "./customTree.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";

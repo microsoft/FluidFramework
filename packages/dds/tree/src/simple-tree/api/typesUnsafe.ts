@@ -17,7 +17,7 @@ import type {
 	FieldSchemaAlpha,
 	ImplicitAllowedTypes,
 	TreeLeafValue,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import type {
 	NodeKind,
 	WithType,

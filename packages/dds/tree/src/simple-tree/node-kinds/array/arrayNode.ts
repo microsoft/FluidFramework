@@ -23,7 +23,7 @@ import {
 	type TreeLeafValue,
 	type TreeNodeFromImplicitAllowedTypes,
 	type UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
+} from "../../fieldSchema.js";
 import {
 	type WithType,
 	// eslint-disable-next-line import/no-deprecated

@@ -190,7 +190,7 @@ export {
 	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
 	evaluateLazySchema,
-} from "./schemaTypes.js";
+} from "./fieldSchema.js";
 export { tryGetTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	type ArrayNodeCustomizableSchema,

@@ -24,7 +24,7 @@ import { brand, getOrCreate } from "../util/index.js";
 
 import { NodeKind } from "./core/index.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
+import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,

@@ -33,6 +33,10 @@ import {
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	type NormalizedAnnotatedAllowedTypes,
+	type NodeSchemaMetadata,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	unannotateImplicitAllowedTypes,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -41,6 +45,7 @@ import {
 	type ObjectNodeSchema,
 	type ObjectNodeSchemaInternalData,
 	type ObjectNodeSchemaPrivate,
+	type UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
@@ -49,15 +54,13 @@ import {
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
-	type FieldSchema,
+	FieldSchema,
+	FieldSchemaAlpha,
 	normalizeFieldSchema,
 	FieldKind,
-	type NodeSchemaMetadata,
-	type FieldSchemaAlpha,
-	ObjectFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
-	type UnannotateSchemaRecord,
-} from "../../schemaTypes.js";
+	type FieldProps,
+} from "../../fieldSchema.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -345,6 +348,30 @@ export function setField(
 	}
 }
 
+/**
+ * {@link FieldSchemaAlpha} including {@link SimpleObjectFieldSchema}.
+ */
+export class ObjectFieldSchema<
+		Kind extends FieldKind,
+		Types extends ImplicitAllowedTypes,
+		TCustomMetadata = unknown,
+	>
+	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata>
+	implements SimpleObjectFieldSchema
+{
+	public readonly storedKey: string;
+
+	public constructor(
+		kind: Kind,
+		allowedTypes: Types,
+		annotatedTypes: ImplicitAnnotatedAllowedTypes,
+		props: FieldProps<TCustomMetadata> & { readonly key: string },
+	) {
+		super(kind, allowedTypes, annotatedTypes, props);
+		this.storedKey = props.key;
+	}
+}
+
 abstract class CustomObjectNodeBase<
 	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > extends TreeNodeValid<InsertableObjectFromSchemaRecord<T>> {
@@ -536,6 +563,20 @@ export function objectSchema<
 			input: InsertableObjectFromAnnotatedSchemaRecord<T> | InternalTreeNode,
 		) => TreeObjectNode<UnannotateSchemaRecord<T>, TName>);
 	return CustomObjectNode as Output;
+}
+
+/**
+ * Removes annotations from a schema record.
+ */
+export function unannotateSchemaRecord<
+	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+>(schemaRecord: Schema): UnannotateSchemaRecord<Schema> {
+	return Object.fromEntries(
+		Object.entries(schemaRecord).map(([key, schema]) => [
+			key,
+			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
+		]),
+	) as UnannotateSchemaRecord<Schema>;
 }
 
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();

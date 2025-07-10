@@ -49,7 +49,7 @@ import type {
 	InsertableTreeNodeFromAllowedTypes,
 	InsertableTypedNode,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaTypes.js";
+} from "../../simple-tree/fieldSchema.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
