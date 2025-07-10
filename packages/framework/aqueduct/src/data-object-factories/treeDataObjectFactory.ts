@@ -42,30 +42,31 @@ export class TreeDataObjectFactory<
 		const maybeTreeFactory = props.sharedObjects?.find(
 			(sharedObject) => sharedObject.type === SharedTree.getFactory().type,
 		);
-		const treeFactory = maybeTreeFactory as IChannelFactory<ITree> ?? SharedTree.getFactory();
+		const treeFactory =
+			(maybeTreeFactory as IChannelFactory<ITree>) ?? SharedTree.getFactory();
 		if (maybeTreeFactory === undefined) {
 			newProps.sharedObjects.push(treeFactory);
-		} else {
-			type Newable = new (
-				_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
-			) => TDataObject;
-
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-			const interceptedConstructor: Newable = function (
-				_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
-			): TDataObject {
-				return new baseCtor({
-					..._props,
-					initProps: {
-						..._props.initProps,
-						treeFactory,
-					},
-				});
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} as any; // `as any` is used to bypass `new` constraint
-
-			newProps.ctor = interceptedConstructor;
 		}
+
+		type Newable = new (
+			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
+		) => TDataObject;
+
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+		const interceptedConstructor: Newable = function (
+			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
+		): TDataObject {
+			return new baseCtor({
+				..._props,
+				initProps: {
+					..._props.initProps,
+					treeFactory,
+				},
+			});
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		} as any; // `as any` is used to bypass `new` constraint
+
+		newProps.ctor = interceptedConstructor;
 
 		super(newProps);
 	}
