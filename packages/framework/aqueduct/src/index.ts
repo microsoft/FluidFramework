@@ -22,6 +22,7 @@ export {
 	DataObjectFactory,
 	PureDataObjectFactory,
 	type DataObjectFactoryProps,
+	TreeDataObjectFactory,
 } from "./data-object-factories/index.js";
 export {
 	DataObject,
@@ -30,6 +31,7 @@ export {
 	type IDataObjectProps,
 	PureDataObject,
 	TreeDataObject,
+	type TreeDataObjectProps,
 	createDataObjectKind,
 } from "./data-objects/index.js";
 export {

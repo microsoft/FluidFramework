@@ -16,7 +16,9 @@ import type { AsyncFluidObjectProvider } from "@fluidframework/synthesize/intern
  * @legacy
  * @alpha
  */
-export interface DataObjectTypes {
+// TODO: Use a real type here.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export interface DataObjectTypes<TInitialState = any> {
 	/**
 	 * Represents a type that will define optional providers that will be injected.
 	 */
@@ -24,9 +26,7 @@ export interface DataObjectTypes {
 	/**
 	 * The initial state type that the produced data object may take during creation.
 	 */
-	// TODO: Use a real type here.
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	InitialState?: any;
+	InitialState?: TInitialState;
 	/**
 	 * Represents events that will be available in the EventForwarder.
 	 */
