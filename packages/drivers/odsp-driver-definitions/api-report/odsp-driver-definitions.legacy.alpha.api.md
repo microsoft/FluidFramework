@@ -60,6 +60,12 @@ export interface IFileEntry {
 }
 
 // @alpha @legacy
+export interface IIfMatchMigrationKind {
+    eTag: string;
+    itemId: string;
+}
+
+// @alpha @legacy
 export interface IOdspError extends Omit<IDriverErrorBase, "errorType">, IOdspErrorAugmentations {
     // (undocumented)
     readonly errorType: OdspErrorTypes;
