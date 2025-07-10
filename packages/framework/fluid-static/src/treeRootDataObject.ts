@@ -47,6 +47,9 @@ export class TreeRootDataObject
 	extends TreeDataObject<ITree>
 	implements IRootDataObject, IProvideTreeRootDataObject
 {
+	readonly #initialObjects: LoadableObjectRecord = {};
+	readonly #initialObjectsKey = "tree";
+
 	public get TreeRootDataObject(): TreeRootDataObject {
 		return this;
 	}
@@ -58,19 +61,19 @@ export class TreeRootDataObject
 	}
 
 	protected async initializingFirstTime(): Promise<void> {
-		// TODO: Implement initialization logic for first time creation
-		throw new Error("Method not implemented.");
+		// No-op, because the tree is initialized in the TreeDataObject base class.
+		return;
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		// TODO: Implement post-initialization logic
-		throw new Error("Method not implemented.");
+		Object.assign(this.#initialObjects, { [this.#initialObjectsKey]: this.treeView });
 	}
 
 	public get initialObjects(): LoadableObjectRecord {
-		// Return an empty object as there are no initial collaborative objects
-		// TODO: Add initial collaborative objects when needed
-		return {};
+		if (Object.keys(this.#initialObjects).length === 0) {
+			throw new Error("Initial Objects were not correctly initialized");
+		}
+		return this.#initialObjects;
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {

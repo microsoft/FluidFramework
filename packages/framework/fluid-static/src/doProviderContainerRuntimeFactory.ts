@@ -66,7 +66,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 			{
 				runtimeOptions: props.runtimeOptionOverrides,
 				minVersionForCollab: props.minVersionForCollabOverride,
-			}
+			},
 		);
 	} else {
 		return new DOProviderContainerRuntimeFactory(
