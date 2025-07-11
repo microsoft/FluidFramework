@@ -63,6 +63,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
 	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
+	// TODO: revert this default
 	// eslint-disable-next-line unicorn/no-negated-condition
 	if (props.useTreeBasedDataObject !== false) {
 		const treeKey = validateAndExtractTreeKey(props.schema);
