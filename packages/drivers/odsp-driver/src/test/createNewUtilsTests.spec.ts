@@ -35,7 +35,7 @@ import {
 	getOdspResolvedUrl,
 } from "../odspUtils.js";
 
-import { mockFetchOk } from "./mockFetch.js";
+import { mockFetchOk, mockFetchOKIf } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
 
@@ -487,6 +487,119 @@ describe("Create New Utils Tests", () => {
 			),
 		);
 		assert(!odspResolvedUrl2.isClpCompliantApp, "isClpCompliantApp should be falsy");
+		await epochTracker.removeEntries().catch(() => {});
+	});
+
+	it("Should set the eTag file metadata prop on resolved url if already present when createNewContainerOnExistingFile", async () => {
+		const existingFileParams: IExistingFileInfo = {
+			type: "Existing",
+			itemId: "itemId1",
+			siteUrl,
+			driveId,
+		};
+		const odspResolvedUrl1 = await useCreateNewModule(createChildLogger(), async (module) =>
+			mockFetchOk(
+				async () =>
+					module.createNewContainerOnExistingFile(
+						async (_options) => "token",
+						existingFileParams,
+						createChildLogger(),
+						createSummary(),
+						epochTracker,
+						fileEntry,
+						true /* createNewCaching */,
+						false /* forceAccessTokenViaAuthorizationHeader */,
+						undefined /* isClpCompliantApp */,
+						"eTag1" /* eTag */,
+					),
+				{ itemId: "itemId1", id: "Summary handle" },
+				{ "x-fluid-epoch": "epoch1" },
+			),
+		);
+		assert(odspResolvedUrl1.fileMetadata?.eTag, "eTag should be set");
+
+		const odspResolvedUrl2 = await useCreateNewModule(createChildLogger(), async (module) =>
+			mockFetchOk(
+				async () =>
+					module.createNewFluidFile(
+						async (_options) => "token",
+						newFileParams,
+						createChildLogger(),
+						createSummary(),
+						epochTracker,
+						fileEntry,
+						true /* createNewCaching */,
+						false /* forceAccessTokenViaAuthorizationHeader */,
+						undefined /* isClpCompliantApp */,
+						undefined /* eTag */,
+					),
+				{ itemId: "itemId1", id: "Summary handle" },
+				{ "x-fluid-epoch": "epoch1" },
+			),
+		);
+		assert(!odspResolvedUrl2.fileMetadata?.eTag, "eTag should be falsy");
+		await epochTracker.removeEntries().catch(() => {});
+	});
+
+	it("Should pass the eTag as an If-Match header to the snapshot api when createNewContainerOnExistingFile", async () => {
+		const existingFileParams: IExistingFileInfo = {
+			type: "Existing",
+			itemId: "itemId1",
+			siteUrl,
+			driveId,
+		};
+		const eTag = "eTag1";
+		const odspResolvedUrl1 = await useCreateNewModule(createChildLogger(), async (module) =>
+			mockFetchOKIf(
+				async () =>
+					module.createNewContainerOnExistingFile(
+						async (_options) => "token",
+						existingFileParams,
+						createChildLogger(),
+						createSummary(),
+						epochTracker,
+						fileEntry,
+						true /* createNewCaching */,
+						false /* forceAccessTokenViaAuthorizationHeader */,
+						undefined /* isClpCompliantApp */,
+						eTag,
+					),
+				(_, init) => {
+					// Check that the If-Match header is set correctly
+					assert(init?.headers !== undefined && init.headers["If-Match"] === eTag);
+					return true;
+				},
+				{ itemId: "itemId1", id: "Summary handle" },
+				{ "x-fluid-epoch": "epoch1" },
+			),
+		);
+		assert(odspResolvedUrl1.fileMetadata?.eTag, "eTag should be set");
+
+		const odspResolvedUrl2 = await useCreateNewModule(createChildLogger(), async (module) =>
+			mockFetchOKIf(
+				async () =>
+					module.createNewFluidFile(
+						async (_options) => "token",
+						newFileParams,
+						createChildLogger(),
+						createSummary(),
+						epochTracker,
+						fileEntry,
+						true /* createNewCaching */,
+						false /* forceAccessTokenViaAuthorizationHeader */,
+						undefined /* isClpCompliantApp */,
+						undefined /* eTag */,
+					),
+				(_, init) => {
+					// Check that the If-Match header not set when eTag is not passed
+					assert(init?.headers === undefined || init.headers["If-Match"] === undefined);
+					return true;
+				},
+				{ itemId: "itemId1", id: "Summary handle" },
+				{ "x-fluid-epoch": "epoch1" },
+			),
+		);
+		assert(!odspResolvedUrl2.fileMetadata?.eTag, "eTag should be falsy");
 		await epochTracker.removeEntries().catch(() => {});
 	});
 

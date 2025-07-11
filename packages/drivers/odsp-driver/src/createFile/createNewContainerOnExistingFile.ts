@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { IWriteSummaryResponse } from "./../contracts.js";
-import { ClpCompliantAppHeader } from "./../contractsPublic.js";
+import { ClpCompliantAppHeader, FileMetadataHeader } from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
 import { EpochTracker } from "./../epochTracker.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
@@ -92,6 +92,7 @@ export async function createNewContainerOnExistingFile(
 		url: odspUrl,
 		headers: {
 			[ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp,
+			[FileMetadataHeader.eTag]: eTag,
 		},
 	});
 	fileEntry.docId = odspResolvedUrl.hashedDocumentId;

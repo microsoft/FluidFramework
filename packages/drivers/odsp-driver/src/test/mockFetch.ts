@@ -44,17 +44,17 @@ export type FetchCallType = "internal" | "external" | "single";
 
 export async function mockFetchMultiple<T>(
 	callback: () => Promise<T>,
-	responses: (() => Promise<object>)[],
+	responses: ((input: string | Request | URL, init?: RequestInit) => Promise<object>)[],
 	type: FetchCallType = "single",
 ): Promise<T> {
 	const fetchStub = stub(globalThis, "fetch");
-	fetchStub.callsFake(async () => {
+	fetchStub.callsFake(async (input, init) => {
 		if (type === "external") {
 			fetchStub.restore();
 		}
 		const cb = responses.shift();
 		assert(cb !== undefined, "the end");
-		return cb() as Promise<Response>;
+		return cb(input, init) as Promise<Response>;
 	});
 	try {
 		return await callback();
@@ -68,7 +68,7 @@ export async function mockFetchMultiple<T>(
 
 export async function mockFetchSingle<T>(
 	callback: () => Promise<T>,
-	responseType: () => Promise<object>,
+	responseType: (input: string | Request | URL, init?: RequestInit) => Promise<object>,
 	type: FetchCallType = "single",
 ): Promise<T> {
 	return mockFetchMultiple(callback, [responseType], type);
@@ -80,6 +80,28 @@ export async function mockFetchOk<T>(
 	headers: { [key: string]: string } = {},
 ): Promise<T> {
 	return mockFetchSingle(callback, async () => okResponse(headers, response));
+}
+
+/**
+ * Mock a fetch call that returns a 200 OK response if the request check passes.
+ * @param callback - The callback to invoke for the fetch call.
+ * @param check - The function to check if the request is made correctly. Throws if the check fails.
+ * @param response - The response to return if the check passes.
+ * @param headers - The headers to include in the response.
+ * @returns The result of the callback.
+ */
+export async function mockFetchOKIf<T>(
+	callback: () => Promise<T>,
+	requestCheck: (input: string | Request | URL, init?: RequestInit) => true | never,
+	response = {},
+	headers: { [key: string]: string } = {},
+): Promise<T> {
+	return mockFetchSingle(callback, async (input, init) => {
+		if (requestCheck(input, init)) {
+			return okResponse(headers, response);
+		}
+		throw new Error(`Unexpected fetch. requestCheck should throw if not passing.`);
+	});
 }
 
 export async function mockFetchError<T>(
