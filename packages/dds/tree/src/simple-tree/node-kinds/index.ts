@@ -37,4 +37,5 @@ export {
 	objectSchema,
 	setField,
 	type TreeObjectNode,
+	type SimpleKeyMap,
 } from "./object/index.js";

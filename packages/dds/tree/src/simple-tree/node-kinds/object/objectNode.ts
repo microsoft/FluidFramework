@@ -195,7 +195,7 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(
+export function createFlexKeyMapping(
 	fields: Record<string, ImplicitAnnotatedFieldSchema>,
 ): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();

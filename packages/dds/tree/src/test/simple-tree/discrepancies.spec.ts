@@ -112,12 +112,6 @@ describe("Schema Discrepancies", () => {
 					view: "object",
 					stored: undefined,
 				},
-				{
-					identifier: leafNodeSchema.identifier,
-					mismatch: "nodeKind",
-					stored: "leaf",
-					view: undefined,
-				},
 			],
 		);
 
@@ -216,6 +210,12 @@ describe("Schema Discrepancies", () => {
 					view: [],
 					stored: [schemaFactory.string.identifier],
 				},
+				{
+					identifier: schemaFactory.string.identifier,
+					mismatch: "nodeKind",
+					view: undefined,
+					stored: "leaf",
+				},
 			],
 		);
 
@@ -228,6 +228,12 @@ describe("Schema Discrepancies", () => {
 			),
 			[
 				{
+					identifier: schemaFactory.number.identifier,
+					mismatch: "nodeKind",
+					view: "leaf",
+					stored: undefined,
+				},
+				{
 					identifier: testTreeNodeIdentifierNormalized,
 					fieldKey: undefined,
 					mismatch: "allowedTypes",
@@ -236,6 +242,12 @@ describe("Schema Discrepancies", () => {
 						{ metadata: {}, type: schemaFactory.string },
 					],
 					stored: ["schema discrepancies.array"],
+				},
+				{
+					identifier: "schema discrepancies.array",
+					mismatch: "nodeKind",
+					view: undefined,
+					stored: "object",
 				},
 			],
 		);
@@ -294,10 +306,22 @@ describe("Schema Discrepancies", () => {
 					],
 				},
 				{
+					identifier: schemaFactory.number.identifier,
+					mismatch: "nodeKind",
+					view: "leaf",
+					stored: undefined,
+				},
+				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "nodeKind",
 					view: "object",
 					stored: undefined,
+				},
+				{
+					identifier: schemaFactory.string.identifier,
+					mismatch: "nodeKind",
+					view: undefined,
+					stored: "leaf",
 				},
 				{
 					identifier: "schema discrepancies.tree2",
@@ -329,10 +353,22 @@ describe("Schema Discrepancies", () => {
 					],
 				},
 				{
+					identifier: schemaFactory.number.identifier,
+					mismatch: "nodeKind",
+					view: "leaf",
+					stored: undefined,
+				},
+				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "nodeKind",
 					view: "map",
 					stored: undefined,
+				},
+				{
+					identifier: schemaFactory.string.identifier,
+					mismatch: "nodeKind",
+					view: undefined,
+					stored: "leaf",
 				},
 				{
 					identifier: "schema discrepancies.tree2",
@@ -362,6 +398,12 @@ describe("Schema Discrepancies", () => {
 			Array.from(getAllowedContentDiscrepancies(objectNodeRoot1, objectNodeStoredSchema2)),
 			[
 				{
+					identifier: schemaFactory.number.identifier,
+					mismatch: "nodeKind",
+					view: "leaf",
+					stored: undefined,
+				},
+				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "fields",
 					differences: [
@@ -387,6 +429,12 @@ describe("Schema Discrepancies", () => {
 							stored: "Optional",
 						},
 					],
+				},
+				{
+					identifier: schemaFactory.string.identifier,
+					mismatch: "nodeKind",
+					view: undefined,
+					stored: "leaf",
 				},
 			],
 		);
@@ -451,6 +499,12 @@ describe("Schema Discrepancies", () => {
 				),
 				[
 					{
+						identifier: schemaFactory.number.identifier,
+						mismatch: "nodeKind",
+						view: "leaf",
+						stored: undefined,
+					},
+					{
 						identifier: "schema discrepancies.tree",
 						fieldKey: undefined,
 						mismatch: "allowedTypes",
@@ -468,6 +522,12 @@ describe("Schema Discrepancies", () => {
 					),
 				),
 				[
+					{
+						identifier: schemaFactory.number.identifier,
+						mismatch: "nodeKind",
+						view: "leaf",
+						stored: undefined,
+					},
 					{
 						identifier: "schema discrepancies.tree",
 						mismatch: "fields",
@@ -536,6 +596,12 @@ describe("Schema Discrepancies", () => {
 				),
 				[
 					{
+						identifier: schemaFactory.number.identifier,
+						mismatch: "nodeKind",
+						view: "leaf",
+						stored: undefined,
+					},
+					{
 						identifier: "schema discrepancies.tree",
 						mismatch: "fields",
 						differences: [
@@ -559,6 +625,12 @@ describe("Schema Discrepancies", () => {
 					),
 				),
 				[
+					{
+						identifier: schemaFactory.number.identifier,
+						mismatch: "nodeKind",
+						view: "leaf",
+						stored: undefined,
+					},
 					{
 						identifier: "schema discrepancies.tree",
 						mismatch: "fields",
