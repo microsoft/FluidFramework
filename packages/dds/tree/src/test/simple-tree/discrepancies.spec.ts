@@ -7,7 +7,6 @@ import assert from "node:assert";
 import {
 	LeafNodeStoredSchema,
 	ValueSchema,
-	// storedEmptyFieldSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 } from "../../core/index.js";
@@ -16,7 +15,6 @@ import {
 	allowsRepoSuperset,
 	FieldKinds,
 	type FlexFieldKind,
-	// type FlexFieldKind,
 } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -263,11 +261,6 @@ describe("Schema Discrepancies", () => {
 		 * If schema identifiers differ, treat it as missing in the other document.
 		 * Exhaustive validation is not applied in this case.
 		 */
-		// const root = fieldSchema(FieldKinds.optional, [
-		// 	numberName,
-		// 	stringName,
-		// 	testTreeNodeIdentifier,
-		// ]);
 
 		const mapNodeSchema = schemaFactory.mapAlpha(testTreeNodeIdentifier, [
 			schemaFactory.number,
@@ -650,17 +643,6 @@ describe("Schema Discrepancies", () => {
 	});
 
 	describe("isRepoSuperset", () => {
-		// const root1 = fieldSchema(FieldKinds.required, [
-		// 	numberName,
-		// 	testTreeNodeIdentifier,
-		// 	stringName,
-		// ]);
-		// const root2 = fieldSchema(FieldKinds.optional, [
-		// 	numberName,
-		// 	testTreeNodeIdentifier,
-		// 	stringName,
-		// ]);
-
 		const mapNodeSchema1 = schemaFactory.required(
 			schemaFactory.mapAlpha(testTreeNodeIdentifier, schemaFactory.number),
 		);

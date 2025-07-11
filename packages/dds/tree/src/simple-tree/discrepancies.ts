@@ -9,7 +9,6 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type FieldKindIdentifier,
-	forbiddenFieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
@@ -202,15 +201,15 @@ export function* getAllowedContentDiscrepancies(
 	view: FieldSchema,
 	stored: TreeStoredSchema,
 ): Iterable<Discrepancy> {
-	// check schema discrepancies at the field level
+	// check root schema discrepancies
 	yield* getFieldDiscrepancies(view, stored.rootFieldSchema, undefined, undefined);
 
-	const annotatedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
 	const storedAllowedTypes = stored.nodeSchema;
 
+	// collect all annotated allowed types from the view schema
+	const annotatedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
 	walkFieldSchema(view, {
 		allowedTypes: (allowedTypes) => {
-			// collect all annotated allowed types from the view schema
 			annotatedAllowedTypes.push(...allowedTypes.types);
 		},
 	});
@@ -219,7 +218,6 @@ export function* getAllowedContentDiscrepancies(
 	for (const annotatedAllowedType of annotatedAllowedTypes) {
 		const { type } = annotatedAllowedType;
 		// map view schema identifiers to the field schemas to make access in the stored schema pass more efficient
-		// TODO should this be a map on field schema?
 		const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
 		viewAllowedTypes.set(identifier, type);
 
@@ -290,7 +288,7 @@ function* getNodeDiscrepancies(
 									schema: createFieldSchema(
 										FieldKind.Optional,
 										asTreeNodeSchemaCorePrivate(view).childAnnotatedAllowedTypes[0] ??
-											fail("test"),
+											fail("Array node schema should have a single field with allowed types"),
 									),
 								},
 							],
@@ -395,9 +393,9 @@ function* getFieldDiscrepancies(
 		convertFieldKind.get(view.kind) ??
 		fail("A conversion from a FieldKind to a FlexFieldKind should exist");
 
-	// If this checks if the field kind in the view schema is not compatible with the stored schema.
+	// This checks if the field kind in the view schema is not compatible with the stored schema.
 	// We cannot detect if the view schema is a sequence using the kind property so it is passed in separately.
-	// TODO: This is a temporary workaround until the comparison logic is refactored.
+	// TODO: This is a temporary workaround until the comparison logic is redesigned.
 	if (
 		(viewKindIsSequence && stored.kind !== "Sequence") ||
 		(!viewKindIsSequence && viewKind.identifier !== stored.kind)
@@ -440,11 +438,6 @@ function* trackObjectNodeDiscrepancies(
 			const viewKind =
 				convertFieldKind.get(schema.kind) ??
 				fail("A conversion from a FieldKind to a FlexFieldKind should exist");
-			if (viewKind.identifier === forbiddenFieldKindIdentifier) {
-				// In one of view/stored, this field is explicitly forbidden, but in the other it is implicitly forbidden
-				// (by way of omission). We treat these identically anyway.
-				continue;
-			}
 			yield {
 				identifier,
 				fieldKey: storedKey,

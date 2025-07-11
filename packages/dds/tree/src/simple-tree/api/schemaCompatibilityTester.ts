@@ -86,7 +86,6 @@ export class SchemaCompatibilityTester {
 						canView = false;
 					}
 
-					// TODO: previously, only view schemas that are not never trees would
 					if (discrepancy.view.length > 0) {
 						// View schema has extra allowed types that the stored schema does not.
 						canView = false;
