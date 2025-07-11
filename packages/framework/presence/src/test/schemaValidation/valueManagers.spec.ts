@@ -26,13 +26,7 @@ import {
 	prepareConnectedPresence,
 } from "../testUtils.js";
 
-import type {
-	Attendee,
-	Latest,
-	LatestMap,
-	LatestData,
-	ProxiedValueAccessor,
-} from "@fluidframework/presence/beta";
+import type { Attendee, Latest, LatestMap } from "@fluidframework/presence/beta";
 import { StateFactory } from "@fluidframework/presence/beta";
 
 /**
@@ -161,7 +155,7 @@ function runMultipleCallsTest(params: MultipleCallsTestParams): void {
 	assert.equal(params.validatorFunction.callCount, 1);
 }
 
-describe("Presence", () => {
+describe.only("Presence", () => {
 	describe("Runtime schema validation", () => {
 		const afterCleanUp: (() => void)[] = [];
 		const initialTime = 1000;
@@ -539,15 +533,15 @@ describe("Presence", () => {
 			});
 		});
 
-		describe("LatestMap validator", () => {
+		describe("LatestMap with validation", () => {
 			let latestMap: LatestMap<Point3D, string>;
 
 			/**
-			 * This beforeEach sets up the presence workspace itself and gets a reference to it. It then sets some new data as
-			 * attendee1 by processing a datastore update signal.
+			 * This beforeEach sets up the presence workspace itself and gets a
+			 * reference to it.
 			 */
 			beforeEach(() => {
-				// Setup workspace initialization signal
+				// workspace setup's initialization signal
 				runtime.signalsExpected.push([
 					{
 						"type": "Pres:DatastoreUpdate",
@@ -599,36 +593,88 @@ describe("Presence", () => {
 				latestMap = stateWorkspace.states.latestMap;
 			});
 
-			describe("is not called", () => {
-				it("when accessing local key value", () => {
-					assert.deepEqual(latestMap.local.get("key1"), {
-						x: 0,
-						y: 0,
-						z: 0,
-					});
+			describe("validator is not called", () => {
+				it("when reading local key value", () => {
+					// Act
+					const localData = latestMap.local.get("key1");
+					// Verify
+					assert.equal(point3DValidatorFunction.callCount, 0);
+					// double check local data
+					assert.deepEqual(localData, { x: 0, y: 0, z: 0 });
+				});
+
+				it("when writing local key value", () => {
+					// Setup
+					runtime.signalsExpected.push([
+						{
+							"type": "Pres:DatastoreUpdate",
+							"content": {
+								"sendTimestamp": 1030,
+								"avgLatency": 10,
+								"data": {
+									"system:presence": {
+										"clientToSessionId": {
+											[connectionId2]: {
+												"rev": 0,
+												"timestamp": 1000,
+												"value": attendeeId2,
+											},
+										},
+									},
+									"s:name:testWorkspace": {
+										"latestMap": {
+											[attendeeId2]: {
+												"rev": 1,
+												"items": {
+													"key1": {
+														"rev": 1,
+														"timestamp": 1030,
+														"value": toOpaqueJson({ "x": 0, "y": 1, "z": 2 }),
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					]);
+
+					// Act
+					latestMap.local.set("key1", { x: 0, y: 1, z: 2 });
+					// Verify
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
 
 				it("when calling .get() on remote map", () => {
 					const remoteData = latestMap.getRemote(remoteAttendee);
+					// Act
 					remoteData.get("key1");
+					// Verify
 					assert.equal(point3DValidatorFunction.callCount, 0);
 				});
 
 				it("when accessing keys only in .forEach()", () => {
+					// Setup
 					const remoteData = latestMap.getRemote(remoteAttendee);
 					let counter = 0;
 					const expectedValues = [
 						["key1", { x: 1, y: 1, z: 1 }],
 						["key2", { x: 2, y: 2, z: 2 }],
 					];
+					// Act
 					// eslint-disable-next-line unicorn/no-array-for-each -- forEach is being tested here
-					remoteData.forEach(
-						(value: LatestData<Point3D, ProxiedValueAccessor<Point3D>>, key: string) => {
-							assert.equal(key, expectedValues[counter][0]);
-							counter++;
-							assert.equal(point3DValidatorFunction.callCount, 0, "call count is wrong");
-						},
+					remoteData.forEach((_value, key) => {
+						// Verify
+						assert.equal(point3DValidatorFunction.callCount, 0, "call count is wrong");
+						assert.equal(key, expectedValues[counter][0]);
+						counter++;
+					});
+					// Make sure forEach iterated through all keys
+					assert.equal(
+						counter,
+						expectedValues.length,
+						"counter should match expected values length",
 					);
 				});
 
@@ -640,29 +686,32 @@ describe("Presence", () => {
 						["key2", { x: 2, y: 2, z: 2 }],
 					];
 					// eslint-disable-next-line unicorn/no-array-for-each -- forEach is being tested here
-					remoteData.forEach(
-						(value: LatestData<Point3D, ProxiedValueAccessor<Point3D>>, key: string) => {
-							assert.equal(key, expectedValues[counter][0]);
-							assert.deepEqual(
-								value?.value(),
-								expectedValues[counter][1],
-								`value at key "${key}" is wrong`,
-							);
-							// Access value twice; should not affect validator call count
-							assert.deepEqual(
-								value?.value(),
-								expectedValues[counter][1],
-								`value at key "${key}" is wrong`,
-							);
-							counter++;
-							assert.equal(point3DValidatorFunction.callCount, counter, "call count is wrong");
-						},
+					remoteData.forEach((value, key) => {
+						assert.equal(key, expectedValues[counter][0]);
+						const valueData = value?.value();
+						assert.deepEqual(
+							valueData,
+							expectedValues[counter][1],
+							`value at key "${key}" is wrong`,
+						);
+						// Access value twice; should not affect validator call count
+						assert.strictEqual(value?.value(), valueData, `value at key "${key}" is wrong`);
+						counter++;
+						assert.equal(point3DValidatorFunction.callCount, counter, "call count is wrong");
+					});
+					// Make sure forEach iterated through all keys
+					assert.equal(
+						counter,
+						expectedValues.length,
+						"counter should match expected values length",
 					);
 				});
 
-				it("for unchanged keys", () => {
+				it("during .value() call for unchanged keys", () => {
+					const originalMap = latestMap.getRemote(remoteAttendee);
 					// Read key1 value - should call validator once
-					assert.deepEqual(latestMap.getRemote(remoteAttendee).get("key1")?.value(), {
+					const key1Value = originalMap.get("key1")?.value();
+					assert.deepEqual(key1Value, {
 						x: 1,
 						y: 1,
 						z: 1,
@@ -674,7 +723,7 @@ describe("Presence", () => {
 					);
 
 					// Update key2 (different key) with new data, keeping key1 unchanged
-					presence.processSignal(
+					processSignal(
 						[],
 						datastoreUpdateSignal(clock, {
 							"rev": 2,
@@ -689,24 +738,21 @@ describe("Presence", () => {
 						false,
 					);
 
+					const updatedMap = latestMap.getRemote(remoteAttendee);
 					// Read key1 value again - should NOT call validator again since key1 data hasn't changed
-					assert.deepEqual(
-						latestMap.getRemote(remoteAttendee).get("key1")?.value(),
-						{ x: 1, y: 1, z: 1 },
-						"key1 value should remain unchanged",
-					);
-
+					const key1ValueRedux = updatedMap.get("key1")?.value();
 					assert.equal(
 						point3DValidatorFunction.callCount,
 						1,
 						"validator should still be called only once for key1",
 					);
+					assert.strictEqual(key1ValueRedux, key1Value, "key1 value should remain unchanged");
 
 					// Read key2 value - should call validator for the second time (first time for key2)
+					const key2Value = updatedMap.get("key2")?.value();
 					assert.deepEqual(
-						latestMap.getRemote(remoteAttendee).get("key2")?.value(),
-						// FIXME: Shouldn't this be { "x": 4, "y": 4, "z": 4 } ?
-						{ "x": 2, "y": 2, "z": 2 },
+						key2Value,
+						{ "x": 4, "y": 4, "z": 4 },
 						"key2 should have updated value",
 					);
 
@@ -729,82 +775,6 @@ describe("Presence", () => {
 					});
 				});
 
-				it("when accessing values in .forEach()", () => {
-					const remoteData = latestMap.getRemote(remoteAttendee);
-					let counter = 0;
-					const expectedValues = [
-						["key1", { x: 1, y: 1, z: 1 }],
-						["key2", { x: 2, y: 2, z: 2 }],
-					];
-					// eslint-disable-next-line unicorn/no-array-for-each -- forEach is being tested here
-					remoteData.forEach(
-						(value: LatestData<Point3D, ProxiedValueAccessor<Point3D>>, key: string) => {
-							assert.equal(key, expectedValues[counter][0]);
-							assert.deepEqual(
-								value?.value(),
-								expectedValues[counter][1],
-								`value at key "${key}" is wrong`,
-							);
-							counter++;
-							assert.equal(point3DValidatorFunction.callCount, counter, "call count is wrong");
-						},
-					);
-				});
-
-				it("when remote key data has changed", () => {
-					// Get the remote data and read it, verify that the validator is called once.
-					assert.deepEqual(latestMap.getRemote(remoteAttendee).get("key1")?.value(), {
-						x: 1,
-						y: 1,
-						z: 1,
-					});
-					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
-
-					// Send updated key data from remote client
-					presence.processSignal(
-						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latestMap": {
-											[attendeeId1]: {
-												"rev": 2,
-												"items": {
-													"key1": {
-														"rev": 2,
-														"timestamp": 1030,
-														"value": toOpaqueJson({ "x": 4, "y": 4, "z": 4 }),
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
-						false,
-					);
-
-					// Reading the remote value should cause the validator to be called a second time since the data has been
-					// changed.
-					assert.deepEqual(
-						latestMap.getRemote(remoteAttendee).get("key1")?.value(),
-						{ x: 4, y: 4, z: 4 },
-						"updated remote key value is wrong",
-					);
-					assert.equal(
-						point3DValidatorFunction.callCount,
-						2,
-						"validator should be called twice",
-					);
-				});
-
 				it("only once for multiple key.value() calls on unchanged data", () => {
 					const remoteData = latestMap.getRemote(remoteAttendee);
 					runMultipleCallsTest({
@@ -814,218 +784,162 @@ describe("Presence", () => {
 					});
 				});
 
-				it("when remote key data changes from valid to invalid", () => {
-					// Get the remote data and read it, verify that the validator is called once.
-					assert.deepEqual(latestMap.getRemote(remoteAttendee).get("key1")?.value(), {
-						x: 1,
-						y: 1,
-						z: 1,
+				it("exactly once for each value's .value() calls in .forEach() and always returns same value", () => {
+					const remoteData = latestMap.getRemote(remoteAttendee);
+					let counter = 0;
+					const expectedValues = [
+						["key1", { x: 1, y: 1, z: 1 }],
+						["key2", { x: 2, y: 2, z: 2 }],
+					];
+					// eslint-disable-next-line unicorn/no-array-for-each -- forEach is being tested here
+					remoteData.forEach((value, key) => {
+						assert.equal(key, expectedValues[counter][0]);
+						const expectedCallCount = counter + 1;
+
+						// Act - first call
+						const valueData = value?.value();
+						// Verify
+						assert.equal(
+							point3DValidatorFunction.callCount,
+							expectedCallCount,
+							"call count is wrong",
+						);
+						// double check value
+						assert.deepEqual(
+							valueData,
+							expectedValues[counter][1],
+							`value at key "${key}" is wrong`,
+						);
+
+						// Act - second call
+						// Access value a second time; should not affect validator call count
+						const valueDataRedux = value?.value();
+						// Verify
+						assert.equal(
+							point3DValidatorFunction.callCount,
+							expectedCallCount,
+							"call count is wrong",
+						);
+						assert.strictEqual(valueDataRedux, valueData, `value at key "${key}" is wrong`);
+
+						counter++;
 					});
-					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
-
-					// Send invalid key data from remote client
-					presence.processSignal(
-						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latestMap": {
-											[attendeeId1]: {
-												"rev": 3,
-												"items": {
-													"key1": {
-														"rev": 2,
-														"timestamp": 1030,
-														"value": toOpaqueJson("invalid" as unknown as Point3D),
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
-						false,
-					);
-
-					// Reading the remote value should cause the validator to be called a second time and return undefined
+					// Make sure forEach iterated through all keys
 					assert.equal(
-						latestMap.getRemote(remoteAttendee).get("key1")?.value(),
-						undefined,
-						"invalid key data should return undefined",
-					);
-					assert.equal(
-						point3DValidatorFunction.callCount,
-						2,
-						"validator should be called twice",
+						counter,
+						expectedValues.length,
+						"counter should match expected values length",
 					);
 				});
 
-				it("when remote key data changes from invalid to valid", () => {
-					// First send invalid key data
-					presence.processSignal(
+				function sendInvalidData(): void {
+					processSignal(
 						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latestMap": {
-											[attendeeId1]: {
-												"rev": 3,
-												"items": {
-													"key1": {
-														"rev": 2,
-														"timestamp": 1030,
-														"value": toOpaqueJson("invalid" as unknown as Point3D),
-													},
-												},
-											},
-										},
-									},
+						datastoreUpdateSignal(clock, {
+							"rev": 2,
+							"items": {
+								"key1": {
+									"rev": 2,
+									"timestamp": 1020,
+									"value": toOpaqueJson("invalid"),
 								},
 							},
-							clientId: "client1",
-						},
+						}),
 						false,
 					);
+				}
 
-					// Get the remote data and read it, verify that the validator is called once and returns undefined
-					assert.equal(latestMap.getRemote(remoteAttendee).get("key1")?.value(), undefined);
-					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
+				for (const { desc, setup, expectedInitialValue, newData, expectedValue } of [
+					{
+						desc: "from valid to different valid value",
+						setup: () => {},
+						expectedInitialValue: { x: 1, y: 1, z: 1 },
+						newData: { x: 4, y: 4, z: 4 },
+						expectedValue: { x: 4, y: 4, z: 4 },
+					},
+					{
+						desc: "from valid to same valid value",
+						setup: () => {},
+						expectedInitialValue: { x: 1, y: 1, z: 1 },
+						newData: { x: 1, y: 1, z: 1 },
+						expectedValue: { x: 1, y: 1, z: 1 },
+					},
+					{
+						desc: "from valid to invalid value",
+						setup: () => {},
+						expectedInitialValue: { x: 1, y: 1, z: 1 },
+						newData: "invalid",
+						expectedValue: undefined,
+					},
+					{
+						desc: "from invalid to valid value",
+						setup: sendInvalidData,
+						expectedInitialValue: undefined,
+						newData: { x: 4, y: 4, z: 4 },
+						expectedValue: { x: 4, y: 4, z: 4 },
+					},
+					{
+						desc: "from invalid to invalid value",
+						setup: sendInvalidData,
+						expectedInitialValue: undefined,
+						newData: "invalid",
+						expectedValue: undefined,
+					},
+				] as const) {
+					it(`during .value() call and there is new value when remote key data has changed ${desc}`, () => {
+						// Setup
+						setup();
 
-					// Send valid key data from remote client
-					presence.processSignal(
-						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latestMap": {
-											[attendeeId1]: {
-												"rev": 4,
-												"items": {
-													"key1": {
-														"rev": 3,
-														"timestamp": 1030,
-														"value": toOpaqueJson({ x: 4, y: 4, z: 4 }),
-													},
-												},
-											},
-										},
+						const originalMap = latestMap.getRemote(remoteAttendee);
+						// Get the remote data and read it, expect that the validator is called once.
+						const key1Value = originalMap.get("key1")?.value();
+						assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
+						assert.deepEqual(key1Value, expectedInitialValue);
+
+						// Act
+						// Process updated key data from remote client
+						processSignal(
+							[],
+							datastoreUpdateSignal(clock, {
+								"rev": 3,
+								"items": {
+									"key1": {
+										"rev": 3,
+										"timestamp": 1030,
+										"value": toOpaqueJson(newData),
 									},
 								},
-							},
-							clientId: "client1",
-						},
-						false,
-					);
+							}),
+							false,
+						);
 
-					// Reading the remote value should cause the validator to be called a second time and return valid data
-					assert.deepEqual(
-						latestMap.getRemote(remoteAttendee).get("key1")?.value(),
-						{ x: 4, y: 4, z: 4 },
-						"valid key data should be returned",
-					);
-					assert.equal(
-						point3DValidatorFunction.callCount,
-						2,
-						"validator should be called twice",
-					);
-				});
+						// Verify no call yet
+						assert.equal(
+							point3DValidatorFunction.callCount,
+							1,
+							"call count after update is wrong",
+						);
 
-				it("when remote key data changes from invalid to invalid", () => {
-					// First send invalid key data
-					presence.processSignal(
-						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latestMap": {
-											[attendeeId1]: {
-												"rev": 2,
-												"items": {
-													"key1": {
-														"rev": 2,
-														"timestamp": 1030,
-														"value": toOpaqueJson("invalid" as unknown as Point3D),
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
-						false,
-					);
+						// Reading the remote value should cause the validator to be
+						// called a second time since the data has been changed.
+						const updatedMap = latestMap.getRemote(remoteAttendee);
 
-					// Get the remote data and read it, verify that the validator is called once and returns undefined
-					assert.equal(latestMap.getRemote(remoteAttendee).get("key1")?.value(), undefined);
-					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
+						// Act - read updated key value
+						const updatedKey1Value = updatedMap.get("key1")?.value();
 
-					// Send different invalid key data from remote client
-					presence.processSignal(
-						[],
-						{
-							type: "Pres:DatastoreUpdate",
-							content: {
-								sendTimestamp: clock.now - 10,
-								avgLatency: 20,
-								data: {
-									"system:presence": attendeeUpdate,
-									"s:name:testWorkspace": {
-										"latestMap": {
-											[attendeeId1]: {
-												"rev": 4,
-												"items": {
-													"key1": {
-														"rev": 3,
-														"timestamp": 1030,
-														"value": toOpaqueJson("still-invalid" as unknown as Point3D),
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-							clientId: "client1",
-						},
-						false,
-					);
-
-					// Reading the remote value should cause the validator to be called a second time and still return undefined
-					assert.equal(
-						latestMap.getRemote(remoteAttendee).get("key1")?.value(),
-						undefined,
-						"invalid key data should return undefined",
-					);
-					assert.equal(
-						point3DValidatorFunction.callCount,
-						2,
-						"validator should be called twice",
-					);
-				});
+						// Verify
+						assert.equal(
+							point3DValidatorFunction.callCount,
+							2,
+							"validator should be called twice",
+						);
+						assert.deepEqual(
+							updatedKey1Value,
+							expectedValue,
+							"updated remote key value is wrong",
+						);
+					});
+				}
 			});
 		});
 	});
