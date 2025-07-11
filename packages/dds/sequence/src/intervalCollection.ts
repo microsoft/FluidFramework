@@ -833,7 +833,7 @@ export class IntervalCollection
 					: undefined;
 				if (localOpMetadata.endpointChangesNode !== undefined) {
 					this.localCollection?.removeExistingInterval(interval);
-					assert(previous !== undefined, "must have existed to change");
+					assert(previous !== undefined, 0xbd2 /* must have existed to change */);
 					this.localCollection?.add(previous);
 					this.emitChange(previous, interval, true, true);
 				}
@@ -846,7 +846,7 @@ export class IntervalCollection
 				break;
 			}
 			case "delete": {
-				assert(previous !== undefined, "must have existed to delete");
+				assert(previous !== undefined, 0xbd3 /* must have existed to delete */);
 				this.localCollection?.add(previous);
 				this.emit("addInterval", previous, true, undefined);
 				break;
@@ -1393,7 +1393,7 @@ export class IntervalCollection
 		assert(id !== undefined, 0x3fe /* id must exist on the interval */);
 
 		if (local) {
-			assert(localOpMetadata !== undefined, "local must have metadata");
+			assert(localOpMetadata !== undefined, 0xbd4 /* local must have metadata */);
 			const { interval } = localOpMetadata;
 			interval.ackPropertiesChange(properties, op);
 

@@ -127,6 +127,9 @@ export interface TreeBeta {
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
+	 *
+	 * @privateRemarks
+	 * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,

@@ -7,10 +7,11 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import { describe, it, after, afterEach, before, beforeEach } from "mocha";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";
 
+import type { PresenceWithNotifications } from "../../index.js";
 import { toOpaqueJson } from "../../internalUtils.js";
-import type { createPresenceManager } from "../../presenceManager.js";
 import type { OutboundDatastoreUpdateMessage } from "../../protocol.js";
 import { MockEphemeralRuntime } from "../mockEphemeralRuntime.js";
+import type { ProcessSignalFunction } from "../testUtils.js";
 import {
 	assertFinalExpectations,
 	attendeeId1,
@@ -80,10 +81,16 @@ describe("Presence", () => {
 
 		type UpdateContent = typeof latestUpdate & typeof latestMapUpdate;
 
+		let clock: SinonFakeTimers;
+		let logger: EventAndErrorTrackingLogger;
+		let presence: PresenceWithNotifications;
+		let processSignal: ProcessSignalFunction;
+		let runtime: MockEphemeralRuntime;
+
 		function processUpdates(valueManagerUpdates: Record<string, UpdateContent>): void {
 			const updates = { "system:presence": attendeeUpdate, ...valueManagerUpdates };
 
-			presence.processSignal(
+			processSignal(
 				[],
 				{
 					type: "Pres:DatastoreUpdate",
@@ -98,11 +105,6 @@ describe("Presence", () => {
 			);
 		}
 
-		let clock: SinonFakeTimers;
-		let logger: EventAndErrorTrackingLogger;
-		let presence: ReturnType<typeof createPresenceManager>;
-		let runtime: MockEphemeralRuntime;
-
 		before(async () => {
 			clock = useFakeTimers();
 		});
@@ -113,7 +115,13 @@ describe("Presence", () => {
 			clock.setSystemTime(initialTime);
 
 			// Create Presence joining session as attendeeId-2.
-			presence = prepareConnectedPresence(runtime, attendeeId2, connectionId2, clock, logger);
+			({ presence, processSignal } = prepareConnectedPresence(
+				runtime,
+				attendeeId2,
+				connectionId2,
+				clock,
+				logger,
+			));
 
 			// Pass a little time (to mimic reality)
 			clock.tick(10);
@@ -215,7 +223,7 @@ describe("Presence", () => {
 				} as const satisfies OutboundDatastoreUpdateMessage;
 				{
 					runtime.signalsExpected.push([expectedSetupJoinResponse]);
-					presence.processSignal([], newAttendeeSignal, false);
+					processSignal([], newAttendeeSignal, false);
 				}
 				// Pass a little time (to distinguish between signals)
 				clock.tick(10);
@@ -276,7 +284,7 @@ describe("Presence", () => {
 				runtime.signalsExpected.push([expectedJoinResponse]);
 
 				// Act & Verify - resend new attendee Join signal
-				presence.processSignal([], newAttendeeSignal, false);
+				processSignal([], newAttendeeSignal, false);
 			});
 		});
 	});
