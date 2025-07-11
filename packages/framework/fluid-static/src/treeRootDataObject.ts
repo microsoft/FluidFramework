@@ -8,9 +8,7 @@ import {
 	TreeDataObject,
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import type {
-	IDataObjectProps,
-} from "@fluidframework/aqueduct/internal";
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import type {
 	IContainerRuntimeOptions,
 	MinimumVersionForCollab,
@@ -177,9 +175,7 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
 		treeFactory: IChannelFactory<ITree>,
 		dynamicObjectTypes?: readonly IChannelFactory[],
 	) {
-		type Ctor = new (
-			props: IDataObjectProps,
-		) => TreeRootDataObject;
+		type Ctor = new (props: IDataObjectProps) => TreeRootDataObject;
 		const ctor: Ctor = function (_props) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return new TreeRootDataObject({
