@@ -381,7 +381,7 @@
 			"axios@<0.30.0": "^0.30.0",
 			"@types/react": "^18.3.12",
 			"@types/glob": "^8.1.0",
-			"webpack": "~5.96.0"
+			"webpack": "~5.94.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
@@ -394,7 +394,7 @@
 			"allowedVersions": {
 				"react": "18.3.1",
 				"react-dom": "18.3.1",
-				"webpack": "^5.96.0"
+				"webpack": "~5.94.0"
 			},
 			"ignoreMissing": [
 				"@types/node",
