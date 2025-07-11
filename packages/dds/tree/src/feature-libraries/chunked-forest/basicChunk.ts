@@ -53,16 +53,6 @@ export class BasicChunk extends ReferenceCountedBase implements TreeChunk {
 		super();
 	}
 
-	private _summaryRefId: string | undefined;
-
-	public get summaryRefId(): string | undefined {
-		return this._summaryRefId;
-	}
-
-	public updateSummaryRefId(summaryRefId: string): void {
-		this._summaryRefId = summaryRefId;
-	}
-
 	public clone(): BasicChunk {
 		const fields = new Map<FieldKey, TreeChunk[]>();
 		for (const [k, v] of this.fields) {

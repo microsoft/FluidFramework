@@ -40,18 +40,18 @@ export function checkNodeEncode(
 	cache: EncoderCache,
 	tree: JsonableTree,
 ): BufferFormat {
-	const mainBuffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
 	shape.encodeNode(
 		cursor,
 		cache,
-		new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, mainBuffer),
+		new EncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
 	);
 
 	// Check round-trip
-	checkDecode([mainBuffer], [[tree]]);
+	checkDecode([buffer], [[tree]]);
 
-	return mainBuffer.slice(1);
+	return buffer.slice(1);
 }
 
 export function checkFieldEncode(
@@ -60,18 +60,18 @@ export function checkFieldEncode(
 	tree: JsonableTree[],
 	idCompressor?: IIdCompressor,
 ): BufferFormat {
-	const mainBuffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [shape.shape];
 	const cursor = cursorForJsonableTreeField(tree);
 	shape.encodeField(
 		cursor,
 		cache,
-		new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, mainBuffer),
+		new EncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
 	);
 
 	// Check round-trip
-	checkDecode([mainBuffer], [tree], idCompressor);
+	checkDecode([buffer], [tree], idCompressor);
 
-	return mainBuffer.slice(1);
+	return buffer.slice(1);
 }
 
 function checkDecode(

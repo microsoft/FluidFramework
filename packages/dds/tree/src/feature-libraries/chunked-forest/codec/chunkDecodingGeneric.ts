@@ -17,7 +17,7 @@ import {
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
 import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
-import type { EncodedFieldBatch } from "./format.js";
+import type { IncrementalDecoder } from "./codecs.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
@@ -27,13 +27,12 @@ export function decode<TEncodedShape extends object, TCache>(
 	cache: TCache,
 	batch: EncodedFieldBatchGeneric<TEncodedShape>,
 	rootDecoder: ChunkDecoder,
-	getIncrementalFieldBatch?: (fieldKey: string) => EncodedFieldBatch,
 ): TreeChunk[] {
 	const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, cache));
 	const chunks: TreeChunk[] = [];
 	for (const field of batch.data) {
 		const stream = { data: field, offset: 0 };
-		const result = rootDecoder.decode(decoders, stream, getIncrementalFieldBatch);
+		const result = rootDecoder.decode(decoders, stream);
 		assert(
 			stream.offset === stream.data.length,
 			0x73a /* expected decode to consume full stream */,
@@ -55,6 +54,7 @@ export class DecoderContext<TEncodedShape = unknown> {
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
 		public readonly idDecodingContext: IdDecodingContext,
+		public readonly incrementalDecoder: IncrementalDecoder | undefined,
 	) {}
 
 	public identifier<T extends string & BrandedType<string, string>>(

@@ -66,16 +66,6 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 		return this.shape.topLevelLength;
 	}
 
-	private _summaryRefId: string | undefined;
-
-	public get summaryRefId(): string | undefined {
-		return this._summaryRefId;
-	}
-
-	public updateSummaryRefId(summaryRefId: string): void {
-		this._summaryRefId = summaryRefId;
-	}
-
 	public clone(): UniformChunk {
 		return new UniformChunk(this.shape, this.values.slice());
 	}

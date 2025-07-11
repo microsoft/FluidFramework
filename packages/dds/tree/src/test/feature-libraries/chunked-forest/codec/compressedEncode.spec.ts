@@ -162,7 +162,7 @@ describe("compressedEncode", () => {
 				encodeValue(
 					value,
 					shape,
-					new EncodedDataBuilder(false /* encodeIncrementally */, true /* fullTree */, buffer),
+					new EncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
 				);
 				assert.deepEqual(buffer, encoded);
 				const processed = updateShapesAndIdentifiersEncoding(version, [buffer]);
