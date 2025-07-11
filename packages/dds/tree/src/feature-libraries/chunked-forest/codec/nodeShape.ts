@@ -25,7 +25,7 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
-import type { IEncodedDataBuilder } from "./encodedDataBuilder.js";
+import type { EncodedDataBuilder } from "./encodedDataBuilder.js";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
@@ -75,7 +75,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		dataBuilder: IEncodedDataBuilder,
+		dataBuilder: EncodedDataBuilder,
 	): void {
 		if (this.type === undefined) {
 			dataBuilder.addToBuffer(new IdentifierToken(cursor.type));
@@ -90,7 +90,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 
 		const otherFieldsBuffer: BufferFormat<EncodedChunkShape> = [];
-		const otherFieldsDataBuilder = dataBuilder.createSiblingFromBuffer(otherFieldsBuffer);
+		const otherFieldsDataBuilder = dataBuilder.createFromBuffer(otherFieldsBuffer);
 
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();

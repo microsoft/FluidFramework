@@ -16,30 +16,11 @@ import {
 import { rootFieldKey } from "./types.js";
 
 /**
- * Properties for incremental summarization of the chunks. This is used to determine if this chunk has changed since
- * the last summary.
- * If it has changed, the chunk will be summarized.
- * If it hasn't changed, the state will be used to incrementally summarize it by referring to the summary for this
- * chunk in the previous summary.
- */
-export interface IncrementalSummaryProps {
-	/**
-	 * The reference ID of the summary for this chunk in the previous summary.
-	 */
-	readonly summaryRefId: string | undefined;
-	/**
-	 * Update the reference ID for this chunk in the current summary. This will be used in the next summary to refer to
-	 * this chunk if it has not changed since the last summary.
-	 */
-	updateSummaryRefId: (summaryRefId: string) => void;
-}
-
-/**
  * Contiguous part of the tree which get stored together in some data format.
  * Copy-on-write, but optimized to be mutated in place when a chunk only has a single user (detected using reference counting).
  * This allows for efficient cloning without major performance overheads for non-cloning scenarios.
  */
-export interface TreeChunk extends ReferenceCounted, IncrementalSummaryProps {
+export interface TreeChunk extends ReferenceCounted {
 	/**
 	 * The number of nodes at the top level of this chunk.
 	 *

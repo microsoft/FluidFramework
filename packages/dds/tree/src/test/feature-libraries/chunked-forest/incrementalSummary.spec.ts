@@ -203,38 +203,6 @@ function validateHandlesInSummary(summary: ISummaryTree, lastSummary: ISummaryTr
 	}
 }
 
-/**
- * Validates that there are no handles in the forest's summary tree.
- */
-function validateNoHandlesInForest(forestSummary: ISummaryTree) {
-	for (const [key, summaryObject] of Object.entries(forestSummary.tree)) {
-		assert(
-			summaryObject.type !== SummaryType.Handle,
-			`Unexpected handle in summary tree at key: ${key}`,
-		);
-		if (summaryObject.type === SummaryType.Tree) {
-			// Recursively validate nested trees
-			validateNoHandlesInForest(summaryObject);
-		}
-	}
-}
-
-/**
- * Validates that are no handles in the forest's summary subtree in the given summary tree.
- */
-function validateNoHandlesInSummary(summary: ISummaryTree) {
-	for (const [key, summaryObject] of Object.entries(summary.tree)) {
-		if (summaryObject.type === SummaryType.Tree) {
-			if (key === "Forest") {
-				validateNoHandlesInForest(summaryObject);
-			} else {
-				// Recursively find forest tree
-				validateNoHandlesInSummary(summaryObject);
-			}
-		}
-	}
-}
-
 describe("Forest incremental summary", () => {
 	let factory: IChannelFactory;
 	let tree1: ISharedTree;
@@ -324,7 +292,10 @@ describe("Forest incremental summary", () => {
 		assert(summary3 !== undefined);
 		validateHandlesInSummary(summary3.summary, summary2.summary);
 
-		return incrementalSummaryContext3;
+		return {
+			previousSummary: summary2,
+			previousSummarySequenceNumber: incrementalSummaryContext2.summarySequenceNumber,
+		};
 	};
 
 	it("incremental summaries", async () => {
@@ -332,7 +303,7 @@ describe("Forest incremental summary", () => {
 	});
 
 	it("incremental summaries with a failed summary in between", async () => {
-		const previousIncrementalSummaryContext = await testWithSuccessfulSummaries();
+		const previousSummaryInfo = await testWithSuccessfulSummaries();
 
 		// Simulate a scenario where the precious summary fails by setting the latest summary sequence number
 		// in the next summary's incrementalSummaryContext not to the previous summary but the last successful
@@ -340,8 +311,7 @@ describe("Forest incremental summary", () => {
 		// This next summary should be a full tree summary.
 		const newIncrementalSummaryContext: IExperimentalIncrementalSummaryContext = {
 			summarySequenceNumber: 30,
-			latestSummarySequenceNumber:
-				previousIncrementalSummaryContext.latestSummarySequenceNumber,
+			latestSummarySequenceNumber: previousSummaryInfo.previousSummarySequenceNumber,
 			summaryPath: "",
 		};
 		const newSummary = await tree1.summarize(
@@ -351,6 +321,7 @@ describe("Forest incremental summary", () => {
 			newIncrementalSummaryContext,
 		);
 		assert(newSummary !== undefined);
-		validateNoHandlesInSummary(newSummary.summary);
+		// This summary should reference the summary before the failed one to generate handles.
+		validateHandlesInSummary(newSummary.summary, previousSummaryInfo.previousSummary.summary);
 	});
 });

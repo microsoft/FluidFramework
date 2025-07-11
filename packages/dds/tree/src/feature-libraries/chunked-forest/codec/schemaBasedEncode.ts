@@ -33,10 +33,12 @@ import {
 import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
-import type { IncrementalEncodingParameters } from "./codecs.js";
+import type { IncrementalEncoder } from "./codecs.js";
 
 /**
- * Encode data from `fieldBatch` in into an `EncodedChunk`.
+ * Encode data from `fieldBatch` in into an `EncodedChunk`. If `incrementalEncoder` is provided, fields that
+ * support incremental encoding will encode their chunks separately via the `incrementalEncoder`. See
+ * {@link IncrementalEncoder} for more details.
  *
  * Optimized for encoded size and encoding performance.
  * TODO: This function should eventually also take in the root FieldSchema to more efficiently compress the nodes.
@@ -46,7 +48,7 @@ export function schemaCompressedEncode(
 	policy: FullSchemaPolicy,
 	fieldBatch: FieldBatch,
 	idCompressor: IIdCompressor,
-	incrementalEncodingParams?: IncrementalEncodingParameters,
+	incrementalEncoder?: IncrementalEncoder,
 ): EncodedFieldBatch {
 	return compressedEncode(
 		fieldBatch,
@@ -54,9 +56,9 @@ export function schemaCompressedEncode(
 			schema,
 			policy,
 			idCompressor,
-			incrementalEncodingParams !== undefined /* encodeIncrementally */,
+			incrementalEncoder !== undefined /* shouldEncodeIncrementally */,
 		),
-		incrementalEncodingParams,
+		incrementalEncoder,
 	);
 }
 
@@ -64,11 +66,11 @@ export function buildCache(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	idCompressor: IIdCompressor,
-	encodeIncrementally: boolean = false,
+	shouldEncodeIncrementally: boolean = false,
 ): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
-			treeShaper(schema, policy, fieldHandler, schemaName, encodeIncrementally),
+			treeShaper(schema, policy, fieldHandler, schemaName, shouldEncodeIncrementally),
 		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache, schema),
 		policy.fieldKinds,
@@ -124,7 +126,7 @@ export function treeShaper(
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
 	schemaName: TreeNodeSchemaIdentifier,
-	encodeIncrementally: boolean = false,
+	shouldEncodeIncrementally: boolean = false,
 ): NodeShape {
 	const schema =
 		fullSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
@@ -138,7 +140,8 @@ export function treeShaper(
 		for (const [key, field] of schema.objectNodeFields ?? []) {
 			// TODO: Remove this hardcoded check and do this based on either heuristic or schema.
 			const fieldEncoder =
-				encodeIncrementally && (key === "notes" || key === "metadata" || key === "metaText")
+				shouldEncodeIncrementally &&
+				(key === "notes" || key === "metadata" || key === "metaText")
 					? new IncrementalFieldShape()
 					: fieldHandler.shapeFromField(field);
 			objectNodeFields.push({

@@ -12,35 +12,66 @@ import {
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
 } from "../../../codec/index.js";
-import { CursorLocationType, type SchemaAndPolicy } from "../../../core/index.js";
+import {
+	CursorLocationType,
+	type SchemaAndPolicy,
+	type TreeChunk,
+} from "../../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
-import { EncodedFieldBatch, validVersions, type EncodedFieldBatchFormat } from "./format.js";
+import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import { Type, type Static } from "@sinclair/typebox";
 
-export interface IncrementalEncodingParameters {
+/**
+ * Reference ID for a chunk that is incrementally encoded.
+ * @internal
+ */
+export const ChunkReferenceId = Type.Number({ multipleOf: 1, minimum: 0 });
+export type ChunkReferenceId = Static<typeof ChunkReferenceId>;
+
+/**
+ * Properties for encoding a chunk that supports incremental encoding.
+ * Fields that support incremental encoding will encode their chunks separately by calling `encodeIncrementalChunk`.
+ * This supports features like incremental summarization where the summary from these fields can be re-used if
+ * unchanged between summaries.
+ * Note that each of these chunks that are incrementally encoded is fully self-describing (contain its own shapes
+ * list and identifier table) and does not rely on context from its parent.
+ * @internal
+ */
+export interface IncrementalEncoder {
 	/**
-	 * The data for fields that support incremental encoding during encoding should be stored here.
+	 * Called to encode an incremental chunk which are encoded separately from the main buffer.
+	 * @param chunk - The chunk to encode.
+	 * @param chunkEncoder - A function that encodes the chunk's contents.
+	 * @returns The reference ID of the encoded chunk. This is used to retrieve the encoded chunk later.
 	 */
-	readonly outputIncrementalFieldsBatch: Map<string, EncodedFieldBatchFormat>;
-	/**
-	 * A flag indicating whether all fields should be encoded irrespective of whether they have changed or not.
-	 * If true, all fields will be encoded in the batch, even if they have not changed since the last encoding.
-	 * Defaults to false.
-	 */
-	readonly fullTree: boolean;
+	encodeIncrementalChunk(
+		chunk: TreeChunk,
+		chunkEncoder: () => EncodedFieldBatch,
+	): ChunkReferenceId;
 }
 
-export interface IncrementalDecodingParameters {
+/**
+ * Properties for decoding a chunk that supports incremental encoding. See {@link IncrementalEncoder} for more details.
+ * @internal
+ */
+export interface IncrementalDecoder {
 	/**
-	 * The data for fields that support incremental encoding should be retrieved from here during decoding.
+	 * Called to get the encoded contents of an incremental chunk with the given reference ID.
+	 * @param referenceId - The reference ID of the chunk to retrieve.
+	 * @returns The encoded contents of the chunk.
 	 */
-	readonly getIncrementalFieldBatch: (fieldKey: string) => EncodedFieldBatch;
+	getEncodedIncrementalChunk: (referenceId: ChunkReferenceId) => EncodedFieldBatch;
 }
+/**
+ * @internal
+ */
+export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
@@ -48,13 +79,10 @@ export interface FieldBatchEncodingContext {
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
 	/**
-	 * The parameters for incremental encoding. Must be provided if doing incremental encoding.
+	 * An encoder / decoder for encoding and decoding of incremental chunks. This will be defined if
+	 * incremental encoding is supported and enabled.
 	 */
-	readonly incrementalEncodingParams?: IncrementalEncodingParameters;
-	/**
-	 * The parameters for incremental decoding. Must be provided if the data was encoded with incremental encoding.
-	 */
-	readonly incrementalDecodingParams?: IncrementalDecodingParameters;
+	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
 }
 /**
  * @remarks
@@ -114,7 +142,7 @@ export function makeFieldBatchCodec(
 							context.schema.policy,
 							data,
 							context.idCompressor,
-							context.incrementalEncodingParams,
+							context.incrementalEncoderDecoder,
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
@@ -137,7 +165,7 @@ export function makeFieldBatchCodec(
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
 				},
-				context.incrementalDecodingParams?.getIncrementalFieldBatch,
+				context.incrementalEncoderDecoder,
 			).map((chunk) => chunk.cursor());
 		},
 	});

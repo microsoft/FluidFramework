@@ -14,9 +14,6 @@ import {
 	ShapeIndex,
 } from "./formatGeneric.js";
 
-export const FieldUnchanged = "unchanged";
-export type FieldUnchanged = typeof FieldUnchanged;
-
 export const version = 1;
 
 // Compatible versions used for format/version validation.
@@ -68,8 +65,8 @@ export const EncodedFieldShape = Type.Tuple([
 export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
 
 /**
- * The content of the encoded field is an array of reference ids. The number of reference ids is equal to the number of
- * chunks in the field. The content for these chunks is encoded separately and is referenced by its reference id.
+ * Content of the encoded field is an array of chunk reference ids, one for each chunk. Each chunk in the field is
+ * encoded separately and is referenced by its reference id.
  */
 export const EncodedIncrementalShape = Type.Literal(0);
 
@@ -209,17 +206,3 @@ export type EncodedIncrementalShape = Static<typeof EncodedIncrementalShape>;
  */
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;
-
-/**
- * Format for encoding a tree field where its children fields that support incremental encoding are added to
- * a separate map. It consists of a main field batch and a map for each of its fields that can be incrementally
- * summarized.
- *
- * @remarks This is currently used during summarization to store the data for fields that support incremental encoding
- * in separate summary trees / blobs such that they can be incrementally summarized.
- */
-export interface EncodedFieldBatchIncremental {
-	fieldBatch: EncodedFieldBatch;
-	incrementalFieldsBatch: Map<string, EncodedFieldBatchFormat>;
-}
-export type EncodedFieldBatchFormat = EncodedFieldBatchIncremental | FieldUnchanged;

@@ -280,7 +280,12 @@ describe("chunkDecoding", () => {
 
 	describe("TreeDecoder", () => {
 		it("empty node", () => {
-			const cache = new DecoderContext([], [], idDecodingContext);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
 			const decoder = new TreeDecoder(
 				{
 					value: false,
@@ -294,7 +299,12 @@ describe("chunkDecoding", () => {
 		});
 
 		it("typed node", () => {
-			const cache = new DecoderContext([], [], idDecodingContext);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
 			const decoder = new TreeDecoder(
 				{
 					type: "baz",
@@ -311,7 +321,12 @@ describe("chunkDecoding", () => {
 		it("identifier node", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
-			const cache = new DecoderContext([], [], idDecodingContext);
+			const cache = new DecoderContext(
+				[],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
 
 			const decoder = new TreeDecoder(
 				{
@@ -327,7 +342,12 @@ describe("chunkDecoding", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new DecoderContext(["b", "d"], [], idDecodingContext);
+			const cache = new DecoderContext(
+				["b", "d"],
+				[],
+				idDecodingContext,
+				undefined /* incrementalDecoder */,
+			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
@@ -362,6 +382,7 @@ describe("chunkDecoding", () => {
 				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
 				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],
 				idDecodingContext,
+				undefined /* incrementalDecoder */,
 			);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());

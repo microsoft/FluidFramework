@@ -4,126 +4,108 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	BufferFormat,
-	BufferFormatIncremental,
-	FieldBufferFormat,
-} from "./compressedEncode.js";
-import { FieldUnchanged } from "./format.js";
+import type { BufferFormat } from "./compressedEncode.js";
+import { version, type EncodedFieldBatch } from "./format.js";
+import type { ChunkReferenceId, IncrementalEncoder } from "./codecs.js";
+import { updateShapesAndIdentifiersEncoding } from "./chunkEncodingGeneric.js";
+import type { TreeChunk } from "../../../core/index.js";
 
 /**
- * Interface for building encoded data in BufferFormatIncremental format.
+ * Used to build data during encoding the forest. Supports incremental encoding where fields that support
+ * incremental encoding can encode their chunks separately from the main buffer. See {@link IncrementalEncoder}
+ * for more details.
  */
-export interface IEncodedDataBuilder {
+export interface EncodedDataBuilder {
 	/**
-	 * Indicates whether the data can be encoded incrementally.
-	 * If true, field supporting incremental encoding may add their data to the incremental field buffers.
+	 * Indicates whether incremental encoding is supported.
+	 * If true, `encodeIncrementalChunk` can be called to encode them separately.
 	 * If false, all data must be added to the main buffer.
 	 */
-	readonly encodeIncrementally: boolean;
-	/**
-	 * Indicates whether fields should be encoded irrespective of whether they have changed or not.
-	 * If true, all fields will be encoded in the batch, even if they have not changed since the last encoding.
-	 */
-	readonly fullTree: boolean;
+	readonly shouldEncodeIncrementally: boolean;
 	/**
 	 * Add data to the main buffer.
-	 * @param data - The data to add.
 	 */
 	addToBuffer(data: BufferFormat[number]): void;
 	/**
-	 * Add data to the incremental field buffers in case where the field has changed since the last summary.
-	 * @param fieldSummaryRefId - The reference ID of the summary for this field in the previous summary.
-	 * @param fieldBufferIncremental - The data for the filed in BufferFormatIncremental format.
+	 * Called to encode a chunk for a field that supports incremental encoding. If the chunk has not changed since
+	 * last encoding and certain other conditions are met, the encoded chunk from the previous encoding will be reused.
+	 * Otherwise, the chunk will be encoded using the provided encoder function.
+	 * @param chunk - The chunk of data to encode.
+	 * @param encoder - A function that encodes the chunk's contents.
+	 * @returns The reference ID of the encoded chunk. This should be added to the main buffer and it used to retrieve
+	 * the encoded chunk during decoding.
+	 * @remarks Must only be called if {@link shouldEncodeIncrementally} is true.
 	 */
-	addIncrementalFieldChanged(
-		fieldSummaryRefId: string,
-		fieldBufferIncremental: BufferFormatIncremental,
-	): void;
+	encodeIncrementalChunk(
+		chunk: TreeChunk,
+		encoder: (chunkDataBuilder: EncodedDataBuilder) => void,
+	): ChunkReferenceId;
 	/**
-	 * Add data to the incremental field buffers in case where the field has not changed since the last summary.
-	 * @param fieldSummaryRefId - The reference ID of the summary for this field in the previous summary.
+	 * Create a new builder with the provided buffer. This can be used in scenarios where the data is not directly
+	 * added to the main buffer, but goes through some intermediate processing.
+	 * @param buffer - The buffer to use for the new builder.
+	 * @returns A new instance of EncodedDataBuilder that uses the provided buffer.
 	 */
-	addIncrementalFieldUnchanged(fieldSummaryRefId: string): void;
-	/**
-	 * Create a new child builder that will be used by the children of a field that supports incremental encoding.
-	 * @returns A new EncodedDataBuilder instance that can be used to build data for a child.
-	 */
-	createChild(): EncodedDataBuilder;
-	/**
-	 * Create a sibling builder from the main buffer. This is used to create a new builder that shares the
-	 * incremental field buffers with the current builder but has its own main buffer.
-	 * @param mainBuffer - The main buffer to use for the new builder.	 *
-	 * @returns A new EncodedDataBuilder instance that shares the incremental field buffers with the current builder.
-	 */
-	createSiblingFromBuffer(mainBuffer: BufferFormat): EncodedDataBuilder;
+	createFromBuffer(buffer: BufferFormat): EncodedDataBuilder;
 }
 
 /**
- * Helper class to build data in BufferFormatIncremental format during encoding. Data may be added to the
- * main buffer or to incremental field buffers. If added to incremental field buffers, it can be either
- * be for a field that has changed or for a field that has not changed since the last summary.
+ * Validates that incremental encoding is enabled and incrementalEncoder is.
+ * @param shouldEncodeIncrementally - Whether incremental encoding should be used.
+ * @param incrementalEncoder - The incremental encoder to use for encoding chunks.
  */
-export class EncodedDataBuilder implements IEncodedDataBuilder {
+function validateIncrementalEncodingEnabled(
+	shouldEncodeIncrementally: boolean,
+	incrementalEncoder: IncrementalEncoder | undefined,
+): asserts incrementalEncoder is IncrementalEncoder {
+	assert(
+		shouldEncodeIncrementally && incrementalEncoder !== undefined,
+		"incremental encoding must be enabled",
+	);
+}
+
+/**
+ * Implementation of {@link EncodedDataBuilder} that builds data for the forest.
+ * It supports encoding incremental chunks separately from the main buffer.
+ * The main buffer is used to store the encoded data, and the incremental encoder is used to encode chunks
+ * for fields that support incremental encoding.
+ */
+export class ForestEncodedDataBuilder implements EncodedDataBuilder {
+	public get shouldEncodeIncrementally(): boolean {
+		return this.incrementalEncoder !== undefined;
+	}
 	public constructor(
-		public readonly encodeIncrementally: boolean,
-		public readonly fullTree: boolean,
-		private readonly mainBuffer: BufferFormat = [],
-		private readonly incrementalFieldBuffers: Map<string, FieldBufferFormat> = new Map(),
+		private readonly buffer: BufferFormat,
+		private readonly incrementalEncoder: IncrementalEncoder | undefined,
 	) {}
 
-	/** {@inheritdoc IEncodedDataBuilder.addToBuffer} */
-	public addToBuffer(content: BufferFormat[number]): void {
-		this.mainBuffer.push(content);
+	/** {@inheritdoc EncodedDataBuilder.addToBuffer} */
+	public addToBuffer(data: BufferFormat[number]): void {
+		this.buffer.push(data);
 	}
 
-	/** {@inheritdoc IEncodedDataBuilder.addIncrementalFieldChanged} */
-	public addIncrementalFieldChanged(
-		fieldSummaryRefId: string,
-		fieldBufferIncremental: BufferFormatIncremental,
-	): void {
-		assert(
-			this.encodeIncrementally,
-			"Cannot add incremental field changes when encodeIncrementally is false",
+	/** {@inheritdoc EncodedDataBuilder.encodeIncrementalChunk} */
+	public encodeIncrementalChunk(
+		chunk: TreeChunk,
+		encoder: (chunkDataBuilder: EncodedDataBuilder) => void,
+	): ChunkReferenceId {
+		validateIncrementalEncodingEnabled(
+			this.shouldEncodeIncrementally,
+			this.incrementalEncoder,
 		);
-		// Wrap the mainBuffer in an array as that is the expected format.
-		// TODO: I am not 100% sure why this though.
-		const fieldBufferForEncoding: BufferFormatIncremental = {
-			mainBuffer: [fieldBufferIncremental.mainBuffer],
-			incrementalFieldBuffers: fieldBufferIncremental.incrementalFieldBuffers,
+		// Encoder for the chunk that encodes its data using the provided encoder function and
+		// updates the encoding for shapes and identifiers.
+		const chunkEncoder = (): EncodedFieldBatch => {
+			const buffer: BufferFormat = [];
+			const chunkDataBuilder = new ForestEncodedDataBuilder(buffer, this.incrementalEncoder);
+			encoder(chunkDataBuilder);
+			return updateShapesAndIdentifiersEncoding(version, [buffer]);
 		};
-		this.incrementalFieldBuffers.set(fieldSummaryRefId, fieldBufferForEncoding);
+		return this.incrementalEncoder.encodeIncrementalChunk(chunk, chunkEncoder);
 	}
 
-	/** {@inheritdoc IEncodedDataBuilder.addIncrementalFieldUnchanged} */
-	public addIncrementalFieldUnchanged(fieldSummaryRefId: string): void {
-		assert(
-			this.encodeIncrementally,
-			"Cannot add unchanged incremental field when encodeIncrementally is false",
-		);
-		assert(!this.fullTree, "Fields must be fully encoded in full tree mode");
-		this.incrementalFieldBuffers.set(fieldSummaryRefId, FieldUnchanged);
-	}
-
-	/** {@inheritdoc IEncodedDataBuilder.createChild} */
-	public createChild(): EncodedDataBuilder {
-		return new EncodedDataBuilder(this.encodeIncrementally, this.fullTree);
-	}
-
-	/** {@inheritdoc IEncodedDataBuilder.createSiblingFromBuffer} */
-	public createSiblingFromBuffer(mainBuffer: BufferFormat): EncodedDataBuilder {
-		return new EncodedDataBuilder(
-			this.encodeIncrementally,
-			this.fullTree,
-			mainBuffer,
-			this.incrementalFieldBuffers,
-		);
-	}
-
-	public getBufferIncremental(): BufferFormatIncremental {
-		return {
-			mainBuffer: this.mainBuffer,
-			incrementalFieldBuffers: this.incrementalFieldBuffers,
-		};
+	/** {@inheritdoc EncodedDataBuilder.createFromBuffer} */
+	public createFromBuffer(buffer: BufferFormat): EncodedDataBuilder {
+		return new ForestEncodedDataBuilder(buffer, this.incrementalEncoder);
 	}
 }
