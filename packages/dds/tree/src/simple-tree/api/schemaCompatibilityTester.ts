@@ -57,9 +57,6 @@ export class SchemaCompatibilityTester {
 	public checkCompatibility(
 		stored: TreeStoredSchema,
 	): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-		// TODO: support adapters
-		// const adapted = this.adaptRepo(stored);
-
 		// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
 		// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
 		// In the future, this would also include things like:
@@ -148,7 +145,6 @@ export class SchemaCompatibilityTester {
 					// The only time this might be valid in the sense that the data canonically converts is converting an object node
 					// to a map node over the union of all the object fields' types.
 					if (discrepancy.stored === undefined) {
-						// TODO: reevaluate if this should only be done when the view schema is not a never tree
 						// View schema has added a node type that the stored schema doesn't know about.
 						canView = false;
 					} else if (discrepancy.view === undefined) {
@@ -161,7 +157,6 @@ export class SchemaCompatibilityTester {
 							canUpgrade = false;
 						}
 					} else {
-						// TODO: reevaluate if this should only be done when the view schema is not a never tree
 						// Node type exists in both schemas but has changed. We conservatively never allow this.
 						canView = false;
 						canUpgrade = false;
@@ -195,24 +190,6 @@ export class SchemaCompatibilityTester {
 	 * TODO: have a way for callers to get invalidated on schema updates.
 	 */
 	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
-		// TODO: no check for never trees on view schema
-		// Sanity check on adapters:
-		// it's probably a bug if they use the never types,
-		// since there never is a reason to have a never type as an adapter input,
-		// and its impossible for an adapter to be correctly implemented if its output type is never
-		// (unless its input is also never).
-		// for (const adapter of this.adapters?.tree ?? []) {
-		// 	if (
-		// 		isNeverTree(
-		// 			this.policy,
-		// 			this.viewSchemaAsStored,
-		// 			this.viewSchemaAsStored.nodeSchema.get(adapter.output),
-		// 		)
-		// 	) {
-		// 		fail(0xb3d /* tree adapter for stored adapter.output should not be never */);
-		// 	}
-		// }
-
 		const adapted = {
 			rootFieldSchema: this.adaptField(stored.rootFieldSchema),
 			nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(),
