@@ -104,10 +104,16 @@
             "error"
         ],
         "@typescript-eslint/consistent-type-exports": [
-            "off"
+            "error",
+            {
+                "fixMixedExportsWithInlineTypeSpecifier": true
+            }
         ],
         "@typescript-eslint/consistent-type-imports": [
-            "off"
+            "error",
+            {
+                "fixStyle": "separate-type-imports"
+            }
         ],
         "@typescript-eslint/dot-notation": [
             "error"
@@ -211,6 +217,9 @@
             "error"
         ],
         "@typescript-eslint/no-implied-eval": [
+            "error"
+        ],
+        "@typescript-eslint/no-import-type-side-effects": [
             "error"
         ],
         "@typescript-eslint/no-inferrable-types": [
