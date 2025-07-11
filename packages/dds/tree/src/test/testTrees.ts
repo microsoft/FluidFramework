@@ -45,7 +45,7 @@ import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
-import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
+import { isLazy, type LazyItem } from "../simple-tree/core/flexList.js";
 import { schemaStatics } from "../simple-tree/index.js";
 import { fieldCursorFromInsertable } from "./utils.js";
 

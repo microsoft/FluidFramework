@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ImplicitFieldSchema } from "../schemaTypes.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
 
 import { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";

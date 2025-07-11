@@ -6,23 +6,21 @@
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type FlexTreeNode, isFlexTreeNode } from "../feature-libraries/index.js";
+import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
+import { markEager } from "./flexList.js";
+import { privateToken, TreeNode } from "./treeNode.js";
+import type { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
+import type { Context } from "./context.js";
+import { NodeKind, type TreeNodeSchema } from "./treeNodeSchema.js";
 import {
-	type TreeNodeSchema,
-	NodeKind,
+	getSimpleNodeSchemaFromInnerNode,
 	isTreeNode,
 	TreeNodeKernel,
-	privateToken,
-	TreeNode,
-	type InternalTreeNode,
-	typeSchemaSymbol,
 	type InnerNode,
-	type Context,
-	type UnhydratedFlexTreeNode,
-	getSimpleNodeSchemaFromInnerNode,
-} from "./core/index.js";
-import { markEager } from "./flexList.js";
+} from "./treeNodeKernel.js";
+import type { InternalTreeNode } from "./types.js";
+import { typeSchemaSymbol } from "./withType.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.

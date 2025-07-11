@@ -7,8 +7,8 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import type { SchemaFactory, ScopedSchemaName } from "./schemaFactory.js";
-import type { NodeFromSchema } from "../schemaTypes.js";
 import type {
+	NodeFromSchema,
 	InternalTreeNode,
 	NodeKind,
 	TreeNode,

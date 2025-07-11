@@ -5,14 +5,13 @@
 
 import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { NodeKind, type TreeNodeSchema, type AllowedTypes } from "../core/index.js";
 import {
 	type FieldSchema,
-	type AllowedTypes,
 	type FieldSchemaAlpha,
 	FieldKind,
 	type FieldProps,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
