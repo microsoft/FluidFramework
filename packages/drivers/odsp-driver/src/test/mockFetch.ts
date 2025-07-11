@@ -44,17 +44,17 @@ export type FetchCallType = "internal" | "external" | "single";
 
 export async function mockFetchMultiple<T>(
 	callback: () => Promise<T>,
-	responses: ((input: string | Request | URL, init?: RequestInit) => Promise<object>)[],
+	responses: ((headers?: { [key: string]: string }) => Promise<object>)[],
 	type: FetchCallType = "single",
 ): Promise<T> {
 	const fetchStub = stub(globalThis, "fetch");
-	fetchStub.callsFake(async (input, init) => {
+	fetchStub.callsFake(async (_, init) => {
 		if (type === "external") {
 			fetchStub.restore();
 		}
 		const cb = responses.shift();
 		assert(cb !== undefined, "the end");
-		return cb(input, init) as Promise<Response>;
+		return cb(Object.fromEntries(new Headers(init?.headers))) as Promise<Response>;
 	});
 	try {
 		return await callback();
@@ -68,7 +68,7 @@ export async function mockFetchMultiple<T>(
 
 export async function mockFetchSingle<T>(
 	callback: () => Promise<T>,
-	responseType: (input: string | Request | URL, init?: RequestInit) => Promise<object>,
+	responseType: (headers?: { [key: string]: string }) => Promise<object>,
 	type: FetchCallType = "single",
 ): Promise<T> {
 	return mockFetchMultiple(callback, [responseType], type);
@@ -92,12 +92,12 @@ export async function mockFetchOk<T>(
  */
 export async function mockFetchOKIf<T>(
 	callback: () => Promise<T>,
-	requestCheck: (input: string | Request | URL, init?: RequestInit) => true | never,
+	check: (headers?: { [key: string]: string }) => true | never,
 	response = {},
 	headers: { [key: string]: string } = {},
 ): Promise<T> {
-	return mockFetchSingle(callback, async (input, init) => {
-		if (requestCheck(input, init)) {
+	return mockFetchSingle(callback, async (reqHeaders) => {
+		if (check(reqHeaders)) {
 			return okResponse(headers, response);
 		}
 		throw new Error(`Unexpected fetch. requestCheck should throw if not passing.`);

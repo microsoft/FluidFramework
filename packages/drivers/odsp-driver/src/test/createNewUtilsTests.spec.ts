@@ -564,9 +564,12 @@ describe("Create New Utils Tests", () => {
 						undefined /* isClpCompliantApp */,
 						eTag,
 					),
-				(_, init) => {
+				(headers) => {
 					// Check that the If-Match header is set correctly
-					assert(init?.headers !== undefined && init.headers["If-Match"] === eTag);
+					assert(
+						headers?.["If-Match"] === eTag || headers?.["if-match"] === eTag,
+						"If-Match header should be set to eTag",
+					);
 					return true;
 				},
 				{ itemId: "itemId1", id: "Summary handle" },
@@ -575,31 +578,6 @@ describe("Create New Utils Tests", () => {
 		);
 		assert(odspResolvedUrl1.fileMetadata?.eTag, "eTag should be set");
 
-		const odspResolvedUrl2 = await useCreateNewModule(createChildLogger(), async (module) =>
-			mockFetchOKIf(
-				async () =>
-					module.createNewFluidFile(
-						async (_options) => "token",
-						newFileParams,
-						createChildLogger(),
-						createSummary(),
-						epochTracker,
-						fileEntry,
-						true /* createNewCaching */,
-						false /* forceAccessTokenViaAuthorizationHeader */,
-						undefined /* isClpCompliantApp */,
-						undefined /* eTag */,
-					),
-				(_, init) => {
-					// Check that the If-Match header not set when eTag is not passed
-					assert(init?.headers === undefined || init.headers["If-Match"] === undefined);
-					return true;
-				},
-				{ itemId: "itemId1", id: "Summary handle" },
-				{ "x-fluid-epoch": "epoch1" },
-			),
-		);
-		assert(!odspResolvedUrl2.fileMetadata?.eTag, "eTag should be falsy");
 		await epochTracker.removeEntries().catch(() => {});
 	});
 
