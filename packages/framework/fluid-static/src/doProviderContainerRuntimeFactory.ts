@@ -15,7 +15,7 @@ import { DOProviderContainerRuntimeFactory, RootDataObjectFactory } from "./root
 import {
 	TreeDOProviderContainerRuntimeFactory,
 	TreeRootDataObjectFactory,
-	validateAndExtractTreeFactory as validateAndExtractTreeSchema,
+	validateAndExtractTreeKey,
 } from "./treeRootDataObject.js";
 import type { CompatibilityMode, ContainerSchema } from "./types.js";
 import { parseDataObjectsFromSharedObjects } from "./utils.js";
@@ -60,24 +60,21 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	useTreeBasedDataObject?: boolean;
 }): IRuntimeFactory {
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
+	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
 	// eslint-disable-next-line unicorn/no-negated-condition
 	if (props.useTreeBasedDataObject !== false) {
-		const [treeKey, treeFactory, dynamicObjectTypes] = validateAndExtractTreeSchema(
-			props.schema,
-		);
+		const treeKey = validateAndExtractTreeKey(props.schema);
 		return new TreeDOProviderContainerRuntimeFactory(
 			props.compatibilityMode,
-			new TreeRootDataObjectFactory(treeKey, treeFactory, dynamicObjectTypes),
+			new TreeRootDataObjectFactory(treeKey, sharedObjects, registry),
 			{
 				runtimeOptions: props.runtimeOptionOverrides,
 				minVersionForCollab: props.minVersionForCollabOverride,
 			},
 		);
 	} else {
-		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
-		const registry =
-			props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
-
 		return new DOProviderContainerRuntimeFactory(
 			props.schema,
 			props.compatibilityMode,

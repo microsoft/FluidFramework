@@ -8,9 +8,7 @@ import {
 	TreeDataObject,
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import type {
-	IDataObjectProps,
-} from "@fluidframework/aqueduct/internal";
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import type {
 	IContainerRuntimeOptions,
 	MinimumVersionForCollab,
@@ -22,6 +20,7 @@ import type {
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
@@ -32,12 +31,13 @@ import type {
 	ContainerSchema,
 	IRootDataObject,
 	IStaticEntryPoint,
+	LoadableObjectKind,
 	LoadableObjectRecord,
 } from "./types.js";
 import {
 	compatibilityModeToMinVersionForCollab,
+	isSharedObjectKind,
 	makeFluidObject,
-	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
 
 interface IProvideTreeRootDataObject {
@@ -174,12 +174,10 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
 > {
 	public constructor(
 		treeKey: string,
-		treeFactory: IChannelFactory<ITree>,
-		dynamicObjectTypes?: readonly IChannelFactory[],
+		sharedObjects: readonly IChannelFactory[] = [],
+		private readonly dataStoreRegistry: IFluidDataStoreRegistry,
 	) {
-		type Ctor = new (
-			props: IDataObjectProps,
-		) => TreeRootDataObject;
+		type Ctor = new (props: IDataObjectProps) => TreeRootDataObject;
 		const ctor: Ctor = function (_props) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return new TreeRootDataObject({
@@ -194,8 +192,12 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
 		super({
 			type: treeRootDataObjectType,
 			ctor,
-			sharedObjects: [treeFactory, ...(dynamicObjectTypes ?? [])],
+			sharedObjects,
 		});
+	}
+
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
+		return this.dataStoreRegistry;
 	}
 }
 
@@ -203,37 +205,24 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
  * Validates the container schema and extracts the factory for the tree-based data object.
  * Throws an error if the schema is invalid or does not contain a valid SharedTree.
  */
-export function validateAndExtractTreeFactory(
-	schema: ContainerSchema,
-): [string, IChannelFactory<ITree>, readonly IChannelFactory[]] {
-	// TODO: deal with dynamicObjectTypes
-	// Also consider whether or not we need to split the tree factory out from the other (dynamic only) shared objects.
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
-	if (registryEntries.length > 0) {
-		throw new Error(
-			"Container schema must not have any data store registry entries for tree-based data object.",
-		);
-	}
-	if (sharedObjects.length !== 1) {
-		throw new Error(
-			"Container schema must have exactly one entry for tree-based data object.",
-		);
-	}
-	const factory = sharedObjects[0];
-	if (!factory || factory.type !== SharedTreeFactoryType) {
-		throw new Error("Container schema must contain a shared tree for tree-based data object.");
-	}
+export function validateAndExtractTreeKey(schema: ContainerSchema): string {
 	const schemaKeys = Object.keys(schema.initialObjects);
 	if (schemaKeys.length !== 1 || !schemaKeys[0]) {
 		throw new Error(
 			"Container schema must have exactly one initial object for tree-based data object.",
 		);
 	}
-	return [
-		schemaKeys[0],
-		factory as IChannelFactory<ITree>,
-		[
-			/* TODO: dynamicObjectTypes */
-		],
-	];
+	const singleSchemaKind = Object.values(
+		schema.initialObjects,
+	)[0] as unknown as LoadableObjectKind;
+	if (
+		!singleSchemaKind ||
+		!isSharedObjectKind(singleSchemaKind) ||
+		singleSchemaKind.getFactory().type !== SharedTreeFactoryType
+	) {
+		throw new Error(
+			"Container schema must have a single initial object of type SharedTree for tree-based data object.",
+		);
+	}
+	return schemaKeys[0];
 }

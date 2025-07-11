@@ -8,6 +8,7 @@ import type { IChannelFactory } from "@fluidframework/datastore-definitions/inte
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ITree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes, IDataObjectProps } from "./types.js";
@@ -129,11 +130,7 @@ export abstract class TreeDataObject<
 			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 		} else {
-			// const sharedTree = treeFactory.create(this.runtime, treeChannelId);
-			const sharedTree = this.runtime.createChannel(
-				treeChannelId,
-				this.#treeFactory.type,
-			) as unknown as ITree;
+			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
 			this.#sharedTree = sharedTree;
