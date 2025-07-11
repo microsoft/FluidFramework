@@ -63,7 +63,6 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
  */
 export const todoListContainerSchema = {
 	initialObjects: {
-		/* [id]: DataObject */
 		todoList: SharedTree,
 	},
 	dynamicObjectTypes: [SharedString],
