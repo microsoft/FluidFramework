@@ -1274,6 +1274,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
+					previousProps: segmentGroup.previousProps?.slice(0),
 				};
 
 				segment.segmentGroups.enqueue(newSegmentGroup);

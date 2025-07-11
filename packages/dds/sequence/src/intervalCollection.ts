@@ -832,13 +832,14 @@ export class IntervalCollection
 					? interval.changeProperties(properties, undefined, true)
 					: undefined;
 				if (localOpMetadata.endpointChangesNode !== undefined) {
-					this.localCollection?.removeExistingInterval(interval);
-					assert(previous !== undefined, 0xbd2 /* must have existed to change */);
-					this.localCollection?.add(previous);
-					this.emitChange(previous, interval, true, true);
-				}
-				if (previous !== interval) {
-					interval.dispose();
+					if (previous !== undefined) {
+						this.localCollection?.removeExistingInterval(interval);
+						this.localCollection?.add(previous);
+						this.emitChange(previous, interval, true, true);
+					}
+					if (previous !== interval) {
+						interval.dispose();
+					}
 				}
 				if (changeProperties) {
 					this.emit("propertyChanged", previous, deltaProps, true, undefined);
@@ -846,9 +847,11 @@ export class IntervalCollection
 				break;
 			}
 			case "delete": {
-				assert(previous !== undefined, 0xbd3 /* must have existed to delete */);
-				this.localCollection?.add(previous);
-				this.emit("addInterval", previous, true, undefined);
+				// a remote could delete the same interval, so it may not exist to re-add
+				if (previous !== undefined) {
+					this.localCollection?.add(previous);
+					this.emit("addInterval", previous, true, undefined);
+				}
 				break;
 			}
 			default:

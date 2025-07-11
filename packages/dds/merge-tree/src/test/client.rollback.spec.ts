@@ -13,7 +13,7 @@ import {
 	SegmentGroup,
 	reservedMarkerIdKey,
 } from "../mergeTreeNodes.js";
-import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import { MergeTreeDeltaType, ReferenceType, type IMergeTreeOp } from "../ops.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";
@@ -633,5 +633,55 @@ describe("client.rollback", () => {
 			}
 		}
 		logger.validate({ baseText: "BBBBBAAAAA" });
+	});
+	it("should not restore text if both clients delete and one rolls back after remote delete", () => {
+		const clients = createClientsAtInitialState({ initialState: "0123456789" }, "A", "B");
+		const logger = new TestClientLogger(clients.all);
+		let seq = 0;
+
+		// Both clients delete the same range locally (not yet sequenced)
+		const delA = clients.A.removeRangeLocal(1, 4); // deletes "123"
+		const delB = clients.B.removeRangeLocal(1, 4); // deletes "123"
+
+		// Client B flushes its delete (becomes sequenced)
+		const msgB = clients.B.makeOpMessage(delB, ++seq);
+		for (const c of clients.all) c.applyMsg(msgB);
+
+		// Client A attempts to rollback its local delete after seeing remote delete
+		clients.A.rollback(delA, clients.A.peekPendingSegmentGroups());
+
+		logger.validate({ baseText: "0456789" });
+	});
+
+	it("should rollback group op after re-submit split", () => {
+		const clients = createClientsAtInitialState({ initialState: "" }, "A");
+		const logger = new TestClientLogger(clients.all);
+		const ops: [IMergeTreeOp, SegmentGroup | SegmentGroup[] | undefined][] = [];
+		ops.push([
+			clients.A.insertTextLocal(0, "0123456789")!,
+			clients.A.peekPendingSegmentGroups(),
+		]);
+		ops.push([
+			clients.A.annotateRangeLocal(3, 4, { prop: "splitTheRange" })!,
+			clients.A.peekPendingSegmentGroups(),
+		]);
+
+		for (const [op, md] of ops.splice(0)) {
+			const newOp = clients.A.regeneratePendingOp(op, md, false);
+			ops.push([
+				newOp,
+				clients.A.peekPendingSegmentGroups(
+					newOp.type === MergeTreeDeltaType.GROUP ? newOp.ops.length : 1,
+				),
+			]);
+		}
+
+		logger.validate({ baseText: "0123456789" });
+
+		for (const [op, md] of ops.splice(0).reverse()) {
+			clients.A.rollback(op, md);
+		}
+
+		logger.validate({ baseText: "" });
 	});
 });
