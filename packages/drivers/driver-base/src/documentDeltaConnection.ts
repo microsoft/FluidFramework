@@ -400,8 +400,11 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection and close the socket.
 	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
+	 *
+	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
+	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 */
-	public dispose() {
+	public dispose(error?: Error) {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -412,14 +415,14 @@ export class DocumentDeltaConnection
 		this.disconnect(
 			createGenericNetworkError(
 				// pre-0.58 error message: clientClosingConnection
-				"Client closing delta connection",
-				{ canRetry: true },
+				error?.message ?? "Client closing delta connection",
+				{ canRetry: error === undefined },
 				{ driverVersion },
 			),
 		);
 	}
 
-	protected disconnect(err: IAnyDriverError) {
+	protected readonly disconnect = (err: IAnyDriverError) => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -449,7 +452,7 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-	}
+	};
 
 	/**
 	 * Disconnect from the websocket.
