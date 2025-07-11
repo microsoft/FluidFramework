@@ -89,6 +89,9 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
         attachmentGETStorageUrl: string;
         deltaStorageUrl: string;
     };
+    fileMetadata?: {
+        eTag?: string;
+    };
     // (undocumented)
     fileName: string;
     // (undocumented)

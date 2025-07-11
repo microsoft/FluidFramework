@@ -169,4 +169,11 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	 * Can be ommited in case it is not necessary for the link handling logic.
 	 */
 	appName?: string;
+
+	/**
+	 * File metadata such as eTag.
+	 */
+	fileMetadata?: {
+		eTag?: string;
+	};
 }

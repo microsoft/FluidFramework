@@ -17,7 +17,7 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { ClpCompliantAppHeader, FileMetadataHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
@@ -180,6 +180,9 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			},
 			fileVersion,
 			isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
+			fileMetadata: {
+				eTag: request.headers?.[FileMetadataHeader.eTag],
+			},
 		};
 	}
 

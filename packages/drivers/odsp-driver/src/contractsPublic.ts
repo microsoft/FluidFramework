@@ -56,8 +56,26 @@ export interface IClpCompliantAppHeader {
 	[ClpCompliantAppHeader.isClpCompliantApp]: boolean;
 }
 
+/**
+ * @internal
+ */
+export enum FileMetadataHeader {
+	// Can be used in request made to resolver, to provide the e-tag of the file.
+	eTag = "eTag",
+}
+/**
+ * @internal
+ */
+export interface IFileMetadataHeader {
+	/**
+	 * E-tag identifier for the file.
+	 */
+	[FileMetadataHeader.eTag]: string;
+}
+
 declare module "@fluidframework/core-interfaces" {
 	export interface IRequestHeader
 		extends Partial<ISharingLinkHeader>,
-			Partial<IClpCompliantAppHeader> {}
+			Partial<IClpCompliantAppHeader>,
+			Partial<IFileMetadataHeader> {}
 }
