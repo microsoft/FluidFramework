@@ -21,7 +21,6 @@ import {
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-	getAllowedContentDiscrepancies,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -31,6 +30,7 @@ import {
 	type TreeNodeSchema,
 	type SimpleNodeSchema,
 	SchemaFactoryAlpha,
+	getAllowedContentDiscrepancies,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { schemaStatics } from "../../../simple-tree/index.js";
@@ -190,9 +190,7 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = Array.from(
-				getAllowedContentDiscrepancies(toStoredSchema(tolerantRoot), stored),
-			);
+			const report = Array.from(getAllowedContentDiscrepancies(tolerantRoot, stored));
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
 			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });

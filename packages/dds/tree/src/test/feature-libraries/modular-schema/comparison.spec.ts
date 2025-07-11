@@ -20,11 +20,7 @@ import {
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
-import {
-	FieldKinds,
-	defaultSchemaPolicy,
-	isRepoSuperset,
-} from "../../../feature-libraries/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsRepoSuperset,
@@ -195,7 +191,6 @@ describe("Schema Comparison", () => {
 			isSuperset: boolean,
 		): void => {
 			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), isSuperset);
-			assert.equal(isRepoSuperset(view, stored), isSuperset);
 		};
 
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
@@ -301,7 +296,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
-			assert.equal(isRepoSuperset(repos[1], repos[0]), true);
+			validateMethodsConsistent(repos[1], repos[0], true);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {
