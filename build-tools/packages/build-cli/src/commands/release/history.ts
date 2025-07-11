@@ -36,8 +36,7 @@ const DEFAULT_MIN_VERSION = "0.0.0";
 export default class ReleaseHistoryCommand extends ReleaseReportBaseCommand<
 	typeof ReleaseHistoryCommand
 > {
-	static readonly description =
-		`Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
+	static readonly description = `Prints a list of released versions of a package or release group. Releases are gathered from the git tags in repo containing the working directory.
 
     Use 'npm view' to list published packages based on the public npm registry.
 

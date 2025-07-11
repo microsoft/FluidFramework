@@ -72,8 +72,7 @@ export class TagAssertsCommand extends PackageCommand<typeof TagAssertsCommand> 
 	static readonly summary =
 		"Tags asserts by replacing their message with a unique numerical value.";
 
-	static readonly description =
-		`Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry purposes.
+	static readonly description = `Tagged asserts are smaller because the message string is not included, and they're easier to aggregate for telemetry purposes.
 Which functions and which of their augments get tagging depends on the configuration which is specified in the package being tagged.
 Configuration is searched by walking from each package's directory up to its parents recursively looking for the first file matching one of ${JSON.stringify(searchPlaces)}.
 The format of the configuration is specified by the "AssertTaggingPackageConfig" type.`;
