@@ -157,7 +157,7 @@ export class SchemaCompatibilityTester {
 							canUpgrade = false;
 						}
 					} else {
-						// Node type exists in both schemas but has changed. We conservatively never allow this.
+						// Node type exists in both schemas but kind has changed. We conservatively never allow this.
 						canView = false;
 						canUpgrade = false;
 					}
