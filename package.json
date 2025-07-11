@@ -394,7 +394,7 @@
 			"allowedVersions": {
 				"react": "18.3.1",
 				"react-dom": "18.3.1",
-				"webpack": "^5.94.0"
+				"webpack": "^5.96.0"
 			},
 			"ignoreMissing": [
 				"@types/node",
