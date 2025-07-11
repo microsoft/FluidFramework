@@ -5,8 +5,7 @@
 
 // TODO: Update import once TreeDataObject is exported in our non-internal package.
 // eslint-disable-next-line import/no-internal-modules
-import { TreeDataObject } from "@fluidframework/aqueduct/internal";
-import { PureDataObjectFactory } from "@fluidframework/aqueduct/legacy";
+import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import {
 	SharedTree,
@@ -36,13 +35,15 @@ export interface TodoItemProps {
  */
 export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>> {
 	public readonly config = new TreeViewConfiguration({ schema: TodoList });
-	public static readonly factory = new PureDataObjectFactory<
-		TreeDataObject<TreeView<typeof TodoList>>
+	public static readonly factory = new TreeDataObjectFactory<
+		TreeDataObject<TreeView<typeof TodoList>>,
+		TreeView<typeof TodoList>
 	>(
-		`TreeDataObject`,
-		TodoListDataObject,
-		[SharedTree.getFactory(), SharedString.getFactory()],
-		{},
+		{
+			type: `TreeDataObject`,
+		ctor: TodoListDataObject,
+		sharedObjects: [SharedTree.getFactory(), SharedString.getFactory()],
+		}
 	);
 
 	/**
