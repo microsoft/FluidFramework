@@ -66,6 +66,12 @@ describe("Menu Accessibility Check", () => {
 		expect(homeHeader).toHaveFocus();
 
 		await user.tab();
+		const tooltipButtom = screen.getByRole("button", {
+			name: /containers are the primary unit of collaboration in fluid framework. they hold the shared data and manage the synchronization of changes between clients./i,
+		});
+		expect(tooltipButtom).toHaveFocus();
+
+		await user.tab();
 		const refreshButton = screen.getByRole("button", { name: /refresh containers list/i });
 		expect(refreshButton).toHaveFocus();
 

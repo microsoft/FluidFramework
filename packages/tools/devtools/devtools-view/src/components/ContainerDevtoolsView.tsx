@@ -157,6 +157,15 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	const styles = useStyles();
 	const usageLogger = useLogger();
 	const panelViews = Object.values(PanelView);
+	const [isDataObject, setIsDataObject] = React.useState<boolean>(false);
+
+	React.useEffect(() => {
+		/**
+		 * Uses the {@link ContainerDevtoolsFeatureFlags.dataObjects} flag to determine if this is a data object.
+		 */
+		setIsDataObject(supportedFeatures.dataObjects === true);
+	}, [supportedFeatures.dataObjects]);
+
 	// Inner view selection
 	const [innerViewSelection, setInnerViewSelection] = React.useState<TabValue>(
 		supportedFeatures.containerDataVisualization === true
@@ -199,7 +208,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 
 	return (
 		<div className={styles.root}>
-			<ContainerSummaryView containerKey={containerKey} />
+			<ContainerSummaryView containerKey={containerKey} isDataObject={isDataObject} />
 			<Divider appearance="strong" />
 			<div>
 				<TabList selectedValue={innerViewSelection} onTabSelect={onTabSelect}>

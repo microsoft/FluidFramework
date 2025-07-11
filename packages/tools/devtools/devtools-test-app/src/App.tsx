@@ -97,6 +97,10 @@ function useContainerInfo(
 				containerKey: sharedContainerKey,
 				containerData: { appData: containerInfo.appData },
 			});
+			devtools.registerDataObject({
+				dataObject: containerInfo.appData.treeDataObject,
+				label: `${sharedContainerKey} - AppDataTree`,
+			});
 		}, console.error);
 
 		getPrivateContainerData().then((containerInfo) => {
@@ -105,6 +109,10 @@ function useContainerInfo(
 				container: containerInfo.container,
 				containerKey: privateContainerKey,
 				containerData: { appData: containerInfo.appData },
+			});
+			devtools.registerDataObject({
+				dataObject: containerInfo.appData.treeDataObject,
+				label: `${privateContainerKey} - AppDataTree`,
 			});
 		}, console.error);
 

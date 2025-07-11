@@ -29,6 +29,11 @@ export namespace ContainerList {
 		 * List of keys for the Containers registered with the Devtools.
 		 */
 		containers: ContainerKey[];
+
+		/**
+		 * List of keys for the Data Objects registered with the Devtools.
+		 */
+		dataObjects: ContainerKey[];
 	}
 
 	/**
