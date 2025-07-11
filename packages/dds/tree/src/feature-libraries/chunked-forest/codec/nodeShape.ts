@@ -100,7 +100,6 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 					0x742 /* had extra local fields when shape does not support them */,
 				);
 				otherFieldsBuffer.push(new IdentifierToken(key));
-				// TODO: Does this need its own incremental field buffers?
 				this.otherFieldsEncoder.encodeField(cursor, cache, otherFieldsDataBuilder);
 			}
 		});

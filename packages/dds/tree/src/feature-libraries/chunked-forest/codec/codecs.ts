@@ -29,7 +29,6 @@ import { Type, type Static } from "@sinclair/typebox";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
- * @internal
  */
 export const ChunkReferenceId = Type.Number({ multipleOf: 1, minimum: 0 });
 export type ChunkReferenceId = Static<typeof ChunkReferenceId>;
@@ -41,7 +40,6 @@ export type ChunkReferenceId = Static<typeof ChunkReferenceId>;
  * unchanged between summaries.
  * Note that each of these chunks that are incrementally encoded is fully self-describing (contain its own shapes
  * list and identifier table) and does not rely on context from its parent.
- * @internal
  */
 export interface IncrementalEncoder {
 	/**
@@ -58,7 +56,6 @@ export interface IncrementalEncoder {
 
 /**
  * Properties for decoding a chunk that supports incremental encoding. See {@link IncrementalEncoder} for more details.
- * @internal
  */
 export interface IncrementalDecoder {
 	/**
@@ -68,9 +65,6 @@ export interface IncrementalDecoder {
 	 */
 	getEncodedIncrementalChunk: (referenceId: ChunkReferenceId) => EncodedFieldBatch;
 }
-/**
- * @internal
- */
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {

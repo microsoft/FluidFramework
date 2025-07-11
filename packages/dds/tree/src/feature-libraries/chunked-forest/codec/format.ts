@@ -201,8 +201,5 @@ export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 export type EncodedIncrementalShape = Static<typeof EncodedIncrementalShape>;
 
-/**
- * Format for encoding a tree field.
- */
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;
