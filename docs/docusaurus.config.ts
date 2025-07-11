@@ -126,6 +126,11 @@ const config: Config = {
 		format: "detect",
 		mermaid: true,
 	},
+	themes: [
+		// Theme for rendering Mermaid diagrams in markdown.
+		"@docusaurus/theme-mermaid",
+		"docusaurus-theme-search-typesense",
+	],
 	themeConfig: {
 		colorMode: {
 			// Default to user's browser preference
@@ -167,26 +172,23 @@ const config: Config = {
 			theme: prismThemes.vsLight,
 			darkTheme: prismThemes.vsDark,
 		},
-	} satisfies Preset.ThemeConfig,
-	themes: [
-		// Theme for rendering Mermaid diagrams in markdown.
-		"@docusaurus/theme-mermaid",
 
-		// Theme that adds local search support (including generating an index as a part of the build).
-		// TODO: This is a temporary workaround until we can replace it with a more robust search solution(Typesense/Algolia etc).
-		// AB#29144: Remove this fork dependency once we have implemented a long term search solution.
-		[
-			"@wayneferrao/docusaurus-search-local",
-			{
-				// `hashed` is recommended as long-term-cache of index file is possible.
-				hashed: true,
-
-				// Include pages (as opposed to docs) in search results.
-				// Default: false
-				indexPages: true,
+		typesense: {
+			typesenseCollectionName: "fluidframeworkdocs",
+			typesenseServerConfig: {
+				nodes: [
+					{
+						host: process.env.TYPESENSE_HOST,
+						port: 443,
+						protocol: "https",
+					},
+				],
+				apiKey: process.env.TYPESENSE_API_KEY,
 			},
-		],
-	],
+			// Optional
+			contextualSearch: true,
+		},
+	} satisfies Preset.ThemeConfig,
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
 	},

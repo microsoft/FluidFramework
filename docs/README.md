@@ -41,13 +41,13 @@ npm start
 The following functionality will not work in this mode.
 Instead, you will need to [build](#build) and [serve](#serve)
 
-##### Search
+##### Typesense Search
 
-Our current offline search implementation does not work in this mode.
+Our Typesense search implementation does not work in this mode.
 It requires running a full build to run its indexing.
-To test search, you will need to use the [`build` and `serve`](#build-and-serve) workflow instead.
+To test search, you will need to use the [`build` and `start`](#build-and-start) workflow instead.
 
-### `build` and `serve`
+### `build` and `start`
 
 The second option, which is substantially slower, leverages the same build that our build pipelines use to generate our production site.
 First, run:
@@ -65,11 +65,11 @@ To _just_ build the static site (without rebuilding the API documentation), run 
 Then, run:
 
 ```shell
-npm run serve
+npm run start
 ```
 
 Note: the Docusaurus build is fairly slow.
-If you don't need to test search, it is recommended to run `npm start` instead.
+If you don't need to test search, it is recommended to run `npm serve` instead.
 This is faster, and will watch for content changes and update automatically.
 You will still need to build the API documentation first.
 
