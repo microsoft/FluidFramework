@@ -38,13 +38,11 @@ export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>
 	public static readonly factory = new TreeDataObjectFactory<
 		TreeDataObject<TreeView<typeof TodoList>>,
 		TreeView<typeof TodoList>
-	>(
-		{
-			type: `TreeDataObject`,
+	>({
+		type: `TreeDataObject`,
 		ctor: TodoListDataObject,
 		sharedObjects: [SharedTree.getFactory(), SharedString.getFactory()],
-		}
-	);
+	});
 
 	/**
 	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
