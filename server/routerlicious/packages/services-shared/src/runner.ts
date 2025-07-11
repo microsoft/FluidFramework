@@ -84,16 +84,6 @@ export async function run<T extends IResources>(
 		});
 	});
 
-	process.on("SIGINT", () => {
-		Lumberjack.info(`Received SIGINT request to stop the service.`);
-	});
-	process.on("SIGQUIT", () => {
-		Lumberjack.info(`Received SIGQUIT request to stop the service.`);
-	});
-	process.on("SIGHUP", () => {
-		Lumberjack.info(`Received SIGHUP request to stop the service.`);
-	});
-
 	try {
 		// Wait for the runner to complete
 		await runningP;
