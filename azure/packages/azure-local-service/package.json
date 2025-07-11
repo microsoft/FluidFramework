@@ -17,7 +17,7 @@
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --format stylish index.js",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint:fix": "eslint --format stylish index.js --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
