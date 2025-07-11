@@ -115,7 +115,7 @@ async function createInitialTodoList(
 	container: IFluidContainer<TodoListContainerSchema>,
 ): Promise<TodoList> {
 	const listTitle = await container.create(SharedString);
-	listTitle.insertText(0, "My Todo List");
+	listTitle.insertText(0, "My to-do list");
 
 	const todoItem1 = await createTodoItem({
 		container,
