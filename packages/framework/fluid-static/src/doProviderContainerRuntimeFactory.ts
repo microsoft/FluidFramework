@@ -66,7 +66,6 @@ export function createDOProviderContainerRuntimeFactory(props: {
 			props.schema,
 		);
 		return new TreeDOProviderContainerRuntimeFactory(
-			props.schema,
 			props.compatibilityMode,
 			new TreeRootDataObjectFactory(treeKey, treeFactory, dynamicObjectTypes),
 			{

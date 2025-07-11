@@ -35,7 +35,6 @@ import type {
 	ContainerSchema,
 	IRootDataObject,
 	IStaticEntryPoint,
-	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
 import {
@@ -133,10 +132,8 @@ async function provideEntryPoint(
 export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	// TODO: use for runtime factory.
 	readonly #treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>;
-	readonly #initialObjects: LoadableObjectKindRecord;
 
 	public constructor(
-		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
 		treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>,
 		overrides?: Partial<{
@@ -156,14 +153,11 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 				compatibilityModeToMinVersionForCollab[compatibilityMode],
 		});
 		this.#treeRootDataObjectFactory = treeRootDataObjectFactory;
-		this.#initialObjects = schema.initialObjects;
 	}
 
 	protected async containerInitializingFirstTime(runtime: IContainerRuntime): Promise<void> {
 		// The first time we create the container we create the RootDataObject
-		await this.#treeRootDataObjectFactory.createRootInstance(treeRootDataStoreId, runtime, {
-			initialObjects: this.#initialObjects,
-		});
+		await this.#treeRootDataObjectFactory.createRootInstance(treeRootDataStoreId, runtime);
 	}
 }
 
@@ -183,12 +177,14 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
 			props: IDataObjectProps<DataObjectTypes<TreeRootDataObjectProps>>,
 		) => TreeRootDataObject;
 
-		const ctor: Ctor = ((_props) =>
+		const ctor: Ctor = function (_props) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			new TreeRootDataObject({
+			return new TreeRootDataObject({
 				..._props,
 				treeKey,
-			})) as unknown as Ctor;
+				// Add any additional injected properties here
+			});
+		} as unknown as Ctor;
 
 		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
 		// and instead we override the necessary methods in this class to use the registry received in the constructor.
