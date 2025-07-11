@@ -95,13 +95,20 @@ type PendingKeyChange = PendingKeySet | PendingKeyDelete;
 
 // TODO: Just exporting these for the metadata test, should they be exported and should that be tested?
 /**
- * Metadata submitted along with set/delete operations.
+ * Metadata submitted along with set operations.
  */
-export interface PendingKeyChangeMetadata {
+export interface PendingKeySetMetadata {
 	pendingMessageId: number;
-	// TODO: This is a weird type
-	type: "key";
-	change: PendingKeyChange;
+	type: "set";
+	change: PendingKeySet;
+}
+/**
+ * Metadata submitted along with delete operations.
+ */
+export interface PendingKeyDeleteMetadata {
+	pendingMessageId: number;
+	type: "delete";
+	change: PendingKeyDelete;
 }
 /**
  * Metadata submitted along with clear operations.
@@ -113,7 +120,10 @@ export interface PendingClearMetadata {
 /**
  * Metadata submitted along with local operations.
  */
-export type PendingLocalOpMetadata = PendingKeyChangeMetadata | PendingClearMetadata;
+export type PendingLocalOpMetadata =
+	| PendingKeySetMetadata
+	| PendingKeyDeleteMetadata
+	| PendingClearMetadata;
 
 interface PendingKeyLifetime {
 	key: string;
@@ -470,9 +480,9 @@ export class MapKernel {
 			value: localValue,
 		};
 		pendingKeyLifetime.keyChanges.push(keyChange);
-		const localMetadata: PendingKeyChangeMetadata = {
+		const localMetadata: PendingKeySetMetadata = {
 			pendingMessageId,
-			type: "key",
+			type: "set",
 			change: keyChange,
 		};
 		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
@@ -523,9 +533,9 @@ export class MapKernel {
 			type: "delete",
 		};
 		pendingKeyLifetime.keyChanges.push(keyChange);
-		const localMetadata: PendingKeyChangeMetadata = {
+		const localMetadata: PendingKeyDeleteMetadata = {
 			pendingMessageId,
-			type: "key",
+			type: "delete",
 			change: keyChange,
 		};
 		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
@@ -723,7 +733,8 @@ export class MapKernel {
 			}
 			assert(
 				pendingKeyChange !== undefined &&
-					pendingLocalOpMetadata.type === "key" &&
+					(pendingLocalOpMetadata.type === "set" ||
+						pendingLocalOpMetadata.type === "delete") &&
 					pendingKeyChange === pendingLocalOpMetadata.change,
 				"Unexpected rollback for key",
 			);
@@ -855,7 +866,7 @@ export class MapKernel {
 			) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
 				assert(
-					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "key",
+					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "delete",
 					0xbcf /* Resubmitting unexpected local delete op */,
 				);
 
@@ -863,7 +874,7 @@ export class MapKernel {
 
 				// TODO: How do I feel about mutating here?
 				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const localMetadata: PendingKeyChangeMetadata = {
+				const localMetadata: PendingKeyDeleteMetadata = {
 					...removedLocalOpMetadata,
 					pendingMessageId,
 				};
@@ -924,7 +935,7 @@ export class MapKernel {
 			resubmit: (op: IMapSetOperation, localOpMetadata: ListNode<PendingLocalOpMetadata>) => {
 				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
 				assert(
-					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "key",
+					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "set",
 					0xbd1 /* Resubmitting unexpected local set op */,
 				);
 
@@ -932,7 +943,7 @@ export class MapKernel {
 
 				// TODO: How do I feel about mutating here?
 				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const localMetadata: PendingKeyChangeMetadata = {
+				const localMetadata: PendingKeySetMetadata = {
 					...removedLocalOpMetadata,
 					pendingMessageId,
 				};

@@ -421,20 +421,20 @@ describe("Map", () => {
 					objectStorage: new MockStorage(undefined),
 				});
 				let metadata = map1.testApplyStashedOp(op)?.data;
-				assert.equal(metadata?.type, "key");
+				assert.equal(metadata?.type, "set");
 				assert.equal(metadata.pendingMessageId, 0);
 				const editMetadata = map1.testApplyStashedOp(op)?.data;
-				assert.equal(editMetadata?.type, "key");
+				assert.equal(editMetadata?.type, "set");
 				assert.equal(editMetadata.pendingMessageId, 1);
 				assert.equal(editMetadata.change.type, "set");
 				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
 				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
 				metadata = map1.testApplyStashedOp(op2)?.data;
-				assert.equal(metadata?.type, "key");
+				assert.equal(metadata?.type, "set");
 				assert.equal(metadata.pendingMessageId, 2);
 				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
 				metadata = map1.testApplyStashedOp(op3)?.data;
-				assert.equal(metadata?.type, "key");
+				assert.equal(metadata?.type, "delete");
 				assert.equal(metadata.pendingMessageId, 3);
 				assert.equal(metadata.change.type, "delete");
 				const op4: IMapClearOperation = { type: "clear" };
