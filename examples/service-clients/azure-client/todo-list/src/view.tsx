@@ -110,6 +110,7 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 					ref={newItemTextInputRef}
 					name="itemName"
 					autoFocus
+					placeholder="Add a new to-do item..."
 				/>
 				<button className="new-item-button" type="submit" name="createItem">
 					+
