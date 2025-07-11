@@ -5,6 +5,8 @@ New items may be inserted, and existing items may be edited and/or deleted.
 
 It leverages the [SharedTree](https://fluidframework.com/docs/data-structures/tree/) distributed data store (DDS) as its core data model, but also demonstrates leveraging nested [SharedString](https://fluidframework.com/docs/data-structures/string) DDSs to enable live, collaborative text within the to-do list and its items.
 
+This app uses [React](https://react.dev/).
+
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 
 <!-- prettier-ignore-start -->
