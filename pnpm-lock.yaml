@@ -143,12 +143,6 @@ importers:
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
-      ts-node:
-        specifier: ^10.9.1
-        version: 10.9.2(@types/node@22.10.1)(typescript@5.4.5)
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
 
   azure/packages/azure-service-utils:
     dependencies:
@@ -8265,6 +8259,12 @@ importers:
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../test/mocha-test-setup
+      '@fluid-private/stochastic-test-utils':
+        specifier: workspace:~
+        version: link:../../test/stochastic-test-utils
+      '@fluid-private/test-dds-utils':
+        specifier: workspace:~
+        version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
@@ -12970,6 +12970,9 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/id-compressor':
         specifier: workspace:~
         version: link:../id-compressor
@@ -43218,6 +43221,7 @@ snapshots:
       typescript: 5.4.5
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
+    optional: true
 
   ts-toolbelt@9.6.0: {}
 

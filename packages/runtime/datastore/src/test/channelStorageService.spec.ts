@@ -31,6 +31,7 @@ describe("ChannelStorageService", () => {
 		assert.strictEqual(await ss.contains("/"), false);
 		assert.deepStrictEqual(await ss.list(""), []);
 		logger.assertMatchNone([{ category: "error" }]);
+		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});
 
 	it("Top Level Blob", async () => {
@@ -52,6 +53,7 @@ describe("ChannelStorageService", () => {
 		assert.deepStrictEqual(await ss.list(""), ["foo"]);
 		assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "utf8"));
 		logger.assertMatchNone([{ category: "error" }]);
+		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});
 
 	it("Nested Blob", async () => {
@@ -78,5 +80,6 @@ describe("ChannelStorageService", () => {
 		assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
 		assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "utf8"));
 		logger.assertMatchNone([{ category: "error" }]);
+		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});
 });
