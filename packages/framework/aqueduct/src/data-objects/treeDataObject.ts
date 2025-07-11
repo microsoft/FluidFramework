@@ -10,7 +10,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ITree } from "@fluidframework/tree/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes } from "./types.js";
+import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
 /**
  * TODO
@@ -105,16 +105,21 @@ export abstract class TreeDataObject<
 		return this.#view;
 	}
 
-	public override async initializeInternal(existing: boolean): Promise<void> {
-		const treeFactory = this.initProps?.treeFactory ?? fail("No SharedTree factory provided");
+	#treeFactory: IChannelFactory<ITree>;
 
+	public constructor(props: IDataObjectProps<TDataObjectTypes> & TreeDataObjectProps) {
+		super(props);
+		this.#treeFactory = props.treeFactory ?? fail("No SharedTree factory provided");
+	}
+
+	public override async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
 			// data store has a root tree so we just need to set it before calling initializingFromExisting
 			const channel = await this.runtime.getChannel(treeChannelId);
 
 			// TODO: Support using a Directory to Tree migration shim and DataObject's root channel ID
 			// to allow migrating from DataObject to TreeDataObject instead of just erroring in that case.
-			if (treeFactory.type !== channel.attributes.type) {
+			if (this.#treeFactory.type !== channel.attributes.type) {
 				throw new Error(
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
@@ -124,7 +129,11 @@ export abstract class TreeDataObject<
 			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 		} else {
-			const sharedTree = treeFactory.create(this.runtime, treeChannelId);
+			// const sharedTree = treeFactory.create(this.runtime, treeChannelId);
+			const sharedTree = this.runtime.createChannel(
+				treeChannelId,
+				this.#treeFactory.type,
+			) as unknown as ITree;
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
 			this.#sharedTree = sharedTree;
