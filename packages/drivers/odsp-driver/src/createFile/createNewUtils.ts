@@ -246,7 +246,6 @@ export async function createNewFluidContainerCore<T>(args: {
 					telemetryName,
 				);
 				const postBodyWithAuthHeaders = [
-					`--${formBoundary}`,
 					`Authorization: ${authHeader}`,
 					`X-HTTP-Method-Override: POST`,
 					`Content-Type: application/json`,
