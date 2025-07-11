@@ -51,7 +51,6 @@ export class TreeDataObjectFactory<
 			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
 		) => TDataObject;
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const interceptedConstructor: Newable = function (
 			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
 		): TDataObject {
@@ -61,8 +60,7 @@ export class TreeDataObjectFactory<
 				treeFactory,
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			} as any);
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} as any; // `as any` is used to bypass `new` constraint
+		} as unknown as Newable;
 
 		newProps.ctor = interceptedConstructor;
 
