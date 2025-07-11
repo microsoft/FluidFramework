@@ -81,17 +81,24 @@ export type IMapDataObjectSerializable = Record<string, ISerializableValue>;
 export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 
 interface PendingKeySet {
-	pendingMessageId: number;
 	type: "set";
+	pendingMessageId: number;
 	value: ILocalValue;
 }
 
 interface PendingKeyDelete {
-	pendingMessageId: number;
 	type: "delete";
+	key: string;
+	pendingMessageId: number;
 }
 
-type PendingKeyChange = PendingKeySet | PendingKeyDelete;
+interface PendingKeyLifetime {
+	type: "lifetime";
+	key: string;
+	keyChanges: PendingKeySet[];
+}
+
+type PendingChange = PendingKeyLifetime | PendingKeyDelete;
 
 // TODO: Just exporting these for the metadata test, should they be exported and should that be tested?
 /**
@@ -124,11 +131,6 @@ export type PendingLocalOpMetadata =
 	| PendingKeySetMetadata
 	| PendingKeyDeleteMetadata
 	| PendingClearMetadata;
-
-interface PendingKeyLifetime {
-	key: string;
-	keyChanges: PendingKeyChange[]; // Expected to either be all sets or conclude with a delete.
-}
 
 // Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
 const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number => {
@@ -167,7 +169,7 @@ export class MapKernel {
 	 * The in-memory data the map is storing.
 	 */
 	private readonly sequencedData = new Map<string, ILocalValue>();
-	private readonly pendingData: PendingKeyLifetime[] = [];
+	private readonly pendingData: PendingChange[] = [];
 	/**
 	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
 	 */
@@ -216,12 +218,7 @@ export class MapKernel {
 					// Either it is optimistically deleted and will not be part of the iteration, or it was
 					// re-added later and we'll iterate to it when we get to the pending data.
 					if (
-						!this.pendingData.some(
-							(lifetime) =>
-								lifetime.key === key &&
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								lifetime.keyChanges[lifetime.keyChanges.length - 1]!.type === "delete",
-						)
+						!this.pendingData.some((change) => change.key === key && change.type === "delete")
 					) {
 						const optimisticValue = this.getOptimisticLocalValue(key);
 						assert(
@@ -236,34 +233,31 @@ export class MapKernel {
 
 			let nextPendingVal = pendingDataIterator.next();
 			while (!nextPendingVal.done) {
-				const pendingLifetime = nextPendingVal.value;
-				const latestPendingValue =
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-					pendingLifetime.keyChanges[pendingLifetime.keyChanges.length - 1]!;
+				const pendingChange = nextPendingVal.value;
+				const nextPendingValIndex = this.pendingData.indexOf(pendingChange);
+				const mostRecentDeleteIndex = findLastIndex(
+					this.pendingData,
+					(change) => change.key === pendingChange.key && change.type === "delete",
+				);
 				const latestPendingClearMessageId =
 					this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
-				// Skip iterating for lifetimes that have been terminated with a delete.
-				if (
-					latestPendingValue.type !== "delete" &&
-					(latestPendingClearMessageId === undefined ||
-						latestPendingClearMessageId < latestPendingValue.pendingMessageId)
-				) {
-					// TODO: clean up
-					// TODO: Consider the case where we have started iterating the pending data, then all of our
-					// ops get sequenced, then we finish iterating the pending data (we would skip the remaining
-					// elements since we can't go back to the sequenced data).
-					// Skip iterating if we would have would have iterated it as part of the sequenced data.
-					// eslint-disable-next-line unicorn/no-lonely-if
+				if (pendingChange.type === "lifetime" && nextPendingValIndex > mostRecentDeleteIndex) {
+					const latestPendingValue =
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						pendingChange.keyChanges[pendingChange.keyChanges.length - 1]!;
 					if (
-						!this.sequencedData.has(pendingLifetime.key) ||
-						this.pendingData.some(
-							(lifetime) =>
-								lifetime.key === pendingLifetime.key &&
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								lifetime.keyChanges[lifetime.keyChanges.length - 1]!.type === "delete",
-						)
+						latestPendingClearMessageId === undefined ||
+						latestPendingClearMessageId < latestPendingValue.pendingMessageId
 					) {
-						return { value: [pendingLifetime.key, latestPendingValue.value], done: false };
+						// TODO: clean up
+						// TODO: Consider the case where we have started iterating the pending data, then all of our
+						// ops get sequenced, then we finish iterating the pending data (we would skip the remaining
+						// elements since we can't go back to the sequenced data).
+						// Skip iterating if we would have would have iterated it as part of the sequenced data.
+						// eslint-disable-next-line unicorn/no-lonely-if
+						if (!this.sequencedData.has(pendingChange.key) || mostRecentDeleteIndex !== -1) {
+							return { value: [pendingChange.key, latestPendingValue.value], done: false };
+						}
 					}
 				}
 				nextPendingVal = pendingDataIterator.next();
@@ -383,31 +377,24 @@ export class MapKernel {
 	// TODO CONVERSION: This would just search back through the pending changes, stop early if find a
 	// clear or delete, return sequenced value if not found.
 	private readonly getOptimisticLocalValue = (key: string): ILocalValue | undefined => {
-		const latestPendingLifetime = findLast(
-			this.pendingData,
-			(lifetime) => lifetime.key === key,
-		);
-		const latestPendingKeyChange =
-			latestPendingLifetime?.keyChanges[latestPendingLifetime.keyChanges.length - 1];
+		const latestPendingChange = findLast(this.pendingData, (change) => change.key === key);
+
 		const latestPendingClearMessageId =
 			this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
-
-		if (latestPendingKeyChange === undefined) {
+		if (latestPendingChange === undefined) {
 			return latestPendingClearMessageId === undefined
 				? this.sequencedData.get(key)
 				: undefined;
+		} else if (latestPendingChange.type === "delete") {
+			return undefined;
 		} else {
-			if (
-				latestPendingClearMessageId !== undefined &&
-				latestPendingClearMessageId > latestPendingKeyChange.pendingMessageId
-			) {
-				return undefined;
-			} else if (latestPendingKeyChange.type === "set") {
-				return latestPendingKeyChange.value;
-			} else if (latestPendingKeyChange.type === "delete") {
-				return undefined;
-			}
-			unreachableCase(latestPendingKeyChange, "Unknown pending value type");
+			const latestPendingSet =
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				latestPendingChange.keyChanges[latestPendingChange.keyChanges.length - 1]!;
+			return latestPendingClearMessageId === undefined ||
+				latestPendingClearMessageId < latestPendingSet.pendingMessageId
+				? latestPendingSet.value
+				: undefined;
 		}
 	};
 
@@ -457,21 +444,19 @@ export class MapKernel {
 		// 2. The most recent change was a deletion (as this terminates the prior lifetime)
 		// 3. A clear was sent after the last change (which also terminates the prior lifetime)
 		// TODO: Should I just check the optimistic value?
-		let pendingKeyLifetime = findLast(this.pendingData, (lifetime) => lifetime.key === key);
+		let pendingKeyChange = findLast(this.pendingData, (change) => change.key === key);
 		const latestPendingClearMessageId =
 			this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
 		if (
-			pendingKeyLifetime === undefined ||
-			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-			pendingKeyLifetime.keyChanges[pendingKeyLifetime.keyChanges.length - 1]!.type ===
-				"delete" ||
+			pendingKeyChange === undefined ||
+			pendingKeyChange.type === "delete" ||
 			(latestPendingClearMessageId !== undefined &&
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				pendingKeyLifetime.keyChanges[pendingKeyLifetime.keyChanges.length - 1]!
-					.pendingMessageId < latestPendingClearMessageId)
+				pendingKeyChange.keyChanges[pendingKeyChange.keyChanges.length - 1]!.pendingMessageId <
+					latestPendingClearMessageId)
 		) {
-			pendingKeyLifetime = { key, keyChanges: [] };
-			this.pendingData.push(pendingKeyLifetime);
+			pendingKeyChange = { type: "lifetime", key, keyChanges: [] };
+			this.pendingData.push(pendingKeyChange);
 		}
 		const pendingMessageId = this.nextPendingMessageId++;
 		const keyChange: PendingKeySet = {
@@ -479,7 +464,7 @@ export class MapKernel {
 			type: "set",
 			value: localValue,
 		};
-		pendingKeyLifetime.keyChanges.push(keyChange);
+		pendingKeyChange.keyChanges.push(keyChange);
 		const localMetadata: PendingKeySetMetadata = {
 			pendingMessageId,
 			type: "set",
@@ -521,22 +506,17 @@ export class MapKernel {
 			return successfullyRemoved;
 		}
 
-		let pendingKeyLifetime = findLast(this.pendingData, (lifetime) => lifetime.key === key);
-		if (pendingKeyLifetime === undefined) {
-			// Deletion only creates a new lifetime in the case of directly deleting a sequenced value
-			pendingKeyLifetime = { key, keyChanges: [] };
-			this.pendingData.push(pendingKeyLifetime);
-		}
 		const pendingMessageId = this.nextPendingMessageId++;
-		const keyChange: PendingKeyDelete = {
-			pendingMessageId,
+		const keyDelete: PendingKeyDelete = {
 			type: "delete",
+			key,
+			pendingMessageId,
 		};
-		pendingKeyLifetime.keyChanges.push(keyChange);
+		this.pendingData.push(keyDelete);
 		const localMetadata: PendingKeyDeleteMetadata = {
 			pendingMessageId,
 			type: "delete",
-			change: keyChange,
+			change: keyDelete,
 		};
 		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
 
@@ -720,30 +700,41 @@ export class MapKernel {
 				);
 			}
 		} else {
-			const pendingLifetimeIndex = findLastIndex(
+			const pendingChangeIndex = findLastIndex(
 				this.pendingData,
-				(lifetime) => lifetime.key === mapOp.key,
+				(change) => change.key === mapOp.key,
 			);
-			const pendingLifetime = this.pendingData[pendingLifetimeIndex];
-			assert(pendingLifetime !== undefined, "Unexpected rollback for key");
-			const previousLocalValue = this.getOptimisticLocalValue(mapOp.key);
-			const pendingKeyChange = pendingLifetime.keyChanges.pop();
-			if (pendingLifetime.keyChanges.length === 0) {
-				this.pendingData.splice(pendingLifetimeIndex, 1);
+			const pendingChange = this.pendingData[pendingChangeIndex];
+			assert(pendingChange !== undefined, "Unexpected rollback for key");
+			if (pendingChange.type === "delete") {
+				this.pendingData.splice(pendingChangeIndex, 1);
+				this.eventEmitter.emit(
+					"valueChanged",
+					{ key: mapOp.key, previousValue: undefined },
+					true,
+					this.eventEmitter,
+				);
+			} else {
+				// TODO: Should just be able to check the pendingKeyChange's set value instead of getting the optimistic value.
+				const previousLocalValue = this.getOptimisticLocalValue(mapOp.key);
+				const pendingKeyChange = pendingChange.keyChanges.pop();
+				if (pendingChange.keyChanges.length === 0) {
+					this.pendingData.splice(pendingChangeIndex, 1);
+				}
+				assert(
+					pendingKeyChange !== undefined &&
+						(pendingLocalOpMetadata.type === "set" ||
+							pendingLocalOpMetadata.type === "delete") &&
+						pendingKeyChange === pendingLocalOpMetadata.change,
+					"Unexpected rollback for key",
+				);
+				this.eventEmitter.emit(
+					"valueChanged",
+					{ key: mapOp.key, previousValue: previousLocalValue?.value },
+					true,
+					this.eventEmitter,
+				);
 			}
-			assert(
-				pendingKeyChange !== undefined &&
-					(pendingLocalOpMetadata.type === "set" ||
-						pendingLocalOpMetadata.type === "delete") &&
-					pendingKeyChange === pendingLocalOpMetadata.change,
-				"Unexpected rollback for key",
-			);
-			this.eventEmitter.emit(
-				"valueChanged",
-				{ key: mapOp.key, previousValue: previousLocalValue?.value },
-				true,
-				this.eventEmitter,
-			);
 		}
 	}
 
@@ -818,7 +809,7 @@ export class MapKernel {
 				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
 			) => {
 				const { key } = op;
-				const pendingKeyLifetimeIndex = this.pendingData.findIndex(
+				const pendingKeyChangeIndex = this.pendingData.findIndex(
 					(lifetime) => lifetime.key === key,
 				);
 				if (local) {
@@ -827,22 +818,17 @@ export class MapKernel {
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
 						0xbce /* Processing unexpected local delete op */,
 					);
-					const pendingKeyLifetime = this.pendingData[pendingKeyLifetimeIndex];
+					const pendingKeyChange = this.pendingData[pendingKeyChangeIndex];
 					assert(
-						pendingKeyLifetime !== undefined,
+						pendingKeyChange !== undefined && pendingKeyChange.type === "delete",
 						"Got a delete message we weren't expecting",
 					);
-					const pendingValue = pendingKeyLifetime.keyChanges.shift();
-					if (pendingKeyLifetime.keyChanges.length === 0) {
-						this.pendingData.splice(pendingKeyLifetimeIndex, 1);
-					}
-					assert(pendingValue !== undefined, "Got a delete message we weren't expecting");
+					this.pendingData.splice(pendingKeyChangeIndex, 1);
 					assert(
 						localOpMetadata !== undefined &&
-							pendingValue.pendingMessageId === localOpMetadata.data.pendingMessageId,
+							pendingKeyChange.pendingMessageId === localOpMetadata.data.pendingMessageId,
 						"pendingMessageId does not match",
 					);
-					assert(pendingValue.type === "delete", "pendingValue type is incorrect");
 					this.sequencedData.delete(key);
 				} else {
 					const previousSequencedLocalValue = this.sequencedData.get(key);
@@ -850,7 +836,7 @@ export class MapKernel {
 					this.sequencedData.delete(key);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 					// TODO CONVERSION: Instead of length check, a some check
-					if (pendingKeyLifetimeIndex === -1 && this.pendingClearMessageIds.length === 0) {
+					if (pendingKeyChangeIndex === -1 && this.pendingClearMessageIds.length === 0) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
@@ -890,8 +876,8 @@ export class MapKernel {
 				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
 			) => {
 				const { key, value } = op;
-				const pendingKeyLifetimeIndex = this.pendingData.findIndex(
-					(lifetime) => lifetime.key === key,
+				const pendingKeyChangeIndex = this.pendingData.findIndex(
+					(change) => change.key === key,
 				);
 				if (local) {
 					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
@@ -899,11 +885,14 @@ export class MapKernel {
 						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
 						0xbd0 /* Processing unexpected local set op */,
 					);
-					const pendingKeyLifetime = this.pendingData[pendingKeyLifetimeIndex];
-					assert(pendingKeyLifetime !== undefined, "Got a set message we weren't expecting");
+					const pendingKeyLifetime = this.pendingData[pendingKeyChangeIndex];
+					assert(
+						pendingKeyLifetime !== undefined && pendingKeyLifetime.type === "lifetime",
+						"Got a set message we weren't expecting",
+					);
 					const pendingValue = pendingKeyLifetime.keyChanges.shift();
 					if (pendingKeyLifetime.keyChanges.length === 0) {
-						this.pendingData.splice(pendingKeyLifetimeIndex, 1);
+						this.pendingData.splice(pendingKeyChangeIndex, 1);
 					}
 					assert(pendingValue !== undefined, "Got a set message we weren't expecting");
 					assert(
@@ -922,7 +911,7 @@ export class MapKernel {
 					this.sequencedData.set(key, localValue);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 					// TODO CONVERSION: Another some check
-					if (pendingKeyLifetimeIndex === -1 && this.pendingClearMessageIds.length === 0) {
+					if (pendingKeyChangeIndex === -1 && this.pendingClearMessageIds.length === 0) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
