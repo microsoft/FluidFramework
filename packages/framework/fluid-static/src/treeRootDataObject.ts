@@ -9,10 +9,7 @@ import {
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type {
-	DataObjectTypes,
 	IDataObjectProps,
-	PureDataObjectFactory,
-	TreeDataObjectProps,
 } from "@fluidframework/aqueduct/internal";
 import type {
 	IContainerRuntimeOptions,
@@ -47,7 +44,7 @@ interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
 }
 
-interface TreeRootDataObjectProps extends TreeDataObjectProps {
+interface TreeRootDataObjectExtraProps {
 	readonly treeKey: string;
 }
 
@@ -56,10 +53,18 @@ interface TreeRootDataObjectProps extends TreeDataObjectProps {
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
 export class TreeRootDataObject
-	extends TreeDataObject<ITree, DataObjectTypes<TreeRootDataObjectProps>>
+	extends TreeDataObject<ITree>
 	implements IRootDataObject, IProvideTreeRootDataObject
 {
+	readonly #treeKey: string;
 	#initialObjects: LoadableObjectRecord | undefined;
+
+	public constructor(props: IDataObjectProps & TreeRootDataObjectExtraProps) {
+		super({
+			...props,
+		});
+		this.#treeKey = props.treeKey ?? fail("Tree key must be provided in initProps");
+	}
 
 	public get TreeRootDataObject(): TreeRootDataObject {
 		return this;
@@ -77,8 +82,7 @@ export class TreeRootDataObject
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		const treeKey = this.initProps?.treeKey ?? fail("Tree key must be provided in initProps");
-		this.#initialObjects = { [treeKey]: this.treeView };
+		this.#initialObjects = { [this.#treeKey]: this.treeView };
 	}
 
 	public get initialObjects(): LoadableObjectRecord {
@@ -174,9 +178,8 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
 		dynamicObjectTypes?: readonly IChannelFactory[],
 	) {
 		type Ctor = new (
-			props: IDataObjectProps<DataObjectTypes<TreeRootDataObjectProps>>,
+			props: IDataObjectProps,
 		) => TreeRootDataObject;
-
 		const ctor: Ctor = function (_props) {
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return new TreeRootDataObject({
