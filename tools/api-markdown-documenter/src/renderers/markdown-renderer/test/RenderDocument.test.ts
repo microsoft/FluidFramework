@@ -47,7 +47,7 @@ describe("Document Markdown rendering tests", () => {
 		const expected = [
 			"# Sample Document",
 			"",
-			"This is a sample document. It has very basic content.\t",
+			"This is a sample document. It has very basic content.&#x9;",
 			"",
 			"## Section Heading",
 			"",

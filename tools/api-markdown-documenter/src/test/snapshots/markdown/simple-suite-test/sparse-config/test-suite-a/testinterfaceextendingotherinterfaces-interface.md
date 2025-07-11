@@ -22,8 +22,8 @@ Here are some remarks about the interface
 
 ### See Also {#testinterfaceextendingotherinterfaces-see-also}
 
-- [TestInterface](docs/test-suite-a/testinterface-interface)
+\- [TestInterface](docs/test-suite-a/testinterface-interface)
 
-- [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)
+\- [TestInterfaceWithTypeParameter](docs/test-suite-a/testinterfacewithtypeparameter-interface)
 
-- [TestMappedType](docs/test-suite-a/testmappedtype-typealias)
+\- [TestMappedType](docs/test-suite-a/testmappedtype-typealias)

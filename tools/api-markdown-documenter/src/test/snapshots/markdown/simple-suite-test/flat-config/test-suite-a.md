@@ -6,27 +6,27 @@ Test package
 
 This remarks block includes a bulleted list!
 
-- Bullet 1
+\- Bullet 1
 
-- Bullet 2
+\- Bullet 2
 
 And an ordered list for good measure!
 
-1. List item 1
+1\. List item 1
 
-2. List item 2
+2\. List item 2
 
-3. List item 3
+3\. List item 3
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
-- Good link (no alias): [TestClass](docs/test-suite-a#testclass-class)
+\- Good link (no alias): [TestClass](docs/test-suite-a#testclass-class)
 
-- Good link (with alias): _function alias text_
+\- Good link (with alias): _function alias text_
 
-- Bad link (no alias): _InvalidItem_
+\- Bad link (no alias): _InvalidItem_
 
-- Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
+\- Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
 # Example {#test-suite-a-example}
 
@@ -71,7 +71,7 @@ const foo = bar;
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
 | [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
 
 # Variables
@@ -216,6 +216,8 @@ A test property with a getter and a setter.
 
 ```typescript
 get setterProperty(): boolean;
+
+
 set setterProperty(newValue: boolean);
 ```
 
@@ -357,11 +359,11 @@ A number
 
 ### See Also {#testinterfaceextendingotherinterfaces-see-also}
 
-- [TestInterface](docs/test-suite-a#testinterface-interface)
+\- [TestInterface](docs/test-suite-a#testinterface-interface)
 
-- [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)
+\- [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)
 
-- [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
+\- [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
 ## TestInterfaceWithIndexSignature {#testinterfacewithindexsignature-interface}
 
@@ -381,7 +383,7 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signature Details
 
-#### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-\_indexer\_-indexsignature}
+#### \[foo: number]: { bar: string; } {#testinterfacewithindexsignature-\_indexer\_-indexsignature}
 
 Test index signature.
 
@@ -690,6 +692,8 @@ Test class property with both a getter and a setter.
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+
+
 set testClassGetterProperty(newValue: number);
 ```
 
@@ -788,7 +792,7 @@ static testClassStaticMethod(foo: number): string;
 
 ##### Returns {#testclassstaticmethod-returns}
 
-- Some string
+\- Some string
 
 **Return type**: string
 
@@ -966,7 +970,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number>
+**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number>
 
 ## testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
@@ -982,7 +986,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type**: string \| [TestInterface](docs/test-suite-a#testinterface-interface)
+**Return type**: string | [TestInterface](docs/test-suite-a#testinterface-interface)
 
 # Variable Details
 
@@ -1101,6 +1105,8 @@ Here are some remarks about the namespace
 
 #### Example: TypeScript Example {#testnamespace-example1}
 
+
+
 ```typescript
 const foo: Foo = {
 	bar: "Hello world!";
@@ -1109,6 +1115,8 @@ const foo: Foo = {
 ```
 
 #### Example: JavaScript Example {#testnamespace-example2}
+
+
 
 ```javascript
 const foo = {
@@ -1189,14 +1197,14 @@ class TestClass
 
 Test class constructor
 
-<a id="_constructor_-signature"></a>
+<a id="_constructor_-signature"></a>\
 **Signature**
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-<a id="_constructor_-parameters"></a>
+<a id="_constructor_-parameters"></a>\
 **Parameters**
 
 | Parameter | Type | Description |
@@ -1209,7 +1217,7 @@ constructor(testClassProperty: string);
 
 Test interface property
 
-<a id="testclassproperty-signature"></a>
+<a id="testclassproperty-signature"></a>\
 **Signature**
 
 ```typescript
@@ -1224,28 +1232,28 @@ readonly testClassProperty: string;
 
 Test class method
 
-<a id="testclassmethod-signature"></a>
+<a id="testclassmethod-signature"></a>\
 **Signature**
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<a id="testclassmethod-parameters"></a>
+<a id="testclassmethod-parameters"></a>\
 **Parameters**
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | string | A string |
 
-<a id="testclassmethod-returns"></a>
+<a id="testclassmethod-returns"></a>\
 **Returns**
 
 A Promise
 
 **Return type**: Promise\<string>
 
-<a id="testclassmethod-throws"></a>
+<a id="testclassmethod-throws"></a>\
 **Throws**
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
@@ -1277,7 +1285,7 @@ enum TestEnum
 
 Test enum value 1
 
-<a id="testenumvalue1-signature"></a>
+<a id="testenumvalue1-signature"></a>\
 **Signature**
 
 ```typescript
@@ -1288,7 +1296,7 @@ TestEnumValue1 = 0
 
 Test enum value 2
 
-<a id="testenumvalue2-signature"></a>
+<a id="testenumvalue2-signature"></a>\
 **Signature**
 
 ```typescript

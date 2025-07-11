@@ -1,4 +1,4 @@
-# \[foo: number\]: { bar: string; }
+# \[foo: number]: { bar: string; }
 
 [Packages](/) > [test-suite-a](/test-suite-a/) > [TestInterfaceWithIndexSignature](/test-suite-a/testinterfacewithindexsignature-interface/) > [\[foo: number\]: { bar: string; }](/test-suite-a/testinterfacewithindexsignature-interface/_indexer_-indexsignature)
 
