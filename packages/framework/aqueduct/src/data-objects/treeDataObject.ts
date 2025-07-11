@@ -13,13 +13,18 @@ import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes, IDataObjectProps } from "./types.js";
 
 /**
- * TODO
+ * Extra constructor arguments supported by {@link TreeDataObject}'s constructor.
  * @input
  * @internal
  */
-export interface TreeDataObjectProps {
+export interface TreeDataObjectConstructorProps {
 	/**
 	 * Factory to use to construct the {@link TreeDataObject}'s {@link @fluidframework/tree#ITree | tree}.
+	 *
+	 * @remarks
+	 * Note that this value impacts how persisted data is loaded by the data object, so the value
+	 * provided here must match the value used to create the tree when the data object was first initialized.
+	 *
 	 * @defaultValue {@link @fluidframework/tree#SharedTree}
 	 */
 	readonly treeFactory?: IChannelFactory<ITree>;
@@ -58,8 +63,7 @@ const uninitializedErrorString =
  */
 export abstract class TreeDataObject<
 	TTreeView,
-	TDataObjectTypes extends
-		DataObjectTypes<TreeDataObjectProps> = DataObjectTypes<TreeDataObjectProps>,
+	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<TDataObjectTypes> {
 	/**
 	 * Generates a view of the data object's {@link @fluidframework/tree#ITree | tree}.
@@ -105,9 +109,12 @@ export abstract class TreeDataObject<
 		return this.#view;
 	}
 
+	/**
+	 * Factory used to create and load {@link @fluidframework/tree#ITree | tree}.
+	 */
 	#treeFactory: IChannelFactory<ITree>;
 
-	public constructor(props: IDataObjectProps<TDataObjectTypes> & TreeDataObjectProps) {
+	public constructor(props: IDataObjectProps<TDataObjectTypes> & TreeDataObjectConstructorProps) {
 		super(props);
 		this.#treeFactory = props.treeFactory ?? fail("No SharedTree factory provided");
 	}

@@ -10,7 +10,7 @@ import type {
 	DataObjectTypes,
 	IDataObjectProps,
 	TreeDataObject,
-	TreeDataObjectProps,
+	TreeDataObjectConstructorProps,
 } from "../data-objects/index.js";
 
 import {
@@ -28,10 +28,9 @@ import {
 export class TreeDataObjectFactory<
 	TDataObject extends TreeDataObject<TTreeView, TDataObjectTypes>,
 	TTreeView,
-	TDataObjectTypes extends
-		DataObjectTypes<TreeDataObjectProps> = DataObjectTypes<TreeDataObjectProps>,
-> extends PureDataObjectFactory<TDataObject, DataObjectTypes<TreeDataObjectProps>> {
-	public constructor(props: DataObjectFactoryProps<TDataObject>) {
+	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
+> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
+	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
 		const baseCtor = props.ctor;
 		const newProps = {
 			...props,
@@ -47,20 +46,15 @@ export class TreeDataObjectFactory<
 			newProps.sharedObjects.push(treeFactory);
 		}
 
-		type Newable = new (
-			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
-		) => TDataObject;
-
-		const interceptedConstructor: Newable = function (
-			_props: IDataObjectProps<DataObjectTypes<TreeDataObjectProps>>,
+		const interceptedConstructor = function (
+			_props: IDataObjectProps<TDataObjectTypes>,
 		): TDataObject {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			return new baseCtor({
+			const _newProps: IDataObjectProps<TDataObjectTypes> & TreeDataObjectConstructorProps = {
 				..._props,
 				treeFactory,
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			} as any);
-		} as unknown as Newable;
+			}
+			return new baseCtor(_newProps);
+		} as unknown as typeof baseCtor;
 
 		newProps.ctor = interceptedConstructor;
 
