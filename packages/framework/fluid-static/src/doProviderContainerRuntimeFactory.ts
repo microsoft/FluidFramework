@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { PureDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import type {
 	IContainerRuntimeOptions,
@@ -15,9 +14,8 @@ import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definition
 import { DOProviderContainerRuntimeFactory, RootDataObjectFactory } from "./rootDataObject.js";
 import {
 	TreeDOProviderContainerRuntimeFactory,
-	TreeRootDataObject,
-	treeRootDataObjectType,
-	validateAndExtractTreeFactory,
+	TreeRootDataObjectFactory,
+	validateAndExtractTreeFactory as validateAndExtractTreeSchema,
 } from "./treeRootDataObject.js";
 import type { CompatibilityMode, ContainerSchema } from "./types.js";
 import { parseDataObjectsFromSharedObjects } from "./utils.js";
@@ -62,18 +60,14 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	useTreeBasedDataObject?: boolean;
 }): IRuntimeFactory {
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
-	const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
-
 	if (props.useTreeBasedDataObject) {
-		const treeFactory = validateAndExtractTreeFactory(registryEntries, sharedObjects);
+		const [treeKey, treeFactory] = validateAndExtractTreeSchema(props.schema);
 		return new TreeDOProviderContainerRuntimeFactory(
 			props.schema,
 			props.compatibilityMode,
-			new PureDataObjectFactory<TreeRootDataObject>(
-				treeRootDataObjectType,
-				TreeRootDataObject,
-				[treeFactory]
+			new TreeRootDataObjectFactory(
+				treeKey,
+				treeFactory,
 			),
 			{
 				runtimeOptions: props.runtimeOptionOverrides,
@@ -81,6 +75,9 @@ export function createDOProviderContainerRuntimeFactory(props: {
 			},
 		);
 	} else {
+		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
+		const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
 		return new DOProviderContainerRuntimeFactory(
 			props.schema,
 			props.compatibilityMode,

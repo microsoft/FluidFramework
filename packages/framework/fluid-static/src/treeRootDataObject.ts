@@ -6,6 +6,7 @@
 import {
 	BaseContainerRuntimeFactory,
 	TreeDataObject,
+	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { PureDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import type {
@@ -33,7 +34,7 @@ import type {
 	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
-import { compatibilityModeToMinVersionForCollab, makeFluidObject } from "./utils.js";
+import { compatibilityModeToMinVersionForCollab, makeFluidObject, parseDataObjectsFromSharedObjects } from "./utils.js";
 
 interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
@@ -155,13 +156,35 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 }
 
 /**
+ * Factory that creates instances of a tree-based root data object.
+ */
+export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
+	TreeRootDataObject,
+	ITree
+> {
+	public constructor(
+		treeKey: string,
+		treeFactory: IChannelFactory<ITree>
+	) {
+		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
+		// and instead we override the necessary methods in this class to use the registry received in the constructor.
+		super({
+			type: treeRootDataObjectType,
+			ctor: TreeRootDataObject,
+			sharedObjects,
+		});
+	}
+
+}
+
+/**
  * Validates the container schema and extracts the factory for the tree-based data object.
  * Throws an error if the schema is invalid or does not contain a valid SharedTree.
  */
 export function validateAndExtractTreeFactory(
-	registryEntries: NamedFluidDataStoreRegistryEntry[],
-	sharedObjects: IChannelFactory[],
-): IChannelFactory<ITree> {
+	schema: ContainerSchema,
+): [string, IChannelFactory<ITree>] {
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	if (registryEntries.length > 0) {
 		throw new Error(
 			"Container schema must not have any data store registry entries for tree-based data object.",
@@ -176,5 +199,9 @@ export function validateAndExtractTreeFactory(
 	if (!factory || factory.type !== SharedTreeFactoryType) {
 		throw new Error("Container schema must contain a shared tree for tree-based data object.");
 	}
-	return factory as IChannelFactory<ITree>;
+	const schemaKeys = Object.keys(schema.initialObjects);
+	if (schemaKeys.length !== 1 || !schemaKeys[0]) {
+		throw new Error("Container schema must have exactly one initial object for tree-based data object.");
+	}
+	return [schemaKeys[0], factory as IChannelFactory<ITree>];
 }
