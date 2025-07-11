@@ -275,7 +275,12 @@ export class ModularChangeFamily
 			affectedBaseFields: newTupleBTree(),
 		};
 
-		const composedRoots = composeRootTables(change1, change2, pendingCompositions);
+		const composedRoots = composeRootTables(
+			change1,
+			change2,
+			composedNodeToParent,
+			pendingCompositions,
+		);
 
 		const crossFieldTable = newComposeTable(
 			change1,
@@ -3004,12 +3009,14 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		count: number,
 	): void {
 		let countToProcess = count;
-		let shouldRemoveKeys: boolean;
+		let shouldRemoveAttach: boolean;
+		let shouldRemoveDetach: boolean;
 		if (areEqualChangeAtomIds(baseAttachId, newDetachId)) {
 			// Both changes can have the same ID if they came from inverse changesets.
-			// If the changes are part of a move,
-			// then both input changesets contain both attach and detach cross-field keys for this ID,
-			// so we shouldn't mark the keys as removed until we know that other endpoints are also removed.
+
+			// If the new detach is part of a move,
+			// then both input changesets contain the attach cross-field key for this ID,
+			// so we shouldn't mark the key as removed until we know that other endpoint is also removed.
 			const newAttachEntry = getFirstFieldForCrossFieldKey(
 				this.table.newChange,
 				{ target: CrossFieldTarget.Destination, ...newDetachId },
@@ -3017,18 +3024,33 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			);
 
 			countToProcess = newAttachEntry.length;
-			shouldRemoveKeys = newAttachEntry.value === undefined;
+			shouldRemoveAttach = newAttachEntry.value === undefined;
+
+			// If the base attach is part of a move,
+			// then both input changesets contain the detach cross-field key for this ID,
+			// so we shouldn't mark the key as removed until we know that other endpoint is also removed.
+			const baseDetachEntry = getFirstFieldForCrossFieldKey(
+				this.table.baseChange,
+				{ target: CrossFieldTarget.Source, ...baseAttachId },
+				countToProcess,
+			);
+			countToProcess = baseDetachEntry.length;
+
+			shouldRemoveDetach = baseDetachEntry.value === undefined;
 		} else {
-			shouldRemoveKeys = true;
+			shouldRemoveAttach = true;
+			shouldRemoveDetach = true;
 		}
 
-		if (shouldRemoveKeys) {
+		if (shouldRemoveAttach) {
 			this.table.removedCrossFieldKeys.set(
 				{ ...baseAttachId, target: CrossFieldTarget.Destination },
 				countToProcess,
 				true,
 			);
+		}
 
+		if (shouldRemoveDetach) {
 			this.table.removedCrossFieldKeys.set(
 				{ ...newDetachId, target: CrossFieldTarget.Source },
 				countToProcess,
@@ -4044,6 +4066,7 @@ function composeCrossFieldKeyTables(
 function composeRootTables(
 	change1: ModularChangeset,
 	change2: ModularChangeset,
+	composedNodeToParent: ChangeAtomIdBTree<NodeLocation>,
 	pendingCompositions: PendingCompositions,
 ): RootNodeTable {
 	const mergedTable = cloneRootTable(change1.rootNodes);
@@ -4097,6 +4120,7 @@ function composeRootTables(
 				);
 			} else {
 				setInChangeAtomIdMap(mergedTable.nodeChanges, detachId1, nodeId2);
+				setInChangeAtomIdMap(composedNodeToParent, nodeId2, { root: detachId1 });
 			}
 		}
 	}
