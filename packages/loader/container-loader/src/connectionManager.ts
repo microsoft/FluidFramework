@@ -248,6 +248,12 @@ export class ConnectionManager implements IConnectionManager {
 
 	private connectFirstConnection = true;
 
+	/**
+	 * Tracks the initial connection start time for the entire lifetime of the class.
+	 * This is used only for retryConnectionTimeoutMs checks and is never reset.
+	 */
+	private initialConnectionStartTime: number | undefined;
+
 	private _connectionVerboseProps: Record<string, string | number> = {};
 
 	private _connectionProps: ITelemetryBaseProperties = {};
@@ -406,6 +412,7 @@ export class ConnectionManager implements IConnectionManager {
 		reconnectAllowed: boolean,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
+		private readonly retryConnectionTimeoutMs?: number,
 	) {
 		this.clientDetails = this.client.details;
 		this.defaultReconnectionMode = this.client.mode;
@@ -584,6 +591,12 @@ export class ConnectionManager implements IConnectionManager {
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performanceNow();
+
+		// Set the initial connection start time only once for the entire lifetime of the class
+		if (this.initialConnectionStartTime === undefined) {
+			this.initialConnectionStartTime = connectStartTime;
+		}
+
 		let lastError: unknown;
 
 		const abortController = new AbortController();
@@ -702,6 +715,31 @@ export class ConnectionManager implements IConnectionManager {
 				// Raise event in case the delay was there from the error.
 				if (retryDelayFromError !== undefined) {
 					this.props.reconnectionDelayHandler(delayMs, origError);
+				}
+
+				// Check if the calculated delay would exceed the remaining timeout with a conservative buffer
+				if (this.retryConnectionTimeoutMs !== undefined) {
+					const elapsedTime = performanceNow() - this.initialConnectionStartTime;
+					const remainingTime = this.retryConnectionTimeoutMs - elapsedTime;
+					const connectionAttemptDuration = performanceNow() - connectStartTime;
+
+					// Use a 75% buffer to be conservative about timeout usage
+					const timeoutBufferThreshold = remainingTime * 0.75;
+					// Estimate the next attempt time as the delay plus the time it took to connect
+					const estimatedNextAttemptTime = delayMs + connectionAttemptDuration;
+
+					if (estimatedNextAttemptTime >= timeoutBufferThreshold) {
+						this.logger.sendTelemetryEvent({
+							eventName: "RetryDelayExceedsConnectionTimeout",
+							attempts: connectRepeatCount,
+							duration: formatTick(elapsedTime),
+							calculatedDelayMs: delayMs,
+							remainingTimeMs: remainingTime,
+							timeoutMs: this.retryConnectionTimeoutMs,
+						});
+						// Throw the error immediately since the estimated time for delay + next connection attempt would exceed our conservative timeout buffer
+						throw normalizeError(origError, { props: fatalConnectErrorProp });
+					}
 				}
 
 				await new Promise<void>((resolve) => {
