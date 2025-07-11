@@ -5,7 +5,7 @@
 
 import { SchemaFactory } from "fluid-framework";
 
-const schemaFactory = new SchemaFactory("fluid-example-external-controller");
+const schemaFactory = new SchemaFactory("fluid-example-todo-list");
 
 /**
  * An item in a to-do list.
