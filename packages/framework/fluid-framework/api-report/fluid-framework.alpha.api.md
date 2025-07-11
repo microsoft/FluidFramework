@@ -768,7 +768,9 @@ export namespace JsonAsTree {
     export class JsonObject extends _APIExtractorWorkaroundObjectBase {
     }
     const // @system
-    _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Record, TreeRecordNodeUnsafe_2<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Record, unknown>, {
+    _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.json.object", NodeKind.Map, System_Unsafe.TreeMapNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.object", NodeKind.Map, unknown>, {
+        [Symbol.iterator](): Iterator<[string, string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null], any, undefined>;
+    } | {
         readonly [x: string]: string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
     }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined>;
     // (undocumented)
@@ -776,7 +778,9 @@ export namespace JsonAsTree {
     // @system
     export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof Array>;
     const // @system
-    _APIExtractorWorkaroundArrayBase: ArrayNodeCustomizableSchemaUnsafe_2<"com.fluidframework.json.array", readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], unknown>;
+    _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass<"com.fluidframework.json.array", NodeKind.Array, System_Unsafe.TreeArrayNodeUnsafe<readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array]> & WithType<"com.fluidframework.json.array", NodeKind.Array, unknown>, {
+        [Symbol.iterator](): Iterator<string | number | JsonObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null, any, undefined>;
+    }, false, readonly [LeafSchema<"null", null>, LeafSchema<"number", number>, LeafSchema<"string", string>, LeafSchema<"boolean", boolean>, () => typeof JsonObject, () => typeof Array], undefined>;
     // (undocumented)
     export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
 }
@@ -974,9 +978,6 @@ export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown> extends N
 
 // @alpha
 export const noopValidator: JsonValidator;
-
-// @alpha
-export function normalizeAllowedTypes(types: ImplicitAllowedTypes): ReadonlySet<TreeNodeSchema>;
 
 // @alpha
 export interface NormalizedAnnotatedAllowedTypes {
