@@ -42,7 +42,6 @@ export function uniformChunk(shape: ChunkShape, values: TreeValue[]): TreeChunk 
  */
 export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	public idCompressor: undefined | IIdCompressor;
-
 	/**
 	 * Create a tree chunk with ref count 1.
 	 *

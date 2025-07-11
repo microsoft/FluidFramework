@@ -176,8 +176,6 @@ export interface ChunkDecoder {
 	/**
 	 * Read from stream, updating the offset.
 	 *
-	 * For fields that support incremental encoding, the encoded data can be retrieved via `getIncrementalFieldBatch`.
-	 *
 	 * @returns a TreeChunk made from the data from `stream`.
 	 * This chunk is allowed to reference/take ownership of content it reads from the stream.
 	 */

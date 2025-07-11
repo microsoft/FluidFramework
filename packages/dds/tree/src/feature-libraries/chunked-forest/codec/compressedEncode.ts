@@ -65,16 +65,8 @@ export function compressedEncode(
 	return updateShapesAndIdentifiersEncoding(version, batchBuffer);
 }
 
-export type Shape = ShapeGeneric<EncodedChunkShape>;
-
-/**
- * Format for data emitted during encoding, before dictionary compression of identifiers. The data is
- * in a hierarchical format, where values for nested fields like arrays and objects are stored in another
- * buffer and values for other elements are stored directly.
- * For fields that support incremental encoding, the data is a unique compressed id which corresponds to
- * its data in a separate buffer.
- */
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
+export type Shape = ShapeGeneric<EncodedChunkShape>;
 
 /**
  * Like {@link FieldEncoder}, except data will be prefixed with the key.
@@ -551,9 +543,6 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 		public readonly idCompressor: IIdCompressor,
 	) {}
 
-	/**
-	 * This also updates the `shapesFromSchema` map with the given schema name and its encoder.
-	 */
 	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.shapesFromSchema, schemaName, () =>
 			this.treeEncoder(this, schemaName),

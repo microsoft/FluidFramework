@@ -46,8 +46,7 @@ import type { Format } from "./format.js";
 import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js";
 
 /**
- * The key for the summary tree that contains the top level forest's tree contents including the reference IDs of
- * the incremental fields at that level.
+ * The key for the blob in the summary containing forest's contents.
  */
 export const forestSummaryContentKey = "ForestTree";
 
@@ -56,8 +55,8 @@ export const forestSummaryContentKey = "ForestTree";
  */
 export class ForestSummarizer implements Summarizable {
 	/**
-	 * The key for the summary tree that contains the overall forest's summary tree. This tree is added by the parent
-	 * of the forest summarizer, i.e., the summarizer for the shared tree.
+	 * The key for the tree that contains the overall forest's summary tree. This tree is added by the parent
+	 * of the forest summarizer.
 	 */
 	public readonly key = "Forest";
 
@@ -86,6 +85,8 @@ export class ForestSummarizer implements Summarizable {
 	 * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
 	 *
 	 * @returns a snapshot of the forest's tree as a string.
+	 *
+	 *
 	 */
 	private getSummaryTree(
 		stringify: SummaryElementStringifier,
@@ -129,6 +130,16 @@ export class ForestSummarizer implements Summarizable {
 		return forestSummaryBuilder.getSummaryTree();
 	}
 
+	/**
+	 * Summarization of the forest's tree content.
+	 * If incremental summary is disabled, all the content will be added to a single summary blob.
+	 * If incremental summary is enabled, the summary will be a tree. See {@link ForestIncrementalSummaryBuilder}
+	 * for details of what this tree looks like.
+	 *
+	 * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
+	 *
+	 * @returns a summary tree containing the forest's tree content.
+	 */
 	public summarize(props: {
 		stringify: SummaryElementStringifier;
 		fullTree?: boolean;
@@ -136,11 +147,44 @@ export class ForestSummarizer implements Summarizable {
 		telemetryContext?: ITelemetryContext;
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
 	}): ISummaryTreeWithStats {
-		return this.getSummaryTree(
-			props.stringify,
-			props.fullTree ?? false,
-			props.incrementalSummaryContext,
+		const { stringify, fullTree = false, incrementalSummaryContext } = props;
+
+		const rootCursor = this.forest.getCursorAboveDetachedFields();
+		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
+			new Map();
+		// TODO: Encode all detached fields in one operation for better performance and compression
+		forEachField(rootCursor, (cursor) => {
+			const key = cursor.getFieldKey();
+			const innerCursor = this.forest.allocateCursor("getTreeString");
+			assert(
+				this.forest.tryMoveCursorToField({ fieldKey: key, parent: undefined }, innerCursor) ===
+					TreeNavigationResult.Ok,
+				0x892 /* failed to navigate to field */,
+			);
+			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
+		});
+
+		const forestSummaryBuilder = new SummaryTreeBuilder();
+		// Let the incremental summary builder know that we are starting a new summary. It returns whether
+		// incremental encoding is enabled.
+		const shouldEncodeIncrementally = this.incrementalSummaryBuilder.startingSummary(
+			forestSummaryBuilder,
+			fullTree,
+			incrementalSummaryContext,
 		);
+		const encoderContext: FieldBatchEncodingContext = {
+			...this.encoderContext,
+			incrementalEncoderDecoder: shouldEncodeIncrementally
+				? this.incrementalSummaryBuilder
+				: undefined,
+		};
+		const encoded = this.codec.encode(fieldMap, encoderContext);
+		fieldMap.forEach((value) => value.free());
+
+		forestSummaryBuilder.addBlob(forestSummaryContentKey, stringify(encoded));
+		// Let the incremental summary builder know that we are done with this summary.
+		this.incrementalSummaryBuilder.completedSummary(incrementalSummaryContext);
+		return forestSummaryBuilder.getSummaryTree();
 	}
 
 	public async load(
@@ -187,7 +231,6 @@ export class ForestSummarizer implements Summarizable {
 				this.forest,
 				makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
 			);
-			return;
 		}
 	}
 }
