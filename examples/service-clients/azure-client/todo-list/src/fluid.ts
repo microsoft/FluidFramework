@@ -120,13 +120,13 @@ async function createInitialTodoList(
 
 	const todoItem1 = await createTodoItem({
 		container,
-		initialTitleText: "Buy groceries",
 		completed: false,
+		initialTitleText: "Buy groceries",
 	});
 	const todoItem2 = await createTodoItem({
 		container,
-		initialTitleText: "Walk the dog",
 		completed: true,
+		initialTitleText: "Walk the dog",
 	});
 	return new TodoList({
 		title: listTitle.handle,
