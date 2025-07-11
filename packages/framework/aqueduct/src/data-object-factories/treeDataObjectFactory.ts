@@ -3,15 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import { SharedTree, type ITree } from "@fluidframework/tree/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
-import type {
-	DataObjectTypes,
-	IDataObjectProps,
-	TreeDataObject,
-	TreeDataObjectConstructorProps,
-} from "../data-objects/index.js";
+import type { DataObjectTypes, TreeDataObject } from "../data-objects/index.js";
 
 import {
 	PureDataObjectFactory,
@@ -31,32 +25,19 @@ export class TreeDataObjectFactory<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
-		const baseCtor = props.ctor;
 		const newProps = {
 			...props,
 			sharedObjects: props.sharedObjects ? [...props.sharedObjects] : [],
 		};
 
-		const maybeTreeFactory = props.sharedObjects?.find(
-			(sharedObject) => sharedObject.type === SharedTree.getFactory().type,
-		);
-		const treeFactory =
-			(maybeTreeFactory as IChannelFactory<ITree>) ?? SharedTree.getFactory();
-		if (maybeTreeFactory === undefined) {
-			newProps.sharedObjects.push(treeFactory);
+		// If the user did not specify a SharedTree factory, add it to the shared objects.
+		if (
+			!newProps.sharedObjects.some(
+				(sharedObject) => sharedObject.type === SharedTree.getFactory().type,
+			)
+		) {
+			newProps.sharedObjects.push(SharedTree.getFactory());
 		}
-
-		const interceptedConstructor = function (
-			_props: IDataObjectProps<TDataObjectTypes>,
-		): TDataObject {
-			const _newProps: IDataObjectProps<TDataObjectTypes> & TreeDataObjectConstructorProps = {
-				..._props,
-				treeFactory,
-			}
-			return new baseCtor(_newProps);
-		} as unknown as typeof baseCtor;
-
-		newProps.ctor = interceptedConstructor;
 
 		super(newProps);
 	}

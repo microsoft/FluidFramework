@@ -6,5 +6,5 @@
 export { createDataObjectKind } from "./createDataObjectKind.js";
 export { DataObject } from "./dataObject.js";
 export { PureDataObject } from "./pureDataObject.js";
-export { TreeDataObject, type TreeDataObjectConstructorProps } from "./treeDataObject.js";
+export { TreeDataObject } from "./treeDataObject.js";
 export type { DataObjectKind, DataObjectTypes, IDataObjectProps } from "./types.js";

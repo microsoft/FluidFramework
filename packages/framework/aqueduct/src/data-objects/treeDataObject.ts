@@ -3,32 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fail } from "@fluidframework/core-utils/internal";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { ITree } from "@fluidframework/tree/internal";
+import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
-import type { DataObjectTypes, IDataObjectProps } from "./types.js";
-
-/**
- * Extra constructor arguments supported by {@link TreeDataObject}'s constructor.
- * @input
- * @internal
- */
-export interface TreeDataObjectConstructorProps {
-	/**
-	 * Factory to use to construct the {@link TreeDataObject}'s {@link @fluidframework/tree#ITree | tree}.
-	 *
-	 * @remarks
-	 * Note that this value impacts how persisted data is loaded by the data object, so the value
-	 * provided here must match the value used to create the tree when the data object was first initialized.
-	 *
-	 * @defaultValue {@link @fluidframework/tree#SharedTree}
-	 */
-	readonly treeFactory?: IChannelFactory<ITree>;
-}
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * Channel ID of {@link TreeDataObject}'s root {@link @fluidframework/tree#SharedTree}.
@@ -109,16 +89,6 @@ export abstract class TreeDataObject<
 		return this.#view;
 	}
 
-	/**
-	 * Factory used to create and load {@link @fluidframework/tree#ITree | tree}.
-	 */
-	#treeFactory: IChannelFactory<ITree>;
-
-	public constructor(props: IDataObjectProps<TDataObjectTypes> & TreeDataObjectConstructorProps) {
-		super(props);
-		this.#treeFactory = props.treeFactory ?? fail("No SharedTree factory provided");
-	}
-
 	public override async initializeInternal(existing: boolean): Promise<void> {
 		if (existing) {
 			// data store has a root tree so we just need to set it before calling initializingFromExisting
@@ -126,7 +96,7 @@ export abstract class TreeDataObject<
 
 			// TODO: Support using a Directory to Tree migration shim and DataObject's root channel ID
 			// to allow migrating from DataObject to TreeDataObject instead of just erroring in that case.
-			if (this.#treeFactory.type !== channel.attributes.type) {
+			if (!SharedTree.is(channel)) {
 				throw new Error(
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
@@ -139,7 +109,7 @@ export abstract class TreeDataObject<
 			// const sharedTree = treeFactory.create(this.runtime, treeChannelId);
 			const sharedTree = this.runtime.createChannel(
 				treeChannelId,
-				this.#treeFactory.type,
+				SharedTree.getFactory().type,
 			) as unknown as ITree;
 			(sharedTree as unknown as ISharedObject).bindToContext();
 

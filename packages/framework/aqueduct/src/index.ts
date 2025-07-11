@@ -31,7 +31,6 @@ export {
 	type IDataObjectProps,
 	PureDataObject,
 	TreeDataObject,
-	type TreeDataObjectConstructorProps,
 	createDataObjectKind,
 } from "./data-objects/index.js";
 export {
