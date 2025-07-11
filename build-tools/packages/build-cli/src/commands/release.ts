@@ -41,7 +41,8 @@ import { StateMachineCommand } from "../stateMachineCommand.js";
 
 export default class ReleaseCommand extends StateMachineCommand<typeof ReleaseCommand> {
 	static readonly summary = "Releases a package or release group.";
-	static readonly description = `The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
+	static readonly description =
+		`The release command ensures that a release branch is in good condition, then walks the user through releasing a package or release group.
 
     The command runs a number of checks automatically to make sure the branch is in a good state for a release. If any of the dependencies are also in the repo, then they're checked for the latest release version. If the dependencies have not yet been released, then the command prompts to perform the release of the dependency, then run the release command again.
 
