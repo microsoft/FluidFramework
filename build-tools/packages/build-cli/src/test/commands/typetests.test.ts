@@ -41,7 +41,7 @@ function packageWithTypeValidation(enabled = true): PackageWithTypeTestSettings 
 			"test-package-previous": "4.0.0",
 		},
 		typeValidation: {
-			entrypoint: "legacy",
+			entrypoint: "legacyBeta",
 			broken: {
 				"broken-api": {
 					backCompat: false,
@@ -149,7 +149,7 @@ describe("typetests tests", () => {
 		it("minimal", () => {
 			const pkgJson: { typeValidation?: ITypeValidationConfig } = {
 				typeValidation: {
-					entrypoint: "legacy",
+					entrypoint: "legacyBeta",
 					broken: {
 						"broken-api": {
 							backCompat: false,
@@ -159,7 +159,7 @@ describe("typetests tests", () => {
 				},
 			};
 			resetBrokenTests(pkgJson);
-			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacy" } });
+			assert.deepEqual(pkgJson, { typeValidation: { broken: {}, entrypoint: "legacyBeta" } });
 		});
 
 		it("ignores packages with no typeValidation node", () => {
