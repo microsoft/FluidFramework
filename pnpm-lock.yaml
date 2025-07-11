@@ -17659,7 +17659,7 @@ packages:
     resolution: {integrity: sha512-AIZ8QbT4BZOY21JvDZT9LT6vLdMiGsIXvD39C7EOuIfY4DwZSJ0Fmv083pvIJvBw3MQyUALqspCnrlzEfz2ibw==}
 
   '@fluidframework/server-services-shared@file:fluidframework-server-services-shared-6.0.0.tgz':
-    resolution: {integrity: sha512-nVKbuAvyqm4t+jrsmTOdJX3pqDx97L4JLi/tDPPJZIpwN8OhnO0FRtsBlZTyT+zmmTElZ/g7JwpwNtvN2Na0+g==, tarball: file:fluidframework-server-services-shared-6.0.0.tgz}
+    resolution: {integrity: sha512-MxL9RL+mFGh5F+v2K6ScamnlB/DiqkGe1bIaiDba3vETWDSl4wTGAvUp3wH/Zb+5OL3WUKSaesr1th2UL+WRIw==, tarball: file:fluidframework-server-services-shared-6.0.0.tgz}
     version: 6.0.0
 
   '@fluidframework/server-services-telemetry@5.0.0':
