@@ -1,9 +1,9 @@
 # @fluid-example/app-integration-todo-list
 
-This app is a basic example that allows the user to manage a simple TODO list comprised of items containing a title, a description, and a flag indicating whether or not they are complete.
+This app is a basic example that allows the user to manage a simple to-do list comprised of items containing a title, a description, and a flag indicating whether or not they are complete.
 New items may be inserted, and existing items may be edited and/or deleted.
 
-It leverages the [SharedTree](https://fluidframework.com/docs/data-structures/tree/) distributed data store (DDS) as its core data model, but also demonstrates leveraging nested [SharedString](https://fluidframework.com/docs/data-structures/string) DDSs to enable live, collaborative text within the TODO list and its items.
+It leverages the [SharedTree](https://fluidframework.com/docs/data-structures/tree/) distributed data store (DDS) as its core data model, but also demonstrates leveraging nested [SharedString](https://fluidframework.com/docs/data-structures/string) DDSs to enable live, collaborative text within the to-do list and its items.
 
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=FALSE) -->
 

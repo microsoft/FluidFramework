@@ -28,7 +28,7 @@ export interface TodoListAppViewProps {
 }
 
 /**
- * TODO list application view component.
+ * To-do list application view component.
  */
 export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 	props: TodoListAppViewProps,
@@ -49,7 +49,7 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 				setTitleString(title as ISharedString);
 			})
 			.catch((error) => {
-				console.error("Failed to get TODO list title:", error);
+				console.error("Failed to get to-do list title:", error);
 				throw error;
 			});
 		return () => {};
@@ -78,7 +78,7 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 				}
 			})
 			.catch((error) => {
-				console.error("Failed to create TODO item:", error);
+				console.error("Failed to create to-do item:", error);
 				throw error;
 			});
 	};
@@ -128,7 +128,7 @@ interface TodoItemViewProps {
 }
 
 /**
- * TODO list item view component.
+ * To-do list item view component.
  */
 const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItem } = props;
@@ -147,7 +147,7 @@ const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => 
 				setItemTitle(text as SharedString);
 			})
 			.catch((error) => {
-				console.error("Failed to get TODO item title:", error);
+				console.error("Failed to get to-do item title:", error);
 				throw error;
 			});
 	}, [todoItemTitleHandle]);
@@ -160,7 +160,7 @@ const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => 
 				setItemDescription(text as SharedString);
 			})
 			.catch((error) => {
-				console.error("Failed to get TODO item description:", error);
+				console.error("Failed to get to-do item description:", error);
 				throw error;
 			});
 	}, [todoItemDescriptionHandle]);

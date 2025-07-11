@@ -8,21 +8,21 @@ import { SchemaFactory } from "fluid-framework";
 const schemaFactory = new SchemaFactory("fluid-example-external-controller");
 
 /**
- * An item in a TODO list.
+ * An item in a to-do list.
  */
 export class TodoItem extends schemaFactory.object("TodoItem", {
 	/**
-	 * A unique identifier for the TODO item.
+	 * A unique identifier for the to-do item.
 	 */
 	id: schemaFactory.identifier,
 
 	/**
-	 * Handle to a `SharedString` representing the TODO item's title.
+	 * Handle to a `SharedString` representing the to-do item's title.
 	 */
 	title: schemaFactory.handle,
 
 	/**
-	 * Handle to a `SharedString` representing the TODO item's description.
+	 * Handle to a `SharedString` representing the to-do item's description.
 	 */
 	description: schemaFactory.handle,
 
@@ -33,16 +33,16 @@ export class TodoItem extends schemaFactory.object("TodoItem", {
 }) {}
 
 /**
- * A TODO list, comprised of {@link TodoItem}s.
+ * A to-do list, comprised of {@link TodoItem}s.
  */
 export class TodoList extends schemaFactory.object("TodoList", {
 	/**
-	 * Handle to a `SharedString` representing the TODO list's title.
+	 * Handle to a `SharedString` representing the to-do list's title.
 	 */
 	title: schemaFactory.handle,
 
 	/**
-	 * The list's TODO items
+	 * The list's to-do items
 	 */
 	items: schemaFactory.array(TodoItem),
 }) {}

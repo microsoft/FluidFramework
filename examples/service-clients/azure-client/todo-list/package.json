@@ -2,7 +2,7 @@
 	"name": "@fluid-example/app-integration-todo-list",
 	"version": "2.51.0",
 	"private": true,
-	"description": "Minimal Fluid Container sample demonstrating the use of SharedTree and nested DDSs via a simple TODO list application.",
+	"description": "Minimal Fluid Container sample demonstrating the use of SharedTree and nested DDSs via a simple to-do list application.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
