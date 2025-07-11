@@ -92,13 +92,18 @@ interface PendingKeyDelete {
 	pendingMessageId: number;
 }
 
+interface PendingClear {
+	type: "clear";
+	pendingMessageId: number;
+}
+
 interface PendingKeyLifetime {
 	type: "lifetime";
 	key: string;
 	keyChanges: PendingKeySet[];
 }
 
-type PendingChange = PendingKeyLifetime | PendingKeyDelete;
+type PendingChange = PendingKeyLifetime | PendingKeyDelete | PendingClear;
 
 // TODO: Just exporting these for the metadata test, should they be exported and should that be tested?
 /**
@@ -170,10 +175,6 @@ export class MapKernel {
 	 */
 	private readonly sequencedData = new Map<string, ILocalValue>();
 	private readonly pendingData: PendingChange[] = [];
-	/**
-	 * The pending ids of any clears that have been performed locally but not yet ack'd from the server
-	 */
-	private readonly pendingClearMessageIds: number[] = [];
 
 	/**
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
@@ -210,7 +211,7 @@ export class MapKernel {
 		const pendingDataIterator = this.pendingData.values();
 		const next = (): IteratorResult<[string, ILocalValue]> => {
 			// TODO CONVERSION: This empty clear check can fold into the some check below.
-			if (this.pendingClearMessageIds.length === 0) {
+			if (!this.pendingData.some((change) => change.type === "clear")) {
 				let nextSequencedVal = sequencedDataIterator.next();
 				while (!nextSequencedVal.done) {
 					const [key] = nextSequencedVal.value;
@@ -218,7 +219,7 @@ export class MapKernel {
 					// Either it is optimistically deleted and will not be part of the iteration, or it was
 					// re-added later and we'll iterate to it when we get to the pending data.
 					if (
-						!this.pendingData.some((change) => change.key === key && change.type === "delete")
+						!this.pendingData.some((change) => change.type === "delete" && change.key === key)
 					) {
 						const optimisticValue = this.getOptimisticLocalValue(key);
 						assert(
@@ -234,28 +235,31 @@ export class MapKernel {
 			let nextPendingVal = pendingDataIterator.next();
 			while (!nextPendingVal.done) {
 				const pendingChange = nextPendingVal.value;
-				const nextPendingValIndex = this.pendingData.indexOf(pendingChange);
-				const mostRecentDeleteIndex = findLastIndex(
-					this.pendingData,
-					(change) => change.key === pendingChange.key && change.type === "delete",
-				);
-				const latestPendingClearMessageId =
-					this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
-				if (pendingChange.type === "lifetime" && nextPendingValIndex > mostRecentDeleteIndex) {
-					const latestPendingValue =
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						pendingChange.keyChanges[pendingChange.keyChanges.length - 1]!;
+				if (pendingChange.type === "lifetime") {
+					const nextPendingValIndex = this.pendingData.indexOf(pendingChange);
+					const mostRecentDeleteOrClearIndex = findLastIndex(
+						this.pendingData,
+						(change) =>
+							change.type === "clear" ||
+							(change.type === "delete" && change.key === pendingChange.key),
+					);
 					if (
-						latestPendingClearMessageId === undefined ||
-						latestPendingClearMessageId < latestPendingValue.pendingMessageId
+						pendingChange.type === "lifetime" &&
+						nextPendingValIndex > mostRecentDeleteOrClearIndex
 					) {
+						const latestPendingValue =
+							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+							pendingChange.keyChanges[pendingChange.keyChanges.length - 1]!;
 						// TODO: clean up
 						// TODO: Consider the case where we have started iterating the pending data, then all of our
 						// ops get sequenced, then we finish iterating the pending data (we would skip the remaining
 						// elements since we can't go back to the sequenced data).
 						// Skip iterating if we would have would have iterated it as part of the sequenced data.
 						// eslint-disable-next-line unicorn/no-lonely-if
-						if (!this.sequencedData.has(pendingChange.key) || mostRecentDeleteIndex !== -1) {
+						if (
+							!this.sequencedData.has(pendingChange.key) ||
+							mostRecentDeleteOrClearIndex !== -1
+						) {
 							return { value: [pendingChange.key, latestPendingValue.value], done: false };
 						}
 					}
@@ -377,24 +381,21 @@ export class MapKernel {
 	// TODO CONVERSION: This would just search back through the pending changes, stop early if find a
 	// clear or delete, return sequenced value if not found.
 	private readonly getOptimisticLocalValue = (key: string): ILocalValue | undefined => {
-		const latestPendingChange = findLast(this.pendingData, (change) => change.key === key);
+		const latestPendingChange = findLast(
+			this.pendingData,
+			(change) => change.type === "clear" || change.key === key,
+		);
 
-		const latestPendingClearMessageId =
-			this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
 		if (latestPendingChange === undefined) {
-			return latestPendingClearMessageId === undefined
-				? this.sequencedData.get(key)
-				: undefined;
-		} else if (latestPendingChange.type === "delete") {
-			return undefined;
-		} else {
+			return this.sequencedData.get(key);
+		} else if (latestPendingChange.type === "lifetime") {
 			const latestPendingSet =
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				latestPendingChange.keyChanges[latestPendingChange.keyChanges.length - 1]!;
-			return latestPendingClearMessageId === undefined ||
-				latestPendingClearMessageId < latestPendingSet.pendingMessageId
-				? latestPendingSet.value
-				: undefined;
+			return latestPendingSet.value;
+		} else {
+			// Delete or clear
+			return undefined;
 		}
 	};
 
@@ -444,19 +445,17 @@ export class MapKernel {
 		// 2. The most recent change was a deletion (as this terminates the prior lifetime)
 		// 3. A clear was sent after the last change (which also terminates the prior lifetime)
 		// TODO: Should I just check the optimistic value?
-		let pendingKeyChange = findLast(this.pendingData, (change) => change.key === key);
-		const latestPendingClearMessageId =
-			this.pendingClearMessageIds[this.pendingClearMessageIds.length - 1];
+		let latestPendingChange = findLast(
+			this.pendingData,
+			(change) => change.type === "clear" || change.key === key,
+		);
 		if (
-			pendingKeyChange === undefined ||
-			pendingKeyChange.type === "delete" ||
-			(latestPendingClearMessageId !== undefined &&
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				pendingKeyChange.keyChanges[pendingKeyChange.keyChanges.length - 1]!.pendingMessageId <
-					latestPendingClearMessageId)
+			latestPendingChange === undefined ||
+			latestPendingChange.type === "delete" ||
+			latestPendingChange.type === "clear"
 		) {
-			pendingKeyChange = { type: "lifetime", key, keyChanges: [] };
-			this.pendingData.push(pendingKeyChange);
+			latestPendingChange = { type: "lifetime", key, keyChanges: [] };
+			this.pendingData.push(latestPendingChange);
 		}
 		const pendingMessageId = this.nextPendingMessageId++;
 		const keyChange: PendingKeySet = {
@@ -464,7 +463,7 @@ export class MapKernel {
 			type: "set",
 			value: localValue,
 		};
-		pendingKeyChange.keyChanges.push(keyChange);
+		latestPendingChange.keyChanges.push(keyChange);
 		const localMetadata: PendingKeySetMetadata = {
 			pendingMessageId,
 			type: "set",
@@ -557,8 +556,12 @@ export class MapKernel {
 		};
 
 		const pendingMessageId = this.nextPendingMessageId++;
+		const pendingClear: PendingClear = {
+			type: "clear",
+			pendingMessageId,
+		};
+		this.pendingData.push(pendingClear);
 		// TODO CONVERSION: This just inserts into the list of pending changes
-		this.pendingClearMessageIds.push(pendingMessageId);
 		const localMetadata: PendingClearMetadata = {
 			type: "clear",
 			pendingMessageId,
@@ -681,12 +684,12 @@ export class MapKernel {
 
 		if (mapOp.type === "clear") {
 			// Just pop the pending changes, it better be the last one
-			const pendingClear = this.pendingClearMessageIds.pop();
 			// TODO: Really need to assert all this?
+			const pendingDataClear = this.pendingData.pop();
 			assert(
-				pendingLocalOpMetadata.type === "clear" &&
-					pendingClear !== undefined &&
-					pendingClear === pendingLocalOpMetadata.pendingMessageId,
+				pendingLocalOpMetadata.type === "clear" && pendingDataClear !== undefined,
+				// TODO CONVERSION: Consider adding the change to the metadata
+				// && pendingDataClear === pendingLocalOpMetadata.change,
 				"Unexpected clear rollback",
 			);
 			for (const [key] of this.internalIterator()) {
@@ -702,7 +705,7 @@ export class MapKernel {
 		} else {
 			const pendingChangeIndex = findLastIndex(
 				this.pendingData,
-				(change) => change.key === mapOp.key,
+				(change) => change.type !== "clear" && change.key === mapOp.key,
 			);
 			const pendingChange = this.pendingData[pendingChangeIndex];
 			assert(pendingChange !== undefined, "Unexpected rollback for key");
@@ -714,7 +717,7 @@ export class MapKernel {
 					true,
 					this.eventEmitter,
 				);
-			} else {
+			} else if (pendingChange.type === "lifetime") {
 				// TODO: Should just be able to check the pendingKeyChange's set value instead of getting the optimistic value.
 				const previousLocalValue = this.getOptimisticLocalValue(mapOp.key);
 				const pendingKeyChange = pendingChange.keyChanges.pop();
@@ -734,6 +737,8 @@ export class MapKernel {
 					true,
 					this.eventEmitter,
 				);
+			} else {
+				throw new Error("Should have filtered out clear changes before this point");
 			}
 		}
 	}
@@ -763,11 +768,16 @@ export class MapKernel {
 						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
 					);
 					// TODO CONVERSION: Just shift the pending changes, it better be the next one
-					const pendingClearMessageId = this.pendingClearMessageIds.shift();
+					const pendingClear = this.pendingData.shift();
 					assert(
-						pendingClearMessageId === localOpMetadata.data.pendingMessageId,
-						0x2fb /* pendingMessageId does not match */,
+						pendingClear !== undefined && pendingClear.type === "clear",
+						"Processing unexpected local clear op",
 					);
+					// TODO CONVERSION: Reuse assert code
+					// assert(
+					// 	pendingClearMessageId === localOpMetadata.data.pendingMessageId,
+					// 	0x2fb /* pendingMessageId does not match */,
+					// );
 				} else {
 					// Only emit for remote ops, we would have already emitted for local ops.
 					// TODO: Should also only emit if there are no local pending clears which would mask the remote clear?
@@ -790,13 +800,12 @@ export class MapKernel {
 				);
 				// We don't reuse the metadata pendingMessageId but send a new one on each submit.
 				// TODO CONVERSION: Instead of shift/push, mutate the pending change similar to the other ops
-				const pendingClearMessageId = this.pendingClearMessageIds.shift();
-				assert(
-					pendingClearMessageId === localOpMetadata.data.pendingMessageId,
-					0x2fd /* pendingMessageId does not match */,
-				);
+				// TODO CONVERSION: Reuse assert code
+				// assert(
+				// 	pendingClearMessageId === localOpMetadata.data.pendingMessageId,
+				// 	0x2fd /* pendingMessageId does not match */,
+				// );
 				const pendingMessageId = this.nextPendingMessageId++;
-				this.pendingClearMessageIds.push(pendingMessageId);
 				const localMetadata: PendingClearMetadata = { type: "clear", pendingMessageId };
 				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
 				this.submitMessage(op, listNode);
@@ -810,7 +819,7 @@ export class MapKernel {
 			) => {
 				const { key } = op;
 				const pendingKeyChangeIndex = this.pendingData.findIndex(
-					(lifetime) => lifetime.key === key,
+					(change) => change.type !== "clear" && change.key === key,
 				);
 				if (local) {
 					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
@@ -836,7 +845,10 @@ export class MapKernel {
 					this.sequencedData.delete(key);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 					// TODO CONVERSION: Instead of length check, a some check
-					if (pendingKeyChangeIndex === -1 && this.pendingClearMessageIds.length === 0) {
+					if (
+						pendingKeyChangeIndex === -1 &&
+						!this.pendingData.some((change) => change.type === "clear")
+					) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
@@ -877,7 +889,7 @@ export class MapKernel {
 			) => {
 				const { key, value } = op;
 				const pendingKeyChangeIndex = this.pendingData.findIndex(
-					(change) => change.key === key,
+					(change) => change.type !== "clear" && change.key === key,
 				);
 				if (local) {
 					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
@@ -911,7 +923,10 @@ export class MapKernel {
 					this.sequencedData.set(key, localValue);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 					// TODO CONVERSION: Another some check
-					if (pendingKeyChangeIndex === -1 && this.pendingClearMessageIds.length === 0) {
+					if (
+						pendingKeyChangeIndex === -1 &&
+						!this.pendingData.some((change) => change.type === "clear")
+					) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
