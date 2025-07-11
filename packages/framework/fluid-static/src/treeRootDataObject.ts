@@ -131,11 +131,11 @@ async function provideEntryPoint(
  */
 export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	// TODO: use for runtime factory.
-	readonly #treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>;
+	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject, ITree>;
 
 	public constructor(
 		compatibilityMode: CompatibilityMode,
-		treeRootDataObjectFactory: PureDataObjectFactory<TreeRootDataObject>,
+		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject, ITree>,
 		overrides?: Partial<{
 			runtimeOptions: Partial<IContainerRuntimeOptions>;
 			minVersionForCollab: MinimumVersionForCollab;
