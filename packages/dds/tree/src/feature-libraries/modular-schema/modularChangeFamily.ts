@@ -3099,8 +3099,8 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 		if (countToProcess < count) {
 			const remainingCount = count - countToProcess;
 			this.composeAttachDetach(
-				offsetChangeAtomId(baseAttachId, remainingCount),
-				offsetChangeAtomId(newDetachId, remainingCount),
+				offsetChangeAtomId(baseAttachId, countToProcess),
+				offsetChangeAtomId(newDetachId, countToProcess),
 				remainingCount,
 			);
 		}
