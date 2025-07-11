@@ -720,7 +720,7 @@ function createArrayNodeProxy(
 ): TreeArrayNode {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
-	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
+	// requirements without use of Array[Symbol.species], which is potentially on a path to deprecation.
 	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
 		get: (target, key, receiver) => {
 			const field = getSequenceField(receiver);
@@ -729,6 +729,12 @@ function createArrayNodeProxy(
 			if (maybeIndex === undefined) {
 				if (key === "length") {
 					return field.length;
+				}
+
+				// In NodeJS 22, assert.strict.deepEqual started special casing well known constructors like Array.
+				// That made this necessary, ensuring that in POJO mode, TreeArrayNode are still deepEqual to arrays.
+				if (key === "constructor") {
+					return proxyTarget.constructor;
 				}
 
 				// Pass the proxy as the receiver here, so that any methods on
