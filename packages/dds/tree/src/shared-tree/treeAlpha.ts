@@ -191,6 +191,12 @@ export interface TreeIdentifierUtils {
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
+ * @privateRemarks
+ * TODO: AB#43548:
+ * How all the create and all the import and export APIs handle unknown optional fields needs to be figured out, tested and documented.
+ * This will need to be extended/generalized to cover other future schema evolution options as well once they exist.
+ * See also TreeBeta.clone with a similar issue.
+ *
  * @system @sealed @alpha
  */
 export interface TreeAlpha {
@@ -214,7 +220,7 @@ export interface TreeAlpha {
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
 	 * @privateRemarks
-	 * There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
+	 * TODO: AB#43548: There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -592,6 +598,7 @@ export const TreeAlpha: TreeAlpha = {
 					return undefined;
 				}
 			// Fall through
+			case NodeKind.Record:
 			case NodeKind.Object: {
 				let storedKey: string | number = propertyKey;
 				if (isObjectNodeSchema(schema)) {
@@ -643,7 +650,8 @@ export const TreeAlpha: TreeAlpha = {
 				}
 				break;
 			}
-			case NodeKind.Map: {
+			case NodeKind.Map:
+			case NodeKind.Record: {
 				for (const [key, flexField] of flexNode.fields) {
 					const childTreeNode = tryGetTreeNodeForField(flexField);
 					if (childTreeNode !== undefined) {

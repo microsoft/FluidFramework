@@ -519,8 +519,6 @@ export class MockHandle<T> extends FluidHandleBase<T> {
     readonly absolutePath: string;
     // (undocumented)
     attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(): void;
     // (undocumented)
     get(): Promise<T>;
     // (undocumented)
@@ -611,6 +609,8 @@ export class MockStorage implements IChannelStorageService {
     contains(path: string): Promise<boolean>;
     // (undocumented)
     static createFromSummary(summaryTree: ISummaryTree): MockStorage;
+    // (undocumented)
+    getSnapshotTree(): ISnapshotTree | undefined;
     // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)

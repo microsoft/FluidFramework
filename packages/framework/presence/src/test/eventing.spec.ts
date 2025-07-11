@@ -9,11 +9,12 @@ import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal
 import type { SinonFakeTimers, SinonSpy } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { Attendee, WorkspaceAddress } from "../index.js";
+import type { Attendee, PresenceWithNotifications, WorkspaceAddress } from "../index.js";
 import { toOpaqueJson } from "../internalUtils.js";
 import type { GeneralDatastoreMessageContent, InternalWorkspaceAddress } from "../protocol.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	prepareConnectedPresence,
@@ -144,7 +145,8 @@ describe("Presence", () => {
 		let runtime: MockEphemeralRuntime;
 		let logger: EventAndErrorTrackingLogger;
 		let clock: SinonFakeTimers;
-		let presence: ReturnType<typeof prepareConnectedPresence>;
+		let presence: PresenceWithNotifications;
+		let processSignal: ProcessSignalFunction;
 		let latest: LatestRaw<{ x: number; y: number; z: number }>;
 		let latestMap: LatestMapRaw<{ a: number; b: number } | { c: number; d: number }>;
 		let notificationManager: NotificationsManager<{ newId: (id: number) => void }>;
@@ -218,7 +220,13 @@ describe("Presence", () => {
 		beforeEach(() => {
 			logger = new EventAndErrorTrackingLogger();
 			runtime = new MockEphemeralRuntime(logger);
-			presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+			({ presence, processSignal } = prepareConnectedPresence(
+				runtime,
+				"attendeeId-2",
+				"client2",
+				clock,
+				logger,
+			));
 		});
 
 		afterEach(function (done: Mocha.Done) {
@@ -284,7 +292,7 @@ describe("Presence", () => {
 		function processUpdates(valueManagerUpdates: GeneralDatastoreMessageContent): void {
 			const updates = { "system:presence": attendeeUpdate, ...valueManagerUpdates };
 
-			presence.processSignal(
+			processSignal(
 				[],
 				{
 					type: datastoreUpdateType,
