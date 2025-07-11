@@ -380,7 +380,8 @@
 			"axios@<0.30.0": "^0.30.0",
 			"@fluidframework/server-services-shared": "file:./fluidframework-server-services-shared-6.0.0.tgz",
 			"@types/react": "^18.3.12",
-			"@types/glob": "^8.1.0"
+			"@types/glob": "^8.1.0",
+			"webpack": "~5.94.0"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
