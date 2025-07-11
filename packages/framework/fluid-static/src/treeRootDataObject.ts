@@ -8,7 +8,12 @@ import {
 	TreeDataObject,
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import type { PureDataObjectFactory } from "@fluidframework/aqueduct/internal";
+import type {
+	DataObjectTypes,
+	IDataObjectProps,
+	PureDataObjectFactory,
+	TreeDataObjectProps,
+} from "@fluidframework/aqueduct/internal";
 import type {
 	IContainerRuntimeOptions,
 	MinimumVersionForCollab,
@@ -18,9 +23,8 @@ import type {
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import type { ITree } from "@fluidframework/tree/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
@@ -34,10 +38,18 @@ import type {
 	LoadableObjectKindRecord,
 	LoadableObjectRecord,
 } from "./types.js";
-import { compatibilityModeToMinVersionForCollab, makeFluidObject, parseDataObjectsFromSharedObjects } from "./utils.js";
+import {
+	compatibilityModeToMinVersionForCollab,
+	makeFluidObject,
+	parseDataObjectsFromSharedObjects,
+} from "./utils.js";
 
 interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
+}
+
+interface TreeRootDataObjectProps extends TreeDataObjectProps {
+	readonly treeKey: string;
 }
 
 /**
@@ -45,11 +57,10 @@ interface IProvideTreeRootDataObject {
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
 export class TreeRootDataObject
-	extends TreeDataObject<ITree>
+	extends TreeDataObject<ITree, DataObjectTypes<TreeRootDataObjectProps>>
 	implements IRootDataObject, IProvideTreeRootDataObject
 {
-	readonly #initialObjects: LoadableObjectRecord = {};
-	readonly #initialObjectsKey = "tree";
+	#initialObjects: LoadableObjectRecord | undefined;
 
 	public get TreeRootDataObject(): TreeRootDataObject {
 		return this;
@@ -67,11 +78,12 @@ export class TreeRootDataObject
 	}
 
 	protected async hasInitialized(): Promise<void> {
-		Object.assign(this.#initialObjects, { [this.#initialObjectsKey]: this.treeView });
+		const treeKey = this.initProps?.treeKey ?? fail("Tree key must be provided in initProps");
+		this.#initialObjects = { [treeKey]: this.treeView };
 	}
 
 	public get initialObjects(): LoadableObjectRecord {
-		if (Object.keys(this.#initialObjects).length === 0) {
+		if (this.#initialObjects === undefined || Object.keys(this.#initialObjects).length === 0) {
 			throw new Error("Initial Objects were not correctly initialized");
 		}
 		return this.#initialObjects;
@@ -164,17 +176,28 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
 > {
 	public constructor(
 		treeKey: string,
-		treeFactory: IChannelFactory<ITree>
+		treeFactory: IChannelFactory<ITree>,
+		dynamicObjectTypes?: readonly IChannelFactory[],
 	) {
+		type Ctor = new (
+			props: IDataObjectProps<DataObjectTypes<TreeRootDataObjectProps>>,
+		) => TreeRootDataObject;
+
+		const ctor: Ctor = ((_props) =>
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+			new TreeRootDataObject({
+				..._props,
+				treeKey,
+			})) as unknown as Ctor;
+
 		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
 		// and instead we override the necessary methods in this class to use the registry received in the constructor.
 		super({
 			type: treeRootDataObjectType,
-			ctor: TreeRootDataObject,
-			sharedObjects,
+			ctor,
+			sharedObjects: [treeFactory, ...(dynamicObjectTypes ?? [])],
 		});
 	}
-
 }
 
 /**
@@ -183,7 +206,9 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
  */
 export function validateAndExtractTreeFactory(
 	schema: ContainerSchema,
-): [string, IChannelFactory<ITree>] {
+): [string, IChannelFactory<ITree>, readonly IChannelFactory[]] {
+	// TODO: deal with dynamicObjectTypes
+	// Also consider whether or not we need to split the tree factory out from the other (dynamic only) shared objects.
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	if (registryEntries.length > 0) {
 		throw new Error(
@@ -201,7 +226,15 @@ export function validateAndExtractTreeFactory(
 	}
 	const schemaKeys = Object.keys(schema.initialObjects);
 	if (schemaKeys.length !== 1 || !schemaKeys[0]) {
-		throw new Error("Container schema must have exactly one initial object for tree-based data object.");
+		throw new Error(
+			"Container schema must have exactly one initial object for tree-based data object.",
+		);
 	}
-	return [schemaKeys[0], factory as IChannelFactory<ITree>];
+	return [
+		schemaKeys[0],
+		factory as IChannelFactory<ITree>,
+		[
+			/* TODO: dynamicObjectTypes */
+		],
+	];
 }

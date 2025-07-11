@@ -9,10 +9,11 @@ import {
 } from "@fluidframework/azure-client";
 // eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
+// eslint-disable-next-line import/no-extraneous-dependencies, import/no-internal-modules
+import { configuredSharedTree } from "@fluidframework/tree/internal";
 import {
 	type ContainerSchema,
 	type IFluidContainer,
-	SharedTree,
 	TreeViewConfiguration,
 } from "fluid-framework";
 import { v4 as uuid } from "uuid";
@@ -57,6 +58,8 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
 				tokenProvider: new InsecureTokenProvider("fooBar", user),
 				endpoint: "http://localhost:7070",
 			};
+
+const SharedTree = configuredSharedTree({});
 
 /**
  * Schema for the Dice Roller Container.

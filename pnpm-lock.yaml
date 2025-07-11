@@ -4442,6 +4442,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../../packages/utils/telemetry-utils
+      '@fluidframework/tree':
+        specifier: workspace:~
+        version: link:../../../../packages/dds/tree
       assert:
         specifier: ^2.0.0
         version: 2.1.0

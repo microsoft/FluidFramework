@@ -60,15 +60,15 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	useTreeBasedDataObject?: boolean;
 }): IRuntimeFactory {
-	if (props.useTreeBasedDataObject) {
-		const [treeKey, treeFactory] = validateAndExtractTreeSchema(props.schema);
+	// eslint-disable-next-line unicorn/no-negated-condition
+	if (props.useTreeBasedDataObject !== false) {
+		const [treeKey, treeFactory, dynamicObjectTypes] = validateAndExtractTreeSchema(
+			props.schema,
+		);
 		return new TreeDOProviderContainerRuntimeFactory(
 			props.schema,
 			props.compatibilityMode,
-			new TreeRootDataObjectFactory(
-				treeKey,
-				treeFactory,
-			),
+			new TreeRootDataObjectFactory(treeKey, treeFactory, dynamicObjectTypes),
 			{
 				runtimeOptions: props.runtimeOptionOverrides,
 				minVersionForCollab: props.minVersionForCollabOverride,
@@ -76,7 +76,8 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		);
 	} else {
 		const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(props.schema);
-		const registry = props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+		const registry =
+			props.rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 		return new DOProviderContainerRuntimeFactory(
 			props.schema,
