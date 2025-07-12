@@ -5,6 +5,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		"skipLibCheck": true,
 		"types": ["node"],
 		"noUncheckedIndexedAccess": false,
 		"exactOptionalPropertyTypes": false,
