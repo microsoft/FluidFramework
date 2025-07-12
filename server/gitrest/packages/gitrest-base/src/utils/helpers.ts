@@ -54,10 +54,23 @@ export function validateBlobContent(content: string): boolean {
 export function getFilesystemManagerFactory(
 	fileSystemManagerFactories: IFileSystemManagerFactories,
 	isEphemeralContainer: boolean,
+	useHybridFs: boolean = false,
 ) {
-	return isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-		? fileSystemManagerFactories.ephemeralFileSystemManagerFactory
-		: fileSystemManagerFactories.defaultFileSystemManagerFactory;
+	if (isEphemeralContainer && fileSystemManagerFactories.ephemeralFileSystemManagerFactory) {
+		Lumberjack.info("Using **ephemeral** file system manager factory for the request");
+		return fileSystemManagerFactories.ephemeralFileSystemManagerFactory;
+	}
+
+	if (
+		!isEphemeralContainer &&
+		useHybridFs &&
+		fileSystemManagerFactories.hybridFileSystemManagerFactory
+	) {
+		Lumberjack.info("Using **hybrid** file system manager factory for the request");
+		return fileSystemManagerFactories.hybridFileSystemManagerFactory;
+	}
+	Lumberjack.info("Using **default** file system manager factory for the request");
+	return fileSystemManagerFactories.defaultFileSystemManagerFactory;
 }
 
 /**
