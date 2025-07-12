@@ -4,6 +4,7 @@
  */
 
 import { cosmiconfigSync } from "cosmiconfig";
+import type { RequireExactlyOne } from "type-fest";
 
 import {
 	type IPackage,
@@ -13,18 +14,58 @@ import {
 } from "./types.js";
 
 /**
- * The version of the BuildProject configuration currently used.
+ * The minimum version of the BuildProject configuration currently supported.
  */
-export const BUILDPROJECT_CONFIG_VERSION = 1;
+export const BUILDPROJECT_CONFIG_MIN_VERSION = 1;
+
+/**
+ * The main configuration type for a BuildProject. This is the top-level configuration that defines
+ * workspaces, release groups, and other project settings.
+ *
+ * @remarks
+ * This type is versioned to allow for future configuration format changes while maintaining backward compatibility.
+ * Currently only supports version 1 configuration format.
+ */
+export type BuildProjectConfig = BuildProjectConfigV1;
 
 /**
  * Top-most configuration for BuildProject settings.
  */
-export interface BuildProjectConfig {
+export interface BuildProjectConfigBase {
 	/**
 	 * The version of the config.
 	 */
-	version: typeof BUILDPROJECT_CONFIG_VERSION;
+	version: number;
+
+	/**
+	 * The layout of the BuildProject into workspaces and release groups.
+	 */
+	buildProject: {
+		workspaces: {
+			/**
+			 * A mapping of workspace name to folder containing a workspace config file (e.g. pnpm-workspace.yaml).
+			 */
+			[name: string]: WorkspaceDefinition;
+		};
+	};
+
+	/**
+	 * An array of glob strings. Any paths that match at least one of these globs will be excluded from the BuildProject.
+	 * This setting is helpful if you need to exclude workspaces that are used for testing or that are not yet managed by
+	 * sail.
+	 */
+	excludeGlobs: string[];
+}
+
+/**
+ * Base interface for version 1 BuildProject configuration. This extends the main configuration base
+ * with backward compatibility support for the legacy fluid-build configuration format.
+ */
+export interface BuildProjectConfigV1Base extends Partial<BuildProjectConfigBase> {
+	/**
+	 * The version of the config.
+	 */
+	version: 1;
 
 	/**
 	 * **BACK-COMPAT ONLY**
@@ -34,22 +75,35 @@ export interface BuildProjectConfig {
 	 * @deprecated Use the buildProject property instead.
 	 */
 	repoPackages?: IFluidBuildDirs;
-
-	/**
-	 * The layout of the build project into workspaces and release groups.
-	 */
-	buildProject?: {
-		workspaces: {
-			/**
-			 * A mapping of workspace name to folder containing a workspace config file (e.g. pnpm-workspace.yaml).
-			 */
-			[name: string]: WorkspaceDefinition;
-		};
-	};
 }
 
 /**
- * The definition of a workspace ih configuration.
+ * Version 1 configuration for a BuildProject. This type ensures that exactly one of the required
+ * configuration properties is provided: either the new `buildProject` format, `excludeGlobs`, or
+ * the legacy `repoPackages` format.
+ *
+ * @remarks
+ * This type uses the `RequireExactlyOne` utility type to enforce that users specify exactly
+ * one of the mutually exclusive configuration options. This prevents invalid configurations where
+ * multiple incompatible formats are specified simultaneously.
+ */
+export type BuildProjectConfigV1 = RequireExactlyOne<
+	BuildProjectConfigV1Base,
+	"buildProject" | "excludeGlobs" | "repoPackages"
+>;
+
+/**
+ * Type guard to check if the input is a BuildProjectConfigV1.
+ *
+ * @param input - The input to check.
+ * @returns `true` if the input is a BuildProjectConfigV1; `false` otherwise.
+ */
+export function isV1Config(input: BuildProjectConfig): input is BuildProjectConfigV1 {
+	return input.version === 1;
+}
+
+/**
+ * The definition of a workspace in configuration.
  */
 export interface WorkspaceDefinition {
 	/**
@@ -230,10 +284,10 @@ export function getBuildProjectConfig(
 	}
 	const config = configResult.config as BuildProjectConfig;
 
-	// Only version 1 of the config is supported. If any other value is provided, throw an error.
-	if (config.version !== BUILDPROJECT_CONFIG_VERSION) {
+	// Only versions higher than the minimum are supported. If any other value is provided, throw an error.
+	if (config.version < BUILDPROJECT_CONFIG_MIN_VERSION) {
 		throw new Error(
-			`Configuration version is not supported: ${config?.version}. Config version must be ${BUILDPROJECT_CONFIG_VERSION}.`,
+			`Configuration version is not supported: ${config?.version}. Config version must be >= ${BUILDPROJECT_CONFIG_MIN_VERSION}.`,
 		);
 	}
 
