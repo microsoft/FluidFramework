@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { Agent, AgentName } from "package-manager-detector";
 import { SimpleGit } from "simple-git";
 import type { Opaque, SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
@@ -30,10 +31,22 @@ export interface PnpmPackageJsonFields {
  * All known package.json fields including those that are specific to build-infrastructure.
  * The `name`, `scripts`, and `version` fields are required, unlike standard package.json.
  */
-export type PackageJson = SetRequired<
-	StandardPackageJson & PnpmPackageJsonFields,
-	"name" | "scripts" | "version"
->;
+export type PackageJson = StandardPackageJson &
+	SetRequired<
+		Pick<
+			StandardPackageJson,
+			| "name"
+			| "scripts"
+			| "version"
+			| "dependencies"
+			| "devDependencies"
+			| "peerDependencies"
+			| "private"
+			| "type"
+		>,
+		"name" | "scripts" | "version"
+	> &
+	PnpmPackageJsonFields;
 
 /**
  * Additional properties that can be added to an {@link IPackage}.
@@ -80,6 +93,12 @@ export interface IBuildProject<P extends IPackage = IPackage> extends Reloadable
 	 * The configuration for the build project.
 	 */
 	configuration: BuildProjectConfig;
+
+	/**
+	 * The source for the configuration. If the configuration is loaded from a file, this will be the path to the file. If
+	 * the configuration is inferred, this will be the string "INFERRED".
+	 */
+	configurationSource: string | "INFERRED";
 
 	/**
 	 * Transforms an absolute path to a path relative to the IBuildProject root.
@@ -168,7 +187,7 @@ export interface IWorkspace extends Installable, Reloadable {
 	name: WorkspaceName;
 
 	/**
-	 * The root directory of the workspace. This directory will contain the workspace root package.
+	 * The absolute path to the root directory of the workspace. This directory will contain the workspace root package.
 	 */
 	directory: string;
 
@@ -192,13 +211,19 @@ export interface IWorkspace extends Installable, Reloadable {
 	 * constituent packages as well.
 	 */
 	packages: IPackage[];
+
+	/**
+	 * The package manager used to manage this workspace.
+	 */
+	packageManager: IPackageManager;
+
 	toString(): string;
 }
 
 /**
  * A tagged type representing release group names.
  */
-export type ReleaseGroupName = Opaque<string, IReleaseGroup>;
+export type ReleaseGroupName = Opaque<string, "IReleaseGroup">;
 
 /**
  * A release group is a collection of packages that are versioned and released together. All packages within a release
@@ -272,7 +297,15 @@ export function isIReleaseGroup(
 /**
  * Known package managers supported by build-infrastructure.
  */
-export type PackageManagerName = "npm" | "pnpm" | "yarn";
+export type PackageManagerName = AgentName;
+
+/**
+ * For package managers that have multiple versions or flavors, this type contains the unambiguous string that can be
+ * used to install the package manager.
+ *
+ * For example, "yarn" is yarn 1, while "yarn\@berry" is yarn's new version.
+ */
+export type PackageManagerInstallName = Agent;
 
 /**
  * A package manager, such as "npm" or "pnpm".
@@ -284,9 +317,9 @@ export interface IPackageManager {
 	readonly name: PackageManagerName;
 
 	/**
-	 * The name of the lockfile used by the package manager.
+	 * The name of the lockfile(s) used by the package manager.
 	 */
-	readonly lockfileName: string;
+	readonly lockfileNames: string[];
 
 	/**
 	 * Returns an array of arguments, including the name of the command, e.g. "install", that can be used to install
@@ -366,16 +399,6 @@ export interface IPackage<J extends PackageJson = PackageJson>
 	 * The package.json contents of the package.
 	 */
 	packageJson: J;
-
-	/**
-	 * The package manager used to manage this package.
-	 *
-	 * @privateRemarks
-	 *
-	 * If this is needed at the package level, perhaps it should instead be retrieved from the package's workspace,
-	 * since the package manager is defined at the workspace level.
-	 */
-	readonly packageManager: IPackageManager;
 
 	/**
 	 * The version of the package. This is the same as `packageJson.version`.

@@ -1,0 +1,29 @@
+{
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "second-release-group-root",
+      "dependencies": {
+        "@fluid-tools/build-infrastructure": "link:../../../../../../build-infrastructure",
+      },
+    },
+    "packages/other-pkg-a": {
+      "name": "other-pkg-a",
+      "version": "2.0.0",
+      "dependencies": {
+        "other-pkg-b": "workspace:~",
+      },
+    },
+    "packages/other-pkg-b": {
+      "name": "other-pkg-b",
+      "version": "2.0.0",
+    },
+  },
+  "packages": {
+    "@fluid-tools/build-infrastructure": ["@fluid-tools/build-infrastructure@link:../../../../../../build-infrastructure", { "bin": { "buildProject": "./bin/run.mjs" } }],
+
+    "other-pkg-a": ["other-pkg-a@workspace:packages/other-pkg-a"],
+
+    "other-pkg-b": ["other-pkg-b@workspace:packages/other-pkg-b"],
+  }
+}
