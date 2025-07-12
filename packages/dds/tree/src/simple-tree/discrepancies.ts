@@ -122,7 +122,7 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	/**
 	 * List of annotated allowed types in viewed schema which are not allowed in stored schema
 	 */
-	view: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+	view: AnnotatedAllowedType<TreeNodeSchema>[];
 	/**
 	 * List of allowed type identifiers in stored schema which are not allowed in view schema
 	 */
