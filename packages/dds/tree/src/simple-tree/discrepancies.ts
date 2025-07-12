@@ -221,10 +221,10 @@ export function* getAllowedContentDiscrepancies(
 		const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
 		viewAllowedTypes.set(identifier, type);
 
-		const storedSchema = stored.nodeSchema.get(identifier);
+		const storedSchema = storedAllowedTypes.get(identifier);
 
 		// if the view schema has an allowed type that's not in the stored schema
-		if (!storedAllowedTypes.has(identifier) || storedSchema === undefined) {
+		if (storedSchema === undefined) {
 			const viewType = getViewNodeSchemaType(type);
 			// TODO does it make sense to have this mismatch when there will also be an allowedTypes mismatch?
 			yield {
