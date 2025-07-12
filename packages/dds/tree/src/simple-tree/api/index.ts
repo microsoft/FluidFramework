@@ -30,6 +30,8 @@ export {
 	type SchemaFactoryObjectOptions,
 	type SchemaStatics,
 	schemaStatics,
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
 } from "./schemaFactory.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
