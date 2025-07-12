@@ -19,7 +19,6 @@ import type { DocSection } from "@microsoft/tsdoc";
 
 import {
 	CodeSpanNode,
-	DocumentationNodeType,
 	HeadingNode,
 	LinkNode,
 	type PhrasingContent,
@@ -124,10 +123,7 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode(
-				[table],
-				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-			);
+		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
 }
 
 /**
@@ -333,9 +329,7 @@ export function createTypeParametersSummaryTable(
 			apiParameter.constraintExcerpt,
 			config,
 		);
-		return constraintSpan === undefined
-			? TableBodyCellNode.Empty
-			: new TableBodyCellNode([constraintSpan]);
+		return new TableBodyCellNode(constraintSpan);
 	}
 
 	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
@@ -343,9 +337,7 @@ export function createTypeParametersSummaryTable(
 			apiParameter.defaultTypeExcerpt,
 			config,
 		);
-		return excerptSpan === undefined
-			? TableBodyCellNode.Empty
-			: new TableBodyCellNode([excerptSpan]);
+		return new TableBodyCellNode(excerptSpan);
 	}
 
 	const bodyRows: TableBodyRowNode[] = [];
@@ -676,7 +668,7 @@ export function createModifiersCell(
 		if (needsComma) {
 			contents.push(new PlainTextNode(", "));
 		}
-		contents.push(CodeSpanNode.createFromPlainText(modifier));
+		contents.push(new CodeSpanNode(modifier));
 		needsComma = true;
 	}
 
@@ -711,9 +703,7 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: PhrasingContent[] = alerts.map((alert) =>
-		CodeSpanNode.createFromPlainText(alert),
-	);
+	const alertNodes: PhrasingContent[] = alerts.map((alert) => new CodeSpanNode(alert));
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
@@ -804,7 +794,7 @@ export function createTypeParameterSummaryCell(
  * @remarks This content will be generated as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param typeExcerpty - An excerpt describing the type to be displayed in the cell.
+ * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createTypeExcerptCell(
@@ -812,9 +802,7 @@ export function createTypeExcerptCell(
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-	return excerptSpan === undefined
-		? TableBodyCellNode.Empty
-		: new TableBodyCellNode([excerptSpan]);
+	return new TableBodyCellNode(excerptSpan);
 }
 
 /**
@@ -853,7 +841,7 @@ function transformTsdocSectionForTableCell(
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.
-	if (transformed.length === 1 && transformed[0].type === DocumentationNodeType.Paragraph) {
+	if (transformed.length === 1 && transformed[0].type === "paragraph") {
 		return transformed[0].children;
 	}
 

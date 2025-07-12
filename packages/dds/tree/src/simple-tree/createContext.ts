@@ -7,7 +7,7 @@ import { defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { getOrCreate } from "../util/index.js";
 
 import { Context, UnhydratedContext } from "./core/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import { toStoredSchema } from "./toStoredSchema.js";
 
 const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
@@ -20,6 +20,6 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 		const normalized = normalizeFieldSchema(schema);
 
 		const flexContext = new UnhydratedContext(defaultSchemaPolicy, toStoredSchema(schema));
-		return new Context(normalized.allowedTypeSet, flexContext);
+		return new Context(normalized.annotatedAllowedTypesNormalized, flexContext);
 	});
 }

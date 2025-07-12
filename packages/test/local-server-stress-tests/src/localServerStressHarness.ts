@@ -1005,12 +1005,22 @@ async function maybeSaveFluidOpsTofile(
 		return;
 	}
 
+	// No ops were sequenced - we never attached!
+	if (finalState.validationClient.container.attachState !== AttachState.Attached) {
+		await saveOpsToFile(`${saveInfo.saveFluidOps.path}`, []);
+		return;
+	}
+
+	assert(
+		finalState.validationClient.container.resolvedUrl !== undefined,
+		"Attached Container must have a URL",
+	);
+
 	const documentServiceFactory = new LocalDocumentServiceFactory(
 		finalState.localDeltaConnectionServer,
 	);
 	const documentService = await documentServiceFactory.createDocumentService(
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		finalState.validationClient.container.resolvedUrl!,
+		finalState.validationClient.container.resolvedUrl,
 	);
 	const deltaStorage = await documentService.connectToDeltaStorage();
 	const ops = deltaStorage.fetchMessages(0, undefined);
@@ -1133,9 +1143,11 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 		...providedOptions,
 	};
 
-	const only = new Set(options.only);
-	const skip = new Set(options.skip);
 	const replay = options.replay;
+	// replay supersedes only and skip, and only supersedes skip
+	// this allows all to be specified even if the seeds overlap
+	const only = new Set(replay === undefined ? options.only : undefined);
+	const skip = new Set(replay === undefined && only.size === 0 ? options.skip : undefined);
 	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 

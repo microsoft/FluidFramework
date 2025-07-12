@@ -1,5 +1,17 @@
 # @fluid-example/version-migration-separate-container
 
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+Dependency updates only.
+
+## 2.42.0
+
+Dependency updates only.
+
 ## 2.41.0
 
 Dependency updates only.

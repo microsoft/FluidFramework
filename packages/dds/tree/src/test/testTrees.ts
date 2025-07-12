@@ -45,7 +45,7 @@ import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
-import { isLazy, type LazyItem } from "../simple-tree/flexList.js";
+import { isLazy, type LazyItem } from "../simple-tree/core/flexList.js";
 import { schemaStatics } from "../simple-tree/index.js";
 import { fieldCursorFromInsertable } from "./utils.js";
 
@@ -180,6 +180,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.optional.identifier,
 				types: numberSet,
+				persistedMetadata: undefined,
 			},
 		],
 		[
@@ -187,6 +188,7 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.required.identifier,
 				types: numberSet,
+				persistedMetadata: undefined,
 			},
 		],
 		[
@@ -194,12 +196,14 @@ export const allTheFields = new ObjectNodeStoredSchema(
 			{
 				kind: FieldKinds.sequence.identifier,
 				types: numberSet,
+				persistedMetadata: undefined,
 			},
 		],
 	]),
 );
 
 export class NumericMap extends factory.map("numericMap", factory.number) {}
+export class NumericRecord extends factory.record("numericRecord", factory.number) {}
 
 export class RecursiveType extends factory.objectRecursive("recursiveType", {
 	field: factory.optionalRecursive([() => RecursiveType]),
@@ -249,6 +253,8 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 	testSimpleTree("hasOptionalField-empty", HasOptionalField, {}),
 	testSimpleTree("numericMap-empty", NumericMap, {}),
 	testSimpleTree("numericMap-full", NumericMap, { a: 5, b: 6 }),
+	testSimpleTree("numericRecord-empty", NumericRecord, {}),
+	testSimpleTree("numericRecord-full", NumericRecord, { a: 5, b: 6 }),
 	testSimpleTree("recursiveType-empty", RecursiveType, new RecursiveType({})),
 	testSimpleTree(
 		"recursiveType-recursive",
@@ -270,7 +276,11 @@ export const testTrees: readonly TestTree[] = [
 		"numericSequence",
 		{
 			...toStoredSchema(factory.number),
-			rootFieldSchema: { kind: FieldKinds.sequence.identifier, types: numberSet },
+			rootFieldSchema: {
+				kind: FieldKinds.sequence.identifier,
+				types: numberSet,
+				persistedMetadata: undefined,
+			},
 		},
 		jsonableTreesFromFieldCursor(fieldJsonCursor([1, 2, 3])),
 	),
@@ -304,6 +314,7 @@ export const testTrees: readonly TestTree[] = [
 			rootFieldSchema: {
 				kind: FieldKinds.required.identifier,
 				types: new Set([allTheFieldsName]),
+				persistedMetadata: undefined,
 			},
 		},
 		[
@@ -320,6 +331,7 @@ export const testTrees: readonly TestTree[] = [
 			rootFieldSchema: {
 				kind: FieldKinds.required.identifier,
 				types: new Set([allTheFieldsName]),
+				persistedMetadata: undefined,
 			},
 		},
 		[

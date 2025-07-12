@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
 	IDirectory,
@@ -20,12 +20,12 @@ describe("Shared Directory with Interception", () => {
 		const userAttributes = { userId: "Fake User" };
 		const documentId = "fakeId";
 		const attributionDirectoryName = "attribution";
-		const attributionKey = (key: string) => `${key}.attribution`;
+		const attributionKey = (key: string): string => `${key}.attribution`;
 		let sharedDirectory: ISharedDirectory;
 		let dataStoreContext: IFluidDataStoreContext;
 
 		// This function gets / creates the attribution directory for the given subdirectory path.
-		function getAttributionDirectory(root: IDirectory, path: string) {
+		function getAttributionDirectory(root: IDirectory, path: string): IDirectory {
 			if (!root.hasSubDirectory(attributionDirectoryName)) {
 				root.createSubDirectory(attributionDirectoryName);
 			}
@@ -37,7 +37,7 @@ describe("Shared Directory with Interception", () => {
 			}
 
 			let prevSubDir = currentSubDir;
-			const subdirs = path.substr(1).split("/");
+			const subdirs = path.slice(1).split("/");
 			for (const subdir of subdirs) {
 				currentSubDir = currentSubDir.getSubDirectory(subdir);
 				if (currentSubDir === undefined) {
@@ -58,7 +58,7 @@ describe("Shared Directory with Interception", () => {
 			baseDirectory: IDirectory,
 			subDirectory: IDirectory,
 			key: string,
-			value: any,
+			value: unknown,
 		): void {
 			const attributionDirectory: IDirectory = getAttributionDirectory(
 				baseDirectory,
@@ -76,7 +76,7 @@ describe("Shared Directory with Interception", () => {
 			baseDirectory: IDirectory,
 			subDirectory: IDirectory,
 			key: string,
-			value: any,
+			value: unknown,
 		): void {
 			if (!subDirectory.hasSubDirectory(attributionDirectoryName)) {
 				subDirectory.createSubDirectory(attributionDirectoryName);
@@ -91,7 +91,7 @@ describe("Shared Directory with Interception", () => {
 			baseDirectory: IDirectory,
 			subDirectory: IDirectory,
 			key: string,
-			value: any,
+			value: unknown,
 		): void {
 			subDirectory.set(attributionKey(key), userAttributes);
 		}
@@ -118,8 +118,8 @@ describe("Shared Directory with Interception", () => {
 			directory: IDirectory,
 			key: string,
 			value: string,
-			props?: any,
-		) {
+			props?: unknown,
+		): void {
 			assert.equal(
 				directory.get(key),
 				value,
@@ -149,8 +149,8 @@ describe("Shared Directory with Interception", () => {
 			directory: IDirectory,
 			key: string,
 			value: string,
-			props?: any,
-		) {
+			props?: unknown,
+		): void {
 			assert.equal(
 				directory.get(key),
 				value,
@@ -352,8 +352,13 @@ describe("Shared Directory with Interception", () => {
 			const userEmail = "test@microsoft.com";
 
 			// Interception callback for wrapping the subdirectory that adds user email to the attribution.
-			function interceptionCb(baseDirectory, subDirectory, key, value) {
-				const attributes = subDirectory.get(attributionKey(key));
+			function interceptionCb(
+				baseDirectory: IDirectory,
+				subDirectory: IDirectory,
+				key: string,
+				value,
+			): void {
+				const attributes = subDirectory.get(attributionKey(key)) as IDirectory;
 				subDirectory.set(attributionKey(key), { ...attributes, userEmail });
 			}
 			const fooWithAttribution = createDirectoryWithInterception(
@@ -409,7 +414,12 @@ describe("Shared Directory with Interception", () => {
 			// If useWrapper above is true, this interception callback that calls a set on the wrapped object
 			// causing an infinite recursion.
 			// If useWrapper is false, it uses the passed subDirectory which does not cause recursion.
-			function recursiveInterceptionCb(baseDirectory, subDirectory, key, value) {
+			function recursiveInterceptionCb(
+				baseDirectory: IDirectory,
+				subDirectory: IDirectory,
+				key: string,
+				value: unknown,
+			): void {
 				const directory = useWrapper ? sharedDirectoryWithInterception : subDirectory;
 				directory.set(attributionKey(key), userAttributes);
 			}
@@ -425,9 +435,9 @@ describe("Shared Directory with Interception", () => {
 			let asserted: boolean = false;
 			try {
 				sharedDirectoryWithInterception.set("color", "green");
-			} catch (error: any) {
+			} catch (error: unknown) {
 				assert.strictEqual(
-					error.message,
+					(error as Error).message,
 					"0x0bf",
 					"We should have caught an assert in replaceText because it detects an infinite recursion",
 				);

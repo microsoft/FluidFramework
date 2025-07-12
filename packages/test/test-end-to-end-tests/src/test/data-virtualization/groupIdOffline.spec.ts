@@ -221,6 +221,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			{ configProvider },
 			{ [LoaderHeader.version]: summaryVersion },
 		)) as IContainerExperimental;
+		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
 		const handleB2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectB");

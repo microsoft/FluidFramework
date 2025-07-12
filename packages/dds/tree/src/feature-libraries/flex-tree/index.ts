@@ -19,15 +19,8 @@ export {
 	flexTreeSlot,
 	type FlexibleNodeContent,
 	type FlexibleFieldContent,
+	type HydratedFlexTreeNode,
 } from "./flexTreeTypes.js";
-
-export {
-	visitBipartiteIterableTree,
-	Skip,
-	visitBipartiteIterableTreeWithState,
-	visitIterableTree,
-	visitIterableTreeWithState,
-} from "./navigation.js";
 
 export {
 	type FlexTreeContext,

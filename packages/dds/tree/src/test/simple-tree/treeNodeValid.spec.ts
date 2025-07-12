@@ -10,7 +10,7 @@ import {
 	type MostDerivedData,
 	TreeNodeValid,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/treeNodeValid.js";
+} from "../../simple-tree/core/treeNodeValid.js";
 
 import type { FlexTreeNode } from "../../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -28,6 +28,7 @@ import {
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	UnhydratedFlexTreeNode,
+	type NormalizedAnnotatedAllowedTypes,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
 
@@ -85,6 +86,8 @@ describe("TreeNodeValid", () => {
 			}
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] =
+				[];
 
 			public override get [typeNameSymbol](): string {
 				throw new Error("Method not implemented.");
@@ -154,6 +157,8 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] =
+				[];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,
@@ -208,6 +213,8 @@ describe("TreeNodeValid", () => {
 			public static readonly info = numberSchema;
 			public static readonly implicitlyConstructable: false;
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
+			public static readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] =
+				[];
 
 			public static override buildRawNode<T2>(
 				this: typeof TreeNodeValid<T2>,

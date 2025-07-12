@@ -12,8 +12,8 @@ import type {
 import type {
 	FieldSchemaAlpha,
 	ImplicitAnnotatedFieldSchema,
-	UnannotateSchemaRecord,
-} from "../../schemaTypes.js";
+	UnannotateImplicitFieldSchema,
+} from "../../fieldSchema.js";
 import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "../../core/index.js";
 import type { FieldKey } from "../../../core/index.js";
 import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
@@ -45,6 +45,16 @@ export interface ObjectNodeSchema<
 	 */
 	readonly fields: ReadonlyMap<string, FieldSchemaAlpha & SimpleObjectFieldSchema>;
 }
+
+/**
+ * Removes annotations from field schemas in a schema record.
+ * @system @alpha
+ */
+export type UnannotateSchemaRecord<
+	T extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+> = {
+	readonly [P in Extract<keyof T, string>]: UnannotateImplicitFieldSchema<T[P]>;
+};
 
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
@@ -83,8 +93,11 @@ export const ObjectNodeSchema = {
 	},
 } as const;
 
-export function isObjectNodeSchema(
-	schema: TreeNodeSchema,
-): schema is ObjectNodeSchema & ObjectNodeSchemaInternalData {
+/**
+ * {@link ObjectNodeSchema} with data that is not part of the package-exported API surface.
+ */
+export type ObjectNodeSchemaPrivate = ObjectNodeSchema & ObjectNodeSchemaInternalData;
+
+export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchemaPrivate {
 	return schema.kind === NodeKind.Object;
 }

@@ -6,22 +6,21 @@
 import type { Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 
-import {
-	DocumentationNodeType,
-	type DocumentationNode,
-	type CodeSpanNode,
-	type FencedCodeBlockNode,
-	type HeadingNode,
-	type LinkNode,
-	type SectionNode,
-	type OrderedListNode,
-	type ParagraphNode,
-	type PlainTextNode,
-	type SpanNode,
-	type TableCellNode,
-	type TableNode,
-	type TableRowNode,
-	type UnorderedListNode,
+import type {
+	DocumentationNode,
+	CodeSpanNode,
+	FencedCodeBlockNode,
+	HeadingNode,
+	LinkNode,
+	SectionNode,
+	ParagraphNode,
+	PlainTextNode,
+	SpanNode,
+	TableCellNode,
+	TableNode,
+	TableRowNode,
+	ListItemNode,
+	ListNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -30,14 +29,14 @@ import {
 	headingToHtml,
 	sectionToHtml,
 	linkToHtml,
-	orderedListToHtml,
 	paragraphToHtml,
 	plainTextToHtml,
 	spanToHtml,
 	tableToHtml,
 	tableCellToHtml,
 	tableRowToHtml,
-	unorderedListToHtml,
+	listItemToHtml,
+	listToHtml,
 } from "../default-transformations/index.js";
 
 /**
@@ -46,7 +45,7 @@ import {
  *
  * @remarks
  *
- * The system supplies a suite of default transformations for all nodes of types {@link DocumentationNodeType}.
+ * The system supplies a suite of default transformations for all nodes of types {@link DocumentationNode."type"}.
  * For any other custom {@link DocumentationNode}s, transformations must be specified or the system will throw an error
  * when handling an unknown node kind.
  *
@@ -83,29 +82,19 @@ const hastHorizontalRule = h("hr");
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	[DocumentationNodeType.CodeSpan]: (node, context) =>
-		codeSpanToHtml(node as CodeSpanNode, context),
-	[DocumentationNodeType.FencedCode]: (node, context) =>
-		fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
-	[DocumentationNodeType.Heading]: (node, context) =>
-		headingToHtml(node as HeadingNode, context),
-	[DocumentationNodeType.LineBreak]: () => hastLineBreak,
-	[DocumentationNodeType.Link]: (node, context) => linkToHtml(node as LinkNode, context),
-	[DocumentationNodeType.Section]: (node, context) =>
-		sectionToHtml(node as SectionNode, context),
-	[DocumentationNodeType.HorizontalRule]: () => hastHorizontalRule,
-	[DocumentationNodeType.OrderedList]: (node, context) =>
-		orderedListToHtml(node as OrderedListNode, context),
-	[DocumentationNodeType.Paragraph]: (node, context) =>
-		paragraphToHtml(node as ParagraphNode, context),
-	[DocumentationNodeType.PlainText]: (node, context) =>
-		plainTextToHtml(node as PlainTextNode, context),
-	[DocumentationNodeType.Span]: (node, context) => spanToHtml(node as SpanNode, context),
-	[DocumentationNodeType.Table]: (node, context) => tableToHtml(node as TableNode, context),
-	[DocumentationNodeType.TableCell]: (node, context) =>
-		tableCellToHtml(node as TableCellNode, context),
-	[DocumentationNodeType.TableRow]: (node, context) =>
-		tableRowToHtml(node as TableRowNode, context),
-	[DocumentationNodeType.UnorderedList]: (node, context) =>
-		unorderedListToHtml(node as UnorderedListNode, context),
+	codeSpan: (node, context) => codeSpanToHtml(node as CodeSpanNode, context),
+	fencedCode: (node, context) => fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
+	heading: (node, context) => headingToHtml(node as HeadingNode, context),
+	lineBreak: () => hastLineBreak,
+	link: (node, context) => linkToHtml(node as LinkNode, context),
+	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
+	section: (node, context) => sectionToHtml(node as SectionNode, context),
+	horizontalRule: () => hastHorizontalRule,
+	list: (node, context) => listToHtml(node as ListNode, context),
+	paragraph: (node, context) => paragraphToHtml(node as ParagraphNode, context),
+	text: (node, context) => plainTextToHtml(node as PlainTextNode, context),
+	span: (node, context) => spanToHtml(node as SpanNode, context),
+	table: (node, context) => tableToHtml(node as TableNode, context),
+	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
+	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),
 };

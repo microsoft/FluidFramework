@@ -5,10 +5,9 @@
 
 import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
-import type { OrderedListNode } from "./OrderedListNode.js";
+import type { ListNode } from "./ListNode.js";
 import type { ParagraphNode } from "./ParagraphNode.js";
 import type { TableNode } from "./TableNode.js";
-import type { UnorderedListNode } from "./UnorderedListNode.js";
 
 /**
  * Registry of all kinds of {@link DocumentationNode} that can occur as "block content" (required by {@link SectionNode}s, {@link TableCellNode}s, etc.).
@@ -34,12 +33,11 @@ import type { UnorderedListNode } from "./UnorderedListNode.js";
  * @public
  */
 export interface BlockContentMap {
-	fencedCodeBlock: FencedCodeBlockNode;
+	fencedCode: FencedCodeBlockNode;
 	horizontalRule: HorizontalRuleNode;
-	orderedList: OrderedListNode;
+	list: ListNode;
 	paragraph: ParagraphNode;
 	table: TableNode;
-	unorderedList: UnorderedListNode;
 }
 
 /**

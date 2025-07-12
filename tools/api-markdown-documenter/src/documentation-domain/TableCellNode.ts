@@ -5,7 +5,6 @@
 
 import type { BlockContent } from "./BlockContent.js";
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import { createNodesFromPlainText } from "./Utilities.js";
 
@@ -65,7 +64,7 @@ export abstract class TableCellNode extends DocumentationParentNodeBase<TableCel
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.TableCell;
+	public readonly type = "tableCell";
 
 	/**
 	 * The kind of row this node represents.

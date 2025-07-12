@@ -1,6 +1,6 @@
 # test-suite-a
 
-[Packages](/) \> [test-suite-a](/test-suite-a/)
+[Packages](/) > [test-suite-a](/test-suite-a/)
 
 Test package
 
@@ -73,15 +73,15 @@ const foo = bar;
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
 | [testFunction(testParameter, testOptionalParameter)](/test-suite-a/#testfunction-function) | `Alpha` | TTypeParameter | Test function |
-| [testFunctionReturningInlineType()](/test-suite-a/#testfunctionreturninginlinetype-function) |  | {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](/test-suite-a/#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number\> | Test function that returns an inline type |
-| [testFunctionReturningUnionType()](/test-suite-a/#testfunctionreturninguniontype-function) |  | string \| [TestInterface](/test-suite-a/testinterface-interface) | Test function that returns an inline type |
+| [testFunctionReturningInlineType()](/test-suite-a/#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); } | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](/test-suite-a/#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
+| [testFunctionReturningUnionType()](/test-suite-a/#testfunctionreturninguniontype-function) | | string \| [TestInterface](/test-suite-a/testinterface-interface) | Test function that returns an inline type |
 
 ## Variables
 
 | Variable | Alerts | Modifiers | Type | Description |
 | - | - | - | - | - |
-| [testConst](/test-suite-a/#testconst-variable) | `Beta` | `readonly` |  | Test Constant |
+| [testConst](/test-suite-a/#testconst-variable) | `Beta` | `readonly` | | Test Constant |
 | [testConstWithEmptyDeprecatedBlock](/test-suite-a/#testconstwithemptydeprecatedblock-variable) | `Deprecated` | `readonly` | string | I have a `@deprecated` tag with an empty comment block. |
 
 ## Namespaces
@@ -89,8 +89,8 @@ const foo = bar;
 | Namespace | Alerts | Description |
 | - | - | - |
 | [TestBetaNamespace](/test-suite-a/testbetanamespace-namespace/) | `Beta` | A namespace tagged as `@beta`. |
-| [TestModule](/test-suite-a/testmodule-namespace/) |  |  |
-| [TestNamespace](/test-suite-a/testnamespace-namespace/) |  | Test Namespace |
+| [TestModule](/test-suite-a/testmodule-namespace/) | | |
+| [TestNamespace](/test-suite-a/testnamespace-namespace/) | | Test Namespace |
 
 ## Function Details
 
@@ -120,14 +120,14 @@ This is a test [link](/test-suite-a/testinterface-interface) to another API memb
 
 | Parameter | Modifiers | Type | Description |
 | - | - | - | - |
-| testParameter |  | TTypeParameter | A test parameter |
-| testOptionalParameter | optional | TTypeParameter |  |
+| testParameter | | TTypeParameter | A test parameter |
+| testOptionalParameter | optional | TTypeParameter | |
 
 #### Returns {#testfunction-returns}
 
 The provided parameter
 
-**Return type:** TTypeParameter
+**Return type**: TTypeParameter
 
 #### Throws {#testfunction-throws}
 
@@ -150,7 +150,7 @@ export declare function testFunctionReturningInlineType(): {
 
 An inline type
 
-**Return type:** {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); }
+**Return type**: {     foo: number;     bar: [TestEnum](/test-suite-a/testenum-enum); }
 
 ### testFunctionReturningIntersectionType {#testfunctionreturningintersectiontype-function}
 
@@ -170,7 +170,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type:** [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number\>
+**Return type**: [TestEmptyInterface](/test-suite-a/testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](/test-suite-a/testinterfacewithtypeparameter-interface)\<number>
 
 ### testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
@@ -186,7 +186,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type:** string \| [TestInterface](/test-suite-a/testinterface-interface)
+**Return type**: string \| [TestInterface](/test-suite-a/testinterface-interface)
 
 ## Variable Details
 
@@ -218,4 +218,4 @@ I have a `@deprecated` tag with an empty comment block.
 testConstWithEmptyDeprecatedBlock: string
 ```
 
-**Type:** string
+**Type**: string

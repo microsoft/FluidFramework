@@ -50,6 +50,7 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
+	SharedTreeFormatVersion,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -105,6 +106,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
 	asTreeViewAlpha,
+	SchemaFactoryAlpha,
 	toSimpleTreeSchema,
 	type ITree,
 	// eslint-disable-next-line import/no-internal-modules
@@ -194,7 +196,10 @@ describe("SharedTree", () => {
 		it("re-view after view disposal with TreeNodes", () => {
 			const tree = treeTestFactory();
 
-			// Scan AnchorSet and check its slots for cached invalid data.
+			/**
+			 * Scan AnchorSet and check its slots for cached invalid data.
+			 * @param allowNodes - if false, errors if there are any TreeNodes cached in the AnchorSet.
+			 */
 			function checkAnchors(allowNodes: boolean) {
 				const anchors = tree.kernel.checkout.forest.anchors;
 				for (const anchor of anchors) {
@@ -247,7 +252,7 @@ describe("SharedTree", () => {
 
 			const view2 = tree.viewWith(config);
 
-			checkAnchors(false);
+			checkAnchors(true);
 
 			const root2 = view2.root;
 			assert.notEqual(root1, root2);
@@ -2236,6 +2241,41 @@ describe("SharedTree", () => {
 			const encodedTreeData2 = changesSummary2.trunk[0].change[1].data.builds.trees;
 			const expectedCompressedTreeData = ["A", "B", "C"];
 			assert.deepEqual(encodedTreeData2.data[0][1], expectedCompressedTreeData);
+		});
+	});
+
+	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
+		it("can create a SharedTree with format v5 enabled", async () => {
+			// Create and initialize the runtime factory
+			const runtime = new MockSharedTreeRuntime();
+
+			// Enable Shared Tree format v5, which corresponds to schema format v2. Create a Shared Tree instance.
+			const tree = configuredSharedTree({
+				formatVersion: SharedTreeFormatVersion.v5,
+			}).create(runtime);
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+			// A schema with node and field persisted metadata
+			class Foo extends schemaFactory.objectAlpha(
+				"Foo",
+				{
+					bar: schemaFactory.required(schemaFactory.number, {
+						persistedMetadata: { "fieldMetadata": 1 },
+					}),
+				},
+				{ persistedMetadata: { "nodeMetadata": 2 } },
+			) {}
+
+			const treeView = tree.viewWith(
+				new TreeViewConfiguration({
+					schema: Foo,
+				}),
+			);
+
+			const schema = treeView.schema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, { "fieldMetadata": 1 });
+			assert.deepEqual(schema.persistedMetadata, { "nodeMetadata": 2 });
 		});
 	});
 

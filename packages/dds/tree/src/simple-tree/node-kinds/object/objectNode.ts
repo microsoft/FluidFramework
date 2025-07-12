@@ -14,7 +14,11 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../../../feature-libraries/index.js";
-import type { RestrictiveStringRecord, FlattenKeys } from "../../../util/index.js";
+import type {
+	RestrictiveStringRecord,
+	FlattenKeys,
+	JsonCompatibleReadOnlyObject,
+} from "../../../util/index.js";
 
 import {
 	type TreeNodeSchema,
@@ -28,13 +32,22 @@ import {
 	type Context,
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
+	type NormalizedAnnotatedAllowedTypes,
+	type NodeSchemaMetadata,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
-import { getTreeNodeForField } from "../../getTreeNodeForField.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	isObjectNodeSchema,
 	type ObjectNodeSchema,
 	type ObjectNodeSchemaInternalData,
+	type ObjectNodeSchemaPrivate,
+	type UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
@@ -43,22 +56,18 @@ import {
 	getExplicitStoredKey,
 	type TreeFieldFromImplicitField,
 	type InsertableTreeFieldFromImplicitField,
-	type FieldSchema,
+	FieldSchema,
+	FieldSchemaAlpha,
 	normalizeFieldSchema,
 	FieldKind,
-	type NodeSchemaMetadata,
-	type FieldSchemaAlpha,
-	ObjectFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
-	unannotateSchemaRecord,
-	type UnannotateSchemaRecord,
-} from "../../schemaTypes.js";
+	type FieldProps,
+} from "../../fieldSchema.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -190,7 +199,9 @@ export type SimpleKeyMap = ReadonlyMap<
 /**
  * Caches the mappings from property keys to stored keys for the provided object field schemas in {@link simpleKeyToFlexKeyCache}.
  */
-function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): SimpleKeyMap {
+function createFlexKeyMapping(
+	fields: Record<string, ImplicitAnnotatedFieldSchema>,
+): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const storedKey = getStoredKey(propertyKey, fieldSchema);
@@ -210,7 +221,7 @@ function createFlexKeyMapping(fields: Record<string, ImplicitFieldSchema>): Simp
  * If not provided `{}` is used for the target.
  */
 function createProxyHandler(
-	schema: ObjectNodeSchema & ObjectNodeSchemaInternalData,
+	schema: ObjectNodeSchemaPrivate,
 	allowAdditionalProperties: boolean,
 ): ProxyHandler<TreeNode> {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an object with the same
@@ -230,13 +241,13 @@ function createProxyHandler(
 				debugAssert(() => !flexNode.context.isDisposed() || "FlexTreeNode is disposed");
 				const field = flexNode.tryGetField(fieldInfo.storedKey);
 				if (field !== undefined) {
-					return getTreeNodeForField(field);
+					return tryGetTreeNodeForField(field);
 				}
 
 				return undefined;
 			}
 
-			// POJO mode objects don't have TreeNode's build in members on their targets, so special case them:
+			// POJO mode objects don't have TreeNode's built in members on their targets, so special case them:
 			if (propertyKey === typeSchemaSymbol) {
 				return schema;
 			}
@@ -298,7 +309,7 @@ function createProxyHandler(
 			const field = getOrCreateInnerNode(proxy).tryGetField(fieldInfo.storedKey);
 
 			const p: PropertyDescriptor = {
-				value: field === undefined ? undefined : getTreeNodeForField(field),
+				value: field === undefined ? undefined : tryGetTreeNodeForField(field),
 				writable: true,
 				// Report empty fields as own properties so they shadow inherited properties (even when empty) to match TypeScript typing.
 				// Make empty fields not enumerable so they get skipped when iterating over an object to better align with
@@ -338,6 +349,30 @@ export function setField(
 	}
 }
 
+/**
+ * {@link FieldSchemaAlpha} including {@link SimpleObjectFieldSchema}.
+ */
+export class ObjectFieldSchema<
+		Kind extends FieldKind,
+		Types extends ImplicitAllowedTypes,
+		TCustomMetadata = unknown,
+	>
+	extends FieldSchemaAlpha<Kind, Types, TCustomMetadata>
+	implements SimpleObjectFieldSchema
+{
+	public readonly storedKey: string;
+
+	public constructor(
+		kind: Kind,
+		allowedTypes: Types,
+		annotatedTypes: ImplicitAnnotatedAllowedTypes,
+		props: FieldProps<TCustomMetadata> & { readonly key: string },
+	) {
+		super(kind, allowedTypes, annotatedTypes, props);
+		this.storedKey = props.key;
+	}
+}
+
 abstract class CustomObjectNodeBase<
 	const T extends RestrictiveStringRecord<ImplicitFieldSchema>,
 > extends TreeNodeValid<InsertableObjectFromSchemaRecord<T>> {
@@ -349,6 +384,7 @@ abstract class CustomObjectNodeBase<
  *
  * @param name - Unique identifier for this schema within this factory's scope.
  * @param fields - Schema for fields of the object node's schema. Defines what children can be placed under each key.
+ * @param persistedMetadata - Optional persisted metadata for the object node schema.
  */
 export function objectSchema<
 	TName extends string,
@@ -361,19 +397,18 @@ export function objectSchema<
 	implicitlyConstructable: ImplicitlyConstructable,
 	allowUnknownOptionalFields: boolean,
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
+	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
 	ObjectNodeSchemaInternalData {
 	// Field set can't be modified after this since derived data is stored in maps.
 	Object.freeze(info);
 
-	const unannotatedInfo = unannotateSchemaRecord(info);
-
 	// Ensure no collisions between final set of property keys, and final set of stored keys (including those
 	// implicitly derived from property keys)
-	assertUniqueKeys(identifier, unannotatedInfo);
+	assertUniqueKeys(identifier, info);
 
 	// Performance optimization: cache property key => stored key and schema.
-	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(unannotatedInfo);
+	const flexKeyMap: SimpleKeyMap = createFlexKeyMapping(info);
 
 	const identifierFieldKeys: FieldKey[] = [];
 	for (const item of flexKeyMap.values()) {
@@ -384,6 +419,12 @@ export function objectSchema<
 
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
+	);
+	const lazyAnnotatedTypes = new Lazy(() =>
+		Array.from(
+			flexKeyMap.values(),
+			({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
+		),
 	);
 
 	let handler: ProxyHandler<object>;
@@ -464,7 +505,7 @@ export function objectSchema<
 		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
-			const schema = this as unknown as ObjectNodeSchema & ObjectNodeSchemaInternalData;
+			const schema = this as unknown as ObjectNodeSchemaPrivate;
 			handler = createProxyHandler(schema, customizable);
 			unhydratedContext = getUnhydratedContext(schema);
 
@@ -503,7 +544,12 @@ export function objectSchema<
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
+			return lazyAnnotatedTypes.value;
+		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
+		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
+			persistedMetadata;
 
 		// eslint-disable-next-line import/no-deprecated
 		public get [typeNameSymbol](): TName {
@@ -520,6 +566,20 @@ export function objectSchema<
 	return CustomObjectNode as Output;
 }
 
+/**
+ * Removes annotations from a schema record.
+ */
+export function unannotateSchemaRecord<
+	Schema extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
+>(schemaRecord: Schema): UnannotateSchemaRecord<Schema> {
+	return Object.fromEntries(
+		Object.entries(schemaRecord).map(([key, schema]) => [
+			key,
+			schema instanceof FieldSchema ? schema : unannotateImplicitAllowedTypes(schema),
+		]),
+	) as UnannotateSchemaRecord<Schema>;
+}
+
 const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
 
 /**
@@ -529,7 +589,7 @@ const targetToProxy: WeakMap<object, TreeNode> = new WeakMap();
  */
 function assertUniqueKeys<
 	const Name extends number | string,
-	const Fields extends RestrictiveStringRecord<ImplicitFieldSchema>,
+	const Fields extends RestrictiveStringRecord<ImplicitAnnotatedFieldSchema>,
 >(schemaName: Name, fields: Fields): void {
 	// Verify that there are no duplicates among the explicitly specified stored keys.
 	const explicitStoredKeys = new Set<string>();

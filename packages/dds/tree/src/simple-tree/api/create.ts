@@ -12,7 +12,7 @@ import {
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 } from "../../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 import {
 	type Context,
 	getOrCreateNodeFromInnerNode,
@@ -37,6 +37,8 @@ import { unknownTypeError } from "./customTree.js";
  * @remarks
  * Does not support defaults.
  * Validates the field is in schema.
+ *
+ * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
  */
 export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
@@ -84,7 +86,7 @@ export function unhydratedFlexTreeFromCursor(
 	context: Context,
 	cursor: ITreeCursorSynchronous,
 ): UnhydratedFlexTreeNode {
-	assert(cursor.mode === CursorLocationType.Nodes, "Expected nodes cursor");
+	assert(cursor.mode === CursorLocationType.Nodes, 0xbb4 /* Expected nodes cursor */);
 	const schema = context.schema.get(cursor.type) ?? unknownTypeError(cursor.type);
 	const storedSchema = getStoredSchema(
 		schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,

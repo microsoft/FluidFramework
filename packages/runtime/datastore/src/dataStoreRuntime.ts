@@ -98,7 +98,6 @@ import { v4 as uuid } from "uuid";
 import { IChannelContext, summarizeChannel } from "./channelContext.js";
 import {
 	dataStoreCompatDetailsForRuntime,
-	// dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,
 } from "./dataStoreLayerCompatState.js";
 import { FluidObjectHandle } from "./fluidHandle.js";
@@ -160,7 +159,7 @@ function initializePendingOpCount(): { value: number } {
 			return value;
 		},
 		set value(newValue: number) {
-			assert(newValue >= 0, "pendingOpCount must be non-negative");
+			assert(newValue >= 0, 0xbbd /* pendingOpCount must be non-negative */);
 			value = newValue;
 		},
 	};

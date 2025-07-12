@@ -66,6 +66,8 @@ export type MinimumVersionForCollab =
  * String in a valid semver format of a specific version at least specifying minor.
  * Unlike {@link MinimumVersionForCollab}, this type allows any bigint for the major version.
  * Used as a more generic type that allows major versions other than 1 or 2.
+ *
+ * @internal
  */
 export type SemanticVersion =
 	| `${bigint}.${bigint}.${bigint}`
@@ -343,7 +345,7 @@ export function configValueToMinVersionForCollab<
 		] of configValueToRequiredVersionMap.entries()) {
 			assert(
 				typeof possibleConfigValue == "object",
-				"possibleConfigValue should be an object",
+				0xbb9 /* possibleConfigValue should be an object */,
 			);
 			// Check if `possibleConfigValue` and the input `configValue` share at least one
 			// common key-value pair. If they do, the `versionRequired` for this `possibleConfigValue`

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -19,37 +20,48 @@ import { brand, isReadonlyArray, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {
-	type ImplicitAllowedTypes,
-	normalizeAllowedTypes,
 	isConstant,
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 	FieldKind,
-	type TreeLeafValue,
 	extractFieldProvider,
 	type ContextualFieldProvider,
-} from "./schemaTypes.js";
+} from "./fieldSchema.js";
 import {
+	createField,
 	getKernel,
 	isTreeNode,
 	NodeKind,
 	type TreeNode,
 	type TreeNodeSchema,
 	type Unhydrated,
+	type UnhydratedFlexTreeField,
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
+	type ImplicitAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	normalizeAllowedTypes,
+	type TreeLeafValue,
 } from "./core/index.js";
+import { getUnhydratedContext } from "./createContext.js";
+import { convertFieldKind } from "./toStoredSchema.js";
+
 // Required to prevent the introduction of new circular dependencies
 // TODO: Having the schema provide their own policy functions for compatibility which
-// unhydratedFlexTreeFromInsertable invokes instead of manually handling each kind would remove this bad
+// `unhydratedFlexTreeFromInsertable` invokes instead of manually handling each kind would remove this bad
 // dependency, and reduce coupling.
-// eslint-disable-next-line import/no-internal-modules
-import { isObjectNodeSchema } from "./node-kinds/object/objectNodeTypes.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-// eslint-disable-next-line import/no-internal-modules
-import { createField, type UnhydratedFlexTreeField } from "./core/unhydratedFlexTree.js";
-import { convertFieldKind } from "./toStoredSchema.js";
-import { getUnhydratedContext } from "./createContext.js";
+/* eslint-disable import/no-internal-modules */
+import { isArrayNodeSchema, type ArrayNodeSchema } from "./node-kinds/array/arrayNodeTypes.js";
+import { isMapNodeSchema, type MapNodeSchema } from "./node-kinds/map/mapNodeTypes.js";
+import {
+	isObjectNodeSchema,
+	type ObjectNodeSchemaPrivate,
+} from "./node-kinds/object/objectNodeTypes.js";
+import {
+	isRecordNodeSchema,
+	type RecordNodeSchema,
+} from "./node-kinds/record/recordNodeTypes.js";
+/* eslint-enable import/no-internal-modules */
 
 /**
  * Module notes:
@@ -139,13 +151,20 @@ function unhydratedFlexTreeFromInsertableNode(
 			result = leafToFlexContent(data, schema, allowedTypes);
 			break;
 		case NodeKind.Array:
+			assert(isArrayNodeSchema(schema), 0x922 /* Expected an array schema. */);
 			result = arrayToFlexContent(data, schema);
 			break;
 		case NodeKind.Map:
+			assert(isMapNodeSchema(schema), 0x923 /* Expected a Map schema. */);
 			result = mapToFlexContent(data, schema);
 			break;
 		case NodeKind.Object:
+			assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
 			result = objectToFlexContent(data, schema);
+			break;
+		case NodeKind.Record:
+			assert(isRecordNodeSchema(schema), 0xbdd /* Expected a Record schema. */);
+			result = recordToFlexContent(data, schema);
 			break;
 		default:
 			unreachableCase(schema.kind);
@@ -265,8 +284,7 @@ function arrayChildToFlexTree(
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
  */
-function arrayToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
-	assert(schema.kind === NodeKind.Array, 0x922 /* Expected an array schema. */);
+function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
 		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
 	}
@@ -308,13 +326,10 @@ function arrayToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexC
  * @param data - The tree data to be transformed. Must be an iterable.
  * @param schema - The schema associated with the value.
  */
-function mapToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
-	assert(schema.kind === NodeKind.Map, 0x923 /* Expected a Map schema. */);
+function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {
 		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
 	}
-
-	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
 
 	const fieldsIterator = (
 		Symbol.iterator in data
@@ -324,30 +339,7 @@ function mapToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexCon
 				Object.entries(data)
 	) as Iterable<readonly [string, InsertableContent]>;
 
-	const context = getUnhydratedContext(schema).flexContext;
-
-	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
-	for (const item of fieldsIterator) {
-		if (!isReadonlyArray(item) || item.length !== 2 || typeof item[0] !== "string") {
-			throw new UsageError(`Input data is incompatible with map entry: ${item}`);
-		}
-		const [key, value] = item;
-		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
-
-		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
-		if (value !== undefined) {
-			const child = unhydratedFlexTreeFromInsertableNode(value, allowedChildTypes);
-			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
-			transformedFields.set(brand(key), field);
-		}
-	}
-
-	return [
-		{
-			type: brand(schema.identifier),
-		},
-		transformedFields,
-	];
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
 }
 
 /**
@@ -355,8 +347,10 @@ function mapToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexCon
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
  */
-function objectToFlexContent(data: FactoryContent, schema: TreeNodeSchema): FlexContent {
-	assert(isObjectNodeSchema(schema), 0x924 /* Expected an Object schema. */);
+function objectToFlexContent(
+	data: FactoryContent,
+	schema: ObjectNodeSchemaPrivate,
+): FlexContent {
 	if (
 		typeof data !== "object" ||
 		data === null ||
@@ -376,7 +370,7 @@ function objectToFlexContent(data: FactoryContent, schema: TreeNodeSchema): Flex
 		if (value === undefined) {
 			const defaultProvider =
 				fieldInfo.schema.props?.defaultProvider ??
-				fail("missing field has no default provider");
+				fail(0xbb1 /* missing field has no default provider */);
 			const fieldProvider = extractFieldProvider(defaultProvider);
 			children = isConstant(fieldProvider) ? fieldProvider() : fieldProvider;
 		} else {
@@ -385,7 +379,8 @@ function objectToFlexContent(data: FactoryContent, schema: TreeNodeSchema): Flex
 			];
 		}
 
-		const kind = convertFieldKind.get(fieldInfo.schema.kind) ?? fail("Invalid field kind");
+		const kind =
+			convertFieldKind.get(fieldInfo.schema.kind) ?? fail(0xbb2 /* Invalid field kind */);
 		fields.set(
 			fieldInfo.storedKey,
 			createField(context, kind.identifier, fieldInfo.storedKey, children),
@@ -393,6 +388,51 @@ function objectToFlexContent(data: FactoryContent, schema: TreeNodeSchema): Flex
 	}
 
 	return [{ type: brand(schema.identifier) }, fields];
+}
+
+/**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ */
+function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
+	}
+
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
+}
+
+/**
+ * Converts record-like data to a FlexContent representation for map/record schema.
+ */
+function recordLikeDataToFlexContent(
+	fieldsIterator: Iterable<readonly [string, InsertableContent]>,
+	schema: MapNodeSchema | RecordNodeSchema,
+): FlexContent {
+	const allowedChildTypes = normalizeAllowedTypes(unannotateImplicitAllowedTypes(schema.info));
+	const context = getUnhydratedContext(schema).flexContext;
+
+	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
+	for (const item of fieldsIterator) {
+		const [key, value] = item;
+		assert(!transformedFields.has(brand(key)), 0x84c /* Keys should not be duplicated */);
+
+		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
+		if (value !== undefined) {
+			const child = unhydratedFlexTreeFromInsertableNode(value, allowedChildTypes);
+			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
+			transformedFields.set(brand(key), field);
+		}
+	}
+
+	return [
+		{
+			type: brand(schema.identifier),
+		},
+		transformedFields,
+	];
 }
 
 /**
@@ -548,6 +588,10 @@ function shallowCompatibilityTest(
 	}
 
 	// At this point, it is assumed data is a record-like object since all the other cases have been eliminated.
+
+	if (schema.kind === NodeKind.Record) {
+		return CompatibilityLevel.Normal;
+	}
 
 	if (schema.kind === NodeKind.Array) {
 		return CompatibilityLevel.None;

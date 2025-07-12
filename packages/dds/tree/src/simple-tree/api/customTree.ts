@@ -22,7 +22,7 @@ import {
 } from "../../core/index.js";
 import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue } from "../core/index.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -30,8 +30,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeLeafValue } from "../schemaTypes.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.
@@ -106,7 +105,7 @@ export function customFromCursor<TChild>(
 			return reader.value;
 		default: {
 			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
-			if (nodeSchema.kind === NodeKind.Array) {
+			if (isArrayNodeSchema(nodeSchema)) {
 				const fields = inCursorField(reader, EmptyKey, () =>
 					mapCursorField(reader, () => childHandler(reader, options, schema)),
 				);

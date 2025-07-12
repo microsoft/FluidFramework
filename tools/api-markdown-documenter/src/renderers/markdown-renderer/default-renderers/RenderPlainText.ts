@@ -67,9 +67,8 @@ export function renderPlainText(
 		writer.write("~~");
 	}
 
-	// Don't escape text within a code block in Markdown, or if it has already been escaped
-	const text =
-		context.insideCodeBlock === true || node.escaped ? body : escapeTextForMarkdown(body);
+	// Don't escape text within a code block in Markdown
+	const text = context.insideCodeBlock === true ? body : escapeTextForMarkdown(body);
 	writer.write(text);
 
 	if (context.strikethrough === true) {
@@ -85,12 +84,18 @@ export function renderPlainText(
 	writer.write(trailingWhitespace); // write trailing whitespace
 }
 
+/**
+ * {@link splitLeadingAndTrailingWhitespace} output.
+ */
 interface SplitTextResult {
 	leadingWhitespace: string;
 	body: string;
 	trailingWhitespace: string;
 }
 
+/**
+ * Splits the input string to extract leading and trailing whitespace.
+ */
 function splitLeadingAndTrailingWhitespace(text: string): SplitTextResult {
 	// split out the [ leading whitespace, body, trailing whitespace ]
 	const [, leadingWhitespace, body, trailingWhitespace]: string[] =
@@ -112,6 +117,6 @@ function splitLeadingAndTrailingWhitespace(text: string): SplitTextResult {
 export function escapeTextForMarkdown(text: string): string {
 	return text
 		.replace(/\\/g, "\\\\") // first replace the escape character
-		.replace(/[#&*<>[\]_`|~]/g, (x) => `\\${x}`) // then escape any special characters
+		.replace(/[#&*<[\]_`|~]/g, (x) => `\\${x}`) // then escape any special characters
 		.replace(/---/g, "\\-\\-\\-"); // hyphens only if it's 3 or more
 }

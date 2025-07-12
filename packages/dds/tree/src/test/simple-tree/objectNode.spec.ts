@@ -20,6 +20,14 @@ import {
 	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
+	type FieldKind,
+	type FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTypedNode,
 } from "../../simple-tree/index.js";
 import type {
 	FieldHasDefault,
@@ -39,17 +47,6 @@ import type {
 } from "../../util/index.js";
 import { getView, validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
-import type {
-	FieldKind,
-	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	ImplicitAnnotatedFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	InsertableTreeNodeFromAllowedTypes,
-	InsertableTypedNode,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaTypes.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -749,7 +746,7 @@ describeHydration(
 					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 					const view = getView(config);
 					view.initialize({ leaf: 1 });
-					const context = view.getView().context;
+					const context = view.getFlexTreeContext();
 					// Note: access the root before trying to access just the leaf, to not count any object allocations that result from
 					// accessing the root as part of the allocations from the leaf access. Also, store it to avoid additional computation
 					// from any intermediate getters when accessing the leaf.
@@ -773,7 +770,7 @@ describeHydration(
 					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 					const view = getView(config);
 					view.initialize(new Map([["1", 1]]));
-					const context = view.getView().context;
+					const context = view.getFlexTreeContext();
 					// Note: access the map that contains leaves before trying to access just the leaf at one of the keys, to not
 					// count any object allocations that result from accessing the root/map as part of the allocations from the leaf
 					// access. Also, store it to avoid additional computation from any intermediate getters when accessing the leaf.
@@ -797,7 +794,7 @@ describeHydration(
 					const config = new TreeViewConfiguration({ schema: TreeWithLeaves });
 					const view = getView(config);
 					view.initialize([1, 2]);
-					const context = view.getView().context;
+					const context = view.getFlexTreeContext();
 					// Note: prior to taking the "before count", access the array that contains leaves *and the first leaf in it*,
 					// to ensure that the sequence field for the array is allocated and accounted for. We expect the sequence field
 					// to be required anyway (vs the field for a leaf property on an object node, for example, where we might be able

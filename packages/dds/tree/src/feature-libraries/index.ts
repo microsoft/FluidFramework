@@ -20,6 +20,7 @@ export {
 	mapTreeWithField,
 	type MapTreeFieldViewGeneric,
 	type MapTreeNodeViewGeneric,
+	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
 export {
@@ -157,7 +158,6 @@ export {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
-	Skip,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	type FlexTreeTypedField,
@@ -182,6 +182,7 @@ export {
 	type FlexibleNodeContent,
 	type FlexibleFieldContent,
 	type FlexTreeHydratedContextMinimal,
+	type HydratedFlexTreeNode,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";

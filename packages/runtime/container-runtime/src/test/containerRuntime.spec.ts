@@ -71,7 +71,7 @@ import {
 	MockFluidDataStoreRuntime,
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
-import { SinonFakeTimers, createSandbox, useFakeTimers } from "sinon";
+import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
 import { defaultMinVersionForCollab } from "../compatUtils.js";
@@ -92,7 +92,11 @@ import {
 	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "../messageTypes.js";
-import type { InboundMessageResult, LocalBatchMessage } from "../opLifecycle/index.js";
+import type {
+	BatchResubmitInfo,
+	InboundMessageResult,
+	LocalBatchMessage,
+} from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
 	IPendingLocalState,
@@ -105,6 +109,13 @@ import {
 	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
+
+type Patch<T, U> = Omit<T, keyof U> & U;
+
+type ContainerRuntime_WithPrivates = Patch<
+	ContainerRuntime,
+	{ flush: (resubmitInfo?: BatchResubmitInfo) => void; channelCollection: ChannelCollection }
+>;
 
 function submitDataStoreOp(
 	runtime: Pick<ContainerRuntime, "submitMessage">,
@@ -158,25 +169,34 @@ function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope<UnknownIncomingT
 	);
 }
 
-function defineResubmitAndSetConnectionState(containerRuntime: ContainerRuntime): void {
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access -- Modifying private property
-	(containerRuntime as any).channelCollection = {
-		setConnectionState: (_connected: boolean, _clientId?: string) => {},
-		// Pass data store op right back to ContainerRuntime
-		reSubmit: (
-			type: string,
-			envelope: IEnvelope,
-			localOpMetadata: unknown,
-			squash: boolean,
-		) => {
+let sandbox: Sinon.SinonSandbox;
+
+function stubChannelCollection(
+	containerRuntime: ContainerRuntime_WithPrivates,
+): Sinon.SinonStubbedInstance<ChannelCollection> {
+	// Pass data store op right back to ContainerRuntime
+	const reSubmitFake = sandbox
+		.stub<[type: string, content: unknown, localOpMetadata: unknown, squash: boolean], void>()
+		.callsFake((type: string, content: unknown, localOpMetadata: unknown, squash: boolean) => {
+			const envelope = content as IEnvelope;
 			submitDataStoreOp(
 				containerRuntime,
 				envelope.address,
 				envelope.contents,
 				localOpMetadata,
 			);
-		},
-	} as ChannelCollection;
+		});
+
+	const stub = Sinon.createStubInstance(ChannelCollection, {
+		setConnectionState: sandbox.stub(),
+		reSubmit: reSubmitFake,
+		rollback: sandbox.stub(),
+		notifyStagingMode: sandbox.stub(),
+		dispose: sandbox.stub(),
+	});
+
+	containerRuntime.channelCollection = stub;
+	return stub;
 }
 
 function assertSignalContentIsAString(
@@ -197,13 +217,14 @@ describe("Runtime", () => {
 	let clock: SinonFakeTimers;
 
 	before(() => {
-		clock = useFakeTimers();
+		clock = Sinon.useFakeTimers();
 	});
 
 	beforeEach(() => {
 		submittedOps = [];
 		opFakeSequenceNumber = 1;
 		submittedSignals = [];
+		sandbox = Sinon.createSandbox();
 	});
 
 	afterEach(() => {
@@ -230,6 +251,7 @@ describe("Runtime", () => {
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
 			connected?: boolean;
+			attachState?: AttachState;
 		} = {},
 		clientId: string = mockClientId,
 	): Partial<IContainerContext> => {
@@ -240,10 +262,11 @@ describe("Runtime", () => {
 			loadedFromVersion,
 			baseSnapshot,
 			connected = true,
+			attachState = AttachState.Attached,
 		} = params;
 
 		const mockContext = {
-			attachState: AttachState.Attached,
+			attachState,
 			deltaManager: new MockDeltaManager(),
 			audience: new MockAudience(),
 			quorum: new MockQuorumClients(),
@@ -402,7 +425,7 @@ describe("Runtime", () => {
 
 			for (const enableOfflineLoad of [true, undefined])
 				it("Replaying ops should resend in correct order, with batch ID if applicable", async () => {
-					const containerRuntime = await ContainerRuntime.loadRuntime({
+					const containerRuntime = (await ContainerRuntime.loadRuntime({
 						context: getMockContext({
 							settings: {
 								"Fluid.Container.enableOfflineLoad": enableOfflineLoad, // batchId only stamped if true
@@ -412,9 +435,9 @@ describe("Runtime", () => {
 						existing: false,
 						runtimeOptions: {},
 						provideEntryPoint: mockProvideEntryPoint,
-					});
+					})) as unknown as ContainerRuntime_WithPrivates;
 
-					defineResubmitAndSetConnectionState(containerRuntime);
+					stubChannelCollection(containerRuntime);
 
 					changeConnectionState(containerRuntime, false, mockClientId);
 
@@ -591,7 +614,8 @@ describe("Runtime", () => {
 			});
 		});
 
-		describe("orderSequentially", () => {
+		const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
+		describe("orderSequentially (rollback not enabled)", () => {
 			for (const flushMode of [
 				FlushMode.TurnBased,
 				FlushMode.Immediate,
@@ -602,7 +626,7 @@ describe("Runtime", () => {
 				describe(`orderSequentially with flush mode: ${
 					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
 				}`, () => {
-					let containerRuntime: ContainerRuntime;
+					let containerRuntime: ContainerRuntime_WithPrivates;
 					let mockContext: Partial<IContainerContext>;
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					const submittedOpsMetadata: any[] = [];
@@ -652,8 +676,6 @@ describe("Runtime", () => {
 						return containerErrors[0];
 					};
 
-					const expectedOrderSequentiallyErrorMessage = "orderSequentially callback exception";
-
 					beforeEach(async () => {
 						mockContext = getMockContextForOrderSequentially();
 						const runtimeOptions: IContainerRuntimeOptionsInternal = {
@@ -665,13 +687,13 @@ describe("Runtime", () => {
 							flushMode,
 						};
 
-						containerRuntime = await ContainerRuntime.loadRuntime({
+						containerRuntime = (await ContainerRuntime.loadRuntime({
 							context: mockContext as IContainerContext,
 							registryEntries: [],
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
-						});
+						})) as unknown as ContainerRuntime_WithPrivates;
 						containerErrors.length = 0;
 						submittedOpsMetadata.length = 0;
 					});
@@ -787,7 +809,7 @@ describe("Runtime", () => {
 					});
 
 					it("Resubmitting batch preserves original batches", async () => {
-						defineResubmitAndSetConnectionState(containerRuntime);
+						stubChannelCollection(containerRuntime);
 
 						changeConnectionState(containerRuntime, false, fakeClientId);
 
@@ -841,11 +863,15 @@ describe("Runtime", () => {
 				describe(`orderSequentially with flush mode: ${
 					FlushMode[flushMode] ?? FlushModeExperimental[flushMode]
 				}`, () => {
-					let containerRuntime: ContainerRuntime;
+					let containerRuntime: ContainerRuntime_WithPrivates;
 					const containerErrors: ICriticalContainerError[] = [];
+					let submittedOpsCount: number = 0;
 
 					const getMockContextForOrderSequentially = (): Partial<IContainerContext> => ({
 						attachState: AttachState.Attached,
+						connected: true,
+						clientId: "client-id",
+						supportedFeatures: new Map([["referenceSequenceNumbers", true]]),
 						deltaManager: new MockDeltaManager(),
 						audience: new MockAudience(),
 						quorum: new MockQuorumClients(),
@@ -861,6 +887,9 @@ describe("Runtime", () => {
 								containerErrors.push(error);
 							}
 						},
+						submitFn: (...args) => {
+							return ++submittedOpsCount; // clientSequenceNumber
+						},
 						updateDirtyContainerState: (dirty: boolean) => {},
 						getLoadedFromVersion: () => undefined,
 					});
@@ -872,14 +901,15 @@ describe("Runtime", () => {
 							},
 							flushMode,
 						};
-						containerRuntime = await ContainerRuntime.loadRuntime({
+						containerRuntime = (await ContainerRuntime.loadRuntime({
 							context: getMockContextForOrderSequentially() as IContainerContext,
 							registryEntries: [],
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
-						});
+						})) as unknown as ContainerRuntime_WithPrivates;
 						containerErrors.length = 0;
+						submittedOpsCount = 0;
 					});
 
 					it("No errors propagate to the container on rollback", () => {
@@ -888,12 +918,84 @@ describe("Runtime", () => {
 								throw new Error("Any");
 							}),
 						);
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+						assert.equal(containerRuntime.isDirty, false, "Dirty after rollback");
 
 						assert.strictEqual(containerErrors.length, 0);
 					});
 
 					it("No errors on successful callback with rollback set", () => {
 						containerRuntime.orderSequentially(() => {});
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+
+						assert.strictEqual(containerErrors.length, 0);
+					});
+
+					it("orderSequentially while in StagingMode works", async () => {
+						stubChannelCollection(containerRuntime);
+
+						const stageControls = containerRuntime.enterStagingMode();
+
+						containerRuntime.orderSequentially(() => {
+							submitDataStoreOp(containerRuntime, "1", "test");
+						});
+						assert.strictEqual(
+							submittedOpsCount,
+							0,
+							"No ops should be submitted in Staging Mode",
+						);
+
+						stageControls.commitChanges();
+
+						assert.strictEqual(
+							submittedOpsCount,
+							1,
+							"One (Grouped) op should have been submitted",
+						);
+					});
+
+					// The purpose of these tests is to illustrate the current behavior of this unspecified scenario
+					describe("Exiting staging mode under orderSequentially - expected behavior has not been specified", () => {
+						it("commitChanges under orderSequentially (happens to fail)", async () => {
+							stubChannelCollection(containerRuntime);
+
+							const stageControls = containerRuntime.enterStagingMode();
+
+							assert.throws(() => {
+								containerRuntime.orderSequentially(() => {
+									submitDataStoreOp(containerRuntime, "1", "test");
+									stageControls.commitChanges();
+								});
+							});
+						});
+
+						it("discardChanges under orderSequentially (does not happen to fail)", async () => {
+							stubChannelCollection(containerRuntime);
+
+							const stageControls = containerRuntime.enterStagingMode();
+
+							assert.doesNotThrow(() => {
+								containerRuntime.orderSequentially(() => {
+									submitDataStoreOp(containerRuntime, "1", "test");
+									stageControls.discardChanges();
+								});
+							});
+						});
+					});
+
+					it("Entering Staging Mode under orderSequentially not supported", async () => {
+						assert.throws(
+							() =>
+								containerRuntime.orderSequentially(() => {
+									containerRuntime.enterStagingMode();
+								}),
+							(e: Error & IErrorBase) =>
+								e.errorType === ContainerErrorTypes.usageError &&
+								e.message === "Already in staging mode",
+							"Entering Staging Mode inside orderSequentially should throw",
+						);
+						assert.equal(containerRuntime.inStagingMode, false, "Still in Staging Mode");
+						assert.equal(containerRuntime.isDirty, false, "Dirty after rollback");
 
 						assert.strictEqual(containerErrors.length, 0);
 					});
@@ -902,7 +1004,6 @@ describe("Runtime", () => {
 		});
 
 		describe("Dirty flag", () => {
-			const sandbox = createSandbox();
 			const createMockContext = (
 				attachState: AttachState,
 				addPendingMsg: boolean,
@@ -2158,6 +2259,7 @@ describe("Runtime", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2206,6 +2308,7 @@ describe("Runtime", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2280,6 +2383,7 @@ describe("Runtime", () => {
 					localOpMetadata: undefined,
 					opMetadata: undefined,
 					batchInfo: { clientId: "CLIENT_ID", batchStartCsn: 1, length: 5, staged: false },
+					runtimeOp: undefined,
 				}));
 				const mockPendingStateManager = new Proxy<PendingStateManager>(
 					{} as unknown as PendingStateManager,
@@ -2435,7 +2539,6 @@ describe("Runtime", () => {
 		});
 
 		describe("Load Partial Snapshot with datastores with GroupId", () => {
-			const sandbox = createSandbox();
 			let snapshotWithContents: ISnapshot;
 			let blobContents: Map<string, ArrayBuffer>;
 			let ops: ISequencedDocumentMessage[];
@@ -2886,26 +2989,26 @@ describe("Runtime", () => {
 		});
 
 		describe("Signal Telemetry", () => {
-			let containerRuntime: ContainerRuntime;
+			let containerRuntime: ContainerRuntime_WithPrivates;
 			let logger: MockLogger;
 			let droppedSignals: ISignalEnvelopeWithClientIds[];
-			let runtimes: Map<string, ContainerRuntime>;
+			let runtimes: Map<string, ContainerRuntime | ContainerRuntime_WithPrivates>;
 
 			beforeEach(async () => {
-				runtimes = new Map<string, ContainerRuntime>();
+				runtimes = new Map();
 				logger = new MockLogger();
 				droppedSignals = [];
 				const runtimeOptions: IContainerRuntimeOptionsInternal = {
 					enableGroupedBatching: false,
 				};
-				containerRuntime = await ContainerRuntime.loadRuntime({
+				containerRuntime = (await ContainerRuntime.loadRuntime({
 					context: getMockContext({ logger }) as IContainerContext,
 					registryEntries: [],
 					existing: false,
 					requestHandler: undefined,
 					runtimeOptions,
 					provideEntryPoint: mockProvideEntryPoint,
-				});
+				})) as unknown as ContainerRuntime_WithPrivates;
 				// Assert that clientId is not undefined
 				assert(containerRuntime.clientId !== undefined, "clientId should not be undefined");
 
@@ -3145,7 +3248,7 @@ describe("Runtime", () => {
 			it("ignores signals sent before disconnect and resets stats on reconnect", () => {
 				// Define resubmit and setConnectionState on channel collection
 				// This is needed to submit test data store ops
-				defineResubmitAndSetConnectionState(containerRuntime);
+				stubChannelCollection(containerRuntime);
 
 				sendSignals(4);
 
@@ -3201,7 +3304,7 @@ describe("Runtime", () => {
 				// SETUP - define resubmit and setConnectionState on channel collection.
 				// This is needed to submit test data store ops. Once defined, submit a test data store op
 				// so that message is queued in PendingStateManager and reconnect count is increased.
-				defineResubmitAndSetConnectionState(containerRuntime);
+				stubChannelCollection(containerRuntime);
 				// Send and process an initial signal to prime the system.
 				submitDataStoreOp(containerRuntime, "1", "test");
 				sendSignals(1); // 1st signal (#1)
@@ -4085,6 +4188,219 @@ describe("Runtime", () => {
 						provideEntryPoint: mockProvideEntryPoint,
 					});
 				});
+			});
+		});
+
+		describe("Staging Mode", () => {
+			let containerRuntime: ContainerRuntime_WithPrivates;
+
+			beforeEach("init", async () => {
+				containerRuntime = (await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+				submittedOps.length = 0; // reuse array defined higher in this file
+			});
+
+			afterEach("dispose", () => {
+				containerRuntime.dispose();
+				containerRuntime = undefined as unknown as ContainerRuntime_WithPrivates;
+			});
+
+			it("entering and exiting updates inStagingMode flag", () => {
+				assert(
+					containerRuntime.attachState === AttachState.Attached,
+					"PRECONDITION: Expected Attached container",
+				);
+				const controls = containerRuntime.enterStagingMode();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					true,
+					"Runtime should be in staging mode after entry",
+				);
+
+				controls.commitChanges();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					false,
+					"Runtime should exit staging mode after commit",
+				);
+
+				// Enter / discard as a second exit-path
+				containerRuntime.enterStagingMode().discardChanges();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					false,
+					"Runtime should exit staging mode after discard",
+				);
+			});
+
+			it("entering staging mode twice not allowed", () => {
+				const controls = containerRuntime.enterStagingMode();
+				assert.throws(
+					() => containerRuntime.enterStagingMode(),
+					(error: Error & IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Already in staging mode",
+					"Should not allow entering staging mode while already in staging mode",
+				);
+				controls.discardChanges();
+				// Now we can enter staging mode again
+				containerRuntime.enterStagingMode();
+				assert.equal(
+					containerRuntime.inStagingMode,
+					true,
+					"Runtime should be in staging mode after re-entry",
+				);
+			});
+
+			it("can enter staging mode while attaching", async () => {
+				const mockContext = getMockContext({
+					attachState: AttachState.Attaching,
+				}) as IContainerContext;
+				containerRuntime = (await ContainerRuntime.loadRuntime({
+					context: mockContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+
+				assert.doesNotThrow(
+					() => containerRuntime.enterStagingMode(),
+					"Should allow entering staging mode while Attaching",
+				);
+			});
+
+			it("cannot enter staging mode while detached", async () => {
+				const mockContext = getMockContext({
+					attachState: AttachState.Detached,
+				}) as IContainerContext;
+				containerRuntime = (await ContainerRuntime.loadRuntime({
+					context: mockContext,
+					registryEntries: [],
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as ContainerRuntime_WithPrivates;
+
+				assert.throws(
+					() => containerRuntime.enterStagingMode(),
+					(error: Error & IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Cannot enter staging mode while Detached",
+					"Should not allow entering staging mode while Detached",
+				);
+			});
+
+			it("commitChanges submits staged ops", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+
+				// Won't be resubmitted when exiting staging mode
+				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
+
+				const controls = containerRuntime.enterStagingMode();
+				assert(
+					channelCollectionStub.notifyStagingMode.calledOnceWithExactly(true),
+					"Expected notifyStagingMode to be called with true",
+				);
+
+				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
+				// but not the staged op (even with flush)
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
+
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				containerRuntime.flush();
+				assert.equal(submittedOps.length, 1, "Only expected the 1 pre-staging op");
+
+				// default options: { squash: false }
+				controls.commitChanges();
+
+				assert(
+					channelCollectionStub.reSubmit.calledOnce,
+					"Expected reSubmit to be called once. Prestaging op should not be resubmitted",
+				);
+				assert(
+					channelCollectionStub.reSubmit.calledWithExactly(
+						"component",
+						{ address: "2", contents: "staged-op" },
+						"LOCAL_OP_METADATA",
+						/* squash: */ false, // False by default on commitChanges
+					),
+					"Unexpected args for reSubmit",
+				);
+				assert(
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
+					"Expected notifyStagingMode to be called with false on the second call",
+				);
+
+				assert.equal(
+					submittedOps.length,
+					2,
+					"Staged op should be resubmitted after commitChanges",
+				);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(submittedOps[1].contents.address, "2", "Unexpected staged op address");
+			});
+
+			it("discardChanges drops staged ops", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+
+				// Won't be rolled back when exiting staging mode
+				submitDataStoreOp(containerRuntime, "1", "pre-staging", "LOCAL_OP_METADATA");
+
+				const controls = containerRuntime.enterStagingMode();
+
+				// Entering staging mode triggers a flush, so we should see the pre-staging op sent,
+				// but not the staged op (even with flush)
+				assert.equal(submittedOps.length, 1, "Pre-staging op expected to be submitted");
+
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "3", "staged-op", "LOCAL_OP_METADATA");
+				containerRuntime.flush();
+				assert.equal(submittedOps.length, 1, "No more ops expected while staged");
+
+				controls.discardChanges();
+
+				assert.deepEqual(
+					channelCollectionStub.rollback.getCalls().map((call) => call.args),
+					[
+						// LIFO order for rolling back
+						["component", { address: "3", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+						["component", { address: "2", contents: "staged-op" }, "LOCAL_OP_METADATA"],
+						// Doesn't rollback the op from before staging mode
+					],
+					"Unexpected args for rollback",
+				);
+				assert(
+					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
+					"Expected notifyStagingMode to be called with false on the second call",
+				);
+
+				assert.equal(
+					submittedOps.length,
+					1, // From before staging mode
+					"Staged op should NOT be submitted after discardChanges",
+				);
+			});
+
+			it("discardChanges resets isDirty state", () => {
+				stubChannelCollection(containerRuntime);
+
+				const controls = containerRuntime.enterStagingMode();
+
+				submitDataStoreOp(containerRuntime, "1", "staged-op", "LOCAL_OP_METADATA");
+				submitDataStoreOp(containerRuntime, "2", "staged-op", "LOCAL_OP_METADATA");
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from Outbox)");
+				containerRuntime.flush();
+				assert.equal(containerRuntime.isDirty, true, "Runtime should be dirty (from PSM)");
+
+				controls.discardChanges();
+
+				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
 		});
 	});

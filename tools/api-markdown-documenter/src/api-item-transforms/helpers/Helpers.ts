@@ -34,18 +34,18 @@ import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
 	type DocumentationNode,
-	DocumentationNodeType,
 	type DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
+	ListItemNode,
+	ListNode,
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
 	type SectionContent,
 	SectionNode,
 	SpanNode,
-	UnorderedListNode,
 } from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
@@ -143,12 +143,12 @@ function createHeritageTypesContent(
 				config,
 			);
 
-			if (extendsTypesSpan === undefined) {
+			if (extendsTypesSpan.length === 0) {
 				logger.error(
 					'No content was rendered for non-empty "extends" type list. This is not expected.',
 				);
 			} else {
-				contents.push(new ParagraphNode([extendsTypesSpan]));
+				contents.push(new ParagraphNode(extendsTypesSpan));
 			}
 		}
 
@@ -158,8 +158,8 @@ function createHeritageTypesContent(
 			"Implements",
 			config,
 		);
-		if (renderedImplementsTypes !== undefined) {
-			contents.push(new ParagraphNode([renderedImplementsTypes]));
+		if (renderedImplementsTypes.length > 0) {
+			contents.push(new ParagraphNode(renderedImplementsTypes));
 		}
 	}
 
@@ -170,20 +170,21 @@ function createHeritageTypesContent(
 			"Extends",
 			config,
 		);
-		if (renderedExtendsTypes !== undefined) {
-			contents.push(new ParagraphNode([renderedExtendsTypes]));
+
+		if (renderedExtendsTypes.length > 0) {
+			contents.push(new ParagraphNode(renderedExtendsTypes));
 		}
 	}
 
 	// Render type information for properties and variables
-	let renderedTypeSpan: SpanNode | undefined;
+	let renderedTypeSpan: PhrasingContent[] = [];
 	if (apiItem instanceof ApiPropertyItem) {
 		renderedTypeSpan = createTypeSpan(apiItem.propertyTypeExcerpt, config);
 	} else if (apiItem instanceof ApiVariable) {
 		renderedTypeSpan = createTypeSpan(apiItem.variableTypeExcerpt, config);
 	}
-	if (renderedTypeSpan !== undefined) {
-		contents.push(new ParagraphNode([renderedTypeSpan]));
+	if (renderedTypeSpan.length > 0) {
+		contents.push(new ParagraphNode(renderedTypeSpan));
 	}
 
 	// Render type parameters if there are any.
@@ -214,15 +215,23 @@ function createHeritageTypesContent(
 function createTypeSpan(
 	excerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
-): SpanNode | undefined {
-	if (!excerpt.isEmpty) {
-		const renderedLabel = SpanNode.createFromPlainText(`Type: `, { bold: true });
-		const renderedExcerpt = createExcerptSpanWithHyperlinks(excerpt, config);
-		if (renderedExcerpt !== undefined) {
-			return new SpanNode([renderedLabel, renderedExcerpt]);
-		}
+): PhrasingContent[] {
+	if (excerpt.isEmpty) {
+		return [];
 	}
-	return undefined;
+
+	const renderedExcerpt = createExcerptSpanWithHyperlinks(excerpt, config);
+
+	if (renderedExcerpt.length === 0) {
+		// If the type excerpt is empty, we don't render anything.
+		return [];
+	}
+
+	return [
+		SpanNode.createFromPlainText("Type", { bold: true }),
+		new PlainTextNode(": "),
+		...renderedExcerpt,
+	];
 }
 
 /**
@@ -238,27 +247,38 @@ function createHeritageTypeListSpan(
 	heritageTypes: readonly HeritageType[],
 	label: string,
 	config: ApiItemTransformationConfiguration,
-): SpanNode | undefined {
-	if (heritageTypes.length > 0) {
-		const renderedLabel = SpanNode.createFromPlainText(`${label}: `, { bold: true });
-
-		// Build up array of excerpt entries
-		const renderedHeritageTypes: SpanNode[] = [];
-		for (const heritageType of heritageTypes) {
-			const renderedExcerpt = createExcerptSpanWithHyperlinks(heritageType.excerpt, config);
-			if (renderedExcerpt !== undefined) {
-				renderedHeritageTypes.push(renderedExcerpt);
-			}
-		}
-
-		const renderedList = injectSeparator<PhrasingContent>(
-			renderedHeritageTypes,
-			new PlainTextNode(", "),
-		);
-
-		return new SpanNode([renderedLabel, ...renderedList]);
+): PhrasingContent[] {
+	if (heritageTypes.length === 0) {
+		return [];
 	}
-	return undefined;
+
+	// Build up array of excerpt entries
+	const renderedHeritageTypes: PhrasingContent[][] = [];
+	for (const heritageType of heritageTypes) {
+		const renderedExcerpt = createExcerptSpanWithHyperlinks(heritageType.excerpt, config);
+		renderedHeritageTypes.push(renderedExcerpt);
+	}
+
+	if (renderedHeritageTypes.length === 0) {
+		// If the heritage types are empty, we don't render anything.
+		return [];
+	}
+
+	const renderedList: PhrasingContent[] = [];
+	let needsComma = false;
+	for (const renderedExcerpt of renderedHeritageTypes) {
+		if (needsComma) {
+			renderedList.push(new PlainTextNode(", "));
+		}
+		renderedList.push(...renderedExcerpt);
+		needsComma = true;
+	}
+
+	return [
+		SpanNode.createFromPlainText(label, { bold: true }),
+		new PlainTextNode(": "),
+		...renderedList,
+	];
 }
 
 /**
@@ -318,10 +338,7 @@ export function createTypeParametersSection(
 		config,
 	);
 
-	return new SectionNode(
-		[typeParametersTable],
-		HeadingNode.createFromPlainText("Type Parameters"),
-	);
+	return new SectionNode([typeParametersTable], new HeadingNode("Type Parameters"));
 }
 
 /**
@@ -334,18 +351,17 @@ export function createTypeParametersSection(
  * @param excerpt - The TSDoc excerpt to render.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns A span containing the rendered contents, if non-empty.
- * Otherwise, will return `undefined`.
+ * @returns The rendered contents, if any.
  */
 export function createExcerptSpanWithHyperlinks(
 	excerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
-): SpanNode | undefined {
+): PhrasingContent[] {
 	if (excerpt.isEmpty) {
-		return undefined;
+		return [];
 	}
 
-	const children: PhrasingContent[] = [];
+	const content: PhrasingContent[] = [];
 	for (const token of excerpt.spannedTokens) {
 		// Markdown doesn't provide a standardized syntax for hyperlinks inside code spans, so we will render
 		// the type expression as DocPlainText.  Instead of creating multiple DocParagraphs, we can simply
@@ -365,18 +381,18 @@ export function createExcerptSpanWithHyperlinks(
 					config,
 					unwrappedTokenText,
 				);
-				children.push(LinkNode.createFromPlainTextLink(link));
+				content.push(LinkNode.createFromPlainTextLink(link));
 				wroteHyperlink = true;
 			}
 		}
 
 		// If the token was not one from which we generated hyperlink text, write as plain text instead
 		if (!wroteHyperlink) {
-			children.push(new PlainTextNode(unwrappedTokenText));
+			content.push(new PlainTextNode(unwrappedTokenText));
 		}
 	}
 
-	return new SpanNode(children);
+	return content;
 }
 
 /**
@@ -829,15 +845,12 @@ function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 	}
 
 	if (firstChild.isLiteral) {
-		if (firstChild.type === DocumentationNodeType.PlainText) {
+		if (firstChild.type === "text") {
 			const text = (firstChild as PlainTextNode).text;
 			if (text === title) {
 				// Remove from children, and remove any trailing line breaks
 				const newChildren = children.slice(1);
-				while (
-					newChildren.length > 0 &&
-					newChildren[0].type === DocumentationNodeType.LineBreak
-				) {
+				while (newChildren.length > 0 && newChildren[0].type === "lineBreak") {
 					newChildren.shift();
 				}
 				return {
@@ -936,11 +949,12 @@ export function createReturnsSection(
 				apiItem.returnTypeExcerpt,
 				config,
 			);
-			if (typeExcerptSpan !== undefined) {
+			if (typeExcerptSpan.length > 0) {
 				children.push(
 					new ParagraphNode([
-						SpanNode.createFromPlainText("Return type: ", { bold: true }),
-						typeExcerptSpan,
+						SpanNode.createFromPlainText("Return type", { bold: true }),
+						new PlainTextNode(": "),
+						...typeExcerptSpan,
 					]),
 				);
 			}
@@ -1040,14 +1054,18 @@ export function wrapInSection(nodes: SectionContent[], heading?: Heading): Secti
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): UnorderedListNode | undefined {
+): ListNode | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;
 	}
 
-	return new UnorderedListNode(
-		apiEntryPoints.map((entryPoint) =>
-			LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+	return new ListNode(
+		apiEntryPoints.map(
+			(entryPoint) =>
+				new ListItemNode([
+					LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
+				]),
 		),
+		/* ordered */ false,
 	);
 }
