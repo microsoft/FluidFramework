@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { VersionBumpType } from "@fluid-tools/version-tools";
 import { Logger } from "@fluidframework/build-tools";
@@ -181,6 +181,58 @@ export type ChangesetEntry = Omit<Changeset, "metadata" | "mainPackage" | "chang
 	 */
 	fullChangeset: Readonly<Changeset>;
 };
+
+/**
+ * Removes any custom metadata from all changesets and writes the resulting changes back to the source files. This
+ * metadata needs to be removed prior to running `changeset version` from the \@changesets/cli package. If it is not,
+ * then the custom metadata is interpreted as change metadata and the changeset tools fail.
+ *
+ * For more information about the custom metadata we use in our changesets, see
+ * https://github.com/microsoft/FluidFramework/wiki/Changesets#custom-metadata
+ *
+ * **Note that this is a lossy action!** The metadata is completely removed. Changesets are typically in source
+ * control so changes can usually be reverted.
+ *
+ * @param releaseGroupRootDir - The root of the release group whose changesets are to be canonicalized.
+ * @param logger - An optional logger.
+ *
+ * @returns The version bump represented by the changesets.
+ */
+export async function canonicalizeChangesets(
+	releaseGroupRootDir: string,
+	logger?: Logger,
+): Promise<VersionBumpType> {
+	const changesetDir = path.join(releaseGroupRootDir, DEFAULT_CHANGESET_PATH);
+	const changesets = await loadChangesets(changesetDir, logger);
+
+	// Determine the highest bump type and save it for later - it determines the changesets-calculated version.
+	const bumpTypes: Set<VersionBumpType> = new Set();
+	for (const changeset of changesets) {
+		for (const bumpType of changeset.changeTypes) {
+			bumpTypes.add(bumpType);
+		}
+	}
+	const bumpTypeFinal = bumpTypes.has("major")
+		? "major"
+		: bumpTypes.has("minor")
+			? "minor"
+			: "patch";
+
+	const toWrite: Promise<void>[] = [];
+	for (const changeset of changesets) {
+		// Filter out properties that start with __
+		const metadata = Object.entries(changeset.metadata)
+			.filter(([key]) => !key.startsWith("__"))
+			.map(([packageName, bump]) => {
+				return `"${packageName}": ${bump}`;
+			});
+		const output = `---\n${metadata.join("\n")}\n---\n\n${changeset.summary}\n\n${changeset.body}\n`;
+		logger?.info(`Writing canonical changeset: ${changeset.sourceFile}`);
+		toWrite.push(writeFile(changeset.sourceFile, output));
+	}
+	await Promise.all(toWrite);
+	return bumpTypeFinal;
+}
 
 /**
  * Compares two changesets by the highlight property of additional metadata if present, then by commit date.
