@@ -38,6 +38,74 @@ export function createInstanceOf<T>(): T {
 }
 
 /**
+ * Tests if a type is `any` and returns one of two types based on the result.
+ *
+ * @remarks
+ * Use caution with this type as `TIfAny` and `TIfNotAny` are always evaluated
+ * (externally), before the `any` check is performed (internally). This means
+ * that if `TIfAny` or `TIfNotAny` are complex types, they will be evaluated
+ * regardless of whether `T` is `any` or not. That will likely lead to
+ * infinite recursion for any recursive `TIfAny` or `TIfNotAny` expressions.
+ *
+ * In such cases, test for `any` directly.
+ */
+type IfAny<T, TIfAny, TIfNotAny = never> = /* test for `any` */ boolean extends (
+	T extends never
+		? true
+		: false
+)
+	? TIfAny
+	: TIfNotAny;
+
+/**
+ * Searched for `any` types in a structure.
+ *
+ * @remarks
+ * Locations of `any` types are preserved in the structure and all other
+ * keys are removed. When there are no `any` types, the result is `never`.
+ *
+ * Use with {@link assertNever} to check that the result is `never`.
+ *
+ * @example
+ * ```ts
+ * // Error: Type '{ a: { b: "'any' found here"; }; }' does not satisfy the constraint 'never'
+ * assertNever<AnyLocations<{ a: { b: any; c: string; }; d: number; }>>();
+ * ```
+ */
+export type AnyLocations<
+	T,
+	TAncestorTypes extends unknown[] = [],
+> = /* test for `any` */ boolean extends (T extends never ? true : false)
+	? /* `any` */ "T is 'any'"
+	: /* not `any` => test for object */ T extends object
+		? /* object => test for recursion */ InternalUtilityTypes.IfExactTypeInTuple<
+				T,
+				TAncestorTypes,
+				true,
+				"no match"
+			> extends true
+			? /* recursion => no `any` */ never
+			: /* process each key */ {
+						[K in keyof T as IfAny<
+							T[K],
+							// K if `T[K]` is `any`
+							K,
+							// K only if `T[K]` has `any` locations
+							AnyLocations<T[K], [...TAncestorTypes, T]> extends never ? never : K
+						>]: IfAny<T[K], "'any' found here", AnyLocations<T[K], [...TAncestorTypes, T]>>;
+					} extends infer LevelResult
+				? /* test if any keys with `any` or nested `any */ keyof LevelResult extends never
+					? /* no keys => no `any` */ never
+					: /* keys worth reporting => */ LevelResult
+				: /* never reached infer else */ never
+		: /* not object => no `any` */ never;
+
+/**
+ * No-runtime-effect helper to check that {@link AnyLocations} results in `never`.
+ */
+export function assertNever<_ extends never>(): void {}
+
+/**
  * JSON.stringify replacer function that replaces `bigint` values with a string representation.
  */
 export function replaceBigInt(_key: string, value: unknown): unknown {
