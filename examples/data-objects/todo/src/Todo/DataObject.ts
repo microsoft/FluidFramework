@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/legacy";
+// TODO: Update import once TreeDataObject is exported in our non-internal package.
+// eslint-disable-next-line import/no-internal-modules
+import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
 import { v4 as uuid } from "uuid";

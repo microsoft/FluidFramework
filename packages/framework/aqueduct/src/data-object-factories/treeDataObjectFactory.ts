@@ -18,7 +18,7 @@ import {
  * @typeParam TDataObject - The concrete TreeDataObject implementation.
  * @typeParam TDataObjectTypes - The input types for the DataObject
  *
- * @legacy @alpha
+ * @internal
  */
 export class TreeDataObjectFactory<
 	TDataObject extends TreeDataObject<TDataObjectTypes>,
