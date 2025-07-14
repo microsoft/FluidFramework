@@ -30,19 +30,29 @@ const uninitializedErrorString =
  *
  * @typeParam TDataObjectTypes - The optional input types used to strongly type the data object.
  *
- * @example Implementing `initializingFromExisting`
- *
- * ```typescript
- * protected override async initializingFromExisting(): Promise<void> {
- * 	TODO
- * }
- * ```
- *
  * @example Implementing `initializingFirstTime`
  *
  * ```typescript
  * protected override async initializingFirstTime(): Promise<void> {
- * 	TODO
+ * 	// Generate the schema-aware view of the tree.
+ * 	this.tree.viewWith(treeViewConfiguration);
+ *
+ * 	// Initialize the tree with initial data.
+ * 	this.treeView.initialize(initialTree);
+ * }
+ * ```
+ *
+ * @example Implementing `initializingFromExisting`
+ *
+ * ```typescript
+ * protected override async initializingFromExisting(): Promise<void> {
+ * 	// Generate the schema-aware view of the tree.
+ * 	this.tree.viewWith(treeViewConfiguration);
+ *
+ *  // Ensure the loaded tree is compatible with the view schema.
+ * 	if (!this.treeView.compatibility.canView) {
+ * 		// Handle out-of-schema data as appropriate.
+ * 	}
  * }
  * ```
  *
