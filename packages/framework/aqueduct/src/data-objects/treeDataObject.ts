@@ -36,7 +36,7 @@ const uninitializedErrorString =
  *
  * ```typescript
  * protected override async initializingFirstTime(): Promise<void> {
- * 	this.tree.initialize(...);
+ * 	this.treeView.initialize(...);
  * }
  * ```
  *
