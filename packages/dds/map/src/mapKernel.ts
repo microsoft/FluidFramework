@@ -699,11 +699,7 @@ export class MapKernel {
 				}
 			},
 			resubmit: (op: IMapClearOperation, localOpMetadata: PendingLocalOpMetadata) => {
-				const pendingMessageId = this.nextPendingMessageId++;
-
-				// TODO: How do I feel about mutating here?
-				localOpMetadata.pendingMessageId = pendingMessageId;
-
+				localOpMetadata.pendingMessageId = this.nextPendingMessageId++;
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
@@ -749,11 +745,7 @@ export class MapKernel {
 				}
 			},
 			resubmit: (op: IMapDeleteOperation, localOpMetadata: PendingLocalOpMetadata) => {
-				const pendingMessageId = this.nextPendingMessageId++;
-
-				// TODO: How do I feel about mutating here?
-				localOpMetadata.pendingMessageId = pendingMessageId;
-
+				localOpMetadata.pendingMessageId = this.nextPendingMessageId++;
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
@@ -807,11 +799,7 @@ export class MapKernel {
 				}
 			},
 			resubmit: (op: IMapSetOperation, localOpMetadata: PendingLocalOpMetadata) => {
-				const pendingMessageId = this.nextPendingMessageId++;
-
-				// TODO: How do I feel about mutating here?
-				localOpMetadata.pendingMessageId = pendingMessageId;
-
+				localOpMetadata.pendingMessageId = this.nextPendingMessageId++;
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
