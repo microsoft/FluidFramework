@@ -8,7 +8,6 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { BaseDevtools } from "./BaseDevtools.js";
 import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
 import { DataObjectDevtools, type DataObjectProps } from "./DataObjectDevtools.js";
@@ -138,13 +137,8 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Stores Container-level devtools instances registered with this object.
 	 * Maps from a {@link ContainerKey} to the corresponding {@link BaseDevtools} instance.
 	 */
-	private readonly containers: Map<ContainerKey, BaseDevtools>;
-
-	/**
-	 * Tracks if the {@link ContainerDevtools} instaces were registered via {@link IFluidDevtools.registerDataObject} vs {@link IFluidDevtools.registerContainerDevtools}.
-	 * Maps {@link ContainerKey} to true if the instance was registered via {@link IFluidDevtools.registerDataObject}, false otherwise.
-	 */
-	private readonly dataObjectRegistry: Map<ContainerKey, boolean>;
+	private readonly containers: Map<ContainerKey, ContainerDevtools>;
+	private readonly dataObjects: Map<ContainerKey, DataObjectDevtools>;
 
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
@@ -242,15 +236,14 @@ export class FluidDevtools implements IFluidDevtools {
 
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
-		this.containers = new Map<ContainerKey, BaseDevtools>();
-		this.dataObjectRegistry = new Map<ContainerKey, boolean>();
+		this.containers = new Map<ContainerKey, ContainerDevtools>();
+		this.dataObjects = new Map<ContainerKey, DataObjectDevtools>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
 					containerConfig.containerKey,
 					new ContainerDevtools(containerConfig),
 				);
-				this.dataObjectRegistry.set(containerConfig.containerKey, false);
 			}
 		}
 
@@ -323,7 +316,6 @@ export class FluidDevtools implements IFluidDevtools {
 
 		const containerDevtools = new ContainerDevtools(props);
 		this.containers.set(containerKey, containerDevtools);
-		this.dataObjectRegistry.set(containerKey, false);
 
 		// Post message for container list change
 		this.postContainerList();
@@ -357,8 +349,7 @@ export class FluidDevtools implements IFluidDevtools {
 			container: decomposedContainer,
 			containerData: { appData: dataObject },
 		});
-		this.containers.set(dataObjectKey, dataObjectDevtools);
-		this.dataObjectRegistry.set(dataObjectKey, true);
+		this.dataObjects.set(dataObjectKey, dataObjectDevtools);
 
 		this.postContainerList();
 	}
@@ -377,7 +368,6 @@ export class FluidDevtools implements IFluidDevtools {
 		} else {
 			containerDevtools.dispose();
 			this.containers.delete(containerKey);
-			this.dataObjectRegistry.delete(containerKey);
 
 			// Post message for container list change
 			this.postContainerList();
@@ -399,27 +389,23 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * Gets all container devtools instances (not data objects).
 	 */
-	public getAllContainers(): readonly BaseDevtools[] {
+	public getAllContainers(): readonly ContainerDevtools[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		return [...this.containers.values()].filter(
-			(container) => !this.isDataObject(container.containerKey),
-		);
+		return [...this.containers.values()];
 	}
 
 	/**
 	 * Gets all data object devtools instances (not containers).
 	 */
-	public getAllDataObjects(): readonly BaseDevtools[] {
+	public getAllDataObjects(): readonly DataObjectDevtools[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		return [...this.containers.values()].filter((dataObject) =>
-			this.isDataObject(dataObject.containerKey),
-		);
+		return [...this.dataObjects.values()];
 	}
 
 	/**
@@ -432,7 +418,7 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
 
-		return this.dataObjectRegistry.get(containerKey) ?? false;
+		return this.dataObjects.has(containerKey);
 	}
 
 	/**
@@ -458,7 +444,7 @@ export class FluidDevtools implements IFluidDevtools {
 			containerDevtools.dispose();
 		}
 		this.containers.clear();
-		this.dataObjectRegistry.clear();
+		this.dataObjects.clear();
 
 		// Notify listeners that the list of Containers changed.
 		this.postContainerList();
@@ -493,7 +479,7 @@ export class FluidDevtools implements IFluidDevtools {
 	 * @returns `true` if data objects are registered, `false` otherwise.
 	 */
 	private hasDataObjects(): boolean {
-		return [...this.dataObjectRegistry.values()].some(Boolean);
+		return this.dataObjects.size > 0;
 	}
 }
 
