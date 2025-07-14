@@ -251,7 +251,7 @@ function _DevtoolsView(props: _DevtoolsViewProps): React.ReactElement {
 			[ContainerList.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerList.Message;
 				setContainers(message.data.containers);
-				setDataObjects(message.data.dataObjects);
+				setDataObjects(message.data.dataObjects ?? []);
 				return true;
 			},
 		};

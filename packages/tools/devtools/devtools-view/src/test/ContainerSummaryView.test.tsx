@@ -35,7 +35,7 @@ describe("ContainerSummaryView Accessibility Check", () => {
 	it("ContainerSummaryView is accessible", async () => {
 		const { container } = render(
 			<MessageRelayContext.Provider value={mockMessageRelay}>
-				<ContainerSummaryView containerKey="Container1" isDataObject={false} />
+				<ContainerSummaryView containerKey="Container1" />
 			</MessageRelayContext.Provider>,
 		);
 		await assertNoAccessibilityViolations(container);

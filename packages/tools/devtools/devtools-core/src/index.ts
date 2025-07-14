@@ -31,11 +31,11 @@ export type {
 } from "./CommonInterfaces.js";
 export { EditType } from "./CommonInterfaces.js";
 export { ContainerStateChangeKind } from "./Container.js";
-export type {
-	ContainerDevtoolsProps,
-	DataObjectProps,
-} from "./ContainerDevtools.js";
+export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
+export type { DataObjectProps } from "./DataObjectDevtools.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
+export type { DecomposedContainer } from "./DecomposedContainer.js";
+export { createDecomposedContainer } from "./DecomposedContainer.js";
 export type {
 	FluidHandleNode,
 	FluidObjectNode,

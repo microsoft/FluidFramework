@@ -6,7 +6,8 @@
 import type { IDisposable } from "@fluidframework/core-interfaces";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
-import type { ContainerDevtoolsProps, DataObjectProps } from "./ContainerDevtools.js";
+import type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import type { DataObjectProps } from "./DataObjectDevtools.js";
 
 /**
  * Fluid Devtools. A single, global instance is used to generate and communicate stats associated with the general Fluid

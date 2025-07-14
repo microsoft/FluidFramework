@@ -33,7 +33,7 @@ export namespace ContainerList {
 		/**
 		 * List of keys for the Data Objects registered with the Devtools.
 		 */
-		dataObjects: ContainerKey[];
+		dataObjects?: ContainerKey[];
 	}
 
 	/**

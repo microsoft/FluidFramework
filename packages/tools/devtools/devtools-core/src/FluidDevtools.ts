@@ -8,13 +8,11 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
+import type { BaseDevtools } from "./BaseDevtools.js";
 import type { ContainerKey } from "./CommonInterfaces.js";
-import {
-	ContainerDevtools,
-	type ContainerDevtoolsProps,
-	type DataObjectProps,
-} from "./ContainerDevtools.js";
-import { DecomposedContainer, type DecomposedIContainer } from "./DecomposedContainer.js";
+import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
+import { DataObjectDevtools, type DataObjectProps } from "./DataObjectDevtools.js";
+import { createDecomposedContainer, type DecomposedContainer } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -138,9 +136,9 @@ export class FluidDevtools implements IFluidDevtools {
 
 	/**
 	 * Stores Container-level devtools instances registered with this object.
-	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerDevtools} instance.
+	 * Maps from a {@link ContainerKey} to the corresponding {@link BaseDevtools} instance.
 	 */
-	private readonly containers: Map<ContainerKey, ContainerDevtools>;
+	private readonly containers: Map<ContainerKey, BaseDevtools>;
 
 	/**
 	 * Tracks if the {@link ContainerDevtools} instaces were registered via {@link IFluidDevtools.registerDataObject} vs {@link IFluidDevtools.registerContainerDevtools}.
@@ -244,7 +242,7 @@ export class FluidDevtools implements IFluidDevtools {
 
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
-		this.containers = new Map<ContainerKey, ContainerDevtools>();
+		this.containers = new Map<ContainerKey, BaseDevtools>();
 		this.dataObjectRegistry = new Map<ContainerKey, boolean>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
@@ -323,10 +321,7 @@ export class FluidDevtools implements IFluidDevtools {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerKey));
 		}
 
-		const containerDevtools = new ContainerDevtools({
-			...props,
-			isDataObject: false,
-		});
+		const containerDevtools = new ContainerDevtools(props);
 		this.containers.set(containerKey, containerDevtools);
 		this.dataObjectRegistry.set(containerKey, false);
 
@@ -348,20 +343,21 @@ export class FluidDevtools implements IFluidDevtools {
 				dataObject as unknown as { context: IFluidDataStoreContext }
 			).context.containerRuntime.generateDocumentUniqueId() as string);
 
-		const decomposedIContainer = toDecomposedIContainer(dataObject);
+		const decomposedContainer = createDecomposedContainer(
+			(dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime,
+		);
 
 		// Check if the data object is already registered.
 		if (this.containers.has(dataObjectKey)) {
 			throw new UsageError(getContainerAlreadyRegisteredErrorText(dataObjectKey));
 		}
 
-		const containerDevtools = ContainerDevtools.createFromDecomposedContainer({
+		const dataObjectDevtools = new DataObjectDevtools({
 			containerKey: dataObjectKey,
-			container: decomposedIContainer,
+			container: decomposedContainer,
 			containerData: { appData: dataObject },
-			isDataObject: true,
 		});
-		this.containers.set(dataObjectKey, containerDevtools);
+		this.containers.set(dataObjectKey, dataObjectDevtools);
 		this.dataObjectRegistry.set(dataObjectKey, true);
 
 		this.postContainerList();
@@ -403,7 +399,7 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * Gets all container devtools instances (not data objects).
 	 */
-	public getAllContainers(): readonly IContainerDevtools[] {
+	public getAllContainers(): readonly BaseDevtools[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
@@ -416,7 +412,7 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * Gets all data object devtools instances (not containers).
 	 */
-	public getAllDataObjects(): readonly IContainerDevtools[] {
+	public getAllDataObjects(): readonly BaseDevtools[] {
 		if (this.disposed) {
 			throw new UsageError(useAfterDisposeErrorText);
 		}
@@ -525,13 +521,11 @@ export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 }
 
 /**
- * Converts a {@link PureDataObject} into a {@link DecomposedIContainer} by wrapping its underlying {@link IFluidDataStoreRuntime}.
+ * Converts a {@link PureDataObject} into a {@link DecomposedContainer} by wrapping its underlying {@link IFluidDataStoreRuntime}.
  * This allows data objects to be registered with devtools by exposing their runtime properties and events
- * through a {@link IContainer}-compatible interface.
+ * through a container-compatible interface.
  */
-export function toDecomposedIContainer(dataObject: PureDataObject): DecomposedIContainer {
+export function toDecomposedContainer(dataObject: PureDataObject): DecomposedContainer {
 	const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
-	const decomposedContainer = new DecomposedContainer(runtime);
-
-	return decomposedContainer;
+	return createDecomposedContainer(runtime);
 }

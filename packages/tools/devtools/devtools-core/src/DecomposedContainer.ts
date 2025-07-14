@@ -15,10 +15,12 @@ import type { IEventProvider } from "@fluidframework/core-interfaces";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 /**
- * A lightweight abstraction of {@link @fluidframework/container-definitions#IContainer} that provides
+ * A lightweight abstraction of a container that provides
  * only the essential properties and methods needed for Fluid DevTools functionality.
+ *
+ * @alpha
  */
-export interface DecomposedIContainer extends IEventProvider<IContainerEvents> {
+export interface DecomposedContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * {@inheritDoc @fluidframework/container-definitions#IContainer.audience}
 	 */
@@ -61,14 +63,14 @@ export interface DecomposedIContainer extends IEventProvider<IContainerEvents> {
 }
 
 /**
- * Implementation of {@link DecomposedIContainer} that wraps an {@link IFluidDataStoreRuntime}.
- * This class provides a bridge between {@link IFluidDataStoreRuntime} and the devtools system by exposing runtime properties and events as {@link IContainer} interfaces.
+ * Implementation of {@link DecomposedContainer} that wraps an {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntime}.
+ * This class provides a bridge between {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntime} and the devtools system by exposing runtime properties and events.
  *
- * @alpha
+ * @internal
  */
-export class DecomposedContainer
+class DecomposedContainerForDataStore
 	extends TypedEventEmitter<IContainerEvents>
-	implements DecomposedIContainer
+	implements DecomposedContainer
 {
 	public constructor(runtime: IFluidDataStoreRuntime) {
 		super();
@@ -112,4 +114,20 @@ export class DecomposedContainer
 	public get closed(): boolean {
 		return !this.runtime.connected;
 	}
+}
+
+/**
+ * Creates a {@link DecomposedContainer} instance from a {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntime}.
+ * This allows data objects to be registered with devtools by exposing their runtime properties
+ * through a container-compatible interface.
+ *
+ * @param runtime - The data store runtime to wrap
+ * @returns A decomposed container instance
+ *
+ * @alpha
+ */
+export function createDecomposedContainer(
+	runtime: IFluidDataStoreRuntime,
+): DecomposedContainer {
+	return new DecomposedContainerForDataStore(runtime);
 }

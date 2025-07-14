@@ -56,7 +56,15 @@ export interface ContainerDevtoolsFeatureFlags {
 	 */
 	containerDataVisualization?: boolean;
 	/**
-	 * Indicates that this container was registered as a data object via registerDataObject().
+	 * Indicates that the Container Devtools supports connecting the container.
 	 */
-	dataObjects?: boolean;
+	canConnect?: boolean;
+	/**
+	 * Indicates that the Container Devtools supports disconnecting the container.
+	 */
+	canDisconnect?: boolean;
+	/**
+	 * Indicates that the Container Devtools supports closing the container.
+	 */
+	canClose?: boolean;
 }
