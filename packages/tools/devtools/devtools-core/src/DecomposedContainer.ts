@@ -75,10 +75,6 @@ class DecomposedContainerForDataStore
 	public constructor(runtime: IFluidDataStoreRuntime) {
 		super();
 		this.runtime = runtime;
-
-		/**
-		 * TODO: Investigate how to map {@link IContainerEvents.closed} event
-		 */
 		runtime.on("attached", this.attachedHandler);
 		runtime.on("connected", this.connectedHandler);
 		runtime.on("disconnected", this.disconnectedHandler);
