@@ -92,7 +92,7 @@ interface PendingClear {
 interface PendingKeyLifetime {
 	type: "lifetime";
 	key: string;
-	keyChanges: PendingKeySet[];
+	keySets: PendingKeySet[];
 }
 
 type PendingChange = PendingKeyLifetime | PendingKeyDelete | PendingClear;
@@ -198,7 +198,7 @@ export class MapKernel {
 					) {
 						const latestPendingValue =
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							pendingChange.keyChanges[pendingChange.keyChanges.length - 1]!;
+							pendingChange.keySets[pendingChange.keySets.length - 1]!;
 						// TODO: clean up
 						// TODO: Consider the case where we have started iterating the pending data, then all of our
 						// ops get sequenced, then we finish iterating the pending data (we would skip the remaining
@@ -334,7 +334,7 @@ export class MapKernel {
 		} else if (latestPendingChange.type === "lifetime") {
 			const latestPendingSet =
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				latestPendingChange.keyChanges[latestPendingChange.keyChanges.length - 1]!;
+				latestPendingChange.keySets[latestPendingChange.keySets.length - 1]!;
 			return latestPendingSet.value;
 		} else {
 			// Delete or clear
@@ -396,14 +396,14 @@ export class MapKernel {
 			latestPendingChange.type === "delete" ||
 			latestPendingChange.type === "clear"
 		) {
-			latestPendingChange = { type: "lifetime", key, keyChanges: [] };
+			latestPendingChange = { type: "lifetime", key, keySets: [] };
 			this.pendingData.push(latestPendingChange);
 		}
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			value: localValue,
 		};
-		latestPendingChange.keyChanges.push(pendingKeySet);
+		latestPendingChange.keySets.push(pendingKeySet);
 
 		const op: IMapSetOperation = {
 			key,
@@ -632,12 +632,12 @@ export class MapKernel {
 					);
 				}
 			} else if (pendingChange.type === "lifetime") {
-				const pendingKeySet = pendingChange.keyChanges.pop();
+				const pendingKeySet = pendingChange.keySets.pop();
 				assert(
 					pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
 					"Unexpected set rollback",
 				);
-				if (pendingChange.keyChanges.length === 0) {
+				if (pendingChange.keySets.length === 0) {
 					this.pendingData.splice(pendingChangeIndex, 1);
 				}
 				this.eventEmitter.emit(
@@ -742,12 +742,12 @@ export class MapKernel {
 						pendingKeyLifetime !== undefined && pendingKeyLifetime.type === "lifetime",
 						"Couldn't match local set message to pending lifetime",
 					);
-					const pendingKeySet = pendingKeyLifetime.keyChanges.shift();
+					const pendingKeySet = pendingKeyLifetime.keySets.shift();
 					assert(
 						pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
 						"Got a local set message we weren't expecting",
 					);
-					if (pendingKeyLifetime.keyChanges.length === 0) {
+					if (pendingKeyLifetime.keySets.length === 0) {
 						this.pendingData.splice(pendingKeyChangeIndex, 1);
 					}
 
