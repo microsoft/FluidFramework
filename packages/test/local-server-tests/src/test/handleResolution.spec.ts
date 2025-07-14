@@ -101,6 +101,7 @@ async function getAndValidateDataObject(
  * Validates that non-root data stores that have other non-root data stores as dependencies are not visible
  * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
  */
+// remove .only!!!
 describe.only("multi-level object visibility tests", () => {
 	const documentId = "objectVisibilityTest";
 	const documentLoadUrl = `https://localhost/${documentId}`;
@@ -141,7 +142,7 @@ describe.only("multi-level object visibility tests", () => {
 		};
 	}
 
-	it("validates that non-root data store and its dependencies become visible correctly when initial container is detached", async () => {
+	it("validates that non-root data store and its dependencies become visible correctly when a detached container attaches", async () => {
 		loaderContainerTracker.reset();
 
 		const props = getDetachedContainerProps();
@@ -174,7 +175,7 @@ describe.only("multi-level object visibility tests", () => {
 		);
 
 		// Attach the container.
-		await container1.attach(urlResolver.createCreateNewRequest(documentLoadUrl));
+		await container1.attach(urlResolver.createCreateNewRequest(documentId));
 		await waitForContainerConnection(container1);
 		loaderContainerTracker.addContainer(container1);
 		await loaderContainerTracker.ensureSynchronized();
@@ -220,7 +221,6 @@ describe.only("multi-level object visibility tests", () => {
 
 		// Send ops for the data stores in both local and remote container and validate that the ops are
 		// successfully processed.
-		// TODO: for some reason, the data store ops aren't processed in either container.
 		dataObject2.root.set("key1", "value1");
 		dataObject2C2.root.set("key2", "value2");
 		dataObject3.root.set("key1", "value1");
@@ -238,9 +238,10 @@ describe.only("multi-level object visibility tests", () => {
 		const props = getDetachedContainerProps();
 		container1 = await createAndAttachContainerUsingProps(
 			props,
-			urlResolver.createCreateNewRequest(documentLoadUrl),
+			urlResolver.createCreateNewRequest(documentId),
 		);
 		await waitForContainerConnection(container1);
+		loaderContainerTracker.addContainer(container1);
 
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		containerRuntime1 = dataObject1.context.containerRuntime;
@@ -278,7 +279,6 @@ describe.only("multi-level object visibility tests", () => {
 
 		const dataObject1C2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		const containerRuntime2 = dataObject1C2.context.containerRuntime;
-		// TODO: data objects are not found in the new container.
 		const dataObject2C2 = await getAndValidateDataObject(dataObject1C2, "dataObject2");
 		const dataObject3C2 = await getAndValidateDataObject(dataObject2C2, "dataObject3");
 
@@ -350,6 +350,8 @@ describe.only("multi-level object visibility tests", () => {
 
 		const dataObjectC2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		const containerRuntime2 = dataObjectC2.context.containerRuntime;
+		const dataObject2C2 = await getAndValidateDataObject(dataObjectC2, "dataObject2");
+		await getAndValidateDataObject(dataObject2C2, "dataObject3");
 
 		// Validate that the data objects are visible from the root of the rehydrated container.
 		await assert.doesNotReject(
