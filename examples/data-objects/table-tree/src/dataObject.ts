@@ -21,13 +21,10 @@ import { Column, Row, Table } from "./schema.js";
  */
 export class TableDataObject extends TreeDataObject<TreeView<typeof Table>> {
 	public readonly config = new TreeViewConfiguration({ schema: Table });
-	public static readonly factory = new TreeDataObjectFactory<
-		TreeDataObject<TreeView<typeof Table>>,
-		TreeView<typeof Table>
-	>({
+	public static readonly factory = new TreeDataObjectFactory<TreeView<typeof Table>>({
 		type: `TreeDataObject`,
 		ctor: TableDataObject,
-		sharedObjects: [SharedTree.getFactory()]
+		sharedObjects: [SharedTree.getFactory()],
 	});
 
 	public override generateView(tree: ITree): TreeView<typeof Table> {

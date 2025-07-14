@@ -34,7 +34,6 @@ export interface TodoItemProps {
 export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>> {
 	public readonly config = new TreeViewConfiguration({ schema: TodoList });
 	public static readonly factory = new TreeDataObjectFactory<
-		TodoListDataObject,
 		TreeView<typeof TodoList>
 	>(
 		{

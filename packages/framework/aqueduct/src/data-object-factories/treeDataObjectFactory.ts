@@ -15,15 +15,19 @@ import {
 /**
  * {@link @fluidframework/runtime-definitions#IFluidDataStoreFactory} for use with {@link TreeDataObject}s.
  *
+ * @typeParam TTreeView - State derived from the underlying {@link @fluidframework/tree#ITree | tree} managed by the {@link TreeDataObject} and exposed via {@link TreeDataObject.treeView}.
  * @typeParam TDataObject - The concrete TreeDataObject implementation.
  * @typeParam TDataObjectTypes - The input types for the DataObject
  *
  * @legacy @alpha
  */
 export class TreeDataObjectFactory<
-	TDataObject extends TreeDataObject<TTreeView, TDataObjectTypes>,
 	TTreeView,
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
+	TDataObject extends TreeDataObject<TTreeView, TDataObjectTypes> = TreeDataObject<
+		TTreeView,
+		TDataObjectTypes
+	>,
 > extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {
 		const newProps = {

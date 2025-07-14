@@ -29,6 +29,7 @@ const uninitializedErrorString =
  * Can be used to derive schema-aware views of the tree.
  * See {@link TreeDataObject.generateView}.
  *
+ * @typeParam TTreeView - State derived from the underlying {@link @fluidframework/tree#ITree | tree} managed by the {@link TreeDataObject} and exposed via {@link TreeDataObject.treeView}.
  * @typeParam TDataObjectTypes - The optional input types used to strongly type the data object.
  *
  * @example Implementing `initializingFirstTime`
