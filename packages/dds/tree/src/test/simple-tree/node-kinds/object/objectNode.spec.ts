@@ -9,6 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
+	FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -20,7 +21,6 @@ import {
 	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
-	type FieldKind,
 	type FieldSchema,
 	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
@@ -28,15 +28,17 @@ import {
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTypedNode,
-} from "../../simple-tree/index.js";
-import type {
-	FieldHasDefault,
-	InsertableObjectFromSchemaRecord,
-	InsertableObjectFromAnnotatedSchemaRecord,
-	ObjectFromSchemaRecord,
+	type NodeFromSchema,
+} from "../../../../simple-tree/index.js";
+import {
+	type FieldHasDefault,
+	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromAnnotatedSchemaRecord,
+	type ObjectFromSchemaRecord,
+	unannotateSchemaRecord,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/node-kinds/object/index.js";
-import { describeHydration, hydrate, pretty } from "./utils.js";
+} from "../../../../simple-tree/node-kinds/object/objectNode.js";
+import { describeHydration, hydrate, pretty } from "../../utils.js";
 import type {
 	areSafelyAssignable,
 	isAssignableTo,
@@ -44,9 +46,13 @@ import type {
 	requireFalse,
 	requireTrue,
 	RestrictiveStringRecord,
-} from "../../util/index.js";
-import { getView, validateUsageError } from "../utils.js";
-import { Tree } from "../../shared-tree/index.js";
+} from "../../../../util/index.js";
+import { getView, validateUsageError } from "../../../utils.js";
+import { Tree } from "../../../../shared-tree/index.js";
+import {
+	createFieldSchema,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../../simple-tree/fieldSchema.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -538,6 +544,41 @@ describeHydration(
 			}
 		});
 
+		it("insertable", () => {
+			const A = schemaFactory.object("A", {});
+			const B = schemaFactory.object("B", { a: A });
+
+			type A = NodeFromSchema<typeof A>;
+
+			const a = new A({});
+			const b = new B({ a });
+			const b2 = new B({ a: {} });
+
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a2: A = 0;
+			// @ts-expect-error empty nodes should not allow non objects.
+			const a3: InsertableTypedNode<typeof A> = 0;
+
+			// @ts-expect-error empty nodes should not allow non-node.
+			const a4: NodeFromSchema<typeof A> = {};
+
+			// Insertable nodes allow non-node objects.
+			const a5: InsertableTypedNode<typeof A> = {};
+		});
+
+		it("Customized customized", () => {
+			class A extends schemaFactory.object("A", {}) {
+				public extra: number = 0;
+			}
+			class B extends schemaFactory.object("B", { a: A }) {
+				public extra: string = "";
+			}
+
+			const a = new A({});
+			const b = new B({ a });
+			const b2 = new B({ a: {} });
+		});
+
 		it("ObjectNodeSchema", () => {
 			const sf = new SchemaFactoryAlpha("Test");
 			class Note extends sf.objectAlpha("Note", { f: SchemaFactory.null }) {}
@@ -879,6 +920,53 @@ describeHydration(
 			const builderA: BuildA = { thisDoesNotExist: 5 };
 			// @ts-expect-error "Object literal may only specify known properties"
 			const builderB: BuildB = { a: 1, thisDoesNotExist: 5 };
+		});
+
+		describe("unannotateSchemaRecord", () => {
+			const stringSchema = schemaFactory.string;
+			const numberSchema = schemaFactory.number;
+
+			it("returns the same FieldSchema if no annotations are present", () => {
+				const schemaRecord = {
+					foo: createFieldSchema(FieldKind.Optional, stringSchema),
+				};
+				const result = unannotateSchemaRecord(schemaRecord);
+				assert.deepStrictEqual(result, schemaRecord);
+			});
+
+			it("unannotates annotated allowed types", () => {
+				const schemaRecord = {
+					bar: {
+						metadata: {},
+						types: [{ metadata: {}, type: stringSchema }, numberSchema],
+					},
+				};
+				const result = unannotateSchemaRecord(schemaRecord);
+				assert.deepStrictEqual(result, {
+					bar: [stringSchema, numberSchema],
+				});
+			});
+
+			it("handles mixed FieldSchema and annotated types", () => {
+				const fieldSchema = createFieldSchema(FieldKind.Optional, stringSchema);
+				const schemaRecord = {
+					foo: fieldSchema,
+					bar: {
+						metadata: {},
+						types: [{ metadata: {}, type: stringSchema }],
+					},
+				};
+				const result = unannotateSchemaRecord(schemaRecord);
+				assert.deepStrictEqual(result, {
+					foo: fieldSchema,
+					bar: [stringSchema],
+				});
+			});
+
+			it("handles empty schema record", () => {
+				const result = unannotateSchemaRecord({});
+				assert.deepStrictEqual(result, {});
+			});
 		});
 	},
 );

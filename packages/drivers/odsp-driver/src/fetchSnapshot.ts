@@ -42,6 +42,7 @@ import {
 	IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "./contracts.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
@@ -739,9 +740,15 @@ export const downloadSnapshot = mockify(
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 		// If the share link is non-durable, we will add the nonDurableRedeem header to the header.prefer.
-		const header = isRedemptionNonDurable
+		const header: { [key: string]: string } = isRedemptionNonDurable
 			? { prefer: "manualredirect, nonDurableRedeem" }
 			: { prefer: "manualredirect" };
+		// Epoch tracker is handling adding the CLP Compliant App header, so only when a flow does not
+		// use epoch tracker, we add the header.
+		if (epochTracker === undefined && odspResolvedUrl.isClpCompliantApp !== undefined) {
+			header[ClpCompliantAppHeader.isClpCompliantApp] =
+				odspResolvedUrl.isClpCompliantApp.toString();
+		}
 		const authHeader = await getAuthHeader(
 			{ ...tokenFetchOptions, request: { url, method } },
 			"downloadSnapshot",
