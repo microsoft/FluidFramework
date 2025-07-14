@@ -65,7 +65,7 @@ export class DocumentDeltaConnection
 	/**
 	 * Error message used when client is closing the delta connection cleanly.
 	 */
-	static readonly clientClosingMessage = "Client closing delta connection";
+	static readonly errorMessageForClientDisposeWithoutError = "Client closing delta connection";
 
 	/**
 	 * Last known sequence number to ordering service at the time of connection
@@ -430,7 +430,7 @@ export class DocumentDeltaConnection
 			this.disconnect(
 				createGenericNetworkError(
 					// pre-0.58 error message: clientClosingConnection
-					error?.message ?? DocumentDeltaConnection.clientClosingMessage,
+					error?.message ?? DocumentDeltaConnection.errorMessageForClientDisposeWithoutError,
 					{ canRetry: error === undefined },
 					{ driverVersion },
 				),
