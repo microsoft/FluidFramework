@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert, fail } from "node:assert";
+import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
@@ -27,26 +27,6 @@ import type {
 	TreeChunk,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
-import type { ChunkedCursor } from "../../../core/index.js";
-import { ReferenceCountedBase } from "../../../util/index.js";
-
-class TestChunk extends ReferenceCountedBase implements TreeChunk {
-	public readonly topLevelLength: number = 1;
-
-	public constructor(public value: string) {
-		super();
-	}
-
-	public clone(): TestChunk {
-		return new TestChunk(this.value);
-	}
-
-	public cursor(): ChunkedCursor {
-		fail("not implemented");
-	}
-
-	protected onUnreferenced(): void {}
-}
 
 /**
  * Creates a mock incremental summary context for testing.
@@ -97,13 +77,11 @@ function getReadAndParse(blobMap: Map<string, string>): ReadAndParseBlob {
 
 describe("ForestIncrementalSummaryBuilder", () => {
 	let builder: ForestIncrementalSummaryBuilder;
-	let testChunk1: TreeChunk;
-	let testChunk2: TreeChunk;
+	let testChunk: TreeChunk;
 
 	beforeEach(() => {
 		builder = new ForestIncrementalSummaryBuilder();
-		testChunk1 = new TestChunk("chunk1");
-		testChunk2 = new TestChunk("chunk2");
+		testChunk = {} as unknown as TreeChunk; // Mock chunk for testing
 	});
 
 	describe("startingSummary", () => {
@@ -379,7 +357,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		const mockEncodedChunk = {} as unknown as EncodedFieldBatch;
 		it("throws when not tracking summary", () => {
 			assert.throws(
-				() => builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk),
+				() => builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk),
 				(error: Error) =>
 					validateAssertionError(error, "Summary tracking must be in progress"),
 			);
@@ -389,7 +367,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const summaryBuilder = new SummaryTreeBuilder();
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
-			const referenceId = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			const referenceId = builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk);
 			assert.strictEqual(typeof referenceId, "number", "Reference ID should be a number");
 		});
 
@@ -398,7 +376,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			// Start with non full tree mode
 			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
-			const referenceId1 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			const referenceId1 = builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk);
 			// Complete first summary
 			builder.completedSummary(incrementalSummaryContext);
 
@@ -410,7 +388,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				newIncrementalSummaryContext,
 			);
 			// Should still encode (not use handle) because it's full tree mode
-			const referenceId2 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			const referenceId2 = builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk);
 			// Should get different reference IDs because both were encoded
 			assert.notStrictEqual(referenceId1, referenceId2, "Reference IDs should be different");
 		});
@@ -428,7 +406,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				false /* fullTree */,
 				incrementalSummaryContext1,
 			);
-			const referenceId1 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			const referenceId1 = builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk);
 			builder.completedSummary(incrementalSummaryContext1);
 
 			// Second summary with same chunk
@@ -439,7 +417,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				"/base/path",
 			);
 			builder.startingSummary(summaryBuilder2, false, incrementalSummaryContext2);
-			const referenceId2 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			const referenceId2 = builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk);
 			// Should reuse the same reference ID
 			assert.strictEqual(referenceId1, referenceId2, "Reference IDs should match");
 
@@ -462,7 +440,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				false /* fullTree */,
 				incrementalSummaryContext,
 			);
-			const referenceId1 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			const referenceId1 = builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk);
 			builder.completedSummary(incrementalSummaryContext);
 
 			// Start new summary and don't encode any chunks.
@@ -485,7 +463,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 			);
 
 			// Should reuse the same reference ID since the chunk hasn't changed since the last successful summary.
-			const referenceId2 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			const referenceId2 = builder.encodeIncrementalChunk(testChunk, () => mockEncodedChunk);
 			assert.strictEqual(referenceId1, referenceId2, "Reference IDs should match");
 
 			// Verify that a handle was added to the summary builder
