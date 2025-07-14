@@ -17,8 +17,9 @@ import {
 	type NormalizedAnnotatedAllowedTypes,
 	type TreeNodeSchema,
 	type TreeNodeSchemaNonClass,
+	type NodeSchemaMetadata,
+	type TreeLeafValue,
 } from "./core/index.js";
-import type { NodeSchemaMetadata, TreeLeafValue } from "./schemaTypes.js";
 import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
@@ -32,7 +33,9 @@ import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
  * This class refers to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
  */
 export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
-	implements TreeNodeSchemaNonClass<Name, NodeKind.Leaf, TreeValue<T>, TreeValue<T>>
+	implements
+		TreeNodeSchemaNonClass<Name, NodeKind.Leaf, TreeValue<T>, TreeValue<T>>,
+		SimpleLeafNodeSchema
 {
 	public readonly identifier: Name;
 	public readonly kind = NodeKind.Leaf;

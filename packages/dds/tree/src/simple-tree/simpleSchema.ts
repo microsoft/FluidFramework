@@ -5,8 +5,8 @@
 
 import type { ValueSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
-import type { NodeKind } from "./core/index.js";
-import type { FieldKind, FieldSchemaMetadata, NodeSchemaMetadata } from "./schemaTypes.js";
+import type { NodeKind, NodeSchemaMetadata } from "./core/index.js";
+import type { FieldKind, FieldSchemaMetadata } from "./fieldSchema.js";
 
 /*
  * TODO:

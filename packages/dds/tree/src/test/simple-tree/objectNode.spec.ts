@@ -20,6 +20,14 @@ import {
 	type SimpleObjectNodeSchema,
 	type TreeNodeSchema,
 	type ValidateRecursiveSchema,
+	type FieldKind,
+	type FieldSchema,
+	type ImplicitAllowedTypes,
+	type ImplicitFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTypedNode,
 } from "../../simple-tree/index.js";
 import type {
 	FieldHasDefault,
@@ -39,17 +47,6 @@ import type {
 } from "../../util/index.js";
 import { getView, validateUsageError } from "../utils.js";
 import { Tree } from "../../shared-tree/index.js";
-import type {
-	FieldKind,
-	FieldSchema,
-	ImplicitAllowedTypes,
-	ImplicitFieldSchema,
-	ImplicitAnnotatedFieldSchema,
-	InsertableTreeFieldFromImplicitField,
-	InsertableTreeNodeFromAllowedTypes,
-	InsertableTypedNode,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/schemaTypes.js";
 
 const schemaFactory = new SchemaFactory("Test");
 

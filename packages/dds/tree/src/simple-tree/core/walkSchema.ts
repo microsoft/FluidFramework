@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	asTreeNodeSchemaCorePrivate,
-	type NormalizedAnnotatedAllowedTypes,
-	type TreeNodeSchema,
-} from "./treeNodeSchema.js";
+import type { NormalizedAnnotatedAllowedTypes } from "./allowedTypes.js";
+import { asTreeNodeSchemaCorePrivate, type TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
