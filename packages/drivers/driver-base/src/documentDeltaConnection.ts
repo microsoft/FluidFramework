@@ -37,7 +37,9 @@ import {
 	createChildMonitoringContext,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
+	isFluidError,
 	normalizeError,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
@@ -412,14 +414,21 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		this.disconnect(
-			createGenericNetworkError(
+		if (isFluidError(error)) {
+			const fluidError = normalizeError(error, {
+				props: { driverVersion },
+			}) as IFluidErrorBase & {
+				canRetry: boolean;
+			};
+			this.disconnect(fluidError);
+		} else {
+			this.disconnect(createGenericNetworkError(
 				// pre-0.58 error message: clientClosingConnection
 				error?.message ?? "Client closing delta connection",
 				{ canRetry: error === undefined },
 				{ driverVersion },
-			),
-		);
+			));
+		}
 	}
 
 	protected readonly disconnect = (err: IAnyDriverError) => {
