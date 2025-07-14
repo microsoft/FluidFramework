@@ -1,5 +1,13 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.8.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.8_0)
+
+Promotes the following rules from the `strict` ruleset to the `recommended` ruleset:
+
+-   [@typescript-eslint/consistent-type-exports](https://typescript-eslint.io/rules/consistent-type-exports/)
+-   [@typescript-eslint/consistent-type-imports](https://typescript-eslint.io/rules/consistent-type-imports/)
+-   [@typescript-eslint/no-import-type-side-effects](https://typescript-eslint.io/rules/no-import-type-side-effects/)
+
 ## [5.7.4](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.4)
 
 Updates the contexts in which `jsdoc/require-jsdoc` is applied to make it less overzealous.
