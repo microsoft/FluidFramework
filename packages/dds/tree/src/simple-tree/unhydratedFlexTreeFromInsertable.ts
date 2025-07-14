@@ -20,17 +20,13 @@ import { brand, isReadonlyArray, hasSingle } from "../util/index.js";
 
 import { nullSchema } from "./leafNodeSchema.js";
 import {
-	type ImplicitAllowedTypes,
-	normalizeAllowedTypes,
 	isConstant,
 	type ImplicitFieldSchema,
 	normalizeFieldSchema,
 	FieldKind,
-	type TreeLeafValue,
 	extractFieldProvider,
 	type ContextualFieldProvider,
-	unannotateImplicitAllowedTypes,
-} from "./schemaTypes.js";
+} from "./fieldSchema.js";
 import {
 	createField,
 	getKernel,
@@ -42,6 +38,10 @@ import {
 	type UnhydratedFlexTreeField,
 	UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
+	type ImplicitAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	normalizeAllowedTypes,
+	type TreeLeafValue,
 } from "./core/index.js";
 import { getUnhydratedContext } from "./createContext.js";
 import { convertFieldKind } from "./toStoredSchema.js";

@@ -80,7 +80,7 @@ describe("tree indexes", () => {
 	): TreeNode | TreeValue {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(anchorNode, cursor);
-		const flexNode = makeTree(root.getView().context, cursor);
+		const flexNode = makeTree(root.getFlexTreeContext(), cursor);
 		cursor.free();
 		return getOrCreateNodeFromInnerNode(flexNode);
 	}
@@ -276,7 +276,7 @@ describe("tree indexes", () => {
 				(anchorNode: AnchorNode) => {
 					const cursor = forest.allocateCursor();
 					forest.moveCursorToPath(anchorNode, cursor);
-					const flexNode = makeTree(root.getView().context, cursor);
+					const flexNode = makeTree(root.getFlexTreeContext(), cursor);
 					cursor.free();
 					const simpleTree = getOrCreateNodeFromInnerNode(flexNode);
 					if (!isTreeValue(simpleTree)) {

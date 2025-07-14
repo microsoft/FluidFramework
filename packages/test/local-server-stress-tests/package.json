@@ -108,7 +108,8 @@
 				"@fluidframework/id-compressor#build:test",
 				"@fluidframework/sequence#build:test",
 				"@fluidframework/map#build:test",
-				"@fluidframework/matrix#build:test"
+				"@fluidframework/matrix#build:test",
+				"@fluidframework/tree#build:test"
 			]
 		}
 	},
