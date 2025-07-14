@@ -91,7 +91,7 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 		return anyDecoder;
 	},
 	e(shape: EncodedIncrementalShape, cache): ChunkDecoder {
-		return new IncrementalFieldDecoder(shape, cache);
+		return new IncrementalFieldDecoder(cache);
 	},
 });
 
@@ -238,10 +238,7 @@ export class InlineArrayDecoder implements ChunkDecoder {
  * Decoder for {@link EncodedIncrementalShape}s.
  */
 export class IncrementalFieldDecoder implements ChunkDecoder {
-	public constructor(
-		private readonly shape: EncodedIncrementalShape,
-		private readonly cache: DecoderContext<EncodedChunkShape>,
-	) {}
+	public constructor(private readonly cache: DecoderContext<EncodedChunkShape>) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const chunkReferenceIds = readStream(stream);
 		assert(
@@ -258,17 +255,7 @@ export class IncrementalFieldDecoder implements ChunkDecoder {
 			);
 			const batch = this.cache.incrementalDecoder.getEncodedIncrementalChunk(chunkReferenceId);
 			assert(batch !== undefined, "Incremental chunk data missing");
-
-			const decoders = batch.shapes.map((shape) => decoderLibrary.dispatch(shape, this.cache));
-			for (const field of batch.data) {
-				const innerStream = { data: field, offset: 0 };
-				const result = anyDecoder.decode(decoders, innerStream);
-				assert(
-					innerStream.offset === innerStream.data.length,
-					0x73a /* expected decode to consume full stream */,
-				);
-				chunks.push(result);
-			}
+			chunks.push(...genericDecode(decoderLibrary, this.cache, batch, anyDecoder));
 		}
 		return aggregateChunks(chunks);
 	}
