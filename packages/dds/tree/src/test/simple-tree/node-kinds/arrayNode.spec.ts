@@ -10,10 +10,21 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	type FixRecursiveArraySchema,
+	type InsertableTreeFieldFromImplicitField,
+	type InsertableTypedNode,
+	type NodeBuilderData,
 	type NodeFromSchema,
+	type TreeFieldFromImplicitField,
+	type TreeNodeFromImplicitAllowedTypes,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
-import type { Mutable } from "../../../util/index.js";
+import type {
+	areSafelyAssignable,
+	Mutable,
+	requireAssignableTo,
+	requireTrue,
+	UnionToIntersection,
+} from "../../../util/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { asIndex } from "../../../simple-tree/node-kinds/index.js";
 import { TestTreeProviderLite, validateUsageError } from "../../utils.js";
@@ -60,6 +71,67 @@ describe("ArrayNode", () => {
 			n.insertAtStart(3);
 			assert.equal(n.y, 3);
 			assert.deepEqual(thisList, [n, n]);
+		});
+	});
+
+	describe("insertable types", () => {
+		it("Lists", () => {
+			const List = schemaFactory.array(schemaFactory.number);
+			const NestedList = schemaFactory.array(List);
+
+			// leaf
+			{
+				type I1 = InsertableTreeFieldFromImplicitField<typeof schemaFactory.number>;
+				type I2 = InsertableTypedNode<typeof schemaFactory.number>;
+				type I3 = NodeBuilderData<typeof schemaFactory.number>;
+
+				type N1 = NodeFromSchema<typeof schemaFactory.number>;
+				type N2 = TreeNodeFromImplicitAllowedTypes<typeof schemaFactory.number>;
+				type N3 = TreeFieldFromImplicitField<typeof schemaFactory.number>;
+
+				type _check1 = requireTrue<areSafelyAssignable<I1, number>>;
+				type _check2 = requireTrue<areSafelyAssignable<I2, number>>;
+				type _check3 = requireTrue<areSafelyAssignable<I3, number>>;
+				type _check4 = requireTrue<areSafelyAssignable<N1, number>>;
+				type _check5 = requireTrue<areSafelyAssignable<N2, number>>;
+				type _check6 = requireTrue<areSafelyAssignable<N3, number>>;
+			}
+
+			// Array
+			{
+				type I1 = InsertableTreeFieldFromImplicitField<typeof List>;
+				type I2 = InsertableTypedNode<typeof List>;
+				type I3 = NodeBuilderData<typeof List>;
+				type I4 = NodeBuilderData<UnionToIntersection<typeof List>>;
+
+				type N1 = NodeFromSchema<typeof List>;
+				type N2 = TreeNodeFromImplicitAllowedTypes<typeof List>;
+				type N3 = TreeFieldFromImplicitField<typeof List>;
+
+				type _check1 = requireTrue<areSafelyAssignable<I1, I2>>;
+				type _check2 = requireTrue<areSafelyAssignable<I2, N1 | Iterable<number>>>;
+				type _check3 = requireTrue<areSafelyAssignable<I3, Iterable<number>>>;
+				type _check6 = requireTrue<areSafelyAssignable<I4, Iterable<number>>>;
+				type _check4 = requireTrue<areSafelyAssignable<N1, N2>>;
+				type _check5 = requireTrue<areSafelyAssignable<N2, N3>>;
+			}
+
+			// Nested Array
+			{
+				type I1 = InsertableTreeFieldFromImplicitField<typeof NestedList>;
+				type I2 = InsertableTypedNode<typeof NestedList>;
+				type I3 = NodeBuilderData<typeof NestedList>;
+
+				type N1 = NodeFromSchema<typeof NestedList>;
+				type N2 = TreeNodeFromImplicitAllowedTypes<typeof NestedList>;
+				type N3 = TreeFieldFromImplicitField<typeof NestedList>;
+
+				type _check1 = requireTrue<areSafelyAssignable<I1, I2>>;
+				type _check2 = requireTrue<areSafelyAssignable<I2, N1 | I3>>;
+				type _check3 = requireAssignableTo<Iterable<Iterable<number>>, I3>;
+				type _check4 = requireTrue<areSafelyAssignable<N1, N2>>;
+				type _check5 = requireTrue<areSafelyAssignable<N2, N3>>;
+			}
 		});
 	});
 
