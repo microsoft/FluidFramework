@@ -17,6 +17,19 @@
 			"**/node_modules/**/@fluid*/*-previous/*"
 		],
 		"typescript.preferences.importModuleSpecifier": "project-relative",
-		"typescript.preferences.preferTypeOnlyAutoImports": true
+		"typescript.preferences.preferTypeOnlyAutoImports": true,
+		"typescript.preferences.autoImportSpecifierExcludeRegexes": [
+			// Avoid suggesting imports from parent index file, which almost always is a mistake which creates a cyclic dependency.
+			// Importers in almost all cases should import it from a sibling instead (the same place the index file imports it from).
+			"^\\.\\/index\\.js$",
+			// Same justification as the ./index.js case, but catches imports from parents further up the directory hierarchy.
+			// Rejects cases like ../index.js and ../../index.js.
+			"\\.\\.\\/index\\.js$",
+			// Avoid suggesting imports which reach into a directory, unless the import is for the index file.
+			// Often tests for a specific file will want to violate this, so violating this could occasionally be useful,
+			// but removing it from an auto-import suggestion in all other cases is helpful.
+			// Rejects cases like ./core/treeNodeSchema.js while allowing ./core/index.js, ../util.js and ./util.js.
+			"\\/[^.]*\\/(?!index\\.js$)"
+		]
 	}
 }

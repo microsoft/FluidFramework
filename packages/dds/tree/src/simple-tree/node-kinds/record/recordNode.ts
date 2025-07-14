@@ -20,26 +20,24 @@ import {
 	getKernel,
 	type InternalTreeNode,
 	type NormalizedAnnotatedAllowedTypes,
+	type NodeSchemaMetadata,
+	type ImplicitAnnotatedAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
 } from "../../core/index.js";
 import { getUnhydratedContext } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import {
-	type NodeSchemaMetadata,
-	type TreeNodeFromImplicitAllowedTypes,
-	type ImplicitAllowedTypes,
-	normalizeAllowedTypes,
-	unannotateImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-	createFieldSchema,
-	FieldKind,
-	normalizeAnnotatedAllowedTypes,
-} from "../../schemaTypes.js";
+import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import type {
 	RecordNodeCustomizableSchema,
 	RecordNodeInsertableData,

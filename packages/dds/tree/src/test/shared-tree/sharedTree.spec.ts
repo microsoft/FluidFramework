@@ -196,7 +196,10 @@ describe("SharedTree", () => {
 		it("re-view after view disposal with TreeNodes", () => {
 			const tree = treeTestFactory();
 
-			// Scan AnchorSet and check its slots for cached invalid data.
+			/**
+			 * Scan AnchorSet and check its slots for cached invalid data.
+			 * @param allowNodes - if false, errors if there are any TreeNodes cached in the AnchorSet.
+			 */
 			function checkAnchors(allowNodes: boolean) {
 				const anchors = tree.kernel.checkout.forest.anchors;
 				for (const anchor of anchors) {
@@ -249,7 +252,7 @@ describe("SharedTree", () => {
 
 			const view2 = tree.viewWith(config);
 
-			checkAnchors(false);
+			checkAnchors(true);
 
 			const root2 = view2.root;
 			assert.notEqual(root1, root2);
