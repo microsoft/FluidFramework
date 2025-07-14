@@ -670,7 +670,7 @@ export class MapKernel {
 						pendingClear !== undefined &&
 							pendingClear.type === "clear" &&
 							pendingClear === localOpMetadata,
-						0x2fb /* pendingMessageId does not match */,
+						"Got a local clear message we weren't expecting",
 					);
 				} else {
 					// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
@@ -692,9 +692,6 @@ export class MapKernel {
 			) => {
 				const { key } = op;
 
-				const previousValue: unknown = this.sequencedData.get(key)?.value;
-				this.sequencedData.delete(key);
-
 				if (local) {
 					const pendingKeyChangeIndex = this.pendingData.findIndex(
 						(change) => change.type !== "clear" && change.key === key,
@@ -704,10 +701,14 @@ export class MapKernel {
 						pendingKeyChange !== undefined &&
 							pendingKeyChange.type === "delete" &&
 							pendingKeyChange === localOpMetadata,
-						"Got a delete message we weren't expecting",
+						"Got a local delete message we weren't expecting",
 					);
 					this.pendingData.splice(pendingKeyChangeIndex, 1);
+
+					this.sequencedData.delete(key);
 				} else {
+					const previousValue: unknown = this.sequencedData.get(key)?.value;
+					this.sequencedData.delete(key);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 					if (
 						!this.pendingData.some((change) => change.type === "clear" || change.key === key)
@@ -732,37 +733,35 @@ export class MapKernel {
 				localOpMetadata: PendingLocalOpMetadata | undefined,
 			) => {
 				const { key, value } = op;
-				const pendingKeyChangeIndex = this.pendingData.findIndex(
-					(change) => change.type !== "clear" && change.key === key,
-				);
+
 				if (local) {
+					const pendingKeyChangeIndex = this.pendingData.findIndex(
+						(change) => change.type !== "clear" && change.key === key,
+					);
 					const pendingKeyLifetime = this.pendingData[pendingKeyChangeIndex];
 					assert(
 						pendingKeyLifetime !== undefined && pendingKeyLifetime.type === "lifetime",
-						"Got a set message we weren't expecting",
+						"Couldn't match local set message to pending lifetime",
 					);
-					const pendingValue = pendingKeyLifetime.keyChanges.shift();
+					const pendingKeySet = pendingKeyLifetime.keyChanges.shift();
+					assert(
+						pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
+						"Got a local set message we weren't expecting",
+					);
 					if (pendingKeyLifetime.keyChanges.length === 0) {
 						this.pendingData.splice(pendingKeyChangeIndex, 1);
 					}
-					assert(pendingValue !== undefined, "Got a set message we weren't expecting");
-					assert(
-						localOpMetadata !== undefined && pendingValue === localOpMetadata,
-						"Change does not match",
-					);
-					assert(pendingValue.type === "set", "pendingValue type is incorrect");
-					// TODO: Choosing to reuse the object reference here rather than create a new one from the incoming op?
-					this.sequencedData.set(key, pendingValue.value);
+
+					this.sequencedData.set(key, pendingKeySet.value);
 				} else {
 					migrateIfSharedSerializable(value, this.serializer, this.handle);
 					const localValue: ILocalValue = { value: value.value };
-					const previousSequencedLocalValue = this.sequencedData.get(key);
-					const previousValue: unknown = previousSequencedLocalValue?.value;
+					const previousValue: unknown = this.sequencedData.get(key)?.value;
 					this.sequencedData.set(key, localValue);
+
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 					if (
-						pendingKeyChangeIndex === -1 &&
-						!this.pendingData.some((change) => change.type === "clear")
+						!this.pendingData.some((change) => change.type === "clear" || change.key === key)
 					) {
 						this.eventEmitter.emit(
 							"valueChanged",
