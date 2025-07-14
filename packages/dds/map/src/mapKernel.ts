@@ -78,18 +78,15 @@ export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 interface PendingKeySet {
 	type: "set";
 	value: ILocalValue;
-	pendingMessageId: number;
 }
 
 interface PendingKeyDelete {
 	type: "delete";
 	key: string;
-	pendingMessageId: number;
 }
 
 interface PendingClear {
 	type: "clear";
-	pendingMessageId: number;
 }
 
 interface PendingKeyLifetime {
@@ -139,11 +136,6 @@ export class MapKernel {
 	 */
 	private readonly sequencedData = new Map<string, ILocalValue>();
 	private readonly pendingData: PendingChange[] = [];
-
-	/**
-	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
-	 */
-	private nextPendingMessageId: number = 0;
 
 	/**
 	 * Create a new shared map kernel.
@@ -412,9 +404,7 @@ export class MapKernel {
 			latestPendingChange = { type: "lifetime", key, keyChanges: [] };
 			this.pendingData.push(latestPendingChange);
 		}
-		const pendingMessageId = this.nextPendingMessageId++;
 		const pendingKeySet: PendingKeySet = {
-			pendingMessageId,
 			type: "set",
 			value: localValue,
 		};
@@ -454,11 +444,9 @@ export class MapKernel {
 			return successfullyRemoved;
 		}
 
-		const pendingMessageId = this.nextPendingMessageId++;
 		const pendingKeyDelete: PendingKeyDelete = {
 			type: "delete",
 			key,
-			pendingMessageId,
 		};
 		this.pendingData.push(pendingKeyDelete);
 
@@ -494,10 +482,8 @@ export class MapKernel {
 			return;
 		}
 
-		const pendingMessageId = this.nextPendingMessageId++;
 		const pendingClear: PendingClear = {
 			type: "clear",
-			pendingMessageId,
 		};
 		this.pendingData.push(pendingClear);
 
@@ -680,16 +666,14 @@ export class MapKernel {
 				this.sequencedData.clear();
 				if (local) {
 					assert(
-						localOpMetadata !== undefined &&
-							localOpMetadata.type === "clear" &&
-							typeof localOpMetadata.pendingMessageId === "number",
+						localOpMetadata !== undefined && localOpMetadata.type === "clear",
 						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
 					);
 					const pendingClear = this.pendingData.shift();
 					assert(
 						pendingClear !== undefined &&
 							pendingClear.type === "clear" &&
-							pendingClear.pendingMessageId === localOpMetadata.pendingMessageId,
+							pendingClear === localOpMetadata,
 						0x2fb /* pendingMessageId does not match */,
 					);
 				} else {
@@ -699,7 +683,6 @@ export class MapKernel {
 				}
 			},
 			resubmit: (op: IMapClearOperation, localOpMetadata: PendingLocalOpMetadata) => {
-				localOpMetadata.pendingMessageId = this.nextPendingMessageId++;
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
@@ -721,9 +704,8 @@ export class MapKernel {
 					);
 					this.pendingData.splice(pendingKeyChangeIndex, 1);
 					assert(
-						localOpMetadata !== undefined &&
-							pendingKeyChange.pendingMessageId === localOpMetadata.pendingMessageId,
-						"pendingMessageId does not match",
+						localOpMetadata !== undefined && pendingKeyChange === localOpMetadata,
+						"Change does not match",
 					);
 					this.sequencedData.delete(key);
 				} else {
@@ -745,7 +727,6 @@ export class MapKernel {
 				}
 			},
 			resubmit: (op: IMapDeleteOperation, localOpMetadata: PendingLocalOpMetadata) => {
-				localOpMetadata.pendingMessageId = this.nextPendingMessageId++;
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
@@ -771,9 +752,8 @@ export class MapKernel {
 					}
 					assert(pendingValue !== undefined, "Got a set message we weren't expecting");
 					assert(
-						localOpMetadata !== undefined &&
-							pendingValue.pendingMessageId === localOpMetadata.pendingMessageId,
-						"pendingMessageId does not match",
+						localOpMetadata !== undefined && pendingValue === localOpMetadata,
+						"Change does not match",
 					);
 					assert(pendingValue.type === "set", "pendingValue type is incorrect");
 					// TODO: Choosing to reuse the object reference here rather than create a new one from the incoming op?
@@ -799,7 +779,6 @@ export class MapKernel {
 				}
 			},
 			resubmit: (op: IMapSetOperation, localOpMetadata: PendingLocalOpMetadata) => {
-				localOpMetadata.pendingMessageId = this.nextPendingMessageId++;
 				this.submitMessage(op, localOpMetadata);
 			},
 		});
