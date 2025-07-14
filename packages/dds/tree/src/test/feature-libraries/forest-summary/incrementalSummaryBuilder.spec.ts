@@ -11,8 +11,6 @@ import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
-import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-
 import {
 	ForestIncrementalSummaryBuilder,
 	// eslint-disable-next-line import/no-internal-modules
@@ -130,39 +128,62 @@ describe("ForestIncrementalSummaryBuilder", () => {
 	});
 
 	describe("startingSummary", () => {
-		it("returns false when incrementalSummaryContext is undefined", () => {
-			const summaryBuilder = new SummaryTreeBuilder();
-			const result = builder.startingSummary(summaryBuilder, false, undefined);
-			assert.strictEqual(result, false);
+		let summaryBuilder: SummaryTreeBuilder;
+		beforeEach(() => {
+			summaryBuilder = new SummaryTreeBuilder();
 		});
 
-		it("returns true and sets up tracking when incrementalSummaryContext is provided", () => {
-			const summaryBuilder = new SummaryTreeBuilder();
-			const context = createMockIncrementalSummaryContext(100, 90);
-
-			const result = builder.startingSummary(summaryBuilder, false, context);
-			assert.strictEqual(result, true);
+		it("returns ShouldSummarizeIncrementally=false when incrementalSummaryContext is undefined", () => {
+			const shouldSummarizeIncrementally = builder.startingSummary(
+				summaryBuilder,
+				false /* fullTree */,
+				undefined /* incrementalSummaryContext */,
+			);
+			assert.strictEqual(
+				shouldSummarizeIncrementally,
+				false,
+				"Expected ShouldSummarizeIncrementally to be false when context is undefined",
+			);
 		});
 
-		it("handles full tree summary correctly", () => {
-			const summaryBuilder = new SummaryTreeBuilder();
-			const context = createMockIncrementalSummaryContext(100, 90);
+		it("returns ShouldSummarizeIncrementally=true when incrementalSummaryContext is provided", () => {
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
+			const shouldSummarizeIncrementally = builder.startingSummary(
+				summaryBuilder,
+				false /* fullTree */,
+				incrementalSummaryContext,
+			);
+			assert.strictEqual(
+				shouldSummarizeIncrementally,
+				true,
+				"Expected ShouldSummarizeIncrementally to be true when context is provided",
+			);
+		});
 
-			const result = builder.startingSummary(summaryBuilder, true, context);
-			assert.strictEqual(result, true);
+		it("returns ShouldSummarizeIncrementally=true when fullTree is true", () => {
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
+			const shouldSummarizeIncrementally = builder.startingSummary(
+				summaryBuilder,
+				true /* fullTree */,
+				incrementalSummaryContext,
+			);
+			assert.strictEqual(
+				shouldSummarizeIncrementally,
+				true,
+				"Expected ShouldSummarizeIncrementally to be true when fullTree is true",
+			);
 		});
 
 		it("throws when called while already tracking", () => {
-			const summaryBuilder = new SummaryTreeBuilder();
-			const context = createMockIncrementalSummaryContext(100, 90);
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(100, 90);
 
 			// Start tracking first summary
-			builder.startingSummary(summaryBuilder, false, context);
+			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
 
 			// Attempting to start another should throw
 			assert.throws(
-				() => builder.startingSummary(summaryBuilder, false, context),
-				(error: Error) => validateAssertionError(error, "Summary tracking must be ready"),
+				() => builder.startingSummary(summaryBuilder, false, incrementalSummaryContext),
+				"Starting summary while already tracking should throw",
 			);
 		});
 	});

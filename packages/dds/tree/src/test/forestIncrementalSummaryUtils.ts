@@ -5,66 +5,8 @@
 
 import { strict as assert } from "node:assert";
 import { SummaryType, type ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ISharedTree } from "../treeFactory.js";
-import {
-	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type TreeView,
-} from "../simple-tree/index.js";
-import { Tree, TreeAlpha } from "../shared-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { forestSummaryKey } from "../feature-libraries/forest-summary/forestSummarizer.js";
-
-/**
- * Validates that the data in tree `actualTree` matches the data in the tree with `expectedView`.
- */
-export function validateTreesEqual<T extends ImplicitFieldSchema>(
-	actualTree: ISharedTree,
-	expectedView: TreeView<T>,
-	schema: T,
-): void {
-	const actualView = actualTree.viewWith(
-		new TreeViewConfiguration({
-			schema,
-		}),
-	);
-	const actualRoot = actualView.root;
-	const expectedRoot = expectedView.root;
-	if (actualRoot === undefined || expectedRoot === undefined) {
-		assert.equal(actualRoot === undefined, expectedRoot === undefined);
-		return;
-	}
-
-	assert.equal(Tree.schema(actualRoot), Tree.schema(expectedRoot));
-	assert.deepEqual(TreeAlpha.exportVerbose(actualRoot), TreeAlpha.exportVerbose(expectedRoot));
-	assert.deepEqual(TreeAlpha.exportConcise(actualRoot), TreeAlpha.exportConcise(expectedRoot));
-}
-
-/**
- * Finds the forest summary in the given summary tree using breadth-first search.
- * @param summary - The summary tree to search.
- * @returns The forest summary tree, or undefined if not found.
- */
-export function findForestSummary(summary: ISummaryTree): ISummaryTree | undefined {
-	const queue: ISummaryTree[] = [summary];
-
-	while (queue.length > 0) {
-		const current = queue.shift();
-		if (current === undefined) {
-			break;
-		}
-		for (const [key, summaryObject] of Object.entries(current.tree)) {
-			if (summaryObject.type === SummaryType.Tree) {
-				if (key === forestSummaryKey) {
-					return summaryObject;
-				}
-				// Add to queue for BFS traversal
-				queue.push(summaryObject);
-			}
-		}
-	}
-	return undefined;
-}
 
 /**
  * Validates that there are handles in the forest summary and for each handle, its path exists in the
@@ -144,4 +86,30 @@ function validateHandlePathExists(handle: string, summaryTree: ISummaryTree) {
 		}
 	}
 	assert(found, `Handle path ${currentPath} not found in summary tree`);
+}
+
+/**
+ * Finds the forest summary in the given summary tree using breadth-first search.
+ * @param summary - The summary tree to search.
+ * @returns The forest summary tree, or undefined if not found.
+ */
+function findForestSummary(summary: ISummaryTree): ISummaryTree | undefined {
+	const queue: ISummaryTree[] = [summary];
+
+	while (queue.length > 0) {
+		const current = queue.shift();
+		if (current === undefined) {
+			break;
+		}
+		for (const [key, summaryObject] of Object.entries(current.tree)) {
+			if (summaryObject.type === SummaryType.Tree) {
+				if (key === forestSummaryKey) {
+					return summaryObject;
+				}
+				// Add to queue for BFS traversal
+				queue.push(summaryObject);
+			}
+		}
+	}
+	return undefined;
 }
