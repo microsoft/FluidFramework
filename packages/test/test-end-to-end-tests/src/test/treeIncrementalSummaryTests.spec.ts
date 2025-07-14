@@ -206,6 +206,15 @@ function validateHandlesInSummary(summary: ISummaryTree, lastSummary: ISummaryTr
 	}
 }
 
+function findForestSummaryTree(summary: ISummaryTree): ISummaryTree | undefined {
+	for (const [key, summaryObject] of Object.entries(summary.tree)) {
+		if (summaryObject.type === SummaryType.Tree) {
+			return key === "Forest" ? summaryObject : findForestSummaryTree(summaryObject);
+		}
+	}
+	return undefined;
+}
+
 describeCompat("SharedTree", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;

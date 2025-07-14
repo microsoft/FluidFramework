@@ -50,6 +50,8 @@ import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js"
  */
 export const forestSummaryContentKey = "ForestTree";
 
+export const forestSummaryKey = "Forest";
+
 /**
  * Provides methods for summarizing and loading a forest.
  */
@@ -58,7 +60,7 @@ export class ForestSummarizer implements Summarizable {
 	 * The key for the tree that contains the overall forest's summary tree. This tree is added by the parent
 	 * of the forest summarizer.
 	 */
-	public readonly key = "Forest";
+	public readonly key = forestSummaryKey;
 
 	private readonly codec: ForestCodec;
 

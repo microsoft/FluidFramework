@@ -46,7 +46,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { EncodedDataBuilder } from "../../../../feature-libraries/chunked-forest/codec/encodedDataBuilder.js";
+import { ForestEncodedDataBuilder } from "../../../../feature-libraries/chunked-forest/codec/encodedDataBuilder.js";
 import {
 	type EncodedChunkShape,
 	EncodedFieldBatch,
@@ -160,7 +160,7 @@ describe("compressedEncode", () => {
 				encodeValue(
 					value,
 					shape,
-					new EncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
+					new ForestEncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
 				);
 				assert.deepEqual(buffer, encoded);
 				const processed = updateShapesAndIdentifiersEncoding(version, [buffer]);

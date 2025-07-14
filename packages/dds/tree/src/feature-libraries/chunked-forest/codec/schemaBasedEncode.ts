@@ -141,7 +141,7 @@ export function treeShaper(
 			// TODO: Remove this hardcoded check and do this based on either heuristic or schema.
 			const fieldEncoder =
 				shouldEncodeIncrementally &&
-				(key === "notes" || key === "metadata" || key === "metaText")
+				(key === "notes" || key === "label" || key === "labelText")
 					? new IncrementalFieldShape()
 					: fieldHandler.shapeFromField(field);
 			objectNodeFields.push({
