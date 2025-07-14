@@ -214,7 +214,7 @@ export class MapKernel {
 					const optimisticValue = this.getOptimisticLocalValue(key);
 					assert(
 						optimisticValue !== undefined,
-						"optimisticValue should be skipped if undefined",
+						"Should never iterate to a key with undefined optimisticValue",
 					);
 					return { value: [key, optimisticValue], done: false };
 				}
@@ -425,9 +425,9 @@ export class MapKernel {
 		}
 
 		// A new pending key lifetime is created if:
-		// 1. There isn't one yet
-		// 2. The most recent change was a deletion (as this terminates the prior lifetime)
-		// 3. A clear was sent after the last change (which also terminates the prior lifetime)
+		// 1. There isn't any pending entry for the key yet
+		// 2. The most recent pending entry for the key was a deletion (as this terminates the prior lifetime)
+		// 3. A clear was sent after the last pending entry for the key (which also terminates the prior lifetime)
 		let latestPendingEntry = findLast(
 			this.pendingData,
 			(entry) => entry.type === "clear" || entry.key === key,
