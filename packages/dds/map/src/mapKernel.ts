@@ -5,12 +5,7 @@
 
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	assert,
-	DoublyLinkedList,
-	type ListNode,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { ValueType } from "@fluidframework/shared-object-base/internal";
 
@@ -43,7 +38,7 @@ interface IMapMessageHandler {
 	process(
 		op: IMapOperation,
 		local: boolean,
-		localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
+		localOpMetadata: PendingLocalOpMetadata | undefined,
 	): void;
 
 	/**
@@ -51,7 +46,7 @@ interface IMapMessageHandler {
 	 * @param op - The map operation to resubmit
 	 * @param localOpMetadata - The metadata that was originally submitted with the message.
 	 */
-	resubmit(op: IMapOperation, localOpMetadata: ListNode<PendingLocalOpMetadata>): void;
+	resubmit(op: IMapOperation, localOpMetadata: PendingLocalOpMetadata): void;
 }
 
 /**
@@ -82,8 +77,8 @@ export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 
 interface PendingKeySet {
 	type: "set";
-	pendingMessageId: number;
 	value: ILocalValue;
+	pendingMessageId: number;
 }
 
 interface PendingKeyDelete {
@@ -104,39 +99,7 @@ interface PendingKeyLifetime {
 }
 
 type PendingChange = PendingKeyLifetime | PendingKeyDelete | PendingClear;
-
-// TODO: Just exporting these for the metadata test, should they be exported and should that be tested?
-/**
- * Metadata submitted along with set operations.
- */
-export interface PendingKeySetMetadata {
-	pendingMessageId: number;
-	type: "set";
-	change: PendingKeySet;
-}
-/**
- * Metadata submitted along with delete operations.
- */
-export interface PendingKeyDeleteMetadata {
-	pendingMessageId: number;
-	type: "delete";
-	change: PendingKeyDelete;
-}
-/**
- * Metadata submitted along with clear operations.
- */
-export interface PendingClearMetadata {
-	pendingMessageId: number;
-	type: "clear";
-	change: PendingClear;
-}
-/**
- * Metadata submitted along with local operations.
- */
-export type PendingLocalOpMetadata =
-	| PendingKeySetMetadata
-	| PendingKeyDeleteMetadata
-	| PendingClearMetadata;
+type PendingLocalOpMetadata = PendingKeySet | PendingKeyDelete | PendingClear;
 
 // Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
 const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number => {
@@ -181,12 +144,6 @@ export class MapKernel {
 	 * This is used to assign a unique id to every outgoing operation and helps in tracking unack'd ops.
 	 */
 	private nextPendingMessageId: number = 0;
-
-	/**
-	 * The pending metadata for any local operations that have not yet been ack'd from the server, in order.
-	 */
-	private readonly pendingLocalOpMetadata: DoublyLinkedList<PendingLocalOpMetadata> =
-		new DoublyLinkedList<PendingLocalOpMetadata>();
 
 	/**
 	 * Create a new shared map kernel.
@@ -256,7 +213,6 @@ export class MapKernel {
 						// ops get sequenced, then we finish iterating the pending data (we would skip the remaining
 						// elements since we can't go back to the sequenced data).
 						// Skip iterating if we would have would have iterated it as part of the sequenced data.
-						// eslint-disable-next-line unicorn/no-lonely-if
 						if (
 							!this.sequencedData.has(pendingChange.key) ||
 							mostRecentDeleteOrClearIndex !== -1
@@ -457,25 +413,19 @@ export class MapKernel {
 			this.pendingData.push(latestPendingChange);
 		}
 		const pendingMessageId = this.nextPendingMessageId++;
-		const keyChange: PendingKeySet = {
+		const pendingKeySet: PendingKeySet = {
 			pendingMessageId,
 			type: "set",
 			value: localValue,
 		};
-		latestPendingChange.keyChanges.push(keyChange);
-		const localMetadata: PendingKeySetMetadata = {
-			pendingMessageId,
-			type: "set",
-			change: keyChange,
-		};
-		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+		latestPendingChange.keyChanges.push(pendingKeySet);
 
 		const op: IMapSetOperation = {
 			key,
 			type: "set",
 			value: { type: ValueType[ValueType.Plain], value: localValue.value },
 		};
-		this.submitMessage(op, listNode);
+		this.submitMessage(op, pendingKeySet);
 		this.eventEmitter.emit(
 			"valueChanged",
 			{ key, previousValue: previousOptimisticLocalValue?.value },
@@ -505,24 +455,18 @@ export class MapKernel {
 		}
 
 		const pendingMessageId = this.nextPendingMessageId++;
-		const keyDelete: PendingKeyDelete = {
+		const pendingKeyDelete: PendingKeyDelete = {
 			type: "delete",
 			key,
 			pendingMessageId,
 		};
-		this.pendingData.push(keyDelete);
-		const localMetadata: PendingKeyDeleteMetadata = {
-			pendingMessageId,
-			type: "delete",
-			change: keyDelete,
-		};
-		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+		this.pendingData.push(pendingKeyDelete);
 
 		const op: IMapDeleteOperation = {
 			key,
 			type: "delete",
 		};
-		this.submitMessage(op, listNode);
+		this.submitMessage(op, pendingKeyDelete);
 		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
 		// (permitting speculative deletion even if we don't see anything locally) but don't emit
 		// a valueChanged since we in fact did not locally observe a value change.
@@ -557,17 +501,10 @@ export class MapKernel {
 		};
 		this.pendingData.push(pendingClear);
 
-		const localMetadata: PendingClearMetadata = {
-			type: "clear",
-			pendingMessageId,
-			change: pendingClear,
-		};
-		const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
-
 		const op: IMapClearOperation = {
 			type: "clear",
 		};
-		this.submitMessage(op, listNode);
+		this.submitMessage(op, pendingClear);
 		this.eventEmitter.emit("clear", true, this.eventEmitter);
 	}
 
@@ -610,7 +547,7 @@ export class MapKernel {
 		if (handler === undefined) {
 			return false;
 		}
-		handler.resubmit(op, localOpMetadata as ListNode<PendingLocalOpMetadata>);
+		handler.resubmit(op, localOpMetadata as PendingLocalOpMetadata);
 		return true;
 	}
 
@@ -659,11 +596,7 @@ export class MapKernel {
 		if (handler === undefined) {
 			return false;
 		}
-		handler.process(
-			op,
-			local,
-			localOpMetadata as ListNode<PendingLocalOpMetadata> | undefined,
-		);
+		handler.process(op, local, localOpMetadata as PendingLocalOpMetadata | undefined);
 		return true;
 	}
 
@@ -674,22 +607,13 @@ export class MapKernel {
 	 */
 	public rollback(op: unknown, localOpMetadata: unknown): void {
 		const mapOp: IMapOperation = op as IMapOperation;
-		const listNodeLocalOpMetadata = localOpMetadata as ListNode<PendingLocalOpMetadata>;
-		const removedListNode = this.pendingLocalOpMetadata.pop();
-		assert(
-			removedListNode !== undefined && removedListNode === listNodeLocalOpMetadata,
-			0xbcb /* Rolling back unexpected op */,
-		);
-		const pendingLocalOpMetadata = removedListNode.data;
-
+		const typedLocalOpMetadata = localOpMetadata as PendingLocalOpMetadata;
 		if (mapOp.type === "clear") {
 			// Just pop the pending changes, it better be the last one
 			// TODO: Really need to assert all this?
 			const pendingDataClear = this.pendingData.pop();
 			assert(
-				pendingLocalOpMetadata.type === "clear" &&
-					pendingDataClear !== undefined &&
-					pendingDataClear === pendingLocalOpMetadata.change,
+				typedLocalOpMetadata.type === "clear" && pendingDataClear !== undefined,
 				"Unexpected clear rollback",
 			);
 			for (const [key] of this.internalIterator()) {
@@ -726,9 +650,7 @@ export class MapKernel {
 				}
 				assert(
 					pendingKeyChange !== undefined &&
-						(pendingLocalOpMetadata.type === "set" ||
-							pendingLocalOpMetadata.type === "delete") &&
-						pendingKeyChange === pendingLocalOpMetadata.change,
+						(typedLocalOpMetadata.type === "set" || typedLocalOpMetadata.type === "delete"),
 					"Unexpected rollback for key",
 				);
 				this.eventEmitter.emit(
@@ -753,25 +675,21 @@ export class MapKernel {
 			process: (
 				op: IMapClearOperation,
 				local: boolean,
-				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
+				localOpMetadata: PendingLocalOpMetadata | undefined,
 			) => {
 				this.sequencedData.clear();
 				if (local) {
-					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
 					assert(
-						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						0xbcc /* Processing unexpected local clear op */,
-					);
-					assert(
-						localOpMetadata.data.type === "clear" &&
-							typeof localOpMetadata.data.pendingMessageId === "number",
+						localOpMetadata !== undefined &&
+							localOpMetadata.type === "clear" &&
+							typeof localOpMetadata.pendingMessageId === "number",
 						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
 					);
 					const pendingClear = this.pendingData.shift();
 					assert(
 						pendingClear !== undefined &&
 							pendingClear.type === "clear" &&
-							pendingClear.pendingMessageId === localOpMetadata.data.pendingMessageId,
+							pendingClear.pendingMessageId === localOpMetadata.pendingMessageId,
 						0x2fb /* pendingMessageId does not match */,
 					);
 				} else {
@@ -780,45 +698,26 @@ export class MapKernel {
 					this.eventEmitter.emit("clear", local, this.eventEmitter);
 				}
 			},
-			resubmit: (
-				op: IMapClearOperation,
-				localOpMetadata: ListNode<PendingLocalOpMetadata>,
-			) => {
-				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
-				assert(
-					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "clear",
-					0xbcd /* Resubmitting unexpected local clear op */,
-				);
-
+			resubmit: (op: IMapClearOperation, localOpMetadata: PendingLocalOpMetadata) => {
 				const pendingMessageId = this.nextPendingMessageId++;
 
 				// TODO: How do I feel about mutating here?
-				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const localMetadata: PendingClearMetadata = {
-					...removedLocalOpMetadata,
-					pendingMessageId,
-				};
-				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+				localOpMetadata.pendingMessageId = pendingMessageId;
 
-				this.submitMessage(op, listNode);
+				this.submitMessage(op, localOpMetadata);
 			},
 		});
 		messageHandlers.set("delete", {
 			process: (
 				op: IMapDeleteOperation,
 				local: boolean,
-				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
+				localOpMetadata: PendingLocalOpMetadata | undefined,
 			) => {
 				const { key } = op;
 				const pendingKeyChangeIndex = this.pendingData.findIndex(
 					(change) => change.type !== "clear" && change.key === key,
 				);
 				if (local) {
-					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
-					assert(
-						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						0xbce /* Processing unexpected local delete op */,
-					);
 					const pendingKeyChange = this.pendingData[pendingKeyChangeIndex];
 					assert(
 						pendingKeyChange !== undefined && pendingKeyChange.type === "delete",
@@ -827,7 +726,7 @@ export class MapKernel {
 					this.pendingData.splice(pendingKeyChangeIndex, 1);
 					assert(
 						localOpMetadata !== undefined &&
-							pendingKeyChange.pendingMessageId === localOpMetadata.data.pendingMessageId,
+							pendingKeyChange.pendingMessageId === localOpMetadata.pendingMessageId,
 						"pendingMessageId does not match",
 					);
 					this.sequencedData.delete(key);
@@ -849,45 +748,26 @@ export class MapKernel {
 					}
 				}
 			},
-			resubmit: (
-				op: IMapDeleteOperation,
-				localOpMetadata: ListNode<PendingLocalOpMetadata>,
-			) => {
-				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
-				assert(
-					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "delete",
-					0xbcf /* Resubmitting unexpected local delete op */,
-				);
-
+			resubmit: (op: IMapDeleteOperation, localOpMetadata: PendingLocalOpMetadata) => {
 				const pendingMessageId = this.nextPendingMessageId++;
 
 				// TODO: How do I feel about mutating here?
-				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const localMetadata: PendingKeyDeleteMetadata = {
-					...removedLocalOpMetadata,
-					pendingMessageId,
-				};
-				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+				localOpMetadata.pendingMessageId = pendingMessageId;
 
-				this.submitMessage(op, listNode);
+				this.submitMessage(op, localOpMetadata);
 			},
 		});
 		messageHandlers.set("set", {
 			process: (
 				op: IMapSetOperation,
 				local: boolean,
-				localOpMetadata: ListNode<PendingLocalOpMetadata> | undefined,
+				localOpMetadata: PendingLocalOpMetadata | undefined,
 			) => {
 				const { key, value } = op;
 				const pendingKeyChangeIndex = this.pendingData.findIndex(
 					(change) => change.type !== "clear" && change.key === key,
 				);
 				if (local) {
-					const removedLocalOpMetadata = this.pendingLocalOpMetadata.shift();
-					assert(
-						removedLocalOpMetadata !== undefined && removedLocalOpMetadata === localOpMetadata,
-						0xbd0 /* Processing unexpected local set op */,
-					);
 					const pendingKeyLifetime = this.pendingData[pendingKeyChangeIndex];
 					assert(
 						pendingKeyLifetime !== undefined && pendingKeyLifetime.type === "lifetime",
@@ -900,7 +780,7 @@ export class MapKernel {
 					assert(pendingValue !== undefined, "Got a set message we weren't expecting");
 					assert(
 						localOpMetadata !== undefined &&
-							pendingValue.pendingMessageId === localOpMetadata.data.pendingMessageId,
+							pendingValue.pendingMessageId === localOpMetadata.pendingMessageId,
 						"pendingMessageId does not match",
 					);
 					assert(pendingValue.type === "set", "pendingValue type is incorrect");
@@ -926,24 +806,13 @@ export class MapKernel {
 					}
 				}
 			},
-			resubmit: (op: IMapSetOperation, localOpMetadata: ListNode<PendingLocalOpMetadata>) => {
-				const removedLocalOpMetadata = localOpMetadata.remove()?.data;
-				assert(
-					removedLocalOpMetadata !== undefined && removedLocalOpMetadata.type === "set",
-					0xbd1 /* Resubmitting unexpected local set op */,
-				);
-
+			resubmit: (op: IMapSetOperation, localOpMetadata: PendingLocalOpMetadata) => {
 				const pendingMessageId = this.nextPendingMessageId++;
 
 				// TODO: How do I feel about mutating here?
-				removedLocalOpMetadata.change.pendingMessageId = pendingMessageId;
-				const localMetadata: PendingKeySetMetadata = {
-					...removedLocalOpMetadata,
-					pendingMessageId,
-				};
-				const listNode = this.pendingLocalOpMetadata.push(localMetadata).first;
+				localOpMetadata.pendingMessageId = pendingMessageId;
 
-				this.submitMessage(op, listNode);
+				this.submitMessage(op, localOpMetadata);
 			},
 		});
 
