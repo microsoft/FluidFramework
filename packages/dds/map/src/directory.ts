@@ -46,7 +46,6 @@ import type {
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
-import type { ILocalValue } from "./localValues.js";
 import { serializeValue, migrateIfSharedSerializable } from "./localValues.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
@@ -889,7 +888,7 @@ export class SharedDirectory
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
-					const localValue = local ? undefined : { value: op.value.value as unknown };
+					const localValue: unknown = local ? undefined : op.value.value;
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
@@ -1053,13 +1052,13 @@ export class SharedDirectory
 interface IKeyEditLocalOpMetadata {
 	type: "edit";
 	pendingMessageId: number;
-	previousValue: ILocalValue | undefined;
+	previousValue: unknown;
 }
 
 interface IClearLocalOpMetadata {
 	type: "clear";
 	pendingMessageId: number;
-	previousStorage: Map<string, ILocalValue>;
+	previousStorage: Map<string, unknown>;
 }
 
 interface ICreateSubDirLocalOpMetadata {
@@ -1142,7 +1141,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * The in-memory data the directory is storing.
 	 */
-	private readonly _storage = new Map<string, ILocalValue>();
+	private readonly _storage = new Map<string, unknown>();
 
 	/**
 	 * The subdirectories the directory is holding.
@@ -1259,7 +1258,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public get<T = unknown>(key: string): T | undefined {
 		this.throwIfDisposed();
-		return this._storage.get(key)?.value as T | undefined;
+		return this._storage.get(key) as T | undefined;
 	}
 
 	/**
@@ -1272,11 +1271,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			throw new Error("Undefined and null keys are not supported");
 		}
 
-		// Create a local value and serialize it.
-		const localValue: ILocalValue = { value };
-
 		// Set the value locally.
-		const previousValue = this.setCore(key, localValue, true);
+		const previousValue = this.setCore(key, value, true);
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
@@ -1287,7 +1283,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: { type: ValueType[ValueType.Plain], value: localValue.value },
+			value: { type: ValueType[ValueType.Plain], value },
 		};
 		this.submitKeyMessage(op, previousValue);
 		return this;
@@ -1511,7 +1507,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 
-		const copy = new Map<string, ILocalValue>(this._storage);
+		const copy = new Map<string, unknown>(this._storage);
 		this.clearCore(true);
 		const op: IDirectoryClearOperation = {
 			path: this.absolutePath,
@@ -1529,8 +1525,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 		// eslint-disable-next-line unicorn/no-array-for-each
-		this._storage.forEach((localValue, key, map) => {
-			callback(localValue.value, key, map);
+		this._storage.forEach((value, key) => {
+			callback(value, key, this);
 		});
 	}
 
@@ -1548,19 +1544,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public entries(): IterableIterator<[string, unknown]> {
 		this.throwIfDisposed();
-		const localEntriesIterator = this._storage.entries();
-		const iterator = {
-			next(): IteratorResult<[string, unknown]> {
-				const nextVal = localEntriesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: { value: [nextVal.value[0], nextVal.value[1].value], done: false };
-			},
-			[Symbol.iterator](): IterableIterator<[string, unknown]> {
-				return this;
-			},
-		};
-		return iterator;
+		return this._storage.entries();
 	}
 
 	/**
@@ -1578,19 +1562,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public values(): IterableIterator<unknown> {
 		this.throwIfDisposed();
-		const localValuesIterator = this._storage.values();
-		const iterator = {
-			next(): IteratorResult<unknown> {
-				const nextVal = localValuesIterator.next();
-				return nextVal.done
-					? { value: undefined, done: true }
-					: { value: nextVal.value.value, done: false };
-			},
-			[Symbol.iterator](): IterableIterator<unknown> {
-				return this;
-			},
-		};
-		return iterator;
+		return this._storage.values();
 	}
 
 	/**
@@ -1672,7 +1644,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public processSetMessage(
 		msg: ISequencedDocumentMessage,
 		op: IDirectorySetOperation,
-		localValue: ILocalValue | undefined,
+		value: unknown,
 		local: boolean,
 		localOpMetadata: unknown,
 	): void {
@@ -1688,8 +1660,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		// needProcessStorageOperation should have returned false if local is true
 		// so we can assume localValue is not undefined
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this.setCore(op.key, localValue!, local);
+		this.setCore(op.key, value, local);
 	}
 
 	/**
@@ -1756,7 +1727,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private submitClearMessage(
 		op: IDirectoryClearOperation,
-		previousValue: Map<string, ILocalValue>,
+		previousValue: Map<string, unknown>,
 	): void {
 		this.throwIfDisposed();
 		const pendingMsgId = ++this.pendingMessageId;
@@ -1807,7 +1778,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param op - The operation
 	 * @param previousValue - The value of the key before this op
 	 */
-	private submitKeyMessage(op: IDirectoryKeyOperation, previousValue?: ILocalValue): void {
+	private submitKeyMessage(op: IDirectoryKeyOperation, previousValue?: unknown): void {
 		this.throwIfDisposed();
 		const pendingMessageId = this.getKeyMessageId(op);
 		const localMetadata = { type: "edit", pendingMessageId, previousValue };
@@ -1946,12 +1917,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		serializer: IFluidSerializer,
 	): Generator<[string, ISerializedValue], void> {
 		this.throwIfDisposed();
-		for (const [key, localValue] of this._storage) {
-			const serializedValue = serializeValue(
-				localValue.value,
-				serializer,
-				this.directory.handle,
-			);
+		for (const [key, value] of this._storage) {
+			const serializedValue = serializeValue(value, serializer, this.directory.handle);
 			const res: [string, ISerializedValue] = [key, serializedValue];
 			yield res;
 		}
@@ -1973,7 +1940,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public populateStorage(key: string, value: unknown): void {
 		this.throwIfDisposed();
-		this._storage.set(key, { value });
+		this._storage.set(key, value);
 	}
 
 	/**
@@ -1993,7 +1960,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param key - The key to retrieve from
 	 * @returns The local value
 	 */
-	public getLocalValue<T extends ILocalValue = ILocalValue>(key: string): T {
+	public getLocalValue<T>(key: string): T {
 		this.throwIfDisposed();
 		return this._storage.get(key) as T;
 	}
@@ -2339,7 +2306,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	private clearExceptPendingKeys(local: boolean): void {
 		// Assuming the pendingKeys is small and the map is large
 		// we will get the value for the pendingKeys and clear the map
-		const temp = new Map<string, ILocalValue>();
+		const temp = new Map<string, unknown>();
 
 		for (const [key] of this.pendingKeys) {
 			const value = this._storage.get(key);
@@ -2371,9 +2338,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @returns Previous local value of the key if it existed, undefined if it did not exist
 	 */
-	private deleteCore(key: string, local: boolean): ILocalValue | undefined {
+	private deleteCore(key: string, local: boolean): unknown {
 		const previousLocalValue = this._storage.get(key);
-		const previousValue: unknown = previousLocalValue?.value;
+		const previousValue: unknown = previousLocalValue;
 		const successfullyRemoved = this._storage.delete(key);
 		if (successfullyRemoved) {
 			const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -2391,9 +2358,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param local - Whether the message originated from the local client
 	 * @returns Previous local value of the key, if any
 	 */
-	private setCore(key: string, value: ILocalValue, local: boolean): ILocalValue | undefined {
+	private setCore(key: string, value: unknown, local: boolean): unknown {
 		const previousLocalValue = this._storage.get(key);
-		const previousValue: unknown = previousLocalValue?.value;
+		const previousValue: unknown = previousLocalValue;
 		this._storage.set(key, value);
 		const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
 		this.directory.emit("valueChanged", event, local, this.directory);
