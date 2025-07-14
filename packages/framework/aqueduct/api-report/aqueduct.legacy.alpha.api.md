@@ -140,16 +140,14 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
 }
 
 // @alpha @legacy
-export abstract class TreeDataObject<TTreeView, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
-    protected abstract generateView(tree: ITree): TTreeView;
+export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
     // (undocumented)
     initializeInternal(existing: boolean): Promise<void>;
     protected get tree(): ITree;
-    get treeView(): TTreeView;
 }
 
 // @alpha @legacy
-export class TreeDataObjectFactory<TTreeView, TDataObjectTypes extends DataObjectTypes = DataObjectTypes, TDataObject extends TreeDataObject<TTreeView, TDataObjectTypes> = TreeDataObject<TTreeView, TDataObjectTypes>> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
+export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
     constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
 }
 
