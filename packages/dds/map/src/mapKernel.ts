@@ -92,13 +92,28 @@ interface PendingClear {
 interface PendingKeyLifetime {
 	type: "lifetime";
 	key: string;
+	/**
+	 * A non-empty array of pending key sets that occurred during this lifetime.  If the list
+	 * becomes empty (e.g. during processing or rollback), the lifetime no longer exists and
+	 * must be removed from the pending data.
+	 */
 	keySets: PendingKeySet[];
 }
 
-type PendingChange = PendingKeyLifetime | PendingKeyDelete | PendingClear;
+/**
+ * A member of the pendingData array, which tracks outstanding changes and can be used to
+ * compute optimistic values. Local sets are aggregated into lifetimes.
+ */
+type PendingDataEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
+/**
+ * An individual outstanding change, which will also be found in the pendingData array
+ * (though the PendingKeySets will be contained within a PendingKeyLifetime there).
+ */
 type PendingLocalOpMetadata = PendingKeySet | PendingKeyDelete | PendingClear;
 
-// Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
+/**
+ * Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
+ */
 const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number => {
 	for (let i = array.length - 1; i >= 0; i--) {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -109,7 +124,9 @@ const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number
 	return -1;
 };
 
-// Rough polyfill for Array.findLast until we target ES2023 or greater.
+/**
+ * Rough polyfill for Array.findLast until we target ES2023 or greater.
+ */
 const findLast = <T>(array: T[], callbackFn: (value: T) => boolean): T | undefined =>
 	array[findLastIndex(array, callbackFn)];
 
@@ -131,10 +148,18 @@ export class MapKernel {
 	private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
 
 	/**
-	 * The in-memory data the map is storing.
+	 * The data the map is storing, but only including sequenced changes (no local pending
+	 * modifications are included).
 	 */
 	private readonly sequencedData = new Map<string, ILocalValue>();
-	private readonly pendingData: PendingChange[] = [];
+	/**
+	 * A data structure containing all local pending modifications, which is used in combination
+	 * with the sequencedData to compute optimistic values.
+	 *
+	 * Pending sets are aggregated into "lifetimes", which permit correct relative iteration order
+	 * even across remote operations and rollbacks.
+	 */
+	private readonly pendingData: PendingDataEntry[] = [];
 
 	/**
 	 * Create a new shared map kernel.
@@ -155,13 +180,26 @@ export class MapKernel {
 		this.messageHandlers = this.getMessageHandlers();
 	}
 
+	/**
+	 * Get an iterator over the optimistically observable ILocalValue entries in the map. For example, excluding
+	 * sequenced entries that have pending deletes/clears.
+	 *
+	 * @remarks
+	 * There is no perfect solution here, particularly when the iterator is retained over time and the map is
+	 * modified or new ack's are received. The pendingData portion of the iteration is the most susceptible to
+	 * this problem. The implementation prioritizes (in roughly this order):
+	 * 1. Correct immediate iteration (i.e. when the map is not modified before iteration completes)
+	 * 2. Consistent iteration order before/after sequencing of pending ops; acks don't change order
+	 * 3. Consistent iteration order between synchronized clients, even if they each modified the map concurrently
+	 * 4. Remaining as close as possible to the native Map iterator behavior, e.g. live-ish view rather than snapshot
+	 */
 	private readonly internalIterator = (): IterableIterator<[string, ILocalValue]> => {
 		const sequencedDataIterator = this.sequencedData.keys();
 		const pendingDataIterator = this.pendingData.values();
 		const next = (): IteratorResult<[string, ILocalValue]> => {
-			let nextSequencedVal = sequencedDataIterator.next();
-			while (!nextSequencedVal.done) {
-				const key = nextSequencedVal.value;
+			let nextSequencedKey = sequencedDataIterator.next();
+			while (!nextSequencedKey.done) {
+				const key = nextSequencedKey.value;
 				// If we have any pending deletes or clears, then we won't iterate to this key yet (if at all).
 				// Either it is optimistically deleted and will not be part of the iteration, or it was
 				// re-added later and we'll iterate to it when we get to the pending data.
@@ -178,41 +216,38 @@ export class MapKernel {
 					);
 					return { value: [key, optimisticValue], done: false };
 				}
-				nextSequencedVal = sequencedDataIterator.next();
+				nextSequencedKey = sequencedDataIterator.next();
 			}
 
-			let nextPendingVal = pendingDataIterator.next();
-			while (!nextPendingVal.done) {
-				const pendingChange = nextPendingVal.value;
-				if (pendingChange.type === "lifetime") {
-					const nextPendingValIndex = this.pendingData.indexOf(pendingChange);
+			let nextPending = pendingDataIterator.next();
+			while (!nextPending.done) {
+				const pendingEntry = nextPending.value;
+				// A lifetime entry may need to be iterated.
+				if (pendingEntry.type === "lifetime") {
+					const pendingEntryIndex = this.pendingData.indexOf(pendingEntry);
 					const mostRecentDeleteOrClearIndex = findLastIndex(
 						this.pendingData,
 						(change) =>
 							change.type === "clear" ||
-							(change.type === "delete" && change.key === pendingChange.key),
+							(change.type === "delete" && change.key === pendingEntry.key),
 					);
-					if (
-						pendingChange.type === "lifetime" &&
-						nextPendingValIndex > mostRecentDeleteOrClearIndex
-					) {
+					// Only iterate the pending entry now if it hasn't been deleted or cleared.
+					if (pendingEntryIndex > mostRecentDeleteOrClearIndex) {
 						const latestPendingValue =
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							pendingChange.keySets[pendingChange.keySets.length - 1]!;
-						// TODO: clean up
-						// TODO: Consider the case where we have started iterating the pending data, then all of our
-						// ops get sequenced, then we finish iterating the pending data (we would skip the remaining
-						// elements since we can't go back to the sequenced data).
-						// Skip iterating if we would have would have iterated it as part of the sequenced data.
+							pendingEntry.keySets[pendingEntry.keySets.length - 1]!;
+						// Skip iterating if we would have would have already iterated it as part of the sequenced data.
+						// This is not a perfect check in the case the map has changed since the iterator was created
+						// (e.g. if a remote client added the same key in the meantime).
 						if (
-							!this.sequencedData.has(pendingChange.key) ||
+							!this.sequencedData.has(pendingEntry.key) ||
 							mostRecentDeleteOrClearIndex !== -1
 						) {
-							return { value: [pendingChange.key, latestPendingValue.value], done: false };
+							return { value: [pendingEntry.key, latestPendingValue.value], done: false };
 						}
 					}
 				}
-				nextPendingVal = pendingDataIterator.next();
+				nextPending = pendingDataIterator.next();
 			}
 
 			return { value: undefined, done: true };
@@ -323,6 +358,10 @@ export class MapKernel {
 		});
 	}
 
+	/**
+	 * Compute the optimistic local value for a given key. This combines the sequenced data with
+	 * any pending changes that have not yet been sequenced.
+	 */
 	private readonly getOptimisticLocalValue = (key: string): ILocalValue | undefined => {
 		const latestPendingChange = findLast(
 			this.pendingData,
