@@ -31,7 +31,8 @@ export interface EncodedDataBuilder {
 	 * last encoding and certain other conditions are met, the encoded chunk from the previous encoding will be reused.
 	 * Otherwise, the chunk will be encoded using the provided encoder function.
 	 * @param chunk - The chunk of data to encode.
-	 * @param encoder - A function that encodes the chunk's contents.
+	 * @param encoder - A function that encodes the chunk's contents. It must use the provided `EncodedDataBuilder`
+	 * to encode the chunk.
 	 * @returns The reference ID of the encoded chunk. This should be added to the main buffer and it used to retrieve
 	 * the encoded chunk during decoding.
 	 * @remarks Must only be called if {@link shouldEncodeIncrementally} is true.
