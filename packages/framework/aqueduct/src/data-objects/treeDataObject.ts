@@ -5,9 +5,10 @@
 
 import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { type ITree, SharedTree } from "@fluidframework/tree/internal";
+import { SharedTree, type ITree } from "@fluidframework/tree/internal";
 
 import { PureDataObject } from "./pureDataObject.js";
+import type { DataObjectTypes } from "./types.js";
 
 /**
  * Channel ID of {@link TreeDataObject}'s root {@link @fluidframework/tree#SharedTree}.
@@ -28,6 +29,8 @@ const uninitializedErrorString =
  * Can be used to derive schema-aware views of the tree.
  * See {@link TreeDataObject.generateView}.
  *
+ * @typeParam TDataObjectTypes - The optional input types used to strongly type the data object.
+ *
  * @example Implementing `initializingFirstTime`
  *
  * ```typescript
@@ -36,9 +39,12 @@ const uninitializedErrorString =
  * }
  * ```
  *
- * @internal
+ * @legacy @alpha
  */
-export abstract class TreeDataObject<TTreeView> extends PureDataObject {
+export abstract class TreeDataObject<
+	TTreeView,
+	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
+> extends PureDataObject<TDataObjectTypes> {
 	/**
 	 * Generates a view of the data object's {@link @fluidframework/tree#ITree | tree}.
 	 * @remarks Called once during initialization.
@@ -95,12 +101,16 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
-			const sharedTree: ITree = channel;
+			const sharedTree: ITree = channel as unknown as ITree;
 
 			this.#sharedTree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 		} else {
-			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
+			// const sharedTree = treeFactory.create(this.runtime, treeChannelId);
+			const sharedTree = this.runtime.createChannel(
+				treeChannelId,
+				SharedTree.getFactory().type,
+			) as unknown as ITree;
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
 			this.#sharedTree = sharedTree;

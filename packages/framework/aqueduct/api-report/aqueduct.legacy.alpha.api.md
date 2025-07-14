@@ -139,4 +139,18 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     readonly type: string;
 }
 
+// @alpha @legacy
+export abstract class TreeDataObject<TTreeView, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
+    protected abstract generateView(tree: ITree): TTreeView;
+    // (undocumented)
+    initializeInternal(existing: boolean): Promise<void>;
+    protected get sharedTree(): ITree;
+    get treeView(): TTreeView;
+}
+
+// @alpha @legacy
+export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TTreeView, TDataObjectTypes>, TTreeView, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
+    constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
+}
+
 ```
