@@ -198,6 +198,12 @@ describeCompat(
 			 * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
 			 */
 			it("validates that non-root data store and its dependencies become visible correctly", async function () {
+				if (detachedMode) {
+					// In detached mode, handles will not be resolved until the container is attached.
+					// See packages/test/local-server-tests/src/test/handleResolution.spec.ts for testing handle
+					// access in the detached case.
+					this.skip();
+				}
 				const dataObject2 = await createNonRootDataObject(containerRuntime1);
 				const dataObject3 = await createNonRootDataObject(containerRuntime1);
 
