@@ -28,8 +28,8 @@
 			// Avoid suggesting imports which reach into a directory, unless the import is for the index file.
 			// Often tests for a specific file will want to violate this, so violating this could occasionally be useful,
 			// but removing it from an auto-import suggestion in all other cases is helpful.
-			// Rejects cases like ./core/treeNodeSchema.js while allowing ./core/index.js.
-			"\\/.*\\/(?!index\\.js$)"
+			// Rejects cases like ./core/treeNodeSchema.js while allowing ./core/index.js, ../util.js and ./util.js.
+			"\\/[^.]*\\/(?!index\\.js$)"
 		]
 	}
 }
