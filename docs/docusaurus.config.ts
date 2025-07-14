@@ -13,6 +13,10 @@ import DocsVersions from "./config/docs-versions.mjs";
 
 dotenv.config();
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
+const TYPESENSE_HOST = process.env.TYPESENSE_HOST;
+const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
+
+const isTypesenseConfigured = Boolean(TYPESENSE_HOST && TYPESENSE_API_KEY);
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
@@ -172,22 +176,23 @@ const config: Config = {
 			theme: prismThemes.vsLight,
 			darkTheme: prismThemes.vsDark,
 		},
-
-		typesense: {
-			typesenseCollectionName: "fluidframeworkdocs",
-			typesenseServerConfig: {
-				nodes: [
-					{
-						host: process.env.TYPESENSE_HOST,
-						port: 443,
-						protocol: "https",
-					},
-				],
-				apiKey: process.env.TYPESENSE_API_KEY,
+		...(isTypesenseConfigured && {
+			typesense: {
+				typesenseCollectionName: "fluidframeworkdocs",
+				typesenseServerConfig: {
+					nodes: [
+						{
+							host: TYPESENSE_HOST,
+							port: 443,
+							protocol: "https",
+						},
+					],
+					apiKey: TYPESENSE_API_KEY,
+				},
+				// Optional
+				contextualSearch: true,
 			},
-			// Optional
-			contextualSearch: true,
-		},
+		}),
 	} satisfies Preset.ThemeConfig,
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
