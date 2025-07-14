@@ -164,6 +164,7 @@ export class OdspClient {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 			compatibilityMode: "2",
+			useTreeBasedDataObject: true, // DO NOT CHECK THIS IN
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
