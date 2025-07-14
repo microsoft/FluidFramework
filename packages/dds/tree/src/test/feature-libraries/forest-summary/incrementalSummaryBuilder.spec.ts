@@ -3,64 +3,49 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
-import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
+import {
+	SummaryTreeBuilder,
+	type ReadAndParseBlob,
+} from "@fluidframework/runtime-utils/internal";
 // import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { SummaryType, type ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	ForestIncrementalSummaryBuilder,
+	ForestSummaryTrackingState,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/forest-summary/incrementalSummaryBuilder.js";
+import type {
+	EncodedFieldBatch,
+	ChunkReferenceId,
+	TreeChunk,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/index.js";
+import type { ChunkedCursor } from "../../../core/index.js";
+import { ReferenceCountedBase } from "../../../util/index.js";
 
-// Using brand types to create mock types for testing
-type ChunkReferenceId = number & { __brand: "ChunkReferenceId" };
+class TestChunk extends ReferenceCountedBase implements TreeChunk {
+	public readonly topLevelLength: number = 1;
 
-// Use the simplest mock that satisfies the encoder function contract
-function createMockEncodedBatch(): unknown {
-	return {
-		version: 1,
-		identifiers: [],
-		data: [],
-		shapes: [],
-	};
-}
-
-/**
- * Type-safe cast for tree chunks in tests
- */
-interface TreeChunkLike {
-	// Minimal interface that the builder expects
-}
-
-/**
- * Minimal mock TreeChunk for testing, avoiding import restrictions.
- */
-class MockTreeChunk {
-	private referenceCount = 1;
-
-	public constructor(
-		public readonly topLevelLength: number,
-		public readonly fields: Map<string, unknown>,
-	) {}
-
-	public referenceAdded(): void {
-		this.referenceCount++;
+	public constructor(public value: string) {
+		super();
 	}
 
-	public referenceRemoved(): void {
-		this.referenceCount--;
+	public clone(): TestChunk {
+		return new TestChunk(this.value);
 	}
 
-	// Mock implementation of TreeChunk interface
-	public get cursor(): unknown {
-		return {};
+	public cursor(): ChunkedCursor {
+		fail("not implemented");
 	}
 
-	public readonly isShared = false;
+	protected onUnreferenced(): void {}
 }
 
 /**
@@ -83,48 +68,42 @@ function createMockIncrementalSummaryContext(
  */
 function createMockStorageService(
 	snapshotTree?: ISnapshotTree,
-	blobs: Map<string, unknown> = new Map(),
+	blobs: Map<string, string> = new Map(),
 ): IChannelStorageService {
 	const mockService: Partial<IChannelStorageService> = {
 		getSnapshotTree: snapshotTree ? () => snapshotTree : undefined,
 		contains: async (path: string) => blobs.has(path),
 		readBlob: async (path: string) => {
-			const blob = blobs.get(path);
-			if (blob === undefined) {
+			const blobContents = blobs.get(path);
+			if (blobContents === undefined) {
 				throw new Error(`Blob not found: ${path}`);
 			}
-			return new ArrayBuffer(0); // Mock implementation
+			return stringToBuffer(blobContents, "utf8"); // Mock implementation
 		},
 		list: async () => [],
 	};
 	return mockService as IChannelStorageService;
 }
 
-/**
- * Mock read and parse function for testing.
- */
-async function mockReadAndParse<T>(path: string): Promise<T> {
-	// Simple mock implementation - in real tests this would read from storage
-	const mockData = { mockData: `data for ${path}` } as unknown as T;
-	return mockData;
+function getReadAndParse(blobMap: Map<string, string>): ReadAndParseBlob {
+	return async <T>(id: string): Promise<T> => {
+		const blob = blobMap.get(id);
+		if (blob === undefined) {
+			throw new Error(`Blob not found: ${id}`);
+		}
+		return blob as T;
+	};
 }
 
 describe("ForestIncrementalSummaryBuilder", () => {
 	let builder: ForestIncrementalSummaryBuilder;
-	let mockChunk1: MockTreeChunk;
-	let mockChunk2: MockTreeChunk;
+	let testChunk1: TreeChunk;
+	let testChunk2: TreeChunk;
 
 	beforeEach(() => {
 		builder = new ForestIncrementalSummaryBuilder();
-		// Create simple MockTreeChunk instances for testing
-		mockChunk1 = new MockTreeChunk(1, new Map());
-		mockChunk2 = new MockTreeChunk(2, new Map());
-	});
-
-	afterEach(() => {
-		// Clean up references
-		mockChunk1.referenceRemoved();
-		mockChunk2.referenceRemoved();
+		testChunk1 = new TestChunk("chunk1");
+		testChunk2 = new TestChunk("chunk2");
 	});
 
 	describe("startingSummary", () => {
@@ -134,19 +113,36 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		});
 
 		it("returns ShouldSummarizeIncrementally=false when incrementalSummaryContext is undefined", () => {
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to be ReadyToTrack",
+			);
+
 			const shouldSummarizeIncrementally = builder.startingSummary(
 				summaryBuilder,
 				false /* fullTree */,
 				undefined /* incrementalSummaryContext */,
 			);
+
 			assert.strictEqual(
 				shouldSummarizeIncrementally,
 				false,
 				"Expected ShouldSummarizeIncrementally to be false when context is undefined",
 			);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to remain ReadyToTrack",
+			);
 		});
 
 		it("returns ShouldSummarizeIncrementally=true when incrementalSummaryContext is provided", () => {
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to be ReadyToTrack",
+			);
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			const shouldSummarizeIncrementally = builder.startingSummary(
 				summaryBuilder,
@@ -158,9 +154,19 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				true,
 				"Expected ShouldSummarizeIncrementally to be true when context is provided",
 			);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.Tracking,
+				"Expected forestSummaryState to change to Tracking",
+			);
 		});
 
 		it("returns ShouldSummarizeIncrementally=true when fullTree is true", () => {
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to be ReadyToTrack",
+			);
 			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
 			const shouldSummarizeIncrementally = builder.startingSummary(
 				summaryBuilder,
@@ -172,6 +178,11 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				true,
 				"Expected ShouldSummarizeIncrementally to be true when fullTree is true",
 			);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.Tracking,
+				"Expected forestSummaryState to change to Tracking",
+			);
 		});
 
 		it("throws when called while already tracking", () => {
@@ -179,205 +190,140 @@ describe("ForestIncrementalSummaryBuilder", () => {
 
 			// Start tracking first summary
 			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.Tracking,
+				"Expected forestSummaryState to be Tracking",
+			);
 
 			// Attempting to start another should throw
 			assert.throws(
 				() => builder.startingSummary(summaryBuilder, false, incrementalSummaryContext),
-				"Starting summary while already tracking should throw",
+				"calling startingSummary while already tracking should throw",
+			);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.Tracking,
+				"Expected forestSummaryState to remain Tracking after failed start",
 			);
 		});
 	});
 
-	describe("encodeIncrementalChunk", () => {
-		// 	it("throws when not tracking summary", () => {
-		// 		assert.throws(
-		// 			() =>
-		// 				builder.encodeIncrementalChunk(mockChunk1 as unknown as TreeChunk, () =>
-		// 					createMockEncodedBatch(),
-		// 				),
-		// 			(error: Error) =>
-		// 				validateAssertionError(error, "Summary tracking must be in progress"),
-		// 		);
-		// 	});
-		// 	it("encodes chunk and returns reference ID when tracking", () => {
-		// 		const summaryBuilder = new SummaryTreeBuilder();
-		// 		const context = createMockIncrementalSummaryContext(100, 90);
-		// 		builder.startingSummary(summaryBuilder, false, context);
-		// 		const referenceId = builder.encodeIncrementalChunk(
-		// 			mockChunk1 as unknown as TreeChunk,
-		// 			() => createMockEncodedBatch(),
-		// 		);
-		// 		assert.strictEqual(typeof referenceId, "number");
-		// 		assert.strictEqual(referenceId, 0); // First chunk should get ID 0
-		// 	});
-		// 	it("generates sequential reference IDs for multiple chunks", () => {
-		// 		const summaryBuilder = new SummaryTreeBuilder();
-		// 		const context = createMockIncrementalSummaryContext(100, 90);
-		// 		builder.startingSummary(summaryBuilder, false, context);
-		// 		const referenceId1 = builder.encodeIncrementalChunk(
-		// 			mockChunk1 as unknown as TreeChunk,
-		// 			() => createMockEncodedBatch(),
-		// 		);
-		// 		const referenceId2 = builder.encodeIncrementalChunk(
-		// 			mockChunk2 as unknown as TreeChunk,
-		// 			() => createMockEncodedBatch(),
-		// 		);
-		// 		assert.strictEqual(referenceId1, 0);
-		// 		assert.strictEqual(referenceId2, 1);
-		// 	});
-		// 	it("always encodes chunks in full tree mode", () => {
-		// 		const summaryBuilder = new SummaryTreeBuilder();
-		// 		const context = createMockIncrementalSummaryContext(100, 90);
-		// 		// Start with full tree mode
-		// 		builder.startingSummary(summaryBuilder, true, context);
-		// 		// Encode the same chunk twice
-		// 		const referenceId1 = builder.encodeIncrementalChunk(
-		// 			mockChunk1 as unknown as TreeChunk,
-		// 			() => createMockEncodedBatch(),
-		// 		);
-		// 		// Complete first summary
-		// 		builder.completedSummary(context);
-		// 		// Start new summary (not full tree)
-		// 		const newContext = createMockIncrementalSummaryContext(101, 100);
-		// 		builder.startingSummary(summaryBuilder, true, newContext);
-		// 		// Should still encode (not use handle) because it's full tree mode
-		// 		const referenceId2 = builder.encodeIncrementalChunk(
-		// 			mockChunk1 as unknown as TreeChunk,
-		// 			() => createMockEncodedBatch(),
-		// 		);
-		// 		// Should get different reference IDs because both were encoded
-		// 		assert.notStrictEqual(referenceId1, referenceId2);
-		// 	});
-		// 	it("creates summary handles for unchanged chunks in incremental mode", () => {
-		// 		const summaryBuilder = new SummaryTreeBuilder();
-		// 		const context1 = createMockIncrementalSummaryContext(100, 90, "/base/path");
-		// 		// First summary
-		// 		builder.startingSummary(summaryBuilder, false, context1);
-		// 		const referenceId1 = builder.encodeIncrementalChunk(
-		// 			mockChunk1 as unknown as TreeChunk,
-		// 			() => createMockEncodedBatch(),
-		// 		);
-		// 		builder.completedSummary(context1);
-		// 		// Second summary with same chunk
-		// 		const summaryBuilder2 = new SummaryTreeBuilder();
-		// 		const context2 = createMockIncrementalSummaryContext(101, 100, "/base/path");
-		// 		builder.startingSummary(summaryBuilder2, false, context2);
-		// 		const referenceId2 = builder.encodeIncrementalChunk(
-		// 			mockChunk1 as unknown as TreeChunk,
-		// 			() => createMockEncodedBatch(),
-		// 		);
-		// 		// Should reuse the same reference ID
-		// 		assert.strictEqual(referenceId1, referenceId2);
-		// 		// Verify that a handle was added to the summary builder
-		// 		const summary = summaryBuilder2.getSummaryTree();
-		// 		const summaryEntry = summary.summary.tree["0"];
-		// 		assert(summaryEntry !== undefined);
-		// 		assert.strictEqual(summaryEntry.type, SummaryType.Handle);
-		// 	});
-		// });
-		// describe("completedSummary", () => {
-		// 	it("does nothing when incrementalSummaryContext is undefined", () => {
-		// 		// Should not throw
-		// 		builder.completedSummary(undefined);
-		// 	});
-		// 	it("throws when not tracking summary", () => {
-		// 		const context = createMockIncrementalSummaryContext(100, 90);
-		// 		assert.throws(
-		// 			() => builder.completedSummary(context),
-		// 			(error: Error) =>
-		// 				validateAssertionError(error, "Summary tracking must be in progress"),
-		// 		);
-		// 	});
-		// 	it("clears tracking state when called after starting summary", () => {
-		// 		const summaryBuilder = new SummaryTreeBuilder();
-		// 		const context = createMockIncrementalSummaryContext(100, 90);
-		// 		builder.startingSummary(summaryBuilder, false, context);
-		// 		builder.completedSummary(context);
-		// 		// Should now be able to start a new summary
-		// 		const newContext = createMockIncrementalSummaryContext(101, 100);
-		// 		const result = builder.startingSummary(summaryBuilder, false, newContext);
-		// 		assert.strictEqual(result, true);
-		// 	});
-		// 	it("cleans up old tracking data", () => {
-		// 		const summaryBuilder = new SummaryTreeBuilder();
-		// 		// Create multiple summaries with different sequence numbers
-		// 		const context1 = createMockIncrementalSummaryContext(100, 80);
-		// 		builder.startingSummary(summaryBuilder, false, context1);
-		// 		builder.encodeIncrementalChunk(mockChunk1 as TreeChunkLike, () =>
-		// 			createMockEncodedBatch(),
-		// 		);
-		// 		builder.completedSummary(context1);
-		// 		const context2 = createMockIncrementalSummaryContext(110, 100);
-		// 		builder.startingSummary(summaryBuilder, false, context2);
-		// 		builder.encodeIncrementalChunk(mockChunk2 as TreeChunkLike, () =>
-		// 			createMockEncodedBatch(),
-		// 		);
-		// 		builder.completedSummary(context2);
-		// 		// Data for sequence 100 should be cleaned up since latest is now 100
-		// 		// (This is internal state, so we test indirectly by ensuring new chunks get fresh IDs)
-		// 		const context3 = createMockIncrementalSummaryContext(120, 110);
-		// 		builder.startingSummary(summaryBuilder, false, context3);
-		// 		// Chunk1 should not be found from old tracking data (sequence 100 < 110)
-		// 		// so it should get a new encoding rather than a handle
-		// 		const referenceId = builder.encodeIncrementalChunk(mockChunk1 as TreeChunkLike, () =>
-		// 			createMockEncodedBatch(),
-		// 		);
-		// 		assert.strictEqual(typeof referenceId, "number");
-		// 	});
+	describe("completedSummary", () => {
+		it("does nothing when incrementalSummaryContext is undefined", () => {
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to be ReadyToTrack",
+			);
+			assert.doesNotThrow(
+				() => builder.completedSummary(undefined),
+				"Completed summary with undefined context should not throw",
+			);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to remain ReadyToTrack",
+			);
+		});
+
+		it("throws when not tracking summary", () => {
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to be ReadyToTrack",
+			);
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
+			assert.throws(
+				() => builder.completedSummary(incrementalSummaryContext),
+				"Calling completedSummary without starting should throw",
+			);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to remain ReadyToTrack after failed completion",
+			);
+		});
+
+		it("clears tracking state when called after starting summary", () => {
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to be ReadyToTrack",
+			);
+			const summaryBuilder = new SummaryTreeBuilder();
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
+			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.Tracking,
+				"Expected forestSummaryState to change to Tracking",
+			);
+			assert.doesNotThrow(
+				() => builder.completedSummary(incrementalSummaryContext),
+				"Calling completedSummary after starting should be successful",
+			);
+			assert.strictEqual(
+				builder.forestSummaryState,
+				ForestSummaryTrackingState.ReadyToTrack,
+				"Expected forestSummaryState to be back to ReadyToTrack",
+			);
+		});
 	});
 
 	describe("load", () => {
 		it("returns early when snapshot tree is not available", async () => {
 			const storageService = createMockStorageService(); // No snapshot tree
-			await builder.load(storageService, mockReadAndParse);
-			// Should not throw and should complete successfully
+			await builder.load(storageService, getReadAndParse(new Map()));
 		});
 
 		it("loads chunk contents from snapshot tree", async () => {
+			const blobMap = new Map([
+				["0/contents", "chunk0"],
+				["1/contents", "chunk1"],
+			]);
 			const mockSnapshotTree: ISnapshotTree = {
 				trees: {
 					"0": {
 						trees: {},
 						blobs: {
-							contents: "blob-id-1",
+							contents: blobMap.get("0/contents") ?? "",
 						},
 					},
 					"1": {
 						trees: {},
 						blobs: {
-							contents: "blob-id-2",
+							contents: blobMap.get("1/contents") ?? "",
 						},
 					},
 				},
 				blobs: {},
 			};
-
-			const blobMap = new Map([
-				["0/contents", { mockChunkData: "chunk0" }],
-				["1/contents", { mockChunkData: "chunk1" }],
-			]);
-
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
 
-			const readAndParse = async <T>(path: string): Promise<T> => {
-				const blob = blobMap.get(path);
-				if (!blob) {
-					throw new Error(`Blob not found: ${path}`);
-				}
-				return blob as T;
-			};
-
-			await builder.load(storageService, readAndParse);
+			await builder.load(storageService, getReadAndParse(blobMap));
 
 			// Verify chunks can be retrieved
 			const chunk0 = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
 			const chunk1 = builder.getEncodedIncrementalChunk(1 as ChunkReferenceId);
 
-			assert.deepStrictEqual(chunk0, { mockChunkData: "chunk0" });
-			assert.deepStrictEqual(chunk1, { mockChunkData: "chunk1" });
+			assert.deepStrictEqual(
+				chunk0,
+				blobMap.get("0/contents"),
+				"Chunk 0 should match stored contents",
+			);
+			assert.deepStrictEqual(
+				chunk1,
+				blobMap.get("1/contents"),
+				"Chunk 1 should match stored contents",
+			);
 		});
 
 		it("loads nested chunk trees recursively", async () => {
+			const blobMap = new Map([
+				["0/contents", "chunk0"],
+				["0/1/contents", "chunk1"],
+			]);
 			const mockSnapshotTree: ISnapshotTree = {
 				trees: {
 					"0": {
@@ -385,41 +331,26 @@ describe("ForestIncrementalSummaryBuilder", () => {
 							"1": {
 								trees: {},
 								blobs: {
-									contents: "nested-blob-id",
+									contents: blobMap.get("0/1/contents") ?? "",
 								},
 							},
 						},
 						blobs: {
-							contents: "parent-blob-id",
+							contents: blobMap.get("0/contents") ?? "",
 						},
 					},
 				},
 				blobs: {},
 			};
-
-			const blobMap = new Map([
-				["0/contents", { parentChunk: "data" }],
-				["0/1/contents", { nestedChunk: "data" }],
-			]);
-
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
-
-			const readAndParse = async <T>(path: string): Promise<T> => {
-				const blob = blobMap.get(path);
-				if (!blob) {
-					throw new Error(`Blob not found: ${path}`);
-				}
-				return blob as T;
-			};
-
-			await builder.load(storageService, readAndParse);
+			await builder.load(storageService, getReadAndParse(blobMap));
 
 			// Verify both parent and nested chunks can be retrieved
 			const parentChunk = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
 			const nestedChunk = builder.getEncodedIncrementalChunk(1 as ChunkReferenceId);
 
-			assert.deepStrictEqual(parentChunk, { parentChunk: "data" });
-			assert.deepStrictEqual(nestedChunk, { nestedChunk: "data" });
+			assert.deepStrictEqual(parentChunk, blobMap.get("0/contents"));
+			assert.deepStrictEqual(nestedChunk, blobMap.get("0/1/contents"));
 		});
 
 		it("throws when chunk contents are missing", async () => {
@@ -427,138 +358,181 @@ describe("ForestIncrementalSummaryBuilder", () => {
 				trees: {
 					"0": {
 						trees: {},
-						blobs: {
-							contents: "missing-blob-id",
-						},
+						blobs: {},
 					},
 				},
 				blobs: {},
 			};
-
 			const storageService = createMockStorageService(mockSnapshotTree, new Map());
-
 			await assert.rejects(
-				async () => builder.load(storageService, mockReadAndParse),
+				async () => builder.load(storageService, getReadAndParse(new Map())),
 				(error: Error) => {
 					assert(error.message.includes("Cannot find contents for incremental chunk"));
 					return true;
 				},
+				"Expected error when chunk contents are missing",
+			);
+		});
+	});
+
+	describe("encodeIncrementalChunk", () => {
+		const mockEncodedChunk = {} as unknown as EncodedFieldBatch;
+		it("throws when not tracking summary", () => {
+			assert.throws(
+				() => builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk),
+				(error: Error) =>
+					validateAssertionError(error, "Summary tracking must be in progress"),
+			);
+		});
+
+		it("encodes chunk and returns reference ID when tracking", () => {
+			const summaryBuilder = new SummaryTreeBuilder();
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
+			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
+			const referenceId = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			assert.strictEqual(typeof referenceId, "number", "Reference ID should be a number");
+		});
+
+		it("always encodes chunks in full tree mode", () => {
+			const summaryBuilder = new SummaryTreeBuilder();
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
+			// Start with non full tree mode
+			builder.startingSummary(summaryBuilder, false /* fullTree */, incrementalSummaryContext);
+			const referenceId1 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			// Complete first summary
+			builder.completedSummary(incrementalSummaryContext);
+
+			// Start new summary - full tree.
+			const newIncrementalSummaryContext = createMockIncrementalSummaryContext(20, 10);
+			builder.startingSummary(
+				summaryBuilder,
+				true /* fullTree */,
+				newIncrementalSummaryContext,
+			);
+			// Should still encode (not use handle) because it's full tree mode
+			const referenceId2 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			// Should get different reference IDs because both were encoded
+			assert.notStrictEqual(referenceId1, referenceId2, "Reference IDs should be different");
+		});
+
+		it("creates summary handles for unchanged chunks", () => {
+			const summaryBuilder = new SummaryTreeBuilder();
+			const incrementalSummaryContext1 = createMockIncrementalSummaryContext(
+				10,
+				0,
+				"/base/path",
+			);
+			// First summary
+			builder.startingSummary(
+				summaryBuilder,
+				false /* fullTree */,
+				incrementalSummaryContext1,
+			);
+			const referenceId1 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			builder.completedSummary(incrementalSummaryContext1);
+
+			// Second summary with same chunk
+			const summaryBuilder2 = new SummaryTreeBuilder();
+			const incrementalSummaryContext2 = createMockIncrementalSummaryContext(
+				20,
+				10,
+				"/base/path",
+			);
+			builder.startingSummary(summaryBuilder2, false, incrementalSummaryContext2);
+			const referenceId2 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			// Should reuse the same reference ID
+			assert.strictEqual(referenceId1, referenceId2, "Reference IDs should match");
+
+			// Verify that a handle was added to the summary builder
+			const summary = summaryBuilder2.getSummaryTree();
+			const summaryEntry = summary.summary.tree[`${referenceId1}`];
+			assert.strictEqual(
+				summaryEntry?.type,
+				SummaryType.Handle,
+				"Expected summary entry to be a handle",
+			);
+		});
+
+		it("creates summary handles for unchanged chunks even if previous summary failed", () => {
+			const summaryBuilder1 = new SummaryTreeBuilder();
+			const incrementalSummaryContext = createMockIncrementalSummaryContext(10, 0);
+			// First summary
+			builder.startingSummary(
+				summaryBuilder1,
+				false /* fullTree */,
+				incrementalSummaryContext,
+			);
+			const referenceId1 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			builder.completedSummary(incrementalSummaryContext);
+
+			// Start new summary and don't encode any chunks.
+			const incrementalSummaryContext2 = createMockIncrementalSummaryContext(20, 10);
+			builder.startingSummary(
+				summaryBuilder1,
+				false /* fullTree */,
+				incrementalSummaryContext2,
+			);
+			builder.completedSummary(incrementalSummaryContext2);
+
+			// Now start a new summary and use the first summary's sequence number as the latestSummarySequenceNumber
+			// to simulate a failure of the previous summary.
+			const summaryBuilder2 = new SummaryTreeBuilder();
+			const incrementalSummaryContext3 = createMockIncrementalSummaryContext(30, 10);
+			builder.startingSummary(
+				summaryBuilder2,
+				false /* fullTree */,
+				incrementalSummaryContext3,
+			);
+
+			// Should reuse the same reference ID since the chunk hasn't changed since the last successful summary.
+			const referenceId2 = builder.encodeIncrementalChunk(testChunk1, () => mockEncodedChunk);
+			assert.strictEqual(referenceId1, referenceId2, "Reference IDs should match");
+
+			// Verify that a handle was added to the summary builder
+			const summary = summaryBuilder2.getSummaryTree();
+			const summaryEntry = summary.summary.tree[`${referenceId1}`];
+			assert.strictEqual(
+				summaryEntry?.type,
+				SummaryType.Handle,
+				"Expected summary entry to be a handle",
 			);
 		});
 	});
 
 	describe("getEncodedIncrementalChunk", () => {
 		it("returns encoded chunk when it exists", async () => {
+			const blobMap = new Map([["0/contents", "chunk0"]]);
 			const mockSnapshotTree: ISnapshotTree = {
 				trees: {
-					"42": {
+					"0": {
 						trees: {},
 						blobs: {
-							contents: "test-blob-id",
+							contents: blobMap.get("0/contents") ?? "",
 						},
 					},
 				},
 				blobs: {},
 			};
 
-			const expectedData = { testChunk: "data" };
-			const blobMap = new Map([["42/contents", expectedData]]);
-
 			const storageService = createMockStorageService(mockSnapshotTree, blobMap);
+			await builder.load(storageService, getReadAndParse(blobMap));
 
-			const readAndParse = async <T>(path: string): Promise<T> => {
-				const blob = blobMap.get(path);
-				if (!blob) {
-					throw new Error(`Blob not found: ${path}`);
-				}
-				return blob as T;
-			};
-
-			await builder.load(storageService, readAndParse);
-
-			const result = builder.getEncodedIncrementalChunk(42 as ChunkReferenceId);
-			assert.deepStrictEqual(result, expectedData);
+			const result = builder.getEncodedIncrementalChunk(0 as ChunkReferenceId);
+			assert.deepStrictEqual(
+				result,
+				blobMap.get("0/contents"),
+				"Should return correct chunk contents",
+			);
 		});
 
-		it("throws when chunk does not exist", () => {
+		it("throws when encoded chunk does not exist", () => {
 			assert.throws(
 				() => builder.getEncodedIncrementalChunk(999 as ChunkReferenceId),
 				(error: Error) => {
-					assert(error.message.includes("Chunk with reference ID 999 not found"));
+					assert(error.message.includes("not found"));
 					return true;
 				},
 			);
 		});
 	});
-
-	// describe("Integration scenarios", () => {
-	// 	it("supports complete summary workflow", () => {
-	// 		const summaryBuilder = new SummaryTreeBuilder();
-	// 		const context = createMockIncrementalSummaryContext(100, 90);
-
-	// 		// Start summary
-	// 		const shouldSummarizeIncrementally = builder.startingSummary(
-	// 			summaryBuilder,
-	// 			false,
-	// 			context,
-	// 		);
-	// 		assert.strictEqual(shouldSummarizeIncrementally, true);
-
-	// 		// Encode some chunks
-	// 		const ref1 = builder.encodeIncrementalChunk(mockChunk1 as any, () => mockEncodedBatch);
-	// 		const ref2 = builder.encodeIncrementalChunk(mockChunk2 as any, () => mockEncodedBatch);
-
-	// 		assert.strictEqual(ref1, 0);
-	// 		assert.strictEqual(ref2, 1);
-
-	// 		// Complete summary
-	// 		builder.completedSummary(context);
-
-	// 		// Verify we can start a new summary
-	// 		const newContext = createMockIncrementalSummaryContext(101, 100);
-	// 		const newResult = builder.startingSummary(summaryBuilder, false, newContext);
-	// 		assert.strictEqual(newResult, true);
-	// 	});
-
-	// 	it("handles summary handles correctly across multiple summaries", () => {
-	// 		let summaryBuilder = new SummaryTreeBuilder();
-	// 		const context1 = createMockIncrementalSummaryContext(100, 90, "/base");
-
-	// 		// First summary - encode chunks
-	// 		builder.startingSummary(summaryBuilder, false, context1);
-	// 		const ref1 = builder.encodeIncrementalChunk(mockChunk1 as any, () => mockEncodedBatch);
-	// 		const ref2 = builder.encodeIncrementalChunk(mockChunk2 as any, () => mockEncodedBatch);
-	// 		builder.completedSummary(context1);
-
-	// 		// Second summary - same chunks should use handles
-	// 		summaryBuilder = new SummaryTreeBuilder();
-	// 		const context2 = createMockIncrementalSummaryContext(101, 100, "/base");
-	// 		builder.startingSummary(summaryBuilder, false, context2);
-
-	// 		const ref1_v2 = builder.encodeIncrementalChunk(
-	// 			mockChunk1 as any,
-	// 			() => mockEncodedBatch,
-	// 		);
-	// 		const ref2_v2 = builder.encodeIncrementalChunk(
-	// 			mockChunk2 as any,
-	// 			() => mockEncodedBatch,
-	// 		);
-
-	// 		// Should reuse reference IDs
-	// 		assert.strictEqual(ref1, ref1_v2);
-	// 		assert.strictEqual(ref2, ref2_v2);
-
-	// 		// Summary should contain handles
-	// 		const summary = summaryBuilder.getSummaryTree();
-	// 		const ref1Entry = summary.summary.tree[ref1.toString()];
-	// 		const ref2Entry = summary.summary.tree[ref2.toString()];
-
-	// 		assert(ref1Entry !== undefined);
-	// 		assert(ref2Entry !== undefined);
-	// 		assert.strictEqual(ref1Entry.type, SummaryType.Handle);
-	// 		assert.strictEqual(ref2Entry.type, SummaryType.Handle);
-
-	// 		builder.completedSummary(context2);
-	// 	});
-	// });
 });

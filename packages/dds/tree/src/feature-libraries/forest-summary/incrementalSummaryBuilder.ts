@@ -29,13 +29,13 @@ const chunkContentsBlobKey = "contents";
 /**
  * State that tells whether a summary is currently being tracked.
  */
-const ForestSummaryTrackingState = {
+export const ForestSummaryTrackingState = {
 	/** A summary is currently being tracked. */
 	Tracking: "Tracking",
 	/** A summary is ready to be tracked. */
 	ReadyToTrack: "ReadyToTrack",
 } as const;
-type ForestSummaryTrackingState =
+export type ForestSummaryTrackingState =
 	(typeof ForestSummaryTrackingState)[keyof typeof ForestSummaryTrackingState];
 
 /**
@@ -182,7 +182,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	/**
 	 * The state indicating whether a summary is currently being tracked or not.
 	 */
-	private forestSummaryState: ForestSummaryTrackingState =
+	public forestSummaryState: ForestSummaryTrackingState =
 		ForestSummaryTrackingState.ReadyToTrack;
 
 	/**
