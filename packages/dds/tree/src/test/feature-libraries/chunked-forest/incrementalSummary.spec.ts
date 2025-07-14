@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import type { IExperimentalIncrementalSummaryContext } from "@fluidframework/runtime-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IExperimentalIncrementalSummaryContext,
+	ISummaryTreeWithStats,
+} from "@fluidframework/runtime-definitions/internal";
 
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { Tree, ForestTypeOptimized, TreeAlpha } from "../../../shared-tree/index.js";
@@ -22,14 +26,16 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+// eslint-disable-next-line import/no-internal-modules
+import { forestSummaryKey } from "../../../feature-libraries/forest-summary/forestSummarizer.js";
+// eslint-disable-next-line import/no-internal-modules
+import { expectTreesEqual } from "../../simple-tree/api/treeNodeApi.spec.js";
 
 const schemaFactory = new SchemaFactory("com.example");
 
 /* eslint-disable jsdoc/check-indentation */
 /**
- * A schema that has the following structure to test 3 levels in the tree where incremental summaries
- * is possible:
+ * A schema that has the following structure to test incremental summaries at 3 levels in the tree:
  * Board
  * ├── boardId: string
  * └── lists: NoteList[]
@@ -38,20 +44,20 @@ const schemaFactory = new SchemaFactory("com.example");
  *         ├── noteId: number
  *         ├── text: string
  *         ├── color: string
- *         └── metadata: NoteMetadata (optional) ---- supports incremental summaries
- *             ├── metadataId: number
- *             └── metaText: string (optional) ---- supports incremental summaries
+ *         └── label: NoteLabel (optional) ---- supports incremental summaries
+ *             ├── labelId: number
+ *             └── labelText: string (optional) ---- supports incremental summaries
  */
 /* eslint-enable jsdoc/check-indentation */
-class NoteMetadata extends schemaFactory.object("subNote", {
-	metadataId: schemaFactory.number,
-	metaText: schemaFactory.optional(schemaFactory.string),
+class NoteLabel extends schemaFactory.object("noteLabel", {
+	labelId: schemaFactory.number,
+	labelText: schemaFactory.optional(schemaFactory.string),
 }) {}
 class Note extends schemaFactory.object("note", {
 	noteId: schemaFactory.number,
 	text: schemaFactory.string,
 	color: schemaFactory.string,
-	metadata: schemaFactory.optional(NoteMetadata),
+	label: schemaFactory.optional(NoteLabel),
 }) {}
 class NoteList extends schemaFactory.object("noteList", {
 	listId: schemaFactory.identifier,
@@ -62,22 +68,30 @@ class Board extends schemaFactory.object("board", {
 	lists: schemaFactory.array(NoteList),
 }) {}
 
+/**
+ * Creates an initial board with the specified number of note lists and notes in each list.
+ * Each note will have a unique ID, and every even-numbered note will have a label.
+ * Every 4th even-numbered note will have label text.
+ *
+ * @param noteListCount - The number of note lists to create.
+ * @param notesInListCount - The number of notes in each list.
+ */
 function createInitialBoard(noteListCount: number, notesInListCount: number) {
 	let nextNoteId = 1;
 	const noteLists: NoteList[] = [];
 	for (let i = 0; i < noteListCount; i++) {
 		const notes: Note[] = [];
 		for (let j = 0; j < notesInListCount; j++) {
-			const addMetadata = j % 2 === 0; // Add metadata to every even number note in a list
-			const addMetadataText: boolean = addMetadata && j % 4 === 0; // Add metadata text to every 2nd note with metadata
+			const addLabel = j % 2 === 0; // Add label to every even number note in a list
+			const addLabelText: boolean = addLabel && j % 4 === 0; // Add label text to every 2nd note with label
 			const note = new Note({
 				noteId: nextNoteId,
 				text: `Note ${nextNoteId}`,
 				color: `Color ${nextNoteId}`,
-				metadata: addMetadata
+				label: addLabel
 					? {
-							metadataId: nextNoteId,
-							metaText: addMetadataText ? `Meta for Note ${nextNoteId}` : undefined,
+							labelId: nextNoteId,
+							labelText: addLabelText ? `Label for Note ${nextNoteId}` : undefined,
 						}
 					: undefined,
 			});
@@ -108,99 +122,29 @@ function updateNote(view: TreeView<typeof Board>, listIndex: number, noteIndex: 
 }
 
 /**
- * Helper function to update metadata for a note at noteIndex in list at listIndex in the given view.
+ * Helper function to update label for a note at noteIndex in list at listIndex in the given view.
  */
-function updateMetadata(view: TreeView<typeof Board>, listIndex: number, noteIndex: number) {
+function updateLabel(view: TreeView<typeof Board>, listIndex: number, noteIndex: number) {
 	const list = view.root.lists.at(listIndex);
 	assert(list !== undefined, `List at index ${listIndex} not found`);
 	const note = list.notes.at(noteIndex);
 	assert(note !== undefined, `Note at index ${noteIndex} not found in list ${listIndex}`);
-	const metadata = note.metadata;
-	assert(metadata !== undefined, `No metadata found for note at index ${noteIndex}`);
-	metadata.metadataId = 100;
+	const label = note.label;
+	assert(label !== undefined, `No label found for note at index ${noteIndex}`);
+	label.labelId = 100;
 }
 
 /**
- * Helper function to update metadata text for a note at noteIndex in list at listIndex in the given view.
+ * Helper function to update label text for a note at noteIndex in list at listIndex in the given view.
  */
-function updateMetadataText(
-	view: TreeView<typeof Board>,
-	listIndex: number,
-	noteIndex: number,
-) {
+function updateLabelText(view: TreeView<typeof Board>, listIndex: number, noteIndex: number) {
 	const list = view.root.lists.at(listIndex);
 	assert(list !== undefined, `List at index ${listIndex} not found`);
 	const note = list.notes.at(noteIndex);
 	assert(note !== undefined, `Note at index ${noteIndex} not found in list ${listIndex}`);
-	const metadata = note.metadata;
-	assert(metadata !== undefined, `No metadata found for note at index ${noteIndex}`);
-	metadata.metaText = `Metadata for ${noteIndex + 1} updated`;
-}
-
-/**
- * Validates that the data in actual tree matches the data in the tree with expected view.
- */
-function validateTreesEqual(
-	actualTree: ISharedTree,
-	expectedView: TreeView<typeof Board>,
-): void {
-	const actualView = actualTree.viewWith(
-		new TreeViewConfiguration({
-			schema: Board,
-		}),
-	);
-	const actualRoot = actualView.root;
-	const expectedRoot = expectedView.root;
-	if (actualRoot === undefined || expectedRoot === undefined) {
-		assert.equal(actualRoot === undefined, expectedRoot === undefined);
-		return;
-	}
-
-	assert.equal(Tree.schema(actualRoot), Tree.schema(expectedRoot));
-	assert.deepEqual(TreeAlpha.exportVerbose(actualRoot), TreeAlpha.exportVerbose(expectedRoot));
-	assert.deepEqual(TreeAlpha.exportConcise(actualRoot), TreeAlpha.exportConcise(expectedRoot));
-}
-
-/**
- * Validates that the handle path exists in the summary tree. The handle path is split by "/" into
- * pathPaths where the first element should exist in the root of the summary tree, the second element
- * in the first element's subtree, and so on.
- */
-function validateHandlePathExists(pathPaths: string[], summaryTree: ISummaryTree) {
-	const currentPath = pathPaths[0];
-	let found = false;
-	for (const [key, summaryObject] of Object.entries(summaryTree.tree)) {
-		if (key === currentPath) {
-			found = true;
-			if (pathPaths.length > 1) {
-				assert(
-					summaryObject.type === SummaryType.Tree || summaryObject.type === SummaryType.Handle,
-					`Handle path ${currentPath} should be for a subtree or a handle`,
-				);
-				if (summaryObject.type === SummaryType.Tree) {
-					validateHandlePathExists(pathPaths.slice(1), summaryObject);
-				}
-			}
-			break;
-		}
-	}
-	assert(found, `Handle path ${currentPath} not found in summary tree`);
-}
-
-/**
- * Validates that for each handle in the current summary, it's path exists in the last summary. This basically
- * validates that the handle paths in the current summary are valid.
- */
-function validateHandlesInSummary(summary: ISummaryTree, lastSummary: ISummaryTree) {
-	for (const [key, summaryObject] of Object.entries(summary.tree)) {
-		if (summaryObject.type === SummaryType.Handle) {
-			// Validate that the id (summary path) exists in lastSummary
-			validateHandlePathExists(summaryObject.handle.split("/").slice(1), lastSummary);
-		} else if (summaryObject.type === SummaryType.Tree) {
-			// Recursively validate nested trees
-			validateHandlesInSummary(summaryObject, lastSummary);
-		}
-	}
+	const label = note.label;
+	assert(label !== undefined, `No label found for note at index ${noteIndex}`);
+	label.labelText = `Label for ${noteIndex + 1} updated`;
 }
 
 describe("Forest incremental summary", () => {
@@ -234,31 +178,40 @@ describe("Forest incremental summary", () => {
 		assert(forest instanceof ChunkedForest);
 	});
 
-	const testWithSuccessfulSummaries = async () => {
-		// This mocks the first summary at sequence number 0.
-		const summary1 = await tree1.summarize();
-
-		const dataStoreRuntime2 = new MockFluidDataStoreRuntime({
-			clientId: `test-client-2`,
+	async function loadTreeView(treeNumber: number, summary: ISummaryTreeWithStats) {
+		const dataStoreRuntime = new MockFluidDataStoreRuntime({
+			clientId: `test-client-${treeNumber}`,
 			id: "test",
 			idCompressor: testIdCompressor,
 		});
-		const tree2 = (await factory.load(
-			dataStoreRuntime2,
-			"TestSharedTree2",
+		const tree = (await factory.load(
+			dataStoreRuntime,
+			`TestSharedTree${treeNumber}`,
 			{
-				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
-				objectStorage: MockStorage.createFromSummary(summary1.summary),
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
 			},
 			factory.attributes,
 		)) as ISharedTree;
-		validateTreesEqual(tree2, view1);
+		return tree.viewWith(
+			new TreeViewConfiguration({
+				schema: Board,
+			}),
+		);
+	}
 
-		updateNote(view1, 0 /* listIndex */, 0 /* noteIndex */);
-		updateMetadata(view1, 1 /* listIndex */, 0 /* noteIndex */);
-		updateMetadataText(view1, 2 /* listIndex */, 0 /* noteIndex */);
+	const testWithSuccessfulSummaries = async () => {
+		// This mocks the first summary at sequence number 0. This summary will not generate an
+		// incremental forest summary because `IExperimentalIncrementalSummaryContext` is not provided.
+		// This is done to mimic the first summary in detached containers.
+		const summary1 = await tree1.summarize();
+
+		const tree2View = await loadTreeView(2, summary1);
+		expectTreesEqual(tree2View.root, view1.root);
+		validateNoHandlesInForestSummary(summary1.summary);
 
 		// Second summary at sequence number 10 - previous was at sequence number 0.
+		// This summary will generate an incremental forest summary.
 		const incrementalSummaryContext2: IExperimentalIncrementalSummaryContext = {
 			summarySequenceNumber: 10,
 			latestSummarySequenceNumber: 0,
@@ -270,14 +223,18 @@ describe("Forest incremental summary", () => {
 			undefined,
 			incrementalSummaryContext2,
 		);
-		assert(summary2 !== undefined);
-		validateHandlesInSummary(summary2.summary, summary1.summary);
+		const treeView2 = await loadTreeView(3, summary2);
+		expectTreesEqual(treeView2.root, view1.root);
+		validateNoHandlesInForestSummary(summary2.summary);
 
+		// Update a note, label, and label text so that in the next summary, the fields and chunks for
+		// these will be summarized again but for other fields, summary handles will be used.
 		updateNote(view1, 0 /* listIndex */, 0 /* noteIndex */);
-		updateMetadata(view1, 0 /* listIndex */, 0 /* noteIndex */);
-		updateMetadata(view1, 1 /* listIndex */, 0 /* noteIndex */);
+		updateLabel(view1, 1 /* listIndex */, 0 /* noteIndex */);
+		updateLabelText(view1, 2 /* listIndex */, 0 /* noteIndex */);
 
 		// Third summary at sequence number 20 - previous was at sequence number 10.
+		// This summary should contain handles for the unchanged fields and its chunks.
 		const incrementalSummaryContext3: IExperimentalIncrementalSummaryContext = {
 			summarySequenceNumber: 20,
 			latestSummarySequenceNumber: 10,
@@ -290,7 +247,7 @@ describe("Forest incremental summary", () => {
 			incrementalSummaryContext3,
 		);
 		assert(summary3 !== undefined);
-		validateHandlesInSummary(summary3.summary, summary2.summary);
+		validateHandlesInForestSummary(summary3.summary, summary2.summary);
 
 		return {
 			previousSummary: summary2,
@@ -304,6 +261,10 @@ describe("Forest incremental summary", () => {
 
 	it("incremental summaries with a failed summary in between", async () => {
 		const previousSummaryInfo = await testWithSuccessfulSummaries();
+
+		updateNote(view1, 0 /* listIndex */, 0 /* noteIndex */);
+		updateLabel(view1, 0 /* listIndex */, 0 /* noteIndex */);
+		updateLabel(view1, 1 /* listIndex */, 0 /* noteIndex */);
 
 		// Simulate a scenario where the precious summary fails by setting the latest summary sequence number
 		// in the next summary's incrementalSummaryContext not to the previous summary but the last successful
@@ -322,6 +283,9 @@ describe("Forest incremental summary", () => {
 		);
 		assert(newSummary !== undefined);
 		// This summary should reference the summary before the failed one to generate handles.
-		validateHandlesInSummary(newSummary.summary, previousSummaryInfo.previousSummary.summary);
+		validateHandlesInForestSummary(
+			newSummary.summary,
+			previousSummaryInfo.previousSummary.summary,
+		);
 	});
 });

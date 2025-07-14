@@ -2844,7 +2844,7 @@ function checkoutWithInitialTree(
 	return checkoutWithContent(treeContent);
 }
 
-function expectTreesEqual(
+export function expectTreesEqual(
 	a: TreeNode | TreeLeafValue | undefined,
 	b: TreeNode | TreeLeafValue | undefined,
 ): void {

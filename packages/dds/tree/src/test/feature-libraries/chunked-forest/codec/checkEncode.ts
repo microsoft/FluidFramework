@@ -20,7 +20,7 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { EncodedDataBuilder } from "../../../../feature-libraries/chunked-forest/codec/encodedDataBuilder.js";
+import { ForestEncodedDataBuilder } from "../../../../feature-libraries/chunked-forest/codec/encodedDataBuilder.js";
 import {
 	type EncodedFieldBatch,
 	version,
@@ -45,7 +45,7 @@ export function checkNodeEncode(
 	shape.encodeNode(
 		cursor,
 		cache,
-		new EncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
+		new ForestEncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
 	);
 
 	// Check round-trip
@@ -65,7 +65,7 @@ export function checkFieldEncode(
 	shape.encodeField(
 		cursor,
 		cache,
-		new EncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
+		new ForestEncodedDataBuilder(buffer, undefined /* incrementalEncoder */),
 	);
 
 	// Check round-trip
