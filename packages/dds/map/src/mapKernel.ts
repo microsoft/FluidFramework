@@ -50,14 +50,9 @@ interface IMapMessageHandler {
 }
 
 /**
- * Map key operations are one of several types.
+ * Union of all possible map operations.
  */
-export type IMapKeyOperation = IMapSetOperation | IMapDeleteOperation;
-
-/**
- * Description of a map delta operation
- */
-export type IMapOperation = IMapKeyOperation | IMapClearOperation;
+export type IMapOperation = IMapSetOperation | IMapDeleteOperation | IMapClearOperation;
 
 /**
  * Defines the in-memory object structure to be used for the conversion to/from serialized.
@@ -148,7 +143,7 @@ export class MapKernel {
 	private readonly messageHandlers: ReadonlyMap<string, IMapMessageHandler> = new Map();
 
 	/**
-	 * The data the map is storing, but only including sequenced changes (no local pending
+	 * The data the map is storing, but only including sequenced values (no local pending
 	 * modifications are included).
 	 */
 	private readonly sequencedData = new Map<string, ILocalValue>();
@@ -192,8 +187,15 @@ export class MapKernel {
 	 * 2. Consistent iteration order before/after sequencing of pending ops; acks don't change order
 	 * 3. Consistent iteration order between synchronized clients, even if they each modified the map concurrently
 	 * 4. Remaining as close as possible to the native Map iterator behavior, e.g. live-ish view rather than snapshot
+	 *
+	 * For this reason, it's important not to internally snapshot the output of the iterator for any purpose that
+	 * does not immediately (synchronously) consume that output and dispose of it.
 	 */
 	private readonly internalIterator = (): IterableIterator<[string, ILocalValue]> => {
+		// We perform iteration in two steps - first by iterating over members of the sequenced data that are not
+		// optimistically deleted or cleared, and then over the pending data lifetimes that have not subsequently
+		// been deleted or cleared.  In total, this give an ordering of members based on when they were initially
+		// added to the map (even if they were later modified), similar to the native Map.
 		const sequencedDataIterator = this.sequencedData.keys();
 		const pendingDataIterator = this.pendingData.values();
 		const next = (): IteratorResult<[string, ILocalValue]> => {
@@ -205,8 +207,8 @@ export class MapKernel {
 				// re-added later and we'll iterate to it when we get to the pending data.
 				if (
 					!this.pendingData.some(
-						(change) =>
-							change.type === "clear" || (change.type === "delete" && change.key === key),
+						(entry) =>
+							entry.type === "clear" || (entry.type === "delete" && entry.key === key),
 					)
 				) {
 					const optimisticValue = this.getOptimisticLocalValue(key);
@@ -221,29 +223,29 @@ export class MapKernel {
 
 			let nextPending = pendingDataIterator.next();
 			while (!nextPending.done) {
-				const pendingEntry = nextPending.value;
+				const nextPendingEntry = nextPending.value;
 				// A lifetime entry may need to be iterated.
-				if (pendingEntry.type === "lifetime") {
-					const pendingEntryIndex = this.pendingData.indexOf(pendingEntry);
+				if (nextPendingEntry.type === "lifetime") {
+					const nextPendingEntryIndex = this.pendingData.indexOf(nextPendingEntry);
 					const mostRecentDeleteOrClearIndex = findLastIndex(
 						this.pendingData,
-						(change) =>
-							change.type === "clear" ||
-							(change.type === "delete" && change.key === pendingEntry.key),
+						(entry) =>
+							entry.type === "clear" ||
+							(entry.type === "delete" && entry.key === nextPendingEntry.key),
 					);
 					// Only iterate the pending entry now if it hasn't been deleted or cleared.
-					if (pendingEntryIndex > mostRecentDeleteOrClearIndex) {
+					if (nextPendingEntryIndex > mostRecentDeleteOrClearIndex) {
 						const latestPendingValue =
 							// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-							pendingEntry.keySets[pendingEntry.keySets.length - 1]!;
+							nextPendingEntry.keySets[nextPendingEntry.keySets.length - 1]!;
 						// Skip iterating if we would have would have already iterated it as part of the sequenced data.
 						// This is not a perfect check in the case the map has changed since the iterator was created
 						// (e.g. if a remote client added the same key in the meantime).
 						if (
-							!this.sequencedData.has(pendingEntry.key) ||
+							!this.sequencedData.has(nextPendingEntry.key) ||
 							mostRecentDeleteOrClearIndex !== -1
 						) {
-							return { value: [pendingEntry.key, latestPendingValue.value], done: false };
+							return { value: [nextPendingEntry.key, latestPendingValue.value], done: false };
 						}
 					}
 				}
@@ -363,17 +365,17 @@ export class MapKernel {
 	 * any pending changes that have not yet been sequenced.
 	 */
 	private readonly getOptimisticLocalValue = (key: string): ILocalValue | undefined => {
-		const latestPendingChange = findLast(
+		const latestPendingEntry = findLast(
 			this.pendingData,
-			(change) => change.type === "clear" || change.key === key,
+			(entry) => entry.type === "clear" || entry.key === key,
 		);
 
-		if (latestPendingChange === undefined) {
+		if (latestPendingEntry === undefined) {
 			return this.sequencedData.get(key);
-		} else if (latestPendingChange.type === "lifetime") {
+		} else if (latestPendingEntry.type === "lifetime") {
 			const latestPendingSet =
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-				latestPendingChange.keySets[latestPendingChange.keySets.length - 1]!;
+				latestPendingEntry.keySets[latestPendingEntry.keySets.length - 1]!;
 			return latestPendingSet.value;
 		} else {
 			// Delete or clear
@@ -426,23 +428,23 @@ export class MapKernel {
 		// 1. There isn't one yet
 		// 2. The most recent change was a deletion (as this terminates the prior lifetime)
 		// 3. A clear was sent after the last change (which also terminates the prior lifetime)
-		let latestPendingChange = findLast(
+		let latestPendingEntry = findLast(
 			this.pendingData,
-			(change) => change.type === "clear" || change.key === key,
+			(entry) => entry.type === "clear" || entry.key === key,
 		);
 		if (
-			latestPendingChange === undefined ||
-			latestPendingChange.type === "delete" ||
-			latestPendingChange.type === "clear"
+			latestPendingEntry === undefined ||
+			latestPendingEntry.type === "delete" ||
+			latestPendingEntry.type === "clear"
 		) {
-			latestPendingChange = { type: "lifetime", key, keySets: [] };
-			this.pendingData.push(latestPendingChange);
+			latestPendingEntry = { type: "lifetime", key, keySets: [] };
+			this.pendingData.push(latestPendingEntry);
 		}
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			value: localValue,
 		};
-		latestPendingChange.keySets.push(pendingKeySet);
+		latestPendingEntry.keySets.push(pendingKeySet);
 
 		const op: IMapSetOperation = {
 			key,
@@ -648,19 +650,19 @@ export class MapKernel {
 		} else {
 			// A pending set/delete may not be last in the list, as the lifetimes' order is based on when
 			// they were created, not when they were last modified.
-			const pendingChangeIndex = findLastIndex(
+			const pendingEntryIndex = findLastIndex(
 				this.pendingData,
-				(change) => change.type !== "clear" && change.key === mapOp.key,
+				(entry) => entry.type !== "clear" && entry.key === mapOp.key,
 			);
-			const pendingChange = this.pendingData[pendingChangeIndex];
+			const pendingEntry = this.pendingData[pendingEntryIndex];
 			assert(
-				pendingChange !== undefined &&
-					(pendingChange.type === "delete" || pendingChange.type === "lifetime"),
+				pendingEntry !== undefined &&
+					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
 				"Unexpected pending data for set/delete op",
 			);
-			if (pendingChange.type === "delete") {
-				assert(pendingChange === typedLocalOpMetadata, "Unexpected delete rollback");
-				this.pendingData.splice(pendingChangeIndex, 1);
+			if (pendingEntry.type === "delete") {
+				assert(pendingEntry === typedLocalOpMetadata, "Unexpected delete rollback");
+				this.pendingData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
 					this.eventEmitter.emit(
@@ -670,14 +672,14 @@ export class MapKernel {
 						this.eventEmitter,
 					);
 				}
-			} else if (pendingChange.type === "lifetime") {
-				const pendingKeySet = pendingChange.keySets.pop();
+			} else if (pendingEntry.type === "lifetime") {
+				const pendingKeySet = pendingEntry.keySets.pop();
 				assert(
 					pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
 					"Unexpected set rollback",
 				);
-				if (pendingChange.keySets.length === 0) {
-					this.pendingData.splice(pendingChangeIndex, 1);
+				if (pendingEntry.keySets.length === 0) {
+					this.pendingData.splice(pendingEntryIndex, 1);
 				}
 				this.eventEmitter.emit(
 					"valueChanged",
@@ -713,7 +715,7 @@ export class MapKernel {
 				} else {
 					// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 					// is no optimistically-applied local pending clear that would supersede this remote clear.
-					if (!this.pendingData.some((change) => change.type === "clear")) {
+					if (!this.pendingData.some((entry) => entry.type === "clear")) {
 						this.eventEmitter.emit("clear", local, this.eventEmitter);
 					}
 				}
@@ -731,26 +733,24 @@ export class MapKernel {
 				const { key } = op;
 
 				if (local) {
-					const pendingKeyChangeIndex = this.pendingData.findIndex(
-						(change) => change.type !== "clear" && change.key === key,
+					const pendingEntryIndex = this.pendingData.findIndex(
+						(entry) => entry.type !== "clear" && entry.key === key,
 					);
-					const pendingKeyChange = this.pendingData[pendingKeyChangeIndex];
+					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						pendingKeyChange !== undefined &&
-							pendingKeyChange.type === "delete" &&
-							pendingKeyChange === localOpMetadata,
+						pendingEntry !== undefined &&
+							pendingEntry.type === "delete" &&
+							pendingEntry === localOpMetadata,
 						"Got a local delete message we weren't expecting",
 					);
-					this.pendingData.splice(pendingKeyChangeIndex, 1);
+					this.pendingData.splice(pendingEntryIndex, 1);
 
 					this.sequencedData.delete(key);
 				} else {
 					const previousValue: unknown = this.sequencedData.get(key)?.value;
 					this.sequencedData.delete(key);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-					if (
-						!this.pendingData.some((change) => change.type === "clear" || change.key === key)
-					) {
+					if (!this.pendingData.some((entry) => entry.type === "clear" || entry.key === key)) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
@@ -773,21 +773,21 @@ export class MapKernel {
 				const { key, value } = op;
 
 				if (local) {
-					const pendingKeyChangeIndex = this.pendingData.findIndex(
-						(change) => change.type !== "clear" && change.key === key,
+					const pendingEntryIndex = this.pendingData.findIndex(
+						(entry) => entry.type !== "clear" && entry.key === key,
 					);
-					const pendingKeyLifetime = this.pendingData[pendingKeyChangeIndex];
+					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
-						pendingKeyLifetime !== undefined && pendingKeyLifetime.type === "lifetime",
+						pendingEntry !== undefined && pendingEntry.type === "lifetime",
 						"Couldn't match local set message to pending lifetime",
 					);
-					const pendingKeySet = pendingKeyLifetime.keySets.shift();
+					const pendingKeySet = pendingEntry.keySets.shift();
 					assert(
 						pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
 						"Got a local set message we weren't expecting",
 					);
-					if (pendingKeyLifetime.keySets.length === 0) {
-						this.pendingData.splice(pendingKeyChangeIndex, 1);
+					if (pendingEntry.keySets.length === 0) {
+						this.pendingData.splice(pendingEntryIndex, 1);
 					}
 
 					this.sequencedData.set(key, pendingKeySet.value);
@@ -798,9 +798,7 @@ export class MapKernel {
 					this.sequencedData.set(key, localValue);
 
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-					if (
-						!this.pendingData.some((change) => change.type === "clear" || change.key === key)
-					) {
+					if (!this.pendingData.some((entry) => entry.type === "clear" || entry.key === key)) {
 						this.eventEmitter.emit(
 							"valueChanged",
 							{ key, previousValue },
