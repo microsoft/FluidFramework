@@ -665,10 +665,6 @@ export class MapKernel {
 			) => {
 				this.sequencedData.clear();
 				if (local) {
-					assert(
-						localOpMetadata !== undefined && localOpMetadata.type === "clear",
-						0x015 /* "pendingMessageId is missing from the local client's clear operation" */,
-					);
 					const pendingClear = this.pendingData.shift();
 					assert(
 						pendingClear !== undefined &&
@@ -677,9 +673,11 @@ export class MapKernel {
 						0x2fb /* pendingMessageId does not match */,
 					);
 				} else {
-					// Only emit for remote ops, we would have already emitted for local ops.
-					// TODO: Should also only emit if there are no local pending clears which would mask the remote clear?
-					this.eventEmitter.emit("clear", local, this.eventEmitter);
+					// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
+					// is no optimistically-applied local pending clear that would supersede this remote clear.
+					if (!this.pendingData.some((change) => change.type === "clear")) {
+						this.eventEmitter.emit("clear", local, this.eventEmitter);
+					}
 				}
 			},
 			resubmit: (op: IMapClearOperation, localOpMetadata: PendingLocalOpMetadata) => {
@@ -693,29 +691,26 @@ export class MapKernel {
 				localOpMetadata: PendingLocalOpMetadata | undefined,
 			) => {
 				const { key } = op;
-				const pendingKeyChangeIndex = this.pendingData.findIndex(
-					(change) => change.type !== "clear" && change.key === key,
-				);
+
+				const previousValue: unknown = this.sequencedData.get(key)?.value;
+				this.sequencedData.delete(key);
+
 				if (local) {
+					const pendingKeyChangeIndex = this.pendingData.findIndex(
+						(change) => change.type !== "clear" && change.key === key,
+					);
 					const pendingKeyChange = this.pendingData[pendingKeyChangeIndex];
 					assert(
-						pendingKeyChange !== undefined && pendingKeyChange.type === "delete",
+						pendingKeyChange !== undefined &&
+							pendingKeyChange.type === "delete" &&
+							pendingKeyChange === localOpMetadata,
 						"Got a delete message we weren't expecting",
 					);
 					this.pendingData.splice(pendingKeyChangeIndex, 1);
-					assert(
-						localOpMetadata !== undefined && pendingKeyChange === localOpMetadata,
-						"Change does not match",
-					);
-					this.sequencedData.delete(key);
 				} else {
-					const previousSequencedLocalValue = this.sequencedData.get(key);
-					const previousValue: unknown = previousSequencedLocalValue?.value;
-					this.sequencedData.delete(key);
 					// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 					if (
-						pendingKeyChangeIndex === -1 &&
-						!this.pendingData.some((change) => change.type === "clear")
+						!this.pendingData.some((change) => change.type === "clear" || change.key === key)
 					) {
 						this.eventEmitter.emit(
 							"valueChanged",
