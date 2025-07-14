@@ -474,10 +474,8 @@ export class MapKernel {
 	 * Clear all data from the map.
 	 */
 	public clear(): void {
-		// TODO: Consider putting it in pending but then simulating an immediate ack instead
 		if (!this.isAttached()) {
 			this.sequencedData.clear();
-			// TODO: Should this also emit deletes or something?  Given the pending behavior.
 			this.eventEmitter.emit("clear", true, this.eventEmitter);
 			return;
 		}
@@ -595,7 +593,7 @@ export class MapKernel {
 		const mapOp: IMapOperation = op as IMapOperation;
 		const typedLocalOpMetadata = localOpMetadata as PendingLocalOpMetadata;
 		if (mapOp.type === "clear") {
-			// Just pop the pending changes, it better be the last one
+			// A pending clear will be last in the list, since it terminates all prior lifetimes.
 			const pendingClear = this.pendingData.pop();
 			assert(
 				pendingClear !== undefined &&
@@ -612,13 +610,20 @@ export class MapKernel {
 				);
 			}
 		} else {
+			// A pending set/delete may not be last in the list, as the lifetimes' order is based on when
+			// they were created, not when they were last modified.
 			const pendingChangeIndex = findLastIndex(
 				this.pendingData,
 				(change) => change.type !== "clear" && change.key === mapOp.key,
 			);
 			const pendingChange = this.pendingData[pendingChangeIndex];
-			assert(pendingChange !== undefined, "Unexpected rollback for key");
+			assert(
+				pendingChange !== undefined &&
+					(pendingChange.type === "delete" || pendingChange.type === "lifetime"),
+				"Unexpected pending data for set/delete op",
+			);
 			if (pendingChange.type === "delete") {
+				assert(pendingChange === typedLocalOpMetadata, "Unexpected delete rollback");
 				this.pendingData.splice(pendingChangeIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
@@ -630,23 +635,20 @@ export class MapKernel {
 					);
 				}
 			} else if (pendingChange.type === "lifetime") {
-				const pendingKeyChange = pendingChange.keyChanges.pop();
+				const pendingKeySet = pendingChange.keyChanges.pop();
+				assert(
+					pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
+					"Unexpected set rollback",
+				);
 				if (pendingChange.keyChanges.length === 0) {
 					this.pendingData.splice(pendingChangeIndex, 1);
 				}
-				assert(
-					pendingKeyChange !== undefined &&
-						(typedLocalOpMetadata.type === "set" || typedLocalOpMetadata.type === "delete"),
-					"Unexpected rollback for key",
-				);
 				this.eventEmitter.emit(
 					"valueChanged",
-					{ key: mapOp.key, previousValue: pendingKeyChange.value },
+					{ key: mapOp.key, previousValue: pendingKeySet.value.value },
 					true,
 					this.eventEmitter,
 				);
-			} else {
-				throw new Error("Should have filtered out clear changes before this point");
 			}
 		}
 	}
