@@ -112,8 +112,11 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	 * Disconnect from the websocket
 	 */
 	protected disconnectCore(err: IAnyDriverError): void {
-		if (this.socket.connected && err.message !== "Client closing delta connection") {
-			this.socket.emit("abnormal_disconnect", this.clientId, this.documentId, err.message);
+		if (
+			this.socket.connected &&
+			err.message !== DocumentDeltaConnection.clientClosingMessage
+		) {
+			this.socket.emit("client_disconnect", this.clientId, this.documentId, err.message);
 		}
 		super.disconnectCore(err);
 	}

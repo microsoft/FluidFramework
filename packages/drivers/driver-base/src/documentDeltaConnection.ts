@@ -63,6 +63,11 @@ export class DocumentDeltaConnection
 	static readonly eventsAlwaysForwarded = ["disconnect", "error"];
 
 	/**
+	 * Error message used when client is closing the delta connection cleanly.
+	 */
+	static readonly clientClosingMessage = "Client closing delta connection";
+
+	/**
 	 * Last known sequence number to ordering service at the time of connection
 	 * It may lap actual last sequence number (quite a bit, if container  is very active).
 	 * But it's best information for client to figure out how far it is behind, at least
@@ -425,7 +430,7 @@ export class DocumentDeltaConnection
 			this.disconnect(
 				createGenericNetworkError(
 					// pre-0.58 error message: clientClosingConnection
-					error?.message ?? "Client closing delta connection",
+					error?.message ?? DocumentDeltaConnection.clientClosingMessage,
 					{ canRetry: error === undefined },
 					{ driverVersion },
 				),

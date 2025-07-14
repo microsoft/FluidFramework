@@ -648,7 +648,7 @@ export function configureWebSocketServices(
 		});
 
 		socket.on(
-			"abnormal_disconnect",
+			"client_disconnect",
 			(clientId: string, documentId: string, errorMessage: string) => {
 				Lumberjack.error(
 					"Client disconnected due to error",
