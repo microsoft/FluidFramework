@@ -101,8 +101,7 @@ async function getAndValidateDataObject(
  * Validates that non-root data stores that have other non-root data stores as dependencies are not visible
  * until the parent data store is visible. Also, they are visible in remote clients and can send ops.
  */
-// remove .only!!!
-describe.only("multi-level object visibility tests", () => {
+describe("multi-level object visibility tests", () => {
 	const documentId = "objectVisibilityTest";
 	const documentLoadUrl = `https://localhost/${documentId}`;
 	let container1: IContainer;
