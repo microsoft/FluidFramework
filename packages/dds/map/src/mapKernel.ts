@@ -121,7 +121,6 @@ export class MapKernel {
 	 * The number of key/value pairs stored in the map.
 	 */
 	public get size(): number {
-		// TODO: Consider some better implementation
 		const iterableItems = [...this.internalIterator()];
 		return iterableItems.length;
 	}
@@ -219,7 +218,6 @@ export class MapKernel {
 			return { value: undefined, done: true };
 		};
 
-		// TODO: Consider just tracking sequenced adds and tacking them on at the end.
 		const iterator = {
 			next,
 			[Symbol.iterator](): IterableIterator<[string, ILocalValue]> {
@@ -245,7 +243,6 @@ export class MapKernel {
 			return { value: [key, localValue.value], done: false };
 		};
 
-		// TODO: Consider just tracking sequenced adds and tacking them on at the end.
 		const iterator = {
 			next,
 			[Symbol.iterator](): IterableIterator<[string, unknown]> {
@@ -316,10 +313,9 @@ export class MapKernel {
 	public forEach(
 		callbackFn: (value: unknown, key: string, map: Map<string, unknown>) => void,
 	): void {
-		// TODO: Would be better to iterate over the data without a temp map.  However,
-		// we don't have a valid map to pass for the third argument here (really, it should probably should
-		// be a reference to the SharedMap). This is already kind of a bug since we leak access to this.data
-		// in the current implementation.
+		// It would be better to iterate over the data without a temp map.  However, we don't have a valid
+		// map to pass for the third argument here (really, it should probably should be a reference to the
+		// SharedMap and not the MapKernel).
 		const tempMap = new Map(this.internalIterator());
 		// eslint-disable-next-line unicorn/no-array-for-each
 		tempMap.forEach((localValue, key, m) => {
@@ -391,7 +387,6 @@ export class MapKernel {
 		// 1. There isn't one yet
 		// 2. The most recent change was a deletion (as this terminates the prior lifetime)
 		// 3. A clear was sent after the last change (which also terminates the prior lifetime)
-		// TODO: Should I just check the optimistic value?
 		let latestPendingChange = findLast(
 			this.pendingData,
 			(change) => change.type === "clear" || change.key === key,
@@ -434,13 +429,15 @@ export class MapKernel {
 
 		if (!this.isAttached()) {
 			const successfullyRemoved = this.sequencedData.delete(key);
-			this.eventEmitter.emit(
-				"valueChanged",
-				{ key, previousValue: previousOptimisticLocalValue?.value },
-				true,
-				this.eventEmitter,
-			);
-			// Should always return true here or else we would have early-exited above
+			// Only emit if we actually deleted something.
+			if (previousOptimisticLocalValue !== undefined) {
+				this.eventEmitter.emit(
+					"valueChanged",
+					{ key, previousValue: previousOptimisticLocalValue.value },
+					true,
+					this.eventEmitter,
+				);
+			}
 			return successfullyRemoved;
 		}
 
