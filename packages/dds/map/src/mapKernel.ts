@@ -596,15 +596,14 @@ export class MapKernel {
 		const typedLocalOpMetadata = localOpMetadata as PendingLocalOpMetadata;
 		if (mapOp.type === "clear") {
 			// Just pop the pending changes, it better be the last one
-			// TODO: Really need to assert all this?
-			const pendingDataClear = this.pendingData.pop();
+			const pendingClear = this.pendingData.pop();
 			assert(
-				typedLocalOpMetadata.type === "clear" && pendingDataClear !== undefined,
+				pendingClear !== undefined &&
+					pendingClear.type === "clear" &&
+					pendingClear === typedLocalOpMetadata,
 				"Unexpected clear rollback",
 			);
 			for (const [key] of this.internalIterator()) {
-				// TODO: Consider if it's weird that all the values are immediately visible when the first
-				// event is emitted, rather than becoming visible one-by-one as the event is raised.
 				this.eventEmitter.emit(
 					"valueChanged",
 					{ key, previousValue: undefined },
@@ -621,15 +620,16 @@ export class MapKernel {
 			assert(pendingChange !== undefined, "Unexpected rollback for key");
 			if (pendingChange.type === "delete") {
 				this.pendingData.splice(pendingChangeIndex, 1);
-				this.eventEmitter.emit(
-					"valueChanged",
-					{ key: mapOp.key, previousValue: undefined },
-					true,
-					this.eventEmitter,
-				);
+				// Only emit if rolling back the delete actually results in a value becoming visible.
+				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
+					this.eventEmitter.emit(
+						"valueChanged",
+						{ key: mapOp.key, previousValue: undefined },
+						true,
+						this.eventEmitter,
+					);
+				}
 			} else if (pendingChange.type === "lifetime") {
-				// TODO: Should just be able to check the pendingKeyChange's set value instead of getting the optimistic value.
-				const previousLocalValue = this.getOptimisticLocalValue(mapOp.key);
 				const pendingKeyChange = pendingChange.keyChanges.pop();
 				if (pendingChange.keyChanges.length === 0) {
 					this.pendingData.splice(pendingChangeIndex, 1);
@@ -641,7 +641,7 @@ export class MapKernel {
 				);
 				this.eventEmitter.emit(
 					"valueChanged",
-					{ key: mapOp.key, previousValue: previousLocalValue?.value },
+					{ key: mapOp.key, previousValue: pendingKeyChange.value },
 					true,
 					this.eventEmitter,
 				);
