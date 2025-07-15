@@ -14,7 +14,6 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
-	asTreeNodeSchemaCorePrivate,
 	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
 	// See docs on TreeNode for more details.
 	type TreeNode,
@@ -28,7 +27,35 @@ export {
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
 	getKernel,
+	type NodeFromSchema,
+	isTreeNodeSchemaClass,
+	type TreeNodeFromImplicitAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type TreeLeafValue,
+	type AllowedTypes,
+	type InsertableTreeNodeFromAllowedTypes,
+	type InsertableTypedNode,
+	type NodeBuilderData,
+	type Input,
+	normalizeAllowedTypes,
+	type NodeSchemaMetadata,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	type AllowedTypesMetadata,
+	evaluateLazySchema,
+	type UnannotateAllowedTypes,
+	type UnannotateAllowedType,
+	type UnannotateAllowedTypesList,
+	type UnannotateAllowedTypeOrLazyItem,
+	type AllowedTypeMetadata,
+	type AnnotatedAllowedTypes,
+	type LazyItem,
+	type FlexList,
+	type FlexListToUnion,
+	type ExtractItemType,
 } from "./core/index.js";
+export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
 export {
 	type ITree,
 	type TreeView,
@@ -128,6 +155,8 @@ export {
 	type FixRecursiveRecursionLimit,
 	schemaStatics,
 	type TreeChangeEvents,
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -143,33 +172,14 @@ export type {
 	SimpleRecordNodeSchema,
 } from "./simpleSchema.js";
 export {
-	type NodeFromSchema,
-	isTreeNodeSchemaClass,
 	type ImplicitFieldSchema,
 	type ImplicitAnnotatedFieldSchema,
 	type TreeFieldFromImplicitField,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-	type UnannotateAllowedTypes,
-	type UnannotateAllowedType,
-	type UnannotateAllowedTypesList,
-	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
-	type UnannotateSchemaRecord,
-	type TreeNodeFromImplicitAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type TreeLeafValue,
-	type AllowedTypes,
-	type AllowedTypeMetadata,
-	type AllowedTypesMetadata,
-	type AnnotatedAllowedTypes,
 	FieldKind,
 	FieldSchema,
 	type FieldSchemaAlpha,
 	type InsertableTreeFieldFromImplicitField,
-	type InsertableTypedNode,
-	type NodeBuilderData,
 	type DefaultProvider,
 	type FieldProps,
 	type FieldPropsAlpha,
@@ -179,19 +189,10 @@ export {
 	type ApplyKind,
 	type FieldSchemaMetadata,
 	type InsertableField,
-	type Insertable,
-	type UnsafeUnknownSchema,
-	normalizeAllowedTypes,
 	type ApplyKindInput,
-	type InsertableTreeNodeFromAllowedTypes,
-	type Input,
 	type ReadableField,
 	type ReadSchema,
-	type NodeSchemaOptions,
-	type NodeSchemaOptionsAlpha,
-	type NodeSchemaMetadata,
-	evaluateLazySchema,
-} from "./schemaTypes.js";
+} from "./fieldSchema.js";
 export { tryGetTreeNodeForField } from "./getTreeNodeForField.js";
 export {
 	type ArrayNodeCustomizableSchema,
@@ -224,6 +225,7 @@ export {
 	type RecordNodePojoEmulationSchema,
 	RecordNodeSchema,
 	type TreeRecordNode,
+	type UnannotateSchemaRecord,
 } from "./node-kinds/index.js";
 export {
 	unhydratedFlexTreeFromInsertable,
@@ -245,21 +247,7 @@ export {
 	asLeafNodeSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export type { LazyItem, FlexList, FlexListToUnion, ExtractItemType } from "./flexList.js";
 export {
 	getAllowedContentDiscrepancies,
 	isRepoSuperset,
-	type AllowedTypeDiscrepancy,
-	type FieldKindDiscrepancy,
-	type ValueSchemaDiscrepancy,
-	type FieldDiscrepancy,
-	type NodeDiscrepancy,
-	type NodeKindDiscrepancy,
-	type NodeFieldsDiscrepancy,
-	type LinearExtension,
-	type Realizer,
-	fieldRealizer,
-	PosetComparisonResult,
-	comparePosetElements,
-	posetLte,
 } from "./discrepancies.js";

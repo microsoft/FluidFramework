@@ -28,6 +28,8 @@ const uninitializedErrorString =
  * Can be used to derive schema-aware views of the tree.
  * See {@link TreeDataObject.generateView}.
  *
+ * @typeParam TTreeView - State derived from the underlying {@link @fluidframework/tree#ITree | tree} managed by the {@link TreeDataObject} and exposed via {@link TreeDataObject.treeView}.
+ *
  * @example Implementing `initializingFirstTime`
  *
  * ```typescript
@@ -49,7 +51,7 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	 * Implementation of SharedTree which is used to generate the view.
 	 * @remarks Created once during initialization.
 	 */
-	#sharedTree: ITree | undefined;
+	#tree: ITree | undefined;
 
 	/**
 	 * Gets the underlying {@link @fluidframework/tree#ITree | tree}.
@@ -57,11 +59,11 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 	 * Note: in most cases, you will want to use {@link TreeDataObject.treeView} instead.
 	 * Created once during initialization.
 	 */
-	protected get sharedTree(): ITree {
-		if (this.#sharedTree === undefined) {
+	protected get tree(): ITree {
+		if (this.#tree === undefined) {
 			throw new UsageError(uninitializedErrorString);
 		}
-		return this.#sharedTree;
+		return this.#tree;
 	}
 
 	/**
@@ -95,15 +97,15 @@ export abstract class TreeDataObject<TTreeView> extends PureDataObject {
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
-			const sharedTree: ITree = channel;
+			const sharedTree: ITree = channel as unknown as ITree;
 
-			this.#sharedTree = sharedTree;
+			this.#tree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 		} else {
 			const sharedTree = SharedTree.create(this.runtime, treeChannelId);
 			(sharedTree as unknown as ISharedObject).bindToContext();
 
-			this.#sharedTree = sharedTree;
+			this.#tree = sharedTree;
 			this.#view = this.generateView(sharedTree);
 
 			// Note, the implementer is responsible for initializing the tree with initial data.

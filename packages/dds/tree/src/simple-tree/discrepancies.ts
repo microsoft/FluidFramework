@@ -28,12 +28,6 @@ import {
 	type TreeNodeSchema,
 } from "./core/index.js";
 import {
-	createFieldSchema,
-	FieldKind,
-	normalizeFieldSchema,
-	type FieldSchema,
-} from "./schemaTypes.js";
-import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
@@ -42,6 +36,12 @@ import {
 import { asLeafNodeSchema } from "./leafNodeSchema.js";
 import { convertFieldKind } from "./toStoredSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
+import {
+	createFieldSchema,
+	FieldKind,
+	normalizeFieldSchema,
+	type FieldSchema,
+} from "./fieldSchema.js";
 
 // TODO:
 // The comparisons in this file seem redundant with those in comparison.ts.

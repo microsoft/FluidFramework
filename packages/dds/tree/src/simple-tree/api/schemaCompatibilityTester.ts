@@ -18,7 +18,7 @@ import {
 	type FullSchemaPolicy,
 	isNeverTree,
 } from "../../feature-libraries/index.js";
-import type { FieldSchema } from "../schemaTypes.js";
+import type { FieldSchema } from "../fieldSchema.js";
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
 import {

@@ -329,6 +329,9 @@ module.exports = {
 		// Exclusion per handler
 		handlerExclusions: {
 			"fluid-build-tasks-eslint": [
+				// There are no built files, but a tsconfig.json is present to simplify the
+				// eslint config.
+				"azure/packages/azure-local-service/package.json",
 				// eslint doesn't really depend on build. Doing so just slows down a package build.
 				"^packages/test/snapshots/package.json",
 				"^packages/test/test-utils/package.json",
@@ -356,6 +359,7 @@ module.exports = {
 			"no-js-file-extensions": [
 				// PropertyDDS uses .js files which should be renamed eventually.
 				"experimental/PropertyDDS/.*",
+				"azure/packages/azure-local-service/index.js",
 				"build-tools/packages/build-cli/bin/dev.js",
 				"build-tools/packages/build-cli/bin/run.js",
 				"build-tools/packages/build-cli/test/helpers/init.js",

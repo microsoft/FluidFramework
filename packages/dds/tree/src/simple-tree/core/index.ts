@@ -24,18 +24,48 @@ export {
 	privateToken,
 	inPrototypeChain,
 } from "./treeNode.js";
+export { NodeKind, isTreeNodeSchemaClass } from "./treeNodeSchema.js";
 export {
 	type TreeNodeSchema,
-	NodeKind,
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
 	type TreeNodeSchemaBoth,
-	type AnnotatedAllowedType,
-	type NormalizedAnnotatedAllowedTypes,
-	isAnnotatedAllowedTypes,
+	type NodeSchemaMetadata,
+	type TreeLeafValue,
+	type InsertableTypedNode,
+	type NodeBuilderData,
+	type NodeFromSchema,
 	asTreeNodeSchemaCorePrivate,
 } from "./treeNodeSchema.js";
+export {
+	isAnnotatedAllowedTypes,
+	isAnnotatedAllowedType,
+	normalizeAllowedTypes,
+	normalizeAnnotatedAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	markSchemaMostDerived,
+	evaluateLazySchema,
+} from "./allowedTypes.js";
+export type {
+	AnnotatedAllowedType,
+	NormalizedAnnotatedAllowedTypes,
+	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	UnannotateImplicitAllowedTypes,
+	AllowedTypesMetadata,
+	AllowedTypes,
+	TreeNodeFromImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+	InsertableTreeNodeFromAllowedTypes,
+	Input,
+	UnannotateAllowedTypes,
+	UnannotateAllowedType,
+	UnannotateAllowedTypesList,
+	UnannotateAllowedTypeOrLazyItem,
+	AllowedTypeMetadata,
+	AnnotatedAllowedTypes,
+} from "./allowedTypes.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
 export {
@@ -49,3 +79,11 @@ export {
 	UnhydratedContext,
 	createField,
 } from "./unhydratedFlexTree.js";
+export type {
+	LazyItem,
+	FlexList,
+	FlexListToUnion,
+	ExtractItemType,
+} from "./flexList.js";
+export { isLazy } from "./flexList.js";
+export { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";

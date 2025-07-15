@@ -19,15 +19,15 @@ import {
 import { brand } from "../../util/index.js";
 import {
 	FieldKind,
-	getAllowedContentDiscrepancies,
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	isRepoSuperset as isRepoSupersetOriginal,
 	toStoredSchema,
 	isRepoSuperset,
+	getAllowedContentDiscrepancies,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { createFieldSchema } from "../../simple-tree/schemaTypes.js";
+import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldSchema } from "../feature-libraries/modular-schema/comparison.spec.js";
 

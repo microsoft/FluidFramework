@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-routerlicious",
-	"version": "7.0.0",
+	"version": "8.0.0",
 	"description": "Fluid reference server implementation",
 	"homepage": "https://fluidframework.com",
 	"repository": {
