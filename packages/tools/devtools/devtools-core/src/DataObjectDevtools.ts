@@ -94,10 +94,7 @@ export class DataObjectDevtools extends BaseDevtools {
 		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
 	}
 
-	/**
-	 * Gets the set of features supported by this instance.
-	 */
-	protected getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
+	protected override getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
 			containerDataVisualization: this.containerData !== undefined,
 			// Data objects don't support connection operations
@@ -122,16 +119,10 @@ export class DataObjectDevtools extends BaseDevtools {
 		};
 	}
 
-	/**
-	 * Gets the client ID for this devtools instance.
-	 */
-	protected getClientId(): string | undefined {
+	protected override getClientId(): string | undefined {
 		return this.container.clientId;
 	}
 
-	/**
-	 * {@inheritDoc IContainerDevtools.dispose}
-	 */
 	public override dispose(): void {
 		// Unbind Container events
 		this.container.off("attached", this.containerAttachedHandler);
