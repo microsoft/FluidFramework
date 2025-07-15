@@ -174,6 +174,9 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	 * File metadata such as eTag.
 	 */
 	fileMetadata?: {
+		/**
+		 * ETag (entity tag) identifier for a specific version of the file.
+		 */
 		eTag?: string;
 	};
 }

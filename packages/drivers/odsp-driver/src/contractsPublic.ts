@@ -60,16 +60,16 @@ export interface IClpCompliantAppHeader {
  * @internal
  */
 export enum FileMetadataHeader {
-	// Can be used in request made to resolver, to provide the e-tag of the file.
+	/**
+	 * ETag (entity tag) identifier for a specific version of the file.
+	 * When provided, it will be sent to the snapshot API in the If-Match header.
+	 */
 	eTag = "eTag",
 }
 /**
  * @internal
  */
 export interface IFileMetadataHeader {
-	/**
-	 * E-tag identifier for the file.
-	 */
 	[FileMetadataHeader.eTag]: string;
 }
 
