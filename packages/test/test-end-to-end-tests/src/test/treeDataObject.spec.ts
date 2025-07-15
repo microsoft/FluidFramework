@@ -56,25 +56,15 @@ class TestTreeDataObject extends TreeDataObject {
 		return this.#treeView;
 	}
 
-	/**
-	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
-	 *
-	 * @param tree - The ITree instance to view.
-	 * @returns A typed TreeView using the TodoList schema.
-	 */
-	private initializeView(): void {
-		this.#treeView = this.tree.viewWith(treeViewConfig);
-	}
-
 	protected override async initializingFirstTime(): Promise<void> {
-		this.initializeView();
+		this.#treeView = this.tree.viewWith(treeViewConfig);
 		assert(this.treeView.compatibility.canInitialize, "Incompatible schema");
 
 		this.treeView.initialize({ foo: "Hello world" });
 	}
 
 	protected override async initializingFromExisting(): Promise<void> {
-		this.initializeView();
+		this.#treeView = this.tree.viewWith(treeViewConfig);
 		assert(this.treeView.compatibility.canView, "Incompatible schema");
 	}
 }
