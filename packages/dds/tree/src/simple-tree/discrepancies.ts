@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, debugAssert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -228,28 +228,23 @@ export function* getAllowedContentDiscrepancies(
 	// check root schema discrepancies
 	yield* getFieldDiscrepancies(view, stored.rootFieldSchema, undefined, undefined);
 
-	const storedAllowedTypes = stored.nodeSchema;
+	const viewNodeSchema = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
 
-	// collect all annotated allowed types from the view schema
-	const annotatedAllowedTypes: AnnotatedAllowedType<TreeNodeSchema>[] = [];
 	walkFieldSchema(view, {
-		allowedTypes: (allowedTypes) => {
-			annotatedAllowedTypes.push(...allowedTypes.types);
+		node: (schema) => {
+			const identifier: TreeNodeSchemaIdentifier = brand(schema.identifier);
+
+			debugAssert(() => !viewNodeSchema.has(identifier));
+			viewNodeSchema.set(identifier, schema);
 		},
 	});
 
-	const viewAllowedTypes = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
-	for (const annotatedAllowedType of annotatedAllowedTypes) {
-		const { type } = annotatedAllowedType;
-		// map view schema identifiers to the field schemas to make access in the stored schema pass more efficient
-		const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
-		viewAllowedTypes.set(identifier, type);
+	for (const [identifier, viewSchema] of viewNodeSchema) {
+		const storedSchema = stored.nodeSchema.get(identifier);
 
-		const storedSchema = storedAllowedTypes.get(identifier);
-
-		// if the view schema has an allowed type that's not in the stored schema
+		// if the view schema has a node that's not in the stored schema
 		if (storedSchema === undefined) {
-			const viewType = getViewNodeSchemaType(type);
+			const viewType = getViewNodeSchemaType(viewSchema);
 			// TODO does it make sense to have this mismatch when there will also be an allowedTypes mismatch?
 			yield {
 				identifier,
@@ -258,12 +253,12 @@ export function* getAllowedContentDiscrepancies(
 				stored: undefined,
 			};
 		} else {
-			yield* getNodeDiscrepancies(identifier, annotatedAllowedType, storedSchema);
+			yield* getNodeDiscrepancies(identifier, viewSchema, storedSchema);
 		}
 	}
 
-	for (const [identifier, storedSchema] of storedAllowedTypes.entries()) {
-		if (!viewAllowedTypes.has(identifier)) {
+	for (const [identifier, storedSchema] of stored.nodeSchema.entries()) {
+		if (!viewNodeSchema.has(identifier)) {
 			const storedType = getStoredNodeSchemaType(storedSchema);
 			yield {
 				identifier,
@@ -277,7 +272,7 @@ export function* getAllowedContentDiscrepancies(
 
 function* getNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
-	{ type: view }: AnnotatedAllowedType<TreeNodeSchema>,
+	view: TreeNodeSchema,
 	stored: TreeNodeStoredSchema,
 ): Iterable<Discrepancy> {
 	if (!isViewTypeEquivalentToStoredType(view, stored)) {
