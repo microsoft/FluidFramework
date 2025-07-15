@@ -14,7 +14,6 @@ import {
 
 import {
 	NodeKind,
-	type NormalizedAnnotatedAllowedTypes,
 	type TreeNodeSchema,
 	type TreeNodeSchemaNonClass,
 	type NodeSchemaMetadata,

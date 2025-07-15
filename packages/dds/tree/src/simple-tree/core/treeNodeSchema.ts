@@ -354,11 +354,12 @@ export interface TreeNodeSchemaCorePrivate<
 	/**
 	 * Package private data provided by all {@link TreeNodeSchema}.
 	 * @remarks
-	 * This is behind a symbol as this content is not exposed in the API, but is present on all the schema.
-	 * That exposes a risk of name collisions with custom statics users add to schema classes.
-	 * While schema classes already have a bunch of non-exported statics which could collide,
-	 * this reduces the risk, and also provides a symbol which can be tested for to more safely
-	 * access the private data.
+	 * Users can add custom statics to schema classes.
+	 * To reduce the risk of such statics colliding with properties used to implement the schema,
+	 * some of the private APIs are grouped together under this symbol.
+	 *
+	 * Note that there are still some properties which are not under a symbol and thus expose some risk of name collisions.
+	 * See {@link TreeNodeValid} for some such properties.
 	 */
 	readonly [privateDataSymbol]: TreeNodeSchemaPrivateData;
 }
