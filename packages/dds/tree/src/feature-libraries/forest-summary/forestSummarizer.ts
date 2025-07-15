@@ -82,57 +82,6 @@ export class ForestSummarizer implements Summarizable {
 	}
 
 	/**
-	 * Synchronous monolithic summarization of tree content.
-	 *
-	 * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
-	 *
-	 * @returns a snapshot of the forest's tree as a string.
-	 *
-	 *
-	 */
-	private getSummaryTree(
-		stringify: SummaryElementStringifier,
-		fullTree: boolean,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats {
-		const rootCursor = this.forest.getCursorAboveDetachedFields();
-		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
-			new Map();
-		// TODO: Encode all detached fields in one operation for better performance and compression
-		forEachField(rootCursor, (cursor) => {
-			const key = cursor.getFieldKey();
-			const innerCursor = this.forest.allocateCursor("getTreeString");
-			assert(
-				this.forest.tryMoveCursorToField({ fieldKey: key, parent: undefined }, innerCursor) ===
-					TreeNavigationResult.Ok,
-				0x892 /* failed to navigate to field */,
-			);
-			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
-		});
-
-		const forestSummaryBuilder = new SummaryTreeBuilder();
-		// Let the incremental summary builder know that we are starting a new summary and whether
-		// incremental encoding is enabled.
-		const shouldEncodeIncrementally = this.incrementalSummaryBuilder.startingSummary(
-			forestSummaryBuilder,
-			fullTree,
-			incrementalSummaryContext,
-		);
-		const encoderContext: FieldBatchEncodingContext = {
-			...this.encoderContext,
-			incrementalEncoderDecoder: shouldEncodeIncrementally
-				? this.incrementalSummaryBuilder
-				: undefined,
-		};
-		const encoded = this.codec.encode(fieldMap, encoderContext);
-		fieldMap.forEach((value) => value.free());
-
-		forestSummaryBuilder.addBlob(forestSummaryContentKey, stringify(encoded));
-		this.incrementalSummaryBuilder.completedSummary(incrementalSummaryContext);
-		return forestSummaryBuilder.getSummaryTree();
-	}
-
-	/**
 	 * Summarization of the forest's tree content.
 	 * If incremental summary is disabled, all the content will be added to a single summary blob.
 	 * If incremental summary is enabled, the summary will be a tree. See {@link ForestIncrementalSummaryBuilder}

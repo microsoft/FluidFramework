@@ -40,12 +40,7 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../../utils.js";
-import {
-	describeHydration,
-	expectTreesEqual,
-	getViewForForkedBranch,
-	hydrate,
-} from "../utils.js";
+import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
 import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
@@ -67,6 +62,7 @@ import {
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../../shared-tree/index.js";
+import { expectTreesEqual } from "../../index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 
