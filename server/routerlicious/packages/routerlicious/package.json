@@ -64,7 +64,6 @@
 		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/server-local-server": "workspace:~",
-		"@fluidframework/server-routerlicious-previous": "npm:@fluidframework/server-routerlicious@5.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",
 		"@types/nconf": "^0.10.2",
 		"@types/node": "^18.19.39",
@@ -83,8 +82,8 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
 		"disabled": true,
+		"broken": {},
 		"entrypoint": "public"
 	}
 }
