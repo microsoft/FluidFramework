@@ -56,15 +56,16 @@ export interface ContainerDevtoolsFeatureFlags {
 	 */
 	containerDataVisualization?: boolean;
 	/**
-	 * Indicates that the Container Devtools supports connecting the container.
+	 * Indicates that the Container Devtools supports modifying the container's connection and lifecycle state.
+	 *
+	 * @remarks
+	 * When `true`, the devtools instance supports:
+	 * - **Connect**: Connecting a disconnected container
+	 * - **Disconnect**: Disconnecting a connected container
+	 * - **Close**: Permanently closing/disposing the container
+	 *
+	 * When `false`, these operations are not available (typical for data object devtools
+	 * which don't have direct control over container lifecycle).
 	 */
-	canConnect?: boolean;
-	/**
-	 * Indicates that the Container Devtools supports disconnecting the container.
-	 */
-	canDisconnect?: boolean;
-	/**
-	 * Indicates that the Container Devtools supports closing the container.
-	 */
-	canClose?: boolean;
+	canModifyContainerState?: boolean;
 }

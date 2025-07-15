@@ -168,13 +168,7 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	let innerView: React.ReactElement;
 	switch (innerViewSelection) {
 		case PanelView.ContainerData: {
-			innerView = (
-				<ContainerFeatureFlagContext.Provider
-					value={{ containerFeatureFlags: supportedFeatures }}
-				>
-					<DataObjectsView containerKey={containerKey} />
-				</ContainerFeatureFlagContext.Provider>
-			);
+			innerView = <DataObjectsView containerKey={containerKey} />;
 			break;
 		}
 		case PanelView.Audience: {
@@ -199,21 +193,23 @@ function _ContainerDevtoolsView(props: _ContainerDevtoolsViewProps): React.React
 	};
 
 	return (
-		<div className={styles.root}>
-			<ContainerSummaryView containerKey={containerKey} />
-			<Divider appearance="strong" />
-			<div>
-				<TabList selectedValue={innerViewSelection} onTabSelect={onTabSelect}>
-					{panelViews.map((view: string) => {
-						return (
-							<Tab key={view} value={view}>
-								{view}
-							</Tab>
-						);
-					})}
-				</TabList>
-				{innerView}
+		<ContainerFeatureFlagContext.Provider value={{ containerFeatureFlags: supportedFeatures }}>
+			<div className={styles.root}>
+				<ContainerSummaryView containerKey={containerKey} />
+				<Divider appearance="strong" />
+				<div>
+					<TabList selectedValue={innerViewSelection} onTabSelect={onTabSelect}>
+						{panelViews.map((view: string) => {
+							return (
+								<Tab key={view} value={view}>
+									{view}
+								</Tab>
+							);
+						})}
+					</TabList>
+					{innerView}
+				</div>
 			</div>
-		</div>
+		</ContainerFeatureFlagContext.Provider>
 	);
 }

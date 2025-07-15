@@ -97,10 +97,8 @@ export class DataObjectDevtools extends BaseDevtools {
 	protected override getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
 			containerDataVisualization: this.containerData !== undefined,
-			// Data objects don't support connection operations
-			canConnect: false,
-			canDisconnect: false,
-			canClose: false,
+			// DataObjects do not have direct control over container lifecycle
+			canModifyContainerState: false,
 		};
 	}
 

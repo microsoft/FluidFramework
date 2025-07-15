@@ -157,10 +157,8 @@ export class ContainerDevtools extends BaseDevtools {
 	protected override getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
 		return {
 			containerDataVisualization: this.containerData !== undefined,
-			// Containers support all connection operations
-			canConnect: true,
-			canDisconnect: true,
-			canClose: true,
+			// Containers support all connection and lifecycle state operations
+			canModifyContainerState: true,
 		};
 	}
 

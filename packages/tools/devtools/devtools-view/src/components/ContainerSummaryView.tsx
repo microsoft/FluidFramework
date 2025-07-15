@@ -32,7 +32,6 @@ import {
 	ConnectContainer,
 	ContainerDevtoolsFeatures,
 	ContainerStateChange,
-	type ContainerDevtoolsFeatureFlags,
 	type ContainerStateMetadata,
 	DisconnectContainer,
 	GetContainerDevtoolsFeatures,
@@ -45,6 +44,7 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
+import { useContainerFeaturesContext } from "../ContainerFeatureFlagHelper.js";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { connectionStateToString } from "../Utilities.js";
@@ -211,10 +211,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		ContainerStateMetadata | undefined
 	>();
 
-	// Set of features supported by the corresponding Container-level devtools instance.
-	const [supportedFeatures, setSupportedFeatures] = React.useState<
-		ContainerDevtoolsFeatureFlags | undefined
-	>();
+	const { containerFeatureFlags } = useContainerFeaturesContext();
 
 	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
 	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
@@ -244,7 +241,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 			[ContainerDevtoolsFeatures.MessageType]: async (untypedMessage) => {
 				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
 				if (message.data.containerKey === containerKey) {
-					setSupportedFeatures(message.data.features);
 					return true;
 				}
 				return false;
@@ -266,7 +262,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		// wait for a response to the message sent below. Especially relevant for the Container-related views because this
 		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
 		setContainerState(undefined);
-		setSupportedFeatures(undefined);
 
 		// Request state info and supported features for the newly specified containerKey
 		messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
@@ -277,7 +272,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		};
 	}, [containerKey, setContainerState, messageRelay]);
 
-	if (containerState === undefined || supportedFeatures === undefined) {
+	if (containerState === undefined) {
 		return <Waiting label="Waiting for Container Summary data." />;
 	}
 
@@ -357,23 +352,17 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					</TableBody>
 				</Table>
 			</div>
-			{supportedFeatures.canConnect === true &&
-				supportedFeatures.canDisconnect === true &&
-				supportedFeatures.canClose === true && (
-					<div className={styles.actions}>
-						<ActionsBar
-							isContainerConnected={
-								containerState.connectionState === ConnectionState.Connected
-							}
-							containerState={containerState}
-							tryConnect={supportedFeatures.canConnect === true ? tryConnect : undefined}
-							forceDisconnect={
-								supportedFeatures.canDisconnect === true ? forceDisconnect : undefined
-							}
-							closeContainer={supportedFeatures.canClose === true ? closeContainer : undefined}
-						/>
-					</div>
-				)}
+			{containerFeatureFlags.canModifyContainerState === true && (
+				<div className={styles.actions}>
+					<ActionsBar
+						isContainerConnected={containerState.connectionState === ConnectionState.Connected}
+						containerState={containerState}
+						tryConnect={tryConnect}
+						forceDisconnect={forceDisconnect}
+						closeContainer={closeContainer}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }
