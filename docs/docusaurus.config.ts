@@ -133,7 +133,7 @@ const config: Config = {
 	themes: [
 		// Theme for rendering Mermaid diagrams in markdown.
 		"@docusaurus/theme-mermaid",
-		"docusaurus-theme-search-typesense",
+		...(isTypesenseConfigured ? ["docusaurus-theme-search-typesense"] : []),
 	],
 	themeConfig: {
 		colorMode: {
