@@ -360,10 +360,6 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
 		return CompatibilityLevel.None;
 	}
 
-	if (data instanceof Map) {
-		return CompatibilityLevel.Normal;
-	}
-
 	if (isReadonlyArray(data)) {
 		// Arrays are iterable, so type checking does allow constructing an array from a MapNode from an if the array's type is key values pairs for the map.
 		return CompatibilityLevel.Low;

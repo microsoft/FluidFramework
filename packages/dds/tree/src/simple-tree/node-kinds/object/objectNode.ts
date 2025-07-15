@@ -729,14 +729,6 @@ function shallowCompatibilityTest(
 		return CompatibilityLevel.None;
 	}
 
-	if (data instanceof Map) {
-		return CompatibilityLevel.None;
-	}
-
-	if (isReadonlyArray(data)) {
-		return CompatibilityLevel.None;
-	}
-
 	if (Symbol.iterator in data) {
 		return CompatibilityLevel.None;
 	}
