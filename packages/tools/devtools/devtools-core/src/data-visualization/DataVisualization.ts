@@ -92,7 +92,7 @@ export type VisualizeChildData = (data: unknown) => Promise<VisualChildNode>;
 /**
  * Utility type for a union of things that can be visualized.
  */
-export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject<unknown>;
+export type VisualizableFluidObject = ISharedObject | DataObject | TreeDataObject;
 
 /**
  * Specifies renderers for different {@link @fluidframework/shared-object-base#ISharedObject} types.
@@ -571,10 +571,10 @@ function isDataObject(value: unknown): value is DataObject {
  * - `TreeDataObject.treeView` getter
  * - `TreeDataObject.initializeInternal` method
  */
-function isTreeDataObject(value: unknown): value is TreeDataObject<unknown> {
+function isTreeDataObject(value: unknown): value is TreeDataObject {
 	if (
 		value instanceof TreeDataObject ||
-		(typeof (value as TreeDataObject<unknown>).initializeInternal === "function" &&
+		(typeof (value as TreeDataObject).initializeInternal === "function" &&
 			Object.getOwnPropertyDescriptor(Object.getPrototypeOf(value), "tree")?.get !== undefined)
 	) {
 		const tree = (value as { readonly tree?: ISharedObject }).tree;
