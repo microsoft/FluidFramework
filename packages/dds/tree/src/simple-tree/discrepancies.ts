@@ -156,7 +156,7 @@ export interface NodeFieldsDiscrepancy {
 	differences: FieldDiscrepancy[];
 }
 
-type SchemaFactoryNodeKind = "object" | "leaf" | "map" | "array" | "record";
+type SchemaFactoryNodeKind = "object" | "leaf" | "map";
 
 function getStoredNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeKind {
 	if (nodeSchema instanceof ObjectNodeStoredSchema) {
@@ -193,16 +193,12 @@ function getViewNodeSchemaType(schema: TreeNodeSchema): SchemaFactoryNodeKind {
 		case NodeKind.Leaf: {
 			return "leaf";
 		}
-		case NodeKind.Map: {
+		case NodeKind.Map:
+		case NodeKind.Record: {
 			return "map";
 		}
-		case NodeKind.Record: {
-			return "record";
-		}
+		case NodeKind.Object:
 		case NodeKind.Array: {
-			return "array";
-		}
-		case NodeKind.Object: {
 			return "object";
 		}
 		default:
@@ -403,13 +399,13 @@ function* getNodeDiscrepancies(
 
 /**
  * The function to track the discrepancies between a field view schema and a stored schema.
- * 
+ *
  * @remarks
  * This function yields discrepancies in the following cases:
  * 1. If the view schema has allowed types that are not present in the stored schema.
  * 2. If the stored schema has allowed types that are not present in the view schema.
  * 3. If the field kind in the view schema is not compatible with the stored schema.
- * 
+ *
  * This function does not recurse into the nodes of the view schema and only makes comparisons at the field level.
  *
  * @param keyOrRoot - If the key is missing, it indicates that this is the root field schema.
@@ -433,9 +429,15 @@ function* getFieldDiscrepancies(
 		viewAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[],
 		storedAllowedTypes: TreeTypeSet,
 	): [readonly AnnotatedAllowedType<TreeNodeSchema>[], TreeNodeSchemaIdentifier[]] => {
-		const viewNodeSchemaIdentifiers = new Set(viewAllowedTypes.map((value) => value.type.identifier));
-		const viewExtraneousAllowedTypes = [...viewAllowedTypes].filter((value) => !storedAllowedTypes.has(brand(value.type.identifier)));
-		const storedExtraneousAllowedTypes = [...storedAllowedTypes].filter((value) => !viewNodeSchemaIdentifiers.has(value));
+		const viewNodeSchemaIdentifiers = new Set(
+			viewAllowedTypes.map((value) => value.type.identifier),
+		);
+		const viewExtraneousAllowedTypes = [...viewAllowedTypes].filter(
+			(value) => !storedAllowedTypes.has(brand(value.type.identifier)),
+		);
+		const storedExtraneousAllowedTypes = [...storedAllowedTypes].filter(
+			(value) => !viewNodeSchemaIdentifiers.has(value),
+		);
 		return [viewExtraneousAllowedTypes, storedExtraneousAllowedTypes];
 	};
 
