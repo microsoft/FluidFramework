@@ -86,7 +86,6 @@ export default function DocsVersionDropdownNavbarItem({
 			"isActive": () => version === activeDocContext.activeVersion,
 			"onClick": () => savePreferredVersionName(version.name),
 			"aria-label": `Version ${version.label}, item ${index + 1} of ${versions.length}`,
-			"role": "menuitem",
 			"aria-setsize": versions.length,
 			"aria-posinset": index + 1,
 			"className": "version-dropdown__item",
@@ -135,7 +134,6 @@ export default function DocsVersionDropdownNavbarItem({
 				items={items}
 				aria-label="Select documentation version"
 				role="menu"
-				aria-haspopup="listbox"
 			/>
 		</div>
 	);
