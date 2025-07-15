@@ -92,6 +92,24 @@ declare type current_as_old_for_Class_TestCache = requireAssignableTo<TypeOnly<c
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_TestCheck": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_TestCheck = requireAssignableTo<TypeOnly<old.TestCheck>, TypeOnly<current.TestCheck>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TestCheck": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_TestCheck = requireAssignableTo<TypeOnly<current.TestCheck>, TypeOnly<old.TestCheck>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Class_TestClientManager": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_TestClientManager = requireAssignableTo<TypeOnly<old.TestClientManager>, TypeOnly<current.TestClientManager>>
@@ -104,6 +122,24 @@ declare type old_as_current_for_Class_TestClientManager = requireAssignableTo<Ty
  * "Class_TestClientManager": {"backCompat": false}
  */
 declare type current_as_old_for_Class_TestClientManager = requireAssignableTo<TypeOnly<current.TestClientManager>, TypeOnly<old.TestClientManager>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TestClusterDrainingStatusChecker": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_TestClusterDrainingStatusChecker = requireAssignableTo<TypeOnly<old.TestClusterDrainingStatusChecker>, TypeOnly<current.TestClusterDrainingStatusChecker>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TestClusterDrainingStatusChecker": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_TestClusterDrainingStatusChecker = requireAssignableTo<TypeOnly<current.TestClusterDrainingStatusChecker>, TypeOnly<old.TestClusterDrainingStatusChecker>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -148,7 +184,6 @@ declare type current_as_old_for_Class_TestConsumer = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Class_TestContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TestContext = requireAssignableTo<TypeOnly<old.TestContext>, TypeOnly<current.TestContext>>
 
 /*
@@ -231,6 +266,24 @@ declare type old_as_current_for_Class_TestDocumentStorage = requireAssignableTo<
  * "Class_TestDocumentStorage": {"backCompat": false}
  */
 declare type current_as_old_for_Class_TestDocumentStorage = requireAssignableTo<TypeOnly<current.TestDocumentStorage>, TypeOnly<old.TestDocumentStorage>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TestFluidAccessTokenGenerator": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_TestFluidAccessTokenGenerator = requireAssignableTo<TypeOnly<old.TestFluidAccessTokenGenerator>, TypeOnly<current.TestFluidAccessTokenGenerator>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TestFluidAccessTokenGenerator": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_TestFluidAccessTokenGenerator = requireAssignableTo<TypeOnly<current.TestFluidAccessTokenGenerator>, TypeOnly<old.TestFluidAccessTokenGenerator>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -329,7 +382,6 @@ declare type current_as_old_for_Class_TestNotImplementedDocumentRepository = req
  * typeValidation.broken:
  * "Class_TestProducer": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TestProducer = requireAssignableTo<TypeOnly<old.TestProducer>, TypeOnly<current.TestProducer>>
 
 /*
@@ -358,6 +410,24 @@ declare type old_as_current_for_Class_TestPublisher = requireAssignableTo<TypeOn
  * "Class_TestPublisher": {"backCompat": false}
  */
 declare type current_as_old_for_Class_TestPublisher = requireAssignableTo<TypeOnly<current.TestPublisher>, TypeOnly<old.TestPublisher>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TestReadinessCheck": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_TestReadinessCheck = requireAssignableTo<TypeOnly<old.TestReadinessCheck>, TypeOnly<current.TestReadinessCheck>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_TestReadinessCheck": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_TestReadinessCheck = requireAssignableTo<TypeOnly<current.TestReadinessCheck>, TypeOnly<old.TestReadinessCheck>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -402,7 +472,6 @@ declare type current_as_old_for_Class_TestTenant = requireAssignableTo<TypeOnly<
  * typeValidation.broken:
  * "Class_TestTenantManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TestTenantManager = requireAssignableTo<TypeOnly<old.TestTenantManager>, TypeOnly<current.TestTenantManager>>
 
 /*
@@ -527,9 +596,27 @@ declare type current_as_old_for_ClassStatics_TestCache = requireAssignableTo<Typ
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "ClassStatics_TestCheck": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TestCheck = requireAssignableTo<TypeOnly<typeof current.TestCheck>, TypeOnly<typeof old.TestCheck>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "ClassStatics_TestClientManager": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_TestClientManager = requireAssignableTo<TypeOnly<typeof current.TestClientManager>, TypeOnly<typeof old.TestClientManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TestClusterDrainingStatusChecker": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TestClusterDrainingStatusChecker = requireAssignableTo<TypeOnly<typeof current.TestClusterDrainingStatusChecker>, TypeOnly<typeof old.TestClusterDrainingStatusChecker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -599,6 +686,15 @@ declare type current_as_old_for_ClassStatics_TestDocumentStorage = requireAssign
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "ClassStatics_TestFluidAccessTokenGenerator": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TestFluidAccessTokenGenerator = requireAssignableTo<TypeOnly<typeof current.TestFluidAccessTokenGenerator>, TypeOnly<typeof old.TestFluidAccessTokenGenerator>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "ClassStatics_TestHistorian": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_TestHistorian = requireAssignableTo<TypeOnly<typeof current.TestHistorian>, TypeOnly<typeof old.TestHistorian>>
@@ -656,6 +752,15 @@ declare type current_as_old_for_ClassStatics_TestProducer = requireAssignableTo<
  * "ClassStatics_TestPublisher": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_TestPublisher = requireAssignableTo<TypeOnly<typeof current.TestPublisher>, TypeOnly<typeof old.TestPublisher>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_TestReadinessCheck": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_TestReadinessCheck = requireAssignableTo<TypeOnly<typeof current.TestReadinessCheck>, TypeOnly<typeof old.TestReadinessCheck>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
