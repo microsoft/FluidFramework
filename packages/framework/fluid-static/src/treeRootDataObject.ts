@@ -57,7 +57,6 @@ export class TreeRootDataObject
 	implements IRootDataObject, IProvideTreeRootDataObject
 {
 	readonly #treeKey: string;
-	#initialObjects: LoadableObjectRecord | undefined;
 
 	public constructor(props: IDataObjectProps & TreeRootDataObjectExtraProps) {
 		super({
@@ -81,15 +80,8 @@ export class TreeRootDataObject
 		return;
 	}
 
-	protected async hasInitialized(): Promise<void> {
-		this.#initialObjects = { [this.#treeKey]: this.treeView };
-	}
-
 	public get initialObjects(): LoadableObjectRecord {
-		if (this.#initialObjects === undefined || Object.keys(this.#initialObjects).length === 0) {
-			throw new Error("Initial Objects were not correctly initialized");
-		}
-		return this.#initialObjects;
+		return { [this.#treeKey]: this.treeView };
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
