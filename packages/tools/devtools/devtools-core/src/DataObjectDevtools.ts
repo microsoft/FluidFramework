@@ -75,7 +75,10 @@ export class DataObjectDevtools extends BaseDevtools {
 	}
 
 	public constructor(props: DataObjectDevtoolsProps) {
-		super(props.containerKey, props.containerData);
+		// Data objects don't support connection operations, so pass empty handlers
+		const specificHandlers: InboundHandlers = {};
+
+		super(props.containerKey, specificHandlers, props.containerData);
 
 		this.container = props.container;
 
@@ -124,15 +127,6 @@ export class DataObjectDevtools extends BaseDevtools {
 	 */
 	protected getClientId(): string | undefined {
 		return this.container.clientId;
-	}
-
-	/**
-	 * Gets the message handlers specific to data objects.
-	 * Data objects don't support connect/disconnect/close operations, so those handlers are not included.
-	 */
-	protected getSpecificInboundMessageHandlers(): InboundHandlers {
-		// Data objects don't support connection operations, so return empty handlers
-		return {};
 	}
 
 	/**

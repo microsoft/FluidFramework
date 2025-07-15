@@ -89,6 +89,11 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	 */
 	protected _disposed: boolean;
 
+	/**
+	 * Specific message handlers provided by the subclass.
+	 */
+	private readonly specificInboundMessageHandlers: InboundHandlers;
+
 	// #region Abstract methods that must be implemented by subclasses
 
 	/**
@@ -107,9 +112,9 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	protected abstract getContainerState(): ContainerStateMetadata;
 
 	/**
-	 * Gets the message handlers specific to this devtools type.
+	 * Gets the client ID for this devtools instance.
 	 */
-	protected abstract getSpecificInboundMessageHandlers(): InboundHandlers;
+	protected abstract getClientId(): string | undefined;
 
 	// #endregion
 
@@ -255,7 +260,7 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 				return false;
 			},
 			// Include specific handlers from subclass
-			...this.getSpecificInboundMessageHandlers(),
+			...this.specificInboundMessageHandlers,
 		};
 	}
 
@@ -360,11 +365,6 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	// #endregion
 
 	/**
-	 * Gets the client ID for this devtools instance.
-	 */
-	protected abstract getClientId(): string | undefined;
-
-	/**
 	 * Message logging options used by the devtools.
 	 */
 	protected get messageLoggingOptions(): MessageLoggingOptions {
@@ -373,10 +373,12 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 
 	protected constructor(
 		containerKey: ContainerKey,
+		specificInboundMessageHandlers: InboundHandlers,
 		containerData?: Record<string, IFluidLoadable>,
 	) {
 		this.containerKey = containerKey;
 		this.containerData = containerData;
+		this.specificInboundMessageHandlers = specificInboundMessageHandlers;
 
 		// Initialize log state
 		this._connectionStateLog = [];

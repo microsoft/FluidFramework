@@ -108,7 +108,37 @@ export class ContainerDevtools extends BaseDevtools {
 	}
 
 	public constructor(props: ContainerDevtoolsProps) {
-		super(props.containerKey, props.containerData);
+		// Create specific message handlers for container operations
+		const specificHandlers: InboundHandlers = {
+			[ConnectContainer.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as ConnectContainer.Message;
+				if (message.data.containerKey === props.containerKey) {
+					props.container.connect();
+					return true;
+				}
+				return false;
+			},
+			[DisconnectContainer.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as DisconnectContainer.Message;
+				if (message.data.containerKey === props.containerKey) {
+					props.container.disconnect(
+						/* TODO: Specify devtools reason here once it is supported */
+					);
+					return true;
+				}
+				return false;
+			},
+			[CloseContainer.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as CloseContainer.Message;
+				if (message.data.containerKey === props.containerKey) {
+					props.container.close(/* TODO: Specify devtools reason here once it is supported */);
+					return true;
+				}
+				return false;
+			},
+		};
+
+		super(props.containerKey, specificHandlers, props.containerData);
 
 		this.container = props.container;
 
@@ -157,41 +187,6 @@ export class ContainerDevtools extends BaseDevtools {
 	 */
 	protected override getClientId(): string | undefined {
 		return this.container.clientId;
-	}
-
-	/**
-	 * Gets the message handlers specific to real containers.
-	 * Real containers support connect/disconnect/close operations.
-	 */
-	protected override getSpecificInboundMessageHandlers(): InboundHandlers {
-		return {
-			[ConnectContainer.MessageType]: async (untypedMessage) => {
-				const message = untypedMessage as ConnectContainer.Message;
-				if (message.data.containerKey === this.containerKey) {
-					this.container.connect();
-					return true;
-				}
-				return false;
-			},
-			[DisconnectContainer.MessageType]: async (untypedMessage) => {
-				const message = untypedMessage as DisconnectContainer.Message;
-				if (message.data.containerKey === this.containerKey) {
-					this.container.disconnect(
-						/* TODO: Specify devtools reason here once it is supported */
-					);
-					return true;
-				}
-				return false;
-			},
-			[CloseContainer.MessageType]: async (untypedMessage) => {
-				const message = untypedMessage as CloseContainer.Message;
-				if (message.data.containerKey === this.containerKey) {
-					this.container.close(/* TODO: Specify devtools reason here once it is supported */);
-					return true;
-				}
-				return false;
-			},
-		};
 	}
 
 	/**
