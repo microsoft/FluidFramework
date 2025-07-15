@@ -553,6 +553,18 @@ export class ModularChangeFamily
 		for (const [field, fieldChange1] of change1) {
 			const fieldId: FieldId = { nodeId: parentId, field };
 			const fieldChange2 = change2.get(field);
+
+			const cachedComposedFieldChange =
+				crossFieldTable.fieldToContext.get(fieldChange1)?.composedChange;
+
+			if (fieldChange2 === undefined && cachedComposedFieldChange !== undefined) {
+				// This can happen if the field was previous processed in `composeFieldWithNoNewChange`.
+				// If `change2` does not have a change for this field, then without this check we would
+				// lose the composed field change and instead simply have `change1`'s change.
+				composedFields.set(field, cachedComposedFieldChange);
+				continue;
+			}
+
 			const composedField =
 				fieldChange2 !== undefined
 					? this.composeFieldChanges(
