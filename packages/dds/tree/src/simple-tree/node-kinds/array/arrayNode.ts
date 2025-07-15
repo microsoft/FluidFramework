@@ -7,12 +7,15 @@ import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../../../core/index.js";
-import type {
-	FlexibleFieldContent,
-	FlexTreeNode,
-	FlexTreeSequenceField,
+import {
+	FieldKinds,
+	isTreeValue,
+	type FlexibleFieldContent,
+	type FlexTreeNode,
+	type FlexTreeSequenceField,
 } from "../../../feature-libraries/index.js";
 import {
+	CompatibilityLevel,
 	type WithType,
 	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
@@ -44,19 +47,28 @@ import {
 	type TreeNodeSchemaCorePrivate,
 	privateDataSymbol,
 	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	type TreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import {
+	type FactoryContent,
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
+	unhydratedFlexTreeFromInsertableNode,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+} from "../../createContext.js";
 import type { System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
 	ArrayNodePojoEmulationSchema,
+	ArrayNodeSchema,
 } from "./arrayNodeTypes.js";
-import type { JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
+import { nullSchema } from "../../leafNodeSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -1117,6 +1129,8 @@ export function arraySchema<
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
+	let privateData: TreeNodeSchemaPrivateData | undefined;
+
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
 	class Schema extends CustomArrayNodeBase<UnannotateImplicitAllowedTypes<T>> {
@@ -1179,8 +1193,16 @@ export function arraySchema<
 					prototype = Reflect.getPrototypeOf(prototype) as object;
 				}
 			}
+			const schema = this as ArrayNodeSchema;
 
-			return getTreeNodeSchemaInitializedData(this);
+			return getTreeNodeSchemaInitializedData(this, {
+				shallowCompatibilityTest: (data: FactoryContent): CompatibilityLevel =>
+					shallowCompatibilityTest(data, schema),
+				toFlexContent: (
+					data: FactoryContent,
+					allowedTypes: ReadonlySet<TreeNodeSchema>,
+				): FlexContent => arrayToFlexContent(data, schema),
+			});
 		}
 
 		public static readonly identifier = identifier;
@@ -1209,7 +1231,9 @@ export function arraySchema<
 			return lazyChildTypes.value;
 		}
 
-		public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, [info]);
+		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+		}
 	}
 
 	const output: Output = Schema;
@@ -1264,4 +1288,93 @@ function validateIndexRange(
 			`Index value passed to TreeArrayNode.${methodName} is out of bounds.`,
 		);
 	}
+}
+
+/**
+ * Transforms data under an Array schema.
+ * @param data - The tree data to be transformed.
+ * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
+ */
+function arrayChildToFlexTree(
+	child: InsertableContent,
+	allowedTypes: ReadonlySet<TreeNodeSchema>,
+): UnhydratedFlexTreeNode {
+	// We do not support undefined sequence entries.
+	// If we encounter an undefined entry, use null instead if supported by the schema, otherwise throw.
+	let childWithFallback = child;
+	if (child === undefined) {
+		if (allowedTypes.has(nullSchema)) {
+			childWithFallback = null;
+		} else {
+			throw new TypeError(`Received unsupported array entry value: ${child}.`);
+		}
+	}
+	return unhydratedFlexTreeFromInsertableNode(childWithFallback, allowedTypes);
+}
+
+/**
+ * Transforms data under an Array schema.
+ * @param data - The tree data to be transformed. Must be an iterable.
+ * @param schema - The schema associated with the value.
+ */
+function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
+		throw new UsageError(`Input data is incompatible with Array schema: ${data}`);
+	}
+
+	const allowedChildTypes = normalizeAllowedTypes(schema.info as ImplicitAllowedTypes);
+
+	const mappedData = Array.from(data, (child) =>
+		arrayChildToFlexTree(child, allowedChildTypes),
+	);
+
+	const context = getUnhydratedContext(schema).flexContext;
+
+	// Array nodes have a single `EmptyKey` field:
+	const fieldsEntries =
+		mappedData.length === 0
+			? []
+			: ([
+					[
+						EmptyKey,
+						new UnhydratedSequenceField(
+							context,
+							FieldKinds.sequence.identifier,
+							EmptyKey,
+							mappedData,
+						),
+					],
+				] as const);
+
+	return [
+		{
+			type: brand(schema.identifier),
+		},
+		new Map(fieldsEntries),
+	];
+}
+
+/**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ */
+function shallowCompatibilityTest(
+	data: FactoryContent,
+	schema: ArrayNodeSchema,
+): CompatibilityLevel {
+	if (isTreeValue(data)) {
+		return CompatibilityLevel.None;
+	}
+
+	if (data instanceof Map) {
+		// Maps are iterable, so type checking does allow constructing an ArrayNode from a map if the array's type is an array that includes the key and value types of the map.
+		return CompatibilityLevel.Low;
+	}
+
+	if (Symbol.iterator in data) {
+		return CompatibilityLevel.Normal;
+	}
+
+	return CompatibilityLevel.None;
 }

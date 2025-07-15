@@ -31,12 +31,16 @@ import {
 	type TreeNodeSchemaCorePrivate,
 	privateDataSymbol,
 	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	CompatibilityLevel,
+	type TreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
+	type FactoryContent,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import type {
@@ -46,8 +50,13 @@ import type {
 	RecordNodeSchema,
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
-import type { FlexTreeNode, FlexTreeOptionalField } from "../../../feature-libraries/index.js";
+import {
+	isTreeValue,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+} from "../../../feature-libraries/index.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
+import { recordLikeDataToFlexContent } from "../../insertableContentHandler.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -262,6 +271,8 @@ export function recordSchema<
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
+	let privateData: TreeNodeSchemaPrivateData | undefined;
+
 	class Schema
 		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
 		implements TreeRecordNode<TUnannotatedAllowedTypes>
@@ -336,7 +347,12 @@ export function recordSchema<
 				}
 			}
 
-			return getTreeNodeSchemaInitializedData(this);
+			const schema = this as RecordNodeSchema;
+			return getTreeNodeSchemaInitializedData(this, {
+				shallowCompatibilityTest,
+				toFlexContent: (data: FactoryContent): FlexContent =>
+					recordToFlexContent(data, schema),
+			});
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -373,7 +389,9 @@ export function recordSchema<
 			return identifier;
 		}
 
-		public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, [info]);
+		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+		}
 	}
 
 	type Output = RecordNodeCustomizableSchema<
@@ -400,4 +418,35 @@ function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	for (const [key, value] of Object.entries(record)) {
 		yield [key, value];
 	}
+}
+
+/**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ */
+function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
+	if (isTreeValue(data)) {
+		return CompatibilityLevel.None;
+	}
+
+	if (Symbol.iterator in data) {
+		return CompatibilityLevel.None;
+	}
+
+	return CompatibilityLevel.Normal;
+}
+
+/**
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema associated with the value.
+ */
+function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
+	}
+
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
 }

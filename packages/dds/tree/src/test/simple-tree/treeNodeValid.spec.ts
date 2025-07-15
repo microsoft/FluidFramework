@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -34,6 +34,8 @@ import {
 	type NormalizedAnnotatedAllowedTypes,
 	type TreeNodeSchemaInitializedData,
 	privateDataSymbol,
+	CompatibilityLevel,
+	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
 
@@ -52,7 +54,7 @@ describe("TreeNodeValid", () => {
 		const log: string[] = [];
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		let customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
-
+		let privateData: TreeNodeSchemaPrivateData | undefined;
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;
 			public static readonly identifier = "Subclass";
@@ -87,7 +89,7 @@ describe("TreeNodeValid", () => {
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("oneTimeSetup");
-				return getTreeNodeSchemaInitializedData(this);
+				return getTreeNodeSchemaInitializedData(this, handler);
 			}
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
@@ -101,7 +103,9 @@ describe("TreeNodeValid", () => {
 				throw new Error("Method not implemented.");
 			}
 
-			public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, []);
+			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+			}
 
 			public constructor(input: number | InternalTreeNode) {
 				super(input);
@@ -158,6 +162,8 @@ describe("TreeNodeValid", () => {
 
 	it("multiple subclass valid", () => {
 		const log: string[] = [];
+
+		let privateData: TreeNodeSchemaPrivateData | undefined;
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;
 			public static readonly identifier = "Subclass";
@@ -186,7 +192,9 @@ describe("TreeNodeValid", () => {
 				super(0);
 			}
 
-			public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, []);
+			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+			}
 		}
 
 		class A extends Subclass {
@@ -194,7 +202,7 @@ describe("TreeNodeValid", () => {
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("A");
-				return getTreeNodeSchemaInitializedData(this);
+				return getTreeNodeSchemaInitializedData(this, handler);
 			}
 		}
 
@@ -205,7 +213,7 @@ describe("TreeNodeValid", () => {
 				this: typeof TreeNodeValid<T2>,
 			): TreeNodeSchemaInitializedData {
 				log.push("B");
-				return getTreeNodeSchemaInitializedData(B);
+				return getTreeNodeSchemaInitializedData(B, handler);
 			}
 		}
 
@@ -218,6 +226,7 @@ describe("TreeNodeValid", () => {
 
 	it("multiple subclass chain", () => {
 		const log: string[] = [];
+		let privateData: TreeNodeSchemaPrivateData | undefined;
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;
 			public static readonly identifier = "Subclass";
@@ -252,9 +261,11 @@ describe("TreeNodeValid", () => {
 
 			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push(this.name);
-				return getTreeNodeSchemaInitializedData(this);
+				return getTreeNodeSchemaInitializedData(this, handler);
 			}
-			public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, []);
+			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+			}
 		}
 
 		class B extends A {}
@@ -270,3 +281,8 @@ describe("TreeNodeValid", () => {
 		);
 	});
 });
+
+const handler = {
+	shallowCompatibilityTest: () => CompatibilityLevel.None,
+	toFlexContent: fail,
+};

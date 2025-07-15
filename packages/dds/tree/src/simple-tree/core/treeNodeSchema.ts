@@ -15,6 +15,9 @@ import type {
 	NormalizedAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
 import type { Context } from "./context.js";
+import type { FieldKey, NodeData } from "../../core/index.js";
+import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
+import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -422,6 +425,49 @@ export interface TreeNodeSchemaInitializedData {
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.
 	 */
 	readonly context: Context;
+
+	/**
+	 * Checks if data might be schema-compatible.
+	 *
+	 * @returns false if `data` is incompatible with `type` based on a cheap/shallow check.
+	 *
+	 * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
+	 */
+	shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel;
+
+	/**
+	 * Convert data to a {@link FlexContent} representation.
+	 * @remarks
+	 * Data must be compatible with the schema according to {@link shallowCompatibilityTest}.
+	 *
+	 * TODO: use of `allowedTypes` is for fallbacks (for example NaN -\> null).
+	 * This behavior should be moved to shallowCompatibilityTest instead.
+	 */
+	toFlexContent(data: FactoryContent, allowedTypes: ReadonlySet<TreeNodeSchema>): FlexContent;
+}
+
+export type FlexContent = [NodeData, Map<FieldKey, UnhydratedFlexTreeField>];
+
+/**
+ * Indicates a compatibility level for inferring a schema to apply to insertable data.
+ * @remarks
+ * Only the highest compatibility options are used.
+ * This approach allows adding new possible matching at a new lower compatibility level as a non breaking change,
+ * since that way they can't make a case that was compatible before ambiguous now.
+ */
+export enum CompatibilityLevel {
+	/**
+	 * Not compatible. Constructor typing indicates incompatibility.
+	 */
+	None = 0,
+	/**
+	 * Additional compatibility cases added in Fluid Framework 2.2.
+	 */
+	Low = 1,
+	/**
+	 * Compatible in Fluid Framework 2.0.
+	 */
+	Normal = 2,
 }
 
 /**

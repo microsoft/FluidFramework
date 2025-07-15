@@ -248,6 +248,7 @@ export function createTreeNodeSchemaPrivateData(
 	childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
+	schemaValid.markMostDerived();
 
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
