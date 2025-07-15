@@ -36,7 +36,6 @@ export class SchemaCompatibilityTester {
 	 */
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
-		public readonly adapters: Adapters,
 		public readonly viewSchemaRoot: FieldSchema,
 	) {}
 
