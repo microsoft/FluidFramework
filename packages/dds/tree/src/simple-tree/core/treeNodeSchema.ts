@@ -10,7 +10,11 @@ import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { NormalizedAnnotatedAllowedTypes } from "./allowedTypes.js";
+import type {
+	ImplicitAnnotatedAllowedTypes,
+	NormalizedAnnotatedAllowedTypes,
+} from "./allowedTypes.js";
+import type { Context } from "./context.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -325,6 +329,11 @@ export interface TreeNodeSchemaCore<
 }
 
 /**
+ * Symbol for use by {@link TreeNodeSchemaCorePrivate}.
+ */
+export const privateDataSymbol = Symbol("PrivateData");
+
+/**
  * {@link TreeNodeSchemaCore} extended with some non-exported APIs.
  */
 export interface TreeNodeSchemaCorePrivate<
@@ -343,6 +352,55 @@ export interface TreeNodeSchemaCorePrivate<
 		TCustomMetadata
 	> {
 	/**
+	 * Package private data provided by all {@link TreeNodeSchema}.
+	 * @remarks
+	 * This is behind a symbol as this content is not exposed in the API, but is present on all the schema.
+	 * That exposes a risk of name collisions with custom statics users add to schema classes.
+	 * While schema classes already have a bunch of non-exported statics which could collide,
+	 * this reduces the risk, and also provides a symbol which can be tested for to more safely
+	 * access the private data.
+	 */
+	readonly [privateDataSymbol]: TreeNodeSchemaPrivateData;
+}
+
+/**
+ * Package private data provided by all {@link TreeNodeSchema}.
+ * @remarks
+ * This data needs to be available before lazy schema references are resolved.
+ * For data which is only available after lazy schema references are resolved,
+ * see {@link TreeNodeSchemaInitializedData}, which can be accessed via {@link TreeNodeSchemaPrivateData.idempotentInitialize}.
+ */
+export interface TreeNodeSchemaPrivateData {
+	/**
+	 * All possible annotated allowed types that a field under a node with this schema could have.
+	 * @remarks
+	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
+	 * This includes the content field for arrays, and all the fields for map nodes.
+	 * If this node does not have fields (and thus is a leaf), the array will be empty.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this array.
+	 *
+	 * @privateRemarks
+	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
+	 * @system
+	 */
+	readonly childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[];
+
+	/**
+	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
+	 */
+	idempotentInitialize(): TreeNodeSchemaInitializedData;
+}
+
+/**
+ * Additional data about a given schema which is private to this package.
+ * @remarks
+ * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
+ */
+export interface TreeNodeSchemaInitializedData {
+	/**
 	 * All possible annotated allowed types that a field under a node with this schema could have.
 	 * @remarks
 	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
@@ -358,27 +416,25 @@ export interface TreeNodeSchemaCorePrivate<
 	 * @system
 	 */
 	readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[];
+
+	/**
+	 * A {@link Context} which can be used for unhydrated nodes of this schema.
+	 */
+	readonly context: Context;
 }
 
 /**
- * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} if it is one.
- *
- * @remarks
- * This function should only be used internally. The result should not be exposed publicly
- * in any exported types or API return values.
+ * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} and get its {@link TreeNodeSchemaPrivateData}.
  */
-export function asTreeNodeSchemaCorePrivate(
+export function getTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
-): TreeNodeSchemaCorePrivate {
+): TreeNodeSchemaPrivateData {
 	assert(
-		"childAnnotatedAllowedTypes" in schema,
+		privateDataSymbol in schema,
 		0xbc9 /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
-	assert(
-		Array.isArray((schema as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes),
-		0xbca /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
-	);
-	return schema as TreeNodeSchemaCorePrivate;
+	const schemaValid = schema as TreeNodeSchemaCorePrivate;
+	return schemaValid[privateDataSymbol];
 }
 
 /**

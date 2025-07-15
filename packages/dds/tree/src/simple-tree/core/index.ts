@@ -13,6 +13,7 @@ export {
 	getOrCreateInnerNode,
 	treeNodeFromAnchor,
 	getSimpleNodeSchemaFromInnerNode,
+	SimpleContextSlot,
 } from "./treeNodeKernel.js";
 export { type WithType, typeNameSymbol, typeSchemaSymbol } from "./withType.js";
 export {
@@ -24,7 +25,12 @@ export {
 	privateToken,
 	inPrototypeChain,
 } from "./treeNode.js";
-export { NodeKind, isTreeNodeSchemaClass } from "./treeNodeSchema.js";
+export {
+	NodeKind,
+	isTreeNodeSchemaClass,
+	privateDataSymbol,
+	getTreeNodeSchemaPrivateData,
+} from "./treeNodeSchema.js";
 export type {
 	TreeNodeSchema,
 	TreeNodeSchemaClass,
@@ -36,6 +42,9 @@ export type {
 	InsertableTypedNode,
 	NodeBuilderData,
 	NodeFromSchema,
+	TreeNodeSchemaCorePrivate,
+	TreeNodeSchemaPrivateData,
+	TreeNodeSchemaInitializedData,
 } from "./treeNodeSchema.js";
 export {
 	isAnnotatedAllowedTypes,
@@ -66,7 +75,7 @@ export type {
 	AnnotatedAllowedTypes,
 } from "./allowedTypes.js";
 export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
-export { Context, HydratedContext, SimpleContextSlot } from "./context.js";
+export { Context, HydratedContext } from "./context.js";
 export {
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
@@ -85,4 +94,8 @@ export type {
 	ExtractItemType,
 } from "./flexList.js";
 export { isLazy } from "./flexList.js";
-export { TreeNodeValid, type MostDerivedData } from "./treeNodeValid.js";
+export {
+	TreeNodeValid,
+	type MostDerivedData,
+	createTreeNodeSchemaPrivateData,
+} from "./treeNodeValid.js";
