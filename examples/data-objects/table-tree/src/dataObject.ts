@@ -36,18 +36,8 @@ export class TableDataObject extends TreeDataObject {
 		return this.#treeView;
 	}
 
-	/**
-	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
-	 *
-	 * @param tree - The ITree instance to view.
-	 * @returns A typed TreeView using the TodoList schema.
-	 */
-	private initializeView(): void {
-		this.#treeView = this.tree.viewWith(this.config);
-	}
-
 	protected override async initializingFirstTime(): Promise<void> {
-		this.initializeView();
+		this.#treeView = this.tree.viewWith(this.config);
 		if (!this.treeView.compatibility.canInitialize) {
 			throw new Error("Incompatible schema");
 		}
@@ -56,7 +46,7 @@ export class TableDataObject extends TreeDataObject {
 	}
 
 	protected override async initializingFromExisting(): Promise<void> {
-		this.initializeView();
+		this.#treeView = this.tree.viewWith(this.config);
 		if (!this.treeView.compatibility.canView) {
 			throw new Error("Incompatible schema");
 		}
