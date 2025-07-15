@@ -11,7 +11,7 @@ import {
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 
 import { createFromCursor } from "./create.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";

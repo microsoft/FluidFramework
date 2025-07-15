@@ -20,8 +20,8 @@
 
 export {
 	DataObjectFactory,
-	PureDataObjectFactory,
 	type DataObjectFactoryProps,
+	PureDataObjectFactory,
 	TreeDataObjectFactory,
 } from "./data-object-factories/index.js";
 export {

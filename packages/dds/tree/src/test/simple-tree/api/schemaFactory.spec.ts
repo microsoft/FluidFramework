@@ -20,15 +20,18 @@ import {
 	type TreeArrayNode,
 	type TreeMapNode,
 	type TreeView,
-} from "../../../simple-tree/index.js";
-import {
+	typeSchemaSymbol,
+	type NodeFromSchema,
+	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchema,
 	type WithType,
 	isTreeNode,
 	NodeKind,
+	type TreeFieldFromImplicitField,
+} from "../../../simple-tree/index.js";
+import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
-	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -38,12 +41,6 @@ import {
 	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
-import type {
-	NodeFromSchema,
-	TreeFieldFromImplicitField,
-	TreeNodeFromImplicitAllowedTypes,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/schemaTypes.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,

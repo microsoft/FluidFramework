@@ -7,12 +7,7 @@
 // eslint-disable-next-line import/no-internal-modules
 import { TreeDataObject, TreeDataObjectFactory } from "@fluidframework/aqueduct/internal";
 import { SharedString } from "@fluidframework/sequence/legacy";
-import {
-	SharedTree,
-	TreeViewConfiguration,
-	type ITree,
-	type TreeView,
-} from "@fluidframework/tree/legacy";
+import { SharedTree, TreeViewConfiguration, type TreeView } from "@fluidframework/tree/legacy";
 import { v4 as uuid } from "uuid";
 
 import { TodoItem, TodoList } from "./index.js";
@@ -33,35 +28,42 @@ export interface TodoItemProps {
  * @remarks
  * This class is responsible for initializing the tree with a predefined schema (`TodoList`)
  */
-export class TodoListDataObject extends TreeDataObject<TreeView<typeof TodoList>> {
+export class TodoListDataObject extends TreeDataObject {
 	public readonly config = new TreeViewConfiguration({ schema: TodoList });
-	public static readonly factory = new TreeDataObjectFactory<
-		TreeDataObject<TreeView<typeof TodoList>>,
-		TreeView<typeof TodoList>
-	>({
+	public static readonly factory = new TreeDataObjectFactory({
 		type: `TreeDataObject`,
 		ctor: TodoListDataObject,
 		sharedObjects: [SharedTree.getFactory(), SharedString.getFactory()],
 	});
 
-	/**
-	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
-	 *
-	 * @param tree - The ITree instance to view.
-	 * @returns A typed TreeView using the TodoList schema.
-	 */
-	public override generateView(tree: ITree): TreeView<typeof TodoList> {
-		return tree.viewWith(this.config) as unknown as TreeView<typeof TodoList>;
-	}
+	#treeView: TreeView<typeof TodoList> | undefined;
 
 	/**
-	 * Initializes the tree with a default title and empty todo item list.
-	 * @remarks Called during the initial creation of the data object.
+	 * The schema-aware view of the tree.
 	 */
-	public override async initializingFirstTime(): Promise<void> {
+	public get treeView(): TreeView<typeof TodoList> {
+		if (this.#treeView === undefined) {
+			throw new Error("treeView has not been initialized.");
+		}
+		return this.#treeView;
+	}
+
+	protected override async initializingFirstTime(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canInitialize) {
+			throw new Error("Incompatible schema");
+		}
+
 		const title = SharedString.create(this.runtime);
 		title.insertText(0, "Title");
 		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
+	}
+
+	protected override async initializingFromExisting(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canView) {
+			throw new Error("Incompatible schema");
+		}
 	}
 
 	/**

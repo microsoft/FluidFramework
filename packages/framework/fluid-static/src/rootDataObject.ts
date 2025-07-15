@@ -23,9 +23,15 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
 import type { IDirectory } from "@fluidframework/map/internal";
-import type { IFluidDataStoreContext, IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreContext,
+	IFluidDataStoreRegistry,
+} from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISharedObjectKind,
 	SharedObjectKind,

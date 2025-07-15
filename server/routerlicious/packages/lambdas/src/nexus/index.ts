@@ -646,5 +646,16 @@ export function configureWebSocketServices(
 			}
 			disposers.splice(0, disposers.length);
 		});
+
+		socket.on(
+			"client_disconnect",
+			(clientId: string, documentId: string, errorMessage: string) => {
+				Lumberjack.error(
+					"Client disconnected due to error",
+					{ clientId, documentId, errorMessage },
+					new Error(errorMessage),
+				);
+			},
+		);
 	});
 }

@@ -17,12 +17,15 @@ import type {
 	IContainerRuntime,
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type {
+	FluidObject,
+	IFluidHandle,
+	IFluidLoadable,
+} from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
-import type { ITree } from "@fluidframework/tree/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
@@ -55,7 +58,7 @@ interface TreeRootDataObjectExtraProps {
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
 export class TreeRootDataObject
-	extends TreeDataObject<ITree>
+	extends TreeDataObject
 	implements IRootDataObject, IProvideTreeRootDataObject
 {
 	readonly #treeKey: string;
@@ -71,19 +74,8 @@ export class TreeRootDataObject
 		return this;
 	}
 
-	protected generateView(tree: ITree): ITree {
-		// Return the tree directly as the view
-		// This provides direct access to the tree for the consumer
-		return tree;
-	}
-
-	protected async initializingFirstTime(): Promise<void> {
-		// No-op, because the tree is initialized in the TreeDataObject base class.
-		return;
-	}
-
 	public get initialObjects(): LoadableObjectRecord {
-		return { [this.#treeKey]: this.treeView };
+		return { [this.#treeKey]: this.tree };
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
@@ -134,11 +126,11 @@ async function provideEntryPoint(
  */
 export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	// TODO: use for runtime factory.
-	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject, ITree>;
+	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>;
 
 	public constructor(
 		compatibilityMode: CompatibilityMode,
-		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject, ITree>,
+		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
 		overrides?: Partial<{
 			runtimeOptions: Partial<IContainerRuntimeOptions>;
 			minVersionForCollab: MinimumVersionForCollab;
@@ -167,10 +159,7 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 /**
  * Factory that creates instances of a tree-based root data object.
  */
-export class TreeRootDataObjectFactory extends TreeDataObjectFactory<
-	TreeRootDataObject,
-	ITree
-> {
+export class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject> {
 	public constructor(
 		treeKey: string,
 		sharedObjects: readonly IChannelFactory[] = [],
