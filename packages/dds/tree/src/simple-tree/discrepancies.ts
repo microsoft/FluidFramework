@@ -238,14 +238,9 @@ export function* getAllowedContentDiscrepancies(
 		}
 	}
 
-	for (const identifier of storedAllowedTypes.keys()) {
+	for (const [identifier, storedSchema] of storedAllowedTypes.entries()) {
 		if (!viewAllowedTypes.has(identifier)) {
-			const storedType = getStoredNodeSchemaType(
-				stored.nodeSchema.get(identifier) ??
-					fail(
-						"Stored schema should have a schema for an identifier present in the root schema types",
-					),
-			);
+			const storedType = getStoredNodeSchemaType(storedSchema);
 			yield {
 				identifier,
 				mismatch: "nodeKind",
@@ -321,7 +316,7 @@ function* getNodeDiscrepancies(
 			const mapAllowedTypes = asTreeNodeSchemaCorePrivate(view).childAnnotatedAllowedTypes;
 			assert(
 				mapAllowedTypes.length === 1 && mapAllowedTypes[0] !== undefined,
-				"Map node schema should have a single field",
+				"Map node schema should have a single set of allowed types",
 			);
 			yield* getFieldDiscrepancies(
 				createFieldSchema(FieldKind.Optional, mapAllowedTypes[0]),
