@@ -403,6 +403,14 @@ function* getNodeDiscrepancies(
 
 /**
  * The function to track the discrepancies between a field view schema and a stored schema.
+ * 
+ * @remarks
+ * This function yields discrepancies in the following cases:
+ * 1. If the view schema has allowed types that are not present in the stored schema.
+ * 2. If the stored schema has allowed types that are not present in the view schema.
+ * 3. If the field kind in the view schema is not compatible with the stored schema.
+ * 
+ * This function does not recurse into the nodes of the view schema and only makes comparisons at the field level.
  *
  * @param keyOrRoot - If the key is missing, it indicates that this is the root field schema.
  */
@@ -415,18 +423,23 @@ function* getFieldDiscrepancies(
 ): Iterable<FieldDiscrepancy> {
 	const normalizedView = normalizeFieldSchema(view);
 
-	// Only track the symmetric differences of two sets.
-	const findSetDiscrepancies = (
-		a: readonly AnnotatedAllowedType<TreeNodeSchema>[],
-		b: TreeTypeSet,
+	/**
+	 * Returns the allowed types that are not present in both the given view and stored schemas.
+	 * It returns a tuple containing two arrays:
+	 * 1. The first array contains the allowed types that are present in the view schema but not in the stored schema.
+	 * 2. The second array contains the allowed types that are present in the stored schema but not in the view schema.
+	 */
+	const findExtraAllowedTypes = (
+		viewAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[],
+		storedAllowedTypes: TreeTypeSet,
 	): [readonly AnnotatedAllowedType<TreeNodeSchema>[], TreeNodeSchemaIdentifier[]] => {
-		const aIdentifiers = new Set(a.map((value) => value.type.identifier));
-		const aDiff = [...a].filter((value) => !b.has(brand(value.type.identifier)));
-		const bDiff = [...b].filter((value) => !aIdentifiers.has(value));
-		return [aDiff, bDiff];
+		const viewNodeSchemaIdentifiers = new Set(viewAllowedTypes.map((value) => value.type.identifier));
+		const viewExtraneousAllowedTypes = [...viewAllowedTypes].filter((value) => !storedAllowedTypes.has(brand(value.type.identifier)));
+		const storedExtraneousAllowedTypes = [...storedAllowedTypes].filter((value) => !viewNodeSchemaIdentifiers.has(value));
+		return [viewExtraneousAllowedTypes, storedExtraneousAllowedTypes];
 	};
 
-	const [viewExtra, storedExtra] = findSetDiscrepancies(
+	const [viewExtra, storedExtra] = findExtraAllowedTypes(
 		normalizedView.annotatedAllowedTypesNormalized.types,
 		stored.types,
 	);
