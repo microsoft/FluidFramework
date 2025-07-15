@@ -129,7 +129,7 @@
 		"test:customBenchmarks": "mocha --config ./.mocharc.customBenchmarks.cjs",
 		"test:customBenchmarks:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:customBenchmarks",
 		"test:memory": "mocha --perfMode --config ./src/test/memory/.mocharc.cjs",
-		"test:memory-profiling:report": "mocha --config ./src/test/memory/.mocharc.cjs",
+		"test:memory-profiling:report": "mocha --perfMode --config ./src/test/memory/.mocharc.cjs",
 		"test:mocha": "npm run test:mocha:esm && echo skipping cjs to avoid overhead - npm run test:mocha:cjs",
 		"test:mocha:cjs": "cross-env MOCHA_SPEC=dist/test mocha",
 		"test:mocha:esm": "mocha",

@@ -22,6 +22,7 @@ const extendedConfig = {
 	"node-option": [...baseNodeOptions, "expose-gc", "gc-global", "unhandled-rejections=strict"], // without leading "--"
 	"reporter": "@fluid-tools/benchmark/dist/MochaReporter.js",
 	"reporterOptions": ["reportDir=.memoryTestsOutput/"],
+	"timeout": "90000",
 };
 
 module.exports = extendedConfig;
