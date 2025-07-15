@@ -476,6 +476,16 @@ function* getFieldDiscrepancies(
 	}
 }
 
+/**
+ * Tracks discrepancies between a view schema and a stored schema for nodes that are treated as object nodes in the stored schema.
+ * This includes both view object nodes and view array nodes.
+ * 
+ * This function yields discrepancies in the following cases:
+ * 1. If the view schema has fields that are not present in the stored schema.
+ * 2. If the stored schema has fields that are not present in the view schema.
+ * 3. If the field kind or allowed types of a field in the view schema is not compatible with the stored schema.
+ * - This function recurses into the common fields of the view and stored schemas to find discrepancies using {@link getFieldDiscrepancies}.
+ */
 function* trackObjectNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
 	view: SimpleKeyMap,
