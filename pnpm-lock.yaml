@@ -322,88 +322,6 @@ importers:
         specifier: ^9.0.0
         version: 9.0.1
 
-  examples/apps/attributable-map:
-    dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
-      '@fluid-experimental/attributable-map':
-        specifier: workspace:~
-        version: link:../../../experimental/dds/attributable-map
-      '@fluid-experimental/attributor':
-        specifier: workspace:~
-        version: link:../../../packages/framework/attributor
-      '@fluidframework/aqueduct':
-        specifier: workspace:~
-        version: link:../../../packages/framework/aqueduct
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/container-definitions
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime
-      '@fluidframework/container-runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/container-runtime-definitions
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
-    devDependencies:
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
-      '@fluid-tools/build-cli':
-        specifier: ^0.56.0
-        version: 0.56.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.56.0
-        version: 0.56.0(@types/node@18.19.67)
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.67
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      html-webpack-plugin:
-        specifier: ^5.6.0
-        version: 5.6.3(webpack@5.97.1)
-      process:
-        specifier: ^0.11.10
-        version: 0.11.10
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-      webpack:
-        specifier: ^5.94.0
-        version: 5.97.1(webpack-cli@5.1.4)
-      webpack-cli:
-        specifier: ^5.1.4
-        version: 5.1.4(webpack-dev-server@4.15.2)(webpack@5.97.1)
-      webpack-dev-server:
-        specifier: ~4.15.2
-        version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
-      webpack-merge:
-        specifier: ^6.0.1
-        version: 6.0.1
-
   examples/apps/blobs:
     dependencies:
       '@fluid-internal/client-utils':
@@ -6647,118 +6565,6 @@ importers:
       sinon:
         specifier: ^18.0.1
         version: 18.0.1
-      typescript:
-        specifier: ~5.4.5
-        version: 5.4.5
-
-  experimental/dds/attributable-map:
-    dependencies:
-      '@fluid-internal/client-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/client-utils
-      '@fluidframework/core-interfaces':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../../packages/common/core-utils
-      '@fluidframework/datastore-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/datastore-definitions
-      '@fluidframework/driver-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/driver-definitions
-      '@fluidframework/driver-utils':
-        specifier: workspace:~
-        version: link:../../../packages/loader/driver-utils
-      '@fluidframework/runtime-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-definitions
-      '@fluidframework/runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/runtime-utils
-      '@fluidframework/shared-object-base':
-        specifier: workspace:~
-        version: link:../../../packages/dds/shared-object-base
-      path-browserify:
-        specifier: ^1.0.1
-        version: 1.0.1
-    devDependencies:
-      '@arethetypeswrong/cli':
-        specifier: ^0.17.1
-        version: 0.17.1
-      '@biomejs/biome':
-        specifier: ~1.9.3
-        version: 1.9.4
-      '@fluid-experimental/attributable-map-previous':
-        specifier: npm:@fluid-experimental/attributable-map@2.50.0
-        version: '@fluid-experimental/attributable-map@2.50.0'
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../../packages/test/mocha-test-setup
-      '@fluid-private/stochastic-test-utils':
-        specifier: workspace:~
-        version: link:../../../packages/test/stochastic-test-utils
-      '@fluid-private/test-dds-utils':
-        specifier: workspace:~
-        version: link:../../../packages/dds/test-dds-utils
-      '@fluid-tools/benchmark':
-        specifier: ^0.51.0
-        version: 0.51.0
-      '@fluid-tools/build-cli':
-        specifier: ^0.56.0
-        version: 0.56.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
-      '@fluidframework/build-common':
-        specifier: ^2.0.3
-        version: 2.0.3
-      '@fluidframework/build-tools':
-        specifier: ^0.56.0
-        version: 0.56.0(@types/node@18.19.67)
-      '@fluidframework/container-definitions':
-        specifier: workspace:~
-        version: link:../../../packages/common/container-definitions
-      '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
-      '@fluidframework/test-runtime-utils':
-        specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
-      '@microsoft/api-extractor':
-        specifier: 7.52.8
-        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.67
-      '@types/path-browserify':
-        specifier: ^1.0.0
-        version: 1.0.3
-      c8:
-        specifier: ^8.0.1
-        version: 8.0.1
-      concurrently:
-        specifier: ^8.2.1
-        version: 8.2.2
-      copyfiles:
-        specifier: ^2.4.1
-        version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
-      eslint:
-        specifier: ~8.55.0
-        version: 8.55.0
-      mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
-      mocha-multi-reporters:
-        specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
-      rimraf:
-        specifier: ^4.4.0
-        version: 4.4.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -17478,9 +17284,6 @@ packages:
     peerDependencies:
       '@types/react': '>=16.8.0 <19.0.0'
       react: '>=16.8.0 <19.0.0'
-
-  '@fluid-experimental/attributable-map@2.50.0':
-    resolution: {integrity: sha512-aX8o4/OZ33pvlHDQB20j8mv/85APqDYeZr5pny85xmGQOeBPc3jJ4dTQ7bpc9uOQdswBK4ZEFGmv9LAJa2S6vA==}
 
   '@fluid-internal/client-utils@2.50.0':
     resolution: {integrity: sha512-4cisKUVNfcqFXJPu/HtC8nIWFWS0auWWYfsyDPXH5Nid70hRVgY9Yw58glwXaknCckk8tS1TJAMVc4xKgmogPw==}
@@ -29557,22 +29360,6 @@ snapshots:
       react: 18.3.1
       tslib: 2.8.1
 
-  '@fluid-experimental/attributable-map@2.50.0':
-    dependencies:
-      '@fluid-internal/client-utils': 2.50.0
-      '@fluidframework/core-interfaces': 2.50.0
-      '@fluidframework/core-utils': 2.50.0
-      '@fluidframework/datastore-definitions': 2.50.0
-      '@fluidframework/driver-definitions': 2.50.0
-      '@fluidframework/driver-utils': 2.50.0(debug@4.4.0)
-      '@fluidframework/runtime-definitions': 2.50.0
-      '@fluidframework/runtime-utils': 2.50.0(debug@4.4.0)
-      '@fluidframework/shared-object-base': 2.50.0(debug@4.4.0)
-      path-browserify: 1.0.1
-    transitivePeerDependencies:
-      - debug
-      - supports-color
-
   '@fluid-internal/client-utils@2.50.0':
     dependencies:
       '@fluidframework/core-interfaces': 2.50.0
@@ -30460,9 +30247,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -36314,33 +36101,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       fast-glob: 3.3.3
       get-tsconfig: 4.10.0
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -36354,13 +36141,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2
