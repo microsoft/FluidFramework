@@ -17,7 +17,7 @@ import type {
 	IContainerRuntime,
 	IContainerRuntimeInternal,
 } from "@fluidframework/container-runtime-definitions/internal";
-import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { FluidObject, IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
@@ -26,6 +26,7 @@ import type { ITree } from "@fluidframework/tree/internal";
 import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import { createDataObject, createSharedObject } from "./rootDataObject.js";
 import type {
 	CompatibilityMode,
 	ContainerSchema,
@@ -36,6 +37,7 @@ import type {
 } from "./types.js";
 import {
 	compatibilityModeToMinVersionForCollab,
+	isDataObjectKind,
 	isSharedObjectKind,
 	makeFluidObject,
 } from "./utils.js";
@@ -85,8 +87,13 @@ export class TreeRootDataObject
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
-		// TODO: Implement dynamic object creation
-		throw new Error("Method not implemented.");
+		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
+		if (isDataObjectKind(internal)) {
+			return createDataObject(internal, this.context);
+		} else if (isSharedObjectKind(internal)) {
+			return createSharedObject(internal, this.runtime);
+		}
+		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
 
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {

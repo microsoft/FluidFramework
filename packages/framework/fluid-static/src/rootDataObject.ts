@@ -23,9 +23,9 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory, IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IDirectory } from "@fluidframework/map/internal";
-import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidDataStoreContext, IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISharedObjectKind,
 	SharedObjectKind,
@@ -142,9 +142,9 @@ export class RootDataObject
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
 		const internal = objectClass as unknown as LoadableObjectKind<T & IFluidLoadable>;
 		if (isDataObjectKind(internal)) {
-			return this.createDataObject(internal);
+			return createDataObject(internal, this.context);
 		} else if (isSharedObjectKind(internal)) {
-			return this.createSharedObject(internal);
+			return createSharedObject(internal, this.runtime);
 		}
 		throw new Error("Could not create new Fluid object because an unknown object was passed");
 	}
@@ -152,24 +152,32 @@ export class RootDataObject
 	public async uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>> {
 		return this.runtime.uploadBlob(blob);
 	}
+}
 
-	private async createDataObject<T extends IFluidLoadable>(
-		dataObjectClass: DataObjectKind<T>,
-	): Promise<T> {
-		const factory = dataObjectClass.factory;
-		const packagePath = [...this.context.packagePath, factory.type];
-		const dataStore = await this.context.containerRuntime.createDataStore(packagePath);
-		const entryPoint = await dataStore.entryPoint.get();
-		return entryPoint as T;
-	}
+/**
+ * Creates a new data object of the specified type.
+ */
+export async function createDataObject<T extends IFluidLoadable>(
+	dataObjectClass: DataObjectKind<T>,
+	context: IFluidDataStoreContext,
+): Promise<T> {
+	const factory = dataObjectClass.factory;
+	const packagePath = [...context.packagePath, factory.type];
+	const dataStore = await context.containerRuntime.createDataStore(packagePath);
+	const entryPoint = await dataStore.entryPoint.get();
+	return entryPoint as T;
+}
 
-	private createSharedObject<T extends IFluidLoadable>(
-		sharedObjectClass: ISharedObjectKind<T>,
-	): T {
-		const factory = sharedObjectClass.getFactory();
-		const obj = this.runtime.createChannel(undefined, factory.type);
-		return obj as unknown as T;
-	}
+/**
+ * Creates a new shared object of the specified type.
+ */
+export function createSharedObject<T extends IFluidLoadable>(
+	sharedObjectClass: ISharedObjectKind<T>,
+	runtime: IFluidDataStoreRuntime,
+): T {
+	const factory = sharedObjectClass.getFactory();
+	const obj = runtime.createChannel(undefined, factory.type);
+	return obj as unknown as T;
 }
 
 const rootDataStoreId = "rootDOId";
