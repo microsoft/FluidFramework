@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-shared",
-	"version": "7.0.0",
+	"version": "8.0.0",
 	"description": "Fluid server shared services",
 	"homepage": "https://fluidframework.com",
 	"repository": {
