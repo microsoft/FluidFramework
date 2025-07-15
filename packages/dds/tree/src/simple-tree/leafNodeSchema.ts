@@ -48,7 +48,6 @@ export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
 	public readonly info: T;
 	public readonly implicitlyConstructable = true as const;
 	public readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-	public readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] = [];
 	public readonly [privateDataSymbol]: TreeNodeSchemaPrivateData = {
 		idempotentInitialize: () =>
 			(this.#initializedData ??= getTreeNodeSchemaInitializedData(this)),
