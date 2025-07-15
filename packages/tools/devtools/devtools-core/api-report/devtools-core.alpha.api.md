@@ -13,9 +13,6 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 // @beta
 export type ContainerKey = string;
 
-// @alpha
-export function createDecomposedContainer(runtime: IFluidDataStoreRuntime): DecomposedContainer;
-
 // @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 

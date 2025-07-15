@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { PureDataObject } from "@fluidframework/aqueduct/internal";
 import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -11,7 +10,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
 import { DataObjectDevtools, type DataObjectProps } from "./DataObjectDevtools.js";
-import { createDecomposedContainer, type DecomposedContainer } from "./DecomposedContainer.js";
+import { DecomposedContainerForDataStore } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -135,9 +134,14 @@ export class FluidDevtools implements IFluidDevtools {
 
 	/**
 	 * Stores Container-level devtools instances registered with this object.
-	 * Maps from a {@link ContainerKey} to the corresponding {@link BaseDevtools} instance.
+	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerDevtools} instance.
 	 */
 	private readonly containers: Map<ContainerKey, ContainerDevtools>;
+
+	/**
+	 * Stores DataObject-level devtools instances registered with this object.
+	 * Maps from a {@link ContainerKey} to the corresponding {@link DataObjectDevtools} instance.
+	 */
 	private readonly dataObjects: Map<ContainerKey, DataObjectDevtools>;
 
 	/**
@@ -335,7 +339,7 @@ export class FluidDevtools implements IFluidDevtools {
 				dataObject as unknown as { context: IFluidDataStoreContext }
 			).context.containerRuntime.generateDocumentUniqueId() as string);
 
-		const decomposedContainer = createDecomposedContainer(
+		const decomposedContainer = new DecomposedContainerForDataStore(
 			(dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime,
 		);
 
@@ -504,14 +508,4 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();
-}
-
-/**
- * Converts a {@link PureDataObject} into a {@link DecomposedContainer} by wrapping its underlying {@link IFluidDataStoreRuntime}.
- * This allows data objects to be registered with devtools by exposing their runtime properties and events
- * through a container-compatible interface.
- */
-export function toDecomposedContainer(dataObject: PureDataObject): DecomposedContainer {
-	const runtime = (dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime;
-	return createDecomposedContainer(runtime);
 }

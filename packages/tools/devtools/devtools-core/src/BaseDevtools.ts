@@ -43,8 +43,6 @@ import {
 /**
  * Abstract base class for devtools implementations.
  * Contains shared functionality between ContainerDevtools and DataObjectDevtools.
- *
- * @internal
  */
 export abstract class BaseDevtools implements IContainerDevtools, HasContainerKey {
 	/**
