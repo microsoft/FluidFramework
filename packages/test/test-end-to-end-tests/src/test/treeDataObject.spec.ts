@@ -38,13 +38,11 @@ class TestTreeDataObject extends TreeDataObject {
 		return TestTreeDataObject.factory;
 	}
 
-	private static readonly factory = new TreeDataObjectFactory(
-		{
-			type: TestTreeDataObject.type,
-			ctor: TestTreeDataObject,
-			sharedObjects: [SharedTree.getFactory()],
-		}
-	);
+	private static readonly factory = new TreeDataObjectFactory({
+		type: TestTreeDataObject.type,
+		ctor: TestTreeDataObject,
+		sharedObjects: [SharedTree.getFactory()],
+	});
 
 	#treeView: TreeView<typeof TestSchema> | undefined;
 
