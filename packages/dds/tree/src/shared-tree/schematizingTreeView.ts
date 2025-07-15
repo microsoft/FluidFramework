@@ -138,11 +138,7 @@ export class SchematizingSimpleTreeView<
 			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
 
-		this.viewSchema = new SchemaCompatibilityTester(
-			this.schemaPolicy,
-			{},
-			this.rootFieldSchema,
-		);
+		this.viewSchema = new SchemaCompatibilityTester(this.schemaPolicy, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,

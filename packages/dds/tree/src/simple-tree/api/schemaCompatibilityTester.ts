@@ -5,10 +5,7 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import type {
-	Adapters,
-	TreeStoredSchema,
-} from "../../core/index.js";
+import type { TreeStoredSchema } from "../../core/index.js";
 import {
 	FieldKinds,
 	type FullSchemaPolicy,

@@ -4,11 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	storedEmptyFieldSchema,
-	type Adapters,
-	type TreeStoredSchema,
-} from "../../../core/index.js";
+import { storedEmptyFieldSchema, type TreeStoredSchema } from "../../../core/index.js";
 import {
 	defaultSchemaPolicy,
 	type FullSchemaPolicy,
@@ -27,7 +23,6 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 
-const noAdapters: Adapters = {};
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: storedEmptyFieldSchema,
@@ -43,11 +38,7 @@ function expectCompatibility(
 		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(view),
 	},
 ) {
-	const viewSchema = new SchemaCompatibilityTester(
-		policy,
-		noAdapters,
-		normalizeFieldSchema(view),
-	);
+	const viewSchema = new SchemaCompatibilityTester(policy, normalizeFieldSchema(view));
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
 }
