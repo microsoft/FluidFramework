@@ -1,4 +1,4 @@
-# @fluid-example/app-integration-todo-list
+# @fluid-example/azure-client-todo-list
 
 This app is a basic example that allows the user to manage a simple to-do list comprised of items containing a title, a description, and a flag indicating whether or not they are complete.
 New items may be inserted, and existing items may be edited and/or deleted.
@@ -19,7 +19,7 @@ You can run this example using the following steps:
 1. Enable [corepack](https://nodejs.org/docs/latest-v16.x/api/corepack.html) by running `corepack enable`.
 1. Run `pnpm install` and `pnpm run build:fast --nolint` from the `FluidFramework` root directory.
     - For an even faster build, you can add the package name to the build command, like this:
-      `pnpm run build:fast --nolint @fluid-example/app-integration-todo-list`
+      `pnpm run build:fast --nolint @fluid-example/azure-client-todo-list`
 1. Run `pnpm start` from this directory and open <http://localhost:8080> in a web browser to see the app running.
 
 <!-- prettier-ignore-end -->

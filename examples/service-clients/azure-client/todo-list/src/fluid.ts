@@ -65,6 +65,8 @@ export const todoListContainerSchema = {
 	initialObjects: {
 		todoList: SharedTree,
 	},
+	// This application leverages nested `SharedString` DDSs within the root `SharedTree` DDS.
+	// To allow dynamic creation of `SharedString`s, we need to specify it as a dynamic object type.
 	dynamicObjectTypes: [SharedString],
 } as const satisfies ContainerSchema;
 /**
@@ -111,12 +113,16 @@ export async function initializeAppForNewContainer(
 	return treeView.root;
 }
 
-async function createInitialTodoList(
-	container: IFluidContainer<TodoListContainerSchema>,
-): Promise<TodoList> {
+/**
+ * Create the initial `TodoList` tree for the application.
+ */
+async function createInitialTodoList(container: IFluidContainer): Promise<TodoList> {
+	// Leverage the provided container to generate a new `SharedString` for the `TodoList` title.
+	// We will insert a handle to it into the `TodoList` below.
 	const listTitle = await container.create(SharedString);
 	listTitle.insertText(0, "My to-do list");
 
+	// Create our 2 initial `TodoItem`s.
 	const todoItem1 = await createTodoItem({
 		container,
 		completed: false,
@@ -127,6 +133,7 @@ async function createInitialTodoList(
 		completed: true,
 		initialTitleText: "Walk the dog",
 	});
+
 	return new TodoList({
 		title: listTitle.handle,
 		items: [todoItem1, todoItem2],
@@ -148,6 +155,8 @@ export async function createTodoItem({
 	initialTitleText?: string;
 	initialDescriptionText?: string;
 }): Promise<TodoItem> {
+	// Leverage the provided container to generate new `SharedString`s for the `TodoItem` title and description.
+	// We will insert handles to them into the `TodoItem` below.
 	const title = await container.create(SharedString);
 	if (initialTitleText !== undefined) {
 		title.insertText(0, initialTitleText);

@@ -9,8 +9,8 @@ import {
 	SharedStringHelper,
 } from "@fluid-example/example-utils";
 import { useTree } from "@fluid-experimental/tree-react-api";
-import type { IFluidContainer } from "fluid-framework";
-import type { ISharedString, SharedString } from "fluid-framework/legacy";
+import type { IFluidContainer, IFluidHandle } from "fluid-framework";
+import type { ISharedString } from "fluid-framework/legacy";
 import React, { useEffect, useRef, useState } from "react";
 
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
@@ -35,24 +35,23 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 ) => {
 	const { todoList, container } = props;
 
-	const [titleString, setTitleString] = useState<SharedString | undefined>();
+	const [titleString, setTitleString] = useState<ISharedString | undefined>();
 
 	const newItemTextInputRef = useRef<HTMLInputElement>(null);
 	useTree(todoList);
 
-	const todoListTitleHandle = todoList.title;
+	const todoListTitleHandle = todoList.title as IFluidHandle<ISharedString>;
 
 	useEffect(() => {
 		todoListTitleHandle
 			.get()
 			.then((title) => {
-				setTitleString(title as ISharedString);
+				setTitleString(title);
 			})
 			.catch((error) => {
 				console.error("Failed to get to-do list title:", error);
 				throw error;
 			});
-		return () => {};
 	}, [todoListTitleHandle]);
 
 	if (titleString === undefined) {
@@ -65,17 +64,16 @@ export const TodoListAppView: React.FC<TodoListAppViewProps> = (
 		if (input === null) {
 			throw new Error("New item text field missing");
 		}
+		const valueToInsert = input.value;
+		input.value = "";
 
 		createTodoItem({
 			container,
-			initialTitleText: input.value,
+			initialTitleText: valueToInsert,
 			completed: false,
 		})
 			.then((todoItem) => {
 				todoList.items.insertAtEnd(todoItem);
-				if (input !== null) {
-					input.value = "";
-				}
 			})
 			.catch((error) => {
 				console.error("Failed to create to-do item:", error);
@@ -134,18 +132,18 @@ interface TodoItemViewProps {
 const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItem } = props;
 
-	const [itemTitle, setItemTitle] = useState<SharedString | undefined>(undefined);
-	const [itemDescription, setItemDescription] = useState<SharedString | undefined>(undefined);
+	const [itemTitle, setItemTitle] = useState<ISharedString | undefined>(undefined);
+	const [itemDescription, setItemDescription] = useState<ISharedString | undefined>(undefined);
 	const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
 
 	useTree(todoItem);
 
-	const todoItemTitleHandle = todoItem.title;
+	const todoItemTitleHandle = todoItem.title as IFluidHandle<ISharedString>;
 	useEffect(() => {
 		todoItemTitleHandle
 			.get()
 			.then((text) => {
-				setItemTitle(text as SharedString);
+				setItemTitle(text);
 			})
 			.catch((error) => {
 				console.error("Failed to get to-do item title:", error);
@@ -153,12 +151,12 @@ const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => 
 			});
 	}, [todoItemTitleHandle]);
 
-	const todoItemDescriptionHandle = todoItem.description;
+	const todoItemDescriptionHandle = todoItem.description as IFluidHandle<ISharedString>;
 	useEffect(() => {
 		todoItemDescriptionHandle
 			.get()
 			.then((text) => {
-				setItemDescription(text as SharedString);
+				setItemDescription(text);
 			})
 			.catch((error) => {
 				console.error("Failed to get to-do item description:", error);
