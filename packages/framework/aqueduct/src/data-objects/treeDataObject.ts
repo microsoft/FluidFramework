@@ -35,7 +35,7 @@ const uninitializedErrorString =
  * ```typescript
  * protected override async initializingFirstTime(): Promise<void> {
  * 	// Generate the schema-aware view of the tree.
- * 	this.tree.viewWith(treeViewConfiguration);
+ * 	this.treeView = this.tree.viewWith(treeViewConfiguration);
  *
  * 	// Initialize the tree with initial data.
  * 	this.treeView.initialize(initialTree);
@@ -47,7 +47,7 @@ const uninitializedErrorString =
  * ```typescript
  * protected override async initializingFromExisting(): Promise<void> {
  * 	// Generate the schema-aware view of the tree.
- * 	this.tree.viewWith(treeViewConfiguration);
+ * 	this.treeView = this.tree.viewWith(treeViewConfiguration);
  *
  *  // Ensure the loaded tree is compatible with the view schema.
  * 	if (!this.treeView.compatibility.canView) {
@@ -94,7 +94,6 @@ export abstract class TreeDataObject<
 
 			this.#tree = sharedTree;
 		} else {
-			// const sharedTree = treeFactory.create(this.runtime, treeChannelId);
 			const sharedTree = this.runtime.createChannel(
 				treeChannelId,
 				SharedTree.getFactory().type,
