@@ -27,6 +27,7 @@ parameters:
 - name: memoryTestPackages
   type: object
   default:
+    - "@fluidframework/tree"
     - "@fluidframework/sequence"
     - "@fluidframework/map"
     - "@fluidframework/matrix"
@@ -231,6 +232,7 @@ stages:
     - job: perf_unit_tests_memory
       displayName: Perf unit tests - memory
       pool: ${{ parameters.poolBuild }}
+      timeoutInMinutes: 90
       steps:
       - template: /tools/pipelines/templates/include-test-perf-benchmarks.yml@self
         parameters:
