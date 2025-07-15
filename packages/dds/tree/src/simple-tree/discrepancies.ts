@@ -31,6 +31,7 @@ import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
+	isRecordNodeSchema,
 	type SimpleKeyMap,
 } from "./node-kinds/index.js";
 import { asLeafNodeSchema } from "./leafNodeSchema.js";
@@ -155,7 +156,7 @@ export interface NodeFieldsDiscrepancy {
 	differences: FieldDiscrepancy[];
 }
 
-type SchemaFactoryNodeKind = "object" | "leaf" | "map";
+type SchemaFactoryNodeKind = "object" | "leaf" | "map" | "array" | "record";
 
 function getStoredNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeKind {
 	if (nodeSchema instanceof ObjectNodeStoredSchema) {
@@ -168,6 +169,25 @@ function getStoredNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactor
 	throwUnsupportedNodeType(nodeSchema.constructor.name);
 }
 
+function isViewTypeEquivalentToStoredType(
+	view: TreeNodeSchema,
+	stored: TreeNodeStoredSchema,
+): boolean {
+	const storedType = getStoredNodeSchemaType(stored);
+	switch (view.kind) {
+		case NodeKind.Leaf:
+			return storedType === "leaf";
+		case NodeKind.Array:
+		case NodeKind.Object:
+			return storedType === "object";
+		case NodeKind.Map:
+		case NodeKind.Record:
+			return storedType === "map";
+		default:
+			throwUnsupportedNodeType(view.kind);
+	}
+}
+
 function getViewNodeSchemaType(schema: TreeNodeSchema): SchemaFactoryNodeKind {
 	switch (schema.kind) {
 		case NodeKind.Leaf: {
@@ -176,8 +196,12 @@ function getViewNodeSchemaType(schema: TreeNodeSchema): SchemaFactoryNodeKind {
 		case NodeKind.Map: {
 			return "map";
 		}
-		// Arrays are treated as objects in the stored schema.
-		case NodeKind.Array:
+		case NodeKind.Record: {
+			return "record";
+		}
+		case NodeKind.Array: {
+			return "array";
+		}
 		case NodeKind.Object: {
 			return "object";
 		}
@@ -256,45 +280,63 @@ function* getNodeDiscrepancies(
 	{ type: view }: AnnotatedAllowedType<TreeNodeSchema>,
 	stored: TreeNodeStoredSchema,
 ): Iterable<Discrepancy> {
-	const viewType = getViewNodeSchemaType(view);
-	const storedType = getStoredNodeSchemaType(stored);
-	if (viewType !== storedType) {
+	if (!isViewTypeEquivalentToStoredType(view, stored)) {
 		yield {
 			identifier,
 			mismatch: "nodeKind",
-			view: viewType,
-			stored: storedType,
+			view: getViewNodeSchemaType(view),
+			stored: getStoredNodeSchemaType(stored),
 		};
 		return;
 	}
 
-	switch (viewType) {
-		case "object": {
+	switch (view.kind) {
+		case NodeKind.Object: {
+			assert(
+				isObjectNodeSchema(view),
+				"schema with node kind of object must implement ObjectNodeSchema",
+			);
+			const fields: SimpleKeyMap | undefined = view.flexKeyMap;
+			const differences = Array.from(
+				trackObjectNodeDiscrepancies(identifier, fields, stored as ObjectNodeStoredSchema),
+			);
+
+			if (differences.length > 0) {
+				yield {
+					identifier,
+					mismatch: "fields",
+					differences,
+				} satisfies NodeFieldsDiscrepancy;
+			}
+			break;
+		}
+		case NodeKind.Array: {
+			assert(
+				isArrayNodeSchema(view),
+				"schema with node kind of array must implement ArrayNodeSchema",
+			);
 			// This is a kludge to allow comparing view array nodes which are treated as arrays with stored array nodes which are treated as objects.
 			// TODO: Revisit this when redesigning the comparision logic.
-			const fields: SimpleKeyMap | undefined = isObjectNodeSchema(view)
-				? view.flexKeyMap
-				: isArrayNodeSchema(view)
-					? new Map([
-							[
-								EmptyKey,
-								{
-									storedKey: EmptyKey,
-									schema: createFieldSchema(
-										FieldKind.Optional,
-										asTreeNodeSchemaCorePrivate(view).childAnnotatedAllowedTypes[0] ??
-											fail("Array node schema should have a single field with allowed types"),
-									),
-								},
-							],
-						])
-					: fail("Node with object field kind should be an object or array node");
+			const fields: SimpleKeyMap | undefined = new Map([
+				[
+					EmptyKey,
+					{
+						storedKey: EmptyKey,
+						schema: createFieldSchema(
+							FieldKind.Optional,
+							asTreeNodeSchemaCorePrivate(view).childAnnotatedAllowedTypes[0] ??
+								fail("Array node schema should have a single field with allowed types"),
+						),
+					},
+				],
+			]);
+
 			const differences = Array.from(
 				trackObjectNodeDiscrepancies(
 					identifier,
 					fields,
 					stored as ObjectNodeStoredSchema,
-					isArrayNodeSchema(view) ? true : false,
+					true,
 				),
 			);
 
@@ -307,7 +349,7 @@ function* getNodeDiscrepancies(
 			}
 			break;
 		}
-		case "map": {
+		case NodeKind.Map: {
 			assert(
 				isMapNodeSchema(view),
 				"schema with node kind of map must implement MapNodeSchema",
@@ -326,7 +368,26 @@ function* getNodeDiscrepancies(
 			);
 			break;
 		}
-		case "leaf": {
+		case NodeKind.Record: {
+			assert(
+				isRecordNodeSchema(view),
+				"schema with node kind of record must implement RecordNodeSchema",
+			);
+
+			const recordAllowedTypes = asTreeNodeSchemaCorePrivate(view).childAnnotatedAllowedTypes;
+			assert(
+				recordAllowedTypes.length === 1 && recordAllowedTypes[0] !== undefined,
+				"Map node schema should have a single set of allowed types",
+			);
+			yield* getFieldDiscrepancies(
+				createFieldSchema(FieldKind.Optional, recordAllowedTypes[0]),
+				(stored as MapNodeStoredSchema).mapFields,
+				identifier,
+				undefined,
+			);
+			break;
+		}
+		case NodeKind.Leaf: {
 			// TODO: leafKind seems like a bad name
 			const viewValue = asLeafNodeSchema(view).leafKind;
 			const storedValue = (stored as LeafNodeStoredSchema).leafValue;
