@@ -30,7 +30,7 @@ import {
 	type HydratedFlexTreeNode,
 } from "../../feature-libraries/index.js";
 
-import { SimpleContextSlot, type Context, type HydratedContext } from "./context.js";
+import type { Context, HydratedContext } from "./context.js";
 import type { TreeNode } from "./treeNode.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
@@ -478,3 +478,11 @@ export function createTreeNodeFromInner(innerNode: InnerNode): TreeNode | TreeVa
 				internal,
 			);
 }
+
+/**
+ * Creating multiple simple tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
+ * This slot is used to detect if one already exists and error if creating a second.
+ * @remarks
+ * See also {@link ContextSlot} in which the flex-tree context is stored.
+ */
+export const SimpleContextSlot = anchorSlot<HydratedContext>();
