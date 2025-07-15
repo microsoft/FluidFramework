@@ -5,12 +5,7 @@
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 
-import {
-	areEqualChangeAtomIds,
-	type ChangeAtomId,
-	type RevisionMetadataSource,
-	type RevisionTag,
-} from "../../core/index.js";
+import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../core/index.js";
 import type { IdAllocator } from "../../util/index.js";
 import type {
 	ComposeNodeManager,
@@ -42,11 +37,13 @@ import {
 	getAttachedNodeId,
 	getDetachedNodeId,
 	getInputCellId,
+	getMovedNodeId,
 	getOutputCellId,
 	isAttach,
 	isDetach,
 	isNewAttach,
 	isNoopMark,
+	isPin,
 	isRename,
 	markEmptiesCells,
 	markHasCellEffect,
@@ -283,8 +280,8 @@ export class ComposeQueue {
 		private readonly revisionMetadata: RevisionMetadataSource,
 	) {
 		const queryFunc: NodeRangeQueryFunc = (mark) =>
-			isDetach(mark)
-				? moveEffects.getNewChangesForBaseDetach(getDetachedNodeId(mark), mark.count).length
+			isDetach(mark) || isPin(mark)
+				? moveEffects.getNewChangesForBaseDetach(getMovedNodeId(mark), mark.count).length
 				: mark.count;
 
 		this.baseMarks = new MarkQueue(baseMarks, queryFunc);

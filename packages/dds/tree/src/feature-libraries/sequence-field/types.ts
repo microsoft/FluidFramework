@@ -123,6 +123,10 @@ export interface Rename {
 	readonly idOverride: CellId;
 }
 
+export interface Pin extends CellMark<Attach> {
+	cellId: undefined;
+}
+
 export type MarkEffect = NoopMark | Attach | Detach | Rename;
 
 export type CellMark<TMark> = TMark & HasMarkFields;

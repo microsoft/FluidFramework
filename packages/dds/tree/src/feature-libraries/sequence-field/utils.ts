@@ -37,6 +37,7 @@ import {
 	NoopMarkType,
 	type CellCount,
 	type Rename,
+	type Pin,
 } from "./types.js";
 
 export function isEmpty(change: Changeset): boolean {
@@ -288,6 +289,10 @@ export function getDetachedNodeId(mark: Detach): ChangeAtomId {
 	return makeChangeAtomId(mark.id, mark.revision);
 }
 
+export function getMovedNodeId(mark: Attach | Detach): ChangeAtomId {
+	return makeChangeAtomId(mark.id, mark.revision);
+}
+
 /**
  * Preserves the semantics of the given `mark` but repackages it into a `DetachOfRemovedNodes` when possible.
  */
@@ -445,6 +450,10 @@ export function compareCellsFromSameRevision(
 export function isDetach(mark: MarkEffect | undefined): mark is Detach {
 	const type = mark?.type;
 	return type === "Remove";
+}
+
+export function isPin(mark: Mark): mark is Pin {
+	return mark?.type === "Insert" && mark.cellId === undefined;
 }
 
 export function isRemoveMark(mark: Mark | undefined): mark is CellMark<Detach> {
