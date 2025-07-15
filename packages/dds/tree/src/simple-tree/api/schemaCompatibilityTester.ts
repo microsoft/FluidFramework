@@ -5,13 +5,9 @@
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import {
-	AdaptedViewSchema,
-	type TreeNodeStoredSchema,
-	type Adapters,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
+import type {
+	Adapters,
+	TreeStoredSchema,
 } from "../../core/index.js";
 import {
 	FieldKinds,
@@ -182,48 +178,5 @@ export class SchemaCompatibilityTester {
 			canUpgrade,
 			isEquivalent: canView && canUpgrade,
 		};
-	}
-
-	/**
-	 * Compute a schema that `original` could be viewed as using adapters as needed.
-	 *
-	 * TODO: have a way for callers to get invalidated on schema updates.
-	 */
-	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
-		const adapted = {
-			rootFieldSchema: this.adaptField(stored.rootFieldSchema),
-			nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(),
-		};
-
-		for (const [key, schema] of stored.nodeSchema) {
-			const adapatedTree = this.adaptTree(schema);
-			adapted.nodeSchema.set(key, adapatedTree);
-		}
-
-		// TODO: subset these adapters to the ones that were needed/used.
-		return new AdaptedViewSchema(this.adapters, adapted);
-	}
-
-	/**
-	 * Adapt original such that it allows member types which can be adapted to its specified types.
-	 */
-	private adaptField(original: TreeFieldStoredSchema): TreeFieldStoredSchema {
-		if (original.types !== undefined) {
-			const types: Set<TreeNodeSchemaIdentifier> = new Set(original.types);
-			for (const treeAdapter of this.adapters?.tree ?? []) {
-				if (types.has(treeAdapter.input)) {
-					types.delete(treeAdapter.input);
-					types.add(treeAdapter.output);
-				}
-			}
-
-			return { kind: original.kind, types, persistedMetadata: undefined };
-		}
-		return original;
-	}
-
-	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
-		// TODO: support adapters like missing field adapters.
-		return original;
 	}
 }
