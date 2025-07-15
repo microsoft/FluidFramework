@@ -48,7 +48,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
-		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@5.0.0",
+		"@fluidframework/server-services-core-previous": "npm:@fluidframework/server-services-core@6.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",
@@ -69,53 +69,7 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_CombinedProducer": {
-				"forwardCompat": false
-			},
-			"Class_MongoManager": {
-				"forwardCompat": false
-			},
-			"Class_TokenRevocationError": {
-				"backCompat": false
-			},
-			"Class_TokenRevokedError": {
-				"backCompat": false
-			},
-			"ClassStatics_TokenRevocationError": {
-				"backCompat": false
-			},
-			"ClassStatics_TokenRevokedError": {
-				"backCompat": false
-			},
-			"Interface_IBoxcarMessage": {
-				"backCompat": false
-			},
-			"Interface_IContext": {
-				"forwardCompat": false
-			},
-			"Interface_IOrdererConnection": {
-				"forwardCompat": false
-			},
-			"Interface_IOrdererManager": {
-				"forwardCompat": false
-			},
-			"Interface_IProducer": {
-				"forwardCompat": false
-			},
-			"Interface_ITenantConfig": {
-				"forwardCompat": false
-			},
-			"Interface_ITenantManager": {
-				"forwardCompat": false
-			},
-			"Interface_IEncryptedTenantKeys": {
-				"backCompat": false
-			},
-			"Enum_EncryptionKeyVersion": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }

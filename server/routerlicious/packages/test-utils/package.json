@@ -73,7 +73,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
-		"@fluidframework/server-test-utils-previous": "npm:@fluidframework/server-test-utils@5.0.0",
+		"@fluidframework/server-test-utils-previous": "npm:@fluidframework/server-test-utils@6.0.0",
 		"@types/lodash": "^4.14.118",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.19.39",
@@ -89,17 +89,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_TestContext": {
-				"forwardCompat": false
-			},
-			"Class_TestProducer": {
-				"forwardCompat": false
-			},
-			"Class_TestTenantManager": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }
