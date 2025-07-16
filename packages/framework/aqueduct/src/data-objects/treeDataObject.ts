@@ -12,8 +12,9 @@ import type { DataObjectTypes } from "./types.js";
 
 /**
  * Channel ID of {@link TreeDataObject}'s root {@link @fluidframework/tree#SharedTree}.
+ * @privateRemarks This key is persisted and should not be changed without a migration strategy.
  */
-const treeChannelId = "tree-data-object";
+const treeChannelId = "root-tree";
 
 const uninitializedErrorString =
 	"The tree has not yet been initialized. The data object must be initialized before accessing.";
@@ -56,7 +57,7 @@ const uninitializedErrorString =
  * }
  * ```
  *
- * @internal
+ * @legacy @alpha
  */
 export abstract class TreeDataObject<
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
