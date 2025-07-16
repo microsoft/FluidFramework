@@ -17,11 +17,11 @@ import {
  *
  * @typeParam TDataObject - The concrete TreeDataObject implementation.
  * @typeParam TDataObjectTypes - The input types for the DataObject
+ *
  * @internal
  */
 export class TreeDataObjectFactory<
-	TDataObject extends TreeDataObject<TTreeView, TDataObjectTypes>,
-	TTreeView,
+	TDataObject extends TreeDataObject<TDataObjectTypes>,
 	TDataObjectTypes extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
 	public constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>) {

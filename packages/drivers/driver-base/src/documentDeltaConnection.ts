@@ -37,7 +37,9 @@ import {
 	createChildMonitoringContext,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
+	isFluidError,
 	normalizeError,
+	type IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
@@ -59,6 +61,11 @@ export class DocumentDeltaConnection
 	// WARNING: These are critical events that we can't miss, so registration for them has to be in place at all times!
 	// Including before handshake is over, and after that (but before DeltaManager had a chance to put its own handlers)
 	static readonly eventsAlwaysForwarded = ["disconnect", "error"];
+
+	/**
+	 * Error message used when client is closing the delta connection cleanly.
+	 */
+	static readonly errorMessageForClientDisposeWithoutError = "Client closing delta connection";
 
 	/**
 	 * Last known sequence number to ordering service at the time of connection
@@ -400,8 +407,11 @@ export class DocumentDeltaConnection
 	 * Disconnect from the websocket, and permanently disable this DocumentDeltaConnection and close the socket.
 	 * However the OdspDocumentDeltaConnection differ in dispose as in there we don't close the socket. There is no
 	 * multiplexing here, so we need to close the socket here.
+	 *
+	 * @param error - An optional error object. If provided, the connection will be closed with the specified error,
+	 * indicating an error-triggered disconnect. If not provided, the connection will be closed cleanly.
 	 */
-	public dispose() {
+	public dispose(error?: Error) {
 		this.logger.sendTelemetryEvent({
 			eventName: "ClientClosingDeltaConnection",
 			driverVersion,
@@ -409,17 +419,26 @@ export class DocumentDeltaConnection
 				...this.getConnectionDetailsProps(),
 			}),
 		});
-		this.disconnect(
-			createGenericNetworkError(
-				// pre-0.58 error message: clientClosingConnection
-				"Client closing delta connection",
-				{ canRetry: true },
-				{ driverVersion },
-			),
-		);
+		if (isFluidError(error)) {
+			const fluidError = normalizeError(error, {
+				props: { driverVersion },
+			}) as IFluidErrorBase & {
+				canRetry: boolean;
+			};
+			this.disconnect(fluidError);
+		} else {
+			this.disconnect(
+				createGenericNetworkError(
+					// pre-0.58 error message: clientClosingConnection
+					error?.message ?? DocumentDeltaConnection.errorMessageForClientDisposeWithoutError,
+					{ canRetry: error === undefined },
+					{ driverVersion },
+				),
+			);
+		}
 	}
 
-	protected disconnect(err: IAnyDriverError) {
+	protected readonly disconnect = (err: IAnyDriverError) => {
 		// Can't check this.disposed here, as we get here on socket closure,
 		// so _disposed & socket.connected might be not in sync while processing
 		// "dispose" event.
@@ -449,7 +468,7 @@ export class DocumentDeltaConnection
 
 		// Let user of connection object know about disconnect.
 		this.emit("disconnect", err);
-	}
+	};
 
 	/**
 	 * Disconnect from the websocket.
