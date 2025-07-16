@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IAudience } from "@fluidframework/container-definitions";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
@@ -98,14 +97,11 @@ export class ContainerDevtools extends BaseDevtools {
 	/**
 	 * The registered Container.
 	 */
-	public readonly container: IContainer;
-
-	/**
-	 * The {@link ContainerDevtools.container}'s audience.
-	 */
-	public get audience(): IAudience {
-		return this.container.audience;
+	protected override get container(): IContainer {
+		return this._container;
 	}
+
+	private readonly _container: IContainer;
 
 	public constructor(props: ContainerDevtoolsProps) {
 		// Create specific message handlers for container operations
@@ -140,18 +136,11 @@ export class ContainerDevtools extends BaseDevtools {
 
 		super(props.containerKey, specificHandlers, props.containerData);
 
-		this.container = props.container;
+		this._container = props.container;
 
-		// Bind Container events required for change-logging
-		this.container.on("attached", this.containerAttachedHandler);
-		this.container.on("connected", this.containerConnectedHandler);
-		this.container.on("disconnected", this.containerDisconnectedHandler);
-		this.container.on("disposed", this.containerDisposedHandler);
-		this.container.on("closed", this.containerClosedHandler);
-
-		// Bind Audience events required for change-logging
-		this.audience.on("addMember", this.audienceMemberAddedHandler);
-		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
+		// Bind container and audience events after container is set
+		this.bindContainerEvents();
+		this.bindAudienceEvents();
 	}
 
 	protected override getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
@@ -172,25 +161,5 @@ export class ContainerDevtools extends BaseDevtools {
 			clientId: this.container.clientId,
 			userId: clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
-	}
-
-	protected override getClientId(): string | undefined {
-		return this.container.clientId;
-	}
-
-	public override dispose(): void {
-		// Unbind Container events
-		this.container.off("attached", this.containerAttachedHandler);
-		this.container.off("connected", this.containerConnectedHandler);
-		this.container.off("disconnected", this.containerDisconnectedHandler);
-		this.container.off("disposed", this.containerDisposedHandler);
-		this.container.off("closed", this.containerClosedHandler);
-
-		// Unbind Audience events
-		this.audience.off("addMember", this.audienceMemberAddedHandler);
-		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
-
-		// Call parent dispose
-		super.dispose();
 	}
 }

@@ -4,7 +4,6 @@
  */
 
 import type { PureDataObject } from "@fluidframework/aqueduct/internal";
-import type { IAudience } from "@fluidframework/container-definitions";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 
 import { BaseDevtools } from "./BaseDevtools.js";
@@ -65,14 +64,11 @@ export class DataObjectDevtools extends BaseDevtools {
 	/**
 	 * The registered data object's decomposed container.
 	 */
-	public readonly container: DecomposedContainer;
-
-	/**
-	 * The data object's audience.
-	 */
-	public get audience(): IAudience {
-		return this.container.audience;
+	protected override get container(): DecomposedContainer {
+		return this._container;
 	}
+
+	private readonly _container: DecomposedContainer;
 
 	public constructor(props: DataObjectDevtoolsProps) {
 		// Data objects don't support connection operations, so pass empty handlers
@@ -80,18 +76,11 @@ export class DataObjectDevtools extends BaseDevtools {
 
 		super(props.containerKey, specificHandlers, props.containerData);
 
-		this.container = props.container;
+		this._container = props.container;
 
-		// Bind Container events required for change-logging
-		this.container.on("attached", this.containerAttachedHandler);
-		this.container.on("connected", this.containerConnectedHandler);
-		this.container.on("disconnected", this.containerDisconnectedHandler);
-		this.container.on("disposed", this.containerDisposedHandler);
-		this.container.on("closed", this.containerClosedHandler);
-
-		// Bind Audience events required for change-logging
-		this.audience.on("addMember", this.audienceMemberAddedHandler);
-		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
+		// Bind container and audience events after container is set
+		this.bindContainerEvents();
+		this.bindAudienceEvents();
 	}
 
 	protected override getSupportedFeatures(): ContainerDevtoolsFeatureFlags {
@@ -115,25 +104,5 @@ export class DataObjectDevtools extends BaseDevtools {
 			clientId: this.container.clientId,
 			userId: clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
-	}
-
-	protected override getClientId(): string | undefined {
-		return this.container.clientId;
-	}
-
-	public override dispose(): void {
-		// Unbind Container events
-		this.container.off("attached", this.containerAttachedHandler);
-		this.container.off("connected", this.containerConnectedHandler);
-		this.container.off("disconnected", this.containerDisconnectedHandler);
-		this.container.off("disposed", this.containerDisposedHandler);
-		this.container.off("closed", this.containerClosedHandler);
-
-		// Unbind Audience events
-		this.audience.off("addMember", this.audienceMemberAddedHandler);
-		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
-
-		// Call parent dispose
-		super.dispose();
 	}
 }

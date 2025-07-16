@@ -4,6 +4,7 @@
  */
 
 import type { IAudience } from "@fluidframework/container-definitions";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 
@@ -11,6 +12,7 @@ import type { AudienceClientMetadata } from "./AudienceMetadata.js";
 import type { ContainerKey, FluidObjectId, HasContainerKey } from "./CommonInterfaces.js";
 import { ContainerStateChangeKind } from "./Container.js";
 import type { ContainerStateMetadata } from "./ContainerMetadata.js";
+import type { DecomposedContainer } from "./DecomposedContainer.js";
 import type { ContainerDevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
 import type { AudienceChangeLogEntry, ConnectionStateChangeLogEntry } from "./Logs.js";
@@ -97,9 +99,16 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	// #region Abstract methods that must be implemented by subclasses
 
 	/**
+	 * Gets the container associated with this devtools instance.
+	 */
+	protected abstract get container(): IContainer | DecomposedContainer;
+
+	/**
 	 * Gets the audience associated with this devtools instance.
 	 */
-	public abstract get audience(): IAudience;
+	protected get audience(): IAudience {
+		return this.container.audience;
+	}
 
 	/**
 	 * Gets the set of features supported by this instance.
@@ -114,7 +123,9 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	/**
 	 * Gets the client ID for this devtools instance.
 	 */
-	protected abstract getClientId(): string | undefined;
+	protected getClientId(): string | undefined {
+		return this.container.clientId;
+	}
 
 	// #endregion
 
@@ -399,6 +410,44 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	}
 
 	/**
+	 * Binds container events for change logging.
+	 */
+	protected bindContainerEvents(): void {
+		this.container.on("attached", this.containerAttachedHandler);
+		this.container.on("connected", this.containerConnectedHandler);
+		this.container.on("disconnected", this.containerDisconnectedHandler);
+		this.container.on("disposed", this.containerDisposedHandler);
+		this.container.on("closed", this.containerClosedHandler);
+	}
+
+	/**
+	 * Unbinds container events.
+	 */
+	protected unbindContainerEvents(): void {
+		this.container.off("attached", this.containerAttachedHandler);
+		this.container.off("connected", this.containerConnectedHandler);
+		this.container.off("disconnected", this.containerDisconnectedHandler);
+		this.container.off("disposed", this.containerDisposedHandler);
+		this.container.off("closed", this.containerClosedHandler);
+	}
+
+	/**
+	 * Binds audience events for change logging.
+	 */
+	protected bindAudienceEvents(): void {
+		this.audience.on("addMember", this.audienceMemberAddedHandler);
+		this.audience.on("removeMember", this.audienceMemberRemovedHandler);
+	}
+
+	/**
+	 * Unbinds audience events.
+	 */
+	protected unbindAudienceEvents(): void {
+		this.audience.off("addMember", this.audienceMemberAddedHandler);
+		this.audience.off("removeMember", this.audienceMemberRemovedHandler);
+	}
+
+	/**
 	 * {@inheritDoc IContainerDevtools.getContainerConnectionLog}
 	 */
 	public getContainerConnectionLog(): readonly ConnectionStateChangeLogEntry[] {
@@ -418,6 +467,10 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	 * {@inheritDoc IContainerDevtools.dispose}
 	 */
 	public dispose(): void {
+		// Unbind container and audience events
+		this.unbindContainerEvents();
+		this.unbindAudienceEvents();
+
 		// Unbind window event listener
 		globalThis.removeEventListener?.("message", this.windowMessageHandler);
 
