@@ -86,7 +86,7 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { convertFieldKind } from "../../toStoredSchema.js";
 
 /**
