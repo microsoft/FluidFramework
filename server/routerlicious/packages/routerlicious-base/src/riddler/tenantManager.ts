@@ -150,13 +150,19 @@ export class TenantManager {
 		return tenant.privateKeys ? true : false;
 	}
 
-	private isTenantPublicNetworkAccessEnabled(tenant: ITenantDocument): boolean {
-		return tenant.publicNetworkAccessEnabled ? true : false;
-	}
-
 	// Currently key and secondary are not optional, but this is to make sure we don't break anything if they are optional in the future
 	private isTenantSharedKeyAccessEnabled(tenant: ITenantDocument): boolean {
 		return tenant.key || tenant.secondaryKey ? true : false;
+	}
+
+	private getExistingTenantPublicNetworkAccess(tenant: ITenantDocument): boolean {
+		const publicNetworkAccessEnabled = tenant.publicNetworkAccessEnabled;
+
+		if (publicNetworkAccessEnabled === undefined) {
+			// If not defined, public network access is enabled by default
+			return true;
+		}
+		return publicNetworkAccessEnabled;
 	}
 
 	public async signToken(
@@ -682,7 +688,7 @@ export class TenantManager {
 
 		const updates: Partial<ITenantDocument> = {};
 		const isTenantPublicNetworkAccessEnabled =
-			this.isTenantPublicNetworkAccessEnabled(tenantDocument);
+			this.getExistingTenantPublicNetworkAccess(tenantDocument);
 
 		if (publicNetworkAccessEnabled === isTenantPublicNetworkAccessEnabled) {
 			// no update needed
