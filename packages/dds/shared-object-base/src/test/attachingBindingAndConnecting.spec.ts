@@ -8,23 +8,23 @@ import { strict as assert } from "node:assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IFluidDataStoreRuntimeEvents,
+import type {
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
+	type IChannelAttributes,
+	type IFluidDataStoreRuntime,
+	type IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
-	type IExperimentalIncrementalSummaryContext,
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	ISummaryTreeWithStats,
+	type IExperimentalIncrementalSummaryContext,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IFluidSerializer } from "../serializer.js";
+import type { IFluidSerializer } from "../serializer.js";
 import { SharedObject } from "../sharedObject.js";
 
 /* eslint-disable-next-line @typescript-eslint/ban-types --

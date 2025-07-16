@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainer,
 	IFluidCodeDetails,
 	IFluidModule,
@@ -11,23 +11,25 @@ import {
 	ILoader,
 	ILoaderOptions,
 	IProvideFluidCodeDetailsComparer,
-	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
-import {
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceFactory,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	ITelemetryLoggerExt,
 	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 	mixinMonitoringContext,
@@ -38,7 +40,7 @@ import { v4 as uuid } from "uuid";
 import { Container } from "./container.js";
 import { DebugLogger } from "./debugLogger.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { ProtocolHandlerBuilder } from "./protocol.js";
 import type { IPendingContainerState } from "./serializedStateManager.js";
 import {
 	getAttachedContainerStateFromSerializedContainer,

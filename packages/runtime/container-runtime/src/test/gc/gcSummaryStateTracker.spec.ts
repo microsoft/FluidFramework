@@ -11,13 +11,8 @@ import {
 	gcTombstoneBlobKey,
 } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	GCSummaryStateTracker,
-	IGCStats,
-	IGarbageCollectionState,
-	gcStateBlobKey,
-	nextGCVersion,
-} from "../../gc/index.js";
+import type { IGCStats, IGarbageCollectionState } from "../../gc/index.js";
+import { GCSummaryStateTracker, gcStateBlobKey, nextGCVersion } from "../../gc/index.js";
 
 describe("GCSummaryStateTracker tests", () => {
 	/**

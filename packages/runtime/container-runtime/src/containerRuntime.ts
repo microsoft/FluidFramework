@@ -166,13 +166,12 @@ import { v4 as uuid } from "uuid";
 import { BindBatchTracker } from "./batchTracker.js";
 import {
 	BlobManager,
-	IPendingBlobs,
 	blobManagerBasePath,
 	blobsTreeName,
 	isBlobPath,
 	loadBlobManagerLoadInfo,
-	type IBlobManagerLoadInfo,
 } from "./blobManager/index.js";
+import type { IPendingBlobs, type IBlobManagerLoadInfo } from "./blobManager/index.js";
 import {
 	ChannelCollection,
 	getSummaryForDatastores,
@@ -199,47 +198,47 @@ import {
 	DeltaManagerSummarizerProxy,
 } from "./deltaManagerProxies.js";
 import { DeltaScheduler } from "./deltaScheduler.js";
-import {
-	GCNodeType,
-	GarbageCollector,
+import { GCNodeType, GarbageCollector, gcGenerationOptionName } from "./gc/index.js";
+import type {
 	IGCRuntimeOptions,
 	IGCStats,
 	IGarbageCollector,
-	gcGenerationOptionName,
 	type GarbageCollectionMessage,
 	type IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
-import {
-	ContainerMessageType,
-	type OutboundContainerRuntimeDocumentSchemaMessage,
+import { ContainerMessageType } from "./messageTypes.js";
+import type {
 	ContainerRuntimeGCMessage,
+	type OutboundContainerRuntimeDocumentSchemaMessage,
 	type ContainerRuntimeIdAllocationMessage,
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 	type UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
-import { ISavedOpMetadata } from "./metadata.js";
+import type { ISavedOpMetadata } from "./metadata.js";
 import {
-	LocalBatchMessage,
-	BatchStartInfo,
 	DuplicateBatchDetector,
 	ensureContentsDeserialized,
-	IBatchCheckpoint,
 	OpCompressor,
 	OpDecompressor,
 	OpGroupingManager,
 	OpSplitter,
 	Outbox,
 	RemoteMessageProcessor,
+} from "./opLifecycle/index.js";
+import type {
+	LocalBatchMessage,
+	BatchStartInfo,
+	IBatchCheckpoint,
 	type OutboundBatch,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
-import {
+import { PendingStateManager } from "./pendingStateManager.js";
+import type {
 	PendingMessageResubmitData,
 	IPendingLocalState,
-	PendingStateManager,
 	type PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
@@ -257,9 +256,6 @@ import type {
 	EnqueueSummarizeResult,
 	ISerializedElection,
 	ISummarizeResults,
-} from "./summary/index.js";
-import {
-	DocumentsSchemaController,
 	IBaseSummarizeResult,
 	IConnectableRuntime,
 	IContainerRuntimeMetadata,
@@ -275,9 +271,13 @@ import {
 	ISummarizerRuntime,
 	ISummaryMetadataMessage,
 	IdCompressorMode,
+	SubmitSummaryResult,
+	ISummaryConfiguration,
+} from "./summary/index.js";
+import {
+	DocumentsSchemaController,
 	OrderedClientElection,
 	RetriableSummaryError,
-	SubmitSummaryResult,
 	aliasBlobName,
 	chunksBlobName,
 	recentBatchInfoBlobName,
@@ -295,7 +295,6 @@ import {
 	SummaryCollection,
 	OrderedClientCollection,
 	validateSummaryHeuristicConfiguration,
-	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 	isSummariesDisabled,
 	summarizerClientType,

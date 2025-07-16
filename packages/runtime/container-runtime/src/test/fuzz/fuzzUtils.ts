@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { AsyncGenerator, AsyncReducer } from "@fluid-private/stochastic-test-utils";
 import {
-	AsyncGenerator,
-	AsyncReducer,
 	combineReducersAsync,
 	createWeightedAsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";

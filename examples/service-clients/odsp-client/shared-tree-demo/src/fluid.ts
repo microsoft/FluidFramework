@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { OdspClient, OdspContainerServices } from "@fluidframework/odsp-client/beta";
-import { ContainerSchema, IFluidContainer, SharedTree } from "fluid-framework";
+import type { OdspContainerServices } from "@fluidframework/odsp-client/beta";
+import { OdspClient } from "@fluidframework/odsp-client/beta";
+import type { ContainerSchema, IFluidContainer } from "fluid-framework";
+import { SharedTree } from "fluid-framework";
 
 import { clientProps } from "./clientProps.js";
 

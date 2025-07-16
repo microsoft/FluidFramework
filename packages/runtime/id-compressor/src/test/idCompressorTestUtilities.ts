@@ -5,10 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import {
+import type {
 	BaseFuzzTestState,
 	Generator,
 	SaveInfo,
+} from "@fluid-private/stochastic-test-utils";
+import {
 	createWeightedGenerator,
 	interleave,
 	makeRandom,
@@ -16,12 +18,11 @@ import {
 	repeat,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 import { IdCompressor } from "../idCompressor.js";
-import {
-	type IIdCompressor,
-	type IIdCompressorCore,
+import { createIdCompressor } from "../index.js";
+import type {
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -29,20 +30,14 @@ import {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	createIdCompressor,
+	IIdCompressor,
+	IIdCompressorCore,
 } from "../index.js";
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
 
-import {
-	FinalCompressedId,
-	ReadonlyIdCompressor,
-	fail,
-	getOrCreate,
-	incrementStableId,
-	isFinalId,
-	isLocalId,
-} from "./testCommon.js";
+import type { FinalCompressedId, ReadonlyIdCompressor } from "./testCommon.js";
+import { fail, getOrCreate, incrementStableId, isFinalId, isLocalId } from "./testCommon.js";
 
 /**
  * A readonly `Map` which is known to contain a value for every possible key

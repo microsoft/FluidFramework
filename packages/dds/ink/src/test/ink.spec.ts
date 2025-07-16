@@ -6,10 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
+import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
@@ -17,7 +17,7 @@ import {
 
 import { Ink } from "../ink.js";
 import { InkFactory } from "../inkFactory.js";
-import { IPen } from "../interfaces.js";
+import type { IPen } from "../interfaces.js";
 
 describe("Ink", () => {
 	let ink: Ink;

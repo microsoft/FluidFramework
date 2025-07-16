@@ -8,16 +8,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { Client } from "../client.js";
-import {
-	LocalReferencePosition,
-	SlidingPreference,
-	setValidateRefCount,
-} from "../localReference.js";
+import type { Client } from "../client.js";
+import type { LocalReferencePosition } from "../localReference.js";
+import { SlidingPreference, setValidateRefCount } from "../localReference.js";
 import { getSlideToSegoff } from "../mergeTree.js";
-import { type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
 import { DetachedReferencePosition } from "../referencePositions.js";

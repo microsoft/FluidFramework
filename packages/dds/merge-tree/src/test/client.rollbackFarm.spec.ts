@@ -7,8 +7,8 @@
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
+import type { TestOperation } from "./mergeTreeOperationRunner.js";
 import {
-	TestOperation,
 	annotateRange,
 	applyMessages,
 	doOverRanges,

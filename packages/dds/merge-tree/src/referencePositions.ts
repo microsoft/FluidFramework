@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { SlidingPreference } from "./localReference.js";
-import { ISegment } from "./mergeTreeNodes.js";
+import type { SlidingPreference } from "./localReference.js";
+import type { ISegment } from "./mergeTreeNodes.js";
 import { ReferenceType } from "./ops.js";
-import { PropertySet } from "./properties.js";
+import type { PropertySet } from "./properties.js";
 import { isMergeNodeInfo } from "./segmentInfos.js";
 
 /**

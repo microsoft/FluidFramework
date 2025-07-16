@@ -6,16 +6,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
-import { IOdspTokenProvider } from "@fluidframework/odsp-client/internal";
-import {
+import type { IOdspTokenProvider } from "@fluidframework/odsp-client/internal";
+import type {
 	IPublicClientConfig,
 	TokenRequestCredentials,
-	getFetchTokenUrl,
-	unauthPostAsync,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
+import { getFetchTokenUrl, unauthPostAsync } from "@fluidframework/odsp-doclib-utils/internal";
+import type { TokenResponse } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { IOdspCredentials } from "./OdspClientFactory.js";
+import type { IOdspCredentials } from "./OdspClientFactory.js";
 
 /**
  * This class implements the IOdspTokenProvider interface and provides methods for fetching push and storage tokens.

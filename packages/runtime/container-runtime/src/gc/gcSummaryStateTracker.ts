@@ -4,9 +4,11 @@
  */
 
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	ISummaryTreeWithStats,
 	ISummarizeResult,
+} from "@fluidframework/runtime-definitions/internal";
+import {
 	gcBlobPrefix,
 	gcDeletedBlobKey,
 	gcTombstoneBlobKey,
@@ -14,11 +16,11 @@ import {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
 
-import { IRefreshSummaryResult } from "../summary/index.js";
+import type { IRefreshSummaryResult } from "../summary/index.js";
 
-import { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
+import type { IGCStats, IGarbageCollectorConfigs } from "./gcDefinitions.js";
 import { generateSortedGCState } from "./gcHelpers.js";
-import {
+import type {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 } from "./gcSummaryDefinitions.js";

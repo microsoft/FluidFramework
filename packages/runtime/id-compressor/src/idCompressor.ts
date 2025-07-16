@@ -4,23 +4,16 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	ITelemetryLoggerExt,
-	LoggingError,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { LoggingError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { FinalSpace } from "./finalSpace.js";
+import type { FinalCompressedId, LocalCompressedId, NumericUuid } from "./identifiers.js";
+import { isFinalId } from "./identifiers.js";
+import type { Index } from "./persistanceUtilities.js";
 import {
-	FinalCompressedId,
-	LocalCompressedId,
-	NumericUuid,
-	isFinalId,
-} from "./identifiers.js";
-import {
-	Index,
 	readBoolean,
 	readNumber,
 	readNumericUuid,
@@ -29,8 +22,8 @@ import {
 	writeNumericUuid,
 } from "./persistanceUtilities.js";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
+import type { IdCluster } from "./sessions.js";
 import {
-	IdCluster,
 	Session,
 	Sessions,
 	getAlignedFinal,
@@ -38,7 +31,7 @@ import {
 	lastFinalizedFinal,
 	lastFinalizedLocal,
 } from "./sessions.js";
-import {
+import type {
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,

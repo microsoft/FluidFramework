@@ -11,7 +11,8 @@ import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { UniversalSequenceNumber } from "../constants.js";
 import { MergeTree } from "../mergeTree.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { MergeBlock, MaxNodesInBlock, segmentIsRemoved } from "../mergeTreeNodes.js";
+import type { MergeBlock } from "../mergeTreeNodes.js";
+import { MaxNodesInBlock, segmentIsRemoved } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { makeRemoteClient, nodeOrdinalsHaveIntegrity } from "./testUtils.js";

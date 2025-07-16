@@ -7,10 +7,8 @@ import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example
 import React from "react";
 import ReactDOM from "react-dom";
 
-import {
-	DataObjectGridContainerRuntimeFactory,
-	IDataObjectGridAppModel,
-} from "./container.js";
+import type { IDataObjectGridAppModel } from "./container.js";
+import { DataObjectGridContainerRuntimeFactory } from "./container.js";
 import { DataObjectGridAppView } from "./dataObjectGridView.js";
 
 /**

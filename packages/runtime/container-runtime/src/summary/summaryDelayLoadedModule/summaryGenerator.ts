@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, IPromiseTimer, Timer } from "@fluidframework/core-utils/internal";
+import type { IPromiseTimer } from "@fluidframework/core-utils/internal";
+import { assert, Timer } from "@fluidframework/core-utils/internal";
 import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	isFluidError,
-	ITelemetryLoggerExt,
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -31,7 +32,7 @@ import {
 import type { IClientSummaryWatcher } from "../summaryCollection.js";
 
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";
-import { type INackSummaryResult, type ISummarizeResults } from "./summaryResultTypes.js";
+import type { INackSummaryResult, ISummarizeResults } from "./summaryResultTypes.js";
 
 // Send some telemetry if generate summary takes too long
 const maxSummarizeTimeoutTime = 20000; // 20 sec

@@ -8,15 +8,14 @@ import { strict as assert } from "node:assert";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
-import {
+import type {
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,
 	ISummaryConfiguration,
 	ISummaryConfigurationHeuristics,
-	SummarizeHeuristicData,
-	SummarizeHeuristicRunner,
 	SummarizeReason,
 } from "../../summary/index.js";
+import { SummarizeHeuristicData, SummarizeHeuristicRunner } from "../../summary/index.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {

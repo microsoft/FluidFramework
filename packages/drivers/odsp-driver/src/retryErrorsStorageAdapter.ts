@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	FetchSource,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
@@ -16,11 +16,8 @@ import {
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	LoggingError,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { runWithRetry } from "./retryUtils.js";
 

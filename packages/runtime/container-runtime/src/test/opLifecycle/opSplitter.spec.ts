@@ -8,20 +8,15 @@
 import { strict as assert } from "node:assert";
 import * as crypto from "node:crypto";
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
-import {
-	OutboundBatchMessage,
-	IChunkedOp,
-	OpSplitter,
-	isChunkedMessage,
-	splitOp,
-} from "../../opLifecycle/index.js";
+import type { OutboundBatchMessage, IChunkedOp } from "../../opLifecycle/index.js";
+import { OpSplitter, isChunkedMessage, splitOp } from "../../opLifecycle/index.js";
 
 function typeFromBatchedOp(op: IBatchMessage) {
 	assert(op.contents !== undefined);

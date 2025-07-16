@@ -7,10 +7,11 @@ import {
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
-import { DataObjectGrid, IDataObjectGrid } from "./dataObjectGrid.js";
+import type { IDataObjectGrid } from "./dataObjectGrid.js";
+import { DataObjectGrid } from "./dataObjectGrid.js";
 import type { ISingleHandleItem } from "./dataObjectRegistry.js";
 
 /**

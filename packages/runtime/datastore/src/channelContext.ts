@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
+import type {
 	IDocumentStorageService,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -24,15 +24,15 @@ import {
 	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	DataCorruptionError,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
 import { ChannelStorageService } from "./channelStorageService.js";
-import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
+import type { ISharedObjectRegistry } from "./dataStoreRuntime.js";
 
 export const attributesBlobKey = ".attributes";
 

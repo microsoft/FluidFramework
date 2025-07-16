@@ -10,7 +10,7 @@ import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { IdCompressor } from "../idCompressor.js";
-import {
+import type {
 	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
@@ -29,13 +29,8 @@ import {
 	performFuzzActions,
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
-import {
-	FinalCompressedId,
-	LocalCompressedId,
-	fail,
-	isFinalId,
-	isLocalId,
-} from "./testCommon.js";
+import type { FinalCompressedId, LocalCompressedId } from "./testCommon.js";
+import { fail, isFinalId, isLocalId } from "./testCommon.js";
 
 const initialClusterCapacity = 512;
 

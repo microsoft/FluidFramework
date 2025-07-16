@@ -5,9 +5,9 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
-import { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
+import type { IOdspSnapshot, IOdspSnapshotCommit } from "./contracts.js";
 
 /**
  * Build a tree hierarchy base on a flat tree

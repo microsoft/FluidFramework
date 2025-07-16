@@ -6,12 +6,18 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString, fromBase64ToUtf8 } from "@fluid-internal/client-utils";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import { ISnapshot, IDocumentAttributes } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
+	ISnapshot,
+	IDocumentAttributes,
+} from "@fluidframework/driver-definitions/internal";
+import type {
 	IFileEntry,
 	IOdspResolvedUrl,
 	ISharingLinkKind,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
@@ -28,12 +34,8 @@ import {
 } from "../odspDriverUrlResolverForShareLink.js";
 import { getLocatorFromOdspUrl } from "../odspFluidFileLink.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import {
-	IExistingFileInfo,
-	INewFileInfo,
-	createCacheSnapshotKey,
-	getOdspResolvedUrl,
-} from "../odspUtils.js";
+import type { IExistingFileInfo, INewFileInfo } from "../odspUtils.js";
+import { createCacheSnapshotKey, getOdspResolvedUrl } from "../odspUtils.js";
 
 import { mockFetchOk } from "./mockFetch.js";
 

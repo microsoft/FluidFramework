@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient } from "@fluidframework/driver-definitions";
-import {
+import type { ISequencedClient } from "@fluidframework/driver-definitions";
+import type {
 	ISequencedDocumentMessage,
 	IDocumentAttributes,
 	IClientJoin,
@@ -14,10 +14,11 @@ import {
 	IQuorum,
 	ISequencedDocumentSystemMessage,
 	ISequencedProposal,
-	MessageType,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 
-import { IQuorumSnapshot, Quorum } from "./quorum.js";
+import type { IQuorumSnapshot } from "./quorum.js";
+import { Quorum } from "./quorum.js";
 
 /**
  * @legacy

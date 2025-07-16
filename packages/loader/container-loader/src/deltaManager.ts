@@ -3,38 +3,34 @@
  * Licensed under the MIT License.
  */
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type {
 	IDeltaManagerEvents,
 	IDeltaManagerFull,
 	IDeltaQueue,
-	type IDeltaSender,
-	type ReadOnlyInfo,
+	IDeltaSender,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	IEventProvider,
-	type ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
+	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
-import { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
-import {
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
+import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
 	IDocumentDeltaStorageService,
 	IDocumentService,
-	DriverErrorTypes,
 	IDocumentMessage,
-	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	type IClientDetails,
-	type IClientConfiguration,
+	IClientDetails,
+	IClientConfiguration,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	UsageError,
@@ -44,9 +40,14 @@ import {
 	safeRaiseEvent,
 	EventEmitterWithErrorHandling,
 } from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryLoggerExt,
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type {
 	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,

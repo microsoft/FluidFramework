@@ -4,10 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 
 import {
 	ContainerMessageType,
@@ -16,9 +14,11 @@ import {
 } from "../messageTypes.js";
 import { asBatchMetadata } from "../metadata.js";
 
-import { OpDecompressor } from "./opDecompressor.js";
-import { OpGroupingManager, isGroupedBatch } from "./opGroupingManager.js";
-import { OpSplitter, isChunkedMessage } from "./opSplitter.js";
+import type { OpDecompressor } from "./opDecompressor.js";
+import type { OpGroupingManager } from "./opGroupingManager.js";
+import { isGroupedBatch } from "./opGroupingManager.js";
+import type { OpSplitter } from "./opSplitter.js";
+import { isChunkedMessage } from "./opSplitter.js";
 /**
  * Info about the batch we learn when we process the first message
  */

@@ -3,20 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
-	MonitoringContext,
-	UsageError,
-	validatePrecondition,
-} from "@fluidframework/telemetry-utils/internal";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
+import { UsageError, validatePrecondition } from "@fluidframework/telemetry-utils/internal";
 
-import { IContainerRuntimeMetadata } from "../summary/index.js";
+import type { IContainerRuntimeMetadata } from "../summary/index.js";
 
-import {
+import type {
 	GCFeatureMatrix,
 	GCVersion,
 	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
 	IGarbageCollectorConfigs,
+} from "./gcDefinitions.js";
+import {
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,

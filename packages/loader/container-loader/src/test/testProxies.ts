@@ -13,8 +13,8 @@ import type {
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import {
-	SummaryType,
+import { SummaryType } from "@fluidframework/driver-definitions/internal";
+import type {
 	IDocumentServiceFactory,
 	type IDocumentService,
 	type IDocumentStorageService,

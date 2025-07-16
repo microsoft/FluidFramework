@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import {
+import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type {
 	ILocationRedirectionError,
 	IUrlResolver,
-	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 /**

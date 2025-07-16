@@ -39,13 +39,15 @@ import React, { useState, type ReactNode, type SetStateAction } from "react";
 
 import { getOpenAiClient } from "@/infra/openAiClient";
 import {
-	SharedTreeTask,
-	SharedTreeTaskGroup,
 	SharedTreeAppState,
 	TaskPriorities,
-	type TaskPriority,
 	TaskStatuses,
 	aiCollabLlmTreeNodeValidator,
+} from "@/types/sharedTreeAppSchema";
+import type {
+	SharedTreeTask,
+	SharedTreeTaskGroup,
+	type TaskPriority,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 

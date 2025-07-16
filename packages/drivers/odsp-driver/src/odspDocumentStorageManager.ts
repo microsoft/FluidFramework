@@ -7,9 +7,8 @@ import { performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
-	FetchSource,
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
@@ -17,25 +16,30 @@ import {
 	IVersion,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
+import { FetchSource } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
 	InstrumentedStorageTokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
 	OdspErrorTypes,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
 	PerformanceEvent,
 	generateStack,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-	type IConfigProvider,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryLoggerExt,
+	IConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	HostStoragePolicyInternal,
 	IDocumentStorageGetVersionsResponse,
 	// eslint-disable-next-line import/no-deprecated
@@ -44,30 +48,31 @@ import {
 	IVersionedValueWithEpoch,
 } from "./contracts.js";
 import { useCreateNewModule } from "./createFile/index.js";
-import { EpochTracker } from "./epochTracker.js";
-import {
+import type { EpochTracker } from "./epochTracker.js";
+import type {
 	ISnapshotRequestAndResponseOptions,
 	SnapshotFormatSupportType,
+} from "./fetchSnapshot.js";
+import {
 	downloadSnapshot,
 	getTreeStats,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
-import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
-import { FlushResult } from "./odspDocumentDeltaConnection.js";
+import type { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
+import type { FlushResult } from "./odspDocumentDeltaConnection.js";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
 import {
-	IOdspResponse,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
 	isInstanceOfISnapshot,
 	isSnapshotFetchForLoadingGroup,
 	snapshotWithLoadingGroupIdSupported,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
-	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
+import type { IOdspResponse, TokenFetchOptionsEx } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.

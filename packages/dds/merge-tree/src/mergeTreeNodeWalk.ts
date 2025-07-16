@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ISegmentLeaf, type MergeBlock, IMergeNode } from "./mergeTreeNodes.js";
+import type { IMergeNode, type ISegmentLeaf, type MergeBlock } from "./mergeTreeNodes.js";
 import { isMergeNodeInfo } from "./segmentInfos.js";
 
 export const LeafAction = {

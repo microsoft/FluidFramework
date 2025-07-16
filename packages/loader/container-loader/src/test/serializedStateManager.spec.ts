@@ -6,13 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import { EventEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import {
+import type {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	FetchSource,
 	IResolvedUrl,
 	ISnapshot,
@@ -20,9 +20,9 @@ import {
 	IDocumentAttributes,
 	ISnapshotTree,
 	IVersion,
-	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { useFakeTimers, type SinonFakeTimers } from "sinon";

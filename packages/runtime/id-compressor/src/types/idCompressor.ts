@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	OpSpaceCompressedId,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
 } from "./identifiers.js";
-import {
+import type {
 	IdCreationRange,
 	SerializedIdCompressorWithNoSession,
 	SerializedIdCompressorWithOngoingSession,

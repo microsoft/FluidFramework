@@ -3,13 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Server } from "node:http";
+import type { Server } from "node:http";
 
 import cors from "cors";
 import express from "express";
 import { isWebUri } from "valid-url";
 
-import { ITaskData, assertValidTaskData } from "../model-interface/index.js";
+import type { ITaskData } from "../model-interface/index.js";
+import { assertValidTaskData } from "../model-interface/index.js";
 
 import { ExternalDataSource } from "./externalDataSource.js";
 import { MockWebhook } from "./webhook.js";

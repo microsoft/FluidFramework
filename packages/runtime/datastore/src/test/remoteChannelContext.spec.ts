@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
@@ -16,7 +16,8 @@ import {
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidDataStoreRuntime, ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import type { ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { FluidDataStoreRuntime } from "../dataStoreRuntime.js";
 import { RemoteChannelContext } from "../remoteChannelContext.js";
 
 describe("RemoteChannelContext Tests", () => {

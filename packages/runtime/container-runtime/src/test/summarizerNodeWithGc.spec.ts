@@ -6,15 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
 	IGarbageCollectionDetailsBase,
 	ISummarizeInternalResult,
 	ISummarizerNodeConfig,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	CreateSummarizerNodeSource,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { GCDataBuilder, mergeStats } from "@fluidframework/runtime-utils/internal";
@@ -26,11 +28,11 @@ import {
 
 import { cloneGCData } from "../gc/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
+import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 import {
-	IRootSummarizerNodeWithGC,
-	SummarizerNodeWithGC,
 	createRootSummarizerNodeWithGC,
+	type IRootSummarizerNodeWithGC,
+	type SummarizerNodeWithGC,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../summary/summarizerNode/summarizerNodeWithGc.js";
 

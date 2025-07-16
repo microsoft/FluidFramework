@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainer,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
-	type IContainerPolicies,
+	IContainerPolicies,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 
 import { Loader } from "./loader.js";
-import { ProtocolHandlerBuilder } from "./protocol.js";
+import type { ProtocolHandlerBuilder } from "./protocol.js";
 
 /**
  * Properties necessary for creating and loading a container.

@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IConfigRange } from "./mergeTreeOperationRunner.js";
 import {
-	IConfigRange,
 	doOverRange,
 	doOverRanges,
 	resolveRange,

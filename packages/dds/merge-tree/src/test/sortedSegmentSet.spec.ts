@@ -7,12 +7,13 @@ import { strict as assert } from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
-import { LocalReferencePosition } from "../localReference.js";
-import { ISegment, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { LocalReferencePosition } from "../localReference.js";
+import type { ISegment, type ISegmentPrivate } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import { toMergeNodeInfo } from "../segmentInfos.js";
-import { SortedSegmentSet, SortedSegmentSetItem } from "../sortedSegmentSet.js";
+import type { SortedSegmentSetItem } from "../sortedSegmentSet.js";
+import { SortedSegmentSet } from "../sortedSegmentSet.js";
 
 import { TestClient } from "./testClient.js";
 const segmentCount = 15;

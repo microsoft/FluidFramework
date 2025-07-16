@@ -5,7 +5,7 @@
 
 import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
+import type {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
 } from "@fluidframework/container-runtime-definitions/internal";
@@ -20,12 +20,12 @@ import type {
 	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentStorageService,
 	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -37,16 +37,16 @@ import {
 	generateHandleContextPath,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import {
 	LoggingError,
-	MonitoringContext,
 	PerformanceEvent,
 	createChildMonitoringContext,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IBlobMetadata } from "../metadata.js";
+import type { IBlobMetadata } from "../metadata.js";
 
 import {
 	getStorageIds,

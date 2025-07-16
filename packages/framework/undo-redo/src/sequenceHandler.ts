@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import type { ISegment, MergeTreeDeltaRevertible } from "@fluidframework/merge-tree/internal";
 import {
-	ISegment,
-	MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
-import {
+import type {
 	SequenceDeltaEvent,
 	type ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
+import type { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided

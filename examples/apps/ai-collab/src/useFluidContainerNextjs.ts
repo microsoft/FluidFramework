@@ -5,7 +5,7 @@
 
 "use client";
 
-import { IFluidContainer, type ContainerSchema } from "fluid-framework";
+import type { IFluidContainer, type ContainerSchema } from "fluid-framework";
 import { useEffect, useState } from "react";
 
 /**

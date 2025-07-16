@@ -42,18 +42,15 @@ import {
 	Tooltip,
 	Typography,
 } from "@mui/material";
-import { type TreeView } from "fluid-framework";
+import type { TreeView } from "fluid-framework";
 import { useSnackbar } from "notistack";
 import React, { useEffect, useState } from "react";
 
 import { TaskCard } from "./TaskCard";
 
 import { getOpenAiClient } from "@/infra/openAiClient";
-import {
-	aiCollabLlmTreeNodeValidator,
-	SharedTreeAppState,
-	SharedTreeTaskGroup,
-} from "@/types/sharedTreeAppSchema";
+import type { SharedTreeTaskGroup } from "@/types/sharedTreeAppSchema";
+import { aiCollabLlmTreeNodeValidator, SharedTreeAppState } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 export function TaskGroup(props: {

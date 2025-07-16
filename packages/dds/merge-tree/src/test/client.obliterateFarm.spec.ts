@@ -5,10 +5,12 @@
 
 import { createFuzzDescribe, makeRandom } from "@fluid-private/stochastic-test-utils";
 
-import {
+import type {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,
 	TestOperation,
+} from "./mergeTreeOperationRunner.js";
+import {
 	doOverRange,
 	generateClientNames,
 	runMergeTreeOperationRunner,

@@ -5,11 +5,9 @@
 
 import { createLogger } from "@fluidframework/app-insights-logger/beta";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
-import {
-	TinyliciousClient,
-	TinyliciousContainerServices,
-} from "@fluidframework/tinylicious-client";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type { TinyliciousContainerServices } from "@fluidframework/tinylicious-client";
+import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import { ApplicationInsights } from "@microsoft/applicationinsights-web";
 
 /**

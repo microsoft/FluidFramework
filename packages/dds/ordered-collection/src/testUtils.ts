@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ConsensusResult, IConsensusOrderedCollection } from "./interfaces.js";
+import type { IConsensusOrderedCollection } from "./interfaces.js";
+import { ConsensusResult } from "./interfaces.js";
 
 /**
  * Helper method to acquire and complete an item

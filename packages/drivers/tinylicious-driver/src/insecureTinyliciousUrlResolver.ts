@@ -3,12 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	DriverHeader,
-	IResolvedUrl,
-	IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 
 /**
  * Default endpoint port. Will be used by the service if the consumer does not specify a port.

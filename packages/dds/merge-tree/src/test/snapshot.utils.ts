@@ -7,15 +7,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
-import { type IMergeTreeOptionsInternal } from "../mergeTree.js";
-import { type ISegmentPrivate } from "../mergeTreeNodes.js";
-import { IMergeTreeOp, ReferenceType } from "../ops.js";
-import { PropertySet } from "../properties.js";
+import type { IMergeTreeOptionsInternal } from "../mergeTree.js";
+import type { ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { IMergeTreeOp } from "../ops.js";
+import { ReferenceType } from "../ops.js";
+import type { PropertySet } from "../properties.js";
 import { SnapshotV1 } from "../snapshotV1.js";
 
 import { TestClient } from "./testClient.js";

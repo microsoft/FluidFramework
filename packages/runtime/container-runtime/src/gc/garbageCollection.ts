@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
-import {
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import type {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
-	gcTreeKey,
 	type IGarbageCollectionData,
 	type ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -16,10 +16,12 @@ import {
 	createResponseError,
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
-import {
+import type {
 	ITelemetryLoggerExt,
-	DataProcessingError,
 	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import {
+	DataProcessingError,
 	PerformanceEvent,
 	createChildLogger,
 	createChildMonitoringContext,
@@ -29,14 +31,18 @@ import {
 import { blobManagerBasePath } from "../blobManager/index.js";
 import { TombstoneResponseHeaderKey } from "../containerRuntime.js";
 import { ClientSessionExpiredError } from "../error.js";
-import { ContainerMessageType, ContainerRuntimeGCMessage } from "../messageTypes.js";
-import { IRefreshSummaryResult } from "../summary/index.js";
+import type { ContainerRuntimeGCMessage } from "../messageTypes.js";
+import { ContainerMessageType } from "../messageTypes.js";
+import type { IRefreshSummaryResult } from "../summary/index.js";
 
 import { generateGCConfigs } from "./gcConfigs.js";
 import {
 	GCNodeType,
-	GarbageCollectionMessage,
 	GarbageCollectionMessageType,
+	UnreferencedState,
+} from "./gcDefinitions.js";
+import type {
+	GarbageCollectionMessage,
 	IGCMetadata,
 	IGCResult,
 	IGCStats,
@@ -46,7 +52,6 @@ import {
 	IGarbageCollectorCreateParams,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
-	UnreferencedState,
 	type IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
 import {
@@ -57,7 +62,7 @@ import {
 	urlToGCNodePath,
 } from "./gcHelpers.js";
 import { runGarbageCollection } from "./gcReferenceGraphAlgorithm.js";
-import {
+import type {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 } from "./gcSummaryDefinitions.js";

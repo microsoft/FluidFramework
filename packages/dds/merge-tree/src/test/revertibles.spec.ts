@@ -8,7 +8,7 @@
 import { strict as assert } from "node:assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type {
 	IMergeTreeDeltaCallbackArgs,
@@ -16,8 +16,8 @@ import type {
 } from "../mergeTreeDeltaCallback.js";
 import { TrackingGroup, UnorderedTrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
+import type { MergeTreeDeltaRevertible } from "../revertibles.js";
 import {
-	MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";

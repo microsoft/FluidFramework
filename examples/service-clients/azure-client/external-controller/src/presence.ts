@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { StateFactory } from "@fluidframework/presence/beta";
+import type {
 	Presence,
-	StateFactory,
 	type StatesWorkspace,
 	type StatesWorkspaceSchema,
 } from "@fluidframework/presence/beta";

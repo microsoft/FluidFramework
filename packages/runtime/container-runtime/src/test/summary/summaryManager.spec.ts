@@ -6,23 +6,23 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentMessage,
-	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import {
+import type {
 	IConnectedEvents,
 	IConnectedState,
 	ISummarizer,
@@ -31,8 +31,10 @@ import {
 	ISummarizerRuntime,
 	ISummaryManagerConfig,
 	ISummaryOpMessage,
-	SummarizeHeuristicData,
 	Summarizer,
+} from "../../summary/index.js";
+import {
+	SummarizeHeuristicData,
 	SummaryCollection,
 	SummaryManager,
 	SummaryManagerState,

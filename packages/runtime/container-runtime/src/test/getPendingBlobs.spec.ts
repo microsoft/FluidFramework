@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { IsoBuffer } from "@fluid-internal/client-utils";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import {
-	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDisposable, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	extractSafePropertiesFromMessage,
@@ -16,19 +16,18 @@ import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
 import { isContainerMessageDirtyable } from "./containerRuntime.js";
-import {
-	type InboundContainerRuntimeMessage,
-	type InboundSequencedContainerRuntimeMessage,
-	type LocalContainerRuntimeMessage,
+import type {
+	InboundContainerRuntimeMessage,
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
-import {
+import { getEffectiveBatchId, serializeOp } from "./opLifecycle/index.js";
+import type {
 	EmptyGroupedBatch,
 	LocalBatchMessage,
-	getEffectiveBatchId,
 	BatchStartInfo,
 	InboundMessageResult,
-	serializeOp,
 	type LocalEmptyBatchPlaceholder,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";

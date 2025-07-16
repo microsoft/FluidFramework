@@ -5,10 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { MergeTree } from "./mergeTree.js";
-import {
+import type { MergeTree } from "./mergeTree.js";
+import { getMinSeqStamp } from "./mergeTreeNodes.js";
+import type {
 	CollaborationWindow,
-	getMinSeqStamp,
 	IMergeNode,
 	ISegmentPrivate,
 	type MergeBlock,

@@ -8,53 +8,47 @@ import { strict as assert } from "node:assert";
 import { Trace } from "@fluid-internal/client-utils";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { DoublyLinkedList } from "@fluidframework/core-utils/internal";
-import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	ITree,
-	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { MockStorage } from "@fluidframework/test-runtime-utils/internal";
 
 import { MergeTreeTextHelper } from "../MergeTreeTextHelper.js";
 import { Client } from "../client.js";
 import { UnassignedSequenceNumber } from "../constants.js";
-import { IMergeTreeOptions, ReferencePosition } from "../index.js";
-import { MergeTree, getSlideToSegoff } from "../mergeTree.js";
+import type { IMergeTreeOptions, ReferencePosition } from "../index.js";
+import type { MergeTree } from "../mergeTree.js";
+import { getSlideToSegoff } from "../mergeTree.js";
 import {
 	backwardExcursion,
 	forwardExcursion,
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
-import {
-	MergeBlock,
-	ISegmentPrivate,
-	Marker,
-	MaxNodesInBlock,
-	type SegmentGroup,
-	assertSegmentLeaf,
-} from "../mergeTreeNodes.js";
+import { Marker, MaxNodesInBlock, assertSegmentLeaf } from "../mergeTreeNodes.js";
+import type { MergeBlock, ISegmentPrivate, type SegmentGroup } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
 	createObliterateRangeOp,
 	createRemoveRangeOp,
 } from "../opBuilder.js";
-import {
+import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
+import type {
 	IJSONSegment,
 	IMarkerDef,
 	IMergeTreeOp,
-	MergeTreeDeltaType,
-	ReferenceType,
 	type IMergeTreeInsertMsg,
 } from "../ops.js";
 import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
-import { PropertySet } from "../properties.js";
+import type { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";
-import { MergeTreeRevertibleDriver } from "../revertibles.js";
+import type { MergeTreeRevertibleDriver } from "../revertibles.js";
 import { assertInserted, assertMergeNode, isRemoved } from "../segmentInfos.js";
 import { SnapshotLegacy } from "../snapshotlegacy.js";
 import type { OperationStamp } from "../stamps.js";

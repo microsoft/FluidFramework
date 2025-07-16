@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ISegment, Marker } from "./mergeTreeNodes.js";
-import {
+import type { ISegment, Marker } from "./mergeTreeNodes.js";
+import { MergeTreeDeltaType } from "./ops.js";
+import type {
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
 	// eslint-disable-next-line import/no-deprecated
@@ -13,12 +14,11 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
 	IMergeTreeRemoveMsg,
-	MergeTreeDeltaType,
 	type AdjustParams,
 	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import { PropertySet, type MapLike } from "./properties.js";
+import type { PropertySet, type MapLike } from "./properties.js";
 import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**

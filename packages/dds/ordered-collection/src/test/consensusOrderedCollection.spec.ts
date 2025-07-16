@@ -5,13 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import type { IGCTestProvider } from "@fluid-private/test-dds-utils";
+import { runGCTests } from "@fluid-private/test-dds-utils";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -21,7 +22,8 @@ import {
 	ConsensusQueueFactory,
 	type ConsensusQueue,
 } from "../consensusOrderedCollectionFactory.js";
-import { ConsensusResult, IConsensusOrderedCollection } from "../interfaces.js";
+import type { IConsensusOrderedCollection } from "../interfaces.js";
+import { ConsensusResult } from "../interfaces.js";
 import { acquireAndComplete, waitAcquireAndComplete } from "../testUtils.js";
 
 function createConnectedCollection(

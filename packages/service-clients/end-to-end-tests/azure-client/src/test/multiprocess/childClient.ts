@@ -5,15 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	AzureClient,
-	type AzureContainerServices,
+import { AzureClient } from "@fluidframework/azure-client";
+import type {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
+	type AzureContainerServices,
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	getPresence,
 	type Attendee,
@@ -24,11 +24,11 @@ import {
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { ScopeType } from "../AzureClientFactory.js";
+import type { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
-import { configProvider } from "../utils.js";
+import type { configProvider } from "../utils.js";
 
-import { MessageFromChild, MessageToChild } from "./messageTypes.js";
+import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 type MessageFromParent = MessageToChild;
 type MessageToParent = Required<MessageFromChild>;

@@ -4,20 +4,23 @@
  */
 
 import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IDeltaQueue, ReadOnlyInfo } from "@fluidframework/container-definitions/internal";
-import {
-	IDisposable,
-	ITelemetryBaseProperties,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type {
+	IDeltaQueue,
+	ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
+import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ConnectionMode, IClient, IClientDetails } from "@fluidframework/driver-definitions";
-import {
+import type {
+	ConnectionMode,
+	IClient,
+	IClientDetails,
+} from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentService,
-	DriverErrorTypes,
 	IAnyDriverError,
 	IClientConfiguration,
 	IDocumentMessage,
@@ -26,10 +29,13 @@ import {
 	ISequencedDocumentSystemMessage,
 	ISignalClient,
 	ITokenClaims,
-	MessageType,
-	ScopeType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
+} from "@fluidframework/driver-definitions/internal";
+import {
+	DriverErrorTypes,
+	MessageType,
+	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	calculateMaxWaitTime,
@@ -42,8 +48,8 @@ import {
 	type GenericNetworkError,
 	type ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	GenericError,
 	UsageError,
 	formatTick,
@@ -52,13 +58,13 @@ import {
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	IConnectionDetailsInternal,
 	IConnectionManager,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
-	ReconnectMode,
 } from "./contracts.js";
+import { ReconnectMode } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";

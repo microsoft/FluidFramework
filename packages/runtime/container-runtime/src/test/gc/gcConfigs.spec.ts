@@ -5,24 +5,23 @@
 
 import { strict as assert } from "node:assert";
 
-import { ICriticalContainerError } from "@fluidframework/container-definitions";
-import { IErrorBase } from "@fluidframework/core-interfaces";
-import { Timer } from "@fluidframework/core-utils/internal";
-import {
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
+import type { Timer } from "@fluidframework/core-utils/internal";
+import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockLogger,
-	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
-import {
-	GCNodeType,
-	GarbageCollector,
+import type {
 	IGCMetadata,
 	IGCMetadata_Deprecated,
 	IGCRuntimeOptions,
@@ -31,6 +30,10 @@ import {
 	IGarbageCollector,
 	IGarbageCollectorConfigs,
 	IGarbageCollectorCreateParams,
+} from "../../gc/index.js";
+import {
+	GCNodeType,
+	GarbageCollector,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
@@ -43,9 +46,9 @@ import {
 	stableGCVersion,
 	disableThrowOnTombstoneLoadKey,
 } from "../../gc/index.js";
-import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
-import { IContainerRuntimeMetadata } from "../../summary/index.js";
+import type { IContainerRuntimeMetadata } from "../../summary/index.js";
 
 import { createTestConfigProvider } from "./gcUnitTestHelpers.js";
 

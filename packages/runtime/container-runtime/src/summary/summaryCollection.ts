@@ -4,25 +4,23 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	IDisposable,
 	IEvent,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IDocumentMessage,
 	ISummaryAck,
 	ISummaryContent,
 	ISummaryNack,
-	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	createChildLogger,
-	ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Interface for summary op messages with typed contents.

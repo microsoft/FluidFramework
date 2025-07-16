@@ -6,34 +6,33 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { type IEventThisPlaceHolder, IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandle,
+	type IEventThisPlaceHolder,
+} from "@fluidframework/core-interfaces";
 import {
 	assert,
 	unreachableCase,
 	isObject,
 	type DoublyLinkedList,
 } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import {
-	ITelemetryLoggerExt,
-	LoggingError,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { LoggingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { MergeTreeTextHelper, type IMergeTreeTextHelper } from "./MergeTreeTextHelper.js";
 import { RedBlackTree } from "./collections/index.js";
 import { NonCollabClient, SquashClient, UniversalSequenceNumber } from "./constants.js";
-import { LocalReferencePosition, SlidingPreference } from "./localReference.js";
+import type { LocalReferencePosition } from "./localReference.js";
+import { SlidingPreference } from "./localReference.js";
 import {
 	MergeTree,
 	errorIfOptionNotTrue,
@@ -47,15 +46,14 @@ import type {
 	IMergeTreeMaintenanceCallbackArgs,
 } from "./mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "./mergeTreeNodeWalk.js";
-import {
+import { compareStrings, isSegmentLeaf } from "./mergeTreeNodes.js";
+import type {
 	CollaborationWindow,
 	ISegment,
 	ISegmentAction,
 	ISegmentPrivate,
 	Marker,
 	SegmentGroup,
-	compareStrings,
-	isSegmentLeaf,
 	type ISegmentInternal,
 	type ISegmentLeaf,
 	type ObliterateInfo,
@@ -70,7 +68,8 @@ import {
 	createObliterateRangeOpSided,
 	createRemoveRangeOp,
 } from "./opBuilder.js";
-import {
+import { MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import type {
 	IJSONSegment,
 	IMergeTreeAnnotateMsg,
 	IMergeTreeDeltaOp,
@@ -82,8 +81,6 @@ import {
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
 	IRelativePosition,
-	MergeTreeDeltaType,
-	ReferenceType,
 	type AdjustParams,
 	type IMergeTreeAnnotateAdjustMsg,
 	type IMergeTreeObliterateSidedMsg,
@@ -94,8 +91,9 @@ import {
 	PriorPerspective,
 	type Perspective,
 } from "./perspective.js";
-import { PropertySet, type MapLike } from "./properties.js";
-import { DetachedReferencePosition, ReferencePosition } from "./referencePositions.js";
+import type { PropertySet, type MapLike } from "./properties.js";
+import type { ReferencePosition } from "./referencePositions.js";
+import { DetachedReferencePosition } from "./referencePositions.js";
 import {
 	isInserted,
 	isRemoved,
@@ -893,7 +891,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const canSlideToEndpoint = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
-		// eslint-disable-next-line prefer-const
+
 		const segOff = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,

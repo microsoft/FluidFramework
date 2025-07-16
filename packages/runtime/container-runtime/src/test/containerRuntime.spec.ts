@@ -10,43 +10,45 @@ import {
 	type ILayerCompatDetails,
 	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import { AttachState, ICriticalContainerError } from "@fluidframework/container-definitions";
-import {
-	ContainerErrorTypes,
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerContext,
 	type IBatchMessage,
 } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type {
 	ConfigTypes,
 	FluidObject,
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	ISignalEnvelope,
 	type IErrorBase,
 	type ITelemetryBaseLogger,
 	type JsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { MessageType, SummaryType } from "@fluidframework/driver-definitions/internal";
+import type {
 	IDocumentStorageService,
 	ISnapshot,
 	ISummaryContext,
-	type ISnapshotTree,
-	MessageType,
 	ISequencedDocumentMessage,
+	type ISnapshotTree,
 	type IVersion,
 	type FetchSource,
 	type IDocumentAttributes,
-	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ISummaryTreeWithStats,
-	FluidDataStoreRegistryEntry,
 	FlushMode,
 	FlushModeExperimental,
+} from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
@@ -57,8 +59,8 @@ import {
 	type ITelemetryContext,
 	type ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import {
-	IFluidErrorBase,
 	MockLogger,
 	createChildLogger,
 	isFluidError,
@@ -78,10 +80,12 @@ import { defaultMinVersionForCollab } from "../compatUtils.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
-	IContainerRuntimeOptions,
-	IPendingRuntimeState,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
+} from "../containerRuntime.js";
+import type {
+	IContainerRuntimeOptions,
+	IPendingRuntimeState,
 	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
@@ -97,15 +101,14 @@ import type {
 	LocalBatchMessage,
 } from "../opLifecycle/index.js";
 import { pkgVersion } from "../packageVersion.js";
-import {
+import type {
 	IPendingLocalState,
 	IPendingMessage,
 	PendingStateManager,
 } from "../pendingStateManager.js";
-import {
+import { neverCancelledSummaryToken, recentBatchInfoBlobName } from "../summary/index.js";
+import type {
 	ISummaryCancellationToken,
-	neverCancelledSummaryToken,
-	recentBatchInfoBlobName,
 	type IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 

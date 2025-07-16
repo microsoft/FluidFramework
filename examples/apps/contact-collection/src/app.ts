@@ -5,10 +5,8 @@
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
 
-import {
-	ContactCollectionContainerRuntimeFactory,
-	IContactCollectionAppModel,
-} from "./containerCode.js";
+import type { IContactCollectionAppModel } from "./containerCode.js";
+import { ContactCollectionContainerRuntimeFactory } from "./containerCode.js";
 import { renderContact, renderContactCollection } from "./view.js";
 
 const searchParams = new URLSearchParams(location.search);

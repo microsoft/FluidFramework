@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IInk, Ink } from "@fluid-experimental/ink";
+import type { IInk } from "@fluid-experimental/ink";
+import { Ink } from "@fluid-experimental/ink";
 import { DataObject } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 export class Canvas extends DataObject {
 	private _ink: IInk | undefined;

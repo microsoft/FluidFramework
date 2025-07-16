@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
+import type { MergeTreeDeltaCallback } from "../mergeTreeDeltaCallback.js";
 import { MergeTreeDeltaType } from "../ops.js";
 
 import { ClientTestHelper } from "./clientTestHelper.js";

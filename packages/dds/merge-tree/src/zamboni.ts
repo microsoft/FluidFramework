@@ -6,17 +6,10 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { UnassignedSequenceNumber } from "./constants.js";
-import { MergeTree } from "./mergeTree.js";
+import type { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
-import {
-	type MergeBlock,
-	assignChild,
-	getMinSeqStamp,
-	IMergeNode,
-	ISegmentPrivate,
-	Marker,
-	MaxNodesInBlock,
-} from "./mergeTreeNodes.js";
+import { assignChild, getMinSeqStamp, Marker, MaxNodesInBlock } from "./mergeTreeNodes.js";
+import type { IMergeNode, ISegmentPrivate, type MergeBlock } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
 import * as opstampUtils from "./stamps.js";

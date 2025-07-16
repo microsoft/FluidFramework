@@ -4,14 +4,14 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
-import {
+import type {
 	IAttributionCollection,
-	AttributionCollection as NewAttributionCollection,
 	SerializedAttributionCollection,
 } from "../attributionCollection.js";
-import { ISegment } from "../mergeTreeNodes.js";
+import { AttributionCollection as NewAttributionCollection } from "../attributionCollection.js";
+import type { ISegment } from "../mergeTreeNodes.js";
 import { TextSegmentGranularity } from "../textSegment.js";
 
 interface IAttributionCollectionCtor {

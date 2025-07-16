@@ -4,7 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	IRequest,
@@ -14,8 +14,8 @@ import {
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
+	ISnapshot,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -25,11 +25,15 @@ import {
 	isInstanceOfISnapshot,
 } from "@fluidframework/driver-utils/internal";
 import {
+	CreateSummarizerNodeSource,
+	channelsTreeName,
+	gcDataBlobKey,
+} from "@fluidframework/runtime-definitions/internal";
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
 	AliasResult,
-	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
 	IFluidDataStoreChannel,
@@ -40,9 +44,7 @@ import {
 	IFluidParentContext,
 	ISummarizeResult,
 	NamedFluidDataStoreRegistryEntries,
-	channelsTreeName,
 	IInboundSignalMessage,
-	gcDataBlobKey,
 	type IRuntimeMessagesContent,
 	type InboundAttachMessage,
 	type IRuntimeMessageCollection,
@@ -67,29 +69,27 @@ import {
 	DataCorruptionError,
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
 	createChildLogger,
 	createChildMonitoringContext,
 	extractSafePropertiesFromMessage,
 	tagCodeArtifacts,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	MonitoringContext,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	DeletedResponseHeaderKey,
-	RuntimeHeaderData,
-	defaultRuntimeHeaderData,
-} from "./containerRuntime.js";
-import {
-	IDataStoreAliasMessage,
-	channelToDataStore,
-	isDataStoreAliasMessage,
-} from "./dataStore.js";
-import {
-	FluidDataStoreContext,
+import type { RuntimeHeaderData } from "./containerRuntime.js";
+import { DeletedResponseHeaderKey, defaultRuntimeHeaderData } from "./containerRuntime.js";
+import type { IDataStoreAliasMessage } from "./dataStore.js";
+import { channelToDataStore, isDataStoreAliasMessage } from "./dataStore.js";
+import type {
 	IFluidDataStoreContextInternal,
 	ILocalDetachedFluidDataStoreContextProps,
+} from "./dataStoreContext.js";
+import {
+	FluidDataStoreContext,
 	LocalDetachedFluidDataStoreContext,
 	LocalFluidDataStoreContext,
 	RemoteFluidDataStoreContext,
@@ -97,14 +97,13 @@ import {
 } from "./dataStoreContext.js";
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
-import { GCNodeType, IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
-import { ContainerMessageType, LocalContainerRuntimeMessage } from "./messageTypes.js";
+import type { IGCNodeUpdatedProps } from "./gc/index.js";
+import { GCNodeType, urlToGCNodePath } from "./gc/index.js";
+import type { LocalContainerRuntimeMessage } from "./messageTypes.js";
+import { ContainerMessageType } from "./messageTypes.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
-import {
-	IContainerRuntimeMetadata,
-	nonDataStorePaths,
-	rootHasIsolatedChannels,
-} from "./summary/index.js";
+import type { IContainerRuntimeMetadata } from "./summary/index.js";
+import { nonDataStorePaths, rootHasIsolatedChannels } from "./summary/index.js";
 
 /**
  * True if a tombstoned object should be returned without erroring

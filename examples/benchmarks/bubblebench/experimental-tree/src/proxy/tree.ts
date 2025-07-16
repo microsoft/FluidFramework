@@ -3,15 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Change,
-	ChangeNode,
-	NodeId,
-	SharedTree,
-	StablePlace,
-	StableRange,
-	TraitLabel,
-} from "@fluid-experimental/tree";
+import type { ChangeNode, NodeId, SharedTree, TraitLabel } from "@fluid-experimental/tree";
+import { Change, StablePlace, StableRange } from "@fluid-experimental/tree";
 import { Serializable } from "@fluidframework/datastore-definitions/legacy";
 
 import { NodeKind, fromJson } from "./treeutils.js";

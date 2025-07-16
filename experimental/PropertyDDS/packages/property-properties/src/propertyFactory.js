@@ -903,15 +903,15 @@ class PropertyFactory {
 	 *
 	 * ```
 	 * <pre>
-	 *   {
-	 *     'isValid': true or false,
-	 *     'typeid': 'The typeid of the object being parsed',
-	 *     'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
-	 *       'in the document', 'but not resolved from the local cache' ],
-	 *     'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
-	 *     'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
-	 *     ...
-	 *   }
+	 * {
+	 * 'isValid': true or false,
+	 * 'typeid': 'The typeid of the object being parsed',
+	 * 'unresolvedTypes': [ 'An array', 'of strong typeids', 'that were found',
+	 * 'in the document', 'but not resolved from the local cache' ],
+	 * 'resolvedTypes': [ 'Array of', 'strong types resolved', 'during template parsing'],
+	 * 'errors': [ 'Array of', 'objects describing', 'syntax errors in the template' ]
+	 * ...
+	 * }
 	 * </pre>
 	 * ```
 	 */
@@ -2269,16 +2269,16 @@ class PropertyFactory {
 	 *
 	 * ```json
 	 * {
-	 *  errors: {
-	 *    typeid1: errors,
-	 *    ...
-	 *    typeidn: errors
-	 *  },
-	 *  templates: {
-	 *    typeid1: [], array of templates
-	 *    ...
-	 *    typeidn: []  array of templates
-	 *   }
+	 * errors: {
+	 * typeid1: errors,
+	 * ...
+	 * typeidn: errors
+	 * },
+	 * templates: {
+	 * typeid1: [], array of templates
+	 * ...
+	 * typeidn: []  array of templates
+	 * }
 	 * }
 	 * ```
 	 */

@@ -6,48 +6,48 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	IContainerRuntimeEvents,
 	type ISummarizeEventProps,
 } from "@fluidframework/container-runtime-definitions/internal";
-import {
+import type {
 	ConfigTypes,
 	IConfigProviderBase,
 	ITelemetryBaseEvent,
 } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IDocumentMessage,
 	ISummaryAck,
 	ISummaryNack,
 	ISummaryProposal,
-	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import {
+import type {
 	IGeneratedSummaryStats,
 	ISummarizeHeuristicData,
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
-	RetriableSummaryError,
 	SubmitSummaryResult,
-	SummarizeHeuristicData,
-	SummaryCollection,
-	getFailMessage,
-	neverCancelledSummaryToken,
 	type ISummaryConfiguration,
 } from "../../summary/index.js";
 import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
 	RunningSummarizer,
+	RetriableSummaryError,
+	SummarizeHeuristicData,
+	SummaryCollection,
+	getFailMessage,
+	neverCancelledSummaryToken,
 } from "../../summary/index.js";
 
 class MockRuntime extends TypedEventEmitter<IContainerRuntimeEvents> {

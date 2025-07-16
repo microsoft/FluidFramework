@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
+import type { AzureContainerServices } from "@fluidframework/azure-client";
+import { AzureClient } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { getPresence } from "@fluidframework/presence/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
-import { type IFluidContainer } from "fluid-framework";
+import type { IFluidContainer } from "fluid-framework";
 
 import { DiceRollerController, type DieValue } from "./controller.js";
 import {
@@ -18,7 +19,7 @@ import {
 	type DiceRollerContainerSchema,
 } from "./fluid.js";
 import { buildDicePresence } from "./presence.js";
-import { TwoDiceApp } from "./schema.js";
+import type { TwoDiceApp } from "./schema.js";
 import { makeAppView } from "./view.js";
 
 async function start(): Promise<void> {

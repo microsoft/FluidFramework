@@ -8,33 +8,32 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { PromiseCache } from "@fluidframework/core-utils/internal";
-import {
-	FetchSource,
-	ISnapshot,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
+import type { PromiseCache } from "@fluidframework/core-utils/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import { FetchSource } from "@fluidframework/driver-definitions/internal";
+import type {
 	ICacheEntry,
 	IOdspResolvedUrl,
-	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
-import {
+import type {
 	HostStoragePolicyInternal,
 	IOdspSnapshot,
 	IVersionedValueWithEpoch,
-	persistedCacheValueVersion,
 } from "../contracts.js";
+import { persistedCacheValueVersion } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
-import { IPrefetchSnapshotContents, LocalPersistentCache } from "../odspCache.js";
+import type { IPrefetchSnapshotContents } from "../odspCache.js";
+import { LocalPersistentCache } from "../odspCache.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo, createCacheSnapshotKey } from "../odspUtils.js";
+import type { INewFileInfo } from "../odspUtils.js";
+import { createCacheSnapshotKey } from "../odspUtils.js";
 import { prefetchLatestSnapshot } from "../prefetchLatestSnapshot.js";
 
 import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";

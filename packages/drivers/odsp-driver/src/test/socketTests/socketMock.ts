@@ -4,17 +4,17 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
-import {
+import type { IEvent } from "@fluidframework/core-interfaces";
+import type {
 	IAnyDriverError,
 	IConnect,
 	IConnected,
-	ScopeType,
 } from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import { createGenericNetworkError } from "@fluidframework/driver-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IOdspSocketError } from "../../contracts.js";
+import type { IOdspSocketError } from "../../contracts.js";
 import { pkgVersion as driverVersion } from "../../packageVersion.js";
 
 export interface SocketMockEvents extends IEvent {

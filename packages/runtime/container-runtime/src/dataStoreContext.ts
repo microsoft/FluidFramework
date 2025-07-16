@@ -4,33 +4,34 @@
  */
 
 import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import {
+import type { IAudience } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import type {
 	IDeltaManager,
-	isIDeltaManagerFull,
 	type IDeltaManagerFull,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
-	type ITelemetryBaseLogger,
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
-import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
-import {
+import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
-	type ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
 	ITreeEntry,
 	ISequencedDocumentMessage,
+	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -38,7 +39,8 @@ import {
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import {
+import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
@@ -57,7 +59,6 @@ import {
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
-	channelsTreeName,
 	IInboundSignalMessage,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
@@ -68,10 +69,10 @@ import {
 	addBlobToSummary,
 	isSnapshotFetchRequiredForLoadingGroupId,
 } from "@fluidframework/runtime-utils/internal";
+import type { MonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import {
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
 	ThresholdCounter,
 	UsageError,
 	createChildMonitoringContext,
@@ -86,10 +87,12 @@ import {
 	runtimeCompatDetailsForDataStore,
 	validateDatastoreCompatibility,
 } from "./runtimeLayerCompatState.js";
-import {
+import type {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
+} from "./summary/index.js";
+import {
 	dataStoreAttributesBlobName,
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,

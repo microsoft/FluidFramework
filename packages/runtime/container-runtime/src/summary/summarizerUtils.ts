@@ -4,11 +4,14 @@
  */
 
 import type { SummarizerStopReason } from "@fluidframework/container-runtime-definitions/internal";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { IPromiseTimerResult } from "@fluidframework/core-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
-import { ISummaryCancellationToken, type IRetriableFailureError } from "./summarizerTypes.js";
+import type {
+	ISummaryCancellationToken,
+	type IRetriableFailureError,
+} from "./summarizerTypes.js";
 
 export type raceTimerResult<T> =
 	| { result: "done"; value: T }

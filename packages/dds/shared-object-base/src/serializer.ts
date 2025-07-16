@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
 	IFluidHandleContext,
 	type IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";

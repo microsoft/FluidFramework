@@ -12,13 +12,11 @@ import {
 	ContainerErrorTypes,
 	type IErrorBase,
 } from "@fluidframework/container-definitions/internal";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import Deque from "double-ended-queue";
+import type Deque from "double-ended-queue";
 import Sinon from "sinon";
 
 import {
@@ -26,17 +24,11 @@ import {
 	type InboundSequencedContainerRuntimeMessage,
 	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
-import {
-	addBatchMetadata,
-	BatchManager,
-	LocalBatchMessage,
-	OpGroupingManager,
-	type InboundMessageResult,
-} from "../opLifecycle/index.js";
-import {
-	findFirstCharacterMismatched,
+import { addBatchMetadata, BatchManager, OpGroupingManager } from "../opLifecycle/index.js";
+import type { LocalBatchMessage, type InboundMessageResult } from "../opLifecycle/index.js";
+import { findFirstCharacterMismatched, PendingStateManager } from "../pendingStateManager.js";
+import type {
 	IPendingMessage,
-	PendingStateManager,
 	type IPendingLocalState,
 	type IRuntimeStateHandler,
 	type PendingBatchResubmitMetadata,

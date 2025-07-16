@@ -8,11 +8,9 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
-	IOdspResolvedUrl,
-	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
@@ -22,16 +20,18 @@ import {
 import { stub } from "sinon";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
-import { HostStoragePolicyInternal } from "../contracts.js";
+import type { HostStoragePolicyInternal } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
-import { downloadSnapshot, ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import type { ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import { downloadSnapshot } from "../fetchSnapshot.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils.js";
+import type { INewFileInfo, IOdspResponse } from "../odspUtils.js";
+import { createCacheSnapshotKey } from "../odspUtils.js";
 
 import {
 	createResponse,

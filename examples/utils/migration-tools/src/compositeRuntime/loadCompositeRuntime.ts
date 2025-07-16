@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/legacy";
-import {
-	IContainerRuntimeOptions,
-	loadContainerRuntime,
-} from "@fluidframework/container-runtime/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type {
+	IContainerContext,
+	IRuntime,
+} from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/legacy";
+import { loadContainerRuntime } from "@fluidframework/container-runtime/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import type {
 	NamedFluidDataStoreRegistryEntries,

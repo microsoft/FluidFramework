@@ -5,8 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { BaseSegment, ISegment } from "./mergeTreeNodes.js";
-import { IJSONSegment } from "./ops.js";
+import type { ISegment } from "./mergeTreeNodes.js";
+import { BaseSegment } from "./mergeTreeNodes.js";
+import type { IJSONSegment } from "./ops.js";
 import type { PropertySet } from "./properties.js";
 
 // Maximum length of text segment to be considered to be merged with other segment.

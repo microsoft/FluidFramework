@@ -11,9 +11,11 @@ import {
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
-import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
-import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
-import { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
+import type { LocalReferencePosition } from "./localReference.js";
+import { LocalReferenceCollection } from "./localReference.js";
+import type { MergeTree } from "./mergeTree.js";
+import { findRootMergeBlock } from "./mergeTree.js";
+import type { IMergeTreeDeltaCallbackArgs } from "./mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "./mergeTreeNodeWalk.js";
 import {
 	assertSegmentLeaf,
@@ -22,9 +24,12 @@ import {
 	type ISegmentLeaf,
 	type ISegmentPrivate,
 } from "./mergeTreeNodes.js";
-import { ITrackingGroup, Trackable, UnorderedTrackingGroup } from "./mergeTreeTracking.js";
-import { IJSONSegment, MergeTreeDeltaType, ReferenceType } from "./ops.js";
-import { PropertySet, matchProperties } from "./properties.js";
+import type { ITrackingGroup, Trackable } from "./mergeTreeTracking.js";
+import { UnorderedTrackingGroup } from "./mergeTreeTracking.js";
+import type { IJSONSegment } from "./ops.js";
+import { MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import type { PropertySet } from "./properties.js";
+import { matchProperties } from "./properties.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
 import { toRemovalInfo } from "./segmentInfos.js";
 

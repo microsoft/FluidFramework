@@ -4,16 +4,19 @@
  */
 
 import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
-import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import {
+import type { IAudience } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
 	FluidObject,
 	IFluidHandle,
 	IRequest,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
+} from "@fluidframework/core-interfaces/internal";
 import {
 	assert,
 	debugAssert,
@@ -21,7 +24,7 @@ import {
 	LazyPromise,
 	unreachableCase,
 } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -30,39 +33,41 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
-import {
+import type {
 	IClientDetails,
 	IQuorumClients,
 	ISummaryBlob,
 	ISummaryTree,
-	SummaryType,
 } from "@fluidframework/driver-definitions";
-import {
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentMessage,
-	type ISnapshotTree,
 	ISequencedDocumentMessage,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
+	CreateSummarizerNodeSource,
+	VisibilityState,
+	gcDataBlobKey,
+	notifiesReadOnlyState,
+	encodeHandlesInContainerRuntime,
+} from "@fluidframework/runtime-definitions/internal";
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
 	IAttachMessage,
 	IEnvelope,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
-	VisibilityState,
-	gcDataBlobKey,
 	IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 	// eslint-disable-next-line import/no-deprecated
 	type IContainerRuntimeBaseExperimental,
-	notifiesReadOnlyState,
-	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -82,11 +87,13 @@ import {
 	toDeltaManagerErased,
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
-import {
+import type {
 	ITelemetryLoggerExt,
+	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import {
 	DataProcessingError,
 	LoggingError,
-	MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
 	generateStack,
@@ -95,7 +102,8 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IChannelContext, summarizeChannel } from "./channelContext.js";
+import type { IChannelContext } from "./channelContext.js";
+import { summarizeChannel } from "./channelContext.js";
 import {
 	dataStoreCompatDetailsForRuntime,
 	validateRuntimeCompatibility,

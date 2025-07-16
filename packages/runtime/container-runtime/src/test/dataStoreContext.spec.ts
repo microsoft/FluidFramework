@@ -8,31 +8,34 @@ import { strict as assert } from "node:assert";
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	Tagged,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryBlob } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	IBlob,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	CreateSummarizerNodeSource,
+	channelsTreeName,
+} from "@fluidframework/runtime-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
-	channelsTreeName,
 	type IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -63,10 +66,12 @@ import {
 	RemoteFluidDataStoreContext,
 } from "../dataStoreContext.js";
 import { StorageServiceWithAttachBlobs } from "../storageServiceWithAttachBlobs.js";
-import {
+import type {
 	IRootSummarizerNodeWithGC,
 	ReadFluidDataStoreAttributes,
 	WriteFluidDataStoreAttributes,
+} from "../summary/index.js";
+import {
 	createRootSummarizerNodeWithGC,
 	dataStoreAttributesBlobName,
 	summarizerClientType,

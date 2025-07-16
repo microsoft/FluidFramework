@@ -7,8 +7,8 @@ import {
 	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
-import { IContainer } from "@fluidframework/container-definitions/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { IContainer } from "@fluidframework/container-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 
 import { CollaborativeText } from "./fluid-object/index.js";
 

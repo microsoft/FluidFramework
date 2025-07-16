@@ -6,16 +6,15 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 
-import { IClient, SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	DriverError,
 	IStream,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	IOdspResolvedUrl,
-	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import/no-internal-modules */

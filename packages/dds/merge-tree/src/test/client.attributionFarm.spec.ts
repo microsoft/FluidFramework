@@ -7,15 +7,17 @@ import { strict as assert } from "node:assert";
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
 import { createPropertyTrackingAndInsertionAttributionPolicyFactory } from "../attributionPolicy.js";
 import type { ISegmentPrivate } from "../mergeTreeNodes.js";
 
-import {
+import type {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,
 	TestOperation,
+} from "./mergeTreeOperationRunner.js";
+import {
 	generateClientNames,
 	insert,
 	removeRange,

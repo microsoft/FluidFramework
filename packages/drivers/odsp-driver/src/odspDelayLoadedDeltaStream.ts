@@ -4,47 +4,44 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-	type IAnyDriverError,
 	ISequencedDocumentMessage,
 	ISignalMessage,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
 	NonRetryableError,
 } from "@fluidframework/driver-utils/internal";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
-import {
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
 	HostStoragePolicy,
-	type IOdspError,
 	IOdspResolvedUrl,
 	ISocketStorageDiscovery,
 	InstrumentedStorageTokenFetcher,
-	OdspErrorTypes,
 	TokenFetchOptions,
+	IOdspError,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
+import type {
 	IFluidErrorBase,
 	MonitoringContext,
-	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
+import { normalizeError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
-import { IOdspCache } from "./odspCache.js";
+import type { EpochTracker } from "./epochTracker.js";
+import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
-import {
-	TokenFetchOptionsEx,
-	getJoinSessionCacheKey,
-	getWithRetryForTokenRefresh,
-} from "./odspUtils.js";
+import type { TokenFetchOptionsEx } from "./odspUtils.js";
+import { getJoinSessionCacheKey, getWithRetryForTokenRefresh } from "./odspUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { fetchJoinSession } from "./vroom.js";
 

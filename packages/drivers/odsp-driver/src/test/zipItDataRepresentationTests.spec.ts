@@ -10,12 +10,11 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ReadBuffer } from "../ReadBufferUtils.js";
 import { TreeBuilderSerializer } from "../WriteBufferUtils.js";
+import type { IStringElement, NodeTypes } from "../zipItDataRepresentationUtils.js";
 import {
 	BlobCore,
 	BlobShallowCopy,
-	IStringElement,
 	NodeCore,
-	NodeTypes,
 	TreeBuilder,
 	assertBlobCoreInstance,
 	assertBoolInstance,

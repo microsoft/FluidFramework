@@ -11,11 +11,10 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { BlobManager, IBlobManagerRuntime } from "../blobManager/index.js";
-import {
-	ContainerFluidHandleContext,
-	IContainerHandleContextRuntime,
-} from "../containerHandleContext.js";
+import type { IBlobManagerRuntime } from "../blobManager/index.js";
+import { BlobManager } from "../blobManager/index.js";
+import type { IContainerHandleContextRuntime } from "../containerHandleContext.js";
+import { ContainerFluidHandleContext } from "../containerHandleContext.js";
 export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 	const proxy: T = new Proxy<T>(handler as T, {
 		get: (t, p, r) => {

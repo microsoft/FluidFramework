@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { makeBubble, makeClient } from "@fluid-example/bubblebench-common";
+import type {
 	IAppState,
 	IClient,
-	makeBubble,
-	makeClient,
 	SimpleClient,
 	type IBubble,
 } from "@fluid-example/bubblebench-common";
-import { Change, SharedTree } from "@fluid-experimental/tree";
+import type { Change, SharedTree } from "@fluid-experimental/tree";
 
-import { TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
+import type { TreeArrayProxy } from "./proxy/index.js";
+import { TreeObjectProxy, fromJson } from "./proxy/index.js";
 
 interface IApp {
 	readonly clients: SimpleClient[];

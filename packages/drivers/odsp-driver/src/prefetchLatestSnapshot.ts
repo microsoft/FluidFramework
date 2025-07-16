@@ -4,33 +4,32 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
 	IPersistedCache,
 	ISnapshotOptions,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-	getKeyForCacheEntry,
-	type InstrumentedStorageTokenFetcher,
+	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	PerformanceEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IVersionedValueWithEpoch } from "./contracts.js";
-import {
+import type { IVersionedValueWithEpoch } from "./contracts.js";
+import type {
 	ISnapshotRequestAndResponseOptions,
 	SnapshotFormatSupportType,
-	downloadSnapshot,
-	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
-import { IPrefetchSnapshotContents } from "./odspCache.js";
-import { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
+import { downloadSnapshot, fetchSnapshotWithRedeem } from "./fetchSnapshot.js";
+import type { IPrefetchSnapshotContents } from "./odspCache.js";
+import type { OdspDocumentServiceFactory } from "./odspDocumentServiceFactory.js";
 import {
 	createCacheSnapshotKey,
 	createOdspLogger,

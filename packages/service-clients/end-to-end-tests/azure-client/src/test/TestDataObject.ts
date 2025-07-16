@@ -5,16 +5,16 @@
 
 import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import {
 	DataObject,
 	DataObjectFactory,
-	IDataObjectProps,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import { type IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, type IErrorEvent } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";

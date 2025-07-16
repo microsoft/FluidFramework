@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Tree, TreeNode } from "fluid-framework";
+import type { TreeNode } from "fluid-framework";
+import { Tree } from "fluid-framework";
 import { useEffect, useState } from "react";
 
 /**

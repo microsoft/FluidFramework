@@ -6,37 +6,32 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-bitwise */
 
-import {
-	assert,
-	Heap,
-	IComparer,
-	DoublyLinkedList,
-	ListNode,
-} from "@fluidframework/core-utils/internal";
+import type { IComparer, ListNode } from "@fluidframework/core-utils/internal";
+import { assert, Heap, DoublyLinkedList } from "@fluidframework/core-utils/internal";
 import { DataProcessingError, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { IAttributionCollectionSerializer } from "./attributionCollection.js";
-import { Client } from "./client.js";
+import type { IAttributionCollectionSerializer } from "./attributionCollection.js";
+import type { Client } from "./client.js";
 import {
 	NonCollabClient,
 	TreeMaintenanceSequenceNumber,
 	UnassignedSequenceNumber,
 } from "./constants.js";
 import { EndOfTreeSegment, StartOfTreeSegment } from "./endOfTreeSegment.js";
+import type { LocalReferencePosition } from "./localReference.js";
 import {
 	LocalReferenceCollection,
-	LocalReferencePosition,
 	SlidingPreference,
 	anyLocalReferencePosition,
 	filterLocalReferencePositions,
 } from "./localReference.js";
-import {
+import type {
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeSegmentDelta,
 	MergeTreeDeltaCallback,
 	MergeTreeMaintenanceCallback,
-	MergeTreeMaintenanceType,
 } from "./mergeTreeDeltaCallback.js";
+import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
 	LeafAction,
 	NodeAction,
@@ -47,20 +42,22 @@ import {
 } from "./mergeTreeNodeWalk.js";
 import {
 	CollaborationWindow,
-	IMergeNode,
-	ISegmentAction,
-	ISegmentChanges,
-	InsertContext,
 	Marker,
 	MaxNodesInBlock,
 	MergeBlock,
-	SegmentGroup,
 	assertSegmentLeaf,
 	assignChild,
 	getMinSeqPerspective,
 	getMinSeqStamp,
 	isSegmentLeaf,
 	reservedMarkerIdKey,
+} from "./mergeTreeNodes.js";
+import type {
+	IMergeNode,
+	ISegmentAction,
+	ISegmentChanges,
+	InsertContext,
+	SegmentGroup,
 	type IMergeNodeBuilder,
 	type ISegmentInternal,
 	type ISegmentLeaf,
@@ -73,12 +70,8 @@ import {
 	createInsertSegmentOp,
 	createRemoveRangeOp,
 } from "./opBuilder.js";
-import {
-	IRelativePosition,
-	MergeTreeDeltaType,
-	ReferenceType,
-	type IMergeTreeOp,
-} from "./ops.js";
+import { MergeTreeDeltaType, ReferenceType } from "./ops.js";
+import type { IRelativePosition, type IMergeTreeOp } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import {
 	PriorPerspective,
@@ -88,10 +81,11 @@ import {
 	RemoteObliteratePerspective,
 	allAckedChangesPerspective,
 } from "./perspective.js";
-import { PropertySet, createMap, extend, extendIfUndefined } from "./properties.js";
+import type { PropertySet } from "./properties.js";
+import { createMap, extend, extendIfUndefined } from "./properties.js";
+import type { ReferencePosition } from "./referencePositions.js";
 import {
 	DetachedReferencePosition,
-	ReferencePosition,
 	refGetTileLabels,
 	refHasTileLabel,
 	refTypeIncludesFlag,
@@ -99,13 +93,15 @@ import {
 import { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	assertRemoved,
-	ISegmentInsideObliterateInfo,
 	isInsideObliterate,
 	isMergeNodeInfo,
 	isRemoved,
 	overwriteInfo,
 	removeRemovalInfo,
 	toRemovalInfo,
+} from "./segmentInfos.js";
+import type {
+	ISegmentInsideObliterateInfo,
 	type IHasInsertionInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,

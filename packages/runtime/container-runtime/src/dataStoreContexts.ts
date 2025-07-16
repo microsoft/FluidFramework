@@ -3,14 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
-import {
-	ITelemetryLoggerExt,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
+import type { FluidDataStoreContext, LocalFluidDataStoreContext } from "./dataStoreContext.js";
 
 /**
  * @internal

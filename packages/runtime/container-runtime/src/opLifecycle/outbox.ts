@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IBatchMessage } from "@fluidframework/container-definitions/internal";
-import {
+import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import type {
 	ITelemetryBaseLogger,
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
@@ -17,16 +17,15 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
-import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
+import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
+import type {
+	PendingMessageResubmitData,
+	PendingStateManager,
+} from "../pendingStateManager.js";
 
-import {
-	BatchManager,
-	BatchSequenceNumbers,
-	sequenceNumbersMatch,
-	type BatchId,
-} from "./batchManager.js";
-import {
+import { BatchManager, sequenceNumbersMatch } from "./batchManager.js";
+import type { BatchSequenceNumbers, type BatchId } from "./batchManager.js";
+import type {
 	LocalBatchMessage,
 	IBatchCheckpoint,
 	type OutboundBatchMessage,
@@ -34,10 +33,10 @@ import {
 	type LocalBatch,
 	type OutboundBatch,
 } from "./definitions.js";
-import { OpCompressor } from "./opCompressor.js";
-import { OpGroupingManager } from "./opGroupingManager.js";
+import type { OpCompressor } from "./opCompressor.js";
+import type { OpGroupingManager } from "./opGroupingManager.js";
 import { serializeOp } from "./opSerialization.js";
-import { OpSplitter } from "./opSplitter.js";
+import type { OpSplitter } from "./opSplitter.js";
 
 export interface IOutboxConfig {
 	readonly compressionOptions: ICompressionRuntimeOptions;

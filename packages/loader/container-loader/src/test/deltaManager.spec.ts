@@ -10,24 +10,22 @@ import {
 	MockDocumentDeltaConnection,
 	MockDocumentService,
 } from "@fluid-private/test-loader-utils";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
 	IDocumentDeltaStorageService,
 	IDocumentMessage,
-	MessageType,
 	ISequencedDocumentMessage,
 	type IStream,
 	type IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	MockLogger,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
-import { IConnectionManagerFactoryArgs } from "../contracts.js";
+import type { IConnectionManagerFactoryArgs } from "../contracts.js";
 import { DeltaManager } from "../deltaManager.js";
 import { NoopHeuristic } from "../noopHeuristic.js";
 

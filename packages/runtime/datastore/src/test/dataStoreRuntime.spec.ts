@@ -6,14 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
-import {
+import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
+import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 	type IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
@@ -27,11 +27,8 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
 
-import {
-	DataStoreMessageType,
-	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
-} from "../dataStoreRuntime.js";
+import type { ISharedObjectRegistry } from "../dataStoreRuntime.js";
+import { DataStoreMessageType, FluidDataStoreRuntime } from "../dataStoreRuntime.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;
 

@@ -6,16 +6,15 @@
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	GCNodeType,
-	GarbageCollector,
+import { GCNodeType, GarbageCollector } from "../../gc/index.js";
+import type {
 	IGarbageCollectionRuntime,
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollector,
 	type IGCRuntimeOptions,
 } from "../../gc/index.js";
-import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
+import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";
 
 import { parseNothing } from "./gcUnitTestHelpers.js";

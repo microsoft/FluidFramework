@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	FetchSource,
 	FiveDaysMs,
 	IDocumentStorageService,
@@ -13,14 +13,14 @@ import {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
-	LoaderCachingPolicy,
 	ISnapshotTree,
 	ICreateBlobResponse,
 	IVersion,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
-import { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
+import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {
 	// Save the timeout so we can cancel and reschedule it as needed

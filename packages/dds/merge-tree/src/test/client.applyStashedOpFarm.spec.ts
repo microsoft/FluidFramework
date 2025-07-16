@@ -4,14 +4,17 @@
  */
 
 import { describeFuzz, makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { SegmentGroup } from "../mergeTreeNodes.js";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+import type { SegmentGroup } from "../mergeTreeNodes.js";
+import type { IMergeTreeOp } from "../ops.js";
+import { MergeTreeDeltaType } from "../ops.js";
 
-import {
+import type {
 	IConfigRange,
 	IMergeTreeOperationRunnerConfig,
+} from "./mergeTreeOperationRunner.js";
+import {
 	annotateRange,
 	doOverRange,
 	generateClientNames,

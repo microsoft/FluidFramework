@@ -6,31 +6,36 @@
 import { strict as assert } from "node:assert";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
+import type {
 	IDeltaManager,
 	IDeltaManagerEvents,
 } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { ConnectionMode, IClient, ISequencedClient } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
+	ConnectionMode,
+	IClient,
+	ISequencedClient,
+} from "@fluidframework/driver-definitions";
+import type {
 	IClientConfiguration,
 	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
+import type { TelemetryEventCategory } from "@fluidframework/telemetry-utils/internal";
 import {
-	TelemetryEventCategory,
 	createChildLogger,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, useFakeTimers } from "sinon";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
-import {
+import type {
 	IConnectionStateHandler,
 	IConnectionStateHandlerInputs,
-	createConnectionStateHandlerCore,
 } from "../connectionStateHandler.js";
-import { IConnectionDetailsInternal } from "../contracts.js";
+import { createConnectionStateHandlerCore } from "../connectionStateHandler.js";
+import type { IConnectionDetailsInternal } from "../contracts.js";
 import { ProtocolHandler } from "../protocol.js";
 
 class MockDeltaManagerForCatchingUp

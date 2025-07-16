@@ -4,21 +4,19 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
-import {
-	ITelemetryLoggerExt,
-	loggerToMonitoringContext,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { loggerToMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
-import { IOdspSnapshot } from "../contracts.js";
+import type { IOdspSnapshot } from "../contracts.js";
 import { OdspDocumentStorageServiceBase } from "../odspDocumentStorageServiceBase.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 

@@ -5,21 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
-import { AzureClient } from "@fluidframework/azure-client";
-import { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
+import type { AzureClient } from "@fluidframework/azure-client";
+import type { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/internal";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 

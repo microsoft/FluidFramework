@@ -10,11 +10,11 @@ import {
 	performanceNow,
 	type ILayerCompatDetails,
 } from "@fluid-internal/client-utils";
-import {
-	AttachState,
+import type {
 	IAudience,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	ContainerWarning,
 	IBatchMessage,
@@ -35,24 +35,25 @@ import type {
 	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
 import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	FluidObject,
 	IEvent,
 	IRequest,
 	ITelemetryBaseProperties,
-	LogLevel,
 } from "@fluidframework/core-interfaces";
-import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { LogLevel } from "@fluidframework/core-interfaces";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert, isPromiseLike, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IClient,
 	IClientDetails,
 	IQuorumClients,
 	ISequencedClient,
 	ISummaryTree,
-	SummaryType,
 } from "@fluidframework/driver-definitions";
-import {
+import { SummaryType } from "@fluidframework/driver-definitions";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
@@ -68,10 +69,9 @@ import {
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
-	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
-	type ConnectionMode,
+	ConnectionMode,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getSnapshotTree,
@@ -84,12 +84,8 @@ import {
 	type CombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type TelemetryEventCategory,
-	ITelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
-	IFluidErrorBase,
-	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	connectedEventName,
@@ -100,33 +96,34 @@ import {
 	raiseConnectedEvent,
 	wrapError,
 	loggerToMonitoringContext,
-	type ITelemetryErrorEventExt,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryLoggerExt,
+	IFluidErrorBase,
+	MonitoringContext,
+	TelemetryEventCategory,
+	ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils/internal";
 import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
-import {
-	AttachProcessProps,
-	AttachmentData,
-	runRetriableAttachProcess,
-} from "./attachment.js";
+import type { AttachProcessProps, AttachmentData } from "./attachment.js";
+import { runRetriableAttachProcess } from "./attachment.js";
 import { Audience } from "./audience.js";
 import { ConnectionManager } from "./connectionManager.js";
 import { ConnectionState } from "./connectionState.js";
-import {
-	IConnectionStateHandler,
-	createConnectionStateHandler,
-} from "./connectionStateHandler.js";
+import type { IConnectionStateHandler } from "./connectionStateHandler.js";
+import { createConnectionStateHandler } from "./connectionStateHandler.js";
 import { ContainerContext } from "./containerContext.js";
 import { ContainerStorageAdapter } from "./containerStorageAdapter.js";
-import {
+import type {
 	IConnectionDetailsInternal,
 	IConnectionManagerFactoryArgs,
 	IConnectionStateChangeReason,
-	ReconnectMode,
-	getPackageName,
 } from "./contracts.js";
-import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
+import { ReconnectMode, getPackageName } from "./contracts.js";
+import type { IConnectionArgs } from "./deltaManager.js";
+import { DeltaManager } from "./deltaManager.js";
 import { RelativeLoader } from "./loader.js";
 import {
 	validateDriverCompatibility,
@@ -139,21 +136,17 @@ import {
 } from "./memoryBlobStorage.js";
 import { NoopHeuristic } from "./noopHeuristic.js";
 import { pkgVersion } from "./packageVersion.js";
-import { IQuorumSnapshot } from "./protocol/index.js";
-import {
-	IProtocolHandler,
-	ProtocolHandler,
-	ProtocolHandlerBuilder,
-	protocolHandlerShouldProcessSignal,
-} from "./protocol.js";
+import type { IQuorumSnapshot } from "./protocol/index.js";
+import type { IProtocolHandler, ProtocolHandlerBuilder } from "./protocol.js";
+import { ProtocolHandler, protocolHandlerShouldProcessSignal } from "./protocol.js";
 import { initQuorumValuesFromCodeDetails } from "./quorum.js";
 import {
 	type IPendingContainerState,
 	type IPendingDetachedContainerState,
 	SerializedStateManager,
 } from "./serializedStateManager.js";
+import type { ISnapshotTreeWithBlobContents } from "./utils.js";
 import {
-	ISnapshotTreeWithBlobContents,
 	combineAppAndProtocolSummary,
 	combineSnapshotTreeAndSnapshotBlobs,
 	getDetachedContainerStateFromSerializedContainer,

@@ -7,15 +7,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import {
-	Marker,
-	SegmentGroup,
-	reservedMarkerIdKey,
-	type ISegmentPrivate,
-} from "../mergeTreeNodes.js";
-import { IMergeTreeOp, ReferenceType } from "../ops.js";
+import { Marker, reservedMarkerIdKey } from "../mergeTreeNodes.js";
+import type { SegmentGroup, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { IMergeTreeOp } from "../ops.js";
+import { ReferenceType } from "../ops.js";
 import { clone } from "../properties.js";
 import { TextSegment } from "../textSegment.js";
 

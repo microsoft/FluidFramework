@@ -5,11 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
+import type {
 	ICacheEntry,
 	IEntry,
 	IOdspResolvedUrl,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
 	OdspErrorTypes,
 	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions/internal";
@@ -18,7 +20,8 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "../contracts.js";
+import type { IVersionedValueWithEpoch } from "../contracts.js";
+import { persistedCacheValueVersion } from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";

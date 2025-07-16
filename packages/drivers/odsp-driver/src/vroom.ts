@@ -3,22 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import {
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type {
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { EpochTracker } from "./epochTracker.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { mockify } from "./mockify.js";
 import { getApiRoot } from "./odspUrlHelper.js";
-import { TokenFetchOptionsEx } from "./odspUtils.js";
+import type { TokenFetchOptionsEx } from "./odspUtils.js";
 import { runWithRetry } from "./retryUtils.js";
 
 interface IJoinSessionBody {

@@ -15,7 +15,8 @@ import type {
 	IMergeTreeAnnotateAdjustMsg,
 	IMergeTreeAnnotateMsg,
 } from "./ops.js";
-import { MapLike, PropertySet, clone, createMap } from "./properties.js";
+import type { MapLike, PropertySet } from "./properties.js";
+import { clone, createMap } from "./properties.js";
 
 /**
  * Minimally copies properties and the property manager from source to destination.

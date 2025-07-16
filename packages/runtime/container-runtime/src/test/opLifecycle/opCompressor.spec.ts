@@ -9,9 +9,9 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
-import {
+import { OpCompressor } from "../../opLifecycle/index.js";
+import type {
 	OutboundBatchMessage,
-	OpCompressor,
 	type OutboundBatch,
 	type OutboundSingletonBatch,
 } from "../../opLifecycle/index.js";

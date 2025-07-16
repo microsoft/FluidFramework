@@ -7,10 +7,7 @@ import assert from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
-import {
-	type IResolvedUrl,
-	type IUrlResolver,
-} from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 import {
 	isFluidError,
 	MockLogger,

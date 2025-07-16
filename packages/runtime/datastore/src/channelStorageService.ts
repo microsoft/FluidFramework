@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type {
 	IDocumentStorageService,
 	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 export class ChannelStorageService implements IChannelStorageService {
 	private static flattenTree(

@@ -6,17 +6,16 @@
 import assert from "node:assert";
 
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type {
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import { SegmentGroup, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { SegmentGroup, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { MergeTreeDeltaRevertible, MergeTreeWithRevert } from "../revertibles.js";
 import {
-	MergeTreeDeltaRevertible,
-	MergeTreeWithRevert,
 	appendToMergeTreeDeltaRevertibles,
 	revertMergeTreeDeltaRevertibles,
 } from "../revertibles.js";

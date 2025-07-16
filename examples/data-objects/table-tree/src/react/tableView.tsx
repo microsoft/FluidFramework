@@ -5,10 +5,11 @@
 
 import { Table, TableBody, Button } from "@fluentui/react-components";
 import { Add24Regular } from "@fluentui/react-icons";
-import React, { useState, DragEvent } from "react";
+import type { DragEvent } from "react";
+import React, { useState } from "react";
 
-import { TableDataObject } from "../dataObject.js";
-import { Column } from "../schema.js";
+import type { TableDataObject } from "../dataObject.js";
+import type { Column } from "../schema.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";

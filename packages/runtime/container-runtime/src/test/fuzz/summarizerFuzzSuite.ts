@@ -9,11 +9,13 @@ import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
+import type {
 	AsyncGenerator,
 	AsyncReducer,
 	BaseFuzzTestState,
 	SaveInfo,
+} from "@fluid-private/stochastic-test-utils";
+import {
 	asyncGeneratorFromArray,
 	createFuzzDescribe,
 	defaultOptions,
@@ -25,11 +27,11 @@ import {
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import type { SummarizerOperation } from "./fuzzUtils.js";
-import {
+import type {
 	IMockContainerRuntimeForSummarizerOptions,
-	MockContainerRuntimeFactoryForSummarizer,
 	MockContainerRuntimeForSummarizer,
 } from "./summarizerFuzzMocks.js";
+import { MockContainerRuntimeFactoryForSummarizer } from "./summarizerFuzzMocks.js";
 
 export interface SummarizerFuzzTestState extends BaseFuzzTestState {
 	containerRuntimeFactory: MockContainerRuntimeFactoryForSummarizer;

@@ -4,11 +4,11 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import type { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	FetchSource,
 	IDocumentService,
 	IDocumentStorageService,
@@ -21,7 +21,7 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";

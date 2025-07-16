@@ -13,18 +13,16 @@ import type {
 	IResponse,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	FluidDataStoreRuntime,
-	FluidObjectHandle,
-	ISharedObjectRegistry,
-} from "@fluidframework/datastore/internal";
-import {
+import type { ISharedObjectRegistry } from "@fluidframework/datastore/internal";
+import { FluidDataStoreRuntime, FluidObjectHandle } from "@fluidframework/datastore/internal";
+import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISharedMap, IValueChanged, SharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
+import { SharedMap } from "@fluidframework/map/internal";
 import { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
-import {
+import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntry,
@@ -37,7 +35,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
+import type { IAgentScheduler, IAgentSchedulerEvents } from "./agent.js";
 
 // Note: making sure this ID is unique and does not collide with storage provided clientID
 const UnattachedClientId = `${uuid()}_unattached`;

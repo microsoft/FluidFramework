@@ -10,10 +10,9 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerMessageType } from "../../index.js";
-import {
+import { OpGroupingManager, isGroupedBatch } from "../../opLifecycle/index.js";
+import type {
 	OutboundBatchMessage,
-	OpGroupingManager,
-	isGroupedBatch,
 	type OutboundBatch,
 	type EmptyGroupedBatch,
 	type LocalEmptyBatchPlaceholder,

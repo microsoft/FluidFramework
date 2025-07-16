@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IDisposable } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { IDisposable } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	ISummaryContext,
-	type IDocumentStorageServicePolicies,
+	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
 
 /**

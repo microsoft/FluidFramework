@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRandom, makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { IRandom } from "@fluid-private/stochastic-test-utils";
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
 
 import { AppendOnlySortedMap } from "../appendOnlySortedMap.js";

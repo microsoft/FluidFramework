@@ -7,21 +7,19 @@
 
 import { strict as assert } from "node:assert";
 
+import type { Generator, IRandom } from "@fluid-private/stochastic-test-utils";
 import {
-	Generator,
-	IRandom,
 	createWeightedGenerator,
 	makeRandom,
 	performFuzzActions,
 	take,
 } from "@fluid-private/stochastic-test-utils";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
-import {
-	AttributionCollection,
-	SerializedAttributionCollection,
-} from "../attributionCollection.js";
-import { BaseSegment, ISegment } from "../mergeTreeNodes.js";
+import type { SerializedAttributionCollection } from "../attributionCollection.js";
+import { AttributionCollection } from "../attributionCollection.js";
+import type { ISegment } from "../mergeTreeNodes.js";
+import { BaseSegment } from "../mergeTreeNodes.js";
 import type { PropertySet } from "../properties.js";
 
 const opKey = (seq: number): AttributionKey => ({ type: "op", seq });

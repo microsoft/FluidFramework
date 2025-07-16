@@ -3,27 +3,28 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AzureClient,
+import type {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
-import {
-	AzureClient as AzureClientLegacy,
+import { AzureClient } from "@fluidframework/azure-client";
+import type {
 	AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
 	AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
 	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
+import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
+import type { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
+import { default as Axios } from "axios";
+import type { AxiosResponse, type AxiosRequestConfig } from "axios";
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";

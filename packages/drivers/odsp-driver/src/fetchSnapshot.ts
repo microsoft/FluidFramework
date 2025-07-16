@@ -6,51 +6,44 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import {
-	DriverErrorTelemetryProps,
-	NonRetryableError,
-	isRuntimeMessage,
-} from "@fluidframework/driver-utils/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
+import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
 	fetchIncorrectResponse,
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	type IOdspError,
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
 	IOdspResolvedUrl,
 	ISnapshotOptions,
 	InstrumentedStorageTokenFetcher,
-	OdspErrorTypes,
+	IOdspError,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
-	ISnapshotContentsWithProps,
-	currentReadVersion,
-	parseCompactSnapshotResponse,
-} from "./compactSnapshotParser.js";
-import {
+import type { ISnapshotContentsWithProps } from "./compactSnapshotParser.js";
+import { currentReadVersion, parseCompactSnapshotResponse } from "./compactSnapshotParser.js";
+import type {
 	IOdspSnapshot,
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
-	persistedCacheValueVersion,
 } from "./contracts.js";
+import { persistedCacheValueVersion } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
-import { EpochTracker } from "./epochTracker.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { mockify } from "./mockify.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
-	IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -59,8 +52,8 @@ import {
 	measure,
 	measureP,
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
-	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
+import type { IOdspResponse, TokenFetchOptionsEx } from "./odspUtils.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**

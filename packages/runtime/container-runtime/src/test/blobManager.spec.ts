@@ -12,15 +12,20 @@ import {
 	gitHashFile,
 } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
-import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleContext,
-	type IFluidHandleInternal,
+import type { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+} from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleContext,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { IClientDetails } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
@@ -30,9 +35,11 @@ import {
 import {
 	LoggingError,
 	MockLogger,
-	MonitoringContext,
 	createChildLogger,
 	mixinMonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	MonitoringContext,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
@@ -40,10 +47,12 @@ import { v4 as uuid } from "uuid";
 
 import {
 	BlobManager,
-	IBlobManagerLoadInfo,
-	IBlobManagerRuntime,
 	blobManagerBasePath,
 	redirectTableBlobName,
+} from "../blobManager/index.js";
+import type {
+	IBlobManagerLoadInfo,
+	IBlobManagerRuntime,
 	type IPendingBlobs,
 } from "../blobManager/index.js";
 

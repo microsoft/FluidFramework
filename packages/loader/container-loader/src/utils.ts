@@ -9,19 +9,20 @@ import {
 	stringToBuffer,
 } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	DriverErrorTypes,
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentAttributes,
 	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	IDocumentStorageService,
-	type ISnapshot,
+	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
+import type {
 	CombinedAppAndProtocolSummary,
 	DeltaStreamConnectionForbiddenError,
+} from "@fluidframework/driver-utils/internal";
+import {
 	isCombinedAppAndProtocolSummary,
 	readAndParse,
 } from "@fluidframework/driver-utils/internal";
@@ -32,7 +33,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,

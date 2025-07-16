@@ -5,7 +5,7 @@
 
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 
-import {
+import type {
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,

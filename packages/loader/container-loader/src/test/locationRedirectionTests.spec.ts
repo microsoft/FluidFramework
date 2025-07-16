@@ -5,12 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { IRequest } from "@fluidframework/core-interfaces";
-import {
-	IResolvedUrl,
-	IUrlResolver,
-	DriverErrorTypes,
-} from "@fluidframework/driver-definitions/internal";
+import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 
 import { resolveWithLocationRedirectionHandling } from "../location-redirection-utilities/index.js";
 

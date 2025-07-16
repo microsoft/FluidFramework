@@ -4,12 +4,8 @@
  */
 
 // inspiration for this example taken from https://github.com/agentcooper/typescript-play
-import {
-	MergeTreeDeltaType,
-	SequenceDeltaEvent,
-	SharedString,
-	TextSegment,
-} from "@fluidframework/sequence/legacy";
+import type { SequenceDeltaEvent, SharedString } from "@fluidframework/sequence/legacy";
+import { MergeTreeDeltaType, TextSegment } from "@fluidframework/sequence/legacy";
 import * as monaco from "monaco-editor";
 import React, { useEffect, useRef } from "react";
 

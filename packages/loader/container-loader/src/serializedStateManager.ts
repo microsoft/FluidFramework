@@ -4,7 +4,7 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
+import type {
 	IGetPendingLocalStateProps,
 	IRuntime,
 } from "@fluidframework/container-definitions/internal";
@@ -15,29 +15,29 @@ import type {
 	Tagged,
 } from "@fluidframework/core-interfaces";
 import { Timer, assert } from "@fluidframework/core-utils/internal";
-import {
-	FetchSource,
+import { FetchSource } from "@fluidframework/driver-definitions/internal";
+import type {
 	IDocumentStorageService,
 	IResolvedUrl,
 	ISnapshot,
-	type IDocumentAttributes,
 	ISnapshotTree,
 	IVersion,
 	ISequencedDocumentMessage,
+	IDocumentAttributes,
 } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
-	MonitoringContext,
 	PerformanceEvent,
 	UsageError,
 	createChildMonitoringContext,
-	type TelemetryEventPropertyTypeExt,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	MonitoringContext,
+	TelemetryEventPropertyTypeExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	ISerializableBlobContents,
-	getBlobContentsFromTree,
-} from "./containerStorageAdapter.js";
+import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
+import { getBlobContentsFromTree } from "./containerStorageAdapter.js";
 import { convertSnapshotToSnapshotInfo, getDocumentAttributes } from "./utils.js";
 
 /**

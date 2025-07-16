@@ -5,22 +5,19 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IDocumentStorageService,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import {
-	ISummaryTreeWithStats,
-	channelsTreeName,
-	gcTreeKey,
-} from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
-import { IGCMetadata } from "../gc/index.js";
+import type { IGCMetadata } from "../gc/index.js";
 
-import { IDocumentSchema } from "./documentSchema.js";
+import type { IDocumentSchema } from "./documentSchema.js";
 
 /**
  * @deprecated - This interface will no longer be exported in the future(AB#8004).

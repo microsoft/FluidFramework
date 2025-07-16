@@ -5,32 +5,30 @@
 
 import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
 	ISummaryBlob,
 	ISummaryTree,
-	type SummaryObject,
-	SummaryType,
+	SummaryObject,
 } from "@fluidframework/driver-definitions";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	getDocAttributesFromProtocolSummary,
 	getGitType,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-} from "@fluidframework/telemetry-utils/internal";
+import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import {
+import type {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
 } from "./../contracts.js";
-import { EpochTracker, FetchType } from "./../epochTracker.js";
+import type { EpochTracker, FetchType } from "./../epochTracker.js";
 import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { checkForKnownServerFarmType } from "./../odspUrlHelper.js";
 import { getWithRetryForTokenRefresh, maxUmpPostBodySize } from "./../odspUtils.js";

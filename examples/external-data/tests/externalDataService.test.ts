@@ -9,13 +9,14 @@ import cors from "cors";
 import express from "express";
 import request from "supertest";
 
+import type { MockWebhook } from "../src/mock-external-data-service/index.js";
 import {
 	ExternalDataSource,
-	MockWebhook,
 	initializeExternalDataService,
 } from "../src/mock-external-data-service/index.js";
 import { externalDataServicePort } from "../src/mock-external-data-service-interface/index.js";
-import { ITaskData, assertValidTaskData } from "../src/model-interface/index.js";
+import type { ITaskData } from "../src/model-interface/index.js";
+import { assertValidTaskData } from "../src/model-interface/index.js";
 
 import { closeServer, delay } from "./utilities.js";
 

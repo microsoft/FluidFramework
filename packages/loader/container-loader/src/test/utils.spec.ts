@@ -6,11 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
+import type {
 	IDocumentStorageService,
-	type ISnapshot,
 	IDocumentAttributes,
 	ISnapshotTree,
+	type ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { ISerializableBlobContents } from "../containerStorageAdapter.js";

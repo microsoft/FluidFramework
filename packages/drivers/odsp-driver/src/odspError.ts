@@ -5,13 +5,12 @@
 
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
-import { OdspError, OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	IFluidErrorBase,
-	getCircularReplacer,
-} from "@fluidframework/telemetry-utils/internal";
+import type { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
+import { getCircularReplacer } from "@fluidframework/telemetry-utils/internal";
 
-import { IOdspSocketError } from "./contracts.js";
+import type { IOdspSocketError } from "./contracts.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 /**

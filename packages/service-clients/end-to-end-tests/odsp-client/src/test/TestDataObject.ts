@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
 import {
 	DataObject,
 	DataObjectFactory,
-	IDataObjectProps,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 
 class TestDataObjectClass extends DataObject {

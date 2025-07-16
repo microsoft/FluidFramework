@@ -4,9 +4,9 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { AttributionKey } from "@fluidframework/runtime-definitions/internal";
+import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 
-import { IAttributionCollection } from "./attributionCollection.js";
+import type { IAttributionCollection } from "./attributionCollection.js";
 import {
 	LocalClientId,
 	NonCollabClient,
@@ -15,27 +15,30 @@ import {
 } from "./constants.js";
 import { LocalReferenceCollection, type LocalReferencePosition } from "./localReference.js";
 import { TrackingGroupCollection, type ITrackingGroup } from "./mergeTreeTracking.js";
-import { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
+import type { IJSONSegment, IMarkerDef, ReferenceType } from "./ops.js";
 import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
-import { PropertySet, clone, createMap, type MapLike } from "./properties.js";
-import { ReferencePosition } from "./referencePositions.js";
-import { SegmentGroupCollection } from "./segmentGroupCollection.js";
+import { clone, createMap } from "./properties.js";
+import type { PropertySet, type MapLike } from "./properties.js";
+import type { ReferencePosition } from "./referencePositions.js";
+import type { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
 	hasProp,
 	isInserted,
 	isMergeNodeInfo as isMergeNode,
 	isRemoved,
 	overwriteInfo,
+	isInsideObliterate,
+} from "./segmentInfos.js";
+import type {
+	ISegmentInsideObliterateInfo,
 	type IHasInsertionInfo,
 	type IMergeNodeInfo,
 	type IHasRemovalInfo,
 	type SegmentWithInfo,
-	ISegmentInsideObliterateInfo,
-	isInsideObliterate,
 } from "./segmentInfos.js";
-import { PropertiesManager } from "./segmentPropertiesManager.js";
+import type { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { Side } from "./sequencePlace.js";
 import type { OperationStamp, SliceRemoveOperationStamp } from "./stamps.js";
 

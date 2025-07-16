@@ -8,18 +8,20 @@ import type {
 	ISummarizerEvents,
 	SummarizerStopReason,
 } from "@fluidframework/container-runtime-definitions/internal";
-import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+import {
 	LoggingError,
 	UsageError,
 	createChildLogger,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	IConnectableRuntime,
 	IEnqueueSummarizeOptions,
 	IOnDemandSummarizeOptions,
@@ -31,9 +33,9 @@ import {
 	type IRetriableFailureError,
 	type ISummaryConfiguration,
 } from "../summarizerTypes.js";
-import { SummaryCollection } from "../summaryCollection.js";
+import type { SummaryCollection } from "../summaryCollection.js";
 
-import { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
+import type { ICancellableSummarizerController } from "./runWhileConnectedCoordinator.js";
 import { RunningSummarizer } from "./runningSummarizer.js";
 import { SummarizeHeuristicData } from "./summarizerHeuristics.js";
 import { SummarizeResultBuilder } from "./summaryResultBuilder.js";

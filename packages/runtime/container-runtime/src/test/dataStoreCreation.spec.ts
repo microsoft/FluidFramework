@@ -5,11 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import {
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type {
 	CreateChildSummarizerNodeFn,
-	CreateSummarizerNodeSource,
 	FluidDataStoreRegistryEntry,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
@@ -17,6 +16,7 @@ import {
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";
+import { CreateSummarizerNodeSource } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,

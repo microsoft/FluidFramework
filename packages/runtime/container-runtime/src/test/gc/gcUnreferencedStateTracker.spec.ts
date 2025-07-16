@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { SinonFakeTimers, SinonSpy, spy, useFakeTimers } from "sinon";
+import type { SinonFakeTimers, SinonSpy } from "sinon";
+import { spy, useFakeTimers } from "sinon";
 
 import { UnreferencedState, UnreferencedStateTracker } from "../../gc/index.js";
 

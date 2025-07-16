@@ -5,7 +5,7 @@
 
 import { DoublyLinkedList, walkList } from "@fluidframework/core-utils/internal";
 
-import { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
+import type { SegmentGroup, type ISegmentLeaf } from "./mergeTreeNodes.js";
 
 export class SegmentGroupCollection {
 	private readonly segmentGroups: DoublyLinkedList<SegmentGroup>;

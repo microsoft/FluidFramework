@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
 
 import {
 	combineAppAndProtocolSummary,

@@ -11,7 +11,8 @@ import type { IRandom } from "@fluid-private/stochastic-test-utils";
 
 // import { createGroupOp } from "../opBuilder.js";
 import type { IMergeTreeInsertMsg, IMergeTreeOp } from "../ops.js";
-import { InteriorSequencePlace, Side } from "../sequencePlace.js";
+import type { InteriorSequencePlace } from "../sequencePlace.js";
+import { Side } from "../sequencePlace.js";
 
 import { annotateRange, removeRange, type TestOperation } from "./mergeTreeOperationRunner.js";
 import type { TestClient } from "./testClient.js";

@@ -4,23 +4,20 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidObject } from "@fluidframework/core-interfaces";
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { FluidObject } from "@fluidframework/core-interfaces";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
 	// eslint-disable-next-line import/no-deprecated
 	type IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	TelemetryDataTag,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { ChannelCollection } from "./channelCollection.js";
+import type { ChannelCollection } from "./channelCollection.js";
 import { ContainerMessageType } from "./messageTypes.js";
 
 /**

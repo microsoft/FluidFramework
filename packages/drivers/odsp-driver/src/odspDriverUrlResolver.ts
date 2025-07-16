@@ -3,19 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	DriverHeader,
+import type {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
+import { DriverHeader } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
-import {
-	IOdspResolvedUrl,
-	OdspErrorTypes,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";

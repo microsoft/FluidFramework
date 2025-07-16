@@ -4,18 +4,15 @@
  */
 
 import { CollaborativeTextArea, SharedStringHelper } from "@fluid-example/example-utils";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
-import { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
 import React from "react";
 
-import {
-	ContainerInfo,
-	createFluidContainer,
-	loadExistingFluidContainer,
-} from "./ClientUtilities.js";
+import type { ContainerInfo } from "./ClientUtilities.js";
+import { createFluidContainer, loadExistingFluidContainer } from "./ClientUtilities.js";
 
 /**
  * Key in the app's `rootMap` under which the SharedString object is stored.

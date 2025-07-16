@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { PromiseCache } from "@fluidframework/core-utils/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -15,7 +15,7 @@ import {
 	getDocAttributesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	HostStoragePolicy,
 	IFileEntry,
 	IOdspUrlParts,
@@ -24,26 +24,24 @@ import {
 	ISharingLinkKind,
 	ISocketStorageDiscovery,
 	OdspResourceTokenFetchOptions,
-	SharingLinkRole,
-	SharingLinkScope,
 	TokenFetchOptions,
 	TokenFetcher,
+} from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	SharingLinkRole,
+	SharingLinkScope,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
-import { ICacheAndTracker, createOdspCacheAndTracker } from "./epochTracker.js";
-import {
-	INonPersistentCache,
-	IPrefetchSnapshotContents,
-	LocalPersistentCache,
-	NonPersistentCache,
-} from "./odspCache.js";
+import type { ICacheAndTracker } from "./epochTracker.js";
+import { createOdspCacheAndTracker } from "./epochTracker.js";
+import type { INonPersistentCache, IPrefetchSnapshotContents } from "./odspCache.js";
+import { LocalPersistentCache, NonPersistentCache } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
+import type { IExistingFileInfo, INewFileInfo } from "./odspUtils.js";
 import {
-	IExistingFileInfo,
-	INewFileInfo,
 	createOdspLogger,
 	getJoinSessionCacheKey,
 	getOdspResolvedUrl,

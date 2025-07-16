@@ -3,6 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { IAppViewProps, AppView } from "./appView.js";
+export { type IAppViewProps, AppView } from "./appView.js";
 export { DebugView } from "./debugView.js";
-export { ITaskListViewProps, TaskListView } from "./taskListView.js";
+export { type ITaskListViewProps, TaskListView } from "./taskListView.js";

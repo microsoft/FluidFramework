@@ -3,30 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Clicker,
-	ClickerInstantiationFactory,
-	ClickerReactView,
-} from "@fluid-example/clicker";
-import {
-	CodeMirrorComponent,
-	CodeMirrorReactView,
-	SmdeFactory,
-} from "@fluid-example/codemirror";
+import type { Clicker } from "@fluid-example/clicker";
+import { ClickerInstantiationFactory, ClickerReactView } from "@fluid-example/clicker";
+import type { CodeMirrorComponent } from "@fluid-example/codemirror";
+import { CodeMirrorReactView, SmdeFactory } from "@fluid-example/codemirror";
 import {
 	CollaborativeText,
 	CollaborativeTextView,
 } from "@fluid-example/collaborative-textarea";
 import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { SliderCoordinateView } from "@fluid-example/multiview-slider-coordinate-view";
-import {
-	ProseMirror,
-	ProseMirrorFactory,
-	ProseMirrorReactView,
-} from "@fluid-example/prosemirror";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
-import { Serializable } from "@fluidframework/datastore-definitions/legacy";
-import {
+import type { ProseMirror } from "@fluid-example/prosemirror";
+import { ProseMirrorFactory, ProseMirrorReactView } from "@fluid-example/prosemirror";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { Serializable } from "@fluidframework/datastore-definitions/legacy";
+import type {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,

@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,

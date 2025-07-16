@@ -6,18 +6,15 @@
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
-import {
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import type {
 	IOdspUrlParts,
-	OdspErrorTypes,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
-	type IOdspResolvedUrl,
+	IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	isFluidError,
-} from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent, isFluidError } from "@fluidframework/telemetry-utils/internal";
 
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { mockify } from "./mockify.js";

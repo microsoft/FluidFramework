@@ -3,62 +3,68 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitterEventType } from "@fluid-internal/client-utils";
+import type { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseProperties, type ErasedType } from "@fluidframework/core-interfaces";
-import {
-	type IFluidHandleInternal,
-	type IFluidLoadable,
+import type {
+	ITelemetryBaseProperties,
+	type ErasedType,
+} from "@fluidframework/core-interfaces";
+import type {
+	IFluidHandleInternal,
+	IFluidLoadable,
 } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelServices,
 	IChannelStorageService,
-	type IChannel,
 	IChannelAttributes,
-	type IChannelFactory,
 	IFluidDataStoreRuntime,
+	type IChannel,
+	type IChannelFactory,
 	type IDeltaHandler,
 	type IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	type IDocumentMessage,
+import type {
 	ISequencedDocumentMessage,
+	type IDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	blobCountPropertyName,
+	totalBlobSizePropertyName,
+} from "@fluidframework/runtime-definitions/internal";
+import type {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
-	blobCountPropertyName,
-	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
+import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
+import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	toDeltaManagerInternal,
-	TelemetryContext,
-} from "@fluidframework/runtime-utils/internal";
-import {
-	ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
-	MonitoringContext,
 	SampledTelemetryHelper,
 	createChildLogger,
 	loggerToMonitoringContext,
 	tagCodeArtifacts,
+	LoggingError,
+} from "@fluidframework/telemetry-utils/internal";
+import type {
+	ITelemetryLoggerExt,
+	MonitoringContext,
 	type ICustomData,
 	type IFluidErrorBase,
-	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
 import { SharedObjectHandle } from "./handle.js";
-import { FluidSerializer, IFluidSerializer } from "./serializer.js";
-import { ISharedObject, ISharedObjectEvents } from "./types.js";
+import type { IFluidSerializer } from "./serializer.js";
+import { FluidSerializer } from "./serializer.js";
+import type { ISharedObject, ISharedObjectEvents } from "./types.js";
 import { bindHandles, makeHandlesSerializable, parseHandles } from "./utils.js";
 
 /**

@@ -8,12 +8,14 @@
 import assert from "node:assert";
 import * as fs from "node:fs";
 
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import { createGroupOp } from "../opBuilder.js";
-import { IMergeTreeOp, MergeTreeDeltaType } from "../ops.js";
+import type { IMergeTreeOp } from "../ops.js";
+import { MergeTreeDeltaType } from "../ops.js";
 
-import { ReplayGroup, replayResultsPath } from "./mergeTreeOperationRunner.js";
+import type { ReplayGroup } from "./mergeTreeOperationRunner.js";
+import { replayResultsPath } from "./mergeTreeOperationRunner.js";
 import { TestClient } from "./testClient.js";
 import { TestClientLogger } from "./testClientLogger.js";
 

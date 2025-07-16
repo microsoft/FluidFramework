@@ -3,15 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { DoublyLinkedList, ListNode, walkList } from "@fluidframework/core-utils/internal";
+import type { ListNode } from "@fluidframework/core-utils/internal";
+import { assert, DoublyLinkedList, walkList } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { type ISegmentInternal } from "./mergeTreeNodes.js";
-import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
+import type { ISegmentInternal } from "./mergeTreeNodes.js";
+import type { TrackingGroup } from "./mergeTreeTracking.js";
+import { TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";
-import { PropertySet, addProperties } from "./properties.js";
-import { ReferencePosition, refTypeIncludesFlag } from "./referencePositions.js";
+import type { PropertySet } from "./properties.js";
+import { addProperties } from "./properties.js";
+import type { ReferencePosition } from "./referencePositions.js";
+import { refTypeIncludesFlag } from "./referencePositions.js";
 
 /**
  * Dictates the preferential direction for a {@link ReferencePosition} to slide

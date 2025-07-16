@@ -3,18 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { IAudienceOwner } from "@fluidframework/container-definitions/internal";
-import {
+import type { IAudienceOwner } from "@fluidframework/container-definitions/internal";
+import type {
 	IDocumentAttributes,
 	IProcessMessageResult,
 	ISignalClient,
-	MessageType,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { canBeCoalescedByService } from "@fluidframework/driver-utils/internal";
 
-import { IBaseProtocolHandler, IQuorumSnapshot, ProtocolOpHandler } from "./protocol/index.js";
+import type { IBaseProtocolHandler, IQuorumSnapshot } from "./protocol/index.js";
+import { ProtocolOpHandler } from "./protocol/index.js";
 
 // ADO: #1986: Start using enum from protocol-base.
 export enum SignalType {

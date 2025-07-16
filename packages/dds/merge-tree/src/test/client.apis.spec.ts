@@ -7,8 +7,9 @@
 
 import { strict as assert } from "node:assert";
 
-import { Client } from "../client.js";
-import { PropertySet, matchProperties } from "../properties.js";
+import type { Client } from "../client.js";
+import type { PropertySet } from "../properties.js";
+import { matchProperties } from "../properties.js";
 
 import { TestClient } from "./testClient.js";
 

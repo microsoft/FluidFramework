@@ -21,30 +21,34 @@ import {
 	raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	type IMockContainerRuntimeOptions,
 	MockContainerRuntimeFactoryForReconnection,
 	MockContainerRuntimeForReconnection,
+} from "@fluidframework/test-runtime-utils/internal";
+import type {
 	MockFluidDataStoreRuntime,
+	type IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { type ISummaryConfiguration } from "../../index.js";
+import type { ISummaryConfiguration } from "../../index.js";
 import {
+	RunWhileConnectedCoordinator,
+	Summarizer,
+	SummaryCollection,
+	SummaryManager,
+} from "../../summary/index.js";
+import type {
 	IConnectableRuntime,
+	ISummarizerClientElection,
+	ISummarizerClientElectionEvents,
 	type IConnectedEvents,
 	type IConnectedState,
 	type IGeneratedSummaryStats,
 	type IRefreshSummaryAckOptions,
 	type ISubmitSummaryOptions,
-	ISummarizerClientElection,
-	ISummarizerClientElectionEvents,
 	type ISummarizerInternalsProvider,
 	type ISummarizerRuntime,
-	RunWhileConnectedCoordinator,
 	type SubmitSummaryResult,
-	Summarizer,
-	SummaryCollection,
-	SummaryManager,
 } from "../../summary/index.js";
 import type { IThrottler } from "../../throttler.js";
 

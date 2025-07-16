@@ -5,21 +5,22 @@
 
 import { strict as assert } from "node:assert";
 
-import { ILoggingError } from "@fluidframework/core-interfaces/internal";
+import type { ILoggingError } from "@fluidframework/core-interfaces/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type {
 	CreateChildSummarizerNodeParam,
-	CreateSummarizerNodeSource,
 	ISummarizerNode,
 	ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions/internal";
+import { CreateSummarizerNodeSource } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
-import { IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
+import type { IRootSummarizerNode } from "../summary/index.js";
+import { createRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
+import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 
 describe("Runtime", () => {
 	describe("Summarization", () => {
