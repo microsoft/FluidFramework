@@ -175,7 +175,7 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDat
 			});
 		} as unknown as Ctor;
 
-		// Note: we're passing `undefined` registry entries to the base class so it won't create a registry itself,
+		// Note: we're not specifying registry entries to the base class, so it won't create a registry itself,
 		// and instead we override the necessary methods in this class to use the registry received in the constructor.
 		super({
 			type: treeRootDataObjectType,
