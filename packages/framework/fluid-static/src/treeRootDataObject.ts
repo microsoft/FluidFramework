@@ -45,10 +45,6 @@ import {
 	makeFluidObject,
 } from "./utils.js";
 
-interface IProvideTreeRootDataObject {
-	readonly TreeRootDataObject: TreeRootDataObject;
-}
-
 /**
  * Extra properties required by {@link TreeRootDataObject}'s constructor.
  */
@@ -69,10 +65,7 @@ interface TreeRootDataObjectExtraProps {
  * @remarks
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class TreeRootDataObject
-	extends TreeDataObject
-	implements IRootDataObject, IProvideTreeRootDataObject
-{
+export class TreeRootDataObject extends TreeDataObject implements IRootDataObject {
 	/**
 	 * {@inheritDoc TreeRootDataObjectExtraProps.treeKey}
 	 */
