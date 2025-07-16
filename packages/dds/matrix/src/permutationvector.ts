@@ -3,39 +3,39 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	BaseSegment,
 	Client,
-	IJSONSegment,
-	IMergeTreeDeltaCallbackArgs,
-	IMergeTreeDeltaOpArgs,
-	IMergeTreeMaintenanceCallbackArgs,
-	ISegment,
+	type IJSONSegment,
+	type IMergeTreeDeltaCallbackArgs,
+	type IMergeTreeDeltaOpArgs,
+	type IMergeTreeMaintenanceCallbackArgs,
+	type ISegment,
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
 	segmentIsRemoved,
 	type IMergeTreeInsertMsg,
 	type IMergeTreeRemoveMsg,
 } from "@fluidframework/merge-tree/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { HandleCache } from "./handlecache.js";
 import { Handle, HandleTable, isHandleValid } from "./handletable.js";
 import { deserializeBlob } from "./serialization.js";
-import { VectorUndoProvider } from "./undoprovider.js";
+import type { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
 	segments = "segments",

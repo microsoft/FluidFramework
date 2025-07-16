@@ -8,8 +8,8 @@
  * Use caustion when making changes and consider backward and forward compatibility of your changes!
  */
 
-import { Serializable } from "@fluidframework/datastore-definitions/internal";
-import { IMergeTreeOp } from "@fluidframework/merge-tree/internal";
+import type { Serializable } from "@fluidframework/datastore-definitions/internal";
+import type { IMergeTreeOp } from "@fluidframework/merge-tree/internal";
 
 export enum MatrixOp {
 	spliceCols,
