@@ -73,6 +73,9 @@ export class TreeRootDataObject
 	extends TreeDataObject
 	implements IRootDataObject, IProvideTreeRootDataObject
 {
+	/**
+	 * {@inheritDoc TreeRootDataObjectExtraProps.treeKey}
+	 */
 	readonly #treeKey: string;
 
 	public constructor(props: IDataObjectProps & TreeRootDataObjectExtraProps) {
@@ -86,6 +89,16 @@ export class TreeRootDataObject
 		return this;
 	}
 
+	/**
+	 * Provides a record that mimics {@link RootDataObject.initialObjects} but contains only the provided `SharedTree`
+	 * under the key specified in the constructor.
+	 *
+	 * @remarks
+	 * Unlike {@link RootDataObject}, this type does not store specified {@link ContainerSchema.initialObjects} in a directory.
+	 * Instead, it stores a single `SharedTree` at the root.
+	 * For compatibility with the existing API, we simulate the directory structure by returning a record
+	 * with a single key that matches the {@link TreeRootDataObjectExtraProps.treeKey} provided at construction.
+	 */
 	public get initialObjects(): LoadableObjectRecord {
 		return { [this.#treeKey]: this.tree };
 	}
