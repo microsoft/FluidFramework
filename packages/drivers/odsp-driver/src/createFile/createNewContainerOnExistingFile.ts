@@ -17,7 +17,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 
 import { IWriteSummaryResponse } from "./../contracts.js";
-import { ClpCompliantAppHeader } from "./../contractsPublic.js";
+import { ClpCompliantAppHeader, FileMetadataHeader } from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
 import { EpochTracker } from "./../epochTracker.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
@@ -54,6 +54,7 @@ export async function createNewContainerOnExistingFile(
 	createNewCaching: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
 	isClpCompliantApp?: boolean,
+	eTag?: string,
 ): Promise<IOdspResolvedUrl> {
 	if (createNewSummary === undefined) {
 		throw new UsageError("createNewSummary must exist to create a new container");
@@ -67,6 +68,12 @@ export async function createNewContainerOnExistingFile(
 
 	const initialUrl = `${baseUrl}/opStream/snapshots/snapshot`;
 
+	const additionalHeaders: { [key: string]: string } = {};
+	if (eTag !== undefined) {
+		// Sending the e-tag of the file in the If-Match triggers file conversion logic in the /snapshot api.
+		additionalHeaders["If-Match"] = eTag;
+	}
+
 	const { id: summaryHandle } = await createNewFluidContainerCore<IWriteSummaryResponse>({
 		containerSnapshot,
 		getAuthHeader,
@@ -76,13 +83,17 @@ export async function createNewContainerOnExistingFile(
 		epochTracker,
 		telemetryName: "CreateNewContainerOnExistingFile",
 		fetchType: "uploadSummary",
+		additionalHeaders,
 	});
 
 	const odspUrl = createOdspUrl({ ...fileInfo, dataStorePath: "/" });
 	const resolver = new OdspDriverUrlResolver();
 	const odspResolvedUrl = await resolver.resolve({
 		url: odspUrl,
-		headers: { [ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp },
+		headers: {
+			[ClpCompliantAppHeader.isClpCompliantApp]: isClpCompliantApp,
+			[FileMetadataHeader.eTag]: eTag,
+		},
 	});
 	fileEntry.docId = odspResolvedUrl.hashedDocumentId;
 	fileEntry.resolvedUrl = odspResolvedUrl;
