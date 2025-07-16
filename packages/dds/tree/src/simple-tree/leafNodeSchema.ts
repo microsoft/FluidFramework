@@ -32,7 +32,7 @@ import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 import { brand, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 import { getTreeNodeSchemaInitializedData } from "./createContext.js";
 import type { FactoryContent } from "./unhydratedFlexTreeFromInsertable.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 /**
  * Instances of this class are schema for leaf nodes.
