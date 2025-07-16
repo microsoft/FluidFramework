@@ -55,7 +55,7 @@ interface TreeRootDataObjectExtraProps {
 
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
- * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
+ * @remarks Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
 export class TreeRootDataObject
 	extends TreeDataObject
@@ -97,7 +97,7 @@ const treeRootDataStoreId = "treeRootDOId";
 
 /**
  * Type of the {@link TreeRootDataObject}.
- * Used in the PureDataObjectFactory to create the root data object.
+ * @remarks Used in the PureDataObjectFactory to create the root data object.
  */
 export const treeRootDataObjectType = "treeRootDO";
 
@@ -191,7 +191,7 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDat
 
 /**
  * Validates the container schema and extracts the factory for the tree-based data object.
- * Throws an error if the schema is invalid or does not contain a valid SharedTree.
+ * @throws Throws an error if the schema is invalid. I.e. if its `initialObjects` does not contain exactly 1 entry that is a `SharedTree`.
  */
 export function validateAndExtractTreeKey(schema: ContainerSchema): string {
 	const schemaKeys = Object.keys(schema.initialObjects);

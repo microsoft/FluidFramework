@@ -98,7 +98,7 @@ export const parseDataObjectsFromSharedObjects = (
 
 /**
  * Creates a Fluid object that has a property with the key `providerKey` that points to itself.
- * This is useful for creating objects that need to reference themselves, such as DataObjects.
+ * @remarks This is useful for creating objects that need to reference themselves, such as DataObjects.
  */
 export function makeFluidObject<
 	T extends object,
