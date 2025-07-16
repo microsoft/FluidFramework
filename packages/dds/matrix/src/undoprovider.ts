@@ -5,11 +5,11 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	IMergeTreeDeltaCallbackArgs,
-	ITrackingGroup,
-	MergeTreeDeltaRevertible,
+	type IMergeTreeDeltaCallbackArgs,
+	type ITrackingGroup,
+	type MergeTreeDeltaRevertible,
 	MergeTreeDeltaType,
-	MergeTreeRevertibleDriver,
+	type MergeTreeRevertibleDriver,
 	TrackingGroup,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
