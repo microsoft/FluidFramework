@@ -5,6 +5,7 @@
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { FieldKey, SchemaPolicy } from "../../../core/index.js";
 import {
@@ -15,12 +16,12 @@ import {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 } from "../../../feature-libraries/index.js";
-import {
-	type RestrictiveStringRecord,
-	type FlattenKeys,
-	type JsonCompatibleReadOnlyObject,
-	brand,
+import type {
+	RestrictiveStringRecord,
+	FlattenKeys,
+	JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 import {
 	CompatibilityLevel,
@@ -86,7 +87,6 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { convertFieldKind } from "../../toStoredSchema.js";
 
 /**

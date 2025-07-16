@@ -17,12 +17,12 @@ import {
 	type FlexContent,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
-
-import type { MapNodeSchema, RecordNodeSchema } from "./index.js";
 import {
 	unhydratedFlexTreeFromInsertableNode,
 	type InsertableContent,
 } from "../unhydratedFlexTreeFromInsertable.js";
+import type { MapNodeSchema } from "./map/index.js";
+import type { RecordNodeSchema } from "./record/index.js";
 
 /**
  * Utilities shared by multiple node kinds.

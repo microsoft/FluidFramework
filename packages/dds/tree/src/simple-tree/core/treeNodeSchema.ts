@@ -4,12 +4,12 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
+import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
 	ImplicitAnnotatedAllowedTypes,
 	NormalizedAnnotatedAllowedTypes,

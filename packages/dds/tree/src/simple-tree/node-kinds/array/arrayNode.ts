@@ -7,13 +7,12 @@ import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "../../../core/index.js";
-import {
-	FieldKinds,
-	isTreeValue,
-	type FlexibleFieldContent,
-	type FlexTreeNode,
-	type FlexTreeSequenceField,
+import type {
+	FlexibleFieldContent,
+	FlexTreeNode,
+	FlexTreeSequenceField,
 } from "../../../feature-libraries/index.js";
+import { FieldKinds, isTreeValue } from "../../../feature-libraries/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
