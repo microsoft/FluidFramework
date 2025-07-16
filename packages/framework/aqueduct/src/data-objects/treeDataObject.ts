@@ -30,8 +30,6 @@ const uninitializedErrorString =
  *
  * @typeParam TDataObjectTypes - The optional input types used to strongly type the data object.
  *
- * @typeParam TDataObjectTypes - The optional input types used to strongly type the data object.
- *
  * @example Implementing `initializingFirstTime`
  *
  * ```typescript
@@ -92,7 +90,7 @@ export abstract class TreeDataObject<
 					`Content with id ${channel.id} is not a SharedTree and cannot be loaded with treeDataObject.`,
 				);
 			}
-			const sharedTree: ITree = channel as unknown as ITree;
+			const sharedTree: ITree = channel;
 
 			this.#tree = sharedTree;
 		} else {
