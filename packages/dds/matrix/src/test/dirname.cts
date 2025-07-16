@@ -10,5 +10,4 @@
 //   - Export '__dirname' from a .cjs file in the same directory.
 //
 // Note that *.cjs files are always CommonJS, but can be imported from ESM.
-// Disabled inline until the next version of the config is published.
 export const _dirname = __dirname;
