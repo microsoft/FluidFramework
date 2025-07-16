@@ -83,7 +83,7 @@
 		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/eslint-config-fluid": "^5.8.0",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@fluidframework/server-local-server": "^7.0.0",

@@ -92,7 +92,7 @@
 		"@fluid-private/test-version-utils": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.56.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/eslint-config-fluid": "^5.8.0",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/debug": "^4.1.5",
