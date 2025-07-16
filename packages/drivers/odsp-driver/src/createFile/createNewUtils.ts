@@ -212,6 +212,7 @@ export async function createNewFluidContainerCore<T>(args: {
 	telemetryName: string;
 	fetchType: FetchType;
 	validateResponseCallback?: (content: T) => void;
+	additionalHeaders?: { [key: string]: string };
 }): Promise<T> {
 	const {
 		containerSnapshot,
@@ -222,6 +223,7 @@ export async function createNewFluidContainerCore<T>(args: {
 		telemetryName,
 		fetchType,
 		validateResponseCallback,
+		additionalHeaders = {},
 	} = args;
 	const internalFarmType = checkForKnownServerFarmType(initialUrl);
 
@@ -243,14 +245,23 @@ export async function createNewFluidContainerCore<T>(args: {
 					{ ...options, request: { url: authInBodyUrl, method } },
 					telemetryName,
 				);
-				const postBodyWithAuth =
-					`--${formBoundary}\r\n` +
-					`Authorization: ${authHeader}\r\n` +
-					`X-HTTP-Method-Override: POST\r\n` +
-					`Content-Type: application/json\r\n` +
-					`_post: 1\r\n` +
-					`\r\n${snapshotBody}\r\n` +
-					`\r\n--${formBoundary}--`;
+				const postBodyWithAuthHeaders = [
+					`Authorization: ${authHeader}`,
+					`X-HTTP-Method-Override: POST`,
+					`Content-Type: application/json`,
+				];
+				if (additionalHeaders !== undefined) {
+					for (const [key, value] of Object.entries(additionalHeaders)) {
+						postBodyWithAuthHeaders.push(`${key}: ${value}`);
+					}
+				}
+				const postBodyWithAuth = [
+					`--${formBoundary}`,
+					...postBodyWithAuthHeaders,
+					`_post: 1`,
+					`\r\n${snapshotBody}`,
+					`\r\n--${formBoundary}--`,
+				].join("\r\n");
 
 				let postBody = snapshotBody;
 				// We use the byte length of the post body to determine if we should use the multipart/form-data or not. This helps
@@ -272,6 +283,7 @@ export async function createNewFluidContainerCore<T>(args: {
 						telemetryName,
 					);
 					headers = {
+						...additionalHeaders,
 						...getHeadersWithAuth(authHeaderNoUmp),
 						"Content-Type": "application/json",
 					};
