@@ -49,13 +49,25 @@ interface IProvideTreeRootDataObject {
 	readonly TreeRootDataObject: TreeRootDataObject;
 }
 
+/**
+ * Extra properties required by {@link TreeRootDataObject}'s constructor.
+ */
 interface TreeRootDataObjectExtraProps {
+	/**
+	 * The key under which the {@link @fluidframework/tree#SharedTree} was specified in the container's
+	 * {@link ContainerSchema.initialObjects}.
+	 *
+	 * @remarks
+	 * Used by {@link TreeRootDataObject.initialObjects} to ensure we output data in a format that matches the input schema.
+	 */
 	readonly treeKey: string;
 }
 
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
- * @remarks Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
+ *
+ * @remarks
+ * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
 export class TreeRootDataObject
 	extends TreeDataObject
