@@ -125,7 +125,6 @@ export class PermutationSegment extends BaseSegment {
 	}
 }
 
-// eslint-disable-next-line import/no-deprecated
 export class PermutationVector extends Client {
 	private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
 	public readonly handleCache = new HandleCache(this);

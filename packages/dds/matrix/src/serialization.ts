@@ -28,6 +28,5 @@ export async function deserializeBlob(
 ): Promise<any> {
 	const blob = await storage.readBlob(path);
 	const utf8 = bufferToString(blob, "utf8");
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 	return serializer.parse(utf8);
 }

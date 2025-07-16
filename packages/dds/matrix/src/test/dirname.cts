@@ -11,5 +11,4 @@
 //
 // Note that *.cjs files are always CommonJS, but can be imported from ESM.
 // Disabled inline until the next version of the config is published.
-// eslint-disable-next-line unicorn/prefer-module
 export const _dirname = __dirname;
