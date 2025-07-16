@@ -130,7 +130,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_TenantManager": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
