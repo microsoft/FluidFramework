@@ -56,7 +56,15 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	minVersionForCollabOverride?: MinimumVersionForCollab;
 	/**
 	 * Optional flag to indicate whether to use tree-based data objects.
+	 * @remarks
 	 * If not provided, we default to false, i.e. to use a directory-based data object.
+	 *
+	 * If provided, then `schema`'s `initialObjects` must contain a single entry that is a `SharedTree`.
+	 * If this condition is not met, an error will be thrown.
+	 *
+	 * @privateRemarks
+	 * Note that this flag is a temporary solution to make it possible to instantiate a Fluid Container with a tree-based data object.
+	 * This will likely be removed in the near future once a better API entrypoint for this functionality has been created.
 	 */
 	useTreeBasedDataObject?: boolean;
 }): IRuntimeFactory {
