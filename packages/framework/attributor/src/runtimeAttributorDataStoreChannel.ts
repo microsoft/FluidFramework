@@ -4,31 +4,34 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions/internal";
+import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred, unreachableCase } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions/internal";
+import type {
 	IDocumentMessage,
-	type ISnapshotTree,
 	ISequencedDocumentMessage,
 	IQuorumClients,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import { VisibilityState } from "@fluidframework/runtime-definitions/internal";
+import type {
 	IGarbageCollectionData,
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IInboundSignalMessage,
-	VisibilityState,
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
-	type IRuntimeMessageCollection,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
-import {
+import type {
 	ITelemetryLoggerExt,
 	MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
+import {
 	raiseConnectedEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
