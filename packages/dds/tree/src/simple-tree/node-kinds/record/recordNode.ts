@@ -56,7 +56,7 @@ import {
 	type FlexTreeOptionalField,
 } from "../../../feature-libraries/index.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
-import { recordLikeDataToFlexContent } from "../../insertableContentHandler.js";
+import { recordLikeDataToFlexContent } from "../common.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.

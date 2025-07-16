@@ -19,7 +19,6 @@ import {
 	type RestrictiveStringRecord,
 	type FlattenKeys,
 	type JsonCompatibleReadOnlyObject,
-	isReadonlyArray,
 	brand,
 } from "../../../util/index.js";
 

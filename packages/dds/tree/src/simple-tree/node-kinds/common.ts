@@ -5,9 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type { FieldKey } from "../core/index.js";
-import { FieldKinds } from "../feature-libraries/index.js";
-import { brand } from "../util/index.js";
+import type { FieldKey } from "../../core/index.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
 
 import {
 	createField,
@@ -15,14 +15,18 @@ import {
 	unannotateImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type FlexContent,
-} from "./core/index.js";
-import { getUnhydratedContext } from "./createContext.js";
+} from "../core/index.js";
+import { getUnhydratedContext } from "../createContext.js";
 
-import type { MapNodeSchema, RecordNodeSchema } from "./node-kinds/index.js";
+import type { MapNodeSchema, RecordNodeSchema } from "./index.js";
 import {
 	unhydratedFlexTreeFromInsertableNode,
 	type InsertableContent,
-} from "./unhydratedFlexTreeFromInsertable.js";
+} from "../unhydratedFlexTreeFromInsertable.js";
+
+/**
+ * Utilities shared by multiple node kinds.
+ */
 
 /**
  * Converts record-like data to a FlexContent representation for map/record schema.

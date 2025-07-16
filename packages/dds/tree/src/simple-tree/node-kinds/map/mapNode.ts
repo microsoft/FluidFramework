@@ -64,7 +64,7 @@ import type {
 	MapNodePojoEmulationSchema,
 	MapNodeSchema,
 } from "./mapNodeTypes.js";
-import { recordLikeDataToFlexContent } from "../../insertableContentHandler.js";
+import { recordLikeDataToFlexContent } from "../common.js";
 
 /**
  * A map of string keys to tree objects.
