@@ -6,8 +6,8 @@
 import {
 	DataObject,
 	DataObjectFactory,
-	PureDataObjectFactory,
 	TreeDataObject,
+	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import { SharedCell } from "@fluidframework/cell/internal";
 import type { IFluidHandle, IFluidLoadable } from "@fluidframework/core-interfaces";
@@ -35,39 +35,48 @@ interface TodoItemProps {
 /**
  * Object so we can test {@link TreeDataObject} inside {@link AppData}.
  */
-export class AppDataTree extends TreeDataObject<TreeView<typeof TodoList>> {
+export class AppDataTree extends TreeDataObject {
 	public static readonly Name = "@devtools-example/test-app-tree-data-object";
 
 	private readonly config = new TreeViewConfiguration({ schema: TodoList });
-	private static readonly factory = new PureDataObjectFactory<
-		TreeDataObject<TreeView<typeof TodoList>>
-	>(AppDataTree.Name, AppDataTree, [SharedString.getFactory(), SharedTree.getFactory()], {});
+	private static readonly factory = new TreeDataObjectFactory({
+		type: AppDataTree.Name,
+		ctor: AppDataTree,
+		sharedObjects: [SharedString.getFactory(), SharedTree.getFactory()],
+	});
 
-	public static getFactory(): PureDataObjectFactory<
-		TreeDataObject<TreeView<typeof TodoList>>
-	> {
+	public static getFactory(): TreeDataObjectFactory<TreeDataObject> {
 		return AppDataTree.factory;
 	}
 
+	#treeView: TreeView<typeof TodoList> | undefined;
+
 	/**
-	 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
-	 *
-	 * @param tree - The ITree instance to view.
-	 * @returns A typed TreeView using the TodoList schema.
+	 * The schema-aware view of the tree.
 	 */
-	public override generateView(tree: ITree): TreeView<typeof TodoList> {
-		return tree.viewWith(this.config) as unknown as TreeView<typeof TodoList>;
+	public get treeView(): TreeView<typeof TodoList> {
+		if (this.#treeView === undefined) {
+			throw new Error("treeView has not been initialized.");
+		}
+		return this.#treeView;
 	}
 
-	/**
-	 * Initializes the tree with a default title and empty todo item list.
-	 * @remarks Called during the initial creation of the data object.
-	 */
-	public override async initializingFirstTime(): Promise<void> {
+	protected override async initializingFirstTime(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canInitialize) {
+			throw new Error("Incompatible schema");
+		}
+
 		const title = SharedString.create(this.runtime);
 		title.insertText(0, "Title");
-
 		this.treeView.initialize(new TodoList({ title: title.handle, items: [] }));
+	}
+
+	protected override async initializingFromExisting(): Promise<void> {
+		this.#treeView = this.tree.viewWith(this.config);
+		if (!this.treeView.compatibility.canView) {
+			throw new Error("Incompatible schema");
+		}
 	}
 
 	/**

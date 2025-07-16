@@ -8,3 +8,4 @@ export {
 	type DataObjectFactoryProps,
 	PureDataObjectFactory,
 } from "./pureDataObjectFactory.js";
+export { TreeDataObjectFactory } from "./treeDataObjectFactory.js";

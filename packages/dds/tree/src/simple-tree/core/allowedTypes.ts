@@ -13,8 +13,7 @@ import {
 	type NodeFromSchema,
 	type TreeNodeSchema,
 } from "./treeNodeSchema.js";
-import { inPrototypeChain } from "./treeNode.js";
-import { TreeNodeValid } from "./treeNodeValid.js";
+import { schemaAsTreeNodeValid } from "./treeNodeValid.js";
 
 /**
  * Schema for types allowed in some location in a tree (like a field, map entry or array).
@@ -381,16 +380,8 @@ export function markSchemaMostDerived(
 		return;
 	}
 
-	if (!inPrototypeChain(schema, TreeNodeValid)) {
-		// Use JSON.stringify to quote and escape identifier string.
-		throw new UsageError(
-			`Schema for ${JSON.stringify(
-				schema.identifier,
-			)} does not extend a SchemaFactory generated class. This is invalid.`,
-		);
-	}
+	const schemaValid = schemaAsTreeNodeValid(schema);
 
-	const schemaValid = schema as typeof TreeNodeValid & TreeNodeSchema;
 	if (oneTimeInitialize) {
 		schemaValid.oneTimeInitialize();
 	} else {
