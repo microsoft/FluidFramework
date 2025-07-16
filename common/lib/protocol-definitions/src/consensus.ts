@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedClient } from "./clients.js";
+import type { ISequencedClient } from "./clients.js";
 
 /**
  * Proposal to set the given key/value pair.

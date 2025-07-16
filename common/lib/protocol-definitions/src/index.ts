@@ -10,7 +10,7 @@
  * @packageDocumentation
  */
 
-export {
+export type {
 	ConnectionMode,
 	ICapabilities,
 	IClient,
@@ -19,8 +19,8 @@ export {
 	ISequencedClient,
 	ISignalClient,
 } from "./clients.js";
-export { IClientConfiguration } from "./config.js";
-export {
+export type { IClientConfiguration } from "./config.js";
+export type {
 	IApprovedProposal,
 	ICommittedProposal,
 	IProcessMessageResult,
@@ -34,61 +34,61 @@ export {
 	IQuorumProposalsEvents,
 	ISequencedProposal,
 } from "./consensus.js";
-export { IsoDate } from "./date.js";
+export type { IsoDate } from "./date.js";
 export {
-	IBranchOrigin,
-	IDocumentMessage,
-	IDocumentSystemMessage,
-	INack,
-	INackContent,
-	ISentSignalMessage,
-	ISequencedDocumentAugmentedMessage,
-	ISequencedDocumentMessage,
-	ISequencedDocumentMessageExperimental,
-	ISequencedDocumentSystemMessage,
-	IServerError,
-	ISignalMessage,
-	ISignalMessageBase,
-	ISummaryAck,
-	ISummaryContent,
-	ISummaryNack,
-	ISummaryProposal,
-	ITrace,
-	IUploadedSummaryDetails,
+	type IBranchOrigin,
+	type IDocumentMessage,
+	type IDocumentSystemMessage,
+	type INack,
+	type INackContent,
+	type ISentSignalMessage,
+	type ISequencedDocumentAugmentedMessage,
+	type ISequencedDocumentMessage,
+	type ISequencedDocumentMessageExperimental,
+	type ISequencedDocumentSystemMessage,
+	type IServerError,
+	type ISignalMessage,
+	type ISignalMessageBase,
+	type ISummaryAck,
+	type ISummaryContent,
+	type ISummaryNack,
+	type ISummaryProposal,
+	type ITrace,
+	type IUploadedSummaryDetails,
 	MessageType,
 	NackErrorType,
 	SignalType,
 } from "./protocol.js";
 export { ScopeType } from "./scopes.js";
-export { IConnect, IConnected } from "./sockets.js";
+export type { IConnect, IConnected } from "./sockets.js";
 export {
 	FileMode,
-	IAttachment,
-	IBlob,
-	ICreateBlobResponse,
-	IDocumentAttributes,
-	ISnapshotTree,
-	ISnapshotTreeEx,
-	ITree,
-	ITreeEntry,
-	IVersion,
+	type IAttachment,
+	type IBlob,
+	type ICreateBlobResponse,
+	type IDocumentAttributes,
+	type ISnapshotTree,
+	type ISnapshotTreeEx,
+	type ITree,
+	type ITreeEntry,
+	type IVersion,
 	TreeEntry,
 } from "./storage.js";
 export {
-	ISummaryAttachment,
-	ISummaryBlob,
-	ISummaryHandle,
-	ISummaryTree,
-	SummaryObject,
-	SummaryTree,
+	type ISummaryAttachment,
+	type ISummaryBlob,
+	type ISummaryHandle,
+	type ISummaryTree,
+	type SummaryObject,
+	type SummaryTree,
 	SummaryType,
-	SummaryTypeNoHandle,
+	type SummaryTypeNoHandle,
 } from "./summary.js";
-export {
+export type {
 	IActorClient,
 	ISummaryTokenClaims,
 	ITokenClaims,
 	ITokenProvider,
 	ITokenService,
 } from "./tokens.js";
-export { IUser } from "./users.js";
+export type { IUser } from "./users.js";
