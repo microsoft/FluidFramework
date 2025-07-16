@@ -102,14 +102,14 @@ export interface FieldDiscrepancyLocation {
 	 *
 	 * Undefined iff the discrepancy is part of the root field schema.
 	 */
-	identifier: TreeNodeSchemaIdentifier | undefined;
+	readonly identifier: TreeNodeSchemaIdentifier | undefined;
 	/**
 	 * The {@link FieldKey} for the field that contains the discrepancy.
 	 * Undefined when:
 	 * - the discrepancy is part of the root field schema
 	 * - the discrepancy is for 'all fields' of a map node
 	 */
-	fieldKey: FieldKey | undefined;
+	readonly fieldKey: FieldKey | undefined;
 }
 
 /**
@@ -119,7 +119,7 @@ export interface FieldDiscrepancyLocation {
  * This reports the symmetric difference of allowed types in view/stored to enable more efficient checks for compatibility
  */
 export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
-	mismatch: "allowedTypes";
+	readonly mismatch: "allowedTypes";
 	/**
 	 * List of annotated allowed types in viewed schema which are not allowed in stored schema
 	 */
