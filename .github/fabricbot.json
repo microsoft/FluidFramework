@@ -1435,14 +1435,6 @@
           "operator": "and",
           "operands": [
             {
-              "name": "prModifiesFiles",
-              "parameters": {
-                "pathFilters": [
-                  "/server/**"
-                ]
-              }
-            },
-            {
               "operator": "or",
               "operands": [
                 {

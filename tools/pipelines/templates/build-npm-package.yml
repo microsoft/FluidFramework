@@ -378,7 +378,8 @@ stages:
               and(
                 succeeded(),
                 eq(variables['Build.Reason'], 'PullRequest'),
-                ne(variables['System.PullRequest.IsFork'], 'true')
+                ne(variables['System.PullRequest.IsFork'], 'true'),
+                false
               )
             env:
               ADO_API_TOKEN: $(System.AccessToken)
