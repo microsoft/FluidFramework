@@ -12,15 +12,15 @@ import type {
 	IChannelServices,
 	IChannelStorageService,
 	IDeltaConnection,
-	type IChannelAttributes,
-	type IFluidDataStoreRuntime,
-	type IFluidDataStoreRuntimeEvents,
+	IChannelAttributes,
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeEvents,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
 	ISummaryTreeWithStats,
-	type IExperimentalIncrementalSummaryContext,
-	type ITelemetryContext,
+	IExperimentalIncrementalSummaryContext,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 

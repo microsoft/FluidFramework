@@ -18,8 +18,8 @@ import type {
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
 	ISummarizeResult,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";

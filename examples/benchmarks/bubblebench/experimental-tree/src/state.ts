@@ -8,7 +8,7 @@ import type {
 	IAppState,
 	IClient,
 	SimpleClient,
-	type IBubble,
+	IBubble,
 } from "@fluid-example/bubblebench-common";
 import type { Change, SharedTree } from "@fluid-experimental/tree";
 

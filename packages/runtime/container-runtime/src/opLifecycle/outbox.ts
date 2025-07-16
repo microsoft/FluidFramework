@@ -6,7 +6,7 @@
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import type {
 	ITelemetryBaseLogger,
-	type ITelemetryBaseProperties,
+	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
@@ -24,14 +24,14 @@ import type {
 } from "../pendingStateManager.js";
 
 import { BatchManager, sequenceNumbersMatch } from "./batchManager.js";
-import type { BatchSequenceNumbers, type BatchId } from "./batchManager.js";
+import type { BatchSequenceNumbers, BatchId } from "./batchManager.js";
 import type {
 	LocalBatchMessage,
 	IBatchCheckpoint,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
-	type LocalBatch,
-	type OutboundBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
+	LocalBatch,
+	OutboundBatch,
 } from "./definitions.js";
 import type { OpCompressor } from "./opCompressor.js";
 import type { OpGroupingManager } from "./opGroupingManager.js";

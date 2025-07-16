@@ -11,7 +11,7 @@ import {
 } from "@fluidframework/merge-tree/internal";
 import type {
 	SequenceDeltaEvent,
-	type ISharedSegmentSequence,
+	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
 import type { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";

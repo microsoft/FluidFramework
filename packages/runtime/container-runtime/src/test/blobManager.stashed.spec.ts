@@ -16,7 +16,7 @@ import type {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager } from "../blobManager/index.js";
-import type { IBlobManagerRuntime, type IPendingBlobs } from "../blobManager/index.js";
+import type { IBlobManagerRuntime, IPendingBlobs } from "../blobManager/index.js";
 import type { IContainerHandleContextRuntime } from "../containerHandleContext.js";
 import { ContainerFluidHandleContext } from "../containerHandleContext.js";
 

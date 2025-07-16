@@ -9,8 +9,8 @@ import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IGarbageCollectionDetailsBase,
 	ISummarizeResult,
-	type IGarbageCollectionData,
-	type ITelemetryContext,
+	IGarbageCollectionData,
+	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	createResponseError,
@@ -52,7 +52,7 @@ import type {
 	IGarbageCollectorCreateParams,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
-	type IGCNodeUpdatedProps,
+	IGCNodeUpdatedProps,
 } from "./gcDefinitions.js";
 import {
 	cloneGCData,

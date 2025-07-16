@@ -14,11 +14,11 @@ import type {
 	// eslint-disable-next-line import/no-deprecated
 	IMergeTreeObliterateMsg,
 	IMergeTreeRemoveMsg,
-	type AdjustParams,
-	type IMergeTreeAnnotateAdjustMsg,
-	type IMergeTreeObliterateSidedMsg,
+	AdjustParams,
+	IMergeTreeAnnotateAdjustMsg,
+	IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
-import type { PropertySet, type MapLike } from "./properties.js";
+import type { PropertySet, MapLike } from "./properties.js";
 import { normalizePlace, Side, type SequencePlace } from "./sequencePlace.js";
 
 /**

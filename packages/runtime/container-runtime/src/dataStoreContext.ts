@@ -9,14 +9,14 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
 	IDeltaManager,
-	type IDeltaManagerFull,
-	type ReadOnlyInfo,
+	IDeltaManagerFull,
+	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
 	ITelemetryBaseProperties,
-	type IEvent,
+	IEvent,
 } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
@@ -31,7 +31,7 @@ import type {
 	ISnapshotTree,
 	ITreeEntry,
 	ISequencedDocumentMessage,
-	type ISnapshot,
+	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	BlobTreeEntry,
@@ -60,10 +60,10 @@ import type {
 	ISummarizerNodeWithGC,
 	SummarizeInternalFn,
 	IInboundSignalMessage,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
-	type IFluidDataStoreFactory,
-	type PackagePath,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
+	IFluidDataStoreFactory,
+	PackagePath,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,

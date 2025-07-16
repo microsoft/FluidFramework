@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
+import type { AzureClient, AzureContainerServices } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";

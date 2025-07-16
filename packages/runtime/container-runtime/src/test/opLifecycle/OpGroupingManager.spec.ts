@@ -13,9 +13,9 @@ import { ContainerMessageType } from "../../index.js";
 import { OpGroupingManager, isGroupedBatch } from "../../opLifecycle/index.js";
 import type {
 	OutboundBatchMessage,
-	type OutboundBatch,
-	type EmptyGroupedBatch,
-	type LocalEmptyBatchPlaceholder,
+	OutboundBatch,
+	EmptyGroupedBatch,
+	LocalEmptyBatchPlaceholder,
 } from "../../opLifecycle/index.js";
 
 describe("OpGroupingManager", () => {

@@ -6,8 +6,8 @@
 import { StateFactory } from "@fluidframework/presence/beta";
 import type {
 	Presence,
-	type StatesWorkspace,
-	type StatesWorkspaceSchema,
+	StatesWorkspace,
+	StatesWorkspaceSchema,
 } from "@fluidframework/presence/beta";
 
 import type { DieValue } from "./controller.js";

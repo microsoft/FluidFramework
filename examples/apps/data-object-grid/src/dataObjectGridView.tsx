@@ -9,10 +9,7 @@ import RGL, { WidthProvider } from "react-grid-layout";
 
 import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
 import { dataObjectRegistry } from "./dataObjectRegistry.js";
-import type {
-	IDataObjectGridItemEntry,
-	type ISingleHandleItem,
-} from "./dataObjectRegistry.js";
+import type { IDataObjectGridItemEntry, ISingleHandleItem } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 
 // eslint-disable-next-line import/no-internal-modules

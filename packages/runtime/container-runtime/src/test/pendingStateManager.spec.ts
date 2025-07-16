@@ -25,14 +25,14 @@ import {
 	type LocalContainerRuntimeMessage,
 } from "../messageTypes.js";
 import { addBatchMetadata, BatchManager, OpGroupingManager } from "../opLifecycle/index.js";
-import type { LocalBatchMessage, type InboundMessageResult } from "../opLifecycle/index.js";
+import type { LocalBatchMessage, InboundMessageResult } from "../opLifecycle/index.js";
 import { findFirstCharacterMismatched, PendingStateManager } from "../pendingStateManager.js";
 import type {
 	IPendingMessage,
-	type IPendingLocalState,
-	type IRuntimeStateHandler,
-	type PendingBatchResubmitMetadata,
-	type PendingMessageResubmitData,
+	IPendingLocalState,
+	IRuntimeStateHandler,
+	PendingBatchResubmitMetadata,
+	PendingMessageResubmitData,
 } from "../pendingStateManager.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;

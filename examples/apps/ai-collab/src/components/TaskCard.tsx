@@ -47,7 +47,7 @@ import {
 import type {
 	SharedTreeTask,
 	SharedTreeTaskGroup,
-	type TaskPriority,
+	TaskPriority,
 } from "@/types/sharedTreeAppSchema";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 

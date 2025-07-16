@@ -6,7 +6,7 @@
 "use client";
 
 import { PublicClientApplication } from "@azure/msal-browser";
-import type { AccountInfo, type AuthenticationResult } from "@azure/msal-browser";
+import type { AccountInfo, AuthenticationResult } from "@azure/msal-browser";
 import { OdspClient } from "@fluidframework/odsp-client/beta";
 
 import { GraphHelper } from "./graphHelper";

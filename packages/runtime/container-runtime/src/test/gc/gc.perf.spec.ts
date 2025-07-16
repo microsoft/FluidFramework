@@ -12,7 +12,7 @@ import type {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollector,
-	type IGCRuntimeOptions,
+	IGCRuntimeOptions,
 } from "../../gc/index.js";
 import type { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";

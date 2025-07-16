@@ -9,7 +9,7 @@ import { generateStack, tagCodeArtifacts } from "@fluidframework/telemetry-utils
 import type {
 	ITelemetryLoggerExt,
 	MonitoringContext,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { RuntimeHeaderData } from "../containerRuntime.js";

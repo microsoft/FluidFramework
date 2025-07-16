@@ -16,9 +16,9 @@ import type {
 import { SummaryType } from "@fluidframework/driver-definitions/internal";
 import type {
 	IDocumentServiceFactory,
-	type IDocumentService,
-	type IDocumentStorageService,
-	type IResolvedUrl,
+	IDocumentService,
+	IDocumentStorageService,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 

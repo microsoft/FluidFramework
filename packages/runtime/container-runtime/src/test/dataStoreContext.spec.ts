@@ -36,7 +36,7 @@ import type {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	SummarizeInternalFn,
-	type IContainerRuntimeBase,
+	IContainerRuntimeBase,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

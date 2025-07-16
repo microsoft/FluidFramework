@@ -4,7 +4,7 @@
  */
 
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
-import type { IFluidContainer, type ContainerSchema } from "fluid-framework";
+import type { IFluidContainer, ContainerSchema } from "fluid-framework";
 
 const tinyliciousClient = new TinyliciousClient({});
 

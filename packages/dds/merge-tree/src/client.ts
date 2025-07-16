@@ -6,10 +6,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import type {
-	IFluidHandle,
-	type IEventThisPlaceHolder,
-} from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IEventThisPlaceHolder } from "@fluidframework/core-interfaces";
 import {
 	assert,
 	unreachableCase,
@@ -54,9 +51,9 @@ import type {
 	ISegmentPrivate,
 	Marker,
 	SegmentGroup,
-	type ISegmentInternal,
-	type ISegmentLeaf,
-	type ObliterateInfo,
+	ISegmentInternal,
+	ISegmentLeaf,
+	ObliterateInfo,
 } from "./mergeTreeNodes.js";
 import {
 	createAdjustRangeOp,
@@ -81,9 +78,9 @@ import type {
 	IMergeTreeOp,
 	IMergeTreeRemoveMsg,
 	IRelativePosition,
-	type AdjustParams,
-	type IMergeTreeAnnotateAdjustMsg,
-	type IMergeTreeObliterateSidedMsg,
+	AdjustParams,
+	IMergeTreeAnnotateAdjustMsg,
+	IMergeTreeObliterateSidedMsg,
 } from "./ops.js";
 import {
 	createLocalReconnectingPerspective,
@@ -91,7 +88,7 @@ import {
 	PriorPerspective,
 	type Perspective,
 } from "./perspective.js";
-import type { PropertySet, type MapLike } from "./properties.js";
+import type { PropertySet, MapLike } from "./properties.js";
 import type { ReferencePosition } from "./referencePositions.js";
 import { DetachedReferencePosition } from "./referencePositions.js";
 import {

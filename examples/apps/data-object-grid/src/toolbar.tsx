@@ -8,10 +8,7 @@ import { ChevronDownFilled, ChevronUpFilled, TargetEditFilled } from "@fluentui/
 import React from "react";
 
 import { Collapsible } from "./collapsible.cjs";
-import type {
-	IDataObjectGridItemEntry,
-	type ISingleHandleItem,
-} from "./dataObjectRegistry.js";
+import type { IDataObjectGridItemEntry, ISingleHandleItem } from "./dataObjectRegistry.js";
 import { iconMap } from "./icons.js";
 import "./toolbar.css";
 

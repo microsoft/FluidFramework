@@ -10,7 +10,7 @@ import type {
 	IDocumentStorageService,
 	IDocumentAttributes,
 	ISnapshotTree,
-	type ISnapshot,
+	ISnapshot,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { ISerializableBlobContents } from "../containerStorageAdapter.js";

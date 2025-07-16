@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { IDisposable, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -28,8 +28,8 @@ import type {
 	LocalBatchMessage,
 	BatchStartInfo,
 	InboundMessageResult,
-	type LocalEmptyBatchPlaceholder,
-	type BatchResubmitInfo,
+	LocalEmptyBatchPlaceholder,
+	BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 
 /**

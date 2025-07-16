@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import type {
 	MonitoringContext,
-	type ITelemetryLoggerExt,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { opSize } from "../../opProperties.js";

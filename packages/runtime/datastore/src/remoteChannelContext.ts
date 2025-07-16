@@ -22,8 +22,8 @@ import type {
 	ISummarizeInternalResult,
 	ISummarizeResult,
 	ISummarizerNodeWithGC,
-	type IPendingMessagesState,
-	type IRuntimeMessageCollection,
+	IPendingMessagesState,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { ThresholdCounter, createChildLogger } from "@fluidframework/telemetry-utils/internal";

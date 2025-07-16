@@ -15,7 +15,7 @@ import type {
 import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 import type {
 	ITelemetryLoggerExt,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { RuntimeHeaderData } from "../containerRuntime.js";

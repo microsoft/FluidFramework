@@ -29,9 +29,9 @@ import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
-	type IDeltaManagerErased,
+	IDeltaManagerErased,
 	// eslint-disable-next-line import/no-deprecated
-	type IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IClientDetails,
@@ -43,7 +43,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	type ISnapshotTree,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -64,11 +64,11 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IInboundSignalMessage,
-	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
 	// eslint-disable-next-line import/no-deprecated
-	type IContainerRuntimeBaseExperimental,
-	type IFluidDataStorePolicies,
+	IContainerRuntimeBaseExperimental,
+	IFluidDataStorePolicies,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

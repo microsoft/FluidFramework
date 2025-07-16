@@ -9,7 +9,7 @@ import { UnassignedSequenceNumber } from "./constants.js";
 import type { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import { assignChild, getMinSeqStamp, Marker, MaxNodesInBlock } from "./mergeTreeNodes.js";
-import type { IMergeNode, ISegmentPrivate, type MergeBlock } from "./mergeTreeNodes.js";
+import type { IMergeNode, ISegmentPrivate, MergeBlock } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
 import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
 import * as opstampUtils from "./stamps.js";

@@ -5,7 +5,7 @@
 
 import type {
 	IConfigProviderBase,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
 import { OdspClient } from "@fluidframework/odsp-client/internal";

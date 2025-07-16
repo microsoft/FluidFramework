@@ -6,7 +6,7 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, shallowCloneObject } from "@fluidframework/core-utils/internal";
 import {

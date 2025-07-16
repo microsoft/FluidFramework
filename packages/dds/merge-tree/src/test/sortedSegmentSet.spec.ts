@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import type { LocalReferencePosition } from "../localReference.js";
-import type { ISegment, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { ISegment, ISegmentPrivate } from "../mergeTreeNodes.js";
 import { TrackingGroup } from "../mergeTreeTracking.js";
 import { ReferenceType } from "../ops.js";
 import { toMergeNodeInfo } from "../segmentInfos.js";

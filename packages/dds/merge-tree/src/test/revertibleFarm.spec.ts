@@ -13,7 +13,7 @@ import type {
 	IMergeTreeDeltaOpArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { walkAllChildSegments } from "../mergeTreeNodeWalk.js";
-import type { SegmentGroup, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { SegmentGroup, ISegmentPrivate } from "../mergeTreeNodes.js";
 import type { MergeTreeDeltaRevertible, MergeTreeWithRevert } from "../revertibles.js";
 import {
 	appendToMergeTreeDeltaRevertibles,

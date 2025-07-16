@@ -7,11 +7,7 @@ import { assert, isObject } from "@fluidframework/core-utils/internal";
 
 import { UnassignedSequenceNumber } from "./constants.js";
 import { MergeBlock } from "./mergeTreeNodes.js";
-import type {
-	ISegmentInternal,
-	ISegmentPrivate,
-	type ObliterateInfo,
-} from "./mergeTreeNodes.js";
+import type { ISegmentInternal, ISegmentPrivate, ObliterateInfo } from "./mergeTreeNodes.js";
 import type { InsertOperationStamp, OperationStamp, RemoveOperationStamp } from "./stamps.js";
 
 export interface StringToType {

@@ -16,8 +16,8 @@ import type {
 	IDocumentDeltaStorageService,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
-	type IStream,
-	type IStreamResult,
+	IStream,
+	IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";

@@ -4,10 +4,7 @@
  */
 
 import type { IRequest } from "@fluidframework/core-interfaces";
-import type {
-	IFluidHandleContext,
-	type IResponse,
-} from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext, IResponse } from "@fluidframework/core-interfaces/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { create404Response } from "@fluidframework/runtime-utils/internal";
 

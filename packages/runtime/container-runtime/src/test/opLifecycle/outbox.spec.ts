@@ -37,16 +37,16 @@ import type {
 	BatchSequenceNumbers,
 	OpCompressor,
 	OpSplitter,
-	type OpGroupingManagerConfig,
-	type OutboundSingletonBatch,
-	type LocalBatchMessage,
-	type OutboundBatch,
-	type LocalEmptyBatchPlaceholder,
+	OpGroupingManagerConfig,
+	OutboundSingletonBatch,
+	LocalBatchMessage,
+	OutboundBatch,
+	LocalEmptyBatchPlaceholder,
 } from "../../opLifecycle/index.js";
 import type {
 	PendingMessageResubmitData,
 	PendingStateManager,
-	type IPendingMessage,
+	IPendingMessage,
 } from "../../pendingStateManager.js";
 
 function typeFromBatchedOp(message: LocalBatchMessage): string {

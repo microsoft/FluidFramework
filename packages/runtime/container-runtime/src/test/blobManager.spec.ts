@@ -40,7 +40,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import type {
 	MonitoringContext,
-	type ITelemetryLoggerExt,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import Sinon from "sinon";
 import { v4 as uuid } from "uuid";
@@ -53,7 +53,7 @@ import {
 import type {
 	IBlobManagerLoadInfo,
 	IBlobManagerRuntime,
-	type IPendingBlobs,
+	IPendingBlobs,
 } from "../blobManager/index.js";
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP

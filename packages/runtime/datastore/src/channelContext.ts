@@ -21,7 +21,7 @@ import type {
 	IGarbageCollectionData,
 	IFluidDataStoreContext,
 	ISummarizeResult,
-	type IRuntimeMessageCollection,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";

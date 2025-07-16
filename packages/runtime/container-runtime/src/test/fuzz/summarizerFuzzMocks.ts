@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import type {
 	MockFluidDataStoreRuntime,
-	type IMockContainerRuntimeOptions,
+	IMockContainerRuntimeOptions,
 } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -41,14 +41,14 @@ import type {
 	IConnectableRuntime,
 	ISummarizerClientElection,
 	ISummarizerClientElectionEvents,
-	type IConnectedEvents,
-	type IConnectedState,
-	type IGeneratedSummaryStats,
-	type IRefreshSummaryAckOptions,
-	type ISubmitSummaryOptions,
-	type ISummarizerInternalsProvider,
-	type ISummarizerRuntime,
-	type SubmitSummaryResult,
+	IConnectedEvents,
+	IConnectedState,
+	IGeneratedSummaryStats,
+	IRefreshSummaryAckOptions,
+	ISubmitSummaryOptions,
+	ISummarizerInternalsProvider,
+	ISummarizerRuntime,
+	SubmitSummaryResult,
 } from "../../summary/index.js";
 import type { IThrottler } from "../../throttler.js";
 

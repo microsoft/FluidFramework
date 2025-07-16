@@ -10,16 +10,16 @@ import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
-	type IFluidDataStoreRuntimeExperimental,
+	IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IGarbageCollectionData,
-	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
-	type ISequencedMessageEnvelope,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,

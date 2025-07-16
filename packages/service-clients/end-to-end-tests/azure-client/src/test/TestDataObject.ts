@@ -11,7 +11,7 @@ import {
 	DataObjectFactory,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import type { IFluidHandle, type IErrorEvent } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, IErrorEvent } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
 import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";

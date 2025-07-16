@@ -12,7 +12,7 @@ import type {
 	IDataStore,
 	IFluidDataStoreChannel,
 	// eslint-disable-next-line import/no-deprecated
-	type IContainerRuntimeBaseExperimental,
+	IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { TelemetryDataTag, UsageError } from "@fluidframework/telemetry-utils/internal";

@@ -171,7 +171,7 @@ import {
 	isBlobPath,
 	loadBlobManagerLoadInfo,
 } from "./blobManager/index.js";
-import type { IPendingBlobs, type IBlobManagerLoadInfo } from "./blobManager/index.js";
+import type { IPendingBlobs, IBlobManagerLoadInfo } from "./blobManager/index.js";
 import {
 	ChannelCollection,
 	getSummaryForDatastores,
@@ -203,18 +203,18 @@ import type {
 	IGCRuntimeOptions,
 	IGCStats,
 	IGarbageCollector,
-	type GarbageCollectionMessage,
-	type IGarbageCollectionRuntime,
+	GarbageCollectionMessage,
+	IGarbageCollectionRuntime,
 } from "./gc/index.js";
 import { InboundBatchAggregator } from "./inboundBatchAggregator.js";
 import { ContainerMessageType } from "./messageTypes.js";
 import type {
 	ContainerRuntimeGCMessage,
-	type OutboundContainerRuntimeDocumentSchemaMessage,
-	type ContainerRuntimeIdAllocationMessage,
-	type InboundSequencedContainerRuntimeMessage,
-	type LocalContainerRuntimeMessage,
-	type UnknownContainerRuntimeMessage,
+	OutboundContainerRuntimeDocumentSchemaMessage,
+	ContainerRuntimeIdAllocationMessage,
+	InboundSequencedContainerRuntimeMessage,
+	LocalContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import type { ISavedOpMetadata } from "./metadata.js";
 import {
@@ -231,15 +231,15 @@ import type {
 	LocalBatchMessage,
 	BatchStartInfo,
 	IBatchCheckpoint,
-	type OutboundBatch,
-	type BatchResubmitInfo,
+	OutboundBatch,
+	BatchResubmitInfo,
 } from "./opLifecycle/index.js";
 import { pkgVersion } from "./packageVersion.js";
 import { PendingStateManager } from "./pendingStateManager.js";
 import type {
 	PendingMessageResubmitData,
 	IPendingLocalState,
-	type PendingBatchResubmitMetadata,
+	PendingBatchResubmitMetadata,
 } from "./pendingStateManager.js";
 import { BatchRunCounter, RunCounter } from "./runCounter.js";
 import {

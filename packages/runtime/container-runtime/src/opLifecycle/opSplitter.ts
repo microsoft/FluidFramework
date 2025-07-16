@@ -19,8 +19,8 @@ import { ContainerMessageType } from "../messageTypes.js";
 
 import type {
 	IChunkedOp,
-	type OutboundBatchMessage,
-	type OutboundSingletonBatch,
+	OutboundBatchMessage,
+	OutboundSingletonBatch,
 } from "./definitions.js";
 import { estimateSocketSize } from "./outbox.js";
 

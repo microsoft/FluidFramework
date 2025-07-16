@@ -12,9 +12,9 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	type NamedFluidDataStoreRegistryEntries,
-	type IContainerRuntimeBase,
-	type ISummarizerNodeWithGC,
+	NamedFluidDataStoreRegistryEntries,
+	IContainerRuntimeBase,
+	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {

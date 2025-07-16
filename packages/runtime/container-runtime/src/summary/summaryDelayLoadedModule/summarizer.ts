@@ -30,8 +30,8 @@ import type {
 	ISummarizerInternalsProvider,
 	ISummarizerRuntime,
 	ISummarizingWarning,
-	type IRetriableFailureError,
-	type ISummaryConfiguration,
+	IRetriableFailureError,
+	ISummaryConfiguration,
 } from "../summarizerTypes.js";
 import type { SummaryCollection } from "../summaryCollection.js";
 

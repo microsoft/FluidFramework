@@ -9,11 +9,11 @@ import { AzureClient } from "@fluidframework/azure-client";
 import type {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
-	type AzureContainerServices,
+	AzureContainerServices,
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
 	getPresence,
 	type Attendee,

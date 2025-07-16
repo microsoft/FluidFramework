@@ -35,7 +35,7 @@ import {
 import { MergeTree } from "../mergeTree.js";
 import type { IMergeTreeDeltaOpArgs } from "../mergeTreeDeltaCallback.js";
 import { compareNumbers, compareStrings, reservedMarkerIdKey } from "../mergeTreeNodes.js";
-import type { IJSONMarkerSegment, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { IJSONMarkerSegment, ISegmentPrivate } from "../mergeTreeNodes.js";
 import { createRemoveRangeOp } from "../opBuilder.js";
 import type { IMergeTreeOp } from "../ops.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";

@@ -6,9 +6,9 @@
 import { StateFactory } from "@fluidframework/presence/beta";
 import type {
 	Presence,
-	type Attendee,
-	type StatesWorkspace,
-	type StatesWorkspaceSchema,
+	Attendee,
+	StatesWorkspace,
+	StatesWorkspaceSchema,
 } from "@fluidframework/presence/beta";
 
 import { getProfilePhoto } from "@/infra/authHelper";

@@ -31,7 +31,7 @@ import {
 	walkAllChildSegments,
 } from "../mergeTreeNodeWalk.js";
 import { Marker, MaxNodesInBlock, assertSegmentLeaf } from "../mergeTreeNodes.js";
-import type { MergeBlock, ISegmentPrivate, type SegmentGroup } from "../mergeTreeNodes.js";
+import type { MergeBlock, ISegmentPrivate, SegmentGroup } from "../mergeTreeNodes.js";
 import {
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
@@ -39,12 +39,7 @@ import {
 	createRemoveRangeOp,
 } from "../opBuilder.js";
 import { MergeTreeDeltaType, ReferenceType } from "../ops.js";
-import type {
-	IJSONSegment,
-	IMarkerDef,
-	IMergeTreeOp,
-	type IMergeTreeInsertMsg,
-} from "../ops.js";
+import type { IJSONSegment, IMarkerDef, IMergeTreeOp, IMergeTreeInsertMsg } from "../ops.js";
 import { LocalReconnectingPerspective, PriorPerspective } from "../perspective.js";
 import type { PropertySet } from "../properties.js";
 import { DetachedReferencePosition, refHasTileLabel } from "../referencePositions.js";

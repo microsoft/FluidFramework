@@ -8,7 +8,7 @@ import type { IDeltaManager } from "@fluidframework/container-definitions/intern
 import type {
 	IDisposable,
 	IEvent,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type {

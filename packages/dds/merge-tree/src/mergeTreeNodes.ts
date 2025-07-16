@@ -20,7 +20,7 @@ import { computeHierarchicalOrdinal } from "./ordinal.js";
 import type { PartialSequenceLengths } from "./partialLengths.js";
 import { LocalDefaultPerspective, PriorPerspective, type Perspective } from "./perspective.js";
 import { clone, createMap } from "./properties.js";
-import type { PropertySet, type MapLike } from "./properties.js";
+import type { PropertySet, MapLike } from "./properties.js";
 import type { ReferencePosition } from "./referencePositions.js";
 import type { SegmentGroupCollection } from "./segmentGroupCollection.js";
 import {
@@ -33,10 +33,10 @@ import {
 } from "./segmentInfos.js";
 import type {
 	ISegmentInsideObliterateInfo,
-	type IHasInsertionInfo,
-	type IMergeNodeInfo,
-	type IHasRemovalInfo,
-	type SegmentWithInfo,
+	IHasInsertionInfo,
+	IMergeNodeInfo,
+	IHasRemovalInfo,
+	SegmentWithInfo,
 } from "./segmentInfos.js";
 import type { PropertiesManager } from "./segmentPropertiesManager.js";
 import type { Side } from "./sequencePlace.js";

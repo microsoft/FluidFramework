@@ -31,7 +31,7 @@ import type {
 	JsonSegmentSpecs,
 	MergeTreeChunkV1,
 	MergeTreeHeaderMetadata,
-	type VersionedMergeTreeChunk,
+	VersionedMergeTreeChunk,
 } from "./snapshotChunks.js";
 import { SnapshotLegacy } from "./snapshotlegacy.js";
 import type { OperationStamp } from "./stamps.js";

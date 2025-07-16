@@ -5,7 +5,7 @@
 
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { ITree, type TreeView } from "@fluidframework/tree";
+import type { ITree, TreeView } from "@fluidframework/tree";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
 import { AppState } from "./appState.js";

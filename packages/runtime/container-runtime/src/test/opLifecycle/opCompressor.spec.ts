@@ -12,8 +12,8 @@ import { ContainerMessageType } from "../../index.js";
 import { OpCompressor } from "../../opLifecycle/index.js";
 import type {
 	OutboundBatchMessage,
-	type OutboundBatch,
-	type OutboundSingletonBatch,
+	OutboundBatch,
+	OutboundSingletonBatch,
 } from "../../opLifecycle/index.js";
 
 describe("OpCompressor", () => {

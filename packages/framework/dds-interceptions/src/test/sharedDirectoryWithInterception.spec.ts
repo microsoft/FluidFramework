@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { SharedDirectory } from "@fluidframework/map/internal";
-import type { IDirectory, type ISharedDirectory } from "@fluidframework/map/internal";
+import type { IDirectory, ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 

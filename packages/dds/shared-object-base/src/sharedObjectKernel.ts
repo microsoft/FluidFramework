@@ -8,18 +8,18 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelStorageService,
-	type IChannel,
-	type IChannelAttributes,
-	type IChannelFactory,
-	type IChannelServices,
-	type IFluidDataStoreRuntime,
+	IChannel,
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	type IExperimentalIncrementalSummaryContext,
-	type IRuntimeMessageCollection,
+	IExperimentalIncrementalSummaryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -30,7 +30,7 @@ import {
 	type ISharedObjectKind,
 	type SharedObjectKind,
 } from "./sharedObject.js";
-import type { ISharedObjectEvents, type ISharedObject } from "./types.js";
+import type { ISharedObjectEvents, ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
 /**

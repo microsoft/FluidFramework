@@ -11,7 +11,7 @@ import type {
 	CollaborationWindow,
 	IMergeNode,
 	ISegmentPrivate,
-	type MergeBlock,
+	MergeBlock,
 } from "./mergeTreeNodes.js";
 import {
 	LocalDefaultPerspective,

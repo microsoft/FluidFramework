@@ -15,7 +15,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import type {
 	IContainerContext,
-	type IBatchMessage,
+	IBatchMessage,
 } from "@fluidframework/container-definitions/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type {
@@ -26,9 +26,9 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type {
 	ISignalEnvelope,
-	type IErrorBase,
-	type ITelemetryBaseLogger,
-	type JsonDeserialized,
+	IErrorBase,
+	ITelemetryBaseLogger,
+	JsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import { MessageType, SummaryType } from "@fluidframework/driver-definitions/internal";
@@ -37,10 +37,10 @@ import type {
 	ISnapshot,
 	ISummaryContext,
 	ISequencedDocumentMessage,
-	type ISnapshotTree,
-	type IVersion,
-	type FetchSource,
-	type IDocumentAttributes,
+	ISnapshotTree,
+	IVersion,
+	FetchSource,
+	IDocumentAttributes,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	FlushMode,
@@ -53,11 +53,11 @@ import type {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
-	type IRuntimeMessageCollection,
-	type ISequencedMessageEnvelope,
-	type IEnvelope,
-	type ITelemetryContext,
-	type ISummarizeInternalResult,
+	IRuntimeMessageCollection,
+	ISequencedMessageEnvelope,
+	IEnvelope,
+	ITelemetryContext,
+	ISummarizeInternalResult,
 } from "@fluidframework/runtime-definitions/internal";
 import type { IFluidErrorBase } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -86,8 +86,8 @@ import {
 import type {
 	IContainerRuntimeOptions,
 	IPendingRuntimeState,
-	type ContainerRuntimeOptionsInternal,
-	type IContainerRuntimeOptionsInternal,
+	ContainerRuntimeOptionsInternal,
+	IContainerRuntimeOptionsInternal,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -109,7 +109,7 @@ import type {
 import { neverCancelledSummaryToken, recentBatchInfoBlobName } from "../summary/index.js";
 import type {
 	ISummaryCancellationToken,
-	type IRefreshSummaryAckOptions,
+	IRefreshSummaryAckOptions,
 } from "../summary/index.js";
 
 type Patch<T, U> = Omit<T, keyof U> & U;

@@ -9,7 +9,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	IContainerRuntimeEvents,
-	type ISummarizeEventProps,
+	ISummarizeEventProps,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	ConfigTypes,
@@ -37,7 +37,7 @@ import type {
 	ISummarizerRuntime,
 	ISummaryCancellationToken,
 	SubmitSummaryResult,
-	type ISummaryConfiguration,
+	ISummaryConfiguration,
 } from "../../summary/index.js";
 import {
 	defaultMaxAttempts,

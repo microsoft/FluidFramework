@@ -58,11 +58,11 @@ import type {
 	ISegmentChanges,
 	InsertContext,
 	SegmentGroup,
-	type IMergeNodeBuilder,
-	type ISegmentInternal,
-	type ISegmentLeaf,
-	type ISegmentPrivate,
-	type ObliterateInfo,
+	IMergeNodeBuilder,
+	ISegmentInternal,
+	ISegmentLeaf,
+	ISegmentPrivate,
+	ObliterateInfo,
 } from "./mergeTreeNodes.js";
 import { UnorderedTrackingGroup, type TrackingGroup } from "./mergeTreeTracking.js";
 import {
@@ -71,7 +71,7 @@ import {
 	createRemoveRangeOp,
 } from "./opBuilder.js";
 import { MergeTreeDeltaType, ReferenceType } from "./ops.js";
-import type { IRelativePosition, type IMergeTreeOp } from "./ops.js";
+import type { IRelativePosition, IMergeTreeOp } from "./ops.js";
 import { PartialSequenceLengths } from "./partialLengths.js";
 import {
 	PriorPerspective,
@@ -102,9 +102,9 @@ import {
 } from "./segmentInfos.js";
 import type {
 	ISegmentInsideObliterateInfo,
-	type IHasInsertionInfo,
-	type IHasRemovalInfo,
-	type SegmentWithInfo,
+	IHasInsertionInfo,
+	IHasRemovalInfo,
+	SegmentWithInfo,
 } from "./segmentInfos.js";
 import {
 	copyPropertiesAndManager,

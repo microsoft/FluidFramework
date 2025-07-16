@@ -24,7 +24,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { default as Axios } from "axios";
-import type { AxiosResponse, type AxiosRequestConfig } from "axios";
+import type { AxiosResponse, AxiosRequestConfig } from "axios";
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";

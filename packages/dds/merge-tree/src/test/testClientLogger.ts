@@ -14,11 +14,11 @@ import type { IMergeTreeOptions } from "../index.js";
 import { MergeTreeMaintenanceType } from "../mergeTreeDeltaCallback.js";
 import type {
 	IMergeTreeDeltaOpArgs,
-	type IMergeTreeMaintenanceCallbackArgs,
+	IMergeTreeMaintenanceCallbackArgs,
 } from "../mergeTreeDeltaCallback.js";
 import { depthFirstNodeWalk } from "../mergeTreeNodeWalk.js";
 import { Marker, seqLTE } from "../mergeTreeNodes.js";
-import type { IMergeNode, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import type { IMergeNode, ISegmentPrivate } from "../mergeTreeNodes.js";
 import type { IMergeTreeOp } from "../ops.js";
 import { MergeTreeDeltaType } from "../ops.js";
 import type { PropertySet } from "../properties.js";

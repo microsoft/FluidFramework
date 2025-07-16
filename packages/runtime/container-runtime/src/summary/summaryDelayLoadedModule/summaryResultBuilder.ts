@@ -9,7 +9,7 @@ import type {
 	SubmitSummaryFailureData,
 	SubmitSummaryResult,
 	SummarizeResultPart,
-	type IRetriableFailureError,
+	IRetriableFailureError,
 } from "../index.js";
 
 import type {

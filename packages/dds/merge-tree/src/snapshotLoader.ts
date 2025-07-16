@@ -24,11 +24,7 @@ import type { ISegmentPrivate } from "./mergeTreeNodes.js";
 import type { IJSONSegment } from "./ops.js";
 import { PriorPerspective } from "./perspective.js";
 import { overwriteInfo } from "./segmentInfos.js";
-import type {
-	IHasRemovalInfo,
-	type IHasInsertionInfo,
-	type SegmentWithInfo,
-} from "./segmentInfos.js";
+import type { IHasRemovalInfo, IHasInsertionInfo, SegmentWithInfo } from "./segmentInfos.js";
 import type { IJSONSegmentWithMergeInfo, MergeTreeChunkV1 } from "./snapshotChunks.js";
 import { hasMergeInfo } from "./snapshotChunks.js";
 import { SnapshotV1 } from "./snapshotV1.js";

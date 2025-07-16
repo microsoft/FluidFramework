@@ -10,7 +10,7 @@ import { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IProvideFluidHandle,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";

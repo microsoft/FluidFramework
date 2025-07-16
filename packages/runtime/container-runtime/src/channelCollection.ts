@@ -45,9 +45,9 @@ import type {
 	ISummarizeResult,
 	NamedFluidDataStoreRegistryEntries,
 	IInboundSignalMessage,
-	type IRuntimeMessagesContent,
-	type InboundAttachMessage,
-	type IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	InboundAttachMessage,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -76,7 +76,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import type {
 	MonitoringContext,
-	type ITelemetryPropertiesExt,
+	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

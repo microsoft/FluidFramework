@@ -6,10 +6,7 @@
 import type { EventEmitterEventType } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
-import type {
-	ITelemetryBaseProperties,
-	type ErasedType,
-} from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties, ErasedType } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleInternal,
 	IFluidLoadable,
@@ -20,14 +17,14 @@ import type {
 	IChannelStorageService,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
-	type IChannel,
-	type IChannelFactory,
-	type IDeltaHandler,
-	type IFluidDataStoreRuntimeInternalConfig,
+	IChannel,
+	IChannelFactory,
+	IDeltaHandler,
+	IFluidDataStoreRuntimeInternalConfig,
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	ISequencedDocumentMessage,
-	type IDocumentMessage,
+	IDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	blobCountPropertyName,
@@ -38,8 +35,8 @@ import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 	IGarbageCollectionData,
-	type IRuntimeMessageCollection,
-	type IRuntimeMessagesContent,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -55,8 +52,8 @@ import {
 import type {
 	ITelemetryLoggerExt,
 	MonitoringContext,
-	type ICustomData,
-	type IFluidErrorBase,
+	ICustomData,
+	IFluidErrorBase,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

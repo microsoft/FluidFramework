@@ -10,7 +10,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
-	type ICreateBlobResponse,
+	ICreateBlobResponse,
 } from "@fluidframework/driver-definitions/internal";
 import { v4 as uuid } from "uuid";
 
