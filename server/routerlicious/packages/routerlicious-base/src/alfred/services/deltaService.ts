@@ -11,6 +11,7 @@ import {
 	ISequencedOperationMessage,
 	ITenantManager,
 } from "@fluidframework/server-services-core";
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * @internal
@@ -28,6 +29,7 @@ export class DeltaService implements IDeltaService {
 		from?: number,
 		to?: number,
 	): Promise<ISequencedDocumentMessage[]> {
+		const MAX_RESPONSE_SIZE_BYTES = 700 * 1024 * 1024; // 700MB
 		// Create an optional filter to restrict the delta range
 		const query: any = { documentId, tenantId };
 		if (from !== undefined || to !== undefined) {
@@ -43,7 +45,7 @@ export class DeltaService implements IDeltaService {
 		}
 
 		const sort = { "operation.sequenceNumber": 1 };
-		return this.queryDeltas(collectionName, query, sort);
+		return this.queryDeltas(collectionName, query, sort, MAX_RESPONSE_SIZE_BYTES);
 	}
 
 	public async getDeltasFromStorage(
@@ -70,9 +72,31 @@ export class DeltaService implements IDeltaService {
 		collectionName: string,
 		query: any,
 		sort: any,
+		maxSizeBytes?: number,
 	): Promise<ISequencedDocumentMessage[]> {
 		const dbDeltas = await this.deltasCollection.find(query, sort);
-		return dbDeltas.map((delta) => delta.operation);
+		const result: ISequencedDocumentMessage[] = [];
+		let totalSize = 0;
+
+		for (const delta of dbDeltas) {
+			const size = Buffer.byteLength(JSON.stringify(delta.operation), "utf8");
+
+			if (maxSizeBytes !== undefined && totalSize + size > maxSizeBytes) {
+				Lumberjack.error("queryDeltas: response size limit exceeded", {
+					collectionName,
+					query,
+					opsReturned: result.length, // The number of ops that were successfully added to the result before hitting the size limit.
+					totalSizeBytes: totalSize,
+					maxSizeBytes,
+				});
+				break;
+			}
+
+			result.push(delta.operation);
+			totalSize += size;
+		}
+
+		return result;
 	}
 
 	public async getDeltasFromSummaryAndStorage(
