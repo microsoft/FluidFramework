@@ -185,14 +185,6 @@ describe("Schema Comparison", () => {
 			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
 		};
 
-		const validateMethodsConsistent = (
-			view: TreeStoredSchema,
-			stored: TreeStoredSchema,
-			isSuperset: boolean,
-		): void => {
-			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), isSuperset);
-		};
-
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
 			const schemaName = brand<TreeNodeSchemaIdentifier>("testTree");
 			const rootFieldSchema = fieldSchema(FieldKinds.optional, [schemaName, emptyTree.name]);
@@ -264,19 +256,49 @@ describe("Schema Comparison", () => {
 			);
 
 			// Validate the consistent results of 'allowsRepoSuperset' and 'isRepoSuperset'
-			validateMethodsConsistent(emptyTreeRepo, valueLocalFieldTreeRepo, false);
-			validateMethodsConsistent(optionalTreeRepoWithoutValue, valueLocalFieldTreeRepo, false);
-			validateMethodsConsistent(
-				optionalTreeRepoWithMultipleValues,
-				optionalLocalFieldTreeRepo,
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, emptyTreeRepo, valueLocalFieldTreeRepo),
+				false,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					optionalTreeRepoWithoutValue,
+					valueLocalFieldTreeRepo,
+				),
+				false,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					optionalTreeRepoWithMultipleValues,
+					optionalLocalFieldTreeRepo,
+				),
 				false,
 			);
 
-			validateMethodsConsistent(optionalLocalFieldTreeRepo, valueLocalFieldTreeRepo, true);
-			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, emptyTreeRepo, true);
-			validateMethodsConsistent(
-				optionalTreeRepoWithMultipleValues,
-				optionalTreeRepoWithoutValue,
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					optionalLocalFieldTreeRepo,
+					valueLocalFieldTreeRepo,
+				),
+				true,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					optionalTreeRepoWithMultipleValues,
+					emptyTreeRepo,
+				),
+				true,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					optionalTreeRepoWithMultipleValues,
+					optionalTreeRepoWithoutValue,
+				),
 				true,
 			);
 		});
@@ -296,7 +318,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
-			validateMethodsConsistent(repos[1], repos[0], true);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, repos[1], repos[0]), true);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {

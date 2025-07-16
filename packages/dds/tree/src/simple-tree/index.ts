@@ -244,7 +244,6 @@ export {
 	booleanSchema,
 	handleSchema,
 	nullSchema,
-	asLeafNodeSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
 export {
