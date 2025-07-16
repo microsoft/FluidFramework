@@ -306,6 +306,8 @@ function* getNodeDiscrepancies(
 				isArrayNodeSchema(view),
 				"schema with node kind of array must implement ArrayNodeSchema",
 			);
+			// This is a kludge to allow comparing view array nodes which are treated as arrays with stored array nodes which are treated as objects.
+			// TODO: Revisit this when redesigning the comparision logic.
 			const fields: SimpleKeyMap | undefined = new Map([
 				[
 					EmptyKey,
