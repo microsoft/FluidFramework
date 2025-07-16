@@ -6,6 +6,8 @@
 import assert from "node:assert";
 import {
 	LeafNodeStoredSchema,
+	ObjectNodeStoredSchema,
+	storedEmptyFieldSchema,
 	ValueSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -482,6 +484,20 @@ describe("Schema Discrepancies", () => {
 		);
 	});
 
+	const createObjectNodeSchema = (
+		fields: [string, TreeFieldStoredSchema][],
+		treeName: string,
+		root: TreeFieldStoredSchema,
+	): TreeStoredSchema => {
+		const objectNodeSchema = new ObjectNodeStoredSchema(
+			new Map(fields.map(([key, schema]) => [brand(key), schema])),
+		);
+		return {
+			rootFieldSchema: root,
+			nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>(treeName), objectNodeSchema]]),
+		};
+	};
+
 	describe("Special types of tree schemas", () => {
 		const objectNodeSchema = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
 			x: schemaFactory.optional(schemaFactory.number),
@@ -489,21 +505,26 @@ describe("Schema Discrepancies", () => {
 
 		it("emptyTree", () => {
 			const emptyTree = schemaFactory.objectAlpha(testTreeNodeIdentifier, {});
-			const emptyTreeStored = toStoredSchema(emptyTree);
-			const emptyLocalFieldTree = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-				x: schemaFactory.optional([]),
-			});
-			const emptyLocalFieldTreeStored = toStoredSchema(emptyLocalFieldTree);
+
+			const emptyTreeStored = createObjectNodeSchema(
+				[],
+				testTreeNodeIdentifierNormalized,
+				storedEmptyFieldSchema,
+			);
+			const emptyLocalFieldTreeStored = createObjectNodeSchema(
+				[["x", storedEmptyFieldSchema]],
+				testTreeNodeIdentifierNormalized,
+				storedEmptyFieldSchema,
+			);
 
 			assert.equal(
 				allowsRepoSuperset(defaultSchemaPolicy, emptyTreeStored, emptyLocalFieldTreeStored),
 				true,
 			);
-			// TODO: This no longer passes because an explicitly forbidden field cannot be defined with a view schema.
-			// assert.equal(
-			// 	allowsRepoSuperset(defaultSchemaPolicy, emptyLocalFieldTreeStored, emptyTreeStored),
-			// 	true,
-			// );
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, emptyLocalFieldTreeStored, emptyTreeStored),
+				true,
+			);
 
 			assert.deepEqual(
 				Array.from(
@@ -514,17 +535,23 @@ describe("Schema Discrepancies", () => {
 				),
 				[
 					{
-						differences: [
+						fieldKey: undefined,
+						identifier: undefined,
+						mismatch: "allowedTypes",
+						stored: [],
+						view: [
 							{
-								fieldKey: "x",
-								identifier: "schema discrepancies.tree",
-								mismatch: "fieldKind",
-								view: "Forbidden",
-								stored: "Optional",
+								metadata: {},
+								type: emptyTree,
 							},
 						],
-						identifier: "schema discrepancies.tree",
-						mismatch: "fields",
+					},
+					{
+						fieldKey: undefined,
+						identifier: undefined,
+						mismatch: "fieldKind",
+						view: "Value",
+						stored: "Forbidden",
 					},
 				],
 			);
@@ -537,6 +564,25 @@ describe("Schema Discrepancies", () => {
 					),
 				),
 				[
+					{
+						fieldKey: undefined,
+						identifier: undefined,
+						mismatch: "allowedTypes",
+						stored: [],
+						view: [
+							{
+								metadata: {},
+								type: objectNodeSchema,
+							},
+						],
+					},
+					{
+						fieldKey: undefined,
+						identifier: undefined,
+						mismatch: "fieldKind",
+						view: "Value",
+						stored: "Forbidden",
+					},
 					{
 						identifier: schemaFactory.number.identifier,
 						mismatch: "nodeKind",
@@ -568,6 +614,25 @@ describe("Schema Discrepancies", () => {
 				),
 				[
 					{
+						fieldKey: undefined,
+						identifier: undefined,
+						mismatch: "allowedTypes",
+						stored: [],
+						view: [
+							{
+								metadata: {},
+								type: objectNodeSchema,
+							},
+						],
+					},
+					{
+						fieldKey: undefined,
+						identifier: undefined,
+						mismatch: "fieldKind",
+						view: "Value",
+						stored: "Forbidden",
+					},
+					{
 						identifier: schemaFactory.number.identifier,
 						mismatch: "nodeKind",
 						view: "leaf",
@@ -583,6 +648,13 @@ describe("Schema Discrepancies", () => {
 								mismatch: "allowedTypes",
 								view: [{ metadata: {}, type: schemaFactory.number }],
 								stored: [],
+							},
+							{
+								identifier: "schema discrepancies.tree",
+								fieldKey: "x",
+								mismatch: "fieldKind",
+								view: "Optional",
+								stored: "Forbidden",
 							},
 						],
 					},
