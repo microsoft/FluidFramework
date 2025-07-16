@@ -16,6 +16,16 @@ export interface ContainerSchema {
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
 
+// @alpha @legacy
+export function createDOProviderContainerRuntimeFactory(props: {
+    schema: ContainerSchema;
+    compatibilityMode: CompatibilityMode;
+    rootDataStoreRegistry?: IFluidDataStoreRegistry;
+    runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+    minVersionForCollabOverride?: MinimumVersionForCollab;
+    useTreeBasedDataObject?: boolean;
+}): IRuntimeFactory;
+
 // @public
 export interface IConnection {
     readonly id: string;

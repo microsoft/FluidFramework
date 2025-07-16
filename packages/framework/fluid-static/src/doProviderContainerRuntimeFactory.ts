@@ -26,7 +26,7 @@ import { parseDataObjectsFromSharedObjects } from "./utils.js";
  * where the root data object's registry and initial objects are configured based on the provided
  * schema (and optionally, data store registry).
  *
- * @internal
+ * @legacy @alpha
  */
 export function createDOProviderContainerRuntimeFactory(props: {
 	/**
