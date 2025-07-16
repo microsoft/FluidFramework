@@ -686,7 +686,7 @@ export class TenantManager {
 
 		if (publicNetworkAccessEnabled === isTenantPublicNetworkAccessEnabled) {
 			// no update needed
-			this.buildTenantConfig(tenantDocument);
+			return this.buildTenantConfig(tenantDocument);
 		}
 
 		updates.publicNetworkAccessEnabled = publicNetworkAccessEnabled;
