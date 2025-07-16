@@ -75,9 +75,9 @@ export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extend
 }
 
 // @alpha @legacy
-export interface DataObjectTypes<TInitialState = any> {
+export interface DataObjectTypes {
     Events?: IEvent;
-    InitialState?: TInitialState;
+    InitialState?: any;
     OptionalProviders?: FluidObject;
 }
 
