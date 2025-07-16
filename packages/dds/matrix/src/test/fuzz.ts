@@ -5,20 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
+import type { AsyncGenerator, Generator } from "@fluid-private/stochastic-test-utils";
 import {
-	AsyncGenerator,
-	Generator,
 	combineReducers,
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import { DDSFuzzTestState, type DDSFuzzModel } from "@fluid-private/test-dds-utils";
+import type { DDSFuzzTestState, DDSFuzzModel } from "@fluid-private/test-dds-utils";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import { MatrixItem } from "../ops.js";
-import { SharedMatrixFactory, SharedMatrix } from "../runtime.js";
+import type { MatrixItem } from "../ops.js";
+import type { SharedMatrixFactory } from "../runtime.js";
+import { SharedMatrix } from "../runtime.js";
 
 /**
  * Supported cell values used within the fuzz model.

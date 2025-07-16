@@ -3,39 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	BaseSegment,
 	Client,
+	MergeTreeDeltaType,
+	MergeTreeMaintenanceType,
+	segmentIsRemoved,
+} from "@fluidframework/merge-tree/internal";
+import type {
 	IJSONSegment,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
 	IMergeTreeMaintenanceCallbackArgs,
 	ISegment,
-	MergeTreeDeltaType,
-	MergeTreeMaintenanceType,
-	segmentIsRemoved,
-	type IMergeTreeInsertMsg,
-	type IMergeTreeRemoveMsg,
+	IMergeTreeInsertMsg,
+	IMergeTreeRemoveMsg,
 } from "@fluidframework/merge-tree/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
-import { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { HandleCache } from "./handlecache.js";
 import { Handle, HandleTable, isHandleValid } from "./handletable.js";
 import { deserializeBlob } from "./serialization.js";
-import { VectorUndoProvider } from "./undoprovider.js";
+import type { VectorUndoProvider } from "./undoprovider.js";
 
 const enum SnapshotPath {
 	segments = "segments",
@@ -125,7 +127,6 @@ export class PermutationSegment extends BaseSegment {
 	}
 }
 
-// eslint-disable-next-line import/no-deprecated
 export class PermutationVector extends Client {
 	private handleTable = new HandleTable<never>(); // Tracks available storage handles for rows.
 	public readonly handleCache = new HandleCache(this);

@@ -5,14 +5,11 @@
 
 import * as path from "node:path";
 
-import {
-	DDSFuzzModel,
-	DDSFuzzSuiteOptions,
-	createDDSFuzzSuite,
-} from "@fluid-private/test-dds-utils";
+import type { DDSFuzzModel, DDSFuzzSuiteOptions } from "@fluid-private/test-dds-utils";
+import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { SharedMatrixFactory } from "../runtime.js";
+import type { SharedMatrixFactory } from "../runtime.js";
 
 import { _dirname } from "./dirname.cjs";
 import { baseSharedMatrixModel, type Operation } from "./fuzz.js";

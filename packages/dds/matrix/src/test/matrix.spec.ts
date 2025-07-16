@@ -5,30 +5,27 @@
 
 import { strict as assert } from "node:assert";
 
-import { IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import type { IGCTestProvider } from "@fluid-private/test-dds-utils";
+import { runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import {
+import type {
 	IChannelServices,
-	type IChannel,
+	IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import type { ISegmentInternal } from "@fluidframework/merge-tree/internal";
+import type { MockContainerRuntimeForReconnection } from "@fluidframework/test-runtime-utils/internal";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
 	MockEmptyDeltaConnection,
 	MockFluidDataStoreRuntime,
 	MockHandle,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import {
-	type ISharedMatrix,
-	MatrixItem,
-	SharedMatrix,
-	SharedMatrixFactory,
-} from "../index.js";
+import { SharedMatrixFactory } from "../index.js";
+import type { MatrixItem, SharedMatrix, ISharedMatrix } from "../index.js";
 import { SharedMatrix as SharedMatrixClass } from "../matrix.js";
 import type { PermutationVector } from "../permutationvector.js";
 

@@ -4,23 +4,26 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IMergeTreeDeltaCallbackArgs,
 	ITrackingGroup,
 	MergeTreeDeltaRevertible,
-	MergeTreeDeltaType,
 	MergeTreeRevertibleDriver,
+} from "@fluidframework/merge-tree/internal";
+import {
+	MergeTreeDeltaType,
 	TrackingGroup,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
 
-import { Handle, isHandleValid } from "./handletable.js";
-import { SharedMatrix } from "./matrix.js";
-import { MatrixItem } from "./ops.js";
-import { PermutationSegment, PermutationVector } from "./permutationvector.js";
-import { IUndoConsumer } from "./types.js";
+import type { Handle } from "./handletable.js";
+import { isHandleValid } from "./handletable.js";
+import type { SharedMatrix } from "./matrix.js";
+import type { MatrixItem } from "./ops.js";
+import type { PermutationSegment, PermutationVector } from "./permutationvector.js";
+import type { IUndoConsumer } from "./types.js";
 
 export class VectorUndoProvider {
 	// 'currentGroup' and 'currentOp' are used while applying an IRevertable.revert() to coalesce
