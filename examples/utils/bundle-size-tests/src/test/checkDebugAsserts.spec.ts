@@ -13,6 +13,7 @@ describe("checkDebugAsserts", () => {
 
 		assert.match(bundle, /kept 1/);
 		assert.match(bundle, /kept 2/);
+		assert.match(bundle, /kept 3/);
 		assert.doesNotMatch(bundle, /removed in production/);
 	});
 });
