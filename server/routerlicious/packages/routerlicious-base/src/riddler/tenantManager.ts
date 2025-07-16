@@ -155,7 +155,7 @@ export class TenantManager {
 		return tenant.key || tenant.secondaryKey ? true : false;
 	}
 
-	private getExistingTenantPublicNetworkAccess(tenant: ITenantDocument): boolean {
+	private getTenantPublicNetworkAccessEnabled(tenant: ITenantDocument): boolean {
 		const publicNetworkAccessEnabled = tenant.publicNetworkAccessEnabled;
 
 		if (publicNetworkAccessEnabled === undefined) {
@@ -688,7 +688,7 @@ export class TenantManager {
 
 		const updates: Partial<ITenantDocument> = {};
 		const isTenantPublicNetworkAccessEnabled =
-			this.getExistingTenantPublicNetworkAccess(tenantDocument);
+			this.getTenantPublicNetworkAccessEnabled(tenantDocument);
 
 		if (publicNetworkAccessEnabled === isTenantPublicNetworkAccessEnabled) {
 			// no update needed
