@@ -4,18 +4,17 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { LazyItem } from "../flexList.js";
-import type {
-	AllowedTypeMetadata,
-	AllowedTypesMetadata,
-	AnnotatedAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	TreeLeafValue,
-} from "../schemaTypes.js";
 import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
+import type { UnionToIntersection } from "../../util/index.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type {
+	ImplicitAnnotatedAllowedTypes,
+	NormalizedAnnotatedAllowedTypes,
+} from "./allowedTypes.js";
+import type { Context } from "./context.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -69,48 +68,6 @@ export type TreeNodeSchema<
 			never,
 			TCustomMetadata
 	  >;
-
-/**
- * Stores annotations for an individual allowed type.
- * @alpha
- */
-export interface AnnotatedAllowedType<T = LazyItem<TreeNodeSchema>> {
-	/**
-	 * Annotations for the allowed type.
-	 */
-	readonly metadata: AllowedTypeMetadata;
-	/**
-	 * The allowed type the annotations apply to in a particular schema.
-	 */
-	readonly type: T;
-}
-
-/**
- * Stores annotations for a set of evaluated annotated allowed types.
- * @alpha
- */
-export interface NormalizedAnnotatedAllowedTypes {
-	/**
-	 * Annotations that apply to a set of allowed types.
-	 */
-	readonly metadata: AllowedTypesMetadata;
-	/**
-	 * All the evaluated allowed types that the annotations apply to. The types themselves are also individually annotated.
-	 */
-	readonly types: readonly AnnotatedAllowedType<TreeNodeSchema>[];
-}
-
-/**
- * Checks if the input is an {@link AnnotatedAllowedTypes}.
- */
-export function isAnnotatedAllowedTypes(
-	allowedTypes: ImplicitAnnotatedAllowedTypes,
-): allowedTypes is AnnotatedAllowedTypes {
-	return (
-		// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
-		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
-	);
-}
 
 /**
  * Schema which is not a class.
@@ -372,6 +329,11 @@ export interface TreeNodeSchemaCore<
 }
 
 /**
+ * Symbol for use by {@link TreeNodeSchemaCorePrivate}.
+ */
+export const privateDataSymbol = Symbol("PrivateData");
+
+/**
  * {@link TreeNodeSchemaCore} extended with some non-exported APIs.
  */
 export interface TreeNodeSchemaCorePrivate<
@@ -390,6 +352,56 @@ export interface TreeNodeSchemaCorePrivate<
 		TCustomMetadata
 	> {
 	/**
+	 * Package private data provided by all {@link TreeNodeSchema}.
+	 * @remarks
+	 * Users can add custom statics to schema classes.
+	 * To reduce the risk of such statics colliding with properties used to implement the schema,
+	 * some of the private APIs are grouped together under this symbol.
+	 *
+	 * Note that there are still some properties which are not under a symbol and thus expose some risk of name collisions.
+	 * See {@link TreeNodeValid} for some such properties.
+	 */
+	readonly [privateDataSymbol]: TreeNodeSchemaPrivateData;
+}
+
+/**
+ * Package private data provided by all {@link TreeNodeSchema}.
+ * @remarks
+ * This data needs to be available before lazy schema references are resolved.
+ * For data which is only available after lazy schema references are resolved,
+ * see {@link TreeNodeSchemaInitializedData}, which can be accessed via {@link TreeNodeSchemaPrivateData.idempotentInitialize}.
+ */
+export interface TreeNodeSchemaPrivateData {
+	/**
+	 * All possible annotated allowed types that a field under a node with this schema could have.
+	 * @remarks
+	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
+	 * This includes the content field for arrays, and all the fields for map nodes.
+	 * If this node does not have fields (and thus is a leaf), the array will be empty.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this array.
+	 *
+	 * @privateRemarks
+	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
+	 * @system
+	 */
+	readonly childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[];
+
+	/**
+	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
+	 */
+	idempotentInitialize(): TreeNodeSchemaInitializedData;
+}
+
+/**
+ * Additional data about a given schema which is private to this package.
+ * @remarks
+ * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
+ */
+export interface TreeNodeSchemaInitializedData {
+	/**
 	 * All possible annotated allowed types that a field under a node with this schema could have.
 	 * @remarks
 	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
@@ -405,27 +417,25 @@ export interface TreeNodeSchemaCorePrivate<
 	 * @system
 	 */
 	readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[];
+
+	/**
+	 * A {@link Context} which can be used for unhydrated nodes of this schema.
+	 */
+	readonly context: Context;
 }
 
 /**
- * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} if it is one.
- *
- * @remarks
- * This function should only be used internally. The result should not be exposed publicly
- * in any exported types or API return values.
+ * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} and get its {@link TreeNodeSchemaPrivateData}.
  */
-export function asTreeNodeSchemaCorePrivate(
+export function getTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
-): TreeNodeSchemaCorePrivate {
+): TreeNodeSchemaPrivateData {
 	assert(
-		"childAnnotatedAllowedTypes" in schema,
+		privateDataSymbol in schema,
 		0xbc9 /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
-	assert(
-		Array.isArray((schema as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes),
-		0xbca /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
-	);
-	return schema as TreeNodeSchemaCorePrivate;
+	const schemaValid = schema as TreeNodeSchemaCorePrivate;
+	return schemaValid[privateDataSymbol];
 }
 
 /**
@@ -458,3 +468,122 @@ export enum NodeKind {
 	 */
 	Record = 4,
 }
+
+/**
+ * Metadata associated with a Node Schema.
+ *
+ * @remarks Specified via {@link NodeSchemaOptions.metadata}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaMetadata<out TCustomMetadata = unknown> {
+	/**
+	 * User-defined metadata.
+	 */
+	readonly custom?: TCustomMetadata | undefined;
+
+	/**
+	 * The description of the Node Schema.
+	 *
+	 * @remarks
+	 *
+	 * If provided, will be used by the system in scenarios where a description of the kind of node is useful.
+	 * E.g., when converting a Node Schema to {@link https://json-schema.org/ | JSON Schema}, this description will be
+	 * used as the `description` property.
+	 */
+	readonly description?: string | undefined;
+}
+
+/**
+ * Returns true if the given schema is a {@link TreeNodeSchemaClass}, or otherwise false if it is a {@link TreeNodeSchemaNonClass}.
+ * @internal
+ */
+export function isTreeNodeSchemaClass<
+	Name extends string,
+	Kind extends NodeKind,
+	TNode extends TreeNode | TreeLeafValue,
+	TBuild,
+	ImplicitlyConstructable extends boolean,
+	Info,
+>(
+	schema:
+		| TreeNodeSchema<Name, Kind, TNode, TBuild, ImplicitlyConstructable, Info>
+		| TreeNodeSchemaClass<Name, Kind, TNode & TreeNode, TBuild, ImplicitlyConstructable, Info>,
+): schema is TreeNodeSchemaClass<
+	Name,
+	Kind,
+	TNode & TreeNode,
+	TBuild,
+	ImplicitlyConstructable,
+	Info
+> {
+	return schema.constructor !== undefined;
+}
+
+/**
+ * Takes in `TreeNodeSchema[]` and returns a TypedNode union.
+ * @privateRemarks
+ * If a schema is both TreeNodeSchemaClass and TreeNodeSchemaNonClass, prefer TreeNodeSchemaClass since that includes subclasses properly.
+ * @public
+ */
+export type NodeFromSchema<T extends TreeNodeSchema> = T extends TreeNodeSchemaClass<
+	string,
+	NodeKind,
+	infer TNode
+>
+	? TNode
+	: T extends TreeNodeSchemaNonClass<string, NodeKind, infer TNode>
+		? TNode
+		: never;
+
+/**
+ * Data which can be used as a node to be inserted.
+ * Either an unhydrated node, or content to build a new node.
+ *
+ * @see {@link Input}
+ *
+ * @typeparam TSchemaInput - Schema to process.
+ * @typeparam T - Do not specify: default value used as implementation detail.
+ * @privateRemarks
+ * This can't really be fully correct, since TreeNodeSchema's TNode is generally use covariantly but this code uses it contravariantly.
+ * That makes this TreeNodeSchema actually invariant with respect to TNode, but doing that would break all `extends TreeNodeSchema` clauses.
+ * As is, this works correctly in most realistic use-cases.
+ *
+ * One special case this makes is if the result of NodeFromSchema contains TreeNode, this must be an under constrained schema, so the result is set to never.
+ * Note that applying UnionToIntersection on the result of NodeFromSchema<T> does not work since it breaks booleans.
+ *
+ * @public
+ */
+export type InsertableTypedNode<
+	TSchema extends TreeNodeSchema,
+	T = UnionToIntersection<TSchema>,
+> =
+	| (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true>
+			? NodeBuilderData<T>
+			: never)
+	| (T extends TreeNodeSchema
+			? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>>
+			: never);
+
+/**
+ * Given a node's schema, return the corresponding object from which the node could be built.
+ * @privateRemarks
+ * This uses TreeNodeSchemaCore, and thus depends on TreeNodeSchemaCore.createFromInsertable for the typing.
+ * This works almost the same as using TreeNodeSchema,
+ * except that the more complex typing in TreeNodeSchema case breaks for non-class schema and leaks in `undefined` from optional crete parameters.
+ * @system @public
+ */
+export type NodeBuilderData<T extends TreeNodeSchemaCore<string, NodeKind, boolean>> =
+	T extends TreeNodeSchemaCore<string, NodeKind, boolean, unknown, infer TBuild>
+		? TBuild
+		: never;
+
+/**
+ * Value that may be stored as a leaf node.
+ * @remarks
+ * Some limitations apply, see the documentation for {@link SchemaStatics.number} and {@link SchemaStatics.string} for those restrictions.
+ * @public
+ */
+// eslint-disable-next-line @rushstack/no-new-null
+export type TreeLeafValue = number | string | boolean | IFluidHandle | null;

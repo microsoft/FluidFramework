@@ -182,6 +182,24 @@ declare type current_as_old_for_Class_SocketIoWebServerFactory = requireAssignab
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_StartupCheck": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_StartupCheck = requireAssignableTo<TypeOnly<old.StartupCheck>, TypeOnly<current.StartupCheck>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_StartupCheck": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_StartupCheck = requireAssignableTo<TypeOnly<current.StartupCheck>, TypeOnly<old.StartupCheck>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Class_WebServer": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_WebServer = requireAssignableTo<TypeOnly<old.WebServer>, TypeOnly<current.WebServer>>
@@ -317,6 +335,15 @@ declare type current_as_old_for_ClassStatics_SocketIoWebServerFactory = requireA
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "ClassStatics_StartupCheck": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_StartupCheck = requireAssignableTo<TypeOnly<typeof current.StartupCheck>, TypeOnly<typeof old.StartupCheck>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "ClassStatics_WebServer": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_WebServer = requireAssignableTo<TypeOnly<typeof current.WebServer>, TypeOnly<typeof old.WebServer>>
@@ -344,9 +371,27 @@ declare type current_as_old_for_ClassStatics_WholeSummaryWriteGitManager = requi
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_closeRedisClientConnections": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_closeRedisClientConnections = requireAssignableTo<TypeOnly<typeof current.closeRedisClientConnections>, TypeOnly<typeof old.closeRedisClientConnections>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_containsPathTraversal": {"backCompat": false}
  */
 declare type current_as_old_for_Function_containsPathTraversal = requireAssignableTo<TypeOnly<typeof current.containsPathTraversal>, TypeOnly<typeof old.containsPathTraversal>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_createHealthCheckEndpoints": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_createHealthCheckEndpoints = requireAssignableTo<TypeOnly<typeof current.createHealthCheckEndpoints>, TypeOnly<typeof old.createHealthCheckEndpoints>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-services-telemetry",
-	"version": "7.0.0",
+	"version": "8.0.0",
 	"description": "Fluid server telemetry utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -63,7 +63,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
-		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@5.0.0",
+		"@fluidframework/server-services-telemetry-previous": "npm:@fluidframework/server-services-telemetry@7.0.0",
 		"@types/mocha": "^10.0.1",
 		"@types/node": "^18.19.39",
 		"@types/sinon": "^17.0.3",
@@ -78,27 +78,7 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_Lumber": {
-				"backCompat": false,
-				"forwardCompat": false
-			},
-			"Enum_BaseTelemetryProperties": {
-				"backCompat": false
-			},
-			"Enum_HttpProperties": {
-				"backCompat": false
-			},
-			"Enum_LumberEventName": {
-				"backCompat": false
-			},
-			"Interface_ITelemetryContextProperties": {
-				"forwardCompat": false
-			},
-			"Enum_CommonProperties": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }

@@ -14,13 +14,18 @@ import {
 
 import {
 	NodeKind,
-	type NormalizedAnnotatedAllowedTypes,
 	type TreeNodeSchema,
 	type TreeNodeSchemaNonClass,
+	type NodeSchemaMetadata,
+	type TreeLeafValue,
+	type TreeNodeSchemaCorePrivate,
+	type TreeNodeSchemaPrivateData,
+	privateDataSymbol,
+	type TreeNodeSchemaInitializedData,
 } from "./core/index.js";
-import type { NodeSchemaMetadata, TreeLeafValue } from "./schemaTypes.js";
 import type { SimpleLeafNodeSchema } from "./simpleSchema.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
+import { getTreeNodeSchemaInitializedData } from "./createContext.js";
 
 /**
  * Instances of this class are schema for leaf nodes.
@@ -32,14 +37,22 @@ import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
  * This class refers to the underlying flex tree schema in its constructor, so this class can't be included in the package API.
  */
 export class LeafNodeSchema<Name extends string, const T extends ValueSchema>
-	implements TreeNodeSchemaNonClass<Name, NodeKind.Leaf, TreeValue<T>, TreeValue<T>>
+	implements
+		TreeNodeSchemaNonClass<Name, NodeKind.Leaf, TreeValue<T>, TreeValue<T>>,
+		SimpleLeafNodeSchema,
+		TreeNodeSchemaCorePrivate
 {
 	public readonly identifier: Name;
 	public readonly kind = NodeKind.Leaf;
 	public readonly info: T;
 	public readonly implicitlyConstructable = true as const;
 	public readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
-	public readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[] = [];
+	public readonly [privateDataSymbol]: TreeNodeSchemaPrivateData = {
+		idempotentInitialize: () =>
+			(this.#initializedData ??= getTreeNodeSchemaInitializedData(this)),
+		childAnnotatedAllowedTypes: [],
+	};
+	#initializedData: TreeNodeSchemaInitializedData | undefined;
 
 	public create(data: TreeValue<T> | FlexTreeNode): TreeValue<T> {
 		if (isFlexTreeNode(data)) {

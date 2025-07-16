@@ -13,18 +13,6 @@ import type {
 	FlexTreeSequenceField,
 } from "../../../feature-libraries/index.js";
 import {
-	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
-	unannotateImplicitAllowedTypes,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-	type NodeSchemaMetadata,
-	type TreeLeafValue,
-	type TreeNodeFromImplicitAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
-import {
 	type WithType,
 	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
@@ -33,7 +21,6 @@ import {
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	typeSchemaSymbol,
-	type Context,
 	getOrCreateNodeFromInnerNode,
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
@@ -42,15 +29,28 @@ import {
 	type UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
 	getOrCreateNodeFromInnerUnboxedNode,
-	type NormalizedAnnotatedAllowedTypes,
+	normalizeAllowedTypes,
+	unannotateImplicitAllowedTypes,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type InsertableTreeNodeFromImplicitAllowedTypes,
+	type NodeSchemaMetadata,
+	type TreeLeafValue,
+	type TreeNodeFromImplicitAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaCorePrivate,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
-import { getUnhydratedContext } from "../../createContext.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import type { System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
@@ -1113,17 +1113,15 @@ export function arraySchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
+		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+		TreeNodeSchemaCorePrivate;
 
 	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedTypes));
-	const lazyAnnotatedTypes = new Lazy(() => [normalizeAnnotatedAllowedTypes(info)]);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
-
-	let unhydratedContext: Context;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
@@ -1162,10 +1160,7 @@ export function arraySchema<
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = getUnhydratedContext(schema);
-
+		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
@@ -1191,7 +1186,7 @@ export function arraySchema<
 				}
 			}
 
-			return unhydratedContext;
+			return getTreeNodeSchemaInitializedData(this);
 		}
 
 		public static readonly identifier = identifier;
@@ -1200,9 +1195,6 @@ export function arraySchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
-		}
-		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
-			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -1222,6 +1214,8 @@ export function arraySchema<
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+
+		public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, [info]);
 	}
 
 	const output: Output = Schema;
