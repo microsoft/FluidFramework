@@ -134,7 +134,7 @@ const getContainerListMessage = GetContainerList.createMessage();
 /**
  * A refresh button to retrieve the latest list of containers or data objects.
  */
-function RefreshButton(props?: { label?: string }): React.ReactElement {
+function RefreshButton(props: { label: string }): React.ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
 
@@ -144,8 +144,7 @@ function RefreshButton(props?: { label?: string }): React.ReactElement {
 		cursor: "pointer",
 	};
 
-	const refreshTooltip =
-		props?.label === undefined ? "Refresh Containers list" : `Refresh ${props.label} list`;
+	const refreshTooltip = `Refresh ${props.label} list`;
 
 	function handleRefreshClick(): void {
 		// Query for list of Containers
@@ -446,9 +445,14 @@ interface ContainersMenuSectionProps {
 	selectContainer(containerKey: ContainerKey | undefined): void;
 
 	/**
-	 * Whether to show as "Data Objects" instead of "Containers".
+	 * Label for the section (e.g., "Containers", "Data Objects").
 	 */
-	isDataObjects?: boolean;
+	sectionLabel: string;
+
+	/**
+	 * Tooltip content to display for the section info icon.
+	 */
+	tooltipContent: React.ReactElement;
 }
 
 /**
@@ -462,10 +466,9 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		containers,
 		selectContainer,
 		currentContainerSelection,
-		isDataObjects = false,
+		sectionLabel,
+		tooltipContent,
 	} = props;
-
-	const sectionLabel = isDataObjects ? "Data Objects" : "Containers";
 
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
@@ -490,17 +493,13 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		);
 	}
 
-	const infoTooltipContent = isDataObjects
-		? dataObjectsInfoTooltipText
-		: containersInfoTooltipText;
-
 	return (
 		<MenuSection
 			header={
 				<MenuSectionLabelHeader
 					label={sectionLabel}
 					icon={[
-						<InfoIcon key="info" content={infoTooltipContent} />,
+						<InfoIcon key="info" content={tooltipContent} />,
 						<RefreshButton key="refresh" label={sectionLabel} />,
 					]}
 				/>
@@ -589,7 +588,8 @@ export function Menu(props: MenuProps): React.ReactElement {
 						: undefined
 				}
 				selectContainer={onContainerClicked}
-				isDataObjects={false}
+				sectionLabel="Containers"
+				tooltipContent={containersInfoTooltipText}
 			/>,
 		);
 	}
@@ -606,7 +606,8 @@ export function Menu(props: MenuProps): React.ReactElement {
 						: undefined
 				}
 				selectContainer={onContainerClicked}
-				isDataObjects={true}
+				sectionLabel="Data Objects"
+				tooltipContent={dataObjectsInfoTooltipText}
 			/>,
 		);
 	}

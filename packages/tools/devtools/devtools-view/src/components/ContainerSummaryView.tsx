@@ -30,11 +30,9 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	CloseContainer,
 	ConnectContainer,
-	ContainerDevtoolsFeatures,
 	ContainerStateChange,
 	type ContainerStateMetadata,
 	DisconnectContainer,
-	GetContainerDevtoolsFeatures,
 	GetContainerState,
 	type HasContainerKey,
 	type IMessageRelay,
@@ -238,13 +236,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 				}
 				return false;
 			},
-			[ContainerDevtoolsFeatures.MessageType]: async (untypedMessage) => {
-				const message = untypedMessage as ContainerDevtoolsFeatures.Message;
-				if (message.data.containerKey === containerKey) {
-					return true;
-				}
-				return false;
-			},
 		};
 
 		/**
@@ -265,7 +256,6 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 
 		// Request state info and supported features for the newly specified containerKey
 		messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
-		messageRelay.postMessage(GetContainerDevtoolsFeatures.createMessage({ containerKey }));
 
 		return (): void => {
 			messageRelay.off("message", messageHandler);
@@ -333,7 +323,11 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					<TableBody>
 						<DataRow
 							label="Status"
-							infoTooltipContent={containerStatusTooltipText(containerFeatureFlags.canModifyContainerState === false ? "DataObject" : "Container")}
+							infoTooltipContent={containerStatusTooltipText(
+								containerFeatureFlags.canModifyContainerState === false
+									? "DataObject"
+									: "Container",
+							)}
 							value={containerStatusValueCell(statusComponents)}
 							columnProps={columnSizing_unstable}
 						/>
