@@ -597,13 +597,6 @@ export class Container
 		return this._protocolHandler;
 	}
 
-	private canSendSignals(): boolean {
-		return (
-			this.connectionStateHandler.connectionState === ConnectionState.Connected ||
-			this.connectionStateHandler.connectionState === ConnectionState.CatchingUp
-		);
-	}
-
 	/**
 	 * During initialization we pause the inbound queues. We track this state to ensure we only call resume once
 	 */
@@ -2477,7 +2470,7 @@ export class Container
 				getClientId: () => this.clientId,
 				getAttachState: () => this.attachState,
 				getConnected: () => this.connected,
-				canSendSignals: () => this.canSendSignals(),
+				getConnectionState: () => this.connectionState,
 				clientDetails: this._deltaManager.clientDetails,
 				existing,
 				taggedLogger: this.subLogger,

@@ -1522,7 +1522,10 @@ export class ContainerRuntime
 		super();
 
 		this.canSendSignals = () =>
-			context.canSendSignals ? context.canSendSignals() : this.canSendOps;
+			context.connectionState === undefined
+				? this.canSendOps
+				: context.connectionState === 2 /* ConnectionState.Connected */ ||
+					context.connectionState === 1 /* ConnectionState.CatchingUp */;
 
 		const {
 			options,

@@ -68,7 +68,7 @@ enum ConnectionState {
 
 function createMockContext(
 	connectionState: ConnectionState,
-	canSendSignals?: (() => boolean) | undefined,
+	defined: boolean = true,
 ): ITestContainerContext {
 	let currentConnectionState = connectionState;
 
@@ -94,11 +94,9 @@ function createMockContext(
 		baseSnapshot: undefined,
 		options: {},
 		loader: {} as unknown as IContainerContext["loader"],
-		canSendSignals:
-			canSendSignals ??
-			(() =>
-				currentConnectionState === ConnectionState.Connected ||
-				currentConnectionState === ConnectionState.CatchingUp),
+		get connectionState(): ConnectionState | undefined {
+			return defined ? currentConnectionState : undefined;
+		},
 		clientDetails: { capabilities: { interactive: true } },
 		submitFn: (): number => 1,
 		disposeFn: (): void => {},
@@ -126,7 +124,7 @@ async function createContainerRuntime(
 
 describe("Container Extension", () => {
 	describe("isConnected", () => {
-		it("should return true when 'Connected' and canSendSignals is true", async () => {
+		it("should return true when 'Connected'", async () => {
 			const context = createMockContext(ConnectionState.Connected);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
@@ -134,7 +132,7 @@ describe("Container Extension", () => {
 			assert.strictEqual(extension.isConnected, true, "Extension should be connected");
 		});
 
-		it("should return true when 'CatchingUp' and canSendSignals is true", async () => {
+		it("should return true when 'CatchingUp'", async () => {
 			const context = createMockContext(ConnectionState.CatchingUp);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
@@ -170,27 +168,27 @@ describe("Container Extension", () => {
 			);
 		});
 
-		it("should fallback to runtime.connected when canSendSignals is undefined and runtime is connected", async () => {
-			const context = createMockContext(ConnectionState.Connected, undefined);
+		it("should fallback to runtime.connected when connectionState is undefined and runtime is connected", async () => {
+			const context = createMockContext(ConnectionState.Connected, false /* undefined */);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 
 			assert.strictEqual(
 				extension.isConnected,
 				true,
-				"Extension should fallback to runtime.connected when canSendSignals is undefined",
+				"Extension should fallback to runtime.connected when connectionState is undefined",
 			);
 		});
 
-		it("should fallback to runtime.connected when canSendSignals is undefined and runtime is disconnected", async () => {
-			const context = createMockContext(ConnectionState.Disconnected, undefined);
+		it("should fallback to runtime.connected when connectionState is undefined and runtime is disconnected", async () => {
+			const context = createMockContext(ConnectionState.Disconnected, false /* undefined */);
 			const runtime = await createContainerRuntime(context);
 			const extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 
 			assert.strictEqual(
 				extension.isConnected,
 				false,
-				"Extension should fallback to runtime.connected when canSendSignals is undefined and runtime is disconnected",
+				"Extension should fallback to runtime.connected when connectionState is undefined and runtime is disconnected",
 			);
 		});
 

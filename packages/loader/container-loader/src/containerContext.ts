@@ -34,6 +34,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
+import { ConnectionState } from "./connectionState.js";
 import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 
 /**
@@ -83,7 +84,7 @@ export interface IContainerContextConfig {
 	/**
 	 * @returns true if signals can be sent and received (container is loaded and connected to service), false otherwise.
 	 */
-	readonly canSendSignals: () => boolean;
+	readonly getConnectionState: () => ConnectionState;
 	readonly clientDetails: IClientDetails;
 	readonly existing: boolean;
 	readonly taggedLogger: ITelemetryLoggerExt;
@@ -142,7 +143,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	private readonly _getClientId: () => string | undefined;
 	private readonly _getAttachState: () => AttachState;
 	private readonly _getConnected: () => boolean;
-	private readonly _canSendSignals: () => boolean;
+	private readonly _getConnectionState: () => ConnectionState;
 	public readonly clientDetails: IClientDetails;
 	public readonly existing: boolean;
 	public readonly taggedLogger: ITelemetryLoggerExt;
@@ -164,12 +165,12 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return this._getConnected();
 	}
 
-	public canSendSignals(): boolean {
-		return this._canSendSignals();
-	}
-
 	public get clientId(): string | undefined {
 		return this._getClientId();
+	}
+
+	public get connectionState(): ConnectionState {
+		return this._getConnectionState();
 	}
 
 	/**
@@ -202,7 +203,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		this._getClientId = config.getClientId;
 		this._getAttachState = config.getAttachState;
 		this._getConnected = config.getConnected;
-		this._canSendSignals = config.canSendSignals;
+		this._getConnectionState = config.getConnectionState;
 		this.clientDetails = config.clientDetails;
 		this.existing = config.existing;
 		this.taggedLogger = config.taggedLogger;
