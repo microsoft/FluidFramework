@@ -6,6 +6,7 @@
 import assert from "node:assert";
 import {
 	LeafNodeStoredSchema,
+	MapNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	storedEmptyFieldSchema,
 	ValueSchema,
@@ -27,6 +28,8 @@ import {
 	toStoredSchema,
 	isRepoSuperset,
 	getAllowedContentDiscrepancies,
+	type AnnotatedAllowedType,
+	type TreeNodeSchema,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
@@ -34,6 +37,8 @@ import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 import { fieldSchema } from "../feature-libraries/modular-schema/comparison.spec.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { findExtraAllowedTypes } from "../../simple-tree/discrepancies.js";
 
 // Arbitrary schema name used in tests
 const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>("tree");
@@ -82,8 +87,8 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "nodeKind",
-					view: "object",
-					stored: "map",
+					view: ObjectNodeStoredSchema,
+					stored: MapNodeStoredSchema,
 				},
 			],
 		);
@@ -111,7 +116,7 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "nodeKind",
-					view: "object",
+					view: ObjectNodeStoredSchema,
 					stored: undefined,
 				},
 			],
@@ -138,8 +143,8 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "nodeKind",
-					view: "map",
-					stored: "object",
+					view: MapNodeStoredSchema,
+					stored: ObjectNodeStoredSchema,
 				},
 			],
 		);
@@ -216,7 +221,7 @@ describe("Schema Discrepancies", () => {
 					identifier: schemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
-					stored: "leaf",
+					stored: LeafNodeStoredSchema,
 				},
 			],
 		);
@@ -232,7 +237,7 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: schemaFactory.number.identifier,
 					mismatch: "nodeKind",
-					view: "leaf",
+					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
@@ -249,7 +254,7 @@ describe("Schema Discrepancies", () => {
 					identifier: "schema discrepancies.array",
 					mismatch: "nodeKind",
 					view: undefined,
-					stored: "object",
+					stored: ObjectNodeStoredSchema,
 				},
 			],
 		);
@@ -305,26 +310,26 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: schemaFactory.number.identifier,
 					mismatch: "nodeKind",
-					view: "leaf",
+					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "nodeKind",
-					view: "object",
+					view: ObjectNodeStoredSchema,
 					stored: undefined,
 				},
 				{
 					identifier: schemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
-					stored: "leaf",
+					stored: LeafNodeStoredSchema,
 				},
 				{
 					identifier: "schema discrepancies.tree2",
 					mismatch: "nodeKind",
 					view: undefined,
-					stored: "object",
+					stored: ObjectNodeStoredSchema,
 				},
 			],
 		);
@@ -352,26 +357,26 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: schemaFactory.number.identifier,
 					mismatch: "nodeKind",
-					view: "leaf",
+					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
 					identifier: testTreeNodeIdentifierNormalized,
 					mismatch: "nodeKind",
-					view: "map",
+					view: MapNodeStoredSchema,
 					stored: undefined,
 				},
 				{
 					identifier: schemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
-					stored: "leaf",
+					stored: LeafNodeStoredSchema,
 				},
 				{
 					identifier: "schema discrepancies.tree2",
 					mismatch: "nodeKind",
 					view: undefined,
-					stored: "object",
+					stored: ObjectNodeStoredSchema,
 				},
 			],
 		);
@@ -397,7 +402,7 @@ describe("Schema Discrepancies", () => {
 				{
 					identifier: schemaFactory.number.identifier,
 					mismatch: "nodeKind",
-					view: "leaf",
+					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
@@ -431,7 +436,7 @@ describe("Schema Discrepancies", () => {
 					identifier: schemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
-					stored: "leaf",
+					stored: LeafNodeStoredSchema,
 				},
 			],
 		);
@@ -586,7 +591,7 @@ describe("Schema Discrepancies", () => {
 					{
 						identifier: schemaFactory.number.identifier,
 						mismatch: "nodeKind",
-						view: "leaf",
+						view: LeafNodeStoredSchema,
 						stored: undefined,
 					},
 					{
@@ -635,7 +640,7 @@ describe("Schema Discrepancies", () => {
 					{
 						identifier: schemaFactory.number.identifier,
 						mismatch: "nodeKind",
-						view: "leaf",
+						view: LeafNodeStoredSchema,
 						stored: undefined,
 					},
 					{
@@ -825,6 +830,66 @@ describe("Schema Discrepancies", () => {
 					assert.equal(isRepoSuperset(schemaA, schemaB), expected);
 				});
 			}
+		});
+	});
+
+	describe("findExtraAllowedTypes", () => {
+		const typeA = { metadata: {}, type: schemaFactory.number };
+		const typeB = { metadata: {}, type: schemaFactory.string };
+		const typeC = { metadata: {}, type: schemaFactory.boolean };
+
+		const getIdentifiers = (types: readonly AnnotatedAllowedType<TreeNodeSchema>[]) =>
+			new Set<TreeNodeSchemaIdentifier>(
+				types.map((type) => {
+					const identifier: TreeNodeSchemaIdentifier = brand(type.type.identifier);
+					return identifier;
+				}),
+			);
+
+		it("returns empty arrays when view and stored types match", () => {
+			const view = [typeA, typeB];
+			const stored = getIdentifiers(view);
+
+			const [viewExtra, storedExtra] = findExtraAllowedTypes(view, stored);
+
+			assert.deepEqual(viewExtra, []); // extras in view
+			assert.deepEqual(storedExtra, []); // extras in stored
+		});
+
+		it("detects extra types in view only", () => {
+			const view = [typeA, typeB, typeC];
+			const stored = getIdentifiers([typeA, typeB]);
+
+			const [viewExtra, storedExtra] = findExtraAllowedTypes(view, stored);
+
+			assert.deepEqual(viewExtra, [typeC]);
+			assert.deepEqual(storedExtra, []);
+		});
+
+		it("detects extra types in stored only", () => {
+			const view = [typeA];
+			const stored = getIdentifiers([typeA, typeB]);
+
+			const [viewExtra, storedExtra] = findExtraAllowedTypes(view, stored);
+
+			assert.deepEqual(viewExtra, []);
+			assert.deepEqual(storedExtra, [typeB.type.identifier]);
+		});
+
+		it("detects extra types on both sides", () => {
+			const view = [typeA, typeB];
+			const stored = getIdentifiers([typeB, typeC]);
+
+			const [viewExtra, storedExtra] = findExtraAllowedTypes(view, stored);
+
+			assert.deepEqual(viewExtra, [typeA]);
+			assert.deepEqual(storedExtra, [typeC.type.identifier]);
+		});
+
+		it("handles empty inputs", () => {
+			const [viewExtra, storedExtra] = findExtraAllowedTypes([], new Set());
+			assert.deepEqual(viewExtra, []);
+			assert.deepEqual(storedExtra, []);
 		});
 	});
 });

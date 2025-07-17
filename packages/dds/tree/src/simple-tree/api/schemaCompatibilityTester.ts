@@ -140,7 +140,8 @@ export class SchemaCompatibilityTester {
 						// View schema has added a node type that the stored schema doesn't know about.
 						// Note that all cases which trigger this should also trigger an AllowedTypeDiscrepancy (where the type is used).
 						// This means this case should be redundant and could be removed in the future if there is a reason to do so
-						// (like simplifying enableable type support).
+						// (like simplifying enablable type support).
+						// See the TODO in getAllowedContentDiscrepancies.
 						canView = false;
 					} else if (discrepancy.view === undefined) {
 						const storedIsNever =
@@ -149,10 +150,16 @@ export class SchemaCompatibilityTester {
 								: true;
 						if (!storedIsNever) {
 							// Stored schema has a node type that the view schema doesn't know about.
+							// The design of allowUnknownOptionalFields allows adding new optional content to types,
+							// and the new optional content can use new types.
+							// Therefore this case needs to be supported for viewing.
+							// However, it is not supported for upgrade as the stored document must be newer (or at least more general) than the view in this case.
+							// The fact that there might be removed trees with a root of this type which only appears in the stored schema is why this must set canUpgrade to false.
 							canUpgrade = false;
 						}
 					} else {
 						// Node type exists in both schemas but kind has changed. We conservatively never allow this.
+						// See note above about cases where this could be allowed if needed.
 						canView = false;
 						canUpgrade = false;
 					}

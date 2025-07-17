@@ -24,19 +24,22 @@ export {
 	privateToken,
 	inPrototypeChain,
 } from "./treeNode.js";
-export { NodeKind, isTreeNodeSchemaClass } from "./treeNodeSchema.js";
 export {
-	type TreeNodeSchema,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchemaNonClass,
-	type TreeNodeSchemaCore,
-	type TreeNodeSchemaBoth,
-	type NodeSchemaMetadata,
-	type TreeLeafValue,
-	type InsertableTypedNode,
-	type NodeBuilderData,
-	type NodeFromSchema,
+	NodeKind,
+	isTreeNodeSchemaClass,
 	asTreeNodeSchemaCorePrivate,
+} from "./treeNodeSchema.js";
+export type {
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaCore,
+	TreeNodeSchemaBoth,
+	NodeSchemaMetadata,
+	TreeLeafValue,
+	InsertableTypedNode,
+	NodeBuilderData,
+	NodeFromSchema,
 } from "./treeNodeSchema.js";
 export {
 	isAnnotatedAllowedTypes,
