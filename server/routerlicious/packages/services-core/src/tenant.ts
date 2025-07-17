@@ -28,6 +28,11 @@ export interface ITenantConfig {
 	 */
 	enableSharedKeyAccess: boolean;
 
+	/**
+	 * Indicates if public network access is enabled for this tenant.
+	 */
+	publicNetworkAccessEnabled: boolean;
+
 	// Timestamp of when this tenant will be hard deleted.
 	// The tenant is soft deleted if a deletion timestamp is present.
 	scheduledDeletionTime?: string;

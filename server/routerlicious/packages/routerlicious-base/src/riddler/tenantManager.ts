@@ -70,6 +70,10 @@ export interface ITenantDocument {
 
 	// Optional private keys, used for keyless tenants
 	privateKeys?: ITenantPrivateKeys;
+
+	// Optional value for public network access
+	// Default to enabled if undefined
+	publicNetworkAccessEnabled?: boolean;
 }
 
 enum FetchTenantKeyMetric {
@@ -149,6 +153,16 @@ export class TenantManager {
 	// Currently key and secondary are not optional, but this is to make sure we don't break anything if they are optional in the future
 	private isTenantSharedKeyAccessEnabled(tenant: ITenantDocument): boolean {
 		return tenant.key || tenant.secondaryKey ? true : false;
+	}
+
+	private getTenantPublicNetworkAccessEnabled(tenant: ITenantDocument): boolean {
+		const publicNetworkAccessEnabled = tenant.publicNetworkAccessEnabled;
+
+		if (publicNetworkAccessEnabled === undefined) {
+			// If not defined, public network access is enabled by default
+			return true;
+		}
+		return publicNetworkAccessEnabled;
 	}
 
 	public async signToken(
@@ -483,6 +497,7 @@ export class TenantManager {
 		customData: ITenantCustomData,
 		enableSharedKeyAccess = true,
 		enablePrivateKeyAccess = false,
+		publicNetworkAccessEnabled = true,
 	): Promise<ITenantConfig & { key: string | undefined }> {
 		const latestKeyVersion = this.secretManager.getLatestKeyVersion();
 		if (!enableSharedKeyAccess && !enablePrivateKeyAccess) {
@@ -529,6 +544,7 @@ export class TenantManager {
 				customData,
 				disabled: false,
 				privateKeys,
+				publicNetworkAccessEnabled,
 			}),
 		);
 
@@ -569,6 +585,7 @@ export class TenantManager {
 			scheduledDeletionTime: tenantDocument.scheduledDeletionTime,
 			enablePrivateKeyAccess: this.isTenantPrivateKeyAccessEnabled(tenantDocument),
 			enableSharedKeyAccess: this.isTenantSharedKeyAccessEnabled(tenantDocument),
+			publicNetworkAccessEnabled: tenantDocument.publicNetworkAccessEnabled ?? true,
 		};
 	}
 
@@ -652,6 +669,46 @@ export class TenantManager {
 			Lumberjack.error("Could not find tenantId after updating private key access policy.", {
 				[BaseTelemetryProperties.tenantId]: tenantId,
 			});
+			throw new NetworkError(404, `Could not find updated tenant: ${tenantId}`);
+		}
+		return this.buildTenantConfig(updatedtenantDocument);
+	}
+
+	public async updatePublicNetworkAccessPolicy(
+		tenantId: string,
+		publicNetworkAccessEnabled: boolean,
+	): Promise<ITenantConfig> {
+		const tenantDocument = await this.getTenantDocument(tenantId);
+		if (tenantDocument === undefined) {
+			Lumberjack.error("Could not find tenantId.", {
+				[BaseTelemetryProperties.tenantId]: tenantId,
+			});
+			throw new NetworkError(404, `Could not find tenant: ${tenantId}`);
+		}
+
+		const updates: Partial<ITenantDocument> = {};
+		const isTenantPublicNetworkAccessEnabled =
+			this.getTenantPublicNetworkAccessEnabled(tenantDocument);
+
+		if (publicNetworkAccessEnabled === isTenantPublicNetworkAccessEnabled) {
+			// no update needed
+			return this.buildTenantConfig(tenantDocument);
+		}
+
+		updates.publicNetworkAccessEnabled = publicNetworkAccessEnabled;
+
+		await this.runWithDatabaseRequestCounter(async () =>
+			this.tenantRepository.update({ _id: tenantId }, updates, null),
+		);
+
+		const updatedtenantDocument = await this.getTenantDocument(tenantId);
+		if (updatedtenantDocument === undefined) {
+			Lumberjack.error(
+				"Could not find tenantId after updating public network access policy.",
+				{
+					[BaseTelemetryProperties.tenantId]: tenantId,
+				},
+			);
 			throw new NetworkError(404, `Could not find updated tenant: ${tenantId}`);
 		}
 		return this.buildTenantConfig(updatedtenantDocument);
