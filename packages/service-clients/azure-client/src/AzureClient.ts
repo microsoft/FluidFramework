@@ -76,10 +76,6 @@ const MAX_VERSION_COUNT = 5;
 const azureClientFeatureGates = {
 	// Azure client requires a write connection by default
 	"Fluid.Container.ForceWriteConnection": true,
-
-	// Test option for enabling tree-only container mode.
-	// Should not be used in production.
-	"Fluid.Container.Test.TreeOnly": false,
 };
 
 /**
