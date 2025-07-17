@@ -351,9 +351,7 @@ export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
 	| RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
 
 /**
- * Transforms data under an Object schema.
- * @param data - The tree data to be transformed. Must be a Record-like object.
- * @param schema - The schema associated with the value.
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Map nodes.
  */
 function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
 	if (isTreeValue(data)) {
@@ -374,9 +372,11 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
 }
 
 /**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ *
  * Transforms data under a Map schema.
- * @param data - The tree data to be transformed. Must be an iterable.
- * @param schema - The schema associated with the value.
+ * @param data - The tree data to be transformed. Must be an iterable or Record like object.
+ * @param schema - The schema to comply with.
  */
 function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {

@@ -1290,8 +1290,8 @@ function validateIndexRange(
 }
 
 /**
- * Transforms data under an Array schema.
- * @param data - The tree data to be transformed.
+ * Transforms data for a child of an array.
+ * @param child - The tree data to be transformed.
  * @param allowedTypes - The set of types allowed by the parent context. Used to validate the input tree.
  */
 function arrayChildToFlexTree(
@@ -1312,9 +1312,10 @@ function arrayChildToFlexTree(
 }
 
 /**
- * Transforms data under an Array schema.
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Array nodes.
+ *
  * @param data - The tree data to be transformed. Must be an iterable.
- * @param schema - The schema associated with the value.
+ * @param schema - The schema to comply with.
  */
 function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null && Symbol.iterator in data)) {
@@ -1354,9 +1355,7 @@ function arrayToFlexContent(data: FactoryContent, schema: ArrayNodeSchema): Flex
 }
 
 /**
- * Transforms data under an Object schema.
- * @param data - The tree data to be transformed. Must be a Record-like object.
- * @param schema - The schema associated with the value.
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Array nodes.
  */
 function shallowCompatibilityTest(
 	data: FactoryContent,

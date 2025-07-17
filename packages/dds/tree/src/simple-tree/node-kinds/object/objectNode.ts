@@ -668,9 +668,11 @@ export function createUnknownOptionalFieldPolicy(
 }
 
 /**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ *
  * Transforms data under an Object schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
- * @param schema - The schema associated with the value.
+ * @param schema - The schema to comply with.
  */
 function objectToFlexContent(
 	data: FactoryContent,
@@ -716,9 +718,7 @@ function objectToFlexContent(
 }
 
 /**
- * Transforms data under an Object schema.
- * @param data - The tree data to be transformed. Must be a Record-like object.
- * @param schema - The schema associated with the value.
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Object nodes.
  */
 function shallowCompatibilityTest(
 	data: FactoryContent,

@@ -421,9 +421,7 @@ function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 }
 
 /**
- * Transforms data under an Object schema.
- * @param data - The tree data to be transformed. Must be a Record-like object.
- * @param schema - The schema associated with the value.
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Record nodes.
  */
 function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
 	if (isTreeValue(data)) {
@@ -438,9 +436,11 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
 }
 
 /**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Record nodes.
+ *
  * Transforms data under a Record schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
- * @param schema - The schema associated with the value.
+ * @param schema - The schema to comply with.
  */
 function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
 	if (!(typeof data === "object" && data !== null)) {
