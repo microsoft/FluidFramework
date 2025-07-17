@@ -158,9 +158,9 @@ export interface NodeFieldsDiscrepancy {
 }
 
 type SchemaFactoryNodeKind =
-	typeof ObjectNodeStoredSchema |
-	typeof MapNodeStoredSchema |
-	typeof LeafNodeStoredSchema;
+	| typeof ObjectNodeStoredSchema
+	| typeof MapNodeStoredSchema
+	| typeof LeafNodeStoredSchema;
 
 function getStoredNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactoryNodeKind {
 	if (nodeSchema instanceof ObjectNodeStoredSchema) {
