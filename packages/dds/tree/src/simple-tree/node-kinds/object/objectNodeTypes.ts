@@ -14,7 +14,12 @@ import type {
 	ImplicitAnnotatedFieldSchema,
 	UnannotateImplicitFieldSchema,
 } from "../../fieldSchema.js";
-import { NodeKind, type TreeNodeSchemaClass, type TreeNodeSchema } from "../../core/index.js";
+import {
+	NodeKind,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchema,
+	type TreeNodeSchemaCorePrivate,
+} from "../../core/index.js";
 import type { FieldKey } from "../../../core/index.js";
 import type { SimpleObjectFieldSchema, SimpleObjectNodeSchema } from "../../simpleSchema.js";
 
@@ -59,7 +64,7 @@ export type UnannotateSchemaRecord<
 /**
  * Extra data provided on all {@link ObjectNodeSchema} that is not included in the (soon possibly public) ObjectNodeSchema type.
  */
-export interface ObjectNodeSchemaInternalData {
+export interface ObjectNodeSchemaInternalData extends TreeNodeSchemaCorePrivate {
 	/**
 	 * {@inheritdoc SimpleKeyMap}
 	 */
