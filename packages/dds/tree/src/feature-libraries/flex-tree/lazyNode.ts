@@ -35,7 +35,7 @@ import { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 
 /**
- * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicate by the cursor.
+ * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicated by the cursor.
  * @remarks
  * This does not take ownership of this cursor: Node will fork it as needed.
  */
