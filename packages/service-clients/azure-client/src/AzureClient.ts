@@ -35,7 +35,7 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	createTreeDOProviderContainerRuntimeFactory,
+	createTreeContainerRuntimeFactory,
 	isTreeContainerSchema,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
@@ -286,7 +286,7 @@ export class AzureClient {
 			if (!isTreeContainerSchema(schema)) {
 				throw new UsageError("Tree-only mode requires exactly SharedTree in initialObjects.");
 			}
-			runtimeFactory = createTreeDOProviderContainerRuntimeFactory({
+			runtimeFactory = createTreeContainerRuntimeFactory({
 				schema,
 				compatibilityMode,
 			});

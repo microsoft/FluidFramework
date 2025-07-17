@@ -125,7 +125,7 @@ async function provideEntryPoint(
  * Factory for Container Runtime instances that provide a {@link IStaticEntryPoint}
  * (containing single {@link IRootDataObject}) as their entry point.
  */
-class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	// TODO: use for runtime factory.
 	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>;
 
@@ -199,7 +199,7 @@ class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject
  *
  * @legacy @alpha
  */
-export function createTreeDOProviderContainerRuntimeFactory(props: {
+export function createTreeContainerRuntimeFactory(props: {
 	/**
 	 * The schema for the container.
 	 */
@@ -238,7 +238,7 @@ export function createTreeDOProviderContainerRuntimeFactory(props: {
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
-	return new TreeDOProviderContainerRuntimeFactory(
+	return new TreeContainerRuntimeFactory(
 		compatibilityMode,
 		new TreeRootDataObjectFactory(sharedObjects, registry),
 		{

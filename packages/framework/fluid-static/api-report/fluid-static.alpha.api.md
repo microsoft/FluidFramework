@@ -17,7 +17,7 @@ export interface ContainerSchema {
 }
 
 // @alpha @legacy
-export function createTreeDOProviderContainerRuntimeFactory(props: {
+export function createTreeContainerRuntimeFactory(props: {
     readonly schema: TreeContainerSchema;
     readonly compatibilityMode: CompatibilityMode;
     readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
