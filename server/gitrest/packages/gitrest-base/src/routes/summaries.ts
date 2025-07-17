@@ -402,11 +402,7 @@ export function create(
 					enableLowIoWrite,
 					optimizeForInitialSummary,
 				);
-				Lumberjack.info(
-					"Summary created successfully",
-					{
-						result
-					});
+				Lumberjack.info("Summary created successfully", { result });
 				if (!isEphemeralContainer && isInitialSummary) {
 					assert(
 						typeof result === "object" &&
