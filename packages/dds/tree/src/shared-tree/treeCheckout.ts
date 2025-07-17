@@ -778,6 +778,11 @@ export class TreeCheckout implements ITreeCheckoutFork {
 
 	public updateSchema(newSchema: TreeStoredSchema): void {
 		this.checkNotDisposed();
+		// TODO: fix issues with schema comparison and enable this.
+		// assert(
+		// 	allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema, newSchema),
+		// 	"The new schema must be a superset of the old schema",
+		// );
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 

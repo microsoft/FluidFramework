@@ -8,13 +8,27 @@ import { strict as assert } from "node:assert";
 import { type Adapters, EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
-	getAllowedContentDiscrepancies,
+	EmptyKey,
+	type TreeFieldStoredSchema,
+	type TreeNodeSchemaIdentifier,
+	type TreeStoredSchema,
+	TreeStoredSchemaRepository,
+	storedEmptyFieldSchema,
+} from "../../../core/index.js";
+import {
+	type FullSchemaPolicy,
+	defaultSchemaPolicy,
+} from "../../../feature-libraries/index.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
 	toStoredSchema,
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
+	getAllowedContentDiscrepancies,
 } from "../../../simple-tree/index.js";
 import { schemaStatics } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
@@ -64,10 +78,8 @@ describe("Schema Evolution Examples", () => {
 	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
-		// This is where legacy schema handling logic for schematize.
-		const adapters: Adapters = {};
 		// Compose all the view information together.
-		const view = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, root);
+		const view = new SchemaCompatibilityTester(defaultSchemaPolicy, root);
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -99,7 +111,7 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const view2 = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, tolerantRoot);
+			const view2 = new SchemaCompatibilityTester(defaultSchemaPolicy, tolerantRoot);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
 
@@ -137,9 +149,7 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = Array.from(
-				getAllowedContentDiscrepancies(toStoredSchema(tolerantRoot), stored),
-			);
+			const report = Array.from(getAllowedContentDiscrepancies(tolerantRoot, stored));
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
 			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });
@@ -159,7 +169,6 @@ describe("Schema Evolution Examples", () => {
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const view3 = new SchemaCompatibilityTester(
 				defaultSchemaPolicy,
-				adapters,
 				builder.optional(canvas2),
 			);
 
@@ -175,6 +184,73 @@ describe("Schema Evolution Examples", () => {
 			const compat3 = view3.checkCompatibility(stored);
 			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true });
 		}
+	});
+
+	it("upgrading an enablable", () => {
+		const factory = new SchemaFactoryAlpha("upgrade");
+
+		// Schema A: Only number allowed
+		const schemaA = factory.required([factory.number]);
+
+		// Schema B: Number or string (string is enablable)
+		const schemaB = factory.required([
+			factory.number,
+			factory.enablable(factory.string),
+		]);
+
+		// Schema C: Number or string, both fully allowed
+		const schemaC = factory.required([factory.number, factory.string]);
+
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaA).rootFieldSchema));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+
+		// A: View schema is A
+		let view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaA);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// B: View schema is B (includes enablable string)
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaB);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: false,
+		});
+
+		// Upgrade to schema B
+		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
+		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaB).rootFieldSchema));
+
+		// Schema is upgraded to support enablable type
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaB);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// C: View schema now wants full support for string (not just enablable)
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: false,
+			canUpgrade: true,
+			isEquivalent: false,
+		});
+
+		// Upgrade to full schema C
+		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaC).rootFieldSchema));
+
+		// Validate C is now fully supported
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
+		assert.deepEqual(view.checkCompatibility(stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
 	});
 
 	// TODO: support adapters.

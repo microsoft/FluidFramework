@@ -237,7 +237,7 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
+export { toStoredSchema, getStoredSchema, convertFieldKind } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
@@ -246,3 +246,7 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+export {
+	getAllowedContentDiscrepancies,
+	isRepoSuperset,
+} from "./discrepancies.js";

@@ -3,32 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 
-import {
-	AdaptedViewSchema,
-	type TreeNodeStoredSchema,
-	type Adapters,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
-} from "../../core/index.js";
+import type { TreeStoredSchema } from "../../core/index.js";
 import {
 	FieldKinds,
 	type FullSchemaPolicy,
-	type FieldDiscrepancy,
-	getAllowedContentDiscrepancies,
 	isNeverTree,
-	PosetComparisonResult,
-	fieldRealizer,
-	comparePosetElements,
 } from "../../feature-libraries/index.js";
 import type { FieldSchema } from "../fieldSchema.js";
-import { toStoredSchema } from "../toStoredSchema.js";
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
-import type { TreeNodeSchema } from "../core/index.js";
-import { brand } from "../../util/index.js";
+import {
+	comparePosetElements,
+	fieldRealizer,
+	getAllowedContentDiscrepancies,
+	PosetComparisonResult,
+	type FieldDiscrepancy,
+} from "../discrepancies.js";
 
 /**
  * A collection of View information for schema, including policy.
@@ -37,30 +29,12 @@ import { brand } from "../../util/index.js";
  */
 export class SchemaCompatibilityTester {
 	/**
-	 * Cached conversion of the view schema in the stored schema format.
-	 */
-	public readonly viewSchemaAsStored: TreeStoredSchema;
-
-	private readonly viewSchemaRoot: FieldSchemaAlpha;
-	private readonly identifiersToViewSchema = new Map<
-		TreeNodeSchemaIdentifier,
-		TreeNodeSchema
-	>();
-
-	/**
 	 * @param viewSchemaRoot - Schema for the root field.
 	 */
 	public constructor(
 		public readonly policy: FullSchemaPolicy,
-		public readonly adapters: Adapters,
-		viewSchemaRoot: FieldSchema,
-	) {
-		this.viewSchemaAsStored = toStoredSchema(viewSchemaRoot);
-		this.viewSchemaRoot = normalizeFieldSchema(viewSchemaRoot);
-		this.viewSchemaRoot.allowedTypeSet.forEach((schema) =>
-			this.identifiersToViewSchema.set(brand(schema.identifier), schema),
-		);
-	}
+		public readonly viewSchemaRoot: FieldSchema,
+	) {}
 
 	/**
 	 * Determines the compatibility of a stored document
@@ -75,9 +49,6 @@ export class SchemaCompatibilityTester {
 	public checkCompatibility(
 		stored: TreeStoredSchema,
 	): Omit<SchemaCompatibilityStatus, "canInitialize"> {
-		// TODO: support adapters
-		// const adapted = this.adaptRepo(stored);
-
 		// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
 		// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
 		// In the future, this would also include things like:
@@ -113,16 +84,7 @@ export class SchemaCompatibilityTester {
 						}
 					}
 
-					if (
-						discrepancy.view.some(
-							(identifier) =>
-								!isNeverTree(
-									this.policy,
-									this.viewSchemaAsStored,
-									this.viewSchemaAsStored.nodeSchema.get(identifier),
-								),
-						)
-					) {
+					if (discrepancy.view.length > 0) {
 						// View schema has extra allowed types that the stored schema does not.
 						canView = false;
 					}
@@ -172,32 +134,24 @@ export class SchemaCompatibilityTester {
 			}
 		};
 
-		for (const discrepancy of getAllowedContentDiscrepancies(
-			this.viewSchemaAsStored,
-			stored,
-		)) {
+		for (const discrepancy of getAllowedContentDiscrepancies(this.viewSchemaRoot, stored)) {
 			if (!canView && !canUpgrade) {
 				break;
 			}
 
 			switch (discrepancy.mismatch) {
 				case "nodeKind": {
-					const viewNodeSchema = this.viewSchemaAsStored.nodeSchema.get(
-						discrepancy.identifier,
-					);
 					const storedNodeSchema = stored.nodeSchema.get(discrepancy.identifier);
 					// We conservatively do not allow node types to change.
 					// The only time this might be valid in the sense that the data canonically converts is converting an object node
 					// to a map node over the union of all the object fields' types.
 					if (discrepancy.stored === undefined) {
-						const viewIsNever =
-							viewNodeSchema !== undefined
-								? isNeverTree(this.policy, this.viewSchemaAsStored, viewNodeSchema)
-								: true;
-						if (!viewIsNever) {
-							// View schema has added a node type that the stored schema doesn't know about.
-							canView = false;
-						}
+						// View schema has added a node type that the stored schema doesn't know about.
+						// Note that all cases which trigger this should also trigger an AllowedTypeDiscrepancy (where the type is used).
+						// This means this case should be redundant and could be removed in the future if there is a reason to do so
+						// (like simplifying enablable type support).
+						// See the TODO in getAllowedContentDiscrepancies.
+						canView = false;
 					} else if (discrepancy.view === undefined) {
 						const storedIsNever =
 							storedNodeSchema !== undefined
@@ -205,22 +159,18 @@ export class SchemaCompatibilityTester {
 								: true;
 						if (!storedIsNever) {
 							// Stored schema has a node type that the view schema doesn't know about.
+							// The design of allowUnknownOptionalFields allows adding new optional content to types,
+							// and the new optional content can use new types.
+							// Therefore this case needs to be supported for viewing.
+							// However, it is not supported for upgrade as the stored document must be newer (or at least more general) than the view in this case.
+							// The fact that there might be removed trees with a root of this type which only appears in the stored schema is why this must set canUpgrade to false.
 							canUpgrade = false;
 						}
 					} else {
-						// Node type exists in both schemas but has changed. We conservatively never allow this.
-						const storedIsNever =
-							storedNodeSchema !== undefined
-								? isNeverTree(this.policy, stored, storedNodeSchema)
-								: true;
-						const viewIsNever =
-							viewNodeSchema !== undefined
-								? isNeverTree(this.policy, this.viewSchemaAsStored, viewNodeSchema)
-								: true;
-						if (!storedIsNever || !viewIsNever) {
-							canView = false;
-							canUpgrade = false;
-						}
+						// Node type exists in both schemas but kind has changed. We conservatively never allow this.
+						// See note above about cases where this could be allowed if needed.
+						canView = false;
+						canUpgrade = false;
 					}
 					break;
 				}
@@ -243,66 +193,5 @@ export class SchemaCompatibilityTester {
 			canUpgrade,
 			isEquivalent: canView && canUpgrade,
 		};
-	}
-
-	/**
-	 * Compute a schema that `original` could be viewed as using adapters as needed.
-	 *
-	 * TODO: have a way for callers to get invalidated on schema updates.
-	 */
-	public adaptRepo(stored: TreeStoredSchema): AdaptedViewSchema {
-		// Sanity check on adapters:
-		// it's probably a bug if they use the never types,
-		// since there never is a reason to have a never type as an adapter input,
-		// and its impossible for an adapter to be correctly implemented if its output type is never
-		// (unless its input is also never).
-
-		for (const adapter of this.adapters?.tree ?? []) {
-			if (
-				isNeverTree(
-					this.policy,
-					this.viewSchemaAsStored,
-					this.viewSchemaAsStored.nodeSchema.get(adapter.output),
-				)
-			) {
-				fail(0xb3d /* tree adapter for stored adapter.output should not be never */);
-			}
-		}
-
-		const adapted = {
-			rootFieldSchema: this.adaptField(stored.rootFieldSchema),
-			nodeSchema: new Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>(),
-		};
-
-		for (const [key, schema] of stored.nodeSchema) {
-			const adapatedTree = this.adaptTree(schema);
-			adapted.nodeSchema.set(key, adapatedTree);
-		}
-
-		// TODO: subset these adapters to the ones that were needed/used.
-		return new AdaptedViewSchema(this.adapters, adapted);
-	}
-
-	/**
-	 * Adapt original such that it allows member types which can be adapted to its specified types.
-	 */
-	private adaptField(original: TreeFieldStoredSchema): TreeFieldStoredSchema {
-		if (original.types !== undefined) {
-			const types: Set<TreeNodeSchemaIdentifier> = new Set(original.types);
-			for (const treeAdapter of this.adapters?.tree ?? []) {
-				if (types.has(treeAdapter.input)) {
-					types.delete(treeAdapter.input);
-					types.add(treeAdapter.output);
-				}
-			}
-
-			return { kind: original.kind, types, persistedMetadata: undefined };
-		}
-		return original;
-	}
-
-	private adaptTree(original: TreeNodeStoredSchema): TreeNodeStoredSchema {
-		// TODO: support adapters like missing field adapters.
-		return original;
 	}
 }
