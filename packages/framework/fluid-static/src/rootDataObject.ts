@@ -178,6 +178,68 @@ async function provideEntryPoint(
 }
 
 /**
+ * Creates an {@link @fluidframework/aqueduct#IRuntimeFactory} which constructs containers
+ * with an entry point containing single directory-based root data object.
+ *
+ * @remarks
+ * The entry point is opaque to caller.
+ * The root data object's registry and initial objects are configured based on the provided
+ * schema (and optionally, data store registry).
+ *
+ * @internal
+ */
+export function createDOProviderContainerRuntimeFactory(props: {
+	/**
+	 * The schema for the container.
+	 */
+	schema: ContainerSchema;
+	/**
+	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 */
+	compatibilityMode: CompatibilityMode;
+	/**
+	 * Optional registry of data stores to pass to the DataObject factory.
+	 * If not provided, one will be created based on the schema.
+	 */
+	rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	/**
+	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 */
+	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+	/**
+	 * Optional override for minimum version for collab.
+	 * If not provided, the default for the given compatibilityMode will be used.
+	 * @remarks
+	 * This is useful when runtime options are overridden and change the minimum version for collab.
+	 */
+	minVersionForCollabOverride?: MinimumVersionForCollab;
+}): IRuntimeFactory {
+	const {
+		compatibilityMode,
+		minVersionForCollabOverride,
+		rootDataStoreRegistry,
+		runtimeOptionOverrides,
+		schema,
+	} = props;
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects([
+		...Object.values(schema.initialObjects),
+		...(schema.dynamicObjectTypes ?? []),
+	]);
+	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
+	return new DOProviderContainerRuntimeFactory(
+		schema,
+		compatibilityMode,
+		new RootDataObjectFactory(sharedObjects, registry),
+		{
+			runtimeOptions: runtimeOptionOverrides,
+			minVersionForCollab: minVersionForCollabOverride,
+		},
+	);
+}
+
+/**
  * Factory for Container Runtime instances that provide a {@link IStaticEntryPoint}
  * (containing single {@link IRootDataObject}) as their entry point.
  */
@@ -263,66 +325,4 @@ class RootDataObjectFactory extends DataObjectFactory<
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this.dataStoreRegistry;
 	}
-}
-
-/**
- * Creates an {@link @fluidframework/aqueduct#IRuntimeFactory} which constructs containers
- * with an entry point containing single directory-based root data object.
- *
- * @remarks
- * The entry point is opaque to caller.
- * The root data object's registry and initial objects are configured based on the provided
- * schema (and optionally, data store registry).
- *
- * @internal
- */
-export function createDOProviderContainerRuntimeFactory(props: {
-	/**
-	 * The schema for the container.
-	 */
-	schema: ContainerSchema;
-	/**
-	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
-	 */
-	compatibilityMode: CompatibilityMode;
-	/**
-	 * Optional registry of data stores to pass to the DataObject factory.
-	 * If not provided, one will be created based on the schema.
-	 */
-	rootDataStoreRegistry?: IFluidDataStoreRegistry;
-	/**
-	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given compatibilityMode will be used.
-	 */
-	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collab.
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * @remarks
-	 * This is useful when runtime options are overridden and change the minimum version for collab.
-	 */
-	minVersionForCollabOverride?: MinimumVersionForCollab;
-}): IRuntimeFactory {
-	const {
-		compatibilityMode,
-		minVersionForCollabOverride,
-		rootDataStoreRegistry,
-		runtimeOptionOverrides,
-		schema,
-	} = props;
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects([
-		...Object.values(schema.initialObjects),
-		...(schema.dynamicObjectTypes ?? []),
-	]);
-	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
-
-	return new DOProviderContainerRuntimeFactory(
-		schema,
-		compatibilityMode,
-		new RootDataObjectFactory(sharedObjects, registry),
-		{
-			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab: minVersionForCollabOverride,
-		},
-	);
 }
