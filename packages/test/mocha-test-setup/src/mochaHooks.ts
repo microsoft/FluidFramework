@@ -102,10 +102,9 @@ export const mochaHooks = {
 		} else {
 			const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 			if (typeof createTestLogger !== "function") {
-				throw new Error(
+				throw new TypeError(
 					`Expected package '${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER}' to export a function, but got an object of type '${typeof createTestLogger}' instead`,
 				);
-				originalLogger = nullLogger;
 			} else {
 				originalLogger = createTestLogger();
 			}
