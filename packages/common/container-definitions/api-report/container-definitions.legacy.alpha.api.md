@@ -127,7 +127,6 @@ export interface IContainerContext {
     readonly audience: IAudience;
     // (undocumented)
     readonly baseSnapshot: ISnapshotTree | undefined;
-    readonly canSendSignals?: () => boolean;
     // (undocumented)
     readonly clientDetails: IClientDetails;
     // (undocumented)
@@ -136,6 +135,8 @@ export interface IContainerContext {
     readonly closeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly connected: boolean;
+    // (undocumented)
+    readonly connectionState?: ConnectionState;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
     // (undocumented)

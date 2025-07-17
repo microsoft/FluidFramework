@@ -27,7 +27,7 @@ import type {
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
-import type { ConnectionState,ILoader } from "./loader.js";
+import type { ConnectionState, ILoader } from "./loader.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
