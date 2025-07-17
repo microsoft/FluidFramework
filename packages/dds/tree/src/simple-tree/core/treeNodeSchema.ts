@@ -451,9 +451,18 @@ export type FlexContent = [NodeData, Map<FieldKey, UnhydratedFlexTreeField>];
 /**
  * Indicates a compatibility level for inferring a schema to apply to insertable data.
  * @remarks
- * Only the highest compatibility options are used.
- * This approach allows adding new possible matching at a new lower compatibility level as a non breaking change,
- * since that way they can't make a case that was compatible before ambiguous now.
+ * Each schema allowed at a location in the tree has its compatibility level checked against the data being inserted.
+ * The compatibility is considered unambiguous if there is a single schema with a higher compatibility than all others.
+ *
+ * This approach allows adding new compatible formats as a non breaking change.
+ * If the new format was already compatible with some other schema, it can still be added as non-breaking as long as a lower compatibility level is used.
+ * For example, support for constructing maps from record like objects was added in Fluid Framework 2.2.
+ * This format (an object with fields) was already compatible with Object nodes at compatibility level Normal so the new format support for maps was added at compatibility level Low.
+ * This ensures that existing code that was using object literals as insertable content where both objects and maps were allowed will continue to work,
+ * assuming the objects are intended as ObjectNodes.
+ * However new code can now be written using record like objects to construct maps, as long as the schema does not also allow Object nodes which are compatible with the data in that location.
+ *
+ * @see {@link ITreeConfigurationOptions.preventAmbiguity} for a related setting which interacts with this in a somewhat complex way.
  */
 export enum CompatibilityLevel {
 	/**

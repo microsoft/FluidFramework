@@ -359,7 +359,7 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
 	}
 
 	if (isReadonlyArray(data)) {
-		// Arrays are iterable, so type checking does allow constructing an array from a MapNode if the array's type is key values pairs for the map.
+		// Arrays are iterable, so type checking does allow constructing a MapNode from an array if the array's type is key values pairs for the map.
 		return CompatibilityLevel.Low;
 	}
 

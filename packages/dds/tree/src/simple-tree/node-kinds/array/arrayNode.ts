@@ -1366,7 +1366,7 @@ function shallowCompatibilityTest(
 	}
 
 	if (data instanceof Map) {
-		// Maps are iterable, so type checking does allow constructing an ArrayNode from a map if the array's type is an array that includes the key and value types of the map.
+		// Maps are iterable, so type checking does allow constructing an ArrayNode from a map if the ArrayNode's type is an array that includes the key and value types of the map.
 		return CompatibilityLevel.Low;
 	}
 
