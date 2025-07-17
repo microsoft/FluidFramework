@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { assert } from "console";
+
 import {
 	isNetworkError,
 	IWholeFlatSummary,
@@ -326,6 +328,7 @@ export function create(
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	router.post("/repos/:owner/:repo/git/summaries", async (request, response) => {
 		const repoManagerParams = getRepoManagerParamsFromRequest(request);
+		const isEphemeralContainer = repoManagerParams.isEphemeralContainer;
 		// request.query type is { [string]: string } but it's actually { [string]: any }
 		// Account for possibilities of undefined, boolean, or string types. A number will be false.
 		const isInitialSummary: boolean | undefined =
@@ -341,6 +344,10 @@ export function create(
 			[BaseGitRestTelemetryProperties.isInitial]: isInitialSummary,
 		};
 		Lumberjack.info("Received request to create a summary", lumberjackProperties);
+		if (isInitialSummary)
+		{
+			repoManagerParams.isEphemeralContainer = true;
+		}
 
 		if (!isWholeSummaryCompatibleRepoManagerParams(repoManagerParams)) {
 			handleResponse(
@@ -384,7 +391,7 @@ export function create(
 						repoPerDocEnabled,
 					);
 				}
-				return createSummary(
+				const result = await createSummary(
 					repoManager,
 					fsManager,
 					wholeSummaryPayload,
@@ -396,6 +403,44 @@ export function create(
 					enableLowIoWrite,
 					optimizeForInitialSummary,
 				);
+				if (!isEphemeralContainer && isInitialSummary) {
+					assert(
+						typeof result === "object" && result !== null && "trees" in result && "id" in result,
+						"Initial summary must be a full summary"
+					);
+					const l2RepoParam = {...repoManagerParams, isEphemeralContainer: false };
+					const l2RepoManager = await getRepoManagerFromWriteAPI(
+						repoManagerFactory,
+						l2RepoParam,
+						repoPerDocEnabled,
+						optimizeForInitialSummary,
+					);
+					const l2FileSystemManagerFactory = getFilesystemManagerFactory(
+						fileSystemManagerFactories,
+						false,
+					);
+					const l2fsManager = l2FileSystemManagerFactory.create({
+						...l2RepoParam.fileSystemManagerParams,
+						rootDir: l2RepoManager.path,
+					});
+					persistLatestFullSummaryInStorage(
+						l2fsManager,
+						getFullSummaryDirectory(
+							l2RepoManager,
+							l2RepoParam.storageRoutingId.documentId,
+						),
+						result as IWholeFlatSummary,
+						lumberjackProperties,
+					).catch((error) => {
+						// Persisting latest summary is an optimization, not a requirement, so do not throw on failure.
+						Lumberjack.error(
+							"Failed to persist latest full summary to storage during createSummary",
+							lumberjackProperties,
+							error,
+						);
+					});
+				}
+				return result;
 			})().catch((error) => logAndThrowApiError(error, request, repoManagerParams));
 			handleResponse(resultP, response, undefined, undefined, 201);
 		});
