@@ -20,12 +20,15 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type { ContainerAttachProps, IFluidContainer } from "@fluidframework/fluid-static";
+import type {
+	ContainerAttachProps,
+	ContainerSchema,
+	IFluidContainer,
+} from "@fluidframework/fluid-static";
 import {
+	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	createTreeDOProviderContainerRuntimeFactory,
-	type TreeContainerSchema,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
@@ -38,21 +41,15 @@ import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import type { TokenResponse } from "./interfaces.js";
 import type {
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
 	OdspContainerServices,
-	TokenResponse,
 } from "./interfaces.js";
 import { createOdspAudienceMember } from "./odspAudience.js";
 import type { IOdspTokenProvider } from "./token.js";
-
-// NOTE: THE CHANGES MADE TO THIS MODULE SHOULD NOT BE CHECKED IN.
-// THEY SERVE STRICTLY AS A PROTOTYPE OF HOW THE ODSP CLIENT COULD BE UPDATED TO SUPPORT ONLY SHARED TREE AT THE ROOT.
-// Changes required:
-// - Use `TreeContainerSchema` instead of `ContainerSchema`.
-// - Use `createTreeDOProviderContainerRuntimeFactory` instead of `createDataObjectProviderContainerRuntimeFactory`.
 
 async function getStorageToken(
 	options: OdspResourceTokenFetchOptions,
@@ -117,8 +114,10 @@ export class OdspClient {
 		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
-	public async createContainer(containerSchema: TreeContainerSchema): Promise<{
-		container: IFluidContainer<TreeContainerSchema>;
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+	): Promise<{
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
@@ -135,14 +134,14 @@ export class OdspClient {
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer as IFluidContainer<TreeContainerSchema>, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	public async getContainer(
+	public async getContainer<T extends ContainerSchema>(
 		id: string,
-		containerSchema: TreeContainerSchema,
+		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<TreeContainerSchema>;
+		container: IFluidContainer<T>;
 		services: OdspContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema);
@@ -158,11 +157,11 @@ export class OdspClient {
 			container,
 		});
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer as IFluidContainer<TreeContainerSchema>, services };
+		return { container: fluidContainer as IFluidContainer<T>, services };
 	}
 
-	private getLoaderProps(schema: TreeContainerSchema): ILoaderProps {
-		const runtimeFactory = createTreeDOProviderContainerRuntimeFactory({
+	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
+		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
 			compatibilityMode: "2",
 		});
