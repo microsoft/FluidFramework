@@ -138,6 +138,9 @@ export class SchemaCompatibilityTester {
 					// to a map node over the union of all the object fields' types.
 					if (discrepancy.stored === undefined) {
 						// View schema has added a node type that the stored schema doesn't know about.
+						// Note that all cases which trigger this should also trigger an AllowedTypeDiscrepancy (where the type is used).
+						// This means this case should be redundant and could be removed in the future if there is a reason to do so
+						// (like simplifying enableable type support).
 						canView = false;
 					} else if (discrepancy.view === undefined) {
 						const storedIsNever =
