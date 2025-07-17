@@ -81,9 +81,6 @@ export interface IContainerContextConfig {
 	readonly getClientId: () => string | undefined;
 	readonly getAttachState: () => AttachState;
 	readonly getConnected: () => boolean;
-	/**
-	 * @returns true if signals can be sent and received (container is loaded and connected to service), false otherwise.
-	 */
 	readonly getConnectionState: () => ConnectionState;
 	readonly clientDetails: IClientDetails;
 	readonly existing: boolean;
