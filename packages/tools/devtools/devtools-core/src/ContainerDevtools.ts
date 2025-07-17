@@ -93,7 +93,7 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
  *
  * @sealed
  */
-export class ContainerDevtools extends BaseDevtools {
+export class ContainerDevtools extends BaseDevtools<IContainer> {
 	/**
 	 * The registered Container.
 	 */

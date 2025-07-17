@@ -4,7 +4,6 @@
  */
 
 import type { IAudience } from "@fluidframework/container-definitions";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 
@@ -46,7 +45,9 @@ import {
  * Abstract base class for devtools implementations.
  * Contains shared functionality between ContainerDevtools and DataObjectDevtools.
  */
-export abstract class BaseDevtools implements IContainerDevtools, HasContainerKey {
+export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
+	implements IContainerDevtools, HasContainerKey
+{
 	/**
 	 * {@inheritDoc HasContainerKey.containerKey}
 	 */
@@ -101,7 +102,7 @@ export abstract class BaseDevtools implements IContainerDevtools, HasContainerKe
 	/**
 	 * Gets the container associated with this devtools instance.
 	 */
-	protected abstract get container(): IContainer | DecomposedContainer;
+	protected abstract get container(): DevtoolsType;
 
 	/**
 	 * Gets the audience associated with this devtools instance.

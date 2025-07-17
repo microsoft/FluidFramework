@@ -60,7 +60,7 @@ export interface DataObjectDevtoolsProps {
  *
  * @sealed
  */
-export class DataObjectDevtools extends BaseDevtools {
+export class DataObjectDevtools extends BaseDevtools<DecomposedContainer> {
 	/**
 	 * The registered data object's decomposed container.
 	 */

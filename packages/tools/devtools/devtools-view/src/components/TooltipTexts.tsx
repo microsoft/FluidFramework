@@ -21,9 +21,9 @@ export const userIdTooltipText =
 /**
  * Description of the Container "Status" property in the summary view.
  */
-export const containerStatusTooltipText = (
+export const containerStatusTooltipText = (devtoolsType: string): JSX.Element => (
 	<div>
-		Represents the current state of the Container with regards to its connection to the Fluid
+		Represents the current state of the {devtoolsType} with regards to its connection to the Fluid
 		Service. For more information, see{" "}
 		<Link
 			href="https://fluidframework.com/docs/build/container-states-events"

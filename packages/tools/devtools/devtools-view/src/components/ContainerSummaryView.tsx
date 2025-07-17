@@ -333,7 +333,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					<TableBody>
 						<DataRow
 							label="Status"
-							infoTooltipContent={containerStatusTooltipText}
+							infoTooltipContent={containerStatusTooltipText(containerFeatureFlags.canModifyContainerState === false ? "DataObject" : "Container")}
 							value={containerStatusValueCell(statusComponents)}
 							columnProps={columnSizing_unstable}
 						/>
