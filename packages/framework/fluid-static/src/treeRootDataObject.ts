@@ -194,8 +194,8 @@ class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject
  *
  * @remarks
  * The entry point is opaque to caller.
- * The root data object's registry and initial objects are configured based on the provided
- * SharedTree (and optionally, data store registry).
+ * The root data object's registry and shared objects are configured based on the provided
+ * SharedTree and optionally data store registry.
  *
  * @legacy @alpha
  */
