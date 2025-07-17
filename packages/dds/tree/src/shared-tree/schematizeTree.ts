@@ -73,11 +73,6 @@ export function initializeContent(
 		};
 	}
 
-	// TODO: fix issues with schema comparison and enable this.
-	// assert(
-	// 	allowsRepoSuperset(defaultSchemaPolicy, tree.storedSchema, incrementalSchemaUpdate),
-	// 	"Incremental Schema update should support the existing empty tree",
-	// );
 	assert(
 		allowsRepoSuperset(defaultSchemaPolicy, newSchema, incrementalSchemaUpdate),
 		0x5c9 /* Incremental Schema during update should be a allow a superset of the final schema */,
@@ -89,7 +84,8 @@ export function initializeContent(
 
 	// If intermediate schema is not final desired schema, update to the final schema:
 	if (incrementalSchemaUpdate !== newSchema) {
-		schemaRepository.updateSchema(newSchema);
+		// This makes the root more strict, so set allowNonSupersetSchema to true.
+		schemaRepository.updateSchema(newSchema, true);
 	}
 }
 

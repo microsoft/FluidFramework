@@ -46,8 +46,10 @@ import {
 import {
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
+	allowsRepoSuperset,
 	buildForest,
 	createNodeIdentifierManager,
+	defaultSchemaPolicy,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
@@ -229,8 +231,13 @@ export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakabl
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 *
+	 * @param newSchema - The new schema to replace the existing schema.
+	 * @param allowNonSupersetSchema - Whether to allow non-superset schemas.
+	 * Defaults to false.
+	 * If false, an assert will be thrown if the new schema does not permit all possible documents which were permitted under the old schema.
 	 */
-	updateSchema(newSchema: TreeStoredSchema): void;
+	updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void;
 
 	/**
 	 * Events about this view.
@@ -776,8 +783,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
-	public updateSchema(newSchema: TreeStoredSchema): void {
+	public updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void {
 		this.checkNotDisposed();
+		if (allowNonSupersetSchema !== true) {
+			assert(
+				allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema.clone(), newSchema),
+				"New schema must allow all documents allowed by old schema",
+			);
+		}
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 
