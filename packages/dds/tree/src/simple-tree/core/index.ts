@@ -30,6 +30,7 @@ export {
 	isTreeNodeSchemaClass,
 	privateDataSymbol,
 	getTreeNodeSchemaPrivateData,
+	CompatibilityLevel,
 } from "./treeNodeSchema.js";
 export type {
 	TreeNodeSchema,
@@ -45,6 +46,7 @@ export type {
 	TreeNodeSchemaCorePrivate,
 	TreeNodeSchemaPrivateData,
 	TreeNodeSchemaInitializedData,
+	FlexContent,
 } from "./treeNodeSchema.js";
 export {
 	isAnnotatedAllowedTypes,

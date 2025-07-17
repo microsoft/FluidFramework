@@ -36,9 +36,11 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
  */
 export function getTreeNodeSchemaInitializedData(
 	schema: TreeNodeSchema,
+	handler: Pick<TreeNodeSchemaInitializedData, "toFlexContent" | "shallowCompatibilityTest">,
 ): TreeNodeSchemaInitializedData {
 	const data = getTreeNodeSchemaPrivateData(schema);
 	return {
+		...handler,
 		context: getUnhydratedContext(schema),
 		childAnnotatedAllowedTypes: data.childAnnotatedAllowedTypes.map(
 			normalizeAnnotatedAllowedTypes,

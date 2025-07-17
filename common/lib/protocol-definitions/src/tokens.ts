@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "./users.js";
+import type { IUser } from "./users.js";
 
 /**
  * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} Claims
