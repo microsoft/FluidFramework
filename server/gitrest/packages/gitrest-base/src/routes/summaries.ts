@@ -344,8 +344,7 @@ export function create(
 			[BaseGitRestTelemetryProperties.isInitial]: isInitialSummary,
 		};
 		Lumberjack.info("Received request to create a summary", lumberjackProperties);
-		if (isInitialSummary)
-		{
+		if (isInitialSummary) {
 			repoManagerParams.isEphemeralContainer = true;
 		}
 
@@ -405,10 +404,13 @@ export function create(
 				);
 				if (!isEphemeralContainer && isInitialSummary) {
 					assert(
-						typeof result === "object" && result !== null && "trees" in result && "id" in result,
-						"Initial summary must be a full summary"
+						typeof result === "object" &&
+							result !== null &&
+							"trees" in result &&
+							"id" in result,
+						"Initial summary must be a full summary",
 					);
-					const l2RepoParam = {...repoManagerParams, isEphemeralContainer: false };
+					const l2RepoParam = { ...repoManagerParams, isEphemeralContainer: false };
 					const l2RepoManager = await getRepoManagerFromWriteAPI(
 						repoManagerFactory,
 						l2RepoParam,
