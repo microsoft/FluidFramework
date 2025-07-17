@@ -3,41 +3,41 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IEvent,
 	IEventThisPlaceHolder,
-	type IEventProvider,
+	IEventProvider,
 } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
-	type IChannel,
+	IChannel,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	Client,
-	IJSONSegment,
-	IMergeTreeOp,
+	type Client,
+	type IJSONSegment,
+	type IMergeTreeOp,
 	type ISegmentInternal,
 	type LocalReferencePosition,
 	MergeTreeDeltaType,
 	ReferenceType,
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	IFluidSerializer,
-	ISharedObjectEvents,
+	type IFluidSerializer,
+	type ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
+import type {
 	IMatrixConsumer,
 	IMatrixProducer,
 	IMatrixReader,
@@ -46,20 +46,20 @@ import {
 import Deque from "double-ended-queue";
 
 import type { HandleCache } from "./handlecache.js";
-import { Handle, isHandleValid } from "./handletable.js";
+import { type Handle, isHandleValid } from "./handletable.js";
 import {
-	ISetOp,
-	MatrixItem,
+	type ISetOp,
+	type MatrixItem,
 	MatrixOp,
-	MatrixSetOrVectorOp,
+	type MatrixSetOrVectorOp,
 	SnapshotPath,
-	VectorOp,
+	type VectorOp,
 } from "./ops.js";
 import { PermutationVector, reinsertSegmentIntoVector } from "./permutationvector.js";
 import { ensureRange } from "./range.js";
 import { deserializeBlob } from "./serialization.js";
 import { SparseArray2D, type RecurArray } from "./sparsearray2d.js";
-import { IUndoConsumer } from "./types.js";
+import type { IUndoConsumer } from "./types.js";
 import { MatrixUndoProvider } from "./undoprovider.js";
 
 interface ISetOpMetadata {

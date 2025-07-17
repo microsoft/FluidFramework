@@ -7,14 +7,14 @@ import { strict as assert } from "node:assert";
 
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import {
+import type {
 	IMatrixConsumer,
 	IMatrixProducer,
 	IMatrixReader,
 	IMatrixWriter,
 } from "@tiny-calc/nano";
 
-import { SharedMatrix, ISharedMatrix } from "../index.js";
+import { type ISharedMatrix, SharedMatrix } from "../index.js";
 
 /**
  * Convenience export of SharedMatrix's factory for usage in tests.

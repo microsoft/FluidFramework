@@ -3,8 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { NormalizedAnnotatedAllowedTypes } from "./allowedTypes.js";
-import { asTreeNodeSchemaCorePrivate, type TreeNodeSchema } from "./treeNodeSchema.js";
+import {
+	normalizeAnnotatedAllowedTypes,
+	type NormalizedAnnotatedAllowedTypes,
+} from "./allowedTypes.js";
+import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
@@ -20,10 +23,14 @@ export function walkNodeSchema(
 
 	visitedSet.add(schema);
 
-	const annotatedAllowedTypes = asTreeNodeSchemaCorePrivate(schema).childAnnotatedAllowedTypes;
+	// Since walkNodeSchema is used in the implementation of TreeNodeSchemaPrivateData.idempotentInitialize,
+	// Avoid depending on it here to avoid circular dependencies for recursive schema.
+	// Instead normalize/evaluate the allowed types as needed.
+	const annotatedAllowedTypes =
+		getTreeNodeSchemaPrivateData(schema).childAnnotatedAllowedTypes;
 
 	for (const fieldAllowedTypes of annotatedAllowedTypes) {
-		walkAllowedTypes(fieldAllowedTypes, visitor, visitedSet);
+		walkAllowedTypes(normalizeAnnotatedAllowedTypes(fieldAllowedTypes), visitor, visitedSet);
 	}
 
 	// This visit is done at the end so the traversal order is most inner types first.
