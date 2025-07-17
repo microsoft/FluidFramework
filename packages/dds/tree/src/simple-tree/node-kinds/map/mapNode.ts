@@ -4,15 +4,19 @@
  */
 
 import { Lazy } from "@fluidframework/core-utils/internal";
-import type {
-	FlexibleNodeContent,
-	FlexTreeNode,
-	FlexTreeOptionalField,
-	OptionalFieldEditBuilder,
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
+import {
+	isTreeValue,
+	type FlexibleNodeContent,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+	type OptionalFieldEditBuilder,
 } from "../../../feature-libraries/index.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
 import {
+	CompatibilityLevel,
 	getKernel,
 	type InnerNode,
 	NodeKind,
@@ -38,6 +42,8 @@ import {
 	type TreeNodeSchemaCorePrivate,
 	privateDataSymbol,
 	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	type TreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -48,11 +54,17 @@ import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
 	brand,
 	count,
+	isReadonlyArray,
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 } from "../../../util/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
-import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
+import type {
+	MapNodeCustomizableSchema,
+	MapNodePojoEmulationSchema,
+	MapNodeSchema,
+} from "./mapNodeTypes.js";
+import { recordLikeDataToFlexContent } from "../common.js";
 
 /**
  * A map of string keys to tree objects.
@@ -257,6 +269,8 @@ export function mapSchema<
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
+	let privateData: TreeNodeSchemaPrivateData | undefined;
+
 	class Schema
 		extends CustomMapNodeBase<UnannotateImplicitAllowedTypes<T>>
 		implements TreeMapNode<UnannotateImplicitAllowedTypes<T>>
@@ -287,7 +301,11 @@ export function mapSchema<
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
 		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
-			return getTreeNodeSchemaInitializedData(this);
+			const schema = this as MapNodeSchema;
+			return getTreeNodeSchemaInitializedData(this, {
+				shallowCompatibilityTest,
+				toFlexContent: (data: FactoryContent): FlexContent => mapToFlexContent(data, schema),
+			});
 		}
 
 		public static readonly identifier = identifier;
@@ -309,7 +327,9 @@ export function mapSchema<
 			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
 
-		public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, [info]);
+		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+		}
 	}
 	const schemaErased: MapNodeCustomizableSchema<
 		TName,
@@ -329,3 +349,47 @@ export function mapSchema<
 export type MapNodeInsertableData<T extends ImplicitAllowedTypes> =
 	| Iterable<readonly [string, InsertableTreeNodeFromImplicitAllowedTypes<T>]>
 	| RestrictiveStringRecord<InsertableTreeNodeFromImplicitAllowedTypes<T>>;
+
+/**
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Map nodes.
+ */
+function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
+	if (isTreeValue(data)) {
+		return CompatibilityLevel.None;
+	}
+
+	if (isReadonlyArray(data)) {
+		// Arrays are iterable, so type checking does allow constructing a MapNode from an array if the array's type is key values pairs for the map.
+		return CompatibilityLevel.Low;
+	}
+
+	if (Symbol.iterator in data) {
+		return CompatibilityLevel.Normal;
+	}
+
+	// When not unioned with an ObjectNode, allow objects to be used to create maps.
+	return CompatibilityLevel.Low;
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ *
+ * Transforms data under a Map schema.
+ * @param data - The tree data to be transformed. Must be an iterable or Record like object.
+ * @param schema - The schema to comply with.
+ */
+function mapToFlexContent(data: FactoryContent, schema: MapNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Map schema: ${data}`);
+	}
+
+	const fieldsIterator = (
+		Symbol.iterator in data
+			? // Support iterables of key value pairs (including Map objects)
+				data
+			: // Support record objects for JSON style Map data
+				Object.entries(data)
+	) as Iterable<readonly [string, InsertableContent]>;
+
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
+}
