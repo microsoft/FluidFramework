@@ -352,7 +352,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					</TableBody>
 				</Table>
 			</div>
-			{containerFeatureFlags.canModifyContainerState === true && (
+			{containerFeatureFlags.canModifyContainerState !== false && (
 				<div className={styles.actions}>
 					<ActionsBar
 						isContainerConnected={containerState.connectionState === ConnectionState.Connected}
