@@ -84,8 +84,12 @@ describe("SharedMap iteration", () => {
 		const keys1 = [...sharedMap.keys()];
 		const keys2 = [...sharedMap2.keys()];
 
-		assert.deepEqual(keys1, ["key1", "key2", "key3", "key4"], "Keys should match expected");
-		assert.deepEqual(keys1, keys2, "Keys should match between clients");
+		assert.deepStrictEqual(
+			keys1,
+			["key1", "key2", "key3", "key4"],
+			"Keys should match expected",
+		);
+		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
 
 	it("should have eventually consistent iteration order between clients when suppressed delete", () => {
@@ -111,8 +115,8 @@ describe("SharedMap iteration", () => {
 		const keys1 = [...sharedMap.keys()];
 		const keys2 = [...sharedMap2.keys()];
 
-		assert.deepEqual(keys1, ["key2", "key1"], "Keys should match expected");
-		assert.deepEqual(keys1, keys2, "Keys should match between clients");
+		assert.deepStrictEqual(keys1, ["key2", "key1"], "Keys should match expected");
+		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
 
 	it("should have eventually consistent iteration order between clients when clear", () => {
@@ -140,7 +144,7 @@ describe("SharedMap iteration", () => {
 		const keys1 = [...sharedMap.keys()];
 		const keys2 = [...sharedMap2.keys()];
 
-		assert.deepEqual(keys1, ["key3", "key1", "key4"], "Keys should match expected");
-		assert.deepEqual(keys1, keys2, "Keys should match between clients");
+		assert.deepStrictEqual(keys1, ["key3", "key1", "key4"], "Keys should match expected");
+		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
 });

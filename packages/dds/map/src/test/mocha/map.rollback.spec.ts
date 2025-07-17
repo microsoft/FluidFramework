@@ -176,29 +176,7 @@ describe("SharedMap rollback", () => {
 		sharedMap.set("key2", "value2");
 		containerRuntime.flush();
 		containerRuntimeFactory.processAllMessages();
-		const valueChanges: IValueChanged[] = [];
-		const expectedValueChanges: IValueChanged[] = [
-			// Set key3
-			{ key: "key3", previousValue: undefined },
-			// Delete key1
-			{ key: "key1", previousValue: "value1" },
-			// Set key2 to a new value
-			{ key: "key2", previousValue: "value2" },
-			// Clear happens here, no valueChange event for clear
-			// Set key4
-			{ key: "key4", previousValue: undefined },
-			// Roll back the final key4 set
-			{ key: "key4", previousValue: "value4" },
-			// Roll back the clear
-			{ key: "key2", previousValue: undefined },
-			{ key: "key3", previousValue: undefined },
-			// Roll back the key2 set
-			{ key: "key2", previousValue: "newValue2" },
-			// Roll back the key1 delete
-			{ key: "key1", previousValue: undefined },
-			// Roll back the key3 set
-			{ key: "key3", previousValue: "value3" },
-		];
+		let valueChanges: IValueChanged[] = [];
 		let clears: number = 0;
 		sharedMap.on("valueChanged", (event: IValueChanged) => {
 			valueChanges.push(event);
@@ -213,25 +191,59 @@ describe("SharedMap rollback", () => {
 		sharedMap.clear();
 		sharedMap.set("key4", "value4");
 
-		assert.strictEqual(sharedMap.get("key1"), undefined, "key1 should be deleted");
-		assert.strictEqual(sharedMap.get("key2"), undefined, "key2 should be cleared");
-		assert.strictEqual(sharedMap.get("key3"), undefined, "key3 should be cleared");
-		assert.strictEqual(sharedMap.get("key4"), "value4", "key4 should be set");
-		assert.strictEqual(valueChanges.length, 4, "Should have four value change events");
-		assert.strictEqual(clears, 1, "Should have one clear event");
-		containerRuntime.rollback?.();
-		assert.strictEqual(sharedMap.get("key1"), "value1", "key1 should be restored");
-		assert.strictEqual(sharedMap.get("key2"), "value2", "key2 should be restored");
-		assert.strictEqual(sharedMap.get("key3"), undefined, "key3 should be removed");
-		assert.strictEqual(sharedMap.get("key4"), undefined, "key4 should be removed");
-		assert.strictEqual(valueChanges.length, 10, "Should have ten value change events");
-		assert.strictEqual(clears, 1, "Should still have one clear event");
-
-		assert.deepEqual(
-			valueChanges,
-			expectedValueChanges,
-			"Value changes should match expected",
+		assert.deepStrictEqual(
+			[...sharedMap.entries()],
+			[["key4", "value4"]],
+			"Map should have expected entries pre-rollback",
 		);
+		assert.deepStrictEqual(
+			valueChanges,
+			[
+				// Set key3
+				{ key: "key3", previousValue: undefined },
+				// Delete key1
+				{ key: "key1", previousValue: "value1" },
+				// Set key2 to a new value
+				{ key: "key2", previousValue: "value2" },
+				// Clear happens here, no valueChange event for clear
+				// Set key4
+				{ key: "key4", previousValue: undefined },
+			],
+			"Value changes should match expected pre-rollback",
+		);
+		assert.strictEqual(clears, 1, "Should have one clear event");
+
+		// Reset event monitoring and roll back.
+		valueChanges = [];
+		clears = 0;
+		containerRuntime.rollback?.();
+
+		assert.deepStrictEqual(
+			[...sharedMap.entries()],
+			[
+				["key1", "value1"],
+				["key2", "value2"],
+			],
+			"Map should have expected entries post-rollback",
+		);
+		assert.deepStrictEqual(
+			valueChanges,
+			[
+				// Roll back the final key4 set
+				{ key: "key4", previousValue: "value4" },
+				// Roll back the clear
+				{ key: "key2", previousValue: undefined },
+				{ key: "key3", previousValue: undefined },
+				// Roll back the key2 set
+				{ key: "key2", previousValue: "newValue2" },
+				// Roll back the key1 delete
+				{ key: "key1", previousValue: undefined },
+				// Roll back the key3 set
+				{ key: "key3", previousValue: "value3" },
+			],
+			"Value changes should match expected post-rollback",
+		);
+		assert.strictEqual(clears, 0, "Should have no clear events");
 	});
 
 	it("should rollback local changes in presence of remote changes from another client", () => {
@@ -255,30 +267,27 @@ describe("SharedMap rollback", () => {
 		containerRuntime2.flush();
 		containerRuntimeFactory.processAllMessages();
 
-		assert.strictEqual(sharedMap.get("key1"), undefined, "key1 should appear deleted locally");
-		assert.strictEqual(sharedMap.get("key2"), undefined, "key2 is deleted");
-		assert.strictEqual(
-			sharedMap.get("key3"),
-			"value3",
-			"key3 should appear as value3 locally",
+		assert.deepStrictEqual(
+			[...sharedMap.entries()],
+			[
+				// Note key4 comes before key3 even though we have an optimistic value for it,
+				// because sharedMap2 set them in that order. Iteration order matches the sequenced perspective.
+				["key4", "value4"],
+				["key3", "value3"],
+			],
+			"Map should have expected entries pre-rollback",
 		);
-		assert.strictEqual(sharedMap.get("key4"), "value4", "key4 should be set to value4");
 
 		containerRuntime.rollback?.();
-		containerRuntime.flush();
-		containerRuntimeFactory.processAllMessages();
 
-		assert.strictEqual(
-			sharedMap.get("key1"),
-			"otherValue1",
-			"key1 should roll back to remotely set value",
+		assert.deepStrictEqual(
+			[...sharedMap.entries()],
+			[
+				["key1", "otherValue1"],
+				["key4", "value4"],
+				["key3", "otherValue3"],
+			],
+			"Map should have expected entries post-rollback",
 		);
-		assert.strictEqual(sharedMap.get("key2"), undefined, "key2 is still deleted");
-		assert.strictEqual(
-			sharedMap.get("key3"),
-			"otherValue3",
-			"key3 should roll back to remotely set value",
-		);
-		assert.strictEqual(sharedMap.get("key4"), "value4", "key4 should still be set to value4");
 	});
 });
