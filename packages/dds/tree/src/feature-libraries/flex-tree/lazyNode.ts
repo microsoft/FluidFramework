@@ -35,9 +35,14 @@ import { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 
 /**
+ * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicate by the cursor.
+ * @remarks
  * This does not take ownership of this cursor: Node will fork it as needed.
  */
-export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
+export function getOrCreateHydratedFlexTreeNode(
+	context: Context,
+	cursor: ITreeSubscriptionCursor,
+): HydratedFlexTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
 		context.checkout.forest.anchors.locate(anchor) ??

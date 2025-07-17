@@ -26,10 +26,8 @@ import {
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../simple-tree/toStoredSchema.js";
+import type { TreeStoredContent } from "../shared-tree/index.js";
+import { toStoredSchema } from "../simple-tree/index.js";
 
 import type {
 	TreeSimpleContent,
