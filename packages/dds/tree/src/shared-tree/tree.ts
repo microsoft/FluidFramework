@@ -450,7 +450,7 @@ export function runTransaction<
 				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
 			);
 		}
-		assert(context instanceof Context, "Expected context to be a Context instance.");
+		assert(context instanceof Context, 0xbe3 /* Expected context to be a Context instance. */);
 		return runTransactionInCheckout(context.checkout, () => t(node), preconditions);
 	}
 }
