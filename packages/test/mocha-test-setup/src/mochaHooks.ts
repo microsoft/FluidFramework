@@ -96,24 +96,24 @@ export const mochaHooks = {
 		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
 		// through it. See the documentation on `FluidTestRunLogger` for details.
 		let originalLogger: ITelemetryBufferedLogger;
-		try {
-			const { createTestLogger } = await import(
-				process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER ?? ""
-			);
-			if (typeof createTestLogger !== "function") {
-				throw new TypeError(
-					`Expected the module at ${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER} to export a function, but got ${typeof createTestLogger}`,
-				);
-			}
-			originalLogger = createTestLogger();
-		} catch (e) {
-			console.error(
-				"Failed to import the test logger. Make sure the FLUID_TEST_PKG_SPECIFIER environment variable is set correctly.",
-				e,
-			);
-			originalLogger = nullLogger;
-		}
-		testLogger = new FluidTestRunLogger(originalLogger);
+		// Check if the environment variable is not set
+        if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER === undefined) {
+            originalLogger = nullLogger;
+        } else {
+            const { createTestLogger } = await import(
+                process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER
+            );
+            if (typeof createTestLogger !== "function") {
+                console.error(
+                    `Expected package '${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER}' to export a function, but got an object of type '${typeof createTestLogger}' instead`,
+                );
+                originalLogger = nullLogger;
+            } else {
+                originalLogger = createTestLogger();
+            }
+        }
+		
+        testLogger = new FluidTestRunLogger(originalLogger);
 
 		// Then we redefine `getTestLogger` so it returns the wrapper logger.
 		// NOTE: if we have other global mocha hooks defined somewhere, they include a `beforeEach` hook, and the module in
