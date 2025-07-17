@@ -49,6 +49,7 @@ const testTreeNodeIdentifierNormalized = brand<TreeNodeSchemaIdentifier>(
 const schemaFactory = new SchemaFactoryAlpha("schema discrepancies");
 const numberName = brand<TreeNodeSchemaIdentifier>(schemaFactory.number.identifier);
 
+// TODO:#43720: Add tests for RecordNodeObjects
 describe("Schema Discrepancies", () => {
 	it("Node kind difference for each possible combination", () => {
 		const objectNodeSchema = schemaFactory.objectAlpha(testTreeNodeIdentifier, {

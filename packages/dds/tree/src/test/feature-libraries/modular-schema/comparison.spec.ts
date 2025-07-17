@@ -257,22 +257,22 @@ describe("Schema Comparison", () => {
 
 			// Validate the consistent results of 'allowsRepoSuperset' and 'isRepoSuperset'
 			assert.equal(
-				allowsRepoSuperset(defaultSchemaPolicy, emptyTreeRepo, valueLocalFieldTreeRepo),
+				allowsRepoSuperset(defaultSchemaPolicy, valueLocalFieldTreeRepo, emptyTreeRepo),
 				false,
 			);
 			assert.equal(
 				allowsRepoSuperset(
 					defaultSchemaPolicy,
-					optionalTreeRepoWithoutValue,
 					valueLocalFieldTreeRepo,
+					optionalTreeRepoWithoutValue,
 				),
 				false,
 			);
 			assert.equal(
 				allowsRepoSuperset(
 					defaultSchemaPolicy,
-					optionalTreeRepoWithMultipleValues,
 					optionalLocalFieldTreeRepo,
+					optionalTreeRepoWithMultipleValues,
 				),
 				false,
 			);
@@ -280,24 +280,24 @@ describe("Schema Comparison", () => {
 			assert.equal(
 				allowsRepoSuperset(
 					defaultSchemaPolicy,
-					optionalLocalFieldTreeRepo,
 					valueLocalFieldTreeRepo,
+					optionalLocalFieldTreeRepo,
 				),
 				true,
 			);
 			assert.equal(
 				allowsRepoSuperset(
 					defaultSchemaPolicy,
-					optionalTreeRepoWithMultipleValues,
 					emptyTreeRepo,
+					optionalTreeRepoWithMultipleValues,
 				),
 				true,
 			);
 			assert.equal(
 				allowsRepoSuperset(
 					defaultSchemaPolicy,
-					optionalTreeRepoWithMultipleValues,
 					optionalTreeRepoWithoutValue,
+					optionalTreeRepoWithMultipleValues,
 				),
 				true,
 			);
@@ -318,7 +318,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
-			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, repos[1], repos[0]), true);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, repos[0], repos[1]), true);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {

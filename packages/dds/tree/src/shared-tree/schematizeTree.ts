@@ -73,11 +73,6 @@ export function initializeContent(
 		};
 	}
 
-	// TODO: fix issues with schema comparison and enable this.
-	// assert(
-	// 	allowsRepoSuperset(defaultSchemaPolicy, tree.storedSchema, incrementalSchemaUpdate),
-	// 	"Incremental Schema update should support the existing empty tree",
-	// );
 	assert(
 		allowsRepoSuperset(defaultSchemaPolicy, newSchema, incrementalSchemaUpdate),
 		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,

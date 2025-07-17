@@ -40,7 +40,7 @@ import { walkFieldSchema } from "./walkFieldSchema.js";
 import {
 	createFieldSchema,
 	FieldKind,
-	normalizeFieldSchema,
+	FieldSchemaAlpha,
 	type FieldSchema,
 } from "./fieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
@@ -433,8 +433,9 @@ function* getFieldDiscrepancies(
 	// TODO: This is a temporary workaround until the comparison logic is redesigned.
 	viewKindIsSequence = false,
 ): Iterable<FieldDiscrepancy> {
+	assert(view instanceof FieldSchemaAlpha, "all field schema should be FieldSchemaAlpha");
 	const [viewExtra, storedExtra] = findExtraAllowedTypes(
-		normalizeFieldSchema(view).annotatedAllowedTypesNormalized.types,
+		view.annotatedAllowedTypesNormalized.types,
 		stored.types,
 	);
 	if (viewExtra.length > 0 || storedExtra.length > 0) {
