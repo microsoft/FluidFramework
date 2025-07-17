@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import nconf from "nconf";
-import { serializeError } from "serialize-error";
 import {
 	ILogger,
 	IResources,
@@ -16,6 +14,9 @@ import {
 	LumberEventName,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
+import nconf from "nconf";
+import { serializeError } from "serialize-error";
+
 import { ConfigDumper } from "./configDumper";
 
 /**
@@ -85,12 +86,24 @@ export async function run<T extends IResources>(
 
 	process.on("SIGINT", () => {
 		Lumberjack.info(`Received SIGINT request to stop the service.`);
+		runner.stop("sigint").catch((error) => {
+			logger?.error(`Could not stop runner after SIGINT due to error: ${error}`);
+			Lumberjack.error(`Could not stop runner after SIGINT due to error`, undefined, error);
+		});
 	});
 	process.on("SIGQUIT", () => {
 		Lumberjack.info(`Received SIGQUIT request to stop the service.`);
+		runner.stop("sigquit").catch((error) => {
+			logger?.error(`Could not stop runner after SIGQUIT due to error: ${error}`);
+			Lumberjack.error(`Could not stop runner after SIGQUIT due to error`, undefined, error);
+		});
 	});
 	process.on("SIGHUP", () => {
 		Lumberjack.info(`Received SIGHUP request to stop the service.`);
+		runner.stop("sighup").catch((error) => {
+			logger?.error(`Could not stop runner after SIGHUP due to error: ${error}`);
+			Lumberjack.error(`Could not stop runner after SIGHUP due to error`, undefined, error);
+		});
 	});
 
 	try {

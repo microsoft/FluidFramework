@@ -107,4 +107,17 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 			url: getUrlForTelemetry(this.url, socketIoPath),
 		};
 	}
+
+	/**
+	 * Disconnect from the websocket
+	 */
+	protected disconnectCore(err: IAnyDriverError): void {
+		if (
+			this.socket.connected &&
+			err.message !== DocumentDeltaConnection.errorMessageForClientDisposeWithoutError
+		) {
+			this.socket.emit("client_disconnect", this.clientId, this.documentId, err.message);
+		}
+		super.disconnectCore(err);
+	}
 }

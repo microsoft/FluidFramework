@@ -468,17 +468,17 @@ export interface ISignalClient {
 }
 
 // @alpha @legacy
-export interface ISignalMessage extends ISignalMessageBase {
+export interface ISignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessageBase<TMessage> {
     clientId: string | null;
 }
 
 // @alpha @legacy
-export interface ISignalMessageBase {
+export interface ISignalMessageBase<TMessage extends TypedMessage = TypedMessage> {
     clientConnectionNumber?: number;
-    content: unknown;
+    content: TMessage["content"];
     referenceSequenceNumber?: number;
     targetClientId?: string;
-    type?: string;
+    type?: TMessage["type"];
 }
 
 // @alpha @legacy

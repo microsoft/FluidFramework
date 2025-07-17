@@ -78,13 +78,13 @@ describe("Fuzz - move", () => {
 		},
 		detachedStartOptions: {
 			numOpsBeforeAttach: 5,
-			rehydrateDisabled: true,
+			// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
+			attachingBeforeRehydrateDisable: true,
 		},
 		reconnectProbability: 0.1,
 		idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		// TODO: AB#31176 tracks failing seeds when trying to synchronize with move edits.
-		forceGlobalSeed: true,
-		skip: [4, 18],
+		skip: [38],
 	};
 	createDDSFuzzSuite(model, options);
 });

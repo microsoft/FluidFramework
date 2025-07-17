@@ -15,16 +15,18 @@ import {
 	type TypeParameter,
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
+import type { DocSection } from "@microsoft/tsdoc";
 
 import {
 	CodeSpanNode,
-	type DocumentationNode,
 	HeadingNode,
 	LinkNode,
+	type PhrasingContent,
 	PlainTextNode,
 	SectionNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
+	type TableCellContent,
 	TableHeaderCellNode,
 	TableHeaderRowNode,
 	TableNode,
@@ -37,8 +39,7 @@ import {
 	injectSeparator,
 } from "../../utilities/index.js";
 import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
-import { transformTsdocSection } from "../TsdocNodeTransforms.js";
-import { getTsdocNodeTransformationOptions } from "../Utilities.js";
+import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
@@ -122,10 +123,7 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode(
-				[table],
-				HeadingNode.createFromPlainText(memberTableProperties.headingTitle),
-			);
+		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
 }
 
 /**
@@ -331,9 +329,7 @@ export function createTypeParametersSummaryTable(
 			apiParameter.constraintExcerpt,
 			config,
 		);
-		return constraintSpan === undefined
-			? TableBodyCellNode.Empty
-			: new TableBodyCellNode([constraintSpan]);
+		return new TableBodyCellNode(constraintSpan);
 	}
 
 	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
@@ -341,9 +337,7 @@ export function createTypeParametersSummaryTable(
 			apiParameter.defaultTypeExcerpt,
 			config,
 		);
-		return excerptSpan === undefined
-			? TableBodyCellNode.Empty
-			: new TableBodyCellNode([excerptSpan]);
+		return new TableBodyCellNode(excerptSpan);
 	}
 
 	const bodyRows: TableBodyRowNode[] = [];
@@ -608,15 +602,13 @@ export function createApiSummaryCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
-	if (apiItem instanceof ApiDocumentedItem) {
-		const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-		if (apiItem.tsdocComment !== undefined) {
-			const summaryComment = transformTsdocSection(
-				apiItem.tsdocComment.summarySection,
-				tsdocNodeTransformOptions,
-			);
-			return new TableBodyCellNode(summaryComment.children);
-		}
+	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
+		const summaryComment = transformTsdocSectionForTableCell(
+			apiItem.tsdocComment.summarySection,
+			apiItem,
+			config,
+		);
+		return new TableBodyCellNode(summaryComment);
 	}
 
 	return TableBodyCellNode.Empty;
@@ -670,13 +662,13 @@ export function createModifiersCell(
 ): TableBodyCellNode {
 	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
-	const contents: DocumentationNode[] = [];
+	const contents: PhrasingContent[] = [];
 	let needsComma = false;
 	for (const modifier of modifiers) {
 		if (needsComma) {
 			contents.push(new PlainTextNode(", "));
 		}
-		contents.push(CodeSpanNode.createFromPlainText(modifier));
+		contents.push(new CodeSpanNode(modifier));
 		needsComma = true;
 	}
 
@@ -693,19 +685,15 @@ export function createDefaultValueCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(apiItem, config);
-
 	const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
 
 	if (defaultValueSection === undefined) {
 		return TableBodyCellNode.Empty;
 	}
 
-	const contents = transformTsdocSection(defaultValueSection, tsdocNodeTransformOptions);
+	const contents = transformTsdocSectionForTableCell(defaultValueSection, apiItem, config);
 
-	// Since we are sticking the contents into a table cell, we can remove the outer Paragraph node
-	// from the hierarchy to simplify things.
-	return new TableBodyCellNode(contents.children);
+	return new TableBodyCellNode(contents);
 }
 
 /**
@@ -715,9 +703,7 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: DocumentationNode[] = alerts.map((alert) =>
-		CodeSpanNode.createFromPlainText(alert),
-	);
+	const alertNodes: PhrasingContent[] = alerts.map((alert) => new CodeSpanNode(alert));
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
@@ -767,16 +753,13 @@ export function createParameterSummaryCell(
 		return TableBodyCellNode.Empty;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
-
-	const cellContent = transformTsdocSection(
+	const cellContent = transformTsdocSectionForTableCell(
 		apiParameter.tsdocParamBlock.content,
-		tsdocNodeTransformOptions,
+		contextApiItem,
+		config,
 	);
 
-	// Since we are putting the contents into a table cell anyways, omit the Paragraph
-	// node from the hierarchy to simplify it.
-	return new TableBodyCellNode(cellContent.children);
+	return new TableBodyCellNode(cellContent);
 }
 
 /**
@@ -797,16 +780,13 @@ export function createTypeParameterSummaryCell(
 		return TableBodyCellNode.Empty;
 	}
 
-	const tsdocNodeTransformOptions = getTsdocNodeTransformationOptions(contextApiItem, config);
-
-	const cellContent = transformTsdocSection(
+	const cellContent = transformTsdocSectionForTableCell(
 		apiTypeParameter.tsdocTypeParamBlock.content,
-		tsdocNodeTransformOptions,
+		contextApiItem,
+		config,
 	);
 
-	// Since we are putting the contents into a table cell anyways, omit the Paragraph
-	// node from the hierarchy to simplify it.
-	return new TableBodyCellNode(cellContent.children);
+	return new TableBodyCellNode(cellContent);
 }
 
 /**
@@ -814,7 +794,7 @@ export function createTypeParameterSummaryCell(
  * @remarks This content will be generated as links to type signature documentation for other items local to the same
  * API suite (model).
  *
- * @param typeExcerpty - An excerpt describing the type to be displayed in the cell.
+ * @param typeExcerpt - An excerpt describing the type to be displayed in the cell.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createTypeExcerptCell(
@@ -822,9 +802,7 @@ export function createTypeExcerptCell(
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-	return excerptSpan === undefined
-		? TableBodyCellNode.Empty
-		: new TableBodyCellNode([excerptSpan]);
+	return new TableBodyCellNode(excerptSpan);
 }
 
 /**
@@ -845,4 +823,27 @@ function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
 			return itemKind;
 		}
 	}
+}
+
+/**
+ * Transforms the contents of a TSDoc section node, and fine-tunes the output for use in a table cell.
+ *
+ * @remarks
+ * Notably, this optimizes away the generation of paragraph nodes around inner contents when there is only a
+ * single paragraph.
+ */
+function transformTsdocSectionForTableCell(
+	tsdocSection: DocSection,
+	contextApiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): TableCellContent[] {
+	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
+
+	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
+	// directly in the cell.
+	if (transformed.length === 1 && transformed[0].type === "paragraph") {
+		return transformed[0].children;
+	}
+
+	return transformed;
 }

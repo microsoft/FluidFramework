@@ -6,27 +6,22 @@
 /**
  * Text formatting options.
  *
+ * @sealed
  * @public
  */
 export interface TextFormatting {
 	/**
-	 * Whether or not the text should be rendered in italics.
-	 *
-	 * @defaultValue Inherit formatting from ancestry, if any exists.
+	 * Display the associated content in italics.
 	 */
-	readonly italic?: boolean;
+	readonly italic?: true;
 
 	/**
-	 * Whether or not the text should be rendered in bold.
-	 *
-	 * @defaultValue Inherit formatting from ancestry, if any exists.
+	 * Display the associated content in bold.
 	 */
-	readonly bold?: boolean;
+	readonly bold?: true;
 
 	/**
-	 * Whether or not the text should be rendered with a strikethrough.
-	 *
-	 * @defaultValue Inherit formatting from ancestry, if any exists.
+	 * Display the associated content with a strikethrough.
 	 */
-	readonly strikethrough?: boolean;
+	readonly strikethrough?: true;
 }

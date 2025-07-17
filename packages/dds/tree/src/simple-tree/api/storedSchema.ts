@@ -12,11 +12,11 @@ import {
 } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
-	type Format,
+	type FormatV1,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
 import { simpleToStoredSchema } from "../toStoredSchema.js";
 
@@ -58,8 +58,8 @@ export function extractPersistedSchema(
 	oldestCompatibleClient: FluidClientVersion,
 ): JsonCompatible {
 	const stored = simpleToStoredSchema(schema);
-	const writeVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
-	return encodeTreeSchema(stored, writeVersion);
+	const schemaWriteVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
+	return encodeTreeSchema(stored, schemaWriteVersion);
 }
 
 /**
@@ -100,7 +100,7 @@ export function comparePersistedSchema(
 	// Any version can be passed down to makeSchemaCodec here.
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
 	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
-	const stored = schemaCodec.decode(persisted as Format);
+	const stored = schemaCodec.decode(persisted as FormatV1);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,
 		{},

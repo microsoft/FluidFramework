@@ -25,6 +25,10 @@ interface IShortCollaborationSession {
 	 */
 	fjt: number;
 	/**
+	 * {@link ICollaborationSession.latestClientJoinTime}
+	 */
+	ljt: number | undefined;
+	/**
 	 * {@link ICollaborationSession.lastClientLeaveTime}
 	 */
 	llt: number | undefined;
@@ -120,13 +124,24 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 	}
 
 	public async getAllSessions(): Promise<ICollaborationSession[]> {
+		const sessions: ICollaborationSession[] = [];
+		await this.iterateAllSessions(async (session: ICollaborationSession) => {
+			sessions.push(session);
+		});
+		return sessions;
+	}
+
+	public async iterateAllSessions<T>(
+		callback: (session: ICollaborationSession) => Promise<T>,
+	): Promise<T[]> {
 		// Use HSCAN to iterate over te key:value pairs of the hashmap
 		// in batches to get all sessions with minimal impact on Redis.
 		const sessionJsonScanStream = this.redisClientConnectionManager
 			.getRedisClient()
 			.hscanStream(this.prefix, { count: this.options.maxScanBatchSize });
+
 		return new Promise((resolve, reject) => {
-			const sessions: ICollaborationSession[] = [];
+			const callbackPs: Promise<T>[] = [];
 			sessionJsonScanStream.on("data", (result: string[]) => {
 				if (!result) {
 					// When redis scan is done, it pushes null to the stream.
@@ -141,11 +156,14 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 				for (let i = 0; i < result.length; i += 2) {
 					const fieldKey = result[i];
 					const sessionJson = result[i + 1];
-					sessions.push(this.getFullSession(fieldKey, JSON.parse(sessionJson)));
+					const fullSession = this.getFullSession(fieldKey, JSON.parse(sessionJson));
+					// Call the callback for each session.
+					// We do not await the callback here to allow for concurrent processing of sessions.
+					callbackPs.push(callback(fullSession));
 				}
 			});
 			sessionJsonScanStream.on("end", () => {
-				resolve(sessions);
+				resolve(Promise.all(callbackPs));
 			});
 			sessionJsonScanStream.on("error", (error) => {
 				reject(error);
@@ -157,6 +175,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		return {
 			fjt: session.firstClientJoinTime,
 			llt: session.lastClientLeaveTime,
+			ljt: session.latestClientJoinTime,
 			tp: {
 				hwc: session.telemetryProperties.hadWriteClient,
 				tlj: session.telemetryProperties.totalClientsJoined,
@@ -172,6 +191,7 @@ export class RedisCollaborationSessionManager implements ICollaborationSessionMa
 		return {
 			...this.getTenantIdDocumentIdFromFieldKey(fieldKey),
 			firstClientJoinTime: shortSession.fjt,
+			latestClientJoinTime: shortSession.ljt,
 			lastClientLeaveTime: shortSession.llt,
 			telemetryProperties: {
 				hadWriteClient: shortSession.tp.hwc,

@@ -39,8 +39,6 @@ export { type TreeStoredContent } from "./schematizeTree.js";
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 
-export { CheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-
 export type {
 	ISharedTreeEditor,
 	ISchemaEditor,
@@ -50,7 +48,10 @@ export type {
 export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";
 
-export { TreeAlpha, type TreeIdentifierUtils } from "./treeAlpha.js";
+export {
+	TreeAlpha,
+	type TreeIdentifierUtils,
+} from "./treeAlpha.js";
 
 export {
 	independentInitializedView,

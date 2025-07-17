@@ -56,6 +56,24 @@ declare type current_as_old_for_Class_ClientManager = requireAssignableTo<TypeOn
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Class_CollaborationSessionTracker": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_CollaborationSessionTracker = requireAssignableTo<TypeOnly<old.CollaborationSessionTracker>, TypeOnly<current.CollaborationSessionTracker>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_CollaborationSessionTracker": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_CollaborationSessionTracker = requireAssignableTo<TypeOnly<current.CollaborationSessionTracker>, TypeOnly<old.CollaborationSessionTracker>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Class_DeltaManager": {"forwardCompat": false}
  */
 declare type old_as_current_for_Class_DeltaManager = requireAssignableTo<TypeOnly<old.DeltaManager>, TypeOnly<current.DeltaManager>>
@@ -148,7 +166,6 @@ declare type current_as_old_for_Class_MongoCollection = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_MongoDb": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MongoDb = requireAssignableTo<TypeOnly<old.MongoDb>, TypeOnly<current.MongoDb>>
 
 /*
@@ -249,6 +266,24 @@ declare type old_as_current_for_Class_RedisCache = requireAssignableTo<TypeOnly<
  * "Class_RedisCache": {"backCompat": false}
  */
 declare type current_as_old_for_Class_RedisCache = requireAssignableTo<TypeOnly<current.RedisCache>, TypeOnly<old.RedisCache>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_RedisCollaborationSessionManager": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Class_RedisCollaborationSessionManager = requireAssignableTo<TypeOnly<old.RedisCollaborationSessionManager>, TypeOnly<current.RedisCollaborationSessionManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Class_RedisCollaborationSessionManager": {"backCompat": false}
+ */
+declare type current_as_old_for_Class_RedisCollaborationSessionManager = requireAssignableTo<TypeOnly<current.RedisCollaborationSessionManager>, TypeOnly<old.RedisCollaborationSessionManager>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -437,7 +472,6 @@ declare type current_as_old_for_Class_Tenant = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "Class_TenantManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_TenantManager = requireAssignableTo<TypeOnly<old.TenantManager>, TypeOnly<current.TenantManager>>
 
 /*
@@ -501,7 +535,6 @@ declare type old_as_current_for_Class_WebServer = requireAssignableTo<TypeOnly<o
  * typeValidation.broken:
  * "Class_WebServer": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_WebServer = requireAssignableTo<TypeOnly<current.WebServer>, TypeOnly<old.WebServer>>
 
 /*
@@ -557,6 +590,15 @@ declare type current_as_old_for_ClassStatics_BasicWebServerFactory = requireAssi
  * "ClassStatics_ClientManager": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_ClientManager = requireAssignableTo<TypeOnly<typeof current.ClientManager>, TypeOnly<typeof old.ClientManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_CollaborationSessionTracker": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_CollaborationSessionTracker = requireAssignableTo<TypeOnly<typeof current.CollaborationSessionTracker>, TypeOnly<typeof old.CollaborationSessionTracker>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -656,6 +698,15 @@ declare type current_as_old_for_ClassStatics_NodeCodeLoader = requireAssignableT
  * "ClassStatics_RedisCache": {"backCompat": false}
  */
 declare type current_as_old_for_ClassStatics_RedisCache = requireAssignableTo<TypeOnly<typeof current.RedisCache>, TypeOnly<typeof old.RedisCache>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "ClassStatics_RedisCollaborationSessionManager": {"backCompat": false}
+ */
+declare type current_as_old_for_ClassStatics_RedisCollaborationSessionManager = requireAssignableTo<TypeOnly<typeof current.RedisCollaborationSessionManager>, TypeOnly<typeof old.RedisCollaborationSessionManager>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -781,7 +832,6 @@ declare type current_as_old_for_ClassStatics_ThrottlerHelper = requireAssignable
  * typeValidation.broken:
  * "ClassStatics_WebServer": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_WebServer = requireAssignableTo<TypeOnly<typeof current.WebServer>, TypeOnly<typeof old.WebServer>>
 
 /*
@@ -936,6 +986,24 @@ declare type old_as_current_for_Interface_INodeClusterConfig = requireAssignable
  * "Interface_INodeClusterConfig": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_INodeClusterConfig = requireAssignableTo<TypeOnly<current.INodeClusterConfig>, TypeOnly<old.INodeClusterConfig>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRedisCollaborationSessionManagerOptions": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IRedisCollaborationSessionManagerOptions = requireAssignableTo<TypeOnly<old.IRedisCollaborationSessionManagerOptions>, TypeOnly<current.IRedisCollaborationSessionManagerOptions>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IRedisCollaborationSessionManagerOptions": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IRedisCollaborationSessionManagerOptions = requireAssignableTo<TypeOnly<current.IRedisCollaborationSessionManagerOptions>, TypeOnly<old.IRedisCollaborationSessionManagerOptions>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.

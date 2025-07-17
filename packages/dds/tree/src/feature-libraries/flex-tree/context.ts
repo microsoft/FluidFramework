@@ -54,16 +54,12 @@ export interface FlexTreeContext {
 }
 
 /**
- * A common context of a "forest" of FlexTrees.
- * It handles group operations like transforming cursors into anchors for edits.
+ * Subset of a hydrated context which can be used in more cases (like before the root and events are set up).
  */
-export interface FlexTreeHydratedContext extends FlexTreeContext {
-	readonly events: Listenable<ForestEvents>;
+export interface FlexTreeHydratedContextMinimal {
 	/**
-	 * Gets the root field of the tree.
+	 * The {@link NodeIdentifierManager} responsible for allocating and compressing identifiers for nodes in this context.
 	 */
-	get root(): FlexTreeField;
-
 	readonly nodeKeyManager: NodeIdentifierManager;
 
 	/**
@@ -73,13 +69,27 @@ export interface FlexTreeHydratedContext extends FlexTreeContext {
 }
 
 /**
+ * A common context of a "forest" of FlexTrees.
+ * It handles group operations like transforming cursors into anchors for edits.
+ */
+export interface FlexTreeHydratedContext
+	extends FlexTreeContext,
+		FlexTreeHydratedContextMinimal {
+	readonly events: Listenable<ForestEvents>;
+	/**
+	 * Gets the root field of the tree.
+	 */
+	get root(): FlexTreeField;
+}
+
+/**
  * Creating multiple flex tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
  * This slot is used to detect if one already exists and error if creating a second.
  */
 export const ContextSlot = anchorSlot<Context>();
 
 /**
- * Implementation of `FlexTreeContext`.
+ * Implementation of `FlexTreeHydratedContext`.
  *
  * @remarks An editor is required to edit the FlexTree.
  *
@@ -92,7 +102,12 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	public readonly withCursors: Set<LazyEntity> = new Set();
 	public readonly withAnchors: Set<LazyEntity> = new Set();
 
-	private readonly eventUnregister: (() => void)[];
+	/**
+	 * Callbacks to run when disposing.
+	 *
+	 * Mainly event un-registration.
+	 */
+	private readonly onDispose: (() => void)[];
 	private disposed = false;
 
 	/**
@@ -111,7 +126,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		 */
 		public readonly nodeKeyManager: NodeIdentifierManager,
 	) {
-		this.eventUnregister = [
+		this.onDispose = [
 			this.checkout.forest.events.on("beforeChange", () => {
 				this.prepareForEdit();
 			}),
@@ -153,10 +168,10 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 		assert(this.disposed === false, 0x803 /* double dispose */);
 		this.disposed = true;
 		this.clear();
-		for (const unregister of this.eventUnregister) {
+		for (const unregister of this.onDispose) {
 			unregister();
 		}
-		this.eventUnregister.length = 0;
+		this.onDispose.length = 0;
 
 		const deleted = this.checkout.forest.anchors.slots.delete(ContextSlot);
 		assert(deleted, 0x8c4 /* unexpected dispose */);
@@ -198,7 +213,7 @@ export class Context implements FlexTreeHydratedContext, IDisposable {
 	 * Additionally if the detached field's content is deleted, the field will become out of schema if it is required: it must not be used after that point.
 	 */
 	public detachedField(key: DetachedField, schema: FieldKindIdentifier): FlexTreeField {
-		assert(this.disposed === false, "use after dispose");
+		assert(this.disposed === false, 0xb9c /* use after dispose */);
 
 		const cursor = this.checkout.forest.allocateCursor("root");
 		moveToDetachedField(this.checkout.forest, cursor, key);

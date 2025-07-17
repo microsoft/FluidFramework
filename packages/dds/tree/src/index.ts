@@ -113,6 +113,7 @@ export {
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
 	type FieldProps,
+	type FieldPropsAlpha,
 	type InternalTreeNode,
 	type WithType,
 	type NodeChangedData,
@@ -130,6 +131,7 @@ export {
 	type FieldSchemaAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
+	type TreeRecordNodeUnsafe,
 	// System types (not in Internal types for various reasons, like doc links or cannot be named errors).
 	type typeSchemaSymbol,
 	type TreeNodeSchemaNonClass,
@@ -158,6 +160,7 @@ export {
 	type ImplicitAnnotatedFieldSchema,
 	type AnnotatedAllowedType,
 	type AnnotatedAllowedTypes,
+	type NormalizedAnnotatedAllowedTypes,
 	type AllowedTypeMetadata,
 	type AllowedTypesMetadata,
 	type InsertableObjectFromAnnotatedSchemaRecord,
@@ -195,10 +198,13 @@ export {
 	type JsonRefPath,
 	type JsonSchemaType,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 	getJsonSchema,
 	type LazyItem,
 	type Unenforced,
 	type SimpleNodeSchemaBase,
+	type SimpleNodeSchemaBaseAlpha,
 	type SimpleTreeSchema,
 	type SimpleNodeSchema,
 	type SimpleFieldSchema,
@@ -207,6 +213,7 @@ export {
 	type SimpleArrayNodeSchema,
 	type SimpleObjectNodeSchema,
 	type SimpleObjectFieldSchema,
+	type SimpleRecordNodeSchema,
 	normalizeAllowedTypes,
 	getSimpleSchema,
 	type ReadonlyArrayNode,
@@ -216,6 +223,7 @@ export {
 	type TreeBranchEvents,
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
 	type NodeSchemaMetadata,
 	type SchemaStatics,
 	type ITreeAlpha,
@@ -246,6 +254,11 @@ export {
 	type ObjectFromSchemaRecord,
 	type ValidateRecursiveSchemaTemplate,
 	type FixRecursiveRecursionLimit,
+	RecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	type TreeRecordNode,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
@@ -256,6 +269,7 @@ export { persistedToSimpleSchema } from "./shared-tree/index.js";
 
 export {
 	type ICodecOptions,
+	type CodecWriteOptions,
 	type JsonValidator,
 	type SchemaValidationFunction,
 	FluidClientVersion,
@@ -282,6 +296,8 @@ export type {
 	PopUnion,
 	JsonCompatible,
 	JsonCompatibleObject,
+	JsonCompatibleReadOnly,
+	JsonCompatibleReadOnlyObject,
 } from "./util/index.js";
 export { cloneWithReplacements } from "./util/index.js";
 

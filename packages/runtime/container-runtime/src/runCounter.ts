@@ -45,7 +45,10 @@ export class BatchRunCounter extends RunCounter {
 	}
 
 	public run<T>(act: () => T, resubmitInfo?: BatchResubmitInfo): T {
-		assert(this.#resubmitInfo === undefined, "Reentrancy not allowed in BatchRunCounter");
+		assert(
+			this.#resubmitInfo === undefined,
+			0xba2 /* Reentrancy not allowed in BatchRunCounter */,
+		);
 		this.#resubmitInfo = resubmitInfo;
 		try {
 			return super.run(act);

@@ -54,7 +54,7 @@ import {
 
 import { getOrCreateInnerNode } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { isObjectNodeSchema } from "../../../simple-tree/objectNodeTypes.js";
+import { isObjectNodeSchema } from "../../../simple-tree/node-kinds/index.js";
 import {
 	SchemaFactory,
 	TreeArrayNode,
@@ -437,9 +437,9 @@ export function applyConstraint(state: FuzzTestState, constraint: Constraint) {
 				: undefined;
 
 			if (constraintNode !== undefined) {
-				tree.checkout.editor.addNodeExistsConstraint(
-					getOrCreateInnerNode(constraintNode).anchorNode,
-				);
+				const flex = getOrCreateInnerNode(constraintNode);
+				assert(flex.isHydrated());
+				tree.checkout.editor.addNodeExistsConstraint(flex.anchorNode);
 			}
 			break;
 		}

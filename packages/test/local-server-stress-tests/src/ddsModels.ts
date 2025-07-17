@@ -8,11 +8,15 @@ import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { baseMapModel, baseDirModel } from "@fluidframework/map/internal/test";
+// eslint-disable-next-line import/no-internal-modules
+import { baseSharedMatrixModel } from "@fluidframework/matrix/internal/test";
 import {
 	baseSharedStringModel,
 	baseIntervalModel,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/sequence/internal/test";
+// eslint-disable-next-line import/no-internal-modules
+import { baseTreeModel } from "@fluidframework/tree/internal/test";
 
 function repeatFactoryAsync<T, TState = void>(
 	factory: () => AsyncGenerator<T, TState>,
@@ -65,4 +69,6 @@ export const ddsModelMap = generateSubModelMap(
 	baseDirModel,
 	baseSharedStringModel,
 	baseIntervalModel,
+	baseSharedMatrixModel,
+	baseTreeModel,
 );

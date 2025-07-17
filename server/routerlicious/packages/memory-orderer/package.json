@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/server-memory-orderer",
-	"version": "6.0.0",
+	"version": "8.0.0",
 	"description": "Fluid server in memory orderer",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -81,8 +81,8 @@
 		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.56.0",
-		"@fluidframework/eslint-config-fluid": "^5.2.0",
-		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@5.0.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/server-memory-orderer-previous": "npm:@fluidframework/server-memory-orderer@7.0.0",
 		"@types/mocha": "^10.0.1",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
@@ -94,23 +94,7 @@
 		"webpack": "^5.94.0"
 	},
 	"typeValidation": {
-		"broken": {
-			"Class_LocalContext": {
-				"forwardCompat": false
-			},
-			"Class_LocalKafka": {
-				"forwardCompat": false
-			},
-			"Class_LocalLambdaController": {
-				"forwardCompat": false
-			},
-			"Class_LocalOrderer": {
-				"forwardCompat": false
-			},
-			"Interface_IKafkaSubscriber": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "public"
 	}
 }

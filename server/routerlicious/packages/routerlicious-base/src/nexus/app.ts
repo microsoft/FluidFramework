@@ -3,22 +3,23 @@
  * Licensed under the MIT License.
  */
 
+import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
-import * as bodyParser from "body-parser";
-import express from "express";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
-import { catch404, getTenantIdFromRequest, handleError } from "../utils";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
+import * as bodyParser from "body-parser";
+import express from "express";
 import type { Provider } from "nconf";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
+
+import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 
 export function create(
 	config: Provider,
@@ -36,8 +37,10 @@ export function create(
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("nexus", (tokens, req, res) => {
+				const tenantId = getTenantIdFromRequest(req.params);
+				res.locals.tenantId = tenantId;
 				return {
-					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+					[BaseTelemetryProperties.tenantId]: tenantId,
 					[CommonProperties.callingServiceName]:
 						req.headers[CallingServiceHeaderName] ?? "",
 				};
@@ -46,7 +49,9 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.json());
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.urlencoded({ extended: false }));
 
 	const healthEndpoints = createHealthCheckEndpoints("nexus", startupCheck, readinessCheck);

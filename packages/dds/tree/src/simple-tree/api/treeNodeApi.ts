@@ -3,19 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import { EmptyKey, rootFieldKey } from "../../core/index.js";
 import { type TreeStatus, isTreeValue, FieldKinds } from "../../feature-libraries/index.js";
 import { extractFromOpaque } from "../../util/index.js";
-import {
-	type TreeLeafValue,
-	type ImplicitFieldSchema,
-	FieldSchema,
-	type ImplicitAllowedTypes,
-	type TreeNodeFromImplicitAllowedTypes,
-	normalizeAllowedTypes,
-} from "../schemaTypes.js";
+import { type ImplicitFieldSchema, FieldSchema } from "../fieldSchema.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -34,18 +27,27 @@ import {
 	type TreeNode,
 	tryGetTreeNodeSchema,
 	getOrCreateNodeFromInnerNode,
-	UnhydratedFlexTreeNode,
 	typeSchemaSymbol,
 	getOrCreateInnerNode,
+	type TreeLeafValue,
+	type ImplicitAllowedTypes,
+	type TreeNodeFromImplicitAllowedTypes,
+	normalizeAllowedTypes,
 } from "../core/index.js";
-import { isObjectNodeSchema } from "../objectNodeTypes.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
-import { lazilyAllocateIdentifier } from "../objectNode.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { tryGetTreeNodeForField } from "../getTreeNodeForField.js";
 
 /**
  * Provides various functions for analyzing {@link TreeNode}s.
- * * @remarks
- * This type should only be used via the public `Tree` export.
+ *
+ * @remarks
+ * With the exception of {@link TreeNodeApi.status}, these functions should not be called with nodes that have
+ * been {@link TreeStatus.Deleted | deleted}.
+ * To verify whether or not a node already has been deleted, use the {@link TreeNodeApi.status} function.
+ *
+ * This type should only be used via the public {@link (Tree:variable)} export.
+ *
  * @privateRemarks
  * Due to limitations of API-Extractor link resolution, this type can't be moved into internalTypes but should be considered just an implementation detail of the `Tree` export.
  *
@@ -76,14 +78,22 @@ export interface TreeNodeApi {
 
 	/**
 	 * Return the node under which this node resides in the tree (or undefined if this is a root node of the tree).
+	 *
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
+	 *
+	 * @see {@link (TreeAlpha:interface).child}
+	 * @see {@link (TreeAlpha:interface).children}
 	 */
 	parent(node: TreeNode): TreeNode | undefined;
 
 	/**
 	 * The key of the given node under its parent.
+	 *
 	 * @remarks
 	 * If `node` is an element in a {@link (TreeArrayNode:interface)}, this returns the index of `node` in the array node (a `number`).
 	 * Otherwise, this returns the key of the field that it is under (a `string`).
+	 *
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been {@link TreeStatus.Deleted | deleted}.
 	 */
 	key(node: TreeNode): string | number;
 
@@ -127,7 +137,7 @@ export interface TreeNodeApi {
 }
 
 /**
- * The `Tree` object holds various functions for analyzing {@link TreeNode}s.
+ * {@inheritDoc TreeNodeApi}
  */
 export const treeNodeApi: TreeNodeApi = {
 	parent(node: TreeNode): TreeNode | undefined {
@@ -180,7 +190,7 @@ export const treeNodeApi: TreeNodeApi = {
 						);
 						listener({ changedProperties });
 					});
-				} else if (nodeSchema.kind === NodeKind.Array) {
+				} else if (isArrayNodeSchema(nodeSchema)) {
 					return kernel.events.on("childrenChangedAfterBatch", () => {
 						listener({ changedProperties: undefined });
 					});
@@ -304,29 +314,39 @@ export function getIdentifierFromNode(
 			return undefined;
 		case 1: {
 			const key = identifierFieldKeys[0] ?? oob();
-			const identifier = flexNode.tryGetField(key)?.boxedAt(0);
-			if (flexNode instanceof UnhydratedFlexTreeNode) {
-				if (identifier === undefined) {
-					return lazilyAllocateIdentifier(flexNode, key);
-				}
-				return identifier.value as string;
-			}
-			assert(
-				identifier?.context.isHydrated() === true,
-				0xa27 /* Expected hydrated identifier */,
-			);
-			const identifierValue = identifier.value as string;
+			const identifierField = flexNode.tryGetField(key);
+			assert(identifierField !== undefined, 0xbb5 /* missing identifier field */);
+			const identifierValue = tryGetTreeNodeForField(identifierField);
+			assert(typeof identifierValue === "string", 0xbb6 /* identifier not a string */);
 
-			if (compression === "preferCompressed") {
-				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : identifierValue;
-			} else if (compression === "compressed") {
-				const localNodeKey =
-					identifier.context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
-				return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+			const context = flexNode.context;
+			switch (compression) {
+				case "preferCompressed": {
+					if (context.isHydrated()) {
+						const localNodeKey =
+							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+						return localNodeKey !== undefined
+							? extractFromOpaque(localNodeKey)
+							: identifierValue;
+					} else {
+						return identifierValue;
+					}
+				}
+				case "compressed": {
+					if (context.isHydrated()) {
+						const localNodeKey =
+							context.nodeKeyManager.tryLocalizeNodeIdentifier(identifierValue);
+						return localNodeKey !== undefined ? extractFromOpaque(localNodeKey) : undefined;
+					} else {
+						return undefined;
+					}
+				}
+				case "uncompressed": {
+					return identifierValue;
+				}
+				default:
+					unreachableCase(compression);
 			}
-			return identifierValue;
 		}
 		default:
 			throw new UsageError(

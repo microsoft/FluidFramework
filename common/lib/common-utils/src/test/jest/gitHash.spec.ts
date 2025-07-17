@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import http from "http";
-import { AddressInfo } from "net";
+import type { AddressInfo } from "net";
 import path from "path";
 
 import rewire from "rewire";

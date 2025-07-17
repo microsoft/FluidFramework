@@ -13,7 +13,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
 import {
-	cursorFromInsertable,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -29,13 +28,13 @@ import {
 import {
 	checkoutWithContent,
 	createTestUndoRedoStacks,
+	fieldCursorFromInsertable,
 	getView,
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
-	CheckoutFlexTreeView,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
@@ -58,12 +57,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
-	nodeKeyManager = new MockNodeIdentifierManager(),
 ): TreeCheckout {
-	const initialTree = cursorFromInsertable<UnsafeUnknownSchema>(
+	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
-		nodeKeyManager,
 	);
 	const treeContent: TreeStoredContent = {
 		schema: toStoredSchema(viewConfig.schema),
@@ -153,7 +150,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 					const root = new Root({ content: 5 });
 
-					const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
+					const inner = getKernel(root).getOrCreateInnerNode();
 					const field = inner.getBoxed(brand("content"));
 					const child = field.boxedAt(0) ?? assert.fail("Expected child");
 					assert(child instanceof UnhydratedFlexTreeNode);
@@ -163,7 +160,7 @@ describe("SchematizingSimpleTreeView", () => {
 					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
 					// In production cases this extra validation exists to help prevent corruption when bugs
 					// allow invalid data through the public API.
-					(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
+					(child.data as Mutable<typeof child.data>).value = "invalid value";
 
 					assert.throws(
 						() => view.initialize(root),
@@ -266,6 +263,26 @@ describe("SchematizingSimpleTreeView", () => {
 		view.root = 6;
 
 		assert.deepEqual(log, [["rootChanged", 6]]);
+	});
+
+	it("Modify root to undefined", () => {
+		const config2 = new TreeViewConfiguration({
+			schema: SchemaFactory.optional(schema.number),
+		});
+		const checkout = checkoutWithInitialTree(config2, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config2,
+			new MockNodeIdentifierManager(),
+		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
+		assert.equal(view.root, 5);
+		const log: [string, unknown][] = [];
+
+		view.root = undefined;
+
+		assert.deepEqual(log, [["rootChanged", undefined]]);
 	});
 
 	it("Schema becomes un-upgradeable then exact match again", () => {
@@ -604,7 +621,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
 			const stringArrayContent = {
 				schema: stringArrayStoredSchema,
-				initialTree: cursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
+				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),
 			};
 			const checkout = checkoutWithContent(stringArrayContent);
 			const main = new SchematizingSimpleTreeView(
@@ -802,11 +819,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getView();
-				assert(checkoutView instanceof CheckoutFlexTreeView);
-				const { undoStack, redoStack } = createTestUndoRedoStacks(
-					checkoutView.checkout.events,
-				);
+				const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
 
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;

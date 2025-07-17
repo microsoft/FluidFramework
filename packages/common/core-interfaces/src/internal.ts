@@ -10,6 +10,8 @@ export * from "./index.js";
 //  index.js is listed as the runtime file. This is done so that all imports are
 //  using the same outer runtime file. (Could be changed if needed.)
 
+export type { JsonTypeToOpaqueJson, OpaqueJsonToJsonType } from "./jsonUtils.js";
+
 // Export set of utility types re-tagged as internal for FF client convenience.
 // These types are not intended for direct use by customers and api-extractor will
 // flag misuse. If an externally visible version of these types is needed, import
@@ -28,6 +30,10 @@ import type {
 	JsonTypeWith as ExposedJsonTypeWith,
 	ReadonlyNonNullJsonObjectWith as ExposedReadonlyNonNullJsonObjectWith,
 } from "./jsonType.js";
+import type {
+	OpaqueJsonDeserialized as ExposedOpaqueJsonDeserialized,
+	OpaqueJsonSerializable as ExposedOpaqueJsonSerializable,
+} from "./opaqueJson.js";
 
 // Note: There are no docs for these re-exports. `@inheritdoc` cannot be used as:
 //   1. api-extractor does not support renames.
@@ -74,9 +80,29 @@ export type ReadonlyNonNullJsonObjectWith<T> = ExposedReadonlyNonNullJsonObjectW
 /**
  * @internal
  */
+export type OpaqueJsonDeserialized<
+	T,
+	Option_AllowExactly extends unknown[] = [],
+	Option_AllowExtensionOf = never,
+> = ExposedOpaqueJsonDeserialized<T, Option_AllowExactly, Option_AllowExtensionOf>;
+
+/**
+ * @internal
+ */
+export type OpaqueJsonSerializable<
+	T,
+	Option_AllowExactly extends unknown[] = [],
+	Option_AllowExtensionOf = never,
+> = ExposedOpaqueJsonSerializable<T, Option_AllowExactly, Option_AllowExtensionOf>;
+
+/**
+ * @internal
+ */
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
 	/* eslint-disable jsdoc/require-jsdoc */
+	export type FlattenIntersection<T extends ExposedInternalUtilityTypes.AnyRecord> =
+		ExposedInternalUtilityTypes.FlattenIntersection<T>;
 	export type IfSameType<
 		X,
 		Y,

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
 import { type IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
 	FluidHandleBase,
@@ -42,12 +41,6 @@ export class DDSFuzzHandle extends FluidHandleBase<string> {
 			this.attached = true;
 		}
 	}
-
-	// eslint-disable-next-line jsdoc/require-description
-	/**
-	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
-	 */
-	public bind(handle: IFluidHandle): void {}
 }
 
 export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IPoisonedHandle {
@@ -80,10 +73,4 @@ export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IP
 			this.attached = true;
 		}
 	}
-
-	// eslint-disable-next-line jsdoc/require-description
-	/**
-	 * @deprecated No replacement provided. Arbitrary handles may not serve as a bind source.
-	 */
-	public bind(handle: IFluidHandle): void {}
 }

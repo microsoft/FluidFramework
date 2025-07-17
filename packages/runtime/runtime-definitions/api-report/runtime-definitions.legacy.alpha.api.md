@@ -76,7 +76,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly baseLogger: ITelemetryBaseLogger;
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
+    createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
@@ -169,7 +169,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
-    readonly packagePath: readonly string[];
+    readonly packagePath: PackagePath;
 }
 
 // @alpha @legacy (undocumented)
@@ -263,9 +263,9 @@ export interface IGarbageCollectionDetailsBase {
 }
 
 // @alpha @legacy
-export interface IInboundSignalMessage extends ISignalMessage {
+export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessage<TMessage> {
     // (undocumented)
-    readonly type: string;
+    readonly type: TMessage["type"];
 }
 
 // @alpha @legacy
@@ -412,6 +412,9 @@ export interface OpAttributionKey {
     seq: number;
     type: "op";
 }
+
+// @alpha @legacy
+export type PackagePath = readonly string[];
 
 // @alpha @sealed @deprecated @legacy (undocumented)
 export interface StageControlsExperimental {

@@ -10,4 +10,5 @@
 //   - Export '__dirname' from a .cjs file in the same directory.
 //
 // Note that *.cjs files are always CommonJS, but can be imported from ESM.
+// eslint-disable-next-line jsdoc/require-jsdoc
 export const _dirname = __dirname;

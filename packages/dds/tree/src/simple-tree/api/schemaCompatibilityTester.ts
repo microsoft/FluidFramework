@@ -23,11 +23,7 @@ import {
 	fieldRealizer,
 	comparePosetElements,
 } from "../../feature-libraries/index.js";
-import {
-	normalizeFieldSchema,
-	type FieldSchema,
-	type FieldSchemaAlpha,
-} from "../schemaTypes.js";
+import type { FieldSchema } from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
@@ -300,7 +296,7 @@ export class SchemaCompatibilityTester {
 				}
 			}
 
-			return { kind: original.kind, types };
+			return { kind: original.kind, types, persistedMetadata: undefined };
 		}
 		return original;
 	}

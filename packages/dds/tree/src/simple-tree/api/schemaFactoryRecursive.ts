@@ -4,16 +4,21 @@
  */
 
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type { NodeKind, TreeNodeSchema, WithType, TreeNode } from "../core/index.js";
-import type { InsertableObjectFromSchemaRecord } from "../objectNode.js";
+import type {
+	NodeKind,
+	TreeNodeSchema,
+	WithType,
+	TreeNode,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+} from "../core/index.js";
+import type { InsertableObjectFromSchemaRecord } from "../node-kinds/index.js";
 import {
 	type FieldKind,
 	type FieldProps,
 	createFieldSchema,
-	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 
 import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
 
@@ -168,7 +173,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
 	// Name: This validator places no restrictions on the name other than that it's a string (as required by TreeNodeSchemaClass).
 	string,
 	// NodeKind: These are the NodeKinds which currently can be used recursively.
-	NodeKind.Array | NodeKind.Map | NodeKind.Object,
+	NodeKind.Array | NodeKind.Map | NodeKind.Object | NodeKind.Record,
 	// TNode: The produced node API. This is pretty minimal validation: more could be added if similar to how TInsertable works below if needed.
 	TreeNode & WithType<T["identifier"], T["kind"]>,
 	// TInsertable: What can be passed to the constructor. This should be enough to catch most issues with incorrect schema.
@@ -183,6 +188,9 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
 		[NodeKind.Map]: T["info"] extends ImplicitAllowedTypes
 			? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]>
 			: unknown;
+		[NodeKind.Record]: {
+			readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypes<T>;
+		};
 		[NodeKind.Leaf]: unknown;
 	}[T["kind"]],
 	// ImplicitlyConstructable: recursive types are currently not implicitly constructable.
@@ -192,6 +200,7 @@ export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNode
 		[NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
 		[NodeKind.Array]: ImplicitAllowedTypes;
 		[NodeKind.Map]: ImplicitAllowedTypes;
+		[NodeKind.Record]: ImplicitAllowedTypes;
 		[NodeKind.Leaf]: unknown;
 	}[T["kind"]]
 >;

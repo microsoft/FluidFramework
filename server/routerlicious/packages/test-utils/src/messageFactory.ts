@@ -21,7 +21,6 @@ import {
 	RawOperationType,
 	SequencedOperationType,
 } from "@fluidframework/server-services-core";
-
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import hash = require("string-hash");
 

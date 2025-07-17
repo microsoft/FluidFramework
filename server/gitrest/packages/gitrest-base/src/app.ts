@@ -8,6 +8,8 @@ import {
 	DriverVersionHeaderName,
 	CallingServiceHeaderName,
 } from "@fluidframework/server-services-client";
+import { IReadinessCheck } from "@fluidframework/server-services-core";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
 	HttpProperties,
@@ -26,6 +28,7 @@ import compression from "compression";
 import cors from "cors";
 import express, { Express } from "express";
 import nconf from "nconf";
+
 import * as routes from "./routes";
 import {
 	Constants,
@@ -34,8 +37,6 @@ import {
 	IRepoManagerParams,
 	IRepositoryManagerFactory,
 } from "./utils";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 
 function getTenantIdForGitRestRequest(params: IRepoManagerParams, request: express.Request) {
 	return params.storageRoutingId?.tenantId ?? (request.body as ICreateRepoParams)?.name;
@@ -66,20 +67,21 @@ export function create(
 				"gitrest",
 				(tokens, req, res) => {
 					const params = getRepoManagerParamsFromRequest(req);
+					const tenantId = getTenantIdForGitRestRequest(params, req);
+					const documentId = params.storageRoutingId?.documentId;
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
 							res,
 							DriverVersionHeaderName,
 						),
-						[BaseTelemetryProperties.tenantId]: getTenantIdForGitRestRequest(
-							params,
-							req,
-						),
-						[BaseTelemetryProperties.documentId]: params.storageRoutingId?.documentId,
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
 						[CommonProperties.callingServiceName]:
 							req.headers[CallingServiceHeaderName] ?? "",
 					};
+					res.locals.tenantId = tenantId;
+					res.locals.documentId = documentId;
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
 						additionalProperties.isEphemeralContainer = req.get(
 							Constants.IsEphemeralContainer,
