@@ -163,6 +163,86 @@ const tenantWithoutSharedKeys: ITenantDocument = {
 	},
 };
 
+// Add this new tenant object to your test data
+const tenantWithDisabledNetworkAccess: ITenantDocument = {
+	_id: "public-network-test-tenant",
+	orderer: {
+		type: "kafka",
+		url: "http://localhost:3003",
+	},
+	storage: {
+		historianUrl: "http://localhost:3001",
+		internalHistorianUrl: "http://historian:3000",
+		url: "http://gitrest:3000",
+		owner: "fluid",
+		repository: "fluid",
+		credentials: {
+			user: "user1",
+			password: "password1",
+		},
+	},
+	customData: {
+		encryptionKeyVersion: "2022",
+	},
+	disabled: false,
+	key: "abcd",
+	secondaryKey: "efgh",
+	publicNetworkAccessEnabled: false, // Explicitly disabled
+};
+
+// Add these new tenant objects after the existing ones
+const tenantWithoutPublicNetworkAccessProperty: ITenantDocument = {
+	_id: "public-network-test-tenant",
+	orderer: {
+		type: "kafka",
+		url: "http://localhost:3003",
+	},
+	storage: {
+		historianUrl: "http://localhost:3001",
+		internalHistorianUrl: "http://historian:3000",
+		url: "http://gitrest:3000",
+		owner: "fluid",
+		repository: "fluid",
+		credentials: {
+			user: "user1",
+			password: "password1",
+		},
+	},
+	customData: {
+		encryptionKeyVersion: "2022",
+	},
+	disabled: false,
+	key: "abcd",
+	secondaryKey: "efgh",
+	// No publicNetworkAccessEnabled property - should default to true
+};
+
+const tenantWithEnabledNetworkAccess: ITenantDocument = {
+	_id: "public-network-test-tenant",
+	orderer: {
+		type: "kafka",
+		url: "http://localhost:3003",
+	},
+	storage: {
+		historianUrl: "http://localhost:3001",
+		internalHistorianUrl: "http://historian:3000",
+		url: "http://gitrest:3000",
+		owner: "fluid",
+		repository: "fluid",
+		credentials: {
+			user: "user1",
+			password: "password1",
+		},
+	},
+	customData: {
+		encryptionKeyVersion: "2022",
+	},
+	disabled: false,
+	key: "abcd",
+	secondaryKey: "efgh",
+	publicNetworkAccessEnabled: true, // Explicitly enabled
+};
+
 const keylessAccessTokenClaims = {
 	documentId: "documentId",
 	tenantId: "cordflasher-dolphin",
@@ -818,6 +898,179 @@ describe("TenantManager", () => {
 				assert.strictEqual(
 					err.message,
 					`Tenant ${tenantWithoutPrivateKeys._id} does not have private key access enabled.`,
+				);
+				return true;
+			});
+		});
+	});
+
+	describe("updatePublicNetworkAccessPolicy", () => {
+		it("Should throw a 404 when tenant is not found", async () => {
+			sandbox.stub(tenantRepository, "findOne").resolves(null);
+			const updateP = tenantManager.updatePublicNetworkAccessPolicy(
+				"public-network-test-tenant",
+				false,
+			);
+			await assert.rejects(updateP, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 404);
+				assert.strictEqual(
+					err.message,
+					"Could not find tenant: public-network-test-tenant",
+				);
+				return true;
+			});
+		});
+
+		it("Should return existing config when publicNetworkAccessEnabled is undefined (defaults to true)", async () => {
+			const findOneStub = sandbox
+				.stub(tenantRepository, "findOne")
+				.resolves(tenantWithoutPublicNetworkAccessProperty);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			// tenantWithoutPublicNetworkAccessProperty has publicNetworkAccessEnabled undefined
+			const updatedTenant: ITenantConfig =
+				await tenantManager.updatePublicNetworkAccessPolicy(
+					"public-network-test-tenant",
+					true,
+				);
+
+			assert.strictEqual(updatedTenant.publicNetworkAccessEnabled, true);
+			sandbox.assert.calledOnce(findOneStub);
+			sandbox.assert.notCalled(updateStub);
+		});
+
+		it("Should return existing config when publicNetworkAccessEnabled value is unchanged (when true)", async () => {
+			const findOneStub = sandbox
+				.stub(tenantRepository, "findOne")
+				.resolves(tenantWithEnabledNetworkAccess);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const updatedTenant: ITenantConfig =
+				await tenantManager.updatePublicNetworkAccessPolicy(
+					"public-network-test-tenant",
+					true,
+				);
+
+			assert.strictEqual(updatedTenant.publicNetworkAccessEnabled, true);
+			sandbox.assert.calledOnce(findOneStub);
+			sandbox.assert.notCalled(updateStub);
+		});
+
+		it("Should return existing config when publicNetworkAccessEnabled value is unchanged (when false)", async () => {
+			const findOneStub = sandbox
+				.stub(tenantRepository, "findOne")
+				.resolves(tenantWithDisabledNetworkAccess);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const updatedTenant: ITenantConfig =
+				await tenantManager.updatePublicNetworkAccessPolicy(
+					"public-network-test-tenant",
+					false,
+				);
+
+			assert.strictEqual(updatedTenant.publicNetworkAccessEnabled, false);
+			sandbox.assert.calledOnce(findOneStub);
+			sandbox.assert.notCalled(updateStub);
+		});
+
+		it("Should update publicNetworkAccessEnabled to false when currently enabled by default (undefined)", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithoutPublicNetworkAccessProperty);
+			// Create a tenant with publicNetworkAccessEnabled explicitly set to false
+			const updatedTenant = {
+				...tenantWithoutPublicNetworkAccessProperty,
+				publicNetworkAccessEnabled: false,
+			};
+			mongoFindOneStub.onSecondCall().resolves(updatedTenant);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const result: ITenantConfig = await tenantManager.updatePublicNetworkAccessPolicy(
+				"public-network-test-tenant",
+				false,
+			);
+
+			assert.strictEqual(result.publicNetworkAccessEnabled, false);
+			sandbox.assert.calledTwice(mongoFindOneStub);
+			sandbox.assert.calledOnce(updateStub);
+			sandbox.assert.calledWith(
+				updateStub,
+				{ _id: "public-network-test-tenant" },
+				{ publicNetworkAccessEnabled: false },
+				null,
+			);
+		});
+
+		it("Should update publicNetworkAccessEnabled to false when currently enabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithEnabledNetworkAccess);
+			// Create a tenant with publicNetworkAccessEnabled explicitly set to false
+			const updatedTenant = {
+				...tenantWithEnabledNetworkAccess,
+				publicNetworkAccessEnabled: false,
+			};
+			mongoFindOneStub.onSecondCall().resolves(updatedTenant);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const result: ITenantConfig = await tenantManager.updatePublicNetworkAccessPolicy(
+				"public-network-test-tenant",
+				false,
+			);
+
+			assert.strictEqual(result.publicNetworkAccessEnabled, false);
+			sandbox.assert.calledTwice(mongoFindOneStub);
+			sandbox.assert.calledOnce(updateStub);
+			sandbox.assert.calledWith(
+				updateStub,
+				{ _id: "public-network-test-tenant" },
+				{ publicNetworkAccessEnabled: false },
+				null,
+			);
+		});
+
+		it("Should update publicNetworkAccessEnabled to true when currently disabled", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithDisabledNetworkAccess);
+			// Create a tenant with publicNetworkAccessEnabled explicitly set to true
+			const updatedTenant = {
+				...tenantWithDisabledNetworkAccess,
+				publicNetworkAccessEnabled: true,
+			};
+			mongoFindOneStub.onSecondCall().resolves(updatedTenant);
+			const updateStub = sandbox.stub(tenantRepository, "update").resolves();
+
+			const result: ITenantConfig = await tenantManager.updatePublicNetworkAccessPolicy(
+				"public-network-test-tenant",
+				true,
+			);
+
+			assert.strictEqual(result.publicNetworkAccessEnabled, true);
+			sandbox.assert.calledTwice(mongoFindOneStub);
+			sandbox.assert.calledOnce(updateStub);
+			sandbox.assert.calledWith(
+				updateStub,
+				{ _id: "public-network-test-tenant" },
+				{ publicNetworkAccessEnabled: true },
+				null,
+			);
+		});
+
+		it("Should throw a 404 when updated tenant is not found after database update", async () => {
+			const mongoFindOneStub = sandbox.stub(tenantRepository, "findOne");
+			mongoFindOneStub.onFirstCall().resolves(tenantWithEnabledNetworkAccess);
+			mongoFindOneStub.onSecondCall().resolves(null); // Simulate tenant not found after update
+			sandbox.stub(tenantRepository, "update").resolves();
+
+			const updateP = tenantManager.updatePublicNetworkAccessPolicy(
+				"public-network-test-tenant",
+				false,
+			);
+			await assert.rejects(updateP, (err) => {
+				assert(err instanceof NetworkError);
+				assert.strictEqual(err.code, 404);
+				assert.strictEqual(
+					err.message,
+					"Could not find updated tenant: public-network-test-tenant",
 				);
 				return true;
 			});
