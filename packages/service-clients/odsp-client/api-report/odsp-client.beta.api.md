@@ -17,13 +17,13 @@ export interface IOdspTokenProvider {
 export class OdspClient {
     constructor(properties: OdspClientProps);
     // (undocumented)
-    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+    createContainer(containerSchema: TreeContainerSchema): Promise<{
+        container: IFluidContainer<TreeContainerSchema>;
         services: OdspContainerServices;
     }>;
     // (undocumented)
-    getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+    getContainer(id: string, containerSchema: TreeContainerSchema): Promise<{
+        container: IFluidContainer<TreeContainerSchema>;
         services: OdspContainerServices;
     }>;
 }

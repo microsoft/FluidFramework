@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
-import type { ContainerSchema } from "@fluidframework/fluid-static";
-import { SharedMap } from "@fluidframework/map/internal";
+import type { TreeContainerSchema } from "@fluidframework/fluid-static/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
 import type { OdspConnectionConfig } from "../interfaces.js";
 import { OdspClient } from "../odspClient.js";
@@ -56,13 +56,13 @@ function createOdspClient(props: { configProvider?: IConfigProviderBase } = {}):
 describe("OdspClient", () => {
 	// const connectTimeoutMs = 5000;
 	let client: OdspClient;
-	let schema: ContainerSchema;
+	let schema: TreeContainerSchema;
 
 	beforeEach(() => {
 		client = createOdspClient();
 		schema = {
 			initialObjects: {
-				map: SharedMap,
+				tree: SharedTree,
 			},
 		};
 	});
