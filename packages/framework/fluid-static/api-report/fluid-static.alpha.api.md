@@ -93,7 +93,7 @@ export type Myself<M extends IMember = IMember> = M & {
 export interface TreeContainerSchema extends ContainerSchema {
     // (undocumented)
     readonly initialObjects: {
-        tree: SharedObjectKind<ITree>;
+        readonly tree: SharedObjectKind<ITree>;
     };
 }
 
