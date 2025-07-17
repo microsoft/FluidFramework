@@ -121,9 +121,10 @@ export interface TreeContainerSchema extends ContainerSchema {
 }
 
 /**
- * Base interface for root data objects.
+ * Holds the collection of objects that the container was initially created with.
+ * Additionally provides the ability to dynamically create further objects during usage.
  */
-export interface IRootDataObjectBase {
+export interface IRootDataObject {
 	/**
 	 * Dynamically creates a new detached collaborative object (DDS/DataObject).
 	 *
@@ -142,40 +143,22 @@ export interface IRootDataObjectBase {
 	 * @remarks This method is used to expose uploadBlob to the IFluidContainer level. UploadBlob will upload data to server side (as of now, ODSP only). There is no downloadBlob provided as it is not needed(blob lifetime managed by server).
 	 */
 	uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
-}
 
-/**
- * Holds the collection of objects that the container was initially created with.
- * Additionally provides the ability to dynamically create further objects during usage.
- */
-export interface IRootDataObject extends IRootDataObjectBase {
 	/**
 	 * Provides a record of the initial objects defined on creation.
 	 */
 	readonly initialObjects: LoadableObjectRecord;
 }
 
-/**
- * Holds the root `SharedTree` that the container was initially created with.
- * Additionally provides the ability to dynamically create further objects during usage.
- */
-export interface ITreeRootDataObject extends IRootDataObjectBase {
-	/**
-	 * The underlying {@link @fluidframework/tree#ITree | tree}.
-	 */
-	readonly tree: ITree;
-}
-
-interface IProvideStaticEntryPoint<TRootDataObject extends IRootDataObjectBase> {
-	readonly IStaticEntryPoint: IStaticEntryPoint<TRootDataObject>;
+interface IProvideStaticEntryPoint {
+	readonly IStaticEntryPoint: IStaticEntryPoint;
 }
 
 /**
  * This is the internal entry point fluid-static creates.
  */
-export interface IStaticEntryPoint<TRootDataObject extends IRootDataObjectBase>
-	extends IProvideStaticEntryPoint<TRootDataObject> {
-	readonly rootDataObject: TRootDataObject;
+export interface IStaticEntryPoint extends IProvideStaticEntryPoint {
+	readonly rootDataObject: IRootDataObject;
 	readonly extensionStore: ContainerExtensionStore;
 }
 

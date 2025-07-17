@@ -28,14 +28,14 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
-import type { ITree } from "@fluidframework/tree";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
 	CompatibilityMode,
+	IRootDataObject,
 	IStaticEntryPoint,
-	ITreeRootDataObject,
 	LoadableObjectKind,
+	LoadableObjectRecord,
 	TreeContainerSchema,
 } from "./types.js";
 import {
@@ -54,7 +54,7 @@ import {
  * @remarks
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-class TreeRootDataObject extends TreeDataObject implements ITreeRootDataObject {
+class TreeRootDataObject extends TreeDataObject implements IRootDataObject {
 	public constructor(props: IDataObjectProps) {
 		super(props);
 	}
@@ -63,8 +63,12 @@ class TreeRootDataObject extends TreeDataObject implements ITreeRootDataObject {
 		return this;
 	}
 
-	public override get tree(): ITree {
-		return super.tree;
+	// TODO: longer term, it would be better to not have to fit into the `initialObjects` model for tree-based containers.
+	// But in the short term, fitting into this model makes migration easier.
+	public get initialObjects(): LoadableObjectRecord {
+		return {
+			tree: this.tree,
+		};
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
@@ -92,7 +96,7 @@ const treeRootDataObjectType = "treeRootDO";
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
-): Promise<IStaticEntryPoint<ITreeRootDataObject>> {
+): Promise<IStaticEntryPoint> {
 	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(treeRootDataStoreId);
 	if (entryPoint === undefined) {
 		throw new Error(`default dataStore [${treeRootDataStoreId}] must exist`);
@@ -100,7 +104,7 @@ async function provideEntryPoint(
 	const treeRootDataObject = ((await entryPoint.get()) as FluidObject<TreeRootDataObject>)
 		.TreeRootDataObject;
 	assert(treeRootDataObject !== undefined, "entryPoint must be of type TreeRootDataObject");
-	return makeFluidObject<IStaticEntryPoint<ITreeRootDataObject>>(
+	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject: treeRootDataObject,
 			extensionStore: containerRuntime as IContainerRuntimeInternal,

@@ -277,8 +277,7 @@ export async function createFluidContainer<
 >(props: {
 	container: IContainer;
 }): Promise<IFluidContainer<TContainerSchema>> {
-	const entryPoint: FluidObject<IStaticEntryPoint<IRootDataObject>> =
-		await props.container.getEntryPoint();
+	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
 	assert(
 		entryPoint.IStaticEntryPoint !== undefined,
 		0xb9e /* entryPoint must be of type IStaticEntryPoint */,

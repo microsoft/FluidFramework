@@ -160,7 +160,7 @@ const rootDataObjectType = "rootDO";
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
-): Promise<IStaticEntryPoint<IRootDataObject>> {
+): Promise<IStaticEntryPoint> {
 	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 	if (entryPoint === undefined) {
 		throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
@@ -168,7 +168,7 @@ async function provideEntryPoint(
 	const rootDataObject = ((await entryPoint.get()) as FluidObject<RootDataObject>)
 		.RootDataObject;
 	assert(rootDataObject !== undefined, 0xb9f /* entryPoint must be of type RootDataObject */);
-	return makeFluidObject<IStaticEntryPoint<IRootDataObject>>(
+	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject,
 			extensionStore: containerRuntime as IContainerRuntimeInternal,
