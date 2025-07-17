@@ -43,7 +43,7 @@ function setupRollbackTest(): RollbackTestSetup {
 	};
 }
 
-// Helper to create another client (interval collection) attached to the same containerRuntimeFactory
+// Helper to create another client attached to the same containerRuntimeFactory
 function createAdditionalClient(
 	containerRuntimeFactory: MockContainerRuntimeFactory,
 	id: string = "client-2",
@@ -227,18 +227,11 @@ describe("SharedMap rollback", () => {
 		assert.strictEqual(valueChanges.length, 10, "Should have ten value change events");
 		assert.strictEqual(clears, 1, "Should still have one clear event");
 
-		for (let i = 0; i < 10; i++) {
-			assert.strictEqual(
-				valueChanges[i].key,
-				expectedValueChanges[i].key,
-				`Event ${i} had unexpected key: ${valueChanges[i].key}`,
-			);
-			assert.strictEqual(
-				valueChanges[i].previousValue,
-				expectedValueChanges[i].previousValue,
-				`Event ${i} had unexpected previousValue: ${valueChanges[i].previousValue}`,
-			);
-		}
+		assert.deepEqual(
+			valueChanges,
+			expectedValueChanges,
+			"Value changes should match expected",
+		);
 	});
 
 	it("should rollback local changes in presence of remote changes from another client", () => {
