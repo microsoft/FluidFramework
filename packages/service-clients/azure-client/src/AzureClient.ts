@@ -7,6 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
+	type IRuntimeFactory,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -34,9 +35,14 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
+	createTreeDOProviderContainerRuntimeFactory,
+	isTreeContainerSchema,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	wrapConfigProviderWithDefaults,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
@@ -70,6 +76,10 @@ const MAX_VERSION_COUNT = 5;
 const azureClientFeatureGates = {
 	// Azure client requires a write connection by default
 	"Fluid.Container.ForceWriteConnection": true,
+
+	// Test option for enabling tree-only container mode.
+	// Should not be used in production.
+	"Fluid.Container.Test.TreeOnly": false,
 };
 
 /**
@@ -274,10 +284,22 @@ export class AzureClient {
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): ILoaderProps {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({
-			schema,
-			compatibilityMode,
-		});
+		let runtimeFactory: IRuntimeFactory;
+		if (this.configProvider?.getRawConfig("Fluid.Container.Test.TreeOnly") === true) {
+			// Verify schema meets tree-only mode requirements.
+			if (!isTreeContainerSchema(schema)) {
+				throw new UsageError("Tree-only mode requires exactly SharedTree in initialObjects.");
+			}
+			runtimeFactory = createTreeDOProviderContainerRuntimeFactory({
+				schema,
+				compatibilityMode,
+			});
+		} else {
+			runtimeFactory = createDOProviderContainerRuntimeFactory({
+				schema,
+				compatibilityMode,
+			});
+		}
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },

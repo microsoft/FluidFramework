@@ -4,6 +4,7 @@
  */
 
 import { AzureClient } from "@fluidframework/azure-client";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import type { IFluidContainer } from "fluid-framework";
@@ -21,6 +22,10 @@ import {
 import type { TodoList } from "./schema.js";
 import { TodoListAppView } from "./view.js";
 
+const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+	getRawConfig: (name: string): ConfigTypes => settings[name],
+});
+
 async function start(): Promise<void> {
 	// Create a custom ITelemetryBaseLogger object to pass into the Tinylicious container
 	// and hook to the Telemetry system
@@ -32,6 +37,9 @@ async function start(): Promise<void> {
 	const clientProps = {
 		connection: connectionConfig,
 		logger: devtoolsLogger,
+		configProvider: configProvider({
+			"Fluid.Container.Test.TreeOnly": true,
+		}),
 	};
 	const client = new AzureClient(clientProps);
 	let container: IFluidContainer<TodoListContainerSchema>;

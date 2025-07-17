@@ -32,3 +32,4 @@ export type {
 	Myself,
 	TreeContainerSchema,
 } from "./types.js";
+export { isTreeContainerSchema } from "./utils.js";

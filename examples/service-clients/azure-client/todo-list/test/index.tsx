@@ -10,8 +10,8 @@ import type {
 } from "@fluidframework/container-definitions/legacy";
 import { Loader } from "@fluidframework/container-loader/legacy";
 import {
-	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
+	createTreeDOProviderContainerRuntimeFactory,
 	// eslint-disable-next-line import/no-internal-modules -- #26986: `fluid-static` internal used in examples
 } from "@fluidframework/fluid-static/internal";
 // eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal used in examples
@@ -104,7 +104,7 @@ async function createContainerAndRenderInElement(
 	// to store ops.
 	const { container, attach } = await getSessionStorageContainer(
 		containerId,
-		createDOProviderContainerRuntimeFactory({
+		createTreeDOProviderContainerRuntimeFactory({
 			schema: todoListContainerSchema,
 			compatibilityMode: "2",
 		}),

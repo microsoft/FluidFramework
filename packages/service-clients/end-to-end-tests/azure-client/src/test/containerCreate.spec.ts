@@ -19,6 +19,7 @@ import { SharedMap } from "@fluidframework/map/internal";
 import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 import { AxiosResponse } from "axios";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
@@ -671,3 +672,58 @@ for (const testOpts of testMatrix) {
 		}
 	});
 }
+
+/**
+ * Testing creating/loading containers with a tree-based root data object.
+ */
+describe("Container create in tree-only mode", () => {
+	it("can create tree-based container", async function () {
+		const client = createAzureClient(
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.Test.TreeOnly": true,
+			}),
+		);
+		const schema = {
+			initialObjects: {
+				tree: SharedTree,
+			},
+		};
+		const { container } = await client.createContainer(schema, "2");
+
+		assert(SharedTree.is(container.initialObjects.tree));
+	});
+
+	it("throws if container schema is incompatible", async function () {
+		const client = createAzureClient(
+			undefined,
+			undefined,
+			undefined,
+			configProvider({
+				"Fluid.Container.Test.TreeOnly": true,
+			}),
+		);
+		const schema = {
+			initialObjects: {
+				map: SharedMap,
+			},
+		};
+
+		try {
+			await client.createContainer(schema, "2");
+		} catch (error) {
+			assert.equal(
+				(error as Error).message,
+				"Tree-only mode requires exactly SharedTree in initialObjects.",
+				"Unexpected error message",
+			);
+			return;
+		}
+
+		assert.fail(
+			"Expected error was not thrown when creating tree-based container with incompatible schema",
+		);
+	});
+});
