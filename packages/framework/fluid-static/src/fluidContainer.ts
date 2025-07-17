@@ -19,7 +19,7 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SharedObjectKind } from "@fluidframework/shared-object-base";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import type {
 	ContainerAttachProps,
@@ -277,7 +277,8 @@ export async function createFluidContainer<
 >(props: {
 	container: IContainer;
 }): Promise<IFluidContainer<TContainerSchema>> {
-	const entryPoint: FluidObject<IStaticEntryPoint> = await props.container.getEntryPoint();
+	const entryPoint: FluidObject<IStaticEntryPoint<IRootDataObject>> =
+		await props.container.getEntryPoint();
 	assert(
 		entryPoint.IStaticEntryPoint !== undefined,
 		0xb9e /* entryPoint must be of type IStaticEntryPoint */,

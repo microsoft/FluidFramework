@@ -9,9 +9,11 @@ import {
 	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IDataObjectProps } from "@fluidframework/aqueduct/internal";
-import type {
-	IContainerRuntimeOptions,
-	MinimumVersionForCollab,
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	FluidDataStoreRegistry,
+	type IContainerRuntimeOptions,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
@@ -22,42 +24,29 @@ import type {
 	IFluidHandle,
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
-import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
+import type { ITree } from "@fluidframework/tree";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
-import { createDataObject, createSharedObject } from "./rootDataObject.js";
 import type {
 	CompatibilityMode,
-	ContainerSchema,
-	IRootDataObject,
 	IStaticEntryPoint,
+	ITreeRootDataObject,
 	LoadableObjectKind,
-	LoadableObjectRecord,
+	TreeContainerSchema,
 } from "./types.js";
 import {
 	compatibilityModeToMinVersionForCollab,
+	createDataObject,
+	createSharedObject,
 	isDataObjectKind,
 	isSharedObjectKind,
 	makeFluidObject,
+	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
-
-/**
- * Extra properties required by {@link TreeRootDataObject}'s constructor.
- */
-interface TreeRootDataObjectExtraProps {
-	/**
-	 * The key under which the {@link @fluidframework/tree#SharedTree} was specified in the container's
-	 * {@link ContainerSchema.initialObjects}.
-	 *
-	 * @remarks
-	 * Used by {@link TreeRootDataObject.initialObjects} to ensure we output data in a format that matches the input schema.
-	 */
-	readonly treeKey: string;
-}
 
 /**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
@@ -65,35 +54,17 @@ interface TreeRootDataObjectExtraProps {
  * @remarks
  * Abstracts the dynamic code required to build a Fluid Container into a static representation for end customers.
  */
-export class TreeRootDataObject extends TreeDataObject implements IRootDataObject {
-	/**
-	 * {@inheritDoc TreeRootDataObjectExtraProps.treeKey}
-	 */
-	readonly #treeKey: string;
-
-	public constructor(props: IDataObjectProps & TreeRootDataObjectExtraProps) {
-		super({
-			...props,
-		});
-		this.#treeKey = props.treeKey ?? fail("Tree key must be provided in initProps");
+class TreeRootDataObject extends TreeDataObject implements ITreeRootDataObject {
+	public constructor(props: IDataObjectProps) {
+		super(props);
 	}
 
 	public get TreeRootDataObject(): TreeRootDataObject {
 		return this;
 	}
 
-	/**
-	 * Provides a record that mimics {@link RootDataObject.initialObjects} but contains only the provided `SharedTree`
-	 * under the key specified in the constructor.
-	 *
-	 * @remarks
-	 * Unlike {@link RootDataObject}, this type does not store specified {@link ContainerSchema.initialObjects} in a directory.
-	 * Instead, it stores a single `SharedTree` at the root.
-	 * For compatibility with the existing API, we simulate the directory structure by returning a record
-	 * with a single key that matches the {@link TreeRootDataObjectExtraProps.treeKey} provided at construction.
-	 */
-	public get initialObjects(): LoadableObjectRecord {
-		return { [this.#treeKey]: this.tree };
+	public override get tree(): ITree {
+		return super.tree;
 	}
 
 	public async create<T>(objectClass: SharedObjectKind<T>): Promise<T> {
@@ -117,11 +88,11 @@ const treeRootDataStoreId = "treeRootDOId";
  * Type of the {@link TreeRootDataObject}.
  * @remarks Used in the PureDataObjectFactory to create the root data object.
  */
-export const treeRootDataObjectType = "treeRootDO";
+const treeRootDataObjectType = "treeRootDO";
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
-): Promise<IStaticEntryPoint> {
+): Promise<IStaticEntryPoint<ITreeRootDataObject>> {
 	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(treeRootDataStoreId);
 	if (entryPoint === undefined) {
 		throw new Error(`default dataStore [${treeRootDataStoreId}] must exist`);
@@ -129,7 +100,7 @@ async function provideEntryPoint(
 	const treeRootDataObject = ((await entryPoint.get()) as FluidObject<TreeRootDataObject>)
 		.TreeRootDataObject;
 	assert(treeRootDataObject !== undefined, "entryPoint must be of type TreeRootDataObject");
-	return makeFluidObject<IStaticEntryPoint>(
+	return makeFluidObject<IStaticEntryPoint<ITreeRootDataObject>>(
 		{
 			rootDataObject: treeRootDataObject,
 			extensionStore: containerRuntime as IContainerRuntimeInternal,
@@ -142,7 +113,7 @@ async function provideEntryPoint(
  * Factory for Container Runtime instances that provide a {@link IStaticEntryPoint}
  * (containing single {@link IRootDataObject}) as their entry point.
  */
-export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	// TODO: use for runtime factory.
 	readonly #treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>;
 
@@ -177,9 +148,8 @@ export class TreeDOProviderContainerRuntimeFactory extends BaseContainerRuntimeF
 /**
  * Factory that creates instances of a tree-based root data object.
  */
-export class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject> {
+class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDataObject> {
 	public constructor(
-		treeKey: string,
 		sharedObjects: readonly IChannelFactory[] = [],
 		private readonly dataStoreRegistry: IFluidDataStoreRegistry,
 	) {
@@ -188,7 +158,6 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDat
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			return new TreeRootDataObject({
 				..._props,
-				treeKey,
 				// Add any additional injected properties here
 			});
 		} as unknown as Ctor;
@@ -208,27 +177,64 @@ export class TreeRootDataObjectFactory extends TreeDataObjectFactory<TreeRootDat
 }
 
 /**
- * Validates the container schema and extracts the factory for the tree-based data object.
- * @throws Throws an error if the schema is invalid. I.e. if its `initialObjects` does not contain exactly 1 entry that is a `SharedTree`.
+ * Creates an {@link @fluidframework/aqueduct#IRuntimeFactory} which constructs containers
+ * with an entry point containing single tree-based root data object.
+ *
+ * @remarks
+ * The entry point is opaque to caller.
+ * The root data object's registry and initial objects are configured based on the provided
+ * SharedTree (and optionally, data store registry).
+ *
+ * @legacy @alpha
  */
-export function validateAndExtractTreeKey(schema: ContainerSchema): string {
-	const schemaKeys = Object.keys(schema.initialObjects);
-	if (schemaKeys.length !== 1 || !schemaKeys[0]) {
-		throw new Error(
-			"Container schema must have exactly one initial object for tree-based data object.",
-		);
-	}
-	const singleSchemaKind = Object.values(
-		schema.initialObjects,
-	)[0] as unknown as LoadableObjectKind;
-	if (
-		!singleSchemaKind ||
-		!isSharedObjectKind(singleSchemaKind) ||
-		singleSchemaKind.getFactory().type !== SharedTreeFactoryType
-	) {
-		throw new Error(
-			"Container schema must have a single initial object of type SharedTree for tree-based data object.",
-		);
-	}
-	return schemaKeys[0];
+export function createTreeDOProviderContainerRuntimeFactory(props: {
+	/**
+	 * The schema for the container.
+	 */
+	readonly schema: TreeContainerSchema;
+
+	/**
+	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 */
+	readonly compatibilityMode: CompatibilityMode;
+	/**
+	 * Optional registry of data stores to pass to the DataObject factory.
+	 * If not provided, one will be created based on the schema.
+	 */
+	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	/**
+	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 */
+	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+	/**
+	 * Optional override for minimum version for collab.
+	 * If not provided, the default for the given compatibilityMode will be used.
+	 * @remarks
+	 * This is useful when runtime options are overridden and change the minimum version for collab.
+	 */
+	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
+}): IRuntimeFactory {
+	const {
+		compatibilityMode,
+		minVersionForCollabOverride,
+		rootDataStoreRegistry,
+		runtimeOptionOverrides,
+		schema,
+	} = props;
+
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects([
+		schema.initialObjects.tree,
+		...(schema.dynamicObjectTypes ?? []),
+	]);
+	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
+	return new TreeDOProviderContainerRuntimeFactory(
+		compatibilityMode,
+		new TreeRootDataObjectFactory(sharedObjects, registry),
+		{
+			runtimeOptions: runtimeOptionOverrides,
+			minVersionForCollab: minVersionForCollabOverride,
+		},
+	);
 }

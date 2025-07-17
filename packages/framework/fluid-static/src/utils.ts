@@ -6,12 +6,21 @@
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/container-runtime/internal";
 import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { NamedFluidDataStoreRegistryEntry } from "@fluidframework/runtime-definitions/internal";
-import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
+import type {
+	IChannelFactory,
+	IFluidDataStoreRuntime,
+} from "@fluidframework/datastore-definitions/internal";
+import type {
+	IFluidDataStoreContext,
+	NamedFluidDataStoreRegistryEntry,
+} from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { CompatibilityMode, ContainerSchema, LoadableObjectKind } from "./types.js";
+import type { CompatibilityMode, LoadableObjectKind } from "./types.js";
 
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
@@ -65,7 +74,7 @@ export function isSharedObjectKind(
  * of DataObject types and an array of SharedObjects.
  */
 export const parseDataObjectsFromSharedObjects = (
-	schema: ContainerSchema,
+	objects: readonly SharedObjectKind[],
 ): [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
 	const sharedObjects = new Set<IChannelFactory>();
@@ -81,10 +90,7 @@ export const parseDataObjectsFromSharedObjects = (
 	};
 
 	// Add the object types that will be initialized
-	const dedupedObjects = new Set([
-		...Object.values(schema.initialObjects),
-		...(schema.dynamicObjectTypes ?? []),
-	]);
+	const dedupedObjects = new Set(objects);
 	for (const obj of dedupedObjects) {
 		tryAddObject(obj as unknown as LoadableObjectKind);
 	}
@@ -95,6 +101,32 @@ export const parseDataObjectsFromSharedObjects = (
 
 	return [[...registryEntries], [...sharedObjects]];
 };
+
+/**
+ * Creates a new data object of the specified type.
+ */
+export async function createDataObject<T extends IFluidLoadable>(
+	dataObjectClass: DataObjectKind<T>,
+	context: IFluidDataStoreContext,
+): Promise<T> {
+	const factory = dataObjectClass.factory;
+	const packagePath = [...context.packagePath, factory.type];
+	const dataStore = await context.containerRuntime.createDataStore(packagePath);
+	const entryPoint = await dataStore.entryPoint.get();
+	return entryPoint as T;
+}
+
+/**
+ * Creates a new shared object of the specified type.
+ */
+export function createSharedObject<T extends IFluidLoadable>(
+	sharedObjectClass: ISharedObjectKind<T>,
+	runtime: IFluidDataStoreRuntime,
+): T {
+	const factory = sharedObjectClass.getFactory();
+	const obj = runtime.createChannel(undefined, factory.type);
+	return obj as unknown as T;
+}
 
 /**
  * Creates a Fluid object that has a property with the key `providerKey` that points to itself.

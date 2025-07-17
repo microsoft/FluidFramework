@@ -6,12 +6,13 @@
 import {
 	BaseContainerRuntimeFactory,
 	DataObject,
-	type DataObjectKind,
 	DataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
-import type {
-	IContainerRuntimeOptions,
-	MinimumVersionForCollab,
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import {
+	FluidDataStoreRegistry,
+	type IContainerRuntimeOptions,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
@@ -23,19 +24,10 @@ import type {
 	IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IChannelFactory,
-	IFluidDataStoreRuntime,
-} from "@fluidframework/datastore-definitions/internal";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IDirectory } from "@fluidframework/map/internal";
-import type {
-	IFluidDataStoreContext,
-	IFluidDataStoreRegistry,
-} from "@fluidframework/runtime-definitions/internal";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
+import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
+import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
 import type {
@@ -49,9 +41,12 @@ import type {
 } from "./types.js";
 import {
 	compatibilityModeToMinVersionForCollab,
+	createDataObject,
+	createSharedObject,
 	isDataObjectKind,
 	isSharedObjectKind,
 	makeFluidObject,
+	parseDataObjectsFromSharedObjects,
 } from "./utils.js";
 
 /**
@@ -160,38 +155,12 @@ export class RootDataObject
 	}
 }
 
-/**
- * Creates a new data object of the specified type.
- */
-export async function createDataObject<T extends IFluidLoadable>(
-	dataObjectClass: DataObjectKind<T>,
-	context: IFluidDataStoreContext,
-): Promise<T> {
-	const factory = dataObjectClass.factory;
-	const packagePath = [...context.packagePath, factory.type];
-	const dataStore = await context.containerRuntime.createDataStore(packagePath);
-	const entryPoint = await dataStore.entryPoint.get();
-	return entryPoint as T;
-}
-
-/**
- * Creates a new shared object of the specified type.
- */
-export function createSharedObject<T extends IFluidLoadable>(
-	sharedObjectClass: ISharedObjectKind<T>,
-	runtime: IFluidDataStoreRuntime,
-): T {
-	const factory = sharedObjectClass.getFactory();
-	const obj = runtime.createChannel(undefined, factory.type);
-	return obj as unknown as T;
-}
-
 const rootDataStoreId = "rootDOId";
 const rootDataObjectType = "rootDO";
 
 async function provideEntryPoint(
 	containerRuntime: IContainerRuntime,
-): Promise<IStaticEntryPoint> {
+): Promise<IStaticEntryPoint<IRootDataObject>> {
 	const entryPoint = await containerRuntime.getAliasedDataStoreEntryPoint(rootDataStoreId);
 	if (entryPoint === undefined) {
 		throw new Error(`default dataStore [${rootDataStoreId}] must exist`);
@@ -199,7 +168,7 @@ async function provideEntryPoint(
 	const rootDataObject = ((await entryPoint.get()) as FluidObject<RootDataObject>)
 		.RootDataObject;
 	assert(rootDataObject !== undefined, 0xb9f /* entryPoint must be of type RootDataObject */);
-	return makeFluidObject<IStaticEntryPoint>(
+	return makeFluidObject<IStaticEntryPoint<IRootDataObject>>(
 		{
 			rootDataObject,
 			extensionStore: containerRuntime as IContainerRuntimeInternal,
@@ -212,7 +181,7 @@ async function provideEntryPoint(
  * Factory for Container Runtime instances that provide a {@link IStaticEntryPoint}
  * (containing single {@link IRootDataObject}) as their entry point.
  */
-export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
+class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	private readonly rootDataObjectFactory: DataObjectFactory<
 		RootDataObject,
 		{
@@ -274,7 +243,7 @@ export class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFacto
 /**
  * Factory that creates instances of a root data object.
  */
-export class RootDataObjectFactory extends DataObjectFactory<
+class RootDataObjectFactory extends DataObjectFactory<
 	RootDataObject,
 	{ InitialState: RootDataObjectProps }
 > {
@@ -294,4 +263,66 @@ export class RootDataObjectFactory extends DataObjectFactory<
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry {
 		return this.dataStoreRegistry;
 	}
+}
+
+/**
+ * Creates an {@link @fluidframework/aqueduct#IRuntimeFactory} which constructs containers
+ * with an entry point containing single directory-based root data object.
+ *
+ * @remarks
+ * The entry point is opaque to caller.
+ * The root data object's registry and initial objects are configured based on the provided
+ * schema (and optionally, data store registry).
+ *
+ * @internal
+ */
+export function createDOProviderContainerRuntimeFactory(props: {
+	/**
+	 * The schema for the container.
+	 */
+	schema: ContainerSchema;
+	/**
+	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 */
+	compatibilityMode: CompatibilityMode;
+	/**
+	 * Optional registry of data stores to pass to the DataObject factory.
+	 * If not provided, one will be created based on the schema.
+	 */
+	rootDataStoreRegistry?: IFluidDataStoreRegistry;
+	/**
+	 * Optional overrides for the container runtime options.
+	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 */
+	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+	/**
+	 * Optional override for minimum version for collab.
+	 * If not provided, the default for the given compatibilityMode will be used.
+	 * @remarks
+	 * This is useful when runtime options are overridden and change the minimum version for collab.
+	 */
+	minVersionForCollabOverride?: MinimumVersionForCollab;
+}): IRuntimeFactory {
+	const {
+		compatibilityMode,
+		minVersionForCollabOverride,
+		rootDataStoreRegistry,
+		runtimeOptionOverrides,
+		schema,
+	} = props;
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects([
+		...Object.values(schema.initialObjects),
+		...(schema.dynamicObjectTypes ?? []),
+	]);
+	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
+
+	return new DOProviderContainerRuntimeFactory(
+		schema,
+		compatibilityMode,
+		new RootDataObjectFactory(sharedObjects, registry),
+		{
+			runtimeOptions: runtimeOptionOverrides,
+			minVersionForCollab: minVersionForCollabOverride,
+		},
+	);
 }

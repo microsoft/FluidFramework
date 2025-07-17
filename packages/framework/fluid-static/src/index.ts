@@ -17,8 +17,9 @@ export {
 	type IFluidContainerInternal,
 	type InitialObjects,
 } from "./fluidContainer.js";
-export { createDOProviderContainerRuntimeFactory } from "./doProviderContainerRuntimeFactory.js";
+export { createDOProviderContainerRuntimeFactory } from "./rootDataObject.js";
 export { createServiceAudience } from "./serviceAudience.js";
+export { createTreeDOProviderContainerRuntimeFactory } from "./treeRootDataObject.js";
 export type {
 	CompatibilityMode,
 	ContainerSchema,
@@ -29,4 +30,5 @@ export type {
 	IServiceAudienceEvents,
 	MemberChangedListener,
 	Myself,
+	TreeContainerSchema,
 } from "./types.js";

@@ -17,13 +17,12 @@ export interface ContainerSchema {
 }
 
 // @alpha @legacy
-export function createDOProviderContainerRuntimeFactory(props: {
-    schema: ContainerSchema;
-    compatibilityMode: CompatibilityMode;
-    rootDataStoreRegistry?: IFluidDataStoreRegistry;
-    runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-    minVersionForCollabOverride?: MinimumVersionForCollab;
-    useTreeBasedDataObject?: boolean;
+export function createTreeDOProviderContainerRuntimeFactory(props: {
+    readonly schema: TreeContainerSchema;
+    readonly compatibilityMode: CompatibilityMode;
+    readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+    readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+    readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory;
 
 // @public
@@ -89,5 +88,13 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
+
+// @alpha @legacy
+export interface TreeContainerSchema extends ContainerSchema {
+    // (undocumented)
+    readonly initialObjects: {
+        tree: SharedObjectKind<ITree>;
+    };
+}
 
 ```
