@@ -45,10 +45,6 @@ import {
 } from "./fieldSchema.js";
 import { LeafNodeSchema } from "./leafNodeSchema.js";
 
-// TODO:
-// The comparisons in this file seem redundant with those in comparison.ts.
-// Rather than both existing, one of which just returns boolean and the other which returns additional details, a simple comparison which returns everything needed should be used.
-
 /**
  * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema.
  * @remarks
