@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { evaluateLazySchema, isAnnotatedAllowedType, type AnnotatedAllowedType } from "../schemaTypes.js";
+import {
+	evaluateLazySchema,
+	isAnnotatedAllowedType,
+	type AnnotatedAllowedType,
+} from "../schemaTypes.js";
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
@@ -39,7 +43,7 @@ export function walkAllowedTypes(
 	for (const childType of allowedTypes) {
 		if (isAnnotatedAllowedType(childType)) {
 			const { enablableSchemaUpgrade } = childType.metadata;
-			if (enablableSchemaUpgrade === undefined || visitor.includeEnablable ) {
+			if (enablableSchemaUpgrade === undefined || visitor.includeEnablable) {
 				walkNodeSchema(evaluateLazySchema(childType.type), visitor, visitedSet);
 			}
 		} else {

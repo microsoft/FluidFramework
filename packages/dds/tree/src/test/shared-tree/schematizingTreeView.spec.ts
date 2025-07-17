@@ -166,9 +166,9 @@ describe("SchematizingSimpleTreeView", () => {
 					(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
 
 					assert.throws(
-							() => view.initialize(root),
-							validateUsageError(/Tree does not conform to schema./),
-						);
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
 
 					// Attempt to initialize with invalid content
 					if (additionalAsserts) {
