@@ -29,18 +29,22 @@ import {
 	typeSchemaSymbol,
 	type InternalTreeNode,
 	type TreeNode,
-	type Context,
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
-	type NormalizedAnnotatedAllowedTypes,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
 } from "../../core/index.js";
-import { getUnhydratedContext } from "../../createContext.js";
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+} from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	isObjectNodeSchema,
@@ -420,16 +424,9 @@ export function objectSchema<
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
-	const lazyAnnotatedTypes = new Lazy(() =>
-		Array.from(
-			flexKeyMap.values(),
-			({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
-		),
-	);
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
-	let unhydratedContext: Context;
 
 	class CustomObjectNode extends CustomObjectNodeBase<UnannotateSchemaRecord<T>> {
 		public static readonly fields: ReadonlyMap<
@@ -502,12 +499,13 @@ export function objectSchema<
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
+		protected static override oneTimeSetup<T2>(
+			this: typeof TreeNodeValid<T2>,
+		): TreeNodeSchemaInitializedData {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
 			const schema = this as unknown as ObjectNodeSchemaPrivate;
 			handler = createProxyHandler(schema, customizable);
-			unhydratedContext = getUnhydratedContext(schema);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
@@ -534,7 +532,7 @@ export function objectSchema<
 				}
 			}
 
-			return unhydratedContext;
+			return getTreeNodeSchemaInitializedData(schema);
 		}
 
 		public static readonly identifier = identifier;
@@ -543,9 +541,6 @@ export function objectSchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
-		}
-		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
-			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -558,6 +553,13 @@ export function objectSchema<
 		public get [typeSchemaSymbol](): Output {
 			return CustomObjectNode.constructorCached?.constructor as unknown as Output;
 		}
+		public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(
+			this,
+			Array.from(
+				flexKeyMap.values(),
+				({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypes,
+			),
+		);
 	}
 	type Output = typeof CustomObjectNode &
 		(new (

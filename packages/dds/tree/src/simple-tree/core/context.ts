@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { anchorSlot, type TreeNodeSchemaIdentifier } from "../../core/index.js";
+import type { TreeNodeSchemaIdentifier } from "../../core/index.js";
 import type {
 	FlexTreeContext,
 	FlexTreeHydratedContext,
@@ -13,14 +13,6 @@ import type { NormalizedAnnotatedAllowedTypes } from "./allowedTypes.js";
 
 import type { TreeNodeSchema } from "./treeNodeSchema.js";
 import { walkAllowedTypes } from "./walkSchema.js";
-
-/**
- * Creating multiple simple tree contexts for the same branch, and thus with the same underlying AnchorSet does not work due to how TreeNode caching works.
- * This slot is used to detect if one already exists and error if creating a second.
- * @remarks
- * See also {@link ContextSlot} in which the flex-tree context is stored.
- */
-export const SimpleContextSlot = anchorSlot<HydratedContext>();
 
 /**
  * Additional information about a collection of {@link TreeNode}s.

@@ -52,8 +52,8 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.76)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.7.3)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.7.3)
       '@microsoft/api-extractor':
         specifier: ^7.52.5
         version: 7.52.5(@types/node@18.19.76)
@@ -252,8 +252,8 @@ packages:
   '@fluidframework/driver-definitions@2.23.0':
     resolution: {integrity: sha512-sKLmuidaPDJrAAPEjS0/lv24+vND2mJigsiIyIo4yYuh5zGuYnYNMVXKOO+gW/pynJCWeD1flFUAsd8JcnZqQQ==}
 
-  '@fluidframework/eslint-config-fluid@5.7.4':
-    resolution: {integrity: sha512-2JD0fKhR0wk8kWkUmjNY6FcavLxs0/oQ413z0gFHUSzd8UTkwTYumFQWpDBEoAvXqQw4nUOTAbicNIqHY25EyQ==}
+  '@fluidframework/eslint-config-fluid@5.8.0':
+    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
 
   '@humanwhocodes/config-array@0.11.13':
     resolution: {integrity: sha512-JSBDMiDKSzQVngfRjOdFXgFfklaXI4K9nLF49Auh21lmBWRLIK3+xTErTWD4KU54pb6coM6ESE7Awz/FNU3zgQ==}
@@ -3393,7 +3393,7 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.23.0
 
-  '@fluidframework/eslint-config-fluid@5.7.4(eslint@8.55.0)(typescript@5.7.3)':
+  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.55.0)(typescript@5.7.3)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.7.3)
       '@microsoft/tsdoc': 0.14.2
@@ -3955,7 +3955,7 @@ snapshots:
       graphemer: 1.4.0
       ignore: 5.3.2
       natural-compare: 1.4.0
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 1.0.3(typescript@5.7.3)
     optionalDependencies:
       typescript: 5.7.3
@@ -4036,7 +4036,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.2
       tsutils: 3.21.0(typescript@5.7.3)
     optionalDependencies:
       typescript: 5.7.3
@@ -4051,7 +4051,7 @@ snapshots:
       globby: 11.1.0
       is-glob: 4.0.3
       minimatch: 9.0.3
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 1.0.3(typescript@5.7.3)
     optionalDependencies:
       typescript: 5.7.3
@@ -4065,7 +4065,7 @@ snapshots:
       debug: 4.4.0(supports-color@8.1.1)
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.6.3
+      semver: 7.7.2
       ts-api-utils: 1.0.3(typescript@5.7.3)
     optionalDependencies:
       typescript: 5.7.3
@@ -4082,7 +4082,7 @@ snapshots:
       '@typescript-eslint/typescript-estree': 5.59.11(typescript@5.7.3)
       eslint: 8.55.0
       eslint-scope: 5.1.1
-      semver: 7.6.3
+      semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -4096,7 +4096,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.7.3)
       eslint: 8.55.0
-      semver: 7.6.3
+      semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -4774,7 +4774,7 @@ snapshots:
       get-tsconfig: 4.8.1
       is-glob: 4.0.3
       minimatch: 3.1.2
-      semver: 7.6.3
+      semver: 7.7.2
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-typescript
@@ -4791,7 +4791,7 @@ snapshots:
       eslint: 8.55.0
       esquery: 1.5.0
       is-builtin-module: 3.2.1
-      semver: 7.6.3
+      semver: 7.7.2
       spdx-expression-parse: 3.0.1
     transitivePeerDependencies:
       - supports-color
@@ -4845,7 +4845,7 @@ snapshots:
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
       regjsparser: 0.10.0
-      semver: 7.6.3
+      semver: 7.7.2
       strip-indent: 3.0.0
 
   eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.7.3))(eslint@8.55.0)(typescript@5.7.3))(eslint@8.55.0):
@@ -5438,7 +5438,7 @@ snapshots:
 
   is-bun-module@1.2.1:
     dependencies:
-      semver: 7.6.3
+      semver: 7.7.2
 
   is-callable@1.2.7: {}
 

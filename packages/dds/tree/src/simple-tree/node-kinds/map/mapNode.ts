@@ -21,13 +21,10 @@ import {
 	typeNameSymbol,
 	type TreeNode,
 	typeSchemaSymbol,
-	type Context,
 	getOrCreateInnerNode,
 	type InternalTreeNode,
 	type UnhydratedFlexTreeNode,
-	type NormalizedAnnotatedAllowedTypes,
 	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
@@ -37,6 +34,10 @@ import {
 	type UnannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaCorePrivate,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import {
 	unhydratedFlexTreeFromInsertable,
@@ -50,7 +51,7 @@ import {
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 } from "../../../util/index.js";
-import { getUnhydratedContext } from "../../createContext.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import type { MapNodeCustomizableSchema, MapNodePojoEmulationSchema } from "./mapNodeTypes.js";
 
 /**
@@ -252,12 +253,9 @@ export function mapSchema<
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
-	const lazyAnnotatedTypes = new Lazy(() => [normalizeAnnotatedAllowedTypes(info)]);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
-
-	let unhydratedContext: Context;
 
 	class Schema
 		extends CustomMapNodeBase<UnannotateImplicitAllowedTypes<T>>
@@ -288,10 +286,8 @@ export function mapSchema<
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = getUnhydratedContext(schema);
-			return unhydratedContext;
+		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
+			return getTreeNodeSchemaInitializedData(this);
 		}
 
 		public static readonly identifier = identifier;
@@ -300,9 +296,6 @@ export function mapSchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
-		}
-		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
-			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -315,6 +308,8 @@ export function mapSchema<
 		public get [typeSchemaSymbol](): typeof schemaErased {
 			return Schema.constructorCached?.constructor as unknown as typeof schemaErased;
 		}
+
+		public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, [info]);
 	}
 	const schemaErased: MapNodeCustomizableSchema<
 		TName,
@@ -322,7 +317,8 @@ export function mapSchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		MapNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> = Schema;
+		MapNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+		TreeNodeSchemaCorePrivate = Schema;
 	return schemaErased;
 }
 
