@@ -21,7 +21,6 @@ import {
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	typeSchemaSymbol,
-	type Context,
 	getOrCreateNodeFromInnerNode,
 	getSimpleNodeSchemaFromInnerNode,
 	getOrCreateInnerNode,
@@ -30,9 +29,7 @@ import {
 	type UnhydratedFlexTreeNode,
 	UnhydratedSequenceField,
 	getOrCreateNodeFromInnerUnboxedNode,
-	type NormalizedAnnotatedAllowedTypes,
 	normalizeAllowedTypes,
-	normalizeAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
@@ -43,13 +40,17 @@ import {
 	type UnannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaCorePrivate,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
 } from "../../core/index.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
 } from "../../unhydratedFlexTreeFromInsertable.js";
 import { prepareArrayContentForInsertion } from "../../prepareForInsertion.js";
-import { getUnhydratedContext } from "../../createContext.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import type { System_Unsafe } from "../../api/index.js";
 import type {
 	ArrayNodeCustomizableSchema,
@@ -719,7 +720,7 @@ function createArrayNodeProxy(
 ): TreeArrayNode {
 	// To satisfy 'deepEquals' level scrutiny, the target of the proxy must be an array literal in order
 	// to pass 'Object.getPrototypeOf'.  It also satisfies 'Array.isArray' and 'Object.prototype.toString'
-	// requirements without use of Array[Symbol.species], which is potentially on a path ot deprecation.
+	// requirements without use of Array[Symbol.species], which is potentially on a path to deprecation.
 	const proxy: TreeArrayNode = new Proxy<TreeArrayNode>(proxyTarget as TreeArrayNode, {
 		get: (target, key, receiver) => {
 			const field = getSequenceField(receiver);
@@ -728,6 +729,12 @@ function createArrayNodeProxy(
 			if (maybeIndex === undefined) {
 				if (key === "length") {
 					return field.length;
+				}
+
+				// In NodeJS 22, assert.strict.deepEqual started special casing well known constructors like Array.
+				// That made this necessary, ensuring that in POJO mode, TreeArrayNode are still deepEqual to arrays.
+				if (key === "constructor") {
+					return proxyTarget.constructor;
 				}
 
 				// Pass the proxy as the receiver here, so that any methods on
@@ -1106,17 +1113,15 @@ export function arraySchema<
 		ImplicitlyConstructable,
 		TCustomMetadata
 	> &
-		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata>;
+		ArrayNodePojoEmulationSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
+		TreeNodeSchemaCorePrivate;
 
 	const unannotatedTypes = unannotateImplicitAllowedTypes(info);
 
 	const lazyChildTypes = new Lazy(() => normalizeAllowedTypes(unannotatedTypes));
-	const lazyAnnotatedTypes = new Lazy(() => [normalizeAnnotatedAllowedTypes(info)]);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
-
-	let unhydratedContext: Context;
 
 	// This class returns a proxy from its constructor to handle numeric indexing.
 	// Alternatively it could extend a normal class which gets tons of numeric properties added.
@@ -1155,10 +1160,7 @@ export function arraySchema<
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			const schema = this as unknown as TreeNodeSchema;
-			unhydratedContext = getUnhydratedContext(schema);
-
+		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
@@ -1184,7 +1186,7 @@ export function arraySchema<
 				}
 			}
 
-			return unhydratedContext;
+			return getTreeNodeSchemaInitializedData(this);
 		}
 
 		public static readonly identifier = identifier;
@@ -1193,9 +1195,6 @@ export function arraySchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
-		}
-		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
-			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -1215,6 +1214,8 @@ export function arraySchema<
 		protected get allowedTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
 		}
+
+		public static readonly [privateDataSymbol] = createTreeNodeSchemaPrivateData(this, [info]);
 	}
 
 	const output: Output = Schema;

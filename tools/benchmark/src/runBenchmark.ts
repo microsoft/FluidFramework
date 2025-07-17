@@ -4,17 +4,17 @@
  */
 
 import {
-	validateBenchmarkArguments,
-	BenchmarkRunningOptions,
-	BenchmarkRunningOptionsSync,
-	BenchmarkRunningOptionsAsync,
-	BenchmarkTimingOptions,
 	benchmarkArgumentsIsCustom,
-	BenchmarkTimer,
+	type BenchmarkRunningOptions,
+	type BenchmarkRunningOptionsSync,
+	type BenchmarkRunningOptionsAsync,
+	type BenchmarkTimingOptions,
+	type BenchmarkTimer,
+	validateBenchmarkArguments,
 } from "./Configuration";
 import type { BenchmarkData } from "./ResultTypes";
 import { getArrayStatistics, prettyNumber } from "./RunnerUtilities";
-import { Timer, defaultMinimumTime, timer } from "./timer";
+import { defaultMinimumTime, type Timer, timer } from "./timer";
 
 /**
  * @public

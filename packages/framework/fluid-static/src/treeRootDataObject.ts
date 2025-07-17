@@ -49,6 +49,14 @@ import {
 } from "./utils.js";
 
 /**
+ * This module contains types and factories for creating tree-based root data objects.
+ * They exist as an alternative to the APIs in `rootDataObject.ts`.
+ *
+ * These APIs are currently shaped to parallel `RootDataObject`, but this is not intended as the long-term design.
+ * The current shape is a short-term solution to allow for easier migration from the old APIs.
+ */
+
+/**
  * The entry-point/root collaborative object of the {@link IFluidContainer | Fluid Container}.
  *
  * @remarks
