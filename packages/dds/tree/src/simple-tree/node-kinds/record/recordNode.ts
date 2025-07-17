@@ -438,7 +438,7 @@ function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
 }
 
 /**
- * Transforms data under an Object schema.
+ * Transforms data under a Record schema.
  * @param data - The tree data to be transformed. Must be a Record-like object.
  * @param schema - The schema associated with the value.
  */
