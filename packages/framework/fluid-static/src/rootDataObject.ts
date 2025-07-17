@@ -222,10 +222,7 @@ export function createDOProviderContainerRuntimeFactory(props: {
 		runtimeOptionOverrides,
 		schema,
 	} = props;
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects([
-		...Object.values(schema.initialObjects),
-		...(schema.dynamicObjectTypes ?? []),
-	]);
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new DOProviderContainerRuntimeFactory(

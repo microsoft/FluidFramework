@@ -235,10 +235,7 @@ export function createTreeDOProviderContainerRuntimeFactory(props: {
 		schema,
 	} = props;
 
-	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects([
-		schema.initialObjects.tree,
-		...(schema.dynamicObjectTypes ?? []),
-	]);
+	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new TreeDOProviderContainerRuntimeFactory(

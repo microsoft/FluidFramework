@@ -14,13 +14,10 @@ import type {
 	IFluidDataStoreContext,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
+import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import type { CompatibilityMode, LoadableObjectKind } from "./types.js";
+import type { CompatibilityMode, ContainerSchema, LoadableObjectKind } from "./types.js";
 
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
@@ -74,7 +71,7 @@ export function isSharedObjectKind(
  * of DataObject types and an array of SharedObjects.
  */
 export const parseDataObjectsFromSharedObjects = (
-	objects: readonly SharedObjectKind[],
+	schema: ContainerSchema,
 ): [NamedFluidDataStoreRegistryEntry[], IChannelFactory[]] => {
 	const registryEntries = new Set<NamedFluidDataStoreRegistryEntry>();
 	const sharedObjects = new Set<IChannelFactory>();
@@ -90,7 +87,10 @@ export const parseDataObjectsFromSharedObjects = (
 	};
 
 	// Add the object types that will be initialized
-	const dedupedObjects = new Set(objects);
+	const dedupedObjects = new Set([
+		...Object.values(schema.initialObjects),
+		...(schema.dynamicObjectTypes ?? []),
+	]);
 	for (const obj of dedupedObjects) {
 		tryAddObject(obj as unknown as LoadableObjectKind);
 	}
