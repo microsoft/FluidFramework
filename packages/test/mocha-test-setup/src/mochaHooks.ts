@@ -96,13 +96,13 @@ export const mochaHooks = {
 		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
 		// through it. See the documentation on `FluidTestRunLogger` for details.
 		let originalLogger: ITelemetryBufferedLogger;
-		// Check if the environment variable is not set
+
 		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER === undefined) {
 			originalLogger = nullLogger;
 		} else {
 			const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 			if (typeof createTestLogger !== "function") {
-				console.error(
+				throw new Error(
 					`Expected package '${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER}' to export a function, but got an object of type '${typeof createTestLogger}' instead`,
 				);
 				originalLogger = nullLogger;
