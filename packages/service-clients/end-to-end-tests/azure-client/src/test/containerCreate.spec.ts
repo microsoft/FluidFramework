@@ -720,16 +720,17 @@ describe("Container create in tree-only mode", () => {
 			},
 		};
 
-		try {
-			await client.createContainer(schema, "2");
-		} catch (error) {
-			assert(error instanceof UsageError);
-			assert.strictEqual(
-				error.message,
-				"Tree-only mode requires exactly 1 SharedTree in initialObjects.",
-			);
-			return;
-		}
-		assert.fail("Expected an error to be thrown for invalid schema");
+		await assert.rejects(
+			async () => client.createContainer(schema, "2"),
+			(error: unknown) => {
+				assert(error instanceof UsageError);
+				assert.strictEqual(
+					error.message,
+					"Tree-only mode requires exactly 1 SharedTree in initialObjects.",
+				);
+				return true;
+			},
+			"Expected an error to be thrown for invalid schema",
+		);
 	});
 });
