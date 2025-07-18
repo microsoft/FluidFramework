@@ -16013,6 +16013,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
+      '@types/isomorphic-fetch':
+        specifier: ^0.0.39
+        version: 0.0.39
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -19132,6 +19135,9 @@ packages:
     resolution: {integrity: sha512-5heqtZMvQ4nXARY0o8rc8cjkJjct2ScM12yCJ/h731S9He93a2cv+kAhwPCNwTKDfNH9gjRfLG4VpAEYJU0/gQ==}
     peerDependencies:
       ioredis: '>=5'
+
+  '@types/isomorphic-fetch@0.0.39':
+    resolution: {integrity: sha512-I0gou/ZdA1vMG7t7gMzL7VYu2xAKU78rW9U1l10MI0nn77pEHq3tQqHQ8hMmXdMpBlkxZOorjI4sO594Z3kKJw==}
 
   '@types/istanbul-lib-coverage@2.0.6':
     resolution: {integrity: sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==}
@@ -33529,6 +33535,8 @@ snapshots:
   '@types/ioredis-mock@8.2.6(ioredis@5.6.1)':
     dependencies:
       ioredis: 5.6.1
+
+  '@types/isomorphic-fetch@0.0.39': {}
 
   '@types/istanbul-lib-coverage@2.0.6': {}
 
