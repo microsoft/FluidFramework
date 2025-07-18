@@ -157,6 +157,9 @@ export interface RebaseNodeManager {
 	 * @returns `true` if both blocks of IDs refer the same nodes.
 	 */
 	areSameRenamedNodes(baseId: ChangeAtomId, newId: ChangeAtomId, count?: number): boolean;
+
+	addDetach(id: ChangeAtomId, count: number): void;
+	removeDetach(id: ChangeAtomId, count: number): void;
 }
 
 export interface DetachedNodeEntry {

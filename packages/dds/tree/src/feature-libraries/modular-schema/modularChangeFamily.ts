@@ -2921,6 +2921,14 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		return true;
 	}
 
+	public addDetach(id: ChangeAtomId, count: number): void {
+		this.table.rebasedDetachLocations.set(id, count, this.fieldId);
+	}
+
+	public removeDetach(id: ChangeAtomId, count: number): void {
+		this.table.movedDetaches.set(id, count, true);
+	}
+
 	private invalidateBaseFields(fields: FieldId[]): void {
 		if (this.allowInval) {
 			for (const fieldId of fields) {

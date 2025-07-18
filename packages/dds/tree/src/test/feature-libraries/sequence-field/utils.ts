@@ -883,6 +883,13 @@ function newRebaseManager(): TestRebaseManager {
 		): boolean {
 			return areEqualChangeAtomIds(baseDetachId, newAttachId);
 		},
+
+		addDetach(id: ChangeAtomId, count: number): void {
+			throw new Error("Function not implemented.");
+		},
+		removeDetach(id: ChangeAtomId, count: number): void {
+			throw new Error("Function not implemented.");
+		},
 	};
 	return manager;
 }

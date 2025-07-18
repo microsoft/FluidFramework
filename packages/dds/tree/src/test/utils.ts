@@ -751,11 +751,7 @@ export function validateSnapshotConsistency(
 	forEachInNestedMap(mapA, (content, major, minor) => {
 		const mapBContent = tryGetFromNestedMap(mapB, major, minor);
 		if (mapBContent !== undefined) {
-			assert.deepEqual(
-				content,
-				mapBContent,
-				`Inconsistent removed trees json representation: ${idDifferentiator}`,
-			);
+			assertStructuralEquality(content, mapBContent);
 		}
 	});
 	expectSchemaEqual(treeA.schema, treeB.schema, idDifferentiator);

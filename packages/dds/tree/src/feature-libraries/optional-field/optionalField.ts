@@ -132,6 +132,16 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 			rebased.valueReplace = { ...newChange.valueReplace, isEmpty };
 		}
 
+		const detachId = getEffectiveDetachId(newChange);
+		if (detachId !== undefined) {
+			nodeManager.removeDetach(detachId, 1);
+		}
+
+		const rebasedDetachId = getEffectiveDetachId(rebased);
+		if (rebasedDetachId !== undefined) {
+			nodeManager.addDetach(rebasedDetachId, 1);
+		}
+
 		return rebased;
 	},
 
@@ -489,8 +499,10 @@ function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
 		}
 	}
 
-	if (change.nodeDetach !== undefined) {
-		keys.push({ key: { ...change.nodeDetach, target: CrossFieldTarget.Source }, count: 1 });
+	const detachId = getEffectiveDetachId(change);
+
+	if (detachId !== undefined) {
+		keys.push({ key: { ...detachId, target: CrossFieldTarget.Source }, count: 1 });
 	}
 
 	return keys;
