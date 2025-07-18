@@ -26,16 +26,18 @@ import {
 } from "./schemaFactory.js";
 import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type {
-	NodeKind,
-	TreeNodeSchema,
-	TreeNodeSchemaBoth,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	WithType,
-	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
-	AnnotatedAllowedType,
+import {
+	type NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaBoth,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaNonClass,
+	type WithType,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type AnnotatedAllowedType,
+	normalizeToAnnotatedAllowedType,
+	createSchemaUpgrade,
 } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,

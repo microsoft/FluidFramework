@@ -22,7 +22,11 @@ import {
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
-import { NodeKind, normalizeAllowedTypes, type ImplicitAnnotatedAllowedTypes } from "./core/index.js";
+import {
+	NodeKind,
+	normalizeAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+} from "./core/index.js";
 import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
 	SimpleFieldSchema,
@@ -59,7 +63,6 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 					getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
 				);
 			},
-			includeEnablable: false,
 		});
 
 		const result: TreeStoredSchema = {

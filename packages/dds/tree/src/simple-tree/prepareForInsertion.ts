@@ -29,7 +29,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
 import {
 	getKernel,
-	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";

@@ -10,7 +10,6 @@ import {
 	ObjectNodeStoredSchema,
 	storedEmptyFieldSchema,
 	ValueSchema,
-	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 } from "../../core/index.js";

@@ -876,7 +876,9 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 		super(input ?? []);
 	}
 
-	#mapTreesFromFieldData(value: Insertable<UnannotateImplicitAllowedTypes<T>>): FlexibleFieldContent {
+	#mapTreesFromFieldData(
+		value: Insertable<UnannotateImplicitAllowedTypes<T>>,
+	): FlexibleFieldContent {
 		const sequenceField = getSequenceField(this);
 		const content = value as readonly (
 			| InsertableContent

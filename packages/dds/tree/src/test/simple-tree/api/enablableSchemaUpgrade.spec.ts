@@ -32,7 +32,7 @@ describe("enablable schema upgrade", () => {
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
 
-		let view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaA);
+		let view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaA);
 
 		// open document, and check its compatibility with our application
 		const compat = view.checkCompatibility(stored);
@@ -48,7 +48,7 @@ describe("enablable schema upgrade", () => {
 		});
 
 		// view schema is B (includes enablable string)
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaB);
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaB);
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,
@@ -67,7 +67,7 @@ describe("enablable schema upgrade", () => {
 		});
 
 		// view schema now wants full support for string (not just enablable)
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaC);
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,
@@ -78,7 +78,7 @@ describe("enablable schema upgrade", () => {
 		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaC).rootFieldSchema));
 
 		// validate C is now fully supported
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
+		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaC);
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,

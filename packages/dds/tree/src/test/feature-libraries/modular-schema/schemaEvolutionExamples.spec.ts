@@ -5,43 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { type Adapters, EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
+import { EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
-import {
-	EmptyKey,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
-	TreeStoredSchemaRepository,
-	storedEmptyFieldSchema,
-} from "../../../core/index.js";
-import {
-	type FullSchemaPolicy,
-	defaultSchemaPolicy,
-} from "../../../feature-libraries/index.js";
-import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
 import {
 	toStoredSchema,
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
 	getAllowedContentDiscrepancies,
+	schemaStatics,
 } from "../../../simple-tree/index.js";
-import { schemaStatics } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
-
-function assertEnumEqual<TEnum extends { [key: number]: string }>(
-	enumObject: TEnum,
-	a: number,
-	b: number,
-): void {
-	if (a !== b) {
-		assert.fail(`expected ${a} (${enumObject[a]}) to equal ${b} (${enumObject[b]})`);
-	}
-}
 
 describe("Schema Evolution Examples", () => {
 	const builder = new SchemaFactoryAlpha("test");
@@ -184,73 +157,6 @@ describe("Schema Evolution Examples", () => {
 			const compat3 = view3.checkCompatibility(stored);
 			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true });
 		}
-	});
-
-	it("upgrading an enablable", () => {
-		const factory = new SchemaFactoryAlpha("upgrade");
-
-		// Schema A: Only number allowed
-		const schemaA = factory.required([factory.number]);
-
-		// Schema B: Number or string (string is enablable)
-		const schemaB = factory.required([
-			factory.number,
-			factory.enablable(factory.string),
-		]);
-
-		// Schema C: Number or string, both fully allowed
-		const schemaC = factory.required([factory.number, factory.string]);
-
-		const stored = new TestSchemaRepository(defaultSchemaPolicy);
-		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaA).rootFieldSchema));
-		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
-
-		// A: View schema is A
-		let view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaA);
-		assert.deepEqual(view.checkCompatibility(stored), {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-
-		// B: View schema is B (includes enablable string)
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaB);
-		assert.deepEqual(view.checkCompatibility(stored), {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: false,
-		});
-
-		// Upgrade to schema B
-		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
-		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaB).rootFieldSchema));
-
-		// Schema is upgraded to support enablable type
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaB);
-		assert.deepEqual(view.checkCompatibility(stored), {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
-
-		// C: View schema now wants full support for string (not just enablable)
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
-		assert.deepEqual(view.checkCompatibility(stored), {
-			canView: false,
-			canUpgrade: true,
-			isEquivalent: false,
-		});
-
-		// Upgrade to full schema C
-		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaC).rootFieldSchema));
-
-		// Validate C is now fully supported
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, schemaC);
-		assert.deepEqual(view.checkCompatibility(stored), {
-			canView: true,
-			canUpgrade: true,
-			isEquivalent: true,
-		});
 	});
 
 	// TODO: support adapters.

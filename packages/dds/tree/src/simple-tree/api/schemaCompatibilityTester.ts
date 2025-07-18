@@ -64,24 +64,17 @@ export class SchemaCompatibilityTester {
 					// Since we only track the symmetric difference between the allowed types in the view and
 					// stored schemas, it's sufficient to check if any extra allowed types still exist in the
 					// stored schema.
-					const extraneousStoredAllowedTypes = discrepancy.stored.filter(
-						(identifier) =>
-							!isNeverTree(this.policy, stored, stored.nodeSchema.get(identifier)),
-					);
-					if (extraneousStoredAllowedTypes.length > 0) {
-						// Check if the extra allowed types in the stored schema are permitted by enablables in the view schema
-						for (const type of extraneousStoredAllowedTypes) {
-							const schema = this.identifiersToViewSchema.get(type);
-							if (
-								schema === undefined ||
-								this.viewSchemaRoot.annotatedAllowedTypeSet.get(schema)
-									?.enablableSchemaUpgrade === undefined
-							) {
-								canView = false;
-								canUpgrade = false;
-								break;
-							}
-						}
+					if (
+						discrepancy.stored.some(
+							(identifier) =>
+								!isNeverTree(this.policy, stored, stored.nodeSchema.get(identifier)),
+						)
+					) {
+						// Stored schema has extra allowed types that the view schema does not.
+						// TODO can an enablable type be enabled in stored but not in view?
+						// I don't think so, revisit
+						canUpgrade = false;
+						canView = false;
 					}
 
 					if (discrepancy.view.length > 0) {

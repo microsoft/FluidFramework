@@ -222,7 +222,7 @@ export type SimpleKeyMap = ReadonlyMap<
 export function createFlexKeyMapping(
 	fields: Record<string, ImplicitAnnotatedFieldSchema>,
 ): SimpleKeyMap {
-	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchemaAlpha }> = new Map();
+	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
 		const schema = normalizeFieldSchema(fieldSchema);
 		const storedKey = getStoredKey(propertyKey, schema);
@@ -291,7 +291,7 @@ function createProxyHandler(
 
 			setField(
 				getOrCreateInnerNode(proxy).getBoxed(fieldInfo.storedKey),
-				normalizeFieldSchema(fieldInfo.schema),
+				fieldInfo.schema,
 				value,
 			);
 			return true;
@@ -347,7 +347,7 @@ function createProxyHandler(
 
 export function setField(
 	field: FlexTreeField,
-	simpleFieldSchema: FieldSchemaAlpha,
+	simpleFieldSchema: FieldSchema,
 	value: InsertableContent | undefined,
 ): void {
 	const mapTree = prepareForInsertion(value, simpleFieldSchema, field.context);
