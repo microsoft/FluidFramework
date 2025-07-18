@@ -29,6 +29,8 @@ export interface IWholeSummaryPayload {
 	message: string;
 	sequenceNumber: number;
 	entries: WholeSummaryTreeEntry[];
+	// Optional, an ISO8601 date string representing the time of the summary.
+	summaryTime?: string;
 }
 
 /**
