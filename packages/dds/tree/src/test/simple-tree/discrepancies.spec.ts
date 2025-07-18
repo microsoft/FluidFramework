@@ -50,17 +50,13 @@ const numberName = brand<TreeNodeSchemaIdentifier>(SchemaFactory.number.identifi
 // TODO:#43720: Add tests for RecordNodeObjects
 describe("Schema Discrepancies", () => {
 	it("Node kind difference for each possible combination", () => {
-		class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {
-			x: SchemaFactory.number,
-		}) {}
+		class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {}) {}
 		const objectNodeStoredSchema = toStoredSchema(ObjectNode);
 
-		class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, [SchemaFactory.number]) {}
+		class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, []) {}
 		const mapNodeStoredSchema = toStoredSchema(MapNode);
 
-		// TODO: set the key for the leaf node schema so that it results in a proper node kind discrepancy
-		// is this even possible in the api? if not, no need to test it here
-		const leafNodeSchema = SchemaFactory.number;
+		const leafNodeSchema = new LeafNodeSchema(testTreeNodeIdentifier, ValueSchema.Number);
 		const leafNodeStoredSchema = toStoredSchema(leafNodeSchema);
 
 		assert.deepEqual(
@@ -93,22 +89,10 @@ describe("Schema Discrepancies", () => {
 			),
 			[
 				{
-					fieldKey: undefined,
-					identifier: undefined,
-					mismatch: "allowedTypes",
-					stored: [leafNodeSchema.identifier],
-					view: [
-						{
-							metadata: {},
-							type: ObjectNode,
-						},
-					],
-				},
-				{
 					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
 					view: ObjectNodeStoredSchema,
-					stored: undefined,
+					stored: LeafNodeStoredSchema,
 				},
 			],
 		);
@@ -247,10 +231,10 @@ describe("Schema Discrepancies", () => {
 		 * Exhaustive validation is not applied in this case.
 		 */
 
-		class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, [SchemaFactory.number]) {}
+		class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
 
 		class ObjectNode1 extends schemaFactory.objectAlpha(testTreeNodeName, {
-			x: SchemaFactory.required(SchemaFactory.number),
+			x: SchemaFactory.number,
 		}) {}
 
 		class ObjectNode2 extends schemaFactory.objectAlpha("tree2", {
@@ -358,7 +342,7 @@ describe("Schema Discrepancies", () => {
 	it("Differing fields on object node schema", () => {
 		// Both utilize ObjectNode but with differing fieldSchemas
 		class ObjectNode1 extends schemaFactory.objectAlpha(testTreeNodeName, {
-			x: SchemaFactory.required(SchemaFactory.number),
+			x: SchemaFactory.number,
 		}) {}
 		const objectNodeRoot1 = SchemaFactory.optional(ObjectNode1);
 
@@ -685,9 +669,7 @@ describe("Schema Discrepancies", () => {
 				schemaFactory.string,
 			]) {}
 
-			class MapNode4 extends schemaFactory.mapAlpha(testTreeNodeName, [
-				schemaFactory.number,
-			]) {}
+			class MapNode4 extends schemaFactory.mapAlpha(testTreeNodeName, schemaFactory.number) {}
 
 			assert.equal(
 				isRepoSuperset(normalizeFieldSchema(MapNode4), toStoredSchema(MapNode2)),
