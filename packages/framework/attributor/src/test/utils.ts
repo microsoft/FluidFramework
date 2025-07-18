@@ -4,10 +4,10 @@
  */
 
 import type { IAudience } from "@fluidframework/container-definitions";
-import {
-	type IClient,
-	type IQuorumClients,
-	type ISequencedClient,
+import type {
+	IClient,
+	IQuorumClients,
+	ISequencedClient,
 } from "@fluidframework/driver-definitions";
 import { MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 
