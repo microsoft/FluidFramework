@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Type, TypeChecker } from "ts-morph";
+import type { Type, TypeChecker } from "ts-morph";
 
 export interface DecompositionResult {
 	/**

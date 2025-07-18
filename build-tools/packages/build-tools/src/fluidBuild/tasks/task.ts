@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue, priorityQueue } from "async";
+import { type AsyncPriorityQueue, priorityQueue } from "async";
 
 import * as assert from "assert";
 import registerDebug from "debug";
 import type { BuildContext } from "../buildContext";
-import { BuildPackage, BuildResult } from "../buildGraph";
+import { type BuildPackage, BuildResult } from "../buildGraph";
 import { options } from "../options";
-import { LeafTask } from "./leaf/leafTask";
+import type { LeafTask } from "./leaf/leafTask";
 
 const traceTaskInit = registerDebug("fluid-build:task:init");
 const traceTaskExec = registerDebug("fluid-build:task:exec");

@@ -8,9 +8,9 @@ import { type BigIntStats, type Stats, existsSync, lstatSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import isEqual from "lodash.isequal";
-import * as tsTypes from "typescript";
+import type * as tsTypes from "typescript";
 
-import { TscUtil, getTscUtils } from "../../tscUtils";
+import { type TscUtil, getTscUtils } from "../../tscUtils";
 import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
