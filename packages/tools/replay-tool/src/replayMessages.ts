@@ -8,16 +8,19 @@ import child_process from "child_process";
 import fs from "fs";
 
 import { AttachState } from "@fluidframework/container-definitions";
-import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ITelemetryBaseEvent, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	ITree,
-	ITreeEntry,
+	type ITree,
+	type ITreeEntry,
 	MessageType,
 	TreeEntry,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	FileDeltaStorageService,
@@ -25,15 +28,18 @@ import {
 	FileSnapshotWriterClassFactory,
 	FileStorageDocumentName,
 	FluidFetchReaderFileSnapshotWriter,
-	ISnapshotWriterStorage,
+	type ISnapshotWriterStorage,
 	ReplayFileDeltaConnection,
-	Replayer,
+	type Replayer,
 } from "@fluidframework/file-driver/internal";
 import { SharedMatrix, SharedMatrixFactory } from "@fluidframework/matrix/internal";
-import { FileSnapshotReader, IFileSnapshot } from "@fluidframework/replay-driver/internal";
+import {
+	FileSnapshotReader,
+	type IFileSnapshot,
+} from "@fluidframework/replay-driver/internal";
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -49,7 +55,7 @@ import {
 	loadContainer,
 	uploadSummary,
 } from "./helpers.js";
-import { ReplayArgs } from "./replayArgs.js";
+import type { ReplayArgs } from "./replayArgs.js";
 
 // "worker_threads" does not resolve without --experimental-worker flag on command line
 let threads = { isMainThread: true };
