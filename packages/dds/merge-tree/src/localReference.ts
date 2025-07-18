@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	DoublyLinkedList,
-	ListNode,
-	walkList,
-} from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
+import { DoublyLinkedList, ListNode, walkList } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type ISegmentInternal } from "./mergeTreeNodes.js";
