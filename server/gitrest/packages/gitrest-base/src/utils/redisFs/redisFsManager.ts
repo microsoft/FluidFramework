@@ -291,7 +291,6 @@ export class RedisFs extends FsPromisesBase {
 	): Promise<undefined | string | void> {
 		const folderpathString = folderpath.toString();
 		const recursive = options && typeof options === "object" && options.recursive;
-
 		if (recursive) {
 			const folderSeparator = "/";
 			const subfolders = folderpathString.split(folderSeparator);
