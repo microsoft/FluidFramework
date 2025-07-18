@@ -37,6 +37,7 @@ export {
 	objectSchema,
 	setField,
 	type TreeObjectNode,
+	type SimpleKeyMap,
 	type UnannotateSchemaRecord,
 } from "./object/index.js";
 

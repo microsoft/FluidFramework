@@ -103,7 +103,6 @@ export function comparePersistedSchema(
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,
-		{},
 		normalizeFieldSchema(view),
 	);
 	return viewSchema.checkCompatibility(stored);

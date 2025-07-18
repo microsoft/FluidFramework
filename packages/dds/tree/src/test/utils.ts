@@ -95,6 +95,9 @@ import {
 	type ExclusiveMapTree,
 	type MapTree,
 	SchemaVersion,
+	type FieldKindIdentifier,
+	type TreeNodeSchemaIdentifier,
+	type TreeFieldStoredSchema,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -1477,4 +1480,18 @@ export function fieldCursorFromInsertable<
 		schema,
 	);
 	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
+}
+
+/**
+ * Helper for building {@link TreeFieldStoredSchema}.
+ */
+export function fieldSchema(
+	kind: { identifier: FieldKindIdentifier },
+	types: Iterable<TreeNodeSchemaIdentifier>,
+): TreeFieldStoredSchema {
+	return {
+		kind: kind.identifier,
+		types: new Set(types),
+		persistedMetadata: undefined,
+	};
 }
