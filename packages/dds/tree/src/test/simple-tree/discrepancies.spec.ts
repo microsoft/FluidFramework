@@ -34,11 +34,10 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { fieldSchema } from "../feature-libraries/modular-schema/comparison.spec.js";
-// eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { findExtraAllowedTypes } from "../../simple-tree/discrepancies.js";
+import { fieldSchema } from "../utils.js";
 
 // Arbitrary schema name used in tests
 const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>("tree");
