@@ -24,7 +24,7 @@ import type { ContainerAttachProps, IFluidContainer } from "@fluidframework/flui
 import {
 	createFluidContainer,
 	createServiceAudience,
-	createTreeDOProviderContainerRuntimeFactory,
+	createTreeContainerRuntimeFactory,
 	type TreeContainerSchema,
 } from "@fluidframework/fluid-static/internal";
 import {
@@ -162,7 +162,7 @@ export class OdspClient {
 	}
 
 	private getLoaderProps(schema: TreeContainerSchema): ILoaderProps {
-		const runtimeFactory = createTreeDOProviderContainerRuntimeFactory({
+		const runtimeFactory = createTreeContainerRuntimeFactory({
 			schema,
 			compatibilityMode: "2",
 		});
