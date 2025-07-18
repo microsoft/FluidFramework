@@ -6,7 +6,7 @@
 import { fromBase64ToUtf8, fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 
 import { OdcApiSiteOrigin, OdcFileSiteOrigin } from "./constants.js";
-import { OdspFluidDataStoreLocator } from "./contractsPublic.js";
+import type { OdspFluidDataStoreLocator } from "./contractsPublic.js";
 
 const fluidSignature = "1";
 const fluidSignatureParamName = "fluid";
