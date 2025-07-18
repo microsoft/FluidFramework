@@ -60,19 +60,22 @@ describe("Schema Discrepancies", () => {
 		const leafNodeStoredSchema = toStoredSchema(leafNodeSchema);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
+			[
+				...getAllowedContentDiscrepancies(
 					normalizeFieldSchema(ObjectNode),
 					objectNodeStoredSchema,
 				),
-			),
+			],
 			[],
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(normalizeFieldSchema(ObjectNode), mapNodeStoredSchema),
-			),
+			[
+				...getAllowedContentDiscrepancies(
+					normalizeFieldSchema(ObjectNode),
+					mapNodeStoredSchema,
+				),
+			],
 			[
 				{
 					identifier: testTreeNodeIdentifier,
@@ -84,9 +87,12 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(normalizeFieldSchema(ObjectNode), leafNodeStoredSchema),
-			),
+			[
+				...getAllowedContentDiscrepancies(
+					normalizeFieldSchema(ObjectNode),
+					leafNodeStoredSchema,
+				),
+			],
 			[
 				{
 					identifier: testTreeNodeIdentifier,
@@ -98,16 +104,17 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(normalizeFieldSchema(MapNode), mapNodeStoredSchema),
-			),
+			[...getAllowedContentDiscrepancies(normalizeFieldSchema(MapNode), mapNodeStoredSchema)],
 			[],
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(normalizeFieldSchema(MapNode), objectNodeStoredSchema),
-			),
+			[
+				...getAllowedContentDiscrepancies(
+					normalizeFieldSchema(MapNode),
+					objectNodeStoredSchema,
+				),
+			],
 			[
 				{
 					identifier: testTreeNodeIdentifier,
@@ -156,12 +163,12 @@ describe("Schema Discrepancies", () => {
 		const mapNodeSchema4 = SchemaFactory.optional(MapNode4);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
+			[
+				...getAllowedContentDiscrepancies(
 					normalizeFieldSchema(mapNodeSchema1),
 					toStoredSchema(mapNodeSchema2),
 				),
-			),
+			],
 			[
 				{
 					identifier: undefined,
@@ -187,12 +194,12 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
+			[
+				...getAllowedContentDiscrepancies(
 					normalizeFieldSchema(mapNodeSchema2),
 					toStoredSchema(mapNodeSchema3),
 				),
-			),
+			],
 			[
 				{
 					identifier: SchemaFactory.number.identifier,
@@ -245,12 +252,12 @@ describe("Schema Discrepancies", () => {
 		const objectNodeStoredSchema2 = toStoredSchema(objectNodeSchema2);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
+			[
+				...getAllowedContentDiscrepancies(
 					schemaFactory.optional(ObjectNode1),
 					objectNodeStoredSchema2,
 				),
-			),
+			],
 			[
 				{
 					fieldKey: undefined,
@@ -292,12 +299,12 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
+			[
+				...getAllowedContentDiscrepancies(
 					schemaFactory.optional(MapNode),
 					objectNodeStoredSchema2,
 				),
-			),
+			],
 			[
 				{
 					fieldKey: undefined,
@@ -354,7 +361,7 @@ describe("Schema Discrepancies", () => {
 		const objectNodeStoredSchema2 = toStoredSchema(objectNodeRoot2);
 
 		assert.deepEqual(
-			Array.from(getAllowedContentDiscrepancies(objectNodeRoot1, objectNodeStoredSchema2)),
+			[...getAllowedContentDiscrepancies(objectNodeRoot1, objectNodeStoredSchema2)],
 			[
 				{
 					identifier: SchemaFactory.number.identifier,
@@ -399,40 +406,25 @@ describe("Schema Discrepancies", () => {
 		);
 	});
 
-	const createLeafNodeSchema = (
-		leafValue: ValueSchema,
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => ({
-		rootFieldSchema: root,
-		nodeSchema: new Map([
-			[brand<TreeNodeSchemaIdentifier>(treeName), new LeafNodeStoredSchema(leafValue)],
-		]),
-	});
-
 	it("Differing value types on leaf node schema", () => {
-		const leafNodeSchema1 = SchemaFactory.optional(
-			new LeafNodeSchema(testTreeNodeIdentifier, ValueSchema.Number),
-		);
+		const viewNumber = schemaFactory.optional(SchemaFactory.number);
 
-		const root = fieldSchema(FieldKinds.optional, [testTreeNodeIdentifier]);
+		const rootFieldSchema = fieldSchema(FieldKinds.optional, [numberName]);
 
-		const leafNodeSchema2 = createLeafNodeSchema(
-			ValueSchema.Boolean,
-			testTreeNodeIdentifier,
-			root,
-		);
-		const leafNodeSchema3 = createLeafNodeSchema(
-			ValueSchema.Number,
-			testTreeNodeIdentifier,
-			root,
-		);
+		const storedBooleanRoot = {
+			rootFieldSchema,
+			nodeSchema: new Map([[numberName, new LeafNodeStoredSchema(ValueSchema.Boolean)]]),
+		};
+		const storedNumberRoot = {
+			rootFieldSchema,
+			nodeSchema: new Map([[numberName, new LeafNodeStoredSchema(ValueSchema.Number)]]),
+		};
 
 		assert.deepEqual(
-			Array.from(getAllowedContentDiscrepancies(leafNodeSchema1, leafNodeSchema2)),
+			[...getAllowedContentDiscrepancies(viewNumber, storedBooleanRoot)],
 			[
 				{
-					identifier: testTreeNodeIdentifier,
+					identifier: numberName,
 					mismatch: "valueSchema",
 					view: ValueSchema.Number,
 					stored: ValueSchema.Boolean,
@@ -440,10 +432,7 @@ describe("Schema Discrepancies", () => {
 			],
 		);
 
-		assert.deepEqual(
-			Array.from(getAllowedContentDiscrepancies(leafNodeSchema1, leafNodeSchema3)),
-			[],
-		);
+		assert.deepEqual([...getAllowedContentDiscrepancies(viewNumber, storedNumberRoot)], []);
 	});
 
 	const createObjectNodeSchema = (
@@ -489,12 +478,12 @@ describe("Schema Discrepancies", () => {
 			);
 
 			assert.deepEqual(
-				Array.from(
-					getAllowedContentDiscrepancies(
+				[
+					...getAllowedContentDiscrepancies(
 						normalizeFieldSchema(emptyTree),
 						emptyLocalFieldTreeStored,
 					),
-				),
+				],
 				[
 					{
 						fieldKey: undefined,
@@ -519,9 +508,7 @@ describe("Schema Discrepancies", () => {
 			);
 
 			assert.deepEqual(
-				Array.from(
-					getAllowedContentDiscrepancies(normalizeFieldSchema(ObjectNode), emptyTreeStored),
-				),
+				[...getAllowedContentDiscrepancies(normalizeFieldSchema(ObjectNode), emptyTreeStored)],
 				[
 					{
 						fieldKey: undefined,
@@ -565,12 +552,12 @@ describe("Schema Discrepancies", () => {
 			);
 
 			assert.deepEqual(
-				Array.from(
-					getAllowedContentDiscrepancies(
+				[
+					...getAllowedContentDiscrepancies(
 						normalizeFieldSchema(ObjectNode),
 						emptyLocalFieldTreeStored,
 					),
-				),
+				],
 				[
 					{
 						fieldKey: undefined,
@@ -761,6 +748,19 @@ describe("Schema Discrepancies", () => {
 				assert.equal(allFieldKinds.length * 3, testCases.length);
 			});
 
+			function getFieldKindName(fieldKind: FieldKind): string {
+				switch (fieldKind) {
+					case FieldKind.Identifier:
+						return "Identifier";
+					case FieldKind.Optional:
+						return "Optional";
+					case FieldKind.Required:
+						return "Required";
+					default:
+						return "Unknown";
+				}
+			}
+
 			for (const { superset, original, expected } of testCases) {
 				it(`${getFieldKindName(superset)} ${expected ? "⊇" : "⊉"} ${original.identifier}`, () => {
 					const schemaA = createFieldSchema(superset, SchemaFactory.number);
@@ -836,16 +836,3 @@ describe("Schema Discrepancies", () => {
 		});
 	});
 });
-
-function getFieldKindName(fieldKind: FieldKind): string {
-	switch (fieldKind) {
-		case FieldKind.Identifier:
-			return "Identifier";
-		case FieldKind.Optional:
-			return "Optional";
-		case FieldKind.Required:
-			return "Required";
-		default:
-			return "Unknown";
-	}
-}
