@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalClient } from "@fluidframework/protocol-definitions";
-import {
+import type { ISignalClient } from "@fluidframework/protocol-definitions";
+import type {
 	ICollaborationSessionClient,
 	ICollaborationSession,
 	ICollaborationSessionManager,

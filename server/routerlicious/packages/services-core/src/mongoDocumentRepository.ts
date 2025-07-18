@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection, IDocumentRepository } from "./database";
-import { IDocument } from "./document";
+import type { ICollection, IDocumentRepository } from "./database";
+import type { IDocument } from "./document";
 
 /**
  * @internal

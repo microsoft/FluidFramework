@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITaskMessage, ITaskMessageSender } from "@fluidframework/server-services-core";
+import type { ITaskMessage, ITaskMessageSender } from "@fluidframework/server-services-core";
 
 /**
  * @deprecated This was functionality related to RabbitMq which is not used anymore,

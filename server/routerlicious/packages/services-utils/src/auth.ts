@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
+import type { ITokenClaims, IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	NetworkError,
 	isNetworkError,
@@ -28,7 +28,7 @@ import {
 import type { RequestHandler, Request, Response } from "express";
 // In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
 // eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
+import type { Params } from "express-serve-static-core";
 import { decode, sign } from "jsonwebtoken";
 import type { Provider } from "nconf";
 import { v4 as uuid, validate } from "uuid";

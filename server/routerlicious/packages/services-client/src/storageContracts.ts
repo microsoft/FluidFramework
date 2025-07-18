@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ISnapshotTree,
 	ISummaryHandle,
 	ISummaryTree as BaseSummaryTree,
