@@ -11,17 +11,17 @@
  */
 export interface TextFormatting {
 	/**
-	 * Display the associated content in italics.
-	 */
-	readonly italic?: true;
-
-	/**
-	 * Display the associated content in bold.
+	 * Render the associated content with a bold formatting.
 	 */
 	readonly bold?: true;
 
 	/**
-	 * Display the associated content with a strikethrough.
+	 * Render the associated content with a italic formatting.
+	 */
+	readonly italic?: true;
+
+	/**
+	 * Render the associated content with a strikethrough formatting.
 	 */
 	readonly strikethrough?: true;
 }
