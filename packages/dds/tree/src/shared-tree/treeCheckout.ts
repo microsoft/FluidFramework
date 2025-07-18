@@ -788,7 +788,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		if (allowNonSupersetSchema !== true) {
 			assert(
 				allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema.clone(), newSchema),
-				"New schema must allow all documents allowed by old schema",
+				0xbe6 /* New schema must allow all documents allowed by old schema */,
 			);
 		}
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);

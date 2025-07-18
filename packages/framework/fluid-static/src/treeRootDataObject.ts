@@ -111,7 +111,10 @@ async function provideEntryPoint(
 	}
 	const treeRootDataObject = ((await entryPoint.get()) as FluidObject<TreeRootDataObject>)
 		.TreeRootDataObject;
-	assert(treeRootDataObject !== undefined, "entryPoint must be of type TreeRootDataObject");
+	assert(
+		treeRootDataObject !== undefined,
+		0xbe7 /* entryPoint must be of type TreeRootDataObject */,
+	);
 	return makeFluidObject<IStaticEntryPoint>(
 		{
 			rootDataObject: treeRootDataObject,
