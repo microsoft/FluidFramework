@@ -38,7 +38,7 @@ async function start(): Promise<void> {
 		connection: connectionConfig,
 		logger: devtoolsLogger,
 		configProvider: configProvider({
-			"Fluid.Container.Test.TreeOnly": true,
+			"Fluid.Container.TEST_TREE_ONLY_MODE_DO_NOT_USE": true,
 		}),
 	};
 	const client = new AzureClient(clientProps);

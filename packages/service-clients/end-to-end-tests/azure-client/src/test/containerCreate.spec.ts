@@ -683,7 +683,7 @@ describe("Container create in tree-only mode", () => {
 			undefined,
 			undefined,
 			configProvider({
-				"Fluid.Container.Test.TreeOnly": true,
+				"Fluid.Container.TEST_TREE_ONLY_MODE_DO_NOT_USE": true,
 			}),
 		);
 		const schema = {
@@ -702,7 +702,7 @@ describe("Container create in tree-only mode", () => {
 			undefined,
 			undefined,
 			configProvider({
-				"Fluid.Container.Test.TreeOnly": true,
+				"Fluid.Container.TEST_TREE_ONLY_MODE_DO_NOT_USE": true,
 			}),
 		);
 		const schema = {

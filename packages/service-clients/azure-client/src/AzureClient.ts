@@ -281,7 +281,11 @@ export class AzureClient {
 		compatibilityMode: CompatibilityMode,
 	): ILoaderProps {
 		let runtimeFactory: IRuntimeFactory;
-		if (this.configProvider?.getRawConfig("Fluid.Container.Test.TreeOnly") === true) {
+
+		// Test only option for enabling tree-only container mode.
+		// This should only be used internally for testing purposes.
+		// We will expose a better API for this in the future.
+		if (this.configProvider?.getRawConfig("Fluid.Container.TEST_TREE_ONLY_MODE_DO_NOT_USE") === true) {
 			// Verify schema meets tree-only mode requirements.
 			if (!isTreeContainerSchema(schema)) {
 				throw new UsageError("Tree-only mode requires exactly SharedTree in initialObjects.");
