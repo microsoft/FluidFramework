@@ -441,20 +441,6 @@ describe("Schema Discrepancies", () => {
 		assert.deepEqual([...getAllowedContentDiscrepancies(viewNumber, storedNumberRoot)], []);
 	});
 
-	const createObjectNodeSchema = (
-		fields: [string, TreeFieldStoredSchema][],
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => {
-		const ObjectNode = new ObjectNodeStoredSchema(
-			new Map(fields.map(([key, schema]) => [brand(key), schema])),
-		);
-		return {
-			rootFieldSchema: root,
-			nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>(treeName), ObjectNode]]),
-		};
-	};
-
 	describe("Special types of tree schemas", () => {
 		class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {
 			x: SchemaFactory.optional(SchemaFactory.number),
@@ -463,16 +449,19 @@ describe("Schema Discrepancies", () => {
 		it("emptyTree", () => {
 			const emptyTree = schemaFactory.objectAlpha(testTreeNodeName, {});
 
-			const emptyTreeStored = createObjectNodeSchema(
-				[],
-				testTreeNodeIdentifier,
-				storedEmptyFieldSchema,
-			);
-			const emptyLocalFieldTreeStored = createObjectNodeSchema(
-				[["x", storedEmptyFieldSchema]],
-				testTreeNodeIdentifier,
-				storedEmptyFieldSchema,
-			);
+			const emptyTreeStored = {
+				rootFieldSchema: storedEmptyFieldSchema,
+				nodeSchema: new Map([[testTreeNodeIdentifier, new ObjectNodeStoredSchema(new Map())]]),
+			};
+			const emptyLocalFieldTreeStored = {
+				rootFieldSchema: storedEmptyFieldSchema,
+				nodeSchema: new Map([
+					[
+						testTreeNodeIdentifier,
+						new ObjectNodeStoredSchema(new Map([[brand("x"), storedEmptyFieldSchema]])),
+					],
+				]),
+			};
 
 			assert.equal(
 				allowsRepoSuperset(defaultSchemaPolicy, emptyTreeStored, emptyLocalFieldTreeStored),
