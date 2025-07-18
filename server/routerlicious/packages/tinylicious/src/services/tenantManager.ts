@@ -8,9 +8,9 @@ import {
 	BasicRestWrapper,
 	GitManager,
 	Historian,
-	IGitManager,
+	type IGitManager,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,

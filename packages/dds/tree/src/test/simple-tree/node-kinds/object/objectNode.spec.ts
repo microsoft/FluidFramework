@@ -9,7 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
-	FieldKind,
+	type FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -49,10 +49,6 @@ import type {
 } from "../../../../util/index.js";
 import { getView, validateUsageError } from "../../../utils.js";
 import { Tree } from "../../../../shared-tree/index.js";
-import {
-	createFieldSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../simple-tree/fieldSchema.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -928,7 +924,7 @@ describeHydration(
 
 			it("returns the same FieldSchema if no annotations are present", () => {
 				const schemaRecord = {
-					foo: createFieldSchema(FieldKind.Optional, stringSchema),
+					foo: SchemaFactory.optional(stringSchema),
 				};
 				const result = unannotateSchemaRecord(schemaRecord);
 				assert.deepStrictEqual(result, schemaRecord);
@@ -948,7 +944,7 @@ describeHydration(
 			});
 
 			it("handles mixed FieldSchema and annotated types", () => {
-				const fieldSchema = createFieldSchema(FieldKind.Optional, stringSchema);
+				const fieldSchema = SchemaFactory.optional(stringSchema);
 				const schemaRecord = {
 					foo: fieldSchema,
 					bar: {

@@ -51,7 +51,7 @@ import {
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
-import { type LazyTreeNode, makeTree } from "./lazyNode.js";
+import { type LazyTreeNode, getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 import { indexForAt, treeStatusFromAnchorCache } from "./utilities.js";
 
 /**
@@ -169,7 +169,7 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 
 		const cursor = this.cursor;
 		cursor.exitField();
-		const output = makeTree(this.context, cursor);
+		const output = getOrCreateHydratedFlexTreeNode(this.context, cursor);
 		cursor.enterField(this.key);
 		return output;
 	}
@@ -203,7 +203,9 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 			return undefined;
 		}
 
-		return inCursorNode(this.cursor, finalIndex, (cursor) => makeTree(this.context, cursor));
+		return inCursorNode(this.cursor, finalIndex, (cursor) =>
+			getOrCreateHydratedFlexTreeNode(this.context, cursor),
+		);
 	}
 
 	public map<U>(callbackfn: (value: FlexTreeUnknownUnboxed, index: number) => U): U[] {
@@ -213,7 +215,9 @@ export abstract class LazyField extends LazyEntity<FieldAnchor> implements FlexT
 	}
 
 	public [Symbol.iterator](): IterableIterator<HydratedFlexTreeNode> {
-		return iterateCursorField(this.cursor, (cursor) => makeTree(this.context, cursor));
+		return iterateCursorField(this.cursor, (cursor) =>
+			getOrCreateHydratedFlexTreeNode(this.context, cursor),
+		);
 	}
 
 	public getFieldPath(): NormalizedFieldUpPath {
@@ -350,7 +354,7 @@ export function unboxedFlexNode(
 	}
 
 	// Try accessing cached child node via anchors.
-	// This avoids O(depth) related costs from makeTree in the cached case.
+	// This avoids O(depth) related costs from getOrCreateHydratedFlexTreeNode in the cached case.
 	const anchor = fieldAnchor.parent;
 	let child: AnchorNode | undefined;
 	if (anchor !== undefined) {
@@ -372,5 +376,5 @@ export function unboxedFlexNode(
 		}
 	}
 
-	return makeTree(context, cursor);
+	return getOrCreateHydratedFlexTreeNode(context, cursor);
 }

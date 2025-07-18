@@ -13,12 +13,12 @@ import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
-import { type IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
+import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
 import { options } from "../fluidBuild/options";
 import { defaultLogger } from "./logging";
-import { MonoRepo, PackageManager } from "./monoRepo";
+import type { MonoRepo, PackageManager } from "./monoRepo";
 import {
-	ExecAsyncResult,
+	type ExecAsyncResult,
 	execWithErrorAsync,
 	isSameFileOrDir,
 	lookUpDirSync,

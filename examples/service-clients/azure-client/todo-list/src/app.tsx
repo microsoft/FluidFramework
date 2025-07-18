@@ -4,7 +4,16 @@
  */
 
 import { AzureClient } from "@fluidframework/azure-client";
+// TODO: Fix this once the tree-only mode API has been stabilized.
+// eslint-disable-next-line import/no-internal-modules
+import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
+import {
+	createTreeContainerRuntimeFactory,
+	isTreeContainerSchema,
+	// TODO: Fix this once the tree-only mode API has been stabilized.
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/fluid-static/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import type { IFluidContainer } from "fluid-framework";
 import React from "react";
@@ -29,9 +38,15 @@ async function start(): Promise<void> {
 	// Wrap telemetry logger for use with Devtools
 	const devtoolsLogger = createDevtoolsLogger(baseLogger);
 
-	const clientProps = {
+	const clientProps: AzureClientPropsInternal = {
 		connection: connectionConfig,
 		logger: devtoolsLogger,
+		createContainerRuntimeFactory: ({ schema, compatibilityMode }) => {
+			if (!isTreeContainerSchema(schema)) {
+				throw new Error("Invalid container schema");
+			}
+			return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
+		},
 	};
 	const client = new AzureClient(clientProps);
 	let container: IFluidContainer<TodoListContainerSchema>;

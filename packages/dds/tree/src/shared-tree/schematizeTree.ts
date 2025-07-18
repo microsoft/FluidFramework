@@ -84,7 +84,8 @@ export function initializeContent(
 
 	// If intermediate schema is not final desired schema, update to the final schema:
 	if (incrementalSchemaUpdate !== newSchema) {
-		schemaRepository.updateSchema(newSchema);
+		// This makes the root more strict, so set allowNonSupersetSchema to true.
+		schemaRepository.updateSchema(newSchema, true);
 	}
 }
 

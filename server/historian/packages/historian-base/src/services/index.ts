@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	ICache,
 	IConnectionString,
 	ICredentials,
@@ -17,6 +17,6 @@ export {
 } from "./definitions";
 export { RedisCache } from "./redisCache";
 export { RedisTenantCache } from "./redisTenantCache";
-export { IDocument, RestGitService } from "./restGitService";
+export { type IDocument, RestGitService } from "./restGitService";
 export { RiddlerService } from "./riddlerService";
 export { SimplifiedCustomDataRetriever } from "./simplifiedCustomDataRetriever";

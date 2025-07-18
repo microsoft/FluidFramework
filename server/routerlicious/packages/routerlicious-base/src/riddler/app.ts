@@ -4,7 +4,7 @@
  */
 
 import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
-import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
+import type { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
@@ -14,7 +14,7 @@ import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
-	ITenantKeyGenerator,
+	type ITenantKeyGenerator,
 } from "@fluidframework/server-services-utils";
 import * as bodyParser from "body-parser";
 import express from "express";
@@ -22,7 +22,7 @@ import express from "express";
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
 
 import * as api from "./api";
-import { ITenantRepository } from "./mongoTenantRepository";
+import type { ITenantRepository } from "./mongoTenantRepository";
 
 export function create(
 	tenantRepository: ITenantRepository,

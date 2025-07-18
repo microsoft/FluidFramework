@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
+import type { ICollection, IDb, IDbFactory } from "@fluidframework/server-services-core";
 
 import { Collection } from "./inMemorycollection";
 
