@@ -100,11 +100,11 @@ describe("SchematizingSimpleTreeView", () => {
 			);
 		});
 
-		it("tolerates enablable allowed types", () => {
+		it("tolerates stageable allowed types", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			const enablableSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
 				schemaFactoryAlpha.number,
-				schemaFactoryAlpha.enablable(schemaFactoryAlpha.string),
+				schemaFactoryAlpha.stageable(schemaFactoryAlpha.string),
 			]);
 
 			const emptyContent = {

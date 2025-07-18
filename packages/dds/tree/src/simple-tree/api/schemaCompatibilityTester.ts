@@ -73,7 +73,7 @@ export class SchemaCompatibilityTester {
 						)
 					) {
 						// Stored schema has extra allowed types that the view schema does not.
-						// TODO can an enablable type be enabled in stored but not in view?
+						// TODO can an stageable type be enabled in stored but not in view?
 						// I don't think so, revisit
 						canUpgrade = false;
 						canView = false;
@@ -144,7 +144,7 @@ export class SchemaCompatibilityTester {
 						// View schema has added a node type that the stored schema doesn't know about.
 						// Note that all cases which trigger this should also trigger an AllowedTypeDiscrepancy (where the type is used).
 						// This means this case should be redundant and could be removed in the future if there is a reason to do so
-						// (like simplifying enablable type support).
+						// (like simplifying stageable type support).
 						// See the TODO in getAllowedContentDiscrepancies.
 						canView = false;
 					} else if (discrepancy.view === undefined) {

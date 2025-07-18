@@ -389,9 +389,9 @@ describe("SchemaCompatibilityTester", () => {
 		});
 
 		describe("with enablables", () => {
-			it("allows viewing and upgrading with enablable type not in stored schema", () => {
+			it("allows viewing and upgrading with stageable type not in stored schema", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [factory.number, factory.enablable(factory.string)],
+					foo: [factory.number, factory.stageable(factory.string)],
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
@@ -404,9 +404,9 @@ describe("SchemaCompatibilityTester", () => {
 				);
 			});
 
-			it("allows viewing and upgrading with enablable type also in stored schema as normal", () => {
+			it("allows viewing and upgrading with stageable type also in stored schema as normal", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [factory.number, factory.enablable(factory.string)],
+					foo: [factory.number, factory.stageable(factory.string)],
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
