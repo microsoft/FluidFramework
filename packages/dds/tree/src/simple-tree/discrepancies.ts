@@ -543,79 +543,6 @@ function* computeObjectNodeDiscrepancies(
 }
 
 /**
- * This function uses incompatibilities to determine if changes to a document schema are backward-compatible, i.e., it determines
- * whether the `view` schema allows a superset of the documents that the `stored` schema allows.
- *
- * @remarks
- * According to the policy of schema evolution, `isRepoSuperset` supports three types of changes:
- * 1. Adding an optional field to an object node.
- * 2. Expanding the set of allowed types for a field.
- * 3. Relaxing a field kind to a more general field kind.
- *
- * Notes: We expect isRepoSuperset to return consistent results with allowsRepoSuperset. However, currently there are some scenarios
- * where the inconsistency will occur:
- * - Different Node Kinds: If view and stored have different node kinds (e.g., view is an objectNodeSchema and stored is a mapNodeSchema),
- * `isRepoSuperset` will determine that view can never be the superset of stored. In contrast, `allowsRepoSuperset` will continue
- * validating internal fields.
- *
- * TODO: Evaluate if this function is needed at all. It is only used in tests and could possibly be replaced with `allowsRepoSuperset`.
- */
-export function isViewSupersetOfStored(view: FieldSchema, stored: TreeStoredSchema): boolean {
-	const discrepancies = getAllowedContentDiscrepancies(view, stored);
-
-	for (const discrepancy of discrepancies) {
-		switch (discrepancy.mismatch) {
-			case "nodeKind": {
-				if (discrepancy.stored !== undefined) {
-					// It's fine for the view schema to know of a node type that the stored schema doesn't know about.
-					return false;
-				}
-				break;
-			}
-			case "valueSchema":
-			case "allowedTypes":
-			case "fieldKind": {
-				if (!isFieldDiscrepancyCompatible(discrepancy)) {
-					return false;
-				}
-				break;
-			}
-			case "fields": {
-				if (
-					discrepancy.differences.some(
-						(difference) => !isFieldDiscrepancyCompatible(difference),
-					)
-				) {
-					return false;
-				}
-				break;
-			}
-			// No default
-		}
-	}
-	return true;
-}
-
-function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
-	switch (discrepancy.mismatch) {
-		case "allowedTypes": {
-			// Since we only track the symmetric difference between the allowed types in the view and
-			// stored schemas, it's sufficient to check if any extra allowed types still exist in the
-			// stored schema.
-			return discrepancy.stored.length === 0;
-		}
-		case "fieldKind": {
-			return posetLte(discrepancy.stored, discrepancy.view, fieldRealizer);
-		}
-		case "valueSchema": {
-			return false;
-		}
-		// No default
-	}
-	return false;
-}
-
-/**
  * A linear extension of a partially-ordered set of `T`s. See:
  * https://en.wikipedia.org/wiki/Linear_extension
  *
@@ -687,6 +614,9 @@ export const PosetComparisonResult = {
 type PosetComparisonResult =
 	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
 
+/**
+ * TODO: This is used by SchemaCompatibilityTester, revisit it during redesign and document
+ */
 export function comparePosetElements<T>(
 	a: T,
 	b: T,
@@ -697,7 +627,7 @@ export function comparePosetElements<T>(
 	for (const extension of realizer) {
 		const aIndex = extension.get(a);
 		const bIndex = extension.get(b);
-		assert(aIndex !== undefined && bIndex !== undefined, 0xa72 /* Invalid realizer */);
+		assert(aIndex !== undefined && bIndex !== undefined, "Invalid realizer");
 		if (aIndex < bIndex) {
 			hasLessThanResult = true;
 		} else if (aIndex > bIndex) {
@@ -712,11 +642,4 @@ export function comparePosetElements<T>(
 		: hasGreaterThanResult
 			? PosetComparisonResult.Greater
 			: PosetComparisonResult.Equal;
-}
-
-export function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
-	const comparison = comparePosetElements(a, b, realizer);
-	return (
-		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
-	);
 }

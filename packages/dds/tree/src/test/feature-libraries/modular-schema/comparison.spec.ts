@@ -241,7 +241,6 @@ describe("Schema Comparison", () => {
 				[[emptyLocalFieldTreeRepo, emptyTreeRepo]],
 			);
 
-			// Validate the consistent results of 'allowsRepoSuperset' and 'isRepoSuperset'
 			assert.equal(
 				allowsRepoSuperset(defaultSchemaPolicy, valueLocalFieldTreeRepo, emptyTreeRepo),
 				false,
