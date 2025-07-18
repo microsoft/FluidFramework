@@ -26,7 +26,7 @@ import {
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	toStoredSchema,
-	isRepoSuperset,
+	isViewSupersetOfStored,
 	getAllowedContentDiscrepancies,
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
@@ -126,7 +126,7 @@ describe("Schema Discrepancies", () => {
 		);
 
 		/**
-		 * Below is an inconsistency between 'isRepoSuperset' and 'allowsRepoSuperset'. The 'isRepoSuperset' will
+		 * Below is an inconsistency between 'isViewSupersetOfStored' and 'allowsRepoSuperset'. The 'isViewSupersetOfStored' will
 		 * halt further validation if an inconsistency in `nodeKind` is found. However, the current logic of
 		 * 'allowsRepoSuperset' permits relaxing an object node to a map node, which allows for a union of all types
 		 * permitted on the object node's fields. It is unclear if this behavior is desired, as
@@ -135,7 +135,10 @@ describe("Schema Discrepancies", () => {
 		 * TODO: If we decide to support this behavior, we will need better e2e tests for this scenario. Additionally,
 		 * we may need to adjust the encoding of map nodes and object nodes to ensure consistent encoding.
 		 */
-		assert.equal(isRepoSuperset(normalizeFieldSchema(ObjectNode), mapNodeStoredSchema), false);
+		assert.equal(
+			isViewSupersetOfStored(normalizeFieldSchema(ObjectNode), mapNodeStoredSchema),
+			false,
+		);
 		assert.equal(
 			allowsRepoSuperset(defaultSchemaPolicy, objectNodeStoredSchema, mapNodeStoredSchema),
 			true,
@@ -227,7 +230,10 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.equal(
-			isRepoSuperset(normalizeFieldSchema(mapNodeSchema4), toStoredSchema(mapNodeSchema1)),
+			isViewSupersetOfStored(
+				normalizeFieldSchema(mapNodeSchema4),
+				toStoredSchema(mapNodeSchema1),
+			),
 			true,
 		);
 	});
@@ -609,7 +615,7 @@ describe("Schema Discrepancies", () => {
 		});
 	});
 
-	describe("isRepoSuperset", () => {
+	describe("isViewSupersetOfStored", () => {
 		class MapNode1 extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
 		const mapNodeSchema1 = SchemaFactory.required(MapNode1);
 
@@ -620,8 +626,14 @@ describe("Schema Discrepancies", () => {
 			class MapNode3 extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
 			const mapNodeSchema3 = SchemaFactory.optional(MapNode3);
 
-			assert.equal(isRepoSuperset(mapNodeSchema2, toStoredSchema(mapNodeSchema1)), true);
-			assert.equal(isRepoSuperset(mapNodeSchema3, toStoredSchema(mapNodeSchema2)), true);
+			assert.equal(
+				isViewSupersetOfStored(mapNodeSchema2, toStoredSchema(mapNodeSchema1)),
+				true,
+			);
+			assert.equal(
+				isViewSupersetOfStored(mapNodeSchema3, toStoredSchema(mapNodeSchema2)),
+				true,
+			);
 		});
 
 		it("Detects new node kinds as a superset", () => {
@@ -631,7 +643,10 @@ describe("Schema Discrepancies", () => {
 				schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number),
 			);
 
-			assert.equal(isRepoSuperset(optionalNumberSchema, toStoredSchema(emptySchema)), true);
+			assert.equal(
+				isViewSupersetOfStored(optionalNumberSchema, toStoredSchema(emptySchema)),
+				true,
+			);
 		});
 
 		it("Detects changed node kinds as not a superset", () => {
@@ -644,8 +659,8 @@ describe("Schema Discrepancies", () => {
 
 			const schemaB = SchemaFactory.optional(schemaFactory.objectAlpha(schemaName, {}));
 
-			assert.equal(isRepoSuperset(schemaA, toStoredSchema(schemaB)), false);
-			assert.equal(isRepoSuperset(schemaB, toStoredSchema(schemaA)), false);
+			assert.equal(isViewSupersetOfStored(schemaA, toStoredSchema(schemaB)), false);
+			assert.equal(isViewSupersetOfStored(schemaB, toStoredSchema(schemaA)), false);
 		});
 
 		it("Adding to the set of allowed types for a field", () => {
@@ -659,11 +674,11 @@ describe("Schema Discrepancies", () => {
 			class MapNode4 extends schemaFactory.mapAlpha(testTreeNodeName, schemaFactory.number) {}
 
 			assert.equal(
-				isRepoSuperset(normalizeFieldSchema(MapNode4), toStoredSchema(MapNode2)),
+				isViewSupersetOfStored(normalizeFieldSchema(MapNode4), toStoredSchema(MapNode2)),
 				true,
 			);
 			assert.equal(
-				isRepoSuperset(normalizeFieldSchema(MapNode3), toStoredSchema(MapNode4)),
+				isViewSupersetOfStored(normalizeFieldSchema(MapNode3), toStoredSchema(MapNode4)),
 				true,
 			);
 		});
@@ -679,7 +694,7 @@ describe("Schema Discrepancies", () => {
 			}) {}
 
 			assert.equal(
-				isRepoSuperset(normalizeFieldSchema(ObjectNode2), toStoredSchema(ObjectNode1)),
+				isViewSupersetOfStored(normalizeFieldSchema(ObjectNode2), toStoredSchema(ObjectNode1)),
 				true,
 			);
 		});
@@ -692,7 +707,7 @@ describe("Schema Discrepancies", () => {
 			class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
 
 			assert.equal(
-				isRepoSuperset(normalizeFieldSchema(ObjectNode), toStoredSchema(MapNode)),
+				isViewSupersetOfStored(normalizeFieldSchema(ObjectNode), toStoredSchema(MapNode)),
 				false,
 			);
 		});
@@ -703,7 +718,10 @@ describe("Schema Discrepancies", () => {
 			const leafNodeSchema1 = SchemaFactory.optional(SchemaFactory.number);
 			const leafNodeSchema2 = SchemaFactory.optional(SchemaFactory.boolean);
 
-			assert.equal(isRepoSuperset(leafNodeSchema1, toStoredSchema(leafNodeSchema2)), false);
+			assert.equal(
+				isViewSupersetOfStored(leafNodeSchema1, toStoredSchema(leafNodeSchema2)),
+				false,
+			);
 		});
 
 		describe("on field kinds for root fields of identical content", () => {
@@ -770,7 +788,7 @@ describe("Schema Discrepancies", () => {
 						nodeSchema: new Map([[numberName, new LeafNodeStoredSchema(ValueSchema.Number)]]),
 					};
 
-					assert.equal(isRepoSuperset(schemaA, schemaB), expected);
+					assert.equal(isViewSupersetOfStored(schemaA, schemaB), expected);
 				});
 			}
 		});

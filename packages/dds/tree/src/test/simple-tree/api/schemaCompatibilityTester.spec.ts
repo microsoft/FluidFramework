@@ -15,7 +15,7 @@ import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	normalizeFieldSchema,
-	isRepoSuperset,
+	isViewSupersetOfStored,
 } from "../../../simple-tree/index.js";
 import {
 	createUnknownOptionalFieldPolicy,
@@ -49,12 +49,12 @@ function expectCompatibility(
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
 	if (compatibility.canUpgrade) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
-		assert.equal(isRepoSuperset(normalizeFieldSchema(view), stored), true);
+		assert.equal(isViewSupersetOfStored(normalizeFieldSchema(view), stored), true);
 	}
 	// if it is viewable, the old stored schema is also a superset of the new one.
 	if (compatibility.canView) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
-		// isRepoSuperset is not checked here as it checks that the view schema is a superset of the stored schema
+		// isViewSupersetOfStored is not checked here as it checks that the view schema is a superset of the stored schema
 	}
 }
 
