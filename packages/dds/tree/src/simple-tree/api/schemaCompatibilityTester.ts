@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { TreeStoredSchema } from "../../core/index.js";
 import {
+	allowsRepoSuperset,
 	FieldKinds,
 	type FullSchemaPolicy,
 	isNeverTree,
@@ -21,6 +22,7 @@ import {
 	PosetComparisonResult,
 	type FieldDiscrepancy,
 } from "../discrepancies.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 
 /**
  * A collection of View information for schema, including policy.
@@ -177,6 +179,13 @@ export class SchemaCompatibilityTester {
 				}
 				// No default
 			}
+		}
+
+		if (canUpgrade) {
+			assert(
+				allowsRepoSuperset(this.policy, stored, toStoredSchema(this.viewSchemaRoot)),
+				"View schema must be a superset of the stored schema to allow upgrade",
+			);
 		}
 
 		return {

@@ -15,7 +15,6 @@ import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	normalizeFieldSchema,
-	isViewSupersetOfStored,
 } from "../../../simple-tree/index.js";
 import {
 	createUnknownOptionalFieldPolicy,
@@ -24,6 +23,7 @@ import {
 
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
+import { isViewSupersetOfStored } from "../../utils.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),

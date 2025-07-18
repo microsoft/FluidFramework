@@ -5,7 +5,6 @@
 
 export {
 	createUnknownOptionalFieldPolicy,
-	createFlexKeyMapping,
 	type FieldHasDefault,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,

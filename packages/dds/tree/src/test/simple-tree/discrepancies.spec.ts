@@ -10,7 +10,6 @@ import {
 	ObjectNodeStoredSchema,
 	storedEmptyFieldSchema,
 	ValueSchema,
-	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
 } from "../../core/index.js";
@@ -26,19 +25,19 @@ import {
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	toStoredSchema,
-	isViewSupersetOfStored,
 	getAllowedContentDiscrepancies,
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
 	SchemaFactory,
 } from "../../simple-tree/index.js";
+// TODO avoid this reaching import, non-string identifiers are intentionally not supported, and likely to break things
 // eslint-disable-next-line import/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { findExtraAllowedTypes } from "../../simple-tree/discrepancies.js";
-import { fieldSchema } from "../utils.js";
+import { fieldSchema, isViewSupersetOfStored } from "../utils.js";
 
 // Arbitrary schema name used in tests
 const testTreeNodeName = "tree";
