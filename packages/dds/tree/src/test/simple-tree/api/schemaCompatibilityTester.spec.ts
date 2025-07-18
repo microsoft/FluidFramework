@@ -388,7 +388,7 @@ describe("SchemaCompatibilityTester", () => {
 			});
 		});
 
-		describe("with enablables", () => {
+		describe("with staged allowed types", () => {
 			it("allows viewing and upgrading with staged type not in stored schema", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
 					foo: [factory.number, factory.staged(factory.string)],

@@ -475,7 +475,7 @@ export class FieldSchemaAlpha<
 				new Set(
 					this.annotatedAllowedTypesNormalized.types
 
-						.filter(({ metadata }) => metadata.enablableSchemaUpgrade === undefined)
+						.filter(({ metadata }) => metadata.stagedSchemaUpgrade === undefined)
 						.map(({ type }) => type.identifier),
 				),
 		);

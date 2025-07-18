@@ -1292,7 +1292,7 @@ describe("schemaFactory", () => {
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 
-	describe("enablables", () => {
+	describe("staged", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
 		class TestObject extends schemaFactory.objectAlpha("TestObject", {

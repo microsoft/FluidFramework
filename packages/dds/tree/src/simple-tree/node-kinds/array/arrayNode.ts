@@ -1082,6 +1082,7 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 
 			// add schema validation
 			// TODO test this
+			// Why is this being done on stored schema? Why aren't we checking for the staged upgrade property?
 			const storedSchema =
 				destinationField.context.schema.nodeSchema.get(
 					brand(this[typeSchemaSymbol].identifier),

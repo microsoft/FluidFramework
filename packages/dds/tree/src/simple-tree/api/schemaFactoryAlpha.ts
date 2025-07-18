@@ -93,7 +93,7 @@ export class SchemaFactoryAlpha<
 			type: annotatedType.type,
 			metadata: {
 				...annotatedType.metadata,
-				enablableSchemaUpgrade: createSchemaUpgrade(),
+				stagedSchemaUpgrade: createSchemaUpgrade(),
 			},
 		};
 	}

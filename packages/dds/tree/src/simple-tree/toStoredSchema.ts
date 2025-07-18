@@ -112,7 +112,8 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
 ]);
 
 /**
- * Normalizes an {@link ImplicitAnnotatedAllowedTypes} into an {@link TreeTypeSet}.
+ * Normalizes an {@link ImplicitAnnotatedAllowedTypes} into a {@link TreeTypeSet}.
+ * TODO: what is this for?
  */
 export function convertAllowedTypes(schema: ImplicitAnnotatedAllowedTypes): TreeTypeSet {
 	return new Set([...normalizeAllowedTypes(schema)].map((item) => brand(item.identifier)));

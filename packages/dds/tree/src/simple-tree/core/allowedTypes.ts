@@ -134,7 +134,7 @@ export interface AllowedTypeMetadata {
 	/**
 	 * If defined, indicates that an allowed type is staged. Before upgrade, any attempt to insert or move a node to the location where this allowed type is declared will throw an error.
 	 */
-	readonly enablableSchemaUpgrade?: SchemaUpgrade;
+	readonly stagedSchemaUpgrade?: SchemaUpgrade;
 }
 
 /**

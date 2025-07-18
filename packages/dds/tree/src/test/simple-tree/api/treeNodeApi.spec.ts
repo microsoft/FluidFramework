@@ -2423,19 +2423,19 @@ describe("treeNodeApi", () => {
 			assert.equal(clonedMetadata, topLeftPoint.metadata, "String not cloned properly");
 		});
 
-		it("errors when assigning a cloned staged to its original location", () => {
+		it("errors when assigning a cloned staged allowed type to its original location", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
-			const enablableSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
+			const stagedSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
 				schemaFactoryAlpha.number,
 				schemaFactoryAlpha.staged(schemaFactoryAlpha.string),
 			]);
 
-			const view = getView(new TreeViewConfiguration({ schema: enablableSchema }));
+			const view = getView(new TreeViewConfiguration({ schema: stagedSchema }));
 			view.initialize([5, "test"]);
 
 			const { root } = view;
 			assert.throws(() => {
-				view.root = TreeBeta.clone<typeof enablableSchema>(root);
+				view.root = TreeBeta.clone<typeof stagedSchema>(root);
 			});
 		});
 

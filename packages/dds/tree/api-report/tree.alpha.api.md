@@ -18,7 +18,7 @@ export function adaptEnum<TScope extends string, const TEnum extends Record<stri
 // @alpha
 export interface AllowedTypeMetadata {
     readonly custom?: unknown;
-    readonly enablableSchemaUpgrade?: SchemaUpgrade;
+    readonly stagedSchemaUpgrade?: SchemaUpgrade;
 }
 
 // @public @system
