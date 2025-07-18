@@ -16,6 +16,15 @@ export interface ContainerSchema {
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
 
+// @alpha @legacy
+export function createTreeContainerRuntimeFactory(props: {
+    readonly schema: TreeContainerSchema;
+    readonly compatibilityMode: CompatibilityMode;
+    readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+    readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+    readonly minVersionForCollabOverride?: MinimumVersionForCollab;
+}): IRuntimeFactory;
+
 // @public
 export interface IConnection {
     readonly id: string;
@@ -79,5 +88,13 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
 };
+
+// @alpha @legacy
+export interface TreeContainerSchema extends ContainerSchema {
+    // (undocumented)
+    readonly initialObjects: {
+        readonly tree: SharedObjectKind<ITree>;
+    };
+}
 
 ```

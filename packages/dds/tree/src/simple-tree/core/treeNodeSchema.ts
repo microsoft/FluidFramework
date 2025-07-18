@@ -4,17 +4,20 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
+import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
 	ImplicitAnnotatedAllowedTypes,
 	NormalizedAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
 import type { Context } from "./context.js";
+import type { FieldKey, NodeData } from "../../core/index.js";
+import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
+import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -422,6 +425,58 @@ export interface TreeNodeSchemaInitializedData {
 	 * A {@link Context} which can be used for unhydrated nodes of this schema.
 	 */
 	readonly context: Context;
+
+	/**
+	 * Checks if data might be schema-compatible.
+	 *
+	 * @returns false if `data` is incompatible with `type` based on a cheap/shallow check.
+	 *
+	 * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
+	 */
+	shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel;
+
+	/**
+	 * Convert data to a {@link FlexContent} representation.
+	 * @remarks
+	 * Data must be compatible with the schema according to {@link shallowCompatibilityTest}.
+	 *
+	 * TODO: use of `allowedTypes` is for fallbacks (for example NaN -\> null).
+	 * This behavior should be moved to shallowCompatibilityTest instead.
+	 */
+	toFlexContent(data: FactoryContent, allowedTypes: ReadonlySet<TreeNodeSchema>): FlexContent;
+}
+
+export type FlexContent = [NodeData, Map<FieldKey, UnhydratedFlexTreeField>];
+
+/**
+ * Indicates a compatibility level for inferring a schema to apply to insertable data.
+ * @remarks
+ * Each schema allowed at a location in the tree has its compatibility level checked against the data being inserted.
+ * The compatibility is considered unambiguous if there is a single schema with a higher compatibility than all others.
+ *
+ * This approach allows adding new compatible formats as a non breaking change.
+ * If the new format was already compatible with some other schema, it can still be added as non-breaking as long as a lower compatibility level is used.
+ * For example, support for constructing maps from record like objects was added in Fluid Framework 2.2.
+ * This format (an object with fields) was already compatible with Object nodes at compatibility level Normal so the new format support for maps was added at compatibility level Low.
+ * This ensures that existing code that was using object literals as insertable content where both objects and maps were allowed will continue to work,
+ * assuming the objects are intended as ObjectNodes.
+ * However new code can now be written using record like objects to construct maps, as long as the schema does not also allow Object nodes which are compatible with the data in that location.
+ *
+ * @see {@link ITreeConfigurationOptions.preventAmbiguity} for a related setting which interacts with this in a somewhat complex way.
+ */
+export enum CompatibilityLevel {
+	/**
+	 * Not compatible. Constructor typing indicates incompatibility.
+	 */
+	None = 0,
+	/**
+	 * Additional compatibility cases added in Fluid Framework 2.2.
+	 */
+	Low = 1,
+	/**
+	 * Compatible in Fluid Framework 2.0.
+	 */
+	Normal = 2,
 }
 
 /**

@@ -43,6 +43,7 @@
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/tree-react-api": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"assert": "^2.0.0",
