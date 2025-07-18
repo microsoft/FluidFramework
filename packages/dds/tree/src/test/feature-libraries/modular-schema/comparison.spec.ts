@@ -72,7 +72,7 @@ describe("Schema Comparison", () => {
 		new Map([[brand("x"), fieldRequiredEmptyTree]]),
 	);
 
-	// With x and y fields which optionality contain emptyTree
+	// With x and y fields which optionally contain emptyTree
 	const nodeWithOptionalXAndYFields = new ObjectNodeStoredSchema(
 		new Map([
 			[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])],
