@@ -25,7 +25,6 @@ import {
 	encodeValue,
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
-import type { EncodedDataBuilder } from "./encodedDataBuilder.js";
 
 export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
@@ -75,22 +74,21 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		cache: EncoderCache,
-		dataBuilder: EncodedDataBuilder,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
 		if (this.type === undefined) {
-			dataBuilder.addToBuffer(new IdentifierToken(cursor.type));
+			outputBuffer.push(new IdentifierToken(cursor.type));
 		} else {
 			assert(cursor.type === this.type, 0x741 /* type must match shape */);
 		}
-		encodeValue(this.getValueToEncode(cursor, cache), this.value, dataBuilder);
+		encodeValue(this.getValueToEncode(cursor, cache), this.value, outputBuffer);
 		for (const fieldEncoder of this.specializedFieldEncoders) {
 			cursor.enterField(brand(fieldEncoder.key));
-			fieldEncoder.encoder.encodeField(cursor, cache, dataBuilder);
+			fieldEncoder.encoder.encodeField(cursor, cache, outputBuffer);
 			cursor.exitField();
 		}
 
 		const otherFieldsBuffer: BufferFormat<EncodedChunkShape> = [];
-		const otherFieldsDataBuilder = dataBuilder.createFromBuffer(otherFieldsBuffer);
 
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
@@ -100,12 +98,12 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 					0x742 /* had extra local fields when shape does not support them */,
 				);
 				otherFieldsBuffer.push(new IdentifierToken(key));
-				this.otherFieldsEncoder.encodeField(cursor, cache, otherFieldsDataBuilder);
+				this.otherFieldsEncoder.encodeField(cursor, cache, otherFieldsBuffer);
 			}
 		});
 
 		if (this.otherFieldsEncoder !== undefined) {
-			dataBuilder.addToBuffer(otherFieldsBuffer);
+			outputBuffer.push(otherFieldsBuffer);
 		}
 	}
 

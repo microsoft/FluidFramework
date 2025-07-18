@@ -14,6 +14,7 @@ import {
 } from "../../../codec/index.js";
 import {
 	CursorLocationType,
+	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 	type TreeChunk,
 } from "../../../core/index.js";
@@ -34,8 +35,8 @@ export const ChunkReferenceId = Type.Number({ multipleOf: 1, minimum: 0 });
 export type ChunkReferenceId = Static<typeof ChunkReferenceId>;
 
 /**
- * Properties for encoding a chunk that supports incremental encoding.
- * Fields that support incremental encoding will encode their chunks separately by calling `encodeIncrementalChunk`.
+ * Properties for incremental encoding.
+ * Fields that support incremental encoding will encode their chunks separately by calling `encodeIncrementalField`.
  * This supports features like incremental summarization where the summary from these fields can be re-used if
  * unchanged between summaries.
  * Note that each of these chunks that are incrementally encoded is fully self-describing (contain its own shapes
@@ -43,23 +44,27 @@ export type ChunkReferenceId = Static<typeof ChunkReferenceId>;
  */
 export interface IncrementalEncoder {
 	/**
-	 * Called to encode an incremental chunk which are encoded separately from the main buffer.
-	 * @param chunk - The chunk to encode.
-	 * @param chunkEncoder - A function that encodes the chunk's contents.
-	 * @returns The reference ID of the encoded chunk. This is used to retrieve the encoded chunk later.
+	 * Called to encode an incremental field at the cursor. The chunks for this field are encoded separately
+	 * from the main buffer.
+	 * @param cursor - The cursor pointing to the field to encode.
+	 * @param chunkEncoder - A function that encodes the contents of the passed chunk in the field.
+	 * @returns The reference IDs of the encoded chunks in the field. This is used to retrieve the encoded
+	 * chunks later.
 	 */
-	encodeIncrementalChunk(
-		chunk: TreeChunk,
-		chunkEncoder: () => EncodedFieldBatch,
-	): ChunkReferenceId;
+	encodeIncrementalField(
+		cursor: ITreeCursorSynchronous,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+	): ChunkReferenceId[];
 }
 
 /**
- * Properties for decoding a chunk that supports incremental encoding. See {@link IncrementalEncoder} for more details.
+ * Properties for incremental decoding.
+ * Fields that had their chunks incrementally encoded will retrieve these chunks by calling
+ * `getEncodedIncrementalChunk`. See {@link IncrementalEncoder} for more details.
  */
 export interface IncrementalDecoder {
 	/**
-	 * Called to get the encoded contents of an incremental chunk with the given reference ID.
+	 * Called to get the encoded contents of an chunk in an incremental field with the given reference ID.
 	 * @param referenceId - The reference ID of the chunk to retrieve.
 	 * @returns The encoded contents of the chunk.
 	 */
@@ -73,7 +78,7 @@ export interface FieldBatchEncodingContext {
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
 	/**
-	 * An encoder / decoder for encoding and decoding of incremental chunks. This will be defined if
+	 * An encoder / decoder for encoding and decoding of incremental fields. This will be defined if
 	 * incremental encoding is supported and enabled.
 	 */
 	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;

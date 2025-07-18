@@ -64,7 +64,9 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly codec: ForestCodec;
 
-	private readonly incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder();
+	private readonly incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder({
+		getChunkAtCursor: (cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
+	});
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
