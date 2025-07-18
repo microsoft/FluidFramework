@@ -15,14 +15,14 @@ import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import { storedEmptyFieldSchema } from "../../../core/index.js";
 
-describe("stageable schema upgrade", () => {
+describe("staged schema upgrade", () => {
 	const factory = new SchemaFactoryAlpha("upgrade");
 
 	// schema A: only number allowed
 	const schemaA = factory.optional([factory.number]);
 
-	// schema B: number or string (string is stageable)
-	const schemaB = factory.optional([factory.number, factory.stageable(factory.string)]);
+	// schema B: number or string (string is staged)
+	const schemaB = factory.optional([factory.number, factory.staged(factory.string)]);
 
 	// schema C: number or string, both fully allowed
 	const schemaC = factory.optional([factory.number, factory.string]);
@@ -47,7 +47,7 @@ describe("stageable schema upgrade", () => {
 			isEquivalent: true,
 		});
 
-		// view schema is B (includes stageable string)
+		// view schema is B (includes staged string)
 		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaB);
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
@@ -59,14 +59,14 @@ describe("stageable schema upgrade", () => {
 		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaB).rootFieldSchema));
 		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
 
-		// schema is upgraded to support stageable type
+		// schema is upgraded to support staged type
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: false,
 			isEquivalent: false,
 		});
 
-		// view schema now wants full support for string (not just stageable)
+		// view schema now wants full support for string (not just staged)
 		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaC);
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,

@@ -850,7 +850,7 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Required, T, TCustomMetadata>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Required, T, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
-    stageable<const T extends TreeNodeSchema>(t: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T>;
+    staged<const T extends TreeNodeSchema>(t: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T>;
 }
 
 // @alpha
