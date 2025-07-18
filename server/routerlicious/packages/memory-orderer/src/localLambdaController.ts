@@ -6,15 +6,15 @@
 import { EventEmitter } from "events";
 
 import {
-	IContext,
-	IQueuedMessage,
-	IPartitionLambda,
+	type IContext,
+	type IQueuedMessage,
+	type IPartitionLambda,
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-import { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
-import { LocalKafka } from "./localKafka";
+import type { IKafkaSubscriber, ILocalOrdererSetup } from "./interfaces";
+import type { LocalKafka } from "./localKafka";
 
 /**
  * @internal

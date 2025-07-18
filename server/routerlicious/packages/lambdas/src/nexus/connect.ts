@@ -24,7 +24,7 @@ import {
 	DefaultServiceConfiguration,
 	createCompositeTokenId,
 	type IWebSocket,
-	ICollaborationSessionClient,
+	type ICollaborationSessionClient,
 	clusterDrainingRetryTimeInMs,
 	type IDenyList,
 } from "@fluidframework/server-services-core";

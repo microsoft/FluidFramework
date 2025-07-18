@@ -101,7 +101,9 @@ export const ObjectNodeSchema = {
 /**
  * {@link ObjectNodeSchema} with data that is not part of the package-exported API surface.
  */
-export type ObjectNodeSchemaPrivate = ObjectNodeSchema & ObjectNodeSchemaInternalData;
+export type ObjectNodeSchemaPrivate = ObjectNodeSchema &
+	ObjectNodeSchemaInternalData &
+	TreeNodeSchemaCorePrivate;
 
 export function isObjectNodeSchema(schema: TreeNodeSchema): schema is ObjectNodeSchemaPrivate {
 	return schema.kind === NodeKind.Object;

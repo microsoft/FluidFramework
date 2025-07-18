@@ -63,7 +63,7 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
  */
 export const todoListContainerSchema = {
 	initialObjects: {
-		todoList: SharedTree,
+		tree: SharedTree,
 	},
 	// This application leverages nested `SharedString` DDSs within the root `SharedTree` DDS.
 	// To allow dynamic creation of `SharedString`s, we need to specify it as a dynamic object type.
@@ -85,7 +85,7 @@ const treeViewConfig = new TreeViewConfiguration({
 export function loadAppFromExistingContainer(
 	container: IFluidContainer<TodoListContainerSchema>,
 ): TodoList {
-	const tree = container.initialObjects.todoList;
+	const tree = container.initialObjects.tree;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canView) {
 		throw new Error("Expected container data to be compatible with app schema");
@@ -101,7 +101,7 @@ export function loadAppFromExistingContainer(
 export async function initializeAppForNewContainer(
 	container: IFluidContainer<TodoListContainerSchema>,
 ): Promise<TodoList> {
-	const tree = container.initialObjects.todoList;
+	const tree = container.initialObjects.tree;
 	const treeView = tree.viewWith(treeViewConfig);
 	if (!treeView.compatibility.canInitialize) {
 		throw new Error("Expected container data to be compatible with TodoList schema");

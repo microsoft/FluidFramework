@@ -13,15 +13,15 @@ import {
 } from "@fluidframework/server-services";
 import {
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
-	IAlfredTenant,
-	ISession,
+	type IAlfredTenant,
+	type ISession,
 	NetworkError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 	createFluidServiceNetworkError,
 	InternalErrorCode,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDocumentStorage,
 	IThrottler,
 	ITenantManager,
@@ -31,7 +31,7 @@ import {
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
@@ -43,16 +43,16 @@ import {
 	verifyStorageToken,
 	getCreationToken,
 	throttle,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	getParam,
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
 	getTelemetryContextPropertiesWithHttpInfo,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
-import { Request, Router } from "express";
+import { type Request, Router } from "express";
 import type { RequestHandler } from "express-serve-static-core";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
 
@@ -63,7 +63,7 @@ import {
 	setGetSessionResultInCache,
 	StageTrace,
 } from "../../../utils";
-import { IDocumentDeleteService } from "../../services";
+import type { IDocumentDeleteService } from "../../services";
 
 /**
  * Response body shape for modern clients that can handle object responses.

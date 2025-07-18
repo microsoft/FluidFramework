@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IThrottleAndUsageStorageManager,
 	IThrottlingMetrics,
 	IUsageData,
@@ -16,8 +16,8 @@ import {
 import {
 	executeRedisMultiWithHmsetExpire,
 	executeRedisMultiWithHmsetExpireAndLpush,
-	IRedisParameters,
-	IRedisClientConnectionManager,
+	type IRedisParameters,
+	type IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
 
 /**

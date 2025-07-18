@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IStorageNameRetriever } from "@fluidframework/server-services-core";
+import type { IStorageNameRetriever } from "@fluidframework/server-services-core";
 
 /**
  * Retriever to fetch storage name used for document.

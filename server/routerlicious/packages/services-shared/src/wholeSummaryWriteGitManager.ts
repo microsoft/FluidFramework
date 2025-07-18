@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICreateBlobParams,
 	ICreateTreeEntry,
 	ICreateTreeParams,
 } from "@fluidframework/gitresources";
 import { getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
+import { type SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
-	IWholeSummaryBlob,
-	IWholeSummaryPayload,
-	IWholeSummaryTree,
-	IWholeSummaryTreeHandleEntry,
-	IWholeSummaryTreeValueEntry,
+	type IWholeSummaryBlob,
+	type IWholeSummaryPayload,
+	type IWholeSummaryTree,
+	type IWholeSummaryTreeHandleEntry,
+	type IWholeSummaryTreeValueEntry,
 	NetworkError,
-	WholeSummaryTreeEntry,
+	type WholeSummaryTreeEntry,
 } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 

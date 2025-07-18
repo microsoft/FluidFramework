@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ITicketedMessage } from "./messages";
-import { IProducer } from "./queue";
+import type { ITicketedMessage } from "./messages";
+import type { IProducer } from "./queue";
 
 /**
  * Combines multiple producers to one.

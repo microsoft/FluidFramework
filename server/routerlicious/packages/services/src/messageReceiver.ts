@@ -5,7 +5,7 @@
 
 import { EventEmitter } from "events";
 
-import { ITaskMessage, ITaskMessageReceiver } from "@fluidframework/server-services-core";
+import type { ITaskMessage, ITaskMessageReceiver } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as amqp from "amqplib";
 import * as winston from "winston";

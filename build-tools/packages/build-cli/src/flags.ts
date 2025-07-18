@@ -22,8 +22,8 @@ function* supportedMonoRepoValues(): IterableIterator<MonoRepoKind> {
 }
 
 import {
-	VersionBumpType,
-	VersionScheme,
+	type VersionBumpType,
+	type VersionScheme,
 	isVersionBumpType,
 	isVersionBumpTypeExtended,
 	isVersionScheme,
@@ -31,7 +31,7 @@ import {
 
 import type { ReleaseGroupName } from "@fluid-tools/build-infrastructure";
 import type { DependencyUpdateType } from "./library/index.js";
-import { ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
+import { type ReleaseGroup, isReleaseGroup } from "./releaseGroups.js";
 
 /**
  * A re-usable CLI flag to parse release groups.

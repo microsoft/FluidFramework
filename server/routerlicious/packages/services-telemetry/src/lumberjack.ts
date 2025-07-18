@@ -8,10 +8,10 @@ import { LumberEventName } from "./lumberEventNames";
 import {
 	LogLevel,
 	LumberType,
-	ILumberjackEngine,
-	ILumberjackSchemaValidator,
+	type ILumberjackEngine,
+	type ILumberjackSchemaValidator,
 	handleError,
-	ILumberFormatter,
+	type ILumberFormatter,
 } from "./resources";
 import {
 	BaseSanitizationLumberFormatter,

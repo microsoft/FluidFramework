@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Project } from "ts-morph";
+import type { Project } from "ts-morph";
 
 let shouldLog = false;
 export function enableLogging(enable: boolean): void {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { PackageJson } from "../common/npmPackage";
+import type { PackageJson } from "../common/npmPackage";
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands";
 
 /**

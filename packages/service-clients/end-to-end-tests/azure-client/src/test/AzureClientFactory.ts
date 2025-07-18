@@ -5,18 +5,24 @@
 
 import {
 	AzureClient,
+	AzureClientPropsInternal,
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 	ITelemetryBaseLogger,
-} from "@fluidframework/azure-client";
+} from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,
 	AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
 	AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
 	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
 import { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
+import type {
+	CompatibilityMode,
+	ContainerSchema,
+} from "@fluidframework/fluid-static/internal";
 import {
 	MockLogger,
 	createChildLogger,
@@ -41,6 +47,13 @@ export function createAzureClient(
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 	scopes?: ScopeType[],
+	createContainerRuntimeFactory?: ({
+		schema,
+		compatibilityMode,
+	}: {
+		schema: ContainerSchema;
+		compatibilityMode: CompatibilityMode;
+	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);
 
@@ -100,11 +113,14 @@ export function createAzureClient(
 			},
 		},
 	});
-	return new AzureClient({
+
+	const props: AzureClientPropsInternal = {
 		connection: connectionProps,
 		logger: createLogger,
 		configProvider,
-	});
+		createContainerRuntimeFactory,
+	};
+	return new AzureClient(props);
 }
 
 /**
