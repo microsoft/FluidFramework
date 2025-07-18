@@ -701,18 +701,6 @@ describe("Schema Discrepancies", () => {
 			);
 		});
 
-		// TODO: This test is skipped because it is not clear how to define leaf node schema with custom identifiers using the current API.
-		// The test is left here for reference, but it should be revisited.
-		it.skip("Leaf schema incompatibilities", () => {
-			const leafNodeSchema1 = SchemaFactory.optional(SchemaFactory.number);
-			const leafNodeSchema2 = SchemaFactory.optional(SchemaFactory.boolean);
-
-			assert.equal(
-				isViewSupersetOfStored(leafNodeSchema1, toStoredSchema(leafNodeSchema2)),
-				false,
-			);
-		});
-
 		describe("on field kinds for root fields of identical content", () => {
 			const allFieldKinds = Object.values(FieldKinds);
 			const testCases: {
