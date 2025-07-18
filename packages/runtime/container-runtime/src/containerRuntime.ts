@@ -1339,6 +1339,8 @@ export class ContainerRuntime
 
 	private canSendOps: boolean;
 
+	private readonly canSendSignals: () => boolean;
+
 	private consecutiveReconnects = 0;
 
 	/**
@@ -1518,6 +1520,12 @@ export class ContainerRuntime
 		recentBatchInfo?: [number, string][],
 	) {
 		super();
+
+		this.canSendSignals = () =>
+			context.connectionState === undefined
+				? this.canSendOps
+				: context.connectionState === 2 /* ConnectionState.Connected */ ||
+					context.connectionState === 1 /* ConnectionState.CatchingUp */;
 
 		const {
 			options,
@@ -5126,7 +5134,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connected,
+				isConnected: () => this.canSendSignals(),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
