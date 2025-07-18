@@ -89,6 +89,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -118,6 +119,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -143,6 +145,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const shape = fieldShaper(
@@ -181,6 +184,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const storedSchema: TreeFieldStoredSchema = {
@@ -223,6 +227,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const shape = treeShaper(
 				toStoredSchema(Minimal),
@@ -240,6 +245,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -279,6 +285,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const shape = treeShaper(
@@ -318,6 +325,7 @@ describe("schemaBasedEncoding", () => {
 			toStoredSchema(RecursiveType),
 			defaultSchemaPolicy,
 			testIdCompressor,
+			undefined /* incrementalEncoder */,
 		);
 		const shape = cache.shapeFromTree(brand(RecursiveType.identifier));
 		const bufferEmpty = checkNodeEncode(shape, cache, {
@@ -342,7 +350,12 @@ describe("schemaBasedEncoding", () => {
 				const storedSchema = schemaData;
 				const tree = treeFactory(idCompressor);
 				// Check with checkFieldEncode
-				const cache = buildCache(storedSchema, defaultSchemaPolicy, idCompressor);
+				const cache = buildCache(
+					storedSchema,
+					defaultSchemaPolicy,
+					idCompressor,
+					undefined /* incrementalEncoder */,
+				);
 				checkFieldEncode(anyFieldEncoder, cache, tree, idCompressor);
 
 				const context: FieldBatchEncodingContext = {

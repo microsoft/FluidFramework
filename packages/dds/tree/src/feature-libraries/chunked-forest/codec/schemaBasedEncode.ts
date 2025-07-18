@@ -52,13 +52,7 @@ export function schemaCompressedEncode(
 ): EncodedFieldBatch {
 	return compressedEncode(
 		fieldBatch,
-		buildCache(
-			schema,
-			policy,
-			idCompressor,
-			incrementalEncoder !== undefined /* shouldEncodeIncrementally */,
-		),
-		incrementalEncoder,
+		buildCache(schema, policy, idCompressor, incrementalEncoder),
 	);
 }
 
@@ -66,15 +60,16 @@ export function buildCache(
 	schema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	idCompressor: IIdCompressor,
-	shouldEncodeIncrementally: boolean = false,
+	incrementalEncoder: IncrementalEncoder | undefined,
 ): EncoderCache {
 	const cache: EncoderCache = new EncoderCache(
 		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
-			treeShaper(schema, policy, fieldHandler, schemaName, shouldEncodeIncrementally),
+			treeShaper(schema, policy, fieldHandler, schemaName, incrementalEncoder !== undefined),
 		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
 			fieldShaper(treeHandler, field, cache, schema),
 		policy.fieldKinds,
 		idCompressor,
+		incrementalEncoder,
 	);
 	return cache;
 }

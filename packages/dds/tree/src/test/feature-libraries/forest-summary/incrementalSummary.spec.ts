@@ -323,9 +323,9 @@ describe("Forest incremental summary", () => {
 			summaryPath: "",
 		};
 		const summary2 = await tree1.summarize(
-			undefined,
-			undefined,
-			undefined,
+			undefined /* fullTree */,
+			undefined /* trackState */,
+			undefined /* telemetryContext */,
 			incrementalSummaryContext2,
 		);
 		validateNoHandlesInForestSummary(summary2.summary);
@@ -344,9 +344,9 @@ describe("Forest incremental summary", () => {
 			summaryPath: "",
 		};
 		const summary3 = await tree1.summarize(
-			undefined,
-			undefined,
-			undefined,
+			undefined /* fullTree */,
+			undefined /* trackState */,
+			undefined /* telemetryContext */,
 			incrementalSummaryContext3,
 		);
 		assert(summary3 !== undefined);
@@ -379,9 +379,9 @@ describe("Forest incremental summary", () => {
 			summaryPath: "",
 		};
 		const newSummary = await tree1.summarize(
-			undefined,
-			undefined,
-			undefined,
+			undefined /* fullTree */,
+			undefined /* trackState */,
+			undefined /* telemetryContext */,
 			newIncrementalSummaryContext,
 		);
 		assert(newSummary !== undefined);

@@ -16,6 +16,7 @@ import type {
 	IncrementalEncoderDecoder,
 	TreeChunk,
 } from "../chunked-forest/index.js";
+import type { ITreeCursorSynchronous } from "../../core/index.js";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -196,19 +197,25 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	private trackedSummaryProperties: TrackedSummaryProperties | undefined;
 
+	private readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk;
+
 	/**
 	 * A map of chunk reference IDs to their encoded contents. This is typically used during the loading of the
 	 * forest to retrieve the contents of the chunks that were summarized incrementally.
 	 */
 	private readonly encodedChunkContentsMap: Map<string, EncodedFieldBatch> = new Map();
 
+	public constructor(props: {
+		readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk;
+	}) {
+		this.getChunkAtCursor = props.getChunkAtCursor;
+	}
+
 	/**
 	 * Must be called when the forest is loaded to download the encoded contents of incremental chunks.
 	 * @param services - The channel storage service to use to access the snapshot tree and download the
 	 * contents of the chunks.
 	 * @param readAndParse - A function that reads and parses a blob from the storage service.
-	 *
-	 * TODO: Initialize the chunkTrackingPropertiesMap so that the next summary can be incremental.
 	 */
 	public async load(
 		services: IChannelStorageService,
@@ -285,22 +292,19 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	}
 
 	/**
-	 * Called to encode an incremental chunk. This should only be called when a summary is being tracked.
-	 * If the chunk has not changed since the last summary, it will be summarized as a handle in the summary tree.
-	 * If it has changed, it will be encoded and the encoded contents will be stored in a separate tree in the summary.
-	 * @param chunk - The chunk to encode.
-	 * @param chunkEncoder - A function that encodes the chunk's contents.
-	 * @returns The reference ID of the encoded chunk.
+	 * {@link IncrementalEncoder.encodeIncrementalField}
 	 */
-	public encodeIncrementalChunk(
-		chunk: TreeChunk,
-		chunkEncoder: () => EncodedFieldBatch,
-	): ChunkReferenceId {
+	public encodeIncrementalField(
+		cursor: ITreeCursorSynchronous,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+	): ChunkReferenceId[] {
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
 		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
 
 		let chunkReferenceId: ChunkReferenceId;
 		let chunkProperties: ChunkSummaryProperties;
+
+		const chunk = this.getChunkAtCursor(cursor);
 
 		// Try and get the properties of the chunk from the latest successful summary.
 		// If it exists and the summary is not a full tree, use the properties to generate a summary handle.
@@ -339,7 +343,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			// any incremental chunks in the subtree of this chunk will use that as their parent summary builder.
 			const chunkSummaryBuilder = new SummaryTreeBuilder();
 			this.trackedSummaryProperties.parentSummaryBuilder = chunkSummaryBuilder;
-			chunkSummaryBuilder.addBlob(chunkContentsBlobKey, JSON.stringify(chunkEncoder()));
+			chunkSummaryBuilder.addBlob(chunkContentsBlobKey, JSON.stringify(chunkEncoder(chunk)));
 
 			// Add this chunk's summary tree to the parent's summary tree. The summary tree contains its encoded
 			// contents and the summary trees of any incremental chunks under it.
@@ -359,7 +363,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 			chunk,
 			chunkProperties,
 		);
-		return chunkReferenceId;
+		return [chunkReferenceId];
 	}
 
 	/**
