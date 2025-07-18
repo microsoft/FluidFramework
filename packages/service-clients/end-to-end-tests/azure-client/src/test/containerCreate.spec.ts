@@ -682,6 +682,8 @@ for (const testOpts of testMatrix) {
  * Testing creating/loading containers with a tree-based root data object.
  */
 describe("Container create in tree-only mode", () => {
+	const invalidSchemaErrorMessage =
+		"Tree-only mode requires exactly 1 SharedTree in initialObjects.";
 	function createClient(): AzureClient {
 		return createAzureClient(
 			undefined,
@@ -691,9 +693,7 @@ describe("Container create in tree-only mode", () => {
 			undefined,
 			({ schema, compatibilityMode }) => {
 				if (!isTreeContainerSchema(schema)) {
-					throw new UsageError(
-						"Tree-only mode requires exactly 1 SharedTree in initialObjects.",
-					);
+					throw new UsageError(invalidSchemaErrorMessage);
 				}
 				return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
 			},
@@ -709,5 +709,25 @@ describe("Container create in tree-only mode", () => {
 		const { container } = await client.createContainer(schema, "2");
 
 		assert(SharedTree.is(container.initialObjects.tree));
+	});
+
+	it("throws if invalid schema is encountered", async function () {
+		const client = createClient();
+		const schema = {
+			initialObjects: {
+				tree: SharedTree,
+				map: SharedMap,
+			},
+		};
+
+		await assert.rejects(
+			client.createContainer(schema, "2"),
+			(error: unknown) => {
+				assert(error instanceof UsageError);
+				assert.strictEqual(error.message, invalidSchemaErrorMessage);
+				return true;
+			},
+			"Expected an error to be thrown for invalid schema",
+		);
 	});
 });
