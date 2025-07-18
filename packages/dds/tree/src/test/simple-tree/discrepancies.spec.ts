@@ -742,8 +742,20 @@ describe("Schema Discrepancies", () => {
 				assert.equal(allFieldKinds.length * 3, testCases.length);
 			});
 
+			function getFieldKindName(fieldKind: FieldKind): string {
+				switch (fieldKind) {
+					case FieldKind.Identifier:
+						return "Identifier";
+					case FieldKind.Optional:
+						return "Optional";
+					case FieldKind.Required:
+						return "Required";
+					default:
+						return "Unknown";
+				}
+			}
 			for (const { superset, original, expected } of testCases) {
-				it(`${superset.identiifer} ${expected ? "⊇" : "⊉"} ${original.identifier}`, () => {
+				it(`${getFieldKindName(superset)} ${expected ? "⊇" : "⊉"} ${original.identifier}`, () => {
 					const schemaA = createFieldSchema(superset, SchemaFactory.number);
 
 					const schemaB: TreeStoredSchema = {
