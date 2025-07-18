@@ -14,12 +14,13 @@ import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import type { IFluidContainer } from "@fluidframework/fluid-static";
-import { isInternalFluidContainer } from "@fluidframework/fluid-static/internal";
+import {
+	isInternalFluidContainer,
+	type TreeContainerSchema,
+} from "@fluidframework/fluid-static/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SchemaFactory, SharedTree, TreeViewConfiguration } from "fluid-framework";
-// eslint-disable-next-line import/no-internal-modules
-import { SharedMap } from "fluid-framework/legacy";
 import { v4 as uuid } from "uuid";
 
 import { AzureClient } from "../AzureClient.js";
@@ -83,17 +84,13 @@ for (const compatibilityMode of ["1", "2"] as const) {
 	describe(`AzureClient (compatibilityMode: ${compatibilityMode})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
-		let schema: {
-			initialObjects: {
-				map1: typeof SharedMap;
-			};
-		};
+		let schema: TreeContainerSchema;
 
 		beforeEach("createAzureClient", function () {
 			client = createAzureClient();
 			schema = {
 				initialObjects: {
-					map1: SharedMap,
+					tree: SharedTree,
 				},
 			};
 		});
@@ -347,20 +344,6 @@ for (const compatibilityMode of ["1", "2"] as const) {
 		 * schema type is statically known.
 		 */
 		describe("'initialObjects'", function () {
-			it("preserves 'SharedMap' type", async function () {
-				const { container } = await client.createContainer(
-					{
-						initialObjects: {
-							map: SharedMap,
-						},
-					},
-					compatibilityMode,
-				);
-
-				// Ensure that the 'map' API is accessible without casting or suppressing lint rules:
-				assert.equal(container.initialObjects.map.get("nonexistent"), undefined);
-			});
-
 			it("preserves 'SharedTree' type", async function () {
 				// SharedTree is not supported in compatibilityMode "1", because it requires idCompressor to be enabled.
 				if (compatibilityMode === "1") {

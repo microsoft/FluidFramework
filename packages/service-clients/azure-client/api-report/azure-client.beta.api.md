@@ -7,17 +7,17 @@
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
-        container: IFluidContainer<TContainerSchema>;
+    createContainer(containerSchema: TreeContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TreeContainerSchema>;
         services: AzureContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
-        container: IFluidContainer<TContainerSchema>;
+    getContainer(id: string, containerSchema: TreeContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TreeContainerSchema>;
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, compatibilityMode: CompatibilityMode): Promise<{
-        container: IFluidContainer<TContainerSchema>;
+    viewContainerVersion(id: string, containerSchema: TreeContainerSchema, version: AzureContainerVersion, compatibilityMode: CompatibilityMode): Promise<{
+        container: IFluidContainer<TreeContainerSchema>;
     }>;
 }
 

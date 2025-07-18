@@ -7,7 +7,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
-	type IRuntimeFactory,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -26,15 +25,12 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
-import type {
-	ContainerSchema,
-	IFluidContainer,
-	CompatibilityMode,
-} from "@fluidframework/fluid-static";
+import type { IFluidContainer, CompatibilityMode } from "@fluidframework/fluid-static";
 import {
-	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
+	createTreeContainerRuntimeFactory,
+	type TreeContainerSchema,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
@@ -43,7 +39,6 @@ import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import type {
 	AzureClientProps,
-	AzureClientPropsInternal,
 	AzureConnectionConfig,
 	AzureContainerServices,
 	AzureContainerVersion,
@@ -95,14 +90,6 @@ export class AzureClient {
 	private readonly connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
 	private readonly logger: ITelemetryBaseLogger | undefined;
 
-	private readonly createContainerRuntimeFactory?: ({
-		schema,
-		compatibilityMode,
-	}: {
-		schema: ContainerSchema;
-		compatibilityMode: CompatibilityMode;
-	}) => IRuntimeFactory;
-
 	/**
 	 * Creates a new client instance using configuration parameters.
 	 * @param properties - Properties for initializing a new AzureClient instance
@@ -127,10 +114,6 @@ export class AzureClient {
 			properties.summaryCompression,
 		);
 		this.configProvider = wrapConfigProvider(properties.configProvider);
-
-		this.createContainerRuntimeFactory = (
-			properties as Partial<AzureClientPropsInternal>
-		).createContainerRuntimeFactory;
 	}
 
 	/**
@@ -141,11 +124,11 @@ export class AzureClient {
 	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns New detached container instance along with associated services.
 	 */
-	public async createContainer<const TContainerSchema extends ContainerSchema>(
-		containerSchema: TContainerSchema,
+	public async createContainer(
+		containerSchema: TreeContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): Promise<{
-		container: IFluidContainer<TContainerSchema>;
+		container: IFluidContainer<TreeContainerSchema>;
 		services: AzureContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
@@ -158,10 +141,7 @@ export class AzureClient {
 			},
 		});
 
-		const fluidContainer = await this.createFluidContainer<TContainerSchema>(
-			container,
-			this.connectionConfig,
-		);
+		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
 	}
@@ -175,12 +155,12 @@ export class AzureClient {
 	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Existing container instance along with associated services.
 	 */
-	public async getContainer<TContainerSchema extends ContainerSchema>(
+	public async getContainer(
 		id: string,
-		containerSchema: TContainerSchema,
+		containerSchema: TreeContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): Promise<{
-		container: IFluidContainer<TContainerSchema>;
+		container: IFluidContainer<TreeContainerSchema>;
 		services: AzureContainerServices;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
@@ -196,7 +176,7 @@ export class AzureClient {
 			...loaderProps,
 			request: { url: url.href },
 		});
-		const fluidContainer = await createFluidContainer<TContainerSchema>({
+		const fluidContainer = await createFluidContainer<TreeContainerSchema>({
 			container,
 		});
 		const services = this.getContainerServices(container);
@@ -213,13 +193,13 @@ export class AzureClient {
 	 * @param compatibilityMode - Compatibility mode the container should run in.
 	 * @returns Loaded container instance at the specified version.
 	 */
-	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
+	public async viewContainerVersion(
 		id: string,
-		containerSchema: TContainerSchema,
+		containerSchema: TreeContainerSchema,
 		version: AzureContainerVersion,
 		compatibilityMode: CompatibilityMode,
 	): Promise<{
-		container: IFluidContainer<TContainerSchema>;
+		container: IFluidContainer<TreeContainerSchema>;
 	}> {
 		const loaderProps = this.getLoaderProps(containerSchema, compatibilityMode);
 		const url = new URL(this.connectionConfig.endpoint);
@@ -233,7 +213,7 @@ export class AzureClient {
 			url: url.href,
 			headers: { [LoaderHeader.version]: version.id },
 		});
-		const fluidContainer = await createFluidContainer<TContainerSchema>({
+		const fluidContainer = await createFluidContainer<TreeContainerSchema>({
 			container,
 		});
 		return { container: fluidContainer };
@@ -285,19 +265,13 @@ export class AzureClient {
 	}
 
 	private getLoaderProps(
-		schema: ContainerSchema,
+		schema: TreeContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): ILoaderProps {
-		const runtimeFactory = this.createContainerRuntimeFactory
-			? this.createContainerRuntimeFactory({
-					schema,
-					compatibilityMode,
-				})
-			: createDOProviderContainerRuntimeFactory({
-					schema,
-					compatibilityMode,
-				});
-
+		const runtimeFactory = createTreeContainerRuntimeFactory({
+			schema,
+			compatibilityMode,
+		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -326,10 +300,10 @@ export class AzureClient {
 		};
 	}
 
-	private async createFluidContainer<TContainerSchema extends ContainerSchema>(
+	private async createFluidContainer(
 		container: IContainer,
 		connection: AzureConnectionConfig,
-	): Promise<IFluidContainer<TContainerSchema>> {
+	): Promise<IFluidContainer<TreeContainerSchema>> {
 		const createNewRequest = createAzureCreateNewRequest(
 			connection.endpoint,
 			getTenantId(connection),
@@ -348,7 +322,7 @@ export class AzureClient {
 			}
 			return container.resolvedUrl.id;
 		};
-		const fluidContainer = await createFluidContainer<TContainerSchema>({
+		const fluidContainer = await createFluidContainer<TreeContainerSchema>({
 			container,
 		});
 		fluidContainer.attach = attach;
