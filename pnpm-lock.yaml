@@ -116,8 +116,8 @@ importers:
   azure/packages/azure-local-service:
     dependencies:
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -153,8 +153,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -183,6 +183,9 @@ importers:
       '@types/jsrsasign':
         specifier: ^10.5.12
         version: 10.5.15
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -276,6 +279,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
@@ -304,8 +310,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.1
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       typechat:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
@@ -313,8 +319,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
 
   examples/apps/blobs:
     dependencies:
@@ -361,8 +367,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -373,8 +379,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -409,6 +415,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -627,8 +636,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.97.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -663,6 +672,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -787,8 +799,8 @@ importers:
         specifier: ^0.20.0
         version: 0.20.2
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -829,6 +841,9 @@ importers:
       '@types/react-grid-layout':
         specifier: ^1.3.5
         version: 1.3.5
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -1008,8 +1023,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
@@ -1077,8 +1092,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -1089,8 +1104,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -1125,6 +1140,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -1422,8 +1440,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -1458,6 +1476,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -2189,8 +2210,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.97.1)
@@ -2322,8 +2343,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -3745,8 +3766,8 @@ importers:
         specifier: ^0.20.0
         version: 0.20.2
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -3872,8 +3893,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -3911,6 +3932,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -4295,8 +4319,8 @@ importers:
         specifier: ^3.4.2
         version: 3.4.2
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4343,8 +4367,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/framework/fluid-framework
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -4374,8 +4398,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/drivers/local-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -4394,6 +4418,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -4434,8 +4461,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@18.19.67)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@18.19.67)(typescript@5.4.5)))(typescript@5.4.5)
@@ -4890,8 +4917,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -4905,8 +4932,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -4935,6 +4962,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -5054,14 +5084,14 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-definitions
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -5084,6 +5114,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.10.1)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -5145,8 +5178,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../packages/utils/telemetry-utils
@@ -5175,8 +5208,8 @@ importers:
         specifier: ^0.1.0
         version: 0.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
       webpack-dev-server:
         specifier: ~4.15.2
         version: 4.15.2(webpack-cli@5.1.4)(webpack@5.97.1)
@@ -5214,6 +5247,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -5444,8 +5480,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5480,6 +5516,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -5604,8 +5643,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/task-manager':
         specifier: workspace:~
         version: link:../../../packages/dds/task-manager
@@ -5622,8 +5661,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5658,6 +5697,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -5782,8 +5824,8 @@ importers:
         specifier: ^2.1.0
         version: 2.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -5815,6 +5857,9 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.0
         version: 18.3.3(@types/react@18.3.15)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       cross-env:
         specifier: ^7.0.3
         version: 7.0.3
@@ -5858,8 +5903,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(webpack@5.97.1)
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       ts-jest:
         specifier: ^29.1.1
         version: 29.2.5(@babel/core@7.26.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.26.0))(jest@29.7.0(@types/node@22.10.1)(babel-plugin-macros@3.1.0)(ts-node@10.9.2(@types/node@22.10.1)(typescript@5.4.5)))(typescript@5.4.5)
@@ -6045,8 +6090,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/runtime/runtime-utils
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/tinylicious-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/tinylicious-driver
@@ -6057,8 +6102,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -6514,8 +6559,8 @@ importers:
         specifier: ^2.0.4
         version: 2.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -6557,8 +6602,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../../../packages/runtime/test-runtime-utils
@@ -6577,6 +6622,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       chai:
         specifier: ^4.2.0
         version: 4.5.0
@@ -7011,8 +7059,8 @@ importers:
         specifier: ^6.0.0
         version: 6.0.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -7068,6 +7116,9 @@ importers:
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -7905,8 +7956,8 @@ importers:
         specifier: workspace:~
         version: link:../shared-object-base
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -7944,6 +7995,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -7999,8 +8053,8 @@ importers:
         specifier: workspace:~
         version: link:../shared-object-base
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8047,6 +8101,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -8471,8 +8528,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8513,6 +8570,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -8762,8 +8822,8 @@ importers:
         specifier: ^2.1.0-0
         version: 2.1.0-0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8819,6 +8879,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -8889,8 +8952,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -8937,6 +9000,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       benchmark:
         specifier: ^2.1.4
         version: 2.1.4
@@ -9210,8 +9276,8 @@ importers:
         specifier: ^10.8.2
         version: 10.8.2
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9243,6 +9309,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -9319,8 +9388,8 @@ importers:
         specifier: ^1.2.0
         version: 1.2.1
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9385,6 +9454,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       ajv:
         specifier: ^8.12.0
         version: 8.17.1
@@ -9732,23 +9804,23 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/protocol-base':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/server-services-client':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/server-services-core':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/server-test-utils':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -9756,8 +9828,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9795,6 +9867,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -9859,8 +9934,8 @@ importers:
         specifier: ~4.7.5
         version: 4.7.5
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -9898,6 +9973,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -10148,8 +10226,8 @@ importers:
         specifier: workspace:~
         version: link:../../loader/driver-utils
       '@fluidframework/server-services-client':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -10163,8 +10241,8 @@ importers:
         specifier: ~4.7.5
         version: 4.7.5
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10205,6 +10283,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       axios:
         specifier: ^1.8.4
         version: 1.8.4(debug@4.4.0)
@@ -10339,8 +10420,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10378,6 +10459,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -10436,8 +10520,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10466,6 +10550,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -10506,8 +10593,8 @@ importers:
         specifier: ^0.1.1
         version: 0.1.1(typescript@5.4.5)(zod@3.24.0)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
       zod:
         specifier: ^3.23.8
         version: 3.24.0
@@ -10548,6 +10635,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -10906,8 +10996,8 @@ importers:
         specifier: ^2.8.11
         version: 2.8.18(tslib@1.14.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -10948,6 +11038,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       chai:
         specifier: ^4.2.0
         version: 4.5.0
@@ -10973,8 +11066,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       tslib:
         specifier: ^1.10.0
         version: 1.14.1
@@ -11804,8 +11897,8 @@ importers:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -11855,6 +11948,9 @@ importers:
       '@types/ungap__structured-clone':
         specifier: ^1.2.0
         version: 1.2.0
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -11910,8 +12006,8 @@ importers:
         specifier: ^0.2.0
         version: 0.2.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -11949,6 +12045,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12083,8 +12182,8 @@ importers:
         specifier: ^1.0.3
         version: 1.0.3
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12140,6 +12239,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12265,8 +12367,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12310,6 +12412,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12417,8 +12522,8 @@ importers:
         specifier: ^1.8.0
         version: 1.8.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12459,6 +12564,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12693,8 +12801,8 @@ importers:
         specifier: ^11.0.0
         version: 11.1.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12732,6 +12840,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -12829,6 +12940,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -12860,8 +12974,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
 
   packages/service-clients/end-to-end-tests/azure-client:
     dependencies:
@@ -12953,11 +13067,11 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -12986,6 +13100,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13065,8 +13182,8 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -13089,6 +13206,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13144,8 +13264,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -13180,6 +13300,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13305,8 +13428,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -13524,8 +13647,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -13536,8 +13659,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/tree
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -13548,6 +13671,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -13651,8 +13777,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/shared-object-base':
         specifier: workspace:~
         version: link:../../dds/shared-object-base
@@ -13817,8 +13943,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/sequence
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -14036,8 +14162,8 @@ importers:
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
       '@fluidframework/server-local-server':
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -14057,8 +14183,8 @@ importers:
         specifier: ^7.7.1
         version: 7.7.1
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -14084,6 +14210,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -14259,11 +14388,11 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14292,6 +14421,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -14450,8 +14582,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
-        version: 7.0.0
+        specifier: ^5.0.0
+        version: 5.0.0
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -14571,8 +14703,8 @@ importers:
         specifier: ^10.8.2
         version: 10.8.2
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -14613,6 +14745,9 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -14773,6 +14908,9 @@ importers:
       '@types/semver':
         specifier: ^7.7.0
         version: 7.7.0
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -14807,8 +14945,8 @@ importers:
         specifier: ~5.4.5
         version: 5.4.5
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
       webpack:
         specifier: ^5.94.0
         version: 5.97.1(webpack-cli@5.1.4)
@@ -14973,6 +15111,9 @@ importers:
       '@microsoft/1ds-post-js':
         specifier: ^3.2.13
         version: 3.2.18(tslib@1.14.1)
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -14983,8 +15124,8 @@ importers:
         specifier: ^1.10.0
         version: 1.14.1
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -15363,8 +15504,8 @@ importers:
         specifier: ^0.20.0
         version: 0.20.2
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@biomejs/biome':
         specifier: ~1.9.3
@@ -15408,6 +15549,9 @@ importers:
       '@types/testing-library__jest-dom':
         specifier: ^5.14.5
         version: 5.14.9
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -16065,8 +16209,8 @@ importers:
         specifier: ^4.3.4
         version: 4.4.0(supports-color@8.1.1)
       uuid:
-        specifier: ^11.1.0
-        version: 11.1.0
+        specifier: ^9.0.0
+        version: 9.0.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -16107,6 +16251,9 @@ importers:
       '@types/sinon':
         specifier: ^17.0.3
         version: 17.0.3
+      '@types/uuid':
+        specifier: ^9.0.2
+        version: 9.0.8
       c8:
         specifier: ^8.0.1
         version: 8.0.1
@@ -17623,6 +17770,9 @@ packages:
   '@fluidframework/server-services-core@7.0.0':
     resolution: {integrity: sha512-LdPERvJ/8nyXOxDPJ0VsWBHsGjwaCve7kdOcMTBk26UQhsHKtSl1D4ZuStoremzzQZBnA0FuksoZsA2yDizwAg==}
 
+  '@fluidframework/server-services-shared@5.0.0':
+    resolution: {integrity: sha512-Qrmxq8IeUTq9n+5rpR4LY0MPZfKWXCw/MQj0Sc5xe0bx8tnPmqQ1W43uOC+or4HcWmigSYKkhPfp73BSzvNrfw==}
+
   '@fluidframework/server-services-shared@7.0.0':
     resolution: {integrity: sha512-kO2/34/4rPPfjnyadaSaIXotWT4ZWMcGxiqruIbuU05zV+OCieUrla3YnE8GFtQ5hCGPMDE6+InfoUcEb8GN9Q==}
 
@@ -17631,6 +17781,9 @@ packages:
 
   '@fluidframework/server-services-telemetry@7.0.0':
     resolution: {integrity: sha512-C3PNyfBWmWboAkSvExELdwyW8dQ9RBIUPhh1P016pf76NRIk2ZypLloVh7K2WA5fo6Tv+gRYhnT2gThXhNm5IA==}
+
+  '@fluidframework/server-services-utils@5.0.0':
+    resolution: {integrity: sha512-5yuVl3Wqj8GpcT1NX+GFsvIwP3nSWD/KJP0J1EQi499T5RWwdsoCcDtZhe1T968NbPQAx/gnXyMtEVy5MfTkWA==}
 
   '@fluidframework/server-services-utils@7.0.0':
     resolution: {integrity: sha512-/hwQbeVx3prXNTReSVGbGmDZTbAKPDUVhHB5CY9eG9nKbo8FnkXUbaOXpgX1xECAWhzer0K4Qj//93G95TAY8w==}
@@ -19352,6 +19505,9 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
+
+  '@types/uuid@9.0.8':
+    resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
 
   '@types/valid-url@1.0.7':
     resolution: {integrity: sha512-tgsWVG80dM5PVEBSbXUttPJTBCOo0IKbBh4R4z/SHsC5C81A3aaUH4fsbj+JYk7fopApU/Mao1c0EWTE592TSg==}
@@ -22721,6 +22877,10 @@ packages:
     peerDependencies:
       '@types/ioredis-mock': ^8
       ioredis: ^5
+
+  ioredis@5.4.1:
+    resolution: {integrity: sha512-2YZsvl7jopIa1gaePkeMtd9rAcSjOOjPtpcLlOeusyO+XH2SK5ZcT+UCrElPP+WVIInh2TzeI4XW9ENaSLVVHA==}
+    engines: {node: '>=12.22.0'}
 
   ioredis@5.6.1:
     resolution: {integrity: sha512-UxC0Yv1Y4WRJiGQxQkP0hfdL0/5/6YvdfOOClRgJ0qppSarkhneSa6UvkMkms0AkdGimSH3Ikqm+6mkMmX7vGA==}
@@ -26528,6 +26688,11 @@ packages:
     resolution: {integrity: sha512-Zc+8eJlFMvgatPZTl6A9L/yht8QqdmUNtURHaKZLmKBE12hNPSrqNkUp2cs3M/UKmNVVAMFQYSjYIVHDjW5zew==}
     engines: {node: '>=12.0.0'}
 
+  tinylicious@5.0.0:
+    resolution: {integrity: sha512-hPO+RCdkoLC9WNEG58nmbnwqzJcIzG6KUdcuZm/mpMeDmUAgPf7gvb+/uDJEloJhUEeG6kvyYt9avKntNqq7dw==}
+    engines: {node: '>=14.0.0'}
+    hasBin: true
+
   tinylicious@7.0.0:
     resolution: {integrity: sha512-E1VDL6N/3s/lOtkzWVqw0OSXrcsYvqzQhzcxm6GD3pXXEfRuHd2MrwADiX+MlcDbTX0/iCY4mo6Mh0fuV2UWDQ==}
     engines: {node: '>=14.0.0'}
@@ -30306,9 +30471,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -31042,6 +31207,37 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
+  '@fluidframework/server-services-shared@5.0.0':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 5.0.0
+      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-utils': 5.0.0
+      '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
+      '@socket.io/sticky': 1.0.4
+      body-parser: 1.20.3
+      debug: 4.4.0(supports-color@8.1.1)
+      events: 3.3.0
+      fast-redact: 3.5.0
+      ioredis: 5.4.1
+      lodash: 4.17.21
+      nconf: 0.12.1
+      notepack.io: 2.3.0
+      serialize-error: 8.1.0
+      socket.io: 4.8.1
+      socket.io-adapter: 2.5.5
+      socket.io-parser: 4.2.4
+      uuid: 9.0.1
+      winston: 3.17.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   '@fluidframework/server-services-shared@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
@@ -31089,6 +31285,28 @@ snapshots:
       path-browserify: 1.0.1
       serialize-error: 8.1.0
       uuid: 11.1.0
+
+  '@fluidframework/server-services-utils@5.0.0':
+    dependencies:
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-services-client': 5.0.0
+      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      debug: 4.4.0(supports-color@8.1.1)
+      express: 4.21.2
+      ioredis: 5.4.1
+      json-stringify-safe: 5.0.1
+      jsonwebtoken: 9.0.2
+      morgan: 1.10.0
+      nconf: 0.12.1
+      serialize-error: 8.1.0
+      sillyname: 0.1.0
+      split: 1.0.1
+      uuid: 9.0.1
+      winston: 3.17.0
+      winston-transport: 4.9.0
+    transitivePeerDependencies:
+      - supports-color
 
   '@fluidframework/server-services-utils@7.0.0':
     dependencies:
@@ -33756,6 +33974,8 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
+  '@types/uuid@9.0.8': {}
+
   '@types/valid-url@1.0.7': {}
 
   '@types/webpack-hot-middleware@2.25.9(webpack-cli@5.1.4)':
@@ -36316,33 +36536,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
       debug: 4.4.0(supports-color@8.1.1)
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       fast-glob: 3.3.3
       get-tsconfig: 4.10.0
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.4.5)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -36356,13 +36576,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 4.4.0(supports-color@8.1.1)
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.4.5))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.10.0
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -37796,6 +38016,20 @@ snapshots:
       fengari-interop: 0.1.3(fengari@0.1.4)
       ioredis: 5.6.1
       semver: 7.7.1
+
+  ioredis@5.4.1:
+    dependencies:
+      '@ioredis/commands': 1.2.0
+      cluster-key-slot: 1.1.2
+      debug: 4.4.0(supports-color@8.1.1)
+      denque: 2.1.0
+      lodash.defaults: 4.2.0
+      lodash.isarguments: 3.1.0
+      redis-errors: 1.2.0
+      redis-parser: 3.0.0
+      standard-as-callback: 2.1.0
+    transitivePeerDependencies:
+      - supports-color
 
   ioredis@5.6.1:
     dependencies:
@@ -42852,6 +43086,47 @@ snapshots:
     dependencies:
       fdir: 6.4.2(picomatch@4.0.2)
       picomatch: 4.0.2
+
+  tinylicious@5.0.0:
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas': 5.0.0(debug@4.4.0)
+      '@fluidframework/server-local-server': 5.0.0
+      '@fluidframework/server-memory-orderer': 5.0.0
+      '@fluidframework/server-services-client': 5.0.0
+      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-shared': 5.0.0
+      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-utils': 5.0.0
+      '@fluidframework/server-test-utils': 5.0.0
+      agentkeepalive: 4.5.0
+      axios: 1.8.4(debug@4.4.0)
+      body-parser: 1.20.3
+      charwise: 3.0.1
+      compression: 1.7.5
+      cookie-parser: 1.4.7
+      cors: 2.8.5
+      detect-port: 1.6.1
+      express: 4.21.2
+      isomorphic-git: 1.27.2
+      json-stringify-safe: 5.0.1
+      level: 8.0.1
+      level-sublevel: 6.6.4
+      lodash: 4.17.21
+      morgan: 1.10.0
+      nconf: 0.12.1
+      socket.io: 4.8.1
+      split: 1.0.1
+      uuid: 9.0.1
+      winston: 3.17.0
+    transitivePeerDependencies:
+      - bufferutil
+      - debug
+      - supports-color
+      - utf-8-validate
 
   tinylicious@7.0.0:
     dependencies:
