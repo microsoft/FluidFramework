@@ -6,7 +6,7 @@
 import assert from "assert";
 import { EventEmitter } from "events";
 
-import {
+import type {
 	IContext,
 	IQueuedMessage,
 	ILogger,

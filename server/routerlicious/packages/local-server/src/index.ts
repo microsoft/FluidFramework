@@ -4,7 +4,7 @@
  */
 
 export {
-	ILocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "./localDeltaConnectionServer";
 export { LocalOrdererManager } from "./localOrdererManager";

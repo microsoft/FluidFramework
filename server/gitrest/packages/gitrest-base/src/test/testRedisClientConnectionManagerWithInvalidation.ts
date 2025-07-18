@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
-import * as Redis from "ioredis";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type * as Redis from "ioredis";
 import RedisMock from "ioredis-mock";
 
 // TODO: Implement this in Routerlicious

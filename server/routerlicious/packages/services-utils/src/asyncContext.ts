@@ -7,12 +7,12 @@ import { AsyncLocalStorage } from "async_hooks";
 
 import {
 	NetworkError,
-	ITimeoutContext,
+	type ITimeoutContext,
 	type IAbortControllerContext,
 } from "@fluidframework/server-services-client";
 import {
-	ITelemetryContextProperties,
-	ITelemetryContext,
+	type ITelemetryContextProperties,
+	type ITelemetryContext,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
 

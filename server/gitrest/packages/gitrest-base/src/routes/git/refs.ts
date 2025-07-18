@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICreateRefParamsExternal,
 	IPatchRefParamsExternal,
 } from "@fluidframework/server-services-client";
 import { handleResponse } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 import {
 	checkSoftDeleted,
@@ -17,8 +17,8 @@ import {
 	getFilesystemManagerFactory,
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
-	IFileSystemManagerFactories,
-	IRepositoryManagerFactory,
+	type IFileSystemManagerFactories,
+	type IRepositoryManagerFactory,
 	logAndThrowApiError,
 } from "../../utils";
 
