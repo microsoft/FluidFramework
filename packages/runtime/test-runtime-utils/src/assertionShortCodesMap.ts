@@ -1270,9 +1270,6 @@ export const shortCodeMap = {
 	"0x911": "Invalid operation on a disposed TreeCheckout",
 	"0x916": "invalid value",
 	"0x921": "Expected a leaf schema.",
-	"0x922": "Expected an array schema.",
-	"0x923": "Expected a Map schema.",
-	"0x924": "Expected an Object schema.",
 	"0x928": "refresher data not found",
 	"0x929": "Unable to build tree that already exists",
 	"0x92a": "refresher data not found",
@@ -1421,7 +1418,6 @@ export const shortCodeMap = {
 	"0x9df": "Key should be a string",
 	"0x9e0": "Value should be a number",
 	"0x9e1": "seqs and posBreakpoints length should match",
-	"0x9e6": "unexpected schema kind",
 	"0x9f0": "Expected build and destroy to have the same length",
 	"0x9f1": "Unexpected mark type",
 	"0x9f2": "Unexpected mark type",
@@ -1841,7 +1837,6 @@ export const shortCodeMap = {
 	"0xbda": "there must be an inflight commit for each resubmit commit",
 	"0xbdb": "revision must exist in local commits",
 	"0xbdc": "must have parent",
-	"0xbdd": "Expected a Record schema.",
 	"0xbde": "Expected object schema.",
 	"0xbdf": "Expected array schema.",
 	"0xbe0": "Expected map schema.",
@@ -1849,5 +1844,7 @@ export const shortCodeMap = {
 	"0xbe2": "metadata must be array for group ops",
 	"0xbe3": "Expected context to be a Context instance.",
 	"0xbe4": "expected reverse mapping and thus a string value",
-	"0xbe5": "expected reverse mapping and thus a key that is a normalized number"
+	"0xbe5": "expected reverse mapping and thus a key that is a normalized number",
+	"0xbe6": "New schema must allow all documents allowed by old schema",
+	"0xbe7": "entryPoint must be of type TreeRootDataObject"
 };
