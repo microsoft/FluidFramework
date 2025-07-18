@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import { PropertySet } from "@fluidframework/merge-tree/internal";
-import { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { PropertySet } from "@fluidframework/merge-tree/internal";
+import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
