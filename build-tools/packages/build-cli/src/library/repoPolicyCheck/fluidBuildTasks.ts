@@ -12,8 +12,8 @@ import {
 } from "@fluid-tools/build-infrastructure";
 import {
 	FluidRepo,
-	Package,
-	PackageJson,
+	type Package,
+	type PackageJson,
 	TscUtils,
 	getEsLintConfigFilePath,
 	getFluidBuildConfig,
@@ -22,9 +22,9 @@ import {
 } from "@fluidframework/build-tools";
 import JSON5 from "json5";
 import * as semver from "semver";
-import { TsConfigJson } from "type-fest";
+import type { TsConfigJson } from "type-fest";
 import { getFlubConfig } from "../../config.js";
-import { Handler, readFile } from "./common.js";
+import { type Handler, readFile } from "./common.js";
 import { FluidBuildDatabase } from "./fluidBuildDatabase.js";
 
 const require = createRequire(import.meta.url);

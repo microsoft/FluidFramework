@@ -5,9 +5,9 @@
 
 import { existsSync, mkdirSync, writeFileSync } from "fs";
 import { dirname, resolve } from "path";
-import { Compilation, Compiler, WebpackError } from "webpack";
+import { type Compilation, type Compiler, WebpackError } from "webpack";
 
-import { BundleBuddyConfig } from "./BundleBuddyTypes";
+import type { BundleBuddyConfig } from "./BundleBuddyTypes";
 
 export interface BundleBuddyPluginConfig {
 	outputFileName: string;
