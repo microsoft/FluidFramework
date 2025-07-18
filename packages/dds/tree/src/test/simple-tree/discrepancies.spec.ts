@@ -26,67 +26,59 @@ import {
 	normalizeFieldSchema,
 	SchemaFactoryAlpha,
 	toStoredSchema,
-	isRepoSuperset,
+	isViewSupersetOfStored,
 	getAllowedContentDiscrepancies,
 	type AnnotatedAllowedType,
 	type TreeNodeSchema,
+	SchemaFactory,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 // eslint-disable-next-line import/no-internal-modules
-import { fieldSchema } from "../feature-libraries/modular-schema/comparison.spec.js";
-// eslint-disable-next-line import/no-internal-modules
 import { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { findExtraAllowedTypes } from "../../simple-tree/discrepancies.js";
+import { fieldSchema } from "../utils.js";
 
 // Arbitrary schema name used in tests
-const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>("tree");
-const testTreeNodeIdentifierNormalized = brand<TreeNodeSchemaIdentifier>(
-	"schema discrepancies.tree",
-);
+const testTreeNodeName = "tree";
+const testTreeNodeIdentifier = brand<TreeNodeSchemaIdentifier>("schema discrepancies.tree");
 
 const schemaFactory = new SchemaFactoryAlpha("schema discrepancies");
-const numberName = brand<TreeNodeSchemaIdentifier>(schemaFactory.number.identifier);
+const numberName = brand<TreeNodeSchemaIdentifier>(SchemaFactory.number.identifier);
 
 // TODO:#43720: Add tests for RecordNodeObjects
 describe("Schema Discrepancies", () => {
 	it("Node kind difference for each possible combination", () => {
-		const objectNodeSchema = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-			x: schemaFactory.required([schemaFactory.number]),
-		});
-		const objectNodeStoredSchema = toStoredSchema(objectNodeSchema);
+		class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {}) {}
+		const objectNodeStoredSchema = toStoredSchema(ObjectNode);
 
-		const mapNodeSchema = schemaFactory.mapAlpha(testTreeNodeIdentifier, [
-			schemaFactory.number,
-		]);
-		const mapNodeStoredSchema = toStoredSchema(mapNodeSchema);
+		class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, []) {}
+		const mapNodeStoredSchema = toStoredSchema(MapNode);
 
-		// TODO: set the key for the leaf node schema so that it results in a proper node kind discrepancy
-		// is this even possible in the api? if not, no need to test it here
-		const leafNodeSchema = schemaFactory.number;
+		const leafNodeSchema = new LeafNodeSchema(testTreeNodeIdentifier, ValueSchema.Number);
 		const leafNodeStoredSchema = toStoredSchema(leafNodeSchema);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
-					normalizeFieldSchema(objectNodeSchema),
+			[
+				...getAllowedContentDiscrepancies(
+					normalizeFieldSchema(ObjectNode),
 					objectNodeStoredSchema,
 				),
-			),
+			],
 			[],
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
-					normalizeFieldSchema(objectNodeSchema),
+			[
+				...getAllowedContentDiscrepancies(
+					normalizeFieldSchema(ObjectNode),
 					mapNodeStoredSchema,
 				),
-			),
+			],
 			[
 				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
 					view: ObjectNodeStoredSchema,
 					stored: MapNodeStoredSchema,
@@ -95,54 +87,37 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
-					normalizeFieldSchema(objectNodeSchema),
+			[
+				...getAllowedContentDiscrepancies(
+					normalizeFieldSchema(ObjectNode),
 					leafNodeStoredSchema,
 				),
-			),
+			],
 			[
 				{
-					fieldKey: undefined,
-					identifier: undefined,
-					mismatch: "allowedTypes",
-					stored: [leafNodeSchema.identifier],
-					view: [
-						{
-							metadata: {},
-							type: objectNodeSchema,
-						},
-					],
-				},
-				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
 					view: ObjectNodeStoredSchema,
-					stored: undefined,
+					stored: LeafNodeStoredSchema,
 				},
 			],
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
-					normalizeFieldSchema(mapNodeSchema),
-					mapNodeStoredSchema,
-				),
-			),
+			[...getAllowedContentDiscrepancies(normalizeFieldSchema(MapNode), mapNodeStoredSchema)],
 			[],
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
-					normalizeFieldSchema(mapNodeSchema),
+			[
+				...getAllowedContentDiscrepancies(
+					normalizeFieldSchema(MapNode),
 					objectNodeStoredSchema,
 				),
-			),
+			],
 			[
 				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
 					view: MapNodeStoredSchema,
 					stored: ObjectNodeStoredSchema,
@@ -151,7 +126,7 @@ describe("Schema Discrepancies", () => {
 		);
 
 		/**
-		 * Below is an inconsistency between 'isRepoSuperset' and 'allowsRepoSuperset'. The 'isRepoSuperset' will
+		 * Below is an inconsistency between 'isViewSupersetOfStored' and 'allowsRepoSuperset'. The 'isViewSupersetOfStored' will
 		 * halt further validation if an inconsistency in `nodeKind` is found. However, the current logic of
 		 * 'allowsRepoSuperset' permits relaxing an object node to a map node, which allows for a union of all types
 		 * permitted on the object node's fields. It is unclear if this behavior is desired, as
@@ -161,7 +136,7 @@ describe("Schema Discrepancies", () => {
 		 * we may need to adjust the encoding of map nodes and object nodes to ensure consistent encoding.
 		 */
 		assert.equal(
-			isRepoSuperset(normalizeFieldSchema(objectNodeSchema), mapNodeStoredSchema),
+			isViewSupersetOfStored(normalizeFieldSchema(ObjectNode), mapNodeStoredSchema),
 			false,
 		);
 		assert.equal(
@@ -171,38 +146,32 @@ describe("Schema Discrepancies", () => {
 	});
 
 	it("Field kind difference for each possible combination (including root)", () => {
-		const mapNodeSchema1 = schemaFactory.optional(
-			schemaFactory.mapAlpha(testTreeNodeIdentifier, schemaFactory.number),
-		);
+		class MapNode1 extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
+		const mapNodeSchema1 = SchemaFactory.optional(MapNode1);
 
-		const mapNodeSchema2 = schemaFactory.required(
-			schemaFactory.mapAlpha(testTreeNodeIdentifier, [
-				schemaFactory.number,
-				schemaFactory.string,
-			]),
-		);
+		class MapNode2 extends schemaFactory.mapAlpha(testTreeNodeName, [
+			SchemaFactory.number,
+			SchemaFactory.string,
+		]) {}
+		const mapNodeSchema2 = SchemaFactory.required(MapNode2);
 
-		const mapNodeSchema3 = schemaFactory.required(
-			schemaFactory.mapAlpha(
-				testTreeNodeIdentifier,
-				schemaFactory.arrayAlpha("array", schemaFactory.string),
-			),
-		);
+		class ArrayNode extends schemaFactory.arrayAlpha("array", SchemaFactory.string) {}
+		class MapNode3 extends schemaFactory.mapAlpha(testTreeNodeName, ArrayNode) {}
+		const mapNodeSchema3 = SchemaFactory.required(MapNode3);
 
-		const mapNodeSchema4 = schemaFactory.optional(
-			schemaFactory.mapAlpha(testTreeNodeIdentifier, [
-				schemaFactory.number,
-				schemaFactory.string,
-			]),
-		);
+		class MapNode4 extends schemaFactory.mapAlpha(testTreeNodeName, [
+			SchemaFactory.number,
+			SchemaFactory.string,
+		]) {}
+		const mapNodeSchema4 = SchemaFactory.optional(MapNode4);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
+			[
+				...getAllowedContentDiscrepancies(
 					normalizeFieldSchema(mapNodeSchema1),
 					toStoredSchema(mapNodeSchema2),
 				),
-			),
+			],
 			[
 				{
 					identifier: undefined,
@@ -212,14 +181,14 @@ describe("Schema Discrepancies", () => {
 					stored: "Value",
 				},
 				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					fieldKey: undefined,
 					mismatch: "allowedTypes",
 					view: [],
-					stored: [schemaFactory.string.identifier],
+					stored: [SchemaFactory.string.identifier],
 				},
 				{
-					identifier: schemaFactory.string.identifier,
+					identifier: SchemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
 					stored: LeafNodeStoredSchema,
@@ -228,26 +197,26 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
+			[
+				...getAllowedContentDiscrepancies(
 					normalizeFieldSchema(mapNodeSchema2),
 					toStoredSchema(mapNodeSchema3),
 				),
-			),
+			],
 			[
 				{
-					identifier: schemaFactory.number.identifier,
+					identifier: SchemaFactory.number.identifier,
 					mismatch: "nodeKind",
 					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					fieldKey: undefined,
 					mismatch: "allowedTypes",
 					view: [
-						{ metadata: {}, type: schemaFactory.number },
-						{ metadata: {}, type: schemaFactory.string },
+						{ metadata: {}, type: SchemaFactory.number },
+						{ metadata: {}, type: SchemaFactory.string },
 					],
 					stored: ["schema discrepancies.array"],
 				},
@@ -261,7 +230,10 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.equal(
-			isRepoSuperset(normalizeFieldSchema(mapNodeSchema4), toStoredSchema(mapNodeSchema1)),
+			isViewSupersetOfStored(
+				normalizeFieldSchema(mapNodeSchema4),
+				toStoredSchema(mapNodeSchema1),
+			),
 			true,
 		);
 	});
@@ -272,29 +244,26 @@ describe("Schema Discrepancies", () => {
 		 * Exhaustive validation is not applied in this case.
 		 */
 
-		const mapNodeSchema = schemaFactory.mapAlpha(testTreeNodeIdentifier, [
-			schemaFactory.number,
-		]);
+		class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
 
-		const objectNodeSchema1 = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-			x: schemaFactory.required(schemaFactory.number),
-		});
+		class ObjectNode1 extends schemaFactory.objectAlpha(testTreeNodeName, {
+			x: SchemaFactory.number,
+		}) {}
 
-		const objectNodeSchema2 = schemaFactory.optional(
-			schemaFactory.objectAlpha("tree2", {
-				x: schemaFactory.optional(schemaFactory.string),
-				y: schemaFactory.optional(schemaFactory.string),
-			}),
-		);
+		class ObjectNode2 extends schemaFactory.objectAlpha("tree2", {
+			x: SchemaFactory.optional(SchemaFactory.string),
+			y: SchemaFactory.optional(SchemaFactory.string),
+		}) {}
+		const objectNodeSchema2 = SchemaFactory.optional(ObjectNode2);
 		const objectNodeStoredSchema2 = toStoredSchema(objectNodeSchema2);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
-					schemaFactory.optional(objectNodeSchema1),
+			[
+				...getAllowedContentDiscrepancies(
+					schemaFactory.optional(ObjectNode1),
 					objectNodeStoredSchema2,
 				),
-			),
+			],
 			[
 				{
 					fieldKey: undefined,
@@ -304,24 +273,24 @@ describe("Schema Discrepancies", () => {
 					view: [
 						{
 							metadata: {},
-							type: objectNodeSchema1,
+							type: ObjectNode1,
 						},
 					],
 				},
 				{
-					identifier: schemaFactory.number.identifier,
+					identifier: SchemaFactory.number.identifier,
 					mismatch: "nodeKind",
 					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
 					view: ObjectNodeStoredSchema,
 					stored: undefined,
 				},
 				{
-					identifier: schemaFactory.string.identifier,
+					identifier: SchemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
 					stored: LeafNodeStoredSchema,
@@ -336,12 +305,12 @@ describe("Schema Discrepancies", () => {
 		);
 
 		assert.deepEqual(
-			Array.from(
-				getAllowedContentDiscrepancies(
-					schemaFactory.optional(mapNodeSchema),
+			[
+				...getAllowedContentDiscrepancies(
+					schemaFactory.optional(MapNode),
 					objectNodeStoredSchema2,
 				),
-			),
+			],
 			[
 				{
 					fieldKey: undefined,
@@ -351,24 +320,24 @@ describe("Schema Discrepancies", () => {
 					view: [
 						{
 							metadata: {},
-							type: mapNodeSchema,
+							type: MapNode,
 						},
 					],
 				},
 				{
-					identifier: schemaFactory.number.identifier,
+					identifier: SchemaFactory.number.identifier,
 					mismatch: "nodeKind",
 					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					mismatch: "nodeKind",
 					view: MapNodeStoredSchema,
 					stored: undefined,
 				},
 				{
-					identifier: schemaFactory.string.identifier,
+					identifier: SchemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
 					stored: LeafNodeStoredSchema,
@@ -384,49 +353,49 @@ describe("Schema Discrepancies", () => {
 	});
 
 	it("Differing fields on object node schema", () => {
-		// Both utilize ObjectNodeSchema but with differing fieldSchemas
-		const objectNodeSchema1 = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-			x: schemaFactory.required(schemaFactory.number),
-		});
-		const objectNodeRoot1 = schemaFactory.optional(objectNodeSchema1);
+		// Both utilize ObjectNode but with differing fieldSchemas
+		class ObjectNode1 extends schemaFactory.objectAlpha(testTreeNodeName, {
+			x: SchemaFactory.number,
+		}) {}
+		const objectNodeRoot1 = SchemaFactory.optional(ObjectNode1);
 
-		const objectNodeSchema2 = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-			x: schemaFactory.optional(schemaFactory.string),
-			y: schemaFactory.optional(schemaFactory.string),
-		});
-		const objectNodeRoot2 = schemaFactory.optional(objectNodeSchema2);
+		class ObjectNode2 extends schemaFactory.objectAlpha(testTreeNodeName, {
+			x: SchemaFactory.optional(SchemaFactory.string),
+			y: SchemaFactory.optional(SchemaFactory.string),
+		}) {}
+		const objectNodeRoot2 = SchemaFactory.optional(ObjectNode2);
 		const objectNodeStoredSchema2 = toStoredSchema(objectNodeRoot2);
 
 		assert.deepEqual(
-			Array.from(getAllowedContentDiscrepancies(objectNodeRoot1, objectNodeStoredSchema2)),
+			[...getAllowedContentDiscrepancies(objectNodeRoot1, objectNodeStoredSchema2)],
 			[
 				{
-					identifier: schemaFactory.number.identifier,
+					identifier: SchemaFactory.number.identifier,
 					mismatch: "nodeKind",
 					view: LeafNodeStoredSchema,
 					stored: undefined,
 				},
 				{
-					identifier: testTreeNodeIdentifierNormalized,
+					identifier: testTreeNodeIdentifier,
 					mismatch: "fields",
 					differences: [
 						{
 							fieldKey: "x",
-							identifier: testTreeNodeIdentifierNormalized,
+							identifier: testTreeNodeIdentifier,
 							mismatch: "allowedTypes",
-							view: [{ metadata: {}, type: schemaFactory.number }],
-							stored: [schemaFactory.string.identifier],
+							view: [{ metadata: {}, type: SchemaFactory.number }],
+							stored: [SchemaFactory.string.identifier],
 						},
 						{
 							fieldKey: "x",
-							identifier: testTreeNodeIdentifierNormalized,
+							identifier: testTreeNodeIdentifier,
 							mismatch: "fieldKind",
 							view: "Value",
 							stored: "Optional",
 						},
 						{
 							fieldKey: "y",
-							identifier: testTreeNodeIdentifierNormalized,
+							identifier: testTreeNodeIdentifier,
 							mismatch: "fieldKind",
 							view: "Forbidden",
 							stored: "Optional",
@@ -434,7 +403,7 @@ describe("Schema Discrepancies", () => {
 					],
 				},
 				{
-					identifier: schemaFactory.string.identifier,
+					identifier: SchemaFactory.string.identifier,
 					mismatch: "nodeKind",
 					view: undefined,
 					stored: LeafNodeStoredSchema,
@@ -443,40 +412,25 @@ describe("Schema Discrepancies", () => {
 		);
 	});
 
-	const createLeafNodeSchema = (
-		leafValue: ValueSchema,
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => ({
-		rootFieldSchema: root,
-		nodeSchema: new Map([
-			[brand<TreeNodeSchemaIdentifier>(treeName), new LeafNodeStoredSchema(leafValue)],
-		]),
-	});
-
 	it("Differing value types on leaf node schema", () => {
-		const leafNodeSchema1 = schemaFactory.optional(
-			new LeafNodeSchema(testTreeNodeIdentifier, ValueSchema.Number),
-		);
+		const viewNumber = schemaFactory.optional(SchemaFactory.number);
 
-		const root = fieldSchema(FieldKinds.optional, [testTreeNodeIdentifier]);
+		const rootFieldSchema = fieldSchema(FieldKinds.optional, [numberName]);
 
-		const leafNodeSchema2 = createLeafNodeSchema(
-			ValueSchema.Boolean,
-			testTreeNodeIdentifier,
-			root,
-		);
-		const leafNodeSchema3 = createLeafNodeSchema(
-			ValueSchema.Number,
-			testTreeNodeIdentifier,
-			root,
-		);
+		const storedBooleanRoot = {
+			rootFieldSchema,
+			nodeSchema: new Map([[numberName, new LeafNodeStoredSchema(ValueSchema.Boolean)]]),
+		};
+		const storedNumberRoot = {
+			rootFieldSchema,
+			nodeSchema: new Map([[numberName, new LeafNodeStoredSchema(ValueSchema.Number)]]),
+		};
 
 		assert.deepEqual(
-			Array.from(getAllowedContentDiscrepancies(leafNodeSchema1, leafNodeSchema2)),
+			[...getAllowedContentDiscrepancies(viewNumber, storedBooleanRoot)],
 			[
 				{
-					identifier: testTreeNodeIdentifier,
+					identifier: numberName,
 					mismatch: "valueSchema",
 					view: ValueSchema.Number,
 					stored: ValueSchema.Boolean,
@@ -484,44 +438,30 @@ describe("Schema Discrepancies", () => {
 			],
 		);
 
-		assert.deepEqual(
-			Array.from(getAllowedContentDiscrepancies(leafNodeSchema1, leafNodeSchema3)),
-			[],
-		);
+		assert.deepEqual([...getAllowedContentDiscrepancies(viewNumber, storedNumberRoot)], []);
 	});
 
-	const createObjectNodeSchema = (
-		fields: [string, TreeFieldStoredSchema][],
-		treeName: string,
-		root: TreeFieldStoredSchema,
-	): TreeStoredSchema => {
-		const objectNodeSchema = new ObjectNodeStoredSchema(
-			new Map(fields.map(([key, schema]) => [brand(key), schema])),
-		);
-		return {
-			rootFieldSchema: root,
-			nodeSchema: new Map([[brand<TreeNodeSchemaIdentifier>(treeName), objectNodeSchema]]),
-		};
-	};
-
 	describe("Special types of tree schemas", () => {
-		const objectNodeSchema = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-			x: schemaFactory.optional(schemaFactory.number),
-		});
+		class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {
+			x: SchemaFactory.optional(SchemaFactory.number),
+		}) {}
 
 		it("emptyTree", () => {
-			const emptyTree = schemaFactory.objectAlpha(testTreeNodeIdentifier, {});
+			const emptyTree = schemaFactory.objectAlpha(testTreeNodeName, {});
 
-			const emptyTreeStored = createObjectNodeSchema(
-				[],
-				testTreeNodeIdentifierNormalized,
-				storedEmptyFieldSchema,
-			);
-			const emptyLocalFieldTreeStored = createObjectNodeSchema(
-				[["x", storedEmptyFieldSchema]],
-				testTreeNodeIdentifierNormalized,
-				storedEmptyFieldSchema,
-			);
+			const emptyTreeStored = {
+				rootFieldSchema: storedEmptyFieldSchema,
+				nodeSchema: new Map([[testTreeNodeIdentifier, new ObjectNodeStoredSchema(new Map())]]),
+			};
+			const emptyLocalFieldTreeStored = {
+				rootFieldSchema: storedEmptyFieldSchema,
+				nodeSchema: new Map([
+					[
+						testTreeNodeIdentifier,
+						new ObjectNodeStoredSchema(new Map([[brand("x"), storedEmptyFieldSchema]])),
+					],
+				]),
+			};
 
 			assert.equal(
 				allowsRepoSuperset(defaultSchemaPolicy, emptyTreeStored, emptyLocalFieldTreeStored),
@@ -533,12 +473,12 @@ describe("Schema Discrepancies", () => {
 			);
 
 			assert.deepEqual(
-				Array.from(
-					getAllowedContentDiscrepancies(
+				[
+					...getAllowedContentDiscrepancies(
 						normalizeFieldSchema(emptyTree),
 						emptyLocalFieldTreeStored,
 					),
-				),
+				],
 				[
 					{
 						fieldKey: undefined,
@@ -563,12 +503,7 @@ describe("Schema Discrepancies", () => {
 			);
 
 			assert.deepEqual(
-				Array.from(
-					getAllowedContentDiscrepancies(
-						normalizeFieldSchema(objectNodeSchema),
-						emptyTreeStored,
-					),
-				),
+				[...getAllowedContentDiscrepancies(normalizeFieldSchema(ObjectNode), emptyTreeStored)],
 				[
 					{
 						fieldKey: undefined,
@@ -578,7 +513,7 @@ describe("Schema Discrepancies", () => {
 						view: [
 							{
 								metadata: {},
-								type: objectNodeSchema,
+								type: ObjectNode,
 							},
 						],
 					},
@@ -590,7 +525,7 @@ describe("Schema Discrepancies", () => {
 						stored: "Forbidden",
 					},
 					{
-						identifier: schemaFactory.number.identifier,
+						identifier: SchemaFactory.number.identifier,
 						mismatch: "nodeKind",
 						view: LeafNodeStoredSchema,
 						stored: undefined,
@@ -612,12 +547,12 @@ describe("Schema Discrepancies", () => {
 			);
 
 			assert.deepEqual(
-				Array.from(
-					getAllowedContentDiscrepancies(
-						normalizeFieldSchema(objectNodeSchema),
+				[
+					...getAllowedContentDiscrepancies(
+						normalizeFieldSchema(ObjectNode),
 						emptyLocalFieldTreeStored,
 					),
-				),
+				],
 				[
 					{
 						fieldKey: undefined,
@@ -627,7 +562,7 @@ describe("Schema Discrepancies", () => {
 						view: [
 							{
 								metadata: {},
-								type: objectNodeSchema,
+								type: ObjectNode,
 							},
 						],
 					},
@@ -639,7 +574,7 @@ describe("Schema Discrepancies", () => {
 						stored: "Forbidden",
 					},
 					{
-						identifier: schemaFactory.number.identifier,
+						identifier: SchemaFactory.number.identifier,
 						mismatch: "nodeKind",
 						view: LeafNodeStoredSchema,
 						stored: undefined,
@@ -652,7 +587,7 @@ describe("Schema Discrepancies", () => {
 								identifier: "schema discrepancies.tree",
 								fieldKey: "x",
 								mismatch: "allowedTypes",
-								view: [{ metadata: {}, type: schemaFactory.number }],
+								view: [{ metadata: {}, type: SchemaFactory.number }],
 								stored: [],
 							},
 							{
@@ -669,112 +604,101 @@ describe("Schema Discrepancies", () => {
 		});
 	});
 
-	describe("isRepoSuperset", () => {
-		const mapNodeSchema1 = schemaFactory.required(
-			schemaFactory.mapAlpha(testTreeNodeIdentifier, schemaFactory.number),
-		);
+	describe("isViewSupersetOfStored", () => {
+		class MapNode1 extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
+		const mapNodeSchema1 = SchemaFactory.required(MapNode1);
 
 		it("Relaxing a field kind to more general field kind", () => {
-			const mapNodeSchema2 = schemaFactory.optional(
-				schemaFactory.mapAlpha(testTreeNodeIdentifier, schemaFactory.number),
-			);
+			class MapNode2 extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
+			const mapNodeSchema2 = SchemaFactory.optional(MapNode2);
 
-			const mapNodeSchema3 = schemaFactory.optional(
-				schemaFactory.mapAlpha(testTreeNodeIdentifier, schemaFactory.number),
-			);
+			class MapNode3 extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
+			const mapNodeSchema3 = SchemaFactory.optional(MapNode3);
 
-			assert.equal(isRepoSuperset(mapNodeSchema2, toStoredSchema(mapNodeSchema1)), true);
-			assert.equal(isRepoSuperset(mapNodeSchema3, toStoredSchema(mapNodeSchema2)), true);
+			assert.equal(
+				isViewSupersetOfStored(mapNodeSchema2, toStoredSchema(mapNodeSchema1)),
+				true,
+			);
+			assert.equal(
+				isViewSupersetOfStored(mapNodeSchema3, toStoredSchema(mapNodeSchema2)),
+				true,
+			);
 		});
 
 		it("Detects new node kinds as a superset", () => {
-			const emptySchema = schemaFactory.optional([]);
+			const emptySchema = SchemaFactory.optional([]);
 
-			const optionalNumberSchema = schemaFactory.optional(
-				schemaFactory.mapAlpha(testTreeNodeIdentifier, schemaFactory.number),
+			const optionalNumberSchema = SchemaFactory.optional(
+				schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number),
 			);
 
-			assert.equal(isRepoSuperset(optionalNumberSchema, toStoredSchema(emptySchema)), true);
+			assert.equal(
+				isViewSupersetOfStored(optionalNumberSchema, toStoredSchema(emptySchema)),
+				true,
+			);
 		});
 
 		it("Detects changed node kinds as not a superset", () => {
 			// Name used for the node which has a changed type
 			const schemaName = brand<TreeNodeSchemaIdentifier>("test");
 
-			const schemaA = schemaFactory.optional(
-				schemaFactory.mapAlpha(schemaName, schemaFactory.number),
+			const schemaA = SchemaFactory.optional(
+				schemaFactory.mapAlpha(schemaName, SchemaFactory.number),
 			);
 
-			const schemaB = schemaFactory.optional(schemaFactory.objectAlpha(schemaName, {}));
+			const schemaB = SchemaFactory.optional(schemaFactory.objectAlpha(schemaName, {}));
 
-			assert.equal(isRepoSuperset(schemaA, toStoredSchema(schemaB)), false);
-			assert.equal(isRepoSuperset(schemaB, toStoredSchema(schemaA)), false);
+			assert.equal(isViewSupersetOfStored(schemaA, toStoredSchema(schemaB)), false);
+			assert.equal(isViewSupersetOfStored(schemaB, toStoredSchema(schemaA)), false);
 		});
 
 		it("Adding to the set of allowed types for a field", () => {
-			const mapNodeSchema2 = schemaFactory.mapAlpha(testTreeNodeIdentifier, []);
+			class MapNode2 extends schemaFactory.mapAlpha(testTreeNodeName, []) {}
 
-			const mapNodeSchema3 = schemaFactory.mapAlpha(testTreeNodeIdentifier, [
+			class MapNode3 extends schemaFactory.mapAlpha(testTreeNodeName, [
 				schemaFactory.number,
 				schemaFactory.string,
-			]);
+			]) {}
 
-			const mapNodeSchema4 = schemaFactory.mapAlpha(testTreeNodeIdentifier, [
-				schemaFactory.number,
-			]);
+			class MapNode4 extends schemaFactory.mapAlpha(testTreeNodeName, schemaFactory.number) {}
 
 			assert.equal(
-				isRepoSuperset(normalizeFieldSchema(mapNodeSchema4), toStoredSchema(mapNodeSchema2)),
+				isViewSupersetOfStored(normalizeFieldSchema(MapNode4), toStoredSchema(MapNode2)),
 				true,
 			);
 			assert.equal(
-				isRepoSuperset(normalizeFieldSchema(mapNodeSchema3), toStoredSchema(mapNodeSchema4)),
+				isViewSupersetOfStored(normalizeFieldSchema(MapNode3), toStoredSchema(MapNode4)),
 				true,
 			);
 		});
 
 		it("Adding an optional field to an object node", () => {
-			const objectNodeSchema1 = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-				x: schemaFactory.optional(schemaFactory.number),
-			});
+			class ObjectNode1 extends schemaFactory.objectAlpha(testTreeNodeName, {
+				x: SchemaFactory.optional(SchemaFactory.number),
+			}) {}
 
-			const objectNodeSchema2 = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-				x: schemaFactory.optional(schemaFactory.number),
-				y: schemaFactory.optional(schemaFactory.string),
-			});
+			class ObjectNode2 extends schemaFactory.objectAlpha(testTreeNodeName, {
+				x: SchemaFactory.optional(SchemaFactory.number),
+				y: SchemaFactory.optional(SchemaFactory.string),
+			}) {}
 
 			assert.equal(
-				isRepoSuperset(
-					normalizeFieldSchema(objectNodeSchema2),
-					toStoredSchema(objectNodeSchema1),
-				),
+				isViewSupersetOfStored(normalizeFieldSchema(ObjectNode2), toStoredSchema(ObjectNode1)),
 				true,
 			);
 		});
 
 		it("No superset for node kind incompatibility", () => {
-			const objectNodeSchema = schemaFactory.objectAlpha(testTreeNodeIdentifier, {
-				x: schemaFactory.optional(schemaFactory.number),
-			});
+			class ObjectNode extends schemaFactory.objectAlpha(testTreeNodeName, {
+				x: SchemaFactory.optional(SchemaFactory.number),
+			}) {}
 
-			const mapNodeSchema = schemaFactory.mapAlpha(
-				testTreeNodeIdentifier,
-				schemaFactory.number,
-			);
+			class MapNode extends schemaFactory.mapAlpha(testTreeNodeName, SchemaFactory.number) {}
 
 			assert.equal(
-				isRepoSuperset(normalizeFieldSchema(objectNodeSchema), toStoredSchema(mapNodeSchema)),
+				isViewSupersetOfStored(normalizeFieldSchema(ObjectNode), toStoredSchema(MapNode)),
 				false,
 			);
-		});
-
-		// TODO: This test is skipped because it is not clear how to define leaf node schema with custom identifiers using the current API.
-		// The test is left here for reference, but it should be revisited.
-		it.skip("Leaf schema incompatibilities", () => {
-			const leafNodeSchema1 = schemaFactory.optional(schemaFactory.number);
-			const leafNodeSchema2 = schemaFactory.optional(schemaFactory.boolean);
-
-			assert.equal(isRepoSuperset(leafNodeSchema1, toStoredSchema(leafNodeSchema2)), false);
 		});
 
 		describe("on field kinds for root fields of identical content", () => {
@@ -819,25 +743,38 @@ describe("Schema Discrepancies", () => {
 				assert.equal(allFieldKinds.length * 3, testCases.length);
 			});
 
+			function getFieldKindName(fieldKind: FieldKind): string {
+				switch (fieldKind) {
+					case FieldKind.Identifier:
+						return "Identifier";
+					case FieldKind.Optional:
+						return "Optional";
+					case FieldKind.Required:
+						return "Required";
+					default:
+						return "Unknown";
+				}
+			}
+
 			for (const { superset, original, expected } of testCases) {
 				it(`${getFieldKindName(superset)} ${expected ? "⊇" : "⊉"} ${original.identifier}`, () => {
-					const schemaA = createFieldSchema(superset, schemaFactory.number);
+					const schemaA = createFieldSchema(superset, SchemaFactory.number);
 
 					const schemaB: TreeStoredSchema = {
 						rootFieldSchema: fieldSchema(original, [numberName]),
 						nodeSchema: new Map([[numberName, new LeafNodeStoredSchema(ValueSchema.Number)]]),
 					};
 
-					assert.equal(isRepoSuperset(schemaA, schemaB), expected);
+					assert.equal(isViewSupersetOfStored(schemaA, schemaB), expected);
 				});
 			}
 		});
 	});
 
 	describe("findExtraAllowedTypes", () => {
-		const typeA = { metadata: {}, type: schemaFactory.number };
-		const typeB = { metadata: {}, type: schemaFactory.string };
-		const typeC = { metadata: {}, type: schemaFactory.boolean };
+		const typeA = { metadata: {}, type: SchemaFactory.number };
+		const typeB = { metadata: {}, type: SchemaFactory.string };
+		const typeC = { metadata: {}, type: SchemaFactory.boolean };
 
 		const getIdentifiers = (types: readonly AnnotatedAllowedType<TreeNodeSchema>[]) =>
 			new Set<TreeNodeSchemaIdentifier>(
@@ -894,16 +831,3 @@ describe("Schema Discrepancies", () => {
 		});
 	});
 });
-
-function getFieldKindName(fieldKind: FieldKind): string {
-	switch (fieldKind) {
-		case FieldKind.Identifier:
-			return "Identifier";
-		case FieldKind.Optional:
-			return "Optional";
-		case FieldKind.Required:
-			return "Required";
-		default:
-			return "Unknown";
-	}
-}

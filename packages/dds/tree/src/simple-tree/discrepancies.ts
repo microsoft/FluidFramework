@@ -543,10 +543,10 @@ function* computeObjectNodeDiscrepancies(
 }
 
 /**
- * @remarks
- *
  * This function uses incompatibilities to determine if changes to a document schema are backward-compatible, i.e., it determines
  * whether the `view` schema allows a superset of the documents that the `stored` schema allows.
+ *
+ * @remarks
  * According to the policy of schema evolution, `isRepoSuperset` supports three types of changes:
  * 1. Adding an optional field to an object node.
  * 2. Expanding the set of allowed types for a field.
@@ -554,12 +554,13 @@ function* computeObjectNodeDiscrepancies(
  *
  * Notes: We expect isRepoSuperset to return consistent results with allowsRepoSuperset. However, currently there are some scenarios
  * where the inconsistency will occur:
- *
- * - Different Node Kinds: If a and b have different node kinds (e.g., a is an objectNodeSchema and b is a mapNodeSchema),
- * `isRepoSuperset` will determine that a can never be the superset of b. In contrast, `allowsRepoSuperset` will continue
+ * - Different Node Kinds: If view and stored have different node kinds (e.g., view is an objectNodeSchema and stored is a mapNodeSchema),
+ * `isRepoSuperset` will determine that view can never be the superset of stored. In contrast, `allowsRepoSuperset` will continue
  * validating internal fields.
+ *
+ * TODO: Evaluate if this function is needed at all. It is only used in tests and could possibly be replaced with `allowsRepoSuperset`.
  */
-export function isRepoSuperset(view: FieldSchema, stored: TreeStoredSchema): boolean {
+export function isViewSupersetOfStored(view: FieldSchema, stored: TreeStoredSchema): boolean {
 	const discrepancies = getAllowedContentDiscrepancies(view, stored);
 
 	for (const discrepancy of discrepancies) {

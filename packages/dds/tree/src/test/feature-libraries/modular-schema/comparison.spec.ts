@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	type MutableTreeStoredSchema,
@@ -31,20 +30,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/comparison.js";
 import { brand } from "../../../util/index.js";
-
-/**
- * Helper for building {@link TreeFieldStoredSchema}.
- */
-export function fieldSchema(
-	kind: { identifier: FieldKindIdentifier },
-	types: Iterable<TreeNodeSchemaIdentifier>,
-): TreeFieldStoredSchema {
-	return {
-		kind: kind.identifier,
-		types: new Set(types),
-		persistedMetadata: undefined,
-	};
-}
+import { fieldSchema } from "../../utils.js";
 
 describe("Schema Comparison", () => {
 	const numberLeaf: TreeNodeStoredSchema = new LeafNodeStoredSchema(ValueSchema.Number);
