@@ -16,9 +16,7 @@ import {
 	type TreeValue,
 	type UpPath,
 } from "../../core/index.js";
-// TODO: decide how to deal with dependencies on flex-tree implementation.
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../feature-libraries/flex-tree/lazyNode.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../feature-libraries/index.js";
 import {
 	assertFlexTreeEntityNotFreed,
 	ContextSlot,
@@ -332,7 +330,7 @@ export class TreeNodeKernel {
 					anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
 				const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-				this.#hydrationState.innerNode = makeTree(context, cursor);
+				this.#hydrationState.innerNode = getOrCreateHydratedFlexTreeNode(context, cursor);
 				cursor.free();
 				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
 			}
@@ -446,7 +444,7 @@ function flexNodeFromAnchor(anchorNode: AnchorNode): HydratedFlexTreeNode {
 		anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb45 /* missing context */);
 	const cursor = context.checkout.forest.allocateCursor("getFlexNode");
 	context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-	const newFlexNode = makeTree(context, cursor);
+	const newFlexNode = getOrCreateHydratedFlexTreeNode(context, cursor);
 	cursor.free();
 	return newFlexNode;
 }
