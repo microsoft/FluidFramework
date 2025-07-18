@@ -35,19 +35,15 @@ import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
-	createTreeContainerRuntimeFactory,
-	isTreeContainerSchema,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import {
-	UsageError,
-	wrapConfigProviderWithDefaults,
-} from "@fluidframework/telemetry-utils/internal";
+import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import type {
 	AzureClientProps,
+	AzureClientPropsInternal,
 	AzureConnectionConfig,
 	AzureContainerServices,
 	AzureContainerVersion,
@@ -99,6 +95,14 @@ export class AzureClient {
 	private readonly connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
 	private readonly logger: ITelemetryBaseLogger | undefined;
 
+	private readonly createContainerRuntimeFactory?: ({
+		schema,
+		compatibilityMode,
+	}: {
+		schema: ContainerSchema;
+		compatibilityMode: CompatibilityMode;
+	}) => IRuntimeFactory;
+
 	/**
 	 * Creates a new client instance using configuration parameters.
 	 * @param properties - Properties for initializing a new AzureClient instance
@@ -123,6 +127,10 @@ export class AzureClient {
 			properties.summaryCompression,
 		);
 		this.configProvider = wrapConfigProvider(properties.configProvider);
+
+		this.createContainerRuntimeFactory = (
+			properties as Partial<AzureClientPropsInternal>
+		).createContainerRuntimeFactory;
 	}
 
 	/**
@@ -280,26 +288,16 @@ export class AzureClient {
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): ILoaderProps {
-		let runtimeFactory: IRuntimeFactory;
+		const runtimeFactory = this.createContainerRuntimeFactory
+			? this.createContainerRuntimeFactory({
+					schema,
+					compatibilityMode,
+				})
+			: createDOProviderContainerRuntimeFactory({
+					schema,
+					compatibilityMode,
+				});
 
-		// Test only option for enabling tree-only container mode.
-		// This should only be used internally for testing purposes.
-		// We will expose a better API for this in the future.
-		if (this.configProvider?.getRawConfig("Fluid.Container.TEST_TREE_ONLY_MODE_DO_NOT_USE") === true) {
-			// Verify schema meets tree-only mode requirements.
-			if (!isTreeContainerSchema(schema)) {
-				throw new UsageError("Tree-only mode requires exactly SharedTree in initialObjects.");
-			}
-			runtimeFactory = createTreeContainerRuntimeFactory({
-				schema,
-				compatibilityMode,
-			});
-		} else {
-			runtimeFactory = createDOProviderContainerRuntimeFactory({
-				schema,
-				compatibilityMode,
-			});
-		}
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
