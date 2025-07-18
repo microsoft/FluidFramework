@@ -542,13 +542,6 @@ function* computeObjectNodeDiscrepancies(
 	}
 }
 
-export function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
-	const comparison = comparePosetElements(a, b, realizer);
-	return (
-		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
-	);
-}
-
 /**
  * A linear extension of a partially-ordered set of `T`s. See:
  * https://en.wikipedia.org/wiki/Linear_extension
@@ -621,6 +614,9 @@ export const PosetComparisonResult = {
 type PosetComparisonResult =
 	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
 
+/**
+ * TODO: This is used by SchemaCompatibilityTester, revisit it during redesign and document
+ */
 export function comparePosetElements<T>(
 	a: T,
 	b: T,

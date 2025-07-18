@@ -249,6 +249,8 @@ export type { LeafSchema } from "./leafNodeSchema.js";
 export {
 	getAllowedContentDiscrepancies,
 	type FieldDiscrepancy,
-	posetLte,
+	comparePosetElements,
 	fieldRealizer,
+	type Realizer,
+	PosetComparisonResult,
 } from "./discrepancies.js";

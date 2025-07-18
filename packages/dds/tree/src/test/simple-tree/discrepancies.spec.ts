@@ -37,7 +37,8 @@ import { createFieldSchema } from "../../simple-tree/fieldSchema.js";
 import { LeafNodeSchema } from "../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { findExtraAllowedTypes } from "../../simple-tree/discrepancies.js";
-import { fieldSchema, isViewSupersetOfStored } from "../utils.js";
+import { fieldSchema } from "../utils.js";
+import { isViewSupersetOfStored } from "./utils.js";
 
 // Arbitrary schema name used in tests
 const testTreeNodeName = "tree";

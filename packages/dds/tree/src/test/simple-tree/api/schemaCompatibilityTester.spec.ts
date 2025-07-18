@@ -23,7 +23,7 @@ import {
 
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
-import { isViewSupersetOfStored } from "../../utils.js";
+import { isViewSupersetOfStored } from "../utils.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
