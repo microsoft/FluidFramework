@@ -116,7 +116,7 @@ export interface TreeContainerSchema extends ContainerSchema {
 	// TODO: longer term, it would be better to not have to fit into the `initialObjects` model for tree-based containers.
 	// But in the short term, fitting into this model makes migration easier.
 	readonly initialObjects: {
-		tree: SharedObjectKind<ITree>;
+		readonly tree: SharedObjectKind<ITree>;
 	};
 }
 

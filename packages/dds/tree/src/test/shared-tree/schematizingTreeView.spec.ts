@@ -282,7 +282,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(toStoredSchema([schema.number]));
+		checkout.updateSchema(toStoredSchema([schema.number]), true);
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);

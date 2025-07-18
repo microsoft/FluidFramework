@@ -29,7 +29,7 @@ import type { IFluidContainer, CompatibilityMode } from "@fluidframework/fluid-s
 import {
 	createFluidContainer,
 	createServiceAudience,
-	createTreeDOProviderContainerRuntimeFactory,
+	createTreeContainerRuntimeFactory,
 	type TreeContainerSchema,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
@@ -268,7 +268,7 @@ export class AzureClient {
 		schema: TreeContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): ILoaderProps {
-		const runtimeFactory = createTreeDOProviderContainerRuntimeFactory({
+		const runtimeFactory = createTreeContainerRuntimeFactory({
 			schema,
 			compatibilityMode,
 		});

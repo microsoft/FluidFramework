@@ -12,8 +12,10 @@ import {
 } from "@fluidframework/aqueduct/internal";
 import { MapFactory, SharedMap } from "@fluidframework/map/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
+import { SharedTree } from "@fluidframework/tree/internal";
 
-import { parseDataObjectsFromSharedObjects } from "../utils.js";
+import type { ContainerSchema } from "../types.js";
+import { isTreeContainerSchema, parseDataObjectsFromSharedObjects } from "../utils.js";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
@@ -90,4 +92,62 @@ describe("parseDataObjectsFromSharedObjects", () => {
 		const types = registryEntries.map((item) => item[0]);
 		assert.strictEqual(types[0], TestDataObject.Name, "TestDataObject should be included");
 	});
+});
+
+it("isTreeContainerSchema", () => {
+	// #region Valid cases
+
+	assert(
+		isTreeContainerSchema({
+			initialObjects: {
+				tree: SharedTree,
+			},
+		}),
+	);
+
+	assert(
+		isTreeContainerSchema({
+			initialObjects: {
+				tree: SharedTree,
+			},
+			dynamicObjectTypes: [SharedTree],
+		}),
+	);
+
+	// #endregion
+
+	// #region Invalid cases
+
+	assert(
+		!isTreeContainerSchema({
+			initialObjects: {
+				map: SharedMap,
+			},
+		}),
+	);
+
+	assert(
+		!isTreeContainerSchema({
+			initialObjects: {
+				foo: SharedTree,
+			},
+		}),
+	);
+
+	assert(
+		!isTreeContainerSchema({
+			initialObjects: {},
+		}),
+	);
+
+	assert(
+		!isTreeContainerSchema({
+			initialObjects: {
+				tree: SharedTree,
+				otherTree: SharedTree,
+			},
+		}),
+	);
+
+	// #endregion
 });

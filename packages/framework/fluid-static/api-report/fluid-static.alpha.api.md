@@ -17,7 +17,7 @@ export interface ContainerSchema {
 }
 
 // @alpha @legacy
-export function createTreeDOProviderContainerRuntimeFactory(props: {
+export function createTreeContainerRuntimeFactory(props: {
     readonly schema: TreeContainerSchema;
     readonly compatibilityMode: CompatibilityMode;
     readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
@@ -93,7 +93,7 @@ export type Myself<M extends IMember = IMember> = M & {
 export interface TreeContainerSchema extends ContainerSchema {
     // (undocumented)
     readonly initialObjects: {
-        tree: SharedObjectKind<ITree>;
+        readonly tree: SharedObjectKind<ITree>;
     };
 }
 

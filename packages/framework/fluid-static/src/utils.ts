@@ -6,6 +6,7 @@
 import type { DataObjectKind } from "@fluidframework/aqueduct/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/container-runtime/internal";
 import type { FluidObjectKeys, IFluidLoadable } from "@fluidframework/core-interfaces";
+import { oob } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -14,13 +15,16 @@ import type {
 	IFluidDataStoreContext,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
+import type { ISharedObjectKind, SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { SharedTreeFactoryType } from "@fluidframework/tree/internal";
 
-import type { CompatibilityMode, LoadableObjectKind } from "./types.js";
+import type {
+	CompatibilityMode,
+	ContainerSchema,
+	LoadableObjectKind,
+	TreeContainerSchema,
+} from "./types.js";
 
 /**
  * Runtime check to determine if an object is a {@link DataObjectKind}.
@@ -146,3 +150,30 @@ export const compatibilityModeToMinVersionForCollab = {
 	"1": "1.0.0",
 	"2": "2.0.0",
 } as const satisfies Record<CompatibilityMode, MinimumVersionForCollab>;
+
+/**
+ * Determines if the provided schema is a valid tree-based container schema.
+ * @internal
+ */
+export function isTreeContainerSchema(schema: ContainerSchema): schema is TreeContainerSchema {
+	const schemaEntries = Object.entries(schema.initialObjects);
+	if (schemaEntries.length !== 1) {
+		return false;
+	}
+
+	const entry = schemaEntries[0] ?? oob();
+	const key = entry[0];
+	if (key !== "tree") {
+		return false;
+	}
+
+	const objectKind = entry[1] as unknown as LoadableObjectKind;
+	if (
+		isSharedObjectKind(objectKind) &&
+		objectKind.getFactory().type === SharedTreeFactoryType
+	) {
+		return true;
+	}
+
+	return false;
+}
