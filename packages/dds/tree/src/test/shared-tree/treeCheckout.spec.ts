@@ -192,7 +192,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 2);
 
-				checkout.updateSchema(toStoredSchema(OptionalString));
+				checkout.updateSchema(toStoredSchema(OptionalString), true);
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -216,7 +216,7 @@ describe("sharedTreeView", () => {
 						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
-				checkout.updateSchema(toStoredSchema(OptionalString));
+				checkout.updateSchema(toStoredSchema(OptionalString), true);
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
@@ -932,8 +932,7 @@ describe("sharedTreeView", () => {
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
-		const sf2 = new SchemaFactory("schema2");
-		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
+		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema([sf1.number, schema1]));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);
