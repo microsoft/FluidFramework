@@ -5,8 +5,9 @@
 
 import fetch from "isomorphic-fetch";
 
-import { IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
+import { type IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -14,12 +15,10 @@ export async function getAsync(
 	url: string,
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
-	return authRequest(
-		authRequestInfo,
-		async (config: RequestInit) => fetch(url, config) as Response,
-	);
+	return authRequest(authRequestInfo, async (config: RequestInit) => fetch(url, config));
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -32,16 +31,17 @@ export async function putAsync(
 			...config,
 			method: "PUT",
 		};
-		return fetch(url, putConfig) as Response;
+		return fetch(url, putConfig);
 	});
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
 export async function postAsync(
 	url: string,
-	body: any,
+	body: BodyInit | undefined,
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<Response> {
 	return authRequest(authRequestInfo, async (config: RequestInit) => {
@@ -50,16 +50,20 @@ export async function postAsync(
 			body,
 			method: "POST",
 		};
-		return fetch(url, postConfig) as Response;
+		return fetch(url, postConfig);
 	});
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
-export async function unauthPostAsync(url: string, body: any): Promise<Response> {
+export async function unauthPostAsync(
+	url: string,
+	body: BodyInit | undefined,
+): Promise<Response> {
 	return safeRequestCore(async () => {
-		return fetch(url, { body, method: "POST" }) as Response;
+		return fetch(url, { body, method: "POST" });
 	});
 }
 
@@ -76,9 +80,12 @@ async function safeRequestCore(requestCallback: () => Promise<Response>): Promis
 	let response: Response;
 	try {
 		response = await requestCallback();
-	} catch (error: any) {
-		if (error?.response?.status) {
-			response = error.response;
+	} catch (error: unknown) {
+		// TODO: narrow to a real error type here
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		if ((error as any)?.response?.status) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+			response = (error as any).response;
 		} else {
 			throw error;
 		}
