@@ -17,6 +17,8 @@ import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 
 import {
 	CommitKind,
@@ -66,6 +68,9 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
+	asTreeViewAlpha,
+	SchemaFactoryAlpha,
+	type ITree,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -100,19 +105,13 @@ import type {
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
-// eslint-disable-next-line import/no-internal-modules
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
-	asTreeViewAlpha,
-	SchemaFactoryAlpha,
 	toSimpleTreeSchema,
-	type ITree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -196,7 +195,10 @@ describe("SharedTree", () => {
 		it("re-view after view disposal with TreeNodes", () => {
 			const tree = treeTestFactory();
 
-			// Scan AnchorSet and check its slots for cached invalid data.
+			/**
+			 * Scan AnchorSet and check its slots for cached invalid data.
+			 * @param allowNodes - if false, errors if there are any TreeNodes cached in the AnchorSet.
+			 */
 			function checkAnchors(allowNodes: boolean) {
 				const anchors = tree.kernel.checkout.forest.anchors;
 				for (const anchor of anchors) {
@@ -249,7 +251,7 @@ describe("SharedTree", () => {
 
 			const view2 = tree.viewWith(config);
 
-			checkAnchors(false);
+			checkAnchors(true);
 
 			const root2 = view2.root;
 			assert.notEqual(root1, root2);

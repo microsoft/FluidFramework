@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ConnectionMode, IClient, ISignalClient } from "./clients.js";
-import { IClientConfiguration } from "./config.js";
-import { ISequencedDocumentMessage, ISignalMessage } from "./protocol.js";
-import { ITokenClaims } from "./tokens.js";
+import type { ConnectionMode, IClient, ISignalClient } from "./clients.js";
+import type { IClientConfiguration } from "./config.js";
+import type { ISequencedDocumentMessage, ISignalMessage } from "./protocol.js";
+import type { ITokenClaims } from "./tokens.js";
 
 /**
  * Message sent to connect to the given document.
- * @alpha
+ * @legacy @alpha
  */
 export interface IConnect {
 	/**
@@ -79,7 +79,7 @@ export interface IConnect {
 
 /**
  * Message sent to indicate a client has connected to the server.
- * @alpha
+ * @legacy @alpha
  */
 export interface IConnected {
 	/**

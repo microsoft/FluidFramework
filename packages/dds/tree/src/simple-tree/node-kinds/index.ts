@@ -37,4 +37,16 @@ export {
 	objectSchema,
 	setField,
 	type TreeObjectNode,
+	type SimpleKeyMap,
+	type UnannotateSchemaRecord,
 } from "./object/index.js";
+
+export {
+	isRecordNodeSchema,
+	type RecordNodeCustomizableSchema,
+	type RecordNodeInsertableData,
+	type RecordNodePojoEmulationSchema,
+	RecordNodeSchema,
+	recordSchema,
+	type TreeRecordNode,
+} from "./record/index.js";

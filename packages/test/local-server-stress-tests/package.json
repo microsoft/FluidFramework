@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -80,17 +80,16 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
-		"@fluidframework/server-local-server": "^5.0.0",
+		"@fluidframework/server-local-server": "^7.0.0",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
@@ -108,7 +107,8 @@
 				"@fluidframework/id-compressor#build:test",
 				"@fluidframework/sequence#build:test",
 				"@fluidframework/map#build:test",
-				"@fluidframework/matrix#build:test"
+				"@fluidframework/matrix#build:test",
+				"@fluidframework/tree#build:test"
 			]
 		}
 	},

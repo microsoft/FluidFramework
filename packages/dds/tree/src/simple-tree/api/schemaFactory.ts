@@ -13,11 +13,13 @@ import type { TreeValue } from "../../core/index.js";
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { TreeAlpha } from "../../shared-tree/index.js";
 import {
+	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 	compareSets,
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
+import { normalizeAllowedTypes, markSchemaMostDerived, isLazy } from "../core/index.js";
 import type {
 	NodeKind,
 	WithType,
@@ -26,8 +28,12 @@ import type {
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaBoth,
 	UnhydratedFlexTreeNode,
+	NodeSchemaMetadata,
+	ImplicitAnnotatedAllowedTypes,
+	UnannotateImplicitAllowedTypes,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
-import { isLazy } from "../flexList.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -45,26 +51,19 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
+	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
 	FieldKind,
 	type FieldSchema,
-	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
-	markSchemaMostDerived,
 	type FieldSchemaAlpha,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-	type UnannotateSchemaRecord,
-	type NodeSchemaOptionsAlpha,
-	normalizeAllowedTypes,
 	type FieldPropsAlpha,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
@@ -776,16 +775,8 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
-			return this.getStructuralType(
-				fullName,
-				types,
-				() =>
-					this.namedMap(
-						fullName as TName,
-						nameOrAllowedTypes as T,
-						false,
-						true,
-					) as TreeNodeSchema,
+			return this.getStructuralType(fullName, types, () =>
+				this.namedMap(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
@@ -796,7 +787,7 @@ export class SchemaFactory<
 				undefined
 			>;
 		}
-		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		// To actually have type safety, assign to the type this method should return before implicitly up-casting when returning.
 		const out: TreeNodeSchemaBoth<
 			string,
 			NodeKind.Map,
@@ -895,7 +886,7 @@ export class SchemaFactory<
 	 * ```
 	 * @privateRemarks
 	 * The name produced at the type level here is not as specific as it could be, however doing type level sorting and escaping is a real mess.
-	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
+	 * There are cases where not having this full type provided will be less than ideal, since TypeScript's structural types will allow assignment between runtime incompatible types at compile time.
 	 * For example attempts to narrow unions of structural arrays by name won't work.
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
@@ -997,7 +988,7 @@ export class SchemaFactory<
 	 * @returns The structural {@link TreeNodeSchema} associated with the given name and types.
 	 * @throws `UsageError` if a schema structurally named schema with the same name is cached in `structuralTypes` but had different input types.
 	 */
-	private getStructuralType(
+	protected getStructuralType(
 		fullName: string,
 		types: TreeNodeSchema | readonly TreeNodeSchema[],
 		builder: () => TreeNodeSchema,
@@ -1320,3 +1311,39 @@ export function structuralName<const T extends string>(
  * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
  */
 const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
+
+/**
+ * Additional information to provide to Node Schema creation.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
+	/**
+	 * Optional metadata to associate with the Node Schema.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
+	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 */
+	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
+}
+
+/**
+ * Additional information to provide to Node Schema creation. Includes fields for alpha features.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @alpha
+ */
+export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}

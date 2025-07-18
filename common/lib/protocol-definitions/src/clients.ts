@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "./users.js";
+import type { IUser } from "./users.js";
 
 /**
  * A client's connection mode - either view-only ("read") or allowing edits ("write").
@@ -111,7 +111,7 @@ export interface ISequencedClient {
 }
 
 /**
- * @alpha
+ * @legacy @alpha
  */
 export interface ISignalClient {
 	/**

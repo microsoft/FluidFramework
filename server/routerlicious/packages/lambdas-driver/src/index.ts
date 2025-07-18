@@ -5,7 +5,7 @@
 
 export { DocumentContext, DocumentLambdaFactory } from "./document-router";
 export {
-	IKafkaResources,
+	type IKafkaResources,
 	KafkaRunner,
 	KafkaRunnerFactory,
 	PartitionManager,

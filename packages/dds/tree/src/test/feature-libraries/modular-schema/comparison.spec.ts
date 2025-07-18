@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type FieldKindIdentifier,
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
 	type MutableTreeStoredSchema,
@@ -20,11 +19,7 @@ import {
 	storedEmptyFieldSchema,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
-import {
-	FieldKinds,
-	defaultSchemaPolicy,
-	isRepoSuperset,
-} from "../../../feature-libraries/index.js";
+import { FieldKinds, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	allowsFieldSuperset,
 	allowsRepoSuperset,
@@ -35,20 +30,7 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/comparison.js";
 import { brand } from "../../../util/index.js";
-
-/**
- * Helper for building {@link TreeFieldStoredSchema}.
- */
-export function fieldSchema(
-	kind: { identifier: FieldKindIdentifier },
-	types: Iterable<TreeNodeSchemaIdentifier>,
-): TreeFieldStoredSchema {
-	return {
-		kind: kind.identifier,
-		types: new Set(types),
-		persistedMetadata: undefined,
-	};
-}
+import { fieldSchema } from "../../utils.js";
 
 describe("Schema Comparison", () => {
 	const numberLeaf: TreeNodeStoredSchema = new LeafNodeStoredSchema(ValueSchema.Number);
@@ -189,15 +171,6 @@ describe("Schema Comparison", () => {
 			return allowsRepoSuperset(defaultSchemaPolicy, a, b);
 		};
 
-		const validateMethodsConsistent = (
-			view: TreeStoredSchema,
-			stored: TreeStoredSchema,
-			isSuperset: boolean,
-		): void => {
-			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, view), isSuperset);
-			assert.equal(isRepoSuperset(view, stored), isSuperset);
-		};
-
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
 			const schemaName = brand<TreeNodeSchemaIdentifier>("testTree");
 			const rootFieldSchema = fieldSchema(FieldKinds.optional, [schemaName, emptyTree.name]);
@@ -268,20 +241,49 @@ describe("Schema Comparison", () => {
 				[[emptyLocalFieldTreeRepo, emptyTreeRepo]],
 			);
 
-			// Validate the consistent results of 'allowsRepoSuperset' and 'isRepoSuperset'
-			validateMethodsConsistent(emptyTreeRepo, valueLocalFieldTreeRepo, false);
-			validateMethodsConsistent(optionalTreeRepoWithoutValue, valueLocalFieldTreeRepo, false);
-			validateMethodsConsistent(
-				optionalTreeRepoWithMultipleValues,
-				optionalLocalFieldTreeRepo,
+			assert.equal(
+				allowsRepoSuperset(defaultSchemaPolicy, valueLocalFieldTreeRepo, emptyTreeRepo),
+				false,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					valueLocalFieldTreeRepo,
+					optionalTreeRepoWithoutValue,
+				),
+				false,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					optionalLocalFieldTreeRepo,
+					optionalTreeRepoWithMultipleValues,
+				),
 				false,
 			);
 
-			validateMethodsConsistent(optionalLocalFieldTreeRepo, valueLocalFieldTreeRepo, true);
-			validateMethodsConsistent(optionalTreeRepoWithMultipleValues, emptyTreeRepo, true);
-			validateMethodsConsistent(
-				optionalTreeRepoWithMultipleValues,
-				optionalTreeRepoWithoutValue,
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					valueLocalFieldTreeRepo,
+					optionalLocalFieldTreeRepo,
+				),
+				true,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					emptyTreeRepo,
+					optionalTreeRepoWithMultipleValues,
+				),
+				true,
+			);
+			assert.equal(
+				allowsRepoSuperset(
+					defaultSchemaPolicy,
+					optionalTreeRepoWithoutValue,
+					optionalTreeRepoWithMultipleValues,
+				),
 				true,
 			);
 		});
@@ -301,7 +303,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
-			assert.equal(isRepoSuperset(repos[1], repos[0]), true);
+			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, repos[0], repos[1]), true);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {

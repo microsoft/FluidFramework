@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluidframework/common-utils";
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-	IClient,
-	IConnect,
-	IDocumentMessage,
-	INack,
-	ISignalMessage,
+	type IClient,
+	type IConnect,
+	type IDocumentMessage,
+	type INack,
+	type ISignalMessage,
 	NackErrorType,
 } from "@fluidframework/protocol-definitions";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
@@ -28,12 +28,12 @@ import { createNackMessage } from "../utils";
 
 import { connectDocument } from "./connect";
 import { disconnectDocument } from "./disconnect";
-import {
+import type {
 	ICollaborationSessionEvents,
 	IRoom,
-	type INexusLambdaSettings,
-	type INexusLambdaConnectionStateTrackers,
-	type INexusLambdaDependencies,
+	INexusLambdaSettings,
+	INexusLambdaConnectionStateTrackers,
+	INexusLambdaDependencies,
 } from "./interfaces";
 import { isValidConnectionMessage } from "./protocol";
 import {
@@ -50,7 +50,11 @@ import {
 	hasWriteAccess,
 } from "./utils";
 
-export { IBroadcastSignalEventPayload, ICollaborationSessionEvents, IRoom } from "./interfaces";
+export type {
+	IBroadcastSignalEventPayload,
+	ICollaborationSessionEvents,
+	IRoom,
+} from "./interfaces";
 
 // Sanitize the received op before sending.
 function sanitizeMessage(message: any): IDocumentMessage {
@@ -646,5 +650,16 @@ export function configureWebSocketServices(
 			}
 			disposers.splice(0, disposers.length);
 		});
+
+		socket.on(
+			"client_disconnect",
+			(clientId: string, documentId: string, errorMessage: string) => {
+				Lumberjack.error(
+					"Client disconnected due to error",
+					{ clientId, documentId, errorMessage },
+					new Error(errorMessage),
+				);
+			},
+		);
 	});
 }

@@ -7,12 +7,12 @@ import type * as v8 from "node:v8";
 
 import { assert } from "chai";
 import chalk from "chalk";
-import { Test } from "mocha";
+import type { Test } from "mocha";
 
 import {
 	isInPerformanceTestingMode,
-	MochaExclusiveOptions,
-	HookFunction,
+	type MochaExclusiveOptions,
+	type HookFunction,
 	BenchmarkType,
 	TestType,
 	qualifiedTitle,

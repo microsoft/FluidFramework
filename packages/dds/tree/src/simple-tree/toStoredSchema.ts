@@ -23,8 +23,7 @@ import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
 import { NodeKind } from "./core/index.js";
-import { LeafNodeSchema } from "./leafNodeSchema.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./schemaTypes.js";
+import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
@@ -116,10 +115,11 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
-			assert(schema instanceof LeafNodeSchema, 0xa4a /* invalid kind */);
+			assert(schema.kind === NodeKind.Leaf, 0xa4a /* invalid kind */);
 			return new LeafNodeStoredSchema(schema.leafKind);
 		}
-		case NodeKind.Map: {
+		case NodeKind.Map:
+		case NodeKind.Record: {
 			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
 			return new MapNodeStoredSchema(
 				{
@@ -148,7 +148,8 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 			}
 			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
-		default:
+		default: {
 			unreachableCase(kind);
+		}
 	}
 }

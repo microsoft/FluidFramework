@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/legacy-dds",
-	"version": "2.50.0",
+	"version": "2.51.0",
 	"description": "Legacy DDSs for the Fluid Framework. These are not intended for use in new code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -42,6 +42,18 @@
 				"types": "./dist/index.d.ts",
 				"default": "./dist/index.js"
 			}
+		},
+		"./internal/test": {
+			"allow-ff-test-exports": {
+				"import": {
+					"types": "./lib/test/index.d.ts",
+					"default": "./lib/test/index.js"
+				},
+				"require": {
+					"types": "./dist/test/index.d.ts",
+					"default": "./dist/test/index.js"
+				}
+			}
 		}
 	},
 	"main": "lib/index.js",
@@ -62,7 +74,7 @@
 		"build:test": "npm run build:test:esm && npm run build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack .",
+		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -123,12 +135,14 @@
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/shared-object-base": "workspace:~",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
+		"@fluid-private/stochastic-test-utils": "workspace:~",
+		"@fluid-private/test-dds-utils": "workspace:~",
 		"@fluid-tools/build-cli": "^0.56.0",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "^0.56.0",
@@ -139,7 +153,6 @@
 		"@types/jest": "29.5.3",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",

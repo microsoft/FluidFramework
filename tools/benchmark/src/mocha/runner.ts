@@ -4,14 +4,12 @@
  */
 
 import { assert } from "chai";
-import { Test } from "mocha";
+import type { Test } from "mocha";
 
+import type { BenchmarkArguments, Titled, MochaExclusiveOptions } from "../Configuration";
 import {
-	BenchmarkArguments,
 	isParentProcess,
 	isInPerformanceTestingMode,
-	Titled,
-	MochaExclusiveOptions,
 	qualifiedTitle,
 	TestType,
 } from "../Configuration";
