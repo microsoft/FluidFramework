@@ -721,7 +721,7 @@ describe("Container create in tree-only mode", () => {
 		};
 
 		await assert.rejects(
-			async () => client.createContainer(schema, "2"),
+			client.createContainer(schema, "2"),
 			(error: unknown) => {
 				assert(error instanceof UsageError);
 				assert.strictEqual(error.message, invalidSchemaErrorMessage);
