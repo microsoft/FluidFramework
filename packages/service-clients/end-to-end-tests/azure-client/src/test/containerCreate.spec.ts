@@ -710,4 +710,26 @@ describe("Container create in tree-only mode", () => {
 
 		assert(SharedTree.is(container.initialObjects.tree));
 	});
+
+	it("throws if invalid schema is encountered", async function () {
+		const client = createClient();
+		const schema = {
+			initialObjects: {
+				tree: SharedTree,
+				map: SharedMap,
+			},
+		};
+
+		try {
+			await client.createContainer(schema, "2");
+		} catch (error) {
+			assert(error instanceof UsageError);
+			assert.strictEqual(
+				error.message,
+				"Tree-only mode requires exactly 1 SharedTree in initialObjects.",
+			);
+			return;
+		}
+		assert.fail("Expected an error to be thrown for invalid schema");
+	});
 });
