@@ -5,25 +5,25 @@
 
 import { strict as assert } from "node:assert";
 
-import { IClient } from "@fluidframework/driver-definitions";
-import { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import { createOdspNetworkError } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	IOdspResolvedUrl,
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	MockLogger,
 	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
 import { EpochTracker } from "../../epochTracker.js";
 import { mockify } from "../../mockify.js";
-import { LocalPersistentCache } from "../../odspCache.js";
+import type { LocalPersistentCache } from "../../odspCache.js";
 import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
 import { getHashedDocumentId } from "../../odspPublicUtils.js";
 import { SocketIOClientStatic } from "../../socketModule.js";

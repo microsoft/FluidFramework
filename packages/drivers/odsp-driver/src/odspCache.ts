@@ -4,14 +4,14 @@
  */
 
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IOdspResolvedUrl,
-	IPersistedCache,
-	ISocketStorageDiscovery,
+	type ICacheEntry,
+	type IEntry,
+	type IFileEntry,
+	type IOdspResolvedUrl,
+	type IPersistedCache,
+	type ISocketStorageDiscovery,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 

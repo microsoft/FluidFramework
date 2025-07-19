@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import {
+import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
 	HostStoragePolicy,
 	IPersistedCache,
 	OdspResourceTokenFetchOptions,

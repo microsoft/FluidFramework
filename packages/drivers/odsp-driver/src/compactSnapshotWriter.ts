@@ -5,7 +5,7 @@
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	ISnapshot,
 	IBlob,
 	ISnapshotTree,
@@ -15,7 +15,7 @@ import {
 import { TreeBuilderSerializer } from "./WriteBufferUtils.js";
 import { snapshotMinReadVersion } from "./compactSnapshotParser.js";
 import {
-	NodeCore,
+	type NodeCore,
 	addBoolProperty,
 	addDictionaryStringProperty,
 	addNumberProperty,

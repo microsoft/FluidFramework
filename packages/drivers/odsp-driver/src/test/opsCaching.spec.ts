@@ -6,15 +6,15 @@
 import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IStream,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { OdspDeltaStorageWithCache } from "../odspDeltaStorageService.js";
-import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
-import { CacheEntry, ICache, IMessage, OpsCache } from "../opsCaching.js";
+import type { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
+import { type CacheEntry, type ICache, type IMessage, OpsCache } from "../opsCaching.js";
 
 export type MyDataInput = IMessage & { data: string };
 

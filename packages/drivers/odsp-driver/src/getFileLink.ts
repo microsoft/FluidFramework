@@ -7,14 +7,14 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	IOdspUrlParts,
+	type IOdspUrlParts,
 	OdspErrorTypes,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetcher,
 	type IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 } from "@fluidframework/telemetry-utils/internal";

@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ISnapshot,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
+import type { HostStoragePolicy } from "@fluidframework/odsp-driver-definitions/internal";
 
 // eslint-disable-next-line import/no-deprecated
-import { ISnapshotContents } from "./odspPublicUtils.js";
+import type { ISnapshotContents } from "./odspPublicUtils.js";
 
 /**
  * Interface for error responses for the WebSocket connection

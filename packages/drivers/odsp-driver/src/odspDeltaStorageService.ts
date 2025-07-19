@@ -3,26 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { validateMessages } from "@fluidframework/driver-base/internal";
-import {
+import type {
 	IDeltasFetchResult,
 	IDocumentDeltaStorageService,
-	type IStream,
+	IStream,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
-import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
+import type { IDeltaStorageGetResponse, ISequencedDeltaOpMessage } from "./contracts.js";
+import type { EpochTracker } from "./epochTracker.js";
+import type { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 
 /**

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { getOdspResolvedUrl } from "./odspUtils.js";
 

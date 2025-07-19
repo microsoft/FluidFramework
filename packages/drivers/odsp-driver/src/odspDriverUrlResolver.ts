@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
-	IContainerPackageInfo,
-	IResolvedUrl,
-	IUrlResolver,
+	type IContainerPackageInfo,
+	type IResolvedUrl,
+	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	IOdspResolvedUrl,
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
