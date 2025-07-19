@@ -1354,6 +1354,36 @@ describe("schemaFactory", () => {
 			});
 		});
 
+		describe("in records", () => {
+			class TestRecord extends schemaFactory.recordAlpha("TestRecord", [
+				schemaFactory.number,
+				schemaFactory.staged(schemaFactory.string),
+			]) {}
+
+			it("are permitted when unhydrated", () => {
+				const testRecord = new TestRecord({ foo: "test" });
+				assert.equal(testRecord.foo, "test");
+				testRecord.foo = 42;
+				assert.equal(testRecord.foo, 42);
+				testRecord.foo = "test";
+				assert.equal(testRecord.foo, "test");
+			});
+
+			it("can't be set", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestRecord,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo = "test";
+				});
+			});
+		});
+
 		describe("in arrays", () => {
 			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
 				schemaFactory.number,
