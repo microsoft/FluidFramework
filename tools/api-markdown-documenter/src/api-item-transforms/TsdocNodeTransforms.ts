@@ -99,8 +99,9 @@ export function transformTsdoc(
 
 /**
  * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
+ * @remarks Exported only for testing purposes.
  */
-function transformTsdocSection(
+export function transformTsdocSection(
 	node: DocSection,
 	options: TsdocNodeTransformOptions,
 ): BlockContent[] {
