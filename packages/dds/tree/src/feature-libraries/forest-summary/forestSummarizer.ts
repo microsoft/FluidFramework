@@ -12,7 +12,10 @@ import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
-import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
+import {
+	SummaryTreeBuilder,
+	type ReadAndParseBlob,
+} from "@fluidframework/runtime-utils/internal";
 
 import type { CodecWriteOptions } from "../../codec/index.js";
 import {
@@ -39,18 +42,30 @@ import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-fore
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import type { Format } from "./format.js";
+import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js";
+
 /**
- * The storage key for the blob in the summary containing tree data
+ * The key for the blob in the summary containing forest's contents.
  */
-const treeBlobKey = "ForestTree";
+export const forestSummaryContentKey = "ForestTree";
+
+export const forestSummaryKey = "Forest";
 
 /**
  * Provides methods for summarizing and loading a forest.
  */
 export class ForestSummarizer implements Summarizable {
-	public readonly key = "Forest";
+	/**
+	 * The key for the tree that contains the overall forest's summary tree. This tree is added by the parent
+	 * of the forest summarizer.
+	 */
+	public readonly key = forestSummaryKey;
 
 	private readonly codec: ForestCodec;
+
+	private readonly incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder({
+		getChunkAtCursor: (cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
+	});
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
@@ -68,13 +83,24 @@ export class ForestSummarizer implements Summarizable {
 	}
 
 	/**
-	 * Synchronous monolithic summarization of tree content.
+	 * Summarization of the forest's tree content.
+	 * If incremental summary is disabled, all the content will be added to a single summary blob.
+	 * If incremental summary is enabled, the summary will be a tree. See {@link ForestIncrementalSummaryBuilder}
+	 * for details of what this tree looks like.
 	 *
 	 * TODO: when perf matters, this should be replaced with a chunked async version using a binary format.
 	 *
-	 * @returns a snapshot of the forest's tree as a string.
+	 * @returns a summary tree containing the forest's tree content.
 	 */
-	private getTreeString(stringify: SummaryElementStringifier): string {
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
+		const { stringify, fullTree = false, incrementalSummaryContext } = props;
+
 		const rootCursor = this.forest.getCursorAboveDetachedFields();
 		const fieldMap: Map<FieldKey, ITreeCursorSynchronous & ITreeSubscriptionCursor> =
 			new Map();
@@ -89,32 +115,51 @@ export class ForestSummarizer implements Summarizable {
 			);
 			fieldMap.set(key, innerCursor as ITreeCursorSynchronous & ITreeSubscriptionCursor);
 		});
-		const encoded = this.codec.encode(fieldMap, this.encoderContext);
 
+		const forestSummaryBuilder = new SummaryTreeBuilder();
+		// Let the incremental summary builder know that we are starting a new summary. It returns whether
+		// incremental encoding is enabled.
+		const shouldEncodeIncrementally = this.incrementalSummaryBuilder.startingSummary(
+			forestSummaryBuilder,
+			fullTree,
+			incrementalSummaryContext,
+		);
+		const encoderContext: FieldBatchEncodingContext = {
+			...this.encoderContext,
+			incrementalEncoderDecoder: shouldEncodeIncrementally
+				? this.incrementalSummaryBuilder
+				: undefined,
+		};
+		const encoded = this.codec.encode(fieldMap, encoderContext);
 		fieldMap.forEach((value) => value.free());
-		return stringify(encoded);
-	}
 
-	public summarize(props: {
-		stringify: SummaryElementStringifier;
-		fullTree?: boolean;
-		trackState?: boolean;
-		telemetryContext?: ITelemetryContext;
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
-	}): ISummaryTreeWithStats {
-		return createSingleBlobSummary(treeBlobKey, this.getTreeString(props.stringify));
+		forestSummaryBuilder.addBlob(forestSummaryContentKey, stringify(encoded));
+		// Let the incremental summary builder know that we are done with this summary.
+		this.incrementalSummaryBuilder.completedSummary(incrementalSummaryContext);
+		return forestSummaryBuilder.getSummaryTree();
 	}
 
 	public async load(
 		services: IChannelStorageService,
 		parse: SummaryElementParser,
 	): Promise<void> {
-		if (await services.contains(treeBlobKey)) {
-			const treeBuffer = await services.readBlob(treeBlobKey);
-			const treeBufferString = bufferToString(treeBuffer, "utf8");
+		if (await services.contains(forestSummaryContentKey)) {
+			const readAndParse: ReadAndParseBlob = async <T>(id: string): Promise<T> => {
+				const blob = await services.readBlob(id);
+				const decoded = bufferToString(blob, "utf8");
+				return parse(decoded) as T;
+			};
+
+			// Load the incremental summary builder so that it can download any incremental chunks in the
+			// snapshot.
+			await this.incrementalSummaryBuilder.load(services, readAndParse);
+
 			// TODO: this code is parsing data without an optional validator, this should be defined in a typebox schema as part of the
 			// forest summary format.
-			const fields = this.codec.decode(parse(treeBufferString) as Format, this.encoderContext);
+			const fields = this.codec.decode(await readAndParse<Format>(forestSummaryContentKey), {
+				...this.encoderContext,
+				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
+			});
 			const allocator = idAllocatorFromMaxId();
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 			const build: DeltaDetachedNodeBuild[] = [];

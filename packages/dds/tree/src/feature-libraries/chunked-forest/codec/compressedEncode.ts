@@ -11,6 +11,7 @@ import {
 	type FieldKey,
 	type FieldKindIdentifier,
 	type ITreeCursorSynchronous,
+	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
@@ -35,9 +36,10 @@ import {
 	SpecialField,
 	version,
 } from "./format.js";
+import type { ChunkReferenceId, IncrementalEncoder } from "./codecs.js";
 
 /**
- * Encode data from `FieldBatch` into an `EncodedChunk`.
+ * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
  *
  * Optimized for encoded size and encoding performance.
  *
@@ -402,6 +404,75 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 }
 
 /**
+ * Encodes a field that supports incremental encoding. The chunks in this field will be encoded separately.
+ * The encoded data for this field will be an array of {@link ChunkReferenceId}s, one for each of its chunks.
+ */
+export class IncrementalFieldShape
+	extends ShapeGeneric<EncodedChunkShape>
+	implements FieldEncoder
+{
+	public constructor() {
+		super();
+	}
+
+	/**
+	 * Encodes all the nodes in the chunk at the cursor position using `InlineArrayShape`.
+	 */
+	private encodeNodesInChunk(chunk: TreeChunk, cache: EncoderCache): BufferFormat {
+		const chunkCursor = chunk.cursor();
+		chunkCursor.firstNode();
+		const inlineArrayShape = new InlineArrayShape(
+			chunkCursor.chunkLength,
+			asNodesEncoder(anyNodeEncoder),
+		);
+		const chunkOutputBuffer: BufferFormat = [];
+		inlineArrayShape.encodeNodes(chunkCursor, cache, chunkOutputBuffer);
+		assert(
+			chunkCursor.mode === CursorLocationType.Fields,
+			"should return to fields mode when finished encoding",
+		);
+		return chunkOutputBuffer;
+	}
+
+	public encodeField(
+		cursor: ITreeCursorSynchronous,
+		cache: EncoderCache,
+		outputBuffer: BufferFormat,
+	): void {
+		assert(
+			cache.shouldEncodeIncrementally,
+			"incremental encoding must be enabled to use IncrementalFieldShape",
+		);
+
+		let chunkReferenceIds: ChunkReferenceId[] = [];
+		if (cursor.getFieldLength() !== 0) {
+			chunkReferenceIds = cache.encodeIncrementalField(cursor, (chunk: TreeChunk) =>
+				this.encodeNodesInChunk(chunk, cache),
+			);
+		}
+		outputBuffer.push(chunkReferenceIds);
+	}
+
+	public encodeShape(
+		identifiers: DeduplicationTable<string>,
+		shapes: DeduplicationTable<Shape>,
+	): EncodedChunkShape {
+		return {
+			e: 0 /* EncodedIncrementalShape */,
+		};
+	}
+
+	public countReferencedShapesAndIdentifiers(
+		identifiers: Counter<string>,
+		shapeDiscovered: (shape: Shape) => void,
+	): void {}
+
+	public get shape(): this {
+		return this;
+	}
+}
+
+/**
  * Encode `value` with `shape` into `outputBuffer`.
  *
  * Requires that `value` is compatible with `shape`.
@@ -436,6 +507,21 @@ export function encodeValue(
 	}
 }
 
+/**
+ * Validates that incremental encoding is enabled and incrementalEncoder is.
+ * @param shouldEncodeIncrementally - Whether incremental encoding should be used.
+ * @param incrementalEncoder - The incremental encoder to use for encoding chunks.
+ */
+function validateIncrementalEncodingEnabled(
+	shouldEncodeIncrementally: boolean,
+	incrementalEncoder: IncrementalEncoder | undefined,
+): asserts incrementalEncoder is IncrementalEncoder {
+	assert(
+		shouldEncodeIncrementally && incrementalEncoder !== undefined,
+		"incremental encoding must be enabled",
+	);
+}
+
 export class EncoderCache implements TreeShaper, FieldShaper {
 	private readonly shapesFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> = new Map();
 	private readonly nestedArrays: Map<NodeEncoder, NestedArrayShape> = new Map();
@@ -444,6 +530,7 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 		private readonly fieldEncoder: FieldShapePolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly idCompressor: IIdCompressor,
+		private readonly incrementalEncoder: IncrementalEncoder | undefined,
 	) {}
 
 	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
@@ -458,6 +545,30 @@ export class EncoderCache implements TreeShaper, FieldShaper {
 
 	public shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 		return new LazyFieldEncoder(this, field, this.fieldEncoder);
+	}
+
+	public get shouldEncodeIncrementally(): boolean {
+		return this.incrementalEncoder !== undefined;
+	}
+
+	/**
+	 * {@link IncrementalEncoder.encodeIncrementalField}
+	 */
+	public encodeIncrementalField(
+		cursor: ITreeCursorSynchronous,
+		encoder: (chunk: TreeChunk) => BufferFormat,
+	): ChunkReferenceId[] {
+		validateIncrementalEncodingEnabled(
+			this.shouldEncodeIncrementally,
+			this.incrementalEncoder,
+		);
+		// Encoder for the chunk that encodes its data using the provided encoder function and
+		// updates the encoded data for shapes and identifiers.
+		const chunkEncoder = (chunk: TreeChunk): EncodedFieldBatch => {
+			const chunkOutputBuffer = encoder(chunk);
+			return updateShapesAndIdentifiersEncoding(version, [chunkOutputBuffer]);
+		};
+		return this.incrementalEncoder.encodeIncrementalField(cursor, chunkEncoder);
 	}
 }
 

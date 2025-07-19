@@ -64,6 +64,12 @@ export const EncodedFieldShape = Type.Tuple([
 
 export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
 
+/**
+ * Content of the encoded field is an array of chunk reference ids, one for each chunk. Each chunk in the field is
+ * encoded separately and is referenced by its reference id.
+ */
+export const EncodedIncrementalShape = Type.Literal(0);
+
 enum CounterRelativeTo {
 	// Relative to previous node of same type in depth first pre-order traversal.
 	PreviousNodeOfType_DepthFirstPreOrder,
@@ -179,6 +185,10 @@ export const EncodedChunkShape = Type.Object(
 		 * {@link EncodedAnyShape} union member.
 		 */
 		d: Type.Optional(EncodedAnyShape),
+		/**
+		 * {@link EncodedIncrementalShape} union member.
+		 */
+		e: Type.Optional(EncodedIncrementalShape),
 	},
 	unionOptions,
 );
@@ -189,6 +199,7 @@ export type EncodedNestedArray = Static<typeof EncodedNestedArray>;
 export type EncodedInlineArray = Static<typeof EncodedInlineArray>;
 export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
+export type EncodedIncrementalShape = Static<typeof EncodedIncrementalShape>;
 
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

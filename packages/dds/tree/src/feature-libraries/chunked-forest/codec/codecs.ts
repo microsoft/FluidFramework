@@ -12,7 +12,12 @@ import {
 	type IJsonCodec,
 	makeVersionedValidatedCodec,
 } from "../../../codec/index.js";
-import { CursorLocationType, type SchemaAndPolicy } from "../../../core/index.js";
+import {
+	CursorLocationType,
+	type ITreeCursorSynchronous,
+	type SchemaAndPolicy,
+	type TreeChunk,
+} from "../../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
@@ -21,12 +26,62 @@ import type { FieldBatch } from "./fieldBatch.js";
 import { EncodedFieldBatch, validVersions } from "./format.js";
 import { schemaCompressedEncode } from "./schemaBasedEncode.js";
 import { uncompressedEncode } from "./uncompressedEncode.js";
+import { Type, type Static } from "@sinclair/typebox";
+
+/**
+ * Reference ID for a chunk that is incrementally encoded.
+ */
+export const ChunkReferenceId = Type.Number({ multipleOf: 1, minimum: 0 });
+export type ChunkReferenceId = Static<typeof ChunkReferenceId>;
+
+/**
+ * Properties for incremental encoding.
+ * Fields that support incremental encoding will encode their chunks separately by calling `encodeIncrementalField`.
+ * This supports features like incremental summarization where the summary from these fields can be re-used if
+ * unchanged between summaries.
+ * Note that each of these chunks that are incrementally encoded is fully self-describing (contain its own shapes
+ * list and identifier table) and does not rely on context from its parent.
+ */
+export interface IncrementalEncoder {
+	/**
+	 * Called to encode an incremental field at the cursor. The chunks for this field are encoded separately
+	 * from the main buffer.
+	 * @param cursor - The cursor pointing to the field to encode.
+	 * @param chunkEncoder - A function that encodes the contents of the passed chunk in the field.
+	 * @returns The reference IDs of the encoded chunks in the field. This is used to retrieve the encoded
+	 * chunks later.
+	 */
+	encodeIncrementalField(
+		cursor: ITreeCursorSynchronous,
+		chunkEncoder: (chunk: TreeChunk) => EncodedFieldBatch,
+	): ChunkReferenceId[];
+}
+
+/**
+ * Properties for incremental decoding.
+ * Fields that had their chunks incrementally encoded will retrieve these chunks by calling
+ * `getEncodedIncrementalChunk`. See {@link IncrementalEncoder} for more details.
+ */
+export interface IncrementalDecoder {
+	/**
+	 * Called to get the encoded contents of an chunk in an incremental field with the given reference ID.
+	 * @param referenceId - The reference ID of the chunk to retrieve.
+	 * @returns The encoded contents of the chunk.
+	 */
+	getEncodedIncrementalChunk: (referenceId: ChunkReferenceId) => EncodedFieldBatch;
+}
+export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * An encoder / decoder for encoding and decoding of incremental fields. This will be defined if
+	 * incremental encoding is supported and enabled.
+	 */
+	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
 }
 /**
  * @remarks
@@ -86,6 +141,7 @@ export function makeFieldBatchCodec(
 							context.schema.policy,
 							data,
 							context.idCompressor,
+							context.incrementalEncoderDecoder,
 						);
 					} else {
 						// TODO: consider enabling a somewhat compressed but not schema accelerated encode.
@@ -102,10 +158,14 @@ export function makeFieldBatchCodec(
 		},
 		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(data, {
-				idCompressor: context.idCompressor,
-				originatorId: context.originatorId,
-			}).map((chunk) => chunk.cursor());
+			return decode(
+				data,
+				{
+					idCompressor: context.idCompressor,
+					originatorId: context.originatorId,
+				},
+				context.incrementalEncoderDecoder,
+			).map((chunk) => chunk.cursor());
 		},
 	});
 }

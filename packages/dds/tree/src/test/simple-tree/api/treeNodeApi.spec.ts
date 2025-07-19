@@ -62,6 +62,7 @@ import {
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../../shared-tree/index.js";
+import { expectTreesEqual } from "../../index.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 
@@ -2842,25 +2843,4 @@ function checkoutWithInitialTree(
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
-}
-
-function expectTreesEqual(
-	a: TreeNode | TreeLeafValue | undefined,
-	b: TreeNode | TreeLeafValue | undefined,
-): void {
-	if (a === undefined || b === undefined) {
-		assert.equal(a === undefined, b === undefined);
-		return;
-	}
-
-	// Validate the same schema objects are used.
-	assert.equal(Tree.schema(a), Tree.schema(b));
-
-	// This should catch all cases, assuming exportVerbose works correctly.
-	assert.deepEqual(TreeAlpha.exportVerbose(a), TreeAlpha.exportVerbose(b));
-
-	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
-	// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
-	// but should have no false positives since equal trees always have the same concise tree.
-	assert.deepEqual(TreeAlpha.exportConcise(a), TreeAlpha.exportConcise(b));
 }

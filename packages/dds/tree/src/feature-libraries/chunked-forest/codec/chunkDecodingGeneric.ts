@@ -17,6 +17,7 @@ import {
 } from "./chunkCodecUtilities.js";
 import type { IdDecodingContext } from "./chunkDecoding.js";
 import type { EncodedFieldBatchGeneric, IdentifierOrIndex } from "./formatGeneric.js";
+import type { IncrementalDecoder } from "./codecs.js";
 
 /**
  * General purpose shape based tree decoder which gets its support for specific shapes from the caller.
@@ -53,6 +54,7 @@ export class DecoderContext<TEncodedShape = unknown> {
 		public readonly identifiers: readonly string[],
 		public readonly shapes: readonly TEncodedShape[],
 		public readonly idDecodingContext: IdDecodingContext,
+		public readonly incrementalDecoder: IncrementalDecoder | undefined,
 	) {}
 
 	public identifier<T extends string & BrandedType<string, string>>(
