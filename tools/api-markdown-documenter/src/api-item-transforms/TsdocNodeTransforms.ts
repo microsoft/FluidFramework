@@ -27,6 +27,8 @@ import {
 	FencedCodeBlockNode,
 	LineBreakNode,
 	LinkNode,
+	ListItemNode,
+	ListNode,
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
@@ -132,8 +134,7 @@ function transformTsdocSectionContent(
 			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
 		}
 		case DocNodeKind.Paragraph: {
-			const transformed = transformTsdocParagraph(node as DocParagraph, options);
-			return transformed === undefined ? [] : [transformed];
+			return transformTsdocParagraph(node as DocParagraph, options);
 		}
 		default: {
 			// TODO
@@ -166,7 +167,7 @@ function transformTsdocSectionContent(
 function transformTsdocParagraph(
 	node: DocParagraph,
 	options: TsdocNodeTransformOptions,
-): ParagraphNode | undefined {
+): (ParagraphNode | ListNode)[] {
 	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
@@ -206,10 +207,10 @@ function transformTsdocParagraph(
 	}
 
 	if (transformedChildren.length === 0) {
-		return undefined;
+		return [];
 	}
 
-	return new ParagraphNode(transformedChildren);
+	return listify(transformedChildren);
 }
 
 // Default TSDoc implementation only supports the following DocNode kinds under a section node:
@@ -383,6 +384,141 @@ function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
 	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, {
 		italic: true,
 	});
+}
+
+function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
+	// #region Step 1: split parsed lines into lines of non-lists (paragraphs) and list items
+
+	// This regex matches lines that look like Markdown list items:
+	// - It starts with optional whitespace (\s*)
+	// - Then either a bullet (*, +, or -) or a numbered list (digits followed by ')' or '.')
+	// - Followed by at least one whitespace (\s+)
+	// Examples matched: "  * item", "1. item", "- item", "  2) item"
+	const regex = /^(\s*)([*+-]|\d+[).])\s+(.*?)$/;
+
+	interface ParsedParagraph {
+		readonly type: "paragraph";
+		readonly content: PhrasingContent[];
+	}
+
+	interface ParsedUnorderedListItem {
+		readonly type: "unorderedListItem";
+		readonly indentation: string;
+		readonly content: PhrasingContent[];
+	}
+
+	interface ParsedOrderedListItem {
+		readonly type: "orderedListItem";
+		readonly delimiterValue: number;
+		readonly indentation: string;
+		readonly content: PhrasingContent[];
+	}
+
+	type ParsedLine = ParsedParagraph | ParsedUnorderedListItem | ParsedOrderedListItem;
+
+	const parsed: ParsedLine[] = [];
+
+	// TODO: verify that we are not treating soft breaks as hard breaks in earlier conversion.
+
+	let lineState: ParsedLine | undefined;
+	for (const node of nodes) {
+		if (lineState === undefined) {
+			if (node.type === "text") {
+				const match = node.value.match(regex);
+				if (match) {
+					// If we are at the beginning of a line, and the beginning text matches the list item pattern,
+					// we will treat this line as a list item.
+					const leadingWhitespace = match[1];
+					const listItemDelimiter = match[2];
+					const listItemContent = match[3];
+
+					// Determine if the list item is ordered or unordered.
+					const delimiterMatch = listItemDelimiter.match(/^(\d+)[).]$/);
+					lineState = delimiterMatch
+						? {
+								type: "orderedListItem",
+								delimiterValue: Number.parseInt(delimiterMatch[1], 10),
+								indentation: leadingWhitespace,
+								content: [new PlainTextNode(listItemContent)],
+							}
+						: {
+								type: "unorderedListItem",
+								indentation: leadingWhitespace,
+								content: [new PlainTextNode(listItemContent)],
+							};
+				} else {
+					// If the line doesn't start with the list item pattern, we will treat the line as a paragraph.
+					lineState = {
+						type: "paragraph",
+						content: [node],
+					};
+				}
+			} else {
+				lineState = {
+					type: "paragraph",
+					content: [node],
+				};
+			}
+		} else {
+			if (node.type === "lineBreak") {
+				// When we encounter a line break, we will finalize the current line content.
+				parsed.push(lineState);
+				lineState = undefined;
+			} else {
+				lineState.content.push(node);
+			}
+		}
+	}
+	if (lineState !== undefined) {
+		parsed.push(lineState);
+	}
+
+	// #endregion
+
+	// #region Step 2: group list items into lists
+
+	// TODO: group lists by indentation level, so that we can support nested lists.
+
+	const result: (ParagraphNode | ListNode)[] = [];
+	let i = 0;
+	while (i < parsed.length) {
+		const current = parsed[i];
+
+		switch (current.type) {
+			case "paragraph": {
+				result.push(new ParagraphNode(current.content));
+				i++;
+
+				break;
+			}
+			case "orderedListItem": {
+				// TODO: preserve numbering.
+				const items: ListItemNode[] = [];
+				while (i < parsed.length && parsed[i].type === "orderedListItem") {
+					items.push(new ListItemNode(parsed[i].content));
+					i++;
+				}
+				result.push(new ListNode(items, true));
+
+				break;
+			}
+			case "unorderedListItem": {
+				const items: ListItemNode[] = [];
+				while (i < parsed.length && parsed[i].type === "unorderedListItem") {
+					items.push(new ListItemNode(parsed[i].content));
+					i++;
+				}
+				result.push(new ListNode(items, false));
+
+				break;
+			}
+			// No default
+		}
+	}
+
+	// #endregion
+
+	return result;
 }
 
 /**
