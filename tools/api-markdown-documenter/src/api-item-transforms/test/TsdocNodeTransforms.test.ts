@@ -8,7 +8,13 @@ import { TSDocParser } from "@microsoft/tsdoc";
 import { expect } from "chai";
 
 import { defaultConsoleLogger } from "../../Logging.js";
-import { LinkNode, ParagraphNode, PlainTextNode } from "../../documentation-domain/index.js";
+import {
+	LinkNode,
+	ListItemNode,
+	ListNode,
+	ParagraphNode,
+	PlainTextNode,
+} from "../../documentation-domain/index.js";
 import {
 	transformTsdocSection,
 	type TsdocNodeTransformOptions,
@@ -66,8 +72,53 @@ describe("Tsdoc node transformation tests", () => {
 			]);
 		});
 
+		it("Unordered list", () => {
+			const comment = `/**
+ * - Item 1
+ * - {@link item2 | Item 2}
+ * - Item 3
+ */`;
+			const context = parser.parseString(comment);
+			const summarySection = context.docComment.summarySection;
+
+			const result = transformTsdocSection(summarySection, transformOptions);
+
+			expect(result).to.deep.equal([
+				new ListNode(
+					[
+						new ListItemNode([new PlainTextNode("Item 1")]),
+						new ListItemNode([new LinkNode("Item 2", "<URL>")]),
+						new ListItemNode([new PlainTextNode("Item 3")]),
+					],
+					false,
+				),
+			]);
+		});
+
+		it("Ordered list", () => {
+			const comment = `/**
+ * 1. Item 1
+ * 2. {@link item2 | Item 2}
+ * 3. Item 3
+ */`;
+			const context = parser.parseString(comment);
+			const summarySection = context.docComment.summarySection;
+
+			const result = transformTsdocSection(summarySection, transformOptions);
+
+			expect(result).to.deep.equal([
+				new ListNode(
+					[
+						new ListItemNode([new PlainTextNode("Item 1")]),
+						new ListItemNode([new LinkNode("Item 2", "<URL>")]),
+						new ListItemNode([new PlainTextNode("Item 3")]),
+					],
+					true,
+				),
+			]);
+		});
+
 		// Test TODOs:
-		// - Single list
 		// - Multiple lists
 		// - Nested lists
 		// - Interspersed paragraphs and lists
