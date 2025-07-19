@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IConfigProviderBase,
-	type ITelemetryBaseLogger,
+	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { OdspClient, OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
+import { OdspClient, type OdspConnectionConfig } from "@fluidframework/odsp-client/internal";
 import {
-	MockLogger,
+	type MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
 } from "@fluidframework/telemetry-utils/internal";

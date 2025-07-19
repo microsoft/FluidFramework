@@ -5,17 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
-import { AzureClient } from "@fluidframework/azure-client";
-import { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
+import type { AzureClient } from "@fluidframework/azure-client";
+import type { AzureClient as AzureClientLegacy } from "@fluidframework/azure-client-legacy";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
 	MessageType,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	ContainerSchema,
+	type ContainerSchema,
 	createTreeContainerRuntimeFactory,
 	isTreeContainerSchema,
 	type IFluidContainer,
@@ -25,7 +25,7 @@ import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SharedTree } from "@fluidframework/tree/internal";
-import { AxiosResponse } from "axios";
+import type { AxiosResponse } from "axios";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 

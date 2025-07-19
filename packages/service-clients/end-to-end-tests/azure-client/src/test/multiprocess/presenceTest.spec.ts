@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { fork, ChildProcess } from "node:child_process";
+import { fork, type ChildProcess } from "node:child_process";
 
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 

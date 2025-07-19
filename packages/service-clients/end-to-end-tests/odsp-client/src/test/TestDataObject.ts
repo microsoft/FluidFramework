@@ -6,10 +6,10 @@
 import {
 	DataObject,
 	DataObjectFactory,
-	IDataObjectProps,
+	type IDataObjectProps,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
 
 class TestDataObjectClass extends DataObject {
