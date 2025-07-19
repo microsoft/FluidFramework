@@ -89,7 +89,7 @@
 		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"jsrsasign": "^11.0.0",
-		"uuid": "^11.1.0"
+		"uuid": "^9.0.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -104,6 +104,7 @@
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
+		"@types/uuid": "^9.0.2",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",

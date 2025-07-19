@@ -74,7 +74,7 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^7.0.0",
+		"tinylicious": "^5.0.0",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
 		"webpack": "^5.94.0",
