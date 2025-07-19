@@ -14,6 +14,7 @@ import {
 	reviveBigInt,
 } from "./testUtils.js";
 import type {
+	BrandedString,
 	ObjectWithOptionalRecursion,
 	ObjectWithSymbolOrRecursion,
 } from "./testValues.js";
@@ -171,6 +172,16 @@ import {
 	brandedObjectWithString,
 	objectWithBrandedNumber,
 	objectWithBrandedString,
+	brandedStringIndexOfBooleans,
+	brandedStringAliasIndexOfBooleans,
+	brandedStringRecordOfBooleans,
+	brandedStringAliasRecordOfBooleans,
+	brandedStringIndexOfNumbers,
+	brandedStringAliasIndexOfNumbers,
+	brandedStringRecordOfNumbers,
+	brandedStringAliasRecordOfNumbers,
+	brandedStringAliasIndexOfTrueOrUndefined,
+	datastore,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 	objectWithFluidHandleOrRecursion,
@@ -606,6 +617,47 @@ describe("JsonSerializable", () => {
 				assertIdenticalTypes(filteredIn, out);
 			});
 
+			it("branded-`string` indexed of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias indexed of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringAliasIndexOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` record of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias record of `boolean`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, brandedStringAliasRecordOfBooleans);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` indexed of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias indexed of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringAliasIndexOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` record of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+			it("branded-`string` alias record of `number`s", () => {
+				const { filteredIn, out } = passThru(brandedStringAliasRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, brandedStringAliasRecordOfNumbers);
+				assertIdenticalTypes(filteredIn, out);
+			});
+
 			it("object with possible type recursion through union", () => {
 				const { filteredIn, out } = passThru(objectWithPossibleRecursion);
 				assertIdenticalTypes(filteredIn, objectWithPossibleRecursion);
@@ -826,6 +878,11 @@ describe("JsonSerializable", () => {
 						opaqueSerializableAndDeserializedInRecursiveStructure,
 					);
 					// @ts-expect-error In this case, `out` has a unique `OpaqueJsonDeserialized` result.
+					assertIdenticalTypes(filteredIn, out);
+				});
+				it("recursive branded indexed object with OpaqueJsonDeserialized<unknown>", () => {
+					const { filteredIn, out } = passThru(datastore);
+					assertIdenticalTypes(filteredIn, datastore);
 					assertIdenticalTypes(filteredIn, out);
 				});
 			});
@@ -1744,6 +1801,22 @@ describe("JsonSerializable", () => {
 									}
 								>
 							>(),
+						);
+					});
+
+					it("`| true` in branded-`string` alias index", () => {
+						const { filteredIn } = passThru(
+							// @ts-expect-error Type 'undefined' is not assignable to type '{ "error required property may not allow `undefined` value": never; }'
+							brandedStringAliasIndexOfTrueOrUndefined,
+							{},
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<{
+								[x: BrandedString]: {
+									"error required property may not allow `undefined` value": never;
+								};
+							}>(),
 						);
 					});
 

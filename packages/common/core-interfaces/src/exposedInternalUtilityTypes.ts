@@ -142,7 +142,12 @@ export namespace InternalUtilityTypes {
 			[K in Keys]: T extends Record<K, T[K]> ? never : K;
 		}[Keys],
 		undefined | symbol
-	>;
+	> extends infer Result
+		? //   Workaround for TypeScript bug/limitation where an alias for a type
+			// is not considered the same type when used as an index. This restores
+			// the original `Keys` (`keyof T`) type when there is no filtering.
+			IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+		: never;
 
 	/**
 	 * Returns non-symbol keys for required properties of an object type.
@@ -161,7 +166,12 @@ export namespace InternalUtilityTypes {
 			[K in Keys]: T extends Record<K, T[K]> ? K : never;
 		}[Keys],
 		undefined | symbol
-	>;
+	> extends infer Result
+		? //   Workaround for TypeScript bug/limitation where an alias for a type
+			// is not considered the same type when used as an index. This restores
+			// the original `Keys` (`keyof T`) type when there is no filtering.
+			IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+		: never;
 
 	/**
 	 * Returns Result.WhenSomethingDeserializable if T is sometimes at least a
@@ -289,7 +299,7 @@ export namespace InternalUtilityTypes {
 				? IfSameType<
 						PossibleTypeLessAllowed,
 						unknown,
-						/* value might not be supported => check for indexed key */ IfIndexKey<
+						/* value might not be supported => check for indexed key */ IfIndexOrBrandedKey<
 							K,
 							/* indexed => allow K */ K,
 							/* literal => exclude K */ never
@@ -313,7 +323,7 @@ export namespace InternalUtilityTypes {
 									OmitExactlyFromTuple<TExactExceptions, unknown>,
 									TExtendsException,
 									{
-										WhenSomethingDeserializable: /* => check for indexed key */ IfIndexKey<
+										WhenSomethingDeserializable: /* => check for indexed key */ IfIndexOrBrandedKey<
 											K,
 											/* indexed => allow K */ K,
 											/* literal => exclude K */ never
@@ -325,7 +335,12 @@ export namespace InternalUtilityTypes {
 				: never;
 		}[Keys],
 		undefined | symbol
-	>;
+	> extends infer Result
+		? //   Workaround for TypeScript bug/limitation where an alias for a type
+			// is not considered the same type when used as an index. This restores
+			// the original `Keys` (`keyof T`) type when there is no filtering.
+			IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+		: never;
 
 	/**
 	 * Returns non-symbol, literal keys for partially supported properties of an object type.
@@ -344,7 +359,7 @@ export namespace InternalUtilityTypes {
 		Keys extends keyof T = keyof T,
 	> = Exclude<
 		{
-			[K in Keys]: IfIndexKey<
+			[K in Keys]: IfIndexOrBrandedKey<
 				K,
 				/* indexed => exclude K */ never,
 				/* literal => ... */
@@ -373,7 +388,12 @@ export namespace InternalUtilityTypes {
 			>;
 		}[Keys],
 		undefined | symbol
-	>;
+	> extends infer Result
+		? //   Workaround for TypeScript bug/limitation where an alias for a type
+			// is not considered the same type when used as an index. This restores
+			// the original `Keys` (`keyof T`) type when there is no filtering.
+			IfSameType<Keys, Result, Keys, Extract<Result, string | number>>
+		: never;
 
 	/**
 	 * Filters a type `T` for `undefined` that is not viable in an array (or tuple) that
@@ -547,8 +567,8 @@ export namespace InternalUtilityTypes {
 	>;
 
 	/**
-	 * Essentially a check for a template literal that has $\{string\} or
-	 * $\{number\} in the pattern. Just `string` and/or `number` also match.
+	 * Check for a template literal that has $\{string\} or $\{number\}
+	 * in the pattern. Just `string` and/or `number` also match.
 	 *
 	 * @remarks This works recursively looking at first elements when not
 	 * `string` or `number`. `first` will just be a single character if
@@ -556,17 +576,36 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type IfIndexKey<T, IfIndex, IfLiteral> = `${string}` extends T
-		? IfIndex
+	export type IfVariableStringOrNumber<T, IfVariable, IfLiteral> = `${string}` extends T
+		? IfVariable
 		: number extends T
-			? IfIndex
+			? IfVariable
 			: T extends `${infer first}${infer rest}`
 				? string extends first
-					? IfIndex
+					? IfVariable
 					: `${number}` extends first
-						? IfIndex
-						: IfIndexKey<rest, IfIndex, IfLiteral>
+						? IfVariable
+						: IfVariableStringOrNumber<rest, IfVariable, IfLiteral>
 				: IfLiteral;
+
+	/**
+	 * Essentially a check for a non-fixed number or string OR a branded key.
+	 *
+	 * @remarks There is no known mechanism to determine the primitive from a
+	 * generic tagged (branded) primitive, such as `X$\{string\}` & \{ foo: "bar" \}.
+	 * There appears to be little use for a branded literal key -- at runtime
+	 * there is no brand; so, two of the same literal with different brands would
+	 * collide. Thus any branded key can usually be considered indexed.
+	 *
+	 * @system
+	 */
+	export type IfIndexOrBrandedKey<
+		T extends keyof AnyRecord,
+		IfIndexOrBranded,
+		Otherwise,
+	> = T extends object
+		? /* branded string or number */ IfIndexOrBranded
+		: /* => check for variable */ IfVariableStringOrNumber<T, IfIndexOrBranded, Otherwise>;
 
 	/**
 	 * Test for type equality
@@ -956,7 +995,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	export type IfPossiblyUndefinedProperty<
-		TKey,
+		TKey extends keyof AnyRecord,
 		TValue,
 		Result extends {
 			IfPossiblyUndefined: unknown;
@@ -965,7 +1004,7 @@ export namespace InternalUtilityTypes {
 		},
 	> = undefined extends TValue
 		? unknown extends TValue
-			? IfIndexKey<TKey, Result["Otherwise"], Result["IfUnknownNonIndexed"]>
+			? IfIndexOrBrandedKey<TKey, Result["Otherwise"], Result["IfUnknownNonIndexed"]>
 			: Result["IfPossiblyUndefined"]
 		: Result["Otherwise"];
 
@@ -1212,19 +1251,18 @@ export namespace InternalUtilityTypes {
 	 * modification is needed. Caller will need to unwrap the type to continue processing.
 	 * If no modification is needed, then `T` will be the result.
 	 *
-	 * @privateRemarks If exact recursion match is found to be needed, then use the
-	 * pattern found in `ReplaceRecursionWithMarkerAndPreserveAllowances`. This will
-	 * also allow shortcut test to return `OpaqueJsonDeserialized<T>` from here when
-	 * the exact recursion match is the first ancestor type in tuple as it must have
-	 * been processed and found to need modification.
+	 * @privateRemarks Exact recursion pattern employed should allow shortcut
+	 * test to return `OpaqueJsonDeserialized<T>` from here when the exact
+	 * recursion match is the first ancestor type in tuple as it must have been
+	 * processed and found to need modification.
 	 *
 	 * @system
 	 */
 	export type JsonDeserializedRecursion<
 		T,
 		Controls extends DeserializedFilterControls,
-		TAncestorTypes extends object,
-	> = T extends TAncestorTypes
+		TAncestorTypes extends object[],
+	> = IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
 		? /* recursion found => reprocess that recursive type directly to avoid
 		     any collateral damage from ancestor type that required modification.
 			 Further recursion will not happen during processing. Either:
@@ -1232,8 +1270,19 @@ export namespace InternalUtilityTypes {
 			    arg will result in `OpaqueJsonDeserialized<T>` wrapper OR
 			  - no change is needed from this point and `T` will result. */
 			JsonDeserializedImpl<T, Controls, true>
-		: /* no recursion yet detected => */
-			JsonDeserializedFilter<T, Controls, TAncestorTypes | Extract<T, object>>;
+		: T extends object
+			? IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+				? JsonDeserializedImpl<T, Controls, true>
+				: /* no recursion yet detected => */ JsonDeserializedFilter<
+						T,
+						Controls,
+						[...TAncestorTypes, T]
+					>
+			: /* not an object (no recursion) => */ JsonDeserializedFilter<
+					T,
+					Controls,
+					TAncestorTypes
+				>;
 
 	/**
 	 * Handle OpaqueJson* types for {@link JsonDeserialized}.
@@ -1274,7 +1323,7 @@ export namespace InternalUtilityTypes {
 		Controls extends DeserializedFilterControls,
 		// Always start with object portion of self as ancestor. Filtering will
 		// not apply past recursion (nested occurrence of this).
-		TAncestorTypes extends object = Extract<T, object>,
+		TAncestorTypes extends object[] = [Extract<T, object>],
 	> = /* test for 'any' */ boolean extends (T extends never ? true : false)
 		? /* 'any' => */ Controls["DegenerateSubstitute"]
 		: /* test for 'unknown' */ unknown extends T

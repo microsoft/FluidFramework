@@ -17,7 +17,13 @@ import {
 	revealOpaqueJson,
 	reviveBigInt,
 } from "./testUtils.js";
-import type { DirectoryOfValues, ObjectWithOptionalRecursion } from "./testValues.js";
+import type {
+	BrandedKey,
+	BrandedString,
+	DecodedValueDirectoryOrRequiredState,
+	DirectoryOfValues,
+	ObjectWithOptionalRecursion,
+} from "./testValues.js";
 import {
 	boolean,
 	number,
@@ -177,6 +183,16 @@ import {
 	brandedObjectWithString,
 	objectWithBrandedNumber,
 	objectWithBrandedString,
+	brandedStringIndexOfBooleans,
+	brandedStringAliasIndexOfBooleans,
+	brandedStringRecordOfBooleans,
+	brandedStringAliasRecordOfBooleans,
+	brandedStringIndexOfNumbers,
+	brandedStringAliasIndexOfNumbers,
+	brandedStringRecordOfNumbers,
+	brandedStringAliasRecordOfNumbers,
+	brandedStringAliasIndexOfTrueOrUndefined,
+	datastore,
 	fluidHandleToNumber,
 	objectWithFluidHandle,
 	opaqueSerializableObject,
@@ -623,6 +639,46 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, templatedRecordOfNumbers);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
+			it("branded-`string` indexed of `boolean`s", () => {
+				const resultRead = passThru(brandedStringIndexOfBooleans);
+				assertIdenticalTypes(resultRead, brandedStringIndexOfBooleans);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
+			it("branded-`string` alias indexed of `boolean`s", () => {
+				const resultRead = passThru(brandedStringAliasIndexOfBooleans);
+				assertIdenticalTypes(resultRead, brandedStringAliasIndexOfBooleans);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
+			it("branded-`string` record of `boolean`s", () => {
+				const resultRead = passThru(brandedStringRecordOfBooleans);
+				assertIdenticalTypes(resultRead, brandedStringRecordOfBooleans);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
+			it("branded-`string` alias record of `boolean`s", () => {
+				const resultRead = passThru(brandedStringAliasRecordOfBooleans);
+				assertIdenticalTypes(resultRead, brandedStringAliasRecordOfBooleans);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
+			it("branded-`string` indexed of `number`s", () => {
+				const resultRead = passThru(brandedStringIndexOfNumbers);
+				assertIdenticalTypes(resultRead, brandedStringIndexOfNumbers);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
+			it("branded-`string` alias indexed of `number`s", () => {
+				const resultRead = passThru(brandedStringAliasIndexOfNumbers);
+				assertIdenticalTypes(resultRead, brandedStringAliasIndexOfNumbers);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
+			it("branded-`string` record of `number`s", () => {
+				const resultRead = passThru(brandedStringRecordOfNumbers);
+				assertIdenticalTypes(resultRead, brandedStringRecordOfNumbers);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
+			it("branded-`string` alias record of `number`s", () => {
+				const resultRead = passThru(brandedStringAliasRecordOfNumbers);
+				assertIdenticalTypes(resultRead, brandedStringAliasRecordOfNumbers);
+				assertNever<AnyLocations<typeof resultRead>>();
+			});
 
 			it("object with possible type recursion through union", () => {
 				const resultRead = passThru(objectWithPossibleRecursion);
@@ -779,6 +835,21 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(
 					revealedResult,
 					createInstanceOf<DirectoryOfValues<JsonTypeWith<never>>>(),
+				);
+			});
+
+			it("recursive branded indexed object with OpaqueJsonDeserialized<unknown>", () => {
+				const resultRead = passThru(datastore);
+				assertIdenticalTypes(resultRead, datastore);
+				assertNever<AnyLocations<typeof resultRead>>();
+				const revealedResult = revealOpaqueJson(resultRead);
+				assertIdenticalTypes(
+					revealedResult,
+					createInstanceOf<{
+						[k: string]: {
+							[x: BrandedKey]: DecodedValueDirectoryOrRequiredState<JsonTypeWith<never>>;
+						};
+					}>(),
 				);
 			});
 		});
@@ -955,6 +1026,17 @@ describe("JsonDeserialized", () => {
 					it("`| number` in string indexed record", () => {
 						const resultRead = passThru(stringRecordOfNumberOrUndefined, { number });
 						assertIdenticalTypes(resultRead, createInstanceOf<Record<string, number>>());
+						assertNever<AnyLocations<typeof resultRead>>();
+					});
+
+					it("`| true` in branded-`string` alias index", () => {
+						const resultRead = passThru(brandedStringAliasIndexOfTrueOrUndefined, {});
+						assertIdenticalTypes(
+							resultRead,
+							createInstanceOf<{
+								[x: BrandedString]: true;
+							}>(),
+						);
 						assertNever<AnyLocations<typeof resultRead>>();
 					});
 				});
