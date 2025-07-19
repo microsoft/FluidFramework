@@ -69,6 +69,7 @@ describe("Tsdoc node transformation tests", () => {
 		// Test TODOs:
 		// - Single list
 		// - Multiple lists
+		// - Nested lists
 		// - Interspersed paragraphs and lists
 		// - Code blocks
 	});
