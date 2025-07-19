@@ -11,7 +11,7 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
-import { ArrowSync24Regular } from "@fluentui/react-icons";
+import { ArrowSync24Regular, Info24Regular } from "@fluentui/react-icons";
 import type {
 	HasContainerKey,
 	DevtoolsFeatureFlags,
@@ -22,6 +22,8 @@ import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
+
+import { containersInfoTooltipText, dataObjectsInfoTooltipText } from "./TooltipTexts.js";
 
 import { Waiting } from "./index.js";
 
@@ -130,9 +132,9 @@ export type MenuSelection =
 const getContainerListMessage = GetContainerList.createMessage();
 
 /**
- * A refresh button to retrieve the latest list of containers.
+ * A refresh button to retrieve the latest list of containers or data objects.
  */
-function RefreshButton(): React.ReactElement {
+function RefreshButton(props: { label: string }): React.ReactElement {
 	const messageRelay = useMessageRelay();
 	const usageLogger = useLogger();
 
@@ -142,6 +144,8 @@ function RefreshButton(): React.ReactElement {
 		cursor: "pointer",
 	};
 
+	const refreshTooltip = `Refresh ${props.label} list`;
+
 	function handleRefreshClick(): void {
 		// Query for list of Containers
 		messageRelay.postMessage(getContainerListMessage);
@@ -149,12 +153,33 @@ function RefreshButton(): React.ReactElement {
 	}
 
 	return (
-		<Tooltip content="Refresh Containers list" relationship="label">
+		<Tooltip content={refreshTooltip} relationship="label">
 			<Button
 				icon={<ArrowSync24Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
-				aria-label="Refresh Containers list"
+				aria-label={refreshTooltip}
+			></Button>
+		</Tooltip>
+	);
+}
+
+/**
+ * An info icon with tooltip explaining what the section contains.
+ */
+function InfoIcon(props: { content: React.ReactElement }): React.ReactElement {
+	const transparentButtonStyle = {
+		backgroundColor: "transparent",
+		border: "none",
+		cursor: "pointer",
+	};
+
+	return (
+		<Tooltip content={props.content} relationship="label">
+			<Button
+				icon={<Info24Regular />}
+				style={transparentButtonStyle}
+				aria-label="Information"
 			></Button>
 		</Tooltip>
 	);
@@ -203,9 +228,9 @@ export interface MenuSectionLabelHeaderProps {
 	label: string;
 
 	/**
-	 * The icon to display in the header of the menu section.
+	 * The icon or icons to display in the header of the menu section.
 	 */
-	icon?: React.ReactElement;
+	icon?: React.ReactElement | React.ReactElement[];
 }
 
 const useMenuSectionLabelHeaderStyles = makeStyles({
@@ -229,7 +254,9 @@ export function MenuSectionLabelHeader(
 	return (
 		<div className={styles.root}>
 			{label}
-			{icon}
+			{Array.isArray(icon)
+				? icon.map((i, index) => <React.Fragment key={index}>{i}</React.Fragment>)
+				: icon}
 		</div>
 	);
 }
@@ -390,6 +417,11 @@ export interface MenuProps {
 	 * The set of Containers to offer as selection options.
 	 */
 	containers?: ContainerKey[];
+
+	/**
+	 * The set of Data Objects to offer as selection options.
+	 */
+	dataObjects?: ContainerKey[];
 }
 /**
  * {@link ContainersMenuSection} input props.
@@ -411,21 +443,38 @@ interface ContainersMenuSectionProps {
 	 * @remarks Passing `undefined` clears the selection.
 	 */
 	selectContainer(containerKey: ContainerKey | undefined): void;
+
+	/**
+	 * Label for the section (e.g., "Containers", "Data Objects").
+	 */
+	sectionLabel: string;
+
+	/**
+	 * Tooltip content to display for the section info icon.
+	 */
+	tooltipContent: React.ReactElement;
 }
 
 /**
- * Displays the Containers menu section, allowing the user to select the Container to display.
+ * Displays the Containers menu section, allowing the user to select the Container or Data Object to display.
  *
- * @remarks Displays a spinner while the Container list is being loaded (if the list is undefined),
- * and displays a note when there are no registered Containers (if the list is empty).
+ * @remarks Displays a spinner while the Container or Data Object list is being loaded (if the list is undefined),
+ * and displays a note when there are no registered Containers or Data Objects (if the list is empty).
  */
 function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactElement {
-	const { containers, selectContainer, currentContainerSelection } = props;
+	const {
+		containers,
+		selectContainer,
+		currentContainerSelection,
+		sectionLabel,
+		tooltipContent,
+	} = props;
+
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
-		containerSectionInnerView = <Waiting label="Fetching Container list" />;
+		containerSectionInnerView = <Waiting label={`Fetching ${sectionLabel} list`} />;
 	} else if (containers.length === 0) {
-		containerSectionInnerView = <div>No Containers found.</div>;
+		containerSectionInnerView = <div>{`No ${sectionLabel} found.`}</div>;
 	} else {
 		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
@@ -446,7 +495,15 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 
 	return (
 		<MenuSection
-			header={<MenuSectionLabelHeader label="Containers" icon={<RefreshButton />} />}
+			header={
+				<MenuSectionLabelHeader
+					label={sectionLabel}
+					icon={[
+						<InfoIcon key="info" content={tooltipContent} />,
+						<RefreshButton key="refresh" label={sectionLabel} />,
+					]}
+				/>
+			}
 			key="container-selection-menu-section"
 		>
 			{containerSectionInnerView}
@@ -458,7 +515,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
  * Menu component for {@link DevtoolsView}.
  */
 export function Menu(props: MenuProps): React.ReactElement {
-	const { currentSelection, setSelection, supportedFeatures, containers } = props;
+	const { currentSelection, setSelection, supportedFeatures, containers, dataObjects } = props;
 	const usageLogger = useLogger();
 
 	const styles = useMenuStyles();
@@ -517,17 +574,43 @@ export function Menu(props: MenuProps): React.ReactElement {
 			}
 			key="home-menu-section"
 		/>,
-		<ContainersMenuSection
-			key="containers-menu-section"
-			containers={containers}
-			currentContainerSelection={
-				currentSelection?.type === "containerMenuSelection"
-					? currentSelection.containerKey
-					: undefined
-			}
-			selectContainer={onContainerClicked}
-		/>,
 	);
+
+	// Show Containers section if there are containers or if data objects feature is not enabled
+	if (containers && containers.length > 0) {
+		menuSections.push(
+			<ContainersMenuSection
+				key="containers-menu-section"
+				containers={containers}
+				currentContainerSelection={
+					currentSelection?.type === "containerMenuSelection"
+						? currentSelection.containerKey
+						: undefined
+				}
+				selectContainer={onContainerClicked}
+				sectionLabel="Containers"
+				tooltipContent={containersInfoTooltipText}
+			/>,
+		);
+	}
+
+	// Show Data Objects section if there are data objects
+	if (dataObjects && dataObjects.length > 0) {
+		menuSections.push(
+			<ContainersMenuSection
+				key="data-objects-menu-section"
+				containers={dataObjects}
+				currentContainerSelection={
+					currentSelection?.type === "containerMenuSelection"
+						? currentSelection.containerKey
+						: undefined
+				}
+				selectContainer={onContainerClicked}
+				sectionLabel="Data Objects"
+				tooltipContent={dataObjectsInfoTooltipText}
+			/>,
+		);
+	}
 
 	// Display the Telemetry menu section only if the corresponding Devtools instance supports telemetry messaging.
 	if (supportedFeatures.telemetry === true) {
