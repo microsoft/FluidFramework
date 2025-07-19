@@ -100,6 +100,38 @@ describe("SchematizingSimpleTreeView", () => {
 			);
 		});
 
+		it("tolerates staged allowed types", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
+			const enablableSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
+				schemaFactoryAlpha.number,
+				schemaFactoryAlpha.staged(schemaFactoryAlpha.string),
+			]);
+
+			const emptyContent = {
+				schema: emptySchema,
+				initialTree: undefined,
+			};
+			const checkout = checkoutWithContent(emptyContent);
+			const view = new SchematizingSimpleTreeView(
+				checkout,
+				new TreeViewConfiguration({ schema: enablableSchema }),
+				new MockNodeIdentifierManager(),
+			);
+
+			const { compatibility } = view;
+			assert.equal(compatibility.canView, false);
+			assert.equal(compatibility.canUpgrade, false);
+			assert.equal(compatibility.canInitialize, true);
+
+			view.initialize([5, "test"]);
+			assert.equal(view.root[1], "test");
+
+			assert.throws(
+				() => view.initialize([5, "test"]),
+				validateUsageError(/initialized more than once/),
+			);
+		});
+
 		for (const additionalAsserts of [true, false]) {
 			for (const enableSchemaValidation of [true, false]) {
 				it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}, additionalAsserts: ${additionalAsserts}`, () => {
@@ -130,19 +162,18 @@ describe("SchematizingSimpleTreeView", () => {
 					// allow invalid data through the public API.
 					(child.data as Mutable<typeof child.data>).value = "invalid value";
 
-					// Attempt to initialize with invalid content
-					if (enableSchemaValidation || additionalAsserts) {
-						assert.throws(
-							() => view.initialize(root),
-							validateUsageError(/Tree does not conform to schema./),
-						);
+					assert.throws(
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
 
+					// Attempt to initialize with invalid content
+					if (additionalAsserts) {
 						assert.throws(
 							() => view.root,
 							validateUsageError(/invalid state by another error/),
 						);
 					} else {
-						view.initialize(root);
 						assert.equal(view.root.content, "invalid value");
 					}
 				});

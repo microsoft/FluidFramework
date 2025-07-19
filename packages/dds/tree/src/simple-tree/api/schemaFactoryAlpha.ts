@@ -26,15 +26,18 @@ import {
 } from "./schemaFactory.js";
 import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type {
-	NodeKind,
-	TreeNodeSchema,
-	TreeNodeSchemaBoth,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	WithType,
-	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
+import {
+	type NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaBoth,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaNonClass,
+	type WithType,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type AnnotatedAllowedType,
+	normalizeToAnnotatedAllowedType,
+	createSchemaUpgrade,
 } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
@@ -61,6 +64,38 @@ export class SchemaFactoryAlpha<
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
 		) as ScopedSchemaName<TScope, Name>;
+	}
+
+	/**
+	 * Declares a type staged in a set of {@link AllowedTypes}.
+	 *
+	 * @remarks
+	 *
+	 * Staged allowed types add support for reading a type which can be used for schema evolution to add members to
+	 * an {@link AllowedTypes} while supporting cross version collaboration.
+	 *
+	 * Once enough clients support reading the type, support for writing can be added by removing the use of
+	 * `staged` from the schema definition and upgrading the schema.
+	 *
+	 * A future change will allow writing the type using a runtime schema upgrade so that the type can be upgraded
+	 * using a configuration flag change rather than a code change.
+	 *
+	 * @privateremarks
+	 * TODO staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
+	 * user friendly and should be improved, particularly in the case of staged allowed types
+	 *
+	 */
+	public staged<const T extends TreeNodeSchema>(
+		t: T | AnnotatedAllowedType<T>,
+	): AnnotatedAllowedType<T> {
+		const annotatedType = normalizeToAnnotatedAllowedType(t);
+		return {
+			type: annotatedType.type,
+			metadata: {
+				...annotatedType.metadata,
+				stagedSchemaUpgrade: createSchemaUpgrade(),
+			},
+		};
 	}
 
 	/**

@@ -22,7 +22,11 @@ import {
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
-import { NodeKind } from "./core/index.js";
+import {
+	NodeKind,
+	normalizeAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+} from "./core/index.js";
 import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import type {
 	SimpleFieldSchema,
@@ -53,6 +57,7 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 						)}. Remove or rename them to avoid the collision.`,
 					);
 				}
+
 				nodeSchema.set(
 					brand(schema.identifier),
 					getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
@@ -105,6 +110,14 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
 	[FieldKind.Required, FieldKinds.required],
 	[FieldKind.Identifier, FieldKinds.identifier],
 ]);
+
+/**
+ * Normalizes an {@link ImplicitAnnotatedAllowedTypes} into a {@link TreeTypeSet}.
+ * TODO: what is this for?
+ */
+export function convertAllowedTypes(schema: ImplicitAnnotatedAllowedTypes): TreeTypeSet {
+	return new Set([...normalizeAllowedTypes(schema)].map((item) => brand(item.identifier)));
+}
 
 /**
  * Converts a {@link TreeNodeSchema} into a {@link TreeNodeStoredSchema}.

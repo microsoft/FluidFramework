@@ -20,7 +20,7 @@ import {
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
 } from "../feature-libraries/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import { normalizeFieldSchema, type ImplicitAnnotatedFieldSchema } from "./fieldSchema.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
@@ -29,7 +29,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
 import {
 	getKernel,
-	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
 	type TreeNode,
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
@@ -47,7 +47,7 @@ import { convertField } from "./toStoredSchema.js";
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	destinationContext: FlexTreeContext,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
 	return prepareForInsertionContextless(
@@ -73,7 +73,7 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
  */
 export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
-	schema: ImplicitAllowedTypes,
+	schema: ImplicitAnnotatedAllowedTypes,
 	destinationContext: FlexTreeContext,
 ): FlexibleFieldContent {
 	const mapTrees: UnhydratedFlexTreeNode[] = data.map((item) =>
@@ -107,7 +107,7 @@ export function prepareArrayContentForInsertion(
  */
 export function prepareForInsertionContextless<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
@@ -137,6 +137,7 @@ function validateAndPrepare(
 		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),
 		// they were already creating used the more specific context we have access to from `hydratedData`.
 		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
+		// TODO maybe remove this check because "the schema is always validated here"
 		if (schemaAndPolicy.policy.validateSchema === true) {
 			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
 			inSchemaOrThrow(maybeError);

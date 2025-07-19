@@ -54,6 +54,7 @@ import {
 	type FieldSchema,
 	toStoredSchema,
 	tryDisposeTreeNode,
+	FieldSchemaAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -321,10 +322,14 @@ export class SchematizingSimpleTreeView<
 				this.nodeKeyManager,
 			);
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
+			assert(
+				this.rootFieldSchema instanceof FieldSchemaAlpha,
+				"all field schema should be FieldSchemaAlpha",
+			);
 			slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
-					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
+					this.rootFieldSchema.annotatedAllowedTypesNormalized,
 					this.flexTreeContext,
 				),
 			);

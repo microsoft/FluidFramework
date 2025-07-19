@@ -116,7 +116,7 @@ export interface AllowedTypesMetadata {
 export function isAnnotatedAllowedType(
 	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 ): allowedType is AnnotatedAllowedType {
-	return "metadata" in allowedType && "type" in allowedType;
+	return allowedType !== undefined && "metadata" in allowedType && "type" in allowedType;
 }
 
 /**
@@ -131,7 +131,30 @@ export interface AllowedTypeMetadata {
 	 */
 	readonly custom?: unknown;
 
-	// TODO metadata for enablable types will be added here
+	/**
+	 * If defined, indicates that an allowed type is staged. Before upgrade, any attempt to insert or move a node to the location where this allowed type is declared will throw an error.
+	 */
+	readonly stagedSchemaUpgrade?: SchemaUpgrade;
+}
+
+/**
+ * Package internal construction API.
+ */
+export let createSchemaUpgrade: () => SchemaUpgrade;
+
+/**
+ * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
+ *
+ * TODO:#38722 implement runtime schema upgrades until then, the class purely behaves as a placeholder and we disable no-extraneous-class
+ * @sealed @alpha
+ */
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
+export class SchemaUpgrade {
+	static {
+		createSchemaUpgrade = () => new SchemaUpgrade();
+	}
+
+	private constructor() {}
 }
 
 /**
@@ -237,29 +260,41 @@ export type UnannotateAllowedType<T extends AnnotatedAllowedType> =
  * @internal
  */
 export function normalizeAllowedTypes(
-	types: ImplicitAllowedTypes,
+	types: ImplicitAnnotatedAllowedTypes,
 ): ReadonlySet<TreeNodeSchema> {
+	// remove annotations before normalizing
+	const unannotated = unannotateImplicitAllowedTypes(types);
 	const normalized = new Set<TreeNodeSchema>();
-	if (isReadonlyArray(types)) {
+	if (isReadonlyArray(unannotated)) {
 		// Types array must not be modified after it is normalized since that would result in the user of the normalized data having wrong (out of date) content.
-		Object.freeze(types);
-		for (const lazyType of types) {
+		Object.freeze(unannotated);
+		for (const lazyType of unannotated) {
 			normalized.add(evaluateLazySchema(lazyType));
 		}
 	} else {
-		normalized.add(evaluateLazySchema(types));
+		normalized.add(evaluateLazySchema(unannotated));
 	}
 	return normalized;
 }
 
 /**
- * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
+ * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist
+ * and eagerly evaluating any lazy schema declarations.
+ *
+ * @remarks
+ * Note: this must only be called after all required schemas have been declared, otherwise evaluation of
+ * recursive schemas may fail.
+ * type is frozen and should not be modified after being passed in.
  */
 export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
 	type: T | AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>>,
-): AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>> {
+): AnnotatedAllowedType<T> {
+	Object.freeze(type);
 	return isAnnotatedAllowedType(type)
-		? type
+		? {
+				metadata: type.metadata,
+				type: evaluateLazySchema(type.type),
+			}
 		: {
 				metadata: {},
 				type,

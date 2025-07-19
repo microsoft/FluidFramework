@@ -121,6 +121,7 @@ import {
 	type MinimalMapTreeNodeView,
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
+	type FullSchemaPolicy,
 } from "../feature-libraries/index.js";
 import {
 	type CheckoutEvents,
@@ -148,6 +149,9 @@ import {
 	type UnsafeUnknownSchema,
 	type InsertableField,
 	unhydratedFlexTreeFromInsertable,
+	type SimpleNodeSchema,
+	type TreeNodeSchema,
+	getStoredSchema,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -157,6 +161,7 @@ import {
 	forEachInNestedMap,
 	tryGetFromNestedMap,
 	isReadonlyArray,
+	brand,
 } from "../util/index.js";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type { Client } from "@fluid-private/test-dds-utils";
@@ -180,6 +185,11 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
 
 // Testing utilities
 
@@ -1494,4 +1504,41 @@ export function fieldSchema(
 		types: new Set(types),
 		persistedMetadata: undefined,
 	};
+}
+
+export class TestSchemaRepository extends TreeStoredSchemaRepository {
+	public constructor(
+		public readonly policy: FullSchemaPolicy,
+		data?: TreeStoredSchema,
+	) {
+		super(data);
+	}
+
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
+		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
+			this.rootFieldSchemaData = schema;
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
+	/**
+	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
+	 * @returns true iff update was performed.
+	 */
+	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
+		const storedSchema = getStoredSchema(schema);
+		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const original = this.nodeSchema.get(name);
+		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
+			this.nodeSchemaData.set(name, storedSchema);
+			this._events.emit("afterSchemaChange", this);
+			return true;
+		}
+		return false;
+	}
 }

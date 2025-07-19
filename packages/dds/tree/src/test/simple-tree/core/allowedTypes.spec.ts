@@ -324,8 +324,9 @@ describe("allowedTypes", () => {
 
 	describe("normalizeToAnnotatedAllowedType", () => {
 		const fakeSchema = schema.string;
+		const lazy = () => fakeSchema;
 
-		it("wraps LazyItem<TreeNodeSchema> in an annotation", () => {
+		it("wraps TreeNodeSchema in an annotation", () => {
 			const result = normalizeToAnnotatedAllowedType(fakeSchema);
 			assert.deepStrictEqual(result, { metadata: {}, type: fakeSchema });
 		});
@@ -336,7 +337,19 @@ describe("allowedTypes", () => {
 				type: fakeSchema,
 			};
 			const result = normalizeToAnnotatedAllowedType(input);
-			assert.strictEqual(result, input);
+			assert.deepStrictEqual(result, input);
+		});
+
+		it("evaluates any lazy schemas", () => {
+			const input: AnnotatedAllowedType = {
+				metadata: { custom: { something: true } },
+				type: lazy,
+			};
+			const result = normalizeToAnnotatedAllowedType(input);
+			assert.deepStrictEqual(result, {
+				metadata: { custom: { something: true } },
+				type: fakeSchema,
+			});
 		});
 	});
 

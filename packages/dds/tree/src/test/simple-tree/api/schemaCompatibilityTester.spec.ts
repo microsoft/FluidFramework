@@ -387,5 +387,37 @@ describe("SchemaCompatibilityTester", () => {
 				});
 			});
 		});
+
+		describe("with staged allowed types", () => {
+			it("allows viewing and upgrading with staged type not in stored schema", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [factory.number, factory.staged(factory.string)],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: factory.number,
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
+					{ canView: true, canUpgrade: true, isEquivalent: true },
+				);
+			});
+
+			it("allows viewing and upgrading with staged type also in stored schema as normal", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [factory.number, factory.staged(factory.string)],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [factory.number, factory.string],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
+					{ canView: true, canUpgrade: true, isEquivalent: true },
+				);
+			});
+		});
 	});
 });

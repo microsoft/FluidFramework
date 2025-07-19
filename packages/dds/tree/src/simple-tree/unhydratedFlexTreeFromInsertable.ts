@@ -9,7 +9,11 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { hasSingle } from "../util/index.js";
 
-import { type ImplicitFieldSchema, normalizeFieldSchema, FieldKind } from "./fieldSchema.js";
+import {
+	normalizeFieldSchema,
+	FieldKind,
+	type ImplicitAnnotatedFieldSchema,
+} from "./fieldSchema.js";
 import {
 	CompatibilityLevel,
 	getKernel,
@@ -50,7 +54,7 @@ import { getUnhydratedContext } from "./createContext.js";
  */
 export function unhydratedFlexTreeFromInsertable<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	allowedTypes: ImplicitFieldSchema,
+	allowedTypes: ImplicitAnnotatedFieldSchema,
 ): TIn extends undefined ? undefined : UnhydratedFlexTreeNode {
 	const normalizedFieldSchema = normalizeFieldSchema(allowedTypes);
 
