@@ -184,10 +184,7 @@ function transformTsdocParagraph(
 		(child) => child !== undefined && !child.isEmpty,
 	);
 
-	// Collapse groups of adjacent line breaks to reduce unnecessary clutter in the output.
-	transformedChildren = collapseAdjacentLineBreaks(transformedChildren);
-
-	// Trim leading and trailing line breaks, which are effectively redundant
+	// Trim leading and trailing line breaks, which are redundant in the context of a paragraph.
 	transformedChildren = trimLeadingAndTrailingLineBreaks(transformedChildren);
 
 	// Trim leading whitespace from first child if it is plain text,
@@ -397,8 +394,8 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 	// Examples matched: "  * item", "1. item", "- item", "  2) item"
 	const regex = /^(\s*)([*+-]|\d+[).])\s+(.*?)$/;
 
-	interface ParsedParagraph {
-		readonly type: "paragraph";
+	interface ParsedParagraphLine {
+		readonly type: "paragraphLine";
 		readonly content: PhrasingContent[];
 	}
 
@@ -415,11 +412,9 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 		readonly content: PhrasingContent[];
 	}
 
-	type ParsedLine = ParsedParagraph | ParsedUnorderedListItem | ParsedOrderedListItem;
+	type ParsedLine = ParsedParagraphLine | ParsedUnorderedListItem | ParsedOrderedListItem;
 
 	const parsed: ParsedLine[] = [];
-
-	// TODO: verify that we are not treating soft breaks as hard breaks in earlier conversion.
 
 	let lineState: ParsedLine | undefined;
 	for (const node of nodes) {
@@ -450,13 +445,13 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				} else {
 					// If the line doesn't start with the list item pattern, we will treat the line as a paragraph.
 					lineState = {
-						type: "paragraph",
+						type: "paragraphLine",
 						content: [node],
 					};
 				}
 			} else {
 				lineState = {
-					type: "paragraph",
+					type: "paragraphLine",
 					content: [node],
 				};
 			}
@@ -486,9 +481,20 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 		const current = parsed[i];
 
 		switch (current.type) {
-			case "paragraph": {
-				result.push(new ParagraphNode(current.content));
-				i++;
+			case "paragraphLine": {
+				// Adjacent "paragraph lines" are combined together into a single paragraph node.
+				// Soft line breaks between them are converted to a single space.
+				const items: PhrasingContent[] = [];
+				while (i < parsed.length && parsed[i].type === "paragraphLine") {
+					if (items.length > 0) {
+						// Add a space between content on adjacent lines in the same paragraph.
+						items.push(new PlainTextNode(" "));
+					}
+					items.push(...parsed[i].content);
+					i++;
+				}
+
+				result.push(new ParagraphNode(combineAdjacentPlainText(items)));
 
 				break;
 			}
@@ -496,7 +502,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				// TODO: preserve numbering.
 				const items: ListItemNode[] = [];
 				while (i < parsed.length && parsed[i].type === "orderedListItem") {
-					items.push(new ListItemNode(parsed[i].content));
+					items.push(new ListItemNode(combineAdjacentPlainText(parsed[i].content)));
 					i++;
 				}
 				result.push(new ListNode(items, true));
@@ -506,7 +512,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 			case "unorderedListItem": {
 				const items: ListItemNode[] = [];
 				while (i < parsed.length && parsed[i].type === "unorderedListItem") {
-					items.push(new ListItemNode(parsed[i].content));
+					items.push(new ListItemNode(combineAdjacentPlainText(parsed[i].content)));
 					i++;
 				}
 				result.push(new ListNode(items, false));
@@ -526,25 +532,26 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
  * Collapses adjacent groups of 1+ line break nodes into a single line break node to reduce clutter
  * in output tree.
  */
-function collapseAdjacentLineBreaks(nodes: readonly PhrasingContent[]): PhrasingContent[] {
+function combineAdjacentPlainText(nodes: readonly PhrasingContent[]): PhrasingContent[] {
 	if (nodes.length === 0) {
 		return [];
 	}
 
 	const result: PhrasingContent[] = [];
-	let onNewline = false;
+	let buffer = "";
 	for (const node of nodes) {
-		if (node.type === "lineBreak") {
-			if (onNewline) {
-				continue;
-			} else {
-				onNewline = true;
-				result.push(node);
-			}
+		if (node.type === "text") {
+			buffer += node.value;
 		} else {
-			onNewline = false;
+			if (buffer.length > 0) {
+				result.push(new PlainTextNode(buffer));
+				buffer = "";
+			}
 			result.push(node);
 		}
+	}
+	if (buffer.length > 0) {
+		result.push(new PlainTextNode(buffer));
 	}
 
 	return result;

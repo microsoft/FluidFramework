@@ -45,5 +45,25 @@ describe("Tsdoc node transformation tests", () => {
 				new ParagraphNode([new PlainTextNode("This is a simple comment.")]),
 			]);
 		});
+
+		it("Multi-paragraph comment", () => {
+			const comment = `/**
+ * This is a simple comment.
+ * It has multiple paragraphs.
+ *
+ * This is the second paragraph.
+ */`;
+			const context = parser.parseString(comment);
+			const summarySection = context.docComment.summarySection;
+
+			const result = transformTsdocSection(summarySection, transformOptions);
+
+			expect(result).to.deep.equal([
+				new ParagraphNode([
+					new PlainTextNode("This is a simple comment. It has multiple paragraphs."),
+				]),
+				new ParagraphNode([new PlainTextNode("This is the second paragraph.")]),
+			]);
+		});
 	});
 });
