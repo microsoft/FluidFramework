@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 // eslint-disable-next-line import/no-deprecated
 import type { IFluidDataStoreRuntimeExperimental } from "@fluidframework/datastore-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 
-import { ISharedObject } from "./types.js";
+import type { ISharedObject } from "./types.js";
 
 /**
  * Handle for a shared object. See also `SharedObjectHandle`.

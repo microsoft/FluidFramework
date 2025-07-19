@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**
  * Shared summary block interface. A shared summary block is part of the summary but it does not generate any ops.

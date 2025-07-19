@@ -6,7 +6,7 @@
 export { Ink } from "./ink.js";
 export { InkCanvas } from "./inkCanvas.js";
 export { InkFactory } from "./inkFactory.js";
-export {
+export type {
 	IClearOperation,
 	IColor,
 	ICreateStrokeOperation,

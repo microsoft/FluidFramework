@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISharedObject } from "@fluidframework/shared-object-base/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 import { Ink } from "./ink.js";
 import { pkgVersion } from "./packageVersion.js";

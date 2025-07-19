@@ -9,7 +9,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
-	MockContainerRuntimeForReconnection,
+	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockSharedObjectServices,
 	MockStorage,
@@ -17,7 +17,7 @@ import {
 
 import { Ink } from "../ink.js";
 import { InkFactory } from "../inkFactory.js";
-import { IPen } from "../interfaces.js";
+import type { IPen } from "../interfaces.js";
 
 describe("Ink", () => {
 	let ink: Ink;
