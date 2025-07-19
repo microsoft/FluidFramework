@@ -137,11 +137,9 @@ function validateAndPrepare(
 		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),
 		// they were already creating used the more specific context we have access to from `hydratedData`.
 		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
-		// TODO maybe remove this check because "the schema is always validated here"
-		if (schemaAndPolicy.policy.validateSchema === true) {
-			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
-			inSchemaOrThrow(maybeError);
-		}
+		// Schema is always validated here, even if the policy says otherwise
+		const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
+		inSchemaOrThrow(maybeError);
 	}
 }
 
