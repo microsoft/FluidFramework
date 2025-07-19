@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type AttributionInfo,
-	type AttributionKey,
+import type {
+	AttributionInfo,
+	AttributionKey,
 } from "@fluidframework/runtime-definitions/internal";
 
 // Summary tree keys
