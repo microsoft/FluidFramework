@@ -65,5 +65,11 @@ describe("Tsdoc node transformation tests", () => {
 				new ParagraphNode([new PlainTextNode("This is the second paragraph.")]),
 			]);
 		});
+
+		// Test TODOs:
+		// - Single list
+		// - Multiple lists
+		// - Interspersed paragraphs and lists
+		// - Code blocks
 	});
 });
