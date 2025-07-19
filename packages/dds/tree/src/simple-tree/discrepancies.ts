@@ -228,11 +228,21 @@ export function* getAllowedContentDiscrepancies(
 	const viewNodeSchema = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
 
 	walkFieldSchema(view, {
-		node: (schema) => {
-			const identifier: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		// TODO:#38722 Change the way this traversal works when runtime schema upgrades are implemented.
+		// The traversal of the view schema needs to be driven by traversing the stored schema, 
+		// since what types actually exist in the view schema depends on which staged allowed types are upgraded, 
+		// which you need to determine when walking the stored schema
+		// Because runtime schema upgrades are not implemented yet, traversing all allowed types and filtering
+		// out any that are staged is sufficient.
+		allowedTypes: (annotatedAllowedTypes) => {
+			for (const { metadata, type } of annotatedAllowedTypes.types) {
+				if (metadata.stagedSchemaUpgrade === undefined) {
+					const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
 
-			debugAssert(() => !viewNodeSchema.has(identifier));
-			viewNodeSchema.set(identifier, schema);
+					debugAssert(() => !viewNodeSchema.has(identifier));
+					viewNodeSchema.set(identifier, type);
+				}
+			}
 		},
 	});
 
@@ -400,7 +410,9 @@ export function findExtraAllowedTypes(
 		viewAllowedTypes.map((value) => value.type.identifier),
 	);
 	const viewExtraneousAllowedTypes = [...viewAllowedTypes].filter(
-		(value) => !storedAllowedTypes.has(brand(value.type.identifier)),
+		(value) =>
+			!storedAllowedTypes.has(brand(value.type.identifier)) &&
+			value.metadata.stagedSchemaUpgrade === undefined,
 	);
 	const storedExtraneousAllowedTypes = [...storedAllowedTypes].filter(
 		(value) => !viewNodeSchemaIdentifiers.has(value),
