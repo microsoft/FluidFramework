@@ -20,5 +20,17 @@ module.exports = {
 		"@typescript-eslint/no-var-requires": "off",
 		"@typescript-eslint/explicit-function-return-type": "off",
 		"unicorn/prefer-module": "off",
+
+		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
+		"@typescript-eslint/consistent-type-exports": [
+			"error",
+			{ fixMixedExportsWithInlineTypeSpecifier: true },
+		],
+		"@typescript-eslint/consistent-type-imports": [
+			"error",
+			{ fixStyle: "inline-type-imports" },
+		],
+		"@typescript-eslint/no-import-type-side-effects": "error",
+		// #endregion
 	},
 };

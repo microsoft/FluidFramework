@@ -9,7 +9,7 @@ import path from "path";
 
 /* eslint-disable import/no-internal-modules */
 import { CSVFileLogger } from "../logger/csvFileLogger.js";
-import { IFileLogger } from "../logger/fileLogger.js";
+import type { IFileLogger } from "../logger/fileLogger.js";
 import { JSONFileLogger } from "../logger/jsonFileLogger.js";
 /* eslint-enable import/no-internal-modules */
 
