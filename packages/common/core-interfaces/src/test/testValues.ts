@@ -274,6 +274,14 @@ export const objectWithMismatchedGetterAndSetterPropertyViaValue: ObjectWithMism
 
 export const stringRecordOfNumbers: Record<string, number> = { key: 0 };
 export const stringRecordOfUndefined: Record<string, undefined> = { key: undefined };
+export const stringRecordOfNumberOrUndefined: Record<string, number | undefined> = {
+	number,
+	undefined,
+};
+export const stringRecordOfSymbolOrBoolean: Record<string, symbol | boolean> = {
+	boolean,
+	symbol,
+};
 export const stringRecordOfUnknown: Record<string, unknown> = { key: 0 };
 export const stringOrNumberRecordOfStrings: Record<string | number, string> = { 5: "value" };
 export const stringOrNumberRecordOfObjects: Record<string | number, { string: string }> = {

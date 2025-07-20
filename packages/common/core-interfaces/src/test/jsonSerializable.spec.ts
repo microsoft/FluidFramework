@@ -114,6 +114,8 @@ import {
 	objectWithNever,
 	stringRecordOfNumbers,
 	stringRecordOfUndefined,
+	stringRecordOfNumberOrUndefined,
+	stringRecordOfSymbolOrBoolean,
 	stringRecordOfUnknown,
 	stringOrNumberRecordOfStrings,
 	stringOrNumberRecordOfObjects,
@@ -1367,6 +1369,14 @@ describe("JsonSerializable", () => {
 						createInstanceOf<{ numberOrBigintOrSymbol: number }>(),
 					);
 				});
+				it("`string` indexed record of `symbol | boolean`", () => {
+					const { filteredIn } = passThru(
+						// @ts-expect-error Type 'symbol | boolean' is not assignable to type 'boolean'
+						stringRecordOfSymbolOrBoolean,
+						{ boolean },
+					);
+					assertIdenticalTypes(filteredIn, createInstanceOf<Record<string, boolean>>());
+				});
 
 				it("object with array of `bigint`s", () => {
 					const { filteredIn } = passThruThrows(
@@ -1712,6 +1722,25 @@ describe("JsonSerializable", () => {
 										};
 									} & {
 										knownNumber: number;
+									}
+								>
+							>(),
+						);
+					});
+
+					it("`| number` in string indexed record", () => {
+						const { filteredIn } = passThru(
+							// @ts-expect-error Type 'undefined' is not assignable to type '{ "error required property may not allow `undefined` value": never; }'
+							stringRecordOfNumberOrUndefined,
+							{ number },
+						);
+						assertIdenticalTypes(
+							filteredIn,
+							createInstanceOf<
+								Record<
+									string,
+									{
+										"error required property may not allow `undefined` value": never;
 									}
 								>
 							>(),

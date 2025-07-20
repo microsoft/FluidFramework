@@ -114,6 +114,8 @@ import {
 	objectWithNever,
 	stringRecordOfNumbers,
 	stringRecordOfUndefined,
+	stringRecordOfNumberOrUndefined,
+	stringRecordOfSymbolOrBoolean,
 	stringRecordOfUnknown,
 	stringOrNumberRecordOfStrings,
 	stringOrNumberRecordOfObjects,
@@ -614,37 +616,11 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, stringOrNumberRecordOfStringWithKnownNumber);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("`Partial<>` `string` indexed record of `numbers`", () => {
-				// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
-				// gains `| undefined` even under exactOptionalPropertyTypes=true.
-				// Preferred result is that there is no change applying Partial<>.
-				// In either case, this test can hold since there isn't a downside
-				// to allowing `undefined` in the result if that is how type is
-				// given since indexed properties are always inherently optional.
-				const resultRead = passThru(partialStringRecordOfNumbers, {
-					key1: 0,
-				});
-				assertIdenticalTypes(resultRead, partialStringRecordOfNumbers);
-				assertNever<AnyLocations<typeof resultRead>>();
-			});
 			it("templated record of `numbers`", () => {
 				const resultRead = passThru(templatedRecordOfNumbers, {
 					key1: 0,
 				});
 				assertIdenticalTypes(resultRead, templatedRecordOfNumbers);
-				assertNever<AnyLocations<typeof resultRead>>();
-			});
-			it("`Partial<>` templated record of `numbers`", () => {
-				// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
-				// gains `| undefined` even under exactOptionalPropertyTypes=true.
-				// Preferred result is that there is no change applying Partial<>.
-				// In either case, this test can hold since there isn't a downside
-				// to allowing `undefined` in the result if that is how type is
-				// given since indexed properties are always inherently optional.
-				const resultRead = passThru(partialTemplatedRecordOfNumbers, {
-					key1: 0,
-				});
-				assertIdenticalTypes(resultRead, partialTemplatedRecordOfNumbers);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
 
@@ -944,6 +920,43 @@ describe("JsonDeserialized", () => {
 						);
 						assertNever<AnyLocations<typeof resultRead>>();
 					});
+
+					it("`Partial<>` `string` indexed record of `numbers`", () => {
+						// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+						// gains `| undefined` even under exactOptionalPropertyTypes=true.
+						// Preferred result is that there is no change applying Partial<>.
+						// Since indexed properties are always inherently optional,
+						// `| undefined` is removed. (If TypeScript addresses Partial
+						// issue, then this may move to the unmodified case set.)
+						const resultRead = passThru(partialStringRecordOfNumbers, {
+							key1: 0,
+						});
+						assertIdenticalTypes(resultRead, createInstanceOf<Record<string, number>>());
+						assertNever<AnyLocations<typeof resultRead>>();
+					});
+
+					it("`Partial<>` templated record of `numbers`", () => {
+						// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
+						// gains `| undefined` even under exactOptionalPropertyTypes=true.
+						// Preferred result is that there is no change applying Partial<>.
+						// Since indexed properties are always inherently optional,
+						// `| undefined` is removed. (If TypeScript addresses Partial
+						// issue, then this may move to the unmodified case set.)
+						const resultRead = passThru(partialTemplatedRecordOfNumbers, {
+							key1: 0,
+						});
+						assertIdenticalTypes(
+							resultRead,
+							createInstanceOf<Record<`key${number}`, number>>(),
+						);
+						assertNever<AnyLocations<typeof resultRead>>();
+					});
+
+					it("`| number` in string indexed record", () => {
+						const resultRead = passThru(stringRecordOfNumberOrUndefined, { number });
+						assertIdenticalTypes(resultRead, createInstanceOf<Record<string, number>>());
+						assertNever<AnyLocations<typeof resultRead>>();
+					});
 				});
 
 				it("object with exactly `string | symbol`", () => {
@@ -980,6 +993,11 @@ describe("JsonDeserialized", () => {
 						resultRead,
 						createInstanceOf<{ numberOrBigintOrSymbol?: number }>(),
 					);
+					assertNever<AnyLocations<typeof resultRead>>();
+				});
+				it("`string` indexed record of `symbol | boolean`", () => {
+					const resultRead = passThru(stringRecordOfSymbolOrBoolean, { boolean });
+					assertIdenticalTypes(resultRead, createInstanceOf<Record<string, boolean>>());
 					assertNever<AnyLocations<typeof resultRead>>();
 				});
 
@@ -1863,44 +1881,29 @@ describe("JsonDeserialized", () => {
 				assertIdenticalTypes(resultRead, createInstanceOf<JsonTypeWith<never>>());
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("`string` indexed record of `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+			it("`string` indexed record of `unknown` replaced with `JsonTypeWith<never>`", () => {
 				const resultRead = passThru(stringRecordOfUnknown);
 				assertIdenticalTypes(
 					resultRead,
-					// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
-					// gains `| undefined` even under exactOptionalPropertyTypes=true.
-					// Preferred result is that there is no change applying Partial<>.
-					// In either case, this test hold since indexed properties are
-					// always inherently optional.
-					createInstanceOf<Partial<Record<string, JsonTypeWith<never>>>>(),
+					createInstanceOf<Record<string, JsonTypeWith<never>>>(),
 				);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("templated record of `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+			it("templated record of `unknown` replaced with `JsonTypeWith<never>`", () => {
 				const resultRead = passThru(templatedRecordOfUnknown);
 				assertIdenticalTypes(
 					resultRead,
-					// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
-					// gains `| undefined` even under exactOptionalPropertyTypes=true.
-					// Preferred result is that there is no change applying Partial<>.
-					// In either case, this test hold since indexed properties are
-					// always inherently optional.
-					createInstanceOf<Partial<Record<`${string}Key`, JsonTypeWith<never>>>>(),
+					createInstanceOf<Record<`${string}Key`, JsonTypeWith<never>>>(),
 				);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("`string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+			it("`string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>`", () => {
 				const resultRead = passThru(stringRecordOfUnknownWithKnownProperties);
 				assertIdenticalTypes(
 					resultRead,
 					createInstanceOf<
 						InternalUtilityTypes.FlattenIntersection<
-							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
-							// gains `| undefined` even under exactOptionalPropertyTypes=true.
-							// Preferred result is that there is no change applying Partial<>.
-							// In either case, this test hold since indexed properties are
-							// always inherently optional.
-							Partial<Record<string, JsonTypeWith<never>>> & {
+							Record<string, JsonTypeWith<never>> & {
 								knownString: string;
 								knownNumber: number;
 							}
@@ -1909,7 +1912,7 @@ describe("JsonDeserialized", () => {
 				);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("`string` indexed record of `unknown` and optional known properties has `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+			it("`string` indexed record of `unknown` and optional known properties has `unknown` replaced with `JsonTypeWith<never>`", () => {
 				const resultRead = passThru(stringRecordOfUnknownWithOptionalKnownProperties, {
 					knownString: "string value",
 				});
@@ -1917,12 +1920,7 @@ describe("JsonDeserialized", () => {
 					resultRead,
 					createInstanceOf<
 						InternalUtilityTypes.FlattenIntersection<
-							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
-							// gains `| undefined` even under exactOptionalPropertyTypes=true.
-							// Preferred result is that there is no change applying Partial<>.
-							// In either case, this test hold since indexed properties are
-							// always inherently optional.
-							Partial<Record<string, JsonTypeWith<never>>> & {
+							Record<string, JsonTypeWith<never>> & {
 								knownString?: string;
 								knownNumber?: number;
 							}
@@ -1937,12 +1935,7 @@ describe("JsonDeserialized", () => {
 					resultRead,
 					createInstanceOf<
 						InternalUtilityTypes.FlattenIntersection<
-							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
-							// gains `| undefined` even under exactOptionalPropertyTypes=true.
-							// Preferred result is that there is no change applying Partial<>.
-							// In either case, this test hold since indexed properties are
-							// always inherently optional.
-							Partial<Record<string, JsonTypeWith<never>>> & {
+							Record<string, JsonTypeWith<never>> & {
 								knownUnknown?: JsonTypeWith<never>;
 							}
 						>
@@ -1950,18 +1943,13 @@ describe("JsonDeserialized", () => {
 				);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("`string` indexed record of `unknown` and optional known `unknown` has all `unknown` replaced with `JsonTypeWith<never>` (and becomes optional per current TS behavior)", () => {
+			it("`string` indexed record of `unknown` and optional known `unknown` has all `unknown` replaced with `JsonTypeWith<never>`", () => {
 				const resultRead = passThru(stringRecordOfUnknownWithOptionalKnownUnknown);
 				assertIdenticalTypes(
 					resultRead,
 					createInstanceOf<
 						InternalUtilityTypes.FlattenIntersection<
-							// Note: as of TypeScript 5.8.2, a Partial<> of an indexed type
-							// gains `| undefined` even under exactOptionalPropertyTypes=true.
-							// Preferred result is that there is no change applying Partial<>.
-							// In either case, this test hold since indexed properties are
-							// always inherently optional.
-							Partial<Record<string, JsonTypeWith<never>>> & {
+							Record<string, JsonTypeWith<never>> & {
 								knownUnknown?: JsonTypeWith<never>;
 							}
 						>
@@ -1969,33 +1957,21 @@ describe("JsonDeserialized", () => {
 				);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("`Partial<>` `string` indexed record of `unknown` replaced with `JsonTypeWith<never>`", () => {
+			it("`Partial<>` `string` indexed record of `unknown` replaced with `JsonTypeWith<never>` (and is inherently optional)", () => {
 				const resultRead = passThru(partialStringRecordOfUnknown);
 				assertIdenticalTypes(
 					resultRead,
-					// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
-					// gains `| undefined` even under exactOptionalPropertyTypes=true.
-					// Preferred result is that there is no change applying Partial<>.
-					// In either case, this test can hold since there isn't a downside
-					// to allowing `undefined` in the result if that is how type is
-					// given since indexed properties are always inherently optional.
-					createInstanceOf<Partial<Record<string, JsonTypeWith<never>>>>(),
+					createInstanceOf<Record<string, JsonTypeWith<never>>>(),
 				);
 				assertNever<AnyLocations<typeof resultRead>>();
 			});
-			it("`Partial<>` `string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>`", () => {
+			it("`Partial<>` `string` indexed record of `unknown` and known properties has `unknown` replaced with `JsonTypeWith<never>` (and is inherently optional)", () => {
 				const resultRead = passThru(partialStringRecordOfUnknownWithKnownProperties);
 				assertIdenticalTypes(
 					resultRead,
 					createInstanceOf<
 						InternalUtilityTypes.FlattenIntersection<
-							// Warning: as of TypeScript 5.8.2, a Partial<> of an indexed type
-							// gains `| undefined` even under exactOptionalPropertyTypes=true.
-							// Preferred result is that there is no change applying Partial<>.
-							// In either case, this test can hold since there isn't a downside
-							// to allowing `undefined` in the result if that is how type is
-							// given since indexed properties are always inherently optional.
-							Partial<Record<string, JsonTypeWith<never>>> & {
+							Record<string, JsonTypeWith<never>> & {
 								knownString: string;
 								knownNumber: number;
 							}

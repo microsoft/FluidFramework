@@ -264,9 +264,10 @@ export namespace InternalUtilityTypes {
 
 	/**
 	 * Returns non-symbol keys for defined, (likely) serializable properties of an
-	 * object type. Keys with fully unsupported properties (undefined, symbol, and
-	 * bigint) and sometimes unsupported (functions) are excluded. An exception to
-	 * that is when there are supported types in union with just bigint.
+	 * object type. Literal keys with fully unsupported properties (undefined, symbol,
+	 * and bigint) and sometimes unsupported (functions) are excluded. An exception to
+	 * that is when there are supported types in union with just bigint. Indexed keys
+	 * are only excluded when there are no supported properties.
 	 *
 	 * For homomorphic mapping use with `as` to filter. Example:
 	 * `[K in keyof T as NonSymbolWithDeserializablePropertyOf<T, [], never, K>]: ...`
@@ -288,7 +289,11 @@ export namespace InternalUtilityTypes {
 				? IfSameType<
 						PossibleTypeLessAllowed,
 						unknown,
-						/* value might not be supported => exclude K */ never,
+						/* value might not be supported => check for indexed key */ IfIndexKey<
+							K,
+							/* indexed => allow K */ K,
+							/* literal => exclude K */ never
+						>,
 						/* extract types that might lead to missing property */ Extract<
 							PossibleTypeLessAllowed,
 							/* types that might lead to missing property, except `bigint` */
@@ -303,7 +308,19 @@ export namespace InternalUtilityTypes {
 									/* exclusively supported types (and maybe `bigint`) or exactly `never` */
 									/* => check for `never` */ T[K] extends never ? never : K
 								>
-							: /* value might not be supported => exclude K */ never
+							: /* value might not be supported => check for any supported */ TestDeserializabilityOf<
+									T[K],
+									OmitExactlyFromTuple<TExactExceptions, unknown>,
+									TExtendsException,
+									{
+										WhenSomethingDeserializable: /* => check for indexed key */ IfIndexKey<
+											K,
+											/* indexed => allow K */ K,
+											/* literal => exclude K */ never
+										>;
+										WhenNeverDeserializable: /* => exclude K */ never;
+									}
+								>
 					>
 				: never;
 		}[Keys],
@@ -311,7 +328,7 @@ export namespace InternalUtilityTypes {
 	>;
 
 	/**
-	 * Returns non-symbol keys for partially supported properties of an object type.
+	 * Returns non-symbol, literal keys for partially supported properties of an object type.
 	 * Keys with only unsupported properties (undefined, symbol, bigint, and
 	 * functions without other properties) are excluded.
 	 *
@@ -320,32 +337,40 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type NonSymbolWithPossiblyDeserializablePropertyOf<
+	export type NonSymbolLiteralWithPossiblyDeserializablePropertyOf<
 		T extends object,
 		TExactExceptions extends unknown[],
 		TExtendsException,
 		Keys extends keyof T = keyof T,
 	> = Exclude<
 		{
-			[K in Keys]: /* all possible types that aren't already allowed, with the exception of `unknown` */
-			ExcludeExactlyInTuple<
-				Exclude<T[K], TExtendsException>,
-				OmitExactlyFromTuple<TExactExceptions, unknown>
-			> extends infer PossibleTypeLessAllowed
-				? Extract<
-						IfSameType<PossibleTypeLessAllowed, unknown, undefined, PossibleTypeLessAllowed>,
-						/* types that might lead to missing property */
-						// eslint-disable-next-line @typescript-eslint/ban-types
-						undefined | symbol | Function
-					> extends never
-					? /* exclusively supported types or exactly `never` */ never
-					: /* at least some unsupported type => check for any supported */ TestDeserializabilityOf<
-							T[K],
-							OmitExactlyFromTuple<TExactExceptions, unknown>,
-							TExtendsException,
-							{ WhenSomethingDeserializable: K; WhenNeverDeserializable: never }
-						>
-				: never;
+			[K in Keys]: IfIndexKey<
+				K,
+				/* indexed => exclude K */ never,
+				/* literal => ... */
+				/* all possible types that aren't already allowed, with the exception of `unknown` */
+				ExcludeExactlyInTuple<
+					Exclude<T[K], TExtendsException>,
+					OmitExactlyFromTuple<TExactExceptions, unknown>
+				> extends infer PossibleTypeLessAllowed
+					? Extract<
+							IfSameType<PossibleTypeLessAllowed, unknown, undefined, PossibleTypeLessAllowed>,
+							/* types that might lead to missing property */
+							// eslint-disable-next-line @typescript-eslint/ban-types
+							undefined | symbol | Function
+						> extends never
+						? /* exclusively supported types or exactly `never` */ never
+						: /* at least some unsupported type => check for any supported */ TestDeserializabilityOf<
+								T[K],
+								OmitExactlyFromTuple<TExactExceptions, unknown>,
+								TExtendsException,
+								{
+									WhenSomethingDeserializable: K;
+									WhenNeverDeserializable: never;
+								}
+							>
+					: never
+			>;
 		}[Keys],
 		undefined | symbol
 	>;
@@ -520,6 +545,28 @@ export namespace InternalUtilityTypes {
 		/* T is never => */ IfSameType<Union, never, IfMatch, IfNoMatch>,
 		/* T is NOT never => */ IfSameType<T, Extract<Union, T>, IfMatch, IfNoMatch>
 	>;
+
+	/**
+	 * Essentially a check for a template literal that has $\{string\} or
+	 * $\{number\} in the pattern. Just `string` and/or `number` also match.
+	 *
+	 * @remarks This works recursively looking at first elements when not
+	 * `string` or `number`. `first` will just be a single character if
+	 * not $\{string\} or $\{number\}.
+	 *
+	 * @system
+	 */
+	export type IfIndexKey<T, IfIndex, IfLiteral> = `${string}` extends T
+		? IfIndex
+		: number extends T
+			? IfIndex
+			: T extends `${infer first}${infer rest}`
+				? string extends first
+					? IfIndex
+					: `${number}` extends first
+						? IfIndex
+						: IfIndexKey<rest, IfIndex, IfLiteral>
+				: IfLiteral;
 
 	/**
 	 * Test for type equality
@@ -898,28 +945,6 @@ export namespace InternalUtilityTypes {
 					: "internal error: failed to determine OpaqueJson* type"
 		: never;
 	/* eslint-enable @typescript-eslint/no-explicit-any */
-
-	/**
-	 * Essentially a check for a template literal that has $\{string\} or
-	 * $\{number\} in the pattern. Just `string` and/or `number` also match.
-	 *
-	 * @remarks This works recursively looking at first elements when not
-	 * `string` or `number`. `first` will just be a single character if
-	 * not $\{string\} or $\{number\}.
-	 *
-	 * @system
-	 */
-	export type IfIndexKey<T, IfIndex, IfLiteral> = `${string}` extends T
-		? IfIndex
-		: number extends T
-			? IfIndex
-			: T extends `${infer first}${infer rest}`
-				? string extends first
-					? IfIndex
-					: `${number}` extends first
-						? IfIndex
-						: IfIndexKey<rest, IfIndex, IfLiteral>
-				: IfLiteral;
 
 	/**
 	 * Helper for {@link JsonSerializableFilter} to determine if a property may
@@ -1304,8 +1329,8 @@ export namespace InternalUtilityTypes {
 															K
 														>]: JsonDeserializedRecursion<T[K], Controls, TAncestorTypes>;
 													} & {
-														/* properties that may have undefined values are optional */
-														[K in keyof T as NonSymbolWithPossiblyDeserializablePropertyOf<
+														/* literal properties that may have undefined values are optional */
+														[K in keyof T as NonSymbolLiteralWithPossiblyDeserializablePropertyOf<
 															T,
 															[
 																...Controls["AllowExactly"],
