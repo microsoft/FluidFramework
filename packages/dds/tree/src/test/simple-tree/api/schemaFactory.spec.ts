@@ -1309,6 +1309,20 @@ describe("schemaFactory", () => {
 				assert.equal(testObject.foo, "test");
 			});
 
+			it("can't be hydrated", () => {
+				const testObject = new TestObject({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestObject,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testObject;
+				});
+			});
+
 			it("can't be set", () => {
 				const provider = new TestTreeProviderLite(1);
 
@@ -1337,6 +1351,20 @@ describe("schemaFactory", () => {
 				assert.equal(testMap.get("foo"), 42);
 				testMap.set("foo", "test");
 				assert.equal(testMap.get("foo"), "test");
+			});
+
+			it("can't be hydrated", () => {
+				const testMap = new TestMap({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testMap;
+				});
 			});
 
 			it("can't be set", () => {
@@ -1369,6 +1397,20 @@ describe("schemaFactory", () => {
 				assert.equal(testRecord.foo, "test");
 			});
 
+			it("can't be hydrated", () => {
+				const testRecord = new TestRecord({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestRecord,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testRecord;
+				});
+			});
+
 			it("can't be set", () => {
 				const provider = new TestTreeProviderLite(1);
 
@@ -1396,6 +1438,20 @@ describe("schemaFactory", () => {
 				assert.deepEqual(Array.from(testArray.values()), ["test", "test"]);
 				testArray.insertAtEnd(5);
 				assert.deepEqual(Array.from(testArray.values()), ["test", "test", 5]);
+			});
+
+			it("can't be hydrated", () => {
+				const testArray = new TestArray(["test"]);
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestArray,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize([]);
+				assert.throws(() => {
+					view.root = testArray;
+				});
 			});
 
 			it("can't be inserted", () => {

@@ -32,6 +32,7 @@ function makeAnnotated(
 
 function mockWalkAllowedTypes(
 	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
+	walkStagedAllowedTypes?: true,
 ): [TreeNodeSchema[], readonly NormalizedAnnotatedAllowedTypes[]] {
 	const visitedNodes: TreeNodeSchema[] = [];
 	const visitedAllowedTypes: NormalizedAnnotatedAllowedTypes[] = [];
@@ -39,6 +40,7 @@ function mockWalkAllowedTypes(
 	const mockVisitor: SchemaVisitor = {
 		node: (schema) => visitedNodes.push(schema),
 		allowedTypes: (types) => visitedAllowedTypes.push(types),
+		walkStagedAllowedTypes,
 	};
 
 	walkAllowedTypes(annotatedAllowedTypes, mockVisitor);
@@ -168,5 +170,40 @@ describe("walk schema", () => {
 		assert.doesNotThrow(() =>
 			walkAllowedTypes({ metadata: {}, types: [annotatedString] }, {}),
 		);
+	});
+
+	it("does not call visitor on staged allowed types by default", () => {
+		const stagedString = sf.staged(SchemaFactoryAlpha.string);
+		class TestObject extends sf.objectAlpha("TestObject", {
+			name: stagedString,
+		}) {}
+
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+			normalizeFieldSchema(TestObject).annotatedAllowedTypesNormalized,
+		);
+
+		assert.deepEqual(visitedNodes, [TestObject]);
+		assert.deepEqual(visitedAllowedTypes, [
+			{ metadata: {}, types: [stagedString] },
+			{ metadata: {}, types: [{ metadata: {}, type: TestObject }] },
+		]);
+	});
+
+	it("calls visitor on staged allowed types when walkStagedAllowedTypes is set to true", () => {
+		const stagedString = sf.staged(SchemaFactoryAlpha.string);
+		class TestObject extends sf.objectAlpha("TestObject", {
+			name: stagedString,
+		}) {}
+
+		const [visitedNodes, visitedAllowedTypes] = mockWalkAllowedTypes(
+			normalizeFieldSchema(TestObject).annotatedAllowedTypesNormalized,
+			true,
+		);
+
+		assert.deepEqual(visitedNodes, [stagedString.type, TestObject]);
+		assert.deepEqual(visitedAllowedTypes, [
+			{ metadata: {}, types: [stagedString] },
+			{ metadata: {}, types: [{ metadata: {}, type: TestObject }] },
+		]);
 	});
 });

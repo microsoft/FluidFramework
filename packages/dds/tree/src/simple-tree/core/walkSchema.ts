@@ -48,14 +48,16 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const { type } of annotatedAllowedTypes.types) {
-		walkNodeSchema(type, visitor, visitedSet);
+	for (const { metadata, type } of annotatedAllowedTypes.types) {
+		if (metadata.stagedSchemaUpgrade === undefined || visitor.walkStagedAllowedTypes) {
+			walkNodeSchema(type, visitor, visitedSet);
+		}
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
 
 /**
- * Callbacks for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
+ * Callbacks and options for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
  */
 export interface SchemaVisitor {
 	/**
@@ -69,4 +71,9 @@ export interface SchemaVisitor {
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
 	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
+	/**
+	 * If true, will walk the staged allowed types of the schema in both the node callback and the allowedTypes callback.
+	 * If undefined, will skip any staged allowed types in the node callback but will include them in the allowedTypes callback.
+	 */
+	walkStagedAllowedTypes?: true;
 }
