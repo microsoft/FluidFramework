@@ -102,7 +102,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		it("tolerates staged allowed types", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
-			const enablableSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
+			const stagedSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
 				schemaFactoryAlpha.number,
 				schemaFactoryAlpha.staged(schemaFactoryAlpha.string),
 			]);
@@ -114,7 +114,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const checkout = checkoutWithContent(emptyContent);
 			const view = new SchematizingSimpleTreeView(
 				checkout,
-				new TreeViewConfiguration({ schema: enablableSchema }),
+				new TreeViewConfiguration({ schema: stagedSchema }),
 				new MockNodeIdentifierManager(),
 			);
 

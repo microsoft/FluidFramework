@@ -2425,17 +2425,16 @@ describe("treeNodeApi", () => {
 
 		it("errors when assigning a cloned staged allowed type to its original location", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
-			const stagedSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
-				schemaFactoryAlpha.number,
-				schemaFactoryAlpha.staged(schemaFactoryAlpha.string),
-			]);
+			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
+				foo: [SchemaFactoryAlpha.number, schemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+			}) {}
 
-			const view = getView(new TreeViewConfiguration({ schema: stagedSchema }));
-			view.initialize([5, "test"]);
+			const view = getView(new TreeViewConfiguration({ schema: StagedSchema }));
+			view.initialize({ foo: "test" });
 
 			const { root } = view;
 			assert.throws(() => {
-				view.root = TreeBeta.clone<typeof stagedSchema>(root);
+				view.root = TreeBeta.clone<typeof StagedSchema>(root);
 			});
 		});
 
