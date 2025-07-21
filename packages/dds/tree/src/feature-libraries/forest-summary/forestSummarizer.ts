@@ -34,8 +34,7 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";

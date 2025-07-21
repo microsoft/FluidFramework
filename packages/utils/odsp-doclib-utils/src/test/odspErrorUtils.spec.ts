@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
-	IGenericNetworkError,
-	IThrottlingWarning,
+	type IGenericNetworkError,
+	type IThrottlingWarning,
 	DriverErrorTypes,
 } from "@fluidframework/driver-definitions/internal";
 import { GenericNetworkError, createWriteError } from "@fluidframework/driver-utils/internal";
 import {
-	IOdspError,
-	OdspError,
+	type IOdspError,
+	type OdspError,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { isILoggingError } from "@fluidframework/telemetry-utils/internal";
@@ -22,8 +22,9 @@ import { createOdspNetworkError, enrichOdspError } from "../odspErrorUtils.js";
 import { pkgVersion } from "../packageVersion.js";
 
 describe("OdspErrorUtils", () => {
-	function assertCustomPropertySupport(err: any) {
-		err.asdf = "asdf";
+	function assertCustomPropertySupport(err: unknown): void {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+		(err as any).asdf = "asdf";
 		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
 		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");
 	}
@@ -126,6 +127,8 @@ describe("OdspErrorUtils", () => {
 				"Error should be a genericNetworkError",
 			);
 			assert.equal(
+				// TODO: use a real type here
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
 				(networkError as any).retryAfterSeconds,
 				undefined,
 				"retryAfterSeconds should not be set",

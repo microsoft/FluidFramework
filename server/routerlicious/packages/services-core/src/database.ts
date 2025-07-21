@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ICheckpoint, IDeliState, IDocument, IScribe } from "./document";
-import { ISequencedOperationMessage } from "./messages";
-import { INode } from "./orderer";
+import type { ICheckpoint, IDeliState, IDocument, IScribe } from "./document";
+import type { ISequencedOperationMessage } from "./messages";
+import type { INode } from "./orderer";
 
 /**
  * Interface to abstract the backend database

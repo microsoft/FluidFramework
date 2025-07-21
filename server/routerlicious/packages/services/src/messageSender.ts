@@ -7,8 +7,8 @@ import { EventEmitter } from "events";
 
 import {
 	EmptyTaskMessageSender,
-	ITaskMessage,
-	ITaskMessageSender,
+	type ITaskMessage,
+	type ITaskMessageSender,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as amqp from "amqplib";

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import * as Webpack from "webpack";
+import type * as Webpack from "webpack";
 
-import {
+import type {
 	BundleBuddyConfig,
 	BundleMetricSet,
 	WebpackStatsProcessor,

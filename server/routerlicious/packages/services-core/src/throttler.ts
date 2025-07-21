@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
+import { type INackContent, NackErrorType } from "@fluidframework/protocol-definitions";
 
-import { IUsageData } from ".";
+import type { IUsageData } from ".";
 
 /**
  * @internal

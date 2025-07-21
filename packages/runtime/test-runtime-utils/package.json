@@ -120,13 +120,14 @@
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
 		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/driver-utils": "workspace:~",
 		"@fluidframework/id-compressor": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
 		"@fluidframework/runtime-utils": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"jsrsasign": "^11.0.0",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
@@ -141,7 +142,6 @@
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "^18.19.0",
-		"@types/uuid": "^9.0.2",
 		"c8": "^8.0.1",
 		"concurrently": "^8.2.1",
 		"copyfiles": "^2.4.1",
@@ -161,6 +161,9 @@
 				"forwardCompat": false
 			},
 			"Class_MockFluidDataStoreRuntime": {
+        "forwardCompat": false
+			},
+			"Class_MockStorage": {
 				"forwardCompat": false
 			}
 		},

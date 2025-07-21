@@ -16,7 +16,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
 import { simpleToStoredSchema } from "../toStoredSchema.js";
 
@@ -103,7 +103,6 @@ export function comparePersistedSchema(
 	const stored = schemaCodec.decode(persisted as FormatV1);
 	const viewSchema = new SchemaCompatibilityTester(
 		defaultSchemaPolicy,
-		{},
 		normalizeFieldSchema(view),
 	);
 	return viewSchema.checkCompatibility(stored);

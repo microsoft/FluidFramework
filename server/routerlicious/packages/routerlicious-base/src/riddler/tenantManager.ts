@@ -6,26 +6,26 @@
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { isNetworkError, NetworkError } from "@fluidframework/server-services-client";
 import {
-	EncryptionKeyVersion,
-	IEncryptedTenantKeys,
-	IPlainTextAndEncryptedTenantKeys,
-	ITenantConfig,
-	ITenantCustomData,
-	ITenantKeys,
-	ITenantOrderer,
-	ITenantStorage,
-	ITenantPrivateKeys,
+	type EncryptionKeyVersion,
+	type IEncryptedTenantKeys,
+	type IPlainTextAndEncryptedTenantKeys,
+	type ITenantConfig,
+	type ITenantCustomData,
+	type ITenantKeys,
+	type ITenantOrderer,
+	type ITenantStorage,
+	type ITenantPrivateKeys,
 	KeyName,
-	ISecretManager,
-	ICache,
+	type ISecretManager,
+	type ICache,
 	type IEncryptedPrivateTenantKeys,
 	type IFluidAccessToken,
 } from "@fluidframework/server-services-core";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
 import {
-	IApiCounters,
+	type IApiCounters,
 	InMemoryApiCounters,
-	ITenantKeyGenerator,
+	type ITenantKeyGenerator,
 	isKeylessFluidAccessClaimEnabled,
 	generateToken,
 	getJtiClaimFromAccessToken,
@@ -35,7 +35,7 @@ import * as _ from "lodash";
 import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 
-import { ITenantRepository } from "./mongoTenantRepository";
+import type { ITenantRepository } from "./mongoTenantRepository";
 
 /**
  * Tenant details stored to the document database

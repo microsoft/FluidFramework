@@ -5,8 +5,8 @@
 
 export {
 	createDeliCheckpointManagerFromCollection,
-	ICheckpointParams,
-	IDeliCheckpointManager,
+	type ICheckpointParams,
+	type IDeliCheckpointManager,
 } from "./checkpointManager";
-export { DeliLambda, IDeliLambdaEvents, OpEventType } from "./lambda";
+export { DeliLambda, type IDeliLambdaEvents, OpEventType } from "./lambda";
 export { DeliLambdaFactory } from "./lambdaFactory";

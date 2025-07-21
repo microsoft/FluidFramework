@@ -5,9 +5,9 @@
 
 import assert from "assert";
 
-import { IOrderer } from "@fluidframework/server-services-core";
+import type { IOrderer } from "@fluidframework/server-services-core";
 
-import { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";
+import type { IConcreteNode, IConcreteNodeFactory, IReservationManager } from "./interfaces";
 
 // The LocalOrderManager maintains a set of nodes and their set of ownerships of documents
 // It then provides caches of orderers
