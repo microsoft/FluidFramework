@@ -381,7 +381,7 @@ function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
 }
 
 function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
-	// #region Step 1: split parsed lines into lines of non-lists (paragraphs) and list items
+	// #region Step 1: parse source lines into lines of non-lists (paragraphs) and list items
 
 	// This regex matches lines that look like Markdown list items:
 	// - It starts with optional whitespace (\s*)
@@ -411,12 +411,15 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 
 	type ParsedLine = ParsedParagraphLine | ParsedUnorderedListItem | ParsedOrderedListItem;
 
-	const parsed: ParsedLine[] = [];
-
-	let lineState: ParsedLine | undefined;
+	const parsedSourceLines: ParsedLine[] = [];
+	let currentLineState: ParsedLine | undefined;
 	for (const node of nodes) {
-		if (lineState === undefined) {
+		if (currentLineState === undefined) {
+			// Case: new line
 			if (node.type === "text") {
+				// If the line starts with a text node, we will check if it matches the list item pattern.
+				// If it does, we will treat this line as the start of a list.
+				// If not, we will treat it as the start of a paragraph.
 				const match = node.value.match(regex);
 				if (match) {
 					// If we are at the beginning of a line, and the beginning text matches the list item pattern,
@@ -433,7 +436,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 					const leadingWhitespaceModified = leadingWhitespace.replace(/\t/g, "  ");
 					const indentationLevel = leadingWhitespaceModified.length / 2; // Assuming 2 spaces per indentation level
 
-					lineState = delimiterMatch
+					currentLineState = delimiterMatch
 						? {
 								type: "orderedListItem",
 								delimiterValue: Number.parseInt(delimiterMatch[1], 10),
@@ -447,37 +450,45 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 								content: [new PlainTextNode(listItemContent)],
 							};
 				} else {
-					// If the line doesn't start with the list item pattern, we will treat the line as a paragraph.
-					lineState = {
+					// If the line doesn't start with the list item pattern, we will treat the line as the start of a paragraph.
+					currentLineState = {
 						type: "paragraphLine",
 						content: [node],
 					};
 				}
 			} else {
-				lineState = {
+				currentLineState = {
 					type: "paragraphLine",
 					content: [node],
 				};
 			}
 		} else {
+			// Case: continuation of the current line
 			if (node.type === "lineBreak") {
 				// When we encounter a line break, we will finalize the current line content.
-				parsed.push(lineState);
-				lineState = undefined;
+				parsedSourceLines.push(currentLineState);
+				currentLineState = undefined;
 			} else {
-				lineState.content.push(node);
+				// Push any non-line-break content to the current line.
+				currentLineState.content.push(node);
 			}
 		}
 	}
-	if (lineState !== undefined) {
-		parsed.push(lineState);
+	if (currentLineState !== undefined) {
+		parsedSourceLines.push(currentLineState);
 	}
 
-	// Merge adjacent paragraph lines together.
-	const adjusted: ParsedLine[] = [];
+	// #endregion
+
+	// #region Step 2: convert parsed source lines into "output" lines following Markdown rules
+
+	// This step converts adjacent "lines" from the source into output lines.
+	// In Markdown, soft line breaks between non-list content are rendered as a single space.
+	// This step folds all adjacent simple text lines into their preceding list or paragraph line.
+	const outputLines: ParsedLine[] = [];
 	let i = 0;
-	while (i < parsed.length) {
-		const current = parsed[i];
+	while (i < parsedSourceLines.length) {
+		const current = parsedSourceLines[i];
 		i++;
 		switch (current.type) {
 			case "orderedListItem":
@@ -485,15 +496,15 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				// Merge paragraph lines following list items into the list item.
 				// Soft line breaks between them are converted to a single space, as in Markdown.
 				const items: PhrasingContent[] = [...current.content];
-				while (i < parsed.length && parsed[i].type === "paragraphLine") {
+				while (i < parsedSourceLines.length && parsedSourceLines[i].type === "paragraphLine") {
 					if (items.length > 0) {
 						// Add a space between content on adjacent lines in the same paragraph.
 						items.push(new PlainTextNode(" "));
 					}
-					items.push(...parsed[i].content);
+					items.push(...parsedSourceLines[i].content);
 					i++;
 				}
-				adjusted.push({
+				outputLines.push({
 					...current,
 					content: combineAdjacentPlainText(items),
 				});
@@ -503,16 +514,16 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				// Combine adjacent "paragraph lines" together into a single paragraph node.
 				// Soft line breaks between them are converted to a single space, as in Markdown.
 				const items: PhrasingContent[] = [...current.content];
-				while (i < parsed.length && parsed[i].type === "paragraphLine") {
+				while (i < parsedSourceLines.length && parsedSourceLines[i].type === "paragraphLine") {
 					if (items.length > 0) {
 						// Add a space between content on adjacent lines in the same paragraph.
 						items.push(new PlainTextNode(" "));
 					}
-					items.push(...parsed[i].content);
+					items.push(...parsedSourceLines[i].content);
 					i++;
 				}
 				// Create a single ParagraphNode from the merged lines.
-				adjusted.push({
+				outputLines.push({
 					type: "paragraphLine",
 					content: combineAdjacentPlainText(items),
 				});
@@ -526,36 +537,24 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 
 	// #endregion
 
-	// #region Step 2: group list items into lists
+	// #region Step 3: group list items into lists
 
 	// TODO: group lists by indentation level, so that we can support nested lists.
 
 	const result: (ParagraphNode | ListNode)[] = [];
 	i = 0;
-	while (i < adjusted.length) {
-		const current = adjusted[i];
+	while (i < outputLines.length) {
+		const current = outputLines[i];
 
 		switch (current.type) {
 			case "paragraphLine": {
-				// Adjacent "paragraph lines" are combined together into a single paragraph node.
-				// Soft line breaks between them are converted to a single space.
-				const items: PhrasingContent[] = [];
-				while (i < adjusted.length && adjusted[i].type === "paragraphLine") {
-					if (items.length > 0) {
-						// Add a space between content on adjacent lines in the same paragraph.
-						items.push(new PlainTextNode(" "));
-					}
-					items.push(...adjusted[i].content);
-					i++;
-				}
-
-				result.push(new ParagraphNode(combineAdjacentPlainText(items)));
+				result.push(new ParagraphNode(current.content));
 				break;
 			}
 			case "orderedListItem": {
 				const items: ListItemNode[] = [];
-				while (i < adjusted.length && adjusted[i].type === "orderedListItem") {
-					items.push(new ListItemNode(combineAdjacentPlainText(adjusted[i].content)));
+				while (i < outputLines.length && outputLines[i].type === "orderedListItem") {
+					items.push(new ListItemNode(combineAdjacentPlainText(outputLines[i].content)));
 					i++;
 				}
 				result.push(new ListNode(items, true));
@@ -565,11 +564,11 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				const delimiter = current.delimiter;
 				const items: ListItemNode[] = [];
 				while (
-					i < adjusted.length &&
-					adjusted[i].type === "unorderedListItem" &&
-					(adjusted[i] as ParsedUnorderedListItem).delimiter === delimiter
+					i < outputLines.length &&
+					outputLines[i].type === "unorderedListItem" &&
+					(outputLines[i] as ParsedUnorderedListItem).delimiter === delimiter
 				) {
-					items.push(new ListItemNode(combineAdjacentPlainText(adjusted[i].content)));
+					items.push(new ListItemNode(combineAdjacentPlainText(outputLines[i].content)));
 					i++;
 				}
 				result.push(new ListNode(items, false));
