@@ -36,7 +36,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+import { rebaseRevisionMetadataFromInfo } from "../../../feature-libraries/modular-schema/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedCellMark } from "../../../feature-libraries/sequence-field/helperTypes.js";
 import {
@@ -45,15 +45,15 @@ import {
 	type HasMarkFields,
 	MarkListFactory,
 	type MoveId,
+	cloneMark,
+	extractMarkEffect,
+	getInputLength,
+	isDetach,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/sequence-field/index.js";
 import {
 	areInputCellsEmpty,
-	cloneMark,
-	extractMarkEffect,
-	getInputLength,
 	isActiveReattach,
-	isDetach,
 	isNewAttach,
 	isTombstone,
 	markEmptiesCells,

@@ -10,8 +10,8 @@ import chai, { expect } from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,
-	PackageFilterOptions,
-	PackageSelectionCriteria,
+	type PackageFilterOptions,
+	type PackageSelectionCriteria,
 	filterPackages,
 	selectAndFilterPackages,
 	selectPackagesFromContext,

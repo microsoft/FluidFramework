@@ -4,7 +4,7 @@
  */
 
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import type { IGitManager } from "@fluidframework/server-services-client";
 
 /**
  * @internal

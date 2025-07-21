@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import * as resources from "@fluidframework/gitresources";
-import { default as Axios, RawAxiosRequestHeaders, type AxiosError } from "axios";
+import type * as resources from "@fluidframework/gitresources";
+import { default as Axios, type RawAxiosRequestHeaders, type AxiosError } from "axios";
 
 /**
  * @internal

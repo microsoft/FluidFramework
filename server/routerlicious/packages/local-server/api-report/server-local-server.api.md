@@ -5,8 +5,8 @@
 ```ts
 
 import { ICheckpointRepository } from '@fluidframework/server-services-core';
-import { IClient } from '@fluidframework/protocol-definitions';
-import { IConnected } from '@fluidframework/protocol-definitions';
+import type { IClient } from '@fluidframework/protocol-definitions';
+import type { IConnected } from '@fluidframework/protocol-definitions';
 import { IDatabaseManager } from '@fluidframework/server-services-core';
 import { IDocumentRepository } from '@fluidframework/server-services-core';
 import { IDocumentStorage } from '@fluidframework/server-services-core';

@@ -4,13 +4,16 @@
  */
 
 import assert from "assert";
-import { WebApi } from "azure-devops-node-api";
-import JSZip from "jszip";
-import { StatsCompilation } from "webpack";
+import type { WebApi } from "azure-devops-node-api";
+import type JSZip from "jszip";
+import type { StatsCompilation } from "webpack";
 
-import { BundleBuddyConfig } from "../BundleBuddyTypes";
+import type { BundleBuddyConfig } from "../BundleBuddyTypes";
 import { decompressStatsFile, unzipStream } from "../utilities";
-import { BundleFileData, getBundleFilePathsFromFolder } from "./getBundleFilePathsFromFolder";
+import {
+	type BundleFileData,
+	getBundleFilePathsFromFolder,
+} from "./getBundleFilePathsFromFolder";
 
 /**
  * Gets a list of all paths relevant to bundle buddy from the zip archive

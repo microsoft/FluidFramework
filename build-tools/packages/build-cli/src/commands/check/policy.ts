@@ -11,8 +11,8 @@ import { Flags } from "@oclif/core";
 
 import {
 	BaseCommand,
-	Context,
-	Handler,
+	type Context,
+	type Handler,
 	Repository,
 	policyHandlers,
 } from "../../library/index.js";

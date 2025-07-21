@@ -5,13 +5,13 @@
 
 import cluster from "cluster";
 
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+import { Deferred, type TypedEventEmitter } from "@fluidframework/common-utils";
 import {
 	configureWebSocketServices,
-	ICollaborationSessionEvents,
+	type ICollaborationSessionEvents,
 } from "@fluidframework/server-lambdas";
 import { createMetricClient } from "@fluidframework/server-services";
-import {
+import type {
 	ICache,
 	IClientManager,
 	IClusterDrainingChecker,
@@ -28,11 +28,11 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
 import * as app from "./app";

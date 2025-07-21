@@ -52,6 +52,7 @@ import {
 	createUnknownOptionalFieldPolicy,
 	prepareForInsertionContextless,
 	type FieldSchema,
+	toStoredSchema,
 	tryDisposeTreeNode,
 } from "../simple-tree/index.js";
 import {
@@ -137,11 +138,7 @@ export class SchematizingSimpleTreeView<
 			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
 		};
 
-		this.viewSchema = new SchemaCompatibilityTester(
-			this.schemaPolicy,
-			{},
-			this.rootFieldSchema,
-		);
+		this.viewSchema = new SchemaCompatibilityTester(this.schemaPolicy, this.rootFieldSchema);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -178,7 +175,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = this.viewSchema.viewSchemaAsStored;
+			const schema = toStoredSchema(this.viewSchema.viewSchemaRoot);
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,

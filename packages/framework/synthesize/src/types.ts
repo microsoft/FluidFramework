@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
+import type { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 
 /**
  * This is a condensed version of Record that requires the object has all

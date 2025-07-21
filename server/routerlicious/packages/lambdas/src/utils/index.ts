@@ -9,12 +9,12 @@ export {
 	createRoomJoinMessage,
 	createRoomLeaveMessage,
 	createRuntimeMessage,
-	IRuntimeSignalEnvelope,
+	type IRuntimeSignalEnvelope,
 } from "./messageGenerator";
-export { NoOpLambda, NoOpLambdaCheckpointConfiguration } from "./noOpLambda";
+export { NoOpLambda, type NoOpLambdaCheckpointConfiguration } from "./noOpLambda";
 export { createSessionMetric, logCommonSessionEndMetrics } from "./telemetryHelper";
 export { isDocumentSessionValid, isDocumentValid } from "./validateDocument";
-export { CheckpointReason, ICheckpoint } from "./checkpointHelper";
-export { IServerMetadata } from "./serverMetadata";
+export { CheckpointReason, type ICheckpoint } from "./checkpointHelper";
+export type { IServerMetadata } from "./serverMetadata";
 export { DocumentCheckpointManager } from "./documentLambdaCheckpointManager";
-export { circuitBreakerOptions, LambdaCircuitBreaker } from "./circuitBreaker";
+export { type circuitBreakerOptions, LambdaCircuitBreaker } from "./circuitBreaker";

@@ -2388,7 +2388,7 @@ export class MergeTree {
 	 */
 	public rollback(op: IMergeTreeOp, localOpMetadata: SegmentGroup | SegmentGroup[]): void {
 		if (op.type === MergeTreeDeltaType.GROUP) {
-			assert(Array.isArray(localOpMetadata), "metadata must be array for group ops");
+			assert(Array.isArray(localOpMetadata), 0xbe2 /* metadata must be array for group ops */);
 			for (let i = op.ops.length - 1; i >= 0; i--) {
 				this.rollback(op.ops[i], localOpMetadata[i]);
 			}

@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Test } from "mocha";
+import type { Test } from "mocha";
 
-import {
-	type BenchmarkDescription,
-	type MochaExclusiveOptions,
-	type Titled,
-} from "../Configuration";
+import type { BenchmarkDescription, MochaExclusiveOptions, Titled } from "../Configuration";
 import type { BenchmarkData, BenchmarkError, CustomData } from "../ResultTypes";
 import { prettyNumber } from "../RunnerUtilities";
 import { timer } from "../timer";

@@ -5,21 +5,25 @@
 
 import { Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryType, SummaryObject } from "@fluidframework/driver-definitions";
-import { ISummaryContext } from "@fluidframework/driver-definitions/internal";
+import {
+	type ISummaryTree,
+	SummaryType,
+	type SummaryObject,
+} from "@fluidframework/driver-definitions";
+import type { ISummaryContext } from "@fluidframework/driver-definitions/internal";
 import {
 	getGitType,
 	isCombinedAppAndProtocolSummary,
 } from "@fluidframework/driver-utils/internal";
-import { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
+import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	PerformanceEvent,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	IOdspSummaryPayload,
 	IOdspSummaryTree,
 	IOdspSummaryTreeBaseEntry,
@@ -27,7 +31,7 @@ import {
 	OdspSummaryTreeEntry,
 	OdspSummaryTreeValue,
 } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { getWithRetryForTokenRefresh } from "./odspUtils.js";
 

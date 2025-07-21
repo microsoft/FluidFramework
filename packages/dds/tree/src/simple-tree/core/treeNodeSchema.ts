@@ -4,13 +4,20 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
+import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 import type { TreeNode } from "./treeNode.js";
 import type { InternalTreeNode, Unhydrated } from "./types.js";
 import type { UnionToIntersection } from "../../util/index.js";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import type { NormalizedAnnotatedAllowedTypes } from "./allowedTypes.js";
+import type {
+	ImplicitAnnotatedAllowedTypes,
+	NormalizedAnnotatedAllowedTypes,
+} from "./allowedTypes.js";
+import type { Context } from "./context.js";
+import type { FieldKey, NodeData } from "../../core/index.js";
+import type { UnhydratedFlexTreeField } from "./unhydratedFlexTree.js";
+import type { FactoryContent } from "../unhydratedFlexTreeFromInsertable.js";
 
 /**
  * Schema for a {@link TreeNode} or {@link TreeLeafValue}.
@@ -325,6 +332,11 @@ export interface TreeNodeSchemaCore<
 }
 
 /**
+ * Symbol for use by {@link TreeNodeSchemaCorePrivate}.
+ */
+export const privateDataSymbol = Symbol("PrivateData");
+
+/**
  * {@link TreeNodeSchemaCore} extended with some non-exported APIs.
  */
 export interface TreeNodeSchemaCorePrivate<
@@ -343,6 +355,56 @@ export interface TreeNodeSchemaCorePrivate<
 		TCustomMetadata
 	> {
 	/**
+	 * Package private data provided by all {@link TreeNodeSchema}.
+	 * @remarks
+	 * Users can add custom statics to schema classes.
+	 * To reduce the risk of such statics colliding with properties used to implement the schema,
+	 * some of the private APIs are grouped together under this symbol.
+	 *
+	 * Note that there are still some properties which are not under a symbol and thus expose some risk of name collisions.
+	 * See {@link TreeNodeValid} for some such properties.
+	 */
+	readonly [privateDataSymbol]: TreeNodeSchemaPrivateData;
+}
+
+/**
+ * Package private data provided by all {@link TreeNodeSchema}.
+ * @remarks
+ * This data needs to be available before lazy schema references are resolved.
+ * For data which is only available after lazy schema references are resolved,
+ * see {@link TreeNodeSchemaInitializedData}, which can be accessed via {@link TreeNodeSchemaPrivateData.idempotentInitialize}.
+ */
+export interface TreeNodeSchemaPrivateData {
+	/**
+	 * All possible annotated allowed types that a field under a node with this schema could have.
+	 * @remarks
+	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
+	 * This includes the content field for arrays, and all the fields for map nodes.
+	 * If this node does not have fields (and thus is a leaf), the array will be empty.
+	 *
+	 * This set cannot be used before the schema in it have been defined:
+	 * more specifically, when using lazy schema references (for example to make foreword references to schema which have not yet been defined),
+	 * users must wait until after the schema are defined to access this array.
+	 *
+	 * @privateRemarks
+	 * If this is stabilized, it will live alongside the childTypes property on {@link TreeNodeSchemaCore}.
+	 * @system
+	 */
+	readonly childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[];
+
+	/**
+	 * Idempotent initialization function that pre-caches data and can dereference lazy schema references.
+	 */
+	idempotentInitialize(): TreeNodeSchemaInitializedData;
+}
+
+/**
+ * Additional data about a given schema which is private to this package.
+ * @remarks
+ * Created by {@link TreeNodeValid.oneTimeSetup} and can involve dereferencing lazy schema references.
+ */
+export interface TreeNodeSchemaInitializedData {
+	/**
 	 * All possible annotated allowed types that a field under a node with this schema could have.
 	 * @remarks
 	 * In this case "field" includes anything that is a field in the internal (flex-tree) abstraction layer.
@@ -358,27 +420,77 @@ export interface TreeNodeSchemaCorePrivate<
 	 * @system
 	 */
 	readonly childAnnotatedAllowedTypes: readonly NormalizedAnnotatedAllowedTypes[];
+
+	/**
+	 * A {@link Context} which can be used for unhydrated nodes of this schema.
+	 */
+	readonly context: Context;
+
+	/**
+	 * Checks if data might be schema-compatible.
+	 *
+	 * @returns false if `data` is incompatible with `type` based on a cheap/shallow check.
+	 *
+	 * Note that this may return true for cases where data is incompatible, but it must not return false in cases where the data is compatible.
+	 */
+	shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel;
+
+	/**
+	 * Convert data to a {@link FlexContent} representation.
+	 * @remarks
+	 * Data must be compatible with the schema according to {@link shallowCompatibilityTest}.
+	 *
+	 * TODO: use of `allowedTypes` is for fallbacks (for example NaN -\> null).
+	 * This behavior should be moved to shallowCompatibilityTest instead.
+	 */
+	toFlexContent(data: FactoryContent, allowedTypes: ReadonlySet<TreeNodeSchema>): FlexContent;
+}
+
+export type FlexContent = [NodeData, Map<FieldKey, UnhydratedFlexTreeField>];
+
+/**
+ * Indicates a compatibility level for inferring a schema to apply to insertable data.
+ * @remarks
+ * Each schema allowed at a location in the tree has its compatibility level checked against the data being inserted.
+ * The compatibility is considered unambiguous if there is a single schema with a higher compatibility than all others.
+ *
+ * This approach allows adding new compatible formats as a non breaking change.
+ * If the new format was already compatible with some other schema, it can still be added as non-breaking as long as a lower compatibility level is used.
+ * For example, support for constructing maps from record like objects was added in Fluid Framework 2.2.
+ * This format (an object with fields) was already compatible with Object nodes at compatibility level Normal so the new format support for maps was added at compatibility level Low.
+ * This ensures that existing code that was using object literals as insertable content where both objects and maps were allowed will continue to work,
+ * assuming the objects are intended as ObjectNodes.
+ * However new code can now be written using record like objects to construct maps, as long as the schema does not also allow Object nodes which are compatible with the data in that location.
+ *
+ * @see {@link ITreeConfigurationOptions.preventAmbiguity} for a related setting which interacts with this in a somewhat complex way.
+ */
+export enum CompatibilityLevel {
+	/**
+	 * Not compatible. Constructor typing indicates incompatibility.
+	 */
+	None = 0,
+	/**
+	 * Additional compatibility cases added in Fluid Framework 2.2.
+	 */
+	Low = 1,
+	/**
+	 * Compatible in Fluid Framework 2.0.
+	 */
+	Normal = 2,
 }
 
 /**
- * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} if it is one.
- *
- * @remarks
- * This function should only be used internally. The result should not be exposed publicly
- * in any exported types or API return values.
+ * Downcasts a {@link TreeNodeSchemaCore} to {@link TreeNodeSchemaCorePrivate} and get its {@link TreeNodeSchemaPrivateData}.
  */
-export function asTreeNodeSchemaCorePrivate(
+export function getTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
-): TreeNodeSchemaCorePrivate {
+): TreeNodeSchemaPrivateData {
 	assert(
-		"childAnnotatedAllowedTypes" in schema,
+		privateDataSymbol in schema,
 		0xbc9 /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
 	);
-	assert(
-		Array.isArray((schema as TreeNodeSchemaCorePrivate).childAnnotatedAllowedTypes),
-		0xbca /* All implementations of TreeNodeSchemaCore must also implement TreeNodeSchemaCorePrivate */,
-	);
-	return schema as TreeNodeSchemaCorePrivate;
+	const schemaValid = schema as TreeNodeSchemaCorePrivate;
+	return schemaValid[privateDataSymbol];
 }
 
 /**

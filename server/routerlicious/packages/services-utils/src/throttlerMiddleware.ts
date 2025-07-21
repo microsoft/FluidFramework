@@ -4,10 +4,10 @@
  */
 
 import {
-	IThrottler,
-	ILogger,
+	type IThrottler,
+	type ILogger,
 	ThrottlingError,
-	IUsageData,
+	type IUsageData,
 	httpUsageStorageId,
 } from "@fluidframework/server-services-core";
 import {
@@ -15,7 +15,7 @@ import {
 	Lumberjack,
 	ThrottlingTelemetryProperties,
 } from "@fluidframework/server-services-telemetry";
-import { RequestHandler, Request, Response, NextFunction } from "express";
+import type { RequestHandler, Request, Response, NextFunction } from "express";
 import safeStringify from "json-stringify-safe";
 
 /**

@@ -34,7 +34,10 @@ export function parseAuthErrorClaims(responseHeader: Headers): string | undefine
 					JSON.parse(nameValuePair[1].trim().toLowerCase()) === "insufficient_claims";
 			} else if (!claims && nameValuePair[0].trim().toLowerCase() === "claims") {
 				claims = fromBase64ToUtf8(
-					JSON.parse(section.substring(section.indexOf("=") + 1).trim()),
+					// TODO: this is assigning an object to a string.
+					// If this is intentional, we should document what's going on here.
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+					JSON.parse(section.slice(Math.max(0, section.indexOf("=") + 1)).trim()),
 				);
 			}
 		}

@@ -4,20 +4,20 @@
  */
 
 import type { RawAxiosRequestHeaders } from "axios";
-import * as git from "@fluidframework/gitresources";
+import type * as git from "@fluidframework/gitresources";
 import {
-	IGetRefParamsExternal,
-	ICreateRefParamsExternal,
-	IPatchRefParamsExternal,
-	IWholeSummaryPayload,
-	IWriteSummaryResponse,
+	type IGetRefParamsExternal,
+	type ICreateRefParamsExternal,
+	type IPatchRefParamsExternal,
+	type IWholeSummaryPayload,
+	type IWriteSummaryResponse,
 	BasicRestWrapper,
-	RestWrapper,
-	IWholeFlatSummary,
-	IWholeSummaryPayloadType,
+	type RestWrapper,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayloadType,
 	LatestSummaryId,
 } from "@fluidframework/server-services-client";
-import { ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
+import { type ITenantStorage, runWithRetry } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 import * as winston from "winston";
 import {
@@ -26,7 +26,7 @@ import {
 	getGlobalTelemetryContext,
 } from "@fluidframework/server-services-telemetry";
 import { Constants, getRequestErrorTranslator } from "../utils";
-import { ICache } from "./definitions";
+import type { ICache } from "./definitions";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
 
 // We include the historian version in the user-agent string

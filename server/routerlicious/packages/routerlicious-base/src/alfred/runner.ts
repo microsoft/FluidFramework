@@ -6,8 +6,8 @@
 import cluster from "cluster";
 
 import { Deferred } from "@fluidframework/common-utils";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import {
+import type { IAlfredTenant } from "@fluidframework/server-services-client";
+import type {
 	ICache,
 	IClusterDrainingChecker,
 	IDeltaService,
@@ -23,16 +23,16 @@ import {
 	IRevokedTokenChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
 import { LumberEventName, Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
 import * as app from "./app";
-import { IDocumentDeleteService } from "./services";
+import type { IDocumentDeleteService } from "./services";
 
 /**
  * @internal

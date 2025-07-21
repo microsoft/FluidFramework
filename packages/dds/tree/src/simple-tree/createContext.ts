@@ -6,7 +6,14 @@
 import { defaultSchemaPolicy } from "../feature-libraries/index.js";
 import { getOrCreate } from "../util/index.js";
 
-import { Context, UnhydratedContext } from "./core/index.js";
+import {
+	Context,
+	getTreeNodeSchemaPrivateData,
+	normalizeAnnotatedAllowedTypes,
+	UnhydratedContext,
+	type TreeNodeSchema,
+	type TreeNodeSchemaInitializedData,
+} from "./core/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import { toStoredSchema } from "./toStoredSchema.js";
 
@@ -22,4 +29,21 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 		const flexContext = new UnhydratedContext(defaultSchemaPolicy, toStoredSchema(schema));
 		return new Context(normalized.annotatedAllowedTypesNormalized, flexContext);
 	});
+}
+
+/**
+ * Utility for creating {@link TreeNodeSchemaInitializedData}.
+ */
+export function getTreeNodeSchemaInitializedData(
+	schema: TreeNodeSchema,
+	handler: Pick<TreeNodeSchemaInitializedData, "toFlexContent" | "shallowCompatibilityTest">,
+): TreeNodeSchemaInitializedData {
+	const data = getTreeNodeSchemaPrivateData(schema);
+	return {
+		...handler,
+		context: getUnhydratedContext(schema),
+		childAnnotatedAllowedTypes: data.childAnnotatedAllowedTypes.map(
+			normalizeAnnotatedAllowedTypes,
+		),
+	};
 }
