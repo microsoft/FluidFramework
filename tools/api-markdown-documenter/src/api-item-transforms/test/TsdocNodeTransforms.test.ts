@@ -254,7 +254,7 @@ describe("Tsdoc node transformation tests", () => {
 			});
 		});
 
-		it("Mixed", () => {
+		describe("Mixed", () => {
 			it("Mixed ordered and unordered lists", () => {
 				const comment = `/**
 * 1. Item 1
