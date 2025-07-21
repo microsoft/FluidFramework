@@ -173,9 +173,13 @@ function transformTsdocParagraph(
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
 
+	// Trim leading and trailing line breaks, which are redundant in the context of a paragraph.
+	const children = node.nodes;
+	const adjustedChildren = trimLeadingAndTrailingLineBreaks(children);
+
 	// Transform child items into Documentation domain
 	let transformedChildren: PhrasingContent[] = [];
-	for (const child of node.nodes) {
+	for (const child of adjustedChildren) {
 		transformedChildren.push(...transformTsdocParagraphContent(child, options));
 	}
 
@@ -183,9 +187,6 @@ function transformTsdocParagraph(
 	transformedChildren = transformedChildren.filter(
 		(child) => child !== undefined && !child.isEmpty,
 	);
-
-	// Trim leading and trailing line breaks, which are redundant in the context of a paragraph.
-	transformedChildren = trimLeadingAndTrailingLineBreaks(transformedChildren);
 
 	// Trim leading whitespace from first child if it is plain text,
 	// and trim trailing whitespace from last child if it is plain text.
@@ -623,9 +624,7 @@ function combineAdjacentPlainText(nodes: readonly PhrasingContent[]): PhrasingCo
  * @remarks Useful for cleaning up {@link ParagraphNode} child contents, since leading and trailing
  * newlines are effectively redundant.
  */
-function trimLeadingAndTrailingLineBreaks(
-	nodes: readonly PhrasingContent[],
-): PhrasingContent[] {
+function trimLeadingAndTrailingLineBreaks(nodes: readonly DocNode[]): DocNode[] {
 	if (nodes.length === 0) {
 		return [];
 	}
@@ -634,7 +633,7 @@ function trimLeadingAndTrailingLineBreaks(
 	let endIndex = nodes.length - 1;
 
 	for (const node of nodes) {
-		if (node.type === "lineBreak") {
+		if (node.kind === DocNodeKind.SoftBreak) {
 			startIndex++;
 		} else {
 			break;
@@ -642,7 +641,7 @@ function trimLeadingAndTrailingLineBreaks(
 	}
 
 	for (let i = nodes.length - 1; i > startIndex; i--) {
-		if (nodes[i].type === "lineBreak") {
+		if (nodes[i].kind === DocNodeKind.SoftBreak) {
 			endIndex--;
 		} else {
 			break;
