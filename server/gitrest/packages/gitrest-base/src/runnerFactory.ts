@@ -7,23 +7,23 @@ import {
 	setupAxiosInterceptorsForAbortSignals,
 	getGlobalAbortControllerContext,
 } from "@fluidframework/server-services-client";
-import * as core from "@fluidframework/server-services-core";
+import type * as core from "@fluidframework/server-services-core";
 import * as services from "@fluidframework/server-services-shared";
 import {
 	normalizePort,
-	IRedisClientConnectionManager,
+	type IRedisClientConnectionManager,
 	RedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
-import { IGitrestResourcesCustomizations } from "./customizations";
+import type { IGitrestResourcesCustomizations } from "./customizations";
 import { ExternalStorageManager } from "./externalStorageManager";
 import { GitrestRunner } from "./runner";
 import {
-	IFileSystemManagerFactories,
-	IRepositoryManagerFactory,
+	type IFileSystemManagerFactories,
+	type IRepositoryManagerFactory,
 	IsomorphicGitManagerFactory,
-	IStorageDirectoryConfig,
+	type IStorageDirectoryConfig,
 	NodeFsManagerFactory,
 	RedisFsManagerFactory,
 } from "./utils";

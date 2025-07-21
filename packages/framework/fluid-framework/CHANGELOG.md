@@ -1,5 +1,54 @@
 # fluid-framework
 
+## 2.51.0
+
+### Minor Changes
+
+- Fix adaptEnum's handling of numeric enums ([#24957](https://github.com/microsoft/FluidFramework/pull/24957)) [7535d31fa61](https://github.com/microsoft/FluidFramework/commit/7535d31fa61a535bf58bb88fc597e6e4f64c5b23)
+
+  Enum entries whose values are numeric get additional properties on TypeScript's generated Enum object.
+  These values were getting treated like enum entries at runtime by `adaptEnum` (`@beta`).
+  This has been fixed and the runtime behavior now matches the types in this case.
+
+  If any documents were created with this API which were impacted by this bug and keeping them openable is required, they will need a workaround.
+  Impacted schema using the union from `adaptEnum` can need to be updated to explicitly include the previously erroneously generated schema.
+
+  Before:
+
+  ```typescript
+  enum Mode {
+    a = 1,
+  }
+  const ModeNodes = adaptEnum(schemaFactory, Mode);
+  const union = ModeNodes.schema;
+  ```
+
+  After:
+
+  ```typescript
+  enum Mode {
+    a = 1,
+  }
+  const ModeNodes = adaptEnum(schemaFactory, Mode);
+  // Bugged version of adaptEnum used to include this: it should not be used but must be included in the schema for legacy document compatibility.
+  class Workaround extends schemaFactory.object("a", {}) {}
+  const union = [...ModeNodes.schema, Workaround] as const;
+  ```
+
+  To help detect when schema contain unexpected content, and to ensure workarounds like this are implemented properly, applications should include tests which check the schema for compatibility.
+  See [tree-cli-app's schema tests](https://github.com/microsoft/FluidFramework/blob/main/examples/apps/tree-cli-app/src/test/schema.spec.ts) for an example of how to do this.
+
+  The schema returned by `adaptEnum` have also been updated to `toString` to include the value of the particular enum entry: this has no effect on the nodes, just the schema.
+
+- Make POJO mode TreeArrayNodes report the array constructor as their constructor ([#24988](https://github.com/microsoft/FluidFramework/pull/24988)) [7b4d0abe90f](https://github.com/microsoft/FluidFramework/commit/7b4d0abe90f50075bb06ef73ceceff2529ef78f5)
+
+  Make POJO mode TreeArrayNode's inherited `constructor` property report `Array` instead of the `TreeNodeSchema` class.
+  This is necessary to make `TreeArrayNode`s appear equal to arrays according to NodeJS's `assert.strict.deepEqual` in NodeJS 22.
+
+- "rootChanged" event is no longer skipped if first change is setting the root to undefined ([#24994](https://github.com/microsoft/FluidFramework/pull/24994)) [e6f25875794](https://github.com/microsoft/FluidFramework/commit/e6f258757947b72b6a9d19c79f5717eccd44452b)
+
+  A bug has been fixed where [rootChanged](https://fluidframework.com/docs/api/fluid-framework/treeviewevents-interface#rootchanged-methodsignature) would not be fired if the change is the first change since the [TreeView](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) became in-schema, and the change was setting the document root to `undefined`.
+
 ## 2.50.0
 
 ### Minor Changes
@@ -820,7 +869,7 @@
   Adds an `ITreeAlpha` interface (which `ITree` can be down-casted to) that provides access to both the tree content and the schema.
   This allows inspecting the content saved in a SharedTree in a generic way that can work on any SharedTree.
 
-  This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`IIree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any SharedTree, regardless of its schema.
+  This can be combined with the existing `generateSchemaFromSimpleSchema` to generate a schema that can be used with [`ITree.viewWith`](https://fluidframework.com/docs/api/fluid-framework/viewabletree-interface#viewwith-methodsignature) to allow constructing a [`TreeView`](https://fluidframework.com/docs/api/fluid-framework/treeview-interface) for any SharedTree, regardless of its schema.
 
   Note that the resulting TypeScript typing for such a view will not be friendly: the `TreeView` APIs are designed for statically known schema. Using them is possible with care and a lot of type casts but not recommended if it can be avoided: see disclaimer on `generateSchemaFromSimpleSchema`.
   Example using `ITreeAlpha` and `generateSchemaFromSimpleSchema`:

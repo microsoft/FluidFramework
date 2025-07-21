@@ -22,7 +22,7 @@ import {
 } from "../../core/index.js";
 import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue } from "../core/index.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -31,7 +31,6 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeLeafValue } from "../schemaTypes.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.

@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { EventEmitter } from "events";
+import type { EventEmitter } from "events";
 
 import { safelyParseJSON } from "@fluidframework/common-utils";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
-import { BoxcarType, IBoxcarMessage, IMessage } from "./messages";
-import { IQueuedMessage } from "./queue";
+import { BoxcarType, type IBoxcarMessage, type IMessage } from "./messages";
+import type { IQueuedMessage } from "./queue";
 
 /**
  * @internal

@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { StatsCompilation } from "webpack";
+import type { StatsCompilation } from "webpack";
 
-import {
+import type {
 	BundleBuddyConfig,
 	BundleSummaries,
 	WebpackStatsProcessor,
 } from "../BundleBuddyTypes";
 import { runProcessorsOnStatsFile } from "../utilities/runProcessorOnStatsFile";
-import { BundleFileData } from "./getBundleFilePathsFromFolder";
+import type { BundleFileData } from "./getBundleFilePathsFromFolder";
 
 export interface GetBundleSummariesArgs {
 	bundlePaths: BundleFileData[];

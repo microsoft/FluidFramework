@@ -22,8 +22,8 @@ import type {
 	ReadableField,
 	ReadSchema,
 	TreeFieldFromImplicitField,
-	UnsafeUnknownSchema,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
+import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";

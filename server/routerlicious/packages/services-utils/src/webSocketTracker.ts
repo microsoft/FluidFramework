@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IWebSocket, IWebSocketTracker } from "@fluidframework/server-services-core";
+import type { IWebSocket, IWebSocketTracker } from "@fluidframework/server-services-core";
 
 /**
  * @internal

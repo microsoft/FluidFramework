@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoDate } from "./date.js";
+import type { IsoDate } from "./date.js";
 
 /**
  * @legacy @alpha

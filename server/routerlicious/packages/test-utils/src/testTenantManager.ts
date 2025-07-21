@@ -5,7 +5,7 @@
 
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
 import { GitManager } from "@fluidframework/server-services-client";
-import {
+import type {
 	ITenant,
 	ITenantManager,
 	ITenantOrderer,

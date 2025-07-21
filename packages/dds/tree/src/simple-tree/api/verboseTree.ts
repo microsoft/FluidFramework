@@ -17,12 +17,9 @@ import {
 	type ITreeCursorSynchronous,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import type {
-	TreeLeafValue,
-	ImplicitFieldSchema,
-	ImplicitAllowedTypes,
-} from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import { NodeKind } from "../core/index.js";
+import type { TreeNodeSchema, ImplicitAllowedTypes, TreeLeafValue } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,

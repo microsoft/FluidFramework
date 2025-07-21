@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
+import { type IThrottler, ThrottlingError } from "@fluidframework/server-services-core";
 
 /**
  * Throttles if an id's count exceeds limit. Exposes tracked `throttleCounts` for easy assertions.

@@ -13,11 +13,13 @@ import type { TreeValue } from "../../core/index.js";
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { TreeAlpha } from "../../shared-tree/index.js";
 import {
+	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 	compareSets,
 	getOrCreate,
 	isReadonlyArray,
 } from "../../util/index.js";
+import { normalizeAllowedTypes, markSchemaMostDerived, isLazy } from "../core/index.js";
 import type {
 	NodeKind,
 	WithType,
@@ -26,8 +28,12 @@ import type {
 	TreeNodeSchemaNonClass,
 	TreeNodeSchemaBoth,
 	UnhydratedFlexTreeNode,
+	NodeSchemaMetadata,
+	ImplicitAnnotatedAllowedTypes,
+	UnannotateImplicitAllowedTypes,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 } from "../core/index.js";
-import { isLazy } from "../flexList.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -45,26 +51,19 @@ import {
 	type InsertableObjectFromSchemaRecord,
 	type TreeMapNode,
 	type TreeObjectNode,
+	type UnannotateSchemaRecord,
 } from "../node-kinds/index.js";
 import {
 	FieldKind,
 	type FieldSchema,
-	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
-	markSchemaMostDerived,
 	type FieldSchemaAlpha,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-	type UnannotateSchemaRecord,
-	type NodeSchemaOptionsAlpha,
-	normalizeAllowedTypes,
 	type FieldPropsAlpha,
-} from "../schemaTypes.js";
+} from "../fieldSchema.js";
 
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
 import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
@@ -1312,3 +1311,39 @@ export function structuralName<const T extends string>(
  * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
  */
 const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
+
+/**
+ * Additional information to provide to Node Schema creation.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
+	/**
+	 * Optional metadata to associate with the Node Schema.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
+	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 */
+	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
+}
+
+/**
+ * Additional information to provide to Node Schema creation. Includes fields for alpha features.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @alpha
+ */
+export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
+}

@@ -139,4 +139,16 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     readonly type: string;
 }
 
+// @alpha @legacy
+export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
+    // (undocumented)
+    initializeInternal(existing: boolean): Promise<void>;
+    protected get tree(): ITree;
+}
+
+// @alpha @legacy
+export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
+    constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
+}
+
 ```

@@ -5,9 +5,9 @@
 
 import * as fs from "fs";
 
-import { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 
-import { IFileLogger } from "./fileLogger.js";
+import type { IFileLogger } from "./fileLogger.js";
 
 /**
  * @internal

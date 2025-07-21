@@ -60,13 +60,11 @@ import {
 import type {
 	FieldBatch,
 	FieldBatchEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+} from "../../../../feature-libraries/index.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	fieldKinds,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";

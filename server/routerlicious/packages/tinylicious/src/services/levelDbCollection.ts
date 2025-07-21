@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { ICollection } from "@fluidframework/server-services-core";
+import type { ICollection } from "@fluidframework/server-services-core";
 import * as charwise from "charwise";
 import * as _ from "lodash";
 

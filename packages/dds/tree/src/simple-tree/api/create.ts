@@ -12,7 +12,7 @@ import {
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 } from "../../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 import {
 	type Context,
 	getOrCreateNodeFromInnerNode,
