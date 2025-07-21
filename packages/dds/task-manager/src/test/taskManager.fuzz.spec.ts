@@ -261,6 +261,7 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
+		rollbackProbability: 0,
 		detachedStartOptions: {
 			numOpsBeforeAttach: 5,
 			// similar to reconnect there are eventual consistency errors when we enter attaching before rehydrate
@@ -314,6 +315,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 		detachedStartOptions: {
 			numOpsBeforeAttach: 0,
 		},
+		rollbackProbability: 0,
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.
