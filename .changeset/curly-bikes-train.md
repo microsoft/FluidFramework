@@ -8,7 +8,7 @@ Adds staged allowed types to SchemaFactoryAlpha
 This adds the `staged` API to [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
 Staged allowed types can be used for schema evolution to add members to an [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) while supporting cross version collaboration.
 
-Staged allowed types are allowed types that can be upgraded by schema upgrades.
+Staged allowed types are [allowed types](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) that can be upgraded by [schema upgrades}(https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature).
 Before being upgraded, any attempt to insert or move a node to a location which requires its type to be upgraded to be valid will throw an error.
 
 To enable this feature, [schema validation](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class#enableschemavalidation-property) is now performed by default when editing the tree.
