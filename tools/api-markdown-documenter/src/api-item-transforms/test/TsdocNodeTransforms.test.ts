@@ -294,6 +294,36 @@ describe("Tsdoc node transformation tests", () => {
 				]);
 			});
 		});
+
+		it("List with soft wrapping", () => {
+			const comment = `/**
+ * - This is a list item that is long enough to require soft wrapping.
+ * It spans multiple lines, but should still be parsed as a single list item.
+ * - This is a second list item, which should end up in the same list as the previous one.
+ */`;
+			const context = parser.parseString(comment);
+			const summarySection = context.docComment.summarySection;
+
+			const result = transformTsdocSection(summarySection, transformOptions);
+
+			expect(result).to.deep.equal([
+				new ListNode(
+					[
+						new ListItemNode([
+							new PlainTextNode(
+								"This is a list item that is long enough to require soft wrapping. It spans multiple lines, but should still be parsed as a single list item.",
+							),
+						]),
+						new ListItemNode([
+							new PlainTextNode(
+								"This is a second list item, which should end up in the same list as the previous one.",
+							),
+						]),
+					],
+					false,
+				),
+			]);
+		});
 	});
 
 	// Test TODOs:

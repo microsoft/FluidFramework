@@ -402,14 +402,14 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 	interface ParsedUnorderedListItem {
 		readonly type: "unorderedListItem";
 		readonly delimiter: "*" | "+" | "-";
-		readonly indentation: string;
+		readonly indentationLevel: number;
 		readonly content: PhrasingContent[];
 	}
 
 	interface ParsedOrderedListItem {
 		readonly type: "orderedListItem";
 		readonly delimiterValue: number;
-		readonly indentation: string;
+		readonly indentationLevel: number;
 		readonly content: PhrasingContent[];
 	}
 
@@ -430,18 +430,24 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 					const listItemContent = match[3];
 
 					// Determine if the list item is ordered or unordered.
+					// Note: Markdown does not preserve explicit numbering, so we
+					// don't need to keep track of the parsed numbers here.
 					const delimiterMatch = listItemDelimiter.match(/^(\d+)[).]$/);
+
+					const leadingWhitespaceModified = leadingWhitespace.replace(/\t/g, "  ");
+					const indentationLevel = leadingWhitespaceModified.length / 2; // Assuming 2 spaces per indentation level
+
 					lineState = delimiterMatch
 						? {
 								type: "orderedListItem",
 								delimiterValue: Number.parseInt(delimiterMatch[1], 10),
-								indentation: leadingWhitespace,
+								indentationLevel,
 								content: [new PlainTextNode(listItemContent)],
 							}
 						: {
 								type: "unorderedListItem",
 								delimiter: listItemDelimiter as "*" | "+" | "-",
-								indentation: leadingWhitespace,
+								indentationLevel,
 								content: [new PlainTextNode(listItemContent)],
 							};
 				} else {
@@ -471,22 +477,18 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 		parsed.push(lineState);
 	}
 
-	// #endregion
-
-	// #region Step 2: group list items into lists
-
-	// TODO: group lists by indentation level, so that we can support nested lists.
-
-	const result: (ParagraphNode | ListNode)[] = [];
+	// Merge adjacent paragraph lines together.
+	const adjusted: ParsedLine[] = [];
 	let i = 0;
 	while (i < parsed.length) {
 		const current = parsed[i];
-
+		i++;
 		switch (current.type) {
-			case "paragraphLine": {
-				// Adjacent "paragraph lines" are combined together into a single paragraph node.
-				// Soft line breaks between them are converted to a single space.
-				const items: PhrasingContent[] = [];
+			case "orderedListItem":
+			case "unorderedListItem": {
+				// Merge paragraph lines following list items into the list item.
+				// Soft line breaks between them are converted to a single space, as in Markdown.
+				const items: PhrasingContent[] = [...current.content];
 				while (i < parsed.length && parsed[i].type === "paragraphLine") {
 					if (items.length > 0) {
 						// Add a space between content on adjacent lines in the same paragraph.
@@ -495,36 +497,86 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 					items.push(...parsed[i].content);
 					i++;
 				}
+				adjusted.push({
+					...current,
+					content: combineAdjacentPlainText(items),
+				});
+				break;
+			}
+			case "paragraphLine": {
+				// Combine adjacent "paragraph lines" together into a single paragraph node.
+				// Soft line breaks between them are converted to a single space, as in Markdown.
+				const items: PhrasingContent[] = [...current.content];
+				while (i < parsed.length && parsed[i].type === "paragraphLine") {
+					if (items.length > 0) {
+						// Add a space between content on adjacent lines in the same paragraph.
+						items.push(new PlainTextNode(" "));
+					}
+					items.push(...parsed[i].content);
+					i++;
+				}
+				// Create a single ParagraphNode from the merged lines.
+				adjusted.push({
+					type: "paragraphLine",
+					content: combineAdjacentPlainText(items),
+				});
+				break;
+			}
+			default: {
+				throw new Error(`Unexpected parsed line type: ${(current as ParsedLine).type}`);
+			}
+		}
+	}
+
+	// #endregion
+
+	// #region Step 2: group list items into lists
+
+	// TODO: group lists by indentation level, so that we can support nested lists.
+
+	const result: (ParagraphNode | ListNode)[] = [];
+	i = 0;
+	while (i < adjusted.length) {
+		const current = adjusted[i];
+
+		switch (current.type) {
+			case "paragraphLine": {
+				// Adjacent "paragraph lines" are combined together into a single paragraph node.
+				// Soft line breaks between them are converted to a single space.
+				const items: PhrasingContent[] = [];
+				while (i < adjusted.length && adjusted[i].type === "paragraphLine") {
+					if (items.length > 0) {
+						// Add a space between content on adjacent lines in the same paragraph.
+						items.push(new PlainTextNode(" "));
+					}
+					items.push(...adjusted[i].content);
+					i++;
+				}
 
 				result.push(new ParagraphNode(combineAdjacentPlainText(items)));
-
 				break;
 			}
 			case "orderedListItem": {
-				// TODO: preserve numbering.
-				// const delimiterValue = current.delimiterValue;
 				const items: ListItemNode[] = [];
-				while (i < parsed.length && parsed[i].type === "orderedListItem") {
-					items.push(new ListItemNode(combineAdjacentPlainText(parsed[i].content)));
+				while (i < adjusted.length && adjusted[i].type === "orderedListItem") {
+					items.push(new ListItemNode(combineAdjacentPlainText(adjusted[i].content)));
 					i++;
 				}
 				result.push(new ListNode(items, true));
-
 				break;
 			}
 			case "unorderedListItem": {
 				const delimiter = current.delimiter;
 				const items: ListItemNode[] = [];
 				while (
-					i < parsed.length &&
-					parsed[i].type === "unorderedListItem" &&
-					(parsed[i] as ParsedUnorderedListItem).delimiter === delimiter
+					i < adjusted.length &&
+					adjusted[i].type === "unorderedListItem" &&
+					(adjusted[i] as ParsedUnorderedListItem).delimiter === delimiter
 				) {
-					items.push(new ListItemNode(combineAdjacentPlainText(parsed[i].content)));
+					items.push(new ListItemNode(combineAdjacentPlainText(adjusted[i].content)));
 					i++;
 				}
 				result.push(new ListNode(items, false));
-
 				break;
 			}
 			// No default
@@ -537,7 +589,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 }
 
 /**
- * Collapses adjacent groups of 1+ line break nodes into a single line break node to reduce clutter
+ * Collapses adjacent groups of 1+ {@link PlainTextNode}s into a single line break node to reduce clutter
  * in output tree.
  */
 function combineAdjacentPlainText(nodes: readonly PhrasingContent[]): PhrasingContent[] {
