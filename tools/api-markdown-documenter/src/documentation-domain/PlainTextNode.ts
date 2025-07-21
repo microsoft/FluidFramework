@@ -36,7 +36,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 		return this.value.length === 0;
 	}
 
-	// TODO: remove this
 	/**
 	 * The text to display.
 	 *
