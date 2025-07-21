@@ -486,23 +486,26 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 	// In Markdown, soft line breaks between non-list content are rendered as a single space.
 	// This step folds all adjacent simple text lines into their preceding list or paragraph line.
 	const outputLines: ParsedLine[] = [];
-	let i = 0;
-	while (i < parsedSourceLines.length) {
-		const current = parsedSourceLines[i];
-		i++;
+	let iParsed = 0;
+	while (iParsed < parsedSourceLines.length) {
+		const current = parsedSourceLines[iParsed];
+		iParsed++;
 		switch (current.type) {
 			case "orderedListItem":
 			case "unorderedListItem": {
 				// Merge paragraph lines following list items into the list item.
 				// Soft line breaks between them are converted to a single space, as in Markdown.
 				const items: PhrasingContent[] = [...current.content];
-				while (i < parsedSourceLines.length && parsedSourceLines[i].type === "paragraphLine") {
+				while (
+					iParsed < parsedSourceLines.length &&
+					parsedSourceLines[iParsed].type === "paragraphLine"
+				) {
 					if (items.length > 0) {
 						// Add a space between content on adjacent lines in the same paragraph.
 						items.push(new PlainTextNode(" "));
 					}
-					items.push(...parsedSourceLines[i].content);
-					i++;
+					items.push(...parsedSourceLines[iParsed].content);
+					iParsed++;
 				}
 				outputLines.push({
 					...current,
@@ -514,13 +517,16 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				// Combine adjacent "paragraph lines" together into a single paragraph node.
 				// Soft line breaks between them are converted to a single space, as in Markdown.
 				const items: PhrasingContent[] = [...current.content];
-				while (i < parsedSourceLines.length && parsedSourceLines[i].type === "paragraphLine") {
+				while (
+					iParsed < parsedSourceLines.length &&
+					parsedSourceLines[iParsed].type === "paragraphLine"
+				) {
 					if (items.length > 0) {
 						// Add a space between content on adjacent lines in the same paragraph.
 						items.push(new PlainTextNode(" "));
 					}
-					items.push(...parsedSourceLines[i].content);
-					i++;
+					items.push(...parsedSourceLines[iParsed].content);
+					iParsed++;
 				}
 				// Create a single ParagraphNode from the merged lines.
 				outputLines.push({
@@ -529,9 +535,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				});
 				break;
 			}
-			default: {
-				throw new Error(`Unexpected parsed line type: ${(current as ParsedLine).type}`);
-			}
+			// No default
 		}
 	}
 
@@ -542,42 +546,29 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 	// TODO: group lists by indentation level, so that we can support nested lists.
 
 	const result: (ParagraphNode | ListNode)[] = [];
-	i = 0;
-	while (i < outputLines.length) {
-		const current = outputLines[i];
+	let iOutput = 0;
+	while (iOutput < outputLines.length) {
+		const current = outputLines[iOutput];
 
 		switch (current.type) {
 			case "paragraphLine": {
 				result.push(new ParagraphNode(current.content));
-				i++;
+				iOutput++;
 				break;
 			}
-			case "orderedListItem": {
-				const delimiter = current.delimiter;
-				const items: ListItemNode[] = [];
-				while (
-					i < outputLines.length &&
-					outputLines[i].type === "orderedListItem" &&
-					(outputLines[i] as ParsedOrderedListItem).delimiter === delimiter
-				) {
-					items.push(new ListItemNode(combineAdjacentPlainText(outputLines[i].content)));
-					i++;
-				}
-				result.push(new ListNode(items, true));
-				break;
-			}
+			case "orderedListItem":
 			case "unorderedListItem": {
-				const delimiter = current.delimiter;
 				const items: ListItemNode[] = [];
 				while (
-					i < outputLines.length &&
-					outputLines[i].type === "unorderedListItem" &&
-					(outputLines[i] as ParsedUnorderedListItem).delimiter === delimiter
+					iOutput < outputLines.length &&
+					outputLines[iOutput].type === current.type &&
+					(outputLines[iOutput] as ParsedOrderedListItem | ParsedUnorderedListItem)
+						.delimiter === current.delimiter
 				) {
-					items.push(new ListItemNode(combineAdjacentPlainText(outputLines[i].content)));
-					i++;
+					items.push(new ListItemNode(combineAdjacentPlainText(outputLines[iOutput].content)));
+					iOutput++;
 				}
-				result.push(new ListNode(items, false));
+				result.push(new ListNode(items, current.type === "orderedListItem"));
 				break;
 			}
 			// No default
