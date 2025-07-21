@@ -25,7 +25,7 @@ To allow writing strings to the array, a code change must be made to remove the 
 schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.string]);
 ```
 
-And then a schema upgrade is done to upgrade the stored schema:
+Then when opening old documents [upgradeSchema](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature) is used to upgrade the stored schema:
 ```typescript
 view.upgradeSchema()
 ```
