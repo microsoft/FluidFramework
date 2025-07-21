@@ -135,7 +135,6 @@ export interface IContainerContext {
     readonly closeFn: (error?: ICriticalContainerError) => void;
     // (undocumented)
     readonly connected: boolean;
-    // (undocumented)
     readonly connectionState?: ConnectionState;
     // (undocumented)
     readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;

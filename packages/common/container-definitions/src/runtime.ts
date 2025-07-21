@@ -157,6 +157,18 @@ export interface IContainerContext {
 	readonly storage: IDocumentStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
+
+	/**
+	 * The current connection state of the container.
+	 *
+	 * @remarks
+	 * This provides more detailed connection state information beyond the simple boolean `connected` property.
+	 * Possible values include:
+	 * - `Disconnected` (0): Container is not connected to the delta server
+	 * - `EstablishingConnection` (3): Container is actively trying to establish a new connection
+	 * - `CatchingUp` (1): Container has an inbound connection and is catching up to the latest state
+	 * - `Connected` (2): Container is fully connected and syncing
+	 */
 	readonly connectionState?: ConnectionState;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
