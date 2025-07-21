@@ -204,7 +204,7 @@ function transformTsdocParagraph(
 		return [];
 	}
 
-	return listify(transformedChildren);
+	return parseContentAsBlock(transformedChildren);
 }
 
 // Default TSDoc implementation only supports the following DocNode kinds under a section node:
@@ -380,7 +380,13 @@ function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
 	});
 }
 
-function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
+/**
+ * Parse the provided list of {@link PhrasingContent} into a list of {@link ParagraphNode} or {@link ListNode}, following Markdown syntax rules.
+ *
+ * @remarks This is a workaround for TSDoc not parsing its input as Markdown.
+ * We add explicit support for lists as a post-processing step.
+ */
+function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 	// #region Step 1: parse source lines into lines of non-lists (paragraphs) and list items
 
 	// This regex matches lines that look like Markdown list items:
