@@ -490,6 +490,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNod
 	// This step converts adjacent "lines" from the source into output lines.
 	// In Markdown, soft line breaks between non-list content are rendered as a single space.
 	// This step folds all adjacent simple text lines into their preceding list or paragraph line.
+
 	const outputLines: ParsedLine[] = [];
 	let iParsed = 0;
 	while (iParsed < parsedSourceLines.length) {
@@ -548,7 +549,14 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNod
 
 	// #region Step 3: group list items into lists
 
-	// TODO: group lists by indentation level, so that we can support nested lists.
+	// The previous step produced a list of lines in terms of output.
+	// For simple paragraphs, there is a 1:1 mapping between output lines and ParagraphNodes.
+	// But for lists, we need to group adjacent list items together into a single ListNode.
+	// This step performs that grouping.
+
+	// Note: for now, this code ignores indentation levels.
+	// This means that all adjacent list items are treated as separate items in a single root list.
+	// This is sufficient for our needs at the moment, but in the future we should add support for parsing nested lists.
 
 	const result: (ParagraphNode | ListNode)[] = [];
 	let iOutput = 0;
