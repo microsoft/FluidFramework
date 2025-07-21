@@ -32,7 +32,7 @@ view.upgradeSchema()
 
 In the future, SharedTree may add an API that allows staged allowed types to be upgraded via a runtime schema upgrade so that the type can be more easily deployed using a configuration flag change rather than a code change.
 
-Below is a full example of how the schema migration process works. This can also be found in our tests.
+Below is a full example of how the schema migration process works. This can also be found in our [tests](https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
 
 ```typescript
 // schema A: only number allowed

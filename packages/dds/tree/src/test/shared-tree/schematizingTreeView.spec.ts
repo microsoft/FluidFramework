@@ -103,7 +103,7 @@ describe("SchematizingSimpleTreeView", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			const stagedSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
 				SchemaFactoryAlpha.number,
-				schemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 			]);
 
 			const emptyContent = {

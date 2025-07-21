@@ -24,7 +24,7 @@ describe("staged schema upgrade", () => {
 	// schema B: number or string (string is staged)
 	const schemaB = factory.optional([
 		SchemaFactoryAlpha.number,
-		factory.staged(SchemaFactoryAlpha.string),
+		SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 	]);
 
 	// schema C: number or string, both fully allowed

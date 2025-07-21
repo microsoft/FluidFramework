@@ -85,7 +85,7 @@ export class SchemaFactoryAlpha<
 	 * user friendly and should be improved, particularly in the case of staged allowed types
 	 *
 	 */
-	public staged<const T extends TreeNodeSchema>(
+	public static staged<const T extends TreeNodeSchema>(
 		t: T | AnnotatedAllowedType<T>,
 	): AnnotatedAllowedType<T> {
 		const annotatedType = normalizeToAnnotatedAllowedType(t);

@@ -1296,7 +1296,7 @@ describe("schemaFactory", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
 		class TestObject extends schemaFactory.objectAlpha("TestObject", {
-			foo: [SchemaFactoryAlpha.number, schemaFactory.staged(SchemaFactoryAlpha.string)],
+			foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
 		}) {}
 
 		describe("in objects", () => {
@@ -1341,7 +1341,7 @@ describe("schemaFactory", () => {
 		describe("in maps", () => {
 			class TestMap extends schemaFactory.mapAlpha("TestMap", [
 				SchemaFactoryAlpha.number,
-				schemaFactory.staged(SchemaFactoryAlpha.string),
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 			]) {}
 
 			it("are permitted when unhydrated", () => {
@@ -1385,7 +1385,7 @@ describe("schemaFactory", () => {
 		describe("in records", () => {
 			class TestRecord extends schemaFactory.recordAlpha("TestRecord", [
 				SchemaFactoryAlpha.number,
-				schemaFactory.staged(SchemaFactoryAlpha.string),
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 			]) {}
 
 			it("are permitted when unhydrated", () => {
@@ -1429,7 +1429,7 @@ describe("schemaFactory", () => {
 		describe("in arrays", () => {
 			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
 				SchemaFactoryAlpha.number,
-				schemaFactory.staged(SchemaFactoryAlpha.string),
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 			]) {}
 
 			it("are permitted when unhydrated", () => {

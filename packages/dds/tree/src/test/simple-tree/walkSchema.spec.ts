@@ -173,7 +173,7 @@ describe("walk schema", () => {
 	});
 
 	it("does not call visitor on staged allowed types by default", () => {
-		const stagedString = sf.staged(SchemaFactoryAlpha.string);
+		const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
 		class TestObject extends sf.objectAlpha("TestObject", {
 			name: stagedString,
 		}) {}
@@ -190,7 +190,7 @@ describe("walk schema", () => {
 	});
 
 	it("calls visitor on staged allowed types when walkStagedAllowedTypes is set to true", () => {
-		const stagedString = sf.staged(SchemaFactoryAlpha.string);
+		const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
 		class TestObject extends sf.objectAlpha("TestObject", {
 			name: stagedString,
 		}) {}
