@@ -178,7 +178,7 @@ describe("Schema Comparison", () => {
 		};
 
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
-			// Test a bunch of different TreeStoredSchema which all are all the same,
+			// Test a bunch of different TreeStoredSchema which are all the same,
 			// except one node schema (identified by `schemaName` in them has changed.
 
 			const schemaName = brand<TreeNodeSchemaIdentifier>("testTree");
