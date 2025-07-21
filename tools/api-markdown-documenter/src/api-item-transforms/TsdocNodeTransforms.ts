@@ -401,6 +401,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 
 	interface ParsedUnorderedListItem {
 		readonly type: "unorderedListItem";
+		readonly delimiter: "*" | "+" | "-";
 		readonly indentation: string;
 		readonly content: PhrasingContent[];
 	}
@@ -439,6 +440,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 							}
 						: {
 								type: "unorderedListItem",
+								delimiter: listItemDelimiter as "*" | "+" | "-",
 								indentation: leadingWhitespace,
 								content: [new PlainTextNode(listItemContent)],
 							};
@@ -500,6 +502,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 			}
 			case "orderedListItem": {
 				// TODO: preserve numbering.
+				// const delimiterValue = current.delimiterValue;
 				const items: ListItemNode[] = [];
 				while (i < parsed.length && parsed[i].type === "orderedListItem") {
 					items.push(new ListItemNode(combineAdjacentPlainText(parsed[i].content)));
@@ -510,8 +513,13 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 				break;
 			}
 			case "unorderedListItem": {
+				const delimiter = current.delimiter;
 				const items: ListItemNode[] = [];
-				while (i < parsed.length && parsed[i].type === "unorderedListItem") {
+				while (
+					i < parsed.length &&
+					parsed[i].type === "unorderedListItem" &&
+					(parsed[i] as ParsedUnorderedListItem).delimiter === delimiter
+				) {
 					items.push(new ListItemNode(combineAdjacentPlainText(parsed[i].content)));
 					i++;
 				}
