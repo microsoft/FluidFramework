@@ -16,7 +16,7 @@ To enable this feature, [schema validation](https://fluidframework.com/docs/api/
 To add a new member to an `AllowedTypes`, add the type wrapped by `staged`.
 For example, migrating an array which previously supported only numbers to support both numbers and strings would start by deploying a version of the app using `staged`:
 ```typescript
-schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.staged(schemaFactoryAlpha.string)]);
+schemaFactoryAlpha.arrayAlpha("TestArray", [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)]);
 ```
 
 Once enough clients have this code update, it is safe to allow writing strings to the array.
