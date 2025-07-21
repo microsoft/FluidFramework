@@ -97,7 +97,9 @@ describe("Tsdoc node transformation tests", () => {
 					]);
 				});
 
-				it("Multiple lists", () => {
+				it("Lists in separate paragraphs", () => {
+					// Despite the numbering implying a single list, the comment has a blank line between the first and second sets of list items,
+					// so they should be parsed as separate lists.
 					const comment = `/**
  * 1. Item 1
  * 2. Item 2
@@ -124,6 +126,45 @@ describe("Tsdoc node transformation tests", () => {
 						new ListNode(
 							[
 								new ListItemNode([new PlainTextNode("Item 4")]),
+								new ListItemNode([new PlainTextNode("Item 5")]),
+								new ListItemNode([new PlainTextNode("Item 6")]),
+							],
+							true,
+						),
+					]);
+				});
+
+				it("Adjacent lists with different delimiters", () => {
+					const comment = `/**
+ * 1. Item 1
+ * 2. Item 2
+ * 3) Item 3
+ * 4) Item 4
+ * 5. Item 5
+ * 6. Item 6
+ */`;
+					const context = parser.parseString(comment);
+					const summarySection = context.docComment.summarySection;
+
+					const result = transformTsdocSection(summarySection, transformOptions);
+
+					expect(result).to.deep.equal([
+						new ListNode(
+							[
+								new ListItemNode([new PlainTextNode("Item 1")]),
+								new ListItemNode([new PlainTextNode("Item 2")]),
+							],
+							true,
+						),
+						new ListNode(
+							[
+								new ListItemNode([new PlainTextNode("Item 3")]),
+								new ListItemNode([new PlainTextNode("Item 4")]),
+							],
+							true,
+						),
+						new ListNode(
+							[
 								new ListItemNode([new PlainTextNode("Item 5")]),
 								new ListItemNode([new PlainTextNode("Item 6")]),
 							],
@@ -186,9 +227,7 @@ describe("Tsdoc node transformation tests", () => {
 					]);
 				});
 
-				it("Multiple lists", () => {
-					// Despite the numbering implying a single list, the comment has a blank line between the first and second sets of list items,
-					// so they should be parsed as separate lists.
+				it("Lists in separate paragraphs", () => {
 					const comment = `/**
  * - Item 1
  * - Item 2
@@ -215,6 +254,45 @@ describe("Tsdoc node transformation tests", () => {
 						new ListNode(
 							[
 								new ListItemNode([new PlainTextNode("Item 4")]),
+								new ListItemNode([new PlainTextNode("Item 5")]),
+								new ListItemNode([new PlainTextNode("Item 6")]),
+							],
+							false,
+						),
+					]);
+				});
+
+				it("Adjacent lists with different delimiters", () => {
+					const comment = `/**
+ * - Item 1
+ * - Item 2
+ * * Item 3
+ * * Item 4
+ * - Item 5
+ * - Item 6
+ */`;
+					const context = parser.parseString(comment);
+					const summarySection = context.docComment.summarySection;
+
+					const result = transformTsdocSection(summarySection, transformOptions);
+
+					expect(result).to.deep.equal([
+						new ListNode(
+							[
+								new ListItemNode([new PlainTextNode("Item 1")]),
+								new ListItemNode([new PlainTextNode("Item 2")]),
+							],
+							false,
+						),
+						new ListNode(
+							[
+								new ListItemNode([new PlainTextNode("Item 3")]),
+								new ListItemNode([new PlainTextNode("Item 4")]),
+							],
+							false,
+						),
+						new ListNode(
+							[
 								new ListItemNode([new PlainTextNode("Item 5")]),
 								new ListItemNode([new PlainTextNode("Item 6")]),
 							],

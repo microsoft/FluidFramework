@@ -404,7 +404,7 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 
 	interface ParsedOrderedListItem {
 		readonly type: "orderedListItem";
-		readonly delimiterValue: number;
+		readonly delimiter: "." | ")";
 		readonly indentationLevel: number;
 		readonly content: PhrasingContent[];
 	}
@@ -431,15 +431,15 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 					// Determine if the list item is ordered or unordered.
 					// Note: Markdown does not preserve explicit numbering, so we
 					// don't need to keep track of the parsed numbers here.
-					const delimiterMatch = listItemDelimiter.match(/^(\d+)[).]$/);
+					const orderedListItemDelimiterMatch = listItemDelimiter.match(/^\d+([).])$/);
 
 					const leadingWhitespaceModified = leadingWhitespace.replace(/\t/g, "  ");
 					const indentationLevel = leadingWhitespaceModified.length / 2; // Assuming 2 spaces per indentation level
 
-					currentLineState = delimiterMatch
+					currentLineState = orderedListItemDelimiterMatch
 						? {
 								type: "orderedListItem",
-								delimiterValue: Number.parseInt(delimiterMatch[1], 10),
+								delimiter: orderedListItemDelimiterMatch[1] as "." | ")",
 								indentationLevel,
 								content: [new PlainTextNode(listItemContent)],
 							}
@@ -549,11 +549,17 @@ function listify(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
 		switch (current.type) {
 			case "paragraphLine": {
 				result.push(new ParagraphNode(current.content));
+				i++;
 				break;
 			}
 			case "orderedListItem": {
+				const delimiter = current.delimiter;
 				const items: ListItemNode[] = [];
-				while (i < outputLines.length && outputLines[i].type === "orderedListItem") {
+				while (
+					i < outputLines.length &&
+					outputLines[i].type === "orderedListItem" &&
+					(outputLines[i] as ParsedOrderedListItem).delimiter === delimiter
+				) {
 					items.push(new ListItemNode(combineAdjacentPlainText(outputLines[i].content)));
 					i++;
 				}
