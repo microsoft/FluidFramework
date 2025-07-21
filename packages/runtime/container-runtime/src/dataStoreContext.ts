@@ -8,7 +8,6 @@ import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import {
 	IDeltaManager,
 	isIDeltaManagerFull,
-	type IRuntimeStorageService,
 	type IDeltaManagerFull,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
@@ -63,6 +62,7 @@ import {
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
 	type PackagePath,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,

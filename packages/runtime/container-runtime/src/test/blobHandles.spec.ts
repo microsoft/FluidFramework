@@ -6,11 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	AttachState,
-	type IRuntimeStorageService,
-} from "@fluidframework/container-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager, IBlobManagerRuntime } from "../blobManager/index.js";
@@ -18,6 +16,7 @@ import {
 	ContainerFluidHandleContext,
 	IContainerHandleContextRuntime,
 } from "../containerHandleContext.js";
+
 export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 	const proxy: T = new Proxy<T>(handler as T, {
 		get: (t, p, r) => {

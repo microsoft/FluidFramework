@@ -4,10 +4,7 @@
  */
 
 import type { AttachState, IAudience } from "@fluidframework/container-definitions";
-import type {
-	IRuntimeStorageService,
-	IDeltaManager,
-} from "@fluidframework/container-definitions/internal";
+import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
@@ -39,7 +36,11 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
+import type {
+	IInboundSignalMessage,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
+} from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,

@@ -4,10 +4,7 @@
  */
 
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import {
-	IDeltaManager,
-	type IRuntimeStorageService,
-} from "@fluidframework/container-definitions/internal";
+import { IDeltaManager } from "@fluidframework/container-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import {
 	IFluidHandleContext,
@@ -28,6 +25,7 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,

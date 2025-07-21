@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	ISnapshotTreeWithBlobContents,
-	type IRuntimeStorageService,
-} from "@fluidframework/container-definitions/internal";
+import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
@@ -20,6 +17,7 @@ import {
 	ISummarizeResult,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,

@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	AttachState,
-	type IRuntimeStorageService,
-} from "@fluidframework/container-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
@@ -24,6 +21,7 @@ import {
 	ISummarizerNodeWithGC,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,

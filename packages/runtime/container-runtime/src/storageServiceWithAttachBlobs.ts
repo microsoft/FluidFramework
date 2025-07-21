@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import {
 	type FetchSource,
 	type ICreateBlobResponse,
@@ -16,6 +15,7 @@ import {
 	type ISummaryTree,
 	type IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -30,15 +30,10 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 
 	/**
 	 * {@link IRuntimeStorageService.policies}.
-	 * @deprecated - This will be removed in a future release. The Runtime only needs `maximumCacheDurationMs` policy
-	 * which is added as a separate property.
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
-	}
-
-	public get maximumCacheDurationMs(): IDocumentStorageServicePolicies["maximumCacheDurationMs"] {
-		return this.internalStorageService.maximumCacheDurationMs;
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -52,6 +47,10 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		return this.internalStorageService.readBlob(id);
 	}
 
+	/**
+	 * {@link IRuntimeStorageService.getSnapshotTree}.
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
@@ -60,6 +59,10 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		return this.internalStorageService.getSnapshotTree(version, scenarioName);
 	}
 
+	/**
+	 * {@link IRuntimeStorageService.getSnapshot}.
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
 		if (this.internalStorageService.getSnapshot !== undefined) {
 			return this.internalStorageService.getSnapshot(snapshotFetchOptions);
@@ -69,6 +72,10 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		);
 	}
 
+	/**
+	 * {@link IRuntimeStorageService.getVersions}.
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
 	public async getVersions(
 		// eslint-disable-next-line @rushstack/no-new-null
 		versionId: string | null,
@@ -84,6 +91,10 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		);
 	}
 
+	/**
+	 * {@link IRuntimeStorageService.uploadSummaryWithContext}.
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
 	public async uploadSummaryWithContext(
 		summary: ISummaryTree,
 		context: ISummaryContext,
@@ -91,14 +102,17 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		return this.internalStorageService.uploadSummaryWithContext(summary, context);
 	}
 
+	/**
+	 * {@link IRuntimeStorageService.createBlob}.
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this.internalStorageService.createBlob(file);
 	}
 
 	/**
 	 * {@link IRuntimeStorageService.downloadSummary}.
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
-	 * it is unused in the Runtime and below layers.
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
 	 */
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this.internalStorageService.downloadSummary(handle);

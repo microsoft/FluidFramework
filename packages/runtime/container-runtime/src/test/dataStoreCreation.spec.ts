@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
 import {
 	CreateChildSummarizerNodeFn,
@@ -16,6 +15,7 @@ import {
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {

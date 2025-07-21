@@ -6,7 +6,7 @@
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	ISnapshotTreeWithBlobContents,
-	type IRuntimeStorageService,
+	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -48,7 +48,10 @@ export interface ISerializableBlobContents {
  * container attach state.
  */
 export class ContainerStorageAdapter
-	implements ISerializedStateManagerDocumentStorageService, IRuntimeStorageService, IDisposable
+	implements
+		ISerializedStateManagerDocumentStorageService,
+		IContainerStorageService,
+		IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 

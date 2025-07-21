@@ -3,11 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import type { TypedMessage } from "@fluidframework/core-interfaces/internal";
+import type { IDisposable, TypedMessage } from "@fluidframework/core-interfaces/internal";
 import type {
 	ITree,
 	ISignalMessage,
 	ISequencedDocumentMessage,
+	IDocumentStorageServicePolicies,
+	IVersion,
+	ISnapshotTree,
+	ISnapshotFetchOptions,
+	ISnapshot,
+	FetchSource,
+	ICreateBlobResponse,
+	ISummaryTree,
+	ISummaryHandle,
+	ISummaryContext,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -127,4 +137,60 @@ export interface IRuntimeMessageCollection {
 	 * The contents of the messages in the collection
 	 */
 	readonly messagesContent: readonly IRuntimeMessagesContent[];
+}
+
+/**
+ * Interface to provide access to snapshot blobs to DataStore layer.
+ *
+ * @legacy
+ * @alpha
+ */
+export interface IRuntimeStorageService extends Partial<IDisposable> {
+	/**
+	 * Reads the object with the given ID, returns content in arrayBufferLike
+	 */
+	readBlob(id: string): Promise<ArrayBufferLike>;
+
+	/**
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
+	readonly policies?: IDocumentStorageServicePolicies | undefined;
+
+	/**
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
+	// eslint-disable-next-line @rushstack/no-new-null
+	getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+
+	/**
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
+	getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+
+	/**
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
+	getVersions(
+		// TODO: use `undefined` instead.
+		// eslint-disable-next-line @rushstack/no-new-null
+		versionId: string | null,
+		count: number,
+		scenarioName?: string,
+		fetchSource?: FetchSource,
+	): Promise<IVersion[]>;
+
+	/**
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
+	createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+
+	/**
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
+	uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+
+	/**
+	 * @deprecated - This will be removed in a future release. The DataStore layer does not need this.
+	 */
+	downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
 }

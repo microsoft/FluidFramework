@@ -7,10 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import {
-	ContainerErrorTypes,
-	type IRuntimeStorageService,
-} from "@fluidframework/container-definitions/internal";
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	Tagged,
@@ -33,6 +30,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	type IContainerRuntimeBase,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,

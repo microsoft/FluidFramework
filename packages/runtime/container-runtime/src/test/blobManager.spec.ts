@@ -11,10 +11,7 @@ import {
 	bufferToString,
 	gitHashFile,
 } from "@fluid-internal/client-utils";
-import {
-	AttachState,
-	type IRuntimeStorageService,
-} from "@fluidframework/container-definitions/internal";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import {
@@ -23,7 +20,10 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
-import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeStorageService,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,

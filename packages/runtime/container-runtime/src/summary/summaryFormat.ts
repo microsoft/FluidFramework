@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
@@ -15,6 +14,7 @@ import {
 	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";

@@ -22,7 +22,7 @@ import type {
 	IDeltaManager,
 	IDeltaManagerFull,
 	ILoader,
-	IRuntimeStorageService,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -1205,7 +1205,7 @@ export class ContainerRuntime
 
 	private readonly isSummarizerClient: boolean;
 
-	public get storage(): IRuntimeStorageService {
+	public get storage(): IContainerStorageService {
 		return this._storage;
 	}
 
@@ -1497,7 +1497,7 @@ export class ContainerRuntime
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
-		private readonly _storage: IRuntimeStorageService,
+		private readonly _storage: IContainerStorageService,
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,

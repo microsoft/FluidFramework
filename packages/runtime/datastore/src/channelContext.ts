@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import {
 	IChannel,
 	IChannelAttributes,
@@ -20,6 +19,7 @@ import {
 	IFluidDataStoreContext,
 	ISummarizeResult,
 	type IRuntimeMessageCollection,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {

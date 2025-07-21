@@ -154,7 +154,7 @@ export interface IContainerContext {
     readonly scope: FluidObject;
     readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
-    readonly storage: IRuntimeStorageService;
+    readonly storage: IContainerStorageService;
     // (undocumented)
     readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
     // @deprecated (undocumented)
@@ -200,6 +200,21 @@ export interface IContainerLoadMode {
 export type IContainerPolicies = {
     maxClientLeaveWaitTime?: number;
 };
+
+// @alpha @legacy
+export interface IContainerStorageService extends Partial<IDisposable> {
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    readonly maximumCacheDurationMs?: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
+    // @deprecated
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+}
 
 // @public
 export type ICriticalContainerError = IErrorBase_2;
@@ -404,21 +419,6 @@ export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 // @alpha @legacy
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
-}
-
-// @alpha @legacy
-export interface IRuntimeStorageService extends Partial<IDisposable> {
-    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
-    // @deprecated
-    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
-    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
-    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
-    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
-    readonly maximumCacheDurationMs?: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
-    // @deprecated
-    readonly policies?: IDocumentStorageServicePolicies | undefined;
-    readBlob(id: string): Promise<ArrayBufferLike>;
-    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @public

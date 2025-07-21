@@ -4,7 +4,6 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
-import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import type { FluidObject, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClientDetails } from "@fluidframework/driver-definitions/internal";
 import {
@@ -14,6 +13,7 @@ import {
 	type IFluidDataStoreFactory,
 	type IFluidDataStoreRegistry,
 	type IGarbageCollectionData,
+	type IRuntimeStorageService,
 	type ISummarizerNodeWithGC,
 	type SummarizeInternalFn,
 } from "@fluidframework/runtime-definitions/internal";

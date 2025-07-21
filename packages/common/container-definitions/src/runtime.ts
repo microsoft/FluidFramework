@@ -145,7 +145,7 @@ export interface IBatchMessage {
  * @legacy
  * @alpha
  */
-export interface IRuntimeStorageService extends Partial<IDisposable> {
+export interface IContainerStorageService extends Partial<IDisposable> {
 	/**
 	 * Policies implemented/instructed by driver.
 	 *
@@ -250,7 +250,7 @@ export interface IContainerContext {
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly clientDetails: IClientDetails;
-	readonly storage: IRuntimeStorageService;
+	readonly storage: IContainerStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	/**

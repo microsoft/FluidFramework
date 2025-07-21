@@ -5,7 +5,7 @@
 
 import type { AttachState } from "@fluidframework/container-definitions";
 import type {
-	IRuntimeStorageService,
+	IContainerStorageService,
 	IDeltaManager,
 } from "@fluidframework/container-definitions/internal";
 import type {
@@ -181,7 +181,7 @@ export interface IContainerRuntime
 	readonly clientDetails: IClientDetails;
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	readonly storage: IRuntimeStorageService;
+	readonly storage: IContainerStorageService;
 	readonly flushMode: FlushMode;
 	readonly scope: FluidObject;
 	/**

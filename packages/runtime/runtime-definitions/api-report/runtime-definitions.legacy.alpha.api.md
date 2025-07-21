@@ -300,6 +300,25 @@ export interface IRuntimeMessagesContent {
 }
 
 // @alpha @legacy
+export interface IRuntimeStorageService extends Partial<IDisposable> {
+    // @deprecated (undocumented)
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated (undocumented)
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    // @deprecated (undocumented)
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    // @deprecated (undocumented)
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    // @deprecated (undocumented)
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    // @deprecated (undocumented)
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    // @deprecated (undocumented)
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+}
+
+// @alpha @legacy
 export type ISequencedMessageEnvelope = Omit<ISequencedDocumentMessage, "contents" | "clientSequenceNumber">;
 
 // @alpha @legacy

@@ -15,7 +15,6 @@ import {
 	ContainerErrorTypes,
 	IContainerContext,
 	type IBatchMessage,
-	type IRuntimeStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
@@ -56,6 +55,7 @@ import {
 	type IEnvelope,
 	type ITelemetryContext,
 	type ISummarizeInternalResult,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
