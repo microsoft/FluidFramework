@@ -202,6 +202,14 @@ describe("Schema Comparison", () => {
 			const withOptionalXField = createTestCase(nodeWithOptionalXField);
 			const withRequiredXField = createTestCase(nodeWithRequiredXField);
 			const withOptionalXAndYFields = createTestCase(nodeWithOptionalXAndYFields);
+			const withRequiredXAndOptionalYFields = createTestCase(
+				new ObjectNodeStoredSchema(
+					new Map([
+						[brand("x"), fieldSchema(FieldKinds.required, [emptyTree.name])],
+						[brand("y"), fieldSchema(FieldKinds.optional, [emptyTree.name])],
+					]),
+				),
+			);
 
 			const emptyRepo = new TreeStoredSchemaRepository({
 				rootFieldSchema: storedEmptyFieldSchema,
@@ -212,10 +220,14 @@ describe("Schema Comparison", () => {
 			testOrder(compareTwoRepo, [emptyRepo, emptyNode]);
 
 			// Making a field optional
-			testOrder(compareTwoRepo, [withEmptyXField, withRequiredXField, withOptionalXField]);
+			testOrder(compareTwoRepo, [withRequiredXField, withOptionalXField]);
 
-			// Adding an optional field
-			testOrder(compareTwoRepo, [withOptionalXField, withOptionalXAndYFields]);
+			// Adding optional fields
+			testOrder(compareTwoRepo, [
+				withEmptyXField,
+				withOptionalXField,
+				withOptionalXAndYFields,
+			]);
 
 			// Required fields can not be added or removed
 			assert.equal(
@@ -223,9 +235,15 @@ describe("Schema Comparison", () => {
 				Ordering.Incomparable,
 			);
 
-			// Two changes with opposite compatibility directions results in incompatibility.
+			// Two changes with same compatibility directions compose (X: required -> optional, Y: empty -> optional).
 			assert.equal(
 				getOrdering(withRequiredXField, withOptionalXAndYFields, compareTwoRepo),
+				Ordering.Superset,
+			);
+
+			// Two changes with opposite compatibility directions results in incompatibility (X: required -> optional, Y: optional -> empty).
+			assert.equal(
+				getOrdering(withRequiredXAndOptionalYFields, withOptionalXField, compareTwoRepo),
 				Ordering.Incomparable,
 			);
 
@@ -370,10 +388,10 @@ describe("Schema Comparison", () => {
 });
 
 enum Ordering {
-	Subset,
-	Equal,
-	Incomparable,
-	Superset,
+	Subset = "Subset",
+	Equal = "Equal",
+	Incomparable = "Incomparable",
+	Superset = "Superset",
 }
 
 function getOrdering<T>(
