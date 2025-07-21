@@ -99,13 +99,13 @@ describe("Tsdoc node transformation tests", () => {
 
 				it("Multiple lists", () => {
 					const comment = `/**
- * - Item 1
- * - Item 2
- * - Item 3
+ * 1. Item 1
+ * 2. Item 2
+ * 3. Item 3
  *
- * - Item 4
- * - Item 5
- * - Item 6
+ * 4. Item 4
+ * 5. Item 5
+ * 6. Item 6
  */`;
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
@@ -119,7 +119,7 @@ describe("Tsdoc node transformation tests", () => {
 								new ListItemNode([new PlainTextNode("Item 2")]),
 								new ListItemNode([new PlainTextNode("Item 3")]),
 							],
-							false,
+							true,
 						),
 						new ListNode(
 							[
@@ -127,7 +127,7 @@ describe("Tsdoc node transformation tests", () => {
 								new ListItemNode([new PlainTextNode("Item 5")]),
 								new ListItemNode([new PlainTextNode("Item 6")]),
 							],
-							false,
+							true,
 						),
 					]);
 				});
@@ -190,13 +190,13 @@ describe("Tsdoc node transformation tests", () => {
 					// Despite the numbering implying a single list, the comment has a blank line between the first and second sets of list items,
 					// so they should be parsed as separate lists.
 					const comment = `/**
- * 1. Item 1
- * 2. Item 2
- * 3. Item 3
+ * - Item 1
+ * - Item 2
+ * - Item 3
  *
- * 4. Item 4
- * 5. Item 5
- * 6. Item 6
+ * - Item 4
+ * - Item 5
+ * - Item 6
  */`;
 					const context = parser.parseString(comment);
 					const summarySection = context.docComment.summarySection;
@@ -210,7 +210,7 @@ describe("Tsdoc node transformation tests", () => {
 								new ListItemNode([new PlainTextNode("Item 2")]),
 								new ListItemNode([new PlainTextNode("Item 3")]),
 							],
-							true,
+							false,
 						),
 						new ListNode(
 							[
@@ -218,7 +218,7 @@ describe("Tsdoc node transformation tests", () => {
 								new ListItemNode([new PlainTextNode("Item 5")]),
 								new ListItemNode([new PlainTextNode("Item 6")]),
 							],
-							true,
+							false,
 						),
 					]);
 				});
