@@ -80,7 +80,7 @@ export class SchemaFactoryAlpha<
 	 * A future change will allow writing the type using a runtime schema upgrade so that the type can be upgraded
 	 * using a configuration flag change rather than a code change.
 	 *
-	 * @privateremarks
+	 * @privateRemarks
 	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
 	 * user friendly and should be improved, particularly in the case of staged allowed types
 	 *
