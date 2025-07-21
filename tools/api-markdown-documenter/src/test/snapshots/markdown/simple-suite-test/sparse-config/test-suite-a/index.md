@@ -7,15 +7,12 @@ Test package
 This remarks block includes a bulleted list!
 
 - Bullet 1
-
 - Bullet 2
 
 And an ordered list for good measure!
 
 1. List item 1
-
 1. List item 2
-
 1. List item 3
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
