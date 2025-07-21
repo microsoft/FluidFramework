@@ -62,16 +62,16 @@ describe("staged schema upgrade", () => {
 		// schema is upgraded to support staged type
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
-			canUpgrade: false,
-			isEquivalent: false,
+			canUpgrade: true,
+			isEquivalent: true,
 		});
 
 		// view schema now wants full support for string (not just staged)
 		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaC);
 		assert.deepEqual(view.checkCompatibility(stored), {
-			canView: true,
+			canView: false,
 			canUpgrade: true,
-			isEquivalent: true,
+			isEquivalent: false,
 		});
 
 		// upgrade to full schema C
@@ -112,6 +112,10 @@ describe("staged schema upgrade", () => {
 
 		// check view A can read the document
 		assert.deepEqual(viewA.root, 5);
+		// check view B cannot write strings to the root
+		assert.throws(() => {
+			viewB.root = "test";
+		});
 
 		// view third tree with schema C
 		const configC = new TreeViewConfiguration({
