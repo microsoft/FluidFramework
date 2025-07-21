@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
+import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
@@ -85,7 +83,7 @@ export function createChannelServiceEndpoints(
 	submitFn: (content: unknown, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
 	isAttachedAndVisible: () => boolean,
-	storageService: IDocumentStorageService,
+	storageService: IRuntimeStorageService,
 	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
 	extraBlobs?: Map<string, ArrayBufferLike>,

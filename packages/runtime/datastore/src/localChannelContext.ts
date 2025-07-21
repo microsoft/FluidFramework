@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import {
+	ISnapshotTreeWithBlobContents,
+	type IRuntimeStorageService,
+} from "@fluidframework/container-definitions/internal";
 import { assert, Lazy, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,
 	IFluidDataStoreContext,
@@ -216,7 +216,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		registry: ISharedObjectRegistry,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		logger: ITelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
@@ -329,7 +329,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		public readonly channel: IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		logger: ITelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,

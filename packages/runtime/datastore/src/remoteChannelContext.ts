@@ -3,16 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type IRuntimeStorageService,
+} from "@fluidframework/container-definitions/internal";
 import { assert, LazyPromise } from "@fluidframework/core-utils/internal";
 import {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
@@ -61,7 +61,7 @@ export class RemoteChannelContext implements IChannelContext {
 	constructor(
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		private readonly id: string,

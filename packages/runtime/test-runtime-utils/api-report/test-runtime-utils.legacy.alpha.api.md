@@ -363,7 +363,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     setChannelDirty(address: string): void;
     // (undocumented)
-    storage: IDocumentStorageService;
+    storage: IRuntimeStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)

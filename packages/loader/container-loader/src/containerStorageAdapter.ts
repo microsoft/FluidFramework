@@ -4,7 +4,10 @@
  */
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTreeWithBlobContents } from "@fluidframework/container-definitions/internal";
+import {
+	ISnapshotTreeWithBlobContents,
+	type IRuntimeStorageService,
+} from "@fluidframework/container-definitions/internal";
 import { IDisposable } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
@@ -45,10 +48,7 @@ export interface ISerializableBlobContents {
  * container attach state.
  */
 export class ContainerStorageAdapter
-	implements
-		ISerializedStateManagerDocumentStorageService,
-		IDocumentStorageService,
-		IDisposable
+	implements ISerializedStateManagerDocumentStorageService, IRuntimeStorageService, IDisposable
 {
 	private _storageService: IDocumentStorageService & Partial<IDisposable>;
 
@@ -159,6 +159,10 @@ export class ContainerStorageAdapter
 		return undefined;
 	}
 
+	public get maximumCacheDurationMs(): IDocumentStorageServicePolicies["maximumCacheDurationMs"] {
+		return this.policies?.maximumCacheDurationMs;
+	}
+
 	public async getSnapshotTree(
 		version?: IVersion,
 		scenarioName?: string,
@@ -241,12 +245,17 @@ export class ContainerStorageAdapter
 		return this._storageService.uploadSummaryWithContext(summary, context);
 	}
 
-	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
-		return this._storageService.downloadSummary(handle);
-	}
-
 	public async createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse> {
 		return this._storageService.createBlob(file);
+	}
+
+	/**
+	 * {@link IRuntimeStorageService.downloadSummary}.
+	 *
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned.
+	 */
+	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
+		return this._storageService.downloadSummary(handle);
 	}
 }
 

@@ -242,7 +242,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IRuntimeStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)

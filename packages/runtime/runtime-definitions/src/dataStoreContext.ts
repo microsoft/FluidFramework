@@ -4,7 +4,10 @@
  */
 
 import type { AttachState, IAudience } from "@fluidframework/container-definitions";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	IRuntimeStorageService,
+	IDeltaManager,
+} from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IDisposable,
@@ -21,7 +24,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -563,7 +565,7 @@ export interface IFluidParentContext
 	 */
 	readonly isReadOnly?: () => boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;

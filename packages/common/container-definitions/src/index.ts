@@ -66,7 +66,7 @@ export type {
 	IRuntime,
 	IGetPendingLocalStateProps,
 } from "./runtime.js";
-export { AttachState, IRuntimeFactory } from "./runtime.js";
+export { AttachState, IRuntimeFactory, type IRuntimeStorageService } from "./runtime.js";
 
 export type {
 	/**

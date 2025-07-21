@@ -5,8 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
@@ -44,7 +44,7 @@ describe("Data Store Creation Tests", () => {
 		 * ```
 		 */
 
-		let storage: IDocumentStorageService;
+		let storage: IRuntimeStorageService;
 		let scope: FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContextPrivate;

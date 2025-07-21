@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -287,7 +287,7 @@ export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats
 }
 
 export async function getFluidDataStoreAttributes(
-	storage: IDocumentStorageService,
+	storage: IRuntimeStorageService,
 	snapshot: ISnapshotTree,
 ): Promise<ReadFluidDataStoreAttributes> {
 	const attributes = await readAndParse<ReadFluidDataStoreAttributes>(

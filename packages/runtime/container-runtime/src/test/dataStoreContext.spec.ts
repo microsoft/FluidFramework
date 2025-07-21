@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import {
+	ContainerErrorTypes,
+	type IRuntimeStorageService,
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	Tagged,
@@ -17,11 +20,7 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	IDocumentStorageService,
-	IBlob,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
@@ -84,7 +83,7 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalFluidDataStoreContext;
-		const storage = {} as unknown as IDocumentStorageService;
+		const storage = {} as unknown as IRuntimeStorageService;
 		const scope = {} as unknown as FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContextPrivate;
@@ -521,7 +520,7 @@ describe("Data Store Context Tests", () => {
 	describe("RemoteDataStoreContext", () => {
 		let remoteDataStoreContext: RemoteFluidDataStoreContext;
 		let dataStoreAttributes: ReadFluidDataStoreAttributes;
-		const storage: Partial<IDocumentStorageService> = {};
+		const storage: Partial<IRuntimeStorageService> = {};
 		const scope = {} as unknown as FluidObject;
 		let summarizerNode: IRootSummarizerNodeWithGC;
 		let parentContext: IFluidParentContextPrivate;
@@ -613,7 +612,7 @@ describe("Data Store Context Tests", () => {
 						snapshot: snapshotTree,
 						parentContext,
 						storage: new StorageServiceWithAttachBlobs(
-							storage as IDocumentStorageService,
+							storage as IRuntimeStorageService,
 							attachBlobs,
 						),
 						scope,
@@ -657,7 +656,7 @@ describe("Data Store Context Tests", () => {
 						id: invalidId,
 						pkg: ["TestDataStore1"],
 						parentContext,
-						storage: storage as IDocumentStorageService,
+						storage: storage as IRuntimeStorageService,
 						scope,
 						createSummarizerNodeFn,
 						snapshot: undefined,
@@ -737,7 +736,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -782,7 +781,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -831,7 +830,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -885,7 +884,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -960,7 +959,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -980,7 +979,7 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalDetachedFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalDetachedFluidDataStoreContext;
-		const storage = {} as unknown as IDocumentStorageService;
+		const storage = {} as unknown as IRuntimeStorageService;
 		const scope = {} as unknown as FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};

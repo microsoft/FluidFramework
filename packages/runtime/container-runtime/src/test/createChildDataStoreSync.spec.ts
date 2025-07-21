@@ -5,9 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IRuntimeStorageService } from "@fluidframework/container-definitions/internal";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
@@ -67,7 +67,7 @@ describe("createChildDataStore", () => {
 		const registry = createRegistry(namedEntries);
 		const createSummarizerNodeFn = () =>
 			new Proxy({} as unknown as ISummarizerNodeWithGC, { get: throwNYI });
-		const storage = new Proxy({} as unknown as IDocumentStorageService, { get: throwNYI });
+		const storage = new Proxy({} as unknown as IRuntimeStorageService, { get: throwNYI });
 
 		const parentContext = {
 			clientDetails: {

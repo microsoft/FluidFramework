@@ -22,6 +22,7 @@ import type {
 	IDeltaManager,
 	IDeltaManagerFull,
 	ILoader,
+	IRuntimeStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -71,7 +72,6 @@ import type {
 } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
@@ -1205,7 +1205,7 @@ export class ContainerRuntime
 
 	private readonly isSummarizerClient: boolean;
 
-	public get storage(): IDocumentStorageService {
+	public get storage(): IRuntimeStorageService {
 		return this._storage;
 	}
 
@@ -1497,7 +1497,7 @@ export class ContainerRuntime
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
-		private readonly _storage: IDocumentStorageService,
+		private readonly _storage: IRuntimeStorageService,
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
@@ -1794,7 +1794,7 @@ export class ContainerRuntime
 
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		if (context.attachState === AttachState.Attached) {
-			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
+			const maxSnapshotCacheDurationMs = this._storage.policies?.maximumCacheDurationMs;
 			if (
 				maxSnapshotCacheDurationMs !== undefined &&
 				maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000

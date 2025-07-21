@@ -8,6 +8,7 @@ import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import {
 	IDeltaManager,
 	isIDeltaManagerFull,
+	type IRuntimeStorageService,
 	type IDeltaManagerFull,
 	type ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
@@ -25,7 +26,6 @@ import {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	type ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -146,7 +146,7 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
 	readonly parentContext: IFluidParentContextPrivate;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IRuntimeStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	/**
@@ -424,7 +424,7 @@ export abstract class FluidDataStoreContext
 	 * The parent which provided this information currently can be the container runtime or a datastore (if the datastore this context is for is nested under another one).
 	 */
 	private readonly parentContext: IFluidParentContextPrivate;
-	public readonly storage: IDocumentStorageService;
+	public readonly storage: IRuntimeStorageService;
 	public readonly scope: FluidObject;
 	/**
 	 * The loading group to which the data store belongs to.
