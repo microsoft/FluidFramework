@@ -228,16 +228,32 @@ export function* getAllowedContentDiscrepancies(
 	const viewNodeSchema = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
 
 	walkFieldSchema(view, {
-		// TODO:#38722 Change the way this traversal works when runtime schema upgrades are implemented.
-		// The traversal of the view schema needs to be driven by traversing the stored schema,
-		// since what types actually exist in the view schema depend on which staged allowed types are upgraded,
-		// which are determined when walking the stored schema.
-		// Because runtime schema upgrades are not implemented yet, traversing all nodes that are not staged is sufficient.
-		node: (type) => {
-			const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
-
-			debugAssert(() => !viewNodeSchema.has(identifier));
-			viewNodeSchema.set(identifier, type);
+		// This traverses all the sets of allowed types to determine if a particular view node schema should be checked for discrepancies.
+		// Because this is for the purpose of identifying discrepancies between view and stored node schemas,
+		// the context of each allowed type i.e. the location they're used in, is not relevant.
+		//
+		// View node schemas that are important to evaluate for discrepancies include:
+		// 1. node schemas that are declared as normal allowed types
+		// 2. node schemas that are declared as staged allowed types that also exist in the stored schema
+		//
+		// TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to include
+		// staged allowed types that have been upgraded.
+		allowedTypes: (allowedTypes) => {
+			for (const { type, metadata } of allowedTypes.types) {
+				const identifier: TreeNodeSchemaIdentifier = brand(type.identifier);
+				if (viewNodeSchema.has(identifier)) {
+					// If the view node schema is already present, make sure that the node schema is the same.
+					debugAssert(
+						() =>
+							viewNodeSchema.get(identifier) === type ||
+							"node schema identifier is already present with a different type",
+					);
+					continue;
+				}
+				if (metadata.stagedSchemaUpgrade === undefined || stored.nodeSchema.has(identifier)) {
+					viewNodeSchema.set(identifier, type);
+				}
+			}
 		},
 	});
 
