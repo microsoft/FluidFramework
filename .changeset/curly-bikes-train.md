@@ -29,3 +29,54 @@ view.upgradeSchema()
 ```
 
 In the future, SharedTree will add an API that allows staged allowed types to be upgraded via a runtime schema upgrade so that the type can be more easily deployed using a configuration flag change rather than a code change.
+
+Below is a full example of how the schema migration process works. This can also be found in our tests.
+
+```typescript
+const provider = new TestTreeProviderLite(3);
+
+// initialize with schema A
+const configA = new TreeViewConfiguration({
+	schema: schemaA,
+});
+const viewA = provider.trees[0].viewWith(configA);
+viewA.initialize(5);
+provider.synchronizeMessages();
+
+assert.deepEqual(viewA.root, 5);
+
+// view second tree with schema B
+const configB = new TreeViewConfiguration({
+	schema: schemaB,
+});
+const viewB = provider.trees[1].viewWith(configB);
+// check that we can read the tree
+assert.deepEqual(viewB.root, 5);
+// upgrade to schema B
+viewB.upgradeSchema();
+provider.synchronizeMessages();
+
+// check view A can read the document
+assert.deepEqual(viewA.root, 5);
+// check view B cannot write strings to the root
+assert.throws(() => {
+	viewB.root = "test";
+});
+
+// view third tree with schema C
+const configC = new TreeViewConfiguration({
+	schema: schemaC,
+});
+const viewC = provider.trees[2].viewWith(configC);
+// upgrade to schema C and change the root to a string
+viewC.upgradeSchema();
+viewC.root = "test";
+provider.synchronizeMessages();
+
+// view A is now incompatible with the stored schema
+assert.throws(() => {
+	const _ = viewA.root;
+});
+assert.deepEqual(viewB.root, "test");
+assert.deepEqual(viewC.root, "test");
+```
