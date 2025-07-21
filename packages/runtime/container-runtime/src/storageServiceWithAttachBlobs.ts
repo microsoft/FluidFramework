@@ -28,8 +28,17 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		private readonly attachBlobs: Map<string, ArrayBufferLike>,
 	) {}
 
+	/**
+	 * {@link IRuntimeStorageService.policies}.
+	 * @deprecated - This will be removed in a future release. The Runtime only needs `maximumCacheDurationMs` policy
+	 * which is added as a separate property.
+	 */
 	public get policies(): IDocumentStorageServicePolicies | undefined {
 		return this.internalStorageService.policies;
+	}
+
+	public get maximumCacheDurationMs(): IDocumentStorageServicePolicies["maximumCacheDurationMs"] {
+		return this.internalStorageService.maximumCacheDurationMs;
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {
@@ -86,6 +95,11 @@ export class StorageServiceWithAttachBlobs implements IRuntimeStorageService {
 		return this.internalStorageService.createBlob(file);
 	}
 
+	/**
+	 * {@link IRuntimeStorageService.downloadSummary}.
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime and below layers.
+	 */
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this.internalStorageService.downloadSummary(handle);
 	}

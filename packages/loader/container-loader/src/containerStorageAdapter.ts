@@ -252,7 +252,8 @@ export class ContainerStorageAdapter
 	/**
 	 * {@link IRuntimeStorageService.downloadSummary}.
 	 *
-	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned.
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime and below layers.
 	 */
 	public async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this._storageService.downloadSummary(handle);
