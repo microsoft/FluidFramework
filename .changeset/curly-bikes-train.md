@@ -35,6 +35,18 @@ In the future, SharedTree will add an API that allows staged allowed types to be
 Below is a full example of how the schema migration process works. This can also be found in our tests.
 
 ```typescript
+// schema A: only number allowed
+const schemaA = factory.optional([SchemaFactoryAlpha.number]);
+
+// schema B: number or string (string is staged)
+const schemaB = factory.optional([
+	SchemaFactoryAlpha.number,
+	factory.staged(SchemaFactoryAlpha.string),
+]);
+
+// schema C: number or string, both fully allowed
+const schemaC = factory.optional([SchemaFactoryAlpha.number, SchemaFactoryAlpha.string]);
+
 const provider = new TestTreeProviderLite(3);
 
 // initialize with schema A
