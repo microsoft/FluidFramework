@@ -18,21 +18,60 @@ export {
 	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
 	 */
 	CompressionAlgorithms,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	disabledCompressionConfig,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	type ICompressionRuntimeOptions,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	MinimumVersionForCollab,
-	SemanticVersion,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	ContainerRuntimeOptions,
-	ContainerRuntimeOptionsInternal,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	ISummaryRuntimeOptions,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	IContainerRuntimeOptions,
-	IContainerRuntimeOptionsInternal,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	IGCRuntimeOptions,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	ISummaryBaseConfiguration,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	ISummaryConfiguration,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	ISummaryConfigurationDisableHeuristics,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	ISummaryConfigurationDisableSummarizer,
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
 	ISummaryConfigurationHeuristics,
+	// eslint-disable-next-line import/no-internal-modules
+} from "@fluidframework/runtime-definitions/legacy";
+export {
+	SemanticVersion,
+	ContainerRuntimeOptionsInternal,
+	IContainerRuntimeOptionsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 export {
 	ContainerMessageType,

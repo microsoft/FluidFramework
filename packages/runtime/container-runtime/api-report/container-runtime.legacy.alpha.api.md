@@ -31,7 +31,7 @@ export enum ContainerMessageType {
 export { ContainerRuntimeOptions }
 
 // @alpha @legacy (undocumented)
-export const DefaultSummaryConfiguration: ISummaryConfiguration;
+export const DefaultSummaryConfiguration: ISummaryConfiguration_2;
 
 export { disabledCompressionConfig }
 
@@ -274,12 +274,12 @@ export interface LoadContainerRuntimeParams {
     containerScope?: FluidObject;
     context: IContainerContext;
     existing: boolean;
-    minVersionForCollab?: MinimumVersionForCollab;
+    minVersionForCollab?: MinimumVersionForCollab_2;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated
     requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
-    runtimeOptions?: IContainerRuntimeOptions;
+    runtimeOptions?: IContainerRuntimeOptions_2;
 }
 
 export { MinimumVersionForCollab }
