@@ -174,8 +174,7 @@ function transformTsdocParagraph(
 	// and map the subsequence to an "html" node.
 
 	// Trim leading and trailing line breaks, which are redundant in the context of a paragraph.
-	const children = node.nodes;
-	const adjustedChildren = trimLeadingAndTrailingLineBreaks(children);
+	const adjustedChildren = trimLeadingAndTrailingLineBreaks(node.nodes);
 
 	// Transform child items into Documentation domain
 	const transformedChildren: PhrasingContent[] = [];
