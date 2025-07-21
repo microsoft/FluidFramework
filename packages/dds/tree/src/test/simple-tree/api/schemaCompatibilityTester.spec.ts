@@ -39,15 +39,18 @@ function expectCompatibility(
 		...defaultSchemaPolicy,
 		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(view),
 	},
+	containsStagedAllowedTypes: boolean = false,
 ) {
 	const viewSchema = new SchemaCompatibilityTester(policy, normalizeFieldSchema(view));
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
 
+	// This includes all staged allowed types in the conversion.
 	const viewStored = toStoredSchema(view);
 
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
-	if (compatibility.canUpgrade) {
+	// staged allowed types are not included in the conversion, so this is not guaranteed to be true
+	if (compatibility.canUpgrade && !containsStagedAllowedTypes) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
 		assert.equal(isViewSupersetOfStored(normalizeFieldSchema(view), stored), true);
 	}
@@ -401,6 +404,7 @@ describe("SchemaCompatibilityTester", () => {
 				expectCompatibility(
 					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
 					{ canView: true, canUpgrade: true, isEquivalent: true },
+					// This check can assume that staged allowed types are not upgraded in the stored schema
 				);
 			});
 
@@ -416,6 +420,8 @@ describe("SchemaCompatibilityTester", () => {
 				expectCompatibility(
 					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
 					{ canView: true, canUpgrade: true, isEquivalent: true },
+					undefined,
+					true, // containsStagedAllowedTypes
 				);
 			});
 		});

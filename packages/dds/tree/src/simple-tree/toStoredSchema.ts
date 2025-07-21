@@ -40,6 +40,11 @@ const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
+ *
+ * @privateRemarks
+ * TODO:#38722 When runtime schema upgrades are implemented, this will need to be updated to check if
+ * a staged allowed type has been upgraded and if so, include it in the conversion.
+ *
  * @throws
  * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
