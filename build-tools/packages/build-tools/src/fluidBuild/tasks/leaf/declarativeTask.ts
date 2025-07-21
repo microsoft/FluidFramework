@@ -3,19 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import globby from "globby";
-
 import type { BuildContext } from "../../buildContext";
 import type { BuildPackage } from "../../buildGraph";
 import {
 	type DeclarativeTask,
-	type GitIgnoreSettingValue,
+	type GitIgnoreSetting,
 	gitignoreDefaultValue,
 } from "../../fluidBuildConfig";
-import type { TaskHandlerFunction } from "../taskHandlers";
-import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
+import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask";
 
-class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
+export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {
 	constructor(
 		node: BuildPackage,
 		command: string,
@@ -29,56 +26,23 @@ class DeclarativeTaskHandler extends LeafWithFileStatDoneFileTask {
 	/**
 	 * Use hashes instead of modified times in donefile.
 	 */
-	protected get useHashes(): boolean {
+	protected override get useHashes(): boolean {
 		return true;
 	}
 
-	/**
-	 * Gets all the input or output files for the task based on the globs configured for that task.
-	 *
-	 * @param mode - Whether to use the input or output globs.
-	 * @returns An array of absolute paths to all files that match the globs.
-	 */
-	private async getFiles(mode: GitIgnoreSettingValue): Promise<string[]> {
-		const { inputGlobs, outputGlobs, gitignore: gitignoreSetting } = this.taskDefinition;
-		const globs = mode === "input" ? inputGlobs : outputGlobs;
-		const gitignoreSettingRealized = gitignoreSetting ?? gitignoreDefaultValue;
-		const excludeGitIgnoredFiles: boolean = gitignoreSettingRealized.includes(mode);
-
-		const files = await globby(globs, {
-			cwd: this.node.pkg.directory,
-			// file paths returned from getInputFiles and getOutputFiles should always be absolute
-			absolute: true,
-			gitignore: excludeGitIgnoredFiles,
-		});
-		return files;
+	protected override get gitIgnore(): GitIgnoreSetting {
+		return this.taskDefinition.gitignore ?? gitignoreDefaultValue;
 	}
 
-	protected async getInputFiles(): Promise<string[]> {
-		return this.getFiles("input");
+	protected override get includeLockFiles(): boolean {
+		return this.taskDefinition.includeLockFiles ?? super.includeLockFiles;
 	}
 
-	protected async getOutputFiles(): Promise<string[]> {
-		return this.getFiles("output");
+	protected async getInputGlobs(): Promise<readonly string[]> {
+		return this.taskDefinition.inputGlobs;
 	}
-}
 
-/**
- * Generates a task handler for a declarative task dynamically.
- *
- * @param taskDefinition - The declarative task definition.
- * @returns a function that can be used to instantiate a LeafTask to handle a task.
- */
-export function createDeclarativeTaskHandler(
-	taskDefinition: DeclarativeTask,
-): TaskHandlerFunction {
-	const handler: TaskHandlerFunction = (
-		node: BuildPackage,
-		command: string,
-		context: BuildContext,
-		taskName?: string,
-	): LeafTask => {
-		return new DeclarativeTaskHandler(node, command, context, taskName, taskDefinition);
-	};
-	return handler;
+	protected async getOutputGlobs(): Promise<readonly string[]> {
+		return this.taskDefinition.outputGlobs;
+	}
 }

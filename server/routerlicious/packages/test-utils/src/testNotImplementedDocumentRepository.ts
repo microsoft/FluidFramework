@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IDocument, IDocumentRepository } from "@fluidframework/server-services-core";
+import type { IDocument, IDocumentRepository } from "@fluidframework/server-services-core";
 
 const getDefaultErrorMsg = (methodName: string) =>
 	`TestNotImplementedDocumentRepository.${methodName}: Method not implemented. Provide your own mock.`;

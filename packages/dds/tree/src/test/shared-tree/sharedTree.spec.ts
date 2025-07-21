@@ -17,6 +17,8 @@ import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 
 import {
 	CommitKind,
@@ -50,6 +52,7 @@ import {
 	ForestTypeReference,
 	getBranch,
 	type ITreePrivate,
+	SharedTreeFormatVersion,
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
@@ -65,6 +68,9 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
+	asTreeViewAlpha,
+	SchemaFactoryAlpha,
+	type ITree,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -99,18 +105,13 @@ import type {
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
-// eslint-disable-next-line import/no-internal-modules
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
-	asTreeViewAlpha,
 	toSimpleTreeSchema,
-	type ITree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -194,7 +195,10 @@ describe("SharedTree", () => {
 		it("re-view after view disposal with TreeNodes", () => {
 			const tree = treeTestFactory();
 
-			// Scan AnchorSet and check its slots for cached invalid data.
+			/**
+			 * Scan AnchorSet and check its slots for cached invalid data.
+			 * @param allowNodes - if false, errors if there are any TreeNodes cached in the AnchorSet.
+			 */
 			function checkAnchors(allowNodes: boolean) {
 				const anchors = tree.kernel.checkout.forest.anchors;
 				for (const anchor of anchors) {
@@ -241,13 +245,13 @@ describe("SharedTree", () => {
 			view1.dispose();
 
 			assert(Tree.status(root1) === TreeStatus.Deleted);
-			assert.throws(() => root1.number, validateUsageError(/Deleted/));
+			assert.throws(() => root1.number, validateUsageError(/deleted/));
 
 			checkAnchors(false);
 
 			const view2 = tree.viewWith(config);
 
-			checkAnchors(false);
+			checkAnchors(true);
 
 			const root2 = view2.root;
 			assert.notEqual(root1, root2);
@@ -2239,6 +2243,41 @@ describe("SharedTree", () => {
 		});
 	});
 
+	describe("Shared Tree format v5 enablement via `configuredSharedTree`", () => {
+		it("can create a SharedTree with format v5 enabled", async () => {
+			// Create and initialize the runtime factory
+			const runtime = new MockSharedTreeRuntime();
+
+			// Enable Shared Tree format v5, which corresponds to schema format v2. Create a Shared Tree instance.
+			const tree = configuredSharedTree({
+				formatVersion: SharedTreeFormatVersion.v5,
+			}).create(runtime);
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
+
+			// A schema with node and field persisted metadata
+			class Foo extends schemaFactory.objectAlpha(
+				"Foo",
+				{
+					bar: schemaFactory.required(schemaFactory.number, {
+						persistedMetadata: { "fieldMetadata": 1 },
+					}),
+				},
+				{ persistedMetadata: { "nodeMetadata": 2 } },
+			) {}
+
+			const treeView = tree.viewWith(
+				new TreeViewConfiguration({
+					schema: Foo,
+				}),
+			);
+
+			const schema = treeView.schema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, { "fieldMetadata": 1 });
+			assert.deepEqual(schema.persistedMetadata, { "nodeMetadata": 2 });
+		});
+	});
+
 	describe("Identifiers", () => {
 		it("Can use identifiers and the static Tree Apis", () => {
 			const sf = new SchemaFactory("com.example");
@@ -2275,7 +2314,7 @@ describe("SharedTree", () => {
 		});
 	});
 
-	// Note: this is basically a more e2e version of some tests for `toMapTree`.
+	// Note: this is basically a more end-to-end version of some tests for `unhydratedFlexTreeFromInsertable`.
 	it("throws when an invalid type is inserted at runtime", () => {
 		const provider = new TestTreeProviderLite(1);
 		const [sharedTree] = provider.trees;

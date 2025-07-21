@@ -81,7 +81,9 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const anchorNode = getOrCreateInnerNode(root).anchorNode;
+			const flex = getOrCreateInnerNode(root);
+			assert(flex.isHydrated());
+			const anchorNode = flex.anchorNode;
 			const log: string[] = [];
 			const unsubscribe = anchorNode.events.on("childrenChanging", () => log.push("change"));
 			const unsubscribeSubtree = anchorNode.events.on("subtreeChanging", () => {
@@ -123,7 +125,9 @@ describe("sharedTreeView", () => {
 			);
 			view.initialize({ x: 24 });
 			const root = view.root;
-			const anchorNode = getOrCreateInnerNode(root).anchorNode;
+			const flex = getOrCreateInnerNode(root);
+			assert(flex.isHydrated());
+			const anchorNode = flex.anchorNode;
 			const log: string[] = [];
 			const unsubscribe = anchorNode.events.on("childrenChanging", (upPath) =>
 				log.push(`change-${String(upPath.parentField)}-${upPath.parentIndex}`),
@@ -188,7 +192,7 @@ describe("sharedTreeView", () => {
 
 				assert.equal(log.length, 2);
 
-				checkout.updateSchema(toStoredSchema(OptionalString));
+				checkout.updateSchema(toStoredSchema(OptionalString), true);
 
 				assert.equal(log.length, 3);
 				unsubscribe();
@@ -212,7 +216,7 @@ describe("sharedTreeView", () => {
 						chunkFromJsonableTrees([{ type: brand(stringSchema.identifier), value: "A" }]),
 						true,
 					);
-				checkout.updateSchema(toStoredSchema(OptionalString));
+				checkout.updateSchema(toStoredSchema(OptionalString), true);
 
 				assert.deepEqual(log, ["not-revertible", "revertible", "not-revertible"]);
 				unsubscribe();
@@ -369,10 +373,9 @@ describe("sharedTreeView", () => {
 		itView("update anchors after applying a change", ({ view }) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(
-				getOrCreateInnerNode(view.root).anchorNode,
-				cursor,
-			);
+			const flex = getOrCreateInnerNode(view.root);
+			assert(flex.isHydrated());
+			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -390,10 +393,9 @@ describe("sharedTreeView", () => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
-				parentCheckout.forest.moveCursorToPath(
-					getOrCreateInnerNode(parentView.root).anchorNode,
-					cursor,
-				);
+				const flex = getOrCreateInnerNode(parentView.root);
+				assert(flex.isHydrated());
+				parentCheckout.forest.moveCursorToPath(flex.anchorNode, cursor);
 				cursor.enterField(EmptyKey);
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
@@ -415,10 +417,9 @@ describe("sharedTreeView", () => {
 				const parentCheckout = parentView.checkout;
 				parentView.root.insertAtStart("A");
 				let cursor = parentCheckout.forest.allocateCursor();
-				parentCheckout.forest.moveCursorToPath(
-					getOrCreateInnerNode(parentView.root).anchorNode,
-					cursor,
-				);
+				const flex = getOrCreateInnerNode(parentView.root);
+				assert(flex.isHydrated());
+				parentCheckout.forest.moveCursorToPath(flex.anchorNode, cursor);
 				cursor.enterField(EmptyKey);
 				cursor.firstNode();
 				const anchor = cursor.buildAnchor();
@@ -439,10 +440,9 @@ describe("sharedTreeView", () => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(
-				getOrCreateInnerNode(view.root).anchorNode,
-				cursor,
-			);
+			const flex = getOrCreateInnerNode(view.root);
+			assert(flex.isHydrated());
+			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -753,10 +753,9 @@ describe("sharedTreeView", () => {
 		itView("update anchors correctly", ({ view }) => {
 			view.root.insertAtStart("A");
 			let cursor = view.checkout.forest.allocateCursor();
-			view.checkout.forest.moveCursorToPath(
-				getOrCreateInnerNode(view.root).anchorNode,
-				cursor,
-			);
+			const flex = getOrCreateInnerNode(view.root);
+			assert(flex.isHydrated());
+			view.checkout.forest.moveCursorToPath(flex.anchorNode, cursor);
 			cursor.enterField(EmptyKey);
 			cursor.firstNode();
 			const anchor = cursor.buildAnchor();
@@ -933,8 +932,7 @@ describe("sharedTreeView", () => {
 		assert.equal(checkout2Revertibles.redoStack.length, 1);
 		assert.equal(view2.checkout.getRemovedRoots().length, 2);
 
-		const sf2 = new SchemaFactory("schema2");
-		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema(sf2.array(sf1.number)));
+		provider.trees[0].kernel.checkout.updateSchema(toStoredSchema([sf1.number, schema1]));
 
 		// The undo stack contains the removal of A but not the schema change
 		assert.equal(checkout1Revertibles.undoStack.length, 1);

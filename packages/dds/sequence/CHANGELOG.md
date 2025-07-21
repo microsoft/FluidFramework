@@ -1,5 +1,38 @@
 # @fluidframework/sequence
 
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+### Minor Changes
+
+- Deprecate unnecessary and internal APIs in `ISequenceIntervalCollection` and related interval types ([#24792](https://github.com/microsoft/FluidFramework/pull/24792)) [8acc59162ac](https://github.com/microsoft/FluidFramework/commit/8acc59162acb0f12f996d756111ae3cb79ea6104)
+
+  The following APIs are now deprecated and will be removed in a future release:
+
+  - `IInterval.clone`
+  - `IInterval.modify`
+  - `IInterval.union`
+  - `ISerializableInterval`
+  - `SequenceInterval.clone`
+  - `SequenceInterval.modify`
+  - `SequenceInterval.union`
+  - `SequenceInterval.serialize`
+  - `SequenceInterval.addPositionChangeListeners`
+  - `SequenceInterval.removePositionChangeListeners`
+
+  These APIs were never intended for public use. There is no migration path, and any usage is strongly discouraged, as it may result in severe errors or data corruption. Please remove any dependencies on these APIs as soon as possible.
+
+## 2.42.0
+
+Dependency updates only.
+
 ## 2.41.0
 
 Dependency updates only.

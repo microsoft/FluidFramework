@@ -15,6 +15,12 @@ export {
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
+	type MinimalMapTreeNodeView,
+	mapTreeFieldsWithField,
+	mapTreeWithField,
+	type MapTreeFieldViewGeneric,
+	type MapTreeNodeViewGeneric,
+	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
 export {
@@ -78,22 +84,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentDiscrepancies,
-	isRepoSuperset,
-	type AllowedTypeDiscrepancy,
-	type FieldKindDiscrepancy,
-	type ValueSchemaDiscrepancy,
-	type FieldDiscrepancy,
-	type NodeDiscrepancy,
-	type NodeKindDiscrepancy,
-	type NodeFieldsDiscrepancy,
 	isNeverTree,
-	type LinearExtension,
-	type Realizer,
-	fieldRealizer,
-	PosetComparisonResult,
-	comparePosetElements,
-	posetLte,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -152,7 +143,6 @@ export {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
-	Skip,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	type FlexTreeTypedField,
@@ -174,6 +164,11 @@ export {
 	treeStatusFromAnchorCache,
 	indexForAt,
 	FlexTreeEntityKind,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type FlexTreeHydratedContextMinimal,
+	type HydratedFlexTreeNode,
+	getOrCreateHydratedFlexTreeNode,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";

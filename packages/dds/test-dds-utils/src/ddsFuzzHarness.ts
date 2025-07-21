@@ -47,7 +47,10 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
-import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
+import {
+	isISharedObjectHandle,
+	type IFluidSerializer,
+} from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactoryForReconnection,
 	MockFluidDataStoreRuntime,
@@ -66,7 +69,7 @@ import {
 } from "./clientLoading.js";
 import { DDSFuzzHandle } from "./ddsFuzzHandle.js";
 import { DDSFuzzSerializer } from "./fuzzSerializer.js";
-import { makeUnreachableCodePathProxy } from "./utils.js";
+import { makeUnreachableCodePathProxy, reconnectAndSquash } from "./utils.js";
 
 /**
  * @internal
@@ -111,6 +114,7 @@ export interface ClientSpec {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
+	squash?: boolean;
 }
 
 /**
@@ -381,6 +385,12 @@ export interface DDSFuzzSuiteOptions {
 	detachedStartOptions: {
 		numOpsBeforeAttach: number;
 		rehydrateDisabled?: true;
+		/**
+		 * If true, disable rehydrating DDSes while they are in the "attaching" state.
+		 *
+		 * BEWARE: The harness has known correctness issues with rehydration when there are outstanding id compressor ops. DDSes that use id-compressor
+		 * should set this to `true` if they test rehydration. AB#43127 has more context.
+		 */
 		attachingBeforeRehydrateDisable?: true;
 	};
 
@@ -536,6 +546,11 @@ export interface DDSFuzzSuiteOptions {
 	 * @deprecated This is option is for back-compat only. Once all usages are removed, it should also be removed.
 	 */
 	forceGlobalSeed?: true;
+
+	/**
+	 * If enabled, connection state change operations will sometimes use squashed resubmits.
+	 */
+	testSquashResubmit?: true;
 }
 
 /**
@@ -578,7 +593,6 @@ export function mixinNewClient<
 	const generatorFactory: () => AsyncGenerator<TOperation | AddClient, TState> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (state: TState): Promise<TOperation | AddClient | typeof done> => {
-			const baseOp = baseGenerator(state);
 			const { clients, random, isDetached } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
@@ -594,7 +608,7 @@ export function mixinNewClient<
 						: false,
 				};
 			}
-			return baseOp;
+			return baseGenerator(state);
 		};
 	};
 
@@ -653,10 +667,14 @@ export function mixinReconnect<
 			return async (state): Promise<TOperation | ChangeConnectionState | typeof done> => {
 				const baseOp = baseGenerator(state);
 				if (isReconnectAllowed(state) && state.random.bool(options.reconnectProbability)) {
-					return {
+					const op: ChangeConnectionState = {
 						type: "changeConnectionState",
 						connected: !state.client.containerRuntime.connected,
 					};
+					if (options.testSquashResubmit === true && op.connected && state.random.bool(0.5)) {
+						op.squash = true;
+					}
+					return op;
 				}
 
 				return baseOp;
@@ -671,11 +689,15 @@ export function mixinReconnect<
 		state,
 		operation,
 	) => {
-		if (operation.type === "changeConnectionState") {
-			state.client.containerRuntime.connected = (operation as ChangeConnectionState).connected;
+		if (isOperationType<ChangeConnectionState>("changeConnectionState", operation)) {
+			if (operation.squash === true) {
+				reconnectAndSquash(state.client.containerRuntime, state.client.dataStoreRuntime);
+			} else {
+				state.client.containerRuntime.connected = operation.connected;
+			}
 			return state;
 		} else {
-			return model.reducer(state, operation as TOperation);
+			return model.reducer(state, operation);
 		}
 	};
 	return {
@@ -761,7 +783,9 @@ export function mixinAttach<
 			state.isDetached = false;
 			assert.equal(state.clients.length, 1);
 			const clientA: ClientWithStashData<TChannelFactory> = state.clients[0];
-			finalizeAllocatedIds(clientA);
+			if (clientA.dataStoreRuntime.attachState === AttachState.Detached) {
+				finalizeAllocatedIds(clientA);
+			}
 			clientA.dataStoreRuntime.setAttachState(AttachState.Attached);
 			const services: IChannelServices = {
 				deltaConnection: clientA.dataStoreRuntime.createDeltaConnection(),
@@ -805,6 +829,11 @@ export function mixinAttach<
 
 			state.containerRuntimeFactory.removeContainerRuntime(clientA.containerRuntime);
 
+			// TODO: AB#43127: Using a detached load here is not right with respect to id compressor ops in all cases.
+			// The general strategy that the mocks use for resubmit does not align with the production implementation,
+			// and that should probably be rectified here. The immediate problem with using `loadDetached` here is that
+			// it finalizes IDs, which is only OK if this rehydrate is happening while the container is detached (not attaching).
+			// See comment on `attachingBeforeRehydrateDisable` for more context.
 			const summarizerClient = await loadDetached(
 				state.containerRuntimeFactory,
 				clientA,
@@ -1486,7 +1515,16 @@ export async function runTestForSeed<
 		initialState.summarizerClient.dataStoreRuntime.id,
 		false,
 	);
-	const rootHandle = new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime);
+
+	// This is unfortunately needed to pass to the Serializer, even though we don't do any handle binding.
+	const dummyHandleBindSource = Object.assign(
+		new DDSFuzzHandle("", initialState.summarizerClient.dataStoreRuntime),
+		{ bind: () => {} },
+	);
+	assert(
+		isISharedObjectHandle(dummyHandleBindSource),
+		"PRECONDITION: must satisfy this for serializer",
+	);
 
 	let operationCount = 0;
 	const generator = model.generatorFactory();
@@ -1496,7 +1534,7 @@ export async function runTestForSeed<
 		// to encode here and decode in the reducer.
 		async (state) => {
 			const operation = await generator(state);
-			return serializer.encode(operation, rootHandle) as TOperation;
+			return serializer.encode(operation, dummyHandleBindSource) as TOperation;
 		},
 		async (state, operation) => {
 			const decodedHandles = serializer.decode(operation) as TOperation;

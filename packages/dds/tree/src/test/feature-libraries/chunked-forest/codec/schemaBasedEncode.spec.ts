@@ -152,7 +152,11 @@ describe("schemaBasedEncoding", () => {
 						return onlyTypeShape;
 					},
 				},
-				{ kind: FieldKinds.sequence.identifier, types: new Set([brand(Minimal.identifier)]) },
+				{
+					kind: FieldKinds.sequence.identifier,
+					types: new Set([brand(Minimal.identifier)]),
+					persistedMetadata: undefined,
+				},
 				cache,
 				{ nodeSchema: new Map() },
 			);
@@ -182,6 +186,7 @@ describe("schemaBasedEncoding", () => {
 			const storedSchema: TreeFieldStoredSchema = {
 				kind: FieldKinds.identifier.identifier,
 				types: new Set([brand(stringSchema.identifier)]),
+				persistedMetadata: undefined,
 			};
 
 			const shape = fieldShaper(

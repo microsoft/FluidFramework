@@ -4,10 +4,10 @@
  */
 
 import {
-	ILumberjackEngine,
-	ILumberjackSchemaValidator,
+	type ILumberjackEngine,
+	type ILumberjackSchemaValidator,
 	Lumberjack,
-	ILumberjackOptions,
+	type ILumberjackOptions,
 } from "@fluidframework/server-services-telemetry";
 import { debug } from "debug";
 import nconf from "nconf";

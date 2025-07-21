@@ -15,7 +15,6 @@ import {
 	getLinkForApiItem,
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
-import type { TsdocNodeTransformOptions } from "./TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
 import { wrapInSection } from "./helpers/index.js";
 
@@ -48,33 +47,13 @@ export function createDocument(
 }
 
 /**
- * Create {@link TsdocNodeTransformOptions} for the provided context API item and the system config.
- *
- * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
- * @param config - See {@link ApiItemTransformationConfiguration}.
- *
- * @returns An option for {@link @microsoft/tsdoc#DocNode} transformations
- */
-export function getTsdocNodeTransformationOptions(
-	contextApiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): TsdocNodeTransformOptions {
-	return {
-		contextApiItem,
-		resolveApiReference: (codeDestination): Link | undefined =>
-			resolveSymbolicLink(contextApiItem, codeDestination, config),
-		logger: config.logger,
-	};
-}
-
-/**
  * Resolves a symbolic link and creates a URL to the target.
  *
  * @param contextApiItem - See {@link TsdocNodeTransformOptions.contextApiItem}.
  * @param codeDestination - The link reference target.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-function resolveSymbolicLink(
+export function resolveSymbolicLink(
 	contextApiItem: ApiItem,
 	codeDestination: DocDeclarationReference,
 	config: ApiItemTransformationConfiguration,

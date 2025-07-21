@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
-import { TreeStatus } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeNode,
@@ -18,9 +17,12 @@ import {
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
-import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import {
+	addConstraintsToTransaction,
+	SchematizingSimpleTreeView,
+} from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
+import { Context } from "../feature-libraries/index.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
@@ -448,8 +450,8 @@ export function runTransaction<
 				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
 			);
 		}
-		const treeView = getCheckoutFlexTreeView(context);
-		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
+		assert(context instanceof Context, 0xbe3 /* Expected context to be a Context instance. */);
+		return runTransactionInCheckout(context.checkout, () => t(node), preconditions);
 	}
 }
 
@@ -463,23 +465,7 @@ function runTransactionInCheckout<TResult>(
 	preconditions: readonly TransactionConstraint[],
 ): TResult | typeof rollback {
 	checkout.transaction.start();
-	for (const constraint of preconditions) {
-		switch (constraint.type) {
-			case "nodeInDocument": {
-				const node = getOrCreateInnerNode(constraint.node);
-				const nodeStatus = Tree.status(constraint.node);
-				if (nodeStatus !== TreeStatus.InDocument) {
-					throw new UsageError(
-						`Attempted to add a "nodeInDocument" constraint, but the node is not currently in the document. Node status: ${nodeStatus}`,
-					);
-				}
-				checkout.editor.addNodeExistsConstraint(node.anchorNode);
-				break;
-			}
-			default:
-				unreachableCase(constraint.type);
-		}
-	}
+	addConstraintsToTransaction(checkout, false, preconditions);
 
 	let result: ReturnType<typeof transaction>;
 	try {

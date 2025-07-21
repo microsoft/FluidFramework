@@ -14,15 +14,19 @@ import {
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
-import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
+import { type PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
-import { PackageNamePolicyConfig, ScriptRequirement, getFlubConfig } from "../../config.js";
+import {
+	type PackageNamePolicyConfig,
+	type ScriptRequirement,
+	getFlubConfig,
+} from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import { Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, writeFile } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -832,13 +836,13 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string): { resolved: boolean } => {
+		resolver: (file: string, gitRoot: string): { resolved: boolean } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
 				json.license = licenseId;
 
-				// file is already relative to the repo root, so we can use it as-is.
-				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				// file is absolute path, so make relative to the repo root
+				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
 				json.repository =
 					// The directory field should be omitted from the root package.
 					relativePkgDir === "."

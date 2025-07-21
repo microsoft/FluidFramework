@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type FieldKindIdentifier,
 	MapNodeStoredSchema,
 	type MutableTreeStoredSchema,
 	ObjectNodeStoredSchema,
@@ -26,24 +25,12 @@ import {
 	/* eslint-disable-next-line import/no-internal-modules */
 } from "../../../feature-libraries/modular-schema/isNeverTree.js";
 import { brand } from "../../../util/index.js";
+import { fieldSchema } from "../../utils.js";
 
 /**
  * Empty readonly map.
  */
 const emptyMap: ReadonlyMap<never, never> = new Map<never, never>();
-
-/**
- * Helper for building {@link TreeFieldStoredSchema}.
- */
-function fieldSchema(
-	kind: { identifier: FieldKindIdentifier },
-	types: Iterable<TreeNodeSchemaIdentifier>,
-): TreeFieldStoredSchema {
-	return {
-		kind: kind.identifier,
-		types: new Set(types),
-	};
-}
 
 describe("Schema Comparison", () => {
 	/**

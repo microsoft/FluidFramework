@@ -5,35 +5,48 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import type {
-	ExclusiveMapTree,
-	ITreeCursorSynchronous,
-	SchemaAndPolicy,
-} from "../../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
 import {
+	CursorLocationType,
+	mapCursorField,
+	mapCursorFields,
+	type ITreeCursorSynchronous,
+	type SchemaAndPolicy,
+} from "../../core/index.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
+import {
+	type Context,
 	getOrCreateNodeFromInnerNode,
-	UnhydratedFlexTreeNode,
+	type NodeKind,
 	type Unhydrated,
+	UnhydratedFlexTreeNode,
+	createField,
 } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
 	inSchemaOrThrow,
-	mapTreeFromCursor,
 	isFieldInSchema,
 } from "../../feature-libraries/index.js";
 import { getUnhydratedContext } from "../createContext.js";
 import { createUnknownOptionalFieldPolicy } from "../node-kinds/index.js";
+import type { SimpleNodeSchema, SimpleNodeSchemaBase } from "../simpleSchema.js";
+import { getStoredSchema } from "../toStoredSchema.js";
+import { unknownTypeError } from "./customTree.js";
 
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
+ * @remarks
+ * Does not support defaults.
+ * Validates the field is in schema.
+ *
+ * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
  */
 export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	cursor: ITreeCursorSynchronous | undefined,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	const mapTrees = cursor === undefined ? [] : [mapTreeFromCursor(cursor)];
 	const context = getUnhydratedContext(schema);
+	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
+
 	const flexSchema = context.flexContext.schema;
 
 	const schemaValidationPolicy: SchemaAndPolicy = {
@@ -58,21 +71,40 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	// Length asserted above, so this is safe. This assert is done instead of checking for undefined after indexing to ensure a length greater than 1 also errors.
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 	const mapTree = mapTrees[0]!;
-	return createFromMapTree(schema, mapTree);
+
+	return getOrCreateNodeFromInnerNode(mapTree) as Unhydrated<
+		TreeFieldFromImplicitField<TSchema>
+	>;
 }
 
 /**
- * Creates an unhydrated simple-tree field from an ExclusiveMapTree.
+ * Construct an {@link UnhydratedFlexTreeNode} from a cursor in Nodes mode.
+ * @remarks
+ * This does not validate the node is in schema.
  */
-export function createFromMapTree<const TSchema extends ImplicitFieldSchema>(
-	schema: TSchema,
-	mapTree: ExclusiveMapTree,
-): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	const mapTreeNode = UnhydratedFlexTreeNode.getOrCreate(
-		getUnhydratedContext(schema),
-		mapTree,
+export function unhydratedFlexTreeFromCursor(
+	context: Context,
+	cursor: ITreeCursorSynchronous,
+): UnhydratedFlexTreeNode {
+	assert(cursor.mode === CursorLocationType.Nodes, 0xbb4 /* Expected nodes cursor */);
+	const schema = context.schema.get(cursor.type) ?? unknownTypeError(cursor.type);
+	const storedSchema = getStoredSchema(
+		schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,
 	);
-
-	const result = getOrCreateNodeFromInnerNode(mapTreeNode);
-	return result as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
+	const fields = new Map(
+		mapCursorFields(cursor, () => [
+			cursor.getFieldKey(),
+			createField(
+				context.flexContext,
+				storedSchema.getFieldSchema(cursor.getFieldKey()).kind,
+				cursor.getFieldKey(),
+				mapCursorField(cursor, () => unhydratedFlexTreeFromCursor(context, cursor)),
+			),
+		]),
+	);
+	return new UnhydratedFlexTreeNode(
+		{ type: cursor.type, value: cursor.value },
+		fields,
+		context,
+	);
 }

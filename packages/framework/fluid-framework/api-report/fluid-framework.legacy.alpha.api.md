@@ -425,14 +425,16 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 
 // @alpha @legacy
 export interface IInterval {
-    // (undocumented)
+    // @deprecated (undocumented)
     clone(): IInterval;
     compare(b: IInterval): number;
     compareEnd(b: IInterval): number;
     compareStart(b: IInterval): number;
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): IInterval | undefined;
+    // @deprecated
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): IInterval | undefined;
     // (undocumented)
     overlaps(b: IInterval): boolean;
+    // @deprecated
     union(b: IInterval): IInterval;
 }
 
@@ -571,7 +573,7 @@ export interface ISequenceIntervalCollection extends TypedEventEmitter<ISequence
         end: SequencePlace;
         props?: PropertySet;
     }): SequenceInterval;
-    // (undocumented)
+    // @deprecated (undocumented)
     attachDeserializer(onDeserialize: DeserializeCallback): void;
     // (undocumented)
     readonly attached: boolean;
@@ -611,11 +613,11 @@ export interface ISequenceIntervalCollectionEvents extends IEvent {
     (event: "changed", listener: (interval: SequenceInterval, propertyDeltas: PropertySet, previousInterval: SequenceInterval | undefined, local: boolean, slide: boolean) => void): void;
 }
 
-// @alpha @legacy (undocumented)
+// @alpha @deprecated @legacy (undocumented)
 export interface ISerializableInterval extends IInterval {
     getIntervalId(): string;
     properties: PropertySet;
-    // (undocumented)
+    // @deprecated (undocumented)
     serialize(): ISerializedInterval;
 }
 
@@ -854,7 +856,8 @@ export enum NodeKind {
     Array = 1,
     Leaf = 3,
     Map = 0,
-    Object = 2
+    Object = 2,
+    Record = 4
 }
 
 // @public @sealed
@@ -953,6 +956,7 @@ export class SchemaFactory<out TScope extends string | undefined = string | unde
     }, false, T, undefined>;
     readonly boolean: LeafSchema<"boolean", boolean>;
     static readonly boolean: LeafSchema<"boolean", boolean>;
+    protected getStructuralType(fullName: string, types: TreeNodeSchema | readonly TreeNodeSchema[], builder: () => TreeNodeSchema): TreeNodeSchema;
     readonly handle: LeafSchema<"handle", IFluidHandle<unknown>>;
     static readonly handle: LeafSchema<"handle", IFluidHandle<unknown>>;
     get identifier(): FieldSchema<FieldKind.Identifier, typeof SchemaFactory.string>;
@@ -1031,8 +1035,9 @@ export interface SequenceEvent<TOperation extends MergeTreeDeltaOperationTypes =
 
 // @alpha @legacy
 export interface SequenceInterval extends ISerializableInterval {
+    // @deprecated
     addPositionChangeListeners(beforePositionChange: () => void, afterPositionChange: () => void): void;
-    // (undocumented)
+    // @deprecated (undocumented)
     clone(): SequenceInterval;
     compare(b: SequenceInterval): number;
     compareEnd(b: SequenceInterval): number;
@@ -1040,13 +1045,17 @@ export interface SequenceInterval extends ISerializableInterval {
     readonly end: LocalReferencePosition;
     // (undocumented)
     readonly endSide: Side;
+    getIntervalId(): string;
     // (undocumented)
     readonly intervalType: IntervalType;
-    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, useNewSlidingBehavior?: boolean): SequenceInterval | undefined;
+    // @deprecated
+    modify(label: string, start: SequencePlace | undefined, end: SequencePlace | undefined, op?: ISequencedDocumentMessage, localSeq?: number, canSlideToEndpoint?: boolean): SequenceInterval | undefined;
     // (undocumented)
     overlaps(b: SequenceInterval): boolean;
     // (undocumented)
     overlapsPos(bstart: number, bend: number): boolean;
+    properties: PropertySet;
+    // @deprecated
     removePositionChangeListeners(): void;
     // (undocumented)
     readonly start: LocalReferencePosition;
@@ -1054,6 +1063,7 @@ export interface SequenceInterval extends ISerializableInterval {
     readonly startSide: Side;
     // (undocumented)
     readonly stickiness: IntervalStickiness;
+    // @deprecated
     union(b: SequenceInterval): SequenceInterval;
 }
 
@@ -1343,6 +1353,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 // @public @sealed
 export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> implements Required<ITreeViewConfiguration<TSchema>> {
     constructor(props: ITreeViewConfiguration<TSchema>);
+    protected readonly definitionsInternal: ReadonlyMap<string, TreeNodeSchema>;
     readonly enableSchemaValidation: boolean;
     readonly preventAmbiguity: boolean;
     readonly schema: TSchema;
@@ -1376,15 +1387,19 @@ export type UnionToIntersection<T> = (T extends T ? (k: T) => unknown : never) e
 export type ValidateRecursiveSchema<T extends ValidateRecursiveSchemaTemplate<T>> = true;
 
 // @public @system
-export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<string, NodeKind.Array | NodeKind.Map | NodeKind.Object, TreeNode & WithType<T["identifier"], T["kind"]>, {
+export type ValidateRecursiveSchemaTemplate<T extends TreeNodeSchema> = TreeNodeSchema<string, NodeKind.Array | NodeKind.Map | NodeKind.Object | NodeKind.Record, TreeNode & WithType<T["identifier"], T["kind"]>, {
     [NodeKind.Object]: T["info"] extends RestrictiveStringRecord<ImplicitFieldSchema> ? InsertableObjectFromSchemaRecord<T["info"]> : unknown;
     [NodeKind.Array]: T["info"] extends ImplicitAllowedTypes ? Iterable<InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>> : unknown;
     [NodeKind.Map]: T["info"] extends ImplicitAllowedTypes ? Iterable<[string, InsertableTreeNodeFromImplicitAllowedTypes<T["info"]>]> : unknown;
+    [NodeKind.Record]: {
+        readonly [P in string]: InsertableTreeNodeFromImplicitAllowedTypes<T>;
+    };
     [NodeKind.Leaf]: unknown;
 }[T["kind"]], false, {
     [NodeKind.Object]: RestrictiveStringRecord<ImplicitFieldSchema>;
     [NodeKind.Array]: ImplicitAllowedTypes;
     [NodeKind.Map]: ImplicitAllowedTypes;
+    [NodeKind.Record]: ImplicitAllowedTypes;
     [NodeKind.Leaf]: unknown;
 }[T["kind"]]>;
 

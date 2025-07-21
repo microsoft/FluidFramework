@@ -5,6 +5,7 @@
 
 import * as crypto from "crypto";
 
+import { ScopeType } from "@fluidframework/protocol-definitions";
 import {
 	getBooleanParam,
 	validateRequestParams,
@@ -12,15 +13,15 @@ import {
 } from "@fluidframework/server-services";
 import {
 	convertFirstSummaryWholeSummaryTreeToSummaryTree,
-	IAlfredTenant,
-	ISession,
+	type IAlfredTenant,
+	type ISession,
 	NetworkError,
 	DocDeleteScopeType,
 	TokenRevokeScopeType,
 	createFluidServiceNetworkError,
 	InternalErrorCode,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDocumentStorage,
 	IThrottler,
 	ITenantManager,
@@ -30,7 +31,7 @@ import {
 	IRevokeTokenOptions,
 	IRevokedTokenChecker,
 	IClusterDrainingChecker,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
@@ -42,16 +43,16 @@ import {
 	verifyStorageToken,
 	getCreationToken,
 	throttle,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	getParam,
 	validateTokenScopeClaims,
 	getBooleanFromConfig,
 	getTelemetryContextPropertiesWithHttpInfo,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
-import { Request, Router } from "express";
+import { type Request, Router } from "express";
 import type { RequestHandler } from "express-serve-static-core";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import { v4 as uuid } from "uuid";
 import winston from "winston";
 
@@ -62,7 +63,7 @@ import {
 	setGetSessionResultInCache,
 	StageTrace,
 } from "../../../utils";
-import { IDocumentDeleteService } from "../../services";
+import type { IDocumentDeleteService } from "../../services";
 
 /**
  * Response body shape for modern clients that can handle object responses.
@@ -249,7 +250,12 @@ export function create(
 		"/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId;
@@ -283,7 +289,7 @@ export function create(
 			createDocTenantThrottleOptions,
 			isHttpUsageCountingEnabled,
 		),
-		verifyStorageToken(tenantManager, config, {
+		verifyStorageToken(tenantManager, config, [ScopeType.DocRead, ScopeType.DocWrite], {
 			requireDocumentId: false,
 			ensureSingleUseToken: true,
 			singleUseTokenCache,
@@ -435,7 +441,12 @@ export function create(
 			winston,
 			getSessionTenantThrottleOptions,
 		),
-		verifyStorageTokenForGetSession(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageTokenForGetSession(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
@@ -521,7 +532,12 @@ export function create(
 		"/:tenantId/document/:id",
 		validateRequestParams("tenantId", "id"),
 		validateTokenScopeClaims(DocDeleteScopeType),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead, ScopeType.DocWrite],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {
@@ -565,7 +581,12 @@ export function create(
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
 		validateTokenScopeClaims(TokenRevokeScopeType),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead, ScopeType.DocWrite],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList, true /* skipDocumentCheck */),
 		// eslint-disable-next-line @typescript-eslint/no-misused-promises
 		async (request, response, next) => {

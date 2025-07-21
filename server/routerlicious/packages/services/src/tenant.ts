@@ -8,10 +8,10 @@ import { ScopeType, type IUser } from "@fluidframework/protocol-definitions";
 import {
 	GitManager,
 	Historian,
-	ICredentials,
+	type ICredentials,
 	BasicRestWrapper,
 	getAuthorizationTokenFromCredentials,
-	IGitManager,
+	type IGitManager,
 	parseToken,
 	isNetworkError,
 	NetworkError,
@@ -29,7 +29,7 @@ import {
 	getValidAccessToken,
 	logHttpMetrics,
 } from "@fluidframework/server-services-utils";
-import { RawAxiosRequestHeaders } from "axios";
+import type { RawAxiosRequestHeaders } from "axios";
 
 import { IsEphemeralContainer } from ".";
 

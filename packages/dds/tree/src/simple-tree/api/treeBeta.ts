@@ -11,7 +11,7 @@ import {
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 
 import { createFromCursor } from "./create.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
@@ -85,8 +85,8 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	 */
 	nodeChanged: (
 		data: NodeChangedData<TNode> &
-			// For object and Map nodes, make properties specific to them required instead of optional:
-			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
+			// Make the properties of object, map, and record nodes required:
+			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
 				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
 				: unknown),
 	) => void;
@@ -127,6 +127,9 @@ export interface TreeBeta {
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
+	 *
+	 * @privateRemarks
+	 * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,

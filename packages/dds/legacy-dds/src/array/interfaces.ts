@@ -16,27 +16,26 @@ import type { ISharedArrayOperation } from "./sharedArrayOperations.js";
  * It can be used as a generic constraint (`extends SerializableTypeForSharedArray`) but is
  * *never* meant to be a concrete/real type on its own.
  *
- * @internal
+ * @legacy
+ * @alpha
  */
 export type SerializableTypeForSharedArray = boolean | number | string | object | IFluidHandle;
-
-/**
- *
- * @typeParam T - The type of the object to make readonly
- *
- * @internal
- */
-export type FullyReadonly<T> = {
-	readonly [P in keyof T]: FullyReadonly<T[P]>;
-};
 
 /**
  * Interface defining the events that can be emitted by the SharedArray DDS
  * and the events that can be listened to by the SharedArray DDS
  *
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface ISharedArrayEvents extends ISharedObjectEvents {
+	/**
+	 *
+	 * @param event - The event name.
+	 * @param listener - An event listener.
+	 *
+	 * @eventProperty
+	 */
 	(
 		event: "valueChanged",
 		listener: (
@@ -46,6 +45,13 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
 		) => void,
 	): void;
 
+	/**
+	 *
+	 * @param event - The event name.
+	 * @param listener - An event listener.
+	 *
+	 * @eventProperty
+	 */
 	(event: "revertible", listener: (revertible: IRevertible) => void): void;
 }
 
@@ -56,22 +62,21 @@ export interface ISharedArrayEvents extends ISharedObjectEvents {
  *
  * @typeParam T - The type of the SharedArray
  *
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface ISharedArray<T extends SerializableTypeForSharedArray>
 	extends ISharedObject<ISharedArrayEvents> {
-	get(): FullyReadonly<T[]>;
+	get(): readonly T[];
 	insert<TWrite>(index: number, value: Serializable<TWrite> & T): void;
 	delete(index: number): void;
 	move(oldIndex: number, newIndex: number): void;
+	toggle(entryId: string): void;
+	toggleMove(oldEntryId: string, newEntryId: string): void;
+	insertBulkAfter<TWrite>(ref: T | undefined, values: (Serializable<TWrite> & T)[]): void;
 }
 
 /**
- * Interface defining the SharedArray DDS with revertible operations
- * It is a generic interface that can be used to create a SharedArray of any type
- * The type of the SharedArray is defined by the type parameter T
- *
- * @typeParam T - The type of the SharedArray
  *
  * @internal
  */
@@ -155,7 +160,8 @@ export interface SnapshotFormat<T> {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IRevertible {
 	revert(): void;
