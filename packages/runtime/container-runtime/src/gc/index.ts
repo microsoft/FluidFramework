@@ -24,7 +24,6 @@ export {
 	IGCMetadata_Deprecated,
 	IGCNodeUpdatedProps,
 	IGCResult,
-	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCStats,

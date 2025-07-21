@@ -5,14 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
+import type {
+	ISummaryConfiguration,
+	ISummaryConfigurationHeuristics,
+} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
 import {
 	ISummarizeAttempt,
 	ISummarizeHeuristicData,
-	ISummaryConfiguration,
-	ISummaryConfigurationHeuristics,
 	SummarizeHeuristicData,
 	SummarizeHeuristicRunner,
 	SummarizeReason,

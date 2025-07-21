@@ -17,6 +17,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryConfiguration } from "@fluidframework/runtime-definitions/internal";
 import {
 	MonitoringContext,
 	UsageError,
@@ -40,7 +41,6 @@ import type {
 	ISummarizeRunnerTelemetry,
 	ISummarizeTelemetryProperties,
 	ISummaryCancellationToken,
-	ISummaryConfiguration,
 	SubmitSummaryResult,
 } from "../summarizerTypes.js";
 import { raceTimer, RetriableSummaryError, type SummarizeReason } from "../summarizerUtils.js";

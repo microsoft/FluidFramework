@@ -11,6 +11,7 @@ import { Timer } from "@fluidframework/core-utils/internal";
 import {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
+	type IGCRuntimeOptions,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockLogger,
@@ -25,7 +26,6 @@ import {
 	GarbageCollector,
 	IGCMetadata,
 	IGCMetadata_Deprecated,
-	IGCRuntimeOptions,
 	IGarbageCollectionRuntime,
 	IGarbageCollectionState,
 	IGarbageCollector,

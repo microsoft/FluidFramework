@@ -7,11 +7,7 @@
 // @alpha @legacy
 export const AllowTombstoneRequestHeaderKey = "allowTombstone";
 
-// @alpha @legacy
-export enum CompressionAlgorithms {
-    // (undocumented)
-    lz4 = "lz4"
-}
+export { CompressionAlgorithms }
 
 // @alpha @legacy (undocumented)
 export enum ContainerMessageType {
@@ -32,28 +28,12 @@ export enum ContainerMessageType {
     Rejoin = "rejoin"
 }
 
-// @alpha @legacy
-export interface ContainerRuntimeOptions {
-    readonly chunkSizeInBytes: number;
-    readonly compressionOptions: ICompressionRuntimeOptions;
-    readonly createBlobPayloadPending: true | undefined;
-    // @deprecated
-    readonly enableGroupedBatching: boolean;
-    readonly enableRuntimeIdCompressor: IdCompressorMode;
-    readonly explicitSchemaControl: boolean;
-    // (undocumented)
-    readonly gcOptions: IGCRuntimeOptions;
-    readonly loadSequenceNumberVerification: "close" | "log" | "bypass";
-    readonly maxBatchSizeInBytes: number;
-    // (undocumented)
-    readonly summaryOptions: ISummaryRuntimeOptions;
-}
+export { ContainerRuntimeOptions }
 
 // @alpha @legacy (undocumented)
 export const DefaultSummaryConfiguration: ISummaryConfiguration;
 
-// @alpha @legacy (undocumented)
-export const disabledCompressionConfig: ICompressionRuntimeOptions;
+export { disabledCompressionConfig }
 
 // @alpha @legacy (undocumented)
 export type EnqueueSummarizeResult = (ISummarizeResults & {
@@ -108,17 +88,11 @@ export interface IClientSummaryWatcher extends IDisposable {
     watchSummary(clientSequenceNumber: number): ISummary;
 }
 
-// @alpha @legacy
-export interface ICompressionRuntimeOptions {
-    readonly compressionAlgorithm: CompressionAlgorithms;
-    readonly minimumBatchSizeInBytes: number;
-}
+export { ICompressionRuntimeOptions }
 
-// @alpha @legacy
-export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
+export { IContainerRuntimeOptions }
 
-// @alpha @legacy
-export type IdCompressorMode = "on" | "delayed" | undefined;
+export { IdCompressorMode }
 
 // @alpha @legacy
 export interface IEnqueueSummarizeOptions extends IOnDemandSummarizeOptions {
@@ -153,14 +127,7 @@ export interface IFluidDataStoreAttributes2 extends OmitAttributesVersions<IFlui
     readonly summaryFormatVersion: 2;
 }
 
-// @alpha @legacy (undocumented)
-export interface IGCRuntimeOptions {
-    [key: string]: any;
-    enableGCSweep?: true;
-    runFullGC?: boolean;
-    sessionExpiryTimeoutMs?: number;
-    sweepGracePeriodMs?: number;
-}
+export { IGCRuntimeOptions }
 
 // @alpha @legacy
 export interface IGeneratedSummaryStats extends ISummaryStats {
@@ -257,12 +224,7 @@ export interface ISummaryAckMessage extends ISequencedDocumentMessage {
     type: MessageType.SummaryAck;
 }
 
-// @alpha @legacy (undocumented)
-export interface ISummaryBaseConfiguration {
-    initialSummarizerDelayMs: number;
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number;
-}
+export { ISummaryBaseConfiguration }
 
 // @alpha @legacy (undocumented)
 export interface ISummaryCollectionOpEvents extends IEvent {
@@ -270,34 +232,13 @@ export interface ISummaryCollectionOpEvents extends IEvent {
     (event: OpActionEventName, listener: OpActionEventListener): any;
 }
 
-// @alpha @legacy (undocumented)
-export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics;
+export { ISummaryConfiguration }
 
-// @alpha @legacy (undocumented)
-export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
-    // (undocumented)
-    state: "disableHeuristics";
-}
+export { ISummaryConfigurationDisableHeuristics }
 
-// @alpha @legacy (undocumented)
-export interface ISummaryConfigurationDisableSummarizer {
-    // (undocumented)
-    state: "disabled";
-}
+export { ISummaryConfigurationDisableSummarizer }
 
-// @alpha @legacy (undocumented)
-export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-    maxIdleTime: number;
-    maxOps: number;
-    maxTime: number;
-    minIdleTime: number;
-    minOpsForLastSummaryAttempt: number;
-    nonRuntimeHeuristicThreshold?: number;
-    nonRuntimeOpWeight: number;
-    runtimeOpWeight: number;
-    // (undocumented)
-    state: "enabled";
-}
+export { ISummaryConfigurationHeuristics }
 
 // @alpha @legacy
 export interface ISummaryNackMessage extends ISequencedDocumentMessage {
@@ -315,12 +256,7 @@ export interface ISummaryOpMessage extends ISequencedDocumentMessage {
     type: MessageType.Summarize;
 }
 
-// @alpha @legacy (undocumented)
-export interface ISummaryRuntimeOptions {
-    // @deprecated
-    initialSummarizerDelayMs?: number;
-    summaryConfigOverrides?: ISummaryConfiguration;
-}
+export { ISummaryRuntimeOptions }
 
 // @alpha @legacy
 export interface IUploadSummaryResult extends Omit<IGenerateSummaryTreeResult, "stage"> {
@@ -346,8 +282,7 @@ export interface LoadContainerRuntimeParams {
     runtimeOptions?: IContainerRuntimeOptions;
 }
 
-// @alpha @legacy
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+export { MinimumVersionForCollab }
 
 // @alpha @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;

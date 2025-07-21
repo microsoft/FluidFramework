@@ -27,6 +27,7 @@ import {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
+import type { ISummaryConfiguration } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, mixinMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 import { MockDeltaManager } from "@fluidframework/test-runtime-utils/internal";
 import sinon from "sinon";
@@ -42,9 +43,6 @@ import {
 	SummaryCollection,
 	getFailMessage,
 	neverCancelledSummaryToken,
-	type ISummaryConfiguration,
-} from "../../summary/index.js";
-import {
 	defaultMaxAttempts,
 	defaultMaxAttemptsForSubmitFailures,
 	RunningSummarizer,

@@ -4,11 +4,6 @@
  */
 
 export {
-	ContainerRuntimeOptions,
-	ContainerRuntimeOptionsInternal,
-	ISummaryRuntimeOptions,
-	IContainerRuntimeOptions,
-	IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
 	LoadContainerRuntimeParams,
 	agentSchedulerId,
@@ -18,8 +13,27 @@ export {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
 } from "./containerRuntime.js";
-export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
-export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
+export {
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
+	 */
+	CompressionAlgorithms,
+	disabledCompressionConfig,
+	type ICompressionRuntimeOptions,
+	MinimumVersionForCollab,
+	SemanticVersion,
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
+	ISummaryRuntimeOptions,
+	IContainerRuntimeOptions,
+	IContainerRuntimeOptionsInternal,
+	IGCRuntimeOptions,
+	ISummaryBaseConfiguration,
+	ISummaryConfiguration,
+	ISummaryConfigurationDisableHeuristics,
+	ISummaryConfigurationDisableSummarizer,
+	ISummaryConfigurationHeuristics,
+} from "@fluidframework/runtime-definitions/internal";
 export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
@@ -31,14 +45,12 @@ export {
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
-export type { MinimumVersionForCollab, SemanticVersion } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,
 	GCFeatureMatrix,
 	GCVersion,
 	IGarbageCollectionRuntime,
-	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCNodeUpdatedProps,
@@ -104,11 +116,6 @@ export {
 	IFluidDataStoreAttributes1,
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
-	ISummaryBaseConfiguration,
-	ISummaryConfigurationHeuristics,
-	ISummaryConfigurationDisableSummarizer,
-	ISummaryConfigurationDisableHeuristics,
-	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";

@@ -14,6 +14,7 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryConfiguration } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITelemetryLoggerExt,
@@ -28,7 +29,6 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { type ISummaryConfiguration } from "../../index.js";
 import {
 	IConnectableRuntime,
 	type IConnectedEvents,

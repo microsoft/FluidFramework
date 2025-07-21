@@ -10,10 +10,13 @@ import {
 	TestDataObjectType,
 	describeCompat,
 } from "@fluid-private/test-version-utils";
-import { IGCRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	channelsTreeName,
+	gcTreeKey,
+	type IGCRuntimeOptions,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,

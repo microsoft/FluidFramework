@@ -4,6 +4,7 @@
  */
 
 import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import type { IGCRuntimeOptions } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -13,7 +14,6 @@ import {
 	IGarbageCollectionSnapshotData,
 	IGarbageCollectionState,
 	IGarbageCollector,
-	type IGCRuntimeOptions,
 } from "../../gc/index.js";
 import { ContainerRuntimeGCMessage } from "../../messageTypes.js";
 import { pkgVersion } from "../../packageVersion.js";

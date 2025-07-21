@@ -36,11 +36,6 @@ export {
 	SubmitSummaryFailureData,
 	SummaryStage,
 	IRetriableFailureError,
-	type ISummaryConfiguration,
-	type ISummaryConfigurationDisableHeuristics,
-	type ISummaryConfigurationDisableSummarizer,
-	type ISummaryConfigurationHeuristics,
-	type ISummaryBaseConfiguration,
 } from "./summarizerTypes.js";
 export {
 	IOrderedClientCollection,

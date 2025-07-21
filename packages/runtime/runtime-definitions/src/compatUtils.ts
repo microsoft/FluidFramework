@@ -4,7 +4,6 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { compare, gt, gte, lte, valid } from "semver-ts";
 
@@ -12,7 +11,8 @@ import {
 	disabledCompressionConfig,
 	enabledCompressionConfig,
 } from "./compressionDefinitions.js";
-import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
+import type { ContainerRuntimeOptionsInternal } from "./containerRuntimeOptions.js";
+import { FlushMode } from "./dataStoreContext.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -32,6 +32,8 @@ import { pkgVersion } from "./packageVersion.js";
  * version and allow `enableExplicitSchemaControl` to default to `true` for
  * any 2.0.0+ version, we will use a special value of `2.0.0-defaults`, which
  * is semantically less than 2.0.0.
+ *
+ * @internal
  */
 export const defaultMinVersionForCollab =
 	"2.0.0-defaults" as const satisfies MinimumVersionForCollab;
@@ -91,12 +93,12 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
 
 /**
  * Subset of the {@link ContainerRuntimeOptionsInternal} properties which
- * affect {@link IDocumentSchemaFeatures}.
+ * affect {@link @fluidframework/container-runtime#IDocumentSchemaFeatures}.
  *
  * @remarks
  * When a new option is added to {@link ContainerRuntimeOptionsInternal}, we
  * must consider if it changes the DocumentSchema. If so, then a corresponding
- * entry must be added to {@link runtimeOptionsAffectingDocSchemaConfigMap}
+ * entry must be added to `runtimeOptionsAffectingDocSchemaConfigMap`
  * below. If not, then it must be omitted from this type.
  *
  * Note: `Omit` is used instead of `Pick` to ensure that all new options are
@@ -104,6 +106,8 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
  * {@link ContainerRuntimeOptionsInternal}, they will be included in this
  * type unless explicitly omitted. This will prevent us from forgetting to
  * account for any new properties in the future.
+ *
+ * @internal
  */
 export type RuntimeOptionsAffectingDocSchema = Omit<
 	ContainerRuntimeOptionsInternal,
@@ -126,7 +130,7 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
  * default value for `enableGroupedBatching` will be true because clients running 2.0 or later will be able to understand the format changes associated
  * with the batching feature.
  */
-const runtimeOptionsAffectingDocSchemaConfigMap = {
+export const runtimeOptionsAffectingDocSchemaConfigMap = {
 	enableGroupedBatching: {
 		"1.0.0": false,
 		"2.0.0-defaults": true,
@@ -203,7 +207,13 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 		[FlushMode.Immediate, "1.0.0"],
 		[FlushMode.TurnBased, "2.0.0-defaults"],
 	]),
-	gcOptions: configValueToMinVersionForCollab([
+	// This is a special case where a type was moved from a package where exactOptionalPropertyTypes was set to false, and changing
+	// the type as part of the move would break backwards compatibility. Instead, we are explicitly specifying the type. This should
+	// get cleaned up as part of a separate refactor.
+	gcOptions: configValueToMinVersionForCollab<
+		{ enableGCSweep?: boolean | undefined },
+		[{ enableGCSweep?: boolean | undefined }, SemanticVersion][]
+	>([
 		[{ enableGCSweep: undefined }, "1.0.0"],
 		[{ enableGCSweep: true }, "2.0.0-defaults"],
 	]),
@@ -215,6 +225,8 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 
 /**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
+ *
+ * @internal
  */
 export function getMinVersionForCollabDefaults(
 	minVersionForCollab: MinimumVersionForCollab,
@@ -259,6 +271,8 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
 /**
  * Checks if the minVersionForCollab is valid.
  * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
+ *
+ * @internal
  */
 export function isValidMinVersionForCollab(
 	minVersionForCollab: MinimumVersionForCollab,
@@ -274,6 +288,8 @@ export function isValidMinVersionForCollab(
  * Validates if the runtime options passed in from the user are compatible with the minVersionForCollab.
  * For example, if a user sets the `enableGroupedBatching` option to true, but the minVersionForCollab
  * is set to "1.0.0", then we should throw a UsageError since 1.x clients do not support batching.
+ *
+ * @internal
  * */
 export function validateRuntimeOptions(
 	minVersionForCollab: MinimumVersionForCollab,

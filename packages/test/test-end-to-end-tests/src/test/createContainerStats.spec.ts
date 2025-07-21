@@ -11,9 +11,9 @@ import {
 	DefaultSummaryConfiguration,
 	IAckedSummary,
 	IContainerRuntimeOptions,
-	ISummaryConfiguration,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
+import type { ISummaryConfiguration } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,

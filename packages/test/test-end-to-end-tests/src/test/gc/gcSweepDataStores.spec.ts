@@ -15,7 +15,6 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/
 import {
 	ContainerMessageType,
 	ContainerRuntime,
-	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	DeletedResponseHeaderKey,
@@ -36,7 +35,11 @@ import type { ISummarizeEventProps } from "@fluidframework/container-runtime-def
 import { IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
+import {
+	channelsTreeName,
+	gcTreeKey,
+	type IGCRuntimeOptions,
+} from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,

@@ -83,3 +83,34 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { IdCompressorMode } from "./idCompressorDefinitions.js";
+export { CompressionAlgorithms } from "./compressionDefinitions.js";
+export {
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
+	IContainerRuntimeOptions,
+	IContainerRuntimeOptionsInternal,
+	ISummaryRuntimeOptions,
+} from "./containerRuntimeOptions.js";
+export {
+	ISummaryBaseConfiguration,
+	ISummaryConfiguration,
+	ISummaryConfigurationDisableHeuristics,
+	ISummaryConfigurationDisableSummarizer,
+	ISummaryConfigurationHeuristics,
+} from "./summaryConfiguration.js";
+export { IGCRuntimeOptions } from "./gcRuntimeOptions.js";
+export { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export {
+	defaultMinVersionForCollab,
+	getMinVersionForCollabDefaults,
+	isValidMinVersionForCollab,
+	MinimumVersionForCollab,
+	RuntimeOptionsAffectingDocSchema,
+	SemanticVersion,
+	validateRuntimeOptions,
+} from "./compatUtils.js";
+export {
+	disabledCompressionConfig,
+	enabledCompressionConfig,
+} from "./compressionDefinitions.js";

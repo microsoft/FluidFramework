@@ -4,8 +4,8 @@
  */
 
 import type { IBatchMessage } from "@fluidframework/container-definitions/internal";
+import { CompressionAlgorithms } from "@fluidframework/runtime-definitions/internal";
 
-import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import type { LocalContainerRuntimeMessage } from "../messageTypes.js";
 import type { IEmptyBatchMetadata } from "../metadata.js";
 
