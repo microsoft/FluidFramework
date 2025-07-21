@@ -1794,7 +1794,7 @@ export class ContainerRuntime
 
 		// eslint-disable-next-line unicorn/consistent-destructuring
 		if (context.attachState === AttachState.Attached) {
-			const maxSnapshotCacheDurationMs = this._storage.policies?.maximumCacheDurationMs;
+			const maxSnapshotCacheDurationMs = this._storage?.policies?.maximumCacheDurationMs;
 			if (
 				maxSnapshotCacheDurationMs !== undefined &&
 				maxSnapshotCacheDurationMs > 5 * 24 * 60 * 60 * 1000
