@@ -116,7 +116,7 @@ export interface AllowedTypesMetadata {
 export function isAnnotatedAllowedType(
 	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 ): allowedType is AnnotatedAllowedType {
-	return allowedType !== undefined && "metadata" in allowedType && "type" in allowedType;
+	return "metadata" in allowedType && "type" in allowedType;
 }
 
 /**
@@ -132,7 +132,7 @@ export interface AllowedTypeMetadata {
 	readonly custom?: unknown;
 
 	/**
-	 * If defined, indicates that an allowed type is staged. Before upgrade, any attempt to insert or move a node to the location where this allowed type is declared will throw an error.
+	 * If defined, indicates that an allowed type is {@link SchemaFactoryAlpha.staged | staged}.
 	 */
 	readonly stagedSchemaUpgrade?: SchemaUpgrade;
 }

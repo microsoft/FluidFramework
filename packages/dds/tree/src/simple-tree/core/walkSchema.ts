@@ -72,7 +72,7 @@ export interface SchemaVisitor {
 	 */
 	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
 	/**
-	 * If true, will walk the staged allowed types of the schema in both the node callback and the allowedTypes callback.
+	 * If true, will walk the {@link SchemaFactoryAlpha.staged | staged allowed types} of the schema in both the node callback and the allowedTypes callback.
 	 * If undefined, will skip any staged allowed types in the node callback but will include them in the allowedTypes callback.
 	 */
 	walkStagedAllowedTypes?: true;
