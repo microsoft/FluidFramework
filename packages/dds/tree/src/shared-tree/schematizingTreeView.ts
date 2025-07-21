@@ -171,7 +171,7 @@ export class SchematizingSimpleTreeView<
 	 * Initializes the tree view with the provided content.
 	 * @param validateSchema - By default, initialization does not validate the given content against the schema.
 	 * This is to allow for staged allowed types to be loaded in the tree.
-	 * TODO: Maybe repurpose the enableSchemaValidation flag to control this?
+	 * TODO: Maybe repurpose the validateSchema flag to control this?
 	 */
 	public initialize(content: InsertableField<TRootSchema>, validateSchema?: true): void {
 		this.ensureUndisposed();

@@ -19,13 +19,16 @@ describe("staged schema upgrade", () => {
 	const factory = new SchemaFactoryAlpha("upgrade");
 
 	// schema A: only number allowed
-	const schemaA = factory.optional([factory.number]);
+	const schemaA = factory.optional([SchemaFactoryAlpha.number]);
 
 	// schema B: number or string (string is staged)
-	const schemaB = factory.optional([factory.number, factory.staged(factory.string)]);
+	const schemaB = factory.optional([
+		SchemaFactoryAlpha.number,
+		factory.staged(SchemaFactoryAlpha.string),
+	]);
 
 	// schema C: number or string, both fully allowed
-	const schemaC = factory.optional([factory.number, factory.string]);
+	const schemaC = factory.optional([SchemaFactoryAlpha.number, SchemaFactoryAlpha.string]);
 
 	it("using the schema compatibility tester", () => {
 		// start with an empty document:

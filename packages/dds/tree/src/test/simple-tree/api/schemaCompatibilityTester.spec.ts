@@ -394,11 +394,11 @@ describe("SchemaCompatibilityTester", () => {
 		describe("with staged allowed types", () => {
 			it("allows viewing and upgrading with staged type not in stored schema", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [factory.number, factory.staged(factory.string)],
+					foo: [SchemaFactoryAlpha.number, factory.staged(SchemaFactoryAlpha.string)],
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
-					foo: factory.number,
+					foo: SchemaFactoryAlpha.number,
 				}) {}
 
 				expectCompatibility(
@@ -410,11 +410,11 @@ describe("SchemaCompatibilityTester", () => {
 
 			it("allows viewing and upgrading with staged type also in stored schema as normal", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
-					foo: [factory.number, factory.staged(factory.string)],
+					foo: [SchemaFactoryAlpha.number, factory.staged(SchemaFactoryAlpha.string)],
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
-					foo: [factory.number, factory.string],
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
 				}) {}
 
 				expectCompatibility(

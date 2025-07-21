@@ -102,8 +102,8 @@ describe("SchematizingSimpleTreeView", () => {
 		it("tolerates staged allowed types", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			const stagedSchema = schemaFactoryAlpha.arrayAlpha("TestArray", [
-				schemaFactoryAlpha.number,
-				schemaFactoryAlpha.staged(schemaFactoryAlpha.string),
+				SchemaFactoryAlpha.number,
+				schemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
 			]);
 
 			const emptyContent = {
@@ -134,7 +134,7 @@ describe("SchematizingSimpleTreeView", () => {
 		for (const enableSchemaValidation of [true, false]) {
 			it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}`, () => {
 				class Root extends schema.object("Root", {
-					content: schema.number,
+					content: SchemaFactoryAlpha.number,
 				}) {}
 
 				const config2 = new TreeViewConfiguration({

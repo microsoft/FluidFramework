@@ -323,7 +323,7 @@ describe("allowedTypes", () => {
 	});
 
 	describe("normalizeToAnnotatedAllowedType", () => {
-		const fakeSchema = schema.string;
+		const fakeSchema = SchemaFactory.string;
 		const lazy = () => fakeSchema;
 
 		it("wraps TreeNodeSchema in an annotation", () => {

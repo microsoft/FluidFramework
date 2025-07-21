@@ -96,7 +96,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}, true),
+				validateUsageError(/Field_NodeTypeNotAllowed/),
+			);
 		});
 
 		it("invalid default - insert", () => {

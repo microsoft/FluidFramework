@@ -125,10 +125,10 @@ export interface SchemaPolicy {
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
 
 	/**
-	 * This is not used for anything. New content that is inserted into the tree will always be validated against the stored schema.
+	 * This is not used for anything. New content that is inserted into the tree will always be validated against the stored schema except during initialization.
 	 * @remarks
 	 * TODO: AB#43546: This is not information used to interpret the stored schema: this configuration should be moved elsewhere.
-	 * TODO: Evaluate if this should be removed.
+	 * TODO: Evaluate if this should be removed or renamed.
 	 */
 	readonly validateSchema: boolean;
 
