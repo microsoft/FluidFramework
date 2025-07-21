@@ -131,6 +131,35 @@ describe("Tsdoc node transformation tests", () => {
 						),
 					]);
 				});
+
+				// Note: we do not currently supported nested lists.
+				// If we add support later, this test should be updated.
+				it("Nested lists", () => {
+					const comment = `/**
+ * 1. Item 1
+ *   1. Item 1.a
+ *   2. Item 1.b
+ * 2. Item 2
+ * 	1. Item 2.a
+ */`;
+					const context = parser.parseString(comment);
+					const summarySection = context.docComment.summarySection;
+
+					const result = transformTsdocSection(summarySection, transformOptions);
+
+					expect(result).to.deep.equal([
+						new ListNode(
+							[
+								new ListItemNode([new PlainTextNode("Item 1")]),
+								new ListItemNode([new PlainTextNode("Item 1.a")]),
+								new ListItemNode([new PlainTextNode("Item 1.b")]),
+								new ListItemNode([new PlainTextNode("Item 2")]),
+								new ListItemNode([new PlainTextNode("Item 2.a")]),
+							],
+							true,
+						),
+					]);
+				});
 			});
 
 			describe("Unordered lists", () => {
@@ -193,9 +222,40 @@ describe("Tsdoc node transformation tests", () => {
 						),
 					]);
 				});
-			});
 
-			it("Mixed lists", () => {
+				// Note: we do not currently supported nested lists.
+				// If we add support later, this test should be updated.
+				it("Nested lists", () => {
+					const comment = `/**
+ * - Item 1
+ *   - Item 1.a
+ *   - Item 1.b
+ * - Item 2
+ * 	- Item 2.a
+ */`;
+					const context = parser.parseString(comment);
+					const summarySection = context.docComment.summarySection;
+
+					const result = transformTsdocSection(summarySection, transformOptions);
+
+					expect(result).to.deep.equal([
+						new ListNode(
+							[
+								new ListItemNode([new PlainTextNode("Item 1")]),
+								new ListItemNode([new PlainTextNode("Item 1.a")]),
+								new ListItemNode([new PlainTextNode("Item 1.b")]),
+								new ListItemNode([new PlainTextNode("Item 2")]),
+								new ListItemNode([new PlainTextNode("Item 2.a")]),
+							],
+							false,
+						),
+					]);
+				});
+			});
+		});
+
+		it("Mixed", () => {
+			it("Mixed ordered and unordered lists", () => {
 				const comment = `/**
 * 1. Item 1
 * 2. Item 2
@@ -234,10 +294,10 @@ describe("Tsdoc node transformation tests", () => {
 				]);
 			});
 		});
-
-		// Test TODOs:
-		// - Nested lists
-		// - Interspersed paragraphs and lists
-		// - Code blocks
 	});
+
+	// Test TODOs:
+	// - Nested lists
+	// - Interspersed paragraphs and lists
+	// - Code blocks
 });
