@@ -12,12 +12,21 @@ import {
 	Tooltip,
 } from "@fluentui/react-components";
 import { ArrowSync24Regular, Info24Regular } from "@fluentui/react-icons";
+import { ConnectionState } from "@fluidframework/container-loader";
 import type {
 	HasContainerKey,
 	DevtoolsFeatureFlags,
 	ContainerKey,
+	ContainerStateMetadata,
+	InboundHandlers,
+	ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
-import { GetContainerList } from "@fluidframework/devtools-core/internal";
+import {
+	GetContainerList,
+	GetContainerState,
+	ContainerStateChange,
+	handleIncomingMessage,
+} from "@fluidframework/devtools-core/internal";
 import React from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
@@ -341,6 +350,13 @@ export interface MenuItemProps {
 	onClick: (event: unknown) => void;
 	text: string;
 	isActive: boolean;
+	/**
+	 * Connection status of the container for styling.
+	 * - "connected": Normal styling
+	 * - "disconnected": Red styling (#FF0000)
+	 * - "closed": Dark red styling (#8B0000)
+	 */
+	connectionStatus?: "connected" | "disconnected" | "closed";
 }
 
 const useMenuItemStyles = makeStyles({
@@ -363,13 +379,26 @@ const useMenuItemStyles = makeStyles({
 		color: tokens.colorNeutralForeground1,
 		backgroundColor: tokens.colorNeutralBackground1,
 	},
+	// Connection status overrides - these take precedence over active/hover states
+	disconnected: {
+		"color": "#FF8C00 !important", // Override all other color styles
+		"&:hover": {
+			"color": "#FF8C00 !important",
+		},
+	},
+	closed: {
+		"color": "#FF4500 !important", // Override all other color styles
+		"&:hover": {
+			"color": "#FF4500 !important",
+		},
+	},
 });
 
 /**
  * Generic component for a menu item (under a section).
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
-	const { isActive, onClick, text } = props;
+	const { isActive, onClick, text, connectionStatus = "connected" } = props;
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
 		if (event.key === "Enter" || event.key === " ") {
@@ -378,7 +407,19 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	};
 
 	const styles = useMenuItemStyles();
-	const style = mergeClasses(styles.root, isActive ? styles.active : styles.inactive);
+
+	// Base style (active state for selection)
+	const baseStyle = isActive ? styles.active : styles.inactive;
+
+	// Connection status override (these use !important to override base colors)
+	const connectionStyle =
+		connectionStatus === "disconnected"
+			? styles.disconnected
+			: connectionStatus === "closed"
+				? styles.closed
+				: undefined;
+
+	const style = mergeClasses(styles.root, baseStyle, connectionStyle);
 
 	return (
 		<div
@@ -470,6 +511,66 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		tooltipContent,
 	} = props;
 
+	const messageRelay = useMessageRelay();
+	const [containerStates, setContainerStates] = React.useState<
+		Map<ContainerKey, ContainerStateMetadata>
+	>(new Map());
+
+	// Fetch container states when containers list changes
+	React.useEffect(() => {
+		if (containers === undefined) {
+			return;
+		}
+
+		const inboundMessageHandlers: InboundHandlers = {
+			[ContainerStateChange.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as ContainerStateChange.Message;
+				setContainerStates((prev) => {
+					const newMap = new Map(prev);
+					newMap.set(message.data.containerKey, message.data.containerState);
+					return newMap;
+				});
+				return true;
+			},
+		};
+
+		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
+			handleIncomingMessage(message, inboundMessageHandlers, {
+				context: "ContainersMenuSection",
+			});
+		}
+
+		messageRelay.on("message", messageHandler);
+
+		// Request state for each container
+		for (const containerKey of containers) {
+			messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
+		}
+
+		return (): void => {
+			messageRelay.off("message", messageHandler);
+		};
+	}, [containers, messageRelay]);
+
+	/**
+	 * Determines the connection status of a container based on its state.
+	 */
+	function getContainerConnectionStatus(
+		containerKey: ContainerKey,
+	): "connected" | "disconnected" | "closed" {
+		const state = containerStates.get(containerKey);
+		if (state === undefined) {
+			return "connected"; // Default to connected if we don't have state info yet
+		}
+		if (state.closed) {
+			return "closed";
+		}
+		if (state.connectionState === ConnectionState.Disconnected) {
+			return "disconnected";
+		}
+		return "connected";
+	}
+
 	let containerSectionInnerView: React.ReactElement;
 	if (containers === undefined) {
 		containerSectionInnerView = <Waiting label={`Fetching ${sectionLabel} list`} />;
@@ -484,6 +585,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 						key={containerKey}
 						isActive={currentContainerSelection === containerKey}
 						text={containerKey}
+						connectionStatus={getContainerConnectionStatus(containerKey)}
 						onClick={(event): void => {
 							selectContainer(`${containerKey}`);
 						}}

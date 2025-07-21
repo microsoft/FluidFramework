@@ -29,7 +29,7 @@ export const ContainerFeatureFlagContext = React.createContext<
 export function useContainerFeaturesContext(): ContainerFeatureFlagContextData {
 	const context = React.useContext(ContainerFeatureFlagContext);
 	if (context === undefined) {
-		throw new Error("TODO");
+		throw new Error("ContainerFeatureFlagContext not found");
 	}
 	return context;
 }
