@@ -67,7 +67,7 @@ export class SchemaFactoryAlpha<
 	}
 
 	/**
-	 * Declares a type staged in a set of {@link AllowedTypes}.
+	 * Declares a staged type in a set of {@link AllowedTypes}.
 	 *
 	 * @remarks
 	 *
