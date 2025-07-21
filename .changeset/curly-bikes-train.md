@@ -11,6 +11,8 @@ Staged allowed types can be used for schema evolution to add members to an [`All
 Staged allowed types are allowed types that can be upgraded by schema upgrades.
 Before being upgraded, any attempt to insert or move a node to a location which requires its type to be upgraded to be valid will throw an error.
 
+To enable this feature, schema validation is now turned on by default except during initialization of the tree.
+
 To add a new member to an `AllowedTypes`, add the type wrapped by `staged`.
 For example, migrating an array which previously supported only numbers to support both numbers and strings would start by deploying a version of the app using `staged`:
 ```typescript
