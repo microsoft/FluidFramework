@@ -4,16 +4,20 @@
  */
 
 /* eslint-disable import/no-internal-modules */
-export { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
+export type { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
 export {
 	createContainerAndExecute,
 	exportFile,
-	IExportFileResponse,
-	IExportFileResponseSuccess,
-	IExportFileResponseFailure,
+	type IExportFileResponse,
+	type IExportFileResponseSuccess,
+	type IExportFileResponseFailure,
 } from "./exportFile.js";
 export { fluidRunner } from "./fluidRunner.js";
-export { OutputFormat, ITelemetryOptions, IFileLogger } from "./logger/fileLogger.js";
+export {
+	OutputFormat,
+	type ITelemetryOptions,
+	type IFileLogger,
+} from "./logger/fileLogger.js";
 export {
 	createLogger,
 	getTelemetryFileValidationError,

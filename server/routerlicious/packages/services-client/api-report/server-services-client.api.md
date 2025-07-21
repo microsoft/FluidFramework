@@ -551,6 +551,8 @@ export interface IWholeSummaryPayload {
     // (undocumented)
     sequenceNumber: number;
     // (undocumented)
+    summaryTime?: string;
+    // (undocumented)
     type: IWholeSummaryPayloadType;
 }
 
