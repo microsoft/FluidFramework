@@ -1,5 +1,5 @@
 ---
-"@fluidframework/container-definitions": minor
+"@fluidframework/runtime-definitions": minor
 "__section": deprecation
 ---
 Deprecated all properties except "readBlob" on "IRuntimeStorageService"
