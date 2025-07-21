@@ -846,7 +846,7 @@ function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 
 	if (firstChild.isLiteral) {
 		if (firstChild.type === "text") {
-			const text = (firstChild as PlainTextNode).text;
+			const text = (firstChild as PlainTextNode).value;
 			if (text === title) {
 				// Remove from children, and remove any trailing line breaks
 				const newChildren = children.slice(1);
