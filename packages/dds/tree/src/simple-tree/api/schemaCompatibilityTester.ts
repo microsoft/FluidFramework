@@ -184,7 +184,7 @@ export class SchemaCompatibilityTester {
 		if (canUpgrade) {
 			assert(
 				allowsRepoSuperset(this.policy, stored, toStoredSchema(this.viewSchemaRoot)),
-				"View schema must be a superset of the stored schema to allow upgrade",
+				0xbf2 /* View schema must be a superset of the stored schema to allow upgrade */,
 			);
 		}
 
