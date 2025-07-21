@@ -71,8 +71,6 @@ export class SchemaCompatibilityTester {
 						)
 					) {
 						// Stored schema has extra allowed types that the view schema does not.
-						// TODO can an staged type be enabled in stored but not in view?
-						// I don't think so, revisit
 						canUpgrade = false;
 						canView = false;
 					}
