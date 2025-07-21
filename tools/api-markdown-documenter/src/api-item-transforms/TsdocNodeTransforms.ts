@@ -178,15 +178,10 @@ function transformTsdocParagraph(
 	const adjustedChildren = trimLeadingAndTrailingLineBreaks(children);
 
 	// Transform child items into Documentation domain
-	let transformedChildren: PhrasingContent[] = [];
+	const transformedChildren: PhrasingContent[] = [];
 	for (const child of adjustedChildren) {
 		transformedChildren.push(...transformTsdocParagraphContent(child, options));
 	}
-
-	// Filter out `undefined` values resulting from transformation errors.
-	transformedChildren = transformedChildren.filter(
-		(child) => child !== undefined && !child.isEmpty,
-	);
 
 	// Trim leading whitespace from first child if it is plain text,
 	// and trim trailing whitespace from last child if it is plain text.
