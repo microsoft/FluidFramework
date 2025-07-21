@@ -40,7 +40,7 @@ class TestExtension implements ContainerExtension<TestExtensionRuntimeProperties
 	constructor(host: ExtensionHost<TestExtensionRuntimeProperties>) {
 		this.interface = {
 			get isConnected(): boolean {
-				const connected = host.isConnected();
+				const connected = host.canSendOps();
 				return connected;
 			},
 		};

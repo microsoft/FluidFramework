@@ -52,7 +52,7 @@ describe("Presence", () => {
 			runtime = new MockEphemeralRuntime(logger);
 
 			// We are configuring the runtime to be in a connected state, so ensure it looks connected
-			runtime.connected = true;
+			runtime.setConnectionState(1 /* ConnectionState.Connected */);
 
 			clock.setSystemTime(initialTime);
 

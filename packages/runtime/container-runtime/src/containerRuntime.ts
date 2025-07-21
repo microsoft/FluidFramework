@@ -22,6 +22,7 @@ import type {
 	IDeltaManager,
 	IDeltaManagerFull,
 	ILoader,
+	ConnectionState,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -1339,7 +1340,7 @@ export class ContainerRuntime
 
 	private canSendOps: boolean;
 
-	private readonly canSendSignals: () => boolean;
+	private readonly getConnectionState: () => ConnectionState | undefined;
 
 	private consecutiveReconnects = 0;
 
@@ -1521,11 +1522,7 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.canSendSignals = () =>
-			context.connectionState === undefined
-				? this.canSendOps
-				: context.connectionState === 2 /* ConnectionState.Connected */ ||
-					context.connectionState === 1 /* ConnectionState.CatchingUp */;
+		this.getConnectionState = () => context.connectionState;
 
 		const {
 			options,
@@ -5134,7 +5131,8 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.canSendSignals(),
+				canSendOps: () => this.canSendOps,
+				getConnectionState: () => this.getConnectionState(),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,

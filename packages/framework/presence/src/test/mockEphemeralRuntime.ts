@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ConnectionState } from "@fluidframework/container-definitions";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
@@ -68,10 +69,11 @@ function makeMockAudience(clients: ClientData[]): MockAudience {
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public clientId: string | undefined;
-	public connected: boolean = false;
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
+	public connected = true;
+	private connectionState: ConnectionState = 0;
 
 	public readonly listeners: {
 		connected: ((clientId: ClientConnectionId) => void)[];
@@ -155,6 +157,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public connect(clientId: string): void {
 		this.clientId = clientId;
+		this.connectionState = 2 /* ConnectionState.Connected */;
 		this.connected = true;
 		for (const listener of this.listeners.connected) {
 			listener(clientId);
@@ -162,15 +165,21 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	}
 
 	public disconnect(): void {
+		this.connectionState = 0 /* ConnectionState.Disconnected */;
 		this.connected = false;
 		for (const listener of this.listeners.disconnected) {
 			listener();
 		}
 	}
 
-	// #region IEphemeralRuntime
+	public setConnectionState(state: ConnectionState): void {
+		this.connectionState = state;
+	}
 
-	public isConnected = (): ReturnType<IEphemeralRuntime["isConnected"]> => this.connected;
+	// #region IEphemeralRuntime
+	public canSendOps = (): ReturnType<IEphemeralRuntime["canSendOps"]> => this.connected;
+	public getConnectionState = (): ReturnType<IEphemeralRuntime["getConnectionState"]> =>
+		this.connectionState;
 	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
 
 	public events: IEphemeralRuntime["events"];

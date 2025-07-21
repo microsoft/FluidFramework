@@ -4,7 +4,10 @@
  */
 
 import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
-import type { IAudience } from "@fluidframework/container-definitions/internal";
+import type {
+	ConnectionState,
+	IAudience,
+} from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
 	BrandedType,
@@ -218,7 +221,8 @@ export interface ExtensionHostEvents {
  * @internal
  */
 export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
-	readonly isConnected: () => boolean;
+	readonly canSendOps: () => boolean;
+	readonly getConnectionState: () => ConnectionState | undefined;
 	readonly getClientId: () => ClientConnectionId | undefined;
 
 	readonly events: Listenable<ExtensionHostEvents>;

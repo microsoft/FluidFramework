@@ -51,7 +51,8 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 			runtime.on("disconnected", () => events.emit("disconnected"));
 
 			const manager = createPresenceManager({
-				isConnected: () => runtime.connected,
+				canSendOps: () => runtime.connected,
+				getConnectionState: () => undefined,
 				getClientId: () => runtime.clientId,
 				events,
 				getQuorum: runtime.getQuorum.bind(runtime),
