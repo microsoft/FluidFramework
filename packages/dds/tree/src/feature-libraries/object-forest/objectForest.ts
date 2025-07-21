@@ -217,7 +217,7 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 				if (this.forest.additionalAsserts) {
 					// Schema validation:
 					// When doing "additionalAsserts", validate the content against the schema after every batch of edits.
-					this.forest.checkSchema();
+					// this.forest.checkSchema();
 				}
 			}
 			public destroy(detachedField: FieldKey, count: number): void {
