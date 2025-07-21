@@ -134,7 +134,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 // @alpha @legacy
-export interface IFluidDataStoreChannel extends IDisposable {
+export interface IFluidDataStoreChannel extends IDisposable_2 {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -399,7 +399,7 @@ export interface ISummaryStats {
 // @alpha @legacy
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
-    summary: ISummaryTree;
+    summary: ISummaryTree_2;
 }
 
 // @alpha @legacy
