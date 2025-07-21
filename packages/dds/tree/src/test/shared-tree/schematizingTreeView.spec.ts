@@ -131,47 +131,36 @@ describe("SchematizingSimpleTreeView", () => {
 			);
 		});
 
-		for (const enableSchemaValidation of [true, false]) {
-			it(`Initialize invalid content: enableSchemaValidation: ${enableSchemaValidation}`, () => {
-				class Root extends schema.object("Root", {
-					content: SchemaFactoryAlpha.number,
-				}) {}
+		it("initialize doesn't run schema validation", () => {
+			class Root extends schema.object("Root", {
+				content: SchemaFactoryAlpha.number,
+			}) {}
 
-				const config2 = new TreeViewConfiguration({
-					schema: Root,
-					enableSchemaValidation,
-				});
-
-				const view = getView(config2, {
-					forest: ForestTypeReference,
-				});
-
-				const root = new Root({ content: 5 });
-
-				const inner = getKernel(root).getOrCreateInnerNode();
-				const field = inner.getBoxed(brand("content"));
-				const child = field.boxedAt(0) ?? assert.fail("Expected child");
-				assert(child instanceof UnhydratedFlexTreeNode);
-
-				// Modify the tree so that it is out of schema.
-				// The public API is supposed to prevent out of schema trees,
-				// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
-				// In production cases this extra validation exists to help prevent corruption when bugs
-				// allow invalid data through the public API.
-				(child.data as Mutable<typeof child.data>).value = "invalid value";
-
-				if (enableSchemaValidation) {
-					assert.throws(
-						() => view.initialize(root, true),
-						validateUsageError(/Tree does not conform to schema./),
-					);
-					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
-				} else {
-					view.initialize(root);
-					assert.equal(view.root.content, "invalid value");
-				}
+			const config2 = new TreeViewConfiguration({
+				schema: Root,
 			});
-		}
+
+			const view = getView(config2, {
+				forest: ForestTypeReference,
+			});
+
+			const root = new Root({ content: 5 });
+
+			const inner = getKernel(root).getOrCreateInnerNode();
+			const field = inner.getBoxed(brand("content"));
+			const child = field.boxedAt(0) ?? assert.fail("Expected child");
+			assert(child instanceof UnhydratedFlexTreeNode);
+
+			// Modify the tree so that it is out of schema.
+			// The public API is supposed to prevent out of schema trees,
+			// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
+			// In production cases this extra validation exists to help prevent corruption when bugs
+			// allow invalid data through the public API.
+			(child.data as Mutable<typeof child.data>).value = "invalid value";
+
+			view.initialize(root);
+			assert.equal(view.root.content, "invalid value");
+		});
 	});
 
 	it("Broken state", () => {

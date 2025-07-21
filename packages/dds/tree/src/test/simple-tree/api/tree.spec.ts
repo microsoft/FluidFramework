@@ -94,12 +94,11 @@ describe("simple-tree tree", () => {
 			enableSchemaValidation: true,
 		});
 
-		it("invalid default - initialize", () => {
+		// This is skipped because schema validation is not performed on initialization.
+		// If the option is added in the future, enable this.
+		it.skip("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(
-				() => view.initialize({}, true),
-				validateUsageError(/Field_NodeTypeNotAllowed/),
-			);
+			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
 		});
 
 		it("invalid default - insert", () => {

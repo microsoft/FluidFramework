@@ -81,7 +81,7 @@ export class SchemaFactoryAlpha<
 	 * using a configuration flag change rather than a code change.
 	 *
 	 * @privateremarks
-	 * TODO staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
+	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
 	 * user friendly and should be improved, particularly in the case of staged allowed types
 	 *
 	 */

@@ -169,11 +169,8 @@ export class SchematizingSimpleTreeView<
 
 	/**
 	 * Initializes the tree view with the provided content.
-	 * @param validateSchema - By default, initialization does not validate the given content against the schema.
-	 * This is to allow for staged allowed types to be loaded in the tree.
-	 * TODO: Maybe repurpose the validateSchema flag to control this?
 	 */
-	public initialize(content: InsertableField<TRootSchema>, validateSchema?: true): void {
+	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
@@ -191,7 +188,7 @@ export class SchematizingSimpleTreeView<
 					policy: this.schemaPolicy,
 				},
 				this,
-				!validateSchema, // isInitialization controls if schema validation occurs
+				true, // if isInitialization is true, schema validation does not occur
 			);
 
 			initialize(this.checkout, {
