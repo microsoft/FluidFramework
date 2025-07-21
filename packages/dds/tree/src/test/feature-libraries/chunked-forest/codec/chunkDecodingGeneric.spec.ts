@@ -18,7 +18,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
-	DecoderContext,
+	DecoderCache,
 	decode,
 	readStreamIdentifier,
 	// eslint-disable-next-line import/no-internal-modules
@@ -89,7 +89,7 @@ class TestChunk2 extends ReferenceCountedBase implements TreeChunk {
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
 	EncodedChunkShape,
-	[cache: DecoderContext<EncodedChunkShape>],
+	[cache: DecoderCache<EncodedChunkShape>],
 	ChunkDecoder
 >({
 	a(shape: Constant, cache): ChunkDecoder {
@@ -122,15 +122,15 @@ const idDecodingContext = {
 };
 
 describe("chunkDecodingGeneric", () => {
-	it("DecoderContext", () => {
-		const cache = new DecoderContext(["a", "b"], [], idDecodingContext);
+	it("DecoderCache", () => {
+		const cache = new DecoderCache(["a", "b"], [], idDecodingContext);
 		assert.equal(cache.identifier("X"), "X");
 		assert.equal(cache.identifier(0), "a");
 		assert.equal(cache.identifier(1), "b");
 	});
 
 	it("readStreamIdentifier", () => {
-		const cache = new DecoderContext(["a", "b"], [], idDecodingContext);
+		const cache = new DecoderCache(["a", "b"], [], idDecodingContext);
 		const stream: StreamCursor = { data: ["X", 0, 1], offset: 0 };
 		assert.equal(readStreamIdentifier(stream, cache), "X");
 		assert.equal(stream.offset, 1);
@@ -147,7 +147,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ a: 0 }],
 			data: [[0, 5]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, idDecodingContext);
+		const cache = new DecoderCache(encoded.identifiers, encoded.shapes, idDecodingContext);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];
@@ -162,7 +162,7 @@ describe("chunkDecodingGeneric", () => {
 			shapes: [{ b: "content" }],
 			data: [[0]],
 		};
-		const cache = new DecoderContext(encoded.identifiers, encoded.shapes, idDecodingContext);
+		const cache = new DecoderCache(encoded.identifiers, encoded.shapes, idDecodingContext);
 		const chunks = decode(decoderLibrary, cache, encoded, rootDecoder);
 		assert(chunks.length === 1);
 		const chunk = chunks[0];

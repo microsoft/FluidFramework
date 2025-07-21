@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
+import { NodeShapeEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeShapeEncoder.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { brand } from "../../../../util/index.js";
@@ -30,9 +30,9 @@ import { checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
 
 describe("nodeShape", () => {
-	describe("NodeShape", () => {
+	describe("NodeShapeEncoder", () => {
 		it("empty node", () => {
-			const shape = new NodeShape(undefined, false, [], undefined);
+			const shape = new NodeShapeEncoder(undefined, false, [], undefined);
 			const identifierCounter = new Counter<string>();
 			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
 			assert(identifierCounter.buildTable().indexToValue.length === 0);
@@ -51,7 +51,7 @@ describe("nodeShape", () => {
 		});
 
 		it("typed node with value", () => {
-			const shape = new NodeShape(brand("foo"), true, [], undefined);
+			const shape = new NodeShapeEncoder(brand("foo"), true, [], undefined);
 
 			const identifierCounter = new Counter<string>();
 			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
@@ -77,10 +77,10 @@ describe("nodeShape", () => {
 				testIdCompressor,
 			);
 
-			const fieldShapeLocal = cache.nestedArray(
-				new NodeShape(undefined, false, [], undefined),
+			const fieldShapeLocal = cache.nestedArrayEncoder(
+				new NodeShapeEncoder(undefined, false, [], undefined),
 			);
-			const shape = new NodeShape(undefined, undefined, [], fieldShapeLocal);
+			const shape = new NodeShapeEncoder(undefined, undefined, [], fieldShapeLocal);
 
 			const tree: JsonableTree = {
 				type: brand("type"),
@@ -115,16 +115,16 @@ describe("nodeShape", () => {
 
 			// Shape which encodes to nothing.
 			const fieldEncoder1: FieldEncoder = asFieldEncoder(
-				new NodeShape(brand("1"), false, [], undefined),
+				new NodeShapeEncoder(brand("1"), false, [], undefined),
 			);
 			// Shape which encodes to just the value.
-			const shapeValueOnly = new NodeShape(brand("2"), true, [], undefined);
+			const shapeValueOnly = new NodeShapeEncoder(brand("2"), true, [], undefined);
 
 			// Shape which encodes to nested array of values.
-			const shapeValues = cache.nestedArray(shapeValueOnly);
+			const shapeValues = cache.nestedArrayEncoder(shapeValueOnly);
 
 			// Shape which encodes to nested array of values.
-			const shape = new NodeShape(
+			const shape = new NodeShapeEncoder(
 				brand("type"),
 				true,
 				[

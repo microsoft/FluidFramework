@@ -26,9 +26,9 @@ import {
 } from "./compressedEncode.js";
 import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
 
-export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
+export class NodeShapeEncoder extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
-	 * Set of keys for fields that are encoded using {@link NodeShape.specializedFieldEncoders}.
+	 * Set of keys for fields that are encoded using {@link NodeShapeEncoder.specializedFieldEncoders}.
 	 * TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
 	 */
 	private readonly specializedFieldKeys: Set<FieldKey>;
@@ -39,17 +39,17 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		/**
 		 * Encoders for a specific set of fields, by key, in the order they will be encoded.
 		 * These are fields for which specialized encoding is provided as an optimization.
-		 * Using these for a given field instead of falling back to {@link NodeShape.specializedFieldEncoders} is often more efficient:
+		 * Using these for a given field instead of falling back to {@link NodeShapeEncoder.specializedFieldEncoders} is often more efficient:
 		 * this avoids the need to explicitly include the key and shape in the encoded data for each node instance.
 		 * Instead, this information is here, and thus is encoded only once as part of the node shape.
 		 * These encoders will be used, even if the field they apply to is empty (which can add overhead for fields which are usually empty).
 		 *
-		 * Any fields not included here will be encoded using {@link NodeShape.otherFieldsEncoder}.
-		 * If {@link NodeShape.otherFieldsEncoder} is undefined, then this must handle all non-empty fields.
+		 * Any fields not included here will be encoded using {@link NodeShapeEncoder.otherFieldsEncoder}.
+		 * If {@link NodeShapeEncoder.otherFieldsEncoder} is undefined, then this must handle all non-empty fields.
 		 */
 		public readonly specializedFieldEncoders: readonly KeyedFieldEncoder[],
 		/**
-		 * Encoder for all other fields that are not in {@link NodeShape.specializedFieldEncoders}. These fields must
+		 * Encoder for all other fields that are not in {@link NodeShapeEncoder.specializedFieldEncoders}. These fields must
 		 * be encoded after the specialized fields.
 		 */
 		public readonly otherFieldsEncoder: undefined | FieldEncoder,
@@ -139,7 +139,7 @@ export class NodeShape extends Shape<EncodedChunkShape> implements NodeEncoder {
 		}
 	}
 
-	public get shape(): NodeShape {
+	public get shape(): NodeShapeEncoder {
 		return this;
 	}
 }
@@ -175,10 +175,10 @@ function encodeOptionalIdentifier(
 }
 
 function encodeOptionalFieldShape(
-	shape: FieldEncoder | undefined,
+	encoder: FieldEncoder | undefined,
 	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): number | undefined {
-	return shape === undefined ? undefined : dedupShape(shape.shape, shapes);
+	return encoder === undefined ? undefined : dedupShape(encoder.shape, shapes);
 }
 
 function dedupShape(

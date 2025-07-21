@@ -45,7 +45,7 @@ export function decode<TEncodedShape extends object, TCache>(
 /**
  * Shared data for use in constructing decoders.
  */
-export class DecoderContext<TEncodedShape = unknown> {
+export class DecoderCache<TEncodedShape = unknown> {
 	/**
 	 * @param identifiers - identifier substitution table (use to replace numeric identifier indexes with the actual identifiers from this table).
 	 */
@@ -70,7 +70,7 @@ export class DecoderContext<TEncodedShape = unknown> {
  */
 export function readStreamIdentifier<T extends string & BrandedType<string, string>>(
 	stream: StreamCursor,
-	cache: DecoderContext,
+	cache: DecoderCache,
 ): T {
 	const content = readStream(stream);
 	assert(

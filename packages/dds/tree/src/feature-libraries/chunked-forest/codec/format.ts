@@ -157,7 +157,13 @@ export const EncodedTreeShape = Type.Object(
 );
 
 /**
- * Discriminated union of chunk shapes.
+ * Discriminated union that represents the shapes of chunk in the encoded data. "Chunk" here refers
+ * to a chunk of tree data that is encoded as a single unit in a specific format represented by one
+ * of the shapes in this union.
+ *
+ * The concept of "chunk" is same for the tree data in memory and in the encoded wire format. The
+ * physical representation of the chunk may differ, but the logical structure remains the same. This
+ * is similar to other such concepts in the system.
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */

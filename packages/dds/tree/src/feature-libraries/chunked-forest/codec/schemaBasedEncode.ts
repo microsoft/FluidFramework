@@ -31,7 +31,7 @@ import {
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
-import { NodeShape } from "./nodeShape.js";
+import { NodeShapeEncoder } from "./nodeShapeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
@@ -89,7 +89,7 @@ export function fieldShaper(
 				nodeSchema.leafValue === ValueSchema.String,
 				0x99c /* identifier field can only be type string */,
 			);
-			const identifierNodeEncoder = new NodeShape(
+			const identifierNodeEncoder = new NodeShapeEncoder(
 				type,
 				SpecialField.Identifier,
 				[],
@@ -99,7 +99,7 @@ export function fieldShaper(
 		}
 		return asFieldEncoder(nodeEncoder);
 	} else {
-		return cache.nestedArray(nodeEncoder);
+		return cache.nestedArrayEncoder(nodeEncoder);
 	}
 }
 
@@ -111,7 +111,7 @@ export function treeShaper(
 	policy: FullSchemaPolicy,
 	fieldHandler: FieldShaper,
 	schemaName: TreeNodeSchemaIdentifier,
-): NodeShape {
+): NodeShapeEncoder {
 	const schema =
 		fullSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
 
@@ -125,11 +125,11 @@ export function treeShaper(
 			objectNodeFields.push({ key, encoder: fieldHandler.shapeFromField(field) });
 		}
 
-		const shape = new NodeShape(schemaName, false, objectNodeFields, undefined);
+		const shape = new NodeShapeEncoder(schemaName, false, objectNodeFields, undefined);
 		return shape;
 	}
 	if (schema instanceof LeafNodeStoredSchema) {
-		const shape = new NodeShape(
+		const shape = new NodeShapeEncoder(
 			schemaName,
 			valueShapeFromSchema(schema.leafValue),
 			[],
@@ -138,7 +138,7 @@ export function treeShaper(
 		return shape;
 	}
 	if (schema instanceof MapNodeStoredSchema) {
-		const shape = new NodeShape(
+		const shape = new NodeShapeEncoder(
 			schemaName,
 			false,
 			[],

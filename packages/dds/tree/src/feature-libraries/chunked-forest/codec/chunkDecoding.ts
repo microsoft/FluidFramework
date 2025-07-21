@@ -33,7 +33,7 @@ import {
 	readStreamValue,
 } from "./chunkCodecUtilities.js";
 import {
-	DecoderContext,
+	DecoderCache,
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
@@ -64,7 +64,7 @@ export function decode(
 ): TreeChunk[] {
 	return genericDecode(
 		decoderLibrary,
-		new DecoderContext(chunk.identifiers, chunk.shapes, idDecodingContext),
+		new DecoderCache(chunk.identifiers, chunk.shapes, idDecodingContext),
 		chunk,
 		anyDecoder,
 	);
@@ -72,7 +72,7 @@ export function decode(
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
 	EncodedChunkShape,
-	[cache: DecoderContext<EncodedChunkShape>],
+	[cache: DecoderCache<EncodedChunkShape>],
 	ChunkDecoder
 >({
 	a(shape: EncodedNestedArray, cache): ChunkDecoder {
@@ -251,7 +251,7 @@ type BasicFieldDecoder = (
  * Get a decoder for fields of a provided (via `shape` and `cache`) {@link EncodedChunkShape}.
  */
 function fieldDecoder(
-	cache: DecoderContext<EncodedChunkShape>,
+	cache: DecoderCache<EncodedChunkShape>,
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
@@ -270,7 +270,7 @@ export class TreeDecoder implements ChunkDecoder {
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedTreeShape,
-		private readonly cache: DecoderContext<EncodedChunkShape>,
+		private readonly cache: DecoderCache<EncodedChunkShape>,
 	) {
 		this.type = shape.type === undefined ? undefined : cache.identifier(shape.type);
 

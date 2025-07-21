@@ -34,8 +34,8 @@ import {
 	EncoderCache,
 	type FieldEncoder,
 	type FieldShaper,
-	InlineArrayShape,
-	NestedArrayShape,
+	InlineArrayShapeEncoder,
+	NestedArrayShapeEncoder,
 	type NodeEncoder,
 	type TreeShaper,
 	anyFieldEncoder,
@@ -54,9 +54,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
-	NodeShape,
+	NodeShapeEncoder,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
+} from "../../../../feature-libraries/chunked-forest/codec/nodeShapeEncoder.js";
 import type {
 	FieldBatch,
 	FieldBatchEncodingContext,
@@ -74,10 +74,10 @@ import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
 
-const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
-const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
+const anyNodeShape = new NodeShapeEncoder(undefined, undefined, [], anyFieldEncoder);
+const onlyTypeShape = new NodeShapeEncoder(undefined, false, [], undefined);
 
-const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
+const constantFooShape = new NodeShapeEncoder(brand("foo"), false, [], undefined);
 
 function makeFieldBatchCodec(
 	options: ICodecOptions,
@@ -181,7 +181,7 @@ describe("compressedEncode", () => {
 		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
 	});
 
-	describe("InlineArrayShape", () => {
+	describe("InlineArrayShapeEncoder", () => {
 		it("empty", () => {
 			const cache = new EncoderCache(
 				() => fail(),
@@ -189,7 +189,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(InlineArrayShape.empty, cache, []);
+			const buffer = checkFieldEncode(InlineArrayShapeEncoder.empty, cache, []);
 			assert(compareArrays(buffer, []));
 		});
 
@@ -200,7 +200,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new InlineArrayShape(1, asNodesEncoder(onlyTypeShape));
+			const shape = new InlineArrayShapeEncoder(1, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, cache, [{ type: brand("foo") }]);
 			assert.deepEqual(buffer, [new IdentifierToken("foo")]);
 		});
@@ -212,7 +212,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new InlineArrayShape(2, asNodesEncoder(onlyTypeShape));
+			const shape = new InlineArrayShapeEncoder(2, asNodesEncoder(onlyTypeShape));
 			const buffer = checkFieldEncode(shape, cache, [
 				{ type: brand("foo") },
 				{ type: brand("bar") },
@@ -227,8 +227,8 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shapeInner = new InlineArrayShape(2, asNodesEncoder(onlyTypeShape));
-			const shapeOuter = new InlineArrayShape(2, shapeInner);
+			const shapeInner = new InlineArrayShapeEncoder(2, asNodesEncoder(onlyTypeShape));
+			const shapeOuter = new InlineArrayShapeEncoder(2, shapeInner);
 			const buffer = checkFieldEncode(shapeOuter, cache, [
 				{ type: brand("a") },
 				{ type: brand("b") },
@@ -244,7 +244,7 @@ describe("compressedEncode", () => {
 		});
 	});
 
-	describe("NestedArrayShape", () => {
+	describe("NestedArrayShapeEncoder", () => {
 		it("empty", () => {
 			const cache = new EncoderCache(
 				() => fail(),
@@ -252,7 +252,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(new NestedArrayShape(onlyTypeShape), cache, []);
+			const buffer = checkFieldEncode(new NestedArrayShapeEncoder(onlyTypeShape), cache, []);
 			assert.deepEqual(buffer, [0]);
 		});
 
@@ -263,7 +263,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new NestedArrayShape(onlyTypeShape);
+			const shape = new NestedArrayShapeEncoder(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, cache, [{ type: brand("foo") }]);
 			assert.deepEqual(buffer, [[new IdentifierToken("foo")]]);
 		});
@@ -275,7 +275,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new NestedArrayShape(onlyTypeShape);
+			const shape = new NestedArrayShapeEncoder(onlyTypeShape);
 			const buffer = checkFieldEncode(shape, cache, [
 				{ type: brand("foo") },
 				{ type: brand("bar") },
@@ -291,7 +291,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(new NestedArrayShape(constantFooShape), cache, [
+			const buffer = checkFieldEncode(new NestedArrayShapeEncoder(constantFooShape), cache, [
 				{ type: brand("foo") },
 			]);
 			assert(compareArrays(buffer, [1]));
@@ -304,7 +304,7 @@ describe("compressedEncode", () => {
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(new NestedArrayShape(constantFooShape), cache, [
+			const buffer = checkFieldEncode(new NestedArrayShapeEncoder(constantFooShape), cache, [
 				{ type: brand("foo") },
 				{ type: brand("foo") },
 				{ type: brand("foo") },
@@ -330,7 +330,7 @@ describe("compressedEncode", () => {
 			);
 			// The exact encoding schema here is not important as long as the above holds (and the entry here is small):
 			// The current encoding scheme uses an empty inline array for encoding 0 size fields:
-			assert(compareArrays(buffer, [InlineArrayShape.empty]));
+			assert(compareArrays(buffer, [InlineArrayShapeEncoder.empty]));
 		});
 
 		it("one item", () => {
@@ -358,7 +358,7 @@ describe("compressedEncode", () => {
 			]);
 			// Should use nestedArray, which will lookup the shape from cache:
 			assert.deepEqual(buffer, [
-				cache.nestedArray(anyNodeEncoder),
+				cache.nestedArrayEncoder(anyNodeEncoder),
 				[onlyTypeShape, new IdentifierToken("foo"), onlyTypeShape, new IdentifierToken("bar")],
 			]);
 		});

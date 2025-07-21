@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeShape } from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
+import { NodeShapeEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeShapeEncoder.js";
 import {
 	buildCache,
 	fieldShaper,
@@ -65,10 +65,10 @@ import {
 } from "../../../../simple-tree/toStoredSchema.js";
 import { numberSchema, stringSchema } from "../../../../simple-tree/index.js";
 
-const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
-const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
-const numericShape = new NodeShape(brand(numberSchema.identifier), true, [], undefined);
-const identifierShape = new NodeShape(
+const anyNodeShape = new NodeShapeEncoder(undefined, undefined, [], anyFieldEncoder);
+const onlyTypeShape = new NodeShapeEncoder(undefined, false, [], undefined);
+const numericShape = new NodeShapeEncoder(brand(numberSchema.identifier), true, [], undefined);
+const identifierShape = new NodeShapeEncoder(
 	brand(stringSchema.identifier),
 	SpecialField.Identifier,
 	[],
@@ -161,7 +161,7 @@ describe("schemaBasedEncoding", () => {
 				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
-			assert.equal(shape.shape, cache.nestedArray(onlyTypeShape));
+			assert.equal(shape.shape, cache.nestedArrayEncoder(onlyTypeShape));
 			assert.deepEqual(checkFieldEncode(shape, cache, []), [0]);
 			assert.deepEqual(checkFieldEncode(shape, cache, [{ type: brand(Minimal.identifier) }]), [
 				[new IdentifierToken("test.minimal")],
@@ -248,17 +248,17 @@ describe("schemaBasedEncoding", () => {
 				{
 					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
-						return cache.nestedArray(numericShape);
+						return cache.nestedArrayEncoder(numericShape);
 					},
 				},
 				brand(HasOptionalField.identifier),
 			);
 			assert.deepEqual(
 				shape,
-				new NodeShape(
+				new NodeShapeEncoder(
 					brand(HasOptionalField.identifier),
 					false,
-					[{ key: brand("field"), encoder: cache.nestedArray(numericShape) }],
+					[{ key: brand("field"), encoder: cache.nestedArrayEncoder(numericShape) }],
 					undefined,
 				),
 			);
@@ -287,18 +287,18 @@ describe("schemaBasedEncoding", () => {
 				{
 					shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
 						log.push(field);
-						return cache.nestedArray(numericShape);
+						return cache.nestedArrayEncoder(numericShape);
 					},
 				},
 				brand(NumericMap.identifier),
 			);
 			assert.deepEqual(
 				shape,
-				new NodeShape(
+				new NodeShapeEncoder(
 					brand(NumericMap.identifier),
 					false,
 					[],
-					cache.nestedArray(numericShape),
+					cache.nestedArrayEncoder(numericShape),
 				),
 			);
 			const bufferEmpty = checkNodeEncode(shape, cache, {
