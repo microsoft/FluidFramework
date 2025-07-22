@@ -49,6 +49,7 @@ export function renderMarkdown(tree: MdastTree): string {
 	return toMarkdownString(tree, {
 		emphasis: "_", // Backwards compat
 		bullet: "-", // Backwards compat
+		incrementListMarker: false, // Backwards compat
 		extensions: [
 			gfmToMarkdown({
 				tablePipeAlign: false, // Backwards compat
