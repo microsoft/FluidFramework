@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/tree",
-	"version": "2.51.0",
+	"version": "2.51.1",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -99,7 +99,6 @@
 		"@types/chai": "^4.0.0",
 		"@types/lru-cache": "^5.1.0",
 		"@types/mocha": "^10.0.10",
-
 		"c8": "^8.0.1",
 		"chai": "^4.2.0",
 		"concurrently": "^8.2.1",
