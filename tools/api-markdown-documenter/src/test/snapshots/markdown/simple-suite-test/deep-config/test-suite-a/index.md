@@ -20,11 +20,8 @@ And an ordered list for good measure!
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
 - Good link (no alias): [TestClass](/test-suite-a/testclass-class/)
-
 - Good link (with alias): [function alias text](/test-suite-a/testfunction-function)
-
 - Bad link (no alias): _InvalidItem_
-
 - Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
 ## Example {#test-suite-a-example}

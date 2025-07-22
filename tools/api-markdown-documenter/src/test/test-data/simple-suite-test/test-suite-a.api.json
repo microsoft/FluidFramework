@@ -162,7 +162,7 @@
 	},
 	"kind": "Package",
 	"canonicalReference": "test-suite-a!",
-	"docComment": "/**\n * <b>Test package</b>\n *\n * @remarks\n *\n * This remarks block includes a bulleted list!\n * - Bullet 1\n * - Bullet 2\n *\n * And an ordered list for good measure!\n * 1. List item 1\n * 2. List item 2\n * 3. List item 3\n *\n * Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:\n *\n * - Good link (no alias): {@link TestClass}\n *\n * - Good link (with alias): {@link testFunction | function alias text}\n *\n * - Bad link (no alias): {@link InvalidItem}\n *\n * - Bad link (with alias): {@link InvalidItem | even though I link to an invalid item, I would still like this text to be rendered}\n *\n * @example\n *\n * A test example\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @packageDocumentation\n */\n",
+	"docComment": "/**\n * <b>Test package</b>\n *\n * @remarks\n *\n * This remarks block includes a bulleted list!\n * - Bullet 1\n * - Bullet 2\n *\n * And an ordered list for good measure!\n * 1. List item 1\n * 2. List item 2\n * 3. List item 3\n *\n * Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:\n * - Good link (no alias): {@link TestClass}\n * - Good link (with alias): {@link testFunction | function alias text}\n * - Bad link (no alias): {@link InvalidItem}\n * - Bad link (with alias): {@link InvalidItem | even though I link to an invalid item, I would still like this text to be rendered}\n *\n * @example\n *\n * A test example\n * ```typescript\n * const foo = bar;\n * ```\n *\n * @packageDocumentation\n */\n",
 	"name": "test-suite-a",
 	"preserveMemberOrder": false,
 	"members": [
