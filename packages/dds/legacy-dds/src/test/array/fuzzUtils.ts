@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type AcceptanceCondition,
 	type Reducer,
 	combineReducers,
 	createWeightedGenerator,
@@ -156,13 +157,23 @@ export function makeSharedArrayOperationGenerator(weights: {
 		newIndex: random.integer(0, Math.max(0, client.channel.get().length)),
 	});
 
+	const lengthSatisfies =
+		(
+			criteria: (length: number) => boolean,
+		): AcceptanceCondition<
+			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
+		> =>
+		({ client }) =>
+			criteria(client.channel.get().length);
+	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
+
 	const syncGenerator = createWeightedGenerator<
 		SharedArrayOperation<string>,
 		DDSFuzzTestState<SharedArrayFactory<string>>
 	>([
 		[insertOp, weights.insert],
-		[deleteOp, weights.delete],
-		[moveOp, weights.move],
+		[deleteOp, weights.delete, hasNonzeroLength],
+		[moveOp, weights.move, hasNonzeroLength],
 	]);
 
 	return async (state: DDSFuzzTestState<SharedArrayFactory<string>>) => {
