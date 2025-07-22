@@ -698,14 +698,98 @@ describe("Map", () => {
 				});
 			});
 
-			describe(".forEach()", () => {
-				it("Should iterate over all keys in the map", () => {
-					// We use a set to mark the values we want to insert. When we iterate we will remove from the set
-					// and then check it's empty at the end
-					const set = new Set<string>();
-					set.add("first");
-					set.add("second");
-					set.add("third");
+			describe("Iteration", () => {
+				it(".forEach() should iterate over all keys in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
+
+					for (const value of set) {
+						map1.set(value, value);
+					}
+
+					containerRuntimeFactory.processAllMessages();
+
+					// Verify the local SharedMap
+					// eslint-disable-next-line unicorn/no-array-for-each
+					map1.forEach((value, key) => {
+						assert.ok(set.has(key), "the key should be present in the set");
+						assert.equal(key, value, "the value should match the set value");
+						assert.equal(map1.get(key), value, "could not get key");
+					});
+
+					// Verify the remote SharedMap
+					// eslint-disable-next-line unicorn/no-array-for-each
+					map2.forEach((value, key) => {
+						assert.ok(set.has(key), "the key in remote map should be present in the set");
+						assert.equal(key, value, "the value should match the set value in the remote map");
+						assert.equal(map2.get(key), value, "could not get key in the remote map");
+					});
+
+					for (const value of set.values()) {
+						assert.ok(map1.has(value), "the set value should be present in the local map");
+						assert.ok(map2.has(value), "the set value should be present in the remote map");
+					}
+				});
+
+				it(".values() Should iterate over all values in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
+
+					for (const value of set) {
+						map1.set(value, value);
+					}
+
+					containerRuntimeFactory.processAllMessages();
+
+					// Verify the local SharedMap
+					for (const value of map1.values()) {
+						assert.ok(
+							set.has(value as string),
+							"the local map's value should be present in the set",
+						);
+					}
+
+					// Verify the remote SharedMap
+					for (const value of map2.values()) {
+						assert.ok(
+							set.has(value as string),
+							"the remote map's value should be present in the set",
+						);
+					}
+
+					assert.equal(map1.size, 3);
+					assert.equal(map2.size, 3);
+				});
+
+				it(".keys() Should iterate over all keys in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
+
+					for (const value of set) {
+						map1.set(value, value);
+					}
+
+					containerRuntimeFactory.processAllMessages();
+
+					// Verify the local SharedMap
+					for (const key of map1.keys()) {
+						assert.ok(set.has(key), "the local map's key should be present in the set");
+					}
+
+					// Verify the remote SharedMap
+					for (const key of map2.keys()) {
+						assert.ok(set.has(key), "the remote map's key should be present in the set");
+					}
+
+					for (const value of set.values()) {
+						assert.ok(map1.has(value), "the set value should be present in the local map");
+						assert.ok(map2.has(value), "the set value should be present in the remote map");
+					}
+				});
+
+				it(".entries() Should iterate over all entries in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
 
 					for (const value of set) {
 						map1.set(value, value);
@@ -715,20 +799,28 @@ describe("Map", () => {
 
 					// Verify the local SharedMap
 					for (const [key, value] of map1.entries()) {
-						assert.ok(set.has(key), "the key should be present in the set");
-						assert.equal(key, value, "the value should match the set value");
-						assert.equal(map1.get(key), value, "could not get key");
+						assert.ok(set.has(key), "the local map's key should be present in the set");
+						assert.ok(
+							set.has(value as string),
+							"the local map's value should be present in the set",
+						);
+						assert.equal(map1.get(key), value, "the local map's value should match the key");
 					}
 
 					// Verify the remote SharedMap
 					for (const [key, value] of map2.entries()) {
-						assert.ok(set.has(key), "the key in remote map should be present in the set");
-						assert.equal(key, value, "the value should match the set value in the remote map");
-						assert.equal(map2.get(key), value, "could not get key in the remote map");
-						set.delete(key);
+						assert.ok(set.has(key), "the remote map's key should be present in the set");
+						assert.ok(
+							set.has(value as string),
+							"the remote map's value should be present in the set",
+						);
+						assert.equal(map2.get(key), value, "the remote map's value should match the key");
 					}
 
-					assert.equal(set.size, 0);
+					for (const value of set.values()) {
+						assert.ok(map1.has(value), "the set value should be present in the local map");
+						assert.ok(map2.has(value), "the set value should be present in the remote map");
+					}
 				});
 			});
 

@@ -323,8 +323,8 @@ export class MapKernel {
 			if (nextResult.done) {
 				return { value: undefined, done: true };
 			}
-			const [, value] = nextResult.value;
-			return { value, done: false };
+			const [, localValue] = nextResult.value;
+			return { value: localValue.value, done: false };
 		};
 		const iterator = {
 			next,
