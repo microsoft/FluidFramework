@@ -240,7 +240,7 @@
 						{
 							"kind": "Property",
 							"canonicalReference": "test-suite-a!TestAbstractClass#abstractPropertyGetter:member",
-							"docComment": "/**\n * A test abstract getter property.\n */\n",
+							"docComment": "/**\n * A test abstract getter property.\n *\n * \\@escapedTag\n */\n",
 							"excerptTokens": [
 								{
 									"kind": "Content",
