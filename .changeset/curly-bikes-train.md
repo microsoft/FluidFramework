@@ -16,13 +16,13 @@ To enable this feature, [schema validation](https://fluidframework.com/docs/api/
 To add a new member to an `AllowedTypes`, add the type wrapped by `staged`.
 For example, migrating an array which previously supported only numbers to support both numbers and strings would start by deploying a version of the app using `staged`:
 ```typescript
-schemaFactoryAlpha.arrayAlpha("TestArray", [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)]);
+class TestArray extends schemaFactoryAlpha.arrayAlpha("TestArray", [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)]) {}
 ```
 
 Once enough clients have this code update, it is safe to allow writing strings to the array.
 To allow writing strings to the array, a code change must be made to remove the staged annotation:
 ```typescript
-schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.string]);
+class TestArray extends schemaFactoryAlpha.arrayAlpha("TestArray", [schemaFactoryAlpha.number, schemaFactoryAlpha.string]) {}
 ```
 
 Then when opening old documents [upgradeSchema](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature) is used to upgrade the stored schema:
@@ -88,9 +88,7 @@ viewC.root = "test";
 provider.synchronizeMessages();
 
 // view A is now incompatible with the stored schema
-assert.throws(() => {
-	const _ = viewA.root;
-});
+assert.throws(viewA.canView, false);
 assert.deepEqual(viewB.root, "test");
 assert.deepEqual(viewC.root, "test");
 ```

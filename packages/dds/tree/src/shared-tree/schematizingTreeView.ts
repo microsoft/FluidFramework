@@ -167,9 +167,6 @@ export class SchematizingSimpleTreeView<
 		return this.config.schema;
 	}
 
-	/**
-	 * Initializes the tree view with the provided content.
-	 */
 	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
@@ -188,7 +185,7 @@ export class SchematizingSimpleTreeView<
 					policy: this.schemaPolicy,
 				},
 				this,
-				true, // if isInitialization is true, schema validation does not occur
+				true,
 			);
 
 			initialize(this.checkout, {

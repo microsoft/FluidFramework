@@ -131,9 +131,7 @@ describe("staged schema upgrade", () => {
 		provider.synchronizeMessages();
 
 		// view A is now incompatible with the stored schema
-		assert.throws(() => {
-			const _ = viewA.root;
-		});
+		assert.equal(viewA.compatibility.canView, false);
 		assert.deepEqual(viewB.root, "test");
 		assert.deepEqual(viewC.root, "test");
 	});
