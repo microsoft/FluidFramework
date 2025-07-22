@@ -350,10 +350,10 @@ Other validation may be added in the future as needed.
 -   Add extensibility options for `DocNode` transformations
     -   If a consumer has a custom tsdoc config associated with their API-Extractor setup, this will be needed.
 
-### Documentation Improvements
+### Usability Improvements
 
 -   Intro sandbox (api report)
--   Extensibility examples (maybe use the "AlertNode" concept used by the fluidframework.com build)
+-   Pre-canned hierarchy policies (flat, index, adjacency)
 
 ### Styling Improvements
 
@@ -369,8 +369,6 @@ Other validation may be added in the future as needed.
 
 ## Longer-term work
 
--   Support placing documents _within_ their own hierarchy (support for the "index" model used by systems like DocFX)
--   Pre-canned policies (flat, index, adjacency)
 -   Add `documentToMarkdown` API that generates `mdast` output.
     -   Update Markdown rendering APIs to leverage the `mdast` and `hast` domain outputs.
 
