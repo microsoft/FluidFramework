@@ -180,12 +180,14 @@ export class DocumentStorage implements IDocumentStorage {
 		);
 
 		let initialSummaryVersionId: string;
+		const summaryTimeStr = new Date().toISOString();
 		try {
 			const { summaryVersionId, summaryUploadMessage } = await this.uploadSummary(
 				uploadManager,
 				fullTree,
 				gitManager,
 				documentId,
+				summaryTimeStr,
 			);
 			initialSummaryVersionId = summaryVersionId;
 			initialSummaryUploadMetric.success(summaryUploadMessage);
@@ -316,6 +318,7 @@ export class DocumentStorage implements IDocumentStorage {
 					fullTree /* summaryTree */,
 					asyncGitManager,
 					documentId,
+					summaryTimeStr,
 				);
 				asyncInitialSummaryUploadMetric.success(summaryUploadMessage);
 			} catch (error: any) {
@@ -335,6 +338,7 @@ export class DocumentStorage implements IDocumentStorage {
 		fullTree: ISummaryTree,
 		gitManager: IGitManager,
 		documentId: string,
+		summaryTimeStr: string,
 	) {
 		let summaryVersionId: string;
 		const handle = await uploadManager.writeSummaryTree(
@@ -350,7 +354,7 @@ export class DocumentStorage implements IDocumentStorage {
 		if (!this.enableWholeSummaryUpload) {
 			const commitParams: ICreateCommitParams = {
 				author: {
-					date: new Date().toISOString(),
+					date: summaryTimeStr,
 					email: "dummy@microsoft.com",
 					name: "Routerlicious Service",
 				},
