@@ -13,7 +13,7 @@ import {
 
 // Define custom node type
 export class CustomDocumentationNode extends DocumentationParentNodeBase<PhrasingContent> {
-	public readonly type = "custom-node";
+	public readonly type = "customNode";
 
 	constructor(children) {
 		super(children);
@@ -23,7 +23,7 @@ export class CustomDocumentationNode extends DocumentationParentNodeBase<Phrasin
 // Extend the `BlockContentMap` interface to include our custom node kind, so it can be used in `SectionNode`s.
 declare module "@fluid-tools/api-markdown-documenter" {
 	interface BlockContentMap {
-		"custom-node": CustomDocumentationNode;
+		customNode: CustomDocumentationNode;
 	}
 }
 
