@@ -5,21 +5,14 @@
 
 import { expect } from "chai";
 
-import {
-	FencedCodeBlockNode,
-	LineBreakNode,
-	PlainTextNode,
-} from "../../../documentation-domain/index.js";
+import { FencedCodeBlockNode } from "../../../documentation-domain/index.js";
 
 import { testRender } from "./Utilities.js";
 
 describe("FencedCodeBlock Markdown rendering tests", () => {
 	describe("Standard context", () => {
 		it("Simple FencedCodeBlock", () => {
-			const input = new FencedCodeBlockNode(
-				[new PlainTextNode("console.log('hello world');")],
-				"typescript",
-			);
+			const input = new FencedCodeBlockNode("console.log('hello world');", "typescript");
 			const result = testRender(input);
 
 			const expected = [
@@ -36,13 +29,7 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 
 		it("Multi-line FencedCodeBlock", () => {
 			const input = new FencedCodeBlockNode(
-				[
-					new PlainTextNode('const foo = "Hello world!"'),
-					LineBreakNode.Singleton,
-					new PlainTextNode("console.log(foo);"),
-					LineBreakNode.Singleton,
-					new PlainTextNode("return foo;"),
-				],
+				'const foo = "Hello world!";\nconsole.log(foo);\nreturn foo;',
 				"typescript",
 			);
 			const result = testRender(input);
@@ -50,7 +37,7 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 			const expected = [
 				"",
 				"```typescript",
-				'const foo = "Hello world!"',
+				'const foo = "Hello world!";',
 				"console.log(foo);",
 				"return foo;",
 				"```",
@@ -64,10 +51,7 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 
 	describe("Table context", () => {
 		it("Simple FencedCodeBlock", () => {
-			const input = new FencedCodeBlockNode(
-				[new PlainTextNode("console.log('hello world');")],
-				"typescript",
-			);
+			const input = new FencedCodeBlockNode("console.log('hello world');", "typescript");
 			const result = testRender(input, { insideTable: true });
 
 			const expected = ["<code>", "console.log('hello world');", "</code>"].join("");
@@ -77,13 +61,7 @@ describe("FencedCodeBlock Markdown rendering tests", () => {
 
 		it("Multi-line FencedCodeBlock", () => {
 			const input = new FencedCodeBlockNode(
-				[
-					new PlainTextNode('const foo = "Hello world!";'),
-					LineBreakNode.Singleton,
-					new PlainTextNode("console.log(foo);"),
-					LineBreakNode.Singleton,
-					new PlainTextNode("return foo;"),
-				],
+				'const foo = "Hello world!";\nconsole.log(foo);\nreturn foo;',
 				"typescript",
 			);
 			const result = testRender(input, { insideTable: true });

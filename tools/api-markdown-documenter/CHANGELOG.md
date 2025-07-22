@@ -66,7 +66,7 @@ Their `createFromPlainText` static factory functions have also been removed, as 
 
 Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
 
-### `FencedCodeBlockNode` updated to only allow plain text and line breaks
+### `FencedCodeBlockNode` updated to be a literal node that accepts a string
 
 This matches the requirements for fenced code in Markdown and is all that was required by the system.
 
