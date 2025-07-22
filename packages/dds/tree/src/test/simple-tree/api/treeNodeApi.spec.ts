@@ -2816,7 +2816,7 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("roundtrip-stored", () => {
-			// TODO AB#43548: THis should include test cases with unknown optional fields.
+			// TODO AB#43548: This should include test cases with unknown optional fields.
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
