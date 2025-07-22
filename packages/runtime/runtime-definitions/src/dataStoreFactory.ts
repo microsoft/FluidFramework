@@ -82,4 +82,9 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
 	createDataStore?(context: IFluidDataStoreContext): {
 		readonly runtime: IFluidDataStoreChannel;
 	};
+
+	/**
+	 * Function to be run after the data store becomes bound to the runtime (i.e. finished initializing).
+	 */
+	afterBindRuntime?(runtime: IFluidDataStoreChannel): Promise<void>;
 }
