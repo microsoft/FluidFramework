@@ -13,6 +13,11 @@ import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
+ * @internal
+ */
+export const dataObjectRootDirectoryId = "root";
+
+/**
  * DataObject is a base data store that is primed with a root directory. It
  * ensures that it is created and ready before you can access it.
  *
@@ -28,7 +33,6 @@ export abstract class DataObject<
 	I extends DataObjectTypes = DataObjectTypes,
 > extends PureDataObject<I> {
 	private internalRoot: ISharedDirectory | undefined;
-	private readonly rootDirectoryId = "root";
 
 	/**
 	 * The root directory will either be ready or will return an error. If an error is thrown
@@ -50,7 +54,7 @@ export abstract class DataObject<
 		if (existing) {
 			// data store has a root directory so we just need to set it before calling initializingFromExisting
 			this.internalRoot = (await this.runtime.getChannel(
-				this.rootDirectoryId,
+				dataObjectRootDirectoryId,
 			)) as ISharedDirectory;
 
 			// This will actually be an ISharedMap if the channel was previously created by the older version of
@@ -66,7 +70,7 @@ export abstract class DataObject<
 			}
 		} else {
 			// Create a root directory and register it before calling initializingFirstTime
-			this.internalRoot = SharedDirectory.create(this.runtime, this.rootDirectoryId);
+			this.internalRoot = SharedDirectory.create(this.runtime, dataObjectRootDirectoryId);
 			this.internalRoot.bindToContext();
 		}
 

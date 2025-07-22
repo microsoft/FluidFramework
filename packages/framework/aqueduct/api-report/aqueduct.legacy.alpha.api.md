@@ -65,6 +65,7 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
 
 // @alpha @legacy
 export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
+    readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
     readonly ctor: new (props: IDataObjectProps<I>) => TObj;
     readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
     readonly policies?: Partial<IFluidDataStorePolicies>;
@@ -122,6 +123,7 @@ export abstract class PureDataObject<I extends DataObjectTypes = DataObjectTypes
 export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> implements IFluidDataStoreFactory, Partial<IProvideFluidDataStoreRegistry> {
     constructor(type: string, ctor: new (props: IDataObjectProps<I>) => TObj, sharedObjects?: readonly IChannelFactory[], optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>, registryEntries?: NamedFluidDataStoreRegistryEntries, runtimeClass?: typeof FluidDataStoreRuntime);
     constructor(props: DataObjectFactoryProps<TObj, I>);
+    readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
     createChildInstance(parentContext: IFluidDataStoreContext, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     createInstance(runtime: IContainerRuntimeBase, initialState?: I["InitialState"], loadingGroupId?: string): Promise<TObj>;
     // (undocumented)

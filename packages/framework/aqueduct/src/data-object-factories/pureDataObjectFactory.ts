@@ -189,6 +189,11 @@ export interface DataObjectFactoryProps<
 	 * These policies define specific behaviors or constraints for the data object.
 	 */
 	readonly policies?: Partial<IFluidDataStorePolicies>;
+
+	/**
+	 * If provided, this function is to be run after the data store becomes bound to the runtime (i.e. finished initializing).
+	 */
+	readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
 }
 
 /**
@@ -213,6 +218,11 @@ export class PureDataObjectFactory<
 	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."type"}
 	 */
 	public readonly type: string;
+
+	/**
+	 * {@inheritDoc @fluidframework/runtime-definitions#IFluidDataStoreFactory."afterBindRuntime"}
+	 */
+	public readonly afterBindRuntime?: (runtime: IFluidDataStoreChannel) => Promise<void>;
 
 	/**
 	 * @remarks Use the props object based constructor instead.
@@ -266,6 +276,8 @@ export class PureDataObjectFactory<
 		if (newProps.registryEntries !== undefined) {
 			this.registry = new FluidDataStoreRegistry(newProps.registryEntries);
 		}
+
+		this.afterBindRuntime = newProps.afterBindRuntime;
 	}
 
 	/**
