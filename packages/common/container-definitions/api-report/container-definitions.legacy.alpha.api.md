@@ -202,8 +202,12 @@ export type IContainerPolicies = {
 };
 
 // @alpha @legacy
-export interface IContainerStorageService extends Partial<IDisposable> {
+export interface IContainerStorageService {
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
     // @deprecated
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;

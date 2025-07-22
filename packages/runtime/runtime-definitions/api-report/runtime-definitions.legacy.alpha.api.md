@@ -134,7 +134,7 @@ export interface IExperimentalIncrementalSummaryContext {
 }
 
 // @alpha @legacy
-export interface IFluidDataStoreChannel extends IDisposable_2 {
+export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     applyStashedOp(content: any): Promise<unknown>;
     readonly entryPoint: IFluidHandleInternal<FluidObject>;
@@ -300,9 +300,13 @@ export interface IRuntimeMessagesContent {
 }
 
 // @alpha @legacy
-export interface IRuntimeStorageService extends Partial<IDisposable> {
+export interface IRuntimeStorageService {
     // @deprecated (undocumented)
     createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
     // @deprecated (undocumented)
     downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
     // @deprecated (undocumented)

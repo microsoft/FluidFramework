@@ -145,12 +145,31 @@ export interface IBatchMessage {
  * @legacy
  * @alpha
  */
-export interface IContainerStorageService extends Partial<IDisposable> {
+export interface IContainerStorageService {
+	/**
+	 * Whether or not the object has been disposed.
+	 * If true, the object should be considered invalid, and its other state should be disregarded.
+	 *
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime layer.
+	 */
+	readonly disposed?: boolean;
+
+	/**
+	 * Dispose of the object and its resources.
+	 * @param error - Optional error indicating the reason for the disposal, if the object was
+	 * disposed as the result of an error.
+	 *
+	 * @deprecated - This API is deprecated and will be removed in a future release. No replacement is planned as
+	 * it is unused in the Runtime layer.
+	 */
+	dispose?(error?: Error): void;
+
 	/**
 	 * Policies implemented/instructed by driver.
 	 *
-	 * @deprecated - This will be removed in a future release. The Runtime only needs `maximumCacheDurationMs` policy
-	 * which is added as a separate property.
+	 * @deprecated - This will be removed in a future release. The Runtime layer only needs `maximumCacheDurationMs`
+	 * policy which is added as a separate property.
 	 */
 	readonly policies?: IDocumentStorageServicePolicies | undefined;
 
