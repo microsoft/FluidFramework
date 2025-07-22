@@ -11,6 +11,7 @@
 import {
 	ApiItemKind,
 	ApiItemUtilities,
+	DocumentationNodeType,
 	getApiItemTransformationConfigurationWithDefaults,
 	HierarchyKind,
 	loadModel,
@@ -24,10 +25,12 @@ import fs from "fs-extra";
 import path from "path";
 
 import { cleanIgnored } from "../clean-ignored.mjs";
+import { admonitionNodeType } from "./admonition-node.mjs";
 import { layoutContent } from "./api-documentation-layout.mjs";
 import {
-	transformAdmonitionNode,
-	transformTableNode,
+	renderAdmonitionNode,
+	renderBlockQuoteNode,
+	renderTableNode,
 } from "./custom-renderers.mjs";
 
 const generatedContentNotice =
@@ -91,12 +94,15 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 
 	/**
 	 * Custom renderers that utilize Docusaurus syntax for certain kinds of documentation elements.
-	 * @type {import("@fluid-tools/api-markdown-documenter").ToMarkdownTransformations}
+	 * @type {import("@fluid-tools/api-markdown-documenter").MarkdownRenderers}
 	 */
-	const customTransformations = {
-		table: transformTableNode,
-		// @ts-ignore -- Limitation of using types in JavaScript: we can't opt into the documenter library's extensibility model to extend supported node types.
-		admonition: transformAdmonitionNode,
+	const customRenderers = {
+		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
+		[DocumentationNodeType.BlockQuote]: renderBlockQuoteNode,
+		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
+		[DocumentationNodeType.Table]: renderTableNode,
+		// @ts-ignore TODO: fix typing in API-Markdown-Documenter package
+		[admonitionNodeType]: renderAdmonitionNode,
 	};
 
 	const config = getApiItemTransformationConfigurationWithDefaults({
@@ -227,7 +233,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 			try {
 				const documentBody = MarkdownRenderer.renderDocument(document, {
 					startingHeadingLevel: 2,
-					customTransformations,
+					customRenderers,
 				});
 
 				const frontMatter = createFrontMatter(documentApiItem, config);
