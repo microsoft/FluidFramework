@@ -216,8 +216,11 @@ async function createNewSummaryVersion(
 		GitRestLumberEventName.CreateSummaryVersion,
 		options.lumberjackProperties,
 	);
+
 	try {
 		const commit = await options.repoManager.createCommit(commitParams);
+		writeSummaryVersionMetric.setProperty("commitParams", commitParams);
+		writeSummaryVersionMetric.setProperty("commit", commit);
 		writeSummaryVersionMetric.success("Successfully created summary version as Git commit.");
 		return {
 			id: commit.sha,
