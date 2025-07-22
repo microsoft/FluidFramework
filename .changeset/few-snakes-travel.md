@@ -10,3 +10,5 @@ The following properties from `IContainerStorageService` are deprecated as they 
 
 - `policies` - The Runtime only needs `maximumCacheDurationMs` property from it which is added directly on `IContainerStorageService`.
 - `downloadSummary`
+- `disposed`
+- `dispose`
