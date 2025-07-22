@@ -263,6 +263,14 @@ export interface TreeAlpha {
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
+	 * @remarks
+	 * This currently does not support input containing {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields}.
+	 * @privateRemarks
+	 * See TODOs in {@link TreeEncodingOptions}.
+	 *
+	 * TODO: clarify how this handles out of schema data.
+	 * Does it robustly validate? How do you use it with schema evolution features like staged allowed types and allowUnknownOptionalFields? Which errors are deferred until insertion/hydration?
+	 * Ensure what ever policy is chosen is documented, enforces, tested and applied consistently to all import code paths.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,

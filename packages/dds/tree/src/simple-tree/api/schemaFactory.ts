@@ -137,12 +137,17 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * // Then the alleged clone wouldn't actually clone the entire person in either case, it would drop the nickname.
 	 * ```
 	 *
-	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * {@link (TreeAlpha:interface).importVerbose|import}/{@link (TreeAlpha:interface).exportVerbose|export} APIs with persistent keys.
+	 * The existing import and export APIs have similar problems.
+	 * For example currently {@link (TreeAlpha:interface).exportVerbose|exportVerbose} APIs with stored keys preserves unknown optional fields,
+	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content and {@link (TreeAlpha:interface).importVerbose|importVerbose} do not.
 	 *
 	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
-	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
-	 * reaches into a node (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 * this problem as SharedTree's implementation stores the entire node in its lower layers.
+	 * It's only when application code reaches into a node
+	 * (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 *
+	 * @privateRemarks
+	 * TODO: AB#43548 Once fixed, update docs above.
 	 */
 	allowUnknownOptionalFields?: boolean;
 }

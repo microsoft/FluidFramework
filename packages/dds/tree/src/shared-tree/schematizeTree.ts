@@ -219,7 +219,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(toStoredSchema(viewSchema.viewSchemaRoot));
+			checkout.updateSchema(toStoredSchema(viewSchema.viewSchema.root));
 			return true;
 		}
 		default: {

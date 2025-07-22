@@ -287,6 +287,7 @@ export function verboseFromCursor(
 		...options,
 	};
 
+	// TODO: AB#43548: This does not handle children in unknown fields who's schema is not know about by this context.
 	const schemaMap = getUnhydratedContext(rootSchema).schema;
 
 	return verboseFromCursorInner(reader, config, schemaMap);
