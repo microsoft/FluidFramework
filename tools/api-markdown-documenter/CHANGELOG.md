@@ -4,7 +4,7 @@
 
 ### Add DocumentationNode -> mdast transformation layer
 
-Adds transformation library for generating [mdast]() from `DocumentationNode`s.
+Adds transformation library for generating [mdast](https://github.com/syntax-tree/mdast) from `DocumentationNode`s.
 
 #### Example
 
@@ -26,6 +26,29 @@ const markdownDocuments = documents.map((document) => documentToMarkdown(documen
 
 // Use the resulting HTML documents with your favorite mdast-compatible library!
 ```
+
+### List parsing
+
+Markdown-like list syntax is now supported in TSDoc comments.
+This support is limited to lists of a single depth (i.e., nested lists are not yet supported).
+
+#### Example
+
+```typescript
+/**
+ * Foo
+ * - bar
+ * - baz
+ */
+export function foo(): string {
+    ...
+}
+```
+
+TSDoc parses the above as a paragraph of content that would otherwise be rendered as `Foo -bar -baz`, since soft line wraps are not treated as line breaks.
+This is true for GitHub-flavored Markdown as well, but certain syntax like lists are special cased.
+
+This library now accounts for list-like syntax, and similarly special-cases it to ensure the output matches the intent of the input.
 
 ### `DocumentationNode.singleLine` has been removed
 

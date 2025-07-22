@@ -8,27 +8,21 @@ Test package
 
 This remarks block includes a bulleted list!
 
-\- Bullet 1
-
-\- Bullet 2
+- Bullet 1
+- Bullet 2
 
 And an ordered list for good measure!
 
-1\. List item 1
-
-2\. List item 2
-
-3\. List item 3
+1. List item 1
+1. List item 2
+1. List item 3
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
-\- Good link (no alias): [TestClass](/test-suite-a/testclass-class)
-
-\- Good link (with alias): [function alias text](/test-suite-a/#testfunction-function)
-
-\- Bad link (no alias): _InvalidItem_
-
-\- Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
+- Good link (no alias): [TestClass](/test-suite-a/testclass-class)
+- Good link (with alias): [function alias text](/test-suite-a/#testfunction-function)
+- Bad link (no alias): _InvalidItem_
+- Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
 ## Example {#test-suite-a-example}
 
