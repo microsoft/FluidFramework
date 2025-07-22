@@ -403,7 +403,7 @@ export interface ISummaryStats {
 // @alpha @legacy
 export interface ISummaryTreeWithStats {
     stats: ISummaryStats;
-    summary: ISummaryTree_2;
+    summary: ISummaryTree;
 }
 
 // @alpha @legacy
