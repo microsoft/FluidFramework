@@ -2,6 +2,29 @@
 
 ## 0.21.0
 
+### List parsing
+
+Markdown-like list syntax is now supported in TSDoc comments.
+This support is limited to lists of a single depth (i.e., nested lists are not yet supported).
+
+#### Example
+
+```typescript
+/**
+ * Foo
+ * - bar
+ * - baz
+ */
+export function foo(): string {
+    ...
+}
+```
+
+TSDoc parses the above as a paragraph of content that would otherwise be rendered as `Foo -bar -baz`, since soft line wraps are not treated as line breaks.
+This is true for GitHub-flavored Markdown as well, but certain syntax like lists are special cased.
+
+This library now accounts for list-like syntax, and similarly special-cases it to ensure the output matches the intent of the input.
+
 ### `DocumentationNode.singleLine` has been removed
 
 This flag was never more than a hack to make our custom Markdown rendering work out correctly.
