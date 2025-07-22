@@ -42,7 +42,7 @@ export function tableCellToMarkdown(
 }
 
 /**
- * TODO
+ * Transform block content under a table cell to Markdown.
  */
 function transformCellContent(
 	node: TableCellContent,
