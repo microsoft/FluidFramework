@@ -1,6 +1,6 @@
 ---
 "@fluidframework/container-definitions": minor
-"__section": deprecation
+"__section": legacy
 ---
 Introduced new interface "IContainerStorageService" to replace "IDocumentStorageService" between Loader and Runtime layers
 

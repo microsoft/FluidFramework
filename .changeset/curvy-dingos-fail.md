@@ -1,6 +1,6 @@
 ---
 "@fluidframework/runtime-definitions": minor
-"__section": deprecation
+"__section": legacy
 ---
 Introduced new interface "IRuntimeStorageService" to replace "IDocumentStorageService" between Runtime and DataStore layers
 
