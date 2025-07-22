@@ -27,6 +27,7 @@ export function listToMarkdown(node: ListNode, context: TransformationContext): 
 			type: "list",
 			ordered: node.ordered,
 			children: transformedChildren,
+			spread: false,
 		},
 	];
 }

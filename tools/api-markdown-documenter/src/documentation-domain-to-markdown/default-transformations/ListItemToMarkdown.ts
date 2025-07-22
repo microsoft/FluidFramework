@@ -5,8 +5,7 @@
 
 import type {
 	ListItem as MdastListItem,
-	BlockContent as MdastBlockContent,
-	Paragraph,
+	PhrasingContent as MdastPhrasingContent,
 } from "mdast";
 
 import type { ListItemNode } from "../../documentation-domain/index.js";
@@ -23,19 +22,20 @@ export function listItemToMarkdown(
 	node: ListItemNode,
 	context: TransformationContext,
 ): [MdastListItem] {
-	const transformedChildren: MdastBlockContent[] = [];
+	const transformedChildren: MdastPhrasingContent[] = [];
 	for (const child of node.children) {
-		const paragraph: Paragraph = {
-			type: "paragraph",
-			children: [...phrasingContentToMarkdown(child, context)],
-		};
-		transformedChildren.push(paragraph);
+		transformedChildren.push(...phrasingContentToMarkdown(child, context));
 	}
 
 	return [
 		{
 			type: "listItem",
-			children: transformedChildren,
+			children: [
+				{
+					type: "paragraph",
+					children: transformedChildren,
+				},
+			],
 		},
 	];
 }
