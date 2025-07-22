@@ -39,7 +39,7 @@ export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
  */
 export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
 	/**
-	 * Static singleton representing an empty Code Span node.
+	 * Static singleton representing an empty Fenced Code Block node.
 	 */
 	public static readonly Empty: FencedCodeBlockNode = new FencedCodeBlockNode([]);
 
