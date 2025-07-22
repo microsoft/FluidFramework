@@ -285,12 +285,6 @@ If you would like to add rendering support for a custom `Documentation Domain` n
 
 If you would like to change any or all of this library's default rendering policies, you may simply override the default policies for the desired `type`s.
 
-### HtmlRenderer
-
-This library includes APIs for HTML rendering.
-
-Like the [MarkdownRenderer](#markdownrenderer), this library includes a `HtmlRenderer.renderApiModel` function that operates in much the same way, but outputs HTML-formatted documents instead of Markdown.
-
 ### ToMarkdown Transformation
 
 This library includes APIs for transforming `Documentation Domain` trees to Markdown syntax trees using [mdast](https://github.com/syntax-tree/mdast).
@@ -322,6 +316,12 @@ const markdownDocuments = documents.map((document) => documentToMarkdown(documen
 <!-- prettier-ignore-end -->
 
 <!-- AUTO-GENERATED-CONTENT:END -->
+
+### HtmlRenderer
+
+This library includes APIs for HTML rendering.
+
+Like the [MarkdownRenderer](#markdownrenderer), this library includes a `HtmlRenderer.renderApiModel` function that operates in much the same way, but outputs HTML-formatted documents instead of Markdown.
 
 ### ToHtml Transformation
 
