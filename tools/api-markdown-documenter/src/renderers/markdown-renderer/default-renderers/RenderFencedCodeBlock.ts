@@ -38,7 +38,8 @@ function renderFencedCodeBlockWithMarkdownSyntax(
 	writer.ensureSkippedLine(); // Code blocks require a leading blank line
 	writer.write("```");
 	writer.writeLine(node.language);
-	writer.writeLine(node.value);
+	writer.write(node.value);
+	writer.ensureNewLine();
 	writer.ensureNewLine(); // Ensure newline after body content
 	writer.writeLine("```");
 	writer.ensureSkippedLine(); // Code blocks require a trailing blank line
