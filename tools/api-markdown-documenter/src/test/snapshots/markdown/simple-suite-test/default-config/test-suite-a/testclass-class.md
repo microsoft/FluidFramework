@@ -229,7 +229,7 @@ static testClassStaticMethod(foo: number): string;
 
 #### Returns {#testclassstaticmethod-returns}
 
-\- Some string
+- Some string
 
 **Return type**: string
 
