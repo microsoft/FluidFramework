@@ -9,7 +9,7 @@ import type { LineBreakNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
- * Transform a {@link PlainTextNode} to Markdown.
+ * Transform a {@link LineBreakNode} to Markdown.
  *
  * @param node - The node to render.
  * @param context - See {@link TransformationContext}.
