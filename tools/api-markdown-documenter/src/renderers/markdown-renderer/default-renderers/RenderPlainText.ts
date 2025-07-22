@@ -24,7 +24,7 @@ export function renderPlainText(
 	writer: DocumentWriter,
 	context: RenderContext,
 ): void {
-	if (node.text.length === 0) {
+	if (node.value.length === 0) {
 		return;
 	}
 

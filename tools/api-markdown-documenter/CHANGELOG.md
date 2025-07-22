@@ -32,6 +32,12 @@ It doesn't make sense in the context of a general-purpose documentation domain, 
 
 It has been removed and is no longer used by the system.
 
+### `PlainTextNode.text` property removed
+
+`text` was a redundant alias for `value`, which `PlainTextNode` inherits as a literal node.
+This property has now been removed.
+Use `PlainTextNode.value` instead.
+
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
 This type previously supported an unsafe escape hatch for text escaping.
