@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+// eslint-disable-next-line import/no-internal-modules
+import type { TreeContainerSchema } from "@fluidframework/fluid-static/internal";
 import { Tree, type TreeNode, TreeViewConfiguration } from "@fluidframework/tree";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import { SharedTree } from "fluid-framework";
@@ -198,9 +200,9 @@ export const INITIAL_APP_STATE = {
 	],
 } as const;
 
-export const CONTAINER_SCHEMA = {
+export const CONTAINER_SCHEMA: TreeContainerSchema = {
 	initialObjects: {
-		appState: SharedTree,
+		tree: SharedTree,
 	},
 };
 

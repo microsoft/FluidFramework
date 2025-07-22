@@ -34,14 +34,14 @@ import { useFluidContainerNextJs } from "@/useFluidContainerNextjs";
 import { useSharedTreeRerender } from "@/useSharedTreeRerender";
 
 // Uncomment the import line that corresponds to the server you want to use
-// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
-import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
+import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./spe"; // eslint-disable-line import/order
+// import { createContainer, loadContainer, postAttach, containerIdFromUrl } from "./tinylicious"; // eslint-disable-line import/order
 
 export async function createAndInitializeContainer(): Promise<
 	IFluidContainer<typeof CONTAINER_SCHEMA>
 > {
 	const container = await createContainer(CONTAINER_SCHEMA);
-	const treeView = container.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+	const treeView = container.initialObjects.tree.viewWith(TREE_CONFIGURATION);
 	treeView.initialize(new SharedTreeAppState(INITIAL_APP_STATE));
 	treeView.dispose(); // After initializing, dispose the tree view so later loading of the data can work correctly
 	return container;
@@ -60,7 +60,7 @@ export default function TasksListPage(): JSX.Element {
 		async (id) => loadContainer(CONTAINER_SCHEMA, id),
 		// Get data from existing container
 		(fluidContainer) => {
-			const _treeView = fluidContainer.initialObjects.appState.viewWith(TREE_CONFIGURATION);
+			const _treeView = fluidContainer.initialObjects.tree.viewWith(TREE_CONFIGURATION);
 			setTreeView(_treeView);
 
 			const presence = getPresence(fluidContainer);

@@ -42,6 +42,7 @@
 		"@fluidframework/build-tools": "^0.56.0",
 		"@fluidframework/devtools": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "^5.7.4",
+		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/odsp-client": "workspace:~",
 		"@fluidframework/presence": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
