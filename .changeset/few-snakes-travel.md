@@ -2,10 +2,11 @@
 "@fluidframework/container-definitions": minor
 "__section": deprecation
 ---
-Deprecated "policies" and "downloadSummary" on "IContainerStorageService"
+Introduced new interface "IContainerStorageService" to replace "IDocumentStorageService" between Loader and Runtime layers
 
-`IContainerStorageService` is a duplicate of `IDocumentStorageService`. It is exposed by the `ContainerContext` to the `Runtime` layer and will only contain properties needed by it.
+Added an interface `IContainerStorageService` which will replace `IDocumentStorageService` in the `Runtime` layer. This is exposed by the `Loader` layer to the `Runtime` layer via `ContainerContext`. This will help remove `Runtime` layer's dependency on the `Driver` layer and replace it with the `Loader` layer that it already maintains. This new interface will only contain properties that are needed and used by the `Runtime` layer.
 
-The property `downloadSummary`  on `IContainerStorageService` is deprecated as it is unused in the Runtime layer. No replacement is provided and this will be removed in a future release.
+The following properties from `IContainerStorageService` are deprecated as they are not needed by the `DataStore` layer. These be removed in a future release:
 
-The property `policies`  on `IContainerStorageService` is deprecated. The Runtime only needs `maximumCacheDurationMs` property from it which is added directly on `IContainerStorageService`. `policies` will be removed in a future release.
+- `policies` - The Runtime only needs `maximumCacheDurationMs` property from it which is added directly on `IContainerStorageService`.
+- `downloadSummary`
