@@ -4,14 +4,14 @@
  */
 
 //@ts-check
-/** @typedef {import("@fluid-tools/api-markdown-documenter").PhrasingContent} PhrasingContent */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").BlockContent} BlockContent */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ToMarkdownContext} ToMarkdownContext */
 /** @typedef {import("mdast").BlockContent} MdastBlockContent */
 /** @typedef {import("mdast").PhrasingContent} MdastPhrasingContent */
 
 import {
+	blockContentToMarkdown,
 	DocumentationParentNodeBase,
-	phrasingContentToMarkdown,
 } from "@fluid-tools/api-markdown-documenter";
 
 /**
@@ -48,7 +48,7 @@ import {
  */
 export class AdmonitionNode extends DocumentationParentNodeBase {
 	/**
-	 * @param {PhrasingContent[]} children - Child node content.
+	 * @param {BlockContent[]} children - Child node content.
 	 * @param {string} admonitionKind - The kind of admonition. See {@link https://docusaurus.io/docs/markdown-features/admonitions}.
 	 * @param {string | undefined} title - (Optional) Title text for the admonition.
 	 */
@@ -70,12 +70,12 @@ export class AdmonitionNode extends DocumentationParentNodeBase {
 	 */
 	toMarkdown(context) {
 		/**
-		 * @type {MdastPhrasingContent[]}
+		 * @type {MdastBlockContent[]}
 		 */
 		const transformedChildren = [];
 		for (const child of this.children) {
 			// @ts-ignore -- Limitation of using types in JavaScript: we can't explicitly mark `AdmonitionNode` as only containing phrasing content.
-			transformedChildren.push(...phrasingContentToMarkdown(child, context));
+			transformedChildren.push(...blockContentToMarkdown(child, context));
 		}
 
 		return [
@@ -88,10 +88,7 @@ export class AdmonitionNode extends DocumentationParentNodeBase {
 					},
 				]
 			},
-			{
-				type: "paragraph",
-				children: transformedChildren,
-			},
+			...transformedChildren,
 			{
 				type: "paragraph",
 				children: [

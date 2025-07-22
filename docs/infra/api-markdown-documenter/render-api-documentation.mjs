@@ -27,7 +27,6 @@ import { cleanIgnored } from "../clean-ignored.mjs";
 import { layoutContent } from "./api-documentation-layout.mjs";
 import {
 	transformAdmonitionNode,
-	transformBlockQuoteNode,
 	transformTableNode,
 } from "./custom-renderers.mjs";
 
@@ -95,7 +94,6 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 	 * @type {import("@fluid-tools/api-markdown-documenter").ToMarkdownTransformations}
 	 */
 	const customTransformations = {
-		blockQuote: transformBlockQuoteNode,
 		table: transformTableNode,
 		// @ts-ignore -- Limitation of using types in JavaScript: we can't opt into the documenter library's extensibility model to extend supported node types.
 		admonition: transformAdmonitionNode,

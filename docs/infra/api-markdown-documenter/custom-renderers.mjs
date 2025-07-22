@@ -10,7 +10,6 @@
 /** @typedef {import("mdast").RootContent} MdastRootContent */
 
 import {
-	BlockQuoteNode,
 	documentationNodeToHtml,
 	HtmlRenderer,
 	TableNode,
@@ -27,23 +26,6 @@ import { AdmonitionNode } from "./admonition-node.mjs";
  */
 export const transformAdmonitionNode = (admonitionNode, context) => {
 	return admonitionNode.toMarkdown(context);
-}
-
-/**
- * Renders a {@link @fluid-tools/api-markdown-documenter#BlockQuoteNode} using Docusaurus admonition syntax.
- *
- * @param {BlockQuoteNode} blockQuoteNode - The node to render.
- * @param {ToMarkdownContext} context - The transformation context.
- *
- * @type {import("@fluid-tools/api-markdown-documenter").ToMarkdownTransformation<BlockQuoteNode, MdastBlockContent[]>}
- */
-export const transformBlockQuoteNode = (blockQuoteNode, context) => {
-	const admonition = new AdmonitionNode(
-		blockQuoteNode.children,
-		"note",
-		undefined, // title
-	);
-	return admonition.toMarkdown(context);
 }
 
 /**
@@ -67,11 +49,6 @@ export const transformTableNode = (tableNode, context) => {
 	// Generate HTML AST for the table node.
 
 	const htmlTree = documentationNodeToHtml(tableNode, {
-		rootFormatting: {
-			bold: context.bold,
-			italic: context.italic,
-			strikethrough: context.strikethrough,
-		},
 		startingHeadingLevel: context.headingLevel,
 		logger: context.logger,
 		customTransformations: undefined,
