@@ -667,8 +667,7 @@ declare namespace MarkdownRenderer {
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
         RenderDocumentAsMarkdownConfiguration,
-        renderMarkdown,
-        RenderMarkdownConfiguration
+        renderMarkdown
     }
 }
 export { MarkdownRenderer }
@@ -739,8 +738,7 @@ export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, 
 }
 
 // @public @sealed
-export interface RenderDocumentAsMarkdownConfiguration extends ToMarkdownConfiguration, RenderMarkdownConfiguration {
-}
+export type RenderDocumentAsMarkdownConfiguration = ToMarkdownConfiguration;
 
 // @public
 function renderDocumentsAsMarkdown(documents: readonly DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
@@ -759,10 +757,6 @@ export interface RenderHtmlConfiguration {
 
 // @public
 function renderMarkdown(tree: Nodes_2): string;
-
-// @public @sealed
-export interface RenderMarkdownConfiguration {
-}
 
 // @public
 export type SectionContent = BlockContent | SectionNode;

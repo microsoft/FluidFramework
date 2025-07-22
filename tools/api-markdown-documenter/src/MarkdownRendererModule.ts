@@ -17,5 +17,4 @@ export {
 	renderDocumentAsMarkdown as renderDocument,
 	type RenderDocumentAsMarkdownConfiguration,
 	renderMarkdown,
-	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";

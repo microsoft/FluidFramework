@@ -14,25 +14,12 @@ import {
 } from "../../documentation-domain-to-markdown/index.js";
 
 /**
- * Configuration for rendering Markdown.
- *
- * @sealed
- * @public
- */
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface RenderMarkdownConfiguration {
-	// TODO
-}
-
-/**
  * Configuration for rendering a document as Markdown.
  *
  * @sealed
  * @public
  */
-export interface RenderDocumentConfiguration
-	extends TransformationConfiguration,
-		RenderMarkdownConfiguration {}
+export type RenderDocumentConfiguration = TransformationConfiguration;
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a string.
