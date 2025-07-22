@@ -78,7 +78,11 @@
 		"typescript": "~5.1.6"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Enum_CommonProperties": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
