@@ -713,7 +713,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
     constructor(text: string);
     static readonly Empty: PlainTextNode;
     get isEmpty(): boolean;
-    get text(): string;
     readonly type = "text";
 }
 

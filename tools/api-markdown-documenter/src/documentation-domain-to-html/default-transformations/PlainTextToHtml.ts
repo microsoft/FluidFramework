@@ -20,6 +20,6 @@ export function plainTextToHtml(
 ): HastText {
 	return {
 		type: "text",
-		value: node.text,
+		value: node.value,
 	};
 }
