@@ -144,7 +144,7 @@ when multiple clients at once initialize a cell. Using FWW, will help clients to
 their change was rejected. They can resolve conflict with the new information that they received in the event.
 This event is only emitted when the SetCell Resolution Policy is First Write Win(FWW). This is emitted when two clients
 race and send changes without observing each other changes, the changes that gets sequenced last would be rejected, and
-only client whose changes rejected would be notified via this event, with expectation that it will merge its changes
+only client whose changes were rejected would be notified via this event, with expectation that it will merge its changes
 back by accounting new information (state from winner of the race).
 
 Some cases which documents how the Set op changes are applied or rejected during LWW -> FWW switch as some clients will
