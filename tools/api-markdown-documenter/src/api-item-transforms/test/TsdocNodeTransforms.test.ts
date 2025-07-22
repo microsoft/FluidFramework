@@ -52,6 +52,16 @@ describe("Tsdoc node transformation tests", () => {
 			]);
 		});
 
+		it("Escaped text", () => {
+			// `@` is escaped to make TSDoc treat it as normal text, rather than as the start of a tag.
+			const context = parser.parseString("/** \\@foo */");
+			const summarySection = context.docComment.summarySection;
+
+			const result = transformTsdocSection(summarySection, transformOptions);
+
+			expect(result).to.deep.equal([new ParagraphNode([new PlainTextNode("@foo")])]);
+		});
+
 		it("Multi-paragraph comment", () => {
 			const comment = `/**
  * This is a simple comment.
