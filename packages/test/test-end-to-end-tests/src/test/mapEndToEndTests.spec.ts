@@ -8,9 +8,14 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
-import { IErrorBase, IFluidHandle } from "@fluidframework/core-interfaces";
+import {
+	ConfigTypes,
+	IConfigProviderBase,
+	IErrorBase,
+	IFluidHandle,
+} from "@fluidframework/core-interfaces";
 import type { FluidDataStoreRuntime } from "@fluidframework/datastore/internal";
-import type { ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap, IValueChanged } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -364,6 +369,176 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 		assert.equal(sharedMap1.isAttached(), true, "sharedMap1 should be attached");
 		assert.equal(detachedMap1.isAttached(), true, "detachedMap1 should be attached");
 		assert.equal(detachedMap2.isAttached(), true, "detachedMap2 should be attached");
+	});
+});
+
+describeCompat("SharedMap orderSequentially", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
+	const mapId = "mapKey";
+	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+	const testContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry,
+	};
+
+	let provider: ITestObjectProvider;
+	beforeEach("getTestObjectProvider", () => {
+		provider = getTestObjectProvider();
+	});
+
+	let container: IContainer;
+	let dataObject: ITestFluidObject;
+	let sharedMap: ISharedMap;
+
+	let containerRuntime: IContainerRuntime;
+	let clearEventCount: number;
+	let changedEventData: IValueChanged[];
+
+	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
+		getRawConfig: (name: string): ConfigTypes => settings[name],
+	});
+	const errorMessage = "callback failure";
+
+	beforeEach("setup", async () => {
+		const configWithFeatureGates = {
+			...testContainerConfig,
+			loaderProps: {
+				configProvider: configProvider({
+					"Fluid.ContainerRuntime.EnableRollback": true,
+				}),
+			},
+		};
+
+		container = await provider.makeTestContainer(configWithFeatureGates);
+		dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
+		sharedMap = await dataObject.getSharedObject<ISharedMap>(mapId);
+		containerRuntime = dataObject.context.containerRuntime as IContainerRuntime;
+		clearEventCount = 0;
+		changedEventData = [];
+		sharedMap.on("valueChanged", (changed, local, target) => {
+			changedEventData.push(changed);
+		});
+		sharedMap.on("clear", (local, target) => {
+			clearEventCount++;
+		});
+	});
+
+	it("Should rollback set", async () => {
+		let error: Error | undefined;
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedMap.set("key", 0);
+				throw new Error(errorMessage);
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false);
+		assert.equal(sharedMap.size, 0);
+		assert.equal(sharedMap.has("key"), false);
+		assert.equal(clearEventCount, 0);
+		assert.equal(changedEventData.length, 2);
+		assert.equal(changedEventData[0].key, "key");
+		assert.equal(changedEventData[0].previousValue, undefined);
+		// rollback
+		assert.equal(changedEventData[1].key, "key");
+		assert.equal(changedEventData[1].previousValue, 0);
+	});
+
+	it("Should rollback set to prior value", async () => {
+		sharedMap.set("key", "old");
+		let error: Error | undefined;
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedMap.set("key", "new");
+				sharedMap.set("key", "last");
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false);
+		assert.equal(sharedMap.size, 1);
+		assert.equal(sharedMap.get("key"), "old", `Unexpected value ${sharedMap.get("key")}`);
+		assert.equal(clearEventCount, 0);
+		assert.equal(changedEventData.length, 5);
+		assert.equal(changedEventData[0].key, "key");
+		assert.equal(changedEventData[0].previousValue, undefined);
+		assert.equal(changedEventData[1].key, "key");
+		assert.equal(changedEventData[1].previousValue, "old");
+		assert.equal(changedEventData[2].key, "key");
+		assert.equal(changedEventData[2].previousValue, "new");
+		// rollback
+		assert.equal(changedEventData[3].key, "key");
+		assert.equal(changedEventData[3].previousValue, "last");
+		assert.equal(changedEventData[4].key, "key");
+		assert.equal(changedEventData[4].previousValue, "new");
+	});
+
+	it("Should rollback delete", async () => {
+		sharedMap.set("key", "old");
+		let error: Error | undefined;
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedMap.delete("key");
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false);
+		assert.equal(sharedMap.size, 1);
+		assert.equal(sharedMap.get("key"), "old", `Unexpected value ${sharedMap.get("key")}`);
+		assert.equal(clearEventCount, 0);
+		assert.equal(changedEventData.length, 3);
+		assert.equal(changedEventData[0].key, "key");
+		assert.equal(changedEventData[0].previousValue, undefined);
+		assert.equal(changedEventData[1].key, "key");
+		assert.equal(changedEventData[1].previousValue, "old");
+		// rollback
+		assert.equal(changedEventData[2].key, "key");
+		assert.equal(changedEventData[2].previousValue, undefined);
+	});
+
+	it("Should rollback clear", async () => {
+		sharedMap.set("key1", "old1");
+		sharedMap.set("key2", "old2");
+		let error: Error | undefined;
+		try {
+			containerRuntime.orderSequentially(() => {
+				sharedMap.clear();
+				throw new Error("callback failure");
+			});
+		} catch (err) {
+			error = err as Error;
+		}
+
+		assert.notEqual(error, undefined, "No error");
+		assert.equal(error?.message, errorMessage, "Unexpected error message");
+		assert.equal(containerRuntime.disposed, false);
+		assert.equal(sharedMap.size, 2);
+		assert.equal(sharedMap.get("key1"), "old1", `Unexpected value ${sharedMap.get("key1")}`);
+		assert.equal(sharedMap.get("key2"), "old2", `Unexpected value ${sharedMap.get("key2")}`);
+		assert.equal(changedEventData.length, 4);
+		assert.equal(changedEventData[0].key, "key1");
+		assert.equal(changedEventData[0].previousValue, undefined);
+		assert.equal(changedEventData[1].key, "key2");
+		assert.equal(changedEventData[1].previousValue, undefined);
+		assert.equal(clearEventCount, 1);
+		// rollback
+		assert.equal(changedEventData[2].key, "key1");
+		assert.equal(changedEventData[2].previousValue, undefined);
+		assert.equal(changedEventData[3].key, "key2");
+		assert.equal(changedEventData[3].previousValue, undefined);
 	});
 });
 
