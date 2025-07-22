@@ -6,10 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelStorageService } from "../channelStorageService.js";
@@ -20,7 +18,7 @@ describe("ChannelStorageService", () => {
 			blobs: {},
 			trees: {},
 		};
-		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+		const storage: Pick<IRuntimeStorageService, "readBlob"> = {
 			readBlob: async (id: string) => {
 				throw new Error("not implemented");
 			},
@@ -41,7 +39,7 @@ describe("ChannelStorageService", () => {
 			},
 			trees: {},
 		};
-		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+		const storage: Pick<IRuntimeStorageService, "readBlob"> = {
 			readBlob: async (id: string) => {
 				return stringToBuffer(id, "utf8");
 			},
@@ -68,7 +66,7 @@ describe("ChannelStorageService", () => {
 				},
 			},
 		};
-		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+		const storage: Pick<IRuntimeStorageService, "readBlob"> = {
 			readBlob: async (id: string) => {
 				return stringToBuffer(id, "utf8");
 			},
