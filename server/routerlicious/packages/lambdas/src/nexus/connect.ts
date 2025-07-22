@@ -384,11 +384,7 @@ async function checkToken(
 			throw error;
 		}
 		// We don't understand the error, so it is likely an internal service error.
-		const errMsg = `Could not verify connect document token. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Could not verify connect document token.";
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
 			errMsg,
