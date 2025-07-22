@@ -12541,15 +12541,27 @@ importers:
       '@types/node':
         specifier: ^18.19.0
         version: 18.19.67
+      c8:
+        specifier: ^8.0.1
+        version: 8.0.1
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
+      cross-env:
+        specifier: ^7.0.3
+        version: 7.0.3
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
+      mocha:
+        specifier: ^10.8.2
+        version: 10.8.2
+      mocha-multi-reporters:
+        specifier: ^1.5.1
+        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
