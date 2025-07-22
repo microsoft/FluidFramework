@@ -139,7 +139,7 @@ axis is typically within an order of magnitude compared to sequentially accessin
 
 ### Switching From Last Write Win(LWW) to First Write Win(FWW) mode
 
-Shared Matrix allows a one way switch from LWW to FWW. This is introduced in order to handle conflict
+Shared Matrix allows a one-way switch from LWW to FWW. This is introduced in order to handle conflict
 when multiple clients at once initialize a cell. Using FWW, will help clients to receive a `conflict` event in case
 their change was rejected. They can resolve conflict with the new information that they received in the event.
 This event is only emitted when the SetCell Resolution Policy is First Write Win(FWW). This is emitted when two clients
