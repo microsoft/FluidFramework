@@ -303,7 +303,7 @@ export interface IGarbageCollectionDetailsBase {
 // @alpha @legacy (undocumented)
 export interface IGCRuntimeOptions {
     [key: string]: any;
-    enableGCSweep?: true;
+    enableGCSweep?: true | undefined;
     runFullGC?: boolean;
     sessionExpiryTimeoutMs?: number;
     sweepGracePeriodMs?: number;

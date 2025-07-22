@@ -17,7 +17,7 @@ export interface IGCRuntimeOptions {
 	 * Current default behavior is for Sweep Phase not to delete Tombstoned objects,
 	 * but merely to prevent them from being loaded.
 	 */
-	enableGCSweep?: true;
+	enableGCSweep?: true | undefined;
 
 	/**
 	 * Flag that will bypass optimizations and generate GC data for all nodes irrespective of whether a node

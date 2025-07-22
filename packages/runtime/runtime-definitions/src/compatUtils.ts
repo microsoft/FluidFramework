@@ -207,13 +207,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 		[FlushMode.Immediate, "1.0.0"],
 		[FlushMode.TurnBased, "2.0.0-defaults"],
 	]),
-	// This is a special case where a type was moved from a package where exactOptionalPropertyTypes was set to false, and changing
-	// the type as part of the move would break backwards compatibility. Instead, we are explicitly specifying the type. This should
-	// get cleaned up as part of a separate refactor.
-	gcOptions: configValueToMinVersionForCollab<
-		{ enableGCSweep?: boolean | undefined },
-		[{ enableGCSweep?: boolean | undefined }, SemanticVersion][]
-	>([
+	gcOptions: configValueToMinVersionForCollab([
 		[{ enableGCSweep: undefined }, "1.0.0"],
 		[{ enableGCSweep: true }, "2.0.0-defaults"],
 	]),
