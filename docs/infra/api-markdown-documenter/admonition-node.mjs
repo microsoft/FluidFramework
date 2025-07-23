@@ -81,40 +81,25 @@ export class AdmonitionNode extends DocumentationParentNodeBase {
 		// If the admonition has a title, prepend it to the list of children with the `directiveLabel` property set.
 		if (this.title !== undefined) {
 			transformedChildren.unshift({
-				type: "text",
-				value: this.title,
+				type: "paragraph",
 				data: {
-					directiveLabel: true
-				}
+					directiveLabel: true,
+				},
+				children: [
+					{
+						type: "text",
+						value: this.title,
+					},
+				],
 			});
 		}
 
-		return [{
-			type: "containerDirective",
-			name: this.admonitionKind,
-			children: transformedChildren
-		}]
-
-		// return [
-		// 	{
-		// 		type: "paragraph",
-		// 		children: [
-		// 			{
-		// 				type: "text",
-		// 				value: `:::${this.admonitionKind}${this.title === undefined ? "" : `[${this.title}]`}`
-		// 			},
-		// 		]
-		// 	},
-		// 	...transformedChildren,
-		// 	{
-		// 		type: "paragraph",
-		// 		children: [
-		// 			{
-		// 				type: "text",
-		// 				value: ":::"
-		// 			},
-		// 		]
-		// 	}
-		// ];
+		return [
+			{
+				type: "containerDirective",
+				name: this.admonitionKind,
+				children: transformedChildren,
+			},
+		];
 	}
 }

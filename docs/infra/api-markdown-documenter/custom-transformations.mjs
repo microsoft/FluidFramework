@@ -26,7 +26,7 @@ import { AdmonitionNode } from "./admonition-node.mjs";
  */
 export const transformAdmonitionNode = (admonitionNode, context) => {
 	return admonitionNode.toMarkdown(context);
-}
+};
 
 /**
  * Type guard for element HAST nodes.
@@ -69,4 +69,4 @@ export const transformTableNode = (tableNode, context) => {
 			value: htmlString,
 		},
 	];
-}
+};
