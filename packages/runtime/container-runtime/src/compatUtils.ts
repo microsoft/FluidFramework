@@ -56,7 +56,7 @@ export type RuntimeOptionsAffectingDocSchema = Omit<
  * default value for `enableGroupedBatching` will be true because clients running 2.0 or later will be able to understand the format changes associated
  * with the batching feature.
  */
-export const runtimeOptionsAffectingDocSchemaConfigMap = {
+const runtimeOptionsAffectingDocSchemaConfigMap = {
 	enableGroupedBatching: {
 		"1.0.0": false,
 		"2.0.0-defaults": true,
@@ -111,7 +111,7 @@ export const runtimeOptionsAffectingDocSchemaConfigMap = {
 	},
 } as const satisfies ConfigMap<RuntimeOptionsAffectingDocSchema>;
 
-export const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
+const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 	enableGroupedBatching: configValueToMinVersionForCollab([
 		[false, "1.0.0"],
 		[true, "2.0.0-defaults"],
