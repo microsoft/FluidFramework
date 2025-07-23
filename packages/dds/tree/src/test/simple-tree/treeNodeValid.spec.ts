@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	createTreeNodeSchemaPrivateData,
 	type MostDerivedData,
 	TreeNodeValid,
 	// eslint-disable-next-line import/no-internal-modules
@@ -17,18 +18,24 @@ import type { FlexTreeNode } from "../../feature-libraries/index.js";
 import { numberSchema } from "../../simple-tree/leafNodeSchema.js";
 import { validateUsageError } from "../utils.js";
 import { brand } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getUnhydratedContext } from "../../simple-tree/createContext.js";
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/createContext.js";
 import {
 	inPrototypeChain,
 	NodeKind,
 	typeNameSymbol,
 	typeSchemaSymbol,
-	type Context,
 	type InternalTreeNode,
 	type TreeNodeSchema,
 	UnhydratedFlexTreeNode,
 	type NormalizedAnnotatedAllowedTypes,
+	type TreeNodeSchemaInitializedData,
+	privateDataSymbol,
+	CompatibilityLevel,
+	type TreeNodeSchemaPrivateData,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/core/index.js";
 
@@ -47,7 +54,7 @@ describe("TreeNodeValid", () => {
 		const log: string[] = [];
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		let customThis: TreeNodeValid<unknown> = {} as TreeNodeValid<unknown>;
-
+		let privateData: TreeNodeSchemaPrivateData | undefined;
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;
 			public static readonly identifier = "Subclass";
@@ -80,9 +87,9 @@ describe("TreeNodeValid", () => {
 
 			protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-			protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
+			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("oneTimeSetup");
-				return getUnhydratedContext(Subclass);
+				return getTreeNodeSchemaInitializedData(this, handler);
 			}
 
 			public static readonly childTypes: ReadonlySet<TreeNodeSchema> = new Set();
@@ -95,6 +102,11 @@ describe("TreeNodeValid", () => {
 			public override get [typeSchemaSymbol](): never {
 				throw new Error("Method not implemented.");
 			}
+
+			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+			}
+
 			public constructor(input: number | InternalTreeNode) {
 				super(input);
 				log.push("done");
@@ -150,6 +162,8 @@ describe("TreeNodeValid", () => {
 
 	it("multiple subclass valid", () => {
 		const log: string[] = [];
+
+		let privateData: TreeNodeSchemaPrivateData | undefined;
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;
 			public static readonly identifier = "Subclass";
@@ -177,23 +191,29 @@ describe("TreeNodeValid", () => {
 			public constructor() {
 				super(0);
 			}
+
+			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
+			}
 		}
 
 		class A extends Subclass {
 			protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-			protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
+			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push("A");
-				return getUnhydratedContext(A);
+				return getTreeNodeSchemaInitializedData(this, handler);
 			}
 		}
 
 		class B extends Subclass {
 			protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-			protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
+			protected static override oneTimeSetup<T2>(
+				this: typeof TreeNodeValid<T2>,
+			): TreeNodeSchemaInitializedData {
 				log.push("B");
-				return getUnhydratedContext(A);
+				return getTreeNodeSchemaInitializedData(B, handler);
 			}
 		}
 
@@ -206,6 +226,7 @@ describe("TreeNodeValid", () => {
 
 	it("multiple subclass chain", () => {
 		const log: string[] = [];
+		let privateData: TreeNodeSchemaPrivateData | undefined;
 		class Subclass extends TreeNodeValid<number> {
 			public static readonly kind = NodeKind.Array;
 			public static readonly identifier = "Subclass";
@@ -238,9 +259,12 @@ describe("TreeNodeValid", () => {
 		class A extends Subclass {
 			protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-			protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
+			protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 				log.push(this.name);
-				return getUnhydratedContext(this as typeof A);
+				return getTreeNodeSchemaInitializedData(this, handler);
+			}
+			public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+				return (privateData ??= createTreeNodeSchemaPrivateData(this, []));
 			}
 		}
 
@@ -257,3 +281,8 @@ describe("TreeNodeValid", () => {
 		);
 	});
 });
+
+const handler = {
+	shallowCompatibilityTest: () => CompatibilityLevel.None,
+	toFlexContent: fail,
+};

@@ -5,20 +5,23 @@
 
 import { strict as assert } from "node:assert";
 
-import { IClient } from "@fluidframework/driver-definitions";
-import { ISignalMessage } from "@fluidframework/driver-definitions/internal";
-import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt, MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
-import { Socket } from "socket.io-client";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { ISignalMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
+import {
+	type ITelemetryLoggerExt,
+	MockLogger,
+} from "@fluidframework/telemetry-utils/internal";
+import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
+import type { Socket } from "socket.io-client";
 
-import { OdspFluidDataStoreLocator } from "../../contractsPublic.js";
+import type { OdspFluidDataStoreLocator } from "../../contractsPublic.js";
 import { createOdspUrl } from "../../createOdspUrl.js";
 import { EpochTracker } from "../../epochTracker.js";
 import { mockify } from "../../mockify.js";
 import { LocalPersistentCache } from "../../odspCache.js";
-import { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
-import { OdspDocumentService } from "../../odspDocumentService.js";
+import type { OdspDocumentDeltaConnection } from "../../odspDocumentDeltaConnection.js";
+import type { OdspDocumentService } from "../../odspDocumentService.js";
 import { OdspDocumentServiceFactory } from "../../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../../odspPublicUtils.js";

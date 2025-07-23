@@ -96,9 +96,7 @@ export function createSignatureSection(
 		if (signatureExcerpt !== "") {
 			const contents: SectionContent[] = [];
 
-			contents.push(
-				FencedCodeBlockNode.createFromPlainText(signatureExcerpt.trim(), "typescript"),
-			);
+			contents.push(new FencedCodeBlockNode(signatureExcerpt.trim(), "typescript"));
 
 			const renderedHeritageTypes = createHeritageTypesContent(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {
@@ -846,7 +844,7 @@ function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 
 	if (firstChild.isLiteral) {
 		if (firstChild.type === "text") {
-			const text = (firstChild as PlainTextNode).text;
+			const text = (firstChild as PlainTextNode).value;
 			if (text === title) {
 				// Remove from children, and remove any trailing line breaks
 				const newChildren = children.slice(1);

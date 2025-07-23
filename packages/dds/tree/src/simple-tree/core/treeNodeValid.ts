@@ -9,10 +9,15 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { type FlexTreeNode, isFlexTreeNode } from "../../feature-libraries/index.js";
 
 import { markEager } from "./flexList.js";
-import { privateToken, TreeNode } from "./treeNode.js";
+import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
 import type { UnhydratedFlexTreeNode } from "./unhydratedFlexTree.js";
-import type { Context } from "./context.js";
-import { NodeKind, type TreeNodeSchema } from "./treeNodeSchema.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaCore,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaPrivateData,
+} from "./treeNodeSchema.js";
 import {
 	getSimpleNodeSchemaFromInnerNode,
 	isTreeNode,
@@ -21,6 +26,7 @@ import {
 } from "./treeNodeKernel.js";
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
+import type { ImplicitAnnotatedAllowedTypes } from "./allowedTypes.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -64,7 +70,9 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 	 * @remarks
 	 * It is valid to dereference LazyItem schema references in this function (or anything that runs after it).
 	 */
-	protected static oneTimeSetup<T>(this: typeof TreeNodeValid<T>): Context {
+	protected static oneTimeSetup<T>(
+		this: typeof TreeNodeValid<T>,
+	): TreeNodeSchemaInitializedData {
 		fail(0xae5 /* Missing oneTimeSetup */);
 	}
 
@@ -163,7 +171,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		const cache = this.markMostDerived();
 		cache.oneTimeInitialized ??= this.oneTimeSetup();
 		// TypeScript fails to narrow the type of `oneTimeInitialized` to `Context` here, so use a cast:
-		return cache as MostDerivedData & { oneTimeInitialized: Context };
+		return cache as MostDerivedData & { oneTimeInitialized: TreeNodeSchemaInitializedData };
 	}
 
 	public constructor(input: TInput | InternalTreeNode) {
@@ -188,7 +196,7 @@ export abstract class TreeNodeValid<TInput> extends TreeNode {
 		// The TreeNodeKernel associates itself the TreeNode (result here, not node) so it can be looked up later via getKernel.
 		// If desired this could be put in a non-enumerable symbol property for lookup instead, but that gets messy going through proxies,
 		// so just relying on the WeakMap seems like the cleanest approach.
-		new TreeNodeKernel(result, schema, node, cache.oneTimeInitialized);
+		new TreeNodeKernel(result, schema, node, cache.oneTimeInitialized.context);
 
 		return result;
 	}
@@ -209,7 +217,45 @@ markEager(TreeNodeValid);
  */
 export interface MostDerivedData {
 	readonly constructor: typeof TreeNodeValid & TreeNodeSchema;
-	oneTimeInitialized?: Context;
+	oneTimeInitialized?: TreeNodeSchemaInitializedData;
+}
+
+/**
+ * Cast `schema` to a {@link TreeNodeValid}, asserting it actually extends it.
+ */
+export function schemaAsTreeNodeValid(
+	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
+): typeof TreeNodeValid & TreeNodeSchema {
+	if (!inPrototypeChain(schema, TreeNodeValid)) {
+		// Use JSON.stringify to quote and escape identifier string.
+		throw new UsageError(
+			`Schema for ${JSON.stringify(
+				schema.identifier,
+			)} does not extend a SchemaFactory generated class. This is invalid.`,
+		);
+	}
+
+	return schema as typeof TreeNodeValid & TreeNodeSchema;
+}
+
+/**
+ * Provides the {@link TreeNodeSchemaPrivateData} for class based implementations of {@link asTreeNodeSchemaCorePrivate}.
+ * @remarks
+ * Such schema must extends {@link TreeNodeValid}.
+ */
+export function createTreeNodeSchemaPrivateData(
+	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
+	childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[],
+): TreeNodeSchemaPrivateData {
+	const schemaValid = schemaAsTreeNodeValid(schema);
+	// Since this closes over the schema, ensure this schema is marked as most derived
+	// so if some other subclass is used later, it will error instead of giving inconsistent results.
+	schemaValid.markMostDerived();
+
+	return {
+		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
+		childAnnotatedAllowedTypes,
+	};
 }
 
 // #region NodeJS custom inspect for TreeNodes.

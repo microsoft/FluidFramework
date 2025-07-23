@@ -4,9 +4,9 @@
  */
 
 import { fromBase64ToUtf8 } from "@fluidframework/common-utils";
-import { IDocumentAttributes } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
-import {
+import type { IDocumentAttributes } from "@fluidframework/protocol-definitions";
+import type { IGitManager } from "@fluidframework/server-services-client";
+import type {
 	CheckpointService,
 	ICheckpoint,
 	ICheckpointRepository,
@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
-import { ILocalOrdererSetup } from "./interfaces";
+import type { ILocalOrdererSetup } from "./interfaces";
 
 export class LocalOrdererSetup implements ILocalOrdererSetup {
 	constructor(

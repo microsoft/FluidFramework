@@ -5,10 +5,12 @@
 
 import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import type { FieldKey, SchemaPolicy } from "../../../core/index.js";
 import {
 	FieldKinds,
+	isTreeValue,
 	type FlexTreeField,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
@@ -19,8 +21,10 @@ import type {
 	FlattenKeys,
 	JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
+import { brand } from "../../../util/index.js";
 
 import {
+	CompatibilityLevel,
 	type TreeNodeSchema,
 	NodeKind,
 	type WithType,
@@ -29,18 +33,27 @@ import {
 	typeSchemaSymbol,
 	type InternalTreeNode,
 	type TreeNode,
-	type Context,
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
-	type NormalizedAnnotatedAllowedTypes,
 	type NodeSchemaMetadata,
 	type ImplicitAllowedTypes,
 	type ImplicitAnnotatedAllowedTypes,
 	unannotateImplicitAllowedTypes,
 	TreeNodeValid,
 	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	type UnhydratedFlexTreeField,
+	createField,
+	type TreeNodeSchemaCorePrivate,
+	type TreeNodeSchemaPrivateData,
 } from "../../core/index.js";
-import { getUnhydratedContext } from "../../createContext.js";
+import {
+	getTreeNodeSchemaInitializedData,
+	getUnhydratedContext,
+} from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
 import {
 	isObjectNodeSchema,
@@ -62,12 +75,19 @@ import {
 	FieldKind,
 	type ImplicitAnnotatedFieldSchema,
 	type FieldProps,
+	type ContextualFieldProvider,
+	extractFieldProvider,
+	isConstant,
 } from "../../fieldSchema.js";
 import type { SimpleObjectFieldSchema } from "../../simpleSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
+	unhydratedFlexTreeFromInsertableNode,
+	type FactoryContent,
+	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
+import { convertFieldKind } from "../../toStoredSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -174,7 +194,7 @@ export type InsertableObjectFromSchemaRecord<
 /**
  * Helper used to remove annotations from a schema record and produce insertable objects,
  *
- * @privateremarks
+ * @privateRemarks
  * This calls {@link InsertableObjectFromSchemaRecord} in order to produce the insertable objects.
  *
  * @system @alpha
@@ -399,7 +419,8 @@ export function objectSchema<
 	metadata?: NodeSchemaMetadata<TCustomMetadata>,
 	persistedMetadata?: JsonCompatibleReadOnlyObject | undefined,
 ): ObjectNodeSchema<TName, T, ImplicitlyConstructable, TCustomMetadata> &
-	ObjectNodeSchemaInternalData {
+	ObjectNodeSchemaInternalData &
+	TreeNodeSchemaCorePrivate {
 	// Field set can't be modified after this since derived data is stored in maps.
 	Object.freeze(info);
 
@@ -420,16 +441,11 @@ export function objectSchema<
 	const lazyChildTypes = new Lazy(
 		() => new Set(Array.from(flexKeyMap.values(), (f) => [...f.schema.allowedTypeSet]).flat()),
 	);
-	const lazyAnnotatedTypes = new Lazy(() =>
-		Array.from(
-			flexKeyMap.values(),
-			({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypesNormalized,
-		),
-	);
+
+	let privateData: TreeNodeSchemaPrivateData | undefined;
 
 	let handler: ProxyHandler<object>;
 	let customizable: boolean;
-	let unhydratedContext: Context;
 
 	class CustomObjectNode extends CustomObjectNodeBase<UnannotateSchemaRecord<T>> {
 		public static readonly fields: ReadonlyMap<
@@ -502,12 +518,11 @@ export function objectSchema<
 
 		protected static override constructorCached: MostDerivedData | undefined = undefined;
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
+		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// One time initialization that required knowing the most derived type (from this.constructor) and thus has to be lazy.
 			customizable = (this as unknown) !== CustomObjectNode;
 			const schema = this as unknown as ObjectNodeSchemaPrivate;
 			handler = createProxyHandler(schema, customizable);
-			unhydratedContext = getUnhydratedContext(schema);
 
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
@@ -534,7 +549,14 @@ export function objectSchema<
 				}
 			}
 
-			return unhydratedContext;
+			return getTreeNodeSchemaInitializedData(schema, {
+				shallowCompatibilityTest: (data: FactoryContent): CompatibilityLevel =>
+					shallowCompatibilityTest(data, schema),
+				toFlexContent: (
+					data: FactoryContent,
+					allowedTypes: ReadonlySet<TreeNodeSchema>,
+				): FlexContent => objectToFlexContent(data, schema),
+			});
 		}
 
 		public static readonly identifier = identifier;
@@ -543,9 +565,6 @@ export function objectSchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
-		}
-		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
-			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -557,6 +576,16 @@ export function objectSchema<
 		}
 		public get [typeSchemaSymbol](): Output {
 			return CustomObjectNode.constructorCached?.constructor as unknown as Output;
+		}
+
+		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				Array.from(
+					flexKeyMap.values(),
+					({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypes,
+				),
+			));
 		}
 	}
 	type Output = typeof CustomObjectNode &
@@ -636,4 +665,113 @@ export function createUnknownOptionalFieldPolicy(
 			storedSchema.allowUnknownOptionalFields
 		);
 	};
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Map nodes.
+ *
+ * Transforms data under an Object schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema to comply with.
+ */
+function objectToFlexContent(
+	data: FactoryContent,
+	schema: TreeNodeSchema & ObjectNodeSchemaInternalData,
+): FlexContent {
+	if (
+		typeof data !== "object" ||
+		data === null ||
+		Symbol.iterator in data ||
+		isFluidHandle(data)
+	) {
+		throw new UsageError(`Input data is incompatible with Object schema: ${data}`);
+	}
+
+	const fields = new Map<FieldKey, UnhydratedFlexTreeField>();
+	const context = getUnhydratedContext(schema).flexContext;
+
+	for (const [key, fieldInfo] of schema.flexKeyMap) {
+		const value = getFieldProperty(data, key);
+
+		let children: UnhydratedFlexTreeNode[] | ContextualFieldProvider;
+		if (value === undefined) {
+			const defaultProvider =
+				fieldInfo.schema.props?.defaultProvider ??
+				fail(0xbb1 /* missing field has no default provider */);
+			const fieldProvider = extractFieldProvider(defaultProvider);
+			children = isConstant(fieldProvider) ? fieldProvider() : fieldProvider;
+		} else {
+			children = [
+				unhydratedFlexTreeFromInsertableNode(value, fieldInfo.schema.allowedTypeSet),
+			];
+		}
+
+		const kind =
+			convertFieldKind.get(fieldInfo.schema.kind) ?? fail(0xbb2 /* Invalid field kind */);
+		fields.set(
+			fieldInfo.storedKey,
+			createField(context, kind.identifier, fieldInfo.storedKey, children),
+		);
+	}
+
+	return [{ type: brand(schema.identifier) }, fields];
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Object nodes.
+ */
+function shallowCompatibilityTest(
+	data: FactoryContent,
+	schema: ObjectNodeSchema & ObjectNodeSchemaInternalData,
+): CompatibilityLevel {
+	if (isTreeValue(data)) {
+		return CompatibilityLevel.None;
+	}
+
+	if (Symbol.iterator in data) {
+		return CompatibilityLevel.None;
+	}
+
+	// TODO: Improve type inference by making this logic more thorough. Handle at least:
+	// * Types which are strict subsets of other types in the same polymorphic union
+	// * Types which have the same keys but different types for those keys in the polymorphic union
+	// * Types which have the same required fields but different optional fields and enough of those optional fields are populated to disambiguate
+
+	// TODO#7441: Consider allowing data to be inserted which has keys that are extraneous/unknown to the schema (those keys are ignored)
+
+	// If the schema has a required key which is not present in the input object, reject it.
+	for (const [fieldKey, fieldSchema] of schema.fields) {
+		if (fieldSchema.requiresValue) {
+			if (getFieldProperty(data, fieldKey) === undefined) {
+				return CompatibilityLevel.None;
+			}
+		}
+	}
+
+	return CompatibilityLevel.Normal;
+}
+
+/**
+ * Check {@link FactoryContentObject} for a property which could be store a field.
+ *
+ * @returns If the property exists, return its value. Otherwise, returns undefined.
+ * @remarks
+ * The currently policy is to only consider own properties.
+ * See {@link InsertableObjectFromSchemaRecord} for where this policy is documented in the public API.
+ *
+ * Explicit undefined values are treated the same as missing properties to allow explicit use of undefined with defaulted identifiers.
+ *
+ * @privateRemarks
+ * If we ever want to have an optional field which defaults to something other than undefined, this will need changes.
+ * It would need to adjusting the handling of explicit undefined in contexts where undefined is allowed, and a default provider also exists.
+ */
+function getFieldProperty(
+	data: FactoryContentObject,
+	key: string | symbol,
+): InsertableContent | undefined {
+	// This policy only allows own properties.
+	if (Object.hasOwnProperty.call(data, key)) {
+		return (data as Record<string, InsertableContent>)[key as string];
+	}
+	return undefined;
 }

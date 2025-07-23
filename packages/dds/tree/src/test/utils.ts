@@ -95,6 +95,9 @@ import {
 	type ExclusiveMapTree,
 	type MapTree,
 	SchemaVersion,
+	type FieldKindIdentifier,
+	type TreeNodeSchemaIdentifier,
+	type TreeFieldStoredSchema,
 } from "../core/index.js";
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
@@ -129,18 +132,11 @@ import {
 	type ISharedTreeEditor,
 	type ITreeCheckoutFork,
 	independentView,
-} from "../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { TreeStoredContent } from "../shared-tree/schematizeTree.js";
-import {
+	type TreeStoredContent,
 	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../shared-tree/schematizingTreeView.js";
-import type {
-	ForestOptions,
-	SharedTreeOptionsInternal,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../shared-tree/sharedTree.js";
+	type ForestOptions,
+	type SharedTreeOptionsInternal,
+} from "../shared-tree/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -169,7 +165,7 @@ import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/in
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
 import type { Transactor } from "../shared-tree-core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/fieldChangeHandler.js";
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
 import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
@@ -1484,4 +1480,18 @@ export function fieldCursorFromInsertable<
 		schema,
 	);
 	return cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]);
+}
+
+/**
+ * Helper for building {@link TreeFieldStoredSchema}.
+ */
+export function fieldSchema(
+	kind: { identifier: FieldKindIdentifier },
+	types: Iterable<TreeNodeSchemaIdentifier>,
+): TreeFieldStoredSchema {
+	return {
+		kind: kind.identifier,
+		types: new Set(types),
+		persistedMetadata: undefined,
+	};
 }

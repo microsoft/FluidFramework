@@ -10,8 +10,8 @@ import { loadBuildProject } from "../buildProject.js";
 import {
 	AllPackagesSelectionCriteria,
 	EmptySelectionCriteria,
-	PackageFilterOptions,
-	PackageSelectionCriteria,
+	type PackageFilterOptions,
+	type PackageSelectionCriteria,
 	filterPackages,
 	selectAndFilterPackages,
 } from "../filter.js";

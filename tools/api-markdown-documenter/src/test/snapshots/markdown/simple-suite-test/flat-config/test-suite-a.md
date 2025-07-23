@@ -7,25 +7,19 @@ Test package
 This remarks block includes a bulleted list!
 
 - Bullet 1
-
 - Bullet 2
 
 And an ordered list for good measure!
 
 1. List item 1
-
-2. List item 2
-
-3. List item 3
+1. List item 2
+1. List item 3
 
 Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:
 
 - Good link (no alias): [TestClass](docs/test-suite-a#testclass-class)
-
 - Good link (with alias): _function alias text_
-
 - Bad link (no alias): _InvalidItem_
-
 - Bad link (with alias): _even though I link to an invalid item, I would still like this text to be rendered_
 
 # Example {#test-suite-a-example}
@@ -216,6 +210,7 @@ A test property with a getter and a setter.
 
 ```typescript
 get setterProperty(): boolean;
+
 set setterProperty(newValue: boolean);
 ```
 
@@ -358,9 +353,7 @@ A number
 ### See Also {#testinterfaceextendingotherinterfaces-see-also}
 
 - [TestInterface](docs/test-suite-a#testinterface-interface)
-
 - [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)
-
 - [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
 ## TestInterfaceWithIndexSignature {#testinterfacewithindexsignature-interface}
@@ -459,7 +452,7 @@ export declare abstract class TestAbstractClass
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [abstractPropertyGetter](docs/test-suite-a#testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
+| [abstractPropertyGetter](docs/test-suite-a#testabstractclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | <p>A test abstract getter property.</p><p>@escapedTag</p> |
 | [protectedProperty](docs/test-suite-a#testabstractclass-protectedproperty-property) | `readonly` | [TestEnum](docs/test-suite-a#testenum-enum) | A test protected property. |
 
 ### Methods
@@ -494,6 +487,8 @@ protected constructor(privateProperty: number, protectedProperty: TestEnum);
 #### abstractPropertyGetter {#testabstractclass-abstractpropertygetter-property}
 
 A test abstract getter property.
+
+@escapedTag
 
 ##### Signature {#abstractpropertygetter-signature}
 
@@ -690,6 +685,7 @@ Test class property with both a getter and a setter.
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+
 set testClassGetterProperty(newValue: number);
 ```
 

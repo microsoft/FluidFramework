@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import {
+import type { IAlfredTenant } from "@fluidframework/server-services-client";
+import type {
 	ICache,
 	IDeltaService,
 	IDocumentRepository,
@@ -17,15 +17,15 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
 import cors from "cors";
 import { Router } from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 
-import { IDocumentDeleteService } from "../../services";
+import type { IDocumentDeleteService } from "../../services";
 
 import * as api from "./api";
 import * as deltas from "./deltas";

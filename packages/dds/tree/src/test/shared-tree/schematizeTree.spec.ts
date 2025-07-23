@@ -209,7 +209,6 @@ describe("schematizeTree", () => {
 					const checkout = mockCheckout(data, isEmpty);
 					const viewSchema = new SchemaCompatibilityTester(
 						defaultSchemaPolicy,
-						{},
 						normalizeFieldSchema(data),
 					);
 					const result = evaluateUpdate(viewSchema, checkout);
@@ -220,11 +219,7 @@ describe("schematizeTree", () => {
 
 		it("UpdateType.SchemaCompatible", () => {
 			const checkout = mockCheckout(schema, false);
-			const viewSchema = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				{},
-				schemaGeneralized,
-			);
+			const viewSchema = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaGeneralized);
 			{
 				const result = evaluateUpdate(viewSchema, checkout);
 				assert.equal(result, UpdateType.SchemaCompatible);
@@ -247,7 +242,7 @@ describe("schematizeTree", () => {
 				schema: toStoredSchema(emptySchema),
 				initialTree: undefined,
 			});
-			const viewSchema = new SchemaCompatibilityTester(defaultSchemaPolicy, {}, emptySchema);
+			const viewSchema = new SchemaCompatibilityTester(defaultSchemaPolicy, emptySchema);
 			assert(ensureSchema(viewSchema, checkout));
 		});
 
@@ -262,11 +257,7 @@ describe("schematizeTree", () => {
 				schema: toStoredSchema(schemaGeneralized),
 				initialTree: undefined,
 			});
-			const viewSchema = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				{},
-				schemaGeneralized,
-			);
+			const viewSchema = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaGeneralized);
 
 			// Schema upgrade
 			{
@@ -285,7 +276,6 @@ describe("schematizeTree", () => {
 
 			const viewSchema = new SchemaCompatibilityTester(
 				defaultSchemaPolicy,
-				{},
 				normalizeFieldSchema(schemaValueRoot),
 			);
 
@@ -312,11 +302,7 @@ describe("schematizeTree", () => {
 				initialTree: initialContent.initialTree,
 			});
 
-			const viewSchema = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				{},
-				schemaGeneralized,
-			);
+			const viewSchema = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaGeneralized);
 
 			const checkout = checkoutWithContent(initialContent);
 			assert(ensureSchema(viewSchema, checkout));

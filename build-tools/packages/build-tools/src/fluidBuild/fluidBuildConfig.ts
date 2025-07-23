@@ -4,7 +4,7 @@
  */
 
 import type { InterdependencyRange } from "@fluid-tools/version-tools";
-import { TaskDefinitionsOnDisk, TaskFileDependencies } from "./fluidTaskDefinitions";
+import type { TaskDefinitionsOnDisk, TaskFileDependencies } from "./fluidTaskDefinitions";
 
 /**
  * The version of the fluidBuild configuration currently used.

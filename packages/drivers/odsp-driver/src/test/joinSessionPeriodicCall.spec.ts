@@ -5,18 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
-import { IClient } from "@fluidframework/driver-definitions";
-import { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type { ISocketStorageDiscovery } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { SinonFakeTimers, SinonStub, stub, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
 
-import { OdspFluidDataStoreLocator } from "../contractsPublic.js";
+import type { OdspFluidDataStoreLocator } from "../contractsPublic.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import * as odspDocumentDeltaConnection from "../odspDocumentDeltaConnection.js";
-import { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
-import { OdspDocumentService } from "../odspDocumentService.js";
+import type { OdspDocumentDeltaConnection } from "../odspDocumentDeltaConnection.js";
+import type { OdspDocumentService } from "../odspDocumentService.js";
 import { OdspDocumentServiceFactory } from "../odspDocumentServiceFactory.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { fetchJoinSession } from "../vroom.js";

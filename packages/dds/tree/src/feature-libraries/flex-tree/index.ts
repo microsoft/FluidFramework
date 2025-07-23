@@ -37,6 +37,8 @@ export {
 	LazyEntity,
 } from "./lazyEntity.js";
 
+export { getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
+
 export { getSchemaAndPolicy, indexForAt } from "./utilities.js";
 
 export { treeStatusFromAnchorCache } from "./utilities.js";

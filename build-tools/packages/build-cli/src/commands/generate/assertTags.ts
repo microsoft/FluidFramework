@@ -5,20 +5,20 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import { PackageKind, type PackageWithKind } from "../../filter.js";
+import type { PackageKind, PackageWithKind } from "../../filter.js";
 
 import assert from "node:assert";
 import { Flags } from "@oclif/core";
 import { cosmiconfig } from "cosmiconfig";
 import {
-	NoSubstitutionTemplateLiteral,
-	Node,
-	NumericLiteral,
+	type NoSubstitutionTemplateLiteral,
+	type Node,
+	type NumericLiteral,
 	Project,
-	SourceFile,
-	StringLiteral,
+	type SourceFile,
+	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
 

@@ -5,25 +5,31 @@
 
 import {
 	AzureClient,
-	AzureLocalConnectionConfig,
-	AzureRemoteConnectionConfig,
-	ITelemetryBaseLogger,
-} from "@fluidframework/azure-client";
+	type AzureClientPropsInternal,
+	type AzureLocalConnectionConfig,
+	type AzureRemoteConnectionConfig,
+	type ITelemetryBaseLogger,
+} from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,
-	AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
-	AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
-	ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
+	type AzureLocalConnectionConfig as AzureLocalConnectionConfigLegacy,
+	type AzureRemoteConnectionConfig as AzureRemoteConnectionConfigLegacy,
+	type ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
-import { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
+import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
+import type {
+	CompatibilityMode,
+	ContainerSchema,
+} from "@fluidframework/fluid-static/internal";
 import {
-	MockLogger,
+	type MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { default as Axios, AxiosResponse, type AxiosRequestConfig } from "axios";
+import { default as Axios, type AxiosResponse, type AxiosRequestConfig } from "axios";
 import { v4 as uuid } from "uuid";
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
@@ -41,6 +47,13 @@ export function createAzureClient(
 	logger?: MockLogger,
 	configProvider?: IConfigProviderBase,
 	scopes?: ScopeType[],
+	createContainerRuntimeFactory?: ({
+		schema,
+		compatibilityMode,
+	}: {
+		schema: ContainerSchema;
+		compatibilityMode: CompatibilityMode;
+	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);
 
@@ -100,11 +113,14 @@ export function createAzureClient(
 			},
 		},
 	});
-	return new AzureClient({
+
+	const props: AzureClientPropsInternal = {
 		connection: connectionProps,
 		logger: createLogger,
 		configProvider,
-	});
+		createContainerRuntimeFactory,
+	};
+	return new AzureClient(props);
 }
 
 /**

@@ -4,8 +4,8 @@
  */
 
 import {
-	ILumberjackSchemaValidator,
-	ILumberjackSchemaValidationResult,
+	type ILumberjackSchemaValidator,
+	type ILumberjackSchemaValidationResult,
 	BaseTelemetryProperties,
 	QueuedMessageProperties,
 } from "./resources";

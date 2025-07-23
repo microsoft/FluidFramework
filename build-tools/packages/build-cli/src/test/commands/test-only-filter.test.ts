@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { runCommand } from "@oclif/test";
 import chai, { assert, expect } from "chai";
 import assertArrays from "chai-arrays";

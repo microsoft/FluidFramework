@@ -6,27 +6,27 @@
 import * as services from "@fluidframework/server-services";
 import {
 	getGlobalAbortControllerContext,
-	IAlfredTenant,
+	type IAlfredTenant,
 	setupAxiosInterceptorsForAbortSignals,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
+import type { IReadinessCheck } from "@fluidframework/server-services-core";
 import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 
 import { Constants } from "../utils";
 
-import { IAlfredResourcesCustomizations } from "./customizations";
+import type { IAlfredResourcesCustomizations } from "./customizations";
 import { AlfredRunner } from "./runner";
 import {
 	DeltaService,
 	StorageNameAllocator,
-	IDocumentDeleteService,
+	type IDocumentDeleteService,
 	DocumentDeleteService,
 } from "./services";
 
