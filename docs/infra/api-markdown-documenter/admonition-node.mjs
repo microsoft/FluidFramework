@@ -78,26 +78,43 @@ export class AdmonitionNode extends DocumentationParentNodeBase {
 			transformedChildren.push(...blockContentToMarkdown(child, context));
 		}
 
-		return [
-			{
-				type: "paragraph",
-				children: [
-					{
-						type: "text",
-						value: `:::${this.admonitionKind}${this.title === undefined ? "" : `[${this.title}]`}`
-					},
-				]
-			},
-			...transformedChildren,
-			{
-				type: "paragraph",
-				children: [
-					{
-						type: "text",
-						value: ":::"
-					},
-				]
-			}
-		];
+		// If the admonition has a title, prepend it to the list of children with the `directiveLabel` property set.
+		if (this.title !== undefined) {
+			transformedChildren.unshift({
+				type: "text",
+				value: this.title,
+				data: {
+					directiveLabel: true
+				}
+			});
+		}
+
+		return [{
+			type: "containerDirective",
+			name: this.admonitionKind,
+			children: transformedChildren
+		}]
+
+		// return [
+		// 	{
+		// 		type: "paragraph",
+		// 		children: [
+		// 			{
+		// 				type: "text",
+		// 				value: `:::${this.admonitionKind}${this.title === undefined ? "" : `[${this.title}]`}`
+		// 			},
+		// 		]
+		// 	},
+		// 	...transformedChildren,
+		// 	{
+		// 		type: "paragraph",
+		// 		children: [
+		// 			{
+		// 				type: "text",
+		// 				value: ":::"
+		// 			},
+		// 		]
+		// 	}
+		// ];
 	}
 }
