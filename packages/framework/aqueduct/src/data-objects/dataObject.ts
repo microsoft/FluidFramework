@@ -13,6 +13,7 @@ import { PureDataObject } from "./pureDataObject.js";
 import type { DataObjectTypes } from "./types.js";
 
 /**
+ * ID of the root ISharedDirectory. Every DataObject contains this ISharedDirectory and adds further DDSes underneath it.
  * @internal
  */
 export const dataObjectRootDirectoryId = "root";
