@@ -148,8 +148,6 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 		idCompressor,
 	);
 
-	initializeForest(forest, rootFieldCursor, revisionTagCodec, idCompressor, false);
-
 	const checkout = createTreeCheckout(idCompressor, mintRevisionTag, revisionTagCodec, {
 		forest,
 		schema: schemaRepository,
