@@ -26,7 +26,6 @@ import {
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,
-	initializeForest,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../feature-libraries/schema-index/formatV1.js";

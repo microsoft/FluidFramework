@@ -27,7 +27,6 @@ import {
 	cursorForJsonableTreeNode,
 	cursorForMapTreeNode,
 	defaultSchemaPolicy,
-	initializeForest,
 	jsonableTreeFromCursor,
 	mapTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -43,6 +42,7 @@ import { generateTwitterJsonByByteSize } from "./twitter.js";
 import { toStoredSchema } from "../../../simple-tree/toStoredSchema.js";
 import { cursorToJsonObject, singleJsonCursor } from "../../json/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { initializeForest } from "../../feature-libraries/index.js";
 
 // Shared tree keys that map to the type used by the Twitter type/dataset
 export const TwitterKey = {
