@@ -127,7 +127,7 @@ import {
 	isValidMinVersionForCollab,
 	type MinimumVersionForCollab,
 	type SemanticVersion,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-utils/internal";
 import {
 	GCDataBuilder,
 	RequestParser,

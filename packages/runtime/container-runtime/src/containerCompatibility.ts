@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 import {
 	configValueToMinVersionForCollab,
-	FlushMode,
 	getConfigsForMinVersionForCollab,
 	getValidationForRuntimeOptions,
 	type ConfigMap,
 	type ConfigValidationMap,
 	type MinimumVersionForCollab,
-} from "@fluidframework/runtime-definitions/internal";
+} from "@fluidframework/runtime-utils/internal";
 
 import {
 	disabledCompressionConfig,

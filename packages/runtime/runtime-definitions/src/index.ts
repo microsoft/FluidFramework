@@ -83,16 +83,3 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
-export type { IdCompressorMode } from "./idCompressorDefinitions.js";
-export {
-	ConfigMap,
-	configValueToMinVersionForCollab,
-	ConfigValidationMap,
-	defaultMinVersionForCollab,
-	getValidationForRuntimeOptions,
-	getConfigsForMinVersionForCollab,
-	isValidMinVersionForCollab,
-	MinimumMinorSemanticVersion,
-	MinimumVersionForCollab,
-	SemanticVersion,
-} from "./compatibilityBase.js";

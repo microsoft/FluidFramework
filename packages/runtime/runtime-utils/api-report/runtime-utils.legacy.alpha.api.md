@@ -38,6 +38,9 @@ export const isFluidHandlePayloadPending: <T>(handle: IFluidHandle<T>) => handle
 export const isLocalFluidHandle: <T>(handle: IFluidHandle<T>) => handle is ILocalFluidHandle<T>;
 
 // @alpha @legacy
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+
+// @alpha @legacy
 export class RequestParser implements IRequest {
     protected constructor(request: Readonly<IRequest>);
     // (undocumented)

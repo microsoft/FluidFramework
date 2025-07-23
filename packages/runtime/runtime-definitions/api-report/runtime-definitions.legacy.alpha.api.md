@@ -121,9 +121,6 @@ export interface IDataStore {
 }
 
 // @alpha @legacy
-export type IdCompressorMode = "on" | "delayed" | undefined;
-
-// @alpha @legacy
 export interface IEnvelope {
     address: string;
     contents: any;
@@ -397,9 +394,6 @@ export interface LocalAttributionKey {
     // (undocumented)
     type: "local";
 }
-
-// @alpha @legacy
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @alpha @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;

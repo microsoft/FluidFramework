@@ -56,8 +56,8 @@ import {
 	type IEnvelope,
 	type ITelemetryContext,
 	type ISummarizeInternalResult,
-	defaultMinVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidErrorBase,
 	MockLogger,

@@ -12495,9 +12495,6 @@ importers:
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
-      '@fluidframework/core-utils':
-        specifier: workspace:~
-        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -12507,9 +12504,6 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
-      semver-ts:
-        specifier: ^1.0.3
-        version: 1.0.3
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -12519,13 +12513,13 @@ importers:
         version: 1.9.4
       '@fluid-tools/build-cli':
         specifier: ^0.56.0
-        version: 0.56.0(@types/node@18.19.67)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
+        version: 0.56.0(@types/node@22.10.1)(encoding@0.1.13)(typescript@5.4.5)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/build-tools':
         specifier: ^0.56.0
-        version: 0.56.0(@types/node@18.19.67)
+        version: 0.56.0(@types/node@22.10.1)
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.4
         version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)
@@ -12534,34 +12528,16 @@ importers:
         version: '@fluidframework/runtime-definitions@2.50.0'
       '@microsoft/api-extractor':
         specifier: 7.52.8
-        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
-      '@types/mocha':
-        specifier: ^10.0.10
-        version: 10.0.10
-      '@types/node':
-        specifier: ^18.19.0
-        version: 18.19.67
-      c8:
-        specifier: ^8.0.1
-        version: 8.0.1
+        version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.10.1)
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
-      cross-env:
-        specifier: ^7.0.3
-        version: 7.0.3
       eslint:
         specifier: ~8.55.0
         version: 8.55.0
-      mocha:
-        specifier: ^10.8.2
-        version: 10.8.2
-      mocha-multi-reporters:
-        specifier: ^1.5.1
-        version: 1.5.1(mocha@10.8.2)
       rimraf:
         specifier: ^4.4.0
         version: 4.4.1
@@ -12601,6 +12577,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
+      semver-ts:
+        specifier: ^1.0.3
+        version: 1.0.3
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1

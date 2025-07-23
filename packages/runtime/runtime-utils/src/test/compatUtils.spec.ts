@@ -14,7 +14,7 @@ import {
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
-} from "../compatibilityBase.js";
+} from "@fluidframework/runtime-utils/internal";
 
 describe("compatibilityBase", () => {
 	describe("getConfigsForMinVersionForCollab", () => {
