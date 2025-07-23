@@ -137,7 +137,7 @@ export function independentInitializedViewInternal<const TSchema extends Implici
 	const revisionTagCodec = new RevisionTagCodec(idCompressor);
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
 
-	// So forest is in schema when constructed, start it with empty schema and set content of schema repository later.
+	// To ensure the forest is in schema when constructed, start it with an empty schema and set the schema repository content later.
 	const schemaRepository = new TreeStoredSchemaRepository();
 
 	const forest = buildConfiguredForest(
