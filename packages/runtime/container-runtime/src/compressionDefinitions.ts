@@ -40,9 +40,6 @@ export const disabledCompressionConfig: ICompressionRuntimeOptions = {
 	compressionAlgorithm: CompressionAlgorithms.lz4,
 };
 
-/**
- * @internal
- */
 export const enabledCompressionConfig = {
 	// Batches with content size exceeding this value will be compressed
 	minimumBatchSizeInBytes: 614400,

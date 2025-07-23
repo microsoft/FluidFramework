@@ -25,9 +25,8 @@ export {
 	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
 	 */
 	MinimumVersionForCollab,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/runtime-definitions/legacy";
-export { SemanticVersion } from "@fluidframework/runtime-definitions/internal";
+	SemanticVersion,
+} from "@fluidframework/runtime-definitions/internal";
 export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,

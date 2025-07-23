@@ -26,7 +26,7 @@ import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
  * @remarks
  * When a new option is added to {@link ContainerRuntimeOptionsInternal}, we
  * must consider if it changes the DocumentSchema. If so, then a corresponding
- * entry must be added to `runtimeOptionsAffectingDocSchemaConfigMap`
+ * entry must be added to {@link runtimeOptionsAffectingDocSchemaConfigMap}
  * below. If not, then it must be omitted from this type.
  *
  * Note: `Omit` is used instead of `Pick` to ensure that all new options are
@@ -34,8 +34,6 @@ import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
  * {@link ContainerRuntimeOptionsInternal}, they will be included in this
  * type unless explicitly omitted. This will prevent us from forgetting to
  * account for any new properties in the future.
- *
- * @internal
  */
 export type RuntimeOptionsAffectingDocSchema = Omit<
 	ContainerRuntimeOptionsInternal,
@@ -165,8 +163,6 @@ export function getMinVersionForCollabDefaults(
  * Validates if the runtime options passed in from the user are compatible with the minVersionForCollab.
  * For example, if a user sets the `enableGroupedBatching` option to true, but the minVersionForCollab
  * is set to "1.0.0", then we should throw a UsageError since 1.x clients do not support batching.
- *
- * @internal
  * */
 export function validateRuntimeOptions(
 	minVersionForCollab: MinimumVersionForCollab,
