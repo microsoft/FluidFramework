@@ -4,6 +4,11 @@
  */
 
 export {
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
+	ISummaryRuntimeOptions,
+	IContainerRuntimeOptions,
+	IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
 	LoadContainerRuntimeParams,
 	agentSchedulerId,
@@ -13,66 +18,16 @@ export {
 	InactiveResponseHeaderKey,
 	RuntimeHeaderData,
 } from "./containerRuntime.js";
+export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	CompressionAlgorithms,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	disabledCompressionConfig,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	type ICompressionRuntimeOptions,
 	/**
 	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
 	 */
 	MinimumVersionForCollab,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	ContainerRuntimeOptions,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	ISummaryRuntimeOptions,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	IContainerRuntimeOptions,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	IGCRuntimeOptions,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	ISummaryBaseConfiguration,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	ISummaryConfiguration,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	ISummaryConfigurationDisableHeuristics,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	ISummaryConfigurationDisableSummarizer,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-definitions/internal` instead.
-	 */
-	ISummaryConfigurationHeuristics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/runtime-definitions/legacy";
-export {
-	SemanticVersion,
-	ContainerRuntimeOptionsInternal,
-	IContainerRuntimeOptionsInternal,
-} from "@fluidframework/runtime-definitions/internal";
+export { SemanticVersion } from "@fluidframework/runtime-definitions/internal";
 export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
@@ -90,6 +45,7 @@ export {
 	GCFeatureMatrix,
 	GCVersion,
 	IGarbageCollectionRuntime,
+	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
 	IGCNodeUpdatedProps,
@@ -155,6 +111,11 @@ export {
 	IFluidDataStoreAttributes1,
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
+	ISummaryBaseConfiguration,
+	ISummaryConfigurationHeuristics,
+	ISummaryConfigurationDisableSummarizer,
+	ISummaryConfigurationDisableHeuristics,
+	ISummaryConfiguration,
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";

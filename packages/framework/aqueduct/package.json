@@ -154,14 +154,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_BaseContainerRuntimeFactoryProps": {
-				"backCompat": false
-			},
-			"Interface_ContainerRuntimeFactoryWithDefaultDataStoreProps": {
-				"backCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

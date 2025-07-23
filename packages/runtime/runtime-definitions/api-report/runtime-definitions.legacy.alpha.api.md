@@ -21,29 +21,6 @@ export interface CommitStagedChangesOptionsExperimental {
     squash?: boolean;
 }
 
-// @alpha @legacy
-export enum CompressionAlgorithms {
-    // (undocumented)
-    lz4 = "lz4"
-}
-
-// @alpha @legacy
-export interface ContainerRuntimeOptions {
-    readonly chunkSizeInBytes: number;
-    readonly compressionOptions: ICompressionRuntimeOptions;
-    readonly createBlobPayloadPending: true | undefined;
-    // @deprecated
-    readonly enableGroupedBatching: boolean;
-    readonly enableRuntimeIdCompressor: IdCompressorMode;
-    readonly explicitSchemaControl: boolean;
-    // (undocumented)
-    readonly gcOptions: IGCRuntimeOptions;
-    readonly loadSequenceNumberVerification: "close" | "log" | "bypass";
-    readonly maxBatchSizeInBytes: number;
-    // (undocumented)
-    readonly summaryOptions: ISummaryRuntimeOptions;
-}
-
 // @alpha @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -76,9 +53,6 @@ export interface DetachedAttributionKey {
     type: "detached";
 }
 
-// @alpha @legacy (undocumented)
-export const disabledCompressionConfig: ICompressionRuntimeOptions;
-
 // @alpha @legacy
 export type FluidDataStoreRegistryEntry = Readonly<Partial<IProvideFluidDataStoreRegistry & IProvideFluidDataStoreFactory>>;
 
@@ -94,12 +68,6 @@ export interface IAttachMessage {
     id: string;
     snapshot: ITree;
     type: string;
-}
-
-// @alpha @legacy
-export interface ICompressionRuntimeOptions {
-    readonly compressionAlgorithm: CompressionAlgorithms;
-    readonly minimumBatchSizeInBytes: number;
 }
 
 // @alpha @sealed @legacy
@@ -145,9 +113,6 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
     // (undocumented)
     readonly inStagingMode?: boolean;
 }
-
-// @alpha @legacy
-export type IContainerRuntimeOptions = Partial<ContainerRuntimeOptions>;
 
 // @alpha @legacy
 export interface IDataStore {
@@ -300,15 +265,6 @@ export interface IGarbageCollectionDetailsBase {
     usedRoutes?: string[];
 }
 
-// @alpha @legacy (undocumented)
-export interface IGCRuntimeOptions {
-    [key: string]: any;
-    enableGCSweep?: true | undefined;
-    runFullGC?: boolean;
-    sessionExpiryTimeoutMs?: number;
-    sweepGracePeriodMs?: number;
-}
-
 // @alpha @legacy
 export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessage<TMessage> {
     // (undocumented)
@@ -408,49 +364,6 @@ export interface ISummarizerNodeWithGC extends ISummarizerNode {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     isReferenced(): boolean;
     updateUsedRoutes(usedRoutes: string[]): void;
-}
-
-// @alpha @legacy (undocumented)
-export interface ISummaryBaseConfiguration {
-    initialSummarizerDelayMs: number;
-    maxAckWaitTime: number;
-    maxOpsSinceLastSummary: number;
-}
-
-// @alpha @legacy (undocumented)
-export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics;
-
-// @alpha @legacy (undocumented)
-export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
-    // (undocumented)
-    state: "disableHeuristics";
-}
-
-// @alpha @legacy (undocumented)
-export interface ISummaryConfigurationDisableSummarizer {
-    // (undocumented)
-    state: "disabled";
-}
-
-// @alpha @legacy (undocumented)
-export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfiguration {
-    maxIdleTime: number;
-    maxOps: number;
-    maxTime: number;
-    minIdleTime: number;
-    minOpsForLastSummaryAttempt: number;
-    nonRuntimeHeuristicThreshold?: number;
-    nonRuntimeOpWeight: number;
-    runtimeOpWeight: number;
-    // (undocumented)
-    state: "enabled";
-}
-
-// @alpha @legacy (undocumented)
-export interface ISummaryRuntimeOptions {
-    // @deprecated
-    initialSummarizerDelayMs?: number;
-    summaryConfigOverrides?: ISummaryConfiguration;
 }
 
 // @alpha @legacy

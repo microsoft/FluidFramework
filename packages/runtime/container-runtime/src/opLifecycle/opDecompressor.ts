@@ -7,13 +7,13 @@ import { IsoBuffer, Uint8ArrayToString } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { CompressionAlgorithms } from "@fluidframework/runtime-definitions/internal";
 import {
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { decompress } from "lz4js";
 
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 import { IBatchMetadata } from "../metadata.js";
 
 /**

@@ -4,26 +4,36 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type {
-	IdCompressorMode,
-	SemanticVersion,
-} from "@fluidframework/runtime-definitions/internal";
+import type { SemanticVersion } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
 import { pkgVersion } from "../packageVersion.js";
 
-export type { IdCompressorMode } from "@fluidframework/runtime-definitions/internal";
-
 /**
- * Describe allowed types for properties in document schema.
+ * Descripe allowed type for properties in document schema.
  * Please note that for all property types we should use undefined to indicate that particular capability is off.
  * Using false, or some string value (like "off") will result in clients who do not understand that property failing, whereas
  * we want them to continue to collaborate alongside clients who support that capability, but such capability is shipping dark for now.
  * @internal
  */
 export type DocumentSchemaValueType = string | string[] | true | number | undefined;
+
+/**
+ * ID Compressor mode.
+ * "on" - compressor is On. It's loaded as part of container load. This mode is sticky - once on, compressor is On for all
+ * sessions for a given document. This results in IContainerRuntime.idCompressor to be always available.
+ * "delayed" - ID compressor bundle is loaded only on establishing of first delta connection, i.e. it does not impact boot of cotnainer.
+ * In such mode IContainerRuntime.idCompressor is not made available (unless previous sessions of same document had it "On").
+ * The only thing that is available is IContainerRuntime.generateDocumentUniqueId() that provides opportunistically short IDs.
+ * undefined - ID compressor is not loaded.
+ * While IContainerRuntime.generateDocumentUniqueId() is available, it will produce long IDs that are do not compress well.
+ *
+ * @legacy
+ * @alpha
+ */
+export type IdCompressorMode = "on" | "delayed" | undefined;
 
 /**
  * Document schema information.

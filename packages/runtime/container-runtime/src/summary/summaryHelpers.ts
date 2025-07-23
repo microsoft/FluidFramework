@@ -6,15 +6,16 @@
 import { type ILoader, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
-import type {
-	ISummaryConfiguration,
-	ISummaryConfigurationDisableSummarizer,
-	ISummaryConfigurationHeuristics,
-} from "@fluidframework/runtime-definitions/internal";
 import { responseToException } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { summarizerClientType, type ISummarizer } from "./summarizerTypes.js";
+import {
+	summarizerClientType,
+	type ISummarizer,
+	type ISummaryConfiguration,
+	type ISummaryConfigurationDisableSummarizer,
+	type ISummaryConfigurationHeuristics,
+} from "./summarizerTypes.js";
 
 export const summarizerRequestUrl = "_summarizer";
 

@@ -10,9 +10,9 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,
+	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type { ISummaryConfiguration } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,

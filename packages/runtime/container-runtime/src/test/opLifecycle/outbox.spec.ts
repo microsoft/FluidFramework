@@ -16,12 +16,10 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	CompressionAlgorithms,
-	type ICompressionRuntimeOptions,
-} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
+import type { ICompressionRuntimeOptions } from "../../compressionDefinitions.js";
+import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import { makeLegacySendBatchFn } from "../../containerRuntime.js";
 import {
 	ContainerMessageType,

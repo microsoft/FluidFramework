@@ -11,9 +11,9 @@ import * as crypto from "node:crypto";
 import { IBatchMessage } from "@fluidframework/container-definitions/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime-previous/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import { CompressionAlgorithms } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
+import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
 	OutboundBatchMessage,

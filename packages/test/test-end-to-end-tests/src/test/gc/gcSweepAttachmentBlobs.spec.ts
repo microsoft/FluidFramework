@@ -11,6 +11,7 @@ import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/
 import {
 	ContainerMessageType,
 	ContainerRuntime,
+	IGCRuntimeOptions,
 } from "@fluidframework/container-runtime/internal";
 import {
 	blobsTreeName,
@@ -29,10 +30,7 @@ import {
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	gcTreeKey,
-	type IGCRuntimeOptions,
-} from "@fluidframework/runtime-definitions/internal";
+import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,

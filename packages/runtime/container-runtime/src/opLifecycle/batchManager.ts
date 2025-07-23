@@ -4,13 +4,13 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ICompressionRuntimeOptions } from "@fluidframework/runtime-definitions/internal";
 import {
 	LoggingError,
 	tagData,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 
+import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { isContainerMessageDirtyable } from "../containerRuntime.js";
 import { asBatchMetadata, type IBatchMetadata } from "../metadata.js";
 import type { IPendingMessage } from "../pendingStateManager.js";

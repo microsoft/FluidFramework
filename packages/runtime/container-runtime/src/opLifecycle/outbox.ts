@@ -9,7 +9,6 @@ import {
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import { ICompressionRuntimeOptions } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataProcessingError,
 	UsageError,
@@ -18,6 +17,7 @@ import {
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
+import { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
 import { PendingMessageResubmitData, PendingStateManager } from "../pendingStateManager.js";
 
 import {

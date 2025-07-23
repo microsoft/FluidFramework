@@ -12,13 +12,14 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, IGCStats } from "@fluidframework/container-runtime/internal";
+import {
+	ContainerRuntime,
+	IGCRuntimeOptions,
+	IGCStats,
+} from "@fluidframework/container-runtime/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	ISummaryStats,
-	type IGCRuntimeOptions,
-} from "@fluidframework/runtime-definitions/internal";
+import { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import { calculateStats, mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,

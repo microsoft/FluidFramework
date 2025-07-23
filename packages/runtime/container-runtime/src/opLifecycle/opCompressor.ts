@@ -6,13 +6,14 @@
 import { IsoBuffer } from "@fluid-internal/client-utils";
 import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { CompressionAlgorithms } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataProcessingError,
 	createChildLogger,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
+
+import { CompressionAlgorithms } from "../compressionDefinitions.js";
 
 import { type OutboundBatchMessage, type OutboundSingletonBatch } from "./definitions.js";
 import { estimateSocketSize } from "./outbox.js";

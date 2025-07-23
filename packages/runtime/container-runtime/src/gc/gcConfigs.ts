@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { IGCRuntimeOptions } from "@fluidframework/runtime-definitions/internal";
 import {
 	MonitoringContext,
 	UsageError,
@@ -16,6 +15,7 @@ import {
 	GCFeatureMatrix,
 	GCVersion,
 	IGCMetadata_Deprecated,
+	IGCRuntimeOptions,
 	IGarbageCollectorConfigs,
 	defaultInactiveTimeoutMs,
 	defaultSessionExpiryDurationMs,

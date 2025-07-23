@@ -11,6 +11,7 @@ import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
 	IContainerRuntimeOptions,
+	ISummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import {
 	defaultMaxAttemptsForSubmitFailures,
@@ -28,10 +29,7 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import {
-	IFluidDataStoreFactory,
-	type ISummaryConfiguration,
-} from "@fluidframework/runtime-definitions/internal";
+import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ITestObjectProvider,

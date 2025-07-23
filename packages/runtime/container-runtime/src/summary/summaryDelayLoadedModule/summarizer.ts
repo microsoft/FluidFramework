@@ -10,7 +10,6 @@ import type {
 } from "@fluidframework/container-runtime-definitions/internal";
 import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { ISummaryConfiguration } from "@fluidframework/runtime-definitions/internal";
 import {
 	IFluidErrorBase,
 	ITelemetryLoggerExt,
@@ -30,6 +29,7 @@ import {
 	ISummarizerRuntime,
 	ISummarizingWarning,
 	type IRetriableFailureError,
+	type ISummaryConfiguration,
 } from "../summarizerTypes.js";
 import { SummaryCollection } from "../summaryCollection.js";
 
