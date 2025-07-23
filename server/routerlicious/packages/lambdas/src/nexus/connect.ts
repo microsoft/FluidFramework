@@ -176,11 +176,7 @@ async function connectOrderer(
 		lumberjackProperties,
 	);
 	const orderer = await ordererManager.getOrderer(tenantId, documentId).catch(async (error) => {
-		const errMsg = `Failed to get orderer manager. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Failed to get orderer manager.";
 		connectDocumentOrdererConnectionMetric.error("Failed to get orderer manager", error);
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
@@ -194,11 +190,7 @@ async function connectOrderer(
 	const connection = await orderer
 		.connect(socket, clientId, messageClient)
 		.catch(async (error) => {
-			const errMsg = `Failed to connect to orderer. Error: ${safeStringify(
-				error,
-				undefined,
-				2,
-			)}`;
+			const errMsg = "Failed to connect to orderer.";
 			connectDocumentOrdererConnectionMetric.error("Failed to connect to orderer", error);
 			throw handleServerErrorAndConvertToNetworkError(
 				logger,
@@ -234,11 +226,7 @@ async function connectOrderer(
 		};
 	}
 	connection.connect(clientJoinMessageServerMetadata).catch(async (error) => {
-		const errMsg = `Failed to connect to the orderer connection. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Failed to connect to the orderer connection.";
 		connectDocumentOrdererConnectionMetric.error(
 			"Failed to establish orderer connection",
 			error,
@@ -452,11 +440,7 @@ async function joinRoomAndSubscribeToChannel(
 		]);
 		return [clientId, room];
 	} catch (error) {
-		const errMsg = `Could not subscribe to channels. Error: ${safeStringify(
-			error,
-			undefined,
-			2,
-		)}`;
+		const errMsg = "Could not subscribe to channels.";
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
 			errMsg,
@@ -485,7 +469,7 @@ async function retrieveClients(
 			return response;
 		})
 		.catch(async (error) => {
-			const errMsg = `Failed to get clients. Error: ${safeStringify(error, undefined, 2)}`;
+			const errMsg = "Failed to get clients.";
 			connectDocumentGetClientsMetric.error(
 				"Failed to get clients during connectDocument",
 				error,
@@ -577,7 +561,7 @@ async function addMessageClientToClientManager(
 		await clientManager.addClient(tenantId, documentId, clientId, messageClient as IClient);
 		connectDocumentAddClientMetric.success("Successfully added client");
 	} catch (error) {
-		const errMsg = `Could not add client. Error: ${safeStringify(error, undefined, 2)}`;
+		const errMsg = "Could not add client.";
 		connectDocumentAddClientMetric.error("Error adding client during connectDocument", error);
 		throw handleServerErrorAndConvertToNetworkError(
 			logger,
