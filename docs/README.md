@@ -36,40 +36,19 @@ Then, run:
 npm start
 ```
 
-#### Limitations
-
-The following functionality will not work in this mode.
-Instead, you will need to [build](#build) and [serve](#serve)
-
 ##### Typesense Search
 
-Our Typesense search implementation does not work in this mode.
-It requires running a full build to run its indexing.
-To test search, you will need to use the [`build` and `start`](#build-and-start) workflow instead.
+The search function on the website is implemented with Typesense.
+To test search locally, you must first build and then use either:
 
-### `build` and `start`
+-   `pnpm run start`
+-   `pnpm run serve`
 
-The second option, which is substantially slower, leverages the same build that our build pipelines use to generate our production site.
-First, run:
-
-```shell
-npm run build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-This includes the generation of API documentation contents.
-
-To _just_ run content generation steps, run `build:generate-content`.
-To _just_ build the static site (without rebuilding the API documentation), run `build:site`.
-
-Then, run:
-
-```shell
-npm run start
-```
+Both commands work as long a you have the appropriate values set in your `.env` file (for example: TYPESENSE_HOST and TYPESENSE_API_KEY).
+Note: This setup and the required API keys are limited to Microsoft internal employees; detail instructions can be found on the internal wiki.
 
 Note: the Docusaurus build is fairly slow.
-If you don't need to test search, it is recommended to run `npm serve` instead.
+If you don't need to test search, it is recommended to run `pnpm run start` instead.
 This is faster, and will watch for content changes and update automatically.
 You will still need to build the API documentation first.
 

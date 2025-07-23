@@ -16,7 +16,7 @@ const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
 const TYPESENSE_HOST = process.env.TYPESENSE_HOST;
 const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
 
-const isTypesenseConfigured = Boolean(TYPESENSE_HOST && TYPESENSE_API_KEY);
+const isTypesenseConfigured = TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY !== undefined;
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
