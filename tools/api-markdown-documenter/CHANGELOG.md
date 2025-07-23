@@ -32,6 +32,12 @@ It doesn't make sense in the context of a general-purpose documentation domain, 
 
 It has been removed and is no longer used by the system.
 
+### `PlainTextNode.text` property removed
+
+`text` was a redundant alias for `value`, which `PlainTextNode` inherits as a literal node.
+This property has now been removed.
+Use `PlainTextNode.value` instead.
+
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
 This type previously supported an unsafe escape hatch for text escaping.
@@ -60,7 +66,7 @@ Their `createFromPlainText` static factory functions have also been removed, as 
 
 Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
 
-### `FencedCodeBlockNode` updated to only allow plain text and line breaks
+### `FencedCodeBlockNode` updated to be a literal node that accepts a string
 
 This matches the requirements for fenced code in Markdown and is all that was required by the system.
 

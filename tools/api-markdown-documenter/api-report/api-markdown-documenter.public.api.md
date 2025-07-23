@@ -357,9 +357,10 @@ export namespace DocumentWriter {
 }
 
 // @public @sealed
-export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
-    constructor(children: FencedCodeBlockNodeContent[], language?: string);
+export class FencedCodeBlockNode extends DocumentationLiteralNodeBase<string> {
+    constructor(value: string, language?: string);
     static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
+    get isEmpty(): boolean;
     readonly language?: string;
     readonly type = "fencedCode";
 }
@@ -681,7 +682,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
     constructor(text: string);
     static readonly Empty: PlainTextNode;
     get isEmpty(): boolean;
-    get text(): string;
     readonly type = "text";
 }
 

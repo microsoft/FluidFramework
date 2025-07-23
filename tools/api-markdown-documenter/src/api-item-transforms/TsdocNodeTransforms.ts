@@ -17,6 +17,7 @@ import {
 	type DocInlineTag,
 	type DocHtmlEndTag,
 	type DocHtmlStartTag,
+	type DocEscapedText,
 } from "@microsoft/tsdoc";
 
 import type { Link } from "../Link.js";
@@ -225,6 +226,9 @@ function transformTsdocParagraphContent(
 		case DocNodeKind.CodeSpan: {
 			return [transformTsdocCodeSpan(node as DocCodeSpan, options)];
 		}
+		case DocNodeKind.EscapedText: {
+			return [transformTsdocEscapedText(node as DocEscapedText, options)];
+		}
 		case DocNodeKind.HtmlStartTag:
 		case DocNodeKind.HtmlEndTag: {
 			return transformTsdocHtmlTag(node as DocHtmlStartTag | DocHtmlEndTag, options);
@@ -306,13 +310,23 @@ function transformTsdocPlainText(
 }
 
 /**
+ * Converts a {@link @microsoft/tsdoc#DocEscapedText} to a {@link PlainTextNode}.
+ */
+function transformTsdocEscapedText(
+	node: DocEscapedText,
+	options: TsdocNodeTransformOptions,
+): PlainTextNode {
+	return new PlainTextNode(node.decodedText);
+}
+
+/**
  * Converts a {@link @microsoft/tsdoc#DocPlainText} to a {@link PlainTextNode}.
  */
 function transformTsdocFencedCode(
 	node: DocFencedCode,
 	options: TsdocNodeTransformOptions,
 ): FencedCodeBlockNode {
-	return FencedCodeBlockNode.createFromPlainText(node.code.trim(), node.language);
+	return new FencedCodeBlockNode(node.code.trim(), node.language);
 }
 
 /**
