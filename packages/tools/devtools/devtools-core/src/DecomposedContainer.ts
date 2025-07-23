@@ -70,6 +70,8 @@ export class DecomposedContainerForDataStore
 	extends TypedEventEmitter<IContainerEvents>
 	implements DecomposedContainer
 {
+	private _disposed = false; // Track actual disposed state
+
 	public constructor(runtime: IFluidDataStoreRuntime) {
 		super();
 		this.runtime = runtime;
@@ -83,8 +85,10 @@ export class DecomposedContainerForDataStore
 	private readonly connectedHandler = (clientId: string): boolean =>
 		this.emit("connected", clientId);
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
-	private readonly disposedHandler = (error?: ICriticalContainerError): boolean =>
-		this.emit("disposed", error);
+	private readonly disposedHandler = (error?: ICriticalContainerError): boolean => {
+		this._disposed = true; // Mark as disposed when dispose event occurs
+		return this.emit("disposed", error);
+	};
 
 	private readonly runtime: IFluidDataStoreRuntime;
 
@@ -106,6 +110,6 @@ export class DecomposedContainerForDataStore
 	}
 
 	public get closed(): boolean {
-		return !this.runtime.connected;
+		return this._disposed; // Only return true if actually disposed, not just disconnected
 	}
 }

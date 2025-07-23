@@ -97,6 +97,7 @@ export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	isDevtoolsMessage,
+	RemoveContainer,
 	RootDataVisualizations,
 	TelemetryEvent,
 	TelemetryHistory,

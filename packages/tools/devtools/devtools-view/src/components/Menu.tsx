@@ -11,7 +11,12 @@ import {
 	tokens,
 	Tooltip,
 } from "@fluentui/react-components";
-import { ArrowSync24Regular, Info24Regular } from "@fluentui/react-icons";
+import {
+	ArrowSync24Regular,
+	Info24Regular,
+	Dismiss24Regular,
+	PlugDisconnected20Regular,
+} from "@fluentui/react-icons";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type {
 	HasContainerKey,
@@ -25,6 +30,7 @@ import {
 	GetContainerList,
 	GetContainerState,
 	ContainerStateChange,
+	RemoveContainer,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
@@ -136,11 +142,6 @@ export type MenuSelection =
 	| OpLatencyMenuSelection;
 
 /**
- * Message sent to the webpage to query for the full container list.
- */
-const getContainerListMessage = GetContainerList.createMessage();
-
-/**
  * A refresh button to retrieve the latest list of containers or data objects.
  */
 function RefreshButton(props: { label: string }): React.ReactElement {
@@ -153,22 +154,19 @@ function RefreshButton(props: { label: string }): React.ReactElement {
 		cursor: "pointer",
 	};
 
-	const refreshTooltip = `Refresh ${props.label} list`;
-
 	function handleRefreshClick(): void {
-		// Query for list of Containers
-		messageRelay.postMessage(getContainerListMessage);
-		usageLogger?.sendTelemetryEvent({ eventName: "ContainerRefreshButtonClicked" });
+		messageRelay.postMessage(GetContainerList.createMessage());
+		usageLogger?.sendTelemetryEvent({ eventName: "RefreshContainerListButtonClicked" });
 	}
 
 	return (
-		<Tooltip content={refreshTooltip} relationship="label">
+		<Tooltip content={`Refresh ${props.label} list`} relationship="label">
 			<Button
 				icon={<ArrowSync24Regular />}
 				style={transparentButtonStyle}
 				onClick={handleRefreshClick}
-				aria-label={refreshTooltip}
-			></Button>
+				aria-label={`Refresh ${props.label} list`}
+			/>
 		</Tooltip>
 	);
 }
@@ -351,12 +349,18 @@ export interface MenuItemProps {
 	text: string;
 	isActive: boolean;
 	/**
-	 * Connection status of the container for styling.
-	 * - "connected": Normal styling
-	 * - "disconnected": Red styling (#FF0000)
-	 * - "closed": Dark red styling (#8B0000)
+	 * Icon to display next to the container name based on its state.
 	 */
-	connectionStatus?: "connected" | "disconnected" | "closed";
+	stateIcon?: React.ReactElement;
+	/**
+	 * Callback function for deleting a closed container.
+	 * Only shown when the container is closed.
+	 */
+	onDelete?: (event: React.MouseEvent) => void;
+	/**
+	 * Whether the container is closed and can be deleted.
+	 */
+	isClosed?: boolean;
 }
 
 const useMenuItemStyles = makeStyles({
@@ -379,17 +383,26 @@ const useMenuItemStyles = makeStyles({
 		color: tokens.colorNeutralForeground1,
 		backgroundColor: tokens.colorNeutralBackground1,
 	},
-	// Connection status overrides - these take precedence over active/hover states
-	disconnected: {
-		"color": "#FF8C00 !important", // Override all other color styles
+	connected: {
+		"color": tokens.colorNeutralForeground1,
 		"&:hover": {
-			"color": "#FF8C00 !important",
+			"color": tokens.colorNeutralForeground1Hover,
 		},
 	},
-	closed: {
-		"color": "#FF4500 !important", // Override all other color styles
+	itemContent: {
+		display: "flex",
+		alignItems: "center",
+		flex: 1,
+		gap: "8px",
+	},
+	deleteButton: {
+		backgroundColor: "transparent",
+		border: "none",
+		cursor: "pointer",
+		padding: "4px",
+		marginLeft: "auto",
 		"&:hover": {
-			"color": "#FF4500 !important",
+			backgroundColor: tokens.colorNeutralBackground1Hover,
 		},
 	},
 });
@@ -398,7 +411,7 @@ const useMenuItemStyles = makeStyles({
  * Generic component for a menu item (under a section).
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
-	const { isActive, onClick, text, connectionStatus = "connected" } = props;
+	const { isActive, onClick, text, stateIcon, onDelete, isClosed = false } = props;
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
 		if (event.key === "Enter" || event.key === " ") {
@@ -411,13 +424,8 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	// Base style (active state for selection)
 	const baseStyle = isActive ? styles.active : styles.inactive;
 
-	// Connection status override (these use !important to override base colors)
-	const connectionStyle =
-		connectionStatus === "disconnected"
-			? styles.disconnected
-			: connectionStatus === "closed"
-				? styles.closed
-				: undefined;
+	// Use connected style as default since we're replacing colors with icons
+	const connectionStyle = styles.connected;
 
 	const style = mergeClasses(styles.root, baseStyle, connectionStyle);
 
@@ -429,7 +437,23 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 			onKeyDown={handleKeyDown}
 			tabIndex={0}
 		>
-			{text}
+			<div className={styles.itemContent}>
+				{text}
+				{stateIcon}
+			</div>
+			{isClosed && onDelete && (
+				<Tooltip content="Remove closed container" relationship="label">
+					<Button
+						icon={<Dismiss24Regular />}
+						className={styles.deleteButton}
+						onClick={(e) => {
+							e.stopPropagation();
+							onDelete(e);
+						}}
+						aria-label="Remove closed container"
+					/>
+				</Tooltip>
+			)}
 		</div>
 	);
 }
@@ -533,42 +557,47 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 				return true;
 			},
 		};
-
 		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
 				context: "ContainersMenuSection",
 			});
 		}
-
 		messageRelay.on("message", messageHandler);
-
-		// Request state for each container
 		for (const containerKey of containers) {
 			messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
 		}
-
 		return (): void => {
 			messageRelay.off("message", messageHandler);
 		};
 	}, [containers, messageRelay]);
 
 	/**
-	 * Determines the connection status of a container based on its state.
+	 * Gets the appropriate icon for a container based on its state.
+	 * Only shows icons for disconnected states. Closed containers show no icon.
 	 */
-	function getContainerConnectionStatus(
-		containerKey: ContainerKey,
-	): "connected" | "disconnected" | "closed" {
+	function getContainerStateIcon(containerKey: ContainerKey): React.ReactElement | undefined {
 		const state = containerStates.get(containerKey);
 		if (state === undefined) {
-			return "connected"; // Default to connected if we don't have state info yet
+			return undefined; // No icon for unknown state
 		}
+
+		// Don't show icon for closed containers - they'll have the X button instead
 		if (state.closed) {
-			return "closed";
+			return undefined;
 		}
+
 		if (state.connectionState === ConnectionState.Disconnected) {
-			return "disconnected";
+			return <PlugDisconnected20Regular />; // Only show icon for disconnected
 		}
-		return "connected";
+
+		return undefined; // No icon for connected states
+	}
+
+	/**
+	 * Handles deletion of a closed container.
+	 */
+	function handleDeleteContainer(containerKey: ContainerKey): void {
+		messageRelay.postMessage(RemoveContainer.createMessage(containerKey));
 	}
 
 	let containerSectionInnerView: React.ReactElement;
@@ -580,17 +609,24 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 		containers.sort((a: string, b: string) => a.localeCompare(b));
 		containerSectionInnerView = (
 			<>
-				{containers.map((containerKey: string) => (
-					<MenuItem
-						key={containerKey}
-						isActive={currentContainerSelection === containerKey}
-						text={containerKey}
-						connectionStatus={getContainerConnectionStatus(containerKey)}
-						onClick={(event): void => {
-							selectContainer(`${containerKey}`);
-						}}
-					/>
-				))}
+				{containers.map((containerKey: string) => {
+					const state = containerStates.get(containerKey);
+					const isClosed = state?.closed ?? false;
+
+					return (
+						<MenuItem
+							key={containerKey}
+							isActive={currentContainerSelection === containerKey}
+							text={containerKey}
+							stateIcon={getContainerStateIcon(containerKey)}
+							isClosed={isClosed}
+							onDelete={isClosed ? () => handleDeleteContainer(containerKey) : undefined}
+							onClick={(event): void => {
+								selectContainer(`${containerKey}`);
+							}}
+						/>
+					);
+				})}
 			</>
 		);
 	}

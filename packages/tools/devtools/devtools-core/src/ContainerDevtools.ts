@@ -162,4 +162,8 @@ export class ContainerDevtools extends BaseDevtools<IContainer> {
 			userId: clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
 	}
+
+	public isClosed(): boolean {
+		return this.getContainerState().closed;
+	}
 }

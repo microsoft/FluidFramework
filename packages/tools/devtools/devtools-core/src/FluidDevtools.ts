@@ -21,10 +21,11 @@ import {
 	DevtoolsFeatures,
 	GetContainerList,
 	GetDevtoolsFeatures,
+	RemoveContainer,
+	SetUnsampledTelemetry,
 	type ISourcedDevtoolsMessage,
 	type InboundHandlers,
 	type MessageLoggingOptions,
-	SetUnsampledTelemetry,
 	handleIncomingWindowMessage,
 	postMessagesToWindow,
 } from "./messaging/index.js";
@@ -163,11 +164,26 @@ export class FluidDevtools implements IFluidDevtools {
 			this.postContainerList();
 			return true;
 		},
-		[SetUnsampledTelemetry.MessageType]: async (message) => {
-			const newValue = (message as SetUnsampledTelemetry.Message).data.unsampledTelemetry;
-			globalThis.sessionStorage?.setItem(unsampledTelemetryKey, String(newValue));
-			this.postSupportedFeatures();
-			window.location.reload();
+		[SetUnsampledTelemetry.MessageType]: async (untypedMessage) => {
+			const message = untypedMessage as SetUnsampledTelemetry.Message;
+			// TODO: Implement unsampled telemetry toggle
+			console.log("Unsampled telemetry toggle:", message.data.unsampledTelemetry);
+			return true;
+		},
+		[RemoveContainer.MessageType]: async (untypedMessage) => {
+			const message = untypedMessage as RemoveContainer.Message;
+			const containerKey = message.data.containerKey;
+
+			// Check if it's a container or data object and remove accordingly
+			if (this.containers.has(containerKey)) {
+				this.removeContainer(containerKey);
+			} else if (this.dataObjects.has(containerKey)) {
+				this.removeDataObject(containerKey);
+			} else {
+				console.warn(
+					`No container or data object found with key "${containerKey}" to remove.`,
+				);
+			}
 			return true;
 		},
 	};
@@ -484,6 +500,50 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private hasDataObjects(): boolean {
 		return this.dataObjects.size > 0;
+	}
+
+	/**
+	 * Removes a container devtools instance from the devtools instance.
+	 * @param containerKey - The key of the container to remove.
+	 */
+	private removeContainer(containerKey: ContainerKey): void {
+		if (this.disposed) {
+			throw new UsageError(useAfterDisposeErrorText);
+		}
+
+		const containerDevtools = this.containers.get(containerKey);
+		if (containerDevtools === undefined) {
+			console.warn(`No ContainerDevtools associated with key "${containerKey}" was found.`);
+			return;
+		}
+
+		containerDevtools.dispose();
+		this.containers.delete(containerKey);
+
+		// Post message for container list change
+		this.postContainerList();
+	}
+
+	/**
+	 * Removes a data object devtools instance from the devtools instance.
+	 * @param containerKey - The key of the data object to remove.
+	 */
+	private removeDataObject(containerKey: ContainerKey): void {
+		if (this.disposed) {
+			throw new UsageError(useAfterDisposeErrorText);
+		}
+
+		const dataObjectDevtools = this.dataObjects.get(containerKey);
+		if (dataObjectDevtools === undefined) {
+			console.warn(`No DataObjectDevtools associated with key "${containerKey}" was found.`);
+			return;
+		}
+
+		dataObjectDevtools.dispose();
+		this.dataObjects.delete(containerKey);
+
+		// Post message for container list change
+		this.postContainerList();
 	}
 }
 

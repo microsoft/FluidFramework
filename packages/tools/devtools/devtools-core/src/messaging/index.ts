@@ -29,6 +29,7 @@ export {
 	GetDataVisualization,
 	GetRootDataVisualizations,
 	RootDataVisualizations,
+	RemoveContainer,
 } from "./container-devtools-messages/index.js";
 export {
 	ContainerList,

@@ -105,4 +105,8 @@ export class DataObjectDevtools extends BaseDevtools<DecomposedContainer> {
 			userId: clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
 	}
+
+	public isClosed(): boolean {
+		return this.getContainerState().closed;
+	}
 }

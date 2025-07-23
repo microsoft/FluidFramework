@@ -21,3 +21,4 @@ export { GetContainerState } from "./GetContainerState.js";
 export { GetDataVisualization } from "./GetDataVisualization.js";
 export { GetRootDataVisualizations } from "./GetRootDataVisualizations.js";
 export { RootDataVisualizations } from "./RootDataVisualizations.js";
+export { RemoveContainer } from "./RemoveContainer.js";
