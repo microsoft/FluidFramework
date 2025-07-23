@@ -43,6 +43,12 @@ export interface TreeEncodingOptions {
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 * @defaultValue false.
+	 * @privateRemarks
+	 * TODO AB#43548:
+	 * Replace this with an enum that provides three options:
+	 * - `usePropertyKeys`: use property keys. Supported for import and export.
+	 * - `allStoredKeys`: use stored keys, and include unknown optional fields. Supported for export only, at least for the short term.
+	 * - `knownStoredKeys`: use stored keys but do not include unknown optional fields. Supported for import and export.
 	 */
 	readonly useStoredKeys?: boolean;
 }
