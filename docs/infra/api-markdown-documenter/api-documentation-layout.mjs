@@ -6,6 +6,7 @@
 //@ts-check
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItem} ApiItem */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ApiItemTransformationConfiguration} ApiItemTransformationConfiguration */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").BlockContent} BlockContent */
 /** @typedef {import("@fluid-tools/api-markdown-documenter").DocumentationNode} DocumentationNode */
 
 import {
@@ -16,10 +17,10 @@ import {
 	LayoutUtilities,
 	LineBreakNode,
 	LinkNode,
+	ParagraphNode,
 	PlainTextNode,
 	ReleaseTag,
 	SectionNode,
-	SpanNode,
 	transformTsdoc,
 } from "@fluid-tools/api-markdown-documenter";
 
@@ -28,9 +29,9 @@ import { AdmonitionNode } from "./admonition-node.mjs";
 const customExamplesSectionTitle = "Usage";
 const customThrowsSectionTitle = "Error Handling";
 
-const supportDocsLinkSpan = new SpanNode([
+const supportDocsLinkParagraph = new ParagraphNode([
 	new PlainTextNode("For more information about our API support guarantees, see "),
-	LinkNode.createFromPlainText(
+	new LinkNode(
 		"here",
 		// Is there a URL that would be relative to the current site? (For development use)
 		"https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels",
@@ -42,7 +43,7 @@ const supportDocsLinkSpan = new SpanNode([
  * A special use notice for the "@system" tag.
  */
 const systemNotice = new AdmonitionNode(
-	[supportDocsLinkSpan],
+	[supportDocsLinkParagraph],
 	/* admonitionKind: */ "warning",
 	"This API is reserved for internal system use and should not be imported directly. It may change at any time without notice.",
 );
@@ -52,7 +53,7 @@ const systemNotice = new AdmonitionNode(
  */
 const sealedNotice = new AdmonitionNode(
 	[
-		new SpanNode([
+		new ParagraphNode([
 			new PlainTextNode(
 				'This type is "sealed," meaning that code outside of the library defining it should not implement or extend it. Future versions of this type may add members or make typing of readonly members more specific.',
 			),
@@ -67,7 +68,7 @@ const sealedNotice = new AdmonitionNode(
  */
 const inputNotice = new AdmonitionNode(
 	[
-		new SpanNode([
+		new ParagraphNode([
 			new PlainTextNode(
 				'This type is "input," meaning that code outside of the library defining it should not read from it. Future versions of this type may add optional members or make typing of members more general.',
 			),
@@ -105,19 +106,18 @@ function createSupportNotice(apiItem, isImportable) {
 	 * @param {string} admonitionTitle - Title to display for the admonition.
 	 */
 	function createAdmonition(importSubpath, admonitionTitle) {
-		/** @type {DocumentationNode[]} */
+		/** @type {BlockContent[]} */
 		const admonitionChildren = [];
 		if (isImportable) {
 			admonitionChildren.push(
-				new SpanNode([
+				new ParagraphNode([
 					new PlainTextNode("To use, import via "),
 					CodeSpanNode.createFromPlainText(`${packageName}/${importSubpath}`),
 					new PlainTextNode("."),
 				]),
-				LineBreakNode.Singleton,
 			);
 		}
-		admonitionChildren.push(supportDocsLinkSpan);
+		admonitionChildren.push(supportDocsLinkParagraph);
 		return new AdmonitionNode(
 			admonitionChildren,
 			/* admonitionKind: */ "warning",

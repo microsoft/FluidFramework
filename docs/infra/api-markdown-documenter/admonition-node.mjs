@@ -5,13 +5,14 @@
 
 //@ts-check
 /** @typedef {import("@fluid-tools/api-markdown-documenter").BlockContent} BlockContent */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ToMarkdownContext} ToMarkdownContext */
+/** @typedef {import("mdast").BlockContent} MdastBlockContent */
+/** @typedef {import("mdast").PhrasingContent} MdastPhrasingContent */
 
-import { DocumentationParentNodeBase } from "@fluid-tools/api-markdown-documenter";
-
-/**
- * The {@link @fluid-tools/api-markdown-documenter#DocumentationNode."type"} of {@link AdmonitionNode}.
- */
-export const admonitionNodeType = "Admonition";
+import {
+	blockContentToMarkdown,
+	DocumentationParentNodeBase,
+} from "@fluid-tools/api-markdown-documenter";
 
 /**
  * A block of content representing a notice that should be highlighted for the user.
@@ -54,9 +55,49 @@ export class AdmonitionNode extends DocumentationParentNodeBase {
 	constructor(children, admonitionKind, title) {
 		super(children);
 
-		this.type = admonitionNodeType;
+		this.type = "admonition";
 
 		this.admonitionKind = admonitionKind;
 		this.title = title;
+	}
+
+	/**
+	 * Generates Markdown representing a Docusaurus Admonition.
+	 *
+	 * @param {ToMarkdownContext} context - The transformation context.
+	 *
+	 * @returns {MdastBlockContent[]} The Markdown AST representing the admonition.
+	 */
+	toMarkdown(context) {
+		/**
+		 * @type {MdastBlockContent[]}
+		 */
+		const transformedChildren = [];
+		for (const child of this.children) {
+			// @ts-ignore -- Limitation of using types in JavaScript: we can't explicitly mark `AdmonitionNode` as only containing phrasing content.
+			transformedChildren.push(...blockContentToMarkdown(child, context));
+		}
+
+		return [
+			{
+				type: "paragraph",
+				children: [
+					{
+						type: "text",
+						value: `:::${this.admonitionKind}${this.title === undefined ? "" : `[${this.title}]`}`
+					},
+				]
+			},
+			...transformedChildren,
+			{
+				type: "paragraph",
+				children: [
+					{
+						type: "text",
+						value: ":::"
+					},
+				]
+			}
+		];
 	}
 }
