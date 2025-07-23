@@ -748,6 +748,7 @@ function createExampleSection(
 		example.exampleNumber ?? ""
 	}`;
 
+	// Always emit the section, even if the body is empty after stripping out the title.
 	return wrapInSection(exampleSection?.children ?? [], {
 		title: headingTitle,
 		id: headingId,
