@@ -35,16 +35,43 @@ export interface ConverterDataObjectFactoryProps<
 > extends DataObjectFactoryProps<TObj, I> {
 	/**
 	 * Used for determining whether or not a conversion is necessary based on the current state.
+	 *
+	 * An example might look like:
+	 * ```
+	 * async (root) => {
+	 *     // Check if "mapKey" has been removed from the SharedDirectory. The presence of this key tells us if the conversion has happened or not (see `convertDataObject`)
+	 *     return root.get<IFluidHandle<SharedMap>>("mapKey") !== undefined;
+	 * }
+	 * ```
 	 */
 	isConversionNeeded: (root: ISharedDirectory) => Promise<boolean>;
 
 	/**
 	 * Data required for running conversion. This is necessary because the conversion must happen synchronously.
+	 *
+	 * An example of what to asynchronously retrieve could be getting the "old" DDS that you want to convert the data of:
+	 * ```
+	 * async (root) => {
+	 *     root.get<IFluidHandle<SharedMap>>("mapKey").get();
+	 * }
+	 * ```
 	 */
 	asyncGetDataForConversion: (root: ISharedDirectory) => Promise<TConversionData>;
 
 	/**
 	 * Convert the DataObject upon resolve (i.e. on retrieval of the DataStore).
+	 *
+	 * An example implementation could be changing which underlying DDS is used to represent the DataObject's data:
+	 * ```
+	 * (runtime, root, data) => {
+	 *     // ! These are not all real APIs and are simply used to convey the purpose of this method
+	 *     const mapContent = data.getContent();
+	 *     const newDirectory = SharedDirectory.create(runtime);
+	 *     newDirectory.populateContent(mapContent);
+	 *     root.set("directoryKey", newDirectory.handle);
+	 *     root.delete("mapKey");
+	 * }
+	 * ```
 	 * @param data - Provided by the "asyncGetDataForConversion" function
 	 */
 	convertDataObject: (
@@ -72,10 +99,16 @@ export class ConverterDataObjectFactory<
 > extends DataObjectFactory<TObj, I> {
 	private convertLock = false;
 
+	// ! TODO: add new DataStoreMessageType.Conversion
+	private static readonly conversionContent = "conversion";
+
 	public constructor(props: ConverterDataObjectFactoryProps<TObj, TConversionData, I>) {
 		const submitConversionOp = (runtime: FluidDataStoreRuntime): void => {
-			// ! TODO: potentially add new DataStoreMessageType.Conversion
-			runtime.submitMessage(DataStoreMessageType.ChannelOp, "conversion", undefined);
+			runtime.submitMessage(
+				DataStoreMessageType.ChannelOp,
+				ConverterDataObjectFactory.conversionContent,
+				undefined,
+			);
 		};
 
 		const fullConvertDataStore = async (runtime: IFluidDataStoreChannel): Promise<void> => {
@@ -111,7 +144,9 @@ export class ConverterDataObjectFactory<
 					if (
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 						messageCollection.envelope.type === DataStoreMessageType.ChannelOp &&
-						messageCollection.messagesContent.some((val) => val.contents === "conversion")
+						messageCollection.messagesContent.some(
+							(val) => val.contents === ConverterDataObjectFactory.conversionContent,
+						)
 					) {
 						if (this.conversionOpSeqNum === -1) {
 							// This is the first conversion op we've seen
@@ -123,7 +158,7 @@ export class ConverterDataObjectFactory<
 					}
 
 					contents = messageCollection.messagesContent.filter(
-						(val) => val.contents !== "conversion",
+						(val) => val.contents !== ConverterDataObjectFactory.conversionContent,
 					);
 
 					if (this.seqNumsToSkip.has(sequenceNumber) || contents.length === 0) {
@@ -145,7 +180,7 @@ export class ConverterDataObjectFactory<
 					if (
 						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 						type2 === DataStoreMessageType.ChannelOp &&
-						content === "conversion"
+						content === ConverterDataObjectFactory.conversionContent
 					) {
 						submitConversionOp(this);
 						return;
