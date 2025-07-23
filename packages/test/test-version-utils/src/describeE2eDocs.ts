@@ -25,7 +25,7 @@ import {
 import {
 	getDriverInformationWhenNoProviderIsAvailable,
 	getVersionedTestObjectProviderFromApis,
-} from "./compatibilityBase.js";
+} from "./compatUtils.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import {
 	getDataRuntimeApi,

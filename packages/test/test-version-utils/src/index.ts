@@ -10,7 +10,7 @@ export {
 	getVersionedTestObjectProviderFromApis,
 	ITestDataObject,
 	TestDataObjectType,
-} from "./compatibilityBase.js";
+} from "./compatUtils.js";
 export {
 	describeInstallVersions,
 	IRequestedFluidVersions,
