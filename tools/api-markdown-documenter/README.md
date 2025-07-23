@@ -395,6 +395,13 @@ Other validation may be added in the future as needed.
 
 -   Rather than repeatedly walking up a given `ApiItem`'s hierarchy when evaluating paths, links, etc., we could pass down transformation context object containing a running record of the item's hierarchy as we walk the tree.
 
+### Longer-term work
+
+- Replace [Documentation Domain](#documentation-domain) with `mdast`.
+  - The `mdast` ecosystem already supports conversion from `mdast` to HTML and other formats.
+    There really isn't a reason for this library to have its own proprietary format.
+    For the couple of special concepts this library does have (e.g. hierarchical sections with contextual heading levels), we can leverage `mdast`'s extensibility model.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
