@@ -270,7 +270,7 @@ export interface TreeAlpha {
 	 *
 	 * TODO: clarify how this handles out of schema data.
 	 * Does it robustly validate? How do you use it with schema evolution features like staged allowed types and allowUnknownOptionalFields? Which errors are deferred until insertion/hydration?
-	 * Ensure what ever policy is chosen is documented, enforces, tested and applied consistently to all import code paths.
+	 * Ensure whatever policy is chosen is documented, enforces, tested and applied consistently to all import code paths.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
