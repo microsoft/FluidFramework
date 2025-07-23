@@ -138,7 +138,7 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * ```
 	 *
 	 * The existing import and export APIs have similar problems.
-	 * For example currently {@link (TreeAlpha:interface).exportVerbose|exportVerbose} APIs with stored keys preserves unknown optional fields,
+	 * For example currently the {@link (TreeAlpha:interface).exportVerbose|exportVerbose} API with stored keys preserves unknown optional fields,
 	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content, and {@link (TreeAlpha:interface).importVerbose|importVerbose} do not.
 	 *
 	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter

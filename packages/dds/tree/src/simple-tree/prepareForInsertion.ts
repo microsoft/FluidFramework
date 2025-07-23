@@ -40,7 +40,7 @@ import { convertField } from "./toStoredSchema.js";
 /**
  * For now, schema validation for inserted content is always enabled.
  * @remarks
- * If this ends up being a too much of a performance overhead, AND nothing depends on it (like staged allowed types likely will),
+ * If this ends up being too much of a performance overhead, AND nothing depends on it (like staged allowed types likely will),
  * this could be changed.
  */
 const validateSchema = true;
