@@ -748,6 +748,7 @@ function createExampleSection(
 		example.exampleNumber ?? ""
 	}`;
 
+	// Always emit the section, even if the body is empty after stripping out the title.
 	return wrapInSection(exampleSection?.children ?? [], {
 		title: headingTitle,
 		id: headingId,
@@ -806,6 +807,8 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  *
  * In the case where the output is not in a form we expect, we will log an error and return the node we were given,
  * rather than making a copy.
+ *
+ * @returns The updated node, if any content remains. Otherwise, `undefined`.
  */
 function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 	node: TNode,
