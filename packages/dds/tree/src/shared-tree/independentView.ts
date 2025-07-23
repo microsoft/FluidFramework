@@ -111,7 +111,7 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 	const fieldCursors = fieldBatchCodec.decode(content.tree as JsonCompatibleReadOnly, context);
 	assert(fieldCursors.length === 1, 0xa5b /* must have exactly 1 field in batch */);
 
-	const out: TreeViewAlpha<TSchema> = independentInitializedViewInternal<TSchema>(
+	return independentInitializedViewInternal(
 		config,
 		options,
 		schema,
@@ -120,7 +120,6 @@ export function independentInitializedView<const TSchema extends ImplicitFieldSc
 		fieldCursors[0]!,
 		idCompressor,
 	);
-	return out;
 }
 
 /**
