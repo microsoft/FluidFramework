@@ -5,7 +5,10 @@
 
 import type { Nodes as MdastTree } from "mdast";
 import { gfmToMarkdown } from "mdast-util-gfm";
-import { toMarkdown as toMarkdownString } from "mdast-util-to-markdown";
+import {
+	toMarkdown as toMarkdownString,
+	type Options as MdastToMarkdownOptions,
+} from "mdast-util-to-markdown";
 
 import type { DocumentNode } from "../../documentation-domain/index.js";
 import {
@@ -19,7 +22,9 @@ import {
  * @sealed
  * @public
  */
-export type RenderDocumentConfiguration = TransformationConfiguration;
+export interface RenderDocumentConfiguration
+	extends TransformationConfiguration,
+		RenderMarkdownConfiguration {}
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a string.
@@ -34,19 +39,36 @@ export function renderDocument(
 	config: RenderDocumentConfiguration,
 ): string {
 	const markdownTree = documentToMarkdown(document, config);
-	return renderMarkdown(markdownTree);
+	return renderMarkdown(markdownTree, config);
+}
+
+/**
+ * Configuration for rendering Markdown content.
+ *
+ * @sealed
+ * @public
+ */
+export interface RenderMarkdownConfiguration {
+	/**
+	 * Options for the Markdown renderer.
+	 *
+	 * @see {@link https://github.com/syntax-tree/mdast-util-to-markdown?tab=readme-ov-file#options}
+	 */
+	readonly mdastToMarkdownOptions?: Partial<MdastToMarkdownOptions>;
 }
 
 /**
  * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a string.
+ *
+ * @remarks Leverages {@link https://github.com/syntax-tree/mdast-util-to-markdown | mdast-util-to-markdown}
  *
  * @param document - The document to render.
  * @param config - Markdown transformation configuration.
  *
  * @public
  */
-export function renderMarkdown(tree: MdastTree): string {
-	return toMarkdownString(tree, {
+export function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
+	const options: MdastToMarkdownOptions = {
 		emphasis: "_", // Backwards compat
 		bullet: "-", // Backwards compat
 		incrementListMarker: false, // Backwards compat
@@ -55,5 +77,7 @@ export function renderMarkdown(tree: MdastTree): string {
 				tablePipeAlign: false, // Backwards compat
 			}),
 		],
-	});
+		...config.mdastToMarkdownOptions,
+	};
+	return toMarkdownString(tree, options);
 }
