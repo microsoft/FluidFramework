@@ -35,6 +35,7 @@ import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
 import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
+import { Options } from 'mdast-util-to-markdown';
 import type { Parent } from 'unist';
 import type { PhrasingContent as PhrasingContent_2 } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
@@ -717,7 +718,8 @@ export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, 
 }
 
 // @public @sealed
-export type RenderDocumentAsMarkdownConfiguration = ToMarkdownConfiguration;
+export interface RenderDocumentAsMarkdownConfiguration extends ToMarkdownConfiguration, RenderMarkdownConfiguration {
+}
 
 // @public
 function renderDocumentsAsMarkdown(documents: readonly DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
@@ -735,7 +737,12 @@ export interface RenderHtmlConfiguration {
 }
 
 // @public
-function renderMarkdown(tree: Nodes_2): string;
+function renderMarkdown(tree: Nodes_2, config: RenderMarkdownConfiguration): string;
+
+// @public @sealed
+export interface RenderMarkdownConfiguration {
+    readonly mdastToMarkdownOptions?: Partial<Options>;
+}
 
 // @public
 export type SectionContent = BlockContent | SectionNode;

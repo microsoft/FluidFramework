@@ -103,6 +103,7 @@ export {
 	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,
 	type RenderDocumentAsMarkdownConfiguration,
+	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
