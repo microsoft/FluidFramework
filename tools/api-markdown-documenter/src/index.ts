@@ -38,9 +38,44 @@ export {
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
 
-// We want to make sure the entirety of this domain is accessible.
-// eslint-disable-next-line no-restricted-syntax
-export * from "./documentation-domain/index.js";
+export {
+	type BlockContent,
+	type BlockContentMap,
+	CodeSpanNode,
+	DocumentNode,
+	type DocumentNodeProps,
+	type DocumentationNode,
+	type DocumentationLiteralNode,
+	DocumentationLiteralNodeBase,
+	type DocumentationParentNode,
+	DocumentationParentNodeBase,
+	FencedCodeBlockNode,
+	type FencedCodeBlockNodeContent,
+	HeadingNode,
+	HorizontalRuleNode,
+	LineBreakNode,
+	LinkNode,
+	ListItemNode,
+	ListNode,
+	ParagraphNode,
+	type PhrasingContent,
+	type PhrasingContentMap,
+	PlainTextNode,
+	SectionNode,
+	type SectionContent,
+	SpanNode,
+	type TableCellContent,
+	TableCellNode,
+	TableBodyCellNode,
+	TableHeaderCellNode,
+	TableCellKind,
+	TableRowNode,
+	TableBodyRowNode,
+	TableHeaderRowNode,
+	TableRowKind,
+	TableNode,
+	type TextFormatting,
+} from "./documentation-domain/index.js";
 
 export {
 	documentToHtml,

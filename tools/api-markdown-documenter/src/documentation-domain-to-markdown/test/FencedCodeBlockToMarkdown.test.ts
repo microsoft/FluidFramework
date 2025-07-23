@@ -5,11 +5,7 @@
 
 import { expect } from "chai";
 
-import {
-	FencedCodeBlockNode,
-	LineBreakNode,
-	PlainTextNode,
-} from "../../documentation-domain/index.js";
+import { FencedCodeBlockNode } from "../../documentation-domain/index.js";
 import { blockContentToMarkdown } from "../ToMarkdown.js";
 import { createTransformationContext } from "../TransformationContext.js";
 
@@ -23,14 +19,7 @@ describe("fencedCodeBlockToMarkdown", () => {
 	});
 
 	it("Simple code block", () => {
-		const input = new FencedCodeBlockNode(
-			[
-				new PlainTextNode("const x = 10;"),
-				LineBreakNode.Singleton,
-				new PlainTextNode("console.log(x);"),
-			],
-			"javascript",
-		);
+		const input = new FencedCodeBlockNode("const x = 10;\nconsole.log(x);", "javascript");
 
 		const result = blockContentToMarkdown(input, transformationContext);
 		expect(result).to.deep.equal([

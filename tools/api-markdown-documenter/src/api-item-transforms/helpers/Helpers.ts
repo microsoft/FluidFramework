@@ -96,9 +96,7 @@ export function createSignatureSection(
 		if (signatureExcerpt !== "") {
 			const contents: SectionContent[] = [];
 
-			contents.push(
-				FencedCodeBlockNode.createFromPlainText(signatureExcerpt.trim(), "typescript"),
-			);
+			contents.push(new FencedCodeBlockNode(signatureExcerpt.trim(), "typescript"));
 
 			const renderedHeritageTypes = createHeritageTypesContent(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {

@@ -322,7 +322,7 @@ function transformTsdocFencedCode(
 	node: DocFencedCode,
 	options: TsdocNodeTransformOptions,
 ): FencedCodeBlockNode {
-	return FencedCodeBlockNode.createFromPlainText(node.code.trim(), node.language);
+	return new FencedCodeBlockNode(node.code.trim(), node.language);
 }
 
 /**

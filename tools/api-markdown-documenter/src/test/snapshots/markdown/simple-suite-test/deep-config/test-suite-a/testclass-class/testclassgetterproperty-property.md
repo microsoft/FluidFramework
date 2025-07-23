@@ -10,7 +10,6 @@ Test class property with both a getter and a setter.
 /** @virtual */
 get testClassGetterProperty(): number;
 
-
 set testClassGetterProperty(newValue: number);
 ```
 
