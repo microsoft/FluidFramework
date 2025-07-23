@@ -15,7 +15,6 @@ import {
 	CodeSpanNode,
 	HeadingNode,
 	LayoutUtilities,
-	LineBreakNode,
 	LinkNode,
 	ParagraphNode,
 	PlainTextNode,
