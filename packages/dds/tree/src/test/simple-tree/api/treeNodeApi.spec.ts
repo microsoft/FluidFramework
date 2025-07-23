@@ -2711,7 +2711,7 @@ describe("treeNodeApi", () => {
 				assert.throws(
 					() => TreeAlpha.importVerbose(Point, exported),
 					validateUsageError(
-						// TODO: Better error message: error about unexpected field should take precedence over error about unknown child type.
+						// TODO: Better error message: error should mention that unknown optional fields are not allowed in this context.
 						'Failed to parse VerboseTree due to unexpected key "x" on type "com.example.Point".',
 					),
 				);
