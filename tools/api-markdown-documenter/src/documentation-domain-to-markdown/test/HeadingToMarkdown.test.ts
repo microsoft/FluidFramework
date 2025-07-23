@@ -44,7 +44,7 @@ describe("headingToMarkdown", () => {
 	});
 
 	describe("Heading level beyond Markdown-supported range", () => {
-		// Markdown supports headings up to level 6, so starting at 7 will result special handling.
+		// Markdown supports headings up to level 6, so starting at 7 will result in special handling.
 		const transformationContext = createTransformationContext({ startingHeadingLevel: 7 });
 
 		it("Without ID", () => {
