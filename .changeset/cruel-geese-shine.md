@@ -6,7 +6,7 @@
 Change and clarify limitations related to alpha features allowUnknownOptionalFields and importVerbose
 
 [allowUnknownOptionalFields](https://fluidframework.com/docs/api/fluid-framework/schemafactoryobjectoptions-interface#allowunknownoptionalfields-propertysignature) currently has some limitations.
-To mitigate some bugs [importVerbose](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#importverbose-methodsignature) has dropped support for unknown optional fields.
+To mitigate some bugs, [importVerbose](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#importverbose-methodsignature) has dropped support for unknown optional fields.
 Previously `importVerbose` would tolerate some unknown optional fields, but could not validate they comply with the document stored schema.
 This could cause some crashes, and likely document corruption.
 This support has been removed: now trying to create nodes containing unknown optional fields via `importVerbose` with throw a `UsageError`.
