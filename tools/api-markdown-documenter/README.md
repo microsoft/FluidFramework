@@ -310,7 +310,7 @@ const documents = transformApiModel({
 // Convert the documents to Markdown via mdast
 const markdownDocuments = documents.map((document) => documentToMarkdown(document, {}));
 
-// Use the resulting HTML documents with your favorite mdast-compatible library!
+// Use the resulting Markdown documents with your favorite mdast-compatible library!
 ```
 
 <!-- prettier-ignore-end -->
