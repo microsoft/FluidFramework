@@ -17,8 +17,11 @@ const Ajv =
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 
+import type { ISharedObjectHandle } from "@fluidframework/shared-object-base/internal";
+
 import type { JsonValidator } from "../../codec/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
 const ajv = formats.default(new Ajv({ strict: false, allErrors: true }), [
@@ -51,6 +54,9 @@ export const ajvValidator: JsonValidator = {
 			check: (data): data is Static<Schema> => {
 				const valid = validate(data);
 				if (!valid) {
+					const mockHandle = new MockHandle("");
+					// Make stringify not assert when checking for "bind"
+					(mockHandle as IFluidHandle as ISharedObjectHandle).bind = () => {};
 					throw new Error(
 						`Invalid JSON.\n\nData: ${mockSerializer.stringify(
 							data,
