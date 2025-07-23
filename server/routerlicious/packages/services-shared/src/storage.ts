@@ -347,6 +347,7 @@ export class DocumentStorage implements IDocumentStorage {
 			"container" /* summaryType */,
 			0 /* sequenceNumber */,
 			true /* initial */,
+			summaryTimeStr,
 		);
 
 		let summaryUploadMessage = `Tree reference: ${JSON.stringify(handle)}`;

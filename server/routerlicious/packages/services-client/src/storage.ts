@@ -151,5 +151,7 @@ export interface ISummaryUploadManager {
 		parentHandle: string,
 		summaryType: IWholeSummaryPayloadType,
 		sequenceNumber?: number,
+		initial?: boolean,
+		summaryTimeStr?: string,
 	): Promise<string>;
 }
