@@ -9,6 +9,7 @@ import { expect } from "chai";
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import {
+	FencedCodeBlockNode,
 	LinkNode,
 	ListItemNode,
 	ListNode,
@@ -60,6 +61,23 @@ describe("Tsdoc node transformation tests", () => {
 			const result = transformTsdocSection(summarySection, transformOptions);
 
 			expect(result).to.deep.equal([new ParagraphNode([new PlainTextNode("@foo")])]);
+		});
+
+		it("@example with fenced code", () => {
+			const comment = `/**
+ * \`\`\`typescript
+ * const foo = "bar";
+ * \`\`\`
+ */`;
+
+			const context = parser.parseString(comment);
+			const summarySection = context.docComment.summarySection;
+
+			const result = transformTsdocSection(summarySection, transformOptions);
+
+			expect(result).to.deep.equal([
+				new FencedCodeBlockNode('const foo = "bar";', "typescript"),
+			]);
 		});
 
 		it("Multi-paragraph comment", () => {
