@@ -23,7 +23,7 @@ import { fieldCursorFromInsertable, testIdCompressor } from "../utils.js";
 
 describe("independentView", () => {
 	describe("independentInitializedView", () => {
-		// Repression test for debug forest erroring during initialization due to being out of schema.
+		// Regression test for debug forest erroring during initialization due to being out of schema.
 		it("debug forest", () => {
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const view = independentInitializedView(
@@ -45,7 +45,7 @@ describe("independentView", () => {
 	});
 
 	describe("independentInitializedViewInternal", () => {
-		// Repression test for debug forest erroring during initialization due to being out of schema.
+		// Regression test for debug forest erroring during initialization due to being out of schema.
 		it("debug forest", () => {
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });
 			const view = independentInitializedViewInternal(
