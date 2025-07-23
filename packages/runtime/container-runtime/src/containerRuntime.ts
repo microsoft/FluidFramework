@@ -184,14 +184,14 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
+import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
+import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import {
 	getMinVersionForCollabDefaults,
 	type RuntimeOptionsAffectingDocSchema,
 	validateRuntimeOptions,
-} from "./compatUtils.js";
-import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
-import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
-import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+} from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -370,7 +370,7 @@ export interface ISummaryRuntimeOptions {
  *
  * @privateRemarks If any new properties are added to this interface (or
  * {@link IContainerRuntimeOptionsInternal}), then we will also need to make
- * changes in {@link file://./compatUtils.ts}.
+ * changes in {@link file://containerCompatibility./.ts}.
  * If the new property does not change the DocumentSchema, then it must be
  * explicity omitted from {@link RuntimeOptionsAffectingDocSchema}.
  * If it does change the DocumentSchema, then a corresponding entry must be

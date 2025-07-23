@@ -95,4 +95,4 @@ export {
 	MinimumMinorSemanticVersion,
 	MinimumVersionForCollab,
 	SemanticVersion,
-} from "./compatUtils.js";
+} from "./compatibilityBase.js";

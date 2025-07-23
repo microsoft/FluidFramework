@@ -31,7 +31,7 @@ import {
 	getVersionedTestObjectProviderFromApis,
 	getCompatVersionedTestObjectProviderFromApis,
 	getDriverInformationWhenNoProviderIsAvailable,
-} from "./compatUtils.js";
+} from "./compatibilityBase.js";
 import {
 	getContainerRuntimeApi,
 	getDataRuntimeApi,

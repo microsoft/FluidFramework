@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 
 import { driver, odspEndpointName, r11sEndpointName, tenantIndex } from "./compatOptions.js";
-import { getVersionedTestObjectProvider } from "./compatUtils.js";
+import { getVersionedTestObjectProvider } from "./compatibilityBase.js";
 import { ITestObjectProviderOptions } from "./describeCompat.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensurePackageInstalled, InstalledPackage } from "./testApi.js";
