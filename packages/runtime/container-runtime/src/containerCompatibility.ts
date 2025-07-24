@@ -21,7 +21,7 @@ import type { ContainerRuntimeOptionsInternal } from "./containerRuntime.js";
 
 /**
  * Subset of the {@link ContainerRuntimeOptionsInternal} properties which
- * affect {@link @fluidframework/container-runtime#IDocumentSchemaFeatures}.
+ * affect {@link IDocumentSchemaFeatures}.
  *
  * @remarks
  * When a new option is added to {@link ContainerRuntimeOptionsInternal}, we
