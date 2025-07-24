@@ -25,10 +25,6 @@ export {
 	 * @deprecated Import from `@fluidframework/runtime-utils/internal` instead.
 	 */
 	MinimumVersionForCollab,
-	/**
-	 * @deprecated Import from `@fluidframework/runtime-utils/internal` instead.
-	 */
-	SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 export {
 	ContainerMessageType,
