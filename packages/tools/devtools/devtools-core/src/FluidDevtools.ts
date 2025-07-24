@@ -145,6 +145,9 @@ export class FluidDevtools implements IFluidDevtools {
 	 */
 	private readonly dataObjects: Map<ContainerKey, DataObjectDevtools>;
 
+	// Track data object instances to assign sequential numbers
+	private readonly dataObjectInstanceCounts = new Map<string, number>();
+
 	/**
 	 * Private {@link FluidDevtools.disposed} tracking.
 	 */
@@ -348,12 +351,8 @@ export class FluidDevtools implements IFluidDevtools {
 	public registerDataObject(props: DataObjectProps): void {
 		const { dataObject, label } = props;
 
-		// Treating document unique id as container key.
-		const dataObjectKey =
-			label ??
-			((
-				dataObject as unknown as { context: IFluidDataStoreContext }
-			).context.containerRuntime.generateDocumentUniqueId() as string);
+		// Generate a readable key with sequential numbering
+		const dataObjectKey = this.generateReadableKey(dataObject, label);
 
 		const decomposedContainer = new DecomposedContainerForDataStore(
 			(dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime,
@@ -544,6 +543,24 @@ export class FluidDevtools implements IFluidDevtools {
 
 		// Post message for container list change
 		this.postContainerList();
+	}
+
+	/**
+	 * Generates a readable key for a data object using package path and sequential numbering.
+	 */
+	private generateReadableKey(dataObject: object, label?: string): string {
+		// Use label if provided, otherwise use package path
+		const baseKey =
+			label ??
+			(dataObject as unknown as { context: IFluidDataStoreContext }).context.packagePath.join(
+				"/",
+			);
+
+		// Get the next number for this base key
+		const nextNumber = (this.dataObjectInstanceCounts.get(baseKey) ?? 0) + 1;
+		this.dataObjectInstanceCounts.set(baseKey, nextNumber);
+
+		return `${baseKey}-${nextNumber}`;
 	}
 }
 
