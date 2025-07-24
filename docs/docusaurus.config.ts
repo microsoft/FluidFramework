@@ -189,8 +189,7 @@ const config: Config = {
 					],
 					apiKey: TYPESENSE_API_KEY,
 				},
-				// Optional
-				contextualSearch: true,
+				contextualSearch: false,
 			},
 		}),
 	} satisfies Preset.ThemeConfig,
