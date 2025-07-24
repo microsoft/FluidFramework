@@ -100,7 +100,7 @@
 		"@types/semver": "^7.7.0",
 		"@types/sinon": "^17.0.3",
 		"c8": "^8.0.1",
-		"chai": "^4.2.0",
+		"chai": "^5.2.1",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^7.0.3",
 		"eslint": "~8.55.0",
