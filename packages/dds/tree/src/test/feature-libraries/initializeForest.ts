@@ -15,7 +15,7 @@ import {
 	deltaForRootInitialization,
 	makeDetachedFieldIndex,
 	visitDelta,
-} from "../core/index.js";
+} from "../../core/index.js";
 
 /**
  * Initializes the given forest with the given content.

@@ -12,10 +12,10 @@ import {
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import { testIdCompressor } from "../../../utils.js";
 
 describe("uncompressedEncode", () => {
@@ -32,7 +32,7 @@ describe("uncompressedEncode", () => {
 				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
 				const result = codec.encode([input], context);
 				const decoded = codec.decode(result, context);
-				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
+				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
 			});
 		}
