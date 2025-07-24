@@ -145,8 +145,6 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap = {
 
 /**
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
- *
- * @internal
  */
 export function getMinVersionForCollabDefaults(
 	minVersionForCollab: MinimumVersionForCollab,

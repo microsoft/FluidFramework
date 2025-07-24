@@ -22,7 +22,7 @@ export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
 	/**
-	 * @deprecated Import from `@fluidframework/runtime-utils/internal` instead.
+	 * @deprecated Import from `@fluidframework/runtime-utils/legacy` instead.
 	 */
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-utils/internal";
