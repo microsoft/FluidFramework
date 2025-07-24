@@ -72,7 +72,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
-	public connected = true;
+	public connected = false;
 	private connectionState: ConnectionState = 0;
 
 	public readonly listeners: {
