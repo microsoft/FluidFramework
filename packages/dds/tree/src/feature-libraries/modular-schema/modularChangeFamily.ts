@@ -309,7 +309,7 @@ export class ModularChangeFamily
 		);
 
 		for (const entry of crossFieldTable.renamesToDelete.entries()) {
-			deleteNodeRename(crossFieldTable.composedRootNodes, entry.start, entry.length);
+			deleteNodeRenameFrom(crossFieldTable.composedRootNodes, entry.start, entry.length);
 		}
 
 		for (const [nodeId, location] of crossFieldTable.movedNodeToParent.entries()) {
@@ -936,13 +936,7 @@ export class ModularChangeFamily
 			value: originalDetachId,
 			length,
 		} of table.attachToDetachId.entries()) {
-			renameNodes(
-				table.invertedRoots,
-				originalDetachId,
-				newAttachId,
-				length,
-				table.invertedRoots.newToOldId,
-			);
+			addNodeRename(table.invertedRoots, originalDetachId, newAttachId, length);
 		}
 	}
 
@@ -2860,14 +2854,7 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 			}
 
 			if (newDetachId !== undefined) {
-				renameNodes(
-					this.table.rebasedRootNodes,
-					baseAttachId,
-					newDetachId,
-					countToProcess,
-					this.table.newChange.rootNodes.newToOldId,
-					this.table.newChange.rootNodes.oldToNewId,
-				);
+				addNodeRename(this.table.rebasedRootNodes, baseAttachId, newDetachId, countToProcess);
 			}
 		}
 
@@ -3105,13 +3092,12 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 			} else {
 				// These nodes were detached in the base change's input context,
 				// so the net effect of the two changes is a rename.
-				renameNodes(
+				appendNodeRename(
 					this.table.composedRootNodes,
 					offsetBaseId,
 					offsetNewId,
 					detachEntry.length,
-					this.table.baseChange.rootNodes.newToOldId,
-					this.table.newChange.rootNodes.oldToNewId,
+					this.table.baseChange.rootNodes,
 				);
 			}
 		}
@@ -3655,7 +3641,7 @@ export interface RenameDescription {
 function renameTableFromRenameDescriptions(renames: RenameDescription[]): RootNodeTable {
 	const table = newRootTable();
 	for (const rename of renames) {
-		renameNodes(table, rename.oldId, rename.newId, rename.count);
+		addNodeRename(table, rename.oldId, rename.newId, rename.count);
 	}
 
 	return table;
@@ -4017,7 +4003,7 @@ function rebaseRename(
 
 	const baseAttachEntry = base.crossFieldKeys.getFirst(
 		{
-			...(baseRenameEntry.value ?? renameEntry.start),
+			...baseRenameEntry.value,
 			target: CrossFieldTarget.Destination,
 		},
 		count,
@@ -4030,9 +4016,8 @@ function rebaseRename(
 		// The rebased change should have a detach in the field where the base change attaches the nodes,
 		// so we need to ensure that field is processed.
 		affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
-	} else if (baseRenameEntry.value !== undefined) {
-		// XXX: This condition is always true
-		renameNodes(rebasedRoots, baseRenameEntry.value, renameEntry.value, count);
+	} else {
+		addNodeRename(rebasedRoots, baseRenameEntry.value, renameEntry.value, count);
 	}
 
 	const countRemaining = renameEntry.length - count;
@@ -4105,13 +4090,19 @@ function composeRootTables(
 					true,
 				);
 			} else {
+				// `change1` may also have a rename to `renameEntry.value`, in which case it must refer to a different node.
+				// That node must have been attached by `change1` and detached by `change2`.
+				// The final rename for that node will be created in `composeAttachDetach`.
+				// We delete any such rename for now to avoid colliding with the rename currently being processed.
+				deleteNodeRenameTo(mergedTable, renameEntry.value, renameEntry.length);
+
 				// The nodes were detached before `change`, so we append this rename.
-				renameNodes(
+				appendNodeRename(
 					mergedTable,
 					renameEntry.start,
 					renameEntry.value,
 					renameEntry.length,
-					change1.rootNodes.newToOldId,
+					change1.rootNodes,
 				);
 			}
 		}
@@ -4191,7 +4182,7 @@ function invertRootTable(change: ModularChangeset, isRollback: boolean): RootNod
 				if (!attachEntry.value) {
 					// XXX: Improve range map API
 					const offset = subtractChangeAtomIds(attachEntry.start, newId);
-					renameNodes(
+					addNodeRename(
 						invertedRoots,
 						offsetChangeAtomId(newId, offset),
 						offsetChangeAtomId(oldId, offset),
@@ -4233,56 +4224,79 @@ function getDetachFields(
 	return table.getAll2({ ...id, target: CrossFieldTarget.Source }, count);
 }
 
-export function renameNodes(
+export function addNodeRename(
 	table: RootNodeTable,
 	oldId: ChangeAtomId,
 	newId: ChangeAtomId,
 	count: number,
-	newToOldIds?: ChangeAtomIdRangeMap<ChangeAtomId>,
-	oldToNewIds?: ChangeAtomIdRangeMap<ChangeAtomId>,
 ): void {
-	const oldEntry = newToOldIds?.getFirst(oldId, count);
-	const newEntry = oldToNewIds?.getFirst(newId, count);
-	const countToRename = Math.min(newEntry?.length ?? count, oldEntry?.length ?? count);
-
-	let adjustedOldId = oldId;
-	if (oldEntry?.value !== undefined) {
-		adjustedOldId = oldEntry.value;
-
-		// XXX: This assumes that table's entry is the same as oldEntry
-		deleteNodeRenameEntry(table, oldEntry.value, oldId, countToRename);
-	}
-
-	let adjustedNewId = newId;
-	if (newEntry?.value !== undefined) {
-		adjustedNewId = newEntry.value;
-
-		// XXX: This assumes that table's entry is the same as newEntry
-		deleteNodeRenameEntry(table, newId, newEntry.value, countToRename);
-	}
-
-	if (!areEqualChangeAtomIdOpts(adjustedOldId, adjustedNewId)) {
-		setNodeRenameEntry(table, adjustedOldId, adjustedNewId, countToRename);
-	}
-
-	if (countToRename < count) {
-		renameNodes(
-			table,
-			offsetChangeAtomId(oldId, countToRename),
-			offsetChangeAtomId(newId, countToRename),
-			count - countToRename,
-			newToOldIds,
-			oldToNewIds,
+	for (const entry of table.oldToNewId.getAll2(oldId, count)) {
+		// XXX: RangeMap offsets
+		const offset = subtractChangeAtomIds(entry.start, oldId);
+		assert(
+			entry.value === undefined ||
+				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(newId, offset)),
+			"Rename collision detected",
 		);
+	}
+
+	for (const entry of table.newToOldId.getAll2(newId, count)) {
+		// XXX: RangeMap offsets
+		const offset = subtractChangeAtomIds(entry.start, newId);
+		assert(
+			entry.value === undefined ||
+				areEqualChangeAtomIds(entry.value, offsetChangeAtomId(oldId, offset)),
+			"Rename collision detected",
+		);
+	}
+
+	table.oldToNewId.set(oldId, count, newId);
+	table.newToOldId.set(newId, count, oldId);
+}
+
+/**
+ * Deletes any renames from `id`.
+ */
+function deleteNodeRenameFrom(roots: RootNodeTable, id: ChangeAtomId, count: number): void {
+	for (const entry of roots.oldToNewId.getAll(id, count)) {
+		deleteNodeRenameEntry(roots, entry.start, entry.value, entry.length);
 	}
 }
 
 /**
- * Deletes any renames from or to `id`.
+ * Deletes any renames to `id`.
  */
-function deleteNodeRename(roots: RootNodeTable, id: ChangeAtomId, count: number): void {
-	for (const entry of roots.oldToNewId.getAll(id, count)) {
-		deleteNodeRenameEntry(roots, entry.start, entry.value, entry.length);
+function deleteNodeRenameTo(roots: RootNodeTable, id: ChangeAtomId, count: number): void {
+	for (const entry of roots.newToOldId.getAll(id, count)) {
+		deleteNodeRenameEntry(roots, entry.value, entry.start, entry.length);
+	}
+}
+
+function appendNodeRename(
+	composedTable: RootNodeTable,
+	oldId: ChangeAtomId,
+	newId: ChangeAtomId,
+	count: number,
+	change1Table: RootNodeTable,
+): void {
+	let countToProcess = count;
+	const rename1Entry = change1Table.newToOldId.getFirst(oldId, countToProcess);
+	countToProcess = rename1Entry.length;
+
+	if (rename1Entry.value !== undefined) {
+		deleteNodeRenameFrom(composedTable, rename1Entry.value, countToProcess);
+	}
+
+	addNodeRename(composedTable, rename1Entry.value ?? oldId, newId, countToProcess);
+	if (countToProcess < count) {
+		const countRemaining = count - countToProcess;
+		appendNodeRename(
+			composedTable,
+			offsetChangeAtomId(oldId, countToProcess),
+			offsetChangeAtomId(newId, countToProcess),
+			countRemaining,
+			change1Table,
+		);
 	}
 }
 
@@ -4298,16 +4312,6 @@ function deleteNodeRenameEntry(
 ): void {
 	roots.oldToNewId.delete(oldId, count);
 	roots.newToOldId.delete(newId, count);
-}
-
-function setNodeRenameEntry(
-	roots: RootNodeTable,
-	oldId: ChangeAtomId,
-	newId: ChangeAtomId,
-	count: number,
-): void {
-	roots.oldToNewId.set(oldId, count, newId);
-	roots.newToOldId.set(newId, count, oldId);
 }
 
 function replaceRootTableRevision(

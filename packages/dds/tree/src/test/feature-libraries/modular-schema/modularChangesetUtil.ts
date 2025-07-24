@@ -57,13 +57,13 @@ import {
 	tryGetFromNestedMap,
 } from "../../../util/index.js";
 import {
+	addNodeRename,
 	contextualizeFieldChangeset,
 	getChangeHandler,
 	getFieldKind,
 	getNodeParent,
 	newRootTable,
 	normalizeFieldId,
-	renameNodes,
 	type RenameDescription,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
@@ -537,7 +537,7 @@ function build(args: BuildArgs, ...fields: FieldChangesetDescription[]): Modular
 
 	if (args.renames !== undefined) {
 		for (const rename of args.renames) {
-			renameNodes(result.rootNodes, rename.oldId, rename.newId, rename.count);
+			addNodeRename(result.rootNodes, rename.oldId, rename.newId, rename.count);
 		}
 	}
 

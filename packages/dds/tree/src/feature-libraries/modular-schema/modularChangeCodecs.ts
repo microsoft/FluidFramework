@@ -72,7 +72,7 @@ import {
 	type RootNodeTable,
 } from "./modularChangeTypes.js";
 import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
-import { newRootTable, renameNodes, setInChangeAtomIdMap } from "./modularChangeFamily.js";
+import { addNodeRename, newRootTable, setInChangeAtomIdMap } from "./modularChangeFamily.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 
 export function makeModularChangeCodecFamily(
@@ -435,7 +435,7 @@ function makeModularChangeCodec(
 
 		if (encodedRenames !== undefined) {
 			for (const { oldId, newId, count } of encodedRenames) {
-				renameNodes(
+				addNodeRename(
 					roots,
 					changeAtomIdCodec.decode(oldId, context),
 					changeAtomIdCodec.decode(newId, context),
