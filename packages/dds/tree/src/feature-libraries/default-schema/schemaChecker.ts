@@ -79,14 +79,11 @@ export function isNodeInSchema(
 				}
 				uncheckedFieldsFromNode.delete(fieldKey);
 			}
-			// The node has fields that we did not check as part of looking at every field defined in the node's schema
-			if (
-				uncheckedFieldsFromNode.size !== 0 &&
-				// TODO: AB#43547: This check is wrong. If a given view schema allows an unknown optional field, that does NOT mean the stored schema should allow unknown:
-				// In-fact, any data the view schema does not know about must still comply with the stored schema:
-				// if this were not the case schema evolution could not add any fields since they might already have out of schema data.
-				!schemaAndPolicy.policy.allowUnknownOptionalFields(node.type)
-			) {
+			// The node has fields that we did not check as part of looking at every field defined in the node's schema.
+			// Since this is testing compatibility with a stored schema (not view schema), "allowUnknownOptionalFields" does not exist at this layer.
+			// Code using this with a stored schema derived from a view schema rather than the document can be problematic because it may be missing unknown fields that the actual document has.
+			// Other schema evolution features like "staged" allowed types will likely cause similar issues elsewhere in this checker.
+			if (uncheckedFieldsFromNode.size !== 0) {
 				return SchemaValidationError.ObjectNode_FieldNotInSchema;
 			}
 		} else if (schema instanceof MapNodeStoredSchema) {

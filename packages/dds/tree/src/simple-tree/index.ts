@@ -218,7 +218,6 @@ export {
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
-	createUnknownOptionalFieldPolicy,
 	isRecordNodeSchema,
 	type RecordNodeCustomizableSchema,
 	type RecordNodeInsertableData,
