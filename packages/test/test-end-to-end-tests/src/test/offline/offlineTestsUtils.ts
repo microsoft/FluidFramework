@@ -66,7 +66,8 @@ export const generatePendingState = async (
 		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
-		pendingState = await container.closeAndGetPendingLocalState?.();
+		pendingState = await container.getPendingLocalState?.();
+		container.close();
 	}
 
 	testObjectProvider.opProcessingController.resumeProcessing();

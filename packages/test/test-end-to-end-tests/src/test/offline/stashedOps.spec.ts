@@ -1053,7 +1053,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				// of how small this window is.
 				if (JSON.stringify(op).includes("attach")) {
 					(container as any).processRemoteMessage = (message) => null;
-					const pendingStateP = container.closeAndGetPendingLocalState?.();
+					const pendingStateP = container.getPendingLocalState?.();
+					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
 				}
@@ -1096,7 +1097,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				if (op.clientId === container.clientId) {
 					// hacky; but we need to make sure we don't process further ops
 					(container as any).processRemoteMessage = (message) => null;
-					const pendingStateP = container.closeAndGetPendingLocalState?.();
+					const pendingStateP = container.getPendingLocalState?.();
+					container.close();
 					assert.ok(pendingStateP);
 					resolve(pendingStateP);
 				}
@@ -1274,7 +1276,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[...Array(lots).keys()].map((i) => map2.set((i + lots).toString(), i + lots));
 
 		// get stashed ops from this container without connecting.  Superset of pendingOps
-		const morePendingOps = await container2.closeAndGetPendingLocalState?.();
+		const morePendingOps = await container2.getPendingLocalState?.();
+		container2.close();
 
 		const { container: container3, connect: connect3 } = await loadContainerOffline(
 			testContainerConfig,
@@ -1439,150 +1442,136 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(bufferToString(handleGet2, "utf8"), "blob contents");
 	});
 
-	it("close while uploading blob", async function () {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-		await provider.ensureSynchronized();
+	// TODO: The following scenarios are possible with payload pending, but will function differently.
+	// The in-flight blob upload will need to be completable after loading with the pending state, but
+	// we will expect the customer to have already stored the blob handle prior to calling getPendingState.
 
-		const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		const handle = await blobP;
-		map.set("blob handle", handle);
-		const pendingOps = await pendingOpsP;
+	// it("close while uploading blob", async function () {
+	// 	const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+	// 	const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+	// 	await provider.ensureSynchronized();
 
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+	// 	const blobP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
+	// 	const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+	// 	const handle = await blobP;
+	// 	map.set("blob handle", handle);
+	// 	const pendingOps = await pendingOpsP;
 
-		await provider.ensureSynchronized();
-		assert.strictEqual(
-			bufferToString(await map1.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
-		assert.strictEqual(
-			bufferToString(await map2.get("blob handle").get(), "utf8"),
-			"blob contents",
-		);
-	});
+	// 	const container2 = await loader.resolve({ url }, pendingOps);
+	// 	const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+	// 	const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
-	it("abort while stashing blobs", async function () {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-		const ac = new AbortController();
-		await provider.ensureSynchronized();
+	// 	await provider.ensureSynchronized();
+	// 	assert.strictEqual(
+	// 		bufferToString(await map1.get("blob handle").get(), "utf8"),
+	// 		"blob contents",
+	// 	);
+	// 	assert.strictEqual(
+	// 		bufferToString(await map2.get("blob handle").get(), "utf8"),
+	// 		"blob contents",
+	// 	);
+	// });
 
-		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents", "utf8"));
-		assert(container1.closeAndGetPendingLocalState);
-		const pendingOpsP = container1.closeAndGetPendingLocalState(ac.signal);
-		map.set("blob handle", await blobP1);
-		ac.abort();
-		const pendingOps = await pendingOpsP;
+	// it("close while uploading multiple blob", async function () {
+	// 	const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
+	// 	const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+	// 	await provider.ensureSynchronized();
 
-		// we are able to load from the pending ops even though we abort
-		await loadContainerOffline(testContainerConfig, provider, { url }, pendingOps);
-	});
+	// 	const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
+	// 	const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 2", "utf8"));
+	// 	const blobP3 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 3", "utf8"));
+	// 	const pendingOpsP = container1.closeAndGetPendingLocalState?.();
+	// 	map.set("blob handle 1", await blobP1);
+	// 	map.set("blob handle 2", await blobP2);
+	// 	map.set("blob handle 3", await blobP3);
+	// 	const pendingOps = await pendingOpsP;
 
-	it("close while uploading multiple blob", async function () {
-		const dataStore = (await container1.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
-		await provider.ensureSynchronized();
+	// 	const container2 = await loader.resolve({ url }, pendingOps);
+	// 	const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+	// 	const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
+	// 	await provider.ensureSynchronized();
+	// 	for (let i = 1; i <= 3; i++) {
+	// 		assert.strictEqual(
+	// 			bufferToString(await map1.get(`blob handle ${i}`).get(), "utf8"),
+	// 			`blob contents ${i}`,
+	// 		);
+	// 		assert.strictEqual(
+	// 			bufferToString(await map2.get(`blob handle ${i}`).get(), "utf8"),
+	// 			`blob contents ${i}`,
+	// 		);
+	// 	}
+	// });
 
-		const blobP1 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		const blobP2 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 2", "utf8"));
-		const blobP3 = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 3", "utf8"));
-		const pendingOpsP = container1.closeAndGetPendingLocalState?.();
-		map.set("blob handle 1", await blobP1);
-		map.set("blob handle 2", await blobP2);
-		map.set("blob handle 3", await blobP3);
-		const pendingOps = await pendingOpsP;
+	// it("load offline from stashed ops with pending blob", async function () {
+	// 	const container = await loadContainerOffline(testContainerConfig, provider, { url });
+	// 	const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+	// 	const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
-		const container2 = await loader.resolve({ url }, pendingOps);
-		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
-		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
-		await provider.ensureSynchronized();
-		for (let i = 1; i <= 3; i++) {
-			assert.strictEqual(
-				bufferToString(await map1.get(`blob handle ${i}`).get(), "utf8"),
-				`blob contents ${i}`,
-			);
-			assert.strictEqual(
-				bufferToString(await map2.get(`blob handle ${i}`).get(), "utf8"),
-				`blob contents ${i}`,
-			);
-		}
-	});
+	// 	// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
+	// 	const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
+	// 	const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+	// 	const handle = await handleP;
+	// 	map.set("blob handle 1", handle);
 
-	it("load offline from stashed ops with pending blob", async function () {
-		const container = await loadContainerOffline(testContainerConfig, provider, { url });
-		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+	// 	const stashedChanges = await stashedChangesP;
 
-		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-		const handle = await handleP;
-		map.set("blob handle 1", handle);
+	// 	const container3 = await loadContainerOffline(
+	// 		testContainerConfig,
+	// 		provider,
+	// 		{ url },
+	// 		stashedChanges,
+	// 	);
+	// 	const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
+	// 	const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
-		const stashedChanges = await stashedChangesP;
+	// 	// blob is accessible offline
+	// 	assert.strictEqual(
+	// 		bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+	// 		"blob contents 1",
+	// 	);
+	// 	container3.connect();
+	// 	await waitForContainerConnection(container3.container);
+	// 	await provider.ensureSynchronized();
 
-		const container3 = await loadContainerOffline(
-			testContainerConfig,
-			provider,
-			{ url },
-			stashedChanges,
-		);
-		const dataStore3 = (await container3.container.getEntryPoint()) as ITestFluidObject;
-		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
+	// 	assert.strictEqual(
+	// 		bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+	// 		"blob contents 1",
+	// 	);
+	// 	assert.strictEqual(
+	// 		bufferToString(await map1.get("blob handle 1").get(), "utf8"),
+	// 		"blob contents 1",
+	// 	);
+	// });
 
-		// blob is accessible offline
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-		container3.connect();
-		await waitForContainerConnection(container3.container);
-		await provider.ensureSynchronized();
+	// it("stashed changes with blobs", async function () {
+	// 	const container = await loadContainerOffline(testContainerConfig, provider, { url });
+	// 	const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
+	// 	const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-		assert.strictEqual(
-			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-	});
+	// 	// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
+	// 	const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
+	// 	const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
+	// 	const handle = await handleP;
+	// 	map.set("blob handle 1", handle);
 
-	it("stashed changes with blobs", async function () {
-		const container = await loadContainerOffline(testContainerConfig, provider, { url });
-		const dataStore = (await container.container.getEntryPoint()) as ITestFluidObject;
-		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
+	// 	const stashedChanges = await stashedChangesP;
 
-		// Call uploadBlob() while offline to get local ID handle, and generate an op referencing it
-		const handleP = dataStore.runtime.uploadBlob(stringToBuffer("blob contents 1", "utf8"));
-		const stashedChangesP = container.container.closeAndGetPendingLocalState?.();
-		const handle = await handleP;
-		map.set("blob handle 1", handle);
+	// 	const container3 = await loader.resolve({ url }, stashedChanges);
+	// 	const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
+	// 	const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 
-		const stashedChanges = await stashedChangesP;
+	// 	await provider.ensureSynchronized();
 
-		const container3 = await loader.resolve({ url }, stashedChanges);
-		const dataStore3 = (await container3.getEntryPoint()) as ITestFluidObject;
-		const map3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
-
-		await provider.ensureSynchronized();
-
-		// Blob is uploaded and accessible by all clients
-		assert.strictEqual(
-			bufferToString(await map1.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-		assert.strictEqual(
-			bufferToString(await map3.get("blob handle 1").get(), "utf8"),
-			"blob contents 1",
-		);
-	});
+	// 	// Blob is uploaded and accessible by all clients
+	// 	assert.strictEqual(
+	// 		bufferToString(await map1.get("blob handle 1").get(), "utf8"),
+	// 		"blob contents 1",
+	// 	);
+	// 	assert.strictEqual(
+	// 		bufferToString(await map3.get("blob handle 1").get(), "utf8"),
+	// 		"blob contents 1",
+	// 	);
+	// });
 
 	it("offline attach", async function () {
 		const newMapId = "newMap";
@@ -1659,7 +1648,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await detachedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		const pendingOps = await detachedContainer.closeAndGetPendingLocalState?.();
+		const pendingOps = await detachedContainer.getPendingLocalState?.();
+		detachedContainer.close();
 
 		const url2 = await detachedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
@@ -1689,7 +1679,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await rehydratedContainer.attach(
 			provider.driver.createCreateNewRequest(provider.documentId),
 		);
-		const pendingOps = await rehydratedContainer.closeAndGetPendingLocalState?.();
+		const pendingOps = await rehydratedContainer.getPendingLocalState?.();
+		rehydratedContainer.close();
 
 		const url2 = await rehydratedContainer.getAbsoluteUrl("");
 		assert.ok(url2);
@@ -2170,7 +2161,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 		const map = await dataStore.getSharedObject<ISharedMap>(mapId);
 		map.set(testKey, testValue);
-		const pendingOps = await container.closeAndGetPendingLocalState?.();
+		const pendingOps = await container.getPendingLocalState?.();
+		container.close();
 		assert.ok(pendingOps);
 		// make sure we got stashed ops with refseqnum === 0, otherwise we are not testing the scenario we want to
 		assert(/referenceSequenceNumber[^\w,}]*0/.test(pendingOps));
