@@ -190,20 +190,6 @@ stages:
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/executionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}';
 
-      - task: Bash@3
-        displayName: Send Execution Time Performance Benchmark Measurments to Azure App Insights
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
-          script: |
-            set -eu -o pipefail
-            echo "Writing performance benchmark output to Azure App Insights..."
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          BRANCH_NAME: $(Build.SourceBranchName)
-
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - execution time
         inputs:
@@ -319,20 +305,6 @@ stages:
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
 
-      - task: Bash@3
-        displayName: Send Memory Usage Performance Benchmark Measurments to Azure App Insights
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
-          script: |
-            set -eu -o pipefail
-            echo "Writing performance benchmark output to Azure App Insights..."
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          BRANCH_NAME: $(Build.SourceBranchName)
-
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - memory usage
         inputs:
@@ -446,20 +418,6 @@ stages:
             echo "Write the following benchmark output to Aria/Kusto";
             ls -laR ${{ variables.consolidatedTestsOutputFolder }};
             npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/customBenchmarkHandler.js --dir ${{ variables.consolidatedTestsOutputFolder }};
-
-      - task: Bash@3
-        displayName: Send Custom Data Performance Benchmark Measurments to Azure App Insights
-        inputs:
-          targetType: 'inline'
-          workingDirectory: $(pathToTelemetryGenerator)
-          script: |
-            set -eu -o pipefail
-            echo "Writing performance benchmark output to Azure App Insights..."
-            ls -laR ${{ variables.consolidatedTestsOutputFolder }};
-            npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsCustomBenchmarkHandler.js --dir '${{ variables.consolidatedTestsOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-        env:
-          BUILD_ID: $(Build.BuildId)
-          BRANCH_NAME: $(Build.SourceBranchName)
 
       - task: PublishPipelineArtifact@1
         displayName: Publish Artifact - Perf tests output - custom data usage
@@ -608,38 +566,6 @@ stages:
               ls -la ${{ variables.memoryUsageTestOutputFolder }};
               npx telemetry-generator --handlerModule $(pathToTelemetryGeneratorHandlers)/memoryUsageTestHandler.js --dir ${{ variables.memoryUsageTestOutputFolder }};
           env:
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-
-        - task: Bash@3
-          displayName: Send Execution Time Perf Benchmark Measurements to Azure App Insights
-          condition: eq('${{ endpointObject.endpointName }}', 'local')
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
-            script: |
-              set -eu -o pipefail
-              echo "Writing execution time performance benchmark output to Azure App Insights..."
-              ls -laR ${{ variables.executionTimeTestOutputFolder }};
-              npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsExecutionTimeTestHandler.js --dir '${{ variables.executionTimeTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            BRANCH_NAME: $(Build.SourceBranchName)
-            FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
-
-        - task: Bash@3
-          displayName: Send Memory Usage Perf Benchmark Measurements to Azure App Insights
-          condition: eq('${{ endpointObject.endpointName }}', 'local')
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(pathToTelemetryGenerator)
-            script: |
-              set -eu -o pipefail
-              echo "Writing memory usage performance benchmark output to Azure App Insights..."
-              ls -laR ${{ variables.memoryUsageTestOutputFolder }};
-              npx telemetry-generator appInsights --handlerModule $(pathToTelemetryGeneratorHandlers)/appInsightsMemoryUsageTestHandler.js --dir '${{ variables.memoryUsageTestOutputFolder }}' --connectionString '$(fluid-interal-app-insights-connection-string)';
-          env:
-            BUILD_ID: $(Build.BuildId)
-            BRANCH_NAME: $(Build.SourceBranchName)
             FLUID_ENDPOINTNAME: ${{ endpointObject.endpointName }}
 
         - task: PublishPipelineArtifact@1
