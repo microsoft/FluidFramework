@@ -3,24 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
+import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
+import type { ISecretManager, ICache, IReadinessCheck } from "@fluidframework/server-services-core";
+import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
-import * as bodyParser from "body-parser";
-import express from "express";
 import {
 	alternativeMorganLoggerMiddleware,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
-	ITenantKeyGenerator,
+	type ITenantKeyGenerator,
 } from "@fluidframework/server-services-utils";
+import * as bodyParser from "body-parser";
+import express from "express";
+
 import { catch404, getTenantIdFromRequest, handleError } from "../utils";
+
 import * as api from "./api";
-import { ITenantRepository } from "./mongoTenantRepository";
-import { createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
-import { CallingServiceHeaderName } from "@fluidframework/server-services-client";
+import type { ITenantRepository } from "./mongoTenantRepository";
 
 export function create(
 	tenantRepository: ITenantRepository,
@@ -35,6 +37,7 @@ export function create(
 	startupCheck: IReadinessCheck,
 	cache?: ICache,
 	readinessCheck?: IReadinessCheck,
+	bypassCache: boolean = false,
 ) {
 	// Express app configuration
 	const app: express.Express = express();
@@ -46,8 +49,10 @@ export function create(
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware("riddler", (tokens, req, res) => {
+				const tenantId = getTenantIdFromRequest(req.params);
+				res.locals.tenantId = tenantId;
 				return {
-					[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
+					[BaseTelemetryProperties.tenantId]: tenantId,
 					[CommonProperties.callingServiceName]:
 						req.headers[CallingServiceHeaderName] ?? "",
 				};
@@ -56,7 +61,9 @@ export function create(
 	} else {
 		app.use(alternativeMorganLoggerMiddleware(loggerFormat));
 	}
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.json());
+	// eslint-disable-next-line import/namespace
 	app.use(bodyParser.urlencoded({ extended: false }));
 
 	app.use(
@@ -71,6 +78,7 @@ export function create(
 			riddlerStorageRequestMetricInterval,
 			tenantKeyGenerator,
 			cache,
+			bypassCache,
 		),
 	);
 

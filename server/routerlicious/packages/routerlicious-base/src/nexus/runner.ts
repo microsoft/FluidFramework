@@ -4,8 +4,14 @@
  */
 
 import cluster from "cluster";
-import { Deferred, TypedEventEmitter } from "@fluidframework/common-utils";
+
+import { Deferred, type TypedEventEmitter } from "@fluidframework/common-utils";
 import {
+	configureWebSocketServices,
+	type ICollaborationSessionEvents,
+} from "@fluidframework/server-lambdas";
+import { createMetricClient } from "@fluidframework/server-services";
+import type {
 	ICache,
 	IClientManager,
 	IClusterDrainingChecker,
@@ -22,18 +28,14 @@ import {
 	IRevokedTokenChecker,
 	ICollaborationSessionTracker,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
-import * as winston from "winston";
-import { createMetricClient } from "@fluidframework/server-services";
-import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
-import {
-	configureWebSocketServices,
-	ICollaborationSessionEvents,
-} from "@fluidframework/server-lambdas";
-import * as app from "./app";
 import { runnerHttpServerStop } from "@fluidframework/server-services-shared";
+import { LumberEventName, Lumberjack, LogLevel } from "@fluidframework/server-services-telemetry";
+import type { Provider } from "nconf";
+import * as winston from "winston";
+
+import * as app from "./app";
 
 export class NexusRunner implements IRunner {
 	private server?: IWebServer;

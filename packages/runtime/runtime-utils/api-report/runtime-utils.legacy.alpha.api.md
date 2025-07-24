@@ -22,8 +22,6 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
     // (undocumented)
     abstract attachGraph(): void;
     // (undocumented)
-    abstract bind(handle: IFluidHandleInternal): void;
-    // (undocumented)
     abstract get(): Promise<T>;
     get IFluidHandle(): IFluidHandleInternal;
     // (undocumented)
@@ -32,6 +30,12 @@ export abstract class FluidHandleBase<T> implements IFluidHandleInternal<T> {
 
 // @public
 export function isFluidHandle(value: unknown): value is IFluidHandle;
+
+// @alpha @legacy
+export const isFluidHandlePayloadPending: <T>(handle: IFluidHandle<T>) => handle is IFluidHandlePayloadPending<T>;
+
+// @alpha @legacy
+export const isLocalFluidHandle: <T>(handle: IFluidHandle<T>) => handle is ILocalFluidHandle<T>;
 
 // @alpha @legacy
 export class RequestParser implements IRequest {

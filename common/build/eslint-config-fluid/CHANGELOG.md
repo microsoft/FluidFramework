@@ -1,5 +1,32 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [5.8.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.8_0)
+
+Promotes the following rules from the `strict` ruleset to the `recommended` ruleset:
+
+-   [@typescript-eslint/consistent-type-exports](https://typescript-eslint.io/rules/consistent-type-exports/)
+-   [@typescript-eslint/consistent-type-imports](https://typescript-eslint.io/rules/consistent-type-imports/)
+-   [@typescript-eslint/no-import-type-side-effects](https://typescript-eslint.io/rules/no-import-type-side-effects/)
+
+## [5.7.4](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.4)
+
+Updates the contexts in which `jsdoc/require-jsdoc` is applied to make it less overzealous.
+Specifically, removes the "VariableDeclaration" context, which would incorrectly trigger for variables that were not exported.
+
+### Example
+
+```typescript
+/**
+ * foo
+ */
+export function foo(): void {
+	// Before the fix, because the outer scope, `foo`, was exported, this variable `bar` would be incorrectly flagged as needing a JSDoc/TSDoc comment.
+	// After the fix, variables inside exported functions, like `bar`, are no longer flagged.
+	const bar = "baz";
+	...
+}
+```
+
 ## [5.7.3](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v5.7.3)
 
 Added support for two new patterns in the no-unchecked-record-access ESLint rule:

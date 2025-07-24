@@ -29,6 +29,9 @@ export {
 	type ScopedSchemaName,
 	type SchemaFactoryObjectOptions,
 	type SchemaStatics,
+	schemaStatics,
+	type NodeSchemaOptions,
+	type NodeSchemaOptionsAlpha,
 } from "./schemaFactory.js";
 export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
 export type {
@@ -43,8 +46,15 @@ export {
 	enumFromStrings,
 	singletonSchema,
 } from "./schemaCreationUtilities.js";
-export { treeNodeApi, type TreeNodeApi, tryGetSchema } from "./treeNodeApi.js";
-export { createFromInsertable, cursorFromInsertable, createFromCursor } from "./create.js";
+export {
+	getIdentifierFromNode,
+	getPropertyKeyFromStoredKey,
+	getStoredKey,
+	treeNodeApi,
+	type TreeNodeApi,
+	tryGetSchema,
+} from "./treeNodeApi.js";
+export { createFromCursor } from "./create.js";
 export {
 	type JsonSchemaId,
 	type JsonSchemaType,
@@ -59,6 +69,8 @@ export {
 	type JsonTreeSchema,
 	type JsonFieldSchema,
 	type JsonLeafSchemaType,
+	type JsonRecordNodeSchema,
+	type JsonStringKeyPatternProperties,
 } from "./jsonSchema.js";
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
@@ -70,6 +82,7 @@ export type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -106,7 +119,6 @@ export {
 
 export {
 	extractPersistedSchema,
-	comparePersistedSchemaInternal,
 	comparePersistedSchema,
 } from "./storedSchema.js";
 
@@ -125,11 +137,4 @@ export {
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 export { toSimpleTreeSchema } from "./viewSchemaToSimpleSchema.js";
-
-// Exporting the schema (RecursiveObject) to test that recursive types are working correctly.
-// These are `@internal` so they can't be included in the `InternalClassTreeTypes` due to https://github.com/microsoft/rushstack/issues/3639
-export {
-	RecursiveObject as test_RecursiveObject,
-	base as test_RecursiveObject_base,
-	RecursiveObjectPojoMode as test_RecursiveObjectPojoMode,
-} from "./testRecursiveDomain.js";
+export type { TreeChangeEvents } from "./treeChangeEvents.js";

@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import type { TreeNodeSchema } from "./treeNodeSchema.js";
+import {
+	normalizeAnnotatedAllowedTypes,
+	type NormalizedAnnotatedAllowedTypes,
+} from "./allowedTypes.js";
+import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
@@ -17,9 +21,18 @@ export function walkNodeSchema(
 	if (visitedSet.has(schema)) {
 		return;
 	}
+
 	visitedSet.add(schema);
 
-	walkAllowedTypes(schema.childTypes, visitor, visitedSet);
+	// Since walkNodeSchema is used in the implementation of TreeNodeSchemaPrivateData.idempotentInitialize,
+	// Avoid depending on it here to avoid circular dependencies for recursive schema.
+	// Instead normalize/evaluate the allowed types as needed.
+	const annotatedAllowedTypes =
+		getTreeNodeSchemaPrivateData(schema).childAnnotatedAllowedTypes;
+
+	for (const fieldAllowedTypes of annotatedAllowedTypes) {
+		walkAllowedTypes(normalizeAnnotatedAllowedTypes(fieldAllowedTypes), visitor, visitedSet);
+	}
 
 	// This visit is done at the end so the traversal order is most inner types first.
 	// This was picked since when fixing errors,
@@ -33,14 +46,14 @@ export function walkNodeSchema(
  * @internal
  */
 export function walkAllowedTypes(
-	allowedTypes: Iterable<TreeNodeSchema>,
+	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const childType of allowedTypes) {
-		walkNodeSchema(childType, visitor, visitedSet);
+	for (const { type } of annotatedAllowedTypes.types) {
+		walkNodeSchema(type, visitor, visitedSet);
 	}
-	visitor.allowedTypes?.(allowedTypes);
+	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
 
 /**
@@ -58,5 +71,5 @@ export interface SchemaVisitor {
 	 *
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
-	allowedTypes?: (allowedTypes: Iterable<TreeNodeSchema>) => void;
+	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
 }

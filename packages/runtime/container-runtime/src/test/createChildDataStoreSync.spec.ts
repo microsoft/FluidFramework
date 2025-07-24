@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { isPromiseLike, LazyPromise } from "@fluidframework/core-utils/internal";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	IFluidDataStoreChannel,
 	IFluidDataStoreFactory,
@@ -15,6 +14,7 @@ import {
 	type NamedFluidDataStoreRegistryEntries,
 	type IContainerRuntimeBase,
 	type ISummarizerNodeWithGC,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -67,12 +67,13 @@ describe("createChildDataStore", () => {
 		const registry = createRegistry(namedEntries);
 		const createSummarizerNodeFn = () =>
 			new Proxy({} as unknown as ISummarizerNodeWithGC, { get: throwNYI });
-		const storage = new Proxy({} as unknown as IDocumentStorageService, { get: throwNYI });
+		const storage = new Proxy({} as unknown as IRuntimeStorageService, { get: throwNYI });
 
 		const parentContext = {
 			clientDetails: {
 				capabilities: { interactive: true },
 			},
+			isReadOnly: () => false,
 			containerRuntime: {
 				createDetachedDataStore(pkg, loadingGroupId) {
 					return new LocalDetachedFluidDataStoreContext({

@@ -14,7 +14,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import type { IJsonCodec } from "../../codec/index.js";
 import {
 	type MutableTreeStoredSchema,
 	type TreeStoredSchema,
@@ -25,10 +25,10 @@ import type {
 	SummaryElementParser,
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
+import type { JsonCompatible } from "../../util/index.js";
 import type { CollabWindow } from "../incrementalSummarizationUtils.js";
 
-import { encodeRepo, makeSchemaCodec } from "./codec.js";
-import type { Format } from "./format.js";
+import { encodeRepo } from "./codec.js";
 
 const schemaStringKey = "SchemaString";
 /**
@@ -37,16 +37,13 @@ const schemaStringKey = "SchemaString";
 export class SchemaSummarizer implements Summarizable {
 	public readonly key = "Schema";
 
-	private readonly codec: IJsonCodec<TreeStoredSchema, Format>;
-
 	private schemaIndexLastChangedSeq: number | undefined;
 
 	public constructor(
 		private readonly schema: MutableTreeStoredSchema,
-		options: ICodecOptions,
 		collabWindow: CollabWindow,
+		private readonly codec: IJsonCodec<TreeStoredSchema>,
 	) {
-		this.codec = makeSchemaCodec(options);
 		this.schema.events.on("afterSchemaChange", () => {
 			// Invalidate the cache, as we need to regenerate the blob if the schema changes
 			// We are assuming that schema changes from remote ops are valid, as we are in a summarization context.
@@ -54,15 +51,18 @@ export class SchemaSummarizer implements Summarizable {
 		});
 	}
 
-	public getAttachSummary(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-	): ISummaryTreeWithStats {
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
+		const incrementalSummaryContext = props.incrementalSummaryContext;
 		const builder = new SummaryTreeBuilder();
+		const fullTree = props.fullTree ?? false;
 		if (
+			!fullTree &&
 			incrementalSummaryContext !== undefined &&
 			this.schemaIndexLastChangedSeq !== undefined &&
 			incrementalSummaryContext.latestSummarySequenceNumber >= this.schemaIndexLastChangedSeq
@@ -70,23 +70,13 @@ export class SchemaSummarizer implements Summarizable {
 			builder.addHandle(
 				schemaStringKey,
 				SummaryType.Blob,
-				`${incrementalSummaryContext.summaryPath}/indexes/${this.key}/${schemaStringKey}`,
+				`${incrementalSummaryContext.summaryPath}/${schemaStringKey}`,
 			);
 		} else {
 			const dataString = JSON.stringify(this.codec.encode(this.schema));
 			builder.addBlob(schemaStringKey, dataString);
 		}
 		return builder.getSummaryTree();
-	}
-
-	public async summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext | undefined,
-	): Promise<ISummaryTreeWithStats> {
-		throw new Error("Method not implemented.");
 	}
 
 	public async load(
@@ -116,6 +106,9 @@ export class SchemaSummarizer implements Summarizable {
  * @remarks
  * This can be used to help inspect schema for debugging, and to save a snapshot of schema to help detect and review changes to an applications schema.
  */
-export function encodeTreeSchema(schema: TreeStoredSchema): Format {
-	return encodeRepo(schema);
+export function encodeTreeSchema(
+	schema: TreeStoredSchema,
+	writeVersion: number,
+): JsonCompatible {
+	return encodeRepo(schema, writeVersion);
 }

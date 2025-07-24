@@ -15,9 +15,20 @@ export {
 	cursorForMapTreeNode,
 	mapTreeFromCursor,
 	mapTreeFieldFromCursor,
+	type MinimalMapTreeNodeView,
+	mapTreeFieldsWithField,
+	mapTreeWithField,
+	type MapTreeFieldViewGeneric,
+	type MapTreeNodeViewGeneric,
+	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
-export { SchemaSummarizer, encodeTreeSchema, makeSchemaCodec } from "./schema-index/index.js";
+export {
+	SchemaSummarizer,
+	encodeTreeSchema,
+	makeSchemaCodec,
+	makeSchemaCodecs,
+} from "./schema-index/index.js";
 export {
 	stackTreeNodeCursor,
 	type CursorAdapter,
@@ -73,22 +84,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentDiscrepancies,
-	isRepoSuperset,
-	type AllowedTypeDiscrepancy,
-	type FieldKindDiscrepancy,
-	type ValueSchemaDiscrepancy,
-	type FieldDiscrepancy,
-	type NodeDiscrepancy,
-	type NodeKindDiscrepancy,
-	type NodeFieldsDiscrepancy,
 	isNeverTree,
-	type LinearExtension,
-	type Realizer,
-	fieldRealizer,
-	PosetComparisonResult,
-	comparePosetElements,
-	posetLte,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -103,6 +99,7 @@ export {
 	type FieldBatchCodec,
 	makeTreeChunker,
 	makeFieldBatchCodec,
+	fluidVersionToFieldBatchCodecWriteVersion,
 	type FieldBatchEncodingContext,
 } from "./chunked-forest/index.js";
 
@@ -136,23 +133,22 @@ export {
 	fieldKindConfigurations,
 	intoDelta,
 	relevantRemovedRoots,
-	SchemaValidationErrors,
+	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
+	inSchemaOrThrow,
 } from "./default-schema/index.js";
 
 export {
 	type FlexTreeOptionalField,
 	type FlexTreeRequiredField,
 	type FlexTreeSequenceField,
-	Skip,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	type FlexTreeTypedField,
 	type FlexTreeEntity,
 	type FlexTreeField,
 	type FlexTreeNode,
-	getTreeContext,
 	TreeStatus,
 	Context,
 	type FlexTreeNodeEvents,
@@ -168,6 +164,11 @@ export {
 	treeStatusFromAnchorCache,
 	indexForAt,
 	FlexTreeEntityKind,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type FlexTreeHydratedContextMinimal,
+	type HydratedFlexTreeNode,
+	getOrCreateHydratedFlexTreeNode,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
@@ -192,5 +193,3 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
-
-export { initializeForest } from "./initializeForest.js";

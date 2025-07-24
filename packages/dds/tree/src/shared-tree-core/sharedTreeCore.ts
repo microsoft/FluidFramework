@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
@@ -17,6 +18,7 @@ import type {
 	IChannelView,
 	IFluidSerializer,
 } from "@fluidframework/shared-object-base/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICodecOptions, IJsonCodec } from "../codec/index.js";
 import {
@@ -41,18 +43,16 @@ import {
 } from "../util/index.js";
 
 import type { SharedTreeBranch } from "./branch.js";
+import { BranchCommitEnricher } from "./branchCommitEnricher.js";
+import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
+import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
 import { EditManager, minimumPossibleSequenceNumber } from "./editManager.js";
 import { makeEditManagerCodec } from "./editManagerCodecs.js";
 import type { SeqNumber } from "./editManagerFormat.js";
 import { EditManagerSummarizer } from "./editManagerSummarizer.js";
 import { type MessageEncodingContext, makeMessageCodec } from "./messageCodecs.js";
 import type { DecodedMessage } from "./messageTypes.js";
-import { type ChangeEnricherReadonlyCheckout, NoOpChangeEnricher } from "./changeEnricher.js";
 import type { ResubmitMachine } from "./resubmitMachine.js";
-import { DefaultResubmitMachine } from "./defaultResubmitMachine.js";
-import { BranchCommitEnricher } from "./branchCommitEnricher.js";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 
 // TODO: Organize this to be adjacent to persisted types.
 const summarizablesTreeKey = "indexes";
@@ -212,20 +212,30 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats {
 		const builder = new SummaryTreeBuilder();
 		const summarizableBuilder = new SummaryTreeBuilder();
 		// Merge the summaries of all summarizables together under a single ISummaryTree
 		for (const s of this.summarizables) {
+			// Add the summarizable's path in the summary tree to the incremental summary context's
+			// summary path, so that the summarizable can use it to generate incremental summaries.
+			const childIncrementalSummaryContext =
+				incrementalSummaryContext === undefined
+					? undefined
+					: {
+							...incrementalSummaryContext,
+							summaryPath: `${incrementalSummaryContext.summaryPath}/${summarizablesTreeKey}/${s.key}`,
+						};
 			summarizableBuilder.addWithStats(
 				s.key,
-				s.getAttachSummary(
-					(contents) => serializer.stringify(contents, this.sharedObject.handle),
-					undefined,
-					undefined,
+				s.summarize({
+					stringify: (contents: unknown) =>
+						serializer.stringify(contents, this.sharedObject.handle),
+					fullTree,
 					telemetryContext,
-					incrementalSummaryContext,
-				),
+					incrementalSummaryContext: childIncrementalSummaryContext,
+				}),
 			);
 		}
 
@@ -387,14 +397,12 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		} = this.messageCodec.decode(this.serializer.decode(content), {
 			idCompressor: this.idCompressor,
 		});
-		const [commit] = this.editManager.findLocalCommit(revision);
 		// If a resubmit phase is not already in progress, then this must be the first commit of a new resubmit phase.
 		if (this.resubmitMachine.isInResubmitPhase === false) {
-			const toResubmit = this.editManager.getLocalCommits();
-			assert(
-				commit === toResubmit[0],
-				0x95d /* Resubmit phase should start with the oldest local commit */,
-			);
+			const localCommits = this.editManager.getLocalCommits();
+			const revisionIndex = localCommits.findIndex((c) => c.revision === revision);
+			assert(revisionIndex >= 0, 0xbdb /* revision must exist in local commits */);
+			const toResubmit = localCommits.slice(revisionIndex);
 			this.resubmitMachine.prepareForResubmit(toResubmit);
 		}
 		assert(
@@ -407,6 +415,20 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		);
 		const enrichedCommit = this.resubmitMachine.peekNextCommit();
 		this.submitCommit(enrichedCommit, localOpMetadata, true);
+	}
+	public rollback(content: JsonCompatibleReadOnly, localOpMetadata: unknown): void {
+		// Empty context object is passed in, as our decode function is schema-agnostic.
+		const {
+			commit: { revision },
+		} = this.messageCodec.decode(this.serializer.decode(content), {
+			idCompressor: this.idCompressor,
+		});
+		const [commit] = this.editManager.findLocalCommit(revision);
+		const { parent } = commit;
+		assert(parent !== undefined, 0xbdc /* must have parent */);
+		const [precedingCommit] = this.editManager.findLocalCommit(parent.revision);
+		this.editManager.localBranch.removeAfter(precedingCommit);
+		this.resubmitMachine.onCommitRollback(commit);
 	}
 
 	public applyStashedOp(content: JsonCompatibleReadOnly): void {
@@ -435,27 +457,26 @@ export interface Summarizable {
 	readonly key: string;
 
 	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).getAttachSummary}
-	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
-	 */
-	getAttachSummary(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-	): ISummaryTreeWithStats;
-
-	/**
 	 * {@inheritDoc @fluidframework/datastore-definitions#(IChannel:interface).summarize}
 	 * @param stringify - Serializes the contents of the component (including {@link (IFluidHandle:interface)}s) for storage.
+	 * @param fullTree - A flag indicating whether the attempt should generate a full
+	 * summary tree without any handles for unchanged subtrees. It should only be set to true when generating
+	 * a summary from the entire container. The default value is false.
+	 * @param trackState - An optimization for tracking state of objects across summaries. If the state
+	 * of an object did not change since last successful summary, an
+	 * {@link @fluidframework/protocol-definitions#ISummaryHandle} can be used
+	 * instead of re-summarizing it. If this is `false`, the expectation is that you should never
+	 * send an `ISummaryHandle`, since you are not expected to track state. The default value is true.
+	 * @param telemetryContext - See {@link @fluidframework/runtime-definitions#ITelemetryContext}.
+	 * @param incrementalSummaryContext - See {@link @fluidframework/runtime-definitions#IExperimentalIncrementalSummaryContext}.
 	 */
-	summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummaryTreeWithStats>;
+	summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats;
 
 	/**
 	 * Allows the component to perform custom loading. The storage service is scoped to this component and therefore

@@ -26,9 +26,7 @@ import {
 	type ModularChangeset,
 	ModularEditBuilder,
 	type TreeChunk,
-	buildForest,
 	fieldKinds,
-	initializeForest,
 } from "../../feature-libraries/index.js";
 import {
 	type SharedTreeMutableChangeEnricher,
@@ -47,12 +45,16 @@ import {
 // eslint-disable-next-line import/no-internal-modules
 import { Change } from "../feature-libraries/optional-field/optionalFieldUtils.js";
 import {
+	buildTestForest,
 	failCodecFamily,
 	jsonTreeFromForest,
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
+import { FluidClientVersion } from "../../codec/index.js";
+import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
+import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
@@ -91,11 +93,11 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: typeboxValidator },
+		{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
 	);
-	const forest = buildForest();
+	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
+	const forest = buildTestForest({ additionalAsserts: true, schema });
 	initializeForest(forest, fieldJsonCursor([content]), testRevisionTagCodec, testIdCompressor);
-	const schema = new TreeStoredSchemaRepository();
 	const enricher = new SharedTreeReadonlyChangeEnricher(
 		forest,
 		schema,

@@ -66,6 +66,8 @@ export interface IFluidDataStoreRuntime
 	readonly channelsRoutingContext: IFluidHandleContext;
 	readonly objectsRoutingContext: IFluidHandleContext;
 
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	readonly options: Record<string | number, any>;
 
 	readonly deltaManager: IDeltaManagerErased;
@@ -87,6 +89,12 @@ export interface IFluidDataStoreRuntime
 	 */
 	readonly attachState: AttachState;
 
+	/**
+	 * An optional ID compressor.
+	 * @remarks
+	 * When provided, can be used to compress and decompress IDs stored in this datastore.
+	 * Some SharedObjects, like SharedTree, require this.
+	 */
 	readonly idCompressor: IIdCompressor | undefined;
 
 	/**
@@ -102,13 +110,19 @@ export interface IFluidDataStoreRuntime
 	createChannel(id: string | undefined, type: string): IChannel;
 
 	/**
-	 * This api allows adding channel to data store after it was created.
-	 * This allows callers to cusmomize channel instance. For example, channel implementation
-	 * could have various modes of operations. As long as such configuration is provided at creation
+	 * Adds an existing channel to the data store.
+	 *
+	 * @remarks
+	 * This allows callers to customize channel instance.
+	 *
+	 * For example, a channel implementation could have various modes of operations.
+	 * As long as such configuration is provided at creation
 	 * and stored in summaries (such that all users of such channel instance behave the same), this
 	 * could be useful technique to have customized solutions without introducing a number of data structures
 	 * that all have same implementation.
+	 *
 	 * This is also useful for scenarios like SharedTree DDS, where schema is provided at creation and stored in a summary.
+	 *
 	 * The channel type should be present in the registry, otherwise the runtime would reject
 	 * the channel. The runtime used to create the channel object should be same to which
 	 * it is added.
@@ -171,6 +185,7 @@ export interface IFluidDataStoreRuntime
  */
 export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
 	readonly inStagingMode?: boolean;
+	readonly isDirty?: boolean;
 }
 
 /**

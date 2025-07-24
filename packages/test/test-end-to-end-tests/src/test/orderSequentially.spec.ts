@@ -5,19 +5,19 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { SharedDirectory, ISharedMap, IValueChanged } from "@fluidframework/map/internal";
-import type { IContainerRuntimeBaseExperimental } from "@fluidframework/runtime-definitions/internal";
 import type {
 	ISharedString,
 	SequenceDeltaEvent,
 	SharedString,
 } from "@fluidframework/sequence/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -80,6 +80,7 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 				}),
 			},
 		};
+		error = undefined;
 		container = await provider.makeTestContainer(configWithFeatureGates);
 		dataObject = (await container.getEntryPoint()) as ITestFluidObject;
 		sharedString = await dataObject.getSharedObject<ISharedString>(stringId);
@@ -163,6 +164,45 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 			`Unexpected event type - ${typeof changedEventData[6]}`,
 		);
 	});
+
+	itExpects(
+		"Should rollback if unsupported op (e.g. rejoin) is attempted to be submitted in orderSequentially",
+		[
+			{
+				category: "error",
+				eventName: "fluid:telemetry:Container:ContainerClose",
+			},
+		],
+		async () => {
+			sharedMap.set("key", "BEFORE");
+
+			try {
+				containerRuntime.orderSequentially(() => {
+					sharedMap.set("key", "SHOULD BE ROLLED BACK");
+
+					// Rejoin isn't supported during staging mode, this should throw and trigger rollback
+					(containerRuntime as unknown as { submit(msg: { type: string }): void }).submit({
+						type: "rejoin",
+					});
+				});
+			} catch (err) {
+				error = err as Error;
+			}
+
+			assert(error !== undefined, "No error");
+			validateAssertionError(error, "Unexpected message type submitted in Staging Mode");
+			assert.equal(
+				changedEventData.length,
+				3,
+				"Expected 3 changes: 'BEFORE', 'SHOULD BE ROLLED BACK', and rollback",
+			);
+			assert.equal(
+				sharedMap.get("key"),
+				"BEFORE",
+				"SharedMap value should be rolled back to BEFORE",
+			);
+		},
+	);
 
 	it("Should rollback complex edits on multiple DDS types", () => {
 		sharedString.insertText(0, "abcde");
@@ -385,33 +425,5 @@ describeCompat("Multiple DDS orderSequentially", "NoCompat", (getTestObjectProvi
 		assert.deepEqual(changedEventData[6].event, { key: "key", previousValue: undefined });
 
 		assert.deepEqual(changedEventData[7].event, { key: "key", previousValue: 0 });
-	});
-
-	it("Should support orderSequentially while in StagingMode", () => {
-		(containerRuntime as IContainerRuntimeBaseExperimental).enterStagingMode?.();
-
-		sharedMap.set("key", 1);
-
-		try {
-			containerRuntime.orderSequentially(() => {
-				sharedMap.set("key", 0);
-				throw new Error("callback failure");
-			});
-		} catch (err) {
-			error = err as Error;
-		}
-
-		assert.notEqual(error, undefined, "No error");
-		assert.equal(error?.message, errorMessage, "Unexpected error message");
-		assert.equal(containerRuntime.disposed, false, "Container disposed");
-		assert.equal(sharedMap.size, 1);
-		assert.equal(sharedMap.has("key"), true);
-		assert.equal(sharedMap.get("key"), 1);
-
-		assert.equal(changedEventData.length, 3);
-
-		assert.deepEqual(changedEventData[0].event, { key: "key", previousValue: undefined }); // Set to 1 before orderSequentially
-		assert.deepEqual(changedEventData[1].event, { key: "key", previousValue: 1 }); // Set to 0 in orderSequentially
-		assert.deepEqual(changedEventData[2].event, { key: "key", previousValue: 0 }); // Rollback
 	});
 });

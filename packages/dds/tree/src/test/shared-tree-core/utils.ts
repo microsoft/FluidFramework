@@ -19,6 +19,7 @@ import {
 	tagChange,
 	TreeStoredSchemaRepository,
 	type GraphCommit,
+	type RevisionTag,
 } from "../../core/index.js";
 import { typeboxValidator } from "../../external-utilities/index.js";
 import {
@@ -38,6 +39,8 @@ import {
 	type SharedTreeBranch,
 	SharedTreeCore,
 	type Summarizable,
+	type ChangeEnricherMutableCheckout,
+	NoOpChangeEnricher,
 } from "../../shared-tree-core/index.js";
 import { testIdCompressor } from "../utils.js";
 import { strict as assert, fail } from "node:assert";
@@ -45,6 +48,8 @@ import {
 	SharedObject,
 	type IChannelView,
 	type IFluidSerializer,
+	type ISharedObject,
+	type ISharedObjectHandle,
 } from "@fluidframework/shared-object-base/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -64,11 +69,18 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { Breakable } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+import { TestChange } from "../testChange.js";
 
 const codecOptions: ICodecOptions = {
 	jsonValidator: typeboxValidator,
 };
 const formatVersions = { editManager: 1, message: 1, fieldBatch: 1 };
+
+class MockSharedObjectHandle extends MockHandle<ISharedObject> implements ISharedObjectHandle {
+	public bind(): never {
+		throw new Error("MockSharedObjectHandle.bind() unimplemented.");
+	}
+}
 
 export function createTree<TIndexes extends readonly Summarizable[]>(
 	indexes: TIndexes,
@@ -77,7 +89,9 @@ export function createTree<TIndexes extends readonly Summarizable[]>(
 ): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
-	const handle = new MockHandle({});
+	// Summarizer requires ISharedObjectHandle. Specifically it looks for `bind` method.
+	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- empty object is sufficient for this mock
+	const handle = new MockSharedObjectHandle({} as ISharedObject);
 	const dummyChannel: IChannelView & IFluidLoadable = {
 		attributes: { snapshotFormatVersion: "", type: "", packageVersion: "" },
 		get handle(): IFluidHandle {
@@ -308,5 +322,21 @@ export class TestSharedTreeCore extends SharedObject {
 
 	public get editor(): DefaultEditBuilder {
 		return this.kernel.getEditor();
+	}
+}
+
+export class TestChangeEnricher implements ChangeEnricherReadonlyCheckout<TestChange> {
+	public updateChangeEnrichments(change: TestChange, revision: RevisionTag): TestChange {
+		if (TestChange.isNonEmptyChange(change)) {
+			return {
+				inputContext: change.inputContext.map((i) => i * 1000),
+				intentions: change.intentions.map((i) => i * 1000),
+				outputContext: change.outputContext.map((i) => i * 1000),
+			};
+		}
+		return change;
+	}
+	public fork(): ChangeEnricherMutableCheckout<TestChange> {
+		return new NoOpChangeEnricher();
 	}
 }

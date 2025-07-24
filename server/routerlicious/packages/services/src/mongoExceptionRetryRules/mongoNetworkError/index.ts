@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
+import {
+	BaseMongoExceptionRetryRule,
+	type IMongoExceptionRetryRule,
+} from "../IMongoExceptionRetryRule";
 
 class MongoNetworkTransientTransactionError extends BaseMongoExceptionRetryRule {
 	protected defaultRetryDecision: boolean = true;

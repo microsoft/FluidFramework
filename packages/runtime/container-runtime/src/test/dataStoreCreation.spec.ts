@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
@@ -16,6 +15,7 @@ import {
 	IFluidDataStoreRegistry,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -44,7 +44,7 @@ describe("Data Store Creation Tests", () => {
 		 * ```
 		 */
 
-		let storage: IDocumentStorageService;
+		let storage: IRuntimeStorageService;
 		let scope: FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContextPrivate;
@@ -115,6 +115,7 @@ describe("Data Store Creation Tests", () => {
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),

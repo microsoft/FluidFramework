@@ -1,5 +1,63 @@
 # @fluidframework/container-loader
 
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+### Minor Changes
+
+- The reason parameter on the disconnect event is now optional to allow for clean, non-error disconnections ([#24840](https://github.com/microsoft/FluidFramework/pull/24840)) [82a1c5a1362](https://github.com/microsoft/FluidFramework/commit/82a1c5a1362d3362886bdcc12859ce60a2744bdb)
+
+  To enable better handling of intentional disconnects (for example [`Container.dispose()`](https://fluidframework.com/docs/api/container-loader/container/dispose)), the `reason` parameter of the `disconnect` event on [`IDocumentDeltaConnectionEvents`](https://fluidframework.com/docs/api/driver-definitions/idocumentdeltaconnectionevents) is being deprecated as a required parameter.
+
+  In a future release, the `reason` parameter will become optional.
+
+  **Old signature:**
+
+  ```typescript
+  listener: (reason: IAnyDriverError) => void
+  ```
+
+  **New signature:**
+
+  ```typescript
+  listener: (reason?: IAnyDriverError) => void
+  ```
+
+  Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`.
+  This indicates a clean disconnect, which should not be treated as an error.
+
+  The breaking change is scheduled to be released in version **2.60**.
+
+## 2.42.0
+
+Dependency updates only.
+
+## 2.41.0
+
+Dependency updates only.
+
+## 2.40.0
+
+### Minor Changes
+
+- IDetachedBlobStorage (deprecated) has been removed from Loader ([#24490](https://github.com/microsoft/FluidFramework/pull/24490)) [ef47644da8](https://github.com/microsoft/FluidFramework/commit/ef47644da889d13b81c7233c3afe8600eaa1600f)
+
+  It is no longer necessary or supported to provide `detachedBlobStorage` to the Loader.
+  This functionality is now provided by default, and the deprecated `IDetachedBlobStorage` has been removed.
+
+- IContainer.getContainerPackageInfo has been removed ([#24525](https://github.com/microsoft/FluidFramework/pull/24525)) [15a541265b](https://github.com/microsoft/FluidFramework/commit/15a541265ba6293bf24e95308a5e667d5f7e9794)
+
+  `IContainer.getContainerPackageInfo()` was set to be removed in release 2.40.0. To access the package name `getContainerPackageInfo()` provided, use `IFluidCodeDetails.package` returned by `IContainer.getLoadedCodeDetails()`.
+
+  See [issue #23898](https://github.com/microsoft/FluidFramework/issues/23898) for more information.
+
 ## 2.33.0
 
 Dependency updates only.

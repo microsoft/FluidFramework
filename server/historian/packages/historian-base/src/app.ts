@@ -3,25 +3,26 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import { json, urlencoded } from "body-parser";
 import compression from "compression";
 import cors from "cors";
 import express from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import {
 	DriverVersionHeaderName,
 	CallingServiceHeaderName,
 } from "@fluidframework/server-services-client";
 import {
 	alternativeMorganLoggerMiddleware,
+	bindAbortControllerContext,
 	bindTelemetryContext,
 	jsonMorganLoggerMiddleware,
 } from "@fluidframework/server-services-utils";
@@ -32,7 +33,7 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import { RestLessServer, createHealthCheckEndpoints } from "@fluidframework/server-services-shared";
 import * as routes from "./routes";
-import { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "./services";
 import { Constants, getDocumentIdFromRequest, getTenantIdFromRequest } from "./utils";
 
 export function create(
@@ -52,6 +53,7 @@ export function create(
 ) {
 	// Express app configuration
 	const app: express.Express = express();
+	const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
 
 	const requestSize = config.get("requestSizeLimit");
 	// initialize RestLess server translation
@@ -67,6 +69,9 @@ export function create(
 	app.use(restLessMiddleware());
 
 	app.use(bindTelemetryContext("historian"));
+	if (axiosAbortSignalEnabled) {
+		app.use(bindAbortControllerContext());
+	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		const enableResponseCloseLatencyMetric =
@@ -78,6 +83,7 @@ export function create(
 				(tokens, req, res) => {
 					const tenantId = getTenantIdFromRequest(req.params);
 					const authHeader = req.get("Authorization");
+					const documentId = getDocumentIdFromRequest(tenantId, authHeader);
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
@@ -85,13 +91,12 @@ export function create(
 							DriverVersionHeaderName,
 						),
 						[BaseTelemetryProperties.tenantId]: tenantId,
-						[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
-							tenantId,
-							authHeader,
-						),
+						[BaseTelemetryProperties.documentId]: documentId,
 						[CommonProperties.callingServiceName]:
 							req.headers[CallingServiceHeaderName] ?? "",
 					};
+					res.locals.tenantId = tenantId;
+					res.locals.documentId = documentId;
 					if (req.get(Constants.IsEphemeralContainer) !== undefined) {
 						additionalProperties.isEphemeralContainer = req.get(
 							Constants.IsEphemeralContainer,

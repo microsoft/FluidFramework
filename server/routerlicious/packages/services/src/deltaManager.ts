@@ -4,12 +4,13 @@
  */
 
 import { fromUtf8ToBase64 } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
+import { type ISequencedDocumentMessage, ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
-import { IDeltaService, type ITenantManager } from "@fluidframework/server-services-core";
+import type { IDeltaService, ITenantManager } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
 import { logHttpMetrics } from "@fluidframework/server-services-utils";
+
+import { getRefreshTokenIfNeededCallback, TenantManager } from "./tenant";
 
 /**
  * Manager to fetch deltas from Alfred using the internal URL.

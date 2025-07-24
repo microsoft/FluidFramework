@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Machine } from "jssm";
+import type { Machine } from "jssm";
 import chalk from "picocolors";
 
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
@@ -18,11 +18,11 @@ import {
 	npmCheckUpdates,
 	setVersion,
 } from "../library/index.js";
-import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
-import { ReleaseGroup, ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
+import type { CommandLogger } from "../logging.js";
+import type { MachineState } from "../machines/index.js";
+import { type ReleaseGroup, type ReleasePackage, isReleaseGroup } from "../releaseGroups.js";
+import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Bumps any pre-release dependencies that have been released.

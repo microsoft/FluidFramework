@@ -18,19 +18,24 @@ import type {
 	JsonObjectNodeSchema,
 	JsonTreeSchema,
 	JsonLeafSchemaType,
+	JsonRecordNodeSchema,
 } from "./jsonSchema.js";
-import { FieldKind } from "../schemaTypes.js";
+import { FieldKind } from "../fieldSchema.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,
 	SimpleMapNodeSchema,
+	SimpleRecordNodeSchema,
 } from "../simpleSchema.js";
 import { NodeKind, type TreeNodeSchema } from "../core/index.js";
 import type { TreeSchema } from "./configuration.js";
 import type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
-import { ObjectNodeSchema } from "../objectNodeTypes.js";
-import { ArrayNodeSchema } from "../arrayNodeTypes.js";
-import { MapNodeSchema } from "../mapNodeTypes.js";
+import {
+	ArrayNodeSchema,
+	isMapNodeSchema,
+	isRecordNodeSchema,
+	ObjectNodeSchema,
+} from "../node-kinds/index.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 
 /**
@@ -90,8 +95,8 @@ function convertNodeSchema(
 ): JsonNodeSchema {
 	if (schema instanceof ArrayNodeSchema) {
 		return convertArrayNodeSchema(schema);
-	} else if (schema instanceof MapNodeSchema) {
-		return convertMapNodeSchema(schema);
+	} else if (isMapNodeSchema(schema) || isRecordNodeSchema(schema)) {
+		return convertRecordLikeNodeSchema(schema);
 	} else if (schema instanceof ObjectNodeSchema) {
 		return convertObjectNodeSchema(schema, options);
 	} else if (schema instanceof LeafNodeSchema) {
@@ -193,15 +198,17 @@ export function convertObjectNodeSchema(
 	return transformedNode;
 }
 
-function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
+function convertRecordLikeNodeSchema(
+	schema: SimpleRecordNodeSchema | SimpleMapNodeSchema,
+): JsonMapNodeSchema | JsonRecordNodeSchema {
 	const allowedTypes: JsonSchemaRef[] = [];
 	schema.allowedTypesIdentifiers.forEach((type) => {
 		allowedTypes.push(createSchemaRef(type));
 	});
 
-	const output: Mutable<JsonMapNodeSchema> = {
+	const output = {
 		type: "object",
-		_treeNodeSchemaKind: NodeKind.Map,
+		_treeNodeSchemaKind: schema.kind,
 		patternProperties: {
 			"^.*$": hasSingle(allowedTypes)
 				? allowedTypes[0]
@@ -209,7 +216,7 @@ function convertMapNodeSchema(schema: SimpleMapNodeSchema): JsonMapNodeSchema {
 						anyOf: allowedTypes,
 					},
 		},
-	};
+	} as const;
 
 	copyProperty(schema.metadata, "description", output);
 

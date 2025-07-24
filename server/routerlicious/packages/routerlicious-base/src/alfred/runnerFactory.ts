@@ -4,25 +4,31 @@
  */
 
 import * as services from "@fluidframework/server-services";
+import {
+	getGlobalAbortControllerContext,
+	type IAlfredTenant,
+	setupAxiosInterceptorsForAbortSignals,
+} from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
+import type { IReadinessCheck } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
-import { Provider } from "nconf";
-import * as winston from "winston";
-import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
 import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import type { Provider } from "nconf";
+import * as winston from "winston";
+
 import { Constants } from "../utils";
+
+import type { IAlfredResourcesCustomizations } from "./customizations";
 import { AlfredRunner } from "./runner";
 import {
 	DeltaService,
 	StorageNameAllocator,
-	IDocumentDeleteService,
+	type IDocumentDeleteService,
 	DocumentDeleteService,
 } from "./services";
-import { IAlfredResourcesCustomizations } from ".";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 /**
  * @internal
@@ -458,6 +464,12 @@ export class AlfredResourcesFactory implements core.IResourcesFactory<AlfredReso
 		redisClientConnectionManagers.push(redisClientConnectionManagerForPub);
 
 		const redisEmitter = new RedisEmitter(redisClientConnectionManagerForPub.getRedisClient());
+		const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
+		if (axiosAbortSignalEnabled) {
+			setupAxiosInterceptorsForAbortSignals(() =>
+				getGlobalAbortControllerContext().getAbortController(),
+			);
+		}
 
 		return new AlfredResources(
 			config,

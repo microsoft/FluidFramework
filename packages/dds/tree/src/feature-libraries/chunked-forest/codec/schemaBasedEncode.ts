@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	LeafNodeStoredSchema,
@@ -31,7 +32,6 @@ import {
 import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
 import { NodeShape } from "./nodeShape.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.

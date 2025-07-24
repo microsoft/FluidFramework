@@ -3,21 +3,37 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-import type { NodeIdentifierManager } from "../../feature-libraries/index.js";
-import {
-	type RestrictiveStringRecord,
-	getOrCreate,
-	isReadonlyArray,
-} from "../../util/index.js";
 // This import is required for intellisense in @link doc comments on mouseover in VSCode.
 // eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { TreeAlpha } from "../../shared-tree/index.js";
-
+import {
+	type JsonCompatibleReadOnlyObject,
+	type RestrictiveStringRecord,
+	compareSets,
+	getOrCreate,
+	isReadonlyArray,
+} from "../../util/index.js";
+import { normalizeAllowedTypes, markSchemaMostDerived, isLazy } from "../core/index.js";
+import type {
+	NodeKind,
+	WithType,
+	TreeNodeSchema,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	TreeNodeSchemaBoth,
+	UnhydratedFlexTreeNode,
+	NodeSchemaMetadata,
+	ImplicitAnnotatedAllowedTypes,
+	UnannotateImplicitAllowedTypes,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
+} from "../core/index.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -27,40 +43,34 @@ import {
 	type LeafSchema,
 } from "../leafNodeSchema.js";
 import {
+	arraySchema,
+	type MapNodeInsertableData,
+	mapSchema,
+	objectSchema,
+	type TreeArrayNode,
+	type InsertableObjectFromSchemaRecord,
+	type TreeMapNode,
+	type TreeObjectNode,
+	type UnannotateSchemaRecord,
+} from "../node-kinds/index.js";
+import {
 	FieldKind,
 	type FieldSchema,
-	type ImplicitAllowedTypes,
 	type ImplicitFieldSchema,
-	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type FieldProps,
 	createFieldSchema,
 	type DefaultProvider,
 	getDefaultProvider,
-	type NodeSchemaOptions,
-	markSchemaMostDerived,
 	type FieldSchemaAlpha,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-	type UnannotateSchemaRecord,
-} from "../schemaTypes.js";
-import type {
-	NodeKind,
-	WithType,
-	TreeNodeSchema,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	TreeNodeSchemaBoth,
-} from "../core/index.js";
-import { type TreeArrayNode, arraySchema } from "../arrayNode.js";
-import {
-	type InsertableObjectFromSchemaRecord,
-	type TreeObjectNode,
-	objectSchema,
-} from "../objectNode.js";
-import { type MapNodeInsertableData, type TreeMapNode, mapSchema } from "../mapNode.js";
-import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
+	type FieldPropsAlpha,
+} from "../fieldSchema.js";
+
 import { createFieldSchemaUnsafe } from "./schemaFactoryRecursive.js";
-import { isLazy } from "../flexList.js";
+import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
+import { unhydratedFlexTreeFromInsertable } from "../unhydratedFlexTreeFromInsertable.js";
 
 /**
  * Gets the leaf domain schema compatible with a given {@link TreeValue}.
@@ -91,7 +101,7 @@ export function schemaFromValue(value: TreeValue): TreeNodeSchema {
  * @alpha
  */
 export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
-	extends NodeSchemaOptions<TCustomMetadata> {
+	extends NodeSchemaOptionsAlpha<TCustomMetadata> {
 	/**
 	 * Allow nodes typed with this object node schema to contain optional fields that are not present in the schema declaration.
 	 * Such nodes can come into existence either via import APIs (see remarks) or by way of collaboration with another client
@@ -127,18 +137,27 @@ export interface SchemaFactoryObjectOptions<TCustomMetadata = unknown>
 	 * // Then the alleged clone wouldn't actually clone the entire person in either case, it would drop the nickname.
 	 * ```
 	 *
-	 * If an application wants to be particularly careful to preserve all data on a node when editing it, it can use
-	 * {@link (TreeAlpha:interface).importVerbose|import}/{@link (TreeAlpha:interface).exportVerbose|export} APIs with persistent keys.
+	 * The existing import and export APIs have similar problems.
+	 * For example currently the {@link (TreeAlpha:interface).exportVerbose|exportVerbose} API with stored keys preserves unknown optional fields,
+	 * but {@link Unhydrated} nodes produced by {@link TreeNode} constructors, insertable content, and {@link (TreeAlpha:interface).importVerbose|importVerbose} do not.
 	 *
 	 * Note that public API methods which operate on entire nodes (such as `moveTo`, `moveToEnd`, etc. on arrays) do not encounter
-	 * this problem as SharedTree's implementation stores the entire node in its lower layers. It's only when application code
-	 * reaches into a node (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 * this problem as SharedTree's implementation stores the entire node in its lower layers.
+	 * It's only when application code reaches into a node
+	 * (either by accessing its fields, spreading it, or some other means) that this problem arises.
+	 *
+	 * @privateRemarks
+	 * TODO: AB#43548 Once fixed, update docs above.
 	 */
 	allowUnknownOptionalFields?: boolean;
 }
 
+/**
+ * Default options for Object node schema creation.
+ * @remarks Omits parameters that are not relevant for common use cases.
+ */
 export const defaultSchemaFactoryObjectOptions: Required<
-	Omit<SchemaFactoryObjectOptions, "metadata">
+	Omit<SchemaFactoryObjectOptions, "metadata" | "persistedMetadata">
 > = {
 	allowUnknownOptionalFields: false,
 };
@@ -182,7 +201,9 @@ export interface SchemaStatics {
 	 *
 	 * @remarks
 	 * The number is a {@link https://en.wikipedia.org/wiki/Double-precision_floating-point_format | double-precision 64-bit binary format IEEE 754} value, however there are some exceptions:
+	 *
 	 * - `NaN`, and the infinities are converted to `null` (and may therefore only be used where `null` is allowed by the schema).
+	 *
 	 * - `-0` may be converted to `0` in some cases.
 	 *
 	 * These limitations match the limitations of JSON.
@@ -288,16 +309,14 @@ export interface SchemaStatics {
 	) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
 }
 
-const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => {
-	return undefined;
-});
+const defaultOptionalProvider: DefaultProvider = getDefaultProvider(() => []);
 
 // The following overloads for optional and required are used to get around the fact that
 // the compiler can't infer that UnannotateImplicitAllowedTypes<T> is equal to T when T is known to extend ImplicitAllowedTypes
 
 function optional<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Optional, T, TCustomMetadata>;
 
 function optional<
@@ -305,7 +324,7 @@ function optional<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
 
 function optional<
@@ -313,7 +332,7 @@ function optional<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Optional, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
 	return createFieldSchema(FieldKind.Optional, t, {
 		defaultProvider: defaultOptionalProvider,
@@ -323,7 +342,7 @@ function optional<
 
 function required<const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Required, T, TCustomMetadata>;
 
 function required<
@@ -331,7 +350,7 @@ function required<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata>;
 
 function required<
@@ -339,7 +358,7 @@ function required<
 	const TCustomMetadata = unknown,
 >(
 	t: T,
-	props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+	props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 ): FieldSchemaAlpha<FieldKind.Required, UnannotateImplicitAllowedTypes<T>, TCustomMetadata> {
 	return createFieldSchema(FieldKind.Required, t, props);
 }
@@ -367,7 +386,7 @@ export const schemaStaticsBase = {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlphaUnsafe<FieldKind.Optional, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Optional, t, {
 			defaultProvider: defaultOptionalProvider,
@@ -380,7 +399,7 @@ export const schemaStaticsBase = {
 		const TCustomMetadata = unknown,
 	>(
 		t: T,
-		props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">,
+		props?: Omit<FieldPropsAlpha<TCustomMetadata>, "defaultProvider">,
 	): FieldSchemaAlphaUnsafe<FieldKind.Required, T, TCustomMetadata> => {
 		return createFieldSchemaUnsafe(FieldKind.Required, t, props);
 	},
@@ -429,9 +448,13 @@ const schemaStaticsPublic: SchemaStatics = schemaStatics;
  * It is legal to subclass the returned class, and even subclass that class,
  * but only a single class from that class hierarchy can ever be instantiated or passed to any API as a {@link TreeNodeSchema|schema}.
  * These base classes can be used with `instanceof`, but not with schema based APIs like `Tree.is`.
+ *
  * 2. If overriding the constructor, the constructor must accept the same argument as the base constructor `super` and forward it to `super` unchanged.
+ *
  * 3. Properties for fields defined in the schema should not be overridden.
+ *
  * 4. Additional static members added to schema should pick relatively unique keys to reduce the risk of colliding with implementation details what are not exposed in the API.
+ *
  * 5. If exporting the schema from a package which uses API-Extractor, export the base class and derived class separately to work around [a known limitation](https://github.com/microsoft/rushstack/issues/4429).
  *
  * Note:
@@ -757,16 +780,8 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Map", types);
-			return getOrCreate(
-				this.structuralTypes,
-				fullName,
-				() =>
-					this.namedMap(
-						fullName as TName,
-						nameOrAllowedTypes as T,
-						false,
-						true,
-					) as TreeNodeSchema,
+			return this.getStructuralType(fullName, types, () =>
+				this.namedMap(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaBoth<
 				string,
 				NodeKind.Map,
@@ -777,7 +792,7 @@ export class SchemaFactory<
 				undefined
 			>;
 		}
-		// To actually have type safety, assign to the type this method should return before implicitly upcasting when returning.
+		// To actually have type safety, assign to the type this method should return before implicitly up-casting when returning.
 		const out: TreeNodeSchemaBoth<
 			string,
 			NodeKind.Map,
@@ -876,7 +891,7 @@ export class SchemaFactory<
 	 * ```
 	 * @privateRemarks
 	 * The name produced at the type level here is not as specific as it could be, however doing type level sorting and escaping is a real mess.
-	 * There are cases where not having this full type provided will be less than ideal since TypeScript's structural types.
+	 * There are cases where not having this full type provided will be less than ideal, since TypeScript's structural types will allow assignment between runtime incompatible types at compile time.
 	 * For example attempts to narrow unions of structural arrays by name won't work.
 	 * Planned future changes to move to a class based schema system as well as factor function based node construction should mostly avoid these issues,
 	 * though there may still be some problematic cases even after that work is done.
@@ -945,7 +960,7 @@ export class SchemaFactory<
 		if (allowedTypes === undefined) {
 			const types = nameOrAllowedTypes as (T & TreeNodeSchema) | readonly TreeNodeSchema[];
 			const fullName = structuralName("Array", types);
-			return getOrCreate(this.structuralTypes, fullName, () =>
+			return this.getStructuralType(fullName, types, () =>
 				this.namedArray(fullName, nameOrAllowedTypes as T, false, true),
 			) as TreeNodeSchemaClass<
 				ScopedSchemaName<TScope, string>,
@@ -967,6 +982,35 @@ export class SchemaFactory<
 			undefined
 		> = this.namedArray(nameOrAllowedTypes as TName, allowedTypes, true, true);
 		return out;
+	}
+
+	/**
+	 * Retrieves or creates a structural {@link TreeNodeSchema} with the specified name and types.
+	 *
+	 * @param fullName - The name for the structural schema.
+	 * @param types - The input schema(s) used to define the structural schema.
+	 * @param builder - A function that builds the schema if it does not already exist.
+	 * @returns The structural {@link TreeNodeSchema} associated with the given name and types.
+	 * @throws `UsageError` if a schema structurally named schema with the same name is cached in `structuralTypes` but had different input types.
+	 */
+	protected getStructuralType(
+		fullName: string,
+		types: TreeNodeSchema | readonly TreeNodeSchema[],
+		builder: () => TreeNodeSchema,
+	): TreeNodeSchema {
+		const structural = getOrCreate(this.structuralTypes, fullName, builder);
+		const inputTypes = new Set(normalizeAllowedTypes(types));
+		const outputTypes = new Set(
+			normalizeAllowedTypes(structural.info as TreeNodeSchema | readonly TreeNodeSchema[]),
+		);
+		// If our cached value had a different set of types then were requested, the user must have caused a collision.
+		const same = compareSets({ a: inputTypes, b: outputTypes });
+		if (!same) {
+			throw new UsageError(
+				`Structurally named schema collision: two schema named "${fullName}" were defined with different input schema.`,
+			);
+		}
+		return structural;
 	}
 
 	/**
@@ -1064,9 +1108,12 @@ export class SchemaFactory<
 	 * The identifier generated by the SharedTree has the following properties:
 	 *
 	 * - It is a UUID which will not collide with other generated UUIDs.
+	 *
 	 * - It is compressed to a space-efficient representation when stored in the document.
+	 * Reading the identifier before inserting the node into a tree prevents the identifier from being stored in its compressed form,
+	 * resulting in a larger storage footprint.
+	 *
 	 * - A compressed form of the identifier can be accessed at runtime via the {@link TreeNodeApi.shortId|Tree.shortId()} API.
-	 * - It will error if read (and will not be present in the object's iterable properties) before the node has been inserted into a tree.
 	 *
 	 * However, a user may alternatively supply their own string as the identifier if desired (for example, if importing identifiers from another system).
 	 * In that case, if the user requires it to be unique, it is up to them to ensure uniqueness.
@@ -1076,10 +1123,19 @@ export class SchemaFactory<
 	 */
 	public get identifier(): FieldSchema<FieldKind.Identifier, typeof this.string> {
 		const defaultIdentifierProvider: DefaultProvider = getDefaultProvider(
-			(nodeKeyManager: NodeIdentifierManager) => {
-				return nodeKeyManager.stabilizeNodeIdentifier(
-					nodeKeyManager.generateLocalNodeIdentifier(),
-				);
+			(
+				context: FlexTreeHydratedContextMinimal | "UseGlobalContext",
+			): UnhydratedFlexTreeNode[] => {
+				const id =
+					context === "UseGlobalContext"
+						? globalIdentifierAllocator.decompress(
+								globalIdentifierAllocator.generateCompressedId(),
+							)
+						: context.nodeKeyManager.stabilizeNodeIdentifier(
+								context.nodeKeyManager.generateLocalNodeIdentifier(),
+							);
+
+				return [unhydratedFlexTreeFromInsertable(id, this.string)];
 			},
 		);
 		return createFieldSchema(FieldKind.Identifier, this.string, {
@@ -1251,4 +1307,48 @@ export function structuralName<const T extends string>(
 		inner = JSON.stringify(names);
 	}
 	return `${collectionName}<${inner}>`;
+}
+
+/**
+ * Used to allocate default identifiers for unhydrated nodes when no context is available.
+ * @remarks
+ * The identifiers allocated by this will never be compressed to Short Ids.
+ * Using this is only better than creating fully random V4 UUIDs because it reduces the entropy making it possible for things like text compression to work slightly better.
+ */
+const globalIdentifierAllocator: IIdCompressor = createIdCompressor();
+
+/**
+ * Additional information to provide to Node Schema creation.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @sealed
+ * @public
+ */
+export interface NodeSchemaOptions<out TCustomMetadata = unknown> {
+	/**
+	 * Optional metadata to associate with the Node Schema.
+	 *
+	 * @remarks
+	 * Note: this metadata is not persisted nor made part of the collaborative state; it is strictly client-local.
+	 * Different clients in the same collaborative session may see different metadata for the same field.
+	 */
+	readonly metadata?: NodeSchemaMetadata<TCustomMetadata> | undefined;
+}
+
+/**
+ * Additional information to provide to Node Schema creation. Includes fields for alpha features.
+ *
+ * @typeParam TCustomMetadata - Custom metadata properties to associate with the Node Schema.
+ * See {@link NodeSchemaMetadata.custom}.
+ *
+ * @alpha
+ */
+export interface NodeSchemaOptionsAlpha<out TCustomMetadata = unknown>
+	extends NodeSchemaOptions<TCustomMetadata> {
+	/**
+	 * The persisted metadata for this schema element.
+	 */
+	readonly persistedMetadata?: JsonCompatibleReadOnlyObject | undefined;
 }

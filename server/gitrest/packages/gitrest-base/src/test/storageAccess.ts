@@ -4,8 +4,10 @@
  */
 
 import assert from "assert";
-import { IFileSystemPromises } from "../utils";
-import { ISummaryTestMode } from "./utils";
+
+import type { IFileSystemPromises } from "../utils";
+
+import type { ISummaryTestMode } from "./utils";
 
 export type StorageAccessCallCounts = { [K in keyof IFileSystemPromises]?: number };
 

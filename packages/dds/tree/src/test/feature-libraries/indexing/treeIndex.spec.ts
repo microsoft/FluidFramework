@@ -25,15 +25,10 @@ import {
 	TreeViewConfiguration,
 	type TreeNode,
 } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
 import { Tree } from "../../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../../feature-libraries/flex-tree/lazyNode.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/core/index.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
+import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/index.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -73,14 +68,14 @@ describe("tree indexes", () => {
 		return { view, parent: view.root };
 	}
 
-	function makeTreeNode(
+	function getOrCreateTreeNode(
 		anchorNode: AnchorNode,
 		forest: IEditableForest,
 		root: SchematizingSimpleTreeView<typeof IndexableParent>,
 	): TreeNode | TreeValue {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(anchorNode, cursor);
-		const flexNode = makeTree(root.getView().context, cursor);
+		const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
 		cursor.free();
 		return getOrCreateNodeFromInnerNode(flexNode);
 	}
@@ -109,8 +104,7 @@ describe("tree indexes", () => {
 				);
 			},
 			(anchorNode: AnchorNode) => {
-				const simpleTree =
-					anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, root);
+				const simpleTree = getOrCreateTreeNode(anchorNode, forest, root);
 				if (!isTreeValue(simpleTree)) {
 					return Tree.status(simpleTree);
 				}
@@ -133,6 +127,7 @@ describe("tree indexes", () => {
 							key,
 							nodes.map((f) => {
 								const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+								assert(flexNode.isHydrated());
 								return getOrCreate(
 									anchorIds,
 									flexNode.anchorNode,
@@ -275,7 +270,7 @@ describe("tree indexes", () => {
 				(anchorNode: AnchorNode) => {
 					const cursor = forest.allocateCursor();
 					forest.moveCursorToPath(anchorNode, cursor);
-					const flexNode = makeTree(root.getView().context, cursor);
+					const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
 					cursor.free();
 					const simpleTree = getOrCreateNodeFromInnerNode(flexNode);
 					if (!isTreeValue(simpleTree)) {
@@ -300,6 +295,7 @@ describe("tree indexes", () => {
 								key,
 								nodes.map((f) => {
 									const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+									assert(flexNode.isHydrated());
 									return getOrCreate(
 										anchorIds,
 										flexNode.anchorNode,
@@ -432,8 +428,7 @@ describe("tree indexes", () => {
 					},
 					() => 3,
 					(anchorNode: AnchorNode) => {
-						const simpleTree =
-							anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, view);
+						const simpleTree = getOrCreateTreeNode(anchorNode, forest, view);
 						if (!isTreeValue(simpleTree)) {
 							return Tree.status(simpleTree);
 						}

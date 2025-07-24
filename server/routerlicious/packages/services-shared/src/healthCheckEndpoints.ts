@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Router, RequestHandler, Request, Response } from "express";
+import type { IReadinessCheck, IReadinessStatus } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IReadinessCheck, IReadinessStatus } from "@fluidframework/server-services-core";
+import { Router, type RequestHandler, type Request, type Response } from "express";
 
 function runProbe(probeType: string, probeCheck: IReadinessCheck, probeProps): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspAuthRequestInfo } from "./odspAuth.js";
+import type { IOdspAuthRequestInfo } from "./odspAuth.js";
 import { getSiteUrl } from "./odspDocLibUtils.js";
 import { throwOdspNetworkError } from "./odspErrorUtils.js";
 import { getAsync, putAsync } from "./odspRequest.js";
@@ -58,6 +58,7 @@ export interface IOdspDriveItem {
 	isFolder: boolean;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -69,8 +70,8 @@ export async function getDriveItemByRootFileName(
 	create: boolean,
 	driveId?: string,
 ): Promise<IOdspDriveItem> {
-	const accountPath = account !== undefined ? `/${account}` : "";
-	let getDriveItemUrl;
+	const accountPath = account === undefined ? "" : `/${account}`;
+	let getDriveItemUrl: string;
 	if (driveId !== undefined && driveId !== "") {
 		const encodedDrive = encodeURIComponent(driveId);
 		getDriveItemUrl = `${getSiteUrl(
@@ -82,6 +83,7 @@ export async function getDriveItemByRootFileName(
 	return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -117,6 +119,7 @@ export async function getDriveItemByServerRelativePath(
 	return getDriveItem(getDriveItemUrl, authRequestInfo, create);
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -130,6 +133,7 @@ export async function getDriveItemFromDriveAndItem(
 	return getDriveItem(url, authRequestInfo, false);
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -144,19 +148,22 @@ export async function getChildrenByDriveItem(
 	let url = `${getSiteUrl(server)}/_api/v2.1/drives/${driveItem.driveId}/items/${
 		driveItem.itemId
 	}/children`;
-	let children: any[] = [];
+	let children: unknown[] = [];
 	do {
 		const response = await getAsync(url, authRequestInfo);
 		if (response.status !== 200) {
 			// pre-0.58 error message: unableToGetChildren
 			throwOdspNetworkError("Unable to get driveItem children", response.status, response);
 		}
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 		const getChildrenResult = await response.json();
-		children = children.concat(getChildrenResult.value);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		children = [...children, ...getChildrenResult.value];
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		url = getChildrenResult["@odata.nextLink"];
 	} while (url);
 
-	return children.map(toIODSPDriveItem);
+	return children.map((child) => toIODSPDriveItem(child));
 }
 
 async function getDriveItem(
@@ -197,10 +204,12 @@ async function getDriveItem(
 			);
 		}
 	}
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 	const getDriveItemResult = await response.json();
 	return toIODSPDriveItem(getDriveItemResult);
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @legacy
  * @alpha
@@ -220,7 +229,7 @@ export async function getDriveId(
 	const drivePath = encodeURI(`${getSiteUrl(server)}${accountPath}/${library}`);
 	const index = drives.findIndex((value) => value.webUrl === drivePath);
 	if (index === -1) {
-		throw Error(`Drive ${drivePath} not found.`);
+		throw new Error(`Drive ${drivePath} not found.`);
 	}
 	return drives[index].id;
 }
@@ -231,8 +240,8 @@ async function getDefaultDrive(
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveInfo> {
 	const response = await getDriveResponse("drive", server, account, authRequestInfo);
-	const getDriveResult = await response.json();
-	return getDriveResult as IOdspDriveInfo;
+	const getDriveResult = (await response.json()) as IOdspDriveInfo;
+	return getDriveResult;
 }
 
 async function getDrives(
@@ -241,7 +250,9 @@ async function getDrives(
 	authRequestInfo: IOdspAuthRequestInfo,
 ): Promise<IOdspDriveInfo[]> {
 	const response = await getDriveResponse("drives", server, account, authRequestInfo);
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 	const getDriveResult = await response.json();
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 	return getDriveResult.value as IOdspDriveInfo[];
 }
 
@@ -250,7 +261,7 @@ async function getDriveResponse(
 	server: string,
 	account: string,
 	authRequestInfo: IOdspAuthRequestInfo,
-) {
+): Promise<Response> {
 	const accountPath = account ? `/${account}` : "";
 	const getDriveUrl = `${getSiteUrl(server)}${accountPath}/_api/v2.1/${routeTail}`;
 	const response = await getAsync(getDriveUrl, authRequestInfo);
@@ -267,15 +278,23 @@ async function getDriveResponse(
 	return response;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: use a real type here
 function toIODSPDriveItem(parsedDriveItemBody: any): IOdspDriveItem {
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 	const path = parsedDriveItemBody.parentReference.path
-		? parsedDriveItemBody.parentReference.path.split("root:")[1]
+		? // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			parsedDriveItemBody.parentReference.path.split("root:")[1]
 		: "/";
 	return {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		path,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		name: parsedDriveItemBody.name,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		driveId: parsedDriveItemBody.parentReference.driveId,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 		itemId: parsedDriveItemBody.id,
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 		isFolder: !!parsedDriveItemBody.folder,
 	};
 }

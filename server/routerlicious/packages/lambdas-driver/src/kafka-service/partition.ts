@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import {
+
+import type {
 	IConsumer,
 	IQueuedMessage,
 	IPartitionLambda,
@@ -13,9 +14,10 @@ import {
 	LambdaCloseType,
 	IContextErrorData,
 } from "@fluidframework/server-services-core";
-import { QueueObject, queue } from "async";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
+import { type QueueObject, queue } from "async";
+import type { Provider } from "nconf";
+
 import { CheckpointManager } from "./checkpointManager";
 import { Context } from "./context";
 

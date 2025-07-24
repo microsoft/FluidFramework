@@ -89,6 +89,9 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
         attachmentGETStorageUrl: string;
         deltaStorageUrl: string;
     };
+    fileMetadata?: {
+        eTag?: string;
+    };
     // (undocumented)
     fileName: string;
     // (undocumented)
@@ -241,6 +244,7 @@ export interface ShareLinkInfoType {
         error?: any;
         shareId?: string;
     };
+    isRedemptionNonDurable?: boolean;
     sharingLinkToRedeem?: string;
 }
 

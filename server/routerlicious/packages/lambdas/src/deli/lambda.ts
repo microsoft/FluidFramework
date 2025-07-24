@@ -3,22 +3,24 @@
  * Licensed under the MIT License.
  */
 
+import { TypedEventEmitter } from "@fluidframework/common-utils";
 import {
-	ISequencedDocumentAugmentedMessage,
-	IBranchOrigin,
-	IClientJoin,
-	IDocumentSystemMessage,
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	ITrace,
+	type ISequencedDocumentAugmentedMessage,
+	type IBranchOrigin,
+	type IClientJoin,
+	type IDocumentSystemMessage,
+	type ISequencedDocumentMessage,
+	type ISequencedDocumentSystemMessage,
+	type ITrace,
 	MessageType,
 	NackErrorType,
 	ScopeType,
-	ISignalMessage,
-	ISummaryAck,
-	ISummaryContent,
-	IDocumentMessage,
+	type ISignalMessage,
+	type ISummaryAck,
+	type ISummaryContent,
+	type IDocumentMessage,
 } from "@fluidframework/protocol-definitions";
+import type { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
 	canSummarize,
 	defaultHash,
@@ -28,44 +30,43 @@ import {
 import {
 	ControlMessageType,
 	extractBoxcar,
-	IClientSequenceNumber,
-	IContext,
-	IControlMessage,
-	IDeliState,
-	IDisableNackMessagesControlMessageContents,
-	IMessage,
-	INackMessage,
-	ITicketedSignalMessage,
-	IPartitionLambda,
-	IProducer,
-	IRawOperationMessage,
-	ISequencedOperationMessage,
-	IServiceConfiguration,
+	type IClientSequenceNumber,
+	type IContext,
+	type IControlMessage,
+	type IDeliState,
+	type IDisableNackMessagesControlMessageContents,
+	type IMessage,
+	type INackMessage,
+	type ITicketedSignalMessage,
+	type IPartitionLambda,
+	type IProducer,
+	type IRawOperationMessage,
+	type ISequencedOperationMessage,
+	type IServiceConfiguration,
 	NackMessagesType,
 	NackOperationType,
 	RawOperationType,
 	SequencedOperationType,
-	IQueuedMessage,
-	INackMessagesControlMessageContents,
-	IUpdateDSNControlMessageContents,
+	type IQueuedMessage,
+	type INackMessagesControlMessageContents,
+	type IUpdateDSNControlMessageContents,
 	LambdaCloseType,
 	SignalOperationType,
-	ITicketedMessage,
-	IExtendClientControlMessageContents,
-	ISequencedSignalClient,
-	IClientManager,
-	ICheckpointService,
+	type ITicketedMessage,
+	type IExtendClientControlMessageContents,
+	type ISequencedSignalClient,
+	type IClientManager,
+	type ICheckpointService,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
 	getLumberBaseProperties,
-	Lumber,
+	type Lumber,
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { DocumentContext } from "@fluidframework/server-lambdas-driver";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { IEvent } from "../events";
+
+import type { IEvent } from "../events";
 import {
 	logCommonSessionEndMetrics,
 	createSessionMetric,
@@ -73,11 +74,12 @@ import {
 	createRoomLeaveMessage,
 	CheckpointReason,
 	DocumentCheckpointManager,
-	IServerMetadata,
+	type IServerMetadata,
 } from "../utils";
+
 import { CheckpointContext } from "./checkpointContext";
+import type { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
 import { ClientSequenceNumberManager } from "./clientSeqManager";
-import { IDeliCheckpointManager, ICheckpointParams } from "./checkpointManager";
 
 enum IncomingMessageOrder {
 	Duplicate,

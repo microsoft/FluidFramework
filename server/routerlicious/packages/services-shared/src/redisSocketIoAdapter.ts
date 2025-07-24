@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import * as msgpack from "notepack.io";
-import * as socketio from "socket.io";
-import { Adapter, BroadcastOptions, Room, SocketId } from "socket.io-adapter";
-import { PacketType } from "socket.io-parser";
-import * as uuid from "uuid";
-
 import { promiseTimeout } from "@fluidframework/server-services-client";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import * as msgpack from "notepack.io";
+import type * as socketio from "socket.io";
+import { Adapter, type BroadcastOptions, type Room, type SocketId } from "socket.io-adapter";
+import { PacketType } from "socket.io-parser";
+import * as uuid from "uuid";
 
 /**
  * @internal

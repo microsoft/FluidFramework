@@ -5,9 +5,10 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
+
 import { Deferred } from "@fluidframework/common-utils";
-import { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
+import type { IClient, IDocumentMessage } from "@fluidframework/protocol-definitions";
+import type {
 	INode,
 	IOrderer,
 	IOrdererConnection,
@@ -16,15 +17,16 @@ import {
 	MongoManager,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { debug } from "./debug";
-import {
+import type {
 	IConcreteNode,
 	IConnectedMessage,
 	IConnectMessage,
 	INodeMessage,
 	IOpMessage,
 } from "./interfaces";
-import { IOrdererConnectionFactory, ProxyOrderer } from "./proxyOrderer";
+import { type IOrdererConnectionFactory, ProxyOrderer } from "./proxyOrderer";
 import { Socket } from "./socket";
 
 class ProxySocketConnection implements IOrdererConnection {

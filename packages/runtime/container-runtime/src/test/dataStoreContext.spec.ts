@@ -17,11 +17,7 @@ import { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType, FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	IDocumentStorageService,
-	IBlob,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { IBlob, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	IGarbageCollectionData,
 	CreateChildSummarizerNodeFn,
@@ -34,6 +30,7 @@ import {
 	SummarizeInternalFn,
 	channelsTreeName,
 	type IContainerRuntimeBase,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -84,7 +81,7 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalFluidDataStoreContext;
-		const storage = {} as unknown as IDocumentStorageService;
+		const storage = {} as unknown as IRuntimeStorageService;
 		const scope = {} as unknown as FluidObject;
 		const makeLocallyVisibleFn = () => {};
 		let parentContext: IFluidParentContextPrivate;
@@ -250,6 +247,7 @@ describe("Data Store Context Tests", () => {
 					IFluidDataStoreRegistry: registryWithSubRegistries,
 					clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 					deltaManager: new MockDeltaManager(),
+					isReadOnly: () => false,
 				} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 				localDataStoreContext = new LocalFluidDataStoreContext({
 					id: dataStoreId,
@@ -350,7 +348,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
-						eventName: "FluidDataStoreContext:DataStoreCreatedInSummarizer",
+						eventName: "FluidDataStoreContext:DataStoreCreatedWhileReadonly",
 						fullPackageName: {
 							tag: TelemetryDataTag.CodeArtifact,
 							value: packageName.join("/"),
@@ -389,7 +387,7 @@ describe("Data Store Context Tests", () => {
 
 				const expectedEvents = [
 					{
-						eventName: "FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer",
+						eventName: "FluidDataStoreContext:DataStoreMessageWhileReadonly",
 						type: DataStoreMessageType.ChannelOp,
 						fluidDataStoreId: {
 							tag: TelemetryDataTag.CodeArtifact,
@@ -430,9 +428,8 @@ describe("Data Store Context Tests", () => {
 				}
 				for (const event of mockLogger.events) {
 					if (
-						event.eventName ===
-							"FluidDataStoreContext:DataStoreMessageSubmittedInSummarizer" ||
-						event.eventName === "FluidDataStoreContext:DataStoreCreatedInSummarizer"
+						event.eventName === "FluidDataStoreContext:DataStoreMessageWhileReadonly" ||
+						event.eventName === "FluidDataStoreContext:DataStoreCreatedWhileReadonly"
 					) {
 						eventCount++;
 					}
@@ -521,7 +518,7 @@ describe("Data Store Context Tests", () => {
 	describe("RemoteDataStoreContext", () => {
 		let remoteDataStoreContext: RemoteFluidDataStoreContext;
 		let dataStoreAttributes: ReadFluidDataStoreAttributes;
-		const storage: Partial<IDocumentStorageService> = {};
+		const storage: Partial<IRuntimeStorageService> = {};
 		const scope = {} as unknown as FluidObject;
 		let summarizerNode: IRootSummarizerNodeWithGC;
 		let parentContext: IFluidParentContextPrivate;
@@ -547,6 +544,7 @@ describe("Data Store Context Tests", () => {
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				containerRuntime: parentContext as unknown as IContainerRuntimeBase,
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 
@@ -612,7 +610,7 @@ describe("Data Store Context Tests", () => {
 						snapshot: snapshotTree,
 						parentContext,
 						storage: new StorageServiceWithAttachBlobs(
-							storage as IDocumentStorageService,
+							storage as IRuntimeStorageService,
 							attachBlobs,
 						),
 						scope,
@@ -656,7 +654,7 @@ describe("Data Store Context Tests", () => {
 						id: invalidId,
 						pkg: ["TestDataStore1"],
 						parentContext,
-						storage: storage as IDocumentStorageService,
+						storage: storage as IRuntimeStorageService,
 						scope,
 						createSummarizerNodeFn,
 						snapshot: undefined,
@@ -736,7 +734,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -781,7 +779,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -830,7 +828,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -884,7 +882,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -959,7 +957,7 @@ describe("Data Store Context Tests", () => {
 					snapshot: snapshotTree,
 					parentContext,
 					storage: new StorageServiceWithAttachBlobs(
-						storage as IDocumentStorageService,
+						storage as IRuntimeStorageService,
 						attachBlobs,
 					),
 					scope,
@@ -979,7 +977,7 @@ describe("Data Store Context Tests", () => {
 
 	describe("LocalDetachedFluidDataStoreContext", () => {
 		let localDataStoreContext: LocalDetachedFluidDataStoreContext;
-		const storage = {} as unknown as IDocumentStorageService;
+		const storage = {} as unknown as IRuntimeStorageService;
 		const scope = {} as unknown as FluidObject;
 		let factory: IFluidDataStoreFactory;
 		const makeLocallyVisibleFn = () => {};
@@ -1043,6 +1041,7 @@ describe("Data Store Context Tests", () => {
 				baseLogger: createChildLogger(),
 				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
 				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
 			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 		});
 

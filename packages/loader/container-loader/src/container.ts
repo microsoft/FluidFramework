@@ -15,7 +15,7 @@ import {
 	IAudience,
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions";
-import {
+import type {
 	ContainerWarning,
 	IBatchMessage,
 	ICodeDetailsLoader,
@@ -30,11 +30,11 @@ import {
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
-	isFluidCodeDetails,
 	ReadOnlyInfo,
-	type ILoader,
-	type ILoaderOptions,
+	ILoader,
+	ILoaderOptions,
 } from "@fluidframework/container-definitions/internal";
+import { isFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IEvent,
@@ -128,7 +128,10 @@ import {
 } from "./contracts.js";
 import { DeltaManager, IConnectionArgs } from "./deltaManager.js";
 import { RelativeLoader } from "./loader.js";
-import { validateRuntimeCompatibility } from "./loaderLayerCompatState.js";
+import {
+	validateDriverCompatibility,
+	validateRuntimeCompatibility,
+} from "./loaderLayerCompatState.js";
 import {
 	createMemoryDetachedBlobStorage,
 	tryInitializeMemoryDetachedBlobStorage,
@@ -243,6 +246,16 @@ export interface IContainerCreateProps {
 	 * protocol implementation for handling the quorum and/or the audience.
 	 */
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
+
+	/**
+	 * Optional property for specifying a timeout for retry connection loop.
+	 *
+	 * If provided, container will use this value as the maximum time to wait
+	 * for a successful connection before giving up throwing the most recent error.
+	 *
+	 * If not provided, default behavior will be to retry until non-retryable error occurs.
+	 */
+	readonly retryConnectionTimeoutMs?: number;
 }
 
 /**
@@ -605,6 +618,7 @@ export class Container
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
+	private readonly _retryConnectionTimeoutMs: number | undefined;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -787,12 +801,14 @@ export class Container
 			scope,
 			subLogger,
 			protocolHandlerBuilder,
+			retryConnectionTimeoutMs,
 		} = createProps;
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
+		this._retryConnectionTimeoutMs = retryConnectionTimeoutMs;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -1336,20 +1352,10 @@ export class Container
 										createNewResolvedUrl !== undefined,
 									0x2c4 /* "client should not be summarizer before container is created" */,
 								);
-								this.service = await runWithRetry(
-									async () =>
-										this.serviceFactory.createContainer(
-											summary,
-											createNewResolvedUrl,
-											this.subLogger,
-											false, // clientIsSummarizer
-										),
-									"containerAttach",
-									this.mc.logger,
-									{
-										cancel: this._deltaManager.closeAbortController.signal,
-									}, // progress
-								);
+								this.service = await this.createDocumentService(createNewResolvedUrl, {
+									mode: "attach",
+									summary,
+								});
 							}
 							this.storageAdapter.connectToService(this.service);
 							return this.storageAdapter;
@@ -1588,14 +1594,51 @@ export class Container
 		this.emit("metadataUpdate", metadata);
 	};
 
+	/**
+	 * Creates a document service during container attachment or loading.
+	 * @param resolvedUrl - The resolved URL of the container.
+	 * @param props - Properties indicating whether to load or attach the container. For attaching,
+	 * a summary tree can be provided.
+	 * @remarks This method validates that the driver is compatible with the Loader.
+	 */
 	private async createDocumentService(
-		serviceProvider: () => Promise<IDocumentService>,
+		resolvedUrl: IResolvedUrl,
+		props: { mode: "load" } | { mode: "attach"; summary: ISummaryTree | undefined },
 	): Promise<IDocumentService> {
-		const service = await serviceProvider();
-		// Back-compat for Old driver
-		if (service.on !== undefined) {
-			service.on("metadataUpdate", this.metadataUpdateHandler);
+		let service: IDocumentService;
+		if (props.mode === "load") {
+			service = await this.serviceFactory.createDocumentService(
+				resolvedUrl,
+				this.subLogger,
+				this.client.details.type === summarizerClientType,
+			);
+			if (service.on !== undefined) {
+				// Back-compat for Old driver
+				service.on("metadataUpdate", this.metadataUpdateHandler);
+			}
+		} else {
+			service = await runWithRetry(
+				async () =>
+					this.serviceFactory.createContainer(
+						props.summary,
+						resolvedUrl,
+						this.subLogger,
+						false, // clientIsSummarizer
+					),
+				"containerAttach",
+				this.mc.logger,
+				{
+					cancel: this._deltaManager.closeAbortController.signal,
+				}, // progress
+			);
 		}
+
+		// Validate that the Driver is compatible with this Loader.
+		const maybeDriverCompatDetails = service as FluidObject<ILayerCompatDetails>;
+		validateDriverCompatibility(maybeDriverCompatDetails.ILayerCompatDetails, (error) =>
+			this.dispose(error),
+		);
+
 		return service;
 	}
 
@@ -1616,13 +1659,7 @@ export class Container
 		dmLastKnownSeqNumber: number;
 	}> {
 		const timings: Record<string, number> = { phase1: performanceNow() };
-		this.service = await this.createDocumentService(async () =>
-			this.serviceFactory.createDocumentService(
-				resolvedUrl,
-				this.subLogger,
-				this.client.details.type === summarizerClientType,
-			),
-		);
+		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
 
 		// Except in cases where it has stashed ops or requested by feature gate, the container will connect in "read" mode
 		const mode =
@@ -1823,7 +1860,7 @@ export class Container
 			if (attachmentBlobs !== undefined) {
 				assert(
 					this.detachedBlobStorage !== undefined,
-					"detached blob storage should always exist when detached",
+					0xb8e /* detached blob storage should always exist when detached */,
 				);
 				tryInitializeMemoryDetachedBlobStorage(this.detachedBlobStorage, attachmentBlobs);
 			}
@@ -2037,6 +2074,7 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
+					this._retryConnectionTimeoutMs,
 				),
 		);
 
@@ -2391,83 +2429,84 @@ export class Container
 	): Promise<void> {
 		assert(this._runtime?.disposed !== false, 0x0dd /* "Existing runtime not disposed" */);
 
-		// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
-		// are set. Global requests will still go directly to the loader
-		const maybeLoader: FluidObject<ILoader> = this.scope;
-		const loader = new RelativeLoader(this, maybeLoader.ILoader);
+		try {
+			// The relative loader will proxy requests to '/' to the loader itself assuming no non-cache flags
+			// are set. Global requests will still go directly to the loader
+			const maybeLoader: FluidObject<ILoader> = this.scope;
+			const loader = new RelativeLoader(this, maybeLoader.ILoader);
 
-		const loadCodeResult = await PerformanceEvent.timedExecAsync(
-			this.subLogger,
-			{ eventName: "CodeLoad" },
-			async () => this.codeLoader.load(codeDetails),
-		);
+			const loadCodeResult = await PerformanceEvent.timedExecAsync(
+				this.subLogger,
+				{ eventName: "CodeLoad" },
+				async () => this.codeLoader.load(codeDetails),
+			);
 
-		this._loadedModule = {
-			module: loadCodeResult.module,
-			// An older interface ICodeLoader could return an IFluidModule which didn't have details.
-			// If we're using one of those older ICodeLoaders, then we fix up the module with the specified details here.
-			// TODO: Determine if this is still a realistic scenario or if this fixup could be removed.
-			details: loadCodeResult.details ?? codeDetails,
-		};
+			this._loadedModule = {
+				module: loadCodeResult.module,
+				// An older interface ICodeLoader could return an IFluidModule which didn't have details.
+				// If we're using one of those older ICodeLoaders, then we fix up the module with the specified details here.
+				// TODO: Determine if this is still a realistic scenario or if this fixup could be removed.
+				details: loadCodeResult.details ?? codeDetails,
+			};
 
-		const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
-			this._loadedModule.module.fluidExport;
-		const runtimeFactory = fluidExport?.IRuntimeFactory;
-		if (runtimeFactory === undefined) {
-			throw new Error(packageNotFactoryError);
+			const fluidExport: FluidObject<IProvideRuntimeFactory> | undefined =
+				this._loadedModule.module.fluidExport;
+			const runtimeFactory = fluidExport?.IRuntimeFactory;
+			if (runtimeFactory === undefined) {
+				throw new Error(packageNotFactoryError);
+			}
+
+			const existing = snapshotTree !== undefined;
+
+			const context = new ContainerContext(
+				this.options,
+				this.scope,
+				snapshotTree,
+				this._loadedFromVersion,
+				this._deltaManager,
+				this.storageAdapter,
+				this.protocolHandler.quorum,
+				this.protocolHandler.audience,
+				loader,
+				(type, contents, batch, metadata) =>
+					this.submitContainerMessage(type, contents, batch, metadata),
+				(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+					this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
+				(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+					this.submitBatch(batch, referenceSequenceNumber),
+				(content, targetClientId) => this.submitSignal(content, targetClientId),
+				(error?: ICriticalContainerError) => this.dispose(error),
+				(error?: ICriticalContainerError) => this.close(error),
+				this.updateDirtyContainerState,
+				this.getAbsoluteUrl,
+				() => this.resolvedUrl?.id,
+				() => this.clientId,
+				() => this.attachState,
+				() => this.connected,
+				this._deltaManager.clientDetails,
+				existing,
+				this.subLogger,
+				pendingLocalState,
+				snapshot,
+			);
+
+			const runtime = await PerformanceEvent.timedExecAsync(
+				this.subLogger,
+				{ eventName: "InstantiateRuntime" },
+				async () => runtimeFactory.instantiateRuntime(context, existing),
+			);
+
+			// Validate that the Runtime is compatible with this Loader.
+			const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
+			validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails);
+
+			this._runtime = runtime;
+			this._lifecycleEvents.emit("runtimeInstantiated");
+			this._loadedCodeDetails = codeDetails;
+		} catch (error) {
+			this.dispose(normalizeError(error));
+			throw error;
 		}
-
-		const existing = snapshotTree !== undefined;
-
-		const context = new ContainerContext(
-			this.options,
-			this.scope,
-			snapshotTree,
-			this._loadedFromVersion,
-			this._deltaManager,
-			this.storageAdapter,
-			this.protocolHandler.quorum,
-			this.protocolHandler.audience,
-			loader,
-			(type, contents, batch, metadata) =>
-				this.submitContainerMessage(type, contents, batch, metadata),
-			(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
-				this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
-			(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
-				this.submitBatch(batch, referenceSequenceNumber),
-			(content, targetClientId) => this.submitSignal(content, targetClientId),
-			(error?: ICriticalContainerError) => this.dispose(error),
-			(error?: ICriticalContainerError) => this.close(error),
-			this.updateDirtyContainerState,
-			this.getAbsoluteUrl,
-			() => this.resolvedUrl?.id,
-			() => this.clientId,
-			() => this.attachState,
-			() => this.connected,
-			this._deltaManager.clientDetails,
-			existing,
-			this.subLogger,
-			pendingLocalState,
-			snapshot,
-		);
-
-		const runtime = await PerformanceEvent.timedExecAsync(
-			this.subLogger,
-			{ eventName: "InstantiateRuntime" },
-			async () => runtimeFactory.instantiateRuntime(context, existing),
-		);
-
-		// Validate that the Runtime is compatible with this Loader.
-		const maybeRuntimeCompatDetails = runtime as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(maybeRuntimeCompatDetails.ILayerCompatDetails, (error) =>
-			this.dispose(error),
-		);
-
-		this._runtime = runtime;
-
-		this._lifecycleEvents.emit("runtimeInstantiated");
-
-		this._loadedCodeDetails = codeDetails;
 	}
 
 	private readonly updateDirtyContainerState = (dirty: boolean): void => {
@@ -2486,13 +2525,11 @@ export class Container
 	 */
 	private setContextConnectedState(connected: boolean, readonly: boolean): void {
 		if (this._runtime?.disposed === false && this.loaded) {
-			/**
-			 * We want to lie to the ContainerRuntime when we are in readonly mode to prevent issues with pending
-			 * ops getting through to the DeltaManager.
-			 * The ContainerRuntime's "connected" state simply means it is ok to send ops
-			 * See https://dev.azure.com/fluidframework/internal/_workitems/edit/1246
-			 */
-			this.runtime.setConnectionState(connected && !readonly, this.clientId);
+			this.runtime.setConnectionState(
+				connected &&
+					!readonly /* container can send ops if connected to service and not in readonly mode */,
+				this.clientId,
+			);
 		}
 	}
 

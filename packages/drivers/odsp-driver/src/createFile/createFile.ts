@@ -4,32 +4,32 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	IFileEntry,
-	IOdspResolvedUrl,
-	InstrumentedStorageTokenFetcher,
+	type IFileEntry,
+	type IOdspResolvedUrl,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-	ShareLinkInfoType,
+	type ShareLinkInfoType,
 	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { ICreateFileResponse, type IRenameFileResponse } from "./../contracts.js";
+import type { ICreateFileResponse, IRenameFileResponse } from "./../contracts.js";
 import { ClpCompliantAppHeader } from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
-import { EpochTracker } from "./../epochTracker.js";
+import type { EpochTracker } from "./../epochTracker.js";
 import { getHeadersWithAuth } from "./../getUrlAndHeadersWithAuth.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
 import { checkForKnownServerFarmType, getApiRoot } from "./../odspUrlHelper.js";
 import {
-	INewFileInfo,
+	type INewFileInfo,
 	appendNavParam,
 	buildOdspShareLinkReqParams,
 	createCacheSnapshotKey,
@@ -212,7 +212,7 @@ export async function createNewEmptyFluidFile(
 	const encodedFilename = encodeURIComponent(`${newFileInfo.filename}.tmp`);
 	const initialUrl = `${getApiRoot(new URL(newFileInfo.siteUrl))}/drives/${
 		newFileInfo.driveId
-	}/items/root:/${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
+	}/items/root:${filePath}/${encodedFilename}:/content?@name.conflictBehavior=rename&select=id,name,parentReference`;
 
 	return getWithRetryForTokenRefresh(async (options) => {
 		const url = initialUrl;

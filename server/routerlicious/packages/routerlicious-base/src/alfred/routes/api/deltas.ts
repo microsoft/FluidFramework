@@ -3,27 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
+import type { IAlfredTenant } from "@fluidframework/server-services-client";
+import type {
 	ICache,
 	IDeltaService,
 	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
 	throttle,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
-import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
 import { Router } from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import winston from "winston";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
+
 import { Constants } from "../../../utils";
 
 export function create(
@@ -90,7 +92,12 @@ export function create(
 		["/v1/:tenantId/:id", "/:tenantId/:id/v1"],
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const from = stringToSequenceNumber(request.query.from);
@@ -118,7 +125,12 @@ export function create(
 		"/raw/:tenantId/:id",
 		validateRequestParams("tenantId", "id"),
 		throttle(generalTenantThrottler, winston, tenantThrottleOptions),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const tenantId = request.params.tenantId || appTenants[0].id;
@@ -147,7 +159,12 @@ export function create(
 			winston,
 			getDeltasTenantThrottleOptions,
 		),
-		verifyStorageToken(tenantManager, config, defaultTokenValidationOptions),
+		verifyStorageToken(
+			tenantManager,
+			config,
+			[ScopeType.DocRead],
+			defaultTokenValidationOptions,
+		),
 		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const documentId = request.params.id;

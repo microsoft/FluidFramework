@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IOdspResolvedUrl,
 	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
+import { type OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getFileLink } from "./getFileLink.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
@@ -137,6 +137,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		const requestToBeResolved = { headers: request.headers, url: request.url };
 		const isSharingLinkToRedeem =
 			requestToBeResolved.headers?.[SharingLinkHeader.isSharingLinkToRedeem];
+		const isRedemptionNonDurable =
+			requestToBeResolved.headers?.[SharingLinkHeader.isRedemptionNonDurable];
 		try {
 			const url = new URL(request.url);
 
@@ -167,6 +169,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			// the eligible length.
 			odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {}, {
 				sharingLinkToRedeem: this.removeNavParam(request.url),
+				isRedemptionNonDurable: isRedemptionNonDurable ?? false,
 			});
 		}
 		if (odspResolvedUrl.itemId) {

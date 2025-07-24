@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ICollection } from "@fluidframework/server-services-core";
+import type { ICollection } from "@fluidframework/server-services-core";
 import * as _ from "lodash";
 
 // TODO consider https://github.com/kofrasa/mingo for handling queries
@@ -47,6 +47,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			throw new Error("Not found");
 		}
+		// eslint-disable-next-line import/namespace
 		_.extend(value, set);
 	}
 
@@ -56,6 +57,7 @@ export class Collection<T> implements ICollection<T> {
 			this.collection.push(set);
 		}
 
+		// eslint-disable-next-line import/namespace
 		_.extend(value, set);
 	}
 

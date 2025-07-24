@@ -17,22 +17,17 @@ export {
 	FlexTreeEntityKind,
 	isFlexTreeNode,
 	flexTreeSlot,
+	type FlexibleNodeContent,
+	type FlexibleFieldContent,
+	type HydratedFlexTreeNode,
 } from "./flexTreeTypes.js";
 
 export {
-	visitBipartiteIterableTree,
-	Skip,
-	visitBipartiteIterableTreeWithState,
-	visitIterableTree,
-	visitIterableTreeWithState,
-} from "./navigation.js";
-
-export {
-	getTreeContext,
 	type FlexTreeContext,
 	type FlexTreeHydratedContext,
 	Context,
 	ContextSlot,
+	type FlexTreeHydratedContextMinimal,
 } from "./context.js";
 
 export { type FlexTreeNodeEvents } from "./treeEvents.js";
@@ -41,6 +36,8 @@ export {
 	assertFlexTreeEntityNotFreed,
 	LazyEntity,
 } from "./lazyEntity.js";
+
+export { getOrCreateHydratedFlexTreeNode } from "./lazyNode.js";
 
 export { getSchemaAndPolicy, indexForAt } from "./utilities.js";
 

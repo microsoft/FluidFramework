@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { v4 as uuid } from "uuid";
-import type { RequestHandler, Request, Response } from "express";
 import {
 	CorrelationIdHeaderName,
 	TelemetryContextHeaderName,
 } from "@fluidframework/server-services-client";
 import {
 	BaseTelemetryProperties,
-	ITelemetryContextProperties,
+	type ITelemetryContextProperties,
 	isTelemetryContextProperties,
 	getGlobalTelemetryContext,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import type { RequestHandler, Request, Response } from "express";
+import { v4 as uuid } from "uuid";
 
 /**
  * Safely parse telemetry context properties from a string.

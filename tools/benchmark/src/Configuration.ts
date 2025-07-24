@@ -5,8 +5,8 @@
 
 import { assert } from "chai";
 
-import { Phase } from "./runBenchmark";
-import { Timer } from "./timer";
+import type { Phase } from "./runBenchmark";
+import type { Timer } from "./timer";
 
 /**
  * Kinds of benchmarks.

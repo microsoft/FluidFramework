@@ -137,16 +137,19 @@ export {
 	identifierFieldKindIdentifier,
 	storedEmptyFieldSchema,
 	type StoredSchemaCollection,
-	schemaFormat,
+	schemaFormatV1,
+	schemaFormatV2,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
 	MapNodeStoredSchema,
 	decodeFieldSchema,
-	encodeFieldSchema,
+	encodeFieldSchemaV1,
+	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
 	type SchemaAndPolicy,
 	Multiplicity,
 	type SchemaPolicy,
+	SchemaVersion,
 } from "./schema-stored/index.js";
 
 export {
@@ -208,7 +211,6 @@ export {
 	type Adapters,
 	AdaptedViewSchema,
 	type TreeAdapter,
-	AllowedUpdateType,
 } from "./schema-view/index.js";
 
 export {

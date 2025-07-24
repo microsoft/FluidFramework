@@ -8,28 +8,27 @@ import { strict as assert } from "node:assert";
 import {
 	AzureClient,
 	type AzureContainerServices,
-	AzureLocalConnectionConfig,
-	AzureRemoteConnectionConfig,
+	type AzureLocalConnectionConfig,
+	type AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import {
-	getPresenceViaDataObject,
-	ExperimentalPresenceManager,
-	type ExperimentalPresenceDO,
-	type Presence,
+	getPresence,
 	type Attendee,
+	ExperimentalPresenceManager,
+	type Presence,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/presence/alpha";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
-import { ScopeType } from "../AzureClientFactory.js";
+import type { ScopeType } from "../AzureClientFactory.js";
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
-import { configProvider } from "../utils.js";
+import type { configProvider } from "../utils.js";
 
-import { MessageFromChild, MessageToChild } from "./messageTypes.js";
+import type { MessageFromChild, MessageToChild } from "./messageTypes.js";
 
 type MessageFromParent = MessageToChild;
 type MessageToParent = Required<MessageFromChild>;
@@ -83,7 +82,8 @@ const getOrCreatePresenceContainer = async (
 	const client = new AzureClient({ connection: connectionProps });
 	const schema: ContainerSchema = {
 		initialObjects: {
-			presence: ExperimentalPresenceManager,
+			// A DataObject is added as otherwise fluid-static complains "Container cannot be initialized without any DataTypes"
+			_unused: ExperimentalPresenceManager,
 		},
 	};
 	let services: AzureContainerServices;
@@ -107,9 +107,7 @@ const getOrCreatePresenceContainer = async (
 		"Container is not attached after attach is called",
 	);
 
-	const presence = getPresenceViaDataObject(
-		container.initialObjects.presence as ExperimentalPresenceDO,
-	);
+	const presence = getPresence(container);
 	return {
 		client,
 		container,

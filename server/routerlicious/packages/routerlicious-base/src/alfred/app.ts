@@ -4,7 +4,14 @@
  */
 
 import { isIPv4, isIPv6 } from "net";
+
+import { RestLessServer, type IHttpServerConfig } from "@fluidframework/server-services";
 import {
+	CallingServiceHeaderName,
+	DriverVersionHeaderName,
+	type IAlfredTenant,
+} from "@fluidframework/server-services-client";
+import type {
 	IDeltaService,
 	IDocumentStorage,
 	IProducer,
@@ -17,35 +24,32 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { json, urlencoded } from "body-parser";
-import compression from "compression";
-import cookieParser from "cookie-parser";
-import express from "express";
-import shajs from "sha.js";
-import { Provider } from "nconf";
-import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import {
-	CallingServiceHeaderName,
-	DriverVersionHeaderName,
-	IAlfredTenant,
-} from "@fluidframework/server-services-client";
-import {
-	alternativeMorganLoggerMiddleware,
-	bindTelemetryContext,
-	bindTimeoutContext,
-	jsonMorganLoggerMiddleware,
-} from "@fluidframework/server-services-utils";
-import { RestLessServer, IHttpServerConfig } from "@fluidframework/server-services";
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
 	HttpProperties,
 } from "@fluidframework/server-services-telemetry";
+import {
+	alternativeMorganLoggerMiddleware,
+	bindTelemetryContext,
+	bindTimeoutContext,
+	jsonMorganLoggerMiddleware,
+	bindAbortControllerContext,
+} from "@fluidframework/server-services-utils";
+import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
+import { json, urlencoded } from "body-parser";
+import compression from "compression";
+import cookieParser from "cookie-parser";
+import express from "express";
+import type { Provider } from "nconf";
+import shajs from "sha.js";
+
 import { catch404, getIdFromRequest, getTenantIdFromRequest, handleError } from "../utils";
-import { IDocumentDeleteService } from "./services";
+
 import * as alfredRoutes from "./routes";
+import type { IDocumentDeleteService } from "./services";
 
 export function create(
 	config: Provider,
@@ -75,6 +79,7 @@ export function create(
 	const enableLatencyMetric = config.get("alfred:enableLatencyMetric") ?? false;
 	const enableEventLoopLagMetric = config.get("alfred:enableEventLoopLagMetric") ?? false;
 	const httpServerConfig: IHttpServerConfig = config.get("system:httpServer");
+	const axiosAbortSignalEnabled = config.get("axiosAbortSignalEnabled") ?? false;
 
 	// Express app configuration
 	const app: express.Express = express();
@@ -100,23 +105,31 @@ export function create(
 		// If connectionTimeoutMs configured and not 0, bind timeout context.
 		app.use(bindTimeoutContext(httpServerConfig.connectionTimeoutMs));
 	}
+	if (axiosAbortSignalEnabled) {
+		app.use(bindAbortControllerContext());
+	}
 	const loggerFormat = config.get("logger:morganFormat");
 	if (loggerFormat === "json") {
 		app.use(
 			jsonMorganLoggerMiddleware(
 				"alfred",
 				(tokens, req, res) => {
+					const tenantId = getTenantIdFromRequest(req.params);
+					const documentId = getIdFromRequest(req.params);
 					const additionalProperties: Record<string, any> = {
 						[HttpProperties.driverVersion]: tokens.req(
 							req,
 							res,
 							DriverVersionHeaderName,
 						),
-						[BaseTelemetryProperties.tenantId]: getTenantIdFromRequest(req.params),
-						[BaseTelemetryProperties.documentId]: getIdFromRequest(req.params),
+						[BaseTelemetryProperties.tenantId]: tenantId,
+						[BaseTelemetryProperties.documentId]: documentId,
 						[CommonProperties.callingServiceName]:
 							req.headers[CallingServiceHeaderName] ?? "",
 					};
+
+					res.locals.tenantId = tenantId;
+					res.locals.documentId = documentId;
 					if (enableClientIPLogging === true) {
 						const hashedClientIP = req.ip
 							? shajs("sha256").update(`${req.ip}`).digest("hex")

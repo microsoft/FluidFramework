@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
-import type { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager/index.js";
@@ -51,11 +51,11 @@ function createBlobManager(overrides?: Partial<ConstructorParameters<typeof Blob
 			blobManagerLoadInfo: {},
 			stashedBlobs: undefined,
 			localBlobIdGenerator: undefined,
-			storage: failProxy<IDocumentStorageService>(),
+			storage: failProxy<IRuntimeStorageService>(),
 			sendBlobAttachOp: () => {},
 			blobRequested: () => {},
 			isBlobDeleted: () => false,
-			createBlobPlaceholders: false,
+			createBlobPayloadPending: false,
 
 			// overrides
 			...overrides,
@@ -94,7 +94,7 @@ describe("BlobManager.stashed", () => {
 		const blobManager = createBlobManager({
 			sendBlobAttachOp(_localId, _storageId) {},
 			stashedBlobs: {},
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return createResponse.promise;
 				},
@@ -108,7 +108,7 @@ describe("BlobManager.stashed", () => {
 		const pendingBlobs = await pendingBlobsP;
 		const blobManager2 = createBlobManager({
 			stashedBlobs: pendingBlobs,
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return createResponse.promise;
 				},
@@ -122,7 +122,7 @@ describe("BlobManager.stashed", () => {
 		const blobManager = createBlobManager({
 			sendBlobAttachOp(_localId, _storageId) {},
 			stashedBlobs: {},
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return createResponse.promise;
 				},
@@ -141,7 +141,7 @@ describe("BlobManager.stashed", () => {
 		const createResponse2 = new Deferred<ICreateBlobResponse>();
 		const blobManager2 = createBlobManager({
 			stashedBlobs: pendingBlobs,
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return createResponse2.promise;
 				},
@@ -183,7 +183,7 @@ describe("BlobManager.stashed", () => {
 					blob: "a",
 				},
 			},
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return createResponse.promise;
 				},
@@ -212,7 +212,7 @@ describe("BlobManager.stashed", () => {
 			stashedBlobs: {
 				olderThanTTL,
 			},
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return createResponse.promise;
 				},
@@ -252,7 +252,7 @@ describe("BlobManager.stashed", () => {
 			stashedBlobs: {
 				storageIdWithoutUploadTime,
 			},
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async () => {
 					return createResponse.promise;
 				},
@@ -295,7 +295,7 @@ describe("BlobManager.stashed", () => {
 
 		const blobManager = createBlobManager({
 			stashedBlobs,
-			storage: failProxy<IDocumentStorageService>({
+			storage: failProxy<IRuntimeStorageService>({
 				createBlob: async (b) => {
 					await letUploadsComplete.promise;
 					return { id: `id:${bufferToString(b, "utf8")}` };

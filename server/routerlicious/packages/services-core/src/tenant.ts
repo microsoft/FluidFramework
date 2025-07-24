@@ -4,7 +4,7 @@
  */
 
 import type { IUser, ScopeType } from "@fluidframework/protocol-definitions";
-import { IGitManager } from "@fluidframework/server-services-client";
+import type { IGitManager } from "@fluidframework/server-services-client";
 
 /**
  * @internal
@@ -111,6 +111,7 @@ export enum EncryptionKeyVersion {
 	key2023 = "2023",
 	key2024 = "2024",
 	key2025 = "2025",
+	key2026 = "2026",
 }
 
 /**

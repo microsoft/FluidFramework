@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import cluster, { Worker } from "cluster";
+import cluster, { type Worker } from "cluster";
 // Note: `availableParallelism` Node 18 is required for this functionality
-import { availableParallelism } from "os";
 import * as http from "http";
-import { AddressInfo } from "net";
+import type { AddressInfo } from "net";
+import { availableParallelism } from "os";
 import * as util from "util";
-import * as core from "@fluidframework/server-services-core";
+
+import type * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
 import * as socketIo from "./socketIoServer";
 
 /**

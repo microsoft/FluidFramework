@@ -46,7 +46,10 @@ module.exports = {
 					"TSEnumDeclaration",
 					"TSInterfaceDeclaration",
 					"TSTypeAliasDeclaration",
-					"VariableDeclaration",
+
+					// Require JSDoc/TSDoc comments on variable declarations, but only those that are named exports.
+					// Specifying just "VariableDeclaration" results in eslint flagging all variable declarations scoped within something that is exported, including in the body of functions, which is not desired.
+					"ExportNamedDeclaration > VariableDeclaration",
 				],
 			},
 		],
@@ -69,38 +72,6 @@ module.exports = {
 						},
 					},
 				],
-
-				/**
-				 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
-				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
-				 *
-				 * @see {@link https://typescript-eslint.io/rules/consistent-type-exports/}
-				 */
-				"@typescript-eslint/consistent-type-exports": [
-					"error",
-					{
-						// Makes it easier to tell, at a glance, the impact of a change to individual exports.
-						fixMixedExportsWithInlineTypeSpecifier: true,
-					},
-				],
-
-				/**
-				 * Requires that type-only imports be done using `import type`. Being explicit allows the TypeScript
-				 * `isolatedModules` flag to be used, and isolated modules are needed to adopt modern build tools like swc.
-				 *
-				 * @see {@link https://typescript-eslint.io/rules/consistent-type-imports/}
-				 */
-				"@typescript-eslint/consistent-type-imports": [
-					"error",
-					{ fixStyle: "separate-type-imports" },
-				],
-
-				/**
-				 * Ensures that type-only import statements do not result in runtime side-effects.
-				 *
-				 * @see {@link https://typescript-eslint.io/rules/no-import-type-side-effects/}
-				 */
-				"@typescript-eslint/no-import-type-side-effects": "error",
 
 				/**
 				 * Prefer Record to index-signature object style. That is, prefer:

@@ -3,19 +3,20 @@
  * Licensed under the MIT License.
  */
 
+import {
+	type ILumberjackEngine,
+	type ILumberjackSchemaValidator,
+	Lumberjack,
+	type ILumberjackOptions,
+} from "@fluidframework/server-services-telemetry";
 import { debug } from "debug";
-import * as winston from "winston";
 import nconf from "nconf";
+import * as winston from "winston";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 import Transport = require("winston-transport");
-import {
-	ILumberjackEngine,
-	ILumberjackSchemaValidator,
-	Lumberjack,
-	ILumberjackOptions,
-} from "@fluidframework/server-services-telemetry";
-import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
+
 import { configureGlobalTelemetryContext } from "./globalContext";
+import { WinstonLumberjackEngine } from "./winstonLumberjackEngine";
 
 /**
  * @internal

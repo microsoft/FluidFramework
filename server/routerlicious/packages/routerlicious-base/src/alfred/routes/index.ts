@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type { IAlfredTenant } from "@fluidframework/server-services-client";
+import type {
 	IDeltaService,
 	IDocumentStorage,
 	IProducer,
@@ -16,14 +17,16 @@ import {
 	IClusterDrainingChecker,
 	IFluidAccessTokenGenerator,
 	IReadinessCheck,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { Router } from "express";
-import { Provider } from "nconf";
 import type { Emitter as RedisEmitter } from "@socket.io/redis-emitter";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import { IDocumentDeleteService } from "../services";
+import type { Router } from "express";
+import type { Provider } from "nconf";
+
+import type { IDocumentDeleteService } from "../services";
+
 import * as api from "./api";
+
 export interface IRoutes {
 	agent: Router;
 	api: Router;

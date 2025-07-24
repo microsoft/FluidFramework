@@ -236,6 +236,13 @@ export class Outbox {
 		return this.messageCount === 0;
 	}
 
+	public containsUserChanges(): boolean {
+		return (
+			this.mainBatch.containsUserChanges() || this.blobAttachBatch.containsUserChanges()
+			// ID Allocation ops are not user changes
+		);
+	}
+
 	/**
 	 * Detect whether batching has been interrupted by an incoming message being processed. In this case,
 	 * we will flush the accumulated messages to account for that (if allowed) and create a new batch with the new
@@ -436,20 +443,19 @@ export class Outbox {
 
 		const rawBatch = batchManager.popBatch(resubmitInfo?.batchId);
 
-		// When resubmitting, we respect the staged state of the original batch.
-		// In this case rawBatch.staged will match the state of inStagingMode when
-		// the resubmit occurred, which is not relevant.
-		const staged = resubmitInfo?.staged ?? rawBatch.staged === true;
+		// On resubmit we use the original batch's staged state, so these should match as well.
+		const staged = rawBatch.staged === true;
+		assert(
+			resubmitInfo === undefined || resubmitInfo.staged === staged,
+			0xba3 /* Mismatch in staged state tracking */,
+		);
 
 		const groupingEnabled =
 			!disableGroupedBatching && this.params.groupingManager.groupedBatchingEnabled();
 		if (
 			batchManager.options.canRebase &&
 			rawBatch.hasReentrantOps === true &&
-			// NOTE: This is too restrictive. We should rebase for any reentrant op, not just if it's going to be a grouped batch
-			// However there is some test that is depending on this behavior so we haven't removed these conditions yet. See AB#33427
-			groupingEnabled &&
-			rawBatch.messages.length > 1
+			groupingEnabled
 		) {
 			assert(!this.rebasing, 0x6fa /* A rebased batch should never have reentrant ops */);
 			// If a batch contains reentrant ops (ops created as a result from processing another op)
@@ -457,7 +463,7 @@ export class Outbox {
 			// and eventual consistency at the DDS level.
 			// Note: Since this is happening in the same turn the ops were originally created with,
 			// and they haven't gone to PendingStateManager yet, we can just let them respect
-			// ContainerRuntime.inStagingMode
+			// ContainerRuntime.inStagingMode.  So we do not plumb local 'staged' variable through here.
 			this.rebase(rawBatch, batchManager);
 			return;
 		}

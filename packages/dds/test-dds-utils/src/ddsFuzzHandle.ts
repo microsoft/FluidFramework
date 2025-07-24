@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandle } from "@fluidframework/core-interfaces";
-import { type IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import {
 	FluidHandleBase,
 	generateHandleContextPath,
@@ -42,8 +41,6 @@ export class DDSFuzzHandle extends FluidHandleBase<string> {
 			this.attached = true;
 		}
 	}
-
-	public bind(handle: IFluidHandle): void {}
 }
 
 export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IPoisonedHandle {
@@ -76,6 +73,4 @@ export class PoisonedDDSFuzzHandle extends FluidHandleBase<string> implements IP
 			this.attached = true;
 		}
 	}
-
-	public bind(handle: IFluidHandle): void {}
 }

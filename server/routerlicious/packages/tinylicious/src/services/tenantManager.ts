@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { default as Axios } from "axios";
+import type { ScopeType, IUser } from "@fluidframework/protocol-definitions";
 import {
+	BasicRestWrapper,
+	GitManager,
+	Historian,
+	type IGitManager,
+} from "@fluidframework/server-services-client";
+import type {
 	ITenant,
 	ITenantConfig,
 	ITenantConfigManager,
@@ -12,13 +18,7 @@ import {
 	ITenantOrderer,
 	ITenantStorage,
 } from "@fluidframework/server-services-core";
-import {
-	BasicRestWrapper,
-	GitManager,
-	Historian,
-	IGitManager,
-} from "@fluidframework/server-services-client";
-import type { ScopeType, IUser } from "@fluidframework/protocol-definitions";
+import { default as Axios } from "axios";
 
 export class TinyliciousTenant implements ITenant {
 	private readonly owner = "tinylicious";

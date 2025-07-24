@@ -5,49 +5,52 @@
 
 import assert from "assert";
 import { inspect } from "util";
-import { ProtocolOpHandler } from "@fluidframework/protocol-base";
+
+import type { ProtocolOpHandler } from "@fluidframework/protocol-base";
 import {
-	IDocumentSystemMessage,
-	ISequencedDocumentMessage,
-	ISummaryAck,
-	ISummaryNack,
+	type IDocumentSystemMessage,
+	type ISequencedDocumentMessage,
+	type ISummaryAck,
+	type ISummaryNack,
 	MessageType,
-	ISequencedDocumentAugmentedMessage,
-	ISequencedDocumentSystemMessage,
-	IProtocolState,
+	type ISequencedDocumentAugmentedMessage,
+	type ISequencedDocumentSystemMessage,
+	type IProtocolState,
 } from "@fluidframework/protocol-definitions";
-import { DocumentContext } from "@fluidframework/server-lambdas-driver";
+import type { DocumentContext } from "@fluidframework/server-lambdas-driver";
 import {
 	ControlMessageType,
 	extractBoxcar,
-	IContext,
-	IControlMessage,
-	IProducer,
-	IScribe,
-	ISequencedOperationMessage,
-	IServiceConfiguration,
+	type IContext,
+	type IControlMessage,
+	type IProducer,
+	type IScribe,
+	type ISequencedOperationMessage,
+	type IServiceConfiguration,
 	SequencedOperationType,
-	IQueuedMessage,
-	IPartitionLambda,
-	LambdaCloseType,
+	type IQueuedMessage,
+	type IPartitionLambda,
+	type LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import {
 	getLumberBaseProperties,
-	Lumber,
+	type Lumber,
 	LumberEventName,
 	Lumberjack,
 	CommonProperties,
 } from "@fluidframework/server-services-telemetry";
 import Deque from "double-ended-queue";
 import * as _ from "lodash";
+
 import {
 	createSessionMetric,
 	logCommonSessionEndMetrics,
 	CheckpointReason,
-	IServerMetadata,
+	type IServerMetadata,
 	DocumentCheckpointManager,
 } from "../utils";
-import { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
+
+import type { ICheckpointManager, IPendingMessageReader, ISummaryWriter } from "./interfaces";
 import {
 	getClientIds,
 	initializeProtocol,
@@ -581,6 +584,7 @@ export class ScribeLambda implements IPartitionLambda {
 					typeof message.contents === "string" &&
 					message.type !== MessageType.ClientLeave
 				) {
+					// eslint-disable-next-line import/namespace
 					const clonedMessage = _.cloneDeep(message);
 					clonedMessage.contents = JSON.parse(clonedMessage.contents as string);
 					this.protocolHandler.processMessage(clonedMessage, false);

@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IThrottleAndUsageStorageManager,
 	IThrottlingMetrics,
 	IUsageData,
 } from "@fluidframework/server-services-core";
 import {
-	executeRedisMultiWithHmsetExpire,
-	executeRedisMultiWithHmsetExpireAndLpush,
-	IRedisParameters,
-	IRedisClientConnectionManager,
-} from "@fluidframework/server-services-utils";
-import {
 	BaseTelemetryProperties,
 	CommonProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import {
+	executeRedisMultiWithHmsetExpire,
+	executeRedisMultiWithHmsetExpireAndLpush,
+	type IRedisParameters,
+	type IRedisClientConnectionManager,
+} from "@fluidframework/server-services-utils";
 
 /**
  * Manages storage of throttling metrics and usage data in redis.

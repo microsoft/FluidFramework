@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { LumberEventName } from "./lumberEventNames";
 import { Lumber } from "./lumber";
+import { LumberEventName } from "./lumberEventNames";
 import {
 	LogLevel,
 	LumberType,
-	ILumberjackEngine,
-	ILumberjackSchemaValidator,
+	type ILumberjackEngine,
+	type ILumberjackSchemaValidator,
 	handleError,
-	ILumberFormatter,
+	type ILumberFormatter,
 } from "./resources";
-import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
 import {
 	BaseSanitizationLumberFormatter,
 	SanitizationLumberFormatter,
 } from "./sanitizationLumberFormatter";
+import { getGlobal, getGlobalTelemetryContext } from "./telemetryContext";
 
 /**
  * @internal

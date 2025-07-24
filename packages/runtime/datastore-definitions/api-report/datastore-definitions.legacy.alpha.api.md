@@ -42,6 +42,7 @@ export interface IChannelServices {
 // @alpha @legacy
 export interface IChannelStorageService {
     contains(path: string): Promise<boolean>;
+    getSnapshotTree?(): ISnapshotTree | undefined;
     list(path: string): Promise<string[]>;
     readBlob(path: string): Promise<ArrayBufferLike>;
 }
@@ -87,7 +88,6 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;
-    // (undocumented)
     readonly idCompressor: IIdCompressor | undefined;
     // (undocumented)
     readonly IFluidHandleContext: IFluidHandleContext;
@@ -129,6 +129,8 @@ export interface IFluidDataStoreRuntimeEvents extends IEvent {
 export interface IFluidDataStoreRuntimeExperimental extends IFluidDataStoreRuntime {
     // (undocumented)
     readonly inStagingMode?: boolean;
+    // (undocumented)
+    readonly isDirty?: boolean;
 }
 
 // @alpha @legacy (undocumented)

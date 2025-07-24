@@ -5,7 +5,13 @@
 
 import { done, isOperationType, takeAsync } from "@fluid-private/stochastic-test-utils";
 
-import { makeGenerator, reducer, saveFailures, type StressOperations } from "../baseModel.js";
+import {
+	ddsModelMinimizers,
+	makeGenerator,
+	reducer,
+	saveFailures,
+	type StressOperations,
+} from "../baseModel.js";
 import {
 	convertToRealHandles,
 	covertLocalServerStateToDdsState,
@@ -73,6 +79,7 @@ describe("Local Server Stress with rollback", () => {
 							} satisfies OrderSequentially;
 						},
 						50,
+						(state) => state.client.container.attachState !== "Detached",
 					],
 				]),
 			),
@@ -81,6 +88,7 @@ describe("Local Server Stress with rollback", () => {
 				? orderSequentiallyReducer(state, op)
 				: reducer(state, op),
 		validateConsistency: validateConsistencyOfAllDDS,
+		minimizationTransforms: ddsModelMinimizers,
 	};
 
 	createLocalServerStressSuite(model, {
@@ -92,13 +100,13 @@ describe("Local Server Stress with rollback", () => {
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
-			...[15], // timeout
-			...[61, 82], //  Mismatch in pending changes
-			...[66], // interval start side not equal
-			...[76], //  Rollback op does not match last pending
-			...[84, 88], //  Startpoints of interval  different
-			...[12, 28, 32, 36, 44, 45, 55, 60, 89], //  Number of subDirectories not same
-			...[4, 14, 69, 74], // 0xb86 and 0xb89: exit staging mode logic failing due to id compressor allocation ops
+			...[12], // Values differ at key
+			...[28, 30], // Key not found or value not matching key
+			...[15, 31, 38], // Number of keys not same (directory)
+			...[25, 53], // Number of subDirectories not same
+			...[], // SubDirectory with name ... not present in second directory
+			...[], // 0x2fa (Unexpected pending message received)
+			...[29], // 0x88f (tree) AB#43469
 		],
 	});
 });

@@ -3,21 +3,21 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	DriverHeader,
-	IContainerPackageInfo,
-	IResolvedUrl,
-	IUrlResolver,
+	type IContainerPackageInfo,
+	type IResolvedUrl,
+	type IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	IOdspResolvedUrl,
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 
-import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import { ClpCompliantAppHeader, FileMetadataHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getHashedDocumentId } from "./odspPublicUtils.js";
 import { getApiRoot } from "./odspUrlHelper.js";
@@ -180,6 +180,9 @@ export class OdspDriverUrlResolver implements IUrlResolver {
 			},
 			fileVersion,
 			isClpCompliantApp: request.headers?.[ClpCompliantAppHeader.isClpCompliantApp],
+			fileMetadata: {
+				eTag: request.headers?.[FileMetadataHeader.eTag],
+			},
 		};
 	}
 

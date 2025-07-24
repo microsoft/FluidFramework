@@ -4,7 +4,8 @@
  */
 
 import assert from "assert";
-import { IWebSocket } from "@fluidframework/server-services-core";
+
+import type { IWebSocket } from "@fluidframework/server-services-core";
 
 /**
  * @internal

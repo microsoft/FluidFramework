@@ -4,6 +4,7 @@
  */
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IGarbageCollectionData,
@@ -164,6 +165,8 @@ export interface IDeltaHandler {
 	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
 	 * account for the fact that A' never inserted content.
 	 */
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	reSubmit(message: any, localOpMetadata: unknown, squash?: boolean): void;
 
 	/**
@@ -181,6 +184,8 @@ export interface IDeltaHandler {
 	 * submission of the op if attached. Soon the old flow will be removed
 	 * and only the new flow will be supported.
 	 */
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	applyStashedOp(message: any): void;
 
 	/**
@@ -188,6 +193,8 @@ export interface IDeltaHandler {
 	 * @param message - The original message that was submitted.
 	 * @param localOpMetadata - The local metadata associated with the original message.
 	 */
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	rollback?(message: any, localOpMetadata: unknown): void;
 }
 
@@ -206,6 +213,8 @@ export interface IDeltaConnection {
 	 * and not sent to the server. It will be provided back when this message is acknowledged by the server. It will
 	 * also be provided back when asked to resubmit the message.
 	 */
+	// TODO: Use something other than `any` (breaking change)
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	submit(messageContent: any, localOpMetadata: unknown): void;
 
 	/**
@@ -240,6 +249,12 @@ export interface IChannelStorageService {
 	 * Lists the blobs that exist at a specific path.
 	 */
 	list(path: string): Promise<string[]>;
+
+	/**
+	 * Returns the snapshot tree for the channel. This will help channels examine their snapshot when it consists
+	 * of dynamic trees and blobs, i.e., the number of tree and blobs and / or their keys are not known in advance.
+	 */
+	getSnapshotTree?(): ISnapshotTree | undefined;
 }
 
 /**

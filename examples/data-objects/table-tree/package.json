@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/table-tree",
-	"version": "2.40.0",
+	"version": "2.52.0",
 	"private": true,
 	"description": "Simple table example app.",
 	"homepage": "https://fluidframework.com",
@@ -50,14 +50,15 @@
 		"@fluidframework/tree": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
-		"uuid": "^9.0.0"
+		"scheduler": "^0.20.0",
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
 		"@fluid-example/webpack-fluid-loader": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.55.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.3",
+		"@fluidframework/build-tools": "^0.56.0",
+		"@fluidframework/eslint-config-fluid": "^5.7.4",
 		"@fluidframework/test-tools": "^1.0.195075",
 		"@fluidframework/test-utils": "workspace:~",
 		"@types/jest": "29.5.3",
@@ -93,5 +94,10 @@
 				"library": "main"
 			}
 		}
+	},
+	"typeValidation": {
+		"disabled": true,
+		"broken": {},
+		"entrypoint": "legacy"
 	}
 }

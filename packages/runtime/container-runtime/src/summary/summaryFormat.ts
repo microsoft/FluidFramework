@@ -6,7 +6,6 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -15,6 +14,7 @@ import {
 	ISummaryTreeWithStats,
 	channelsTreeName,
 	gcTreeKey,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 
 import { blobsTreeName } from "../blobManager/index.js";
@@ -287,7 +287,7 @@ export function wrapSummaryInChannelsTree(summarizeResult: ISummaryTreeWithStats
 }
 
 export async function getFluidDataStoreAttributes(
-	storage: IDocumentStorageService,
+	storage: IRuntimeStorageService,
 	snapshot: ISnapshotTree,
 ): Promise<ReadFluidDataStoreAttributes> {
 	const attributes = await readAndParse<ReadFluidDataStoreAttributes>(

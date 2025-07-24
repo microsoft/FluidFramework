@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { NetworkError } from "@fluidframework/server-services-client";
+import type {
 	ITokenRevocationManager,
 	IRevokedTokenChecker,
 	ITokenRevocationResponse,
 } from "@fluidframework/server-services-core";
-import { NetworkError } from "@fluidframework/server-services-client";
 
 /**
  * @internal

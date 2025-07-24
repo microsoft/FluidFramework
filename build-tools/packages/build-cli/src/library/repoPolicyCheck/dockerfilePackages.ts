@@ -5,7 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
 

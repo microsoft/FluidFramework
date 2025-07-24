@@ -27,7 +27,7 @@ import {
 import {
 	type BufferFormat,
 	IdentifierToken,
-	handleShapesAndIdentifiers,
+	updateShapesAndIdentifiersEncoding,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
@@ -60,13 +60,11 @@ import {
 import type {
 	FieldBatch,
 	FieldBatchEncodingContext,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
+} from "../../../../feature-libraries/index.js";
 import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	fieldKinds,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
@@ -159,7 +157,7 @@ describe("compressedEncode", () => {
 				const buffer: BufferFormat<EncodedChunkShape> = [];
 				encodeValue(value, shape, buffer);
 				assert.deepEqual(buffer, encoded);
-				const processed = handleShapesAndIdentifiers(version, [buffer]);
+				const processed = updateShapesAndIdentifiersEncoding(version, [buffer]);
 				assert(processed.data.length === 1);
 				const stream = { data: processed.data[0], offset: 0 };
 				const decoded = readValue(stream, shape, {

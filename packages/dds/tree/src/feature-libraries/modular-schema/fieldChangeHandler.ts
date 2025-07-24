@@ -18,8 +18,8 @@ import type {
 import type { IdAllocator, Invariant } from "../../util/index.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
-import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
 export type NestedChangesIndices = [
 	NodeId,
@@ -216,19 +216,13 @@ export interface FieldEditor<TChangeset> {
  */
 export type ToDelta = (child: NodeId) => DeltaFieldMap;
 
-/**
- */
 export type NodeChangeInverter = (change: NodeId) => NodeId;
 
-/**
- */
 export enum NodeAttachState {
 	Attached,
 	Detached,
 }
 
-/**
- */
 export type NodeChangeRebaser = (
 	change: NodeId | undefined,
 	baseChange: NodeId | undefined,
@@ -239,15 +233,11 @@ export type NodeChangeRebaser = (
 	state?: NodeAttachState,
 ) => NodeId | undefined;
 
-/**
- */
 export type NodeChangeComposer = (
 	change1: NodeId | undefined,
 	change2: NodeId | undefined,
 ) => NodeId;
 
-/**
- */
 export type NodeChangePruner = (change: NodeId) => NodeId | undefined;
 
 /**

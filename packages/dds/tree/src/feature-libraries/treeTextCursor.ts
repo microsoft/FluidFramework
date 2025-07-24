@@ -66,7 +66,7 @@ export function cursorForJsonableTreeNode(root: JsonableTree): ITreeCursorSynchr
 }
 
 /**
- * @returns an {@link ITreeCursorSynchronous} in fields mode for a JsonableTree field.
+ * Creates an {@link ITreeCursorSynchronous} in fields mode for a JsonableTree field.
  */
 export function cursorForJsonableTreeField(
 	trees: JsonableTree[],

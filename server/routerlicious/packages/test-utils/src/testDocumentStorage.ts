@@ -3,20 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import {
+import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
+import type {
 	ICommit,
 	ICommitDetails,
 	ICreateCommitParams,
 	ICreateTreeEntry,
 } from "@fluidframework/gitresources";
+import { type IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
 import {
-	IGitCache,
-	IGitManager,
-	ISession,
+	type ISummaryTree,
+	type ICommittedProposal,
+	type ITreeEntry,
+	SummaryType,
+	type ISnapshotTreeEx,
+	type SummaryObject,
+	FileMode,
+} from "@fluidframework/protocol-definitions";
+import {
+	type IGitCache,
+	type IGitManager,
+	type ISession,
 	getQuorumTreeEntries,
 	mergeAppAndProtocolTree,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDatabaseManager,
 	IDeliState,
 	IDocument,
@@ -25,17 +36,6 @@ import {
 	IScribe,
 	ITenantManager,
 } from "@fluidframework/server-services-core";
-import {
-	ISummaryTree,
-	ICommittedProposal,
-	ITreeEntry,
-	SummaryType,
-	ISnapshotTreeEx,
-	SummaryObject,
-	FileMode,
-} from "@fluidframework/protocol-definitions";
-import { IQuorumSnapshot, getGitMode, getGitType } from "@fluidframework/protocol-base";
-import { gitHashFile, IsoBuffer, Uint8ArrayToString } from "@fluidframework/common-utils";
 
 // Forked from DocumentStorage to remove to server dependencies and enable testing of other data stores.
 /**

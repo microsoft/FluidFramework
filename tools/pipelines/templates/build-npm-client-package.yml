@@ -140,6 +140,11 @@ parameters:
   type: boolean
   default: false
 
+# Indicates if this is a release build that should be shipped to arrow.
+- name: shouldShip
+  type: boolean
+  default: false
+
 # The `resources` specify the location and version of the 1ES Pipeline Template.
 resources:
   repositories:
@@ -174,9 +179,7 @@ extends:
           # This is the service connection for the Arrow Service Connection in FluidFramework Azure DevOps organization
           serviceConnection: ff-internal-arrow-sc
           # This will make sure that the artifacts are published to the Arrow Service Connection if they are release or pre-release
-          # Note: using `variables` in a compile-time condition is easy to get wrong; here we know that the 'release' variable does exist at compile time
-          ${{ if or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')) }}:
-            isShipped: true
+          isShipped: ${{ parameters.shouldShip }}
       sourceAnalysisPool:
         name: Azure-Pipelines-1ESPT-ExDShared
         image: windows-2022

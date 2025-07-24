@@ -67,6 +67,7 @@ export class DataObjectFactory<TObj extends DataObject<I>, I extends DataObjectT
 export interface DataObjectFactoryProps<TObj extends PureDataObject<I>, I extends DataObjectTypes = DataObjectTypes> {
     readonly ctor: new (props: IDataObjectProps<I>) => TObj;
     readonly optionalProviders?: FluidObjectSymbolProvider<I["OptionalProviders"]>;
+    readonly policies?: Partial<IFluidDataStorePolicies>;
     readonly registryEntries?: NamedFluidDataStoreRegistryEntries;
     readonly runtimeClass?: typeof FluidDataStoreRuntime;
     readonly sharedObjects?: readonly IChannelFactory[];
@@ -136,6 +137,18 @@ export class PureDataObjectFactory<TObj extends PureDataObject<I>, I extends Dat
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     get registryEntry(): NamedFluidDataStoreRegistryEntry;
     readonly type: string;
+}
+
+// @alpha @legacy
+export abstract class TreeDataObject<TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObject<TDataObjectTypes> {
+    // (undocumented)
+    initializeInternal(existing: boolean): Promise<void>;
+    protected get tree(): ITree;
+}
+
+// @alpha @legacy
+export class TreeDataObjectFactory<TDataObject extends TreeDataObject<TDataObjectTypes>, TDataObjectTypes extends DataObjectTypes = DataObjectTypes> extends PureDataObjectFactory<TDataObject, TDataObjectTypes> {
+    constructor(props: DataObjectFactoryProps<TDataObject, TDataObjectTypes>);
 }
 
 ```

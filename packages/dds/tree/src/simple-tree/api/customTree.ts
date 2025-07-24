@@ -4,8 +4,9 @@
  */
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	EmptyKey,
@@ -19,9 +20,9 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 } from "../../core/index.js";
+import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
-import type { TreeLeafValue } from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue } from "../core/index.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -29,8 +30,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isObjectNodeSchema } from "../objectNodeTypes.js";
-import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
+import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.
@@ -43,6 +43,12 @@ export interface TreeEncodingOptions {
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 * @defaultValue false.
+	 * @privateRemarks
+	 * TODO AB#43548:
+	 * Replace this with an enum that provides three options:
+	 * - `usePropertyKeys`: use property keys. Supported for import and export.
+	 * - `allStoredKeys`: use stored keys, and include unknown optional fields. Supported for export only, at least for the short term.
+	 * - `knownStoredKeys`: use stored keys but do not include unknown optional fields. Supported for import and export.
 	 */
 	readonly useStoredKeys?: boolean;
 }
@@ -105,7 +111,7 @@ export function customFromCursor<TChild>(
 			return reader.value;
 		default: {
 			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
-			if (nodeSchema.kind === NodeKind.Array) {
+			if (isArrayNodeSchema(nodeSchema)) {
 				const fields = inCursorField(reader, EmptyKey, () =>
 					mapCursorField(reader, () => childHandler(reader, options, schema)),
 				);
@@ -230,4 +236,13 @@ export function replaceHandles<T>(tree: unknown, replacer: HandleConverter<T>): 
 			return { clone: true, value };
 		}
 	});
+}
+
+/**
+ * Throws a `UsageError` indicating that a type is unknown in the current context.
+ */
+export function unknownTypeError(type: string): never {
+	throw new UsageError(
+		`Failed to parse tree due to occurrence of type ${JSON.stringify(type)} which is not defined in this context.`,
+	);
 }

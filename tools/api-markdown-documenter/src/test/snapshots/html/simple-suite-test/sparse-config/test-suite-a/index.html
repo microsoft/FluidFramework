@@ -11,26 +11,28 @@
       </section>
       <section>
         <h3 id="test-suite-a-remarks">Remarks</h3>
-        <p>
-          <p>This remarks block includes a bulleted list!</p>
-          <p>- Bullet 1</p>
-          <p>- Bullet 2</p>
-          <p>And an ordered list for good measure!</p>
-          <p>1. List item 1</p>
-          <p>2. List item 2</p>
-          <p>3. List item 3</p>
-          <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
-          <p>- Good link (no alias): <a href="docs/test-suite-a/testclass-class">TestClass</a></p>
-          <p>- Good link (with alias): <span><i>function alias text</i></span></p>
-          <p>- Bad link (no alias): <span><i>InvalidItem</i></span></p>
-          <p>- Bad link (with alias): <span><i>even though I link to an invalid item, I would still like this text to be rendered</i></span></p>
-        </p>
+        <p>This remarks block includes a bulleted list!</p>
+        <ul>
+          <li>Bullet 1</li>
+          <li>Bullet 2</li>
+        </ul>
+        <p>And an ordered list for good measure!</p>
+        <ol>
+          <li>List item 1</li>
+          <li>List item 2</li>
+          <li>List item 3</li>
+        </ol>
+        <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
+        <ul>
+          <li>Good link (no alias): <a href="docs/test-suite-a/testclass-class">TestClass</a></li>
+          <li>Good link (with alias): <i>function alias text</i></li>
+          <li>Bad link (no alias): <i>InvalidItem</i></li>
+          <li>Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i></li>
+        </ul>
       </section>
       <section>
         <h3 id="test-suite-a-example">Example</h3>
-        <p>
-          <p>A test example</p><code>const foo = bar;</code>
-        </p>
+        <p>A test example</p><code>const foo = bar;</code>
       </section>
       <section>
         <h3>Interfaces</h3>
@@ -139,19 +141,19 @@
             <tr>
               <td><a href="docs/test-suite-a/testfunctionreturninginlinetype-function">testFunctionReturningInlineType()</a></td>
               <td></td>
-              <td><span>{ foo: number; bar: <a href="docs/test-suite-a/testenum-enum">TestEnum</a>; }</span></td>
+              <td>{ foo: number; bar: <a href="docs/test-suite-a/testenum-enum">TestEnum</a>; }</td>
               <td>Test function that returns an inline type</td>
             </tr>
             <tr>
               <td><a href="docs/test-suite-a/testfunctionreturningintersectiontype-function">testFunctionReturningIntersectionType()</a></td>
               <td><code>Deprecated</code></td>
-              <td><span><a href="docs/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="docs/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></span></td>
+              <td><a href="docs/test-suite-a/testemptyinterface-interface">TestEmptyInterface</a> &#x26; <a href="docs/test-suite-a/testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></td>
               <td>Test function that returns an inline type</td>
             </tr>
             <tr>
               <td><a href="docs/test-suite-a/testfunctionreturninguniontype-function">testFunctionReturningUnionType()</a></td>
               <td></td>
-              <td><span>string | <a href="docs/test-suite-a/testinterface-interface">TestInterface</a></span></td>
+              <td>string | <a href="docs/test-suite-a/testinterface-interface">TestInterface</a></td>
               <td>Test function that returns an inline type</td>
             </tr>
           </tbody>
@@ -174,7 +176,7 @@
               <td><a href="docs/test-suite-a/testconstwithemptydeprecatedblock-variable">testConstWithEmptyDeprecatedBlock</a></td>
               <td><code>Deprecated</code></td>
               <td><code>readonly</code></td>
-              <td><span>string</span></td>
+              <td>string</td>
               <td>I have a <code>@deprecated</code> tag with an empty comment block.</td>
             </tr>
           </tbody>

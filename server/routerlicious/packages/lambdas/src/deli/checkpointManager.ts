@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	ICheckpointService,
 	IDeliState,
 	IQueuedMessage,
 } from "@fluidframework/server-services-core";
-import { CheckpointReason } from "../utils";
+
+import type { CheckpointReason } from "../utils";
 
 /**
  * @internal

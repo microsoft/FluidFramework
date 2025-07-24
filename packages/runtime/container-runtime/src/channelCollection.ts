@@ -121,7 +121,7 @@ interface FluidDataStoreMessage {
 }
 
 /**
- * This version of the interface is private to this the package. it should never be exported under any tag.
+ * This version of the interface is private to this the package. It should never be exported under any tag.
  * It is used to manage interactions within the container-runtime package. If something is needed
  * cross package, it is likely it is also being used cross layer (ContainerRuntime * DataStoreRuntime).
  * If that is the case, the change likely needs to be staged directly on IFluidParentContext. Changes
@@ -701,7 +701,9 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public get disposed(): boolean {
 		return this.disposeOnce.evaluated;
 	}
-	public readonly dispose = (): void => this.disposeOnce.value;
+	public dispose(): void {
+		return this.disposeOnce.value;
+	}
 
 	public reSubmit(
 		type: string,
@@ -1116,10 +1118,10 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		context.processSignal(message, local);
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string): void {
+	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.setConnectionState(connected, clientId);
+				context.setConnectionState(canSendOps, clientId);
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -1130,7 +1132,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						}),
 						details: JSON.stringify({
 							runtimeConnected: this.parentContext.connected,
-							connected,
+							canSendOps,
 						}),
 					},
 					error,
@@ -1145,7 +1147,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 	public notifyReadOnlyState(readonly: boolean): void {
 		for (const [fluidDataStoreId, context] of this.contexts) {
 			try {
-				context.notifyReadOnlyState(readonly);
+				context.notifyReadOnlyState();
 			} catch (error) {
 				this.mc.logger.sendErrorEvent(
 					{
@@ -1156,6 +1158,32 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 						details: {
 							runtimeReadonly: this.parentContext.isReadOnly(),
 							readonly,
+						},
+					},
+					error,
+				);
+			}
+		}
+	}
+
+	/**
+	 * Notifies all data store contexts about the current staging mode state.
+	 *
+	 * @param staging - A boolean indicating whether the container is in staging mode.
+	 */
+	public notifyStagingMode(staging: boolean): void {
+		for (const [fluidDataStoreId, context] of this.contexts) {
+			try {
+				context.notifyStagingMode(staging);
+			} catch (error) {
+				this.mc.logger.sendErrorEvent(
+					{
+						eventName: "notifyStagingModeError",
+						...tagCodeArtifacts({
+							fluidDataStoreId,
+						}),
+						details: {
+							staging,
 						},
 					},
 					error,
@@ -1518,7 +1546,7 @@ export class ChannelCollection implements IFluidDataStoreChannel, IDisposable {
 		const id = requestParser.pathParts[0];
 
 		// Differentiate between requesting the dataStore directly, or one of its children
-		const requestForChild = !requestParser.isLeaf(1);
+		const requestForChild = requestParser.pathParts.length > 1;
 
 		const headerData: RuntimeHeaderData = {};
 		if (typeof request.headers?.[RuntimeHeaders.wait] === "boolean") {
@@ -1677,7 +1705,7 @@ export class ChannelCollectionFactory implements IFluidDataStoreFactory {
 		// from the same package.
 		assert(
 			context instanceof FluidDataStoreContext,
-			"we don't support the layer boundary here today",
+			0xb8f /* we don't support the layer boundary here today */,
 		);
 
 		const runtime = new ChannelCollection(

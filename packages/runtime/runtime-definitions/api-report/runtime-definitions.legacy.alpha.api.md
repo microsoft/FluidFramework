@@ -16,6 +16,11 @@ export interface AttributionInfo {
 // @alpha @legacy
 export type AttributionKey = OpAttributionKey | DetachedAttributionKey | LocalAttributionKey;
 
+// @alpha @sealed @deprecated @legacy (undocumented)
+export interface CommitStagedChangesOptionsExperimental {
+    squash?: boolean;
+}
+
 // @alpha @legacy (undocumented)
 export type CreateChildSummarizerNodeFn = (summarizeInternal: SummarizeInternalFn, getGCDataFn: (fullGC?: boolean) => Promise<IGarbageCollectionData>,
 getBaseGCDetailsFn?: () => Promise<IGarbageCollectionDetailsBase>) => ISummarizerNodeWithGC;
@@ -71,7 +76,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     readonly baseLogger: ITelemetryBaseLogger;
     // (undocumented)
     readonly clientDetails: IClientDetails;
-    createDataStore(pkg: Readonly<string | string[]>, loadingGroupId?: string): Promise<IDataStore>;
+    createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
     createDetachedDataStore(pkg: Readonly<string[]>, loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
@@ -138,6 +143,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
     makeVisibleAndAttachGraph(): void;
     notifyReadOnlyState?(readonly: boolean): void;
+    readonly policies?: IFluidDataStorePolicies;
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     processSignal(message: IInboundSignalMessage, local: boolean): void;
     // (undocumented)
@@ -163,7 +169,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;
-    readonly packagePath: readonly string[];
+    readonly packagePath: PackagePath;
 }
 
 // @alpha @legacy (undocumented)
@@ -181,6 +187,11 @@ export interface IFluidDataStoreFactory extends IProvideFluidDataStoreFactory {
     };
     instantiateDataStore(context: IFluidDataStoreContext, existing: boolean): Promise<IFluidDataStoreChannel>;
     type: string;
+}
+
+// @alpha @legacy
+export interface IFluidDataStorePolicies {
+    readonly readonlyInStagingMode: boolean;
 }
 
 // @alpha @legacy (undocumented)
@@ -231,7 +242,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IRuntimeStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
@@ -252,9 +263,9 @@ export interface IGarbageCollectionDetailsBase {
 }
 
 // @alpha @legacy
-export interface IInboundSignalMessage extends ISignalMessage {
+export interface IInboundSignalMessage<TMessage extends TypedMessage = TypedMessage> extends ISignalMessage<TMessage> {
     // (undocumented)
-    readonly type: string;
+    readonly type: TMessage["type"];
 }
 
 // @alpha @legacy
@@ -286,6 +297,29 @@ export interface IRuntimeMessagesContent {
     readonly clientSequenceNumber: number;
     readonly contents: unknown;
     readonly localOpMetadata: unknown;
+}
+
+// @alpha @legacy
+export interface IRuntimeStorageService {
+    // @deprecated (undocumented)
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
+    // @deprecated (undocumented)
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    // @deprecated (undocumented)
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    // @deprecated (undocumented)
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    // @deprecated (undocumented)
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    // @deprecated (undocumented)
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    // @deprecated (undocumented)
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @alpha @legacy
@@ -402,11 +436,12 @@ export interface OpAttributionKey {
     type: "op";
 }
 
+// @alpha @legacy
+export type PackagePath = readonly string[];
+
 // @alpha @sealed @deprecated @legacy (undocumented)
 export interface StageControlsExperimental {
-    // (undocumented)
-    readonly commitChanges: () => void;
-    // (undocumented)
+    readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
     readonly discardChanges: () => void;
 }
 

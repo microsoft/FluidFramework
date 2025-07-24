@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
 	CursorLocationType,
@@ -22,7 +23,7 @@ import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
 	type BufferFormat as BufferFormatGeneric,
 	Shape as ShapeGeneric,
-	handleShapesAndIdentifiers,
+	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
@@ -34,7 +35,6 @@ import {
 	SpecialField,
 	version,
 } from "./format.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedChunk`.
@@ -55,7 +55,7 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, cache, buffer);
 		batchBuffer.push(buffer);
 	}
-	return handleShapesAndIdentifiers(version, batchBuffer);
+	return updateShapesAndIdentifiersEncoding(version, batchBuffer);
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -175,7 +175,10 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 		return { d: encodedAnyShape };
 	}
 
-	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {}
+	public countReferencedShapesAndIdentifiers(
+		identifiers: Counter<string>,
+		shapeDiscovered: (shape: Shape) => void,
+	): void {}
 
 	public static encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -329,8 +332,11 @@ export class InlineArrayShape
 		};
 	}
 
-	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {
-		shapes(this.inner.shape);
+	public countReferencedShapesAndIdentifiers(
+		identifiers: Counter<string>,
+		shapeDiscovered: (shape: Shape) => void,
+	): void {
+		shapeDiscovered(this.inner.shape);
 	}
 
 	public get shape(): this {
@@ -387,8 +393,11 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 		};
 	}
 
-	public count(identifiers: Counter<string>, shapes: (shape: Shape) => void): void {
-		shapes(this.inner.shape);
+	public countReferencedShapesAndIdentifiers(
+		identifiers: Counter<string>,
+		shapeDiscovered: (shape: Shape) => void,
+	): void {
+		shapeDiscovered(this.inner.shape);
 	}
 }
 

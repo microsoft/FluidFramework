@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IConsumer,
 	IPartitionLambdaPlugin,
 	IPartitionLambdaFactory,
 	IResources,
 	IResourcesFactory,
 } from "@fluidframework/server-services-core";
+import type { Provider } from "nconf";
 import sillyname from "sillyname";
-import { Provider } from "nconf";
+
 import { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 
 /**
