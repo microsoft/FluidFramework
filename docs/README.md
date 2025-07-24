@@ -45,7 +45,7 @@ To test search locally, you must first build and then use either:
 -   `pnpm run serve`
 
 Both commands work as long a you have the appropriate values set in your `.env` file (for example: TYPESENSE_HOST and TYPESENSE_API_KEY).
-Note: This setup and the required API keys are limited to Microsoft internal employees; detail instructions can be found on the internal wiki.
+Note: This setup and the required API keys are limited to Microsoft internal employees; detailed instructions can be found on the internal wiki.
 
 Note: the Docusaurus build is fairly slow.
 If you don't need to test search, it is recommended to run `pnpm run start` instead.
