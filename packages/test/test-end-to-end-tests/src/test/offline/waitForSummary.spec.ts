@@ -295,9 +295,9 @@ describeCompat(
 					new Promise<string | undefined>((resolve, reject) =>
 						container.on("op", (op) => {
 							if (op.type === "summarize") {
-								const pendingStateP = container.getPendingLocalState?.();
-								if (pendingStateP) {
-									pendingStateP
+								if (container.getPendingLocalState !== undefined) {
+									container
+										.getPendingLocalState()
 										.then((pendingState) => {
 											container.close();
 											resolve(pendingState);
