@@ -5056,7 +5056,7 @@ export class ContainerRuntime
 		};
 
 		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+		// getPendingLocalState() is only exposed through Container.getPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
