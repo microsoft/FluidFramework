@@ -9,6 +9,7 @@ Test class property with both a getter and a setter.
 ```typescript
 /** @virtual */
 get testClassGetterProperty(): number;
+
 set testClassGetterProperty(newValue: number);
 ```
 

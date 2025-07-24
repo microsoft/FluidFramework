@@ -22,6 +22,7 @@ import type {
 	IDeltaManager,
 	IDeltaManagerFull,
 	ILoader,
+	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -71,7 +72,6 @@ import type {
 } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
@@ -1207,7 +1207,7 @@ export class ContainerRuntime
 
 	private readonly isSummarizerClient: boolean;
 
-	public get storage(): IDocumentStorageService {
+	public get storage(): IContainerStorageService {
 		return this._storage;
 	}
 
@@ -1499,7 +1499,7 @@ export class ContainerRuntime
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
-		private readonly _storage: IDocumentStorageService,
+		private readonly _storage: IContainerStorageService,
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,

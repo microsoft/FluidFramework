@@ -4,7 +4,6 @@
  */
 
 export {
-	createUnknownOptionalFieldPolicy,
 	type FieldHasDefault,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,

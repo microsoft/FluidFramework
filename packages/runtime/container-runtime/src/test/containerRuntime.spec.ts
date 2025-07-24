@@ -31,7 +31,6 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	ISnapshot,
 	ISummaryContext,
 	type ISnapshotTree,
@@ -56,6 +55,7 @@ import {
 	type IEnvelope,
 	type ITelemetryContext,
 	type ISummarizeInternalResult,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
@@ -233,7 +233,7 @@ describe("Runtime", () => {
 	const mockClientId = "mockClientId";
 
 	// Mock the storage layer so "submitSummary" works.
-	const defaultMockStorage: Partial<IDocumentStorageService> = {
+	const defaultMockStorage: Partial<IRuntimeStorageService> = {
 		uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
 			return "fakeHandle";
 		},
@@ -242,7 +242,7 @@ describe("Runtime", () => {
 		params: {
 			settings?: Record<string, ConfigTypes>;
 			logger?: ITelemetryBaseLogger;
-			mockStorage?: Partial<IDocumentStorageService>;
+			mockStorage?: Partial<IRuntimeStorageService>;
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
 			connected?: boolean;
@@ -289,7 +289,7 @@ describe("Runtime", () => {
 			},
 			clientId,
 			connected,
-			storage: mockStorage as IDocumentStorageService,
+			storage: mockStorage as IRuntimeStorageService,
 			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
 
@@ -2110,7 +2110,7 @@ describe("Runtime", () => {
 					summaryRefSeq: 100,
 					summaryLogger: createChildLogger({}),
 				};
-				class MockStorageService implements Partial<IDocumentStorageService> {
+				class MockStorageService implements Partial<IRuntimeStorageService> {
 					/**
 					 * This always returns the same snapshot. Basically, when container runtime receives an ack for the
 					 * deleted snapshot and tries to fetch the latest snapshot, return the latest snapshot.

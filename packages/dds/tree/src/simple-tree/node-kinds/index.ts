@@ -26,7 +26,6 @@ export {
 } from "./map/index.js";
 
 export {
-	createUnknownOptionalFieldPolicy,
 	type FieldHasDefault,
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type InsertableObjectFromSchemaRecord,

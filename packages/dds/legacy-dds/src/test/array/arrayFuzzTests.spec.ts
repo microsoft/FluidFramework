@@ -26,6 +26,5 @@ describe("SharedArray fuzz", () => {
 		},
 		defaultTestCount: 50,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
-		skip: [6, 10, 17, 31, 40],
 	});
 });
