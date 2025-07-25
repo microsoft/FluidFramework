@@ -714,7 +714,7 @@ function createExampleSection(
 ): SectionNode {
 	const { logger } = config;
 
-	let exampleSection: SectionNode = new SectionNode(
+	let exampleSection: SectionNode | undefined = new SectionNode(
 		transformTsdoc(example.content, example.apiItem, config),
 	);
 
@@ -748,7 +748,8 @@ function createExampleSection(
 		example.exampleNumber ?? ""
 	}`;
 
-	return wrapInSection(exampleSection.children, {
+	// Always emit the section, even if the body is empty after stripping out the title.
+	return wrapInSection(exampleSection?.children ?? [], {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -806,12 +807,14 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  *
  * In the case where the output is not in a form we expect, we will log an error and return the node we were given,
  * rather than making a copy.
+ *
+ * @returns The updated node, if any content remains. Otherwise, `undefined`.
  */
 function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 	node: TNode,
 	title: string,
 	logger: Logger | undefined,
-): TNode {
+): TNode | undefined {
 	// Verify title matches text of first plain text in output.
 	// This is an expected invariant. If this is not the case, then something has gone wrong.
 	// Note: if we ever allow consumers to provide custom DocNode transformations, this invariant will likely
@@ -833,13 +836,18 @@ function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 			logger,
 		);
 
-		const newChildren: DocumentationNode[] = [newFirstChild, ...children.slice(1)];
+		const remainingChildren = children.slice(1);
+		const newChildren: DocumentationNode[] =
+			newFirstChild === undefined ? remainingChildren : [newFirstChild, ...remainingChildren];
 
-		return {
-			...node,
-			children: newChildren,
-			hasChildren: newChildren.length > 0,
-		};
+		// If there are no remaining children under this parent after stripping out the title, omit this parent node.
+		return newChildren.length === 0
+			? undefined
+			: {
+					...node,
+					children: newChildren,
+					hasChildren: newChildren.length > 0,
+				};
 	}
 
 	if (firstChild.isLiteral) {
@@ -851,11 +859,14 @@ function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
 				while (newChildren.length > 0 && newChildren[0].type === "lineBreak") {
 					newChildren.shift();
 				}
-				return {
-					...node,
-					children: newChildren,
-					hasChildren: newChildren.length > 0,
-				};
+				// If there are no remaining children under this parent after stripping out the title, omit this parent node.
+				return newChildren.length === 0
+					? undefined
+					: {
+							...node,
+							children: newChildren,
+							hasChildren: newChildren.length > 0,
+						};
 			} else {
 				logger?.error(
 					"Transformed example paragraph does not begin with expected title. This is unexpected and indicates a bug.",

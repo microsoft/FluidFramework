@@ -5,21 +5,15 @@
 
 import { strict as assert } from "node:assert";
 import { storedEmptyFieldSchema, type TreeStoredSchema } from "../../../core/index.js";
-import {
-	allowsRepoSuperset,
-	defaultSchemaPolicy,
-	type FullSchemaPolicy,
-} from "../../../feature-libraries/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	toStoredSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	normalizeFieldSchema,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
-import {
-	createUnknownOptionalFieldPolicy,
-	SchemaFactoryAlpha,
-} from "../../../simple-tree/index.js";
+import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
@@ -35,12 +29,10 @@ const factory = new SchemaFactoryAlpha("");
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
-	policy: FullSchemaPolicy = {
-		...defaultSchemaPolicy,
-		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(view),
-	},
 ) {
-	const viewSchema = new SchemaCompatibilityTester(policy, normalizeFieldSchema(view));
+	const viewSchema = new SchemaCompatibilityTester(
+		new TreeViewConfigurationAlpha({ schema: view }),
+	);
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
 

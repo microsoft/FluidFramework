@@ -65,7 +65,7 @@ const foo = bar;
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
 | [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
-| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
+| [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
 
 # Variables
@@ -374,7 +374,7 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signature Details
 
-#### \[foo: number\]: { bar: string; } {#testinterfacewithindexsignature-\_indexer\_-indexsignature}
+#### \[foo: number]: { bar: string; } {#testinterfacewithindexsignature-\_indexer\_-indexsignature}
 
 Test index signature.
 
@@ -962,7 +962,7 @@ export declare function testFunctionReturningIntersectionType(): TestEmptyInterf
 
 an intersection type
 
-**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) \& [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number>
+**Return type**: [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number>
 
 ## testFunctionReturningUnionType {#testfunctionreturninguniontype-function}
 
@@ -978,7 +978,7 @@ export declare function testFunctionReturningUnionType(): string | TestInterface
 
 A union type
 
-**Return type**: string \| [TestInterface](docs/test-suite-a#testinterface-interface)
+**Return type**: string | [TestInterface](docs/test-suite-a#testinterface-interface)
 
 # Variable Details
 
@@ -1185,14 +1185,14 @@ class TestClass
 
 Test class constructor
 
-<a id="_constructor_-signature"></a>
+<a id="_constructor_-signature"></a>\
 **Signature**
 
 ```typescript
 constructor(testClassProperty: string);
 ```
 
-<a id="_constructor_-parameters"></a>
+<a id="_constructor_-parameters"></a>\
 **Parameters**
 
 | Parameter | Type | Description |
@@ -1205,7 +1205,7 @@ constructor(testClassProperty: string);
 
 Test interface property
 
-<a id="testclassproperty-signature"></a>
+<a id="testclassproperty-signature"></a>\
 **Signature**
 
 ```typescript
@@ -1220,28 +1220,28 @@ readonly testClassProperty: string;
 
 Test class method
 
-<a id="testclassmethod-signature"></a>
+<a id="testclassmethod-signature"></a>\
 **Signature**
 
 ```typescript
 testClassMethod(testParameter: string): Promise<string>;
 ```
 
-<a id="testclassmethod-parameters"></a>
+<a id="testclassmethod-parameters"></a>\
 **Parameters**
 
 | Parameter | Type | Description |
 | - | - | - |
 | testParameter | string | A string |
 
-<a id="testclassmethod-returns"></a>
+<a id="testclassmethod-returns"></a>\
 **Returns**
 
 A Promise
 
 **Return type**: Promise\<string>
 
-<a id="testclassmethod-throws"></a>
+<a id="testclassmethod-throws"></a>\
 **Throws**
 
 An Error when something happens for which an error should be thrown. Except in the cases where another kind of error is thrown. We don't throw this error in those cases.
@@ -1273,7 +1273,7 @@ enum TestEnum
 
 Test enum value 1
 
-<a id="testenumvalue1-signature"></a>
+<a id="testenumvalue1-signature"></a>\
 **Signature**
 
 ```typescript
@@ -1284,7 +1284,7 @@ TestEnumValue1 = 0
 
 Test enum value 2
 
-<a id="testenumvalue2-signature"></a>
+<a id="testenumvalue2-signature"></a>\
 **Signature**
 
 ```typescript

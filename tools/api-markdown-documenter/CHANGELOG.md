@@ -2,6 +2,31 @@
 
 ## 0.21.0
 
+### Add DocumentationNode -> mdast transformation layer
+
+Adds transformation library for generating [mdast](https://github.com/syntax-tree/mdast) from `DocumentationNode`s.
+
+#### Example
+
+```typescript
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+// Transform the API Model to documents
+const documents = transformApiModel({
+	apiModel,
+});
+
+// Convert the documents to Markdown via mdast
+const markdownDocuments = documents.map((document) => documentToMarkdown(document, {}));
+
+// Use the resulting Markdown documents with your favorite mdast-compatible library!
+```
+
 ### List parsing
 
 Markdown-like list syntax is now supported in TSDoc comments.

@@ -30,7 +30,9 @@ import {
 	type TreeLeafValue,
 	type TreeNode,
 	TreeViewConfiguration,
+	unhydratedFlexTreeFromInsertable,
 	type UnsafeUnknownSchema,
+	type VerboseTree,
 } from "../../../simple-tree/index.js";
 import {
 	checkoutWithContent,
@@ -41,7 +43,12 @@ import {
 	validateUsageError,
 } from "../../utils.js";
 import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
-import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
+import {
+	brand,
+	type areSafelyAssignable,
+	type Mutable,
+	type requireTrue,
+} from "../../../util/index.js";
 
 import {
 	booleanSchema,
@@ -62,6 +69,17 @@ import {
 	type TreeCheckout,
 	type TreeStoredContent,
 } from "../../../shared-tree/index.js";
+import { FieldKinds } from "../../../feature-libraries/index.js";
+import {
+	createField,
+	UnhydratedFlexTreeNode,
+	type Context,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createTreeNodeFromInner } from "../../../simple-tree/core/treeNodeKernel.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 
@@ -143,7 +161,7 @@ describe("treeNodeApi", () => {
 			const Base = schema.object("Test", {});
 			class Derived extends Base {}
 			const node = new Derived({});
-			// Check instancof alternative works:
+			// Check instanceof alternative works:
 			assert(node instanceof Base);
 			assert.throws(
 				() => Tree.is(node, Base),
@@ -2679,6 +2697,72 @@ describe("treeNodeApi", () => {
 				const a = TreeAlpha.importVerbose(A, { type: A.identifier, fields: { x: 1 } });
 				assert.deepEqual(a, { x: 1 });
 			});
+
+			it("errors on unknown disallowed fields", () => {
+				const exported: VerboseTree = {
+					type: Point.identifier,
+					fields: { x: 1 },
+				};
+
+				assert.throws(
+					() => TreeAlpha.importVerbose(Point, exported, { useStoredKeys: true }),
+					validateUsageError('Field "x" is not defined in the schema "com.example.Point".'),
+				);
+				assert.throws(
+					() => TreeAlpha.importVerbose(Point, exported),
+					validateUsageError(
+						// TODO: Better error message: error should mention that unknown optional fields are not allowed in this context.
+						'Failed to parse VerboseTree due to unexpected key "x" on type "com.example.Point".',
+					),
+				);
+			});
+		});
+
+		describe("exportVerbose", () => {
+			it("TODO: unknown optional fields", () => {
+				const sf1 = new SchemaFactoryAlpha("com.example");
+				class PointUnknown extends sf1.objectAlpha(
+					"Point",
+					{},
+					{ allowUnknownOptionalFields: true },
+				) {}
+
+				// TODO AB#43548: Provide a utility (test or production) for easily building TreeNodes from content which has unknown optional fields or other schema evolution features.
+				// Due to current limitation on unknown types, the utility might need to explicitly take in all referenced types and use a custom context if the node built is unhydrated.
+				// Use such a utility here to build such a node instead of this:
+				// Construct an A node from a flex node which has an extra unknown optional field.
+				const field = createField(
+					getUnhydratedContext(PointUnknown).flexContext,
+					FieldKinds.optional.identifier,
+					brand("x"),
+					[unhydratedFlexTreeFromInsertable(1, SchemaFactory.number)],
+				);
+
+				const context: Context = getUnhydratedContext([PointUnknown, SchemaFactory.number]);
+				const flex = new UnhydratedFlexTreeNode(
+					{ type: brand(PointUnknown.identifier) },
+					new Map([[brand("x"), field]]),
+					context,
+				);
+				const node = createTreeNodeFromInner(flex);
+
+				// TODO: AB#43548: remove this hack which is currently needed for export to not assert about missing schema!
+				(getUnhydratedContext(PointUnknown) as Mutable<Context>).schema = context.schema;
+
+				assert.deepEqual(TreeAlpha.exportVerbose(node, { useStoredKeys: true }), {
+					type: PointUnknown.identifier,
+					fields: { x: 1 },
+				});
+
+				// TODO AB#43548: provide and test a way to export with stored keys without unknown optional fields.
+
+				// TODO AB#43548: this should not assert.
+				assert.throws(
+					() => TreeAlpha.exportVerbose(node),
+					// Currently errors failing to look up the property key in the schema for the unknown field.
+					(e: Error) => validateAssertionError(e, "missing property key"),
+				);
+			});
 		});
 
 		describe("roundtrip", () => {
@@ -2701,7 +2785,6 @@ describe("treeNodeApi", () => {
 				it("does not preserve additional optional fields", () => {
 					// (because stored keys are not being used, see analogous test in roundtrip-stored)
 					const sf1 = new SchemaFactoryAlpha("com.example");
-					const sf2 = new SchemaFactoryAlpha("com.example");
 					class Point2D extends sf1.objectAlpha(
 						"Point",
 						{
@@ -2710,10 +2793,10 @@ describe("treeNodeApi", () => {
 						},
 						{ allowUnknownOptionalFields: true },
 					) {}
-					class Point3D extends sf2.objectAlpha("Point", {
-						x: sf2.number,
-						y: sf2.number,
-						z: sf2.optional(sf2.number),
+					class Point3D extends sf1.objectAlpha("Point", {
+						x: sf1.number,
+						y: sf1.number,
+						z: sf1.optional(sf1.number),
 					}) {}
 
 					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
@@ -2733,6 +2816,7 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("roundtrip-stored", () => {
+			// TODO AB#43548: This should include test cases with unknown optional fields.
 			for (const testCase of testSimpleTrees) {
 				if (testCase.root() !== undefined) {
 					it(testCase.name, () => {
@@ -2749,59 +2833,6 @@ describe("treeNodeApi", () => {
 					});
 				}
 			}
-
-			describe("with misaligned view and stored schema", () => {
-				const sf1 = new SchemaFactoryAlpha("com.example");
-				class Point3D extends sf1.objectAlpha("Point", {
-					x: sf1.number,
-					y: sf1.number,
-					z: sf1.optional(sf1.number),
-				}) {}
-
-				it("preserves additional allowed optional fields", () => {
-					const sf2 = new SchemaFactoryAlpha("com.example");
-
-					class Point2D extends sf2.objectAlpha(
-						"Point",
-						{
-							x: sf2.number,
-							y: sf2.number,
-						},
-						{ allowUnknownOptionalFields: true },
-					) {}
-					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
-					const exported = TreeAlpha.exportVerbose(testTree, { useStoredKeys: true });
-					const imported = TreeAlpha.importVerbose(Point2D, exported, { useStoredKeys: true });
-					const exported2 = TreeAlpha.exportVerbose(imported, { useStoredKeys: true });
-					const imported2 = TreeAlpha.importVerbose(Point3D, exported2, {
-						useStoredKeys: true,
-					});
-					assert.deepEqual(exported, exported2);
-					assert.deepEqual(Object.keys(imported), ["x", "y"]);
-					assert.deepEqual(Object.keys(imported2), ["x", "y", "z"]);
-					assert.equal(imported2.z, 3);
-				});
-
-				it("errors on additional disallowed optional fields", () => {
-					const sf2 = new SchemaFactoryAlpha("com.example");
-
-					class Point2D extends sf2.objectAlpha(
-						"Point",
-						{
-							x: sf2.number,
-							y: sf2.number,
-						},
-						{ allowUnknownOptionalFields: false },
-					) {}
-					const testTree = new Point3D({ x: 1, y: 2, z: 3 });
-					const exported = TreeAlpha.exportVerbose(testTree, { useStoredKeys: true });
-
-					assert.throws(
-						() => TreeAlpha.importVerbose(Point2D, exported, { useStoredKeys: true }),
-						/Tree does not conform to schema./,
-					);
-				});
-			});
 		});
 	});
 

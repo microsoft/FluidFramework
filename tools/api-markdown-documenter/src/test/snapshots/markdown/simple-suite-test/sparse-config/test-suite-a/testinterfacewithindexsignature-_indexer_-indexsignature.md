@@ -1,4 +1,4 @@
-## \[foo: number\]: { bar: string; }
+## \[foo: number]: { bar: string; }
 
 Test index signature.
 

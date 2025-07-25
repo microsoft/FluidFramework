@@ -23,6 +23,15 @@ To get started, install the package by running the following command:
 npm i @fluidframework/fluid-static
 ```
 
+## Importing from this package
+
+This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
+For more information on the related support guarantees, see [API Support Levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+
+To access the `public` ([SemVer](https://semver.org/)) APIs, import via `@fluidframework/fluid-static` like normal.
+
+To access the `legacy` APIs, import via `@fluidframework/fluid-static/legacy`.
+
 ## API Documentation
 
 API documentation for **@fluidframework/fluid-static** is available at <https://fluidframework.com/docs/apis/fluid-static>.

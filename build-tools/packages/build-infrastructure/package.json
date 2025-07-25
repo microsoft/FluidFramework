@@ -38,14 +38,12 @@
 	],
 	"scripts": {
 		"build": "fluid-build --task build",
-		"build:commonjs": "npm run tsc && npm run build:test",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:manifest": "oclif manifest",
 		"build:readme": "oclif readme --version 0.0.0 --no-aliases --readme-path src/docs/cli.md",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
+		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
@@ -59,8 +57,7 @@
 		"lint:fix": "npm run eslint:fix",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
-		"test:mocha": "mocha --recursive lib/test",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"test:mocha": "mocha --recursive lib/test"
 	},
 	"dependencies": {
 		"@fluid-tools/version-tools": "workspace:~",

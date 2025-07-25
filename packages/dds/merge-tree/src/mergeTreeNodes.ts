@@ -285,7 +285,7 @@ export class MergeBlock implements Partial<IMergeNodeInfo> {
 	partialLengths?: PartialSequenceLengths;
 
 	public constructor(public childCount: number) {
-		// Suppression needed due to the way the merge tree children are initalized - we
+		// Suppression needed due to the way the merge tree children are initialized - we
 		// allocate 8 children blocks, but any unused blocks are not counted in the childCount.
 		// Using Array.from leads to unused children being undefined, which are counted in childCount.
 		// eslint-disable-next-line unicorn/no-new-array

@@ -15,6 +15,6 @@ export {
 } from "./RenderMarkdown.js";
 export {
 	renderDocumentAsMarkdown as renderDocument,
-	renderNodeAsMarkdown as renderNode,
-	renderNodesAsMarkdown as renderNodes,
+	type RenderDocumentAsMarkdownConfiguration,
+	renderMarkdown,
 } from "./renderers/index.js";

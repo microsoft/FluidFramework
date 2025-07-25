@@ -139,13 +139,11 @@ function transformTsdocSectionContent(
 			return transformTsdocParagraph(node as DocParagraph, options);
 		}
 		default: {
-			// TODO
-			throw new Error(`Unsupported DocNode kind under section node: "${node.kind}".`);
-			// options.logger?.error(
-			// 	`Unsupported DocNode kind under section node: "${node.kind}".`,
-			// 	node,
-			// );
-			// return [];
+			options.logger.error(
+				`Unsupported DocNode kind under section node: "${node.kind}".`,
+				node,
+			);
+			return [];
 		}
 	}
 }
@@ -253,13 +251,11 @@ function transformTsdocParagraphContent(
 			return [LineBreakNode.Singleton];
 		}
 		default: {
-			// TODO
-			throw new Error(`Unsupported DocNode kind under paragraph node: "${node.kind}".`);
-			// options.logger?.error(
-			// 	`Unsupported DocNode kind under paragraph node: "${node.kind}".`,
-			// 	node,
-			// );
-			// return [];
+			options.logger.error(
+				`Unsupported DocNode kind under paragraph node: "${node.kind}".`,
+				node,
+			);
+			return [];
 		}
 	}
 }
