@@ -47,12 +47,12 @@ import * as winston from "winston";
  */
 export class DocumentStorage implements IDocumentStorage {
 	constructor(
-		private readonly documentRepository: IDocumentRepository,
-		private readonly tenantManager: ITenantManager,
-		private readonly enableWholeSummaryUpload: boolean,
-		private readonly opsCollection: ICollection<ISequencedOperationMessage>,
-		private readonly storageNameAssigner: IStorageNameAllocator | undefined,
-		private readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
+		protected readonly documentRepository: IDocumentRepository,
+		protected readonly tenantManager: ITenantManager,
+		protected readonly enableWholeSummaryUpload: boolean,
+		protected readonly opsCollection: ICollection<ISequencedOperationMessage>,
+		protected readonly storageNameAssigner: IStorageNameAllocator | undefined,
+		protected readonly ephemeralDocumentTTLSec: number = 60 * 60 * 24, // 24 hours in seconds
 	) {}
 
 	/**
@@ -124,6 +124,21 @@ export class DocumentStorage implements IDocumentStorage {
 			  };
 	}
 
+	protected async getGitManager(
+		tenantId: string,
+		documentId: string,
+		storageName: string | undefined,
+		isEphemeralContainer: boolean,
+	): Promise<IGitManager> {
+		return this.tenantManager.getTenantGitManager(
+			tenantId,
+			documentId,
+			storageName,
+			false /* includeDisabledTenant */,
+			isEphemeralContainer,
+		);
+	}
+
 	public async createDocument(
 		tenantId: string,
 		documentId: string,
@@ -136,27 +151,22 @@ export class DocumentStorage implements IDocumentStorage {
 		values: [string, ICommittedProposal][],
 		enableDiscovery: boolean = false,
 		isEphemeralContainer: boolean = false,
-		hybridContainerEnabled: boolean = false,
 		messageBrokerId?: string,
 	): Promise<IDocumentDetails> {
 		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
-		const uploadAsEphemeralContainer = isEphemeralContainer || hybridContainerEnabled;
 		const gitManager = await this.tenantManager.getTenantGitManager(
 			tenantId,
 			documentId,
 			storageName,
 			false /* includeDisabledTenant */,
-			uploadAsEphemeralContainer,
+			isEphemeralContainer,
 		);
 
 		const storageNameAssignerEnabled = !!this.storageNameAssigner;
 		const lumberjackProperties = {
 			...getLumberBaseProperties(documentId, tenantId),
-			storageName,
 			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
-			storageNameAssignerExists: storageNameAssignerEnabled,
 			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
-			[CommonProperties.uploadAsEphemeralContainer]: uploadAsEphemeralContainer,
 		};
 		if (storageNameAssignerEnabled && !storageName) {
 			// Using a warning instead of an error just in case there are some outliers that we don't know about.
@@ -269,12 +279,10 @@ export class DocumentStorage implements IDocumentStorage {
 			storageName,
 			isEphemeralContainer,
 		};
-		const documentDbValue: IDocument & { ttl?: number } = {
-			...document,
-		};
-		if (isEphemeralContainer) {
-			documentDbValue.ttl = this.ephemeralDocumentTTLSec;
-		}
+		const documentDbValue: IDocument & { ttl?: number } = this.createDocumentDbValue(
+			document,
+			isEphemeralContainer,
+		);
 
 		let dbResult: IDocumentDetails;
 		try {
@@ -291,49 +299,20 @@ export class DocumentStorage implements IDocumentStorage {
 			throw error;
 		}
 
-		if (!isEphemeralContainer && hybridContainerEnabled) {
-			const asyncInitialSummaryUploadMetric = Lumberjack.newLumberMetric(
-				LumberEventName.CreateDocInitialSummaryWrite,
-				lumberjackProperties,
-			);
-			try {
-				// If the document is not ephemeral, we want to asynchronously upload the initial summary to storage.
-				const asyncGitManager = await this.tenantManager.getTenantGitManager(
-					tenantId,
-					documentId,
-					storageName,
-					false /* includeDisabledTenant */,
-					false /* isEphemeralContainer */,
-				);
-				const asyncBlobsShaCache = new Map<string, string>();
-				const asyncUploadManager = this.enableWholeSummaryUpload
-					? new WholeSummaryUploadManager(asyncGitManager)
-					: new SummaryTreeUploadManager(
-							asyncGitManager,
-							asyncBlobsShaCache,
-							async () => undefined,
-					  );
-				const { summaryUploadMessage } = await this.uploadSummary(
-					asyncUploadManager,
-					fullTree /* summaryTree */,
-					asyncGitManager,
-					documentId,
-					summaryTimeStr,
-				);
-				asyncInitialSummaryUploadMetric.success(summaryUploadMessage);
-			} catch (error: any) {
-				asyncInitialSummaryUploadMetric.error(
-					"Error uploading initial async summary",
-					error,
-				);
-				throw error;
-			}
-		}
-
 		return dbResult;
 	}
 
-	private async uploadSummary(
+	protected createDocumentDbValue(document: IDocument, isEphemeralContainer: boolean) {
+		const documentDbValue: IDocument & { ttl?: number } = {
+			...document,
+		};
+		if (isEphemeralContainer) {
+			documentDbValue.ttl = this.ephemeralDocumentTTLSec;
+		}
+		return documentDbValue;
+	}
+
+	protected async uploadSummary(
 		uploadManager: WholeSummaryUploadManager | SummaryTreeUploadManager,
 		fullTree: ISummaryTree,
 		gitManager: IGitManager,
