@@ -2786,9 +2786,19 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
+		// "connected" is only emitted when canSendOps is true, which is always false in readonly mode.
+		// "connectedToService" is here to emit when container connection state transitions to 'Connected' regardless of connection mode.
+		// "disconnectedFromService" is also here to exclude the false "disconnected" events that happen when readonly client transitions to 'Connected'.
+		if (this.getConnectionState() === 2 /* Connected */) {
+			this.emit("connectedToService", clientId);
+		} else {
+			this.emit("disconnectedFromService");
+		}
+
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			this.loadIdCompressor();
 		}
+
 		if (canSendOps === false && this.delayConnectClientId !== undefined) {
 			this.delayConnectClientId = undefined;
 			this.mc.logger.sendTelemetryEvent({
@@ -2871,21 +2881,14 @@ export class ContainerRuntime
 			}
 		}
 
+		this.channelCollection.setConnectionState(canSendOps, clientId);
+		this.garbageCollector.setConnectionState(canSendOps, clientId);
+
 		if (canSendOpsChanged) {
 			this.replayPendingStates();
 		}
 
-		this.channelCollection.setConnectionState(canSendOps, clientId);
-		this.garbageCollector.setConnectionState(canSendOps, clientId);
-
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
-
-		if (this.getConnectionState() === 2 /* Connected */) {
-			this.emit("connectedToService", clientId);
-			return;
-		} else {
-			this.emit("disconnectedFromService");
-		}
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
