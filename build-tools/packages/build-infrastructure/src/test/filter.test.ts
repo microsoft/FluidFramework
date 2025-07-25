@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import chai, { assert, expect } from "chai";
+import { assert, expect } from "chai";
+import * as chai from "chai";
 import assertArrays from "chai-arrays";
 
 import { loadBuildProject } from "../buildProject.js";

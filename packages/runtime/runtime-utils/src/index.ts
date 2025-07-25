@@ -59,3 +59,15 @@ export {
 	toDeltaManagerErased,
 	toDeltaManagerInternal,
 } from "./deltaManager.js";
+export {
+	ConfigMap,
+	configValueToMinVersionForCollab,
+	ConfigValidationMap,
+	defaultMinVersionForCollab,
+	getValidationForRuntimeOptions,
+	getConfigsForMinVersionForCollab,
+	isValidMinVersionForCollab,
+	MinimumMinorSemanticVersion,
+	MinimumVersionForCollab,
+	SemanticVersion,
+} from "./compatibilityBase.js";

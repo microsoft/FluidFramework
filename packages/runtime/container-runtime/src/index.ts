@@ -21,6 +21,12 @@ export {
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-utils/legacy` instead.
+	 */
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
+export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
@@ -31,7 +37,6 @@ export {
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
-export type { MinimumVersionForCollab, SemanticVersion } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,
