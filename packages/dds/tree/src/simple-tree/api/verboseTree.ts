@@ -17,12 +17,9 @@ import {
 	type ITreeCursorSynchronous,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
-import type {
-	TreeLeafValue,
-	ImplicitFieldSchema,
-	ImplicitAllowedTypes,
-} from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import { NodeKind } from "../core/index.js";
+import type { TreeNodeSchema, ImplicitAllowedTypes, TreeLeafValue } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
@@ -290,6 +287,7 @@ export function verboseFromCursor(
 		...options,
 	};
 
+	// TODO: AB#43548: This does not handle children in unknown fields who's schema is not know about by this context.
 	const schemaMap = getUnhydratedContext(rootSchema).schema;
 
 	return verboseFromCursorInner(reader, config, schemaMap);

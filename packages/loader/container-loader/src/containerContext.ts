@@ -18,12 +18,12 @@ import {
 	ILoader,
 	ILoaderOptions,
 	IDeltaManager,
+	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -46,7 +46,7 @@ export interface IContainerContextConfig {
 	readonly baseSnapshot: ISnapshotTree | undefined;
 	readonly version: IVersion | undefined;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IContainerStorageService;
 	readonly quorum: IQuorumClients;
 	readonly audience: IAudience;
 	readonly loader: ILoader;
@@ -110,7 +110,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	public readonly baseSnapshot: ISnapshotTree | undefined;
 	private readonly _version: IVersion | undefined;
 	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	public readonly storage: IDocumentStorageService;
+	public readonly storage: IContainerStorageService;
 	public readonly quorum: IQuorumClients;
 	public readonly audience: IAudience;
 	public readonly loader: ILoader;

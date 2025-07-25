@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { IStorageNameAllocator, ITenantConfigManager } from "@fluidframework/server-services-core";
+import type {
+	IStorageNameAllocator,
+	ITenantConfigManager,
+} from "@fluidframework/server-services-core";
 
 export class StorageNameAllocator implements IStorageNameAllocator {
 	public constructor(private readonly tenantConfigManager: ITenantConfigManager) {}

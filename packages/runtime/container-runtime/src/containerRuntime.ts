@@ -22,6 +22,7 @@ import type {
 	IDeltaManager,
 	IDeltaManagerFull,
 	ILoader,
+	IContainerStorageService,
 	ConnectionState,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
@@ -72,7 +73,6 @@ import type {
 } from "@fluidframework/driver-definitions";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 	ISignalMessage,
@@ -123,6 +123,12 @@ import {
 	channelsTreeName,
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
+import {
+	defaultMinVersionForCollab,
+	isValidMinVersionForCollab,
+	type MinimumVersionForCollab,
+	type SemanticVersion,
+} from "@fluidframework/runtime-utils/internal";
 import {
 	GCDataBuilder,
 	RequestParser,
@@ -179,18 +185,14 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
-import {
-	defaultMinVersionForCollab,
-	getMinVersionForCollabDefaults,
-	isValidMinVersionForCollab,
-	type RuntimeOptionsAffectingDocSchema,
-	type MinimumVersionForCollab,
-	type SemanticVersion,
-	validateRuntimeOptions,
-} from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+import {
+	getMinVersionForCollabDefaults,
+	type RuntimeOptionsAffectingDocSchema,
+	validateRuntimeOptions,
+} from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -369,7 +371,7 @@ export interface ISummaryRuntimeOptions {
  *
  * @privateRemarks If any new properties are added to this interface (or
  * {@link IContainerRuntimeOptionsInternal}), then we will also need to make
- * changes in {@link file://./compatUtils.ts}.
+ * changes in {@link file://./containerCompatibility.ts}.
  * If the new property does not change the DocumentSchema, then it must be
  * explicity omitted from {@link RuntimeOptionsAffectingDocSchema}.
  * If it does change the DocumentSchema, then a corresponding entry must be
@@ -1206,7 +1208,7 @@ export class ContainerRuntime
 
 	private readonly isSummarizerClient: boolean;
 
-	public get storage(): IDocumentStorageService {
+	public get storage(): IContainerStorageService {
 		return this._storage;
 	}
 
@@ -1501,7 +1503,7 @@ export class ContainerRuntime
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
-		private readonly _storage: IDocumentStorageService,
+		private readonly _storage: IContainerStorageService,
 		private readonly createIdCompressorFn: () => IIdCompressor & IIdCompressorCore,
 
 		private readonly documentsSchemaController: DocumentsSchemaController,
@@ -5074,7 +5076,7 @@ export class ContainerRuntime
 		};
 
 		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+		// getPendingLocalState() is only exposed through Container.getPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 

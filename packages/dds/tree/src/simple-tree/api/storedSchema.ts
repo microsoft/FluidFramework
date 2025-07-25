@@ -5,20 +5,17 @@
 
 import type { FluidClientVersion, ICodecOptions } from "../../codec/index.js";
 import { SchemaVersion } from "../../core/index.js";
-import {
-	defaultSchemaPolicy,
-	encodeTreeSchema,
-	makeSchemaCodec,
-} from "../../feature-libraries/index.js";
+import { encodeTreeSchema, makeSchemaCodec } from "../../feature-libraries/index.js";
 import {
 	clientVersionToSchemaVersion,
 	type FormatV1,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import type { SimpleTreeSchema } from "../simpleSchema.js";
 import { simpleToStoredSchema } from "../toStoredSchema.js";
+import { TreeViewConfigurationAlpha } from "./configuration.js";
 
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
@@ -101,10 +98,9 @@ export function comparePersistedSchema(
 	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
 	const schemaCodec = makeSchemaCodec(options, SchemaVersion.v1);
 	const stored = schemaCodec.decode(persisted as FormatV1);
-	const viewSchema = new SchemaCompatibilityTester(
-		defaultSchemaPolicy,
-		{},
-		normalizeFieldSchema(view),
-	);
+	const config = new TreeViewConfigurationAlpha({
+		schema: normalizeFieldSchema(view),
+	});
+	const viewSchema = new SchemaCompatibilityTester(config);
 	return viewSchema.checkCompatibility(stored);
 }

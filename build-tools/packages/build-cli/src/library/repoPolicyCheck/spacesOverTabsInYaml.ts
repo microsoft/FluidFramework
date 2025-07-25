@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Handler, readFile } from "./common.js";
+import { type Handler, readFile } from "./common.js";
 
 /**
  * Checks that *.yml/*.yaml files do not use tabs for indentation.

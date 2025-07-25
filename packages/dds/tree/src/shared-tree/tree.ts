@@ -4,6 +4,7 @@
  */
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import {
 	type ImplicitFieldSchema,
@@ -16,12 +17,12 @@ import {
 	type TransactionConstraint,
 } from "../simple-tree/index.js";
 
-import { getCheckoutFlexTreeView } from "./checkoutFlexTreeView.js";
 import {
 	addConstraintsToTransaction,
 	SchematizingSimpleTreeView,
 } from "./schematizingTreeView.js";
 import type { ITreeCheckout } from "./treeCheckout.js";
+import { Context } from "../feature-libraries/index.js";
 
 /**
  * Provides various functions for interacting with {@link TreeNode}s.
@@ -449,8 +450,8 @@ export function runTransaction<
 				"Transactions cannot be run on Unhydrated nodes. Transactions apply to a TreeView and Unhydrated nodes are not part of a TreeView.",
 			);
 		}
-		const treeView = getCheckoutFlexTreeView(context);
-		return runTransactionInCheckout(treeView.checkout, () => t(node), preconditions);
+		assert(context instanceof Context, 0xbe3 /* Expected context to be a Context instance. */);
+		return runTransactionInCheckout(context.checkout, () => t(node), preconditions);
 	}
 }
 

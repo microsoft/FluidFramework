@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
-import {
+import type {
 	ISocketIoRedisConnection,
 	ISocketIoRedisSubscriptionConnection,
 } from "./redisSocketIoAdapter";

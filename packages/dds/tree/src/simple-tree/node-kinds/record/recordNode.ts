@@ -14,32 +14,35 @@ import {
 	// eslint-disable-next-line import/no-deprecated
 	typeNameSymbol,
 	typeSchemaSymbol,
-	type Context,
 	type UnhydratedFlexTreeNode,
 	getOrCreateInnerNode,
 	getKernel,
 	type InternalTreeNode,
-	type NormalizedAnnotatedAllowedTypes,
-} from "../../core/index.js";
-import { getUnhydratedContext } from "../../createContext.js";
-import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import {
 	type NodeSchemaMetadata,
-	type TreeNodeFromImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type UnannotateImplicitAllowedTypes,
 	type ImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	unannotateImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type UnannotateImplicitAllowedTypes,
-	createFieldSchema,
-	FieldKind,
-	normalizeAnnotatedAllowedTypes,
-} from "../../schemaTypes.js";
+	type TreeNodeFromImplicitAllowedTypes,
+	TreeNodeValid,
+	type MostDerivedData,
+	type TreeNodeSchemaInitializedData,
+	type TreeNodeSchemaCorePrivate,
+	privateDataSymbol,
+	createTreeNodeSchemaPrivateData,
+	type FlexContent,
+	CompatibilityLevel,
+	type TreeNodeSchemaPrivateData,
+} from "../../core/index.js";
+import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
+import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
+import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
 import {
 	unhydratedFlexTreeFromInsertable,
+	type FactoryContent,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { TreeNodeValid, type MostDerivedData } from "../../treeNodeValid.js";
 import type {
 	RecordNodeCustomizableSchema,
 	RecordNodeInsertableData,
@@ -47,8 +50,13 @@ import type {
 	RecordNodeSchema,
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
-import type { FlexTreeNode, FlexTreeOptionalField } from "../../../feature-libraries/index.js";
+import {
+	isTreeValue,
+	type FlexTreeNode,
+	type FlexTreeOptionalField,
+} from "../../../feature-libraries/index.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
+import { recordLikeDataToFlexContent } from "../common.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -259,12 +267,11 @@ export function recordSchema<
 	const lazyChildTypes = new Lazy(() =>
 		normalizeAllowedTypes(unannotateImplicitAllowedTypes(info)),
 	);
-	const lazyAnnotatedTypes = new Lazy(() => [normalizeAnnotatedAllowedTypes(info)]);
 	const lazyAllowedTypesIdentifiers = new Lazy(
 		() => new Set([...lazyChildTypes.value].map((type) => type.identifier)),
 	);
 
-	let unhydratedContext: Context;
+	let privateData: TreeNodeSchemaPrivateData | undefined;
 
 	class Schema
 		extends CustomRecordNodeBase<TUnannotatedAllowedTypes>
@@ -314,10 +321,7 @@ export function recordSchema<
 			return unhydratedFlexTreeFromInsertable(input as object, this as typeof Schema);
 		}
 
-		protected static override oneTimeSetup<T2>(this: typeof TreeNodeValid<T2>): Context {
-			const schema = this as unknown as RecordNodeSchema;
-			unhydratedContext = getUnhydratedContext(schema);
-
+		protected static override oneTimeSetup(): TreeNodeSchemaInitializedData {
 			// First run, do extra validation.
 			// TODO: provide a way for TreeConfiguration to trigger this same validation to ensure it gets run early.
 			// Scan for shadowing inherited members which won't work, but stop scan early to allow shadowing built in (which seems to work ok).
@@ -343,7 +347,12 @@ export function recordSchema<
 				}
 			}
 
-			return unhydratedContext;
+			const schema = this as RecordNodeSchema;
+			return getTreeNodeSchemaInitializedData(this, {
+				shallowCompatibilityTest,
+				toFlexContent: (data: FactoryContent): FlexContent =>
+					recordToFlexContent(data, schema),
+			});
 		}
 
 		public static get allowedTypesIdentifiers(): ReadonlySet<string> {
@@ -358,9 +367,6 @@ export function recordSchema<
 			implicitlyConstructable;
 		public static get childTypes(): ReadonlySet<TreeNodeSchema> {
 			return lazyChildTypes.value;
-		}
-		public static get childAnnotatedAllowedTypes(): readonly NormalizedAnnotatedAllowedTypes[] {
-			return lazyAnnotatedTypes.value;
 		}
 		public static readonly metadata: NodeSchemaMetadata<TCustomMetadata> = metadata ?? {};
 		public static readonly persistedMetadata: JsonCompatibleReadOnlyObject | undefined =
@@ -382,6 +388,10 @@ export function recordSchema<
 		public get [Symbol.toStringTag](): string {
 			return identifier;
 		}
+
+		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+		}
 	}
 
 	type Output = RecordNodeCustomizableSchema<
@@ -395,7 +405,8 @@ export function recordSchema<
 			TAllowedTypes,
 			TImplicitlyConstructable,
 			TCustomMetadata
-		>;
+		> &
+		TreeNodeSchemaCorePrivate;
 
 	const output: Output = Schema;
 	return output;
@@ -407,4 +418,35 @@ function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	for (const [key, value] of Object.entries(record)) {
 		yield [key, value];
 	}
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.shallowCompatibilityTest} for Record nodes.
+ */
+function shallowCompatibilityTest(data: FactoryContent): CompatibilityLevel {
+	if (isTreeValue(data)) {
+		return CompatibilityLevel.None;
+	}
+
+	if (Symbol.iterator in data) {
+		return CompatibilityLevel.None;
+	}
+
+	return CompatibilityLevel.Normal;
+}
+
+/**
+ * {@link TreeNodeSchemaInitializedData.toFlexContent} for Record nodes.
+ *
+ * Transforms data under a Record schema.
+ * @param data - The tree data to be transformed. Must be a Record-like object.
+ * @param schema - The schema to comply with.
+ */
+function recordToFlexContent(data: FactoryContent, schema: RecordNodeSchema): FlexContent {
+	if (!(typeof data === "object" && data !== null)) {
+		throw new UsageError(`Input data is incompatible with Record schema: ${data}`);
+	}
+
+	const fieldsIterator: Iterable<readonly [string, InsertableContent]> = Object.entries(data);
+	return recordLikeDataToFlexContent(fieldsIterator, schema);
 }

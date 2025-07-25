@@ -1,5 +1,18 @@
 # @fluidframework/aqueduct
 
+## 2.51.0
+
+### Minor Changes
+
+- New "PureDataObject" implementation "TreeDataObject" added ([#25025](https://github.com/microsoft/FluidFramework/pull/25025)) [f4fbd2f582c](https://github.com/microsoft/FluidFramework/commit/f4fbd2f582c22e0b6fd06986b9b5dbb6b73396a4)
+
+  A new implementation of `PureDataObject` has been added: `TreeDataObject`.
+  Where `DataObject` stores its contents in a `SharedDirectory`, `TreeDataObject` stores its contents in a `SharedTree`.
+
+## 2.50.0
+
+Dependency updates only.
+
 ## 2.43.0
 
 Dependency updates only.

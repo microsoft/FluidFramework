@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { AttachState } from "@fluidframework/container-definitions";
-import { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
-import { IQuorumClients } from "@fluidframework/driver-definitions";
+import type { AttachState } from "@fluidframework/container-definitions";
+import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
+import type { IQuorumClients } from "@fluidframework/driver-definitions";
 
 /**
  * Events emitted by {@link IOldestClientObservable}.

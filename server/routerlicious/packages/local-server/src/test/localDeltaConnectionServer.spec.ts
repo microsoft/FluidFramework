@@ -7,24 +7,24 @@ import { strict as assert } from "assert";
 
 import { Deferred } from "@fluidframework/common-utils";
 import {
-	ConnectionMode,
-	IClient,
-	IConnected,
-	IDocumentMessage,
-	ISequencedDocumentMessage,
-	ISequencedDocumentSystemMessage,
-	ITokenClaims,
-	IUser,
+	type ConnectionMode,
+	type IClient,
+	type IConnected,
+	type IDocumentMessage,
+	type ISequencedDocumentMessage,
+	type ISequencedDocumentSystemMessage,
+	type ITokenClaims,
+	type IUser,
 	MessageType,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { IWebSocket } from "@fluidframework/server-services-core";
+import type { IWebSocket } from "@fluidframework/server-services-core";
 import { TestNotImplementedDocumentRepository } from "@fluidframework/server-test-utils";
 import { KJUR as jsrsasign } from "jsrsasign";
 import Sinon from "sinon";
 
 import {
-	ILocalDeltaConnectionServer,
+	type ILocalDeltaConnectionServer,
 	LocalDeltaConnectionServer,
 } from "../localDeltaConnectionServer";
 

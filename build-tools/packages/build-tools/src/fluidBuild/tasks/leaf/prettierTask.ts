@@ -9,7 +9,7 @@ import * as path from "node:path";
 import ignore from "ignore";
 
 import type { BuildContext } from "../../buildContext";
-import { BuildPackage } from "../../buildGraph";
+import type { BuildPackage } from "../../buildGraph";
 import { getInstalledPackageVersion, getRecursiveFiles, globFn } from "../taskUtils";
 import { LeafWithDoneFileTask } from "./leafTask";
 

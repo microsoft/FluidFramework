@@ -10,6 +10,7 @@ import {
 	ContainerRuntimeFactoryWithDefaultDataStore,
 	PureDataObjectFactory,
 	TreeDataObject,
+	TreeDataObjectFactory,
 } from "@fluidframework/aqueduct/internal";
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import {
@@ -20,7 +21,6 @@ import {
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
-	type ITree,
 	type TreeView,
 } from "@fluidframework/tree/internal";
 
@@ -31,28 +31,42 @@ class TestSchema extends schemaFactory.object("TestSchema", {
 
 const treeViewConfig = new TreeViewConfiguration({ schema: TestSchema });
 
-class TestTreeDataObject extends TreeDataObject<TreeView<typeof TestSchema>> {
-	public override generateView(tree: ITree): TreeView<typeof TestSchema> {
-		return tree.viewWith(treeViewConfig);
-	}
-
-	public override async initializingFirstTime(): Promise<void> {
-		assert(this.treeView.compatibility.canInitialize);
-		this.treeView.initialize({ foo: "Hello world" });
-	}
-
+class TestTreeDataObject extends TreeDataObject {
 	public static readonly type = "TestTreeDataObject";
 
 	public static getFactory(): PureDataObjectFactory<TestTreeDataObject> {
 		return TestTreeDataObject.factory;
 	}
 
-	private static readonly factory = new PureDataObjectFactory(
-		TestTreeDataObject.type,
-		TestTreeDataObject,
-		[SharedTree.getFactory()],
-		{},
-	);
+	private static readonly factory = new TreeDataObjectFactory({
+		type: TestTreeDataObject.type,
+		ctor: TestTreeDataObject,
+		sharedObjects: [SharedTree.getFactory()],
+	});
+
+	#treeView: TreeView<typeof TestSchema> | undefined;
+
+	/**
+	 * The schema-aware view of the tree.
+	 */
+	public get treeView(): TreeView<typeof TestSchema> {
+		if (this.#treeView === undefined) {
+			throw new Error("treeView has not been initialized.");
+		}
+		return this.#treeView;
+	}
+
+	protected override async initializingFirstTime(): Promise<void> {
+		this.#treeView = this.tree.viewWith(treeViewConfig);
+		assert(this.treeView.compatibility.canInitialize, "Incompatible schema");
+
+		this.treeView.initialize({ foo: "Hello world" });
+	}
+
+	protected override async initializingFromExisting(): Promise<void> {
+		this.#treeView = this.tree.viewWith(treeViewConfig);
+		assert(this.treeView.compatibility.canView, "Incompatible schema");
+	}
 }
 
 // Note: ideally these tests would live directly in the `aqueduct` package,

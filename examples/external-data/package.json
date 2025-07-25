@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/app-integration-external-data",
-	"version": "2.50.0",
+	"version": "2.52.0",
 	"private": true,
 	"description": "Integrating an external data source with Fluid data.",
 	"homepage": "https://fluidframework.com",
@@ -108,7 +108,7 @@
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
 		"supertest": "^3.4.2",
-		"tinylicious": "^5.0.0",
+		"tinylicious": "^7.0.0",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",

@@ -155,7 +155,7 @@ export interface IContainerContext {
     readonly scope: FluidObject;
     readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IContainerStorageService;
     // (undocumented)
     readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
     // @deprecated (undocumented)
@@ -201,6 +201,25 @@ export interface IContainerLoadMode {
 export type IContainerPolicies = {
     maxClientLeaveWaitTime?: number;
 };
+
+// @alpha @legacy
+export interface IContainerStorageService {
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
+    // @deprecated
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    readonly maximumCacheDurationMs?: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
+    // @deprecated
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+}
 
 // @public
 export type ICriticalContainerError = IErrorBase_2;
