@@ -154,20 +154,36 @@ export function exposeFromOpaqueJson<
  * @remarks
  * Only one level of {@link OpaqueJsonDeserialized} is processed, so nested
  * {@link OpaqueJsonDeserialized} instances are retained.
+ * Additionally, no processing done past first recursion unless `TAncestorTypes`
+ * is specified as "unlimited recursion".
  *
  * Only works with basic built-in stringify-parse logic (i.e. default
  * {@link JsonDeserializedOptions}).
  */
-type RevealOpaqueJsonDeserialized<T> = T extends OpaqueJsonDeserialized<infer U>
+type RevealOpaqueJsonDeserialized<
+	T,
+	TAncestorTypes extends unknown[] | "unlimited recursion",
+> = T extends OpaqueJsonDeserialized<infer U>
 	? JsonDeserialized<U>
-	: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key]> };
+	: TAncestorTypes extends unknown[]
+		? InternalUtilityTypes.IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
+			? T
+			: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], [...TAncestorTypes, T]> }
+		: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], TAncestorTypes> };
 
 /**
  * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON
  * types throughout a structure.
  *
  * @see {@link RevealOpaqueJsonDeserialized}.
+ *
+ * @remarks
+ * Set `RecursionTreatment` to `[]` to prevent recursion through self-referencing
+ * types, which might lead to infinite recursion.
  */
-export function revealOpaqueJson<T>(value: T): RevealOpaqueJsonDeserialized<T> {
-	return value as RevealOpaqueJsonDeserialized<T>;
+export function revealOpaqueJson<
+	T,
+	RecursionTreatment extends [] | "unlimited recursion" = "unlimited recursion",
+>(value: T): RevealOpaqueJsonDeserialized<T, RecursionTreatment> {
+	return value as RevealOpaqueJsonDeserialized<T, RecursionTreatment>;
 }
