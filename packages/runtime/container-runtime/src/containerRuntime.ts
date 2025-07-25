@@ -2778,13 +2778,6 @@ export class ContainerRuntime
 		this.channelCollection.notifyReadOnlyState(readonly);
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
-		if (this.getConnectionState() === 2 /* Connected */) {
-			this.emit("connectedToService", clientId);
-			return;
-		} else {
-			this.emit("disconnectedFromService");
-		}
-
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -2886,6 +2879,13 @@ export class ContainerRuntime
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
+
+		if (this.getConnectionState() === 2 /* Connected */) {
+			this.emit("connectedToService", clientId);
+			return;
+		} else {
+			this.emit("disconnectedFromService");
+		}
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
