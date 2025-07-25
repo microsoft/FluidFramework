@@ -1212,7 +1212,6 @@ export class ContainerRuntime
 	}
 
 	public readonly options: Record<string | number, unknown>;
-	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -3626,9 +3625,7 @@ export class ContainerRuntime
 	private shouldSendOps(): boolean {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return (
-			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
-		);
+		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -5037,60 +5034,45 @@ export class ContainerRuntime
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
 		this.verifyNotClosed();
+		if (props?.notifyImminentClosure) {
+			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");
+		}
 
 		if (this.batchRunner.running) {
 			throw new UsageError("can't get state while manually accumulating a batch");
 		}
-		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
-
-		const getSyncState = (
-			pendingAttachmentBlobs?: IPendingBlobs,
-		): IPendingRuntimeState | undefined => {
-			const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
-			const sessionExpiryTimerStarted =
-				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
-
-			const pendingIdCompressorState = this._idCompressor?.serialize(true);
-
-			return {
-				pending,
-				pendingIdCompressorState,
-				pendingAttachmentBlobs,
-				sessionExpiryTimerStarted,
-			};
-		};
-		const perfEvent = {
-			eventName: "getPendingLocalState",
-			notifyImminentClosure: props?.notifyImminentClosure,
-		};
-		const logAndReturnPendingState = (
-			event: PerformanceEvent,
-			pendingState?: IPendingRuntimeState,
-		): IPendingRuntimeState | undefined => {
-			event.end({
-				attachmentBlobsSize: Object.keys(pendingState?.pendingAttachmentBlobs ?? {}).length,
-				pendingOpsSize: pendingState?.pending?.pendingStates.length,
-			});
-			return pendingState;
-		};
 
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.getPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
-		return props?.notifyImminentClosure === true
-			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
-					logAndReturnPendingState(
-						event,
-						getSyncState(
-							await this.blobManager.attachAndGetPendingBlobs(props?.stopBlobAttachingSignal),
-						),
-					),
-				)
-			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
-					logAndReturnPendingState(event, getSyncState(this.blobManager.getPendingBlobs())),
-				);
+		return PerformanceEvent.timedExec<IPendingRuntimeState | undefined>(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+			},
+			(event) => {
+				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const sessionExpiryTimerStarted =
+					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
+
+				const pendingIdCompressorState = this._idCompressor?.serialize(true);
+				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
+
+				const pendingRuntimeState: IPendingRuntimeState = {
+					pending,
+					pendingIdCompressorState,
+					pendingAttachmentBlobs,
+					sessionExpiryTimerStarted,
+				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pendingRuntimeState?.pending?.pendingStates.length,
+				});
+				return pendingRuntimeState;
+			},
+		);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
