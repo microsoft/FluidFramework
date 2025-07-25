@@ -171,7 +171,7 @@ describe("Container Extension", () => {
 		});
 
 		it("should return true when 'CatchingUp'", async () => {
-			container.setConnectionState(ConnectionState.CatchingUp, "mockClientId");
+			container.setConnectionState(ConnectionState.CatchingUp);
 			assert(container.runtime, "Runtime should be initialized");
 			const extension = container.runtime.acquireExtension(
 				testExtensionId,
@@ -216,23 +216,14 @@ describe("Container Extension", () => {
 		});
 
 		it("should fallback to runtime.connected when connectionState is undefined and runtime is connected", async () => {
-			// Create a container with undefined connection state behavior
-			const containerWithUndefinedState = new MockContainer();
-			await containerWithUndefinedState.initialize();
-
 			// Override the context to return undefined connectionState
-			assert(containerWithUndefinedState.context, "Context should be initialized");
-			const context = containerWithUndefinedState.context;
-			Object.defineProperty(context, "connectionState", {
+			Object.defineProperty(container.context, "connectionState", {
 				get: () => undefined,
 			});
 
-			containerWithUndefinedState.setConnectionState(
-				ConnectionState.Connected,
-				"mockClientId",
-			);
-			assert(containerWithUndefinedState.runtime, "Runtime should be initialized");
-			const extension = containerWithUndefinedState.runtime.acquireExtension(
+			container.setConnectionState(ConnectionState.Connected, "mockClientId");
+			assert(container.runtime, "Runtime should be initialized");
+			const extension = container.runtime.acquireExtension(
 				testExtensionId,
 				TestExtensionFactory,
 			);
@@ -245,20 +236,14 @@ describe("Container Extension", () => {
 		});
 
 		it("should fallback to runtime.connected when connectionState is undefined and runtime is disconnected", async () => {
-			// Create a container with undefined connection state behavior
-			const containerWithUndefinedState = new MockContainer();
-			await containerWithUndefinedState.initialize();
-
 			// Override the context to return undefined connectionState
-			assert(containerWithUndefinedState.context, "Context should be initialized");
-			const context = containerWithUndefinedState.context;
-			Object.defineProperty(context, "connectionState", {
+			Object.defineProperty(container.context, "connectionState", {
 				get: () => undefined,
 			});
 
-			containerWithUndefinedState.setConnectionState(ConnectionState.Disconnected);
-			assert(containerWithUndefinedState.runtime, "Runtime should be initialized");
-			const extension = containerWithUndefinedState.runtime.acquireExtension(
+			container.setConnectionState(ConnectionState.Disconnected);
+			assert(container.runtime, "Runtime should be initialized");
+			const extension = container.runtime.acquireExtension(
 				testExtensionId,
 				TestExtensionFactory,
 			);
