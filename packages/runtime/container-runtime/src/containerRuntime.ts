@@ -1339,6 +1339,7 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
+	private readonly canSendSignals: () => boolean;
 
 	private readonly getConnectionState: () => ConnectionState | undefined;
 
@@ -1685,6 +1686,13 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
+
+		this.canSendSignals =
+			this.getConnectionState() === undefined
+				? () => this.canSendOps
+				: () =>
+						this.getConnectionState() === 1 /* CatchingUp */ ||
+						this.getConnectionState() === 2 /* Connected */;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -2768,6 +2776,13 @@ export class ContainerRuntime
 		this.channelCollection.notifyReadOnlyState(readonly);
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
+		if (this.getConnectionState() === 2 /* Connected */) {
+			this.emit("connectedToService", clientId);
+			return;
+		} else {
+			this.emit("disconnectedFromService");
+		}
+
 		// Validate we have consistent state
 		const currentClientId = this._audience.getSelf()?.clientId;
 		assert(clientId === currentClientId, 0x977 /* input clientId does not match Audience */);
@@ -5108,8 +5123,10 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
-		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		this.on("connectedToService", (clientId: string) =>
+			eventEmitter.emit("connected", clientId),
+		);
+		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
 	});
 
@@ -5132,7 +5149,7 @@ export class ContainerRuntime
 		if (entry === undefined) {
 			const runtime = {
 				canSendOps: () => this.canSendOps,
-				getConnectionState: () => this.getConnectionState(),
+				canSendSignals: () => this.canSendSignals(),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,

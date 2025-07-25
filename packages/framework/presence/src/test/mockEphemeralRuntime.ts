@@ -178,8 +178,9 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	// #region IEphemeralRuntime
 	public canSendOps = (): ReturnType<IEphemeralRuntime["canSendOps"]> => this.connected;
-	public getConnectionState = (): ReturnType<IEphemeralRuntime["getConnectionState"]> =>
-		this.connectionState;
+	public canSendSignals = (): ReturnType<IEphemeralRuntime["canSendSignals"]> => {
+		return this.connectionState === 1 || this.connectionState === 2;
+	};
 	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
 
 	public events: IEphemeralRuntime["events"];

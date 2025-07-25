@@ -186,14 +186,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
 
-	private isConnected(): boolean {
-		return (
-			this.runtime.getConnectionState() === 2 ||
-			this.runtime.getConnectionState() === 1 ||
-			this.runtime.canSendOps()
-		);
-	}
-
 	public joinSession(clientId: ClientConnectionId): void {
 		// Broadcast join message to all clients
 		const updateProviders = [...this.runtime.getQuorum().getMembers().keys()].filter(
@@ -236,7 +228,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			options: RuntimeLocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
-			if (!this.isConnected()) {
+			if (!this.runtime.canSendSignals()) {
 				return;
 			}
 
@@ -327,7 +319,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		// Check for connectivity before sending updates.
-		if (!this.isConnected()) {
+		if (!this.runtime.canSendSignals()) {
 			// Clear the queued data since we're disconnected. We don't want messages
 			// to queue infinitely while disconnected.
 			this.queuedData = undefined;
@@ -478,7 +470,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// It is possible for some signals to come in while client is not connected due
 			// to how work is scheduled. If we are not connected, we can't respond to the
 			// join request. We will make our own Join request once we are connected.
-			if (this.isConnected()) {
+			if (this.runtime.canSendSignals()) {
 				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 			}
 			// It is okay to continue processing the contained updates even if we are not
@@ -620,7 +612,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			setTimeout(() => {
 				// Make sure a broadcast is still needed and we are currently connected.
 				// If not connected, nothing we can do.
-				if (this.refreshBroadcastRequested && this.isConnected()) {
+				if (this.refreshBroadcastRequested && this.runtime.canSendSignals()) {
 					this.broadcastAllKnownState();
 					this.logger?.sendTelemetryEvent({
 						eventName: "JoinResponse",

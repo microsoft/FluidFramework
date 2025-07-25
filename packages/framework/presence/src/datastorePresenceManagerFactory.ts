@@ -52,7 +52,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 
 			const manager = createPresenceManager({
 				canSendOps: () => runtime.connected,
-				getConnectionState: () => undefined,
+				canSendSignals: () => runtime.connected,
 				getClientId: () => runtime.clientId,
 				events,
 				getQuorum: runtime.getQuorum.bind(runtime),

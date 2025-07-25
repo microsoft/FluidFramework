@@ -108,12 +108,8 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		// Note: In some manual testing, this does not appear to be enough to
 		// always trigger an initial connect.
 		const clientId = runtime.getClientId();
-		const isConnected =
-			runtime.getConnectionState() === 2 ||
-			runtime.getConnectionState() === 1 ||
-			runtime.canSendOps();
 
-		if (clientId !== undefined && isConnected) {
+		if (clientId !== undefined && runtime.canSendSignals()) {
 			this.onConnect(clientId);
 		}
 	}
