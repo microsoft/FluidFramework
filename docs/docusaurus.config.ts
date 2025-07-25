@@ -189,6 +189,7 @@ const config: Config = {
 					],
 					apiKey: TYPESENSE_API_KEY,
 				},
+				// Allows searching across all documentation versions, not limited to the selected version.
 				contextualSearch: false,
 			},
 		}),
