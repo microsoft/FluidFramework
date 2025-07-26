@@ -48,7 +48,7 @@ export {
 
 export type {
 	LatestMap,
-	// LatestMapArguments,
+	LatestMapArguments,
 	LatestMapArgumentsRaw,
 	LatestMapClientData,
 	LatestMapEvents,
