@@ -56,7 +56,7 @@ import {
 import {
 	NodeShapeBasedEncoder,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/nodeEncoderGeneric.js";
+} from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import type {
 	FieldBatch,
 	FieldBatchEncodingContext,

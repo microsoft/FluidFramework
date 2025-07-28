@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoderGeneric.js";
+import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import {
 	buildContext,
 	fieldShaper,

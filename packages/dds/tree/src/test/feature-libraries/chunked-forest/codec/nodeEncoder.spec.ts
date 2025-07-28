@@ -21,7 +21,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoderGeneric.js";
+import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { brand } from "../../../../util/index.js";

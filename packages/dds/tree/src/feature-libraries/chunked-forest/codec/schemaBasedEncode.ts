@@ -31,7 +31,7 @@ import {
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
-import { NodeShapeBasedEncoder } from "./nodeEncoderGeneric.js";
+import { NodeShapeBasedEncoder } from "./nodeEncoder.js";
 
 /**
  * Encode data from `fieldBatch` in into an `EncodedChunk`.
