@@ -23,5 +23,6 @@ export function makeDetachedFieldIndexCodec(
 	const family = makeCodecFamily([
 		[version1, makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor)],
 	]);
+	// TODO: once there are multiple versions, pick the correct write version based on options
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion: version1 });
 }
