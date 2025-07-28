@@ -14,7 +14,7 @@ import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedFieldBatch,
 	type EncodedNestedArrayShape,
-	type EncodedTreeShape,
+	type EncodedNodeShape,
 	version,
 } from "./format.js";
 import type { ShapeIndex } from "./formatGeneric.js";
@@ -33,7 +33,7 @@ export function uncompressedEncode(batch: FieldBatch): EncodedFieldBatch {
 		version,
 		identifiers: [],
 		// A single shape used to encode all fields.
-		shapes: [{ c: anyTreeShape }, { a: anyArray }],
+		shapes: [{ c: anyNodeShape }, { a: anyArray }],
 		// Wrap up each field as an indicator to use the above shape, and its encoded data.
 		data: rootFields.map((data) => [arrayIndex, data]),
 	};
@@ -42,7 +42,7 @@ export function uncompressedEncode(batch: FieldBatch): EncodedFieldBatch {
 const treeIndex: ShapeIndex = 0;
 const arrayIndex: ShapeIndex = 1;
 
-const anyTreeShape: EncodedTreeShape = {
+const anyNodeShape: EncodedNodeShape = {
 	extraFields: arrayIndex,
 };
 

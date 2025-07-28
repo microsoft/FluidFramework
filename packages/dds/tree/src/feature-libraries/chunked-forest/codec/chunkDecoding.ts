@@ -43,7 +43,7 @@ import {
 	type EncodedFieldBatch,
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
-	type EncodedTreeShape,
+	type EncodedNodeShape,
 	type EncodedValueShape,
 	SpecialField,
 } from "./format.js";
@@ -81,8 +81,8 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 	b(shape: EncodedInlineArrayShape, context): ChunkDecoder {
 		return new InlineArrayDecoder(shape);
 	},
-	c(shape: EncodedTreeShape, context): ChunkDecoder {
-		return new TreeDecoder(shape, context);
+	c(shape: EncodedNodeShape, context): ChunkDecoder {
+		return new NodeDecoder(shape, context);
 	},
 	d(shape: EncodedAnyShape): ChunkDecoder {
 		return anyDecoder;
@@ -263,13 +263,13 @@ function fieldDecoder(
 }
 
 /**
- * Decoder for {@link EncodedTreeShape}s.
+ * Decoder for {@link EncodedNodeShape}s.
  */
-export class TreeDecoder implements ChunkDecoder {
+export class NodeDecoder implements ChunkDecoder {
 	private readonly type?: TreeNodeSchemaIdentifier;
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
-		private readonly shape: EncodedTreeShape,
+		private readonly shape: EncodedNodeShape,
 		private readonly context: DecoderContext<EncodedChunkShape>,
 	) {
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);

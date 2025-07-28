@@ -25,7 +25,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeEncoderGeneric } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoderGeneric.js";
+import { NodeShapeBasedEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoderGeneric.js";
 import {
 	buildContext,
 	fieldShaper,
@@ -65,15 +65,15 @@ import {
 } from "../../../../simple-tree/toStoredSchema.js";
 import { numberSchema, stringSchema } from "../../../../simple-tree/index.js";
 
-const anyNodeShape = new NodeEncoderGeneric(undefined, undefined, [], anyFieldEncoder);
-const onlyTypeShape = new NodeEncoderGeneric(undefined, false, [], undefined);
-const numericShape = new NodeEncoderGeneric(
+const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
+const onlyTypeShape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
+const numericShape = new NodeShapeBasedEncoder(
 	brand(numberSchema.identifier),
 	true,
 	[],
 	undefined,
 );
-const identifierShape = new NodeEncoderGeneric(
+const identifierShape = new NodeShapeBasedEncoder(
 	brand(stringSchema.identifier),
 	SpecialField.Identifier,
 	[],
@@ -261,7 +261,7 @@ describe("schemaBasedEncoding", () => {
 			);
 			assert.deepEqual(
 				shape,
-				new NodeEncoderGeneric(
+				new NodeShapeBasedEncoder(
 					brand(HasOptionalField.identifier),
 					false,
 					[{ key: brand("field"), encoder: context.nestedArrayEncoder(numericShape) }],
@@ -300,7 +300,7 @@ describe("schemaBasedEncoding", () => {
 			);
 			assert.deepEqual(
 				shape,
-				new NodeEncoderGeneric(
+				new NodeShapeBasedEncoder(
 					brand(NumericMap.identifier),
 					false,
 					[],

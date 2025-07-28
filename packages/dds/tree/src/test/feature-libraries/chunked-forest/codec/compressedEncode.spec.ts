@@ -54,7 +54,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
-	NodeEncoderGeneric,
+	NodeShapeBasedEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoderGeneric.js";
 import type {
@@ -74,10 +74,10 @@ import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
 
-const anyNodeShape = new NodeEncoderGeneric(undefined, undefined, [], anyFieldEncoder);
-const onlyTypeShape = new NodeEncoderGeneric(undefined, false, [], undefined);
+const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
+const onlyTypeShape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
 
-const constantFooShape = new NodeEncoderGeneric(brand("foo"), false, [], undefined);
+const constantFooShape = new NodeShapeBasedEncoder(brand("foo"), false, [], undefined);
 
 function makeFieldBatchCodec(
 	options: ICodecOptions,

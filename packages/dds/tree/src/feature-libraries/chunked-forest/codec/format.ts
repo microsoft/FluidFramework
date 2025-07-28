@@ -123,7 +123,7 @@ export enum SpecialField {
  * In the future other value shape formats may be added, likely as objects.
  *
  * @remarks
- * See {@link EncodedTreeShape} for usage.
+ * See {@link EncodedNodeShape} for usage.
  */
 export const EncodedValueShape = Type.Union([
 	Type.Boolean(),
@@ -134,7 +134,7 @@ export const EncodedValueShape = Type.Union([
 ]);
 export type EncodedValueShape = undefined | Static<typeof EncodedValueShape>;
 
-export const EncodedTreeShape = Type.Object(
+export const EncodedNodeShape = Type.Object(
 	{
 		/**
 		 * If not provided, inlined in data.
@@ -178,9 +178,9 @@ export const EncodedChunkShape = Type.Object(
 		 */
 		b: Type.Optional(EncodedInlineArrayShape),
 		/**
-		 * {@link EncodedTreeShape} union member.
+		 * {@link EncodedNodeShape} union member.
 		 */
-		c: Type.Optional(EncodedTreeShape),
+		c: Type.Optional(EncodedNodeShape),
 		/**
 		 * {@link EncodedAnyShape} union member.
 		 */
@@ -193,7 +193,7 @@ export type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 
 export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
 export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
-export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
+export type EncodedNodeShape = Static<typeof EncodedNodeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
