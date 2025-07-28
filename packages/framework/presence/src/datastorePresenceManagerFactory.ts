@@ -47,7 +47,7 @@ class PresenceManagerDataObject extends LoadableFluidObject {
 			// Signals) is readily detectable here and use that presence manager directly.
 			const runtime = this.runtime;
 			const events = createEmitter<ExtensionHostEvents>();
-			runtime.on("connected", (clientId) => events.emit("connected", clientId));
+			runtime.on("connected", (clientId) => events.emit("connected", clientId, true));
 			runtime.on("disconnected", () => events.emit("disconnected"));
 
 			const manager = createPresenceManager({
