@@ -106,7 +106,10 @@ export const mochaHooks = {
 					`Expected package '${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER}' to export a function, but got an object of type '${typeof createTestLogger}' instead`,
 				);
 			} else {
-				originalLogger = createTestLogger();
+				originalLogger = createTestLogger({
+					afterFlushDelayMs: 1250,
+					throttleLogging: false,
+				});
 			}
 		}
 
