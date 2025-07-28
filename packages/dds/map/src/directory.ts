@@ -223,7 +223,7 @@ interface PendingClear {
 }
 
 interface PendingKeyLifetime {
-	type: "lifetimeKey";
+	type: "lifetime";
 	key: string;
 	path: string;
 	/**
@@ -235,10 +235,10 @@ interface PendingKeyLifetime {
 }
 
 /**
- * A member of the pendingData array, which tracks outstanding changes and can be used to
+ * A member of the pendingStorageData array, which tracks outstanding changes and can be used to
  * compute optimistic values. Local sets are aggregated into lifetimes.
  */
-type PendingDataEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
+type PendingStorageEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
 
 /**
  * Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
@@ -1344,7 +1344,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// 2. The most recent pending entry for the key was a deletion (as this terminates the prior lifetime)
 		// 3. A clear was sent after the last pending entry for the key (which also terminates the prior lifetime)
 		let latestPendingEntry = findLast(
-			this.pendingData,
+			this.pendingStorageData,
 			(entry) => entry.type === "clear" || entry.key === key,
 		);
 		if (
@@ -1352,8 +1352,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			latestPendingEntry.type === "delete" ||
 			latestPendingEntry.type === "clear"
 		) {
-			latestPendingEntry = { type: "lifetimeKey", path: this.absolutePath, key, keySets: [] };
-			this.pendingData.push(latestPendingEntry);
+			latestPendingEntry = { type: "lifetime", path: this.absolutePath, key, keySets: [] };
+			this.pendingStorageData.push(latestPendingEntry);
 		}
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
@@ -1599,7 +1599,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			path: this.absolutePath,
 			key,
 		};
-		this.pendingData.push(pendingKeyDelete);
+		this.pendingStorageData.push(pendingKeyDelete);
 
 		const op: IDirectoryOperation = {
 			key,
@@ -1642,7 +1642,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "clear",
 			path: this.absolutePath,
 		};
-		this.pendingData.push(pendingClear);
+		this.pendingStorageData.push(pendingClear);
 
 		const copy = new Map<string, unknown>(this.sequencedData);
 		this.directory.emit("clear", true, this.directory);
@@ -1776,7 +1776,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Pending sets are aggregated into "lifetimes", which permit correct relative iteration order
 	 * even across remote operations and rollbacks.
 	 */
-	private readonly pendingData: PendingDataEntry[] = [];
+	private readonly pendingStorageData: PendingStorageEntry[] = [];
 
 	/**
 	 * An internal iterator that iterates over the entries in the directory.
@@ -1787,7 +1787,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// been deleted or cleared.  In total, this give an ordering of members based on when they were initially
 		// added to the map (even if they were later modified), similar to the native Map.
 		const sequencedDataIterator = this.sequencedData.keys();
-		const pendingDataIterator = this.pendingData.values();
+		const pendingStorageDataIterator = this.pendingStorageData.values();
 		const next = (): IteratorResult<[string, unknown]> => {
 			let nextSequencedKey = sequencedDataIterator.next();
 			while (!nextSequencedKey.done) {
@@ -1796,7 +1796,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// Either it is optimistically deleted and will not be part of the iteration, or it was
 				// re-added later and we'll iterate to it when we get to the pending data.
 				if (
-					!this.pendingData.some(
+					!this.pendingStorageData.some(
 						(entry) =>
 							entry.type === "clear" || (entry.type === "delete" && entry.key === key),
 					)
@@ -1808,14 +1808,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				nextSequencedKey = sequencedDataIterator.next();
 			}
 
-			let nextPending = pendingDataIterator.next();
+			let nextPending = pendingStorageDataIterator.next();
 			while (!nextPending.done) {
 				const nextPendingEntry = nextPending.value;
 				// A lifetime entry may need to be iterated.
-				if (nextPendingEntry.type === "lifetimeKey") {
-					const nextPendingEntryIndex = this.pendingData.indexOf(nextPendingEntry);
+				if (nextPendingEntry.type === "lifetime") {
+					const nextPendingEntryIndex = this.pendingStorageData.indexOf(nextPendingEntry);
 					const mostRecentDeleteOrClearIndex = findLastIndex(
-						this.pendingData,
+						this.pendingStorageData,
 						(entry) =>
 							entry.type === "clear" ||
 							(entry.type === "delete" && entry.key === nextPendingEntry.key),
@@ -1836,7 +1836,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 						}
 					}
 				}
-				nextPending = pendingDataIterator.next();
+				nextPending = pendingStorageDataIterator.next();
 			}
 
 			return { value: undefined, done: true };
@@ -1857,13 +1857,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private readonly getOptimisticLocalValue = (key: string): unknown => {
 		const latestPendingEntry = findLast(
-			this.pendingData,
+			this.pendingStorageData,
 			(entry) => entry.type === "clear" || entry.key === key,
 		);
 
 		if (latestPendingEntry === undefined) {
 			return this.sequencedData.get(key);
-		} else if (latestPendingEntry.type === "lifetimeKey") {
+		} else if (latestPendingEntry.type === "lifetime") {
 			const latestPendingSet =
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				latestPendingEntry.keySets[latestPendingEntry.keySets.length - 1]!;
@@ -1880,13 +1880,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	private readonly optimisticallyHas = (key: string): boolean => {
 		const latestPendingEntry = findLast(
-			this.pendingData,
+			this.pendingStorageData,
 			(entry) => entry.type === "clear" || entry.key === key,
 		);
 
 		return latestPendingEntry === undefined
 			? this.sequencedData.has(key)
-			: latestPendingEntry.type === "lifetimeKey";
+			: latestPendingEntry.type === "lifetime";
 	};
 
 	/**
@@ -1910,7 +1910,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		if (local) {
 			this.sequencedData.clear();
-			const pendingClear = this.pendingData.shift();
+			const pendingClear = this.pendingStorageData.shift();
 			assert(
 				pendingClear !== undefined && pendingClear.type === "clear",
 				"Got a local clear message we weren't expecting",
@@ -1922,8 +1922,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		} else {
 			// For pending set operations, collect the previous values before clearing sequenced data
 			const pendingSets: { key: string; previousValue: unknown }[] = [];
-			for (const entry of this.pendingData) {
-				if (entry.type === "lifetimeKey") {
+			for (const entry of this.pendingStorageData) {
+				if (entry.type === "lifetime") {
 					const previousValue = this.sequencedData.get(entry.key);
 					pendingSets.push({ key: entry.key, previousValue });
 				}
@@ -1932,7 +1932,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
-			if (!this.pendingData.some((entry) => entry.type === "clear")) {
+			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
 			}
 
@@ -1970,23 +1970,27 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 		if (local) {
-			const pendingEntryIndex = this.pendingData.findIndex(
+			const pendingEntryIndex = this.pendingStorageData.findIndex(
 				(entry) => entry.type !== "clear" && entry.key === op.key,
 			);
-			const pendingEntry = this.pendingData[pendingEntryIndex];
+			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
 				pendingEntry !== undefined &&
 					pendingEntry.type === "delete" &&
 					pendingEntry.key === op.key,
 				"Got a local delete message we weren't expecting",
 			);
-			this.pendingData.splice(pendingEntryIndex, 1);
+			this.pendingStorageData.splice(pendingEntryIndex, 1);
 			this.sequencedData.delete(op.key);
 		} else {
 			const previousValue: unknown = this.sequencedData.get(op.key);
 			this.sequencedData.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			if (!this.pendingData.some((entry) => entry.type === "clear" || entry.key === op.key)) {
+			if (
+				!this.pendingStorageData.some(
+					(entry) => entry.type === "clear" || entry.key === op.key,
+				)
+			) {
 				const event: IDirectoryValueChanged = {
 					key: op.key,
 					path: this.absolutePath,
@@ -2022,12 +2026,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const { key } = op;
 
 		if (local) {
-			const pendingEntryIndex = this.pendingData.findIndex(
+			const pendingEntryIndex = this.pendingStorageData.findIndex(
 				(entry) => entry.type !== "clear" && entry.key === key,
 			);
-			const pendingEntry = this.pendingData[pendingEntryIndex];
+			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "lifetimeKey",
+				pendingEntry !== undefined && pendingEntry.type === "lifetime",
 				"Couldn't match local set message to pending lifetime",
 			);
 			const pendingKeySet = pendingEntry.keySets.shift();
@@ -2038,7 +2042,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				"Got a local set message we weren't expecting",
 			);
 			if (pendingEntry.keySets.length === 0) {
-				this.pendingData.splice(pendingEntryIndex, 1);
+				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
 
 			this.sequencedData.set(key, pendingKeySet.value);
@@ -2048,7 +2052,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedData.set(key, value);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			if (!this.pendingData.some((entry) => entry.type === "clear" || entry.key === key)) {
+			if (
+				!this.pendingStorageData.some((entry) => entry.type === "clear" || entry.key === key)
+			) {
 				const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
 				this.directory.emit("valueChanged", event, local, this.directory);
 				const containedEvent: IValueChanged = { key, previousValue };
@@ -2373,7 +2379,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		if (directoryOp.type === "clear") {
 			// A pending clear will be last in the list, since it terminates all prior lifetimes.
-			const pendingClear = this.pendingData.pop();
+			const pendingClear = this.pendingStorageData.pop();
 			assert(
 				pendingClear !== undefined &&
 					pendingClear.type === "clear" &&
@@ -2397,17 +2403,17 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// A pending set/delete may not be last in the list, as the lifetimes' order is based on when
 			// they were created, not when they were last modified.
 			const pendingEntryIndex = findLastIndex(
-				this.pendingData,
+				this.pendingStorageData,
 				(entry) => entry.type !== "clear" && entry.key === directoryOp.key,
 			);
-			const pendingEntry = this.pendingData[pendingEntryIndex];
+			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 			assert(
 				pendingEntry !== undefined &&
-					(pendingEntry.type === "delete" || pendingEntry.type === "lifetimeKey"),
+					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
 				"Unexpected pending data for set/delete op",
 			);
 			if (pendingEntry.type === "delete") {
-				this.pendingData.splice(pendingEntryIndex, 1);
+				this.pendingStorageData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticLocalValue(directoryOp.key) !== undefined) {
 					const event: IDirectoryValueChanged = {
@@ -2422,14 +2428,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					};
 					this.emit("containedValueChanged", containedEvent, true, this);
 				}
-			} else if (pendingEntry.type === "lifetimeKey") {
+			} else if (pendingEntry.type === "lifetime") {
 				const pendingKeySet = pendingEntry.keySets.pop();
 				assert(
 					pendingKeySet !== undefined && pendingKeySet === localOpMetadata.previousValue,
 					"Unexpected set rollback",
 				);
 				if (pendingEntry.keySets.length === 0) {
-					this.pendingData.splice(pendingEntryIndex, 1);
+					this.pendingStorageData.splice(pendingEntryIndex, 1);
 				}
 				const event: IDirectoryValueChanged = {
 					key: directoryOp.key,
