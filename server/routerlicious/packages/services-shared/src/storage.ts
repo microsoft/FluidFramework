@@ -191,11 +191,10 @@ export class DocumentStorage implements IDocumentStorage {
 			createDocTrace.stampStage(DocCreationStage.StorageNameAllocated);
 			getGlobalTimeoutContext().checkTimeout();
 
-			const gitManager = await this.tenantManager.getTenantGitManager(
+			const gitManager = await this.getGitManager(
 				tenantId,
 				documentId,
 				storageName,
-				false /* includeDisabledTenant */,
 				isEphemeralContainer,
 			);
 
