@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IPartitionLambda, LambdaCloseType } from "./lambdas";
-import { IQueuedMessage } from "./queue";
+import type { IPartitionLambda, LambdaCloseType } from "./lambdas";
+import type { IQueuedMessage } from "./queue";
 
 /**
  * A lambda that passes the same message to one or more lambdas

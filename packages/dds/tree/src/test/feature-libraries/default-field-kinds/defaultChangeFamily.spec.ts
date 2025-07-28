@@ -24,7 +24,6 @@ import {
 	type DefaultChangeset,
 	DefaultEditBuilder,
 	cursorForJsonableTreeField,
-	initializeForest,
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
@@ -40,6 +39,7 @@ import {
 } from "../../utils.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
+import { initializeForest } from "../initializeForest.js";
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
 const family = defaultChangeFamily;

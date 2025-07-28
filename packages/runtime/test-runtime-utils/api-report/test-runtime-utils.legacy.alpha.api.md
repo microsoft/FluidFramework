@@ -363,7 +363,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     setChannelDirty(address: string): void;
     // (undocumented)
-    storage: IDocumentStorageService;
+    storage: IRuntimeStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -609,6 +609,8 @@ export class MockStorage implements IChannelStorageService {
     contains(path: string): Promise<boolean>;
     // (undocumented)
     static createFromSummary(summaryTree: ISummaryTree): MockStorage;
+    // (undocumented)
+    getSnapshotTree(): ISnapshotTree | undefined;
     // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)

@@ -9,7 +9,7 @@ import * as path from "node:path";
 import picomatch from "picomatch";
 import { getTypeTestPreviousPackageDetails } from "../../../common/typeTests";
 import type { BuildContext } from "../../buildContext";
-import { BuildPackage } from "../../buildGraph";
+import type { BuildPackage } from "../../buildGraph";
 import { globFn, toPosixPath } from "../taskUtils";
 import { LeafTask, LeafWithFileStatDoneFileTask } from "./leafTask";
 

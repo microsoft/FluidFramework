@@ -893,7 +893,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		);
 		const canSlideToEndpoint = true;
 		// Destructuring segment + offset is convenient and segment is reassigned
-		// eslint-disable-next-line prefer-const
+
 		const segOff = getSlideToSegoff(
 			{ segment: oldSegment, offset: oldOffset },
 			slidePreference,
@@ -1274,6 +1274,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
+					previousProps: segmentGroup.previousProps?.slice(0),
 				};
 
 				segment.segmentGroups.enqueue(newSegmentGroup);

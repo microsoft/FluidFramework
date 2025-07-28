@@ -5,25 +5,25 @@
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { validateRequestParams, handleResponse } from "@fluidframework/server-services";
-import { IAlfredTenant } from "@fluidframework/server-services-client";
-import {
+import type { IAlfredTenant } from "@fluidframework/server-services-client";
+import type {
 	ICache,
 	IDeltaService,
 	IRevokedTokenChecker,
 	ITenantManager,
 	IThrottler,
-	type IDenyList,
+	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
 	verifyStorageToken,
 	throttle,
-	IThrottleMiddlewareOptions,
+	type IThrottleMiddlewareOptions,
 	getParam,
 	getBooleanFromConfig,
 	denyListMiddleware,
 } from "@fluidframework/server-services-utils";
 import { Router } from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import winston from "winston";
 
 import { Constants } from "../../../utils";

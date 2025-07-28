@@ -19,9 +19,7 @@ export function createNodesFromPlainText(text: string): (PlainTextNode | LineBre
 
 	const transformedLines: (PlainTextNode | LineBreakNode)[] = [];
 	for (const [index, line] of lines.entries()) {
-		if (line.length === 0) {
-			transformedLines.push(LineBreakNode.Singleton);
-		} else {
+		if (line.length > 0) {
 			transformedLines.push(new PlainTextNode(line));
 		}
 

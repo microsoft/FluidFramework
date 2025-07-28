@@ -81,11 +81,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@22.10.7)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/gitresources-previous':
-        specifier: npm:@fluidframework/gitresources@5.0.0
-        version: '@fluidframework/gitresources@5.0.0'
+        specifier: npm:@fluidframework/gitresources@7.0.0
+        version: '@fluidframework/gitresources@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@22.10.7)
@@ -127,11 +127,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-kafka-orderer-previous':
-        specifier: npm:@fluidframework/server-kafka-orderer@5.0.0
-        version: '@fluidframework/server-kafka-orderer@5.0.0'
+        specifier: npm:@fluidframework/server-kafka-orderer@7.0.0
+        version: '@fluidframework/server-kafka-orderer@7.0.0'
       '@types/node':
         specifier: ^18.19.39
         version: 18.19.39
@@ -233,11 +233,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-previous':
-        specifier: npm:@fluidframework/server-lambdas@5.0.0
-        version: '@fluidframework/server-lambdas@5.0.0(debug@4.3.4)'
+        specifier: npm:@fluidframework/server-lambdas@7.0.0
+        version: '@fluidframework/server-lambdas@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -339,11 +339,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-lambdas-driver-previous':
-        specifier: npm:@fluidframework/server-lambdas-driver@5.0.0
-        version: '@fluidframework/server-lambdas-driver@5.0.0'
+        specifier: npm:@fluidframework/server-lambdas-driver@7.0.0
+        version: '@fluidframework/server-lambdas-driver@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -430,11 +430,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server-previous':
-        specifier: npm:@fluidframework/server-local-server@5.0.0
-        version: '@fluidframework/server-local-server@5.0.0'
+        specifier: npm:@fluidframework/server-local-server@7.0.0
+        version: '@fluidframework/server-local-server@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -566,11 +566,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-memory-orderer-previous':
-        specifier: npm:@fluidframework/server-memory-orderer@5.0.0
-        version: '@fluidframework/server-memory-orderer@5.0.0'
+        specifier: npm:@fluidframework/server-memory-orderer@7.0.0
+        version: '@fluidframework/server-memory-orderer@7.0.0'
       '@types/mocha':
         specifier: ^10.0.1
         version: 10.0.1
@@ -624,11 +624,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/protocol-base-previous':
-        specifier: npm:@fluidframework/protocol-base@5.0.0
-        version: '@fluidframework/protocol-base@5.0.0'
+        specifier: npm:@fluidframework/protocol-base@7.0.0
+        version: '@fluidframework/protocol-base@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -736,14 +736,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
-      '@fluidframework/server-routerlicious-previous':
-        specifier: npm:@fluidframework/server-routerlicious@5.0.0
-        version: '@fluidframework/server-routerlicious@5.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -884,14 +881,14 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-local-server':
         specifier: workspace:~
         version: link:../local-server
       '@fluidframework/server-routerlicious-base-previous':
-        specifier: npm:@fluidframework/server-routerlicious-base@5.0.0
-        version: '@fluidframework/server-routerlicious-base@5.0.0'
+        specifier: npm:@fluidframework/server-routerlicious-base@7.0.0
+        version: '@fluidframework/server-routerlicious-base@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -1059,11 +1056,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-previous':
-        specifier: npm:@fluidframework/server-services@5.0.0
-        version: '@fluidframework/server-services@5.0.0'
+        specifier: npm:@fluidframework/server-services@7.0.0
+        version: '@fluidframework/server-services@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -1162,11 +1159,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-client-previous':
-        specifier: npm:@fluidframework/server-services-client@5.0.0
-        version: '@fluidframework/server-services-client@5.0.0'
+        specifier: npm:@fluidframework/server-services-client@7.0.0
+        version: '@fluidframework/server-services-client@7.0.0'
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -1253,11 +1250,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-core-previous':
-        specifier: npm:@fluidframework/server-services-core@5.0.0
-        version: '@fluidframework/server-services-core@5.0.0'
+        specifier: npm:@fluidframework/server-services-core@7.0.0
+        version: '@fluidframework/server-services-core@7.0.0'
       '@types/mocha':
         specifier: ^10.0.1
         version: 10.0.1
@@ -1326,11 +1323,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-kafkanode-previous':
-        specifier: npm:@fluidframework/server-services-ordering-kafkanode@5.0.0
-        version: '@fluidframework/server-services-ordering-kafkanode@5.0.0'
+        specifier: npm:@fluidframework/server-services-ordering-kafkanode@7.0.0
+        version: '@fluidframework/server-services-ordering-kafkanode@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -1405,11 +1402,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-rdkafka-previous':
-        specifier: npm:@fluidframework/server-services-ordering-rdkafka@5.0.0
-        version: '@fluidframework/server-services-ordering-rdkafka@5.0.0'
+        specifier: npm:@fluidframework/server-services-ordering-rdkafka@7.0.0
+        version: '@fluidframework/server-services-ordering-rdkafka@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -1466,11 +1463,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-ordering-zookeeper-previous':
-        specifier: npm:@fluidframework/server-services-ordering-zookeeper@5.0.0
-        version: '@fluidframework/server-services-ordering-zookeeper@5.0.0'
+        specifier: npm:@fluidframework/server-services-ordering-zookeeper@7.0.0
+        version: '@fluidframework/server-services-ordering-zookeeper@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -1593,11 +1590,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-shared-previous':
-        specifier: npm:@fluidframework/server-services-shared@5.0.0
-        version: '@fluidframework/server-services-shared@5.0.0'
+        specifier: npm:@fluidframework/server-services-shared@7.0.0
+        version: '@fluidframework/server-services-shared@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -1678,11 +1675,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-telemetry-previous':
-        specifier: npm:@fluidframework/server-services-telemetry@5.0.0
-        version: '@fluidframework/server-services-telemetry@5.0.0'
+        specifier: npm:@fluidframework/server-services-telemetry@7.0.0
+        version: '@fluidframework/server-services-telemetry@7.0.0'
       '@types/mocha':
         specifier: ^10.0.1
         version: 10.0.1
@@ -1784,11 +1781,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-services-utils-previous':
-        specifier: npm:@fluidframework/server-services-utils@5.0.0
-        version: '@fluidframework/server-services-utils@5.0.0'
+        specifier: npm:@fluidframework/server-services-utils@7.0.0
+        version: '@fluidframework/server-services-utils@7.0.0'
       '@fluidframework/server-test-utils':
         specifier: workspace:~
         version: link:../test-utils
@@ -1908,11 +1905,11 @@ importers:
         specifier: ^0.56.0
         version: 0.56.0(@types/node@18.19.39)
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@fluidframework/server-test-utils-previous':
-        specifier: npm:@fluidframework/server-test-utils@5.0.0
-        version: '@fluidframework/server-test-utils@5.0.0'
+        specifier: npm:@fluidframework/server-test-utils@7.0.0
+        version: '@fluidframework/server-test-utils@7.0.0'
       '@types/lodash':
         specifier: ^4.14.118
         version: 4.14.195
@@ -2062,8 +2059,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       '@fluidframework/eslint-config-fluid':
-        specifier: ^5.7.4
-        version: 5.7.4(eslint@8.55.0)(typescript@5.1.6)
+        specifier: ^5.8.0
+        version: 5.8.0(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/api-extractor':
         specifier: ^7.45.1
         version: 7.45.1(patch_hash=f66stvskxun56mencgf6l5564y)(@types/node@18.19.39)
@@ -2448,68 +2445,65 @@ packages:
   '@fluidframework/driver-definitions@2.0.5':
     resolution: {integrity: sha512-1jdEGpWg73ow3g7wEv/YnIKa5NzRqsOAbqsUQj6v3QCK6lDhwbUNibctyKSdhRaE18s42s06Ip5n15fqbeq76Q==}
 
-  '@fluidframework/eslint-config-fluid@5.7.4':
-    resolution: {integrity: sha512-2JD0fKhR0wk8kWkUmjNY6FcavLxs0/oQ413z0gFHUSzd8UTkwTYumFQWpDBEoAvXqQw4nUOTAbicNIqHY25EyQ==}
+  '@fluidframework/eslint-config-fluid@5.8.0':
+    resolution: {integrity: sha512-MH0phD6UXLI1HGr9L8IDEYhv1UfnT55PeENu63mz7m/fNsawDQr/MI7OopIFKcW99vDtnMOEy5WHQk+hUFCkrw==}
 
-  '@fluidframework/gitresources@5.0.0':
-    resolution: {integrity: sha512-nfam1KT+EUqFCENHcxrU9VwUfbhUC83UcLuOsdLpn9I7VuClL+w8KMWosoYauZraO9gDhTo2kCErjgQji5GzGA==}
+  '@fluidframework/gitresources@7.0.0':
+    resolution: {integrity: sha512-APAxqCF/+2ljC8th0PoXzdUAo2EJapdTk9KNm6dp7dFD5hxYWoscFqdyu5K+bvMxmhrIpGd0f//nbb7rZq7bog==}
 
-  '@fluidframework/protocol-base@5.0.0':
-    resolution: {integrity: sha512-q5qQt269nUYQERwX5lntfEXVv7jbxFmGAZC1z1I5hZmkvSC6PJGF6GzXAtP43/eq0+hCftxmIT0jus+kLL/K4w==}
+  '@fluidframework/protocol-base@7.0.0':
+    resolution: {integrity: sha512-LUSTKQBJVnemMLMQUuoszHvl46XBfflI8U9R8kW+12T2W/Vvt+ldML7203MvNg4E/sFScGfqqZS5OzYn0z1TIw==}
 
   '@fluidframework/protocol-definitions@3.2.0':
     resolution: {integrity: sha512-xgcyMN4uF6dAp2/XYFSHvGFITIV7JbVt3itA+T0c71/lZjq/HU/a/ClPIxfl9AEN0RbtuR/1n5LP4FXSV9j0hA==}
 
-  '@fluidframework/server-kafka-orderer@5.0.0':
-    resolution: {integrity: sha512-WQaKMj6UWr4LTIf4Rib296qoTaws5e0ZWn5zxDLykDoFGTs14D4xvgBBiRMYDI66u5cy8rJq08BlPm+krntF+Q==}
+  '@fluidframework/server-kafka-orderer@7.0.0':
+    resolution: {integrity: sha512-/j2FC448ExnnZzR56FcpYiDjWFtW9jhYZxmWZ+OTc+/P01z9p1fp79TCH5jD4zsTmJWF5uRz/ZCxwAbDvDyirg==}
 
-  '@fluidframework/server-lambdas-driver@5.0.0':
-    resolution: {integrity: sha512-tnMxsxKr2zajQ64Ew7zcTKclK2Rkp7cqK4ghiuYkzhdbt7ZxIMVmkSW3B5/DXDSxVoi4VR6q1BA6cMnGJMcwsw==}
+  '@fluidframework/server-lambdas-driver@7.0.0':
+    resolution: {integrity: sha512-HNXeXUWYIR+jjGMAB61gCWsryuwqysA2o7/bwvdZuM4avqfm75dJUheB6N04uG5GfRfvesMHU68452YHIf6FYQ==}
 
-  '@fluidframework/server-lambdas@5.0.0':
-    resolution: {integrity: sha512-t0ouLtYi2y5DBYbp+WT4mIGXTSYK/1Yz+cb0prOtAUxYqsn+TAG/hr2DE8OyzHdL0RHZp/y2KX7X1jZhPxxGDg==}
+  '@fluidframework/server-lambdas@7.0.0':
+    resolution: {integrity: sha512-D5yzSZWpCojgZR2dfczSHa8lix2V39l1P5mwVrfmrTZE8tL+a3POnXtxcRJPT7QeRImfrMMDBdIBXE5dwFxNjQ==}
 
-  '@fluidframework/server-local-server@5.0.0':
-    resolution: {integrity: sha512-v+IBLojcZm1azQhiSEPCt3A2/xByiqDQ7/0gdkFenGrnEvnJ/9r/vv6ON0vAWFqDXov1Nu6kwEGA1bXIZTeHQw==}
+  '@fluidframework/server-local-server@7.0.0':
+    resolution: {integrity: sha512-ygCDPr3pE8HCakMtdYOlv8X6jpyzqval1hbf45v3egBI5LmolA+RDxKGA/nNKo525u13kGglPWvsuC/8tN82qA==}
 
-  '@fluidframework/server-memory-orderer@5.0.0':
-    resolution: {integrity: sha512-S5G2TwHXlewGkZ3jAtUKr/vpku0LPvhApktOVtAidIGHlKJP0kjLiom/KZihKZT5h2KqIhFBy56JgkXPFYkNeQ==}
+  '@fluidframework/server-memory-orderer@7.0.0':
+    resolution: {integrity: sha512-HmimZuGDYabOma6Tdn5jHpk2IRNEtxbUdUuNkR3qqZxPaqewTj3qeCOXRTMMGyEEaUg5Gmw19LrOROeDRcG6pA==}
 
-  '@fluidframework/server-routerlicious-base@5.0.0':
-    resolution: {integrity: sha512-j1l8hEi8EWiC2L5AN9DgeJe1vF79yP4AU3jd+rXNPeSOfR2vYO5aQxmosgJGkHPJYG8AWQ72VEi6YPE4jFlS7w==}
+  '@fluidframework/server-routerlicious-base@7.0.0':
+    resolution: {integrity: sha512-eGSyMPacPaEfbmGZKD/Gg/3kakq2jx2pR9LHuWTA9NxdhJX2tEpnKgFe3u+4Ss99yPXuG4xTdKr529y+QY1BNw==}
 
-  '@fluidframework/server-routerlicious@5.0.0':
-    resolution: {integrity: sha512-9zAuSxDBgl4SLYU0ZJPBDBmZLE2M+wbuIyZjBGy/JE5FlAs17DvdZLkh0bDty8Wp5AgHk9FW44KZNXwrBsUG1g==}
+  '@fluidframework/server-services-client@7.0.0':
+    resolution: {integrity: sha512-gzEvH6wNpRuMsyZhY22JrOHbTFsPGSzjLIlAWmnT7UT0znYGCDaMC39WPbOLLm7O8JSvmUblGe2Vx8N1+gCOgQ==}
 
-  '@fluidframework/server-services-client@5.0.0':
-    resolution: {integrity: sha512-Cijcy/WUL4U20XAVmN3tDMCYmjmwAmAl6drXBYzN6QvnwMN4PsNjwgsZdEHN+2D7wEs4o/Wb+g9DNv+Lu5EmLg==}
+  '@fluidframework/server-services-core@7.0.0':
+    resolution: {integrity: sha512-LdPERvJ/8nyXOxDPJ0VsWBHsGjwaCve7kdOcMTBk26UQhsHKtSl1D4ZuStoremzzQZBnA0FuksoZsA2yDizwAg==}
 
-  '@fluidframework/server-services-core@5.0.0':
-    resolution: {integrity: sha512-ztrGdRStwlfBFVsm+kChu6VuI764O4TbEEE1RX4gXpLlOsUVZfgYfeUiysdk5Zh7svDKT9n5LdE6VdjLvwb7IA==}
+  '@fluidframework/server-services-ordering-kafkanode@7.0.0':
+    resolution: {integrity: sha512-8eRuJ5BstEh1bHX2DNIDe9CcjJvk9p6Ox4ZmoSMR9hO2eQfx6TFmJBQd4yPv3M1MrpzdWA8IChDqVt/iYByhEA==}
 
-  '@fluidframework/server-services-ordering-kafkanode@5.0.0':
-    resolution: {integrity: sha512-pbNHMD3bZ3gs8pMlQvauTMn7SiGxm46HenlnQBRlbZb+FF+PbEhf1doyJab5JllVTR0HnIso0LLxf9MHK63Mdg==}
+  '@fluidframework/server-services-ordering-rdkafka@7.0.0':
+    resolution: {integrity: sha512-kk8w3+wJT3VGZCbndznlSyebClrijy555KbOPEdHgOvwLVjuitk0tgpqo0fkGk6PGWdikWUAxnat8fONNoFusA==}
 
-  '@fluidframework/server-services-ordering-rdkafka@5.0.0':
-    resolution: {integrity: sha512-BNq5i6Loro7OdT/Xuo1QsPDxPLySkezBXELKnyzTnJBzziNu81jmTAutJJkNDiPkv6aZNquk657q5S1mcm8FGQ==}
+  '@fluidframework/server-services-ordering-zookeeper@7.0.0':
+    resolution: {integrity: sha512-p69vyn+50j22f3irItp7LFCvHoIYZFVX08EcOjS0UOQu6KrMZd04TNk19WQf1wQ49xqEUI6kD88z7rgyMior3g==}
 
-  '@fluidframework/server-services-ordering-zookeeper@5.0.0':
-    resolution: {integrity: sha512-HZad4lMJjMduUySfTBQKN4bvgrpWrVpWRBkc3DvWOjP3NUwBf+VA6ndiN2x3fpqlyMgdyXNfgZyNrijMJpvADA==}
+  '@fluidframework/server-services-shared@7.0.0':
+    resolution: {integrity: sha512-kO2/34/4rPPfjnyadaSaIXotWT4ZWMcGxiqruIbuU05zV+OCieUrla3YnE8GFtQ5hCGPMDE6+InfoUcEb8GN9Q==}
 
-  '@fluidframework/server-services-shared@5.0.0':
-    resolution: {integrity: sha512-Qrmxq8IeUTq9n+5rpR4LY0MPZfKWXCw/MQj0Sc5xe0bx8tnPmqQ1W43uOC+or4HcWmigSYKkhPfp73BSzvNrfw==}
+  '@fluidframework/server-services-telemetry@7.0.0':
+    resolution: {integrity: sha512-C3PNyfBWmWboAkSvExELdwyW8dQ9RBIUPhh1P016pf76NRIk2ZypLloVh7K2WA5fo6Tv+gRYhnT2gThXhNm5IA==}
 
-  '@fluidframework/server-services-telemetry@5.0.0':
-    resolution: {integrity: sha512-lWymor6/GVgZpjtBOEUzCmjNJoro/oK2MKoT0MFgg70bhTgWKAOLRAkJZgq8GLGPCHW7ntZ/D+ve763kPu27CQ==}
+  '@fluidframework/server-services-utils@7.0.0':
+    resolution: {integrity: sha512-/hwQbeVx3prXNTReSVGbGmDZTbAKPDUVhHB5CY9eG9nKbo8FnkXUbaOXpgX1xECAWhzer0K4Qj//93G95TAY8w==}
 
-  '@fluidframework/server-services-utils@5.0.0':
-    resolution: {integrity: sha512-5yuVl3Wqj8GpcT1NX+GFsvIwP3nSWD/KJP0J1EQi499T5RWwdsoCcDtZhe1T968NbPQAx/gnXyMtEVy5MfTkWA==}
+  '@fluidframework/server-services@7.0.0':
+    resolution: {integrity: sha512-DAWBCcWyI/5kRaUs71MUR94mnZAdDy7czmD8b+eKxLNw7tyTdrM0N0uuGkYK2T+yy4UBJ8apiTyByIfmrw3XJA==}
 
-  '@fluidframework/server-services@5.0.0':
-    resolution: {integrity: sha512-iFh8ML/0FycJNtqNFc1uYZnA16DHXxd5kLlt6oY1lDVNeV1JgsI+6mefhp1QK++j1T3jcSe6d5MWs72nm8VUsw==}
-
-  '@fluidframework/server-test-utils@5.0.0':
-    resolution: {integrity: sha512-FOZ1Faw6x8VALUZh/nY6zKCfpgbPK/ylpKf/uQ2oOV9sxGNQfo5NXyHlQP1b78wfx2OYyHY5njtvYl7i9tz/zg==}
+  '@fluidframework/server-test-utils@7.0.0':
+    resolution: {integrity: sha512-ACUoJDbL3sckzeDe/1DGUamYI9IIGyYyeP88MfEnunqgz9FoDrdn3Jae2Vl1SSBYLtck8IxG86rSOh0kbXcPHQ==}
 
   '@gitbeaker/core@38.12.1':
     resolution: {integrity: sha512-8XMVcBIdVAAoxn7JtqmZ2Ee8f+AZLcCPmqEmPFOXY2jPS84y/DERISg/+sbhhb18iRy+ZsZhpWgQ/r3CkYNJOQ==}
@@ -9332,7 +9326,7 @@ snapshots:
       outdent: 0.5.0
       prettier: 2.8.8
       resolve-from: 5.0.0
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/assemble-release-plan@6.0.4':
     dependencies:
@@ -9341,7 +9335,7 @@ snapshots:
       '@changesets/should-skip-package': 0.1.1
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/changelog-git@0.2.0':
     dependencies:
@@ -9399,7 +9393,7 @@ snapshots:
       '@changesets/types': 6.0.0
       '@manypkg/get-packages': 1.1.3
       picocolors: 1.1.1
-      semver: 7.7.1
+      semver: 7.7.2
 
   '@changesets/get-release-plan@4.0.4':
     dependencies:
@@ -9972,7 +9966,7 @@ snapshots:
     dependencies:
       '@fluidframework/core-interfaces': 2.0.5
 
-  '@fluidframework/eslint-config-fluid@5.7.4(eslint@8.55.0)(typescript@5.1.6)':
+  '@fluidframework/eslint-config-fluid@5.8.0(eslint@8.55.0)(typescript@5.1.6)':
     dependencies:
       '@fluid-internal/eslint-plugin-fluid': 0.1.5(eslint@8.55.0)(typescript@5.1.6)
       '@microsoft/tsdoc': 0.14.2
@@ -9983,9 +9977,9 @@ snapshots:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint-config-biome: 1.9.4
       eslint-config-prettier: 9.0.0(eslint@8.55.0)
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
       eslint-plugin-eslint-comments: 3.2.0(eslint@8.55.0)
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       eslint-plugin-jsdoc: 46.8.2(eslint@8.55.0)
       eslint-plugin-promise: 6.1.1(eslint@8.55.0)
       eslint-plugin-react: 7.33.2(eslint@8.55.0)
@@ -10001,32 +9995,32 @@ snapshots:
       - supports-color
       - typescript
 
-  '@fluidframework/gitresources@5.0.0': {}
+  '@fluidframework/gitresources@7.0.0': {}
 
-  '@fluidframework/protocol-base@5.0.0':
+  '@fluidframework/protocol-base@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
       events_pkg: events@3.3.0
 
   '@fluidframework/protocol-definitions@3.2.0': {}
 
-  '@fluidframework/server-kafka-orderer@5.0.0':
+  '@fluidframework/server-kafka-orderer@7.0.0':
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-core': 7.0.0
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-lambdas-driver@5.0.0':
+  '@fluidframework/server-lambdas-driver@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
       assert: 2.1.0
-      async: 3.2.5
+      async: 3.2.6
       events: 3.3.0
       lodash: 4.17.21
       nconf: 0.12.1
@@ -10034,97 +10028,129 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-lambdas@5.0.0(debug@4.3.4)':
+  '@fluidframework/server-lambdas@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
-      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 5.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-lambdas-driver': 7.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
       '@types/semver': 7.7.0
       assert: 2.1.0
-      async: 3.2.5
-      axios: 1.8.4(debug@4.3.4)
+      async: 3.2.6
+      axios: 1.8.4
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       json-stringify-safe: 5.0.1
       lodash: 4.17.21
       nconf: 0.12.1
-      semver: 7.7.1
+      opossum: 8.1.4
+      semver: 7.7.2
+      serialize-error: 8.1.0
       sha.js: 2.4.11
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - debug
       - supports-color
 
-  '@fluidframework/server-local-server@5.0.0':
+  '@fluidframework/server-lambdas@7.0.0(debug@4.4.1)':
+    dependencies:
+      '@fluidframework/common-utils': 3.1.0
+      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/protocol-base': 7.0.0
+      '@fluidframework/protocol-definitions': 3.2.0
+      '@fluidframework/server-lambdas-driver': 7.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      '@types/semver': 7.7.0
+      assert: 2.1.0
+      async: 3.2.6
+      axios: 1.8.4(debug@4.4.1)
+      buffer: 6.0.3
+      double-ended-queue: 2.1.0-0
+      events: 3.3.0
+      json-stringify-safe: 5.0.1
+      lodash: 4.17.21
+      nconf: 0.12.1
+      opossum: 8.1.4
+      semver: 7.7.2
+      serialize-error: 8.1.0
+      sha.js: 2.4.11
+      uuid: 11.1.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  '@fluidframework/server-local-server@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
-      '@fluidframework/server-memory-orderer': 5.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
-      '@fluidframework/server-test-utils': 5.0.0
-      debug: 4.3.4
+      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.1)
+      '@fluidframework/server-memory-orderer': 7.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-test-utils': 7.0.0
+      debug: 4.4.1
       events_pkg: events@3.3.0
       jsrsasign: 11.0.0
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-memory-orderer@5.0.0':
+  '@fluidframework/server-memory-orderer@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-lambdas': 7.0.0(debug@4.4.1)
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
       '@types/debug': 4.1.12
       '@types/double-ended-queue': 2.1.7
       '@types/lodash': 4.14.202
       '@types/node': 18.19.39
       '@types/ws': 6.0.4
       assert: 2.1.0
-      debug: 4.3.4
+      debug: 4.4.1
       double-ended-queue: 2.1.0-0
       events: 3.3.0
       lodash: 4.17.21
       sillyname: 0.1.0
-      uuid: 9.0.1
+      uuid: 11.1.0
       ws: 7.5.10
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-routerlicious-base@5.0.0':
+  '@fluidframework/server-routerlicious-base@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-kafka-orderer': 5.0.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
-      '@fluidframework/server-lambdas-driver': 5.0.0
-      '@fluidframework/server-memory-orderer': 5.0.0
-      '@fluidframework/server-services': 5.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-ordering-kafkanode': 5.0.0
-      '@fluidframework/server-services-ordering-rdkafka': 5.0.0
-      '@fluidframework/server-services-ordering-zookeeper': 5.0.0
-      '@fluidframework/server-services-shared': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
-      '@fluidframework/server-services-utils': 5.0.0
+      '@fluidframework/server-kafka-orderer': 7.0.0
+      '@fluidframework/server-lambdas': 7.0.0
+      '@fluidframework/server-lambdas-driver': 7.0.0
+      '@fluidframework/server-memory-orderer': 7.0.0
+      '@fluidframework/server-services': 7.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-ordering-kafkanode': 7.0.0
+      '@fluidframework/server-services-ordering-rdkafka': 7.0.0
+      '@fluidframework/server-services-ordering-zookeeper': 7.0.0
+      '@fluidframework/server-services-shared': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-utils': 7.0.0
+      '@socket.io/redis-emitter': 4.1.1
       body-parser: 1.20.3
       bytes: 3.1.2
       compression: 1.7.4
@@ -10139,7 +10165,7 @@ snapshots:
       serialize-error: 8.1.0
       sha.js: 2.4.11
       sillyname: 0.1.0
-      uuid: 9.0.1
+      uuid: 11.1.0
       winston: 3.9.0
       ws: 7.5.10
     transitivePeerDependencies:
@@ -10149,72 +10175,44 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-routerlicious@5.0.0':
+  '@fluidframework/server-services-client@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-kafka-orderer': 5.0.0
-      '@fluidframework/server-lambdas': 5.0.0(debug@4.3.4)
-      '@fluidframework/server-lambdas-driver': 5.0.0
-      '@fluidframework/server-memory-orderer': 5.0.0
-      '@fluidframework/server-routerlicious-base': 5.0.0
-      '@fluidframework/server-services': 5.0.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-shared': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
-      '@fluidframework/server-services-utils': 5.0.0
-      commander: 2.20.3
-      express: 4.21.2
-      ioredis: 5.6.1
-      nconf: 0.12.1
-      winston: 3.9.0
-    transitivePeerDependencies:
-      - aws-crt
-      - bufferutil
-      - debug
-      - supports-color
-      - utf-8-validate
-
-  '@fluidframework/server-services-client@5.0.0':
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
-      '@fluidframework/protocol-base': 5.0.0
-      '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.8.4(debug@4.3.4)
+      axios: 1.8.4(debug@4.4.1)
       crc-32: 1.2.0
-      debug: 4.3.4
+      debug: 4.4.1
       json-stringify-safe: 5.0.1
       jsrsasign: 11.0.0
       jwt-decode: 4.0.0
       sillyname: 0.1.0
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-core@5.0.0':
+  '@fluidframework/server-services-core@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
+      '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
       '@types/nconf': 0.10.6
       '@types/node': 18.19.39
-      debug: 4.3.4
+      debug: 4.4.1
       events: 3.3.0
       nconf: 0.12.1
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-ordering-kafkanode@5.0.0':
+  '@fluidframework/server-services-ordering-kafkanode@7.0.0':
     dependencies:
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-ordering-zookeeper': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-ordering-zookeeper': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
       events_pkg: events@3.3.0
       kafka-node: 5.0.0
       nconf: 0.12.1
@@ -10222,12 +10220,13 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-ordering-rdkafka@5.0.0':
+  '@fluidframework/server-services-ordering-rdkafka@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-utils': 7.0.0
       events_pkg: events@3.3.0
       nconf: 0.12.1
       node-rdkafka: 3.4.0
@@ -10235,28 +10234,29 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-ordering-zookeeper@5.0.0':
+  '@fluidframework/server-services-ordering-zookeeper@7.0.0':
     dependencies:
-      '@fluidframework/server-services-core': 5.0.0
+      '@fluidframework/server-services-core': 7.0.0
       zookeeper: 5.6.0
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services-shared@5.0.0':
+  '@fluidframework/server-services-shared@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
-      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
-      '@fluidframework/server-services-utils': 5.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-utils': 7.0.0
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.5)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3
-      debug: 4.3.4
+      debug: 4.4.1
       events: 3.3.0
+      express: 4.21.2
       fast-redact: 3.3.0
       ioredis: 5.6.1
       lodash: 4.17.21
@@ -10266,28 +10266,28 @@ snapshots:
       socket.io: 4.8.0
       socket.io-adapter: 2.5.5
       socket.io-parser: 4.2.4
-      uuid: 9.0.1
+      uuid: 11.1.0
       winston: 3.9.0
     transitivePeerDependencies:
       - bufferutil
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-services-telemetry@5.0.0':
+  '@fluidframework/server-services-telemetry@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       json-stringify-safe: 5.0.1
       path-browserify: 1.0.1
       serialize-error: 8.1.0
-      uuid: 9.0.1
+      uuid: 11.1.0
 
-  '@fluidframework/server-services-utils@5.0.0':
+  '@fluidframework/server-services-utils@7.0.0':
     dependencies:
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
-      debug: 4.3.4
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      debug: 4.4.1
       express: 4.21.2
       ioredis: 5.6.1
       json-stringify-safe: 5.0.1
@@ -10297,28 +10297,28 @@ snapshots:
       serialize-error: 8.1.0
       sillyname: 0.1.0
       split: 1.0.1
-      uuid: 9.0.1
+      uuid: 11.1.0
       winston: 3.9.0
       winston-transport: 4.6.0
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/server-services@5.0.0':
+  '@fluidframework/server-services@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-ordering-kafkanode': 5.0.0
-      '@fluidframework/server-services-ordering-rdkafka': 5.0.0
-      '@fluidframework/server-services-shared': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
-      '@fluidframework/server-services-utils': 5.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-ordering-kafkanode': 7.0.0
+      '@fluidframework/server-services-ordering-rdkafka': 7.0.0
+      '@fluidframework/server-services-shared': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
+      '@fluidframework/server-services-utils': 7.0.0
       '@socket.io/redis-emitter': 4.1.1
       '@types/lodash': 4.14.202
       amqplib: 0.10.3
-      axios: 1.8.4(debug@4.3.4)
-      debug: 4.3.4
+      axios: 1.8.4(debug@4.4.1)
+      debug: 4.4.1
       events: 3.3.0
       ioredis: 5.6.1
       lodash: 4.17.21
@@ -10327,7 +10327,7 @@ snapshots:
       nconf: 0.12.1
       socket.io: 4.8.0
       telegrafjs: 0.1.3
-      uuid: 9.0.1
+      uuid: 11.1.0
       winston: 3.9.0
     transitivePeerDependencies:
       - aws-crt
@@ -10335,24 +10335,24 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@fluidframework/server-test-utils@5.0.0':
+  '@fluidframework/server-test-utils@7.0.0':
     dependencies:
       '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 5.0.0
-      '@fluidframework/protocol-base': 5.0.0
+      '@fluidframework/gitresources': 7.0.0
+      '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-services-client': 5.0.0
-      '@fluidframework/server-services-core': 5.0.0
-      '@fluidframework/server-services-telemetry': 5.0.0
+      '@fluidframework/server-services-client': 7.0.0
+      '@fluidframework/server-services-core': 7.0.0
+      '@fluidframework/server-services-telemetry': 7.0.0
       '@types/ioredis-mock': 8.2.6(ioredis@5.6.1)
       assert: 2.1.0
-      debug: 4.3.4
+      debug: 4.4.1
       events: 3.3.0
       ioredis: 5.6.1
       ioredis-mock: 8.9.0(@types/ioredis-mock@8.2.6(ioredis@5.6.1))(ioredis@5.6.1)
       lodash: 4.17.21
       string-hash: 1.1.3
-      uuid: 9.0.1
+      uuid: 11.1.0
     transitivePeerDependencies:
       - supports-color
 
@@ -10674,7 +10674,7 @@ snapshots:
 
   '@kwsites/file-exists@1.1.1':
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -10884,7 +10884,7 @@ snapshots:
       proc-log: 3.0.0
       promise-inflight: 1.0.1
       promise-retry: 2.0.1
-      semver: 7.7.1
+      semver: 7.7.2
       which: 3.0.1
     transitivePeerDependencies:
       - bluebird
@@ -11181,7 +11181,7 @@ snapshots:
 
   '@pm2/agent@2.0.4':
     dependencies:
-      async: 3.2.5
+      async: 3.2.6
       chalk: 3.0.0
       dayjs: 1.8.36
       debug: 4.3.4
@@ -12014,12 +12014,12 @@ snapshots:
       '@typescript-eslint/type-utils': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/utils': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
       eslint: 8.55.0
       graphemer: 1.4.0
       ignore: 5.3.2
       natural-compare: 1.4.0
-      semver: 7.7.1
+      semver: 7.7.2
       ts-api-utils: 1.0.3(typescript@5.1.6)
     optionalDependencies:
       typescript: 5.1.6
@@ -12053,7 +12053,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       '@typescript-eslint/visitor-keys': 6.7.5
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
       eslint: 8.55.0
     optionalDependencies:
       typescript: 5.1.6
@@ -12129,7 +12129,7 @@ snapshots:
       debug: 4.4.1
       globby: 11.1.0
       is-glob: 4.0.3
-      semver: 7.7.1
+      semver: 7.7.2
       ts-api-utils: 1.0.3(typescript@5.1.6)
     optionalDependencies:
       typescript: 5.1.6
@@ -12160,7 +12160,7 @@ snapshots:
       '@typescript-eslint/types': 6.7.5
       '@typescript-eslint/typescript-estree': 6.7.5(typescript@5.1.6)
       eslint: 8.55.0
-      semver: 7.7.1
+      semver: 7.7.2
     transitivePeerDependencies:
       - supports-color
       - typescript
@@ -12629,9 +12629,25 @@ snapshots:
       fast-deep-equal: 3.1.3
       is-buffer: 2.0.5
 
+  axios@1.8.4:
+    dependencies:
+      follow-redirects: 1.15.6(debug@4.3.4)
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
   axios@1.8.4(debug@4.3.4):
     dependencies:
       follow-redirects: 1.15.6(debug@4.3.4)
+      form-data: 4.0.0
+      proxy-from-env: 1.1.0
+    transitivePeerDependencies:
+      - debug
+
+  axios@1.8.4(debug@4.4.1):
+    dependencies:
+      follow-redirects: 1.15.6(debug@4.4.1)
       form-data: 4.0.0
       proxy-from-env: 1.1.0
     transitivePeerDependencies:
@@ -12668,7 +12684,7 @@ snapshots:
     dependencies:
       arg-parser: 1.2.0
       commander: 9.5.0
-      semver: 7.7.1
+      semver: 7.7.2
 
   binary-extensions@2.2.0: {}
 
@@ -13593,7 +13609,7 @@ snapshots:
       has-property-descriptors: 1.0.2
       has-proto: 1.0.3
       has-symbols: 1.0.3
-      hasown: 2.0.1
+      hasown: 2.0.2
       internal-slot: 1.0.7
       is-array-buffer: 3.0.4
       is-callable: 1.2.7
@@ -13649,11 +13665,11 @@ snapshots:
     dependencies:
       get-intrinsic: 1.2.4
       has-tostringtag: 1.0.2
-      hasown: 2.0.1
+      hasown: 2.0.2
 
   es-shim-unscopables@1.0.2:
     dependencies:
-      hasown: 2.0.1
+      hasown: 2.0.2
 
   es-to-primitive@1.2.1:
     dependencies:
@@ -13701,33 +13717,33 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0):
     dependencies:
       '@nolyfill/is-core-module': 1.0.39
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
       enhanced-resolve: 5.17.1
       eslint: 8.55.0
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.10.1
       is-bun-module: 1.3.0
       is-glob: 4.0.3
     optionalDependencies:
-      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-plugin-import: eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
     transitivePeerDependencies:
       - '@typescript-eslint/parser'
       - eslint-import-resolver-node
       - eslint-import-resolver-webpack
       - supports-color
 
-  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-module-utils@2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 3.2.7
     optionalDependencies:
       '@typescript-eslint/parser': 6.7.5(eslint@8.55.0)(typescript@5.1.6)
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-import-resolver-typescript: 3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1)(eslint@8.55.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -13737,13 +13753,13 @@ snapshots:
       eslint: 8.55.0
       ignore: 5.3.2
 
-  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0):
+  eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0):
     dependencies:
       debug: 4.4.1
       doctrine: 3.0.0
       eslint: 8.55.0
       eslint-import-resolver-node: 0.3.9
-      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-plugin-i@2.29.1(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0))(eslint@8.55.0))(eslint@8.55.0)
+      eslint-module-utils: 2.12.0(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.3)(eslint@8.55.0)
       get-tsconfig: 4.10.1
       is-glob: 4.0.3
       minimatch: 3.1.2
@@ -13759,12 +13775,12 @@ snapshots:
       '@es-joy/jsdoccomment': 0.40.1
       are-docs-informative: 0.0.2
       comment-parser: 1.4.0
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
       escape-string-regexp: 4.0.0
       eslint: 8.55.0
       esquery: 1.5.0
       is-builtin-module: 3.2.1
-      semver: 7.7.1
+      semver: 7.7.2
       spdx-expression-parse: 3.0.1
     transitivePeerDependencies:
       - supports-color
@@ -13818,7 +13834,7 @@ snapshots:
       read-pkg-up: 7.0.1
       regexp-tree: 0.1.27
       regjsparser: 0.10.0
-      semver: 7.7.1
+      semver: 7.7.2
       strip-indent: 3.0.0
 
   eslint-plugin-unused-imports@3.0.0(@typescript-eslint/eslint-plugin@6.7.5(@typescript-eslint/parser@6.7.5(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0)(typescript@5.1.6))(eslint@8.55.0):
@@ -14126,6 +14142,10 @@ snapshots:
     optionalDependencies:
       debug: 4.3.4
 
+  follow-redirects@1.15.6(debug@4.4.1):
+    optionalDependencies:
+      debug: 4.4.1
+
   for-each@0.3.3:
     dependencies:
       is-callable: 1.2.7
@@ -14241,7 +14261,7 @@ snapshots:
       function-bind: 1.1.2
       has-proto: 1.0.3
       has-symbols: 1.0.3
-      hasown: 2.0.1
+      hasown: 2.0.2
 
   get-package-type@0.1.0: {}
 
@@ -14302,7 +14322,7 @@ snapshots:
 
   gitlog@4.0.8:
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
       tslib: 2.6.2
     transitivePeerDependencies:
       - supports-color
@@ -14646,7 +14666,7 @@ snapshots:
   internal-slot@1.0.7:
     dependencies:
       es-errors: 1.3.0
-      hasown: 2.0.1
+      hasown: 2.0.2
       side-channel: 1.0.4
 
   interpret@1.4.0: {}
@@ -14723,7 +14743,7 @@ snapshots:
 
   is-bun-module@1.3.0:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   is-callable@1.2.7: {}
 
@@ -15041,7 +15061,7 @@ snapshots:
       lodash.isstring: 4.0.1
       lodash.once: 4.1.1
       ms: 2.1.3
-      semver: 7.7.1
+      semver: 7.7.2
 
   jsrsasign@11.0.0: {}
 
@@ -15306,7 +15326,7 @@ snapshots:
 
   make-dir@4.0.0:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   make-error@1.3.6: {}
 
@@ -15889,7 +15909,7 @@ snapshots:
 
   nconf@0.12.1:
     dependencies:
-      async: 3.2.5
+      async: 3.2.6
       ini: 2.0.0
       secure-keys: 1.0.0
       yargs: 16.2.0
@@ -16005,7 +16025,7 @@ snapshots:
   normalize-package-data@6.0.2:
     dependencies:
       hosted-git-info: 7.0.2
-      semver: 7.7.1
+      semver: 7.7.2
       validate-npm-package-license: 3.0.4
 
   normalize-path@3.0.0: {}
@@ -16071,7 +16091,7 @@ snapshots:
     dependencies:
       hosted-git-info: 6.1.1
       proc-log: 3.0.0
-      semver: 7.7.1
+      semver: 7.7.2
       validate-npm-package-name: 5.0.1
 
   npm-packlist@7.0.4:
@@ -16083,7 +16103,7 @@ snapshots:
       npm-install-checks: 6.1.1
       npm-normalize-package-bin: 3.0.1
       npm-package-arg: 10.1.0
-      semver: 7.7.1
+      semver: 7.7.2
 
   npm-registry-fetch@14.0.5:
     dependencies:
@@ -16334,7 +16354,7 @@ snapshots:
       ky: 1.7.4
       registry-auth-token: 5.0.3
       registry-url: 6.0.1
-      semver: 7.7.1
+      semver: 7.7.2
 
   package-json@8.1.1:
     dependencies:
@@ -16505,7 +16525,7 @@ snapshots:
 
   pm2-axon-rpc@0.7.1:
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
     transitivePeerDependencies:
       - supports-color
 
@@ -16513,7 +16533,7 @@ snapshots:
     dependencies:
       amp: 0.3.1
       amp-message: 0.1.2
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
       escape-string-regexp: 4.0.0
     transitivePeerDependencies:
       - supports-color
@@ -16529,8 +16549,8 @@ snapshots:
 
   pm2-sysmonit@1.2.8:
     dependencies:
-      async: 3.2.5
-      debug: 4.4.0(supports-color@8.1.1)
+      async: 3.2.6
+      debug: 4.4.1
       pidusage: 2.0.21
       systeminformation: 5.21.24
       tx2: 1.0.5
@@ -16744,7 +16764,7 @@ snapshots:
 
   rc-config-loader@4.1.3:
     dependencies:
-      debug: 4.4.0(supports-color@8.1.1)
+      debug: 4.4.1
       js-yaml: 4.1.0
       json5: 2.2.3
       require-from-string: 2.0.2
@@ -16844,7 +16864,7 @@ snapshots:
 
   rechoir@0.6.2:
     dependencies:
-      resolve: 1.22.8
+      resolve: 1.22.10
 
   rechoir@0.8.0:
     dependencies:
@@ -16964,7 +16984,7 @@ snapshots:
     dependencies:
       debug: 4.4.1
       module-details-from-path: 1.0.3
-      resolve: 1.22.8
+      resolve: 1.22.10
     transitivePeerDependencies:
       - supports-color
 
@@ -17009,7 +17029,7 @@ snapshots:
 
   resolve@2.0.0-next.4:
     dependencies:
-      is-core-module: 2.13.1
+      is-core-module: 2.16.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
@@ -17104,7 +17124,7 @@ snapshots:
 
   semver-diff@4.0.0:
     dependencies:
-      semver: 7.7.1
+      semver: 7.7.2
 
   semver-utils@1.1.4: {}
 
@@ -17397,7 +17417,7 @@ snapshots:
       get-stdin: 9.0.0
       git-hooks-list: 3.1.0
       is-plain-obj: 4.1.0
-      semver: 7.7.1
+      semver: 7.7.2
       sort-object-keys: 1.1.3
       tinyglobby: 0.2.10
 
@@ -18010,7 +18030,7 @@ snapshots:
       is-yarn-global: 0.4.1
       latest-version: 7.0.0
       pupa: 3.1.0
-      semver: 7.7.1
+      semver: 7.7.2
       semver-diff: 4.0.0
       xdg-basedir: 5.1.0
 
@@ -18053,7 +18073,8 @@ snapshots:
 
   uuid@3.4.0: {}
 
-  uuid@9.0.1: {}
+  uuid@9.0.1:
+    optional: true
 
   v8-to-istanbul@9.1.0:
     dependencies:

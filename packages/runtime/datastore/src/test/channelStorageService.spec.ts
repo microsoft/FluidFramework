@@ -6,10 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelStorageService } from "../channelStorageService.js";
@@ -20,7 +18,7 @@ describe("ChannelStorageService", () => {
 			blobs: {},
 			trees: {},
 		};
-		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+		const storage: Pick<IRuntimeStorageService, "readBlob"> = {
 			readBlob: async (id: string) => {
 				throw new Error("not implemented");
 			},
@@ -31,6 +29,7 @@ describe("ChannelStorageService", () => {
 		assert.strictEqual(await ss.contains("/"), false);
 		assert.deepStrictEqual(await ss.list(""), []);
 		logger.assertMatchNone([{ category: "error" }]);
+		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});
 
 	it("Top Level Blob", async () => {
@@ -40,7 +39,7 @@ describe("ChannelStorageService", () => {
 			},
 			trees: {},
 		};
-		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+		const storage: Pick<IRuntimeStorageService, "readBlob"> = {
 			readBlob: async (id: string) => {
 				return stringToBuffer(id, "utf8");
 			},
@@ -52,6 +51,7 @@ describe("ChannelStorageService", () => {
 		assert.deepStrictEqual(await ss.list(""), ["foo"]);
 		assert.deepStrictEqual(await ss.readBlob("foo"), stringToBuffer("bar", "utf8"));
 		logger.assertMatchNone([{ category: "error" }]);
+		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});
 
 	it("Nested Blob", async () => {
@@ -66,7 +66,7 @@ describe("ChannelStorageService", () => {
 				},
 			},
 		};
-		const storage: Pick<IDocumentStorageService, "readBlob"> = {
+		const storage: Pick<IRuntimeStorageService, "readBlob"> = {
 			readBlob: async (id: string) => {
 				return stringToBuffer(id, "utf8");
 			},
@@ -78,5 +78,6 @@ describe("ChannelStorageService", () => {
 		assert.deepStrictEqual(await ss.list("nested/"), ["foo"]);
 		assert.deepStrictEqual(await ss.readBlob("nested/foo"), stringToBuffer("bar", "utf8"));
 		logger.assertMatchNone([{ category: "error" }]);
+		assert.deepStrictEqual(ss.getSnapshotTree(), tree);
 	});
 });

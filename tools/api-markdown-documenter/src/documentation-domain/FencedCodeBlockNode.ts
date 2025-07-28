@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
 import type { LineBreakNode } from "./LineBreakNode.js";
 import type { PlainTextNode } from "./PlainTextNode.js";
-import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
  * The types of child nodes that can be contained within a {@link FencedCodeBlockNode}.
@@ -37,7 +36,12 @@ export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
  * @sealed
  * @public
  */
-export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
+export class FencedCodeBlockNode extends DocumentationLiteralNodeBase<string> {
+	/**
+	 * Static singleton representing an empty Fenced Code Block node.
+	 */
+	public static readonly Empty: FencedCodeBlockNode = new FencedCodeBlockNode("");
+
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
@@ -48,8 +52,15 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeB
 	 */
 	public readonly language?: string;
 
-	public constructor(children: FencedCodeBlockNodeContent[], language?: string) {
-		super(children);
+	/**
+	 * {@inheritDoc DocumentationNode.isEmpty}
+	 */
+	public override get isEmpty(): boolean {
+		return this.value.length === 0;
+	}
+
+	public constructor(value: string, language?: string) {
+		super(value);
 		this.language = language;
 	}
 
@@ -59,6 +70,6 @@ export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeB
 	 * @param language - (optional) code language to associated with the code block.
 	 */
 	public static createFromPlainText(text: string, language?: string): FencedCodeBlockNode {
-		return new FencedCodeBlockNode(createNodesFromPlainText(text), language);
+		return new FencedCodeBlockNode(text, language);
 	}
 }

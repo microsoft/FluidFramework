@@ -6,7 +6,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-import { IZookeeperClient } from "@fluidframework/server-services-core";
+import type { IZookeeperClient } from "@fluidframework/server-services-core";
 import type ZooKeeper from "zookeeper";
 
 /**

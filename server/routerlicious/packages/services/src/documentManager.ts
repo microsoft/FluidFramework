@@ -5,7 +5,7 @@
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { BasicRestWrapper } from "@fluidframework/server-services-client";
-import {
+import type {
 	IDocumentManager,
 	IDocument,
 	ITenantManager,

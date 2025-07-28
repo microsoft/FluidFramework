@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import {
-	type Adapters,
 	EmptyKey,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
@@ -21,7 +20,6 @@ import {
 import {
 	allowsFieldSuperset,
 	allowsTreeSuperset,
-	getAllowedContentDiscrepancies,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -31,6 +29,8 @@ import {
 	type TreeNodeSchema,
 	type SimpleNodeSchema,
 	SchemaFactoryAlpha,
+	getAllowedContentDiscrepancies,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { schemaStatics } from "../../../simple-tree/index.js";
@@ -117,10 +117,10 @@ describe("Schema Evolution Examples", () => {
 	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
-		// This is where legacy schema handling logic for schematize.
-		const adapters: Adapters = {};
 		// Compose all the view information together.
-		const view = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, root);
+		const view = new SchemaCompatibilityTester(
+			new TreeViewConfigurationAlpha({ schema: root }),
+		);
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -152,7 +152,9 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const view2 = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, tolerantRoot);
+			const view2 = new SchemaCompatibilityTester(
+				new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
+			);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
 
@@ -190,9 +192,7 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = Array.from(
-				getAllowedContentDiscrepancies(toStoredSchema(tolerantRoot), stored),
-			);
+			const report = Array.from(getAllowedContentDiscrepancies(tolerantRoot, stored));
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
 			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });
@@ -211,9 +211,7 @@ describe("Schema Evolution Examples", () => {
 			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const view3 = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				adapters,
-				builder.optional(canvas2),
+				new TreeViewConfigurationAlpha({ schema: builder.optional(canvas2) }),
 			);
 
 			// With this new schema, we can load the document just like before:

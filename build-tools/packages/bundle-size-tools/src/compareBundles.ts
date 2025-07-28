@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { BundleComparison, BundleSummaries } from "./BundleBuddyTypes";
+import type { BundleComparison, BundleSummaries } from "./BundleBuddyTypes";
 
 /**
  * Compares all the bundle summaries for a "baseline" and a "compare" bundle.

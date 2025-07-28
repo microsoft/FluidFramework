@@ -4,7 +4,10 @@
  */
 
 import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import {
+	AttachState,
+	type IContainerStorageService,
+} from "@fluidframework/container-definitions/internal";
 import {
 	IContainerRuntime,
 	IContainerRuntimeEvents,
@@ -20,10 +23,7 @@ import type {
 	PayloadState,
 } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import {
-	IDocumentStorageService,
-	ICreateBlobResponse,
-} from "@fluidframework/driver-definitions/internal";
+import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { canRetryOnError, runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
 	IGarbageCollectionData,
@@ -217,7 +217,7 @@ export class BlobManager {
 	private stopAttaching: boolean = false;
 
 	private readonly routeContext: IFluidHandleContext;
-	private readonly storage: IDocumentStorageService;
+	private readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
 	// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 	// blobPath's format - `/<basePath>/<blobId>`.
 	private readonly blobRequested: (blobPath: string) => void;
@@ -236,7 +236,7 @@ export class BlobManager {
 		readonly routeContext: IFluidHandleContext;
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo;
-		readonly storage: IDocumentStorageService;
+		readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
 		/**
 		 * Submit a BlobAttach op. When a blob is uploaded, there is a short grace period before which the blob is
 		 * deleted. The BlobAttach op notifies the server that blob is in use. The server will then not delete the
@@ -420,7 +420,7 @@ export class BlobManager {
 			assert(this.redirectTable.has(blobId), 0x383 /* requesting unknown blobs */);
 
 			// Blobs created while the container is detached are stored in IDetachedBlobStorage.
-			// The 'IDocumentStorageService.readBlob()' call below will retrieve these via localId.
+			// The 'IContainerStorageService.readBlob()' call below will retrieve these via localId.
 			storageId = blobId;
 		} else {
 			const attachedStorageId = this.redirectTable.get(blobId);
@@ -491,7 +491,7 @@ export class BlobManager {
 		blob: ArrayBufferLike,
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
-		// The 'IDocumentStorageService.createBlob()' call below will respond with a localId.
+		// The 'IContainerStorageService.createBlob()' call below will respond with a localId.
 		const response = await this.storage.createBlob(blob);
 		this.setRedirection(response.id, undefined);
 		return this.getBlobHandle(response.id);

@@ -1,0 +1,9 @@
+{
+	// This file is only used by ESLint to check the index.js file.
+	// Because the common config uses TypeScript, we need to provide a tsconfig file to them.
+	"extends": "../../../common/build/build-common/tsconfig.node16.json",
+	"include": ["index.js"],
+	"compilerOptions": {
+		"noEmit": true,
+	},
+}

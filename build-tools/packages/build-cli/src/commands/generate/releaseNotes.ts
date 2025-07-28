@@ -14,7 +14,7 @@ import remarkGithub, { defaultBuildUrl } from "remark-github";
 import admonitions from "remark-github-beta-blockquote-admonitions";
 import remarkToc from "remark-toc";
 
-import { type ReleaseNotesSection } from "../../config.js";
+import type { ReleaseNotesSection } from "../../config.js";
 import { releaseGroupFlag } from "../../flags.js";
 import {
 	BaseCommand,

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 import type { Static, TSchema } from "@sinclair/typebox";
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
 // In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
@@ -17,8 +16,12 @@ const Ajv =
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	(ajvModuleOrClass as any);
 
+import type { ISharedObjectHandle } from "@fluidframework/shared-object-base/internal";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
+
 import type { JsonValidator } from "../../codec/index.js";
 import { mockSerializer } from "../mockSerializer.js";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 // See: https://github.com/sinclairzx81/typebox#ajv
 const ajv = formats.default(new Ajv({ strict: false, allErrors: true }), [
@@ -51,10 +54,13 @@ export const ajvValidator: JsonValidator = {
 			check: (data): data is Static<Schema> => {
 				const valid = validate(data);
 				if (!valid) {
+					const mockHandle = new MockHandle("");
+					// Make stringify not assert when checking for "bind"
+					(mockHandle as IFluidHandle as ISharedObjectHandle).bind = () => {};
 					throw new Error(
 						`Invalid JSON.\n\nData: ${mockSerializer.stringify(
 							data,
-							new MockHandle(""),
+							mockHandle,
 						)}\n\nErrors: ${JSON.stringify(validate.errors)}`,
 					);
 				}

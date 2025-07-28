@@ -4,30 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
-import {
-	storedEmptyFieldSchema,
-	type Adapters,
-	type TreeStoredSchema,
-} from "../../../core/index.js";
-import {
-	defaultSchemaPolicy,
-	type FullSchemaPolicy,
-} from "../../../feature-libraries/index.js";
+import { storedEmptyFieldSchema, type TreeStoredSchema } from "../../../core/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	toStoredSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
 	normalizeFieldSchema,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
-import {
-	createUnknownOptionalFieldPolicy,
-	SchemaFactoryAlpha,
-} from "../../../simple-tree/index.js";
+import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
+import { isViewSupersetOfStored } from "../utils.js";
 
-const noAdapters: Adapters = {};
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: storedEmptyFieldSchema,
@@ -38,18 +29,25 @@ const factory = new SchemaFactoryAlpha("");
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
-	policy: FullSchemaPolicy = {
-		...defaultSchemaPolicy,
-		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(view),
-	},
 ) {
 	const viewSchema = new SchemaCompatibilityTester(
-		policy,
-		noAdapters,
-		normalizeFieldSchema(view),
+		new TreeViewConfigurationAlpha({ schema: view }),
 	);
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
+
+	const viewStored = toStoredSchema(view);
+
+	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
+	if (compatibility.canUpgrade) {
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
+		assert.equal(isViewSupersetOfStored(normalizeFieldSchema(view), stored), true);
+	}
+	// if it is viewable, the old stored schema is also a superset of the new one.
+	if (compatibility.canView) {
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
+		// isViewSupersetOfStored is not checked here as it checks that the view schema is a superset of the stored schema
+	}
 }
 
 describe("SchemaCompatibilityTester", () => {

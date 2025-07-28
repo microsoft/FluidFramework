@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IOdspUrlParts } from "@fluidframework/odsp-driver-definitions/internal";
 
 // Centralized store for all ODC/SPO logic
 
