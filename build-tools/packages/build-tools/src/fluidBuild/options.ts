@@ -9,7 +9,7 @@ import * as path from "node:path";
 
 import { defaultLogger } from "../common/logging";
 import { commonOptionString, parseOption } from "./commonOptions";
-import { IPackageMatchedOptions } from "./fluidRepoBuild";
+import type { IPackageMatchedOptions } from "./fluidRepoBuild";
 import { defaultBuildTaskName, defaultCleanTaskName } from "./fluidTaskDefinitions";
 
 const { log, errorLog } = defaultLogger;

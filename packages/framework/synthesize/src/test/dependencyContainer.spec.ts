@@ -6,22 +6,22 @@
 import { strict as assert } from "node:assert";
 
 import {
-	FluidObject,
+	type FluidObject,
 	IFluidLoadable,
-	IProvideFluidLoadable,
+	type IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IFluidHandleContext,
 	IProvideFluidHandle,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
+import type { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
 import { DependencyContainer } from "../index.js";
-import {
+import type {
 	AsyncFluidObjectProvider,
 	FluidObjectProvider,
 	FluidObjectSymbolProvider,

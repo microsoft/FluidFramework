@@ -7,7 +7,7 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
 	AuthorizationError,
-	DriverErrorTelemetryProps,
+	type DriverErrorTelemetryProps,
 	FluidInvalidSchemaError,
 	NonRetryableError,
 	OnlineStatus,
@@ -16,12 +16,12 @@ import {
 	isOnline,
 } from "@fluidframework/driver-utils/internal";
 import {
-	IOdspErrorAugmentations,
-	OdspError,
+	type IOdspErrorAugmentations,
+	type OdspError,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	IFluidErrorBase,
+	type IFluidErrorBase,
 	LoggingError,
 	numberFromString,
 } from "@fluidframework/telemetry-utils/internal";
@@ -43,12 +43,14 @@ export const fetchIncorrectResponse = 712;
  */
 export const OdspServiceReadOnlyErrorCode = "serviceReadOnly";
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
 export function getSPOAndGraphRequestIdsFromResponse(headers: {
+	// eslint-disable-next-line @rushstack/no-new-null
 	get: (id: string) => string | undefined | null;
-}) {
+}): ITelemetryBaseProperties {
 	interface LoggingHeader {
 		headerName: string;
 		logName: string;
@@ -69,12 +71,12 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 		sprequestduration: numberFromString(headers.get("sprequestduration")),
 		contentsize: numberFromString(headers.get("content-length")),
 	};
-	headersToLog.forEach((header) => {
+	for (const header of headersToLog) {
 		const headerValue = headers.get(header.headerName);
 		if (headerValue !== undefined && headerValue !== null) {
 			additionalProps[header.logName] = headerValue;
 		}
-	});
+	}
 
 	// x-fluid-telemetry contains a key value pair in the following format:
 	// x-fluid-telemetry:key1=value1,key2,key3=value3,
@@ -89,14 +91,17 @@ export function getSPOAndGraphRequestIdsFromResponse(headers: {
 			if ("Origin" === key.trim()) {
 				let fieldValue: string;
 				switch (value?.trim()) {
-					case "c":
+					case "c": {
 						fieldValue = "cache";
 						break;
-					case "g":
+					}
+					case "g": {
 						fieldValue = "graph";
 						break;
-					default:
+					}
+					default: {
 						fieldValue = value?.trim();
+					}
 				}
 				const logName = "responseOrigin";
 				additionalProps[logName] = fieldValue;
@@ -147,15 +152,18 @@ export class OdspRedirectError extends LoggingError implements IFluidErrorBase {
 	}
 }
 
-/** Empirically-based type guard for error responses from ODSP */
-function isOdspErrorResponse(x: any): x is OdspErrorResponse {
-	const error = x?.error;
+/**
+ * Empirically-based type guard for error responses from ODSP
+ */
+function isOdspErrorResponse(x: unknown): x is OdspErrorResponse {
+	const error = (x as Partial<OdspErrorResponse>)?.error;
 	return (
 		typeof error?.message === "string" &&
 		(error?.code === undefined || typeof error?.code === "string")
 	);
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -164,15 +172,18 @@ export function tryParseErrorResponse(
 ): { success: true; errorResponse: OdspErrorResponse } | { success: false } {
 	try {
 		if (response !== undefined) {
-			const parsed = JSON.parse(response);
+			const parsed: unknown = JSON.parse(response);
 			if (isOdspErrorResponse(parsed)) {
 				return { success: true, errorResponse: parsed };
 			}
 		}
-	} catch (e) {}
+	} catch {
+		// Ignore JSON parsing errors
+	}
 	return { success: false };
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -188,6 +199,7 @@ export function parseFacetCodes(errorResponse: OdspErrorResponse): string[] {
 	return stack;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -225,14 +237,15 @@ export function createOdspNetworkError(
 		case 302:
 		case 303:
 		case 307:
-		case 308:
+		case 308: {
 			redirectLocation = response?.headers.get("Location") ?? undefined;
 			if (redirectLocation !== undefined) {
 				error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
 				break;
 			}
+		}
 		// Don't break here. Let it be a generic network error if redirectLocation is not there.
-		case 400:
+		case 400: {
 			if (innerMostErrorCode === "fluidInvalidSchema") {
 				error = new FluidInvalidSchemaError(errorMessage, driverProps);
 				break;
@@ -243,8 +256,9 @@ export function createOdspNetworkError(
 				driverProps,
 			);
 			break;
+		}
 		case 401:
-		case 403:
+		case 403: {
 			// The server throws 403 status code with innerMostError code as "serviceReadOnly" for cases where the
 			// database on server becomes readonly. The driver retries for such cases with exponential backup logic.
 			if (innerMostErrorCode === OdspServiceReadOnlyErrorCode) {
@@ -266,12 +280,14 @@ export function createOdspNetworkError(
 				error = new AuthorizationError(errorMessage, claims, tenantId, driverProps);
 			}
 			break;
-		case 404:
+		}
+		case 404: {
 			if (parseResult.success) {
 				// The location of file can move on Spo. If the manual redirect prefer header is added to network call
 				// it returns 404 error instead of 308. Error thrown by server will contain the new redirect location.
 				// For reference we can look here: \packages\drivers\odsp-driver\src\fetchSnapshot.ts
 				const responseError = parseResult?.errorResponse?.error;
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- TODO: use stronger typing here.
 				redirectLocation = responseError?.["@error.redirectLocation"];
 				if (redirectLocation !== undefined) {
 					error = new OdspRedirectError(errorMessage, redirectLocation, driverProps);
@@ -284,17 +300,20 @@ export function createOdspNetworkError(
 				driverProps,
 			);
 			break;
-		case 406:
+		}
+		case 406: {
 			error = new NonRetryableError(
 				errorMessage,
 				DriverErrorTypes.unsupportedClientProtocolVersion,
 				driverProps,
 			);
 			break;
-		case 410:
+		}
+		case 410: {
 			error = new NonRetryableError(errorMessage, OdspErrorTypes.cannotCatchUp, driverProps);
 			break;
-		case 409:
+		}
+		case 409: {
 			// This status code is sent by the server when the client and server epoch mismatches.
 			// The client sets its epoch version in the calls it makes to the server and if that mismatches
 			// with the server epoch version, the server throws this error code.
@@ -305,7 +324,8 @@ export function createOdspNetworkError(
 				driverProps,
 			);
 			break;
-		case 412:
+		}
+		case 412: {
 			// "Precondition Failed" error - happens when uploadSummaryWithContext uses wrong parent.
 			// Resubmitting same payload is not going to help, so this is non-recoverable failure!
 			error = new NonRetryableError(
@@ -314,17 +334,21 @@ export function createOdspNetworkError(
 				driverProps,
 			);
 			break;
-		case 413:
+		}
+		case 413: {
 			error = new NonRetryableError(errorMessage, OdspErrorTypes.snapshotTooBig, driverProps);
 			break;
-		case 414:
+		}
+		case 414: {
 			error = new NonRetryableError(
 				errorMessage,
 				OdspErrorTypes.invalidFileNameError,
 				driverProps,
 			);
 			break;
-		case 423: // File locked
+		}
+		case 423: {
+			// File locked
 			if (
 				innerMostErrorCode === "resourceLocked" ||
 				innerMostErrorCode === "resourceCheckedOut"
@@ -336,24 +360,28 @@ export function createOdspNetworkError(
 				);
 				break;
 			}
-		case 500:
+		}
+		case 500: {
 			error = new RetryableError(
 				errorMessage,
 				DriverErrorTypes.genericNetworkError,
 				driverProps,
 			);
 			break;
-		case 501:
+		}
+		case 501: {
 			error = new NonRetryableError(errorMessage, OdspErrorTypes.fluidNotEnabled, driverProps);
 			break;
-		case 507:
+		}
+		case 507: {
 			error = new NonRetryableError(
 				errorMessage,
 				DriverErrorTypes.outOfStorageError,
 				driverProps,
 			);
 			break;
-		case fetchIncorrectResponse:
+		}
+		case fetchIncorrectResponse: {
 			// Note that getWithRetryForTokenRefresh will retry it once, then it becomes non-retryable error
 			error = new NonRetryableError(
 				errorMessage,
@@ -361,15 +389,17 @@ export function createOdspNetworkError(
 				driverProps,
 			);
 			break;
-		default:
+		}
+		default: {
 			const retryAfterMs =
-				retryAfterSeconds !== undefined ? retryAfterSeconds * 1000 : undefined;
+				retryAfterSeconds === undefined ? undefined : retryAfterSeconds * 1000;
 			error = createGenericNetworkError(
 				errorMessage,
 				{ canRetry: true, retryAfterMs },
 				driverProps,
 			);
 			break;
+		}
 	}
 
 	// Set this to true as createOdspNetworkError is called to handle error response from service.
@@ -378,6 +408,7 @@ export function createOdspNetworkError(
 	return error;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -386,7 +417,7 @@ export function enrichOdspError(
 	response?: Response,
 	facetCodes?: string[],
 	props: ITelemetryBaseProperties = {},
-) {
+): IFluidErrorBase & OdspError {
 	error.online = OnlineStatus[isOnline()];
 	if (facetCodes !== undefined) {
 		error.facetCodes = facetCodes;
@@ -431,6 +462,7 @@ export function throwOdspNetworkError(
 	throw networkError;
 }
 
+// eslint-disable-next-line @rushstack/no-new-null
 function numberFromHeader(header: string | null): number | undefined {
 	if (header === null) {
 		return undefined;
@@ -442,13 +474,15 @@ function numberFromHeader(header: string | null): number | undefined {
 	return n;
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
-export function hasFacetCodes(x: any): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
-	return Array.isArray(x?.facetCodes);
+export function hasFacetCodes(x: unknown): x is Pick<IOdspErrorAugmentations, "facetCodes"> {
+	return Array.isArray((x as Partial<IOdspErrorAugmentations>)?.facetCodes);
 }
 
+// eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation
 /**
  * @internal
  */
@@ -459,6 +493,6 @@ export function hasRedirectionLocation(
 		x !== null &&
 		typeof x === "object" &&
 		"redirectLocation" in x &&
-		typeof x?.redirectLocation === "string"
+		typeof (x as Partial<IOdspErrorAugmentations>)?.redirectLocation === "string"
 	);
 }

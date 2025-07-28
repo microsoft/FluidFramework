@@ -22,7 +22,7 @@ import {
 } from "../../core/index.js";
 import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
-import type { TreeNodeSchema } from "../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue } from "../core/index.js";
 import {
 	booleanSchema,
 	handleSchema,
@@ -31,7 +31,6 @@ import {
 	stringSchema,
 } from "../leafNodeSchema.js";
 import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
-import type { TreeLeafValue } from "../schemaTypes.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.
@@ -44,6 +43,12 @@ export interface TreeEncodingOptions {
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
 	 * @defaultValue false.
+	 * @privateRemarks
+	 * TODO AB#43548:
+	 * Replace this with an enum that provides three options:
+	 * - `usePropertyKeys`: use property keys. Supported for import and export.
+	 * - `allStoredKeys`: use stored keys, and include unknown optional fields. Supported for export only, at least for the short term.
+	 * - `knownStoredKeys`: use stored keys but do not include unknown optional fields. Supported for import and export.
 	 */
 	readonly useStoredKeys?: boolean;
 }

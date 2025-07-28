@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { PathLike, Stats, type BigIntStats } from "fs";
+import type { PathLike, Stats, BigIntStats } from "fs";
 import * as path from "path";
 
 import {
-	IGetRefParamsExternal,
-	IWholeFlatSummary,
+	type IGetRefParamsExternal,
+	type IWholeFlatSummary,
 	isNetworkError,
 	NetworkError,
 } from "@fluidframework/server-services-client";
@@ -17,16 +17,16 @@ import {
 	HttpProperties,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { Request } from "express";
+import type { Request } from "express";
 
 import {
 	Constants,
-	IExternalWriterConfig,
-	IFileSystemManager,
-	IFileSystemManagerFactories,
-	IRepoManagerParams,
-	IRepositoryManagerFactory,
-	IStorageRoutingId,
+	type IExternalWriterConfig,
+	type IFileSystemManager,
+	type IFileSystemManagerFactories,
+	type IRepoManagerParams,
+	type IRepositoryManagerFactory,
+	type IStorageRoutingId,
 } from "./definitions";
 import { isFilesystemError, throwFileSystemErrorAsNetworkError } from "./fileSystemHelper";
 import {

@@ -76,7 +76,6 @@ declare type current_as_old_for_Class_CombinedLambda = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Class_CombinedProducer": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_CombinedProducer = requireAssignableTo<TypeOnly<old.CombinedProducer>, TypeOnly<current.CombinedProducer>>
 
 /*
@@ -185,7 +184,6 @@ declare type current_as_old_for_Class_MongoDocumentRepository = requireAssignabl
  * typeValidation.broken:
  * "Class_MongoManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_MongoManager = requireAssignableTo<TypeOnly<old.MongoManager>, TypeOnly<current.MongoManager>>
 
 /*
@@ -249,7 +247,6 @@ declare type old_as_current_for_Class_TokenRevocationError = requireAssignableTo
  * typeValidation.broken:
  * "Class_TokenRevocationError": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TokenRevocationError = requireAssignableTo<TypeOnly<current.TokenRevocationError>, TypeOnly<old.TokenRevocationError>>
 
 /*
@@ -268,7 +265,6 @@ declare type old_as_current_for_Class_TokenRevokedError = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Class_TokenRevokedError": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_TokenRevokedError = requireAssignableTo<TypeOnly<current.TokenRevokedError>, TypeOnly<old.TokenRevokedError>>
 
 /*
@@ -386,7 +382,6 @@ declare type current_as_old_for_ClassStatics_ThrottlingError = requireAssignable
  * typeValidation.broken:
  * "ClassStatics_TokenRevocationError": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TokenRevocationError = requireAssignableTo<TypeOnly<typeof current.TokenRevocationError>, TypeOnly<typeof old.TokenRevocationError>>
 
 /*
@@ -396,7 +391,6 @@ declare type current_as_old_for_ClassStatics_TokenRevocationError = requireAssig
  * typeValidation.broken:
  * "ClassStatics_TokenRevokedError": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_TokenRevokedError = requireAssignableTo<TypeOnly<typeof current.TokenRevokedError>, TypeOnly<typeof old.TokenRevokedError>>
 
 /*
@@ -433,7 +427,6 @@ declare type old_as_current_for_Enum_EncryptionKeyVersion = requireAssignableTo<
  * typeValidation.broken:
  * "Enum_EncryptionKeyVersion": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_EncryptionKeyVersion = requireAssignableTo<TypeOnly<current.EncryptionKeyVersion>, TypeOnly<old.EncryptionKeyVersion>>
 
 /*
@@ -558,6 +551,15 @@ declare type current_as_old_for_Function_extractBoxcar = requireAssignableTo<Typ
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Function_isCompleteBoxcarMessage": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isCompleteBoxcarMessage = requireAssignableTo<TypeOnly<typeof current.isCompleteBoxcarMessage>, TypeOnly<typeof old.isCompleteBoxcarMessage>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Function_isRetryEnabled": {"backCompat": false}
  */
 declare type current_as_old_for_Function_isRetryEnabled = requireAssignableTo<TypeOnly<typeof current.isRetryEnabled>, TypeOnly<typeof old.isRetryEnabled>>
@@ -641,7 +643,6 @@ declare type old_as_current_for_Interface_IBoxcarMessage = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IBoxcarMessage": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IBoxcarMessage = requireAssignableTo<TypeOnly<current.IBoxcarMessage>, TypeOnly<old.IBoxcarMessage>>
 
 /*
@@ -679,6 +680,24 @@ declare type old_as_current_for_Interface_ICache = requireAssignableTo<TypeOnly<
  * "Interface_ICache": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ICache = requireAssignableTo<TypeOnly<current.ICache>, TypeOnly<old.ICache>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICheck": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ICheck = requireAssignableTo<TypeOnly<old.ICheck>, TypeOnly<current.ICheck>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICheck": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ICheck = requireAssignableTo<TypeOnly<current.ICheck>, TypeOnly<old.ICheck>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -811,6 +830,78 @@ declare type current_as_old_for_Interface_IClusterDrainingChecker = requireAssig
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_ICollaborationSession": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ICollaborationSession = requireAssignableTo<TypeOnly<old.ICollaborationSession>, TypeOnly<current.ICollaborationSession>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICollaborationSession": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ICollaborationSession = requireAssignableTo<TypeOnly<current.ICollaborationSession>, TypeOnly<old.ICollaborationSession>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICollaborationSessionClient": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ICollaborationSessionClient = requireAssignableTo<TypeOnly<old.ICollaborationSessionClient>, TypeOnly<current.ICollaborationSessionClient>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICollaborationSessionClient": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ICollaborationSessionClient = requireAssignableTo<TypeOnly<current.ICollaborationSessionClient>, TypeOnly<old.ICollaborationSessionClient>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICollaborationSessionManager": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ICollaborationSessionManager = requireAssignableTo<TypeOnly<old.ICollaborationSessionManager>, TypeOnly<current.ICollaborationSessionManager>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICollaborationSessionManager": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ICollaborationSessionManager = requireAssignableTo<TypeOnly<current.ICollaborationSessionManager>, TypeOnly<old.ICollaborationSessionManager>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICollaborationSessionTracker": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ICollaborationSessionTracker = requireAssignableTo<TypeOnly<old.ICollaborationSessionTracker>, TypeOnly<current.ICollaborationSessionTracker>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ICollaborationSessionTracker": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ICollaborationSessionTracker = requireAssignableTo<TypeOnly<current.ICollaborationSessionTracker>, TypeOnly<old.ICollaborationSessionTracker>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_ICollection": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_ICollection = requireAssignableTo<TypeOnly<old.ICollection<never>>, TypeOnly<current.ICollection<never>>>
@@ -849,7 +940,6 @@ declare type current_as_old_for_Interface_IConsumer = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IContext = requireAssignableTo<TypeOnly<old.IContext>, TypeOnly<current.IContext>>
 
 /*
@@ -1046,6 +1136,24 @@ declare type current_as_old_for_Interface_IDeltaService = requireAssignableTo<Ty
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_IDenyList": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IDenyList = requireAssignableTo<TypeOnly<old.IDenyList>, TypeOnly<current.IDenyList>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IDenyList": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IDenyList = requireAssignableTo<TypeOnly<current.IDenyList>, TypeOnly<old.IDenyList>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IDisableNackMessagesControlMessageContents": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IDisableNackMessagesControlMessageContents = requireAssignableTo<TypeOnly<old.IDisableNackMessagesControlMessageContents>, TypeOnly<current.IDisableNackMessagesControlMessageContents>>
@@ -1190,6 +1298,24 @@ declare type current_as_old_for_Interface_IDocumentStorage = requireAssignableTo
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_IEncryptedPrivateTenantKeys": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IEncryptedPrivateTenantKeys = requireAssignableTo<TypeOnly<old.IEncryptedPrivateTenantKeys>, TypeOnly<current.IEncryptedPrivateTenantKeys>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IEncryptedPrivateTenantKeys": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IEncryptedPrivateTenantKeys = requireAssignableTo<TypeOnly<current.IEncryptedPrivateTenantKeys>, TypeOnly<old.IEncryptedPrivateTenantKeys>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IEncryptedTenantKeys": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IEncryptedTenantKeys = requireAssignableTo<TypeOnly<old.IEncryptedTenantKeys>, TypeOnly<current.IEncryptedTenantKeys>>
@@ -1201,7 +1327,6 @@ declare type old_as_current_for_Interface_IEncryptedTenantKeys = requireAssignab
  * typeValidation.broken:
  * "Interface_IEncryptedTenantKeys": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IEncryptedTenantKeys = requireAssignableTo<TypeOnly<current.IEncryptedTenantKeys>, TypeOnly<old.IEncryptedTenantKeys>>
 
 /*
@@ -1227,6 +1352,42 @@ declare type current_as_old_for_Interface_IExtendClientControlMessageContents = 
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_IFluidAccessToken": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IFluidAccessToken = requireAssignableTo<TypeOnly<old.IFluidAccessToken>, TypeOnly<current.IFluidAccessToken>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidAccessToken": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IFluidAccessToken = requireAssignableTo<TypeOnly<current.IFluidAccessToken>, TypeOnly<old.IFluidAccessToken>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidAccessTokenGenerator": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IFluidAccessTokenGenerator = requireAssignableTo<TypeOnly<old.IFluidAccessTokenGenerator>, TypeOnly<current.IFluidAccessTokenGenerator>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IFluidAccessTokenGenerator": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IFluidAccessTokenGenerator = requireAssignableTo<TypeOnly<current.IFluidAccessTokenGenerator>, TypeOnly<old.IFluidAccessTokenGenerator>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IHttpServer": {"forwardCompat": false}
  */
 declare type old_as_current_for_Interface_IHttpServer = requireAssignableTo<TypeOnly<old.IHttpServer>, TypeOnly<current.IHttpServer>>
@@ -1239,6 +1400,24 @@ declare type old_as_current_for_Interface_IHttpServer = requireAssignableTo<Type
  * "Interface_IHttpServer": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IHttpServer = requireAssignableTo<TypeOnly<current.IHttpServer>, TypeOnly<old.IHttpServer>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IInvalidTokenError": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IInvalidTokenError = requireAssignableTo<TypeOnly<old.IInvalidTokenError>, TypeOnly<current.IInvalidTokenError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IInvalidTokenError": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IInvalidTokenError = requireAssignableTo<TypeOnly<current.IInvalidTokenError>, TypeOnly<old.IInvalidTokenError>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -1445,7 +1624,6 @@ declare type current_as_old_for_Interface_IOrderer = requireAssignableTo<TypeOnl
  * typeValidation.broken:
  * "Interface_IOrdererConnection": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IOrdererConnection = requireAssignableTo<TypeOnly<old.IOrdererConnection>, TypeOnly<current.IOrdererConnection>>
 
 /*
@@ -1464,7 +1642,6 @@ declare type current_as_old_for_Interface_IOrdererConnection = requireAssignable
  * typeValidation.broken:
  * "Interface_IOrdererManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IOrdererManager = requireAssignableTo<TypeOnly<old.IOrdererManager>, TypeOnly<current.IOrdererManager>>
 
 /*
@@ -1625,9 +1802,26 @@ declare type current_as_old_for_Interface_IPendingMessage = requireAssignableTo<
  * If this test starts failing, it indicates a change that is not forward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Interface_IPlainTextAndEncryptedTenantKeys": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IPlainTextAndEncryptedTenantKeys = requireAssignableTo<TypeOnly<old.IPlainTextAndEncryptedTenantKeys>, TypeOnly<current.IPlainTextAndEncryptedTenantKeys>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IPlainTextAndEncryptedTenantKeys": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IPlainTextAndEncryptedTenantKeys = requireAssignableTo<TypeOnly<current.IPlainTextAndEncryptedTenantKeys>, TypeOnly<old.IPlainTextAndEncryptedTenantKeys>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Interface_IProducer": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IProducer = requireAssignableTo<TypeOnly<old.IProducer>, TypeOnly<current.IProducer>>
 
 /*
@@ -1710,6 +1904,42 @@ declare type old_as_current_for_Interface_IRawOperationMessageBatch = requireAss
  * "Interface_IRawOperationMessageBatch": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_IRawOperationMessageBatch = requireAssignableTo<TypeOnly<current.IRawOperationMessageBatch>, TypeOnly<old.IRawOperationMessageBatch>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IReadinessCheck": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IReadinessCheck = requireAssignableTo<TypeOnly<old.IReadinessCheck>, TypeOnly<current.IReadinessCheck>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IReadinessCheck": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IReadinessCheck = requireAssignableTo<TypeOnly<current.IReadinessCheck>, TypeOnly<old.IReadinessCheck>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IReadinessStatus": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_IReadinessStatus = requireAssignableTo<TypeOnly<old.IReadinessStatus>, TypeOnly<current.IReadinessStatus>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_IReadinessStatus": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_IReadinessStatus = requireAssignableTo<TypeOnly<current.IReadinessStatus>, TypeOnly<old.IReadinessStatus>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -2132,7 +2362,6 @@ declare type current_as_old_for_Interface_ITenant = requireAssignableTo<TypeOnly
  * typeValidation.broken:
  * "Interface_ITenantConfig": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITenantConfig = requireAssignableTo<TypeOnly<old.ITenantConfig>, TypeOnly<current.ITenantConfig>>
 
 /*
@@ -2205,7 +2434,6 @@ declare type current_as_old_for_Interface_ITenantKeys = requireAssignableTo<Type
  * typeValidation.broken:
  * "Interface_ITenantManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITenantManager = requireAssignableTo<TypeOnly<old.ITenantManager>, TypeOnly<current.ITenantManager>>
 
 /*
@@ -2234,6 +2462,24 @@ declare type old_as_current_for_Interface_ITenantOrderer = requireAssignableTo<T
  * "Interface_ITenantOrderer": {"backCompat": false}
  */
 declare type current_as_old_for_Interface_ITenantOrderer = requireAssignableTo<TypeOnly<current.ITenantOrderer>, TypeOnly<old.ITenantOrderer>>
+
+/*
+ * Validate forward compatibility by using the old type in place of the current type.
+ * If this test starts failing, it indicates a change that is not forward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ITenantPrivateKeys": {"forwardCompat": false}
+ */
+declare type old_as_current_for_Interface_ITenantPrivateKeys = requireAssignableTo<TypeOnly<old.ITenantPrivateKeys>, TypeOnly<current.ITenantPrivateKeys>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Interface_ITenantPrivateKeys": {"backCompat": false}
+ */
+declare type current_as_old_for_Interface_ITenantPrivateKeys = requireAssignableTo<TypeOnly<current.ITenantPrivateKeys>, TypeOnly<old.ITenantPrivateKeys>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -2699,6 +2945,15 @@ declare type current_as_old_for_Variable_clientConnectivityStorageId = requireAs
  * If this test starts failing, it indicates a change that is not backward compatible.
  * To acknowledge the breaking change, add the following to package.json under
  * typeValidation.broken:
+ * "Variable_clusterDrainingRetryTimeInMs": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_clusterDrainingRetryTimeInMs = requireAssignableTo<TypeOnly<typeof current.clusterDrainingRetryTimeInMs>, TypeOnly<typeof old.clusterDrainingRetryTimeInMs>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
  * "Variable_DefaultServiceConfiguration": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_DefaultServiceConfiguration = requireAssignableTo<TypeOnly<typeof current.DefaultServiceConfiguration>, TypeOnly<typeof old.DefaultServiceConfiguration>>
@@ -2720,6 +2975,15 @@ declare type current_as_old_for_Variable_httpUsageStorageId = requireAssignableT
  * "Variable_MaxBatchSize": {"backCompat": false}
  */
 declare type current_as_old_for_Variable_MaxBatchSize = requireAssignableTo<TypeOnly<typeof current.MaxBatchSize>, TypeOnly<typeof old.MaxBatchSize>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Variable_MaxKafkaMessageSize": {"backCompat": false}
+ */
+declare type current_as_old_for_Variable_MaxKafkaMessageSize = requireAssignableTo<TypeOnly<typeof current.MaxKafkaMessageSize>, TypeOnly<typeof old.MaxKafkaMessageSize>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.

@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import type { ListNode } from "@fluidframework/core-utils/internal";
 import type { ISummaryBlob } from "@fluidframework/driver-definitions";
 import {
 	MockContainerRuntimeFactory,
@@ -18,15 +17,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { type ISharedMap, type IValueChanged, MapFactory, SharedMap } from "../../index.js";
-import type {
-	IMapClearOperation,
-	IMapDeleteOperation,
-	IMapSetOperation,
-	ISerializableValue,
-	MapLocalOpMetadata,
-} from "../../internalInterfaces.js";
-import { SharedMap as SharedMapInternal } from "../../map.js";
-import type { IMapOperation } from "../../mapKernel.js";
+import type { SharedMap as SharedMapInternal } from "../../map.js";
 
 /**
  * Creates and connects a new {@link ISharedMap}.
@@ -54,20 +45,6 @@ function createLocalMap(id: string): SharedMapInternal {
 	});
 	const map = SharedMap.create(dataStoreRuntime, id);
 	return map as SharedMapInternal;
-}
-
-class TestSharedMap extends SharedMapInternal {
-	private lastMetadata?: ListNode<MapLocalOpMetadata>;
-	public testApplyStashedOp(content: IMapOperation): ListNode<MapLocalOpMetadata> | undefined {
-		this.lastMetadata = undefined;
-		this.applyStashedOp(content);
-		return this.lastMetadata;
-	}
-
-	public submitLocalMessage(op: IMapOperation, localOpMetadata: unknown): void {
-		this.lastMetadata = localOpMetadata as ListNode<MapLocalOpMetadata>;
-		super.submitLocalMessage(op, localOpMetadata);
-	}
 }
 
 describe("Map", () => {
@@ -407,42 +384,6 @@ describe("Map", () => {
 				assert.equal(map1.get(key), newValue, "The first map did not get the new value");
 				assert.equal(map2.get(key), newValue, "The second map did not get the new value");
 			});
-
-			it("metadata op", async () => {
-				const serializable: ISerializableValue = { type: "Plain", value: "value" };
-				const dataStoreRuntime1 = new MockFluidDataStoreRuntime();
-				const op: IMapSetOperation = { type: "set", key: "key", value: serializable };
-				const map1 = new TestSharedMap("testMap1", dataStoreRuntime1, MapFactory.Attributes);
-				const containerRuntimeFactory = new MockContainerRuntimeFactory();
-				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime1);
-				map1.connect({
-					deltaConnection: dataStoreRuntime1.createDeltaConnection(),
-					objectStorage: new MockStorage(undefined),
-				});
-				let metadata = map1.testApplyStashedOp(op)?.data;
-				assert.equal(metadata?.type, "add");
-				assert.equal(metadata.pendingMessageId, 0);
-				const editMetadata = map1.testApplyStashedOp(op)?.data;
-				assert.equal(editMetadata?.type, "edit");
-				assert.equal(editMetadata.pendingMessageId, 1);
-				assert.equal(editMetadata.previousValue.value, "value");
-				const serializable2: ISerializableValue = { type: "Plain", value: "value2" };
-				const op2: IMapSetOperation = { type: "set", key: "key2", value: serializable2 };
-				metadata = map1.testApplyStashedOp(op2)?.data;
-				assert.equal(metadata?.type, "add");
-				assert.equal(metadata.pendingMessageId, 2);
-				const op3: IMapDeleteOperation = { type: "delete", key: "key2" };
-				metadata = map1.testApplyStashedOp(op3)?.data;
-				assert.equal(metadata?.type, "edit");
-				assert.equal(metadata.pendingMessageId, 3);
-				assert.equal(metadata.previousValue.value, "value2");
-				const op4: IMapClearOperation = { type: "clear" };
-				metadata = map1.testApplyStashedOp(op4)?.data;
-				assert.equal(metadata?.pendingMessageId, 4);
-				assert.equal(metadata.type, "clear");
-				assert.equal(metadata.previousMap?.get("key")?.value, "value");
-				assert.equal(metadata.previousMap?.has("key2"), false);
-			});
 		});
 	});
 
@@ -576,20 +517,18 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processSomeMessages(2);
 
-					assert.equal(valuesChanged.length, 3);
+					assert.equal(valuesChanged.length, 2);
 					assert.equal(valuesChanged[0].key, "map1Key");
 					assert.equal(valuesChanged[0].previousValue, undefined);
 					assert.equal(valuesChanged[1].key, "map2key");
 					assert.equal(valuesChanged[1].previousValue, undefined);
-					assert.equal(valuesChanged[2].key, "map1Key");
-					assert.equal(valuesChanged[2].previousValue, undefined);
 					assert.equal(clearCount, 1);
 					assert.equal(map1.size, 1);
 					assert.equal(map1.get("map1Key"), "value1");
 
 					containerRuntimeFactory.processSomeMessages(2);
 
-					assert.equal(valuesChanged.length, 3);
+					assert.equal(valuesChanged.length, 2);
 					assert.equal(clearCount, 2);
 					assert.equal(map1.size, 0);
 				});
@@ -759,14 +698,98 @@ describe("Map", () => {
 				});
 			});
 
-			describe(".forEach()", () => {
-				it("Should iterate over all keys in the map", () => {
-					// We use a set to mark the values we want to insert. When we iterate we will remove from the set
-					// and then check it's empty at the end
-					const set = new Set<string>();
-					set.add("first");
-					set.add("second");
-					set.add("third");
+			describe("Iteration", () => {
+				it(".forEach() should iterate over all keys in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
+
+					for (const value of set) {
+						map1.set(value, value);
+					}
+
+					containerRuntimeFactory.processAllMessages();
+
+					// Verify the local SharedMap
+					// eslint-disable-next-line unicorn/no-array-for-each
+					map1.forEach((value, key) => {
+						assert.ok(set.has(key), "the key should be present in the set");
+						assert.equal(key, value, "the value should match the set value");
+						assert.equal(map1.get(key), value, "could not get key");
+					});
+
+					// Verify the remote SharedMap
+					// eslint-disable-next-line unicorn/no-array-for-each
+					map2.forEach((value, key) => {
+						assert.ok(set.has(key), "the key in remote map should be present in the set");
+						assert.equal(key, value, "the value should match the set value in the remote map");
+						assert.equal(map2.get(key), value, "could not get key in the remote map");
+					});
+
+					for (const value of set.values()) {
+						assert.ok(map1.has(value), "the set value should be present in the local map");
+						assert.ok(map2.has(value), "the set value should be present in the remote map");
+					}
+				});
+
+				it(".values() Should iterate over all values in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
+
+					for (const value of set) {
+						map1.set(value, value);
+					}
+
+					containerRuntimeFactory.processAllMessages();
+
+					// Verify the local SharedMap
+					for (const value of map1.values()) {
+						assert.ok(
+							set.has(value as string),
+							"the local map's value should be present in the set",
+						);
+					}
+
+					// Verify the remote SharedMap
+					for (const value of map2.values()) {
+						assert.ok(
+							set.has(value as string),
+							"the remote map's value should be present in the set",
+						);
+					}
+
+					assert.equal(map1.size, 3);
+					assert.equal(map2.size, 3);
+				});
+
+				it(".keys() Should iterate over all keys in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
+
+					for (const value of set) {
+						map1.set(value, value);
+					}
+
+					containerRuntimeFactory.processAllMessages();
+
+					// Verify the local SharedMap
+					for (const key of map1.keys()) {
+						assert.ok(set.has(key), "the local map's key should be present in the set");
+					}
+
+					// Verify the remote SharedMap
+					for (const key of map2.keys()) {
+						assert.ok(set.has(key), "the remote map's key should be present in the set");
+					}
+
+					for (const value of set.values()) {
+						assert.ok(map1.has(value), "the set value should be present in the local map");
+						assert.ok(map2.has(value), "the set value should be present in the remote map");
+					}
+				});
+
+				it(".entries() Should iterate over all entries in the map", () => {
+					// We use a set to mark the values we want to insert.
+					const set = new Set<string>(["first", "second", "third"]);
 
 					for (const value of set) {
 						map1.set(value, value);
@@ -776,20 +799,28 @@ describe("Map", () => {
 
 					// Verify the local SharedMap
 					for (const [key, value] of map1.entries()) {
-						assert.ok(set.has(key), "the key should be present in the set");
-						assert.equal(key, value, "the value should match the set value");
-						assert.equal(map1.get(key), value, "could not get key");
+						assert.ok(set.has(key), "the local map's key should be present in the set");
+						assert.ok(
+							set.has(value as string),
+							"the local map's value should be present in the set",
+						);
+						assert.equal(map1.get(key), value, "the local map's value should match the key");
 					}
 
 					// Verify the remote SharedMap
 					for (const [key, value] of map2.entries()) {
-						assert.ok(set.has(key), "the key in remote map should be present in the set");
-						assert.equal(key, value, "the value should match the set value in the remote map");
-						assert.equal(map2.get(key), value, "could not get key in the remote map");
-						set.delete(key);
+						assert.ok(set.has(key), "the remote map's key should be present in the set");
+						assert.ok(
+							set.has(value as string),
+							"the remote map's value should be present in the set",
+						);
+						assert.equal(map2.get(key), value, "the remote map's value should match the key");
 					}
 
-					assert.equal(set.size, 0);
+					for (const value of set.values()) {
+						assert.ok(map1.has(value), "the set value should be present in the local map");
+						assert.ok(map2.has(value), "the set value should be present in the remote map");
+					}
 				});
 			});
 

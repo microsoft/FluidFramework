@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { ICommit, ICommitDetails } from "@fluidframework/gitresources";
-import {
+import type { ICommit, ICommitDetails } from "@fluidframework/gitresources";
+import type {
 	IProtocolState,
 	ISummaryTree,
 	ICommittedProposal,
 } from "@fluidframework/protocol-definitions";
-import { IGitCache, ISession } from "@fluidframework/server-services-client";
+import type { IGitCache, ISession } from "@fluidframework/server-services-client";
 
-import { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
+import type { INackMessagesControlMessageContents, NackMessagesType } from "./messages";
 
 /**
  * @internal

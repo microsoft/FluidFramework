@@ -25,7 +25,6 @@ import type { IFluidSerializer } from "@fluidframework/shared-object-base/intern
 import {
 	SharedObject,
 	ValueType,
-	bindHandles,
 	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
@@ -1271,9 +1270,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (key === undefined || key === null) {
 			throw new Error("Undefined and null keys are not supported");
 		}
-
-		// Create a local value and serialize it.
-		bindHandles(value, this.serializer, this.directory.handle);
 
 		// Set the value locally.
 		const previousValue = this.setCore(key, value, true);

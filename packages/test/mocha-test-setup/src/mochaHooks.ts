@@ -89,13 +89,27 @@ let testLogger: FluidTestRunLogger;
  * @internal
  */
 export const mochaHooks = {
-	beforeAll() {
+	async beforeAll() {
 		// Code in our tests will call the global `getTestLogger` function to get a logger to use.
 
 		// First we call the version of that function that was (potentially) injected dynamicaly to get the logger that it
 		// provides and wrap it with a more intelligent logger which adds test-run-related context to all events logged
 		// through it. See the documentation on `FluidTestRunLogger` for details.
-		const originalLogger = _global.getTestLogger?.() ?? nullLogger;
+		let originalLogger: ITelemetryBufferedLogger;
+
+		if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER === undefined) {
+			originalLogger = nullLogger;
+		} else {
+			const { createTestLogger } = await import(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+			if (typeof createTestLogger !== "function") {
+				throw new TypeError(
+					`Expected package '${process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER}' to export a function, but got an object of type '${typeof createTestLogger}' instead`,
+				);
+			} else {
+				originalLogger = createTestLogger();
+			}
+		}
+
 		testLogger = new FluidTestRunLogger(originalLogger);
 
 		// Then we redefine `getTestLogger` so it returns the wrapper logger.
@@ -140,6 +154,10 @@ export const mochaHooks = {
 		// Clear the current test from the logger. Important so if anything calls `getTestLogger` outside the context of a
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurrentTest();
+	},
+	async afterAll() {
+		// After all tests ran, flush the logger to ensure all events are sent before the process exits.
+		await testLogger.flush();
 	},
 };
 

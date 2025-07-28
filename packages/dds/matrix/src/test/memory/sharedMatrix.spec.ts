@@ -11,7 +11,7 @@ import {
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 
-import { SharedMatrix } from "../../index.js";
+import type { SharedMatrix } from "../../index.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 import { createLocalMatrix } from "../utils.js";
 

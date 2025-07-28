@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IEvent } from "@fluidframework/core-interfaces";
+import type { IEvent } from "@fluidframework/core-interfaces";
 
-import { IAgentScheduler } from "./agent.js";
+import type { IAgentScheduler } from "./agent.js";
 
 /**
  * Events emitted by {@link TaskSubscription}.

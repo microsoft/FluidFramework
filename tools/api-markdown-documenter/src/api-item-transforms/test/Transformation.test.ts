@@ -144,12 +144,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 				[
 					wrapInSection([ParagraphNode.createFromPlainText("Test Constant")]),
 					wrapInSection(
-						[
-							FencedCodeBlockNode.createFromPlainText(
-								'TestConst = "Hello world!"',
-								"typescript",
-							),
-						],
+						[new FencedCodeBlockNode('TestConst = "Hello world!"', "typescript")],
 						{
 							title: "Signature",
 							id: `testconst-signature`,
@@ -186,11 +181,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					wrapInSection(
 						[
 							new FencedCodeBlockNode(
-								[
-									new PlainTextNode(
-										"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
-									),
-								],
+								"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
 								"typescript",
 							),
 							new SectionNode(
@@ -304,12 +295,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 			// Signature section
 			wrapInSection(
-				[
-					FencedCodeBlockNode.createFromPlainText(
-						"export interface TestInterface",
-						"typescript",
-					),
-				],
+				[new FencedCodeBlockNode("export interface TestInterface", "typescript")],
 				{ title: "Signature", id: "testinterface-signature" },
 			),
 
@@ -359,7 +345,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Signature section
 							wrapInSection(
 								[
-									FencedCodeBlockNode.createFromPlainText(
+									new FencedCodeBlockNode(
 										"testOptionalInterfaceProperty?: number;",
 										"typescript",
 									),
@@ -423,12 +409,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 			// Signature section
 			wrapInSection(
-				[
-					FencedCodeBlockNode.createFromPlainText(
-						"export declare namespace TestNamespace",
-						"typescript",
-					),
-				],
+				[new FencedCodeBlockNode("export declare namespace TestNamespace", "typescript")],
 				{ title: "Signature", id: "testnamespace-signature" },
 			),
 
@@ -482,13 +463,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Beta warning
 							wrapInSection([new ParagraphNode([betaWarningSpan])]),
 							// Signature
-							wrapInSection(
-								[FencedCodeBlockNode.createFromPlainText('bar = "bar"', "typescript")],
-								{
-									title: "Signature",
-									id: "bar-signature",
-								},
-							),
+							wrapInSection([new FencedCodeBlockNode('bar = "bar"', "typescript")], {
+								title: "Signature",
+								id: "bar-signature",
+							}),
 						],
 						{
 							title: "bar",
@@ -501,13 +479,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// No summary docs on `foo`
 
 							// Signature
-							wrapInSection(
-								[FencedCodeBlockNode.createFromPlainText('foo = "foo"', "typescript")],
-								{
-									title: "Signature",
-									id: "foo-signature",
-								},
-							),
+							wrapInSection([new FencedCodeBlockNode('foo = "foo"', "typescript")], {
+								title: "Signature",
+								id: "foo-signature",
+							}),
 						],
 						{
 							title: "foo",
@@ -624,12 +599,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 										// Signature
 										new SectionNode(
-											[
-												FencedCodeBlockNode.createFromPlainText(
-													'hello = "Hello"',
-													"typescript",
-												),
-											],
+											[new FencedCodeBlockNode('hello = "Hello"', "typescript")],
 											new HeadingNode("Signature", "hello-signature"),
 										),
 									],
@@ -695,12 +665,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 										// Signature
 										new SectionNode(
-											[
-												FencedCodeBlockNode.createFromPlainText(
-													'world = "world"',
-													"typescript",
-												),
-											],
+											[new FencedCodeBlockNode('world = "world"', "typescript")],
 											new HeadingNode("Signature", "world-signature"),
 										),
 									],

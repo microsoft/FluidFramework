@@ -24,9 +24,10 @@ module.exports = {
 			},
 		],
 
-		// #region TODO: Remove these overrides once this config has been updated to extend the "strict" base config.
-
+		// TODO: Remove this override once this config has been updated to extend the "strict" base config.
 		"@typescript-eslint/explicit-member-accessibility": "error",
+
+		// #region TODO: remove these once eslint-config-fluid has been updated to 5.8.0
 		"@typescript-eslint/consistent-type-exports": [
 			"error",
 			{ fixMixedExportsWithInlineTypeSpecifier: true },

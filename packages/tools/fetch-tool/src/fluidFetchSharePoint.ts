@@ -11,9 +11,9 @@ import {
 import { cachePersistencePlugin } from "@azure/identity-cache-persistence";
 import { DriverErrorTypes } from "@fluidframework/driver-definitions/internal";
 import {
-	IPublicClientConfig,
-	IOdspAuthRequestInfo,
-	IOdspDriveItem,
+	type IPublicClientConfig,
+	type IOdspAuthRequestInfo,
+	type IOdspDriveItem,
 	getChildrenByDriveItem,
 	getDriveItemByServerRelativePath,
 	getDriveItemFromDriveAndItem,

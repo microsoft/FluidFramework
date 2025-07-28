@@ -12,7 +12,7 @@ import type {
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot, type SchemaPolicy } from "../core/index.js";
+import { anchorSlot } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
@@ -49,10 +49,11 @@ import {
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
-	createUnknownOptionalFieldPolicy,
 	prepareForInsertionContextless,
 	type FieldSchema,
+	toStoredSchema,
 	tryDisposeTreeNode,
+	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -89,7 +90,6 @@ export class SchematizingSimpleTreeView<
 	 * Undefined iff uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
-	private readonly schemaPolicy: SchemaPolicy;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
@@ -131,17 +131,10 @@ export class SchematizingSimpleTreeView<
 		checkout.forest.anchors.slots.set(ViewSlot, this);
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
-		this.schemaPolicy = {
-			...defaultSchemaPolicy,
-			validateSchema: config.enableSchemaValidation,
-			allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(this.rootFieldSchema),
-		};
 
-		this.viewSchema = new SchemaCompatibilityTester(
-			this.schemaPolicy,
-			{},
-			this.rootFieldSchema,
-		);
+		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
+
+		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -178,13 +171,13 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = this.viewSchema.viewSchemaAsStored;
+			const schema = toStoredSchema(this.config.schema);
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
 				{
 					schema,
-					policy: this.schemaPolicy,
+					policy: defaultSchemaPolicy,
 				},
 				this,
 			);
@@ -319,7 +312,7 @@ export class SchematizingSimpleTreeView<
 
 		if (compatibility.canView) {
 			this.flexTreeContext = new Context(
-				this.schemaPolicy,
+				defaultSchemaPolicy,
 				this.checkout,
 				this.nodeKeyManager,
 			);

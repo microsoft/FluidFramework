@@ -22,7 +22,7 @@ import {
 	getDefaultProvider,
 	type ConstantFieldProvider,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/schemaTypes.js";
+} from "../../../simple-tree/fieldSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
 

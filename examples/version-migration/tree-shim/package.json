@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/tree-shim",
-	"version": "2.51.0",
+	"version": "2.52.0",
 	"private": true,
 	"description": "Migrating from legacy SharedTree to new SharedTree using a tree shim.",
 	"homepage": "https://fluidframework.com",
@@ -55,7 +55,7 @@
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1",
 		"tiny-typed-emitter": "^2.1.0",
-		"uuid": "^9.0.0"
+		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~1.9.3",
@@ -68,7 +68,6 @@
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.0",
-		"@types/uuid": "^9.0.2",
 		"cross-env": "^7.0.3",
 		"css-loader": "^7.1.2",
 		"eslint": "~8.55.0",
@@ -83,7 +82,7 @@
 		"rimraf": "^4.4.0",
 		"start-server-and-test": "^2.0.3",
 		"style-loader": "^4.0.0",
-		"tinylicious": "^5.0.0",
+		"tinylicious": "^7.0.0",
 		"ts-jest": "^29.1.1",
 		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
