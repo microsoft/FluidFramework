@@ -15,4 +15,4 @@ There is no longer a way to create and insert nodes which contain subtrees for w
 Ideally `exportVerbose` and `importVerbose` could be used to round trip data while optionally preserving unknown optional fields, but this is currently not working and thus not supported.
 
 If exporting using [useStoredKeys](https://fluidframework.com/docs/api/fluid-framework/treeencodingoptions-interface#usestoredkeys-propertysignature), the unknown optional fields will be preserved but may not be able to be imported.
-If exporting not using `useStoredKeys`, a known bug currently causes an assertion to fail.
+If exporting not using `useStoredKeys`, unknown optional fields will be omitted.

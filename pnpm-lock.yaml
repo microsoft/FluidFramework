@@ -11696,16 +11696,16 @@ importers:
         version: link:../../dds/tree
       '@langchain/core':
         specifier: ^0.3.66
-        version: 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
+        version: 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
       langchain:
         specifier: ^0.3.30
-        version: 0.3.30(@langchain/anthropic@0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))))(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))(@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))))(axios@0.30.0)(handlebars@4.7.8)(openai@5.10.2(ws@8.18.0)(zod@3.24.0))(ws@8.18.0)
+        version: 0.3.30(@langchain/anthropic@0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))))(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))(@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))))(axios@0.30.0)(handlebars@4.7.8)(openai@5.10.2(ws@8.18.0)(zod@3.25.76))(ws@8.18.0)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
       zod:
-        specifier: ^3.23.8
-        version: 3.24.0
+        specifier: ^3.25.32
+        version: 3.25.76
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -11736,13 +11736,13 @@ importers:
         version: link:../../runtime/test-runtime-utils
       '@langchain/anthropic':
         specifier: ^0.3.24
-        version: 0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))
+        version: 0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))
       '@langchain/google-genai':
         specifier: ^0.2.16
-        version: 0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))
+        version: 0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))
       '@langchain/openai':
         specifier: ^0.6.3
-        version: 0.6.3(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))(ws@8.18.0)
+        version: 0.6.3(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@18.19.67)
@@ -12689,6 +12689,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
+      semver-ts:
+        specifier: ^1.0.3
+        version: 1.0.3
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.1
@@ -15019,18 +15022,12 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.14.1)
-      '@types/chai':
-        specifier: ^4.0.0
-        version: 4.3.20
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
       c8:
         specifier: ^8.0.1
         version: 8.0.1
-      chai:
-        specifier: ^4.2.0
-        version: 4.5.0
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -15046,9 +15043,6 @@ importers:
       eslint-config-prettier:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
-      eslint-plugin-chai-expect:
-        specifier: ~3.0.0
-        version: 3.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15677,9 +15671,6 @@ importers:
       '@testing-library/user-event':
         specifier: ^14.4.3
         version: 14.5.2(@testing-library/dom@10.4.0)
-      '@types/chai':
-        specifier: ^4.0.0
-        version: 4.3.20
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -15704,9 +15695,6 @@ importers:
       axe-core:
         specifier: ^4.9.1
         version: 4.10.2
-      chai:
-        specifier: ^4.2.0
-        version: 4.5.0
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
@@ -26696,8 +26684,8 @@ packages:
     resolution: {integrity: sha512-GNzQvQTOIP6RyTfE2Qxb8ZVlNmw0n88vp1szwWRimP02mnTsx3Wtn5qRdqY9w2XduFNUgvOwhNnQsjwCp+kqaQ==}
     engines: {node: '>=6'}
 
-  tar-fs@2.1.2:
-    resolution: {integrity: sha512-EsaAXwxmx8UB7FRKqeozqEPop69DXcmYwTQwXvyAPF352HJsPdkVhvTaDPYqfNgruveJIJy3TA2l+2zj8LJIJA==}
+  tar-fs@2.1.3:
+    resolution: {integrity: sha512-090nwYJDmlhwFwEW3QQl+vaNnxsO2yVsd45eTKRBzSzu+hlb1w2K9inVq5b0ngXuLVqQ4ApvsUHHnu/zQNkWAg==}
 
   tar-fs@3.1.0:
     resolution: {integrity: sha512-5Mty5y/sOF1YWj1J6GiBodjlDc05CUR8PKXrsnFAiSG0xA+GHeWLovaZPYUDXkH/1iKRf2+M5+OrRgzC7O9b7w==}
@@ -32393,20 +32381,20 @@ snapshots:
 
   '@kwsites/promise-deferred@1.1.1': {}
 
-  '@langchain/anthropic@0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))':
+  '@langchain/anthropic@0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))':
     dependencies:
       '@anthropic-ai/sdk': 0.56.0
-      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
+      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
       fast-xml-parser: 4.5.3
 
-  '@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))':
+  '@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))':
     dependencies:
       '@cfworker/json-schema': 4.1.1
       ansi-styles: 5.2.0
       camelcase: 6.3.0
       decamelize: 1.2.0
       js-tiktoken: 1.0.19
-      langsmith: 0.3.49(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
+      langsmith: 0.3.49(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
       mustache: 4.2.0
       p-queue: 6.6.2
       p-retry: 4.6.2
@@ -32419,24 +32407,24 @@ snapshots:
       - '@opentelemetry/sdk-trace-base'
       - openai
 
-  '@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))':
+  '@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))':
     dependencies:
       '@google/generative-ai': 0.24.0
-      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
+      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
       uuid: 11.1.0
 
-  '@langchain/openai@0.6.3(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))(ws@8.18.0)':
+  '@langchain/openai@0.6.3(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)':
     dependencies:
-      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
+      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
       js-tiktoken: 1.0.19
       openai: 5.10.2(ws@8.18.0)(zod@3.25.76)
       zod: 3.25.76
     transitivePeerDependencies:
       - ws
 
-  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))':
+  '@langchain/textsplitters@0.1.0(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))':
     dependencies:
-      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
+      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
       js-tiktoken: 1.0.19
 
   '@leichtgewicht/ip-codec@2.0.5': {}
@@ -39336,23 +39324,23 @@ snapshots:
 
   ky@1.7.3: {}
 
-  langchain@0.3.30(@langchain/anthropic@0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))))(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))(@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))))(axios@0.30.0)(handlebars@4.7.8)(openai@5.10.2(ws@8.18.0)(zod@3.24.0))(ws@8.18.0):
+  langchain@0.3.30(@langchain/anthropic@0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))))(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))(@langchain/google-genai@0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))))(axios@0.30.0)(handlebars@4.7.8)(openai@5.10.2(ws@8.18.0)(zod@3.25.76))(ws@8.18.0):
     dependencies:
-      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
-      '@langchain/openai': 0.6.3(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))(ws@8.18.0)
-      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))
+      '@langchain/core': 0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
+      '@langchain/openai': 0.6.3(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))(ws@8.18.0)
+      '@langchain/textsplitters': 0.1.0(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))
       js-tiktoken: 1.0.19
       js-yaml: 4.1.0
       jsonpointer: 5.0.1
-      langsmith: 0.3.49(openai@5.10.2(ws@8.18.0)(zod@3.24.0))
+      langsmith: 0.3.49(openai@5.10.2(ws@8.18.0)(zod@3.25.76))
       openapi-types: 12.1.3
       p-retry: 4.6.2
       uuid: 10.0.0
       yaml: 2.6.1
       zod: 3.25.76
     optionalDependencies:
-      '@langchain/anthropic': 0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))
-      '@langchain/google-genai': 0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.24.0)))
+      '@langchain/anthropic': 0.3.24(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))
+      '@langchain/google-genai': 0.2.16(@langchain/core@0.3.66(openai@5.10.2(ws@8.18.0)(zod@3.25.76)))
       axios: 0.30.0(debug@4.4.0)
       handlebars: 4.7.8
     transitivePeerDependencies:
@@ -39362,7 +39350,7 @@ snapshots:
       - openai
       - ws
 
-  langsmith@0.3.49(openai@5.10.2(ws@8.18.0)(zod@3.24.0)):
+  langsmith@0.3.49(openai@5.10.2(ws@8.18.0)(zod@3.25.76)):
     dependencies:
       '@types/uuid': 10.0.0
       chalk: 4.1.2
@@ -39372,7 +39360,7 @@ snapshots:
       semver: 7.7.1
       uuid: 10.0.0
     optionalDependencies:
-      openai: 5.10.2(ws@8.18.0)(zod@3.24.0)
+      openai: 5.10.2(ws@8.18.0)(zod@3.25.76)
 
   latest-version@7.0.0:
     dependencies:
@@ -40951,12 +40939,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
-  openai@5.10.2(ws@8.18.0)(zod@3.24.0):
-    optionalDependencies:
-      ws: 8.18.0
-      zod: 3.24.0
-    optional: true
-
   openai@5.10.2(ws@8.18.0)(zod@3.25.76):
     optionalDependencies:
       ws: 8.18.0
@@ -41476,7 +41458,7 @@ snapshots:
       pump: 3.0.2
       rc: 1.2.8
       simple-get: 4.0.1
-      tar-fs: 2.1.2
+      tar-fs: 2.1.3
       tunnel-agent: 0.6.0
 
   prelude-ls@1.1.2: {}
@@ -43249,7 +43231,7 @@ snapshots:
 
   tapable@2.2.1: {}
 
-  tar-fs@2.1.2:
+  tar-fs@2.1.3:
     dependencies:
       chownr: 1.1.4
       mkdirp-classic: 0.5.3

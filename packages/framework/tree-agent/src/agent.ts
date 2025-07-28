@@ -216,7 +216,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 					switch (toolCall.name) {
 						case this.thinkingTool.name: {
 							this.#offTreeChanged?.();
-							this.#messages.push((await this.thinkingTool.invoke(toolCall)) as ToolMessage);
+							this.#messages.push(await this.thinkingTool.invoke(toolCall));
 							this.#offTreeChanged = this.treeView.events.on(
 								"changed",
 								() => (this.#treeHasChangedSinceLastQuery = true),
@@ -224,7 +224,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 							break;
 						}
 						case this.getTreeTool.name: {
-							this.#messages.push((await this.getTreeTool.invoke(toolCall)) as ToolMessage);
+							this.#messages.push(await this.getTreeTool.invoke(toolCall));
 							break;
 						}
 						case this.editingTool.name: {

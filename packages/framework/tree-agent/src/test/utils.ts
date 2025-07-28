@@ -75,7 +75,7 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 				apiKey:
 					process.env.OPENAI_API_KEY ??
 					failUsage("Missing OPENAI_API_KEY environment variable"),
-				reasoningEffort: "high",
+				reasoning: { effort: "high" },
 				maxTokens: 20000,
 				metadata: {
 					modelName: "o3 Mini",

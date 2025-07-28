@@ -22,7 +22,7 @@ import type {
 	TreeNode,
 	TreeNodeSchema,
 } from "@fluidframework/tree/internal";
-import { z } from "zod";
+import { z, type ZodArray, type ZodTypeAny } from "zod";
 
 import { objectIdKey, objectIdType, typeField } from "./agentEditTypes.js";
 import type { NodeSchema } from "./methodBinding.js";
@@ -95,7 +95,7 @@ const insertionSchemaCache = new WeakMap<
 	SimpleTreeSchema,
 	ReturnType<typeof generateEditTypes>
 >();
-const insertionObjectCache = new WeakMap<SimpleNodeSchema, Zod.ZodTypeAny>();
+const insertionObjectCache = new WeakMap<SimpleNodeSchema, ZodTypeAny>();
 
 /**
  * TODO
@@ -105,9 +105,9 @@ export function generateEditTypesForPrompt(
 	schema: SimpleTreeSchema,
 	includeObjectIdKey: boolean, // TODO: If this changes, we will get a false cache hit because it's not part of the cache key
 ): {
-	editTypes: Record<string, Zod.ZodTypeAny>;
+	editTypes: Record<string, ZodTypeAny>;
 	editRoot: string;
-	domainTypes: Record<string, Zod.ZodTypeAny>;
+	domainTypes: Record<string, ZodTypeAny>;
 	domainRoot: string;
 } {
 	return getOrCreate(promptSchemaCache, schema, () => {
@@ -126,13 +126,11 @@ export function generateEditTypesForPrompt(
 /**
  * TODO
  */
-export function generateEditTypesForInsertion(
-	schema: SimpleTreeSchema,
-): Zod.ZodArray<Zod.ZodTypeAny> {
+export function generateEditTypesForInsertion(schema: SimpleTreeSchema): ZodArray<ZodTypeAny> {
 	const { editTypes, editRoot } = getOrCreate(insertionSchemaCache, schema, () =>
 		generateEditTypes(schema, true, insertionObjectCache, true, undefined),
 	);
-	return editTypes[editRoot] as Zod.ZodArray<Zod.ZodTypeAny>;
+	return editTypes[editRoot] as ZodArray<ZodTypeAny>;
 }
 
 /**
@@ -146,20 +144,20 @@ export function generateEditTypesForInsertion(
 function generateEditTypes(
 	schema: SimpleTreeSchema,
 	transformForParsing: boolean,
-	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): {
-	editTypes: Record<string, Zod.ZodTypeAny>;
+	editTypes: Record<string, ZodTypeAny>;
 	editRoot: string;
-	domainTypes: Record<string, Zod.ZodTypeAny>;
+	domainTypes: Record<string, ZodTypeAny>;
 	domainRoot: string;
 } {
 	const insertSet = new Set<string>();
 	const setFieldFieldSet = new Set<string>();
 	const setFieldTypeSet = new Set<string>();
 
-	const domainTypeRecord: Record<string, Zod.ZodTypeAny> = {};
+	const domainTypeRecord: Record<string, ZodTypeAny> = {};
 	for (const name of schema.definitions.keys()) {
 		domainTypeRecord[name] = getOrCreateType(
 			schema.definitions,
@@ -236,7 +234,7 @@ function generateEditTypes(
 		})
 		.describe("Move a value from one location to another array");
 
-	const editTypeRecord: Record<string, Zod.ZodTypeAny> = {
+	const editTypeRecord: Record<string, ZodTypeAny> = {
 		[objectIdType]: objectId,
 		ObjectPointer: objectPointer,
 		SetField: setField,
@@ -296,7 +294,7 @@ function generateEditTypes(
 export function getOrCreateTypeForInsertion(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	definition: string,
-): Zod.ZodTypeAny {
+): ZodTypeAny {
 	return getOrCreateType(
 		definitionMap,
 		new Set<string>(),
@@ -316,10 +314,10 @@ function getOrCreateType(
 	modifyTypeSet: Set<string>,
 	definition: string,
 	transformForParsing: boolean,
-	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
-): Zod.ZodTypeAny {
+): ZodTypeAny {
 	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
 	return getOrCreate(objectCache, simpleNodeSchema, () => {
 		switch (simpleNodeSchema.kind) {
@@ -450,10 +448,10 @@ function getOrCreateTypeForField(
 	modifyTypeSet: Set<string>,
 	fieldSchema: SimpleFieldSchema,
 	transformForParsing: boolean,
-	objectCache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
-): Zod.ZodTypeAny {
+): ZodTypeAny {
 	const getDefault: unknown = fieldSchema.metadata?.custom?.[llmDefault];
 	if (getDefault !== undefined) {
 		if (typeof getDefault !== "function") {
@@ -516,10 +514,10 @@ function getTypeForAllowedTypes(
 	modifyTypeSet: Set<string>,
 	allowedTypes: ReadonlySet<string>,
 	transformForParsing: boolean,
-	cache: MapGetSet<SimpleNodeSchema, Zod.ZodTypeAny>,
+	cache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
 	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
-): Zod.ZodTypeAny {
+): ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
 	if (single === undefined) {
 		const types = [

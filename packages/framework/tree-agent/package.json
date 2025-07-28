@@ -118,7 +118,7 @@
 		"@langchain/core": "^0.3.66",
 		"langchain": "^0.3.30",
 		"uuid": "^11.1.0",
-		"zod": "^3.23.8"
+		"zod": "^3.25.32"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.17.1",
