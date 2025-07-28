@@ -14910,18 +14910,12 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.52.8
         version: 7.52.8(patch_hash=ldzfpsbo3oeejrejk775zxplmi)(@types/node@22.10.1)
-      '@types/chai':
-        specifier: ^4.0.0
-        version: 4.3.20
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
       c8:
         specifier: ^8.0.1
         version: 8.0.1
-      chai:
-        specifier: ^4.2.0
-        version: 4.5.0
       concurrently:
         specifier: ^8.2.1
         version: 8.2.2
@@ -14937,9 +14931,6 @@ importers:
       eslint-config-prettier:
         specifier: ~9.0.0
         version: 9.0.0(eslint@8.55.0)
-      eslint-plugin-chai-expect:
-        specifier: ~3.0.0
-        version: 3.0.0(eslint@8.55.0)
       mocha:
         specifier: ^10.8.2
         version: 10.8.2
@@ -15568,9 +15559,6 @@ importers:
       '@testing-library/user-event':
         specifier: ^14.4.3
         version: 14.5.2(@testing-library/dom@10.4.0)
-      '@types/chai':
-        specifier: ^4.0.0
-        version: 4.3.20
       '@types/jest':
         specifier: 29.5.3
         version: 29.5.3
@@ -15595,9 +15583,6 @@ importers:
       axe-core:
         specifier: ^4.9.1
         version: 4.10.2
-      chai:
-        specifier: ^4.2.0
-        version: 4.5.0
       chalk:
         specifier: ^4.1.2
         version: 4.1.2
