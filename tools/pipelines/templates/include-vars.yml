@@ -23,6 +23,9 @@ parameters:
 variables:
 - group: prague-key-vault
 - group: ado-feeds
+# Note: 'skipComponentGovernanceDetection' has no effect on pipelines that use 1ES templates.
+# Leaving it here for now in case it's doing something for other pipelines,
+# but if we can confirm it doesn't, we should remove it.
 - name: skipComponentGovernanceDetection
   value: true
 - name: testBuild
