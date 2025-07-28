@@ -458,6 +458,9 @@ export interface DDSFuzzSuiteOptions {
 	 */
 	rebaseProbability: number;
 
+	/**
+	 * Each non-synchronization option has this probability of triggering a rollback and applying them during state transitions.
+	 */
 	rollbackProbability: number;
 
 	/**
@@ -1148,7 +1151,7 @@ export function mixinClientSelection<
 }
 
 /**
- * Mixes in functionality to allow for rollback operations in a DDS fuzz model and applying them during state transitions.
+ * Mixes in functionality to allow for rollback operations in a DDS fuzz model and applies them during state transitions.
  */
 export function mixinRollback<
 	TChannelFactory extends IChannelFactory,

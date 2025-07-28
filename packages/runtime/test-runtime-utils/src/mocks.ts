@@ -260,7 +260,9 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
+	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
 	#manualFlushCalls: number = 0;
+
 	public async runWithManualFlush(act: () => void | Promise<void>) {
 		this.#manualFlushCalls++;
 		try {
