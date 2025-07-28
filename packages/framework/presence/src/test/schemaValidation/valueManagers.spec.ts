@@ -77,7 +77,8 @@ const latestMapUpdate = {
 } as const;
 
 function datastoreUpdateSignal(
-	clock: SinonFakeTimers,
+	sendTimestamp: number,
+	valueObjectName: string,
 	metadata:
 		| {
 				"rev": number;
@@ -99,12 +100,12 @@ function datastoreUpdateSignal(
 	return {
 		type: "Pres:DatastoreUpdate",
 		content: {
-			sendTimestamp: clock.now - 10,
+			sendTimestamp,
 			avgLatency: 20,
 			data: {
 				"system:presence": attendeeUpdate,
 				"s:name:testWorkspace": {
-					"latest": {
+					[valueObjectName]: {
 						[attendeeId1]: metadata,
 					},
 				},
@@ -358,17 +359,18 @@ describe.only("Presence", () => {
 					});
 
 					// Send updated data from remote client
+					const timestamp = clock.now - 15;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latest", {
 							"rev": 3,
-							"timestamp": clock.now - 10,
+							"timestamp": timestamp,
 							"value": toOpaqueJson({ x: 50, y: 60, z: 70 }),
 						}),
 						false,
 					);
 
-					// Valalidator is not called by remote update
+					// Validator is not called by remote update
 					assert.equal(point3DValidatorFunction.callCount, 1);
 				});
 			});
@@ -400,11 +402,12 @@ describe.only("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send updated data from remote client
+					const timestamp = clock.now - 15;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latest", {
 							"rev": 3,
-							"timestamp": clock.now - 10,
+							"timestamp": timestamp,
 							"value": toOpaqueJson({ x: 50, y: 60, z: 70 }),
 						}),
 						false,
@@ -431,11 +434,12 @@ describe.only("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send invalid data from remote client
+					const timestamp = clock.now - 15;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latest", {
 							"rev": 3,
-							"timestamp": clock.now - 10,
+							"timestamp": timestamp,
 							"value": toOpaqueJson("invalid"),
 						}),
 						false,
@@ -453,11 +457,12 @@ describe.only("Presence", () => {
 
 				it("on .value() call when remote data changes from invalid to valid", () => {
 					// First send invalid data
+					let timestamp = clock.now - 15;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latest", {
 							"rev": 3,
-							"timestamp": clock.now - 10,
+							"timestamp": timestamp,
 							"value": toOpaqueJson("invalid"),
 						}),
 						false,
@@ -469,11 +474,12 @@ describe.only("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send valid data from remote client
+					timestamp += 10;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latest", {
 							"rev": 4,
-							"timestamp": clock.now - 10,
+							"timestamp": timestamp,
 							"value": toOpaqueJson({ x: 100, y: 200, z: 300 }),
 						}),
 						false,
@@ -495,11 +501,12 @@ describe.only("Presence", () => {
 
 				it("on .value() call when remote data changes from invalid to invalid", () => {
 					// First send invalid data
+					let timestamp = clock.now - 15;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latest", {
 							"rev": 3,
-							"timestamp": clock.now - 10,
+							"timestamp": timestamp,
 							"value": toOpaqueJson("invalid"),
 						}),
 						false,
@@ -511,11 +518,12 @@ describe.only("Presence", () => {
 					assert.equal(point3DValidatorFunction.callCount, 1, "first call count is wrong");
 
 					// Send different invalid data from remote client
+					timestamp += 10;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latest", {
 							"rev": 4,
-							"timestamp": clock.now,
+							"timestamp": timestamp,
 							"value": toOpaqueJson("also-invalid"),
 						}),
 						false,
@@ -723,14 +731,15 @@ describe.only("Presence", () => {
 					);
 
 					// Update key2 (different key) with new data, keeping key1 unchanged
+					const timestamp = clock.now - 15;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latestMap", {
 							"rev": 2,
 							"items": {
 								"key2": {
 									"rev": 2,
-									"timestamp": 1030,
+									"timestamp": timestamp,
 									"value": toOpaqueJson({ "x": 4, "y": 4, "z": 4 }),
 								},
 							},
@@ -833,14 +842,15 @@ describe.only("Presence", () => {
 				});
 
 				function sendInvalidData(): void {
+					const timestamp = clock.now - 15;
 					processSignal(
 						[],
-						datastoreUpdateSignal(clock, {
+						datastoreUpdateSignal(timestamp, "latestMap", {
 							"rev": 2,
 							"items": {
 								"key1": {
 									"rev": 2,
-									"timestamp": 1020,
+									"timestamp": timestamp,
 									"value": toOpaqueJson("invalid"),
 								},
 							},
@@ -898,14 +908,15 @@ describe.only("Presence", () => {
 
 						// Act
 						// Process updated key data from remote client
+						const timestamp = clock.now - 15;
 						processSignal(
 							[],
-							datastoreUpdateSignal(clock, {
+							datastoreUpdateSignal(timestamp, "latestMap", {
 								"rev": 3,
 								"items": {
 									"key1": {
 										"rev": 3,
-										"timestamp": 1030,
+										"timestamp": timestamp,
 										"value": toOpaqueJson(newData),
 									},
 								},
