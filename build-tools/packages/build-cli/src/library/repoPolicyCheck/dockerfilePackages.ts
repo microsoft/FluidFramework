@@ -33,7 +33,7 @@ export const handler: Handler = {
 		// This matters because the Dockerfile is checked in with POSIX-style slashes, and the Node path APIs return
 		// OS-specific file separators.
 		const dockerfileCopyText = getDockerfileCopyText(
-			TscUtils.normalizeSlashes(path.relative(gitRoot, file)).replace(serverPath, "")
+			TscUtils.normalizeSlashes(path.relative(gitRoot, file)).replace(serverPath, ""),
 		);
 		const dockerFilePath = path.join(
 			path.relative(process.cwd(), path.join(gitRoot, serverPath)),
