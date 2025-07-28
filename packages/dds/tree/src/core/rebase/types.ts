@@ -8,7 +8,7 @@ import type {
 	SessionId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
-import { Type } from "@sinclair/typebox";
+import { Type, type Static } from "@sinclair/typebox";
 
 import {
 	type Brand,
@@ -37,6 +37,7 @@ export const RevisionTagSchema = Type.Union([
 	Type.Literal("root"),
 	brandedNumberType<Exclude<EncodedRevisionTag, string>>(),
 ]);
+export type RevisionTagSchema = Static<typeof RevisionTagSchema>;
 
 /**
  * An ID which is unique within a revision of a `ModularChangeset`.

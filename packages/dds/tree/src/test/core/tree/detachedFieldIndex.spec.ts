@@ -14,9 +14,9 @@ import {
 	RevisionTagCodec,
 } from "../../../core/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { makeDetachedNodeToFieldCodec } from "../../../core/tree/detachedFieldIndexCodec.js";
+import { makeDetachedFieldIndexCodec } from "../../../core/tree/detachedFieldIndexCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
-import type { Format } from "../../../core/tree/detachedFieldIndexFormat.js";
+import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { DetachedFieldSummaryData } from "../../../core/tree/detachedFieldIndexTypes.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
@@ -90,7 +90,7 @@ const malformedData: [string, JsonCompatibleReadOnly][] = [
 	],
 ];
 
-const validData: [string, Format][] = [
+const validData: [string, FormatV1][] = [
 	[
 		"empty data",
 		{
@@ -204,11 +204,7 @@ describe("DetachedFieldIndex", () => {
 		assert.deepEqual(detachedFieldIndex.encode(), expected);
 	});
 	describe("round-trip through JSON", () => {
-		const codec = makeDetachedNodeToFieldCodec(
-			testRevisionTagCodec,
-			options,
-			testIdCompressor,
-		);
+		const codec = makeDetachedFieldIndexCodec(testRevisionTagCodec, options, testIdCompressor);
 		for (const { name, data } of generateTestCases(testIdCompressor)) {
 			it(name, () => {
 				const encoded = codec.encode(data);
@@ -255,7 +251,7 @@ describe("DetachedFieldIndex", () => {
 		useSnapshotDirectory("detached-field-index");
 		const snapshotIdCompressor = createSnapshotCompressor();
 		const snapshotRevisionTagCodec = new RevisionTagCodec(snapshotIdCompressor);
-		const codec = makeDetachedNodeToFieldCodec(
+		const codec = makeDetachedFieldIndexCodec(
 			snapshotRevisionTagCodec,
 			options,
 			testIdCompressor,
