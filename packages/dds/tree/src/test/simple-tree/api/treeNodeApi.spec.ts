@@ -42,7 +42,6 @@ import {
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../../utils.js";
-<<<<<<< HEAD
 import {
 	describeHydration,
 	expectTreesEqual,
@@ -55,10 +54,6 @@ import {
 	type Mutable,
 	type requireTrue,
 } from "../../../util/index.js";
-=======
-import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
-import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
->>>>>>> 6371c4a294 (Minor fixes)
 
 import {
 	booleanSchema,

@@ -26,7 +26,7 @@ import {
 } from "../../simple-tree/index.js";
 import { getView } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
-import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView, Tree, TreeAlpha } from "../../shared-tree/index.js";
 import type { TreeStoredSchema } from "../../core/index.js";
 import assert from "node:assert";
 
