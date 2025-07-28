@@ -5,7 +5,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { type Handler, readFile, writeFile } from "./common.js";
+import { type Handler, normalizeFilePath, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
 
@@ -29,7 +29,7 @@ export const handler: Handler = {
 	handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
 		// strip server path since all paths are relative to server directory
 		const dockerfileCopyText = getDockerfileCopyText(
-			path.relative(gitRoot, file).replace(serverPath, ""),
+			normalizeFilePath(path.relative(gitRoot, file)).replace(serverPath, ""),
 		);
 		const dockerFilePath = path.join(
 			path.relative(process.cwd(), path.join(gitRoot, serverPath)),
