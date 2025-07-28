@@ -27,7 +27,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import/no-internal-modules
-import { DecoderCache } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
+import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
 	type EncodedChunkShape,
 	SpecialField,
@@ -186,7 +186,7 @@ describe("chunkDecoding", () => {
 		}
 	});
 
-	describe("EncodedNestedArray", () => {
+	describe("EncodedNestedArrayShape", () => {
 		it("empty", () => {
 			const decoder = new NestedArrayDecoder(0);
 			const log: string[] = [];
@@ -238,7 +238,7 @@ describe("chunkDecoding", () => {
 		});
 	});
 
-	describe("EncodedInlineArray", () => {
+	describe("EncodedInlineArrayShape", () => {
 		it("empty", () => {
 			const decoder = new InlineArrayDecoder({ length: 0, shape: 0 });
 			const log: string[] = [];
@@ -280,7 +280,7 @@ describe("chunkDecoding", () => {
 
 	describe("TreeDecoder", () => {
 		it("empty node", () => {
-			const cache = new DecoderCache([], [], idDecodingContext);
+			const cache = new DecoderContext([], [], idDecodingContext);
 			const decoder = new TreeDecoder(
 				{
 					value: false,
@@ -294,7 +294,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("typed node", () => {
-			const cache = new DecoderCache([], [], idDecodingContext);
+			const cache = new DecoderContext([], [], idDecodingContext);
 			const decoder = new TreeDecoder(
 				{
 					type: "baz",
@@ -311,7 +311,7 @@ describe("chunkDecoding", () => {
 		it("identifier node", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const stableId = testIdCompressor.decompress(compressedId);
-			const cache = new DecoderCache([], [], idDecodingContext);
+			const cache = new DecoderContext([], [], idDecodingContext);
 
 			const decoder = new TreeDecoder(
 				{
@@ -327,7 +327,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new DecoderCache(["b", "d"], [], idDecodingContext);
+			const cache = new DecoderContext(["b", "d"], [], idDecodingContext);
 			const log: string[] = [];
 			const localChunk = new BasicChunk(brand("local"), new Map());
 			const decoders = [makeLoggingDecoder(log, localChunk)];
@@ -357,7 +357,7 @@ describe("chunkDecoding", () => {
 		});
 
 		it("fixed fields", () => {
-			const cache = new DecoderCache(
+			const cache = new DecoderContext(
 				["key"],
 				// This is unused, but used to bounds check the index into decoders, so it needs 2 items.
 				[null as unknown as EncodedChunkShape, null as unknown as EncodedChunkShape],

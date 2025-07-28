@@ -24,12 +24,12 @@ export const validVersions = new Set([version]);
  * Top level length is implied from length of data array.
  * All content are of this shape.
  */
-export const EncodedNestedArray = ShapeIndex;
+export const EncodedNestedArrayShape = ShapeIndex;
 
 /**
  * Inline array.
  */
-export const EncodedInlineArray = Type.Object(
+export const EncodedInlineArrayShape = Type.Object(
 	{
 		length: Count,
 		/**
@@ -170,13 +170,13 @@ export const EncodedTreeShape = Type.Object(
 export const EncodedChunkShape = Type.Object(
 	{
 		/**
-		 * {@link EncodedNestedArray} union member.
+		 * {@link EncodedNestedArrayShape} union member.
 		 */
-		a: Type.Optional(EncodedNestedArray),
+		a: Type.Optional(EncodedNestedArrayShape),
 		/**
-		 * {@link EncodedInlineArray} union member.
+		 * {@link EncodedInlineArrayShape} union member.
 		 */
-		b: Type.Optional(EncodedInlineArray),
+		b: Type.Optional(EncodedInlineArrayShape),
 		/**
 		 * {@link EncodedTreeShape} union member.
 		 */
@@ -191,8 +191,8 @@ export const EncodedChunkShape = Type.Object(
 
 export type EncodedChunkShape = Static<typeof EncodedChunkShape>;
 
-export type EncodedNestedArray = Static<typeof EncodedNestedArray>;
-export type EncodedInlineArray = Static<typeof EncodedInlineArray>;
+export type EncodedNestedArrayShape = Static<typeof EncodedNestedArrayShape>;
+export type EncodedInlineArrayShape = Static<typeof EncodedInlineArrayShape>;
 export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
 

@@ -15,13 +15,13 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
-	EncoderCache,
+	EncoderContext,
 	type FieldEncoder,
 	asFieldEncoder,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/compressedEncode.js";
 // eslint-disable-next-line import/no-internal-modules
-import { NodeShapeEncoder } from "../../../../feature-libraries/chunked-forest/codec/nodeShapeEncoder.js";
+import { NodeEncoderGeneric } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoderGeneric.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldKinds } from "../../../../feature-libraries/default-schema/index.js";
 import { brand } from "../../../../util/index.js";
@@ -30,39 +30,39 @@ import { checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
 
 describe("nodeShape", () => {
-	describe("NodeShapeEncoder", () => {
+	describe("NodeEncoderGeneric", () => {
 		it("empty node", () => {
-			const shape = new NodeShapeEncoder(undefined, false, [], undefined);
+			const shape = new NodeEncoderGeneric(undefined, false, [], undefined);
 			const identifierCounter = new Counter<string>();
 			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
 			assert(identifierCounter.buildTable().indexToValue.length === 0);
 
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
 
-			const buffer = checkNodeEncode(shape, cache, {
+			const buffer = checkNodeEncode(shape, context, {
 				type: brand("foo"),
 			});
 			assert.deepEqual(buffer, [new IdentifierToken("foo")]);
 		});
 
 		it("typed node with value", () => {
-			const shape = new NodeShapeEncoder(brand("foo"), true, [], undefined);
+			const shape = new NodeEncoderGeneric(brand("foo"), true, [], undefined);
 
 			const identifierCounter = new Counter<string>();
 			shape.countReferencedShapesAndIdentifiers(identifierCounter, () => fail());
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
 
-			const encodedChunk = checkNodeEncode(shape, cache, {
+			const encodedChunk = checkNodeEncode(shape, context, {
 				type: brand("foo"),
 				value: 5,
 			});
@@ -70,17 +70,17 @@ describe("nodeShape", () => {
 		});
 
 		it("dynamic", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
 
-			const fieldShapeLocal = cache.nestedArrayEncoder(
-				new NodeShapeEncoder(undefined, false, [], undefined),
+			const fieldShapeLocal = context.nestedArrayEncoder(
+				new NodeEncoderGeneric(undefined, false, [], undefined),
 			);
-			const shape = new NodeShapeEncoder(undefined, undefined, [], fieldShapeLocal);
+			const shape = new NodeEncoderGeneric(undefined, undefined, [], fieldShapeLocal);
 
 			const tree: JsonableTree = {
 				type: brand("type"),
@@ -91,7 +91,7 @@ describe("nodeShape", () => {
 				},
 			};
 
-			const encodedChunk = checkNodeEncode(shape, cache, tree);
+			const encodedChunk = checkNodeEncode(shape, context, tree);
 			assert.deepEqual(encodedChunk, [
 				new IdentifierToken("type"),
 				true,
@@ -106,7 +106,7 @@ describe("nodeShape", () => {
 		});
 
 		it("fixed fields", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
@@ -115,16 +115,16 @@ describe("nodeShape", () => {
 
 			// Shape which encodes to nothing.
 			const fieldEncoder1: FieldEncoder = asFieldEncoder(
-				new NodeShapeEncoder(brand("1"), false, [], undefined),
+				new NodeEncoderGeneric(brand("1"), false, [], undefined),
 			);
 			// Shape which encodes to just the value.
-			const shapeValueOnly = new NodeShapeEncoder(brand("2"), true, [], undefined);
+			const shapeValueOnly = new NodeEncoderGeneric(brand("2"), true, [], undefined);
 
 			// Shape which encodes to nested array of values.
-			const shapeValues = cache.nestedArrayEncoder(shapeValueOnly);
+			const shapeValues = context.nestedArrayEncoder(shapeValueOnly);
 
 			// Shape which encodes to nested array of values.
-			const shape = new NodeShapeEncoder(
+			const shape = new NodeEncoderGeneric(
 				brand("type"),
 				true,
 				[
@@ -145,7 +145,7 @@ describe("nodeShape", () => {
 				},
 			};
 
-			const encodedChunk = checkNodeEncode(shape, cache, tree);
+			const encodedChunk = checkNodeEncode(shape, context, tree);
 			assert.deepEqual(encodedChunk, ["value", "v", [6]]);
 		});
 	});

@@ -13,7 +13,7 @@ import type { FluidSerializableReadOnly } from "../../valueUtilities.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedFieldBatch,
-	type EncodedNestedArray,
+	type EncodedNestedArrayShape,
 	type EncodedTreeShape,
 	version,
 } from "./format.js";
@@ -46,7 +46,7 @@ const anyTreeShape: EncodedTreeShape = {
 	extraFields: arrayIndex,
 };
 
-const anyArray: EncodedNestedArray = treeIndex;
+const anyArray: EncodedNestedArrayShape = treeIndex;
 
 /**
  * Encode a field using the hard coded shape above.
