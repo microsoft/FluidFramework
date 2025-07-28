@@ -37,12 +37,3 @@ export function readFile(file: string): string {
 export function writeFile(file: string, data: string): void {
 	fs.writeFileSync(file, data, { encoding: "utf8" });
 }
-
-/**
- * Normalizes the file path to use forward slashes for consistency across platforms.
- * @param filePath - The file path to normalize.
- * @returns The normalized file path.
- */
-export function normalizeFilePath(filePath: string): string {
-	return filePath.replace(/\\/g, "/");
-}
