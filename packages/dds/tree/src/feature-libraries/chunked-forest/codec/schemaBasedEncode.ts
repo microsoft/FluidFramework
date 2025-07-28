@@ -23,12 +23,12 @@ import {
 	EncoderCache,
 	type FieldEncoder,
 	type FieldShaper,
-	IncrementalFieldShape,
 	type KeyedFieldEncoder,
 	type TreeShaper,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
+	incrementalFieldEncoder,
 } from "./compressedEncode.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import { type EncodedFieldBatch, type EncodedValueShape, SpecialField } from "./format.js";
@@ -137,7 +137,7 @@ export function treeShaper(
 			const fieldEncoder =
 				shouldEncodeIncrementally &&
 				(key === "notes" || key === "label" || key === "labelText")
-					? new IncrementalFieldShape()
+					? incrementalFieldEncoder
 					: fieldHandler.shapeFromField(field);
 			objectNodeFields.push({
 				key,

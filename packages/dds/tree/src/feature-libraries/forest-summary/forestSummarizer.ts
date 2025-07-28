@@ -46,7 +46,7 @@ import type { Format } from "./format.js";
 import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js";
 
 /**
- * The key for the blob in the summary containing forest's contents.
+ * The key for the blob in the summary containing the forest's contents.
  */
 export const forestSummaryContentKey = "ForestTree";
 
@@ -118,8 +118,8 @@ export class ForestSummarizer implements Summarizable {
 		});
 
 		const forestSummaryBuilder = new SummaryTreeBuilder();
-		// Let the incremental summary builder know that we are starting a new summary. It returns whether
-		// incremental encoding is enabled.
+		// Let the incremental summary builder know that we are starting a new summary.
+		// It returns whether incremental encoding is enabled.
 		const shouldEncodeIncrementally = this.incrementalSummaryBuilder.startingSummary(
 			forestSummaryBuilder,
 			fullTree,

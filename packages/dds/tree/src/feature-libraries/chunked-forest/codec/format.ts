@@ -48,6 +48,12 @@ export const EncodedInlineArray = Type.Object(
 export const EncodedAnyShape = Type.Literal(0);
 
 /**
+ * Encoded content is a {@link ChunkReferenceId}.
+ * This represents the shape of a chunk that is encoded separately and is referenced by its reference id.
+ */
+export const EncodedIncrementalChunkShape = Type.Literal(0);
+
+/**
  * Content of the encoded field is specified by the Shape referenced by the ShapeIndex.
  * This is a tuple for conciseness.
  */
@@ -63,12 +69,6 @@ export const EncodedFieldShape = Type.Tuple([
 ]);
 
 export type EncodedFieldShape = Static<typeof EncodedFieldShape>;
-
-/**
- * Content of the encoded field is an array of chunk reference ids, one for each chunk. Each chunk in the field is
- * encoded separately and is referenced by its reference id.
- */
-export const EncodedIncrementalShape = Type.Literal(0);
 
 enum CounterRelativeTo {
 	// Relative to previous node of same type in depth first pre-order traversal.
@@ -186,9 +186,9 @@ export const EncodedChunkShape = Type.Object(
 		 */
 		d: Type.Optional(EncodedAnyShape),
 		/**
-		 * {@link EncodedIncrementalShape} union member.
+		 * {@link EncodedIncrementalChunkShape} union member.
 		 */
-		e: Type.Optional(EncodedIncrementalShape),
+		e: Type.Optional(EncodedIncrementalChunkShape),
 	},
 	unionOptions,
 );
@@ -199,7 +199,7 @@ export type EncodedNestedArray = Static<typeof EncodedNestedArray>;
 export type EncodedInlineArray = Static<typeof EncodedInlineArray>;
 export type EncodedTreeShape = Static<typeof EncodedTreeShape>;
 export type EncodedAnyShape = Static<typeof EncodedAnyShape>;
-export type EncodedIncrementalShape = Static<typeof EncodedIncrementalShape>;
+export type EncodedIncrementalChunkShape = Static<typeof EncodedIncrementalChunkShape>;
 
 export const EncodedFieldBatch = EncodedFieldBatchGeneric(version, EncodedChunkShape);
 export type EncodedFieldBatch = Static<typeof EncodedFieldBatch>;

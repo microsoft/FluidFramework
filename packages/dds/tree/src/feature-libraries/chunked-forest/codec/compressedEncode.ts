@@ -347,13 +347,44 @@ export class InlineArrayShape
 }
 
 /**
+ * Encodes the shape for a nested array as {@link EncodedNestedArray} shape.
+ */
+class NestedShape extends ShapeGeneric<EncodedChunkShape> {
+	/**
+	 * @param innerShape - the shape of each item in this nested array.
+	 */
+	public constructor(public readonly innerShape: Shape) {
+		super();
+	}
+
+	public encodeShape(
+		identifiers: DeduplicationTable<string>,
+		shapes: DeduplicationTable<Shape>,
+	): EncodedChunkShape {
+		const shape: EncodedNestedArray =
+			shapes.valueToIndex.get(this.innerShape) ??
+			fail(0xb4f /* index for shape not found in table */);
+		return {
+			a: shape,
+		};
+	}
+
+	public countReferencedShapesAndIdentifiers(
+		identifiers: Counter<string>,
+		shapeDiscovered: (shape: Shape) => void,
+	): void {
+		shapeDiscovered(this.innerShape);
+	}
+}
+
+/**
  * Encodes a field as a nested array with the {@link EncodedNestedArray} shape.
  */
-export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements FieldEncoder {
+export class NestedArrayShape extends NestedShape implements FieldEncoder {
 	public readonly shape: Shape;
 
 	public constructor(public readonly inner: NodeEncoder) {
-		super();
+		super(inner.shape);
 		this.shape = this;
 	}
 
@@ -382,51 +413,26 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> implements
 			outputBuffer.push(buffer);
 		}
 	}
-
-	public encodeShape(
-		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
-		const shape: EncodedNestedArray =
-			shapes.valueToIndex.get(this.inner.shape) ??
-			fail(0xb4f /* index for shape not found in table */);
-		return {
-			a: shape,
-		};
-	}
-
-	public countReferencedShapesAndIdentifiers(
-		identifiers: Counter<string>,
-		shapeDiscovered: (shape: Shape) => void,
-	): void {
-		shapeDiscovered(this.inner.shape);
-	}
 }
 
 /**
- * Encodes a field that supports incremental encoding. The chunks in this field will be encoded separately.
- * The encoded data for this field will be an array of {@link ChunkReferenceId}s, one for each of its chunks.
+ * Encodes a chunk with the {@link EncodedIncrementalChunkShape} shape.
+ * This chunks will be encoded separately, i.e., the contents of the chunk will not be part of the main buffer.
+ * A reference to the chunk will be stored in the main buffer as an {@link ChunkReferenceId}.
  */
-export class IncrementalFieldShape
-	extends ShapeGeneric<EncodedChunkShape>
-	implements FieldEncoder
-{
-	public constructor() {
-		super();
-	}
-
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
 	/**
 	 * Encodes all the nodes in the chunk at the cursor position using `InlineArrayShape`.
 	 */
-	private encodeNodesInChunk(chunk: TreeChunk, cache: EncoderCache): BufferFormat {
+	public static encodeChunk(chunk: TreeChunk, cache: EncoderCache): BufferFormat {
+		const chunkOutputBuffer: BufferFormat = [];
+		const nodesEncoder = asNodesEncoder(anyNodeEncoder);
 		const chunkCursor = chunk.cursor();
 		chunkCursor.firstNode();
-		const inlineArrayShape = new InlineArrayShape(
-			chunkCursor.chunkLength,
-			asNodesEncoder(anyNodeEncoder),
-		);
-		const chunkOutputBuffer: BufferFormat = [];
-		inlineArrayShape.encodeNodes(chunkCursor, cache, chunkOutputBuffer);
+		const chunkLength = chunkCursor.chunkLength;
+		for (let index = 0; index < chunkLength; index++) {
+			nodesEncoder.encodeNodes(chunkCursor, cache, chunkOutputBuffer);
+		}
 		assert(
 			chunkCursor.mode === CursorLocationType.Fields,
 			"should return to fields mode when finished encoding",
@@ -434,31 +440,12 @@ export class IncrementalFieldShape
 		return chunkOutputBuffer;
 	}
 
-	public encodeField(
-		cursor: ITreeCursorSynchronous,
-		cache: EncoderCache,
-		outputBuffer: BufferFormat,
-	): void {
-		assert(
-			cache.shouldEncodeIncrementally,
-			"incremental encoding must be enabled to use IncrementalFieldShape",
-		);
-
-		let chunkReferenceIds: ChunkReferenceId[] = [];
-		if (cursor.getFieldLength() !== 0) {
-			chunkReferenceIds = cache.encodeIncrementalField(cursor, (chunk: TreeChunk) =>
-				this.encodeNodesInChunk(chunk, cache),
-			);
-		}
-		outputBuffer.push(chunkReferenceIds);
-	}
-
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
 	): EncodedChunkShape {
 		return {
-			e: 0 /* EncodedIncrementalShape */,
+			e: 0 /* EncodedIncrementalChunkShape */,
 		};
 	}
 
@@ -471,6 +458,34 @@ export class IncrementalFieldShape
 		return this;
 	}
 }
+
+/**
+ * Encodes an incremental field whose chunks are encoded separately and referenced by their {@link ChunkReferenceId}.
+ * The shape of the content of this field is {@link NestedShape} where the items in the array are
+ * the {@link ChunkReferenceId}s of the encoded chunks.
+ */
+export const incrementalFieldEncoder: FieldEncoder = {
+	encodeField(
+		cursor: ITreeCursorSynchronous,
+		cache: EncoderCache,
+		outputBuffer: BufferFormat,
+	): void {
+		assert(
+			cache.shouldEncodeIncrementally,
+			"incremental encoding must be enabled to use IncrementalFieldShape",
+		);
+
+		let chunkReferenceIds: ChunkReferenceId[] = [];
+		if (cursor.getFieldLength() !== 0) {
+			chunkReferenceIds = cache.encodeIncrementalField(cursor, (chunk: TreeChunk) =>
+				IncrementalChunkShape.encodeChunk(chunk, cache),
+			);
+		}
+		outputBuffer.push(chunkReferenceIds);
+	},
+
+	shape: new NestedShape(new IncrementalChunkShape() /* innerShape */),
+};
 
 /**
  * Encode `value` with `shape` into `outputBuffer`.

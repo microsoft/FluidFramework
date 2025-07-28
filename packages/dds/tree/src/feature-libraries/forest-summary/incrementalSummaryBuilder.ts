@@ -48,12 +48,12 @@ interface ChunkSummaryProperties {
 	 * The reference ID of the chunk which uniquely identifies it under its parent's summary tree.
 	 * The summary for this chunk will be stored against this reference ID as key in the summary tree.
 	 */
-	referenceId: ChunkReferenceId;
+	readonly referenceId: ChunkReferenceId;
 	/**
 	 * The path for this chunk's summary in the summary tree relative to the forest's summary tree.
 	 * This path is used to generate a summary handle for the chunk if it doesn't change between summaries.
 	 */
-	summaryPath: string;
+	readonly summaryPath: string;
 }
 
 /**
@@ -74,12 +74,13 @@ interface TrackedSummaryProperties {
 	 */
 	readonly fullTree: boolean;
 	/**
-	 * Represents the path of a chunk in the summary tree relative to the forest's summary tree. Each item in the
-	 * array is a reference ID of a chunk in the summary tree starting from the chunk under forest summary tree.
+	 * Represents the path of a chunk in the summary tree relative to the forest's summary tree.
+	 * Each item in the array is the {@link ChunkReferenceId} of a chunk in the summary tree starting
+	 * from the chunk under forest summary tree.
 	 * When a chunk is summarized, this array will be used to generate the path for the chunk's summary in the
 	 * summary tree.
 	 */
-	readonly chunkSummaryPath: number[];
+	readonly chunkSummaryPath: ChunkReferenceId[];
 	/**
 	 * The parent summary builder to use to build the incremental summary tree. When a chunk is being summarized,
 	 * it will add its summary to this builder against its reference ID.
