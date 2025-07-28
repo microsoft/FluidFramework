@@ -1147,6 +1147,9 @@ export function mixinClientSelection<
 	};
 }
 
+/**
+ * Mixes in functionality to allow for rollback operations in a DDS fuzz model and applying them during state transitions.
+ */
 export function mixinRollback<
 	TChannelFactory extends IChannelFactory,
 	TOperation extends BaseOperation,
