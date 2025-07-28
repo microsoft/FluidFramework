@@ -159,7 +159,7 @@ export interface TriggerRebase {
  * @internal
  */
 export interface Rollback {
-	type: "rollback";
+	type: "applyThenRollback";
 	ddsOp: BaseOperation;
 }
 
@@ -1167,7 +1167,7 @@ export function mixinRollback<
 			const baseOp = await baseGenerator(state);
 			if (baseOp !== done && state.random.bool(options.rollbackProbability)) {
 				return {
-					type: "rollback",
+					type: "applyThenRollback",
 					ddsOp: baseOp,
 				};
 			}
@@ -1181,7 +1181,7 @@ export function mixinRollback<
 		| undefined;
 
 	const reducer: AsyncReducer<TOperation | Rollback, TState> = async (state, operation) => {
-		if (isOperationType<Rollback>("rollback", operation)) {
+		if (isOperationType<Rollback>("applyThenRollback", operation)) {
 			state.client.containerRuntime.flush();
 			await state.client.containerRuntime.runWithManualFlush(async () => {
 				await model.reducer(state, operation.ddsOp as TOperation);
