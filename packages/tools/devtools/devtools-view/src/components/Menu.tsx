@@ -587,21 +587,24 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 				const message = untypedMessage as DataVisualization.Message;
 				const containerKey = message.data.containerKey;
 
-				setBlinkingContainers((prev) => {
-					const newSet = new Set(prev);
-					newSet.add(containerKey);
+				// Only trigger blinking if this is an actual data change, not a user-requested visualization
+				if (message.data.reason === DataVisualization.UpdateReason.DataChanged) {
+					setBlinkingContainers((prev) => {
+						const newSet = new Set(prev);
+						newSet.add(containerKey);
 
-					// Remove from blinking set after animation duration
-					setTimeout(() => {
-						setBlinkingContainers((current) => {
-							const updatedSet = new Set(current);
-							updatedSet.delete(containerKey);
-							return updatedSet;
-						});
-					}, 600); // Remove after 600ms (3 blinks at 200ms each)
+						// Remove from blinking set after animation duration
+						setTimeout(() => {
+							setBlinkingContainers((current) => {
+								const updatedSet = new Set(current);
+								updatedSet.delete(containerKey);
+								return updatedSet;
+							});
+						}, 600); // Remove after 600ms (3 blinks at 200ms each)
 
-					return newSet;
-				});
+						return newSet;
+					});
+				}
 
 				return true;
 			},

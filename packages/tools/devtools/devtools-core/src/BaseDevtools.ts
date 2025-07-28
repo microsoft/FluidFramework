@@ -217,7 +217,12 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 	// #region Data visualization handlers
 
 	protected readonly dataUpdateHandler = (visualization: FluidObjectNode): void => {
-		this.postDataVisualization(visualization.fluidObjectId, visualization);
+		// This is called when actual data changes occur - should trigger blinking
+		this.postDataVisualization(
+			visualization.fluidObjectId,
+			visualization,
+			DataVisualization.UpdateReason.DataChanged,
+		);
 	};
 
 	// #endregion
@@ -267,7 +272,12 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 				const message = untypedMessage as GetDataVisualization.Message;
 				if (message.data.containerKey === this.containerKey) {
 					const visualization = await this.getDataVisualization(message.data.fluidObjectId);
-					this.postDataVisualization(message.data.fluidObjectId, visualization);
+					// This is a user-requested visualization - should NOT trigger blinking
+					this.postDataVisualization(
+						message.data.fluidObjectId,
+						visualization,
+						DataVisualization.UpdateReason.UserRequested,
+					);
 					return true;
 				}
 				return false;
@@ -364,6 +374,7 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 	protected readonly postDataVisualization = (
 		fluidObjectId: FluidObjectId,
 		visualization: FluidObjectNode | undefined,
+		reason: DataVisualization.UpdateReason = DataVisualization.UpdateReason.DataChanged,
 	): void => {
 		postMessagesToWindow(
 			this.messageLoggingOptions,
@@ -371,10 +382,10 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 				containerKey: this.containerKey,
 				fluidObjectId,
 				visualization,
+				reason,
 			}),
 		);
 	};
-
 	// #endregion
 
 	/**

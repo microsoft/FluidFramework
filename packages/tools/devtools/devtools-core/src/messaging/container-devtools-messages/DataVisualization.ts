@@ -21,6 +21,25 @@ export namespace DataVisualization {
 	export const MessageType = "DATA_VISUALIZATION";
 
 	/**
+	 * Reasons why a DataVisualization message is being sent.
+	 *
+	 * @internal
+	 */
+	export const enum UpdateReason {
+		/**
+		 * Visualization was requested by user interaction (e.g., clicking to expand tree).
+		 * Should not trigger UI animations.
+		 */
+		UserRequested = "userRequested",
+
+		/**
+		 * Visualization updated due to actual data changes in the underlying shared object.
+		 * Should trigger UI animations to indicate data has changed.
+		 */
+		DataChanged = "dataChanged",
+	}
+
+	/**
 	 * Message data format used by {@link DataVisualization.Message}.
 	 *
 	 * @internal
@@ -33,6 +52,12 @@ export namespace DataVisualization {
 		 * {@link HasFluidObjectId.fluidObjectId | ID}.
 		 */
 		visualization: FluidObjectNode | undefined;
+
+		/**
+		 * Reason for this visualization update.
+		 * Determines whether UI should show visual feedback (blinking/animation).
+		 */
+		reason: UpdateReason;
 	}
 
 	/**
