@@ -19,6 +19,7 @@ import {
 	DataVisualizerGraph,
 	type FluidObjectNode,
 	type RootHandleNode,
+	VisualNodeKind,
 	defaultVisualizers,
 } from "./data-visualization/index.js";
 import {
@@ -404,6 +405,13 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 
 		this.dataVisualizer?.on("update", this.dataUpdateHandler);
 
+		// Initialize data visualization monitoring immediately to ensure event listeners are active
+		if (this.dataVisualizer !== undefined) {
+			this.initializeDataVisualizationMonitoring().catch((error) => {
+				console.error("Failed to initialize data visualization monitoring:", error);
+			});
+		}
+
 		// Register listener for inbound messages from the window (globalThis)
 		globalThis.addEventListener?.("message", this.windowMessageHandler);
 
@@ -488,6 +496,31 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 	 */
 	public get disposed(): boolean {
 		return this._disposed;
+	}
+
+	/**
+	 * Initialize data visualization monitoring immediately to ensure event listeners are set up
+	 * and console logs appear even when devtools UI is not open.
+	 */
+	private async initializeDataVisualizationMonitoring(): Promise<void> {
+		try {
+			// Trigger initial rendering to set up event listeners on all shared objects
+			const rootVisualizations = await this.getRootDataVisualizations();
+
+			// Also render each root object fully to ensure nested objects get their listeners set up
+			if (rootVisualizations) {
+				for (const [_, handleNode] of Object.entries(rootVisualizations)) {
+					if (handleNode.nodeKind === VisualNodeKind.FluidHandleNode) {
+						await this.getDataVisualization(handleNode.fluidObjectId);
+					}
+				}
+			}
+		} catch (error) {
+			console.error(
+				"BaseDevtools: Failed to initialize data visualization monitoring:",
+				error,
+			);
+		}
 	}
 
 	protected async getRootDataVisualizations(): Promise<

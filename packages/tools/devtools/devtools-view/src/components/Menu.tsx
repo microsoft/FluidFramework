@@ -32,6 +32,7 @@ import {
 	ContainerStateChange,
 	RemoveContainer,
 	handleIncomingMessage,
+	DataVisualization,
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
@@ -361,6 +362,11 @@ export interface MenuItemProps {
 	 * Whether the container is closed and can be deleted.
 	 */
 	isClosed?: boolean;
+
+	/**
+	 * Whether the container or data object is blinking.
+	 */
+	blink?: boolean;
 }
 
 const useMenuItemStyles = makeStyles({
@@ -395,6 +401,17 @@ const useMenuItemStyles = makeStyles({
 		flex: 1,
 		gap: "8px",
 	},
+	blinkText: {
+		"animationName": {
+			"0%": { color: "inherit" },
+			"50%": { color: "black" },
+			"100%": { color: "inherit" },
+		},
+		"animationDuration": "0.2s",
+		"animationTimingFunction": "ease-in-out",
+		"animationIterationCount": "3",
+		"animationFillMode": "forwards",
+	},
 	deleteButton: {
 		backgroundColor: "transparent",
 		border: "none",
@@ -411,7 +428,15 @@ const useMenuItemStyles = makeStyles({
  * Generic component for a menu item (under a section).
  */
 export function MenuItem(props: MenuItemProps): React.ReactElement {
-	const { isActive, onClick, text, stateIcon, onDelete, isClosed = false } = props;
+	const {
+		isActive,
+		onClick,
+		text,
+		stateIcon,
+		onDelete,
+		isClosed = false,
+		blink = false,
+	} = props;
 
 	const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>): void => {
 		if (event.key === "Enter" || event.key === " ") {
@@ -438,7 +463,7 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 			tabIndex={0}
 		>
 			<div className={styles.itemContent}>
-				{text}
+				<span className={mergeClasses(blink === true && styles.blinkText)}>{text}</span>
 				{stateIcon}
 			</div>
 			{isClosed && onDelete && (
@@ -539,6 +564,8 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 	const [containerStates, setContainerStates] = React.useState<
 		Map<ContainerKey, ContainerStateMetadata>
 	>(new Map());
+	// Set of container keys that should blink
+	const [blinkingContainers, setBlinkingContainers] = React.useState<Set<string>>(new Set());
 
 	// Fetch container states when containers list changes
 	React.useEffect(() => {
@@ -554,6 +581,28 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 					newMap.set(message.data.containerKey, message.data.containerState);
 					return newMap;
 				});
+				return true;
+			},
+			[DataVisualization.MessageType]: async (untypedMessage) => {
+				const message = untypedMessage as DataVisualization.Message;
+				const containerKey = message.data.containerKey;
+
+				setBlinkingContainers((prev) => {
+					const newSet = new Set(prev);
+					newSet.add(containerKey);
+
+					// Remove from blinking set after animation duration
+					setTimeout(() => {
+						setBlinkingContainers((current) => {
+							const updatedSet = new Set(current);
+							updatedSet.delete(containerKey);
+							return updatedSet;
+						});
+					}, 600); // Remove after 600ms (3 blinks at 200ms each)
+
+					return newSet;
+				});
+
 				return true;
 			},
 		};
@@ -624,6 +673,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 							onClick={(event): void => {
 								selectContainer(`${containerKey}`);
 							}}
+							blink={blinkingContainers.has(containerKey)}
 						/>
 					);
 				})}
