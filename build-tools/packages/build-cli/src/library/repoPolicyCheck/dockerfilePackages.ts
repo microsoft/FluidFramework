@@ -5,8 +5,8 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { type Handler, normalizeFilePath, readFile, writeFile } from "./common.js";
 import { TscUtils } from "@fluidframework/build-tools";
+import { type Handler, readFile, writeFile } from "./common.js";
 
 const serverPath = "server/routerlicious/";
 
