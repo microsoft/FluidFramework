@@ -32,6 +32,7 @@ import {
 	type IStorageNameAllocator,
 	type ITenantManager,
 	SequencedOperationType,
+	StageTrace,
 } from "@fluidframework/server-services-core";
 import {
 	BaseTelemetryProperties,
@@ -39,12 +40,23 @@ import {
 	getLumberBaseProperties,
 	LumberEventName,
 	Lumberjack,
+	type Lumber,
 } from "@fluidframework/server-services-telemetry";
 import * as winston from "winston";
 
 /**
  * @internal
  */
+
+export enum DocCreationStage {
+	Started = "Started",
+	StorageNameAllocated = "StorageNameAllocated",
+	GitManagerCreated = "GitManagerCreated",
+	DocCreationCompleted = "DocCreationCompleted",
+	InitialSummaryUploaded = "InitialSummaryUploaded",
+	DocCreated = "DocCreated",
+}
+
 export class DocumentStorage implements IDocumentStorage {
 	constructor(
 		protected readonly documentRepository: IDocumentRepository,
@@ -153,44 +165,112 @@ export class DocumentStorage implements IDocumentStorage {
 		isEphemeralContainer: boolean = false,
 		messageBrokerId?: string,
 	): Promise<IDocumentDetails> {
-		const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
-		const gitManager = await this.tenantManager.getTenantGitManager(
-			tenantId,
-			documentId,
-			storageName,
-			false /* includeDisabledTenant */,
-			isEphemeralContainer,
-		);
-
-		const storageNameAssignerEnabled = !!this.storageNameAssigner;
-		const lumberjackProperties = {
+		const createDocTrace = new StageTrace<DocCreationStage>(DocCreationStage.Started);
+		const lumberjackProperties: Record<string, any> = {
 			...getLumberBaseProperties(documentId, tenantId),
 			enableWholeSummaryUpload: this.enableWholeSummaryUpload,
 			[CommonProperties.isEphemeralContainer]: isEphemeralContainer,
 		};
-		if (storageNameAssignerEnabled && !storageName) {
-			// Using a warning instead of an error just in case there are some outliers that we don't know about.
-			Lumberjack.warning(
-				"Failed to get storage name for new document.",
-				lumberjackProperties,
+		let runTimeError;
+		const createDocMetric = Lumberjack.newLumberMetric(
+			LumberEventName.CreateDocument,
+			lumberjackProperties,
+		);
+		try {
+			const storageName = await this.storageNameAssigner?.assign(tenantId, documentId);
+			const storageNameAssignerEnabled = !!this.storageNameAssigner;
+			lumberjackProperties.storageName = storageName;
+			lumberjackProperties.storageNameAssignerEnabled = storageNameAssignerEnabled;
+			if (storageNameAssignerEnabled && !storageName) {
+				// Using a warning instead of an error just in case there are some outliers that we don't know about.
+				Lumberjack.warning(
+					"Failed to get storage name for new document.",
+					lumberjackProperties,
+				);
+			}
+			createDocTrace.stampStage(DocCreationStage.StorageNameAllocated);
+			getGlobalTimeoutContext().checkTimeout();
+
+			const gitManager = await this.tenantManager.getTenantGitManager(
+				tenantId,
+				documentId,
+				storageName,
+				false /* includeDisabledTenant */,
+				isEphemeralContainer,
 			);
+
+			const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
+			const fullTree = this.createFullTree(appTree, protocolTree);
+			const blobsShaCache = new Map<string, string>();
+			const uploadManager = this.enableWholeSummaryUpload
+				? new WholeSummaryUploadManager(gitManager)
+				: new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
+
+			const summaryTimeStr = new Date().toISOString();
+
+			const dbResult: IDocumentDetails = await this.createDocumentCore(
+				createDocMetric,
+				lumberjackProperties,
+				createDocTrace,
+				uploadManager,
+				fullTree,
+				gitManager,
+				documentId,
+				summaryTimeStr,
+				sequenceNumber,
+				initialHash,
+				values,
+				ordererUrl,
+				historianUrl,
+				deltaStreamUrl,
+				messageBrokerId,
+				enableDiscovery,
+				tenantId,
+				storageName,
+				isEphemeralContainer,
+			);
+			createDocTrace.stampStage(DocCreationStage.DocCreationCompleted);
+			return dbResult;
+		} catch (err: unknown) {
+			runTimeError = err;
+			throw err;
+		} finally {
+			createDocMetric.setProperty("createDocTrace", createDocTrace.trace);
+			if (!runTimeError) {
+				createDocMetric.error("Failed created doc", runTimeError);
+			} else {
+				createDocMetric.success("Successfully created doc");
+			}
 		}
+	}
 
-		const protocolTree = this.createInitialProtocolTree(sequenceNumber, values);
-		const fullTree = this.createFullTree(appTree, protocolTree);
-
-		const blobsShaCache = new Map<string, string>();
-		const uploadManager = this.enableWholeSummaryUpload
-			? new WholeSummaryUploadManager(gitManager)
-			: new SummaryTreeUploadManager(gitManager, blobsShaCache, async () => undefined);
-
+	protected async createDocumentCore(
+		createDocMetric: Lumber<LumberEventName.CreateDocument>, // Used by override
+		lumberjackProperties: Record<string, any>,
+		createDocTrace: StageTrace<DocCreationStage>,
+		uploadManager: WholeSummaryUploadManager | SummaryTreeUploadManager,
+		fullTree: ISummaryTree,
+		gitManager: IGitManager,
+		documentId: string,
+		summaryTimeStr: string,
+		sequenceNumber: number,
+		initialHash: string,
+		values: [string, ICommittedProposal][],
+		ordererUrl: string,
+		historianUrl: string,
+		deltaStreamUrl: string,
+		messageBrokerId: string | undefined,
+		enableDiscovery: boolean,
+		tenantId: string,
+		storageName: string | undefined,
+		isEphemeralContainer: boolean,
+	): Promise<IDocumentDetails> {
 		const initialSummaryUploadMetric = Lumberjack.newLumberMetric(
 			LumberEventName.CreateDocInitialSummaryWrite,
 			lumberjackProperties,
 		);
 
 		let initialSummaryVersionId: string;
-		const summaryTimeStr = new Date().toISOString();
 		try {
 			const { summaryVersionId, summaryUploadMessage } = await this.uploadSummary(
 				uploadManager,
@@ -207,6 +287,7 @@ export class DocumentStorage implements IDocumentStorage {
 		}
 
 		// Storage is known to take too long sometimes. Check timeout before continuing.
+		createDocTrace.stampStage(DocCreationStage.InitialSummaryUploaded);
 		getGlobalTimeoutContext().checkTimeout();
 
 		const deli: IDeliState = {
@@ -293,12 +374,12 @@ export class DocumentStorage implements IDocumentStorage {
 				},
 				documentDbValue,
 			);
+			createDocTrace.stampStage(DocCreationStage.DocCreated);
 			createDocumentCollectionMetric.success("Successfully created document");
 		} catch (error: any) {
 			createDocumentCollectionMetric.error("Error create document", error);
 			throw error;
 		}
-
 		return dbResult;
 	}
 
