@@ -5128,9 +5128,12 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connectedToService", (clientId: string) =>
-			eventEmitter.emit("connected", clientId),
+		this.on("connected", (clientId: string) =>
+			eventEmitter.emit("connected", clientId, true /* canSendOps */),
 		);
+		this.on("connectedToService", (clientId: string) => {
+			eventEmitter.emit("connected", clientId, false /* canSendOps */);
+		});
 		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
 	});

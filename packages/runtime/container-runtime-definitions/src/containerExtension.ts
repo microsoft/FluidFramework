@@ -205,7 +205,7 @@ export interface ContainerExtension<
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
-	"connected": (clientId: ClientConnectionId) => void;
+	"connected": (clientId: ClientConnectionId, canSendOps: boolean) => void;
 }
 
 /**

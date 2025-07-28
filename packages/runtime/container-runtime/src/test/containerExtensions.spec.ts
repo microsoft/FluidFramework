@@ -262,11 +262,11 @@ describe("Container Extension", () => {
 				TestExtensionFactory,
 			);
 
-			let connectCount = 0;
 			let disconnectCount = 0;
+			const connectedEvents: { clientId: string; canSendOps: boolean }[] = [];
 
-			extension.events.on("connected", (clientId) => {
-				connectCount += 1;
+			extension.events.on("connected", (clientId: string, canSendOps: boolean) => {
+				connectedEvents.push({ clientId, canSendOps });
 				assert.strictEqual(
 					clientId,
 					"mockClientId",
@@ -303,7 +303,25 @@ describe("Container Extension", () => {
 
 			// Transition to Connected
 			container.setConnectionState(ConnectionState.Connected, "mockClientId");
-			assert.strictEqual(connectCount, 1, "Extension should emit connected event once");
+			assert.strictEqual(
+				connectedEvents.length,
+				2,
+				"Should have received two connected events",
+			);
+
+			// First event should be with canSendOps=false
+			assert.strictEqual(
+				connectedEvents[0].canSendOps,
+				false,
+				"First connected event should have canSendOps=false",
+			);
+			// Second event should be with canSendOps=true
+			assert.strictEqual(
+				connectedEvents[1].canSendOps,
+				true,
+				"Second connected event should have canSendOps=true",
+			);
+
 			assert.strictEqual(
 				extension.connectedToService,
 				true,
@@ -336,13 +354,21 @@ describe("Container Extension", () => {
 
 			let connectCount = 0;
 			let disconnectCount = 0;
+			const connectedEvents: { clientId: string; canSendOps: boolean }[] = [];
 
-			extension.events.on("connected", (clientId) => {
+			extension.events.on("connected", (clientId: string, canSendOps: boolean) => {
 				connectCount += 1;
+				connectedEvents.push({ clientId, canSendOps });
 				assert.strictEqual(
 					clientId,
 					"mockClientId",
 					"Extension should emit connected event with correct clientId",
+				);
+				// For read-only client, canSendOps should always be false
+				assert.strictEqual(
+					canSendOps,
+					false,
+					"Extension should emit connected event with canSendOps=false for read-only client",
 				);
 			});
 
