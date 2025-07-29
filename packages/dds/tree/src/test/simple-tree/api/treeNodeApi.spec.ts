@@ -45,12 +45,7 @@ import {
 	validateUsageError,
 } from "../../utils.js";
 import { describeHydration, getViewForForkedBranch, hydrate } from "../utils.js";
-import {
-	brand,
-	type areSafelyAssignable,
-	type Mutable,
-	type requireTrue,
-} from "../../../util/index.js";
+import { brand, type areSafelyAssignable, type requireTrue } from "../../../util/index.js";
 
 import {
 	booleanSchema,
