@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { RequestHandler } from "express";
+import type { RequestHandler } from "express";
 import { decode } from "jsonwebtoken";
-import * as nconf from "nconf";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import type * as nconf from "nconf";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { validateTokenClaims } from "@fluidframework/server-services-utils";
 import { handleResponse } from "@fluidframework/server-services-shared";
@@ -17,20 +17,22 @@ import {
 } from "@fluidframework/server-services-telemetry";
 import {
 	runWithRetry,
-	IStorageNameRetriever,
-	IRevokedTokenChecker,
-	IDocumentManager,
-	IThrottler,
+	type IStorageNameRetriever,
+	type IRevokedTokenChecker,
+	type IDocumentManager,
+	type IThrottler,
+	type IDenyList,
 } from "@fluidframework/server-services-core";
 import {
-	ICache,
-	ITenantService,
+	type ICache,
+	type ITenantService,
 	RestGitService,
-	ITenantCustomDataExternal,
-	IDenyList,
-	ISimplifiedCustomDataRetriever,
+	type ITenantCustomDataExternal,
+	type ISimplifiedCustomDataRetriever,
 } from "../services";
 import { containsPathTraversal, parseToken } from "../utils";
+
+const MAX_TOKEN_LENGTH = 1000; // Maximum allowed token length in characters
 
 export { handleResponse } from "@fluidframework/server-services-shared";
 
@@ -61,7 +63,6 @@ export interface ICreateGitServiceArgs {
 	allowDisabledTenant?: boolean;
 	isEphemeralContainer?: boolean;
 	ephemeralDocumentTTLSec?: number; // 24 hours
-	denyList?: IDenyList;
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
 }
 
@@ -263,7 +264,6 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		allowDisabledTenant,
 		isEphemeralContainer,
 		ephemeralDocumentTTLSec,
-		denyList,
 		simplifiedCustomDataRetriever,
 	} = { ...createArgs };
 	if (!authorization) {
@@ -278,9 +278,6 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	if (containsPathTraversal(documentId)) {
 		// Prevent attempted directory traversal.
 		throw new NetworkError(400, `Invalid document id: ${documentId}`);
-	}
-	if (denyList?.isDenied(tenantId, documentId)) {
-		throw new NetworkError(500, `Unable to process request for document id: ${documentId}`);
 	}
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 	const customData: ITenantCustomDataExternal = details.customData;
@@ -347,7 +344,11 @@ export function queryParamToString(value: any): string | undefined {
 	return value;
 }
 
-export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefined): RequestHandler {
+export function verifyToken(
+	revokedTokenChecker: IRevokedTokenChecker | undefined,
+	requiredScopes: string[],
+	maxTokenLifetimeSec: number,
+): RequestHandler {
 	// eslint-disable-next-line @typescript-eslint/no-misused-promises
 	return async (request, response, next) => {
 		try {
@@ -360,6 +361,10 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 			if (!token) {
 				throw new NetworkError(403, "Authorization token is missing.");
 			}
+			if (token.length > MAX_TOKEN_LENGTH) {
+				// Prevent excessively long tokens that could lead to performance issues.
+				throw new NetworkError(403, "Invalid token. Token is too long.");
+			}
 			const claims = validateTokenClaims(token, "documentId", reqTenantId, false);
 			const documentId = claims.documentId;
 			const tenantId = claims.tenantId;
@@ -367,14 +372,14 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 				// Prevent attempted directory traversal.
 				throw new NetworkError(400, `Invalid document id: ${documentId}`);
 			}
+
 			// Verify token not revoked if JTI claim is present
 			if (revokedTokenChecker && claims.jti) {
 				const isTokenRevoked = await revokedTokenChecker.isTokenRevoked(
 					tenantId,
-					claims.documentId,
+					documentId,
 					claims.jti,
 				);
-
 				if (isTokenRevoked) {
 					throw new NetworkError(
 						403,
@@ -383,6 +388,26 @@ export function verifyToken(revokedTokenChecker: IRevokedTokenChecker | undefine
 						true /* isFatal */,
 					);
 				}
+			}
+
+			if (requiredScopes) {
+				const hasAllRequiredScopes = requiredScopes.every((scope) =>
+					claims.scopes.includes(scope),
+				);
+				if (!hasAllRequiredScopes) {
+					throw new NetworkError(
+						403,
+						`Permission denied. Insufficient scopes. Required scopes: ${requiredScopes}`,
+					);
+				}
+			}
+
+			if (!claims.exp || !claims.iat || claims.exp - claims.iat > maxTokenLifetimeSec) {
+				throw new NetworkError(403, "Invalid token expiry");
+			}
+			const lifeTimeMSec = claims.exp * 1000 - new Date().getTime();
+			if (lifeTimeMSec < 0) {
+				throw new NetworkError(401, "Expired token");
 			}
 			// eslint-disable-next-line @typescript-eslint/return-await
 			return getGlobalTelemetryContext().bindPropertiesAsync(

@@ -4,30 +4,34 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { AttachState, IDeltaManager } from "@fluidframework/container-definitions/internal";
-import { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
+import {
+	AttachState,
+	type IDeltaManager,
+} from "@fluidframework/container-definitions/internal";
+import type { FluidObject, IRequest, IResponse } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred, unreachableCase } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
-import { IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions/internal";
-import {
+import type { IFluidDataStoreRuntimeEvents } from "@fluidframework/datastore-definitions/internal";
+import type {
 	IDocumentMessage,
-	type ISnapshotTree,
+	ISnapshotTree,
 	ISequencedDocumentMessage,
 	IQuorumClients,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	IGarbageCollectionData,
-	IFluidDataStoreChannel,
-	IFluidDataStoreContext,
-	IInboundSignalMessage,
+	type IGarbageCollectionData,
+	type IFluidDataStoreChannel,
+	type IFluidDataStoreContext,
+	type IInboundSignalMessage,
 	VisibilityState,
 	type ISummaryTreeWithStats,
 	type ITelemetryContext,
+	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITelemetryLoggerExt,
-	MonitoringContext,
+	type ITelemetryLoggerExt,
+	type MonitoringContext,
 	raiseConnectedEvent,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
@@ -135,13 +139,9 @@ export class RuntimeAttributorDataStoreChannel
 	}
 
 	/**
-	 * {@inheritdoc IFluidDataStoreChannel.process}
+	 * {@inheritdoc IFluidDataStoreChannel.processMessages}
 	 */
-	public process(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	): void {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		throw new Error("Attributor should not receive messages yet");
 	}
 

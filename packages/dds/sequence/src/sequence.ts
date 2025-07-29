@@ -69,24 +69,15 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 
-import {
-	IIntervalCollection,
-	SequenceIntervalCollectionValueType,
-} from "./intervalCollection.js";
+import { type ISequenceIntervalCollection } from "./intervalCollection.js";
 import { IMapOperation, IntervalCollectionMap } from "./intervalCollectionMap.js";
-import {
-	IMapMessageLocalMetadata,
-	IValueChanged,
-	type SequenceOptions,
-} from "./intervalCollectionMapInterfaces.js";
-import { SequenceInterval } from "./intervals/index.js";
+import { type SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 import {
 	SequenceDeltaEvent,
 	SequenceDeltaEventClass,
 	SequenceMaintenanceEvent,
 	SequenceMaintenanceEventClass,
 } from "./sequenceDeltaEvent.js";
-import { ISharedIntervalCollection } from "./sharedIntervalCollection.js";
 
 const snapshotFileName = "header";
 const contentPath = "content";
@@ -147,7 +138,6 @@ export interface ISharedSegmentSequenceEvents extends ISharedObjectEvents {
  */
 export interface ISharedSegmentSequence<T extends ISegment>
 	extends ISharedObject<ISharedSegmentSequenceEvents>,
-		ISharedIntervalCollection<SequenceInterval>,
 		MergeTreeRevertibleDriver {
 	/**
 	 * Creates a `LocalReferencePosition` on this SharedString. If the refType does not include
@@ -254,7 +244,7 @@ export interface ISharedSegmentSequence<T extends ISegment>
 	 * Retrieves the interval collection keyed on `label`. If no such interval collection exists,
 	 * creates one.
 	 */
-	getIntervalCollection(label: string): IIntervalCollection<SequenceInterval>;
+	getIntervalCollection(label: string): ISequenceIntervalCollection;
 
 	/**
 	 * Obliterate is similar to remove, but differs in that segments concurrently
@@ -494,7 +484,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	protected client: Client;
 	private messagesSinceMSNChange: ISequencedDocumentMessage[] = [];
-	private readonly intervalCollections: IntervalCollectionMap<SequenceInterval>;
+	private readonly intervalCollections: IntervalCollectionMap;
 	constructor(
 		dataStoreRuntime: IFluidDataStoreRuntime,
 		public id: string,
@@ -542,7 +532,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 		this.client.prependListener("delta", (opArgs, deltaArgs) => {
 			const event = new SequenceDeltaEventClass(opArgs, deltaArgs, this.client);
-			if (event.isLocal) {
+			if (event.isLocal && event.opArgs.rollback !== true) {
 				this.submitSequenceMessage(opArgs.op);
 			}
 			if (deltaArgs.deltaSegments.length > 0) {
@@ -569,7 +559,6 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 				this.inFlightRefSeqs.push(this.currentRefSeq);
 				this.submitLocalMessage(op, localOpMetadata);
 			},
-			new SequenceIntervalCollectionValueType(),
 			options,
 		);
 	}
@@ -594,7 +583,9 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		segment: T | undefined;
 		offset: number | undefined;
 	} {
-		return this.client.getContainingSegment<T>(pos);
+		return (
+			this.client.getContainingSegment<T>(pos) ?? { segment: undefined, offset: undefined }
+		);
 	}
 
 	public getLength(): number {
@@ -705,7 +696,7 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 		this.guardReentrancy(() => this.client.insertSegmentLocal(pos, segment));
 	}
 
-	public getIntervalCollection(label: string): IIntervalCollection<SequenceInterval> {
+	public getIntervalCollection(label: string): ISequenceIntervalCollection {
 		return this.intervalCollections.get(label);
 	}
 
@@ -784,24 +775,38 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected reSubmitCore(content: any, localOpMetadata: unknown) {
+	protected reSubmitCore(content: any, localOpMetadata: unknown, squash: boolean = false) {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
 			0x8bb /* Expected a recorded refSeq when resubmitting an op */,
 		);
 		this.useResubmitRefSeq(originalRefSeq, () => {
-			if (
-				!this.intervalCollections.tryResubmitMessage(
-					content,
-					localOpMetadata as IMapMessageLocalMetadata,
-				)
-			) {
+			if (!this.intervalCollections.tryResubmitMessage(content, localOpMetadata, squash)) {
 				this.submitSequenceMessage(
-					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata),
+					this.client.regeneratePendingOp(content as IMergeTreeOp, localOpMetadata, squash),
 				);
 			}
 		});
+	}
+
+	protected reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata, true);
+	}
+
+	/**
+	 * Revert an op
+	 */
+	protected rollback(content: any, localOpMetadata: unknown): void {
+		const originalRefSeq = this.inFlightRefSeqs.pop();
+		assert(
+			originalRefSeq !== undefined,
+			0xb7f /* Expected a recorded refSeq when rolling back an op  */,
+		);
+
+		if (!this.intervalCollections.tryRollback(content, localOpMetadata)) {
+			this.client.rollback(content, localOpMetadata);
+		}
 	}
 
 	/**
@@ -999,17 +1004,13 @@ export abstract class SharedSegmentSequence<T extends ISegment>
 
 	private initializeIntervalCollections() {
 		// Listen and initialize new SharedIntervalCollections
-		this.intervalCollections.eventEmitter.on(
-			"create",
-			({ key, previousValue }: IValueChanged, local: boolean) => {
+		this.intervalCollections.events.on(
+			"createIntervalCollection",
+			(key: string, local: boolean) => {
 				const intervalCollection = this.intervalCollections.get(key);
 				if (!intervalCollection.attached) {
 					intervalCollection.attachGraph(this.client, key);
 				}
-				assert(
-					previousValue === undefined,
-					0x2c1 /* "Creating an interval collection that already exists?" */,
-				);
 				this.emit("createIntervalCollection", key, local, this);
 			},
 		);

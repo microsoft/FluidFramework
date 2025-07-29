@@ -7,12 +7,12 @@ import { strict as assert } from "node:assert";
 
 import {
 	type AsyncGenerator,
-	type AsyncReducer,
 	type Generator,
+	type Reducer,
 	combineReducers,
-	combineReducersAsync,
 	createWeightedAsyncGenerator,
 	createWeightedGenerator,
+	isOperationType,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
@@ -151,7 +151,7 @@ export const baseMapModel: DDSFuzzModel<MapFactory, MapOperation> = {
 	workloadName: "default",
 	factory: new MapFactory(),
 	generatorFactory: () => takeAsync(100, mapMakeGenerator()),
-	reducer: async (state, operation) => mapReducer(state, operation),
+	reducer: (state, operation) => mapReducer(state, operation),
 	validateConsistency: async (a, b) => assertMapsAreEquivalent(a.channel, b.channel),
 };
 
@@ -450,17 +450,17 @@ function logCurrentState(clients: Client<DirectoryFactory>[], loggingInfo: Loggi
  */
 export function makeDirReducer(
 	loggingInfo?: LoggingInfo,
-): AsyncReducer<DirOperation, DirFuzzTestState> {
+): Reducer<DirOperation, DirFuzzTestState> {
 	const withLogging =
-		<T>(baseReducer: AsyncReducer<T, DirFuzzTestState>): AsyncReducer<T, DirFuzzTestState> =>
-		async (state, operation) => {
+		<T>(baseReducer: Reducer<T, DirFuzzTestState>): Reducer<T, DirFuzzTestState> =>
+		(state, operation) => {
 			if (loggingInfo?.printConsoleLogs === true) {
 				logCurrentState(state.clients, loggingInfo);
 				console.log("-".repeat(20));
 				console.log("Next operation:", JSON.stringify(operation, undefined, 4));
 			}
 			try {
-				await baseReducer(state, operation);
+				baseReducer(state, operation);
 			} catch (error) {
 				if (loggingInfo?.printConsoleLogs === true) {
 					logCurrentState(state.clients, loggingInfo);
@@ -470,28 +470,28 @@ export function makeDirReducer(
 			return state;
 		};
 
-	const reducer: AsyncReducer<DirOperation, DirFuzzTestState> = combineReducersAsync({
-		createSubDirectory: async ({ client }, { path, name }) => {
+	const reducer: Reducer<DirOperation, DirFuzzTestState> = combineReducers({
+		createSubDirectory: ({ client }, { path, name }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.createSubDirectory(name);
 		},
-		deleteSubDirectory: async ({ client }, { path, name }) => {
+		deleteSubDirectory: ({ client }, { path, name }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.deleteSubDirectory(name);
 		},
-		set: async ({ client }, { path, key, value }) => {
+		set: ({ client }, { path, key, value }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.set(key, value);
 		},
-		clear: async ({ client }, { path }) => {
+		clear: ({ client }, { path }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.clear();
 		},
-		delete: async ({ client }, { path, key }) => {
+		delete: ({ client }, { path, key }) => {
 			const dir = client.channel.getWorkingDirectory(path);
 			assert(dir);
 			dir.delete(key);
@@ -510,4 +510,18 @@ export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 	reducer: makeDirReducer({ clientIds: ["A", "B", "C"], printConsoleLogs: false }),
 	validateConsistency: async (a, b) => assertEquivalentDirectories(a.channel, b.channel),
 	factory: new DirectoryFactory(),
+	minimizationTransforms: [
+		(op: DirOperation): void => {
+			if (
+				isOperationType<DirSetKey>("set", op) ||
+				isOperationType<DirDeleteKey>("delete", op) ||
+				isOperationType<DirClearKeys>("clear", op)
+			) {
+				const lastPath = op.path.lastIndexOf("/");
+				if (lastPath !== -1) {
+					op.path = op.path.slice(0, lastPath + 1);
+				}
+			}
+		},
+	],
 };

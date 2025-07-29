@@ -7,23 +7,85 @@ import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type {
+	IFluidDataStoreChannel,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
-	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
-import type { FluidObjectSymbolProvider } from "@fluidframework/synthesize/internal";
 
 import {
 	type DataObject,
 	type DataObjectTypes,
-	type IDataObjectProps,
+	type PureDataObject,
 	dataObjectRootDirectoryId,
 } from "../data-objects/index.js";
 
 import { DataObjectFactory } from "./dataObjectFactory.js";
+import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
+
+/**
+ * Represents the properties required to create a ConverterDataObjectFactory.
+ * @legacy
+ * @alpha
+ */
+export interface ConverterDataObjectFactoryProps<
+	TObj extends PureDataObject<I>,
+	TConversionData,
+	I extends DataObjectTypes = DataObjectTypes,
+> extends DataObjectFactoryProps<TObj, I> {
+	/**
+	 * Used for determining whether or not a conversion is necessary based on the current state.
+	 *
+	 * An example might look like:
+	 * ```
+	 * async (root) => {
+	 *     // Check if "mapKey" has been removed from the SharedDirectory. The presence of this key tells us if the conversion has happened or not (see `convertDataObject`)
+	 *     return root.get<IFluidHandle<SharedMap>>("mapKey") !== undefined;
+	 * }
+	 * ```
+	 */
+	isConversionNeeded: (root: ISharedDirectory) => Promise<boolean>;
+
+	/**
+	 * Data required for running conversion. This is necessary because the conversion must happen synchronously.
+	 *
+	 * An example of what to asynchronously retrieve could be getting the "old" DDS that you want to convert the data of:
+	 * ```
+	 * async (root) => {
+	 *     root.get<IFluidHandle<SharedMap>>("mapKey").get();
+	 * }
+	 * ```
+	 */
+	asyncGetDataForConversion: (root: ISharedDirectory) => Promise<TConversionData>;
+
+	/**
+	 * Convert the DataObject upon resolve (i.e. on retrieval of the DataStore).
+	 *
+	 * An example implementation could be changing which underlying DDS is used to represent the DataObject's data:
+	 * ```
+	 * (runtime, root, data) => {
+	 *     // ! These are not all real APIs and are simply used to convey the purpose of this method
+	 *     const mapContent = data.getContent();
+	 *     const newDirectory = SharedDirectory.create(runtime);
+	 *     newDirectory.populateContent(mapContent);
+	 *     root.set("directoryKey", newDirectory.handle);
+	 *     root.delete("mapKey");
+	 * }
+	 * ```
+	 * @param data - Provided by the "asyncGetDataForConversion" function
+	 */
+	convertDataObject: (
+		runtime: FluidDataStoreRuntime,
+		root: ISharedDirectory,
+		data: TConversionData,
+	) => void;
+
+	/**
+	 * If not provided, the Container will be closed after conversion due to underlying changes affecting the data model.
+	 */
+	refreshDataObject?: () => Promise<void>;
+}
 
 /**
  * TODO
@@ -32,36 +94,25 @@ import { DataObjectFactory } from "./dataObjectFactory.js";
  */
 export class ConverterDataObjectFactory<
 	TObj extends DataObject<I>,
-	U,
+	TConversionData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactory<TObj, I> {
 	private convertLock = false;
 
-	public constructor(
-		type: string,
-		ctor: new (props: IDataObjectProps<I>) => TObj,
-		sharedObjects: readonly IChannelFactory[] = [],
-		optionalProviders: FluidObjectSymbolProvider<I["OptionalProviders"]>,
-		isConversionNeeded: (root: ISharedDirectory) => Promise<boolean>,
-		asyncGetDataForConversion: (root: ISharedDirectory) => Promise<U>,
-		convertDataStore: (
-			runtime: FluidDataStoreRuntime,
-			root: ISharedDirectory,
-			data: U,
-		) => void,
-		registryEntries?: NamedFluidDataStoreRegistryEntries,
-		runtimeFactory: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
-	) {
-		const fullConvertDataStore = async (runtime: FluidDataStoreRuntime): Promise<void> => {
-			const root = (await runtime.getChannel(dataObjectRootDirectoryId)) as ISharedDirectory;
-			if (!this.convertLock && (await isConversionNeeded(root))) {
+	public constructor(props: ConverterDataObjectFactoryProps<TObj, TConversionData, I>) {
+		const fullConvertDataStore = async (runtime: IFluidDataStoreChannel): Promise<void> => {
+			const realRuntime = runtime as FluidDataStoreRuntime;
+			const root = (await realRuntime.getChannel(
+				dataObjectRootDirectoryId,
+			)) as ISharedDirectory;
+			if (!this.convertLock && (await props.isConversionNeeded(root))) {
 				this.convertLock = true;
-				const data = await asyncGetDataForConversion(root);
+				const data = await props.asyncGetDataForConversion(root);
 
-				runtime.maintainOnlyLocal?.(() => {
-					runtime.orderSequentially?.(() => {
-						submitConversionOp(runtime);
-						convertDataStore(runtime, root, data);
+				realRuntime.maintainOnlyLocal?.(() => {
+					realRuntime.orderSequentially?.(() => {
+						submitConversionOp(realRuntime);
+						props.convertDataObject(realRuntime, root, data);
 					});
 				});
 				this.convertLock = false;
@@ -72,13 +123,12 @@ export class ConverterDataObjectFactory<
 			runtime.submitMessage(DataStoreMessageType.ChannelOp, "conversion", undefined);
 		};
 
-		super(
-			type,
-			ctor,
-			sharedObjects,
-			optionalProviders,
-			registryEntries,
-			class ConverterDataStoreRuntime extends runtimeFactory {
+		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
+
+		super({
+			...props,
+			convertDataStore: fullConvertDataStore,
+			runtimeClass: class ConverterDataStoreRuntime extends runtimeClass {
 				private conversionOpSeqNum = -1;
 				private readonly seqNumsToSkip = new Set<number>();
 
@@ -132,7 +182,6 @@ export class ConverterDataObjectFactory<
 					super.reSubmit(type2, content, localOpMetadata);
 				}
 			},
-			fullConvertDataStore,
-		);
+		});
 	}
 }

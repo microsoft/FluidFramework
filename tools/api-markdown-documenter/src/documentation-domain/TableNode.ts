@@ -3,11 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
+import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
 
 // TODOs:
@@ -20,7 +16,7 @@ import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
  *
  * ```md
  * | Header A | Header CB | Header C |
- * | --- | --- | --- |
+ * | - | - | - |
  * | Foo | Bar | Baz |
  * | A | B | C |
  * | 1 | 2| 3 |
@@ -63,12 +59,10 @@ import type { TableBodyRowNode, TableHeaderRowNode } from "./TableRowNode.js";
  *
  * - {@link TableRowNode}
  *
+ * @sealed
  * @public
  */
-export class TableNode
-	extends DocumentationParentNodeBase<TableBodyRowNode>
-	implements MultiLineDocumentationNode
-{
+export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
 	/**
 	 * Static singleton representing an empty Table node.
 	 */
@@ -77,14 +71,7 @@ export class TableNode
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.Table;
-
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
+	public readonly type = "table";
 
 	/**
 	 * Optional table header row.

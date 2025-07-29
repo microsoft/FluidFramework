@@ -8,23 +8,21 @@ import { EventEmitter } from "@fluid-internal/client-utils";
 import {
 	DataObject,
 	DataObjectFactory,
-	IDataObjectProps,
+	type IDataObjectProps,
 	createDataObjectKind,
 } from "@fluidframework/aqueduct/internal";
-import { type IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IErrorEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/internal";
-import { Jsonable } from "@fluidframework/datastore-definitions/internal";
-import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
+import type { Jsonable } from "@fluidframework/datastore-definitions/internal";
+import type { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
 
 class TestDataObjectClass extends DataObject {
 	public static readonly Name = "@fluid-example/test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		TestDataObjectClass.Name,
-		TestDataObjectClass,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: TestDataObjectClass.Name,
+		ctor: TestDataObjectClass,
+	});
 
 	constructor(props: IDataObjectProps) {
 		super(props);
@@ -52,12 +50,11 @@ class CounterTestDataObjectClass extends DataObject {
 
 	public static readonly Name = "@fluid-example/counter-test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		CounterTestDataObjectClass.Name,
-		CounterTestDataObjectClass,
-		[SharedCounter.getFactory()],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: CounterTestDataObjectClass.Name,
+		ctor: CounterTestDataObjectClass,
+		sharedObjects: [SharedCounter.getFactory()],
+	});
 
 	public increment(): void {
 		this.counter.increment(1);
@@ -85,12 +82,10 @@ export class SignalerTestDataObjectClass extends DataObject<{ Events: IErrorEven
 	private readonly emitter = new EventEmitter();
 	public static readonly Name = "@fluid-example/signaler-test-data-object";
 
-	public static readonly factory = new DataObjectFactory(
-		SignalerTestDataObjectClass.Name,
-		SignalerTestDataObjectClass,
-		[],
-		{},
-	);
+	public static readonly factory = new DataObjectFactory({
+		type: SignalerTestDataObjectClass.Name,
+		ctor: SignalerTestDataObjectClass,
+	});
 
 	protected async hasInitialized(): Promise<void> {
 		this.runtime.on("signal", (message: IInboundSignalMessage, local: boolean) => {

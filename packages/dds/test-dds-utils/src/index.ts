@@ -10,6 +10,7 @@ export type {
 	ChangeConnectionState,
 	ClientSpec,
 	DDSFuzzModel,
+	DDSFuzzHarnessModel,
 	DDSFuzzSuiteOptions,
 	DDSFuzzTestState,
 	DDSFuzzHarnessEvents,
@@ -21,6 +22,15 @@ export {
 	defaultDDSFuzzSuiteOptions,
 	replayTest,
 } from "./ddsFuzzHarness.js";
+export {
+	createSquashFuzzSuite,
+	type SquashClient,
+	type SquashRandom,
+	type SquashFuzzHarnessModel,
+	type SquashFuzzSuiteOptions,
+	type SquashFuzzTestState,
+	type SquashFuzzModel,
+} from "./squashFuzzHarness.js";
 export type { ISnapshotSuite } from "./ddsSnapshotHarness.js";
 export { createSnapshotSuite } from "./ddsSnapshotHarness.js";
 export type { Client, FuzzSerializedIdCompressor } from "./clientLoading.js";

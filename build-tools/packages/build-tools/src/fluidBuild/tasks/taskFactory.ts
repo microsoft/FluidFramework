@@ -5,14 +5,16 @@
 
 import { getExecutableFromCommand } from "../../common/utils";
 import type { BuildContext } from "../buildContext";
-import { BuildPackage } from "../buildGraph";
+import type { BuildPackage } from "../buildGraph";
+import type { TaskFileDependencies } from "../fluidTaskDefinitions";
+import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
-import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
+import { DeclarativeLeafTask } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
-import { UnknownLeafTask } from "./leaf/leafTask";
+import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
 import { EsLintTask, TsLintTask } from "./leaf/lintTasks";
 import {
 	CopyfilesTask,
@@ -27,8 +29,8 @@ import { PrettierTask } from "./leaf/prettierTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
-import { Task } from "./task";
-import { type TaskHandler, isConstructorFunction } from "./taskHandlers";
+import type { Task } from "./task";
+import type { TaskHandler } from "./taskHandlers";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
@@ -68,40 +70,64 @@ const executableToLeafTask: {
 } as const;
 
 /**
- * Given a command executable, attempts to find a matching `TaskHandler` that will handle the task. If one is found, it
- * is returned; otherwise, it returns `UnknownLeafTask` as the default handler.
+ * Create a leaf task for the given command.
+ * If the task has file dependencies specified, or the executable is a declarative task, create a declarative task.
+ * Otherwise, find a known executable task handler for the executable, or use the UnknownLeafTask as a fallback.
  *
- * Any DeclarativeTasks that are defined in the fluid-build config are checked first, followed by the built-in
- * executableToLeafTask constant.
- *
- * @param executable The command executable to find a matching task handler for.
+ * @param node - build package for the target task
+ * @param command - the command to create the task for
+ * @param context - the build context
+ * @param taskName - target name
+ * @param files - file dependencies for the task, if any
  * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
-function getTaskForExecutable(executable: string, context: BuildContext): TaskHandler {
-	const config = context.fluidBuildConfig;
-	const declarativeTasks = config?.declarativeTasks;
-	const taskMatch = declarativeTasks?.[executable];
-
-	if (taskMatch !== undefined) {
-		return createDeclarativeTaskHandler(taskMatch);
+function getLeafTaskForCommand(
+	node: BuildPackage,
+	command: string,
+	context: BuildContext,
+	taskName?: string,
+	files?: TaskFileDependencies,
+) {
+	// If the task has file dependencies specification, create a declarative task
+	if (files !== undefined) {
+		return new DeclarativeLeafTask(node, command, context, taskName, files);
 	}
 
-	// No declarative task found matching the executable, so look it up in the built-in list.
-	const builtInHandler: TaskHandler | undefined = executableToLeafTask[executable];
+	// If the executable has a declarative task defined, use that
+	const executable = getExecutableFromCommand(
+		command,
+		context.fluidBuildConfig?.multiCommandExecutables ?? [],
+	);
+	const config = context.fluidBuildConfig;
+	const declarativeTasks = config?.declarativeTasks;
+	const taskMatch =
+		node.pkg.packageJson.fluidBuild?.declarativeTasks?.[executable] ??
+		declarativeTasks?.[executable];
 
-	// If no handler is found, return the UnknownLeafTask as the default handler. The task won't support incremental
-	// builds.
-	return builtInHandler ?? UnknownLeafTask;
+	if (taskMatch !== undefined) {
+		return new DeclarativeLeafTask(node, command, context, taskName, taskMatch);
+	}
+
+	// Create a task using task handler of a known executable, or use the UnknownLeafTask as a fallback
+	const handler = executableToLeafTask[executable] ?? UnknownLeafTask;
+	return new handler(node, command, context, taskName);
 }
 
-/**
- * Regular expression to parse `concurrently` arguments that specify package scripts.
- * The format is `npm:<script>` or `"npm:<script>*"`; in the latter case script
- * is a prefix that is used to match one or more package scripts.
- * Quotes are optional but expected to escape the `*` character.
- */
-const regexNpmConcurrentlySpec =
-	/^(?<quote>"?)npm:(?<script>[^*]+?)(?<wildcard>\*?)\k<quote>$/;
+function getRunScriptName(command: string, packageManager: string): string | undefined {
+	// Remove the package manager name from the command
+	if (command.startsWith("npm run ")) {
+		return command.substring("npm run ".length);
+	}
+	// Only support yarn and pnpm for now
+	if (packageManager === "yarn" || packageManager === "pnpm") {
+		const packageManagerRun = `${packageManager} run `;
+
+		if (command.startsWith(packageManagerRun)) {
+			return command.substring(packageManagerRun.length);
+		}
+	}
+	return undefined;
+}
 
 export class TaskFactory {
 	public static Create(
@@ -110,7 +136,8 @@ export class TaskFactory {
 		context: BuildContext,
 		pendingInitDep: Task[],
 		taskName?: string,
-	) {
+		files?: TaskFileDependencies,
+	): GroupTask | LeafTask {
 		// Split the "&&" first
 		const subTasks = new Array<Task>();
 		const steps = command.split("&&");
@@ -118,48 +145,48 @@ export class TaskFactory {
 			for (const step of steps) {
 				subTasks.push(TaskFactory.Create(node, step.trim(), context, pendingInitDep));
 			}
+
+			if (files !== undefined) {
+				throw new Error(
+					`File dependency specification not allowed on multi-command tasks: ${taskName}`,
+				);
+			}
 			// create a sequential group task
 			return new GroupTask(node, command, context, subTasks, taskName, true);
 		}
 
 		// Parse concurrently
-		const concurrently = command.startsWith("concurrently ");
-		if (concurrently) {
-			const subTasks = new Array<Task>();
-			const steps = command.substring("concurrently ".length).split(/ +/);
-			for (const step of steps) {
-				const npmMatch = regexNpmConcurrentlySpec.exec(step);
-				if (npmMatch?.groups !== undefined) {
-					const scriptSpec = npmMatch.groups.script;
-					let scriptNames: string[];
-					// When npm:... ends with *, it is a wildcard match of all scripts that start with the prefix.
-					if (npmMatch.groups.wildcard === "*") {
-						// Note: result of no matches is allowed, so long as another concurrently step has a match.
-						// This avoids general tool being overly prescriptive about script patterns. If always
-						// having a match is desired, then such a policy should be enforced.
-						scriptNames = Object.keys(node.pkg.packageJson.scripts).filter((s) =>
-							s.startsWith(scriptSpec),
-						);
-					} else {
-						scriptNames = [scriptSpec];
-					}
-					for (const scriptName of scriptNames) {
-						const task = node.getScriptTask(scriptName, pendingInitDep);
-						if (task === undefined) {
-							throw new Error(
-								`${
-									node.pkg.nameColored
-								}: Unable to find script '${scriptName}' listed in 'concurrently' command${
-									taskName ? ` '${taskName}'` : ""
-								}`,
-							);
-						}
-						subTasks.push(task);
-					}
-				} else {
-					subTasks.push(TaskFactory.Create(node, step, context, pendingInitDep));
-				}
+		if (isConcurrentlyCommand(command)) {
+			if (files !== undefined) {
+				throw new Error(
+					`File dependency specification not allowed on concurrently command tasks: ${taskName}`,
+				);
 			}
+			const subTasks = new Array<Task>();
+			// Note: result of no matches is allowed from concurrenly wildcard, so long as another
+			// concurrently step has a match.
+			// This avoids general tool being overly prescriptive about script patterns. If always
+			// having a match is desired, then such a policy should be enforced.
+			parseConcurrentlyCommand(
+				command,
+				Object.keys(node.pkg.packageJson.scripts),
+				(scriptName) => {
+					const task = node.getScriptTask(scriptName, pendingInitDep);
+					if (task === undefined) {
+						throw new Error(
+							`${
+								node.pkg.nameColored
+							}: Unable to find script '${scriptName}' listed in 'concurrently' command${
+								taskName ? ` '${taskName}'` : ""
+							}`,
+						);
+					}
+					subTasks.push(task);
+				},
+				(step) => {
+					subTasks.push(TaskFactory.Create(node, step, context, pendingInitDep));
+				},
+			);
 			if (subTasks.length === 0) {
 				throw new Error(
 					`${node.pkg.nameColored}: Unable to find any tasks listed in 'concurrently' command${
@@ -170,34 +197,24 @@ export class TaskFactory {
 			return new GroupTask(node, command, context, subTasks, taskName);
 		}
 
-		// Resolve "npm run" to the actual script
-		if (command.startsWith("npm run ")) {
-			const scriptName = command.substring("npm run ".length);
-			const subTask = node.getScriptTask(scriptName, pendingInitDep);
-			if (subTask === undefined) {
-				throw new Error(
-					`${node.pkg.nameColored}: Unable to find script '${scriptName}' in 'npm run' command`,
-				);
+		// Resolve "npm run" (or other package manager's run command) to the actual script if possible
+		const runScript = getRunScriptName(command, node.pkg.packageManager);
+		if (runScript !== undefined) {
+			const subTask = node.getScriptTask(runScript, pendingInitDep);
+			if (subTask !== undefined) {
+				if (files !== undefined) {
+					throw new Error(
+						`File dependency specification not allowed on package manager run command tasks: ${taskName}`,
+					);
+				}
+				// Even though there is only one task, create a group task for the taskName
+				return new GroupTask(node, command, context, [subTask], taskName);
 			}
-			// Even though there is only one task, create a group task for the taskName
-			return new GroupTask(node, command, context, [subTask], taskName);
+			// Unable find the script.  Treat it as if it is a plain leaf task.
 		}
 
-		// Leaf tasks; map the executable to a known task type. If none is found, the UnknownLeafTask is used.
-		const executable = getExecutableFromCommand(
-			command,
-			context.fluidBuildConfig?.multiCommandExecutables ?? [],
-		).toLowerCase();
-
-		// Will return a task-specific handler or the UnknownLeafTask
-		const handler = getTaskForExecutable(executable, context);
-
-		// Invoke the function or constructor to create the task handler
-		if (isConstructorFunction(handler)) {
-			return new handler(node, command, context, taskName);
-		} else {
-			return handler(node, command, context, taskName);
-		}
+		// Leaf tasks
+		return getLeafTaskForCommand(node, command, context, taskName, files);
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IClient,
 	IConnect,
 	IConnected,
@@ -11,29 +11,30 @@ import {
 	ISignalMessage,
 } from "@fluidframework/protocol-definitions";
 import { configureWebSocketServices } from "@fluidframework/server-lambdas";
-import { IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
+import { type IPubSub, PubSub } from "@fluidframework/server-memory-orderer";
 import {
 	DefaultMetricClient,
-	IDatabaseManager,
-	IDocumentRepository,
-	IDocumentStorage,
-	ILogger,
-	IServiceConfiguration,
-	IWebSocket,
-	IWebSocketServer,
+	type IDatabaseManager,
+	type IDocumentRepository,
+	type IDocumentStorage,
+	type ILogger,
+	type IServiceConfiguration,
+	type IWebSocket,
+	type IWebSocketServer,
 	MongoDatabaseManager,
 	MongoManager,
 } from "@fluidframework/server-services-core";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
 import {
 	DebugLogger,
-	ITestDbFactory,
+	type ITestDbFactory,
 	TestClientManager,
 	TestDbFactory,
 	TestDocumentStorage,
 	TestHistorian,
 	TestTenantManager,
 } from "@fluidframework/server-test-utils";
+
 import { LocalOrdererManager } from "./localOrdererManager";
 import { LocalWebSocketServer } from "./localWebSocketServer";
 

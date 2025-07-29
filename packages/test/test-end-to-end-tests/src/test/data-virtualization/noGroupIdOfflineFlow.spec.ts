@@ -53,12 +53,11 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 	};
 
 	const testDataObjectType = "TestDataObject";
-	const dataObjectFactory = new DataObjectFactory(
-		testDataObjectType,
-		TestDataObject,
-		[SharedCounter.getFactory()],
-		{},
-	);
+	const dataObjectFactory = new DataObjectFactory({
+		type: testDataObjectType,
+		ctor: TestDataObject,
+		sharedObjects: [SharedCounter.getFactory()],
+	});
 
 	const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 		defaultFactory: dataObjectFactory,
@@ -86,7 +85,8 @@ describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) =
 		const childObject = await dataObjectFactory.createInstance(mainObject.containerRuntime);
 		mainObject._root.set("testObject2", childObject.handle);
 
-		const serializedState = await container.closeAndGetPendingLocalState?.();
+		const serializedState = await container.getPendingLocalState?.();
+		container.close();
 		assert(serializedState !== undefined, "serializedState should not be undefined");
 
 		// This should not hang

@@ -5,24 +5,25 @@
 
 import { performance } from "@fluidframework/common-utils";
 import {
-	IClient,
-	IClientJoin,
-	IDocumentMessage,
-	IDocumentSystemMessage,
+	type IClient,
+	type IClientJoin,
+	type IDocumentMessage,
+	type IDocumentSystemMessage,
 	MessageType,
 } from "@fluidframework/protocol-definitions";
 import {
 	BoxcarType,
-	IBoxcarMessage,
-	IDocument,
-	IOrdererConnection,
-	IProducer,
-	IRawOperationMessage,
-	IServiceConfiguration,
+	type IBoxcarMessage,
+	type IDocument,
+	type IOrdererConnection,
+	type IProducer,
+	type IRawOperationMessage,
+	type IServiceConfiguration,
 	RawOperationType,
 } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
-import { ISubscriber } from "./pubsub";
+
+import type { ISubscriber } from "./pubsub";
 
 export class LocalOrdererConnection implements IOrdererConnection {
 	public readonly maxMessageSize: number;

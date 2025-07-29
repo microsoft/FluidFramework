@@ -29,18 +29,16 @@ describe("Document HTML rendering tests", () => {
 							[
 								new ParagraphNode([
 									new PlainTextNode("This is text inside of a paragraph. "),
-									new PlainTextNode(
-										"It is also inside of a hierarchical section node. ",
-									),
+									new PlainTextNode("It is also inside of a hierarchical section node. "),
 									SpanNode.createFromPlainText("That's real neat-o.", {
 										italic: true,
 									}),
 								]),
 							],
-							HeadingNode.createFromPlainText("Section Heading"),
+							new HeadingNode("Section Heading"),
 						),
 					],
-					HeadingNode.createFromPlainText("Sample Document"),
+					new HeadingNode("Sample Document"),
 				),
 			],
 			documentPath: "./test",
@@ -58,7 +56,7 @@ describe("Document HTML rendering tests", () => {
 			"      <p>This is a sample document. It has very basic content.</p>",
 			"      <section>",
 			"        <h2>Section Heading</h2>",
-			"        <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <span><i>That's real neat-o.</i></span></p>",
+			"        <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <i>That's real neat-o.</i></p>",
 			"      </section>",
 			"    </section>",
 			"  </body>",

@@ -13,12 +13,12 @@ import sortPackageJson from "sort-package-json";
 
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
 
-import { type IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
+import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
 import { options } from "../fluidBuild/options";
 import { defaultLogger } from "./logging";
-import { MonoRepo, PackageManager } from "./monoRepo";
+import type { MonoRepo, PackageManager } from "./monoRepo";
 import {
-	ExecAsyncResult,
+	type ExecAsyncResult,
 	execWithErrorAsync,
 	isSameFileOrDir,
 	lookUpDirSync,
@@ -122,11 +122,13 @@ export class Package {
 		[this._packageJson, this._indent] = readPackageJsonAndIndent(packageJsonFileName);
 		const pnpmWorkspacePath = path.join(this.directory, "pnpm-workspace.yaml");
 		const yarnLockPath = path.join(this.directory, "yarn.lock");
-		this.packageManager = existsSync(pnpmWorkspacePath)
-			? "pnpm"
-			: existsSync(yarnLockPath)
-				? "yarn"
-				: "npm";
+		this.packageManager = monoRepo
+			? monoRepo.packageManager
+			: existsSync(pnpmWorkspacePath)
+				? "pnpm"
+				: existsSync(yarnLockPath)
+					? "yarn"
+					: "npm";
 		traceInit(`${this.nameColored}: Package loaded`);
 		Object.assign(this, additionalProperties);
 	}

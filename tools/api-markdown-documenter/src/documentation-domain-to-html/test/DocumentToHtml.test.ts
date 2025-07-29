@@ -30,18 +30,16 @@ describe("documentToHtml tests", () => {
 							[
 								new ParagraphNode([
 									new PlainTextNode("This is test inside of a paragraph. "),
-									new PlainTextNode(
-										"It is also inside of a hierarchical section node. ",
-									),
+									new PlainTextNode("It is also inside of a hierarchical section node. "),
 									SpanNode.createFromPlainText("That's real neat-o.", {
 										italic: true,
 									}),
 								]),
 							],
-							HeadingNode.createFromPlainText("Section Heading"),
+							new HeadingNode("Section Heading"),
 						),
 					],
-					HeadingNode.createFromPlainText("Sample Document"),
+					new HeadingNode("Sample Document"),
 				),
 			],
 			documentPath: "./test",
@@ -65,7 +63,7 @@ describe("documentToHtml tests", () => {
 							h("p", [
 								"This is test inside of a paragraph. ",
 								"It is also inside of a hierarchical section node. ",
-								h("span", [h("i", "That's real neat-o.")]),
+								h("i", "That's real neat-o."),
 							]),
 						]),
 					]),

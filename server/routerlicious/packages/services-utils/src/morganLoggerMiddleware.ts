@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import express from "express";
-import morgan from "morgan";
+import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
+
 import {
 	BaseTelemetryProperties,
 	CommonProperties,
@@ -12,8 +12,10 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
+import type express from "express";
+import morgan from "morgan";
+
 import { getTelemetryContextPropertiesWithHttpInfo } from "./telemetryContext";
-import { monitorEventLoopDelay, type IntervalHistogram } from "perf_hooks";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const split = require("split");
@@ -161,6 +163,7 @@ export function jsonMorganLoggerMiddleware(
 					statusCode = "STATUS_UNAVAILABLE";
 				}
 			}
+
 			const properties = {
 				[HttpProperties.method]: tokens.method(req, res) ?? "METHOD_UNAVAILABLE",
 				[HttpProperties.pathCategory]: `${req.baseUrl}${
@@ -173,10 +176,13 @@ export function jsonMorganLoggerMiddleware(
 				[HttpProperties.responseTime]: tokens["response-time"](req, res),
 				[HttpProperties.httpVersion]: tokens["http-version"](req, res),
 				[HttpProperties.scheme]: tokens.scheme(req, res),
+				[HttpProperties.hostName]: req.hostname ?? "HOSTNAME_UNAVAILABLE",
 				[BaseTelemetryProperties.correlationId]: getTelemetryContextPropertiesWithHttpInfo(
 					req,
 					res,
 				).correlationId,
+				[BaseTelemetryProperties.tenantId]: res.locals.tenantId,
+				[BaseTelemetryProperties.documentId]: res.locals.documentId,
 				[CommonProperties.serviceName]: serviceName,
 				[CommonProperties.telemetryGroupName]: "http_requests",
 				[HttpProperties.retryCount]: Number.parseInt(

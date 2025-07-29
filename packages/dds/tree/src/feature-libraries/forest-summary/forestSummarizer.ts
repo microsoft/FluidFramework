@@ -6,13 +6,15 @@
 import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
+	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
 import { createSingleBlobSummary } from "@fluidframework/shared-object-base/internal";
 
-import { type ICodecOptions, noopValidator } from "../../codec/index.js";
+import type { CodecWriteOptions } from "../../codec/index.js";
 import {
 	type DeltaDetachedNodeBuild,
 	type DeltaFieldChanges,
@@ -25,7 +27,6 @@ import {
 	applyDelta,
 	forEachField,
 	makeDetachedFieldIndex,
-	mapCursorField,
 } from "../../core/index.js";
 import type {
 	Summarizable,
@@ -33,13 +34,11 @@ import type {
 	SummaryElementStringifier,
 } from "../../shared-tree-core/index.js";
 import { idAllocatorFromMaxId } from "../../util/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { chunkField, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
+import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/index.js";
 import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
 
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import type { Format } from "./format.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 /**
  * The storage key for the blob in the summary containing tree data
  */
@@ -61,9 +60,10 @@ export class ForestSummarizer implements Summarizable {
 		private readonly revisionTagCodec: RevisionTagCodec,
 		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
-		options: ICodecOptions = { jsonValidator: noopValidator },
+		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
 	) {
+		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
 	}
 
@@ -95,22 +95,14 @@ export class ForestSummarizer implements Summarizable {
 		return stringify(encoded);
 	}
 
-	public getAttachSummary(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats {
-		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
-	}
-
-	public async summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummaryTreeWithStats> {
-		return createSingleBlobSummary(treeBlobKey, this.getTreeString(stringify));
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
+		return createSingleBlobSummary(treeBlobKey, this.getTreeString(props.stringify));
 	}
 
 	public async load(
@@ -127,19 +119,16 @@ export class ForestSummarizer implements Summarizable {
 			const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
 			const build: DeltaDetachedNodeBuild[] = [];
 			for (const [fieldKey, field] of fields) {
-				const chunked = chunkField(field, {
+				const chunked = chunkFieldSingle(field, {
 					policy: defaultChunkPolicy,
 					idCompressor: this.idCompressor,
 				});
-				const nodeCursors = chunked.flatMap((chunk) =>
-					mapCursorField(chunk.cursor(), (cursor) => cursor.fork()),
-				);
-				const buildId = { minor: allocator.allocate(nodeCursors.length) };
+				const buildId = { minor: allocator.allocate(chunked.topLevelLength) };
 				build.push({
 					id: buildId,
-					trees: nodeCursors,
+					trees: chunked,
 				});
-				fieldChanges.push([fieldKey, [{ count: nodeCursors.length, attach: buildId }]]);
+				fieldChanges.push([fieldKey, [{ count: chunked.topLevelLength, attach: buildId }]]);
 			}
 
 			assert(this.forest.isEmpty, 0x797 /* forest must be empty */);

@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	FluidDataStoreRuntime,
-	ISharedObjectRegistry,
+	type ISharedObjectRegistry,
 } from "@fluidframework/datastore/internal";
-import {
+import type {
 	IChannel,
 	IChannelAttributes,
 	IChannelFactory,
@@ -16,13 +16,12 @@ import {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	ITelemetryContext,
 	IGarbageCollectionData,
 	ISummaryTreeWithStats,
 	IFluidDataStoreContext,
-	type IRuntimeMessageCollection,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 
 class UnknownChannel implements IChannel {
@@ -32,11 +31,6 @@ class UnknownChannel implements IChannel {
 		services: IChannelServices,
 	) {
 		services.deltaConnection.attach({
-			process: (
-				message: ISequencedDocumentMessage,
-				local: boolean,
-				localOpMetadata: unknown,
-			) => {},
 			processMessages: (messageCollection: IRuntimeMessageCollection) => {},
 			setConnectionState: (connected: boolean) => {},
 			reSubmit: (content: any, localOpMetadata: unknown) => {},

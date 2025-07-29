@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export {
+export type {
 	IOldestClientObservable,
 	IOldestClientObservableEvents,
 	IOldestClientObserver,

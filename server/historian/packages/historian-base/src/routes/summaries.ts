@@ -3,26 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
+import {
+	denyListMiddleware,
+	type IThrottleMiddlewareOptions,
+	throttle,
+} from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import winston from "winston";
 import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
 import { parseToken, Constants } from "../utils";
 import * as utils from "./utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -39,6 +45,7 @@ export function create(
 ): Router {
 	const router: Router = Router();
 	const ignoreIsEphemeralFlag: boolean = config.get("ignoreEphemeralFlag") ?? true;
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantGeneralThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
@@ -98,7 +105,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getSummary(sha, useCache);
@@ -124,7 +130,6 @@ export function create(
 			initialUpload: initial,
 			storageName,
 			isEphemeralContainer,
-			denyList,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
 		});
@@ -145,7 +150,6 @@ export function create(
 			documentManager,
 			cache,
 			allowDisabledTenant: true,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		const deletionPs = [service.deleteSummary(softDelete)];
@@ -163,7 +167,8 @@ export function create(
 		validateRequestParams("tenantId", "sha"),
 		throttle(restClusterGetSummaryThrottler, winston, getSummaryPerClusterThrottleOptions),
 		throttle(restTenantGetSummaryThrottler, winston, getSummaryPerTenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const useCache = !("disableCache" in request.query);
 			const summaryP = getSummary(
@@ -191,7 +196,12 @@ export function create(
 			createSummaryPerClusterThrottleOptions,
 		),
 		throttle(restTenantCreateSummaryThrottler, winston, createSummaryPerTenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			// request.query type is { [string]: string } but it's actually { [string]: any }
 			// Account for possibilities of undefined, boolean, or string types. A number will be false.
@@ -241,7 +251,13 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/summaries",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantGeneralThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
+		// Skip documentDenyListCheck, as it is not needed for delete operations
+		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {
 			const softDelete = request.get("Soft-Delete")?.toLowerCase() === "true";
 			const summaryP = deleteSummary(

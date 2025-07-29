@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import {
 	type NodeFromSchema,
@@ -15,14 +14,15 @@ import {
 	type TreeView,
 	type InsertableTreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
+	SchemaFactoryAlpha,
 } from "../../../simple-tree/index.js";
 import {
 	adaptEnum,
+	enumEntries,
 	enumFromStrings,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaCreationUtilities.js";
-import { TreeFactory } from "../../../treeFactory.js";
-import { testIdCompressor, validateUsageError } from "../../utils.js";
+import { getView, validateUsageError } from "../../utils.js";
 import {
 	unsafeArrayToTuple,
 	type areSafelyAssignable,
@@ -39,12 +39,7 @@ describe("schemaCreationUtilities", () => {
 		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}
 		const config = new TreeViewConfiguration({ schema: Parent });
 
-		const factory = new TreeFactory({});
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-		const view: TreeView<typeof Parent> = tree.viewWith(config);
+		const view: TreeView<typeof Parent> = getView(config);
 		view.initialize(
 			new Parent({
 				mode: new Mode.Bonus(),
@@ -81,13 +76,9 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enumFromStrings - construction tests", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 
-		const ModeNodes = enumFromStrings(new SchemaFactory(`${schemaFactory.scope}.Mode`), [
-			"A",
-			"B",
-			"C",
-		]);
+		const ModeNodes = enumFromStrings(schemaFactory.scopedFactory("Mode"), ["A", "B", "C"]);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		type I0 = NodeFromSchema<(typeof ModeNodes.schema)[0]>;
@@ -121,14 +112,14 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum example from docs", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		// An enum for use in the tree. Must have string keys.
 		enum Mode {
 			a = "A",
 			b = "B",
 		}
 		// Define the schema for each member of the enum using a nested scope to group them together.
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		// Defined the types of the nodes which correspond to this the schema.
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 		// An example schema which has an enum as a child.
@@ -150,13 +141,18 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("adaptEnum - numbers", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = 1,
-			b = "b",
+			b = "B",
 			c = 6.3,
 		}
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const f = schemaFactory.scopedFactory("Mode");
+
+		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
+
+		const ModeNodes = adaptEnum(f, Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
@@ -188,17 +184,49 @@ describe("schemaCreationUtilities", () => {
 		assert.equal(parent1.mode.value, Mode.a);
 		assert.equal(parent2.mode.value, Mode.b);
 		assert.equal(parent3.mode.value, Mode.c);
+
+		assert.deepEqual(ModeNodes.schema, [ModeNodes.a, ModeNodes.b, ModeNodes.c]);
+
+		const x = new ModeNodes.a().value;
+		const y = new ModeNodes.b().value;
+		const z = new ModeNodes.c().value;
+
+		type _check4 = requireTrue<areSafelyAssignable<typeof x, Mode.a>>;
+		type _check5 = requireTrue<areSafelyAssignable<typeof y, Mode.b>>;
+		type _check6 = requireTrue<areSafelyAssignable<typeof z, Mode.c>>;
+	});
+
+	it("scoping", () => {
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
+		enum Mode {
+			a,
+		}
+		const f = schemaFactory.scopedFactory("Mode");
+
+		type Scope = typeof f extends SchemaFactoryAlpha<infer S> ? S : never;
+		type _check0 = requireTrue<areSafelyAssignable<Scope, "com.myApp.Mode">>;
+
+		const ModeNodes = adaptEnum(f, Mode);
+
+		type AType = typeof ModeNodes.a.identifier;
+
+		assert.equal(ModeNodes.a.identifier, "com.myApp.Mode.0");
+
+		// TODO: AB#43345
+		// This should be just "com.myApp.Mode.0", but due to known issue.
+		// See comments on adaptEnum and "variance with respect to scope and alpha" test.
+		type _check = requireTrue<areSafelyAssignable<AType, "com.myApp.Mode.0" | "com.0">>;
 	});
 
 	it("adaptEnum - construction tests", () => {
-		const schemaFactory = new SchemaFactory("com.myApp");
+		const schemaFactory = new SchemaFactoryAlpha("com.myApp");
 		enum Mode {
 			a = "A",
 			b = "B",
 			c = "C",
 		}
 		// Uses a nested schema factory, as recommended by adaptEnum's docs to ensure that pattern works.
-		const ModeNodes = adaptEnum(new SchemaFactory(`${schemaFactory.scope}.Mode`), Mode);
+		const ModeNodes = adaptEnum(schemaFactory.scopedFactory("Mode"), Mode);
 		type ModeNodes = TreeNodeFromImplicitAllowedTypes<typeof ModeNodes.schema>;
 
 		const fromEnumValue = ModeNodes(Mode.a);
@@ -255,6 +283,30 @@ describe("schemaCreationUtilities", () => {
 		const _test2: InstanceType<typeof ModeNodes.a> = new ModeNodes.b();
 	});
 
+	it("adaptEnum workaround", () => {
+		const schemaFactory = new SchemaFactory("x");
+
+		// Old
+		{
+			enum Mode {
+				a = 1,
+			}
+			const ModeNodes = adaptEnum(schemaFactory, Mode);
+			const union = ModeNodes.schema;
+		}
+
+		// New
+		{
+			enum Mode {
+				a = 1,
+			}
+			const ModeNodes = adaptEnum(schemaFactory, Mode);
+			// Bugged version of adaptEnum used to include this: it should not be used.
+			class Workaround extends schemaFactory.object("a", {}) {}
+			const union = [...ModeNodes.schema, Workaround] as const;
+		}
+	});
+
 	it("enum value switch", () => {
 		const Mode = enumFromStrings(schema, ["Fun", "Bonus"]);
 		class Parent extends schema.object("Parent", { mode: Mode.schema }) {}
@@ -296,8 +348,6 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enum interop - enumFromStrings", () => {
-		const factory = new TreeFactory({});
-
 		enum Day {
 			Today = "Today",
 			Tomorrow = "Tomorrow",
@@ -305,14 +355,9 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = enumFromStrings(schema, unsafeArrayToTuple(Object.values(Day)));
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-
 		const day = Day.Today;
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(day));
 
 		switch (view.root.value) {
@@ -329,8 +374,6 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enum interop - adaptEnum", () => {
-		const factory = new TreeFactory({});
-
 		enum Day {
 			Today = "today",
 			Tomorrow = "tomorrow",
@@ -338,18 +381,13 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = adaptEnum(schema, Day);
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-
 		// Can convert enum to unhydrated node:
 		const x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today();
 		const z: Day.Today = y.value;
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {
@@ -374,8 +412,6 @@ describe("schemaCreationUtilities", () => {
 	});
 
 	it("enum interop - adaptEnum numeric", () => {
-		const factory = new TreeFactory({});
-
 		enum Day {
 			Today = 2,
 			Tomorrow = 3,
@@ -383,18 +419,13 @@ describe("schemaCreationUtilities", () => {
 
 		const DayNodes = adaptEnum(schema, Day);
 
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: testIdCompressor }),
-			"tree",
-		);
-
 		// Can convert enum to unhydrated node:
 		const x = DayNodes(Day.Today);
 		// Can construct unhydrated node from enum's key:
 		const y = new DayNodes.Today();
 		const z: Day.Today = y.value;
 
-		const view = tree.viewWith(new TreeViewConfiguration({ schema: DayNodes.schema }));
+		const view = getView(new TreeViewConfiguration({ schema: DayNodes.schema }));
 		view.initialize(DayNodes(Day.Today));
 
 		switch (view.root.value) {
@@ -432,5 +463,78 @@ describe("schemaCreationUtilities", () => {
 				'Multiple schema encountered with the identifier "test.2". Remove or rename them to avoid the collision.',
 			),
 		);
+	});
+
+	describe("enumEntries", () => {
+		it("string enum", () => {
+			enum TestEnum {
+				A = "a",
+				B = "b",
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["A", "a"],
+				["B", "b"],
+			]);
+		});
+
+		it("numeric enum", () => {
+			enum TestEnum {
+				A = 1,
+				B = 2,
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["A", 1],
+				["B", 2],
+			]);
+		});
+
+		it("edge cases", () => {
+			enum TestEnum {
+				"1.0" = "a",
+				A = "b",
+				"-0" = "c",
+				// Due to https://github.com/microsoft/TypeScript/issues/61993 this produces 0 not -0
+				"+1.1" = -0,
+				// Actually -0
+				"1.10" = (() => -0)(),
+			}
+
+			const entries = enumEntries(TestEnum);
+			assert.deepEqual(entries, [
+				["1.0", "a"],
+				["A", "b"],
+				["-0", "c"],
+				["+1.1", 0],
+				["1.10", -0],
+			]);
+		});
+
+		it("malformed enums", () => {
+			// See https://github.com/microsoft/TypeScript/issues/48956
+			// TypeScript screws this case up in an undetectable way, but confirm it doesn't assert.
+			enum TestEnumNumber {
+				Infinity = Number.POSITIVE_INFINITY,
+				NaN = Number.NaN,
+			}
+
+			enum TestEnumString {
+				Infinity = "Infinity",
+				NaN = "NaN",
+			}
+
+			// Since these two enums are deeply equal (checked here),
+			// there is nothing we can do to to make the number case work correctly.
+			assert.deepEqual(TestEnumNumber, TestEnumString);
+
+			const entries = enumEntries(TestEnumNumber);
+			assert.deepEqual(entries, [
+				["Infinity", "Infinity"],
+				["NaN", "NaN"],
+			]);
+		});
 	});
 });

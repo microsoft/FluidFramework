@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	ListNode,
+	walkList,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { DoublyLinkedList, ListNode, walkList } from "./collections/index.js";
 import { type ISegmentInternal } from "./mergeTreeNodes.js";
 import { TrackingGroup, TrackingGroupCollection } from "./mergeTreeTracking.js";
 import { ReferenceType } from "./ops.js";

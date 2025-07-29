@@ -5,17 +5,19 @@
 
 import { strict as assert } from "node:assert";
 
-import { AzureClient } from "@fluidframework/azure-client";
+import type { AzureClient } from "@fluidframework/azure-client";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { ContainerSchema, type IFluidContainer } from "@fluidframework/fluid-static";
+import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { TreeViewConfiguration, SchemaFactory, type TreeView } from "@fluidframework/tree";
 import {
+	allowUnused,
 	asTreeViewAlpha,
 	SharedTree,
 	Tree,
 	TreeStatus,
 	type Revertible,
+	type ValidateRecursiveSchema,
 } from "@fluidframework/tree/internal";
 import type { AxiosResponse } from "axios";
 
@@ -301,6 +303,7 @@ for (const testOpts of testMatrix) {
 					// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 					nested: sf.optionalRecursive([() => Doll]),
 				}) {}
+				allowUnused<ValidateRecursiveSchema<typeof Doll>>();
 
 				const { container } = await client.createContainer(schema, "2");
 				await container.attach();

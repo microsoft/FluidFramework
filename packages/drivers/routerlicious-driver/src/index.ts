@@ -22,3 +22,6 @@ export {
 
 // Configuration
 export { IRouterliciousDriverPolicies } from "./policies.js";
+
+// Layer Compat details
+export { r11sDriverCompatDetailsForLoader } from "./r11sLayerCompatState.js";

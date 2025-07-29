@@ -21,7 +21,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -37,7 +36,11 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
+import type {
+	IInboundSignalMessage,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
+} from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -153,9 +156,11 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
  * Encapsulates the return codes of the aliasing API.
  *
  * 'Success' - the datastore has been successfully aliased. It can now be used.
+ *
  * 'Conflict' - there is already a datastore bound to the provided alias. To acquire it's entry point, use
  * the `IContainerRuntime.getAliasedDataStoreEntryPoint` function. The current datastore should be discarded
  * and will be garbage collected. The current datastore cannot be aliased to a different value.
+ *
  * 'AlreadyAliased' - the datastore has already been previously bound to another alias name.
  * @legacy
  * @alpha
@@ -164,9 +169,16 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
 
 /**
  * Exposes some functionality/features of a data store:
+ *
  * - Handle to the data store's entryPoint
+ *
  * - Fluid router for the data store
+ *
  * - Can be assigned an alias
+ *
+ * @privateRemarks
+ * TODO: These docs should define what a "data store" is, and not do so by just referencing "data store".
+ *
  * @legacy
  * @alpha
  */
@@ -189,7 +201,8 @@ export interface IDataStore {
 }
 
 /**
- * A reduced set of functionality of IContainerRuntime that a data store context/data store runtime will need
+ * A reduced set of functionality of {@link @fluidframework/container-runtime-definitions#IContainerRuntime} that a data store context/data store runtime will need.
+ * @privateRemarks
  * TODO: this should be merged into IFluidDataStoreContext
  * @legacy
  * @alpha
@@ -205,6 +218,9 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * sequentially.
 	 *
 	 * If the callback throws an error, the container will close and the error will be logged.
+	 *
+	 * @remarks
+	 * `orderSequentially` may enter staging mode for the duration of the function. This is necessary for rolling back certain op types.
 	 */
 	orderSequentially(callback: () => void): void;
 
@@ -229,10 +245,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(
-		pkg: Readonly<string | string[]>,
-		loadingGroupId?: string,
-	): Promise<IDataStore>;
+	createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -303,6 +316,84 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 }
 
 /**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface CommitStagedChangesOptionsExperimental {
+	/**
+	 * If true, intermediate states created by changes made while in staging mode will be "squashed" out of the
+	 * ops which were created during staging mode.
+	 * Defaults to false.
+	 * @remarks
+	 * The squash parameter is analogous to `git squash` but differs in a notable way: ops created by a client exiting staging mode
+	 * are not necessarily coalesced into a single op or something like it.
+	 * It still does have the desirable property that "unnecessary changes" (such as inserting some content then removing it) will
+	 * be removed from the set of submitted ops, which means it helps reduce network traffic and the chance of unwanted data being
+	 * persisted--even if only temporarily--in the document.
+	 *
+	 * By not attempting to reduce the set of changes to a single op a la `git squash`, we can better preserve the ordering of
+	 * changes that remote clients see such that they better align with the client which submitted the changes.
+	 */
+	squash?: boolean;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface StageControlsExperimental {
+	/**
+	 * Exit staging mode and commit to any changes made while in staging mode.
+	 * This will cause them to be sent to the ordering service, and subsequent changes
+	 * made by this container will additionally flow freely to the ordering service.
+	 * @param options - Options when committing changes.
+	 */
+	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
+	/**
+	 * Exit staging mode and discard any changes made while in staging mode.
+	 */
+	readonly discardChanges: () => void;
+}
+
+/**
+ * @experimental
+ * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
+ * @legacy
+ * @alpha
+ * @sealed
+ */
+export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
+	enterStagingMode?(): StageControlsExperimental;
+	readonly inStagingMode?: boolean;
+}
+/**
+ * These policies can be set by the author of the data store via its data store runtime to influence behaviors.
+ *
+ * @remarks
+ * Policies allow data store authors to define specific behaviors or constraints for their data stores.
+ * These settings can impact how the data store interacts with the runtime and other components.
+ *
+ * @legacy
+ * @alpha
+ */
+export interface IFluidDataStorePolicies {
+	/**
+	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 *
+	 * @remarks
+	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
+	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 */
+	readonly readonlyInStagingMode: boolean;
+}
+
+/**
  * Minimal interface a data store runtime needs to provide for IFluidDataStoreContext to bind to control.
  *
  * Functionality include attach, snapshot, op/signal processing, request routes, expose an entryPoint,
@@ -311,6 +402,12 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
  * @alpha
  */
 export interface IFluidDataStoreChannel extends IDisposable {
+	/**
+	 * Optional policies that the data store channel may adhere to that the data store context should know about.
+	 * These policies influence the behavior of the data store, such as its readonly state in specific modes.
+	 */
+	readonly policies?: IFluidDataStorePolicies;
+
 	/**
 	 * Makes the data store channel visible in the container. Also, runs through its graph and attaches all
 	 * bound handles that represent its dependencies in the container's graph.
@@ -331,13 +428,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * Process messages for this channel. The messages here are contiguous messages in a batch.
 	 * @param messageCollection - The collection of messages to process.
 	 */
-	processMessages?(messageCollection: IRuntimeMessageCollection): void;
-
-	/**
-	 * Processes the op.
-	 * @deprecated processMessages should be used instead to process messages for a channel.
-	 */
-	process(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+	processMessages(messageCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Processes the signal.
@@ -379,13 +470,30 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	setConnectionState(connected: boolean, clientId?: string);
 
 	/**
-	 * Ask the DDS to resubmit a message. This could be because we reconnected and this message was not acked.
+	 * Notifies this object about changes in the readonly state
+	 */
+	notifyReadOnlyState?(readonly: boolean): void;
+
+	/**
+	 * Ask the DDS to resubmit a message. This can happen for several reasons, such as:
+	 *
+	 * - We reconnected and discovered the original message was never acked.
+	 * - The original message was submitted from a reentrant state that is impossible for other clients to interpret correctly
+	 * - The original message was never sent on the wire and subsequent ops have been inbounded
 	 * @param type - The type of the original message.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 * @param squash - If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created by this message.
+	 * This includes any content which this message created but has since been changed or removed by subsequent messages.
+	 * For example, if this message (call it A) inserts content into a DDS that a subsequent op (call it B) removes,
+	 * resubmission of this message (call it A') should avoid inserting that content, and resubmission of the subsequent op that removed it (B') would
+	 * account for the fact that A' never inserted content.
+	 *
+	 * @privateRemarks
+	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown);
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -433,10 +541,16 @@ export interface IPendingMessagesState {
 }
 
 /**
- * Represents the context for the data store like objects. It is used by the data store runtime to
- * get information and call functionality to its parent.
+ * Context for an {@link IDataStore} like object.
+ * @remarks
+ * This context does NOT represent common information provided to all channels under a specific parent.
+ * Each implementation of {@link IFluidDataStoreChannel} will receive its own instance of this context that contains specifically the data it needs.
  *
  * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
+ * Therefore the semantics of these two interfaces is not really distinct.
+ *
+ * @privateRemarks
+ * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy
  * @alpha
@@ -448,8 +562,13 @@ export interface IFluidParentContext
 	readonly options: Record<string | number, any>;
 	readonly clientId: string | undefined;
 	readonly connected: boolean;
+	/**
+	 * Indicates if the parent context is readonly. If isReadOnly is true, the consumer of
+	 * the context should also consider themselves readonly.
+	 */
+	readonly isReadOnly?: () => boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
@@ -503,7 +622,8 @@ export interface IFluidParentContext
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
+	 * @param content - Content of the signal. Should be an {@link IEnvelope} with `contents` that is a JSON
+	 * serializable object or primitive.
 	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
 	 */
 	submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
@@ -560,8 +680,22 @@ export interface IFluidParentContext
 }
 
 /**
- * Represents the context for the data store. It is used by the data store runtime to
- * get information and call functionality to the container.
+ * A path which selects a {@link (IFluidDataStoreFactory:interface)} within a hierarchial registry.
+ * @remarks
+ * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a {@link NamedFluidDataStoreRegistryEntries}.
+ *
+ * Due to some usages joining this array with "/", it is recommended to avoid using "/" in the strings.
+ * @legacy
+ * @alpha
+ */
+export type PackagePath = readonly string[];
+
+/**
+ * Extension to {@link IFluidParentContext} specifically for {@link IDataStore}s.
+ *
+ * @remarks
+ * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
+ *
  * @legacy
  * @alpha
  */
@@ -577,9 +711,11 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 */
 	readonly isLocalDataStore: boolean;
 	/**
-	 * The package path of the data store as per the package factory.
+	 * The {@link PackagePath} of the data store as per the package factory.
+	 * @remarks
+	 * This defines what {@link (IFluidDataStoreFactory:interface)} would be used to create the {@link IDataStore.entryPoint} of the {@link IDataStore}.
 	 */
-	readonly packagePath: readonly string[];
+	readonly packagePath: PackagePath;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 
 	/**

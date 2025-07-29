@@ -4,16 +4,17 @@
  */
 
 import { Deferred } from "@fluidframework/common-utils";
-import {
+import type {
 	IRunner,
 	IWebServer,
 	IWebServerFactory,
-	type IReadinessCheck,
+	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
+
 import * as app from "./app";
-import { IFileSystemManagerFactories, IRepositoryManagerFactory } from "./utils";
+import type { IFileSystemManagerFactories, IRepositoryManagerFactory } from "./utils";
 
 export class GitrestRunner implements IRunner {
 	private server?: IWebServer;

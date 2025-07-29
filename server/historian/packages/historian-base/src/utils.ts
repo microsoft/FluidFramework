@@ -4,11 +4,9 @@
  */
 
 import { parse } from "path";
-// In this case we want @types/express-serve-static-core, not express-serve-static-core, and so disable the lint rule
-// eslint-disable-next-line import/no-unresolved
-import { Params } from "express-serve-static-core";
+import type { Params } from "express-serve-static-core";
 import { getParam } from "@fluidframework/server-services-utils";
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { decode } from "jsonwebtoken";
@@ -40,15 +38,8 @@ export const Constants = Object.freeze({
 	IsEphemeralContainer: "Is-Ephemeral-Container",
 	isInitialSummary: "isInitialSummary",
 	SimplifiedCustomData: "Simplified-Custom-Data",
+	invalidTokenCachePrefix: "invalidTokenCache",
 });
-
-export function getTokenLifetimeInSec(token: string): number | undefined {
-	const claims = decode(token) as ITokenClaims;
-	if (claims?.exp) {
-		return claims.exp - Math.round(new Date().getTime() / 1000);
-	}
-	return undefined;
-}
 
 export function getTenantIdFromRequest(params: Params) {
 	const tenantId = getParam(params, "tenantId");
@@ -82,18 +73,18 @@ export function parseToken(
 ): string | undefined {
 	let token: string | undefined;
 	if (authorization) {
-		const base64TokenMatch = authorization.match(/Basic (.+)/);
-		if (!base64TokenMatch) {
+		if (!authorization.startsWith("Basic ")) {
 			throw new NetworkError(403, "Malformed authorization token");
 		}
-		const encoded = Buffer.from(base64TokenMatch[1], "base64").toString();
+		const base64Token = authorization.replace("Basic ", "");
+		const decoded = Buffer.from(base64Token, "base64").toString();
 
-		const tokenMatch = encoded.match(/(.+):(.+)/);
-		if (!tokenMatch || tenantId !== tokenMatch[1]) {
+		const tokenMatch = decoded.split(":");
+		if (tokenMatch.length !== 2 || tenantId !== tokenMatch[0]) {
 			throw new NetworkError(403, "Malformed authorization token");
 		}
 
-		token = tokenMatch[2];
+		token = tokenMatch[1];
 	}
 
 	return token;

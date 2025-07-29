@@ -4,11 +4,9 @@
  */
 
 export {
+	ContainerRuntimeOptions,
+	ContainerRuntimeOptionsInternal,
 	ISummaryRuntimeOptions,
-	ISummaryBaseConfiguration,
-	ISummaryConfigurationHeuristics,
-	ISummaryConfigurationDisableSummarizer,
-	ISummaryConfigurationDisableHeuristics,
 	IContainerRuntimeOptions,
 	IContainerRuntimeOptionsInternal,
 	loadContainerRuntime,
@@ -18,13 +16,16 @@ export {
 	DeletedResponseHeaderKey,
 	TombstoneResponseHeaderKey,
 	InactiveResponseHeaderKey,
-	ISummaryConfiguration,
-	DefaultSummaryConfiguration,
-	ICompressionRuntimeOptions,
-	CompressionAlgorithms,
 	RuntimeHeaderData,
-	disabledCompressionConfig,
 } from "./containerRuntime.js";
+export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
+export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
+export {
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-utils/legacy` instead.
+	 */
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-utils/internal";
 export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
@@ -33,7 +34,6 @@ export { IBlobManagerLoadInfo } from "./blobManager/index.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {
 	detectOutboundReferences,
-	RuntimeHeaders,
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
@@ -42,6 +42,7 @@ export {
 	IGCMetadata,
 	GCFeatureMatrix,
 	GCVersion,
+	IGarbageCollectionRuntime,
 	IGCRuntimeOptions,
 	IMarkPhaseStats,
 	ISweepPhaseStats,
@@ -95,29 +96,31 @@ export {
 	IRetriableFailureError,
 	IdCompressorMode,
 	IDocumentSchema,
+	IDocumentSchemaInfo,
 	DocumentSchemaValueType,
 	IDocumentSchemaCurrent,
 	currentDocumentVersionSchema,
 	DocumentsSchemaController,
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 	IDocumentSchemaFeatures,
 	ReadFluidDataStoreAttributes,
 	IFluidDataStoreAttributes0,
 	IFluidDataStoreAttributes1,
 	IFluidDataStoreAttributes2,
 	OmitAttributesVersions,
+	ISummaryBaseConfiguration,
+	ISummaryConfigurationHeuristics,
+	ISummaryConfigurationDisableSummarizer,
+	ISummaryConfigurationDisableHeuristics,
+	ISummaryConfiguration,
+	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
-export { ChannelCollection } from "./channelCollection.js";
 export {
-	IFluidDataStoreContextInternal,
-	ISnapshotDetails,
-	LocalFluidDataStoreContext,
-	LocalFluidDataStoreContextBase,
-	FluidDataStoreContext,
-	IFluidDataStoreContextProps,
-	ILocalFluidDataStoreContextProps,
-	ILocalDetachedFluidDataStoreContextProps,
-	IFluidDataStoreContextEvents,
-} from "./dataStoreContext.js";
-export { DataStoreContexts } from "./dataStoreContexts.js";
+	runtimeCoreCompatDetails,
+	runtimeCompatDetailsForLoader,
+	runtimeCompatDetailsForDataStore,
+	loaderSupportRequirementsForRuntime,
+	dataStoreSupportRequirementsForRuntime,
+} from "./runtimeLayerCompatState.js";

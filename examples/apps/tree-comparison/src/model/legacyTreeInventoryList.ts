@@ -329,19 +329,18 @@ export const LegacyTreeInventoryListFactory = new DataObjectFactory<LegacyTreeIn
 export const LegacyTreeInventoryListFactoryNew = new ConverterDataObjectFactory<
 	NewTreeInventoryList,
 	LegacySharedTree
->(
-	"legacy-tree-inventory-list",
-	NewTreeInventoryList,
-	[LegacySharedTree.getFactory(), SharedTree.getFactory()],
-	{},
-	async (root) => {
+>({
+	type: "legacy-tree-inventory-list",
+	ctor: NewTreeInventoryList,
+	sharedObjects: [LegacySharedTree.getFactory(), SharedTree.getFactory()],
+	isConversionNeeded: async (root) => {
 		return root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey) !== undefined;
 	} /* isConversionNeeded */,
-	async (root) => {
+	asyncGetDataForConversion: async (root) => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!.get();
 	} /* asyncGetDataForConversion */,
-	(runtime, root, tree) => {
+	convertDataObject: (runtime, root, tree) => {
 		const rootNode = tree.currentView.getViewNode(tree.currentView.root);
 		const inventoryItemsNodeIds = tree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -367,4 +366,4 @@ export const LegacyTreeInventoryListFactoryNew = new ConverterDataObjectFactory<
 		root.set(newSharedTreeKey, newSharedTree.handle);
 		root.delete(legacySharedTreeKey);
 	} /* convertDataStore */,
-);
+});

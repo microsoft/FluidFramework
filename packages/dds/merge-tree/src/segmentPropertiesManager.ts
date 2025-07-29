@@ -3,9 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	DoublyLinkedList,
+	iterateListValuesWhile,
+} from "@fluidframework/core-utils/internal";
 
-import { DoublyLinkedList, iterateListValuesWhile } from "./collections/index.js";
 import { UnassignedSequenceNumber, UniversalSequenceNumber } from "./constants.js";
 import type {
 	AdjustParams,
@@ -14,20 +17,6 @@ import type {
 } from "./ops.js";
 import { MapLike, PropertySet, clone, createMap } from "./properties.js";
 
-/**
- * @internal
- */
-export enum PropertiesRollback {
-	/**
-	 * Not in a rollback
-	 */
-	None,
-
-	/**
-	 * Rollback
-	 */
-	Rollback,
-}
 /**
  * Minimally copies properties and the property manager from source to destination.
  * @internal
@@ -203,9 +192,9 @@ export class PropertiesManager {
 		seq: number,
 		msn: number,
 		collaborating: boolean = false,
-		rollback: PropertiesRollback = PropertiesRollback.None,
+		rollback: boolean = false,
 	): MapLike<unknown> {
-		if (rollback === PropertiesRollback.Rollback) {
+		if (rollback) {
 			return this.rollbackProperties(op, seg, collaborating);
 		}
 		const rtn = applyChanges(op, seg, seq, (properties, deltas, key, value) => {

@@ -5,26 +5,27 @@
 
 import {
 	extractBoxcar,
-	IContext,
-	IQueuedMessage,
-	IPartitionLambdaConfig,
-	IPartitionLambda,
-	IPartitionLambdaFactory,
+	type IContext,
+	type IQueuedMessage,
+	type IPartitionLambdaConfig,
+	type IPartitionLambda,
+	type IPartitionLambdaFactory,
 	LambdaCloseType,
-	IContextErrorData,
-	IDocumentLambdaServerConfiguration,
-	IBoxcarMessage,
-	INackMessage,
-	ISequencedOperationMessage,
+	type IContextErrorData,
+	type IDocumentLambdaServerConfiguration,
+	type IBoxcarMessage,
+	type INackMessage,
+	type ISequencedOperationMessage,
 	NackOperationType,
 	SequencedOperationType,
 	SignalOperationType,
-	ITicketedSignalMessage,
+	type ITicketedSignalMessage,
 	RawOperationType,
-	IRawOperationMessage,
+	type IRawOperationMessage,
 	isCompleteBoxcarMessage,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+
 import { DocumentContextManager } from "./contextManager";
 import { DocumentPartition } from "./documentPartition";
 

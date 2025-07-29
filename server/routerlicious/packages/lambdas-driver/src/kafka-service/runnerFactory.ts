@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IPartitionLambdaFactory,
 	IConsumer,
 	IResources,
 	IRunner,
 	IRunnerFactory,
 } from "@fluidframework/server-services-core";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
+
 import { KafkaRunner } from "./runner";
 
 /**

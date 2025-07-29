@@ -9,23 +9,34 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import {
 	type FieldKey,
-	initializeForest,
 	moveToDetachedField,
 	rootFieldKey,
+	TreeStoredSchemaRepository,
 } from "../../core/index.js";
-import { singleJsonCursor } from "../json/index.js";
 import { cursorForMapTreeNode } from "../../feature-libraries/index.js";
 // Allow importing from this specific file which is being tested:
 /* eslint-disable-next-line import/no-internal-modules */
 import { buildForest } from "../../feature-libraries/object-forest/index.js";
-import { type JsonCompatible, brand } from "../../util/index.js";
+import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { testIdCompressor, testRevisionTagCodec, validateUsageError } from "../utils.js";
+import { fieldJsonCursor } from "../json/index.js";
+import { toStoredSchema, SchemaFactory } from "../../simple-tree/index.js";
+import { initializeForest } from "./initializeForest.js";
 
 describe("object-forest", () => {
-	testForest({
-		suiteName: "forest suite",
-		factory: (schema) => buildForest(),
+	describe("forest suite", () => {
+		testForest({
+			factory: (schema) => buildForest(new Breakable("testForest")),
+		});
+	});
+
+	// TODO: the forest test suite should be able to run with the additional assertions.
+	// Currently many of its tests fail due to schema violations.
+	describe.skip("forest suite additional assertions", () => {
+		testForest({
+			factory: (schema) => buildForest(new Breakable("testForest"), schema, undefined, true),
+		});
 	});
 
 	const content: JsonCompatible = {
@@ -33,12 +44,15 @@ describe("object-forest", () => {
 	};
 	const detachedFieldKey: FieldKey = brand("detached");
 
+	// used for calling delta visitor functions, the actual value doesn't matter for these tests
+	const dummyDetachedNodeId = { minor: 0 };
+
 	describe("Throws an error for invalid edits", () => {
 		it("attaching content into the detached field it is being transferred from", () => {
-			const forest = buildForest();
+			const forest = buildForest(new Breakable("test"));
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
@@ -57,17 +71,17 @@ describe("object-forest", () => {
 		});
 
 		it("detaching content from the detached field it is being transferred to", () => {
-			const forest = buildForest();
+			const forest = buildForest(new Breakable("test"));
 			initializeForest(
 				forest,
-				[singleJsonCursor(content)],
+				fieldJsonCursor([content]),
 				testRevisionTagCodec,
 				testIdCompressor,
 			);
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
-				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey),
+				() => visitor.detach({ start: 0, end: 1 }, rootFieldKey, dummyDetachedNodeId, false),
 				(e: Error) =>
 					validateAssertionError(
 						e,
@@ -77,48 +91,26 @@ describe("object-forest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 		});
-
-		it("replacing content by transferring to and from the same detached field", () => {
-			const forest = buildForest();
-			initializeForest(
-				forest,
-				[singleJsonCursor(content)],
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
-			const visitor = forest.acquireVisitor();
-			visitor.enterField(rootFieldKey);
-			assert.throws(
-				() => visitor.replace(detachedFieldKey, { start: 0, end: 1 }, detachedFieldKey),
-				(e: Error) =>
-					validateAssertionError(
-						e,
-						/Replace detached source field and detached destination field must be different/,
-					),
-			);
-			visitor.exitField(rootFieldKey);
-			visitor.free();
-		});
 	});
 
 	it("moveCursorToPath with an undefined path points to dummy node above detachedFields.", () => {
-		const forest = buildForest();
+		const forest = buildForest(new Breakable("test"));
 		initializeForest(
 			forest,
-			[singleJsonCursor([1, 2])],
+			fieldJsonCursor([[1, 2]]),
 			testRevisionTagCodec,
 			testIdCompressor,
 		);
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
-		assert.deepEqual(cursor.getFieldKey(), cursorForMapTreeNode(forest.roots).getFieldKey());
+		assert.deepEqual(cursor.fieldIndex, cursorForMapTreeNode(forest.roots).fieldIndex);
 	});
 
 	it("uses cursor sources in errors", () => {
-		const forest = buildForest();
+		const forest = buildForest(new Breakable("test"));
 		initializeForest(
 			forest,
-			[singleJsonCursor(content)],
+			fieldJsonCursor([content]),
 			testRevisionTagCodec,
 			testIdCompressor,
 		);
@@ -141,5 +133,40 @@ describe("object-forest", () => {
 		);
 		visitor.exitField(rootFieldKey);
 		visitor.free();
+	});
+
+	it("additional asserts validates schema of initial content", () => {
+		assert.throws(
+			() =>
+				buildForest(
+					new Breakable("test"),
+					// Required field, but not content: should error.
+					new TreeStoredSchemaRepository(toStoredSchema(SchemaFactory.string)),
+					undefined,
+					true,
+				),
+			validateUsageError(/Tree does not conform to schema/),
+		);
+	});
+
+	it("additional asserts validates schema after edit", () => {
+		const forest = buildForest(
+			new Breakable("test"),
+			// Field allowing nothing
+			new TreeStoredSchemaRepository(toStoredSchema(SchemaFactory.optional([]))),
+			undefined,
+			true,
+		);
+		assert.throws(
+			() =>
+				// Adds something to field which allows nothing: should error.
+				initializeForest(
+					forest,
+					fieldJsonCursor(["root"]),
+					testRevisionTagCodec,
+					testIdCompressor,
+				),
+			validateUsageError(/Tree does not conform to schema/),
+		);
 	});
 });

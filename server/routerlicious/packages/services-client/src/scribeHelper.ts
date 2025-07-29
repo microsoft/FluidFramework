@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
+import type { ICreateTreeEntry, ITree } from "@fluidframework/gitresources";
+import type { IQuorumSnapshot } from "@fluidframework/protocol-base";
 import {
-	IDocumentAttributes,
-	ITreeEntry,
+	type IDocumentAttributes,
+	type ITreeEntry,
 	FileMode,
 	TreeEntry,
 } from "@fluidframework/protocol-definitions";
-import { IQuorumSnapshot } from "@fluidframework/protocol-base";
 
 /**
  * @internal

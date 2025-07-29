@@ -4,13 +4,15 @@
  */
 
 import { EventEmitter } from "events";
-import {
+
+import type {
 	IContext,
 	IDocumentLambdaServerConfiguration,
 	IPartitionLambdaConfig,
 	IPartitionLambda,
 	IPartitionLambdaFactory,
 } from "@fluidframework/server-services-core";
+
 import { DocumentLambda } from "./documentLambda";
 
 /**

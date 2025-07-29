@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import {
 	DriverHeader,
 	type IContainerPackageInfo,
 } from "@fluidframework/driver-definitions/internal";
-import { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ISharingLinkKind } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtils.js";
 
@@ -20,7 +20,7 @@ import { buildOdspShareLinkReqParams, getContainerPackageName } from "./odspUtil
  * @param fileName - name of the new file to be created
  * @param createShareLinkType - type of sharing link you would like to create for this file. ShareLinkTypes
  * will be deprecated soon, so for any new implementation please provide createShareLinkType of type ShareLink
- * @param containerPackageInfo - container package information which will be used to extract the container package name.
+ * @param containerPackageInfo - Container package information which will be used to extract the container package name.
  * If not given that means that the container package does not have a name.
  * @legacy
  * @alpha

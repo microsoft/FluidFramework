@@ -12,7 +12,6 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -26,12 +25,15 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
+
+import { MockDeltaManager } from "./mockDeltas.js";
 
 /**
  * @legacy
@@ -45,16 +47,23 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public clientId: string | undefined = uuid();
 	public clientDetails: IClientDetails;
 	public connected: boolean = true;
+	public readonly: boolean = false;
 	public baseSnapshot: ISnapshotTree | undefined;
 	public deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> =
-		undefined as any;
+		new MockDeltaManager(() => this.clientId);
+
 	public containerRuntime: IContainerRuntimeBase = undefined as any;
-	public storage: IDocumentStorageService = undefined as any;
+	public storage: IRuntimeStorageService = undefined as any;
 	public IFluidDataStoreRegistry: IFluidDataStoreRegistry = undefined as any;
 	public IFluidHandleContext: IFluidHandleContext = undefined as any;
 	public idCompressor: IIdCompressorCore & IIdCompressor = undefined as any;
 	public readonly gcThrowOnTombstoneUsage = false;
 	public readonly gcTombstoneEnforcementAllowed = false;
+
+	/**
+	 * @remarks This is for internal use only.
+	 */
+	public ILayerCompatDetails?: unknown;
 
 	/**
 	 * Indicates the attachment state of the data store to a host service.
@@ -105,7 +114,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public submitMessage(type: string, content: any, localOpMetadata: unknown): void {
-		throw new Error("Method not implemented.");
+		// No-op for mock context
 	}
 
 	public submitSignal(type: string, content: any): void {

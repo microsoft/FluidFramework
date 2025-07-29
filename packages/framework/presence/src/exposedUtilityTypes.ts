@@ -7,7 +7,7 @@ import type {
 	InternalUtilityTypes as CoreInternalUtilityTypes,
 	JsonDeserialized,
 	JsonSerializable,
-} from "@fluidframework/presence/internal/core-interfaces";
+} from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 
 /**
  * Collection of utility types that are not intended to be used/imported
@@ -19,27 +19,16 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export namespace InternalUtilityTypes {
 	/**
-	 * Recursively/deeply makes all properties of a type readonly.
+	 * Yields `IfListener` when the given type is an acceptable shape for a notification.
+	 * `Else` otherwise.
 	 *
 	 * @system
 	 */
-	export type FullyReadonly<T> = {
-		readonly [K in keyof T]: FullyReadonly<T[K]>;
-	};
-
-	/**
-	 * `true` iff the given type is an acceptable shape for a notification.
-	 *
-	 * @system
-	 */
-	export type IsNotificationListener<Event> = Event extends (...args: infer P) => void
-		? CoreInternalUtilityTypes.IfSameType<
-				P,
-				JsonSerializable<P> & JsonDeserialized<P>,
-				true,
-				false
-			>
-		: false;
+	export type IfNotificationListener<Event, IfListener, Else> = Event extends (
+		...args: infer P
+	) => void
+		? CoreInternalUtilityTypes.IfSameType<P, JsonSerializable<P>, IfListener, Else>
+		: Else;
 
 	/**
 	 * Used to specify the kinds of notifications emitted by a {@link NotificationListenable}.
@@ -61,7 +50,7 @@ export namespace InternalUtilityTypes {
 	 * @system
 	 */
 	export type NotificationListeners<E> = {
-		[P in string & keyof E as IsNotificationListener<E[P]> extends true ? P : never]: E[P];
+		[P in keyof E as IfNotificationListener<E[P], P, never>]: E[P];
 	};
 
 	/**
@@ -69,7 +58,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonDeserializedParameters<T extends (...args: any) => any> = T extends (
+	export type JsonDeserializedParameters<T extends (...args: any[]) => any> = T extends (
 		...args: infer P
 	) => any
 		? JsonDeserialized<P>
@@ -80,7 +69,7 @@ export namespace InternalUtilityTypes {
 	 *
 	 * @system
 	 */
-	export type JsonSerializableParameters<T extends (...args: any) => any> = T extends (
+	export type JsonSerializableParameters<T extends (...args: any[]) => any> = T extends (
 		...args: infer P
 	) => any
 		? JsonSerializable<P>

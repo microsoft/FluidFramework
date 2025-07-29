@@ -6,7 +6,6 @@
 import { strict as assert } from "node:assert";
 
 import { FluidObject } from "@fluidframework/core-interfaces";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
 import {
 	CreateChildSummarizerNodeFn,
 	CreateSummarizerNodeSource,
@@ -14,13 +13,17 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	NamedFluidDataStoreRegistryEntries,
 	SummarizeInternalFn,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+import {
+	MockDeltaManager,
+	MockFluidDataStoreRuntime,
+} from "@fluidframework/test-runtime-utils/internal";
 
+import type { IFluidParentContextPrivate } from "../channelCollection.js";
 import { LocalFluidDataStoreContext } from "../dataStoreContext.js";
 import { createRootSummarizerNodeWithGC } from "../summary/index.js";
 
@@ -41,10 +44,10 @@ describe("Data Store Creation Tests", () => {
 		 * ```
 		 */
 
-		let storage: IDocumentStorageService;
+		let storage: IRuntimeStorageService;
 		let scope: FluidObject;
 		const makeLocallyVisibleFn = () => {};
-		let parentContext: IFluidParentContext;
+		let parentContext: IFluidParentContextPrivate;
 		const defaultName = "default";
 		const dataStoreAName = "dataStoreA";
 		const dataStoreBName = "dataStoreB";
@@ -110,8 +113,10 @@ describe("Data Store Creation Tests", () => {
 			parentContext = {
 				IFluidDataStoreRegistry: globalRegistry,
 				baseLogger: createChildLogger(),
-				clientDetails: {} as unknown as IFluidParentContext["clientDetails"],
-			} satisfies Partial<IFluidParentContext> as unknown as IFluidParentContext;
+				clientDetails: {} as unknown as IFluidParentContextPrivate["clientDetails"],
+				deltaManager: new MockDeltaManager(),
+				isReadOnly: () => false,
+			} satisfies Partial<IFluidParentContextPrivate> as unknown as IFluidParentContextPrivate;
 			const summarizerNode = createRootSummarizerNodeWithGC(
 				createChildLogger(),
 				(() => {}) as unknown as SummarizeInternalFn,

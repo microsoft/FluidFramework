@@ -6,30 +6,30 @@
 import {
 	type TreeStoredSchema,
 	rootFieldKey,
-	type MapTree,
 	type TreeNodeSchemaIdentifier,
+	type JsonableTree,
 } from "../core/index.js";
-import { FieldKinds, cursorForMapTreeField } from "../feature-libraries/index.js";
-import type { ITreeCheckout } from "../shared-tree/index.js";
-import { stringSchema, toStoredSchema } from "../simple-tree/index.js";
+import { FieldKinds } from "../feature-libraries/index.js";
+import type { ITreeCheckout, TreeCheckout } from "../shared-tree/index.js";
+import { stringSchema, toStoredSchema, normalizeAllowedTypes } from "../simple-tree/index.js";
 import { brand, type JsonCompatible } from "../util/index.js";
-import { checkoutWithContent } from "./utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { normalizeAllowedTypes } from "../simple-tree/schemaTypes.js";
-import { JsonUnion, singleJsonCursor } from "./json/index.js";
+import { checkoutWithContent, chunkFromJsonableTrees } from "./utils.js";
+import { fieldJsonCursor } from "./json/index.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 
 // This file provides utilities for testing sequence fields using documents where the root is the sequence being tested.
 // This pattern is not expressible using the public simple-tree API, and is only for testing internal details.
 
 export const jsonSequenceRootSchema: TreeStoredSchema = {
-	nodeSchema: toStoredSchema(JsonUnion).nodeSchema,
+	nodeSchema: toStoredSchema(JsonAsTree.Tree).nodeSchema,
 	rootFieldSchema: {
 		kind: FieldKinds.sequence.identifier,
 		types: new Set(
-			[...normalizeAllowedTypes(JsonUnion)].map((s) =>
+			[...normalizeAllowedTypes(JsonAsTree.Tree)].map((s) =>
 				brand<TreeNodeSchemaIdentifier>(s.identifier),
 			),
 		),
+		persistedMetadata: undefined,
 	},
 };
 
@@ -44,10 +44,9 @@ export function insert(tree: ITreeCheckout, index: number, ...values: string[]):
 	const fieldEditor = tree.editor.sequenceField({ field: rootFieldKey, parent: undefined });
 	fieldEditor.insert(
 		index,
-		cursorForMapTreeField(
+		chunkFromJsonableTrees(
 			values.map(
-				(value): MapTree => ({
-					fields: new Map(),
+				(value): JsonableTree => ({
 					type: brand(stringSchema.identifier),
 					value,
 				}),
@@ -67,11 +66,10 @@ export function remove(tree: ITreeCheckout, index: number, count: number): void 
 /**
  * Creates a sequence field at the root.
  */
-export function makeTreeFromJsonSequence(json: JsonCompatible[]): ITreeCheckout {
-	const cursors = json.map(singleJsonCursor);
+export function makeTreeFromJsonSequence(json: JsonCompatible[]): TreeCheckout {
 	const tree = checkoutWithContent({
 		schema: jsonSequenceRootSchema,
-		initialTree: cursors,
+		initialTree: fieldJsonCursor(json),
 	});
 	return tree;
 }

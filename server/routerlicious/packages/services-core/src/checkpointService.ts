@@ -14,8 +14,9 @@ import {
 	LumberEventName,
 	Lumberjack,
 } from "@fluidframework/server-services-telemetry";
-import { ICheckpointRepository, IDocumentRepository } from "./database";
-import { IDeliState, IDocument, IScribe, type ICheckpoint } from "./document";
+
+import type { ICheckpointRepository, IDocumentRepository } from "./database";
+import type { IDeliState, IDocument, IScribe, ICheckpoint } from "./document";
 
 type DocumentLambda = "deli" | "scribe";
 

@@ -23,21 +23,21 @@ export class Bubblebench extends DataObject {
 	private maybeTree?: SharedTree = undefined;
 	private maybeAppState?: AppState = undefined;
 
-	protected async initializingFirstTime() {
+	protected async initializingFirstTime(): Promise<void> {
 		const tree = (this.maybeTree = SharedTree.create(this.runtime));
 
 		const p = TreeObjectProxy<IApp>(tree, tree.currentView.root, tree.applyEdit.bind(tree));
-		p.clients = [] as any;
+		p.clients = [];
 
 		this.root.set("tree", this.maybeTree.handle);
 	}
 
-	protected async initializingFromExisting() {
+	protected async initializingFromExisting(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		this.maybeTree = await this.root.get<IFluidHandle<SharedTree>>("tree")!.get();
 	}
 
-	protected async hasInitialized() {
+	protected async hasInitialized(): Promise<void> {
 		this.maybeAppState = new AppState(
 			this.tree,
 			/* stageWidth: */ 640,
@@ -45,7 +45,7 @@ export class Bubblebench extends DataObject {
 			/* numBubbles: */ 1,
 		);
 
-		const onConnected = () => {
+		const onConnected = (): void => {
 			// Out of paranoia, we periodically check to see if your client Id has changed and
 			// update the tree if it has.
 			setInterval(() => {
@@ -64,12 +64,12 @@ export class Bubblebench extends DataObject {
 		}
 	}
 
-	private get tree() {
+	private get tree(): SharedTree {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.maybeTree!;
 	}
 
-	public get appState() {
+	public get appState(): AppState {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return this.maybeAppState!;
 	}
@@ -80,9 +80,8 @@ export class Bubblebench extends DataObject {
  * To add a SharedSequence, SharedMap, or any other structure, put it in the array below.
  * @internal
  */
-export const BubblebenchInstantiationFactory = new DataObjectFactory(
-	Bubblebench.Name,
-	Bubblebench,
-	[SharedTree.getFactory(WriteFormat.v0_1_1)],
-	{},
-);
+export const BubblebenchInstantiationFactory = new DataObjectFactory({
+	type: Bubblebench.Name,
+	ctor: Bubblebench,
+	sharedObjects: [SharedTree.getFactory(WriteFormat.v0_1_1)],
+});

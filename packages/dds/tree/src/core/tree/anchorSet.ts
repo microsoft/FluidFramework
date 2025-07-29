@@ -5,10 +5,10 @@
 
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 
-import { assert } from "@fluidframework/core-utils/internal";
-
-import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+
 import {
 	type Brand,
 	type BrandedKey,
@@ -17,12 +17,22 @@ import {
 	ReferenceCountedBase,
 	brand,
 	brandedSlot,
-	fail,
+	getOrAddEmptyToMap,
+	getOrCreate,
 } from "../../util/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
+import type { ITreeCursorSynchronous } from "./cursor.js";
 import type * as Delta from "./delta.js";
-import type { PlaceIndex, Range, UpPath } from "./pathTree.js";
+import { offsetDetachId } from "./deltaUtil.js";
+import {
+	isDetachedUpPathRoot,
+	type INormalizedUpPath,
+	type NormalizedUpPath,
+	type PlaceIndex,
+	type Range,
+	type UpPath,
+} from "./pathTree.js";
 import { EmptyKey } from "./types.js";
 import type { DeltaVisitor } from "./visitDelta.js";
 
@@ -196,7 +206,7 @@ export interface AnchorSetRootEvents {
 /**
  * Node in a tree of anchors.
  */
-export interface AnchorNode extends UpPath<AnchorNode> {
+export interface AnchorNode extends INormalizedUpPath<AnchorNode> {
 	/**
 	 * Events for this anchor node.
 	 */
@@ -474,7 +484,7 @@ export class AnchorSet implements AnchorLocator {
 			}
 		}
 
-		return path ?? fail("internalize path must be a path");
+		return path ?? fail(0xaea /* internalize path must be a path */);
 	}
 
 	/**
@@ -567,6 +577,13 @@ export class AnchorSet implements AnchorLocator {
 			node.parentIndex += destination.parentIndex - coupleInfo.startParentIndex;
 			node.parentPath = destinationPath;
 			node.parentField = destination.parentField;
+			// If the destination is a detached root, propagate its detachedNodeId, otherwise remove any existing one
+			node.detachedNodeId = isDetachedUpPathRoot(destination)
+				? offsetDetachId(
+						destination.detachedNodeId,
+						node.parentIndex - destination.parentIndex,
+					)
+				: undefined;
 		}
 
 		// Update new parent to add children
@@ -711,35 +728,34 @@ export class AnchorSet implements AnchorLocator {
 			/**
 			 * Events collected during the visit which get sent as a batch during "free".
 			 */
-			bufferedEvents: [] as {
-				node: PathNode;
-				event: keyof AnchorEvents;
-				/**
-				 * The key for the impacted field, if the event is associated with a key.
-				 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
-				 */
-				changedField?: FieldKey;
-			}[],
+			bufferedEvents: [] as BufferedEvent[],
 
-			// 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
-			// subtreeChangedAfterBatch events.
-			// The algorithm works as follows:
-			// - Initialize both to 0.
-			// - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
-			// - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
-			//   Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
-			//   node at this depth you should emit a subtreeChangedAfterBatch event".
-			// - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
-			//   Then decrement currentDepth unconditionally.
-			// Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
-			// have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
-			// parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
-			// get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
-			// walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
-			// as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
-			// back up that path, until we get back to the depth where we were already emitting the event, and will continue
-			// emitting it on the way to the root.
+			/**
+			 * 'currentDepth' and 'depthThresholdForSubtreeChanged' serve to keep track of when do we need to emit
+			 * subtreeChangedAfterBatch events.
+			 * The algorithm works as follows:
+			 *
+			 * - Initialize both to 0.
+			 * - As we walk the tree from the root towards the leaves, when we enter a node increment currentDepth by 1.
+			 * - When we edit a node, set depthThresholdForSubtreeChanged = currentDepth.
+			 * Intuitively, depthThresholdForSubtreeChanged means "as you walk the tree towards the root, when you exit a
+			 * node at this depth you should emit a subtreeChangedAfterBatch event".
+			 * - When we exit a node, if d === currentDepth then emit a subtreeChangedAfterBatch and decrement d by 1.
+			 * Then decrement currentDepth unconditionally.
+			 *
+			 * Note that the event will be emitted when exiting a node that was edited (depthThresholdForSubtreeChanged will
+			 * have been set to the current depth when the edit happened), it will be emitted when exiting a node that is the
+			 * parent of a node that already emitted the event (because both depthThresholdForSubtreeChanged and currentDepth
+			 * get decremented when exiting a node so they stay in sync), and if we're already emitting the event but start
+			 * walking the tree back towards the leaves in a path where no edits happen, currentDepth will be increased again
+			 * as we walk that path, depthThresholdForSubtreeChanged will not, and thus no event will be emitted when walking
+			 * back up that path, until we get back to the depth where we were already emitting the event, and will continue
+			 * emitting it on the way to the root.
+			 */
 			currentDepth: 0,
+			/**
+			 * See {@link visitor.currentDepth}.
+			 */
 			depthThresholdForSubtreeChanged: 0,
 
 			free() {
@@ -751,25 +767,31 @@ export class AnchorSet implements AnchorLocator {
 					node.removeRef();
 				}
 				this.anchorSet.activeVisitor = undefined;
-				const alreadyEmitted = new Map<PathNode, string[]>();
-				for (const { node, event } of this.bufferedEvents) {
-					if (!alreadyEmitted.has(node)) {
-						alreadyEmitted.set(node, []);
+
+				// Aggregate changedFields by node.
+				const eventsByNode: Map<PathNode, Set<FieldKey>> = new Map();
+				for (const { node, event, changedField } of this.bufferedEvents) {
+					if (event === "childrenChangedAfterBatch") {
+						const keys = getOrCreate(eventsByNode, node, () => new Set());
+						keys.add(
+							changedField ??
+								fail(0xb57 /* childrenChangedAfterBatch events should have a changedField */),
+						);
 					}
-					const emittedEvents = alreadyEmitted.get(node);
-					if (emittedEvents?.includes(event) ?? false) {
+				}
+
+				const alreadyEmitted = new Map<PathNode, (keyof AnchorEvents)[]>();
+				for (const { node, event } of this.bufferedEvents) {
+					const emittedEvents = getOrAddEmptyToMap(alreadyEmitted, node);
+					if (emittedEvents.includes(event)) {
 						continue;
 					}
-					emittedEvents?.push(event);
+					emittedEvents.push(event);
 					if (event === "childrenChangedAfterBatch") {
-						const fieldKeys: FieldKey[] = this.bufferedEvents
-							.filter((e) => e.node === node && e.event === event)
-							.map(
-								(e) =>
-									e.changedField ??
-									fail("childrenChangedAfterBatch events should have a changedField"),
-							);
-						node.events.emit(event, { changedFields: new Set(fieldKeys) });
+						const changedFields =
+							eventsByNode.get(node) ??
+							fail(0xaeb /* childrenChangedAfterBatch events should have changedFields */);
+						node.events.emit(event, { changedFields });
 					} else {
 						node.events.emit(event);
 					}
@@ -821,25 +843,34 @@ export class AnchorSet implements AnchorLocator {
 				this.anchorSet.moveChildren(sourcePath, destinationPath, count);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
 			},
-			detach(source: Range, destination: FieldKey): void {
+			detach(
+				source: Range,
+				destination: FieldKey,
+				detachedNodeId: Delta.DetachedNodeId,
+			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(source, destination);
+				this.detachEdit(source, destination, detachedNodeId);
 				this.notifyChildrenChanged();
 			},
-			detachEdit(source: Range, destination: FieldKey): void {
+			detachEdit(
+				source: Range,
+				destination: FieldKey,
+				detachedNodeId: Delta.DetachedNodeId,
+			): void {
 				assert(
 					this.parentField !== undefined,
 					0x7a5 /* Must be in a field in order to detach */,
 				);
-				const sourcePath = {
+				const sourcePath: UpPath = {
 					parent: this.parent,
 					parentField: this.parentField,
 					parentIndex: source.start,
 				};
-				const destinationPath = {
+				const destinationPath: NormalizedUpPath = {
 					parent: this.anchorSet.root,
 					parentField: destination,
 					parentIndex: 0,
+					detachedNodeId,
 				};
 				this.anchorSet.moveChildren(sourcePath, destinationPath, source.end - source.start);
 				this.depthThresholdForSubtreeChanged = this.currentDepth;
@@ -848,9 +879,10 @@ export class AnchorSet implements AnchorLocator {
 				newContentSource: FieldKey,
 				range: Range,
 				oldContentDestination: FieldKey,
+				destinationDetachedNodeId: Delta.DetachedNodeId,
 			): void {
 				this.notifyChildrenChanging();
-				this.detachEdit(range, oldContentDestination);
+				this.detachEdit(range, oldContentDestination, destinationDetachedNodeId);
 				this.attachEdit(newContentSource, range.end - range.start, range.start);
 				this.notifyChildrenChanged();
 			},
@@ -864,7 +896,7 @@ export class AnchorSet implements AnchorLocator {
 					count,
 				);
 			},
-			create(content: Delta.ProtoNodes, destination: FieldKey): void {
+			create(content: ITreeCursorSynchronous[], destination: FieldKey): void {
 				// Nothing to do since content can only be created in a new detached field,
 				// which cannot contain any anchors.
 			},
@@ -884,16 +916,17 @@ export class AnchorSet implements AnchorLocator {
 			},
 			exitNode(index: number): void {
 				assert(this.parent !== undefined, 0x3ac /* Must have parent node */);
-				this.maybeWithNode((p) => {
-					p.events.emit("subtreeChanged", p);
-					if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+				if (this.depthThresholdForSubtreeChanged === this.currentDepth) {
+					this.maybeWithNode((p) => {
+						p.events.emit("subtreeChanged", p);
+
 						this.bufferedEvents.push({
 							node: p,
 							event: "subtreeChangedAfterBatch",
 						});
-						this.depthThresholdForSubtreeChanged--;
-					}
-				});
+					});
+					this.depthThresholdForSubtreeChanged--;
+				}
 				const parent = this.parent;
 				this.parentField = parent.parentField;
 				this.parent = parent.parent;
@@ -969,7 +1002,7 @@ enum Status {
  * 2. refcount is non-zero.
  * 3. events are registered.
  */
-class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorNode {
+class PathNode extends ReferenceCountedBase implements AnchorNode {
 	public status: Status = Status.Alive;
 	/**
 	 * Event emitter for this anchor.
@@ -991,6 +1024,11 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	// See note on BrandedKey.
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public readonly slots: BrandedMapSubset<AnchorSlot<any>> = new Map();
+
+	/**
+	 * {@inheritdoc UpPath.detachedNodeId}
+	 */
+	public detachedNodeId: Delta.DetachedNodeId | undefined;
 
 	/**
 	 * Construct a PathNode with refcount 1.
@@ -1031,12 +1069,14 @@ class PathNode extends ReferenceCountedBase implements UpPath<PathNode>, AnchorN
 	public getOrCreateChildRef(key: FieldKey, index: number): [Anchor, AnchorNode] {
 		const anchor = this.anchorSet.track(this.child(key, index));
 		const node =
-			this.anchorSet.locate(anchor) ?? fail("cannot reference child that does not exist");
+			this.anchorSet.locate(anchor) ??
+			fail(0xaec /* cannot reference child that does not exist */);
 		return [anchor, node];
 	}
 
 	/**
-	 * @returns true iff this PathNode is the special root node that sits above all the detached fields.
+	 * Whether or not this `PathNode` is the special root node that sits above all the detached fields.
+	 * @remarks
 	 * In this case, the fields are detached sequences.
 	 * Note that the special root node should never appear in an UpPath
 	 * since UpPaths represent this root as `undefined`.
@@ -1193,4 +1233,14 @@ function binaryFind(sorted: readonly PathNode[], index: number): PathNode | unde
 		}
 	}
 	return undefined; // If we reach here, target is not in array (or array was not sorted)
+}
+
+interface BufferedEvent {
+	node: PathNode;
+	event: keyof AnchorEvents;
+	/**
+	 * The key for the impacted field, if the event is associated with a key.
+	 * Some events, such as afterDestroy, do not involve a key, and thus leave this undefined.
+	 */
+	changedField?: FieldKey;
 }

@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Machine } from "jssm";
+import type { Machine } from "jssm";
 
-import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
+import type { CommandLogger } from "../logging.js";
+import type { MachineState } from "../machines/index.js";
 import { BaseStateHandler } from "./stateHandlers.js";
 
 /**
@@ -18,8 +18,8 @@ export abstract class InitFailedStateHandler extends BaseStateHandler {
 		state: MachineState,
 		machine: Machine<unknown>,
 		testMode: boolean,
-		log: CommandLogger,
-		data: unknown,
+		_log: CommandLogger,
+		_data: unknown,
 	): Promise<boolean> {
 		switch (state) {
 			case "Init": {

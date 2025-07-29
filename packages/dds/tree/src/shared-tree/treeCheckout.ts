@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
@@ -11,7 +11,7 @@ import {
 	UsageError,
 	type ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
-import { noopValidator } from "../codec/index.js";
+import { FluidClientVersion, noopValidator } from "../codec/index.js";
 import {
 	type Anchor,
 	type AnchorLocator,
@@ -46,8 +46,10 @@ import {
 import {
 	type FieldBatchCodec,
 	type TreeCompressionStrategy,
+	allowsRepoSuperset,
 	buildForest,
-	createNodeKeyManager,
+	createNodeIdentifierManager,
+	defaultSchemaPolicy,
 	intoDelta,
 	jsonableTreeFromCursor,
 	makeFieldBatchCodec,
@@ -60,13 +62,7 @@ import {
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
-import {
-	Breakable,
-	disposeSymbol,
-	fail,
-	getOrCreate,
-	type WithBreakable,
-} from "../util/index.js";
+import { Breakable, disposeSymbol, getOrCreate, type WithBreakable } from "../util/index.js";
 
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -235,8 +231,13 @@ export interface ITreeCheckout extends AnchorLocator, ViewableTree, WithBreakabl
 	/**
 	 * Replaces all schema with the provided schema.
 	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 *
+	 * @param newSchema - The new schema to replace the existing schema.
+	 * @param allowNonSupersetSchema - Whether to allow non-superset schemas.
+	 * Defaults to false.
+	 * If false, an assert will be thrown if the new schema does not permit all possible documents which were permitted under the old schema.
 	 */
-	updateSchema(newSchema: TreeStoredSchema): void;
+	updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void;
 
 	/**
 	 * Events about this view.
@@ -282,9 +283,13 @@ export function createTreeCheckout(
 		disposeForksAfterTransaction?: boolean;
 	},
 ): TreeCheckout {
-	const forest = args?.forest ?? buildForest();
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
-	const defaultCodecOptions = { jsonValidator: noopValidator };
+	const forest = args?.forest ?? buildForest(breaker, schema);
+	const defaultCodecOptions = {
+		jsonValidator: noopValidator,
+		oldestCompatibleClient: FluidClientVersion.v2_0,
+	};
 	const defaultFieldBatchVersion = 1;
 	const changeFamily =
 		args?.changeFamily ??
@@ -292,7 +297,7 @@ export function createTreeCheckout(
 			revisionTagCodec,
 			args?.fieldBatchCodec ??
 				makeFieldBatchCodec(defaultCodecOptions, defaultFieldBatchVersion),
-			{ jsonValidator: noopValidator },
+			defaultCodecOptions,
 			args?.chunkCompressionStrategy,
 			idCompressor,
 		);
@@ -318,7 +323,7 @@ export function createTreeCheckout(
 		idCompressor,
 		args?.removedRoots,
 		args?.logger,
-		args?.breaker,
+		breaker,
 		args?.disposeForksAfterTransaction,
 	);
 }
@@ -524,7 +529,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 					// original (reinstated) schema.
 					this.storedSchema.apply(change.innerChange.schema.new);
 				} else {
-					fail("Unknown Shared Tree change type.");
+					fail(0xad1 /* Unknown Shared Tree change type. */);
 				}
 			}
 		}
@@ -662,7 +667,7 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		const view = new SchematizingSimpleTreeView(
 			this,
 			config,
-			createNodeKeyManager(this.idCompressor),
+			createNodeIdentifierManager(this.idCompressor),
 			() => {
 				this.views.delete(view);
 			},
@@ -778,8 +783,14 @@ export class TreeCheckout implements ITreeCheckoutFork {
 		}
 	}
 
-	public updateSchema(newSchema: TreeStoredSchema): void {
+	public updateSchema(newSchema: TreeStoredSchema, allowNonSupersetSchema?: true): void {
 		this.checkNotDisposed();
+		if (allowNonSupersetSchema !== true) {
+			assert(
+				allowsRepoSuperset(defaultSchemaPolicy, this.storedSchema.clone(), newSchema),
+				0xbe6 /* New schema must allow all documents allowed by old schema */,
+			);
+		}
 		this.editor.schema.setStoredSchema(this.storedSchema.clone(), newSchema);
 	}
 

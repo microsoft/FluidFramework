@@ -7,38 +7,8 @@ import { strict as assert } from "assert";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { IDetachedBlobStorage } from "@fluidframework/container-loader/internal";
-import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
 import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
-
-export class MockDetachedBlobStorage implements IDetachedBlobStorage {
-	private readonly blobs = new Map<string, ArrayBufferLike>();
-
-	public get size() {
-		return this.blobs.size;
-	}
-
-	public getBlobIds(): string[] {
-		return Array.from(this.blobs.keys());
-	}
-
-	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
-		const id = this.size.toString();
-		this.blobs.set(id, content);
-		return { id };
-	}
-
-	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
-		const blob = this.blobs.get(blobId);
-		assert(blob);
-		return blob;
-	}
-
-	dispose(): void {
-		this.blobs.clear();
-	}
-}
 
 const driversThatSupportBlobs: string[] = ["local", "odsp"];
 export function driverSupportsBlobs(driver: ITestDriver): boolean {

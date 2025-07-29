@@ -5,6 +5,7 @@
 
 import type { FieldKey } from "../schema-stored/index.js";
 
+import type { DetachedNodeId } from "./delta.js";
 import { type DetachedField, keyAsDetachedField } from "./types.js";
 
 /**
@@ -42,11 +43,72 @@ export interface UpPath<TParent = UpPathDefault> {
 }
 
 /**
+ * Identical to {@link INormalizedUpPath}, but a duplicate declaration is needed to make the default type parameter compile.
+ */
+export type INormalizedUpPathDefault = INormalizedUpPath;
+
+/**
+ * Identical to {@link UpPath}, but a with a {@link DetachedNodeId} to specify the ID of detached roots.
+ * Note that document roots (i.e., any node in the root field) are not considered detached roots and therefore do not have an associated ID.
+ *
+ * Use this interface for implementing a class that needs to be used as a {@link NormalizedUpPath}.
+ */
+export interface INormalizedUpPath<TParent = INormalizedUpPathDefault>
+	extends UpPath<TParent> {
+	readonly detachedNodeId: DetachedNodeId | undefined;
+}
+
+/**
+ * Identical to {@link UpPath}, but a with a {@link DetachedNodeId} to specify the ID of detached roots.
+ * Note that document roots (i.e., any node in the root field) are not considered detached roots and therefore do not have an associated ID.
+ *
+ * Prefer this type over {@link INormalizedUpPath} except when implementing a class that needs to be used as a {@link NormalizedUpPath}.
+ */
+export type NormalizedUpPath =
+	| INormalizedUpPath<NormalizedUpPath>
+	| NormalizedUpPathInterior<NormalizedUpPath>
+	| NormalizedUpPathRoot;
+
+/**
+ * The root element of a {@link NormalizedUpPath}.
+ */
+export interface NormalizedUpPathRoot extends UpPath<undefined> {
+	/**
+	 * The ID associated with this node if it is a detached root.
+	 */
+	readonly detachedNodeId: DetachedNodeId | undefined;
+}
+
+/**
+ * Identical to {@link NormalizedUpPathInterior}, but a duplicate declaration is needed to make the default type parameter compile.
+ */
+export type NormalizedUpPathInteriorDefault = NormalizedUpPathInterior;
+
+/**
+ * An interior (i.e., non-root) element of a {@link NormalizedUpPath}.
+ */
+export interface NormalizedUpPathInterior<
+	TParent = NormalizedUpPathInteriorDefault | NormalizedUpPathRoot,
+> extends UpPath<TParent> {
+	/**
+	 * The parent.
+	 */
+	readonly parent: TParent;
+}
+
+/**
  * Path from a field in the tree upward.
  *
  * See {@link UpPath}.
  */
-export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
+export type NormalizedFieldUpPath<TParent = NormalizedUpPath> = FieldUpPath<TParent>;
+
+/**
+ * Path from a field in the tree upward.
+ *
+ * See {@link FieldUpPath} and {@link NormalizedUpPath}.
+ */
+export interface FieldUpPath<TUpPath = UpPath> {
 	/**
 	 * The parent, or undefined in the case where this path is to a detached sequence.
 	 */
@@ -57,6 +119,15 @@ export interface FieldUpPath<TUpPath extends UpPath = UpPath> {
 	 * Note that if `parent` returns `undefined`, this key  corresponds to a detached sequence.
 	 */
 	readonly field: FieldKey; // TODO: Type information, including when in DetachedField.
+}
+
+/**
+ * Given an {@link UpPath}, checks if it is a path to a detached root.
+ */
+export function isDetachedUpPathRoot<T>(
+	path: UpPath<T> | NormalizedUpPath,
+): path is NormalizedUpPathRoot {
+	return (path as NormalizedUpPathRoot).detachedNodeId !== undefined;
 }
 
 /**
@@ -106,7 +177,8 @@ export type NodeIndex = number;
 export type PlaceIndex = number;
 
 /**
- * @returns the number of nodes above this one.
+ * Gets the number of nodes above this one.
+ * @remarks
  * Zero when the path's parent is undefined, meaning the path represents a node in a detached field.
  * Runs in O(depth) time.
  */
@@ -121,14 +193,14 @@ export function getDepth(path: UpPath): number {
 }
 
 /**
- * @returns a deep copy of the provided path as simple javascript objects.
- * This is safe to hold onto and use deep object comparisons on.
+ * Creates deep copy of the provided path as simple JavaScript object.
+ * @remarks This is safe to hold onto and use deep object comparisons on.
  */
 export function clonePath(path: UpPath): UpPath;
 
 /**
- * @returns a deep copy of the provided path as simple javascript objects.
- * This is safe to hold onto and use deep object comparisons on.
+ * Creates a deep copy of the provided path as simple JavaScript object.
+ * @remarks This is safe to hold onto and use deep object comparisons on.
  */
 export function clonePath(path: UpPath | undefined): UpPath | undefined;
 
@@ -144,8 +216,8 @@ export function clonePath(path: UpPath | undefined): UpPath | undefined {
 }
 
 /**
- * @returns The elements of the given `path`, ordered from root-most to child-most.
- * These elements are unchanged and therefore still point "up".
+ * Gets the elements of the given `path`, ordered from root-most to child-most.
+ * @remarks These elements are unchanged and therefore still point "up".
  */
 export function topDownPath(path: UpPath | undefined): UpPath[] {
 	const out: UpPath[] = [];
@@ -159,8 +231,8 @@ export function topDownPath(path: UpPath | undefined): UpPath[] {
 }
 
 /**
- * @returns true iff `a` and `b` describe the same path.
- *
+ * Returns true if and only if `a` and `b` describe the same path.
+ * @remarks
  * Note that for mutable paths (as used in `AnchorSet`), this equality may change over time: this only checks if the two paths are currently the same.
  */
 export function compareUpPaths(a: UpPath | undefined, b: UpPath | undefined): boolean {
@@ -178,8 +250,8 @@ export function compareUpPaths(a: UpPath | undefined, b: UpPath | undefined): bo
 }
 
 /**
- * @returns true iff `a` and `b` describe the same field path.
- *
+ * Returns true if and only if `a` and `b` describe the same field path.
+ * @remarks
  * Note that for mutable paths (as used in `AnchorSet`), this equality may change over time: this only checks if the two paths are currently the same.
  */
 export function compareFieldUpPaths(a: FieldUpPath, b: FieldUpPath): boolean {

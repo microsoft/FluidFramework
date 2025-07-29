@@ -3,15 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { Router } from "express";
-import * as nconf from "nconf";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
+import type { Router } from "express";
+import type * as nconf from "nconf";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../services";
 /* eslint-disable import/no-internal-modules */
 import * as blobs from "./git/blobs";
 import * as commits from "./git/commits";
@@ -22,7 +23,7 @@ import * as repositoryCommits from "./repository/commits";
 import * as contents from "./repository/contents";
 import * as headers from "./repository/headers";
 import * as summaries from "./summaries";
-import { CommonRouteParams } from "./utils";
+import type { CommonRouteParams } from "./utils";
 /* eslint-enable import/no-internal-modules */
 
 export interface IRoutes {

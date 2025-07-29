@@ -10,14 +10,14 @@ import { Flags } from "@oclif/core";
 import chalk from "picocolors";
 import * as semver from "semver";
 
-import { FluidRepo, MonoRepo, Package } from "@fluidframework/build-tools";
+import { FluidRepo, MonoRepo, type Package } from "@fluidframework/build-tools";
 
 import {
-	InterdependencyRange,
+	type InterdependencyRange,
 	RangeOperators,
-	ReleaseVersion,
-	VersionChangeType,
-	VersionScheme,
+	type ReleaseVersion,
+	type VersionChangeType,
+	type VersionScheme,
 	WorkspaceRanges,
 	bumpVersionScheme,
 	detectVersionScheme,

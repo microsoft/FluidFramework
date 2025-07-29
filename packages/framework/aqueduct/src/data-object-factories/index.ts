@@ -3,6 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { ConverterDataObjectFactory } from "./converterDataObjectFactory.js";
+export {
+	ConverterDataObjectFactory,
+	type ConverterDataObjectFactoryProps,
+} from "./converterDataObjectFactory.js";
 export { DataObjectFactory } from "./dataObjectFactory.js";
-export { PureDataObjectFactory } from "./pureDataObjectFactory.js";
+export {
+	type DataObjectFactoryProps,
+	PureDataObjectFactory,
+} from "./pureDataObjectFactory.js";
+export { TreeDataObjectFactory } from "./treeDataObjectFactory.js";

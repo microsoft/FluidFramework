@@ -10,19 +10,23 @@ import { createRequire } from "node:module";
 import { EOL as newline } from "node:os";
 import path from "node:path";
 import {
+	findGitRootSync,
 	updatePackageJsonFile,
 	updatePackageJsonFileAsync,
 } from "@fluid-tools/build-infrastructure";
-import { findGitRootSync } from "@fluid-tools/build-infrastructure";
-import { PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
+import { type PackageJson, getApiExtractorConfigFilePath } from "@fluidframework/build-tools";
 import { writeJson } from "fs-extra/esm";
 import JSON5 from "json5";
 import replace from "replace-in-file";
 import sortPackageJson from "sort-package-json";
-import { PackageNamePolicyConfig, ScriptRequirement, getFlubConfig } from "../../config.js";
+import {
+	type PackageNamePolicyConfig,
+	type ScriptRequirement,
+	getFlubConfig,
+} from "../../config.js";
 import { Repository } from "../git.js";
 import { queryTypesResolutionPathsFromPackageExports } from "../packageExports.js";
-import { Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, writeFile } from "./common.js";
 
 const require = createRequire(import.meta.url);
 
@@ -362,7 +366,7 @@ async function ensurePrivatePackagesComputed(): Promise<Set<string>> {
 	const packageJsons = await repo.getFiles("**/package.json");
 
 	for (const filePath of packageJsons) {
-		const packageJson = JSON.parse(readFile(filePath)) as PackageJson;
+		const packageJson = JSON.parse(readFile(path.resolve(baseDir, filePath))) as PackageJson;
 		if (packageJson.private ?? false) {
 			computedPrivatePackages.add(packageJson.name);
 		}
@@ -768,7 +772,7 @@ export const handlers: Handler[] = [
 	{
 		name: "npm-package-metadata-and-sorting",
 		match,
-		handler: async (file: string): Promise<string | undefined> => {
+		handler: async (file: string, gitRoot: string): Promise<string | undefined> => {
 			let json: PackageJson;
 			try {
 				json = JSON.parse(readFile(file)) as PackageJson;
@@ -800,15 +804,14 @@ export const handlers: Handler[] = [
 					ret.push(`repository.url: "${json.repository.url}" !== "${repository}"`);
 				}
 
-				// file is already relative to the repo root, so we can use it as-is.
-				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
 
 				// The directory field should be omitted from the root package, so consider this a policy failure.
-				if (relativePkgDir === ".") {
+				if (relativePkgDir === "." && json.repository.directory !== undefined) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" field is present but should be omitted from root package`,
 					);
-				} else if (json.repository?.directory !== relativePkgDir) {
+				} else if (relativePkgDir !== "." && json.repository?.directory !== relativePkgDir) {
 					ret.push(
 						`repository.directory: "${json.repository.directory}" !== "${relativePkgDir}"`,
 					);
@@ -833,13 +836,13 @@ export const handlers: Handler[] = [
 
 			return undefined;
 		},
-		resolver: (file: string): { resolved: boolean } => {
+		resolver: (file: string, gitRoot: string): { resolved: boolean } => {
 			updatePackageJsonFile(path.dirname(file), (json) => {
 				json.author = author;
 				json.license = licenseId;
 
-				// file is already relative to the repo root, so we can use it as-is.
-				const relativePkgDir = path.dirname(file).replace(/\\/g, "/");
+				// file is absolute path, so make relative to the repo root
+				const relativePkgDir = path.dirname(path.relative(gitRoot, file)).replace(/\\/g, "/");
 				json.repository =
 					// The directory field should be omitted from the root package.
 					relativePkgDir === "."

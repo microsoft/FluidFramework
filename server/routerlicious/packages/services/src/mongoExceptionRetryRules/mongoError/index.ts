@@ -4,8 +4,12 @@
  */
 
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ConnectionNotAvailableMode } from "../../mongodb";
-import { BaseMongoExceptionRetryRule, IMongoExceptionRetryRule } from "../IMongoExceptionRetryRule";
+
+import type { ConnectionNotAvailableMode } from "../../mongodb";
+import {
+	BaseMongoExceptionRetryRule,
+	type IMongoExceptionRetryRule,
+} from "../IMongoExceptionRetryRule";
 class InternalErrorRule extends BaseMongoExceptionRetryRule {
 	private static readonly codeName = "InternalError";
 	protected defaultRetryDecision: boolean = true;

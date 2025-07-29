@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { ILocalValue } from "./localValues.js";
-
 /**
  * Operation indicating a value should be set for a key.
  */
@@ -51,71 +49,6 @@ export interface IMapDeleteOperation {
 }
 
 /**
- * Metadata for an local `edit` operation.
- */
-export interface IMapKeyEditLocalOpMetadata {
-	/**
-	 * String identifier of the operation type.
-	 */
-	type: "edit";
-
-	/**
-	 * Unique identifier for the local operation.
-	 */
-	pendingMessageId: number;
-
-	/**
-	 * Local value prior to the edit.
-	 */
-	previousValue: ILocalValue;
-}
-
-/**
- * Metadata for an local `add` operation.
- */
-export interface IMapKeyAddLocalOpMetadata {
-	/**
-	 * String identifier of the operation type.
-	 */
-	type: "add";
-
-	/**
-	 * Unique identifier for the local operation.
-	 */
-	pendingMessageId: number;
-}
-
-/**
- * Metadata for an local `clear` operation.
- */
-export interface IMapClearLocalOpMetadata {
-	/**
-	 * String identifier of the operation type.
-	 */
-	type: "clear";
-
-	/**
-	 * Unique identifier for the local operation.
-	 */
-	pendingMessageId: number;
-
-	/**
-	 * Local map contents prior to clearing it.
-	 */
-	previousMap?: Map<string, ILocalValue>;
-}
-
-/**
- * Metadata for a local operation associated with a specific key entry in the map.
- */
-export type MapKeyLocalOpMetadata = IMapKeyEditLocalOpMetadata | IMapKeyAddLocalOpMetadata;
-
-/**
- * Metadata for a local operation.
- */
-export type MapLocalOpMetadata = IMapClearLocalOpMetadata | MapKeyLocalOpMetadata;
-
-/**
  * The _ready-for-serialization_ format of values contained in DDS contents. This allows us to use
  * {@link ISerializableValue."type"} to understand whether they're storing a Plain JavaScript object,
  * a {@link @fluidframework/shared-object-base#SharedObject}, or a value type.
@@ -155,8 +88,6 @@ export interface ISerializableValue {
 
 /**
  * Serialized {@link ISerializableValue} counterpart.
- * @legacy
- * @alpha
  */
 export interface ISerializedValue {
 	/**

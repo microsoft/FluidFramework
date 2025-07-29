@@ -16,6 +16,7 @@ import {
 	CompressionAlgorithms,
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
+	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 // TODO:AB#6558: This should be provided based on the compatibility configuration.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
@@ -30,7 +31,7 @@ import {
 
 import { pkgVersion } from "../packageVersion.js";
 
-const compressionSuite = (getProvider) => {
+const compressionSuite = (getProvider, apis?) => {
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -43,17 +44,27 @@ const compressionSuite = (getProvider) => {
 			},
 		};
 
+		let compatLocalVersionIsOld: boolean = false;
+		let compatOldRemoteVersionIsOld: boolean = false;
+
 		beforeEach("createLocalAndRemoteMaps", async () => {
 			provider = await getProvider();
+			// If the runtime version for the local or remote container runtime is 1.4.0, then we need to skip the tests as a lot of the options being tested fail in this version.
+			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				compatLocalVersionIsOld = apis.containerRuntime.version === "1.4.0";
+				compatOldRemoteVersionIsOld = apis.containerRuntimeForLoading.version === "1.4.0";
+			}
 		});
 
 		async function setupContainers(
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
+			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
 		) {
 			const containerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMap.getFactory()]],
 				runtimeOptions,
 				fluidDataObjectType: DataObjectFactoryType.Test,
+				minVersionForCollab,
 			};
 			const localContainer = await provider.makeTestContainer(containerConfig);
 			localDataObject =
@@ -71,8 +82,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		it("Can compress and process compressed op", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			if (compatLocalVersionIsOld || compatOldRemoteVersionIsOld) {
 				this.skip();
 			}
 			await setupContainers();
@@ -94,8 +104,7 @@ const compressionSuite = (getProvider) => {
 		});
 
 		it("Processes ops that weren't worth compressing", async function () {
-			// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
-			if (provider.type === "TestObjectProviderWithVersionedLoad") {
+			if (compatLocalVersionIsOld || compatOldRemoteVersionIsOld) {
 				this.skip();
 			}
 			await setupContainers();
@@ -114,8 +123,8 @@ const compressionSuite = (getProvider) => {
 			{ compression: true, grouping: true, chunking: false },
 		].forEach((option) => {
 			it(`Correctly processes messages: compression [${option.compression}] chunking [${option.chunking}] grouping [${option.grouping}]`, async function () {
-				// TODO: Re-enable after cross version compat bugs are fixed - ADO:6287
-				if (provider.type === "TestObjectProviderWithVersionedLoad") {
+				// The tests are skipped when it is testing cross compatibility and the remote version is 1.4.0.
+				if (compatOldRemoteVersionIsOld) {
 					this.skip();
 				}
 				// This test has unreproducible flakiness against r11s (non-FRS).
@@ -126,14 +135,19 @@ const compressionSuite = (getProvider) => {
 				) {
 					this.skip();
 				}
-				await setupContainers({
-					compressionOptions: {
-						minimumBatchSizeInBytes: option.compression ? 10 : Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
+				await setupContainers(
+					{
+						compressionOptions: {
+							minimumBatchSizeInBytes: option.compression ? 10 : Number.POSITIVE_INFINITY,
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
+						chunkSizeInBytes: option.chunking ? 100 : Number.POSITIVE_INFINITY,
+						enableGroupedBatching: option.grouping,
 					},
-					chunkSizeInBytes: option.chunking ? 100 : Number.POSITIVE_INFINITY,
-					enableGroupedBatching: option.grouping,
-				});
+					// We set minVersionForCollab to 2.0.0 so we can test grouping and batching features with older clients.
+					// in cross-client compat tests.
+					"2.0.0", // minVersionForCollab
+				);
 				const values = [
 					generateRandomStringOfSize(100),
 					generateRandomStringOfSize(100),
@@ -155,8 +169,8 @@ const compressionSuite = (getProvider) => {
 	});
 };
 
-describeCompat("Op Compression", "FullCompat", (getTestObjectProvider) =>
-	compressionSuite(async () => getTestObjectProvider()),
+describeCompat("Op Compression", "FullCompat", (getTestObjectProvider, apis) =>
+	compressionSuite(async () => getTestObjectProvider(), apis),
 );
 
 const loaderWithoutCompressionField = "2.0.0-internal.1.4.6";

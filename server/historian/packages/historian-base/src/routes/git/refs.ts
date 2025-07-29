@@ -3,25 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@fluidframework/gitresources";
-import {
+import type * as git from "@fluidframework/gitresources";
+import type {
 	ICreateRefParamsExternal,
 	IPatchRefParamsExternal,
 } from "@fluidframework/server-services-client";
-import {
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
+import {
+	denyListMiddleware,
+	type IThrottleMiddlewareOptions,
+	throttle,
+} from "@fluidframework/server-services-utils";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -37,6 +43,8 @@ export function create(
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
+
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
@@ -58,7 +66,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getRefs();
@@ -77,7 +84,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getRef(ref);
@@ -96,7 +102,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
 		});
@@ -117,7 +122,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 			simplifiedCustomDataRetriever,
 		});
@@ -137,7 +141,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.deleteRef(ref);
@@ -147,7 +150,8 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refsP = getRefs(request.params.tenantId, request.get("Authorization"));
 			utils.handleResponse(refsP, response, false);
@@ -158,7 +162,7 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
 		(request, response, next) => {
 			const refP = getRef(
 				request.params.tenantId,
@@ -173,7 +177,12 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = createRef(
 				request.params.tenantId,
@@ -188,7 +197,12 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const refP = updateRef(
 				request.params.tenantId,
@@ -204,7 +218,13 @@ export function create(
 		"/repos/:ignored?/:tenantId/git/refs/*",
 		validateRequestParams("tenantId", 0),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(
+			revokedTokenChecker,
+			[ScopeType.DocRead, ScopeType.DocWrite, ScopeType.SummaryWrite],
+			maxTokenLifetimeSec,
+		),
+		// Skip documentDenyListCheck, as it is not needed for delete operations
+		denyListMiddleware(denyList, true /* skipDocumentDenyListCheck */),
 		(request, response, next) => {
 			const refP = deleteRef(
 				request.params.tenantId,

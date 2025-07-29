@@ -16,7 +16,7 @@ import {
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { summarizerClientType } from "./summarizerClientElection.js";
+import { summarizerClientType } from "./index.js";
 
 // helper types for recursive readonly.
 // eslint-disable-next-line @typescript-eslint/ban-types
@@ -271,9 +271,7 @@ export interface IOrderedClientElectionEvents extends IEvent {
 
 /**
  * Serialized state of IOrderedClientElection.
- * @legacy
- * @alpha
- * @deprecated This type will be moved to internal in 2.30. External usage is not necessary or supported.
+ * @internal
  */
 export interface ISerializedElection {
 	/**

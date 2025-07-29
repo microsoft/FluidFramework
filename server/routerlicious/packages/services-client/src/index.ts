@@ -20,10 +20,11 @@ export {
 	DriverVersionHeaderName,
 	LatestSummaryId,
 	TelemetryContextHeaderName,
+	CallingServiceHeaderName,
 } from "./constants";
 export {
 	createFluidServiceNetworkError,
-	INetworkErrorDetails,
+	type INetworkErrorDetails,
 	InternalErrorCode,
 	isNetworkError,
 	NetworkError,
@@ -32,17 +33,22 @@ export {
 } from "./error";
 export { choose, getRandomName } from "./generateNames";
 export { GitManager } from "./gitManager";
-export { Heap, IHeapComparator } from "./heap";
+export { Heap, type IHeapComparator } from "./heap";
 export {
 	getAuthorizationTokenFromCredentials,
 	Historian,
-	ICredentials,
+	type ICredentials,
 	parseToken,
 } from "./historian";
-export { IAlfredTenant, ISession } from "./interfaces";
+export type { IAlfredTenant, ISession } from "./interfaces";
 export { promiseTimeout } from "./promiseTimeout";
 export { RestLessClient, RestLessFieldNames } from "./restLessClient";
-export { BasicRestWrapper, RestWrapper, IBasicRestWrapperMetricProps } from "./restWrapper";
+export {
+	BasicRestWrapper,
+	RestWrapper,
+	type IBasicRestWrapperMetricProps,
+	setupAxiosInterceptorsForAbortSignals,
+} from "./restWrapper";
 export { defaultHash, getNextHash } from "./rollingHash";
 export {
 	canRead,
@@ -58,7 +64,7 @@ export {
 	mergeAppAndProtocolTree,
 	generateServiceProtocolEntries,
 } from "./scribeHelper";
-export {
+export type {
 	ICreateRefParamsExternal,
 	IExternalWriterConfig,
 	IGetRefParamsExternal,
@@ -69,7 +75,7 @@ export {
 	IPatchRefParamsExternal,
 	ISummaryUploadManager,
 } from "./storage";
-export {
+export type {
 	ExtendedSummaryObject,
 	IEmbeddedSummaryHandle,
 	INormalizedWholeSummary,
@@ -99,9 +105,14 @@ export {
 } from "./storageUtils";
 export { SummaryTreeUploadManager } from "./summaryTreeUploadManager";
 export {
-	ITimeoutContext,
+	type ITimeoutContext,
 	getGlobalTimeoutContext,
 	setGlobalTimeoutContext,
 } from "./timeoutContext";
 export { getOrCreateRepository, getRandomInt } from "./utils";
 export { WholeSummaryUploadManager } from "./wholeSummaryUploadManager";
+export {
+	type IAbortControllerContext,
+	setGlobalAbortControllerContext,
+	getGlobalAbortControllerContext,
+} from "./abortControllerContext";

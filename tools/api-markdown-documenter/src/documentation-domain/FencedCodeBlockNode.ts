@@ -3,13 +3,16 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type DocumentationNode,
-	DocumentationParentNodeBase,
-	type MultiLineDocumentationNode,
-} from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { createNodesFromPlainText } from "./Utilities.js";
+import { DocumentationLiteralNodeBase } from "./DocumentationNode.js";
+import type { LineBreakNode } from "./LineBreakNode.js";
+import type { PlainTextNode } from "./PlainTextNode.js";
+
+/**
+ * The types of child nodes that can be contained within a {@link FencedCodeBlockNode}.
+ *
+ * @public
+ */
+export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
 
 /**
  * A fenced code block, with an optional associated code language.
@@ -30,16 +33,19 @@ import { createNodesFromPlainText } from "./Utilities.js";
  * </code>
  * ```
  *
+ * @sealed
  * @public
  */
-export class FencedCodeBlockNode
-	extends DocumentationParentNodeBase
-	implements MultiLineDocumentationNode
-{
+export class FencedCodeBlockNode extends DocumentationLiteralNodeBase<string> {
+	/**
+	 * Static singleton representing an empty Fenced Code Block node.
+	 */
+	public static readonly Empty: FencedCodeBlockNode = new FencedCodeBlockNode("");
+
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
-	public readonly type = DocumentationNodeType.FencedCode;
+	public readonly type = "fencedCode";
 
 	/**
 	 * (optional) Code language to associated with the code block.
@@ -47,14 +53,14 @@ export class FencedCodeBlockNode
 	public readonly language?: string;
 
 	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
+	 * {@inheritDoc DocumentationNode.isEmpty}
 	 */
-	public override get singleLine(): false {
-		return false;
+	public override get isEmpty(): boolean {
+		return this.value.length === 0;
 	}
 
-	public constructor(children: DocumentationNode[], language?: string) {
-		super(children);
+	public constructor(value: string, language?: string) {
+		super(value);
 		this.language = language;
 	}
 
@@ -64,6 +70,6 @@ export class FencedCodeBlockNode
 	 * @param language - (optional) code language to associated with the code block.
 	 */
 	public static createFromPlainText(text: string, language?: string): FencedCodeBlockNode {
-		return new FencedCodeBlockNode(createNodesFromPlainText(text), language);
+		return new FencedCodeBlockNode(text, language);
 	}
 }

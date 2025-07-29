@@ -13,7 +13,10 @@ import {
 	transformApiModel,
 } from "./api-item-transforms/index.js";
 import type { DocumentNode } from "./documentation-domain/index.js";
-import { type MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./renderers/index.js";
+import {
+	type RenderDocumentAsMarkdownConfiguration,
+	renderDocumentAsMarkdown,
+} from "./renderers/index.js";
 
 /**
  * API Model Markdown rendering options.
@@ -22,7 +25,7 @@ import { type MarkdownRenderConfiguration, renderDocumentAsMarkdown } from "./re
  */
 export interface RenderApiModelAsMarkdownOptions
 	extends ApiItemTransformationOptions,
-		MarkdownRenderConfiguration,
+		RenderDocumentAsMarkdownConfiguration,
 		FileSystemConfiguration {}
 
 /**
@@ -44,7 +47,7 @@ export async function renderApiModelAsMarkdown(
  * @public
  */
 export interface RenderDocumentsAsMarkdownOptions
-	extends MarkdownRenderConfiguration,
+	extends RenderDocumentAsMarkdownConfiguration,
 		FileSystemConfiguration {}
 
 /**

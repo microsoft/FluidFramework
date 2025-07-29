@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { ICollection } from "@fluidframework/server-services-core";
+import type { ICollection } from "@fluidframework/server-services-core";
 import * as charwise from "charwise";
 import * as _ from "lodash";
 
@@ -70,6 +70,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			throw new Error("Not found");
 		} else {
+			// eslint-disable-next-line import/namespace
 			_.extend(value, set);
 			return this.insertOne(value);
 		}
@@ -84,6 +85,7 @@ export class Collection<T> implements ICollection<T> {
 		if (!value) {
 			return this.insertOne(set);
 		} else {
+			// eslint-disable-next-line import/namespace
 			_.extend(value, set);
 			return this.insertOne(value);
 		}

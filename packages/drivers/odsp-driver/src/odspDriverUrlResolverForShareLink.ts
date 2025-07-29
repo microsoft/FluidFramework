@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IRequest, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { PromiseCache } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IContainerPackageInfo,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IOdspResolvedUrl,
 	IdentityType,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
+import { type OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
 import { getFileLink } from "./getFileLink.js";
 import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
@@ -73,6 +73,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 	 * navigates directly to the link.
 	 * @param getContext - callback function which is used to get context for given resolved url. If context
 	 * is returned then it will be embedded into url returned by getAbsoluteUrl() method.
+	 * @param containerPackageInfo - container package information which will be used to extract the container package name.
 	 */
 	public constructor(
 		shareLinkFetcherProps?: ShareLinkFetcherProps | undefined,
@@ -82,6 +83,7 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 			resolvedUrl: IOdspResolvedUrl,
 			dataStorePath: string,
 		) => Promise<string | undefined>,
+		private readonly containerPackageInfo?: IContainerPackageInfo,
 	) {
 		this.logger = createOdspLogger(logger);
 		if (shareLinkFetcherProps) {
@@ -135,6 +137,8 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 		const requestToBeResolved = { headers: request.headers, url: request.url };
 		const isSharingLinkToRedeem =
 			requestToBeResolved.headers?.[SharingLinkHeader.isSharingLinkToRedeem];
+		const isRedemptionNonDurable =
+			requestToBeResolved.headers?.[SharingLinkHeader.isRedemptionNonDurable];
 		try {
 			const url = new URL(request.url);
 
@@ -155,12 +159,17 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		odspResolvedUrl.appName = this.appName;
 
+		odspResolvedUrl.codeHint = odspResolvedUrl.codeHint?.containerPackageName
+			? odspResolvedUrl.codeHint
+			: { containerPackageName: getContainerPackageName(this.containerPackageInfo) };
+
 		if (isSharingLinkToRedeem) {
 			// We need to remove the nav param if set by host when setting the sharelink as otherwise the shareLinkId
 			// when redeeming the share link during the redeem fallback for trees latest call becomes greater than
 			// the eligible length.
 			odspResolvedUrl.shareLinkInfo = Object.assign(odspResolvedUrl.shareLinkInfo ?? {}, {
 				sharingLinkToRedeem: this.removeNavParam(request.url),
+				isRedemptionNonDurable: isRedemptionNonDurable ?? false,
 			});
 		}
 		if (odspResolvedUrl.itemId) {
@@ -255,9 +264,16 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 
 		odspResolvedUrl.context = await this.getContext?.(odspResolvedUrl, actualDataStorePath);
 
+		/**
+		 * containerPackageName can be provided by various ways, in the order of priority:
+		 * 1. packageInfoSource - passed by the call of appendLocatorParams
+		 * 2. odspResolvedUrl.codeHint?.containerPackageName - passed by the odsp-driver's resolvedURL object
+		 * 3. this.containerPackageInfo - passed by the constructor of OdspDrvierUrlResolverForShareLink
+		 * */
 		const containerPackageName: string | undefined =
 			getContainerPackageName(packageInfoSource) ??
-			odspResolvedUrl.codeHint?.containerPackageName;
+			odspResolvedUrl.codeHint?.containerPackageName ??
+			getContainerPackageName(this.containerPackageInfo);
 
 		odspResolvedUrl.appName = this.appName;
 

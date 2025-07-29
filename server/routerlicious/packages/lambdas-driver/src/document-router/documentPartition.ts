@@ -4,17 +4,19 @@
  */
 
 import { inspect } from "util";
+
 import {
-	IContextErrorData,
-	IPartitionLambda,
-	IPartitionLambdaConfig,
-	IPartitionLambdaFactory,
-	IQueuedMessage,
+	type IContextErrorData,
+	type IPartitionLambda,
+	type IPartitionLambdaConfig,
+	type IPartitionLambdaFactory,
+	type IQueuedMessage,
 	LambdaCloseType,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { QueueObject, queue } from "async";
-import { DocumentContext } from "./documentContext";
+import { type QueueObject, queue } from "async";
+
+import type { DocumentContext } from "./documentContext";
 
 export class DocumentPartition {
 	private readonly q: QueueObject<IQueuedMessage>;
@@ -208,6 +210,13 @@ export class DocumentPartition {
 	}
 
 	public pause(offset: number) {
+		if (this.closed) {
+			Lumberjack.warning("Skipping pause since doc partition is closed.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+				offset,
+			});
+			return;
+		}
 		if (this.paused) {
 			Lumberjack.warning("Doc partition already paused, returning early.", {
 				...getLumberBaseProperties(this.documentId, this.tenantId),
@@ -215,6 +224,7 @@ export class DocumentPartition {
 			});
 			return;
 		}
+
 		this.paused = true;
 
 		this.q.pause();
@@ -236,6 +246,12 @@ export class DocumentPartition {
 	}
 
 	public resume() {
+		if (this.closed) {
+			Lumberjack.warning("Skipping resume since doc partition is closed.", {
+				...getLumberBaseProperties(this.documentId, this.tenantId),
+			});
+			return;
+		}
 		if (!this.paused) {
 			Lumberjack.warning("Doc partition already resumed, returning early.", {
 				...getLumberBaseProperties(this.documentId, this.tenantId),

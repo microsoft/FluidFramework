@@ -4,16 +4,17 @@
  */
 
 // eslint-disable-next-line import/no-deprecated
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import {
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
+import type {
 	IBroadcastSignalEventPayload,
 	ICollaborationSessionEvents,
 	IRoom,
 	IRuntimeSignalEnvelope,
 } from "@fluidframework/server-lambdas";
-import { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
+import type { IDocumentStorage, MongoManager } from "@fluidframework/server-services-core";
 import { Router } from "express";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
+
 import * as deltas from "./deltas";
 import * as documents from "./documents";
 

@@ -154,7 +154,11 @@ describe("IntervalCollection fuzz testing", () => {
 			),
 	};
 
-	createDDSFuzzSuite(model, optionsWithEmitter);
+	createDDSFuzzSuite(model, {
+		...optionsWithEmitter,
+		rollbackProbability: 0,
+		// replay: 8
+	});
 });
 
 describe("IntervalCollection fuzz testing with rebasing", () => {

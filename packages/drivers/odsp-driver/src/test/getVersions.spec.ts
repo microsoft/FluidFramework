@@ -6,18 +6,18 @@
 import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import {
-	ICacheEntry,
-	IOdspResolvedUrl,
+	type ICacheEntry,
+	type IOdspResolvedUrl,
 	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	HostStoragePolicyInternal,
-	IOdspSnapshot,
-	IVersionedValueWithEpoch,
+	type HostStoragePolicyInternal,
+	type IOdspSnapshot,
+	type IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
@@ -29,7 +29,7 @@ import {
 } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo } from "../odspUtils.js";
+import type { INewFileInfo } from "../odspUtils.js";
 
 import { createResponse, mockFetchSingle, notFound } from "./mockFetch.js";
 

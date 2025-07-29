@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDatabaseManager,
 	IDocumentStorage,
 	IWebSocketServer,
@@ -13,7 +13,8 @@ import {
 	CheckpointService,
 } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
-import { IConcreteNodeFactory } from "./interfaces";
+
+import type { IConcreteNodeFactory } from "./interfaces";
 import { LocalNode } from "./localNode";
 
 /**

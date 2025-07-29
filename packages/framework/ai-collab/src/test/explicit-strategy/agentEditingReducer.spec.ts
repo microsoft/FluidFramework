@@ -14,12 +14,29 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	SharedTree,
+	Tree,
+	type TreeView,
+	type SimpleTreeSchema,
 	type TreeNode,
+	type ITree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 
+import type {
+	ArrayRangeRemoveDiff,
+	ArraySingleRemoveDiff,
+	InsertDiff,
+	ModifyDiff,
+	MoveRangeDiff,
+	MoveSingleDiff,
+	NodePath,
+	RemoveNodeDiff,
+	// RemoveNodeDiff,
+} from "../../diffTypes.js";
 import {
 	applyAgentEdit,
+	getRangeInfo,
+	getSchemaIdentifier,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditReducer.js";
 import {
@@ -27,6 +44,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
 import type {
+	Insert,
+	Modify,
+	Move,
+	Range,
+	Remove,
 	TreeEdit,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../explicit-strategy/agentEditTypes.js";
@@ -380,84 +402,204 @@ describe("applyAgentEdit", () => {
 		});
 	});
 
-	it("modify edits", () => {
-		const tree = factory.create(
-			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
-			"tree",
-		);
-		const config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
-		const view = tree.viewWith(config);
-		const simpleSchema = getSimpleSchema(view.schema);
+	describe("modify edits", () => {
+		let tree: ITree;
+		let config: TreeViewConfiguration<typeof RootObjectPolymorphic>;
+		let view: TreeView<typeof RootObjectPolymorphic>;
+		let simpleSchema: SimpleTreeSchema;
 
-		view.initialize({
-			str: "testStr",
-			vectors: [new Vector({ x: 1, y: 2, z: 3 })],
-			bools: [true],
+		// Reinitialize our test tree to the same initial state.
+		beforeEach(() => {
+			tree = factory.create(
+				new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+				"tree",
+			);
+			config = new TreeViewConfiguration({ schema: RootObjectPolymorphic });
+			view = tree.viewWith(config);
+			simpleSchema = getSimpleSchema(view.schema);
+
+			view.initialize({
+				str: "testStr",
+				vectors: [new Vector({ x: 1, y: 2, z: 3 })],
+				bools: [true],
+			});
+
+			idGenerator.assignIds(view.root);
 		});
 
-		idGenerator.assignIds(view.root);
-		const vectorId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
+		it("replace an array node of objects", () => {
+			const vectorArrayId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
 
-		const modifyEdit: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId },
-			field: "vectors",
-			modification: [
-				{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
-				{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
-			],
-		};
-		applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions);
+			const modifyEdit: TreeEdit = {
+				explanation: "Replace an array of vectors",
+				type: "modify",
+				target: { target: vectorArrayId },
+				field: "vectors",
+				modification: [
+					{ [typeField]: Vector.identifier, x: 2, y: 3, z: 4 },
+					{ [typeField]: Vector2.identifier, x2: 3, y2: 4, z2: 5 },
+				],
+			};
+			applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions);
 
-		const modifyEdit2: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId },
-			field: "bools",
-			modification: [false],
-		};
-		applyAgentEdit(modifyEdit2, idGenerator, simpleSchema.definitions);
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 2,
+						"y": 3,
+						"z": 4,
+					},
+					{
+						"id": (view.root.vectors[1] as Vector2).id,
+						"x2": 3,
+						"y2": 4,
+						"z2": 5,
+					},
+				],
+				"bools": [true],
+			};
 
-		idGenerator.assignIds(view.root);
-		const vectorId2 =
-			idGenerator.getId(view.root.vectors[0] as Vector) ?? fail("ID expected.");
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
 
-		const modifyEdit3: TreeEdit = {
-			explanation: "Modify a vector",
-			type: "modify",
-			target: { target: vectorId2 },
-			field: "x",
-			modification: 111,
-		};
-		applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
+		it("replace an array node of primitive leaf nodes", () => {
+			const vectorArrayId = idGenerator.getId(view.root as TreeNode) ?? fail("ID expected.");
 
-		const identifier = (view.root.vectors[0] as Vector).id;
-		const identifier2 = (view.root.vectors[1] as Vector2).id;
+			const modifyEdit2: TreeEdit = {
+				explanation: "replace a primitive array",
+				type: "modify",
+				target: { target: vectorArrayId },
+				field: "bools",
+				modification: [false],
+			};
+			applyAgentEdit(modifyEdit2, idGenerator, simpleSchema.definitions);
 
-		const expected = {
-			"str": "testStr",
-			"vectors": [
-				{
-					"id": identifier,
-					"x": 111,
-					"y": 3,
-					"z": 4,
-				},
-				{
-					"id": identifier2,
-					"x2": 3,
-					"y2": 4,
-					"z2": 5,
-				},
-			],
-			"bools": [false],
-		};
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 1,
+						"y": 2,
+						"z": 3,
+					},
+				],
+				"bools": [false],
+			};
 
-		assert.deepEqual(
-			JSON.stringify(view.root, undefined, 2),
-			JSON.stringify(expected, undefined, 2),
-		);
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("Modifies a primitive leaf node value within an object node", () => {
+			const vectorId =
+				idGenerator.getId(view.root.vectors[0] as Vector) ?? fail("ID expected.");
+
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: vectorId },
+				field: "x",
+				modification: 111,
+			};
+			applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
+
+			const expected = {
+				"str": "testStr",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 111,
+						"y": 2,
+						"z": 3,
+					},
+				],
+				"bools": [true],
+			};
+
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("Modifies a primitive leaf node value", () => {
+			const rootNodeId = idGenerator.getId(view.root) ?? fail("ID expected");
+
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a string",
+				type: "modify",
+				target: { target: rootNodeId },
+				field: "str",
+				modification: "modifiedString",
+			};
+			applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions);
+
+			const expected = {
+				"str": "modifiedString",
+				"vectors": [
+					{
+						"id": (view.root.vectors[0] as Vector).id,
+						"x": 1,
+						"y": 2,
+						"z": 3,
+					},
+				],
+				"bools": [true],
+			};
+
+			assert.deepEqual(
+				JSON.stringify(view.root, undefined, 2),
+				JSON.stringify(expected, undefined, 2),
+			);
+		});
+
+		it("modify edit with non existent field fails", () => {
+			const vectorId =
+				idGenerator.getId(view.root.vectors[0] as TreeNode) ?? fail("ID expected.");
+
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: vectorId },
+				field: "x2",
+				modification: 111,
+			};
+
+			assert.throws(
+				() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
+				validateUsageError(
+					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. The node's field you selected for modification \`x2\` does not exist in this node's schema. The set of available fields for this node are: \`['id', 'x', 'y', 'z']\`. If you are sure you are trying to modify this node, did you mean to use the field \`x\` which has the following set of allowed types: \`['com.fluidframework.leaf.number']\`?`,
+				),
+			);
+		});
+
+		it("modify edit with invalid primitive value type for field fails", () => {
+			const vectorId =
+				idGenerator.getId(view.root.vectors[0] as TreeNode) ?? fail("ID expected.");
+
+			const modifyEdit3: TreeEdit = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: vectorId },
+				field: "x",
+				modification: false,
+			};
+
+			assert.throws(
+				() => applyAgentEdit(modifyEdit3, idGenerator, simpleSchema.definitions),
+				validateUsageError(
+					`You attempted an invalid modify edit on the node with id 'Vector1' and schema 'agentSchema.Vector'. You cannot set the node's field \`x\` to the value \`false\` with type \`boolean\` because this type is incompatible with all of the types allowed by the field's schema. The set of allowed types are \`['com.fluidframework.leaf.number']\`.`,
+				),
+			);
+		});
 	});
 
 	describe("remove edits", () => {
@@ -1287,5 +1429,723 @@ describe("applyAgentEdit", () => {
 			() => applyAgentEdit(modifyEdit, idGenerator, simpleSchema.definitions),
 			validateUsageError(/objectIdKey testObjectId does not exist/),
 		);
+	});
+});
+
+describe("Diff Creation", () => {
+	let idGenerator: IdGenerator;
+	beforeEach(() => {
+		idGenerator = new IdGenerator();
+	});
+
+	class TestVector extends sf.object("TestVector", {
+		id: sf.identifier, // will be omitted from the generated JSON schema
+		x: sf.number,
+		y: sf.number,
+		z: sf.optional(sf.number),
+	}) {}
+
+	class TestAppRootObject extends sf.object("TestAppRootObject", {
+		id: sf.identifier,
+		rootStr: sf.string,
+		rootVectors: sf.array([TestVector]),
+		rootStrings: sf.array(sf.string),
+		optionalFieldObject: sf.optional(TestVector),
+		innerObject: sf.object("InnerObject", {
+			nestedStr: sf.string,
+			nestedVectors: sf.array([TestVector]),
+		}),
+	}) {}
+
+	function initializeTree(): {
+		view: TreeView<typeof TestAppRootObject>;
+		schema: SimpleTreeSchema;
+	} {
+		const tree = factory.create(
+			new MockFluidDataStoreRuntime({ idCompressor: createIdCompressor() }),
+			"tree",
+		);
+		const view = tree.viewWith(new TreeViewConfiguration({ schema: TestAppRootObject }));
+		const simpleSchema = getSimpleSchema(view.schema);
+
+		view.initialize({
+			rootStr: "rootStrValue",
+			rootVectors: [
+				new TestVector({ x: 1, y: 2, z: 3 }),
+				new TestVector({ x: 4, y: 5, z: 6 }),
+				new TestVector({ x: 7, y: 8, z: 9 }),
+				new TestVector({ x: 10, y: 11, z: 12 }),
+				new TestVector({ x: 13, y: 14, z: 15 }),
+			],
+			rootStrings: ["str1", "str2", "str3"],
+			optionalFieldObject: new TestVector({ x: 10, y: 11, z: 12 }),
+			innerObject: {
+				nestedStr: "nestedStrValue",
+				nestedVectors: [
+					new TestVector({ x: 100, y: 101, z: 102 }),
+					new TestVector({ x: 103, y: 104, z: 105 }),
+				],
+			},
+		});
+
+		idGenerator.assignIds(view.root);
+
+		return { view, schema: simpleSchema };
+	}
+
+	describe("Insert Diff", () => {
+		it("insert non-primitive into array node via ObjectPlace", () => {
+			const { view, schema } = initializeTree();
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const targetVector = view.root.rootVectors[0]!;
+			const targetVectorId = idGenerator.getId(targetVector) ?? fail("ID expected.");
+
+			const insertEdit: TreeEdit = {
+				explanation: "Insert a vector",
+				type: "insert",
+				content: { [typeField]: TestVector.identifier, x: 2, y: 3, z: 4 },
+				destination: {
+					type: "objectPlace",
+					target: targetVectorId,
+					place: "after",
+				},
+			};
+			const result = applyAgentEdit(insertEdit, idGenerator, schema.definitions);
+
+			const expectedNewInsertIndex = 1;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const newlyInsertedNode = view.root.rootVectors.at(expectedNewInsertIndex)!;
+
+			const expectedUDiff: InsertDiff = {
+				type: "insert",
+				nodePath: [
+					{
+						shortId: Tree.shortId(newlyInsertedNode),
+						schemaIdentifier: Tree.schema(newlyInsertedNode).identifier,
+						parentField: expectedNewInsertIndex,
+					},
+					{
+						shortId: undefined, // Tree.shortId() would return undefined for the array since it has no sf.identifier field
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+						parentField: "rootVectors",
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				aiExplanation: insertEdit.explanation,
+				nodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)) as unknown,
+			};
+			assert.deepEqual(result.diff, expectedUDiff);
+		});
+
+		it("insert non-primitive into array node via ArrayPlace", () => {
+			const { view, schema } = initializeTree();
+			const targetVectorArrayParentId = idGenerator.getId(view.root) ?? fail("ID expected.");
+
+			const insertEdit: Insert = {
+				explanation: "Insert a vector",
+				type: "insert",
+				content: { [typeField]: TestVector.identifier, x: 2, y: 3, z: 4 },
+				destination: {
+					type: "arrayPlace",
+					parentId: targetVectorArrayParentId,
+					field: "rootVectors",
+					location: "start",
+				},
+			};
+			const result = applyAgentEdit(insertEdit, idGenerator, schema.definitions);
+
+			const expectedNewInsertIndex = 0;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const newlyInsertedNode = view.root.rootVectors.at(expectedNewInsertIndex)!;
+
+			const expectedUDiff: InsertDiff = {
+				type: "insert",
+				nodePath: [
+					{
+						shortId: Tree.shortId(newlyInsertedNode),
+						schemaIdentifier: Tree.schema(newlyInsertedNode).identifier,
+						parentField: expectedNewInsertIndex,
+					},
+					{
+						shortId: undefined, // Tree.shortId() would return undefined for the array since it has no sf.identifier field
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+						parentField: "rootVectors",
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				aiExplanation: insertEdit.explanation,
+				nodeContent: JSON.parse(JSON.stringify(newlyInsertedNode)) as unknown,
+			};
+			assert.deepEqual(result.diff, expectedUDiff);
+		});
+	});
+
+	describe("Modify Diff", () => {
+		// Note that the Modify TreeEdit only uses ObjectTarget.
+
+		it("modify non-primitive node via ObjectTarget", () => {
+			const { view, schema } = initializeTree();
+			const rootObjectId = idGenerator.getId(view.root) ?? fail("ID expected.");
+
+			const modifyEdit: Modify = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: rootObjectId },
+				field: "rootVectors",
+				modification: [
+					{ [typeField]: TestVector.identifier, x: 2, y: 3, z: 4 },
+					{ [typeField]: TestVector.identifier, x: 3, y: 4, z: 5 },
+				],
+			};
+			const expectedOldValue: unknown = JSON.parse(JSON.stringify(view.root.rootVectors));
+			const result = applyAgentEdit(modifyEdit, idGenerator, schema.definitions);
+			const expectedDiff: ModifyDiff = {
+				type: "modify",
+				nodePath: [
+					{
+						shortId: Tree.shortId(view.root.rootVectors),
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+						parentField: "rootVectors",
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				aiExplanation: modifyEdit.explanation,
+				oldValue: expectedOldValue,
+				newValue: modifyEdit.modification,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+
+		it("modify primitive node via ObjectTarget", () => {
+			const { view, schema } = initializeTree();
+			const nestedObjectId = idGenerator.getId(view.root.innerObject) ?? fail("ID expected.");
+
+			const modifyEdit: Modify = {
+				explanation: "Modify a vector",
+				type: "modify",
+				target: { target: nestedObjectId },
+				field: "nestedStr",
+				modification: "modifiedNestedStrValue",
+			};
+			const expectedOldValue: unknown = view.root.innerObject.nestedStr;
+			const result = applyAgentEdit(modifyEdit, idGenerator, schema.definitions);
+			const expectedDiff: ModifyDiff = {
+				type: "modify",
+				nodePath: [
+					{
+						shortId: undefined,
+						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+						schemaIdentifier: getSchemaIdentifier(modifyEdit.modification)!,
+						parentField: "nestedStr",
+					},
+					{
+						shortId: Tree.shortId(view.root.innerObject),
+						schemaIdentifier: Tree.schema(view.root.innerObject).identifier,
+						parentField: "innerObject",
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				aiExplanation: modifyEdit.explanation,
+				oldValue: expectedOldValue,
+				newValue: modifyEdit.modification,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+	});
+
+	describe("Remove Diffs", () => {
+		it("Remove non primitive single array node via ObjectPlace", () => {
+			const { view, schema } = initializeTree();
+			idGenerator.assignIds(view.root);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const targetVector = view.root.rootVectors[0]!;
+			const vectorId1 = idGenerator.getId(targetVector) ?? fail("ID expected.");
+			const vectorShortId = Tree.shortId(targetVector);
+			const removeEdit: Remove = {
+				explanation: "remove a vector",
+				type: "remove",
+				source: { target: vectorId1 },
+			};
+			const expectedNodeContent: unknown = JSON.parse(JSON.stringify(targetVector));
+			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
+			const expectedDiff: ArraySingleRemoveDiff = {
+				type: "remove",
+				removalType: "remove-array-single",
+				nodePath: [
+					{
+						shortId: vectorShortId,
+						schemaIdentifier: TestVector.identifier,
+						parentField: 0,
+					},
+					{
+						shortId: Tree.shortId(view.root.rootVectors),
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+						parentField: "rootVectors",
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				nodeContent: expectedNodeContent,
+				aiExplanation: removeEdit.explanation,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+
+		it("Remove non-primitive field value", () => {
+			const { view, schema } = initializeTree();
+			idGenerator.assignIds(view.root);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const optionalFieldObject = view.root.optionalFieldObject!;
+			const optionalFieldObjectId =
+				idGenerator.getId(optionalFieldObject) ?? fail("ID expected.");
+			const optionaFieldObjectShortId = Tree.shortId(optionalFieldObject);
+
+			const removeEdit: Remove = {
+				explanation: "remove a vector",
+				type: "remove",
+				source: { target: optionalFieldObjectId },
+			};
+			const expectedNodeContent: unknown = JSON.parse(JSON.stringify(optionalFieldObject));
+			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
+			const expectedDiff: RemoveNodeDiff = {
+				type: "remove",
+				removalType: "remove-node",
+				nodePath: [
+					{
+						shortId: optionaFieldObjectShortId,
+						schemaIdentifier: TestVector.identifier,
+						parentField: "optionalFieldObject",
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				nodeContent: expectedNodeContent,
+				aiExplanation: removeEdit.explanation,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+
+		it("Remove non-primitive range of nodes from array node ", () => {
+			const { view, schema } = initializeTree();
+			idGenerator.assignIds(view.root);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const fromVector = view.root.rootVectors[1]!;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const toVector = view.root.rootVectors[3]!;
+			const fromVectorId = idGenerator.getId(fromVector) ?? fail("ID expected.");
+			const toVectorId = idGenerator.getId(toVector) ?? fail("ID expected.");
+
+			const removeEdit: Remove = {
+				explanation: "remove a vector",
+				type: "remove",
+				source: {
+					from: {
+						target: fromVectorId,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						target: toVectorId,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+			};
+			const {
+				array,
+				startIndex: sourceStartIndex,
+				endIndex: sourceEndIndex,
+			} = getRangeInfo(removeEdit.source as Range, idGenerator);
+			const expectedSourceNodePaths: NodePath[] = [];
+			const expectedSourceNodes: TreeNode[] = [];
+			for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const targetNodeToMove = array.at(i)! as TreeNode;
+				expectedSourceNodePaths.push([
+					{
+						shortId: Tree.shortId(targetNodeToMove),
+						schemaIdentifier: Tree.schema(targetNodeToMove).identifier,
+						parentField: i,
+					},
+					{
+						shortId: undefined,
+						parentField: "rootVectors",
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				]);
+				expectedSourceNodes.push(targetNodeToMove);
+			}
+			const result = applyAgentEdit(removeEdit, idGenerator, schema.definitions);
+			const expectedDiff: ArrayRangeRemoveDiff = {
+				type: "remove",
+				removalType: "remove-array-range",
+				nodePaths: expectedSourceNodePaths,
+				aiExplanation: removeEdit.explanation,
+				nodeContents: expectedSourceNodes.map(
+					(node) => JSON.parse(JSON.stringify(node)) as unknown,
+				),
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+	});
+
+	describe("Move Diffs", () => {
+		it("Move single non primitive node via source ObjectTarget and destination ObjectPlace", () => {
+			const { view, schema } = initializeTree();
+			idGenerator.assignIds(view.root);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const sourceVector = view.root.rootVectors[0]!;
+			const sourceVectorId = idGenerator.getId(sourceVector) ?? fail("ID expected.");
+			const sourceVectorShortId = Tree.shortId(sourceVector);
+			const sourceVectorSchema = Tree.schema(sourceVector).identifier;
+
+			const innerObjectVectorArrayNodeId =
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				idGenerator.getId(view.root.innerObject.nestedVectors[0]!) ?? fail("ID expected.");
+
+			const moveEdit: TreeEdit = {
+				explanation: "Move a vector",
+				type: "move",
+				source: { target: sourceVectorId },
+				destination: {
+					type: "objectPlace",
+					target: innerObjectVectorArrayNodeId,
+					place: "after",
+				},
+			};
+			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
+			const expectedDiff: MoveSingleDiff = {
+				type: "move",
+				moveType: "move-single",
+				sourceNodePath: [
+					{
+						shortId: sourceVectorShortId,
+						schemaIdentifier: sourceVectorSchema,
+						parentField: 0,
+					},
+					{
+						shortId: undefined,
+						parentField: "rootVectors",
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				destinationNodePath: [
+					{
+						shortId: undefined,
+						parentField: "nestedVectors",
+						schemaIdentifier: Tree.schema(view.root.innerObject.nestedVectors).identifier,
+					},
+					{
+						shortId: undefined,
+						parentField: "innerObject",
+						schemaIdentifier: Tree.schema(view.root.innerObject).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				nodeContent: JSON.parse(JSON.stringify(sourceVector)) as unknown,
+				aiExplanation: moveEdit.explanation,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+
+		it("Move single non primitive node via source ObjectTarget and destination ArrayPlace", () => {
+			const { view, schema } = initializeTree();
+			idGenerator.assignIds(view.root);
+
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const sourceVector = view.root.rootVectors[0]!;
+			const sourceVectorId = idGenerator.getId(sourceVector) ?? fail("ID expected.");
+			const sourceVectorShortId = Tree.shortId(sourceVector);
+			const sourceVectorSchema = Tree.schema(sourceVector).identifier;
+
+			const innerObjectId = idGenerator.getId(view.root.innerObject) ?? fail("ID expected.");
+
+			const moveEdit: Move = {
+				explanation: "Move a vector",
+				type: "move",
+				source: { target: sourceVectorId },
+				destination: {
+					type: "arrayPlace",
+					parentId: innerObjectId,
+					field: "nestedVectors",
+					location: "start",
+				},
+			};
+			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
+			const expectedDiff: MoveSingleDiff = {
+				type: "move",
+				moveType: "move-single",
+				sourceNodePath: [
+					{
+						shortId: sourceVectorShortId,
+						schemaIdentifier: sourceVectorSchema,
+						parentField: 0,
+					},
+					{
+						shortId: undefined,
+						parentField: "rootVectors",
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				destinationNodePath: [
+					{
+						shortId: undefined,
+						parentField: "nestedVectors",
+						schemaIdentifier: Tree.schema(view.root.innerObject.nestedVectors).identifier,
+					},
+					{
+						shortId: undefined,
+						parentField: "innerObject",
+						schemaIdentifier: Tree.schema(view.root.innerObject).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				nodeContent: JSON.parse(JSON.stringify(sourceVector)) as unknown,
+				aiExplanation: moveEdit.explanation,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+
+		it("Move non-primitive range of nodes via source Range and destination ObjectPlace", () => {
+			const { view, schema } = initializeTree();
+			idGenerator.assignIds(view.root);
+
+			const fromVectorId =
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				idGenerator.getId(view.root.rootVectors[1]!) ?? fail("ID expected.");
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const toVectorId = idGenerator.getId(view.root.rootVectors[3]!) ?? fail("ID expected.");
+
+			const destinationArrayInnerNodeId =
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				idGenerator.getId(view.root.innerObject.nestedVectors[0]!) ?? fail("ID expected");
+
+			const moveEdit: Move = {
+				explanation: "remove a vector",
+				type: "move",
+				source: {
+					from: {
+						target: fromVectorId,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						target: toVectorId,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+				destination: {
+					type: "objectPlace",
+					target: destinationArrayInnerNodeId,
+					place: "after",
+				},
+			};
+
+			const {
+				array,
+				startIndex: sourceStartIndex,
+				endIndex: sourceEndIndex,
+			} = getRangeInfo(moveEdit.source as Range, idGenerator);
+
+			const expectedSourceNodePaths: NodePath[] = [];
+			const expectedSourceNodes: TreeNode[] = [];
+			for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const targetNodeToMove = array.at(i)! as TreeNode;
+				expectedSourceNodePaths.push([
+					{
+						shortId: Tree.shortId(targetNodeToMove),
+						schemaIdentifier: Tree.schema(targetNodeToMove).identifier,
+						parentField: i,
+					},
+					{
+						shortId: undefined,
+						parentField: "rootVectors",
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				]);
+				expectedSourceNodes.push(targetNodeToMove);
+			}
+
+			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
+
+			const expectedDiff: MoveRangeDiff = {
+				type: "move",
+				moveType: "move-range",
+				sourceNodePaths: expectedSourceNodePaths,
+				destinationNodePath: [
+					{
+						shortId: undefined,
+						parentField: "nestedVectors",
+						schemaIdentifier: Tree.schema(view.root.innerObject.nestedVectors).identifier,
+					},
+					{
+						shortId: undefined,
+						parentField: "innerObject",
+						schemaIdentifier: Tree.schema(view.root.innerObject).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				nodeContents: expectedSourceNodes.map(
+					(node) => JSON.parse(JSON.stringify(node)) as unknown,
+				),
+				aiExplanation: moveEdit.explanation,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
+
+		it("Move non-primitive range of nodes via source Range and destination ArrayPlace", () => {
+			const { view, schema } = initializeTree();
+			idGenerator.assignIds(view.root);
+
+			const fromVectorId =
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				idGenerator.getId(view.root.rootVectors[1]!) ?? fail("ID expected.");
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			const toVectorId = idGenerator.getId(view.root.rootVectors[3]!) ?? fail("ID expected.");
+
+			const moveEdit: Move = {
+				explanation: "remove a vector",
+				type: "move",
+				source: {
+					from: {
+						target: fromVectorId,
+						type: "objectPlace",
+						place: "before",
+					},
+					to: {
+						target: toVectorId,
+						type: "objectPlace",
+						place: "after",
+					},
+				},
+				destination: {
+					type: "arrayPlace",
+					parentId: idGenerator.getId(view.root.innerObject) ?? fail("ID expected"),
+					field: "nestedVectors",
+					location: "end",
+				},
+			};
+
+			const {
+				array,
+				startIndex: sourceStartIndex,
+				endIndex: sourceEndIndex,
+			} = getRangeInfo(moveEdit.source as Range, idGenerator);
+
+			const expectedSourceNodePaths: NodePath[] = [];
+			const expectedSourceNodes: TreeNode[] = [];
+			for (let i = sourceStartIndex; i < sourceEndIndex; i++) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const targetNodeToMove = array.at(i)! as TreeNode;
+				expectedSourceNodePaths.push([
+					{
+						shortId: Tree.shortId(targetNodeToMove),
+						schemaIdentifier: Tree.schema(targetNodeToMove).identifier,
+						parentField: i,
+					},
+					{
+						shortId: undefined,
+						parentField: "rootVectors",
+						schemaIdentifier: Tree.schema(view.root.rootVectors).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				]);
+				expectedSourceNodes.push(targetNodeToMove);
+			}
+
+			const result = applyAgentEdit(moveEdit, idGenerator, schema.definitions);
+
+			const expectedDiff: MoveRangeDiff = {
+				type: "move",
+				moveType: "move-range",
+				sourceNodePaths: expectedSourceNodePaths,
+				destinationNodePath: [
+					{
+						shortId: undefined,
+						parentField: "nestedVectors",
+						schemaIdentifier: Tree.schema(view.root.innerObject.nestedVectors).identifier,
+					},
+					{
+						shortId: undefined,
+						parentField: "innerObject",
+						schemaIdentifier: Tree.schema(view.root.innerObject).identifier,
+					},
+					{
+						shortId: Tree.shortId(view.root),
+						schemaIdentifier: Tree.schema(view.root).identifier,
+						parentField: "rootFieldKey",
+					},
+				],
+				nodeContents: expectedSourceNodes.map(
+					(node) => JSON.parse(JSON.stringify(node)) as unknown,
+				),
+				aiExplanation: moveEdit.explanation,
+			};
+			assert.deepEqual(result.diff, expectedDiff);
+		});
 	});
 });

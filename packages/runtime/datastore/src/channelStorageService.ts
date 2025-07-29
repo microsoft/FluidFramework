@@ -5,10 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
 import { getNormalizedObjectStoragePathParts } from "@fluidframework/runtime-utils/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -17,7 +15,7 @@ export class ChannelStorageService implements IChannelStorageService {
 		base: string,
 		tree: ISnapshotTree,
 		results: { [path: string]: string },
-	) {
+	): void {
 		for (const [path, subtree] of Object.entries(tree.trees)) {
 			ChannelStorageService.flattenTree(`${base}${path}/`, subtree, results);
 		}
@@ -31,7 +29,7 @@ export class ChannelStorageService implements IChannelStorageService {
 
 	constructor(
 		private readonly tree: ISnapshotTree | undefined,
-		private readonly storage: Pick<IDocumentStorageService, "readBlob">,
+		private readonly storage: Pick<IRuntimeStorageService, "readBlob">,
 		private readonly logger: ITelemetryLoggerExt,
 		private readonly extraBlobs?: Map<string, ArrayBufferLike>,
 	) {
@@ -49,7 +47,7 @@ export class ChannelStorageService implements IChannelStorageService {
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		const id = await this.getIdForPath(path);
 		assert(id !== undefined, 0x9d7 /* id is undefined in ChannelStorageService.readBlob() */);
-		const blob = this.extraBlobs !== undefined ? this.extraBlobs.get(id) : undefined;
+		const blob = this.extraBlobs === undefined ? undefined : this.extraBlobs.get(id);
 
 		if (blob !== undefined) {
 			return blob;
@@ -70,11 +68,15 @@ export class ChannelStorageService implements IChannelStorageService {
 			const part = pathParts.shift()!;
 			tree = tree.trees[part];
 		}
-		if (tree === undefined || pathParts.length !== 0) {
+		if (tree === undefined || pathParts.length > 0) {
 			throw new Error("path does not exist");
 		}
 
 		return Object.keys(tree?.blobs ?? {});
+	}
+
+	public getSnapshotTree(): ISnapshotTree | undefined {
+		return this.tree;
 	}
 
 	private async getIdForPath(path: string): Promise<string | undefined> {

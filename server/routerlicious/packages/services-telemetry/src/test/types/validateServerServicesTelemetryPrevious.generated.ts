@@ -103,7 +103,6 @@ declare type old_as_current_for_Class_Lumber = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Lumber": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Lumber = requireAssignableTo<TypeOnly<current.Lumber>, TypeOnly<old.Lumber>>
 
 /*
@@ -356,7 +355,6 @@ declare type old_as_current_for_Enum_BaseTelemetryProperties = requireAssignable
  * typeValidation.broken:
  * "Enum_BaseTelemetryProperties": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_BaseTelemetryProperties = requireAssignableTo<TypeOnly<current.BaseTelemetryProperties>, TypeOnly<old.BaseTelemetryProperties>>
 
 /*
@@ -393,7 +391,6 @@ declare type old_as_current_for_Enum_HttpProperties = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Enum_HttpProperties": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_HttpProperties = requireAssignableTo<TypeOnly<current.HttpProperties>, TypeOnly<old.HttpProperties>>
 
 /*
@@ -430,7 +427,6 @@ declare type old_as_current_for_Enum_LumberEventName = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Enum_LumberEventName": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Enum_LumberEventName = requireAssignableTo<TypeOnly<current.LumberEventName>, TypeOnly<old.LumberEventName>>
 
 /*
@@ -513,6 +509,15 @@ declare type current_as_old_for_Enum_ThrottlingTelemetryProperties = requireAssi
  * "Function_handleError": {"backCompat": false}
  */
 declare type current_as_old_for_Function_handleError = requireAssignableTo<TypeOnly<typeof current.handleError>, TypeOnly<typeof old.handleError>>
+
+/*
+ * Validate backward compatibility by using the current type in place of the old type.
+ * If this test starts failing, it indicates a change that is not backward compatible.
+ * To acknowledge the breaking change, add the following to package.json under
+ * typeValidation.broken:
+ * "Function_isTelemetryContextProperties": {"backCompat": false}
+ */
+declare type current_as_old_for_Function_isTelemetryContextProperties = requireAssignableTo<TypeOnly<typeof current.isTelemetryContextProperties>, TypeOnly<typeof old.isTelemetryContextProperties>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -629,7 +634,6 @@ declare type current_as_old_for_Interface_ITelemetryContext = requireAssignableT
  * typeValidation.broken:
  * "Interface_ITelemetryContextProperties": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ITelemetryContextProperties = requireAssignableTo<TypeOnly<old.ITelemetryContextProperties>, TypeOnly<current.ITelemetryContextProperties>>
 
 /*

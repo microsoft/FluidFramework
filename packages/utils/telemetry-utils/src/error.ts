@@ -125,15 +125,29 @@ export class DataProcessingError extends LoggingError implements IErrorBase, IFl
 		dataProcessingCodepath: string,
 		sequencedMessage?: ISequencedDocumentMessage,
 		props: ITelemetryPropertiesExt = {},
+		stackTraceLimit?: number,
 	): IFluidErrorBase {
-		const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
-			errorMessage,
-			dataProcessingCodepath,
-			sequencedMessage,
-		);
-		dataProcessingError.addTelemetryProperties(props);
+		const ErrorConfig = Error as unknown as { stackTraceLimit: number };
+		const originalStackTraceLimit = ErrorConfig.stackTraceLimit;
+		try {
+			if (stackTraceLimit !== undefined) {
+				ErrorConfig.stackTraceLimit = stackTraceLimit;
+			}
 
-		return dataProcessingError;
+			const dataProcessingError = DataProcessingError.wrapIfUnrecognized(
+				errorMessage,
+				dataProcessingCodepath,
+				sequencedMessage,
+			);
+			dataProcessingError.addTelemetryProperties(props);
+
+			return dataProcessingError;
+		} finally {
+			// Reset the stack trace limit to the original value
+			if (stackTraceLimit !== undefined) {
+				ErrorConfig.stackTraceLimit = originalStackTraceLimit;
+			}
+		}
 	}
 
 	/**

@@ -58,7 +58,7 @@ For that reason, naming choices of fields and semantics for the remainder of the
 This should alleviate any back-compat issues if/when we do decide to implement move (esp. fields that end up in ops or snapshots).
 The current proposal is to use the runtime value "null" to represent "out of existence", but this choice is flexible.
 In prose, for terseness that operation will still be called obliterate.
-After describing obliterate's design, this document [digs into how the design can be extended to work for move](##Move).
+After describing obliterate's design, this document [digs into how the design can be extended to work for move](#Move).
 
 Notice that the above examples always insert text at positions strictly inside the removed range.
 If the insert operation was instead before the "1" or after the "2", one can imagine different applications wanting different behavior:
@@ -144,18 +144,18 @@ perspective: if the perspective is from after the segment was moved, the tombsto
 However, these fields need to be independent from `removedSeq` due to the possibility of a removal and a move overlapping, as well as the differences
 in how concurrent inserts are handled into a removed or a moved range.
 
-Segment groups will store `ObliterateInfo`, which will hold the references to a start and end position for a given obliterate, in addition to some other bookeeping information relevant to resolving the obliterate on other clients.
+Segment groups will store `ObliterateInfo`, which will hold the references to a start and end position for a given obliterate, in addition to some other bookkeeping information relevant to resolving the obliterate on other clients.
 
 ```typescript
 export interface ObliterateInfo {
 	/**
 	 * Local references created at the start and end of an obliterated range. Since the end of an obliterate is exclusive, the end reference will be created at the position before the passed-in end position.
-	*/
+	 */
 	start: LocalReferencePosition;
 	end: LocalReferencePosition;
 	/**
 	 * The refSeq at which the obliterate occurs.
-	*/
+	 */
 	refSeq: number;
 	/**
 	 * The clientId that performed the obliterate.
@@ -208,69 +208,18 @@ Concretely, and continuing with the example operations given above, suppose this
 { seq: 60, refSeq: 40, clientId: 3, op: <insert "hello" at index 10> }
 ```
 After locating the insertion point and updating the merge tree, we need to decide if the resulting segment is inside of a moved region.
-If we happened to know the `seq` of the move we were testing for, this would be easy: the first adjacent segment in each direction from
-the perspective of `{ seq: 50, clientId: localClientId }` can inform us if we're either inside or directly adjacent to that moved range.
-Thus, a naive implementation could check all sequence numbers in the collab window.
-The obvious optimization of only checking seq numbers of move ops would improve this slightly.
-But we can do better by leveraging an index of the obliterate local references.
-By storing the obliterates in sequence order, as well as storing the obliterate "starts" in a sorted set, we can quickly compare the ordinals of the segment being inserted and those of the stored obliterates.
-This tells us whether or not the segment falls in the range of an obliterate, and we can then find the overlapping obliterate with the smallest movedSeq (i.e. the first obliterate operation that affected this segment) that the applying client has not already seen to apply to the new segment.
+We do this by inserting local references into the merge tree for obliterates within the collab window and storing them in an indexing
+structure which supports querying for overlapping obliterates.
+Since segments can be compared for ordering in `O(1)` time using their ordinals, this is reasonably efficient provided the collab window is small.
 
 This approach takes care of removed segments as well, since the ordinal of the removed segment will fall in between those of the segments containing the position of the start and end local references. This approach also handles obliterates that should expand - internally, the endpoints are modified based on their `Side` value to be inclusive or exclusive of the adjacent segments.
 
-All-in-all, the insert logic modification might look something like this:
-
-```typescript
-function blockInsert(pos: number, refSeq: number, clientId: number, seq: number, localSeq: number | undefined) {
-	/* regular insert logic goes here */
-
-	for (const ob of this.obliterates.findOverlapping(newSegment)) {
-		// compute a normalized seq that takes into account local seqs
-		// but is still comparable to remote seqs to keep the checks below easy
-		// REMOTE SEQUENCE NUMBERS                                     LOCAL SEQUENCE NUMBERS
-		// [0, 1, 2, 3, ..., 100, ..., 1000, ..., (MAX - MaxLocalSeq), L1, L2, L3, L4, ..., L100, ..., L1000, ...(MAX)]
-		const normalizedObSeq =
-			ob.seq === UnassignedSequenceNumber
-				? Number.MAX_SAFE_INTEGER - this.collabWindow.localSeq + ob.localSeq!
-				: ob.seq;
-		if (normalizedObSeq > refSeq) {
-			if (oldest === undefined || normalizedOldestSeq > normalizedObSeq) {
-				normalizedOldestSeq = normalizedObSeq;
-				oldest = ob;
-				movedClientIds.unshift(ob.clientId);
-				movedSeqs.unshift(ob.seq);
-			} else {
-				if (newest === undefined || normalizedNewestSeq < normalizedObSeq) {
-					normalizedNewestSeq = normalizedObSeq;
-					newest = ob;
-				}
-				movedClientIds.push(ob.clientId);
-				movedSeqs.push(ob.seq);
-			}
-		}
-	}
-
-	if (oldest && newest?.clientId !== clientId) {
-		const moveInfo: IMoveInfo = {
-			movedClientIds,
-			movedSeq: oldest.seq,
-			movedSeqs,
-			localMovedSeq: oldest.localSeq,
-			wasMovedOnInsert: oldest.seq !== UnassignedSequenceNumber,
-		};
-		markSegmentMoved(newSegment, moveInfo);
-
-		/* handling of local move and partial lengths calculations */
-	}
-}
-```
+The logic described above can be found in `MergeTree.blockInsert` (look for `obliterates.findOverlapping`).
 
 This correctly handles inserting a local edit (which should never be immediately obliterated) by ensuring that the most recent obliterate was not performed by the same client that is attempting to insert. It also handles local, unacked obliterates with the manipulation of ob.seq --> normalizedObSeq to compare to the refSeq.
 It's worth noting that removals between the obliterated seq and the inserting op's seq don't complicate things much because we're simply checking that the inserting op falls between the segments that start and end the range, regardless of visibility.
 
-If we want to optimize further at some memory cost it is probably possible to use the
-partialLengths information to skip over blocks in some cases if the sequence numbers of obliterate ops are stored on
-each merge block. We can also likely optimize the index to have a tree structure to further accelerate walks.
+If we want to optimize further at some memory cost, it's probably possible to optimize the obliterate index to leverage the tree structure.
 
 ### Local perspective
 

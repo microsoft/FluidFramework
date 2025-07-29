@@ -18,14 +18,16 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({ presenceManager }): JS
 	const [invalidations, setInvalidations] = useState(0);
 
 	useEffect(() => {
-		// Listen to the attendeeJoined event and update the presence group when a new attendee joins
-		const unsubJoin = presenceManager.getPresence().events.on("attendeeJoined", () => {
-			setInvalidations(invalidations + Math.random());
-		});
+		// Listen to the attendeeConnected event and update the presence group when a new attendee joins
+		const unsubJoin = presenceManager
+			.getPresence()
+			.attendees.events.on("attendeeConnected", () => {
+				setInvalidations(invalidations + Math.random());
+			});
 		// Listen to the attendeeDisconnected event and update the presence group when an attendee leaves
 		const unsubDisconnect = presenceManager
 			.getPresence()
-			.events.on("attendeeDisconnected", () => {
+			.attendees.events.on("attendeeDisconnected", () => {
 				setInvalidations(invalidations + Math.random());
 			});
 		// Listen to the userInfoUpdate event and update the presence group when the user info is updated
@@ -41,9 +43,9 @@ const UserPresenceGroup: React.FC<UserPresenceProps> = ({ presenceManager }): JS
 	});
 
 	// Get the list of connected attendees
-	const connectedAttendees = [...presenceManager.getPresence().getAttendees()].filter(
-		(attendee) => attendee.getConnectionStatus() === "Connected",
-	);
+	const connectedAttendees = [
+		...presenceManager.getPresence().attendees.getAttendees(),
+	].filter((attendee) => attendee.getConnectionStatus() === "Connected");
 
 	// Get the user info for the connected attendees
 	const userInfoList = presenceManager.getUserInfo(connectedAttendees);

@@ -3,14 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
-import { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import {
+	IDeltaManager,
+	isIDeltaManagerFull,
+	type IDeltaManagerFull,
+	type ReadOnlyInfo,
+} from "@fluidframework/container-definitions/internal";
 import {
 	FluidObject,
 	IDisposable,
-	IRequest,
-	IResponse,
 	ITelemetryBaseProperties,
 	type IEvent,
 } from "@fluidframework/core-interfaces";
@@ -22,7 +25,6 @@ import {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	type ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -48,7 +50,6 @@ import {
 	IFluidDataStoreContext,
 	IFluidDataStoreContextDetached,
 	IFluidDataStoreRegistry,
-	IFluidParentContext,
 	IGarbageCollectionDetailsBase,
 	IProvideFluidDataStoreFactory,
 	ISummarizeInternalResult,
@@ -60,6 +61,8 @@ import {
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
+	type PackagePath,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -77,6 +80,12 @@ import {
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
+import type { IFluidParentContextPrivate } from "./channelCollection.js";
+import { BaseDeltaManagerProxy } from "./deltaManagerProxies.js";
+import {
+	runtimeCompatDetailsForDataStore,
+	validateDatastoreCompatibility,
+} from "./runtimeLayerCompatState.js";
 import {
 	// eslint-disable-next-line import/no-deprecated
 	ReadFluidDataStoreAttributes,
@@ -85,7 +94,6 @@ import {
 	getAttributesFormatVersion,
 	getFluidDataStoreAttributes,
 	hasIsolatedChannels,
-	summarizerClientType,
 	wrapSummaryInChannelsTree,
 } from "./summary/index.js";
 
@@ -108,9 +116,6 @@ export function createAttributesBlob(
 	return new BlobTreeEntry(dataStoreAttributesBlobName, JSON.stringify(attributes));
 }
 
-/**
- * @internal
- */
 export interface ISnapshotDetails {
 	pkg: readonly string[];
 	isRootDataStore: boolean;
@@ -122,7 +127,6 @@ export interface ISnapshotDetails {
  * This is interface that every context should implement.
  * This interface is used for context's parent - ChannelCollection.
  * It should not be exposed to any other users of context.
- * @internal
  */
 export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 	getAttachSummary(telemetryContext?: ITelemetryContext): ISummaryTreeWithStats;
@@ -138,21 +142,25 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 
 /**
  * Properties necessary for creating a FluidDataStoreContext
- * @internal
  */
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
-	readonly parentContext: IFluidParentContext;
-	readonly storage: IDocumentStorageService;
+	readonly parentContext: IFluidParentContextPrivate;
+	readonly storage: IRuntimeStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
-	readonly pkg?: Readonly<string[]>;
+	/**
+	 * See {@link FluidDataStoreContext.pkg}.
+	 */
+	readonly pkg?: PackagePath;
+	/**
+	 * See {@link FluidDataStoreContext.loadingGroupId}.
+	 */
 	readonly loadingGroupId?: string;
 }
 
 /**
  * Properties necessary for creating a local FluidDataStoreContext
- * @internal
  */
 export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly pkg: Readonly<string[]> | undefined;
@@ -162,7 +170,6 @@ export interface ILocalFluidDataStoreContextProps extends IFluidDataStoreContext
 
 /**
  * Properties necessary for creating a local FluidDataStoreContext
- * @internal
  */
 export interface ILocalDetachedFluidDataStoreContextProps
 	extends ILocalFluidDataStoreContextProps {
@@ -171,7 +178,6 @@ export interface ILocalDetachedFluidDataStoreContextProps
 
 /**
  * Properties necessary for creating a remote FluidDataStoreContext
- * @internal
  */
 export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContextProps {
 	readonly snapshot: ISnapshotTree | ISnapshot | undefined;
@@ -179,22 +185,67 @@ export interface IRemoteFluidDataStoreContextProps extends IFluidDataStoreContex
 
 // back-compat: To be removed in the future.
 // Added in "2.0.0-rc.2.0.0" timeframe (to support older builds).
-/**
- * @internal
- */
 export interface IFluidDataStoreContextEvents extends IEvent {
 	(event: "attaching" | "attached", listener: () => void);
 }
 
 /**
- * Represents the context for the store. This context is passed to the store runtime.
- * @internal
+ * Eventually we should remove the delta manger from being exposed to Datastore runtimes via the context. However to remove that exposure we need to add new
+ * features, and those features themselves need forward and back compat. This proxy is here to enable that back compat. Each feature this proxy is used to
+ * support should be listed below, and as layer compat support goes away for those feature, we should also remove them from this proxy, with the eventual goal
+ * of completely removing this proxy.
+ *
+ * - Everything regarding readonly is to support older datastore runtimes which do not have the setReadonly function, so they must get their readonly state via the delta manager.
+ *
+ */
+class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
+	constructor(
+		base: IDeltaManagerFull,
+		private readonly isReadOnly: () => boolean,
+	) {
+		super(base, {
+			onReadonly: (): void => {
+				/* readonly is controlled from the context which calls setReadonly */
+			},
+		});
+	}
+
+	public get readOnlyInfo(): ReadOnlyInfo {
+		const readonly = this.isReadOnly();
+		if (readonly === this.deltaManager.readOnlyInfo.readonly) {
+			return this.deltaManager.readOnlyInfo;
+		} else {
+			return readonly === true
+				? {
+						readonly,
+						forced: false,
+						permissions: undefined,
+						storageOnly: false,
+					}
+				: { readonly };
+		}
+	}
+
+	/**
+	 * Called by the owning datastore context to emit the readonly
+	 * event on the delta manger that is projected down to the datastore
+	 * runtime. This state may not align with that of the true delta
+	 * manager if the context wishes to control the read only state
+	 * differently than the delta manager itself.
+	 */
+	public emitReadonly(): void {
+		this.emit("readonly", this.isReadOnly());
+	}
+}
+
+/**
+ * {@link IFluidDataStoreContext} for the implementations of {@link IFluidDataStoreChannel} which powers the {@link IDataStore}s.
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidParentContext, IDisposable
+	implements IFluidDataStoreContextInternal, IFluidDataStoreContext, IDisposable
 {
-	public get packagePath(): readonly string[] {
+	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
 		return this.pkg;
 	}
@@ -215,9 +266,15 @@ export abstract class FluidDataStoreContext
 		return this.parentContext.baseLogger;
 	}
 
+	private readonly _contextDeltaManagerProxy: ContextDeltaManagerProxy;
 	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
-		return this.parentContext.deltaManager;
+		return this._contextDeltaManagerProxy;
 	}
+
+	private isStagingMode: boolean = false;
+	public isReadOnly = (): boolean =>
+		(this.isStagingMode && this.channel?.policies?.readonlyInStagingMode !== false) ||
+		this.parentContext.isReadOnly();
 
 	public get connected(): boolean {
 		return this.parentContext.connected;
@@ -276,6 +333,14 @@ export abstract class FluidDataStoreContext
 
 	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
 		return this.registry;
+	}
+
+	/**
+	 * The compatibility details of the Runtime layer that is exposed to the DataStore layer
+	 * for validating DataStore-Runtime compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return runtimeCompatDetailsForDataStore;
 	}
 
 	private baseSnapshotSequenceNumber: number | undefined;
@@ -352,14 +417,32 @@ export abstract class FluidDataStoreContext
 
 	public readonly id: string;
 	private readonly _containerRuntime: IContainerRuntimeBase;
-	private readonly parentContext: IFluidParentContext;
-	public readonly storage: IDocumentStorageService;
+	/**
+	 * Information for this data store from its parent.
+	 *
+	 * @remarks
+	 * The parent which provided this information currently can be the container runtime or a datastore (if the datastore this context is for is nested under another one).
+	 */
+	private readonly parentContext: IFluidParentContextPrivate;
+	public readonly storage: IRuntimeStorageService;
 	public readonly scope: FluidObject;
-	// Represents the group to which the data store belongs too.
+	/**
+	 * The loading group to which the data store belongs to.
+	 */
 	public readonly loadingGroupId: string | undefined;
-	protected pkg?: readonly string[];
+	/**
+	 * {@link PackagePath} of this data store.
+	 *
+	 * This can be undefined when a data store is delay loaded, i.e., the attributes of this data store in the snapshot are not fetched until this data store is actually used.
+	 * At that time, the attributes blob is fetched and the pkg is updated from it.
+	 *
+	 * @see {@link PackagePath}.
+	 * @see {@link IFluidDataStoreContext.packagePath}.
+	 * @see {@link factoryFromPackagePath}.
+	 */
+	protected pkg?: PackagePath;
 
-	constructor(
+	public constructor(
 		props: IFluidDataStoreContextProps,
 		private readonly existing: boolean,
 		public readonly isLocalDataStore: boolean,
@@ -410,6 +493,16 @@ export abstract class FluidDataStoreContext
 		// By default, a data store can log maximum 10 local changes telemetry in summarizer.
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
+
+		assert(
+			isIDeltaManagerFull(this.parentContext.deltaManager),
+			0xb83 /* Invalid delta manager */,
+		);
+
+		this._contextDeltaManagerProxy = new ContextDeltaManagerProxy(
+			this.parentContext.deltaManager,
+			() => this.isReadOnly(),
+		);
 	}
 
 	public dispose(): void {
@@ -427,6 +520,7 @@ export abstract class FluidDataStoreContext
 				})
 				.catch((error) => {});
 		}
+		this._contextDeltaManagerProxy.dispose();
 	}
 
 	/**
@@ -450,10 +544,13 @@ export abstract class FluidDataStoreContext
 		attachState: AttachState.Attaching | AttachState.Attached,
 	): void;
 
-	private rejectDeferredRealize(
+	/**
+	 * Throw a {@link LoggingError} indicating that {@link factoryFromPackagePath} failed.
+	 */
+	private factoryFromPackagePathError(
 		reason: string,
 		failedPkgPath?: string,
-		fullPackageName?: readonly string[],
+		fullPackageName?: PackagePath,
 	): never {
 		throw new LoggingError(
 			reason,
@@ -496,34 +593,45 @@ export abstract class FluidDataStoreContext
 		return this.channelP;
 	}
 
+	/**
+	 * Gets the factory that would be used to instantiate this data store by calling `instantiateDataStore` based on {@link pkg}.
+	 * @remarks
+	 * Also populates {@link registry}.
+	 *
+	 * Must be called after {@link pkg} is set, and only called once.
+	 *
+	 * @see {@link @fluidframework/container-runtime-definitions#IContainerRuntimeBase.createDataStore}.
+	 * @see {@link FluidDataStoreContext.pkg}.
+	 */
 	protected async factoryFromPackagePath(): Promise<IFluidDataStoreFactory> {
-		const packages = this.pkg;
-		if (packages === undefined) {
-			this.rejectDeferredRealize("packages is undefined");
+		const path = this.pkg;
+		if (path === undefined) {
+			this.factoryFromPackagePathError("packages is undefined");
 		}
 
 		let entry: FluidDataStoreRegistryEntry | undefined;
 		let registry: IFluidDataStoreRegistry | undefined =
 			this.parentContext.IFluidDataStoreRegistry;
-		let lastPkg: string | undefined;
-		for (const pkg of packages) {
+		let lastIdentifier: string | undefined;
+		// Follow the path, looking up each identifier in the registry along the way:
+		for (const identifier of path) {
 			if (!registry) {
-				this.rejectDeferredRealize("No registry for package", lastPkg, packages);
+				this.factoryFromPackagePathError("No registry for package", lastIdentifier, path);
 			}
-			lastPkg = pkg;
-			entry = registry.getSync?.(pkg) ?? (await registry.get(pkg));
+			lastIdentifier = identifier;
+			entry = registry.getSync?.(identifier) ?? (await registry.get(identifier));
 			if (!entry) {
-				this.rejectDeferredRealize(
+				this.factoryFromPackagePathError(
 					"Registry does not contain entry for the package",
-					pkg,
-					packages,
+					identifier,
+					path,
 				);
 			}
 			registry = entry.IFluidDataStoreRegistry;
 		}
 		const factory = entry?.IFluidDataStoreFactory;
 		if (factory === undefined) {
-			this.rejectDeferredRealize("Can't find factory for package", lastPkg, packages);
+			this.factoryFromPackagePathError("Can't find factory for package", lastIdentifier, path);
 		}
 
 		assert(this.registry === undefined, 0x157 /* "datastore registry already attached" */);
@@ -532,7 +640,7 @@ export abstract class FluidDataStoreContext
 		return factory;
 	}
 
-	createChildDataStore<T extends IFluidDataStoreFactory>(
+	public createChildDataStore<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>> {
 		const maybe = this.registry?.getSync?.(childFactory.type);
@@ -581,6 +689,7 @@ export abstract class FluidDataStoreContext
 
 		const channel = await factory.instantiateDataStore(this, existing);
 		assert(channel !== undefined, 0x140 /* "undefined channel on datastore context" */);
+
 		await this.bindRuntime(channel, existing);
 		// This data store may have been disposed before the channel is created during realization. If so,
 		// dispose the channel now.
@@ -612,27 +721,27 @@ export abstract class FluidDataStoreContext
 		this.channel!.setConnectionState(connected, clientId);
 	}
 
+	public notifyReadOnlyState(): void {
+		this.verifyNotClosed("notifyReadOnlyState", false /* checkTombstone */);
+
+		// These two calls achieve the same purpose, and are both needed for a time for back compat
+		this.channel?.notifyReadOnlyState?.(this.isReadOnly());
+		this._contextDeltaManagerProxy.emitReadonly();
+	}
+
 	/**
-	 * back-compat ADO 21575: This is temporary and will be removed once the compat requirement across Runtime and
-	 * Datastore boundary is satisfied.
-	 * Process the messages to maintain backwards compatibility. The `processMessages` function is added to
-	 * IFluidDataStoreChannel in 2.5.0. For channels before that, call `process` for each message.
+	 * Updates the readonly state of the data store based on the staging mode.
+	 *
+	 * @param staging - A boolean indicating whether the container is in staging mode.
+	 * If true, the data store is set to readonly unless explicitly allowed by its policies.
 	 */
-	private processMessagesCompat(
-		channel: IFluidDataStoreChannel,
-		messageCollection: IRuntimeMessageCollection,
-	): void {
-		if (channel.processMessages === undefined) {
-			const { envelope, messagesContent, local } = messageCollection;
-			for (const { contents, localOpMetadata, clientSequenceNumber } of messagesContent) {
-				channel.process(
-					{ ...envelope, contents, clientSequenceNumber },
-					local,
-					localOpMetadata,
-				);
-			}
-		} else {
-			channel.processMessages(messageCollection);
+	public notifyStagingMode(staging: boolean): void {
+		// If the `readonlyInStagingMode` policy is not explicitly set to `false`,
+		// the data store is treated as readonly in staging mode.
+		const oldReadOnlyState = this.isReadOnly();
+		this.isStagingMode = staging;
+		if (this.isReadOnly() !== oldReadOnlyState) {
+			this.notifyReadOnlyState();
 		}
 	}
 
@@ -651,7 +760,7 @@ export abstract class FluidDataStoreContext
 
 		if (this.loaded) {
 			assert(this.channel !== undefined, 0xa68 /* Channel is not loaded */);
-			this.processMessagesCompat(this.channel, messageCollection);
+			this.channel.processMessages(messageCollection);
 		} else {
 			assert(!local, 0x142 /* "local store channel is not loaded" */);
 			assert(
@@ -815,20 +924,11 @@ export abstract class FluidDataStoreContext
 		this.parentContext.addedGCOutboundRoute(fromPath, toPath, messageTimestampMs);
 	}
 
-	// eslint-disable-next-line jsdoc/require-description
-	/**
-	 * @deprecated 0.18.Should call request on the runtime directly
-	 */
-	public async request(request: IRequest): Promise<IResponse> {
-		const runtime = await this.realizeInternal();
-		return runtime.request(request);
-	}
-
 	public submitMessage(type: string, content: unknown, localOpMetadata: unknown): void {
 		this.verifyNotClosed("submitMessage");
 		assert(!!this.channel, 0x146 /* "Channel must exist when submitting message" */);
-		// Summarizer clients should not submit messages.
-		this.identifyLocalChangeInSummarizer("DataStoreMessageSubmittedInSummarizer", type);
+		// Readonly clients should not submit messages.
+		this.identifyLocalChangeIfReadonly("DataStoreMessageWhileReadonly", type);
 
 		this.parentContext.submitMessage(type, content, localOpMetadata);
 	}
@@ -857,12 +957,6 @@ export abstract class FluidDataStoreContext
 		}
 	}
 
-	/**
-	 * Submits the signal to be sent to other clients.
-	 * @param type - Type of the signal.
-	 * @param content - Content of the signal. Should be a JSON serializable object or primitive.
-	 * @param targetClientId - When specified, the signal is only sent to the provided client id.
-	 */
 	public submitSignal(type: string, content: unknown, targetClientId?: string): void {
 		this.verifyNotClosed("submitSignal");
 
@@ -889,7 +983,7 @@ export abstract class FluidDataStoreContext
 		for (const messageCollection of this.pendingMessagesState.messageCollections) {
 			// Only process ops whose seq number is greater than snapshot sequence number from which it loaded.
 			if (messageCollection.envelope.sequenceNumber > baseSequenceNumber) {
-				this.processMessagesCompat(channel, messageCollection);
+				channel.processMessages(messageCollection);
 			}
 		}
 
@@ -898,6 +992,13 @@ export abstract class FluidDataStoreContext
 	}
 
 	protected completeBindingRuntime(channel: IFluidDataStoreChannel): void {
+		// Validate that the DataStore is compatible with this Runtime.
+		const maybeDataStoreCompatDetails = channel as FluidObject<ILayerCompatDetails>;
+		validateDatastoreCompatibility(
+			maybeDataStoreCompatDetails.ILayerCompatDetails,
+			this.dispose.bind(this),
+		);
+
 		// And now mark the runtime active
 		this.loaded = true;
 		this.channel = channel;
@@ -986,9 +1087,14 @@ export abstract class FluidDataStoreContext
 		return {};
 	}
 
-	public reSubmit(type: string, contents: unknown, localOpMetadata: unknown): void {
+	public reSubmit(
+		type: string,
+		contents: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void {
 		assert(!!this.channel, 0x14b /* "Channel must exist when resubmitting ops" */);
-		this.channel.reSubmit(type, contents, localOpMetadata);
+		this.channel.reSubmit(type, contents, localOpMetadata, squash);
 	}
 
 	public rollback(type: string, contents: unknown, localOpMetadata: unknown): void {
@@ -1044,6 +1150,7 @@ export abstract class FluidDataStoreContext
 				callSite,
 				undefined /* sequencedMessage */,
 				safeTelemetryProps,
+				30 /* stackTraceLimit */,
 			);
 
 			this.mc.logger.sendTelemetryEvent(
@@ -1058,19 +1165,16 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
-	 * Summarizer client should not have local changes. These changes can become part of the summary and can break
+	 * Readonly client, including summarizer, should not have local changes. These changes can become part of the summary and can break
 	 * eventual consistency. For example, the next summary (say at ref seq# 100) may contain these changes whereas
 	 * other clients that are up-to-date till seq# 100 may not have them yet.
 	 */
-	protected identifyLocalChangeInSummarizer(eventName: string, type?: string): void {
-		if (
-			this.clientDetails.type !== summarizerClientType ||
-			this.localChangesTelemetryCount <= 0
-		) {
+	protected identifyLocalChangeIfReadonly(eventName: string, type?: string): void {
+		if (!this.isReadOnly() || this.localChangesTelemetryCount <= 0) {
 			return;
 		}
 
-		// Log a telemetry if there are local changes in the summarizer. This will give us data on how often
+		// Log a telemetry if there are local changes in readonly. This will give us data on how often
 		// this is happening and which data stores do this. The eventual goal is to disallow local changes
 		// in the summarizer and the data will help us plan this.
 		this.mc.logger.sendTelemetryEvent({
@@ -1078,6 +1182,8 @@ export abstract class FluidDataStoreContext
 			type,
 			isSummaryInProgress: this.summarizerNode.isSummaryInProgress?.(),
 			stack: generateStack(30),
+			readonly: this.isReadOnly(),
+			isStagingMode: this.isStagingMode,
 		});
 		this.localChangesTelemetryCount--;
 	}
@@ -1279,7 +1385,7 @@ export class LocalFluidDataStoreContextBase extends FluidDataStoreContext {
 		);
 
 		// Summarizer client should not create local data stores.
-		this.identifyLocalChangeInSummarizer("DataStoreCreatedInSummarizer");
+		this.identifyLocalChangeIfReadonly("DataStoreCreatedWhileReadonly");
 
 		this.snapshotTree = props.snapshotTree;
 	}

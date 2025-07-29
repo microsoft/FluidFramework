@@ -10,8 +10,13 @@ import {
 	unreachableCase,
 } from "@fluidframework/common-utils";
 import { getGitType } from "@fluidframework/protocol-base";
-import { ISnapshotTree, SummaryObject, SummaryType } from "@fluidframework/protocol-definitions";
 import {
+	type ISnapshotTree,
+	type SummaryObject,
+	SummaryType,
+} from "@fluidframework/protocol-definitions";
+
+import type {
 	ISummaryTree,
 	IWholeSummaryTree,
 	WholeSummaryTreeValue,

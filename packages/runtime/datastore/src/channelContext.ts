@@ -9,10 +9,7 @@ import {
 	IChannelFactory,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
@@ -22,6 +19,7 @@ import {
 	IFluidDataStoreContext,
 	ISummarizeResult,
 	type IRuntimeMessageCollection,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
@@ -53,11 +51,11 @@ export interface IChannelContext {
 		telemetryContext?: ITelemetryContext,
 	): Promise<ISummarizeResult>;
 
-	reSubmit(content: any, localOpMetadata: unknown): void;
+	reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void;
 
-	applyStashedOp(content: any): unknown;
+	applyStashedOp(content: unknown): unknown;
 
-	rollback(message: any, localOpMetadata: unknown): void;
+	rollback(message: unknown, localOpMetadata: unknown): void;
 
 	/**
 	 * Returns the data used for garbage collection. This includes a list of GC nodes that represent this context
@@ -82,10 +80,10 @@ export interface ChannelServiceEndpoints {
 
 export function createChannelServiceEndpoints(
 	connected: boolean,
-	submitFn: (content: any, localOpMetadata: unknown) => void,
+	submitFn: (content: unknown, localOpMetadata: unknown) => void,
 	dirtyFn: () => void,
 	isAttachedAndVisible: () => boolean,
-	storageService: IDocumentStorageService,
+	storageService: IRuntimeStorageService,
 	logger: ITelemetryLoggerExt,
 	tree?: ISnapshotTree,
 	extraBlobs?: Map<string, ArrayBufferLike>,
@@ -104,7 +102,9 @@ export function createChannelServiceEndpoints(
 	};
 }
 
-/** Used to get the channel's summary for the DDS or DataStore attach op */
+/**
+ * Used to get the channel's summary for the DDS or DataStore attach op.
+ */
 export function summarizeChannel(
 	channel: IChannel,
 	fullTree: boolean = false,

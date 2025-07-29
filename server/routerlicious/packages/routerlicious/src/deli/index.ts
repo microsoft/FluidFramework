@@ -4,22 +4,22 @@
  */
 
 import { BroadcasterLambda, DeliLambdaFactory } from "@fluidframework/server-lambdas";
-import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import {
 	LocalKafka,
 	LocalContext,
 	LocalLambdaController,
 } from "@fluidframework/server-memory-orderer";
+import { createDocumentRouter } from "@fluidframework/server-routerlicious-base";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { Provider } from "nconf";
-import { RedisOptions, ClusterOptions } from "ioredis";
-import * as winston from "winston";
 import {
 	RedisClientConnectionManager,
 	type IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
+import type { RedisOptions, ClusterOptions } from "ioredis";
+import type { Provider } from "nconf";
+import * as winston from "winston";
 
 export async function deliCreate(
 	config: Provider,
@@ -65,6 +65,9 @@ export async function deliCreate(
 	const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 	const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
 	const globalDbEnabled = config.get("mongo:globalDbEnabled") as boolean;
+	const ephemeralDocumentTTLSec = config.get("storage:ephemeralDocumentTTLSec") as
+		| number
+		| undefined;
 	// Database connection for global db if enabled
 	const factory = await services.getDbFactory(config);
 
@@ -161,6 +164,8 @@ export async function deliCreate(
 			undefined,
 			redisConfig.enableClustering,
 			redisConfig.slotsRefreshTimeout,
+			undefined /* retryDelays */,
+			redisConfig.enableVerboseErrorLogging,
 		);
 	// The socketioredispublisher handles redis connection graceful shutdown
 	const publisher = new services.SocketIoRedisPublisher(redisClientConnectionManager);
@@ -216,6 +221,7 @@ export async function deliCreate(
 		reverseProducer,
 		serviceConfiguration,
 		customizations?.clusterDrainingChecker,
+		ephemeralDocumentTTLSec,
 	);
 
 	deliLambdaFactory.on("dispose", () => {

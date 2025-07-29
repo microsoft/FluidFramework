@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 
 import { OdspUrlResolver } from "../urlResolver.js";
 

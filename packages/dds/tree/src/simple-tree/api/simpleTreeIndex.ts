@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "@fluidframework/core-utils/internal";
 import type {
 	AnchorNode,
 	FieldKey,
@@ -18,9 +19,14 @@ import {
 	type TreeIndexKey,
 	type KeyFinder,
 } from "../../feature-libraries/index.js";
-import { brand, fail } from "../../util/index.js";
-import type { ImplicitFieldSchema, NodeFromSchema } from "../schemaTypes.js";
-import { treeNodeFromAnchor, type TreeNode, type TreeNodeSchema } from "../core/index.js";
+import { brand } from "../../util/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import {
+	treeNodeFromAnchor,
+	type TreeNode,
+	type TreeNodeSchema,
+	type NodeFromSchema,
+} from "../core/index.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 import type { TreeView } from "./tree.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
@@ -164,7 +170,7 @@ export function createSimpleTreeIndex<
 							return makeGenericKeyFinder<TKey>(brand(keyLocation), isKeyValid);
 						}
 					} else {
-						fail("node is out of schema");
+						fail(0xb32 /* node is out of schema */);
 					}
 				}
 			: (schemaIdentifier: TreeNodeSchemaIdentifier) => {
@@ -179,7 +185,7 @@ export function createSimpleTreeIndex<
 				};
 
 	const index = new AnchorTreeIndex<TKey, TValue>(
-		(view as SchematizingSimpleTreeView<TFieldSchema>).getView().checkout.forest,
+		(view as SchematizingSimpleTreeView<TFieldSchema>).checkout.forest,
 		schemaIndexer,
 		(anchorNodes) => {
 			const simpleTreeNodes: TreeNode[] = [];
@@ -221,11 +227,11 @@ function makeGenericKeyFinder<TKey extends TreeIndexKey>(
 		cursor.exitField();
 
 		if (value === undefined) {
-			fail("a value for the key does not exist");
+			fail(0xb33 /* a value for the key does not exist */);
 		}
 
 		if (!isKeyValid(value)) {
-			fail("the key is an unexpected type");
+			fail(0xb34 /* the key is an unexpected type */);
 		}
 
 		return value;

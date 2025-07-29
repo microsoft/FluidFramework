@@ -3,25 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import * as git from "@fluidframework/gitresources";
-import {
+import type * as git from "@fluidframework/gitresources";
+import type {
 	IStorageNameRetriever,
 	IThrottler,
 	IRevokedTokenChecker,
 	IDocumentManager,
+	IDenyList,
 } from "@fluidframework/server-services-core";
-import { IThrottleMiddlewareOptions, throttle } from "@fluidframework/server-services-utils";
+import {
+	denyListMiddleware,
+	type IThrottleMiddlewareOptions,
+	throttle,
+} from "@fluidframework/server-services-utils";
 import {
 	containsPathTraversal,
 	validateRequestParams,
 } from "@fluidframework/server-services-shared";
 import { Router } from "express";
-import * as nconf from "nconf";
+import type * as nconf from "nconf";
 import winston from "winston";
-import { ICache, IDenyList, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
+import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
 import { Constants } from "../../utils";
 import { NetworkError } from "@fluidframework/server-services-client";
+import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -37,6 +43,8 @@ export function create(
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
 	const router: Router = Router();
+
+	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
 
 	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
 		throttleIdPrefix: (req) => req.params.tenantId,
@@ -63,7 +71,6 @@ export function create(
 			storageNameRetriever,
 			documentManager,
 			cache,
-			denyList,
 			ephemeralDocumentTTLSec,
 		});
 		return service.getCommits(sha, count);
@@ -73,7 +80,8 @@ export function create(
 		"/repos/:ignored?/:tenantId/commits",
 		validateRequestParams("tenantId"),
 		throttle(restTenantGeneralThrottler, winston, tenantThrottleOptions),
-		utils.verifyToken(revokedTokenChecker),
+		utils.verifyToken(revokedTokenChecker, [ScopeType.DocRead], maxTokenLifetimeSec),
+		denyListMiddleware(denyList),
 		(request, response, next) => {
 			const sha = utils.queryParamToString(request.query.sha);
 			if (sha === undefined) {

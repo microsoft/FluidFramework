@@ -19,11 +19,9 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import type { Value } from "../../core/index.js";
-import { typeboxValidator } from "../../external-utilities/index.js";
-import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
 import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
 import { type JsonCompatibleReadOnly, getOrAddEmptyToMap } from "../../util/index.js";
-import { treeTestFactory } from "../utils.js";
+import { DefaultTestSharedTreeKind } from "../utils.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -58,13 +56,7 @@ function createConnectedTree(): ITreePrivate {
 		idCompressor: createIdCompressor(),
 	});
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
-	const tree = treeTestFactory({
-		runtime: dataStoreRuntime,
-		options: {
-			jsonValidator: typeboxValidator,
-			treeEncodeType: TreeCompressionStrategy.Uncompressed,
-		},
-	});
+	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, "tree");
 	tree.connect({
 		deltaConnection: dataStoreRuntime.createDeltaConnection(),
 		objectStorage: new MockStorage(),

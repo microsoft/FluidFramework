@@ -5,18 +5,19 @@
 
 import { delay } from "@fluidframework/common-utils";
 import {
-	ICollection,
-	IContext,
+	type ICollection,
+	type IContext,
 	isRetryEnabled,
-	IScribe,
-	ISequencedOperationMessage,
+	type IScribe,
+	type ISequencedOperationMessage,
 	runWithRetry,
-	IDeltaService,
-	IDocumentRepository,
-	ICheckpointService,
+	type IDeltaService,
+	type IDocumentRepository,
+	type ICheckpointService,
 } from "@fluidframework/server-services-core";
 import { getLumberBaseProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
-import { ICheckpointManager } from "./interfaces";
+
+import type { ICheckpointManager } from "./interfaces";
 import { isLocalCheckpoint } from "./utils";
 
 /**

@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import * as os from "os";
 import cluster from "cluster";
-import { TypedEventEmitter } from "@fluidframework/common-utils";
-import { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
+import * as os from "os";
+
+import type { TypedEventEmitter } from "@fluidframework/common-utils";
 import { KafkaOrdererFactory } from "@fluidframework/server-kafka-orderer";
+import type { ICollaborationSessionEvents } from "@fluidframework/server-lambdas";
 import {
 	LocalNodeFactory,
 	LocalOrderManager,
@@ -16,19 +17,22 @@ import {
 } from "@fluidframework/server-memory-orderer";
 import * as services from "@fluidframework/server-services";
 import * as core from "@fluidframework/server-services-core";
+import type { IReadinessCheck } from "@fluidframework/server-services-core";
+import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as utils from "@fluidframework/server-services-utils";
+import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
 import * as bytes from "bytes";
-import { Provider } from "nconf";
+import type { Provider } from "nconf";
 import * as winston from "winston";
 import * as ws from "ws";
-import { RedisClientConnectionManager } from "@fluidframework/server-services-utils";
+
+import { Constants } from "../utils";
+
+import type { INexusResourcesCustomizations } from "./customizations";
+import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
-import { INexusResourcesCustomizations } from "./customizations";
-import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
-import { IReadinessCheck } from "@fluidframework/server-services-core";
-import { closeRedisClientConnections, StartupCheck } from "@fluidframework/server-services-shared";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -80,6 +84,7 @@ export class NexusResources implements core.IResources {
 		public clusterDrainingChecker?: core.IClusterDrainingChecker,
 		public collaborationSessionTracker?: core.ICollaborationSessionTracker,
 		public readinessCheck?: IReadinessCheck,
+		public denyList?: core.IDenyList,
 	) {}
 
 	public async dispose(): Promise<void> {
@@ -170,6 +175,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					redisConfig2.enableClustering,
 					redisConfig2.slotsRefreshTimeout,
 					retryDelays,
+					redisConfig2.enableVerboseErrorLogging,
 			  );
 		redisClientConnectionManagers.push(redisClientConnectionManager);
 
@@ -234,6 +240,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig2,
 						redisConfig2.enableClustering,
 						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForJwtCache);
 		const redisJwtCache = new services.RedisCache(redisClientConnectionManagerForJwtCache);
@@ -306,7 +314,30 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 
 		const internalHistorianUrl = config.get("worker:internalBlobStorageUrl");
 		const authEndpoint = config.get("auth:endpoint");
-		const tenantManager = new services.TenantManager(authEndpoint, internalHistorianUrl);
+		const redisClientConnectionManagerForInvalidTokenCache =
+			customizations?.redisClientConnectionManagerForInvalidTokenCache
+				? customizations.redisClientConnectionManagerForInvalidTokenCache
+				: new RedisClientConnectionManager(
+						undefined,
+						redisConfig2,
+						redisConfig2.enableClustering,
+						redisConfig2.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig2.enableVerboseErrorLogging,
+				  );
+		redisClientConnectionManagers.push(redisClientConnectionManagerForInvalidTokenCache);
+		const redisCacheForInvalidToken = new services.RedisCache(
+			redisClientConnectionManagerForInvalidTokenCache,
+			{
+				expireAfterSeconds: redisConfig2.keyExpireAfterSeconds,
+				prefix: Constants.invalidTokenCachePrefix,
+			},
+		);
+		const tenantManager = new services.TenantManager(
+			authEndpoint,
+			internalHistorianUrl,
+			redisCacheForInvalidToken,
+		);
 
 		// Redis connection for throttling.
 		const redisConfigForThrottling = config.get("redisForThrottling");
@@ -325,6 +356,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfigForThrottling.enableClustering,
 						redisConfigForThrottling.slotsRefreshTimeout,
 						retryDelays,
+						redisConfigForThrottling.enableVerboseErrorLogging,
 				  );
 		redisClientConnectionManagers.push(redisClientConnectionManagerForThrottling);
 
@@ -447,6 +479,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 							redisConfig,
 							redisConfig.enableClustering,
 							redisConfig.slotsRefreshTimeout,
+							undefined /* retryDelays */,
+							redisConfig.enableVerboseErrorLogging,
 					  );
 			redisClientConnectionManagers.push(redisClientConnectionManagerForLogging);
 
@@ -490,8 +524,6 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			ordererManagerOptions,
 		);
 
-		const collaborationSessionEvents = new TypedEventEmitter<ICollaborationSessionEvents>();
-
 		// This wanst to create stuff
 		const port = utils.normalizePort(process.env.PORT || "3000");
 
@@ -534,6 +566,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig.enableVerboseErrorLogging,
 				  );
 
 		const redisClientConnectionManagerForSub =
@@ -544,6 +578,8 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 						redisConfig,
 						redisConfig.enableClustering,
 						redisConfig.slotsRefreshTimeout,
+						undefined /* retryDelays */,
+						redisConfig.enableVerboseErrorLogging,
 				  );
 
 		const socketIoAdapterConfig = config.get("nexus:socketIoAdapter");
@@ -572,6 +608,12 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			  );
 
 		const startupCheck = new StartupCheck();
+		const documentsDenyListConfig = config.get("documentDenyList");
+		const tenantsDenyListConfig = config.get("tenantsDenyList");
+		const denyList: core.IDenyList = new utils.DenyList(
+			tenantsDenyListConfig,
+			documentsDenyListConfig,
+		);
 
 		return new NexusResources(
 			config,
@@ -598,11 +640,12 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 			socketTracker,
 			tokenRevocationManager,
 			revokedTokenChecker,
-			collaborationSessionEvents,
+			undefined,
 			serviceMessageResourceManager,
 			customizations?.clusterDrainingChecker,
 			collaborationSessionTracker,
 			customizations?.readinessCheck,
+			denyList,
 		);
 	}
 }
@@ -636,6 +679,7 @@ export class NexusRunnerFactory implements core.IRunnerFactory<NexusResources> {
 			resources.clusterDrainingChecker,
 			resources.collaborationSessionTracker,
 			resources.readinessCheck,
+			resources.denyList,
 		);
 	}
 }

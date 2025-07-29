@@ -20,14 +20,19 @@
 
 export {
 	DataObjectFactory,
+	type DataObjectFactoryProps,
 	PureDataObjectFactory,
+	TreeDataObjectFactory,
 	ConverterDataObjectFactory,
+	type ConverterDataObjectFactoryProps,
 } from "./data-object-factories/index.js";
 export {
 	DataObject,
+	type DataObjectKind,
 	type DataObjectTypes,
 	type IDataObjectProps,
 	PureDataObject,
+	TreeDataObject,
 	createDataObjectKind,
 } from "./data-objects/index.js";
 export {

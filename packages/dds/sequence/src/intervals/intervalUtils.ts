@@ -7,10 +7,6 @@
 
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	// eslint-disable-next-line import/no-deprecated
-	Client,
-	// eslint-disable-next-line import/no-deprecated
-	PropertiesManager,
 	PropertySet,
 	SlidingPreference,
 	SequencePlace,
@@ -25,6 +21,9 @@ import {
 export interface IInterval {
 	/**
 	 * @returns a new interval object with identical semantics.
+	 *
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 * @privateRemarks Move to ISerializableInterval after deprecation period
 	 */
 	clone(): IInterval;
 	/**
@@ -49,6 +48,8 @@ export interface IInterval {
 	compareEnd(b: IInterval): number;
 	/**
 	 * Modifies one or more of the endpoints of this interval, returning a new interval representing the result.
+	 *
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
 	 */
 	modify(
 		label: string,
@@ -56,7 +57,7 @@ export interface IInterval {
 		end: SequencePlace | undefined,
 		op?: ISequencedDocumentMessage,
 		localSeq?: number,
-		useNewSlidingBehavior?: boolean,
+		canSlideToEndpoint?: boolean,
 	): IInterval | undefined;
 	/**
 	 * @returns whether this interval overlaps with `b`.
@@ -67,6 +68,8 @@ export interface IInterval {
 	 * Unions this interval with `b`, returning a new interval.
 	 * The union operates as a convex hull, i.e. if the two intervals are disjoint, the return value includes
 	 * intermediate values between the two intervals.
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 * @privateRemarks Move to ISerializableInterval after deprecation period
 	 */
 	union(b: IInterval): IInterval;
 }
@@ -156,12 +159,16 @@ export interface ISerializedInterval {
 /**
  * @legacy
  * @alpha
+ * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+ * @privateRemarks Remove from external exports, and replace usages of IInterval with this interface after deprecation period
  */
 export interface ISerializableInterval extends IInterval {
 	/** Serializable bag of properties associated with the interval. */
 	properties: PropertySet;
 
-	/***/
+	/**
+	 * @deprecated This api is not meant or necessary for external consumption and will be removed in subsequent release
+	 */
 	serialize(): ISerializedInterval;
 
 	/**
@@ -171,10 +178,6 @@ export interface ISerializableInterval extends IInterval {
 	 */
 	getIntervalId(): string;
 }
-
-export type ISerializableIntervalPrivate<T extends ISerializableInterval> = T & {
-	propertyManager?: PropertiesManager;
-};
 
 /**
  * Represents a change that should be applied to an existing interval.
@@ -214,40 +217,6 @@ export type CompressedSerializedInterval =
 			IntervalStickiness,
 	  ]
 	| [number | "start" | "end", number | "start" | "end", number, IntervalType, PropertySet];
-
-/**
- * @sealed
- * @deprecated The methods within have substitutions
- * @internal
- */
-export interface IIntervalHelpers<TInterval extends ISerializableInterval> {
-	/**
-	 *
-	 * @param label - label of the interval collection this interval is being added to. This parameter is
-	 * irrelevant for transient intervals.
-	 * @param start - numerical start position of the interval
-	 * @param end - numerical end position of the interval
-	 * @param client - client creating the interval
-	 * @param intervalType - Type of interval to create. Default is SlideOnRemove
-	 * @param op - If this create came from a remote client, op that created it. Default is undefined (i.e. local)
-	 * @param fromSnapshot - If this create came from loading a snapshot. Default is false.
-	 * @param startSide - The side on which the start position lays. See
-	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
-	 * @param endSide - The side on which the end position lays. See
-	 * {@link @fluidframework/merge-tree#SequencePlace} for additional context
-	 */
-	create(
-		label: string,
-		start: SequencePlace | undefined,
-		end: SequencePlace | undefined,
-		// eslint-disable-next-line import/no-deprecated
-		client: Client | undefined,
-		intervalType: IntervalType,
-		op?: ISequencedDocumentMessage,
-		fromSnapshot?: boolean,
-		useNewSlidingBehavior?: boolean,
-	): TInterval;
-}
 
 /**
  * Determines how an interval should expand when segments are inserted adjacent
@@ -295,8 +264,12 @@ export const IntervalStickiness = {
 export type IntervalStickiness = (typeof IntervalStickiness)[keyof typeof IntervalStickiness];
 
 export function startReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
 ): SlidingPreference {
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
 	// if any start stickiness, prefer sliding backwards
 	return (stickiness & IntervalStickiness.START) === 0
 		? SlidingPreference.FORWARD
@@ -304,10 +277,34 @@ export function startReferenceSlidingPreference(
 }
 
 export function endReferenceSlidingPreference(
-	stickiness: IntervalStickiness,
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
 ): SlidingPreference {
+	const stickiness = computeStickinessFromSide(startPos, startSide, endPos, endSide);
+
 	// if any end stickiness, prefer sliding forwards
 	return (stickiness & IntervalStickiness.END) === 0
 		? SlidingPreference.BACKWARD
 		: SlidingPreference.FORWARD;
+}
+
+export function computeStickinessFromSide(
+	startPos: number | "start" | "end" | undefined,
+	startSide: Side,
+	endPos: number | "start" | "end" | undefined,
+	endSide: Side,
+): IntervalStickiness {
+	let stickiness: IntervalStickiness = IntervalStickiness.NONE;
+
+	if (startSide === Side.After || startPos === "start") {
+		stickiness |= IntervalStickiness.START;
+	}
+
+	if (endSide === Side.Before || endPos === "end") {
+		stickiness |= IntervalStickiness.END;
+	}
+
+	return stickiness as IntervalStickiness;
 }

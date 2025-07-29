@@ -321,7 +321,6 @@ export async function setUpLocalServerTestSharedTree(
 
 	const featureGates = options.featureGates ?? {};
 	featureGates['Fluid.Container.enableOfflineLoad'] = true;
-	featureGates['Fluid.ContainerRuntime.DisablePartialFlush'] = true;
 
 	const treeId = id ?? 'test';
 	let factory: SharedTreeFactory;
@@ -696,7 +695,8 @@ export async function withContainerOffline<TReturn>(
 	await provider.ensureSynchronized();
 	await provider.opProcessingController.pauseProcessing(container);
 	const actionReturn = action();
-	const pendingLocalState = await container.closeAndGetPendingLocalState?.();
+	const pendingLocalState = await container.getPendingLocalState?.();
+	container.close();
 	assert(pendingLocalState !== undefined, 0x726 /* pendingLocalState should be defined */);
 	return { actionReturn, pendingLocalState };
 }

@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { IQueuedMessage, IProducer } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IQueuedMessage, IProducer } from "@fluidframework/server-services-core";
 import Deque from "double-ended-queue";
-import { IKafkaSubscriber } from "./interfaces";
+
+import type { IKafkaSubscriber } from "./interfaces";
 import { LocalKafkaSubscription } from "./localKafkaSubscription";
 
 /**

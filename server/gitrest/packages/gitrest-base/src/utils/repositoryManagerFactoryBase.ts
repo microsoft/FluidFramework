@@ -6,17 +6,19 @@
 import { NetworkError } from "@fluidframework/server-services-client";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import { executeApiWithMetric } from "@fluidframework/server-services-utils";
-import { E_TIMEOUT, Mutex, MutexInterface, withTimeout } from "async-mutex";
-import { IExternalStorageManager } from "../externalStorageManager";
+import { E_TIMEOUT, Mutex, type MutexInterface, withTimeout } from "async-mutex";
+
+import type { IExternalStorageManager } from "../externalStorageManager";
+
 import {
 	Constants,
-	IFileSystemManager,
-	IFileSystemManagerFactories,
-	IFileSystemManagerParams,
-	IRepoManagerParams,
-	IRepositoryManager,
-	IRepositoryManagerFactory,
-	IStorageDirectoryConfig,
+	type IFileSystemManager,
+	type IFileSystemManagerFactories,
+	type IFileSystemManagerParams,
+	type IRepoManagerParams,
+	type IRepositoryManager,
+	type IRepositoryManagerFactory,
+	type IStorageDirectoryConfig,
 } from "./definitions";
 import {
 	BaseGitRestTelemetryProperties,

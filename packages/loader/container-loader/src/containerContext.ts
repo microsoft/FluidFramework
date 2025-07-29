@@ -18,12 +18,12 @@ import {
 	ILoader,
 	ILoaderOptions,
 	IDeltaManager,
+	type IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
 import { type FluidObject } from "@fluidframework/core-interfaces";
 import { type ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { LoaderCompatDetails } from "./layerCompatState.js";
+import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 
 /**
  * {@inheritDoc @fluidframework/container-definitions#IContainerContext}
@@ -71,8 +71,12 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return this._getConnected();
 	}
 
+	/**
+	 * The compatibility details of the Loader layer that is exposed to the Runtime layer
+	 * for validating Runtime-Loader compatibility.
+	 */
 	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return LoaderCompatDetails;
+		return loaderCompatDetailsForRuntime;
 	}
 
 	constructor(
@@ -81,7 +85,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		public readonly baseSnapshot: ISnapshotTree | undefined,
 		private readonly _version: IVersion | undefined,
 		public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
-		public readonly storage: IDocumentStorageService,
+		public readonly storage: IContainerStorageService,
 		public readonly quorum: IQuorumClients,
 		public readonly audience: IAudience,
 		public readonly loader: ILoader,

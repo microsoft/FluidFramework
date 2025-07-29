@@ -167,22 +167,21 @@ export class RootDO2 extends DataObject {
 	}
 }
 
-export const DOWithSTFactory = new DataObjectFactory(
-	"a",
-	DOWithST,
-	[SharedTree.getFactory()],
-	{},
-);
-export const DOWithST2Factory = new DataObjectFactory(
-	"b",
-	DOWithST2,
-	[SharedTree.getFactory()],
-	{},
-);
-export const RootDO2Factory = new DataObjectFactory("rootdo", RootDO2, [], {}, [
-	DOWithSTFactory.registryEntry,
-	DOWithST2Factory.registryEntry,
-]);
+export const DOWithSTFactory = new DataObjectFactory({
+	type: "DOWithST",
+	ctor: DOWithST,
+});
+
+export const DOWithST2Factory = new DataObjectFactory({
+	type: "DOWithST2",
+	ctor: DOWithST2,
+});
+
+export const RootDO2Factory = new DataObjectFactory({
+	type: "rootdo",
+	ctor: RootDO2,
+	registryEntries: [DOWithSTFactory.registryEntry, DOWithST2Factory.registryEntry],
+});
 
 export const newRuntimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 	defaultFactory: RootDO2Factory,

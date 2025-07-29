@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import fsPromises from "fs/promises";
 import type { MakeDirectoryOptions } from "fs";
-import * as git from "@fluidframework/gitresources";
+import type fsPromises from "fs/promises";
+
+import type * as git from "@fluidframework/gitresources";
 
 export enum Constants {
 	StorageRoutingIdHeader = "Storage-Routing-Id",

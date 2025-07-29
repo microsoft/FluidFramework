@@ -74,6 +74,11 @@ export interface OrderedEditSet<TChange = unknown> {
 	 * @deprecated this will be removed in favor of {@link OrderedEditSet.tryGetEditAtIndex}
 	 */
 	getEditInSessionAtIndex(index: number): Edit<TChange>;
+
+	/**
+	 * Gets all local edits.
+	 */
+	getLocalEdits(): Iterable<Edit<TChange>>;
 }
 
 /**

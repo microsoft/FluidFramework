@@ -22,7 +22,11 @@ const {
  * @param {number} headingOptions.headingLevel - Root heading level for the generated section.
  * Must be a positive integer.
  */
-const generateInstallationInstructionsSection = (packageName, devDependency, headingOptions) => {
+const generateInstallationInstructionsSection = (
+	packageName,
+	devDependency,
+	headingOptions,
+) => {
 	const sectionBody = `To get started, install the package by running the following command:
 
 \`\`\`bash

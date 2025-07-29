@@ -8,7 +8,7 @@ import { existsSync } from "node:fs";
 
 import { confirm, rawlist } from "@inquirer/prompts";
 import execa from "execa";
-import { Machine } from "jssm";
+import type { Machine } from "jssm";
 
 import { bumpVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo } from "@fluidframework/build-tools";
@@ -23,12 +23,12 @@ import {
 	getReleaseSourceForReleaseGroup,
 	isReleased,
 } from "../library/index.js";
-import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
-import { ReleaseSource, isReleaseGroup } from "../releaseGroups.js";
+import type { CommandLogger } from "../logging.js";
+import type { MachineState } from "../machines/index.js";
+import { type ReleaseSource, isReleaseGroup } from "../releaseGroups.js";
 import { getRunPolicyCheckDefault } from "../repoConfig.js";
-import { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
-import { BaseStateHandler, StateHandlerFunction } from "./stateHandlers.js";
+import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
+import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 
 /**
  * Only client and server release groups use changesets and the related release note and per-package changelog
@@ -336,6 +336,7 @@ export const checkOnReleaseBranch: StateHandlerFunction = async (
 		if (currentBranch === releaseBranch) {
 			BaseStateHandler.signalSuccess(machine, state);
 		} else {
+			log.errorLog(`Expected release branch to be '${releaseBranch}'`);
 			BaseStateHandler.signalFailure(machine, state);
 		}
 	} else {
@@ -687,7 +688,7 @@ export const checkReleaseIsDone: StateHandlerFunction = async (
 
 	const { context, releaseGroup, releaseVersion } = data;
 
-	const wasReleased = await isReleased(context, releaseGroup, releaseVersion);
+	const wasReleased = await isReleased(context, releaseGroup, releaseVersion, log);
 	if (wasReleased) {
 		BaseStateHandler.signalSuccess(machine, state);
 	} else {

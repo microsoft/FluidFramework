@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
 
 /**
  * @internal
@@ -16,6 +16,7 @@ export interface IDeltaService {
 		from?: number,
 		to?: number,
 		caller?: string,
+		fetchReason?: string,
 	): Promise<ISequencedDocumentMessage[]>;
 
 	getDeltasFromStorage(

@@ -4,7 +4,8 @@
  */
 
 import { EventEmitter } from "events";
-import {
+
+import type {
 	IContext,
 	IPartitionLambda,
 	IPartitionLambdaConfig,
@@ -12,6 +13,7 @@ import {
 	IServiceConfiguration,
 	MongoManager,
 } from "@fluidframework/server-services-core";
+
 import { MoiraLambda } from "./lambda";
 
 /**

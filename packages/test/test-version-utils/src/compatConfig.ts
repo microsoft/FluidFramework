@@ -49,14 +49,14 @@ export interface CompatConfig {
 	containerRuntime?: string | number;
 	dataRuntime?: string | number;
 	/**
-	 * Cross Version Compat Only
+	 * Cross-Client Compat Only
 	 * Version that the `TestObjectProviderWithVersionedLoad` will use to create the container with.
 	 * (Same version will be used across all layers).
 	 * This is same as compatVersion, but it's easier to use createVersion in the code as compatVersion type is number | string.
 	 */
 	createVersion?: string;
 	/**
-	 * Cross Version Compat Only
+	 * Cross-Client Compat Only
 	 * Version that the `TestObjectProviderWithVersionedLoad` will use to load the container with.
 	 * (Same version will be used across all layers).
 	 */
@@ -66,6 +66,8 @@ export interface CompatConfig {
 const defaultCompatVersions = {
 	// N and N - 1
 	currentVersionDeltas: [0, -1],
+	// N, N-1, and N-2 for cross-client compat
+	currentCrossClientVersionDeltas: [0, -1, -2],
 	// we are currently supporting 1.3.X long-term
 	ltsVersions: [resolveVersion("^1.3", false)],
 };
@@ -245,8 +247,8 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
  */
 export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
 	let lowerVersion: string | number = config.compatVersion;
-	// For CrossVersion there are 2 versions being tested. Get the lower one.
-	if (config.kind === CompatKind.CrossVersion) {
+	// For cross-client there are 2 versions being tested. Get the lower one.
+	if (config.kind === CompatKind.CrossClient) {
 		lowerVersion =
 			semver.compare(config.compatVersion as string, config.loadVersion as string) > 0
 				? (config.loadVersion as string)
@@ -257,11 +259,40 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
 
-// Helper function for genCrossVersionCompatConfig().
-function genCompatConfig(createVersion: string, loadVersion: string): CompatConfig {
+/**
+ * Returns true if the given compat config is compliant with ODSP's version requirements.
+ * ! If a summarizer's version is too old (using dual-commit summaries), ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
+ */
+export function isOdspCompatCompliant(config: CompatConfig): boolean {
+	const versionIsCompliant = (version: string | number | undefined) => {
+		// ! Looking at current telemetry, the oldest hit that doesn't use dual-commit summaries was version "2.0.0-rc.5.0.7"
+		// ! Given this, version "2.0.0" is a fine cut off since we currently only test back to N-1
+		const odspMinVersion = "2.0.0";
+		return (
+			version === undefined ||
+			typeof version !== "string" ||
+			semver.compare(version, odspMinVersion) >= 0
+		);
+	};
+
+	return (
+		versionIsCompliant(config.compatVersion) &&
+		versionIsCompliant(config.createVersion) &&
+		versionIsCompliant(config.loadVersion)
+	);
+}
+
+// Helper function for genCrossClientCompatConfig().
+function genCompatConfig(versionDetails: {
+	createVersion: string;
+	loadVersion: string;
+	createDelta: string;
+	loadDelta: string;
+}): CompatConfig {
+	const { createVersion, loadVersion, createDelta, loadDelta } = versionDetails;
 	return {
-		name: `compat cross version - create with ${createVersion} + load with ${loadVersion}`,
-		kind: CompatKind.CrossVersion,
+		name: `compat cross-client - create with ${createVersion} (${createDelta}) + load with ${loadVersion} (${loadDelta})`,
+		kind: CompatKind.CrossClient,
 		// Note: `compatVersion` is used to determine what versions need to be installed.
 		// By setting it to `resolvedCreateVersion` we ensure both versions will eventually be
 		// installed, since we switch the create/load versions in the test permutations.
@@ -271,34 +302,95 @@ function genCompatConfig(createVersion: string, loadVersion: string): CompatConf
 	};
 }
 /**
- * Generates the cross version compat config permutations.
+ * Generates the cross-client compat config permutations.
  * This will resolve to one permutation where `CompatConfig.createVersion` is set to the current version and
- * `CompatConfig.loadVersion` is set to the delta (N-1) version. Then, a second permutation where `CompatConfig.createVersion`
- * is set to the delta (N-1) version and `CompatConfig.loadVersion` is set to the current version.
+ * `CompatConfig.loadVersion` is set to the delta version. Then, a second permutation where `CompatConfig.createVersion`
+ * is set to the delta version and `CompatConfig.loadVersion` is set to the current version.
+ * The delta versions will be:
+ * - N-1 and N-2, for "fast train" customers (i.e. \>=2.10.0 \<2.20.0, \>=2.20.0 \<2.30.0, etc.)
+ * - N-1 and N-2, for "slow train" customers (i.e. ^1.0.0, ^2.0.0, etc.)
+ * - LTS versions
  *
- * Note: `adjustMajorPublic` will be set to true when requesting versions. This will ensure that we test against
- * the latest **public** major release when using the N-1 version (instead of the most recent internal major release).
+ * @remarks
+ * Fast/slow trains refer to the different velocities that customers adopt new releases.
+ * Fast train customers integrate most minor releases quickly and saturate on a roughly 2-month
+ * cadence. This currently aligns with our regular schedule for .10 minor releases (i.e. 2.10.0,
+ * 2.20.0, etc.). Note that this may change in the future, and we will have to adjust our strategy accordingly.
+ * Slow train customers mainly integrate public major releases and may take much longer to saturate
+ * on any given release. Ideally, the slow train releases would also be on a regular time-based cadence, but
+ * public major releases are not currently on a fixed schedule. This may change in the future.
+ * We want to be able to test cross-client compat for both types of customers, so we generate permutations for
+ * N/N-1 and N/N-2 for both fast and slow trains.
  *
  * @internal
  */
-export const genCrossVersionCompatConfig = (): CompatConfig[] => {
-	const currentVersion = getRequestedVersion(pkgVersion, 0);
+export const genCrossClientCompatConfig = (): CompatConfig[] => {
+	const currentVersion = getRequestedVersion(pkgVersion, 0, false /* adjustMajorPublic */);
 
-	// Build a list of all the versions we want to test, except current version.
-	const allDefaultDeltaVersions = defaultCompatVersions.currentVersionDeltas
+	// We build a map of all the versions we want to test the current version against.
+	// The key is the version and the value is a string describing the delta from the current version.
+	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
+	// If there is a duplicate version (i.e. the N-1 public major version is the same as the LTS version),
+	// then we will append the delta description to the existing delta description for that version.
+	const deltaVersions: Map<string, string> = new Map();
+
+	// N-1 and N-2 for "fast train" releases
+	defaultCompatVersions.currentCrossClientVersionDeltas
 		.filter((delta) => delta !== 0) // skip current build
-		.map((delta) => getRequestedVersion(pkgVersion, delta));
-	allDefaultDeltaVersions.push(...defaultCompatVersions.ltsVersions);
+		.forEach((delta) => {
+			const v = getRequestedVersion(pkgVersion, delta, false /* adjustMajorPublic */);
+			if (semver.gte(v, "1.0.0")) {
+				deltaVersions.set(v, `N${delta} fast train`);
+			}
+		});
 
-	// Build all combos of (current verison, prior version) & (prior version, current version)
-	const configs: CompatConfig[] = [];
+	// N-1 and N-2 for "slow train" releases
+	// Note: We add these in a separate for loop to maintain the order of tests (minor, major, then LTS).
+	defaultCompatVersions.currentCrossClientVersionDeltas
+		.filter((delta) => delta !== 0) // skip current build
+		.forEach((delta) => {
+			const v = getRequestedVersion(pkgVersion, delta, true /* adjustMajorPublic */);
+			if (semver.gte(v, "1.0.0")) {
+				if (deltaVersions.has(v)) {
+					deltaVersions.set(v, `${deltaVersions.get(v)}/N${delta} slow train`);
+				} else {
+					deltaVersions.set(v, `N${delta} slow train`);
+				}
+			}
+		});
 
-	for (const c of allDefaultDeltaVersions) {
-		configs.push(genCompatConfig(currentVersion, c));
+	// LTS releases
+	for (const v of defaultCompatVersions.ltsVersions) {
+		if (semver.gte(v, "1.0.0")) {
+			if (deltaVersions.has(v)) {
+				deltaVersions.set(v, `${deltaVersions.get(v)}/LTS`);
+			} else {
+				deltaVersions.set(v, "LTS");
+			}
+		}
 	}
 
-	for (const c of allDefaultDeltaVersions) {
-		configs.push(genCompatConfig(c, currentVersion));
+	// Build all combos of (current version, prior version) & (prior version, current version)
+	const configs: CompatConfig[] = [];
+	for (const [v, delta] of deltaVersions) {
+		configs.push(
+			genCompatConfig({
+				createVersion: currentVersion,
+				loadVersion: v,
+				createDelta: "N",
+				loadDelta: delta,
+			}),
+		);
+	}
+	for (const [v, delta] of deltaVersions) {
+		configs.push(
+			genCompatConfig({
+				createVersion: v,
+				loadVersion: currentVersion,
+				createDelta: delta,
+				loadDelta: "N",
+			}),
+		);
 	}
 
 	return configs;
@@ -322,14 +414,14 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	// CompatVersions is set via pipeline flags. If not set, use default scenarios.
 	if (!compatVersions || compatVersions.length === 0) {
-		// By default run currentVersionDeltas (N/N-1), LTS, and cross version compat tests
+		// By default run currentVersionDeltas (N/N-1), LTS, and cross-client compat tests
 		defaultCompatVersions.currentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
 		defaultCompatVersions.ltsVersions.forEach((value) => {
 			_configList.push(...genLTSConfig(value));
 		});
-		_configList.push(...genCrossVersionCompatConfig());
+		_configList.push(...genCrossClientCompatConfig());
 		// If fluid__test__backCompat=FULL is enabled, run full back compat tests
 		if (process.env.fluid__test__backCompat === "FULL") {
 			_configList.push(...genFullBackCompatConfig());
@@ -354,8 +446,8 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 					_configList.push(...genFullBackCompatConfig(defaultNumOfDriverVersionsAboveV2Int1));
 					break;
 				}
-				case "CROSS_VERSION": {
-					_configList.push(...genCrossVersionCompatConfig());
+				case "CROSS_CLIENT": {
+					_configList.push(...genCrossClientCompatConfig());
 					break;
 				}
 				default: {

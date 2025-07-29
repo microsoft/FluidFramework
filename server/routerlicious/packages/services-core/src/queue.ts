@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Deferred } from "@fluidframework/common-utils";
-import { ITicketedMessage } from "./messages";
+import type { Deferred } from "@fluidframework/common-utils";
+
+import type { ITicketedMessage } from "./messages";
 
 /**
  * @internal
@@ -76,6 +77,12 @@ export interface IConsumer {
 	getLatestMessageOffset(partitionId: number): number | undefined;
 
 	/**
+	 * Returns the error codes that should be ignored and the checkpoint should be skipped
+	 * We increment counter for such errors and restart when they reach a threshold
+	 */
+	getIgnoreAndSkipCheckpointOnKafkaErrorCodes?(): number[];
+
+	/**
 	 * Event handlers
 	 */
 	on(
@@ -85,6 +92,8 @@ export interface IConsumer {
 	on(event: "data", listener: (message: IQueuedMessage) => void): this;
 	on(event: "rebalancing", listener: (partitions: IPartition[]) => void): this;
 	on(event: "rebalanced", listener: (partitions: IPartition[]) => void): this;
+	on(event: "coop.rebalance.assign", listener: (partitions: IPartition[]) => void): this;
+	on(event: "coop.rebalance.revoke", listener: (partitions: IPartition[]) => void): this;
 	on(event: string, listener: (...args: any[]) => void): this;
 	once(
 		event: "connected" | "disconnected" | "closed" | "paused" | "resumed",

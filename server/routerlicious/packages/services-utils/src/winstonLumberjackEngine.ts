@@ -4,13 +4,13 @@
  */
 
 import {
-	ILumberjackEngine,
+	type ILumberjackEngine,
 	LogLevel,
-	Lumber,
+	type Lumber,
 	LumberType,
 } from "@fluidframework/server-services-telemetry";
-import winston from "winston";
 import { serializeError } from "serialize-error";
+import winston from "winston";
 
 // Lumberjack engine based on Winston. It processes the data
 // captured in a Lumber instance and sends it through Winston.

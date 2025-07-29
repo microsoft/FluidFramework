@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaStorageService,
 	IDocumentService,
 	IDocumentServiceEvents,
@@ -13,11 +13,12 @@ import {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
-import { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { LocalOdspDeltaStorageService } from "./localOdspDeltaStorageService.js";
 import { LocalOdspDocumentStorageService } from "./localOdspDocumentStorageManager.js";
+import { localOdspDriverCompatDetailsForLoader } from "./localOdspLayerCompatState.js";
 
 /**
  * IDocumentService implementation that provides explicit snapshot to the document storage service.
@@ -35,6 +36,14 @@ export class LocalOdspDocumentService
 		private readonly localSnapshot: Uint8Array | string,
 	) {
 		super();
+	}
+
+	/**
+	 * The compatibility details of the Local ODSP Driver layer that is exposed to the Loader layer
+	 * for validating Loader-Driver compatibility.
+	 */
+	public get ILayerCompatDetails(): ILayerCompatDetails {
+		return localOdspDriverCompatDetailsForLoader;
 	}
 
 	public get resolvedUrl(): IResolvedUrl {

@@ -22,7 +22,7 @@ export namespace ConnectionState {
 // @public
 export type ConnectionState = ConnectionState.Disconnected | ConnectionState.EstablishingConnection | ConnectionState.CatchingUp | ConnectionState.Connected;
 
-// @alpha
+// @alpha @legacy
 export const ContainerErrorTypes: {
     readonly clientSessionExpiredError: "clientSessionExpiredError";
     readonly genericError: "genericError";
@@ -32,10 +32,10 @@ export const ContainerErrorTypes: {
     readonly usageError: "usageError";
 };
 
-// @alpha
+// @alpha @legacy
 export type ContainerErrorTypes = (typeof ContainerErrorTypes)[keyof typeof ContainerErrorTypes];
 
-// @alpha
+// @alpha @legacy
 export interface ContainerWarning extends IErrorBase_2 {
     logged?: boolean;
 }
@@ -56,14 +56,14 @@ export interface IAudienceEvents extends IEvent {
     (event: "selfChanged", listener: (oldValue: ISelf | undefined, newValue: ISelf) => void): void;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IAudienceOwner extends IAudience {
     addMember(clientId: string, details: IClient): void;
     removeMember(clientId: string): boolean;
     setCurrentClientId(clientId: string): void;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IBatchMessage {
     // (undocumented)
     compression?: string;
@@ -75,12 +75,12 @@ export interface IBatchMessage {
     referenceSequenceNumber?: number;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComparer> {
     load(source: IFluidCodeDetails): Promise<IFluidModuleWithDetails>;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IConnectionDetails {
     checkpointSequenceNumber: number | undefined;
     // (undocumented)
@@ -90,7 +90,7 @@ export interface IConnectionDetails {
     serviceConfiguration: IClientConfiguration;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IContainer extends IEventProvider<IContainerEvents> {
     attach(request: IRequest, attachProps?: {
         deltaConnection?: "none" | "delayed";
@@ -109,7 +109,6 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     readonly disposed?: boolean;
     forceReadonly?(readonly: boolean): any;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
-    getContainerPackageInfo?(): IContainerPackageInfo | undefined;
     getEntryPoint(): Promise<FluidObject>;
     getLoadedCodeDetails(): IFluidCodeDetails | undefined;
     getQuorum(): IQuorumClients;
@@ -121,7 +120,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     serialize(): string;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IContainerContext {
     readonly attachState: AttachState;
     // (undocumented)
@@ -155,7 +154,7 @@ export interface IContainerContext {
     readonly scope: FluidObject;
     readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IContainerStorageService;
     // (undocumented)
     readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
     // @deprecated (undocumented)
@@ -172,7 +171,7 @@ export interface IContainerContext {
     updateDirtyContainerState(dirty: boolean): void;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IContainerEvents extends IEvent {
     (event: "readonly", listener: (readonly: boolean) => void): void;
     (event: "connected", listener: (clientId: string) => void): any;
@@ -189,7 +188,7 @@ export interface IContainerEvents extends IEvent {
     (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IContainerLoadMode {
     // (undocumented)
     deltaConnection?: "none" | "delayed" | undefined;
@@ -197,15 +196,34 @@ export interface IContainerLoadMode {
     opsBeforeReturn?: undefined | "cached" | "all";
 }
 
-// @alpha
+// @alpha @legacy
 export type IContainerPolicies = {
     maxClientLeaveWaitTime?: number;
 };
 
+// @alpha @legacy
+export interface IContainerStorageService {
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
+    // @deprecated
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    readonly maximumCacheDurationMs?: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
+    // @deprecated
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+}
+
 // @public
 export type ICriticalContainerError = IErrorBase_2;
 
-// @alpha @sealed
+// @alpha @sealed @legacy
 export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>, IDeltaSender {
     readonly active: boolean;
     readonly clientDetails: IClientDetails;
@@ -224,7 +242,7 @@ export interface IDeltaManager<T, U> extends IEventProvider<IDeltaManagerEvents>
     readonly version: string;
 }
 
-// @alpha @sealed
+// @alpha @sealed @legacy
 export interface IDeltaManagerEvents extends IEvent {
     // @deprecated (undocumented)
     (event: "prepareSend", listener: (messageBuffer: any[]) => void): any;
@@ -240,7 +258,7 @@ export interface IDeltaManagerEvents extends IEvent {
     }) => void): any;
 }
 
-// @alpha @sealed
+// @alpha @sealed @legacy
 export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, IDisposable {
     idle: boolean;
     length: number;
@@ -255,21 +273,21 @@ export interface IDeltaQueue<T> extends IEventProvider<IDeltaQueueEvents<T>>, ID
     }>;
 }
 
-// @alpha @sealed
+// @alpha @sealed @legacy
 export interface IDeltaQueueEvents<T> extends IErrorEvent {
     (event: "push", listener: (task: T) => void): any;
     (event: "op", listener: (task: T) => void): any;
     (event: "idle", listener: (count: number, duration: number) => void): any;
 }
 
-// @alpha @sealed
+// @alpha @sealed @legacy
 export interface IDeltaSender {
     flush(): void;
 }
 
 export { IErrorBase }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidBrowserPackage extends IFluidPackage {
     fluid: {
         browser: IFluidBrowserPackageEnvironment;
@@ -277,7 +295,7 @@ export interface IFluidBrowserPackage extends IFluidPackage {
     };
 }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironment {
     umd: {
         files: string[];
@@ -285,40 +303,40 @@ export interface IFluidBrowserPackageEnvironment extends IFluidPackageEnvironmen
     };
 }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidCodeDetails {
     readonly config?: IFluidCodeDetailsConfig;
     readonly package: string | Readonly<IFluidPackage>;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const IFluidCodeDetailsComparer: keyof IProvideFluidCodeDetailsComparer;
 
-// @alpha
+// @alpha @legacy
 export interface IFluidCodeDetailsComparer extends IProvideFluidCodeDetailsComparer {
     compare(a: IFluidCodeDetails, b: IFluidCodeDetails): Promise<number | undefined>;
     satisfies(candidate: IFluidCodeDetails, constraint: IFluidCodeDetails): Promise<boolean>;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidCodeDetailsConfig {
     // (undocumented)
     readonly [key: string]: string;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IFluidModule {
     // (undocumented)
     fluidExport: FluidObject<IRuntimeFactory & IProvideFluidCodeDetailsComparer>;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidModuleWithDetails {
     details: IFluidCodeDetails;
     module: IFluidModule;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidPackage {
     [key: string]: unknown;
     fluid: {
@@ -327,7 +345,7 @@ export interface IFluidPackage {
     name: string;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IFluidPackageEnvironment {
     [target: string]: undefined | {
         files: string[];
@@ -335,7 +353,7 @@ export interface IFluidPackageEnvironment {
     };
 }
 
-// @alpha
+// @alpha @legacy
 export interface IGetPendingLocalStateProps {
     readonly notifyImminentClosure: boolean;
     readonly sessionExpiryTimerStarted?: number;
@@ -343,7 +361,7 @@ export interface IGetPendingLocalStateProps {
     readonly stopBlobAttachingSignal?: AbortSignal;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IHostLoader extends ILoader {
     createDetachedContainer(codeDetails: IFluidCodeDetails, createDetachedProps?: {
         canReconnect?: boolean;
@@ -355,12 +373,12 @@ export interface IHostLoader extends ILoader {
     }): Promise<IContainer>;
 }
 
-// @alpha
+// @alpha @legacy
 export interface ILoader extends Partial<IProvideLoader> {
     resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer>;
 }
 
-// @alpha
+// @alpha @legacy
 export type ILoaderOptions = {
     cache?: boolean;
     client?: IClient;
@@ -369,25 +387,25 @@ export type ILoaderOptions = {
     maxClientLeaveWaitTime?: number;
 };
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IProvideFluidCodeDetailsComparer {
     // (undocumented)
     readonly IFluidCodeDetailsComparer: IFluidCodeDetailsComparer;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IProvideLoader {
     // (undocumented)
     readonly ILoader: ILoader;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export interface IProvideRuntimeFactory {
     // (undocumented)
     readonly IRuntimeFactory: IRuntimeFactory;
 }
 
-// @alpha
+// @alpha @legacy
 export interface IRuntime extends IDisposable {
     createSummary(blobRedirectTable?: Map<string, string>): ISummaryTree;
     getEntryPoint(): Promise<FluidObject>;
@@ -396,13 +414,13 @@ export interface IRuntime extends IDisposable {
     process(message: ISequencedDocumentMessage, local: boolean): any;
     processSignal(message: any, local: boolean): any;
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
-    setConnectionState(connected: boolean, clientId?: string): any;
+    setConnectionState(canSendOps: boolean, clientId?: string): any;
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export const IRuntimeFactory: keyof IProvideRuntimeFactory;
 
-// @alpha
+// @alpha @legacy
 export interface IRuntimeFactory extends IProvideRuntimeFactory {
     instantiateRuntime(context: IContainerContext, existing: boolean): Promise<IRuntime>;
 }
@@ -413,13 +431,13 @@ export interface ISelf {
     readonly clientId: string;
 }
 
-// @alpha
+// @alpha @legacy
 export const isFluidBrowserPackage: (maybePkg: unknown) => maybePkg is Readonly<IFluidBrowserPackage>;
 
-// @alpha
+// @alpha @legacy
 export const isFluidPackage: (pkg: unknown) => pkg is Readonly<IFluidPackage>;
 
-// @alpha
+// @alpha @legacy
 export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
     // (undocumented)
     blobsContents?: {
@@ -433,7 +451,7 @@ export interface ISnapshotTreeWithBlobContents extends ISnapshotTree {
 
 export { IThrottlingWarning }
 
-// @alpha
+// @alpha @legacy
 export enum LoaderHeader {
     // @deprecated (undocumented)
     cache = "fluid-cache",
@@ -446,7 +464,7 @@ export enum LoaderHeader {
     version = "version"
 }
 
-// @alpha (undocumented)
+// @alpha @legacy (undocumented)
 export type ReadOnlyInfo = {
     readonly readonly: false | undefined;
 } | {

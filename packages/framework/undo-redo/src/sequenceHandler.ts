@@ -4,18 +4,18 @@
  */
 
 import {
-	ISegment,
-	MergeTreeDeltaRevertible,
+	type ISegment,
+	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
 	discardMergeTreeDeltaRevertible,
 	revertMergeTreeDeltaRevertibles,
 } from "@fluidframework/merge-tree/internal";
-import {
+import type {
 	SequenceDeltaEvent,
-	type ISharedSegmentSequence,
+	ISharedSegmentSequence,
 } from "@fluidframework/sequence/internal";
 
-import { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
+import type { IRevertible, UndoRedoStackManager } from "./undoRedoStackManager.js";
 
 /**
  * A shared segment sequence undo redo handler that will add all local sequences changes to the provided
@@ -32,18 +32,18 @@ export class SharedSegmentSequenceUndoRedoHandler {
 		this.stackManager.on("changePushed", () => this.sequences.clear());
 	}
 
-	public attachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>) {
+	public attachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>): void {
 		sequence.on("sequenceDelta", this.sequenceDeltaHandler);
 	}
 
-	public detachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>) {
+	public detachSequence<T extends ISegment>(sequence: ISharedSegmentSequence<T>): void {
 		sequence.off("sequenceDelta", this.sequenceDeltaHandler);
 	}
 
 	private readonly sequenceDeltaHandler = (
 		event: SequenceDeltaEvent,
 		target: ISharedSegmentSequence<ISegment>,
-	) => {
+	): void => {
 		if (event.isLocal) {
 			let revertible = this.sequences.get(target);
 			if (revertible === undefined) {
@@ -67,15 +67,15 @@ export class SharedSegmentSequenceRevertible implements IRevertible {
 		this.revertibles = [];
 	}
 
-	public add(event: SequenceDeltaEvent) {
+	public add(event: SequenceDeltaEvent): void {
 		appendToMergeTreeDeltaRevertibles(event.deltaArgs, this.revertibles);
 	}
 
-	public revert() {
+	public revert(): void {
 		revertMergeTreeDeltaRevertibles(this.sequence, this.revertibles);
 	}
 
-	public discard() {
+	public discard(): void {
 		discardMergeTreeDeltaRevertible(this.revertibles);
 	}
 }

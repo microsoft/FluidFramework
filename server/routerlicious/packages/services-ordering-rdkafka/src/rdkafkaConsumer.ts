@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type * as kafkaTypes from "node-rdkafka";
-
 import { Deferred } from "@fluidframework/common-utils";
-import {
+import type {
 	IConsumer,
 	IPartition,
 	IQueuedMessage,
@@ -14,7 +12,10 @@ import {
 	ZookeeperClientConstructor,
 } from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
-import { IKafkaBaseOptions, IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
+import { InMemoryApiCounters } from "@fluidframework/server-services-utils";
+import type * as kafkaTypes from "node-rdkafka";
+
+import { type IKafkaBaseOptions, type IKafkaEndpoints, RdkafkaBase } from "./rdkafkaBase";
 
 /**
  * @internal
@@ -58,12 +59,19 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 	private readonly latestOffsets: Map<number, number> = new Map();
 	private readonly paused: Map<number, boolean> = new Map();
 	private readonly pausedOffsets: Map<number, number> = new Map();
+	private readonly apiCounter = new InMemoryApiCounters();
+	private readonly failedApiCounterSuffix = ".Failed";
+	private readonly isCoopRebalanceStrategyEnabled: boolean;
+	private consecutiveFailedCount = 0;
+	private apiCounterInterval: NodeJS.Timeout | undefined;
 
 	constructor(
 		endpoints: IKafkaEndpoints,
 		clientId: string,
 		topic: string,
 		public readonly groupId: string,
+		private readonly apiCounterConfig: Record<string, any>,
+		private readonly ignoreAndSkipCheckpointOnKafkaErrorCodes: number[],
 		options?: Partial<IKafkaConsumerOptions>,
 	) {
 		super(endpoints, clientId, topic, options);
@@ -87,6 +95,81 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			automaticConsume: options?.automaticConsume ?? true,
 			maxConsumerCommitRetries: options?.maxConsumerCommitRetries ?? 10,
 		};
+		if (this.apiCounterConfig.apiCounterEnabled) {
+			this.apiCounterInterval = setInterval(() => {
+				if (!this.apiCounter.countersAreActive) {
+					return;
+				}
+				const counters = this.apiCounter.getCounters();
+				this.apiCounter.resetAllCounters();
+				Lumberjack.info(
+					`KafkaConsumer counter for topic ${topic}`, // can be multiple partitions..?
+					counters,
+				);
+				this.terminateBasedOnCounterThreshold(counters);
+			}, this.apiCounterConfig.apiCounterIntervalMS);
+		}
+
+		this.isCoopRebalanceStrategyEnabled =
+			options?.additionalOptions?.["partition.assignment.strategy"]?.toLowerCase() ===
+			"cooperative-sticky";
+	}
+
+	private terminateBasedOnCounterThreshold(counters: Record<string, number>): void {
+		if (this.apiCounterConfig.apiFailureRateTerminationThreshold > 1) {
+			return; // If threshold set more than 1, meaning we should never terminate and skip followings.
+		}
+		let totalCount = 0;
+		let totalFailedCount = 0;
+
+		// currently we maintain counters for only `kafkaOffsetCommit` apiName
+		for (const [apiName, apiCounter] of Object.entries(counters)) {
+			totalCount += apiCounter;
+			if (apiName.endsWith(this.failedApiCounterSuffix)) {
+				totalFailedCount += apiCounter;
+			}
+		}
+
+		const failureRate = totalFailedCount / totalCount;
+
+		if (failureRate <= this.apiCounterConfig.apiFailureRateTerminationThreshold) {
+			this.consecutiveFailedCount = 0;
+			return;
+		}
+
+		this.consecutiveFailedCount++;
+		const logProperties = {
+			failureRate,
+			totalCount,
+			totalFailedCount,
+			apiFailureRateTerminationThreshold:
+				this.apiCounterConfig.apiFailureRateTerminationThreshold,
+			apiMinimumCountToEnableTermination:
+				this.apiCounterConfig.apiMinimumCountToEnableTermination,
+			consecutiveFailedCount: this.consecutiveFailedCount,
+			consecutiveFailedThresholdForLowerTotalRequests:
+				this.apiCounterConfig.consecutiveFailedThresholdForLowerTotalRequests,
+		};
+		if (
+			totalCount < this.apiCounterConfig.apiMinimumCountToEnableTermination &&
+			this.consecutiveFailedCount <
+				this.apiCounterConfig.consecutiveFailedThresholdForLowerTotalRequests
+		) {
+			Lumberjack.warning("Total count didn't meet min threshold", logProperties);
+			return;
+		}
+
+		Lumberjack.warning("Failure rate more than threshold, terminating", logProperties);
+		this.error(new Error(`Failure rate more than threshold, terminating`), {
+			restart: true,
+			errorLabel: "rdkafkaConsumer:terminateBasedOnCounterThreshold",
+		});
+	}
+
+	public getIgnoreAndSkipCheckpointOnKafkaErrorCodes(): number[] {
+		return this.apiCounterConfig.apiCounterEnabled
+			? this.ignoreAndSkipCheckpointOnKafkaErrorCodes
+			: [];
 	}
 
 	/**
@@ -143,6 +226,10 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 			...this.sslOptions,
 		};
 
+		if (this.isCoopRebalanceStrategyEnabled) {
+			Lumberjack.info(`Cooperative rebalance strategy is enabled for topic '${this.topic}'`);
+		}
+
 		consumer = this.consumer = new this.kafka.KafkaConsumer(options, {
 			"auto.offset.reset": "latest",
 		});
@@ -188,11 +275,26 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 						err.code === this.kafka.CODES.ERRORS.ERR_ILLEGAL_GENERATION);
 
 				if (!shouldRetryCommit) {
-					this.error(err, {
-						restart: false,
-						errorLabel: "rdkafkaConsumer:offset.commit",
-					});
+					if (
+						this.apiCounterConfig.apiCounterEnabled &&
+						this.ignoreAndSkipCheckpointOnKafkaErrorCodes.includes(err.code)
+					) {
+						Lumberjack.info("Skipping checkpoint and incrementing api failed counter", {
+							error: err,
+							apiName: "kafkaOffsetCommit",
+						});
+						this.apiCounter.incrementCounter(
+							`kafkaOffsetCommit${this.failedApiCounterSuffix}`,
+						);
+					} else {
+						this.error(err, {
+							restart: false,
+							errorLabel: "rdkafkaConsumer:offset.commit",
+						});
+					}
 				}
+			} else if (this.apiCounterConfig.apiCounterEnabled) {
+				this.apiCounter.incrementCounter("kafkaOffsetCommit");
 			}
 
 			for (const offset of offsets) {
@@ -232,79 +334,13 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS ||
 				err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS
 			) {
-				const newAssignedPartitions = new Set<number>(
-					topicPartitions.map((tp) => tp.partition),
-				);
-
-				if (
-					newAssignedPartitions.size === this.assignedPartitions.size &&
-					Array.from(this.assignedPartitions).every((ap) => newAssignedPartitions.has(ap))
-				) {
-					// the consumer is already up to date
-					return;
-				}
-
-				// clear pending messages
-				this.pendingMessages.clear();
-
-				if (!this.consumerOptions.optimizedRebalance) {
-					if (this.isRebalancing) {
-						this.isRebalancing = false;
-					} else {
-						this.emit(
-							"rebalancing",
-							this.getPartitions(this.assignedPartitions),
-							err.code,
-						);
-					}
-				}
-
-				const originalAssignedPartitions = this.assignedPartitions;
-				this.assignedPartitions = newAssignedPartitions;
-
-				try {
-					this.isRebalancing = true;
-					const partitions = this.getPartitions(this.assignedPartitions);
-					this.emit("rebalanced", partitions, err.code);
-
-					// cleanup things left over from the lost partitions
-					for (const partition of originalAssignedPartitions) {
-						if (!newAssignedPartitions.has(partition)) {
-							// clear latest offset
-							this.latestOffsets.delete(partition);
-
-							// clear paused offset if it exists
-							if (this.pausedOffsets.has(partition)) {
-								this.pausedOffsets.delete(partition);
-							}
-							if (this.paused.has(partition)) {
-								this.paused.delete(partition);
-							}
-
-							// reject pending commit
-							const deferredCommit = this.pendingCommits.get(partition);
-							if (deferredCommit) {
-								this.pendingCommits.delete(partition);
-								deferredCommit.reject(
-									new Error(`Partition for commit was unassigned. ${partition}`),
-								);
-							}
-						}
-					}
-
-					this.isRebalancing = false;
-
-					for (const pendingMessages of this.pendingMessages.values()) {
-						// process messages sent while we were rebalancing for each partition in order
-						for (const pendingMessage of pendingMessages) {
-							this.processMessage(pendingMessage);
-						}
-					}
-				} catch (ex) {
-					this.isRebalancing = false;
-					this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance" });
-				} finally {
-					this.pendingMessages.clear();
+				if (this.isCoopRebalanceStrategyEnabled) {
+					Lumberjack.debug("Cooperative rebalance in progress", {
+						currentAssignments: Array.from(this.assignedPartitions),
+					});
+					this.cooperativeRebalanceHandler(err, topicPartitions);
+				} else {
+					this.eagerRebalanceHandler(err, topicPartitions);
 				}
 			} else {
 				this.error(err, { restart: false, errorLabel: "rdkafkaConsumer:rebalance" });
@@ -340,6 +376,11 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		if (!reconnecting) {
 			// when closed outside of this class, disable reconnecting
 			this.closed = true;
+			// stop the api counter interval
+			if (this.apiCounterInterval !== undefined) {
+				clearInterval(this.apiCounterInterval);
+				this.apiCounterInterval = undefined;
+			}
 		}
 
 		// set consumer to undefined before disconnecting in order to
@@ -484,6 +525,18 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 				seekTimeout,
 				(err) => {
 					if (err) {
+						Lumberjack.error(
+							`Consumer seek failed`,
+							{
+								topic: this.topic,
+								partitionId,
+								offset,
+								isConsumerConnected: this.consumer?.isConnected(),
+								isConsumerRebalancing: this.isRebalancing,
+								consumerAssignments: this.consumer?.assignments()?.length,
+							},
+							err,
+						);
 						this.error(err, {
 							restart: true,
 							errorLabel: "rdkafkaConsumer:pauseFetching.seek",
@@ -582,6 +635,14 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 		}));
 	}
 
+	private convertPartitions(partitions: kafkaTypes.TopicPartition[]): IPartition[] {
+		return partitions.map((partition) => ({
+			topic: this.topic,
+			partition: partition.partition,
+			offset: -1, // n/a
+		}));
+	}
+
 	/**
 	 * The default node-rdkafka consumer rebalance callback with the addition
 	 * of continuing from the last seen offset for assignments that have not changed
@@ -621,13 +682,171 @@ export class RdkafkaConsumer extends RdkafkaBase implements IConsumer {
 					}
 				}
 
-				consumer.assign(assignments);
+				if (this.isCoopRebalanceStrategyEnabled) {
+					Lumberjack.debug("cooperative rebalance incremental assign", assignments);
+					consumer.incrementalAssign(assignments);
+				} else {
+					consumer.assign(assignments);
+				}
 			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
-				consumer.unassign();
+				if (this.isCoopRebalanceStrategyEnabled) {
+					Lumberjack.debug("cooperative rebalance revoke", assignments);
+					consumer.incrementalUnassign(assignments);
+				} else {
+					consumer.unassign();
+				}
 			}
 		} catch (ex) {
 			if (consumer.isConnected()) {
 				consumer.emit("rebalance.error", ex);
+			}
+		}
+	}
+
+	/**
+	 * Handles the eager rebalancing protocol events from Kafka
+	 * This is a default partition assignment strategy.
+	 *
+	 * @param err - The Kafka error object containing the rebalance event type
+	 * @param topicPartitions - Array of topic partitions involved in the rebalance
+	 */
+	private eagerRebalanceHandler(
+		err: kafkaTypes.LibrdKafkaError,
+		topicPartitions: kafkaTypes.TopicPartition[],
+	) {
+		const newAssignedPartitions = new Set<number>(topicPartitions.map((tp) => tp.partition));
+
+		if (
+			newAssignedPartitions.size === this.assignedPartitions.size &&
+			Array.from(this.assignedPartitions).every((ap) => newAssignedPartitions.has(ap))
+		) {
+			// the consumer is already up to date
+			return;
+		}
+
+		// clear pending messages
+		this.pendingMessages.clear();
+
+		if (!this.consumerOptions.optimizedRebalance) {
+			if (this.isRebalancing) {
+				this.isRebalancing = false;
+			} else {
+				this.emit("rebalancing", this.getPartitions(this.assignedPartitions), err.code);
+			}
+		}
+
+		const originalAssignedPartitions = this.assignedPartitions;
+		this.assignedPartitions = newAssignedPartitions;
+
+		try {
+			this.isRebalancing = true;
+			const partitions = this.getPartitions(this.assignedPartitions);
+			this.emit("rebalanced", partitions, err.code);
+
+			// cleanup things left over from the lost partitions
+			for (const partition of originalAssignedPartitions) {
+				if (!newAssignedPartitions.has(partition)) {
+					this.cleanupPartitionResources(partition);
+				}
+			}
+
+			this.isRebalancing = false;
+
+			this.processPendingMessages();
+		} catch (ex) {
+			this.isRebalancing = false;
+			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:eager" });
+		} finally {
+			this.pendingMessages.clear();
+		}
+	}
+
+	/**
+	 * Handles the cooperative rebalancing protocol events from Kafka
+	 * This is called when using the "cooperative-sticky" partition assignment strategy
+	 *
+	 * @param err - The Kafka error object containing the rebalance event type
+	 * @param topicPartitions - Array of topic partitions involved in the rebalance
+	 * @remarks
+	 * Cooperative rebalancing allows consumers to gradually transfer partition ownership
+	 * instead of stopping all consumers during a rebalance, leading to improved stability and efficiency.
+	 */
+	private cooperativeRebalanceHandler(
+		err: kafkaTypes.LibrdKafkaError,
+		topicPartitions: kafkaTypes.TopicPartition[],
+	) {
+		if (topicPartitions.length === 0) {
+			// According to Kafka's cooperative rebalancing protocol, there can be multiple rebalancing rounds.
+			// During these rounds, there might be intermediate states where a consumer receives an empty partition list as part of the protocol.
+			Lumberjack.debug("cooperative rebalance: no partitions assigned");
+			return;
+		}
+
+		this.isRebalancing = true;
+		try {
+			if (err.code === this.kafka.CODES.ERRORS.ERR__ASSIGN_PARTITIONS) {
+				topicPartitions.forEach((tp) => this.assignedPartitions.add(tp.partition));
+				this.emit(
+					"coop.rebalance.assign",
+					this.convertPartitions(topicPartitions),
+					err.code,
+				);
+			} else if (err.code === this.kafka.CODES.ERRORS.ERR__REVOKE_PARTITIONS) {
+				this.emit(
+					"coop.rebalance.revoke",
+					this.convertPartitions(topicPartitions),
+					err.code,
+				);
+
+				// clean up things left over from the lost partitions
+				topicPartitions.forEach((tp) => {
+					const partition = tp.partition;
+					this.assignedPartitions.delete(partition);
+					this.cleanupPartitionResources(partition);
+				});
+			}
+
+			this.isRebalancing = false;
+
+			this.processPendingMessages();
+		} catch (ex) {
+			this.isRebalancing = false;
+			this.error(ex, { restart: false, errorLabel: "rdkafkaConsumer:rebalance:cooperative" });
+		}
+	}
+
+	/**
+	 * Cleanup resources for a specific partition that is no longer assigned
+	 * @param partition - The partition number to cleanup
+	 */
+	private cleanupPartitionResources(partition: number): void {
+		// clear latest offset
+		this.latestOffsets.delete(partition);
+
+		// clear paused offset if it exists
+		if (this.pausedOffsets.has(partition)) {
+			this.pausedOffsets.delete(partition);
+		}
+		if (this.paused.has(partition)) {
+			this.paused.delete(partition);
+		}
+
+		// reject pending commit
+		const deferredCommit = this.pendingCommits.get(partition);
+		if (deferredCommit) {
+			this.pendingCommits.delete(partition);
+			deferredCommit.reject(new Error(`Partition for commit was unassigned. ${partition}`));
+		}
+	}
+
+	/**
+	 * Process any pending messages after rebalancing
+	 */
+	private processPendingMessages(): void {
+		for (const pendingMessages of this.pendingMessages.values()) {
+			// process messages sent while we were rebalancing for each partition in order
+			for (const pendingMessage of pendingMessages) {
+				this.processMessage(pendingMessage);
 			}
 		}
 	}

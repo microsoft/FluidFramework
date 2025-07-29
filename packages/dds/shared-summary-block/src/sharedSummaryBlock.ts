@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	Jsonable,
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import {
-	IFluidSerializer,
+	type IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
-import { ISharedSummaryBlock } from "./interfaces.js";
+import type { ISharedSummaryBlock } from "./interfaces.js";
 
 const snapshotFileName = "header";
 
@@ -75,9 +75,9 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	 */
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const contentsBlob: ISharedSummaryBlockDataSerializable = {};
-		this.data.forEach((value, key) => {
+		for (const [key, value] of this.data.entries()) {
 			contentsBlob[key] = value;
-		});
+		}
 		return createSingleBlobSummary(snapshotFileName, JSON.stringify(contentsBlob));
 	}
 
@@ -97,16 +97,16 @@ export class SharedSummaryBlockClass extends SharedObject implements ISharedSumm
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.onDisconnect}
 	 */
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
 	 */
-	protected processCore(message: ISequencedDocumentMessage, local: boolean) {
+	protected processCore(message: ISequencedDocumentMessage, local: boolean): void {
 		throw new Error("shared summary block should not generate any ops.");
 	}
 
-	protected applyStashedOp() {
+	protected applyStashedOp(): void {
 		throw new Error("not implemented");
 	}
 }

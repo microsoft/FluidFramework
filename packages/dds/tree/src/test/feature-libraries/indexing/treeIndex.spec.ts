@@ -25,16 +25,10 @@ import {
 	TreeViewConfiguration,
 	type TreeNode,
 } from "../../../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-// eslint-disable-next-line import/no-internal-modules
-import { treeApi } from "../../../shared-tree/treeApi.js";
-// eslint-disable-next-line import/no-internal-modules
-import { proxySlot } from "../../../simple-tree/core/treeNodeKernel.js";
-// eslint-disable-next-line import/no-internal-modules
-import { makeTree } from "../../../feature-libraries/flex-tree/lazyNode.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/core/index.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import { Tree } from "../../../shared-tree/index.js";
+import { getOrCreateHydratedFlexTreeNode } from "../../../feature-libraries/index.js";
+import { getOrCreateNodeFromInnerNode } from "../../../simple-tree/index.js";
 
 function readStringField(cursor: ITreeSubscriptionCursor, fieldKey: FieldKey): string {
 	cursor.enterField(fieldKey);
@@ -74,14 +68,14 @@ describe("tree indexes", () => {
 		return { view, parent: view.root };
 	}
 
-	function makeTreeNode(
+	function getOrCreateTreeNode(
 		anchorNode: AnchorNode,
 		forest: IEditableForest,
 		root: SchematizingSimpleTreeView<typeof IndexableParent>,
 	): TreeNode | TreeValue {
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(anchorNode, cursor);
-		const flexNode = makeTree(root.getView().context, cursor);
+		const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
 		cursor.free();
 		return getOrCreateNodeFromInnerNode(flexNode);
 	}
@@ -110,10 +104,9 @@ describe("tree indexes", () => {
 				);
 			},
 			(anchorNode: AnchorNode) => {
-				const simpleTree =
-					anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, root);
+				const simpleTree = getOrCreateTreeNode(anchorNode, forest, root);
 				if (!isTreeValue(simpleTree)) {
-					return treeApi.status(simpleTree);
+					return Tree.status(simpleTree);
 				}
 			},
 		);
@@ -134,6 +127,7 @@ describe("tree indexes", () => {
 							key,
 							nodes.map((f) => {
 								const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+								assert(flexNode.isHydrated());
 								return getOrCreate(
 									anchorIds,
 									flexNode.anchorNode,
@@ -206,12 +200,12 @@ describe("tree indexes", () => {
 			bird: sf.required(Bird),
 		}) {}
 
-		const Tree = sf.object("Tree", {
+		class Root extends sf.object("Tree", {
 			nests: sf.array(Nest),
-		});
+		}) {}
 
 		// creates an index that indexes all nests on the most common color of eggs they hold
-		function createNestIndex(root: SchematizingSimpleTreeView<typeof Tree>) {
+		function createNestIndex(root: SchematizingSimpleTreeView<typeof Root>) {
 			const anchorIds = new Map<AnchorNode, number>();
 			const { forest } = root.checkout;
 			let indexedAnchorNodeCount = 0;
@@ -276,11 +270,11 @@ describe("tree indexes", () => {
 				(anchorNode: AnchorNode) => {
 					const cursor = forest.allocateCursor();
 					forest.moveCursorToPath(anchorNode, cursor);
-					const flexNode = makeTree(root.getView().context, cursor);
+					const flexNode = getOrCreateHydratedFlexTreeNode(root.getFlexTreeContext(), cursor);
 					cursor.free();
 					const simpleTree = getOrCreateNodeFromInnerNode(flexNode);
 					if (!isTreeValue(simpleTree)) {
-						return treeApi.status(simpleTree);
+						return Tree.status(simpleTree);
 					}
 				},
 			);
@@ -301,6 +295,7 @@ describe("tree indexes", () => {
 								key,
 								nodes.map((f) => {
 									const flexNode: FlexTreeNode = getOrCreateInnerNode(f);
+									assert(flexNode.isHydrated());
 									return getOrCreate(
 										anchorIds,
 										flexNode.anchorNode,
@@ -345,7 +340,7 @@ describe("tree indexes", () => {
 		}
 
 		it("when a node is replaced", () => {
-			const config = new TreeViewConfiguration({ schema: Tree });
+			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
 			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
 			view.initialize({ nests: [nest] });
@@ -359,7 +354,7 @@ describe("tree indexes", () => {
 		});
 
 		it("when a node is added", () => {
-			const config = new TreeViewConfiguration({ schema: Tree });
+			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
 			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
 			view.initialize({ nests: [nest] });
@@ -373,7 +368,7 @@ describe("tree indexes", () => {
 		});
 
 		it("when a node is detached", () => {
-			const config = new TreeViewConfiguration({ schema: Tree });
+			const config = new TreeViewConfiguration({ schema: Root });
 			const view = getView(config);
 			const nest = new Nest({ bird: { eggs: [{ color: "blue" }, { color: "red" }] } });
 			view.initialize({ nests: [nest] });
@@ -433,10 +428,9 @@ describe("tree indexes", () => {
 					},
 					() => 3,
 					(anchorNode: AnchorNode) => {
-						const simpleTree =
-							anchorNode.slots.get(proxySlot) ?? makeTreeNode(anchorNode, forest, view);
+						const simpleTree = getOrCreateTreeNode(anchorNode, forest, view);
 						if (!isTreeValue(simpleTree)) {
-							return treeApi.status(simpleTree);
+							return Tree.status(simpleTree);
 						}
 					},
 				),
@@ -483,7 +477,7 @@ describe("tree indexes", () => {
 	it("completely removes nodes when they are garbage collected", () => {
 		const provider = new TestTreeProviderLite(1);
 		const tree = provider.trees[0];
-		const view = tree.viewWith(
+		const view = tree.kernel.viewWith(
 			new TreeViewConfiguration({ schema: IndexableParent, enableSchemaValidation: true }),
 		);
 		view.initialize(
@@ -492,13 +486,13 @@ describe("tree indexes", () => {
 				child: new IndexableChild({ childKey: childId }),
 			}),
 		);
-		provider.processMessages();
+		provider.synchronizeMessages();
 		const { index } = createIndex(view);
 		const parent = view.root;
 		const child = parent.child;
 		assert(child !== undefined);
 		parent.child = undefined;
-		provider.processMessages();
+		provider.synchronizeMessages();
 		// check that the detached child still exists on the index
 		assert.deepEqual(Array.from(index.allEntries()), [
 			[parentId, [0]],
@@ -506,7 +500,7 @@ describe("tree indexes", () => {
 		]);
 		// send an edit so that the detached node is garbage collected
 		parent.child = new IndexableChild({ childKey: parentId });
-		provider.processMessages();
+		provider.synchronizeMessages();
 		// check that the detached child is removed from the index
 		assert.deepEqual(Array.from(index.allEntries()), [[parentId, [0, 2]]]);
 	});

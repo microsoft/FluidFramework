@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { IContext, IQueuedMessage, IPartitionLambda } from "@fluidframework/server-services-core";
+import type {
+	IContext,
+	IQueuedMessage,
+	IPartitionLambda,
+} from "@fluidframework/server-services-core";
 
 /**
  * @internal
@@ -27,6 +31,9 @@ export class NoOpLambda implements IPartitionLambda {
 		// default
 		if (!this.checkpointConfiguration?.enabled) {
 			this.context.checkpoint(message);
+			if (this.context.setLastSuccessfulOffset) {
+				this.context.setLastSuccessfulOffset(message.offset);
+			}
 			return undefined;
 		}
 

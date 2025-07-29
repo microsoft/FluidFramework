@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import nconf from "nconf";
+import type nconf from "nconf";
 
 /**
  * @internal

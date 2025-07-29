@@ -5,20 +5,20 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { Package } from "@fluidframework/build-tools";
+import type { Package } from "@fluidframework/build-tools";
 import { PackageCommand } from "../../BasePackageCommand.js";
-import { PackageKind, type PackageWithKind } from "../../filter.js";
+import type { PackageKind, PackageWithKind } from "../../filter.js";
 
 import assert from "node:assert";
 import { Flags } from "@oclif/core";
 import { cosmiconfig } from "cosmiconfig";
 import {
-	NoSubstitutionTemplateLiteral,
-	Node,
-	NumericLiteral,
+	type NoSubstitutionTemplateLiteral,
+	type Node,
+	type NumericLiteral,
 	Project,
-	SourceFile,
-	StringLiteral,
+	type SourceFile,
+	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
 
@@ -167,8 +167,8 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 
 	// This should not be called due to processPackages being overridden instead.
 	protected override async processPackage<TPkg extends Package>(
-		pkg: TPkg,
-		kind: PackageKind,
+		_pkg: TPkg,
+		_kind: PackageKind,
 	): Promise<void> {
 		throw new Error("Method not implemented.");
 	}
@@ -227,7 +227,7 @@ The format of the configuration is specified by the "AssertTaggingPackageConfig"
 			return errors;
 		}
 
-		for (const [pkg, data] of dataMap) {
+		for (const [, data] of dataMap) {
 			errors.push(...this.tagAsserts(collected, data));
 		}
 

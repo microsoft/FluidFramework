@@ -5,7 +5,8 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	aboveRootPlaceholder,
@@ -14,15 +15,11 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
-	type TreeNodeSchemaIdentifier,
 } from "../../core/index.js";
-import { brand, fail } from "../../util/index.js";
-import type {
-	TreeLeafValue,
-	ImplicitFieldSchema,
-	ImplicitAllowedTypes,
-} from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+import { brand } from "../../util/index.js";
+import type { ImplicitFieldSchema } from "../fieldSchema.js";
+import { NodeKind } from "../core/index.js";
+import type { TreeNodeSchema, ImplicitAllowedTypes, TreeLeafValue } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
@@ -36,12 +33,15 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isObjectNodeSchema } from "../objectNodeTypes.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
 import {
 	customFromCursor,
+	replaceHandles,
+	unknownTypeError,
 	type CustomTreeNode,
-	type CustomTreeValue,
-	type EncodeOptions,
+	type HandleConverter,
+	type SchemalessParseOptions,
+	type TreeEncodingOptions,
 } from "./customTree.js";
 import { getUnhydratedContext } from "../createContext.js";
 
@@ -110,55 +110,13 @@ export interface VerboseTreeNode<THandle = IFluidHandle> {
 }
 
 /**
- * Options for how to interpret a `VerboseTree<TCustom>` when schema information is available.
- * @alpha
- */
-export interface ParseOptions<TCustom> {
-	/**
-	 * Fixup custom input formats.
-	 * @remarks
-	 * Main usage is to handle IFluidHandles.
-	 * When targeting JSON compatibility,
-	 * this may be by throwing an error or including a placeholder.
-	 * Since IFluidHandles are special references to FLuid data which is garbage collected when not referenced by the container for long enough,
-	 * any scheme for encoding handles for storage outside the container (or in formats the container does not understand) is unreliable.
-	 */
-	valueConverter(data: VerboseTree<TCustom>): TreeLeafValue | VerboseTreeNode<TCustom>;
-	/**
-	 * If true, interpret the input keys of object nodes as stored keys.
-	 * If false, interpret them as property keys.
-	 * @defaultValue false.
-	 */
-	readonly useStoredKeys?: boolean;
-}
-
-/**
- * Options for how to interpret a `VerboseTree<TCustom>` without relying on schema.
- */
-export interface SchemalessParseOptions<TCustom> {
-	/**
-	 * Fixup custom input formats.
-	 * @remarks
-	 * See note on {@link ParseOptions.valueConverter}.
-	 */
-	valueConverter(data: VerboseTree<TCustom>): TreeLeafValue | VerboseTreeNode<TCustom>;
-	/**
-	 * Converts stored keys into whatever key the tree is using in its encoding.
-	 */
-	keyConverter?: {
-		parse(type: string, inputKey: string): FieldKey;
-		encode(type: string, key: FieldKey): string;
-	};
-}
-
-/**
  * Use info from `schema` to convert `options` to {@link SchemalessParseOptions}.
  */
-export function applySchemaToParserOptions<TCustom>(
+export function applySchemaToParserOptions(
 	schema: ImplicitFieldSchema,
-	options: ParseOptions<TCustom>,
-): SchemalessParseOptions<TCustom> {
-	const config: Required<ParseOptions<TCustom>> = {
+	options: TreeEncodingOptions,
+): SchemalessParseOptions {
+	const config: Required<TreeEncodingOptions> = {
 		useStoredKeys: false,
 		...options,
 	};
@@ -166,13 +124,13 @@ export function applySchemaToParserOptions<TCustom>(
 	const context = getUnhydratedContext(schema);
 
 	return {
-		valueConverter: config.valueConverter,
 		keyConverter: config.useStoredKeys
 			? undefined
 			: {
 					encode: (type, key: FieldKey): string => {
 						// translate stored key into property key.
-						const simpleNodeSchema = context.schema.get(brand(type)) ?? fail("missing schema");
+						const simpleNodeSchema =
+							context.schema.get(brand(type)) ?? fail(0xb39 /* missing schema */);
 						if (isObjectNodeSchema(simpleNodeSchema)) {
 							const propertyKey = simpleNodeSchema.storedKeyToPropertyKey.get(key);
 							if (propertyKey !== undefined) {
@@ -193,10 +151,14 @@ export function applySchemaToParserOptions<TCustom>(
 						return key;
 					},
 					parse: (type, inputKey): FieldKey => {
-						const simpleNodeSchema = context.schema.get(brand(type)) ?? fail("missing schema");
+						const simpleNodeSchema = context.schema.get(brand(type)) ?? unknownTypeError(type);
 						if (isObjectNodeSchema(simpleNodeSchema)) {
-							const info =
-								simpleNodeSchema.flexKeyMap.get(inputKey) ?? fail("missing field info");
+							const info = simpleNodeSchema.flexKeyMap.get(inputKey);
+							if (info === undefined) {
+								throw new UsageError(
+									`Failed to parse VerboseTree due to unexpected key ${JSON.stringify(inputKey)} on type ${JSON.stringify(type)}.`,
+								);
+							}
 							return info.storedKey;
 						}
 						return brand(inputKey);
@@ -210,9 +172,9 @@ export function applySchemaToParserOptions<TCustom>(
  *
  * @returns an {@link ITreeCursorSynchronous} for a single node in nodes mode.
  */
-export function cursorFromVerbose<TCustom>(
-	data: VerboseTree<TCustom>,
-	options: SchemalessParseOptions<TCustom>,
+export function cursorFromVerbose(
+	data: VerboseTree,
+	options: SchemalessParseOptions,
 ): ITreeCursorSynchronous {
 	return stackTreeNodeCursor(verboseTreeAdapter(options), data);
 }
@@ -222,9 +184,9 @@ export function cursorFromVerbose<TCustom>(
  *
  * @returns an {@link ITreeCursorSynchronous} for a single field in fields mode.
  */
-export function fieldCursorFromVerbose<TCustom>(
-	data: VerboseTree<TCustom>[],
-	options: SchemalessParseOptions<TCustom>,
+export function fieldCursorFromVerbose(
+	data: VerboseTree[],
+	options: SchemalessParseOptions,
 ): ITreeCursorSynchronous {
 	return stackTreeFieldCursor(
 		verboseTreeAdapter(options),
@@ -233,35 +195,30 @@ export function fieldCursorFromVerbose<TCustom>(
 	);
 }
 
-function verboseTreeAdapter<TCustom>(
-	options: SchemalessParseOptions<TCustom>,
-): CursorAdapter<VerboseTree<TCustom>> {
+function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<VerboseTree> {
 	return {
-		value: (input: VerboseTree<TCustom>) => {
-			const node = options.valueConverter(input);
+		value: (node: VerboseTree) => {
 			return isTreeValue(node) ? node : undefined;
 		},
-		type: (input: VerboseTree<TCustom>) => {
-			const node = options.valueConverter(input);
+		type: (node: VerboseTree) => {
 			switch (typeof node) {
 				case "number":
-					return numberSchema.identifier as TreeNodeSchemaIdentifier;
+					return brand(numberSchema.identifier);
 				case "string":
-					return stringSchema.identifier as TreeNodeSchemaIdentifier;
+					return brand(stringSchema.identifier);
 				case "boolean":
-					return booleanSchema.identifier as TreeNodeSchemaIdentifier;
+					return brand(booleanSchema.identifier);
 				default:
 					if (node === null) {
-						return nullSchema.identifier as TreeNodeSchemaIdentifier;
+						return brand(nullSchema.identifier);
 					}
 					if (isFluidHandle(node)) {
-						return handleSchema.identifier as TreeNodeSchemaIdentifier;
+						return brand(handleSchema.identifier);
 					}
-					return node.type as TreeNodeSchemaIdentifier;
+					return brand(node.type);
 			}
 		},
-		keysFromNode: (input: VerboseTree<TCustom>): readonly FieldKey[] => {
-			const node = options.valueConverter(input);
+		keysFromNode: (node: VerboseTree): readonly FieldKey[] => {
 			switch (typeof node) {
 				case "object": {
 					if (node === null) {
@@ -285,11 +242,7 @@ function verboseTreeAdapter<TCustom>(
 					return [];
 			}
 		},
-		getFieldFromNode: (
-			input: VerboseTree<TCustom>,
-			key: FieldKey,
-		): readonly VerboseTree<TCustom>[] => {
-			const node = options.valueConverter(input);
+		getFieldFromNode: (node: VerboseTree, key: FieldKey): readonly VerboseTree[] => {
 			// Object.prototype.hasOwnProperty can return true for strings (ex: with key "0"), so we have to filter them out.
 			// Rather than just special casing strings, we can handle them with an early return for all primitives.
 			if (typeof node !== "object") {
@@ -324,34 +277,49 @@ function verboseTreeAdapter<TCustom>(
 /**
  * Used to read a node cursor as a VerboseTree.
  */
-export function verboseFromCursor<TCustom>(
+export function verboseFromCursor(
 	reader: ITreeCursor,
 	rootSchema: ImplicitAllowedTypes,
-	options: EncodeOptions<TCustom>,
-): VerboseTree<TCustom> {
-	const config: Required<EncodeOptions<TCustom>> = {
+	options: TreeEncodingOptions,
+): VerboseTree {
+	const config: Required<TreeEncodingOptions> = {
 		useStoredKeys: false,
 		...options,
 	};
 
+	// TODO: AB#43548: This does not handle children in unknown fields who's schema is not know about by this context.
 	const schemaMap = getUnhydratedContext(rootSchema).schema;
 
 	return verboseFromCursorInner(reader, config, schemaMap);
 }
 
-function verboseFromCursorInner<TCustom>(
+function verboseFromCursorInner(
 	reader: ITreeCursor,
-	options: Required<EncodeOptions<TCustom>>,
+	options: Required<TreeEncodingOptions>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
-): VerboseTree<TCustom> {
+): VerboseTree {
 	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);
-	const nodeSchema = schema.get(reader.type) ?? fail("missing schema for type in cursor");
+	const nodeSchema =
+		schema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);
 	if (nodeSchema.kind === NodeKind.Leaf) {
-		return fields as CustomTreeValue<TCustom>;
+		return fields as TreeLeafValue;
 	}
 
 	return {
 		type: reader.type,
-		fields: fields as CustomTreeNode<TCustom>,
+		fields: fields as CustomTreeNode<VerboseTree>,
 	};
+}
+
+/**
+ * Clones tree, replacing any handles.
+ * @remarks
+ * A strongly types version of {@link replaceHandles}.
+ * @alpha
+ */
+export function replaceVerboseTreeHandles<T>(
+	tree: VerboseTree,
+	replacer: HandleConverter<T>,
+): VerboseTree<T> {
+	return replaceHandles(tree, replacer) as VerboseTree<T>;
 }

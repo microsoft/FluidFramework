@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue } from "async";
+import type { AsyncPriorityQueue } from "async";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
@@ -12,21 +12,22 @@ import * as assert from "assert";
 import registerDebug from "debug";
 import type { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
-import { Package } from "../common/npmPackage";
-import { Timer } from "../common/timer";
+import type { Package } from "../common/npmPackage";
+import type { Timer } from "../common/timer";
 import type { BuildContext } from "./buildContext";
 import { FileHashCache } from "./fileHashCache";
 import type { IFluidBuildConfig } from "./fluidBuildConfig";
 import {
-	TaskDefinition,
-	TaskDefinitions,
-	TaskDefinitionsOnDisk,
+	type TaskDefinition,
+	type TaskDefinitions,
+	type TaskDefinitionsOnDisk,
+	type TaskFileDependencies,
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
 } from "./fluidTaskDefinitions";
 import { options } from "./options";
-import { Task, TaskExec } from "./tasks/task";
+import { Task, type TaskExec } from "./tasks/task";
 import { TaskFactory } from "./tasks/taskFactory";
 import { WorkerPool } from "./tasks/workers/workerPool";
 
@@ -83,7 +84,10 @@ class BuildGraphContext implements BuildContext {
 }
 
 export class BuildPackage {
-	private readonly tasks = new Map<string, Task>();
+	private readonly tasks: Task[] = [];
+
+	// tasks (with lifecycle) to resolved named reference.
+	private readonly targetTasks = new Map<string, Task>();
 
 	// track a script task without the lifecycle (pre/post) tasks
 	private readonly scriptTasks = new Map<string, Task>();
@@ -100,18 +104,12 @@ export class BuildPackage {
 		public readonly pkg: Package,
 		globalTaskDefinitions: TaskDefinitions,
 	) {
-		this._taskDefinitions = getTaskDefinitions(
-			this.pkg.packageJson,
-			globalTaskDefinitions,
-			this.pkg.isReleaseGroupRoot,
-		);
+		this._taskDefinitions = getTaskDefinitions(this.pkg.packageJson, globalTaskDefinitions, {
+			isReleaseGroupRoot: this.pkg.isReleaseGroupRoot,
+		});
 		traceTaskDef(
 			`${pkg.nameColored}: Task def: ${JSON.stringify(this._taskDefinitions, undefined, 2)}`,
 		);
-	}
-
-	public get taskCount() {
-		return this.tasks.size;
 	}
 
 	public createTasks(buildTaskNames: string[]) {
@@ -159,7 +157,9 @@ export class BuildPackage {
 				dependsOn: [`^${taskName}`],
 				script: false,
 				before: [],
+				children: [],
 				after: [],
+				files: undefined,
 			};
 		}
 		return undefined;
@@ -170,19 +170,33 @@ export class BuildPackage {
 		if (config?.script === false) {
 			const task = TaskFactory.CreateTargetTask(this, this.context, taskName);
 			pendingInitDep.push(task);
+			this.tasks.push(task);
+			this.targetTasks.set(taskName, task);
 			return task;
 		}
-		return this.createScriptTask(taskName, pendingInitDep);
+		return this.createScriptTask(taskName, pendingInitDep, config?.files);
 	}
 
-	private createScriptTask(taskName: string, pendingInitDep: Task[]) {
+	private createScriptTask(
+		taskName: string,
+		pendingInitDep: Task[],
+		files: TaskFileDependencies | undefined,
+	) {
 		const command = this.pkg.getScript(taskName);
 		if (command !== undefined && !command.startsWith("fluid-build ")) {
 			// Find the script task (without the lifecycle task)
 			let scriptTask = this.scriptTasks.get(taskName);
 			if (scriptTask === undefined) {
-				scriptTask = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
+				scriptTask = TaskFactory.Create(
+					this,
+					command,
+					this.context,
+					pendingInitDep,
+					taskName,
+					files,
+				);
 				pendingInitDep.push(scriptTask);
+				this.tasks.push(scriptTask);
 				this.scriptTasks.set(taskName, scriptTask);
 			}
 
@@ -197,10 +211,10 @@ export class BuildPackage {
 				this.ensureScriptTask(`post${taskName}`, pendingInitDep),
 			);
 			if (task !== scriptTask) {
-				// We are doing duplicate work initializeDependentTasks as both the lifecycle task
-				// and script task will have the task name and dependency
 				pendingInitDep.push(task);
+				this.tasks.push(task);
 			}
+			this.targetTasks.set(taskName, task);
 			return task;
 		}
 		return undefined;
@@ -220,14 +234,23 @@ export class BuildPackage {
 			throw new Error(`${this.pkg.nameColored}: '${taskName}' must be a script task`);
 		}
 
-		const task = TaskFactory.Create(this, command, this.context, pendingInitDep, taskName);
+		const task = TaskFactory.Create(
+			this,
+			command,
+			this.context,
+			pendingInitDep,
+			taskName,
+			config?.files,
+		);
 		pendingInitDep.push(task);
+		this.tasks.push(task);
+		this.scriptTasks.set(taskName, task);
 		return task;
 	}
 
-	// Create or return and existing task with a name.  If it is a script, it will also create an return the pre/post script task if it exists
+	// Create or return and existing task with a name.  If it is a script, it will also create and return the pre/post script task if it exists
 	private getTask(taskName: string, pendingInitDep: Task[] | undefined): Task | undefined {
-		const existing = this.tasks.get(taskName);
+		const existing = this.targetTasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
@@ -237,11 +260,7 @@ export class BuildPackage {
 			return undefined;
 		}
 
-		const task = this.createTask(taskName, pendingInitDep);
-		if (task !== undefined) {
-			this.tasks.set(taskName, task);
-		}
-		return task;
+		return this.createTask(taskName, pendingInitDep);
 	}
 
 	public getScriptTask(taskName: string, pendingInitDep: Task[]): Task | undefined {
@@ -250,16 +269,12 @@ export class BuildPackage {
 			// it is not a script task
 			return undefined;
 		}
-		const existing = this.tasks.get(taskName);
+		const existing = this.targetTasks.get(taskName);
 		if (existing) {
 			return existing;
 		}
 
-		const task = this.createScriptTask(taskName, pendingInitDep);
-		if (task !== undefined) {
-			this.tasks.set(taskName, task);
-		}
-		return task;
+		return this.createScriptTask(taskName, pendingInitDep, config?.files);
 	}
 
 	public getDependsOnTasks(task: Task, taskName: string, pendingInitDep: Task[]) {
@@ -275,7 +290,7 @@ export class BuildPackage {
 	}
 
 	// Create or get the task with names in the `deps` array
-	private getMatchedTasks(deps: string[], pendingInitDep?: Task[]) {
+	private getMatchedTasks(deps: readonly string[], pendingInitDep?: Task[]) {
 		const matchedTasks: Task[] = [];
 		for (const dep of deps) {
 			// If pendingInitDep is undefined, that mean we don't expect the task to be found, so pretend that we already found it.
@@ -291,7 +306,7 @@ export class BuildPackage {
 				for (const depPackage of this.dependentPackages) {
 					if (taskName === "*") {
 						assert.strictEqual(pendingInitDep, undefined);
-						matchedTasks.push(...depPackage.tasks.values());
+						matchedTasks.push(...depPackage.targetTasks.values());
 					} else {
 						const depTask = depPackage.getTask(taskName, pendingInitDep);
 						if (depTask !== undefined) {
@@ -335,7 +350,7 @@ export class BuildPackage {
 				return beforeStarTaskNames;
 			}
 			// avoid circular dependency. ignore mutual before "*" */
-			beforeStarTaskNames = Array.from(this.tasks.keys()).filter(
+			beforeStarTaskNames = Array.from(this.targetTasks.keys()).filter(
 				(depTaskName) => !this.getTaskDefinition(depTaskName)?.before.includes("*"),
 			);
 			return beforeStarTaskNames;
@@ -347,14 +362,14 @@ export class BuildPackage {
 				return afterStarTaskNames;
 			}
 			// avoid circular dependency. ignore mutual after "*" */
-			afterStarTaskNames = Array.from(this.tasks.keys()).filter(
+			afterStarTaskNames = Array.from(this.targetTasks.keys()).filter(
 				(depTaskName) => !this.getTaskDefinition(depTaskName)?.after.includes("*"),
 			);
 			return afterStarTaskNames;
 		};
 
 		// Expand the star entry to all scheduled tasks
-		const expandStar = (deps: string[], getTaskNames: () => string[]) => {
+		const expandStar = (deps: readonly string[], getTaskNames: () => string[]) => {
 			const newDeps = deps.filter((dep) => dep !== "*");
 			if (newDeps.length === deps.length) {
 				return newDeps;
@@ -382,7 +397,6 @@ export class BuildPackage {
 				const matchedTasks = this.getMatchedTasks(before);
 				const dependentTask = [task];
 				for (const matchedTask of matchedTasks) {
-					// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 					matchedTask.addDependentTasks(dependentTask, taskConfig.isDefault);
 				}
 			}
@@ -395,18 +409,11 @@ export class BuildPackage {
 					} -> ${JSON.stringify(after)}`,
 				);
 				const matchedTasks = this.getMatchedTasks(after);
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				task.addDependentTasks(matchedTasks, taskConfig.isDefault);
 			}
 		};
 
 		this.tasks.forEach(finalizeTask);
-		this.scriptTasks.forEach((task: Task, name: string) => {
-			// Process named script task that hasn't been processed yet.
-			if (this.tasks.get(name) !== task) {
-				finalizeTask(task);
-			}
-		});
 	}
 
 	public initializeDependentLeafTasks() {
@@ -422,11 +429,11 @@ export class BuildPackage {
 	}
 
 	public async isUpToDate(): Promise<boolean> {
-		if (this.tasks.size == 0) {
+		if (this.tasks.length === 0) {
 			return true;
 		}
 		const isUpToDateP = new Array<Promise<boolean>>();
-		for (const task of this.tasks.values()) {
+		for (const task of this.tasks) {
 			isUpToDateP.push(task.isUpToDate());
 		}
 		const isUpToDateArr = await Promise.all(isUpToDateP);
@@ -435,14 +442,14 @@ export class BuildPackage {
 
 	private async buildAllTasks(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		const runP: Promise<BuildResult>[] = [];
-		for (const task of this.tasks.values()) {
+		for (const task of this.tasks) {
 			runP.push(task.run(q));
 		}
 		return summarizeBuildResult(await Promise.all(runP));
 	}
 	public async build(q: AsyncPriorityQueue<TaskExec>): Promise<BuildResult> {
 		if (!this.buildP) {
-			if (this.tasks.size !== 0) {
+			if (this.tasks.length !== 0) {
 				this.buildP = this.buildAllTasks(q);
 			} else {
 				this.buildP = Promise.resolve(BuildResult.UpToDate);
@@ -515,12 +522,17 @@ export class BuildGraph {
 	}
 
 	private async isUpToDate() {
-		const isUpToDateP = new Array<Promise<boolean>>();
-		this.buildPackages.forEach((node) => {
-			isUpToDateP.push(node.isUpToDate());
-		});
-		const isUpToDateArr = await Promise.all(isUpToDateP);
-		return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		try {
+			const isUpToDateP = new Array<Promise<boolean>>();
+			this.buildPackages.forEach((node) => {
+				isUpToDateP.push(node.isUpToDate());
+			});
+			const isUpToDateArr = await Promise.all(isUpToDateP);
+			return isUpToDateArr.every((isUpToDate) => isUpToDate);
+		} catch {
+			// If checking the up-to-date state fails, we assume that the build is not up to date.
+			return false;
+		}
 	}
 
 	public async checkInstall() {
@@ -539,10 +551,12 @@ export class BuildGraph {
 		const spinner = new Spinner("Checking incremental build task status...");
 		spinner.start();
 
+		// Note: any console logging done here (e.g. in leafTask.ts' checkIsUpToDate()) runs the risk of getting truncated due to how picospinner works.
+		// Ideally we shouldn't do console logging between starting and stopping a spinner.
 		const isUpToDate = await this.isUpToDate();
 
-		timer?.time(`Check up to date completed`);
 		spinner.succeed("Tasks loaded.");
+		timer?.time(`Check up to date completed`);
 
 		log(
 			`Start tasks '${chalk.cyanBright(this.buildTaskNames.join("', '"))}' in ${

@@ -8,18 +8,19 @@ import * as fs from "fs";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	loadExistingContainer,
+	waitContainerToCatchUp,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IFluidFileConverter } from "./codeLoaderBundle.js";
+import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import/no-internal-modules */
-import { ITelemetryOptions } from "./logger/fileLogger.js";
+import type { ITelemetryOptions } from "./logger/fileLogger.js";
 import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
 import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
 /* eslint-enable import/no-internal-modules */
@@ -145,6 +146,7 @@ export async function createContainerAndExecute(
 				},
 			},
 		});
+		await waitContainerToCatchUp(container);
 
 		return PerformanceEvent.timedExecAsync(logger, { eventName: "ExportFile" }, async () => {
 			try {

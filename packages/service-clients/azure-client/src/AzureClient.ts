@@ -7,6 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
+	type IRuntimeFactory,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -16,11 +17,9 @@ import {
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
-	FluidObject,
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
@@ -33,7 +32,6 @@ import type {
 	CompatibilityMode,
 } from "@fluidframework/fluid-static";
 import {
-	type IRootDataObject,
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
 	createServiceAudience,
@@ -45,6 +43,7 @@ import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import type {
 	AzureClientProps,
+	AzureClientPropsInternal,
 	AzureConnectionConfig,
 	AzureContainerServices,
 	AzureContainerVersion,
@@ -96,6 +95,14 @@ export class AzureClient {
 	private readonly connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
 	private readonly logger: ITelemetryBaseLogger | undefined;
 
+	private readonly createContainerRuntimeFactory?: ({
+		schema,
+		compatibilityMode,
+	}: {
+		schema: ContainerSchema;
+		compatibilityMode: CompatibilityMode;
+	}) => IRuntimeFactory;
+
 	/**
 	 * Creates a new client instance using configuration parameters.
 	 * @param properties - Properties for initializing a new AzureClient instance
@@ -120,6 +127,10 @@ export class AzureClient {
 			properties.summaryCompression,
 		);
 		this.configProvider = wrapConfigProvider(properties.configProvider);
+
+		this.createContainerRuntimeFactory = (
+			properties as Partial<AzureClientPropsInternal>
+		).createContainerRuntimeFactory;
 	}
 
 	/**
@@ -185,10 +196,8 @@ export class AzureClient {
 			...loaderProps,
 			request: { url: url.href },
 		});
-		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
 		});
 		const services = this.getContainerServices(container);
 		return { container: fluidContainer, services };
@@ -224,10 +233,8 @@ export class AzureClient {
 			url: url.href,
 			headers: { [LoaderHeader.version]: version.id },
 		});
-		const rootDataObject = await this.getContainerEntryPoint(container);
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
 		});
 		return { container: fluidContainer };
 	}
@@ -281,10 +288,16 @@ export class AzureClient {
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): ILoaderProps {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({
-			schema,
-			compatibilityMode,
-		});
+		const runtimeFactory = this.createContainerRuntimeFactory
+			? this.createContainerRuntimeFactory({
+					schema,
+					compatibilityMode,
+				})
+			: createDOProviderContainerRuntimeFactory({
+					schema,
+					compatibilityMode,
+				});
+
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },
@@ -322,8 +335,6 @@ export class AzureClient {
 			getTenantId(connection),
 		);
 
-		const rootDataObject = await this.getContainerEntryPoint(container);
-
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
@@ -337,21 +348,11 @@ export class AzureClient {
 			}
 			return container.resolvedUrl.id;
 		};
-		const fluidContainer = createFluidContainer<TContainerSchema>({
+		const fluidContainer = await createFluidContainer<TContainerSchema>({
 			container,
-			rootDataObject,
 		});
 		fluidContainer.attach = attach;
 		return fluidContainer;
-	}
-
-	private async getContainerEntryPoint(container: IContainer): Promise<IRootDataObject> {
-		const rootDataObject: FluidObject<IRootDataObject> = await container.getEntryPoint();
-		assert(
-			rootDataObject.IRootDataObject !== undefined,
-			0x90a /* entryPoint must be of type IRootDataObject */,
-		);
-		return rootDataObject.IRootDataObject;
 	}
 	// #endregion
 }

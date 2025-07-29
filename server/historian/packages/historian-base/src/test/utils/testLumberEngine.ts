@@ -4,9 +4,9 @@
  */
 
 import {
-	ILumberjackEngine,
+	type ILumberjackEngine,
 	LogLevel,
-	Lumber,
+	type Lumber,
 	LumberType,
 } from "@fluidframework/server-services-telemetry";
 

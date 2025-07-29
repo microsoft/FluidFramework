@@ -5,26 +5,28 @@
 
 import assert from "assert";
 import { EventEmitter } from "events";
-import { IDocumentMessage } from "@fluidframework/protocol-definitions";
-import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
+
+import type { IDocumentMessage } from "@fluidframework/protocol-definitions";
 import {
-	IDatabaseManager,
-	IDocumentStorage,
-	INode,
-	IOrderer,
-	IOrdererConnection,
-	IWebSocketServer,
-	ILogger,
+	type IDatabaseManager,
+	type IDocumentStorage,
+	type INode,
+	type IOrderer,
+	type IOrdererConnection,
+	type IWebSocketServer,
+	type ILogger,
 	DefaultServiceConfiguration,
-	IDocumentRepository,
-	ICheckpointRepository,
-	CheckpointService,
+	type IDocumentRepository,
+	type ICheckpointRepository,
+	type CheckpointService,
 } from "@fluidframework/server-services-core";
+import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 import * as _ from "lodash";
 import sillyname from "sillyname";
 import { v4 as uuid } from "uuid";
+
 import { debug } from "./debug";
-import {
+import type {
 	IConcreteNode,
 	IConnectedMessage,
 	IConnectMessage,
@@ -32,7 +34,7 @@ import {
 	IOpMessage,
 } from "./interfaces";
 import { LocalOrderer } from "./localOrderer";
-import { ISubscriber } from "./pubsub";
+import type { ISubscriber } from "./pubsub";
 import { Socket } from "./socket";
 
 // Can I treat each Alfred as a mini-Kafka. And consolidate all the deli logic together?
@@ -136,6 +138,7 @@ export class LocalNode extends EventEmitter implements IConcreteNode {
 			null,
 		);
 
+		// eslint-disable-next-line import/namespace
 		const result = _.clone(existing);
 		result.expiration = newExpiration;
 

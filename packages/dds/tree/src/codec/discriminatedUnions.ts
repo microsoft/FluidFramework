@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { ObjectOptions } from "@sinclair/typebox";
 
-import { type _InlineTrick, fail, objectToMap } from "../util/index.js";
+import { type _InlineTrick, objectToMap } from "../util/index.js";
 
 /**
  * This module contains utilities for an encoding of a discriminated union that is efficient to validate using
@@ -124,7 +124,8 @@ export class DiscriminatedUnionDispatcher<
 		);
 		const key: keyof TUnion = keys[0] as keyof TUnion;
 		const value = union[key];
-		const factory = this.library.get(key) ?? fail("missing function for union member");
+		const factory =
+			this.library.get(key) ?? fail(0xac2 /* missing function for union member */);
 		const result = factory(value, ...args);
 		return result;
 	}

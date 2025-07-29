@@ -4,9 +4,11 @@
  */
 
 import * as util from "util";
+
 import nconf from "nconf";
 import rimrafCallback from "rimraf";
-import { IStorageDirectoryConfig } from "../utils";
+
+import type { IStorageDirectoryConfig } from "../utils";
 
 export type gitLibType = "isomorphic-git";
 export interface IRouteTestMode {

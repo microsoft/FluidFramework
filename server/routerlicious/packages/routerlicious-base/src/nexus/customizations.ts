@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IClusterDrainingChecker,
 	IDocumentRepository,
 	IStorageNameAllocator,
@@ -14,7 +14,7 @@ import {
 	IReadinessCheck,
 } from "@fluidframework/server-services-core";
 import type { SocketIoAdapterCreator } from "@fluidframework/server-services-shared";
-import { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
 
 /**
  * @internal
@@ -33,6 +33,7 @@ export interface INexusResourcesCustomizations {
 	redisClientConnectionManagerForLogging?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForSub?: IRedisClientConnectionManager;
 	redisClientConnectionManagerForPub?: IRedisClientConnectionManager;
+	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
 	customCreateSocketIoAdapter?: SocketIoAdapterCreator;
 	readinessCheck?: IReadinessCheck;
 }

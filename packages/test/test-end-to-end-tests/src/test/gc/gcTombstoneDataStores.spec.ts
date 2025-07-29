@@ -281,7 +281,13 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 		itExpects(
 			"Requesting tombstoned datastores fails in interactive client loaded after tombstone timeout (but SubDataStore load is allowed)",
 			[
-				// Interactive client's request
+				// Interactive client's requests
+				{
+					eventName:
+						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+					headers: expectedHeadersLogged.request,
+					clientType: "interactive",
+				},
 				{
 					eventName:
 						"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
@@ -341,6 +347,29 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					"Expected the Tombstone header",
 				);
 
+				// This request fails the same as above when there's a query parameter in the URL
+				// (could be a deep link to a tombstoned datastore, rather than a handle.get)
+				const tombstoneErrorResponse2 = await (
+					entryPoint._context.containerRuntime as ContainerRuntime
+				).resolveHandle({
+					url: `${unreferencedId}?query=string`,
+				});
+				assert.equal(
+					tombstoneErrorResponse2.status,
+					404,
+					"Should not be able to retrieve a tombstoned datastore in non-summarizer clients",
+				);
+				assert.equal(
+					tombstoneErrorResponse2.value,
+					`DataStore was tombstoned: ${unreferencedId}`,
+					"Expected the Tombstone error message",
+				);
+				assert.equal(
+					tombstoneErrorResponse2.headers?.[TombstoneResponseHeaderKey],
+					true,
+					"Expected the Tombstone header",
+				);
+
 				// This request succeeds because the "allowTombstone" header is set to true
 				const tombstoneSuccessResponse = await (
 					entryPoint._context.containerRuntime as ContainerRuntime
@@ -361,7 +390,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 
 				mockLogger.assertMatch(
 					[
-						// request WITHOUT allowTombsone
+						// requests WITHOUT allowTombstone
 						{
 							category: "error",
 							eventName:
@@ -371,7 +400,16 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 							id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
 							trackedId: `/${unreferencedId}`,
 						},
-						// request WITH allowTombsone
+						{
+							category: "error",
+							eventName:
+								"fluid:telemetry:ContainerRuntime:GarbageCollector:GC_Tombstone_DataStore_Requested",
+							clientType: "interactive",
+							headers: expectedHeadersLogged.request,
+							id: { value: `/${unreferencedId}`, tag: TelemetryDataTag.CodeArtifact },
+							trackedId: `/${unreferencedId}`,
+						},
+						// request WITH allowTombstone
 						{
 							category: "generic",
 							eventName:
@@ -1501,8 +1539,10 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			const summary2 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCStateFromSummary(summary2.summaryTree),
+				// Assertion error message text changed in Node 20.18.1 to append the failed comparison info.
+				// This validation can be made more strict again once the repo requires Node >= 20.18.1
 				(e: Error) =>
-					validateAssertionError(e, "getGCStateFromSummary: GC state is not a blob"),
+					validateAssertionError(e, /^getGCStateFromSummary: GC state is not a blob/),
 			);
 			const tombstoneState = getGCTombstoneStateFromSummary(summary2.summaryTree);
 			assert(
@@ -1514,10 +1554,12 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 			const summary3 = await summarizeNow(summarizer);
 			assert.throws(
 				() => getGCTombstoneStateFromSummary(summary3.summaryTree),
+				// Assertion error message text changed in Node 20.18.1 to append the failed comparison info.
+				// This validation can be made more strict again once the repo requires Node >= 20.18.1
 				(e: Error) =>
 					validateAssertionError(
 						e,
-						"getGCTombstoneStateFromSummary: GC data should be a tree",
+						/^getGCTombstoneStateFromSummary: GC data should be a tree/,
 					),
 			);
 		});

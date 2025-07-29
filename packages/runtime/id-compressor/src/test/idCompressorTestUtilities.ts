@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-nodejs-modules
 import { strict as assert } from "node:assert";
 
 import {
@@ -114,10 +113,44 @@ export class CompressorFactory {
 		logger?: ITelemetryBaseLogger,
 	): IdCompressor {
 		const compressor = createIdCompressor(sessionId, logger) as IdCompressor;
-		// eslint-disable-next-line @typescript-eslint/dot-notation
-		compressor["nextRequestedClusterSize"] = clusterCapacity;
+		modifyClusterSize(compressor, clusterCapacity);
 		return compressor;
 	}
+}
+
+/**
+ * Modify the requested cluster size of the provided compressor.
+ * @remarks
+ * This is useful for testing purposes for a few reasons:
+ * - Id compressor bugs are often related to edge cases that occur on cluster boundaries
+ * - Smaller cluster sizes can enable writing tests without for loops generating "ids until a new cluster is created"
+ */
+export function modifyClusterSize(compressor: IIdCompressor, newClusterSize: number): void {
+	verifyCompressorLike(compressor);
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	compressor["nextRequestedClusterSize"] = newClusterSize;
+}
+
+/**
+ * Returns the current cluster size of the compressor.
+ * @privateRemarks
+ * This is useful in writing tests to avoid having to hardcode the (currently constant) cluster size.
+ */
+export function getClusterSize(compressor: ReadonlyIdCompressor): number {
+	verifyCompressorLike(compressor);
+	// eslint-disable-next-line @typescript-eslint/dot-notation
+	return compressor["nextRequestedClusterSize"] as number;
+}
+
+function verifyCompressorLike(compressor: ReadonlyIdCompressor | IIdCompressor): void {
+	assert(
+		// Some IdCompressor tests wrap underlying compressors with proxies--allow this for now.
+		// Because of id-compressor's dynamic import in container-runtime, instanceof checks for IdCompressor
+		// also won't necessarily work nicely. Get a small amount of validation that this function should work
+		// as intended by at least verifying the property name exists.
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		typeof compressor["nextRequestedClusterSize"] === "number",
+	);
 }
 
 /**
@@ -311,7 +344,7 @@ export class IdCompressorTestNetwork {
 	 * Changes the capacity request amount for a client. It will take effect immediately.
 	 */
 	public changeCapacity(client: Client, newClusterCapacity: number): void {
-		changeCapacity(this.compressors.get(client), newClusterCapacity);
+		modifyClusterSize(this.compressors.get(client), newClusterCapacity);
 	}
 
 	private addNewId(
@@ -362,11 +395,7 @@ export class IdCompressorTestNetwork {
 				ids: {
 					firstGenCount: 1,
 					count: numIds,
-					// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-					requestedClusterSize: this.getCompressor(Client.Client1)[
-						// eslint-disable-next-line @typescript-eslint/dot-notation
-						"nextRequestedClusterSize"
-					],
+					requestedClusterSize: getClusterSize(this.getCompressor(Client.Client1)),
 					localIdRanges: [], // remote session, can safely ignore in tests
 				},
 			};
@@ -673,11 +702,6 @@ export class IdCompressorTestNetwork {
 	}
 }
 
-function changeCapacity(compressor: IdCompressor, newClusterCapacity: number): void {
-	// eslint-disable-next-line @typescript-eslint/dot-notation
-	compressor["nextRequestedClusterSize"] = newClusterCapacity;
-}
-
 /**
  * Roundtrips the supplied compressor through serialization and deserialization.
  */
@@ -703,17 +727,16 @@ export function roundtrip(
 ] {
 	// preserve the capacity request as this property is normally private and resets
 	// to a default on construction (deserialization)
-	// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-assignment
-	const capacity: number = compressor["nextRequestedClusterSize"];
+	const capacity: number = getClusterSize(compressor);
 	if (withSession) {
 		const serialized = compressor.serialize(withSession);
 		const roundtripped = IdCompressor.deserialize(serialized);
-		changeCapacity(roundtripped, capacity);
+		modifyClusterSize(roundtripped, capacity);
 		return [serialized, roundtripped];
 	} else {
 		const nonLocalSerialized = compressor.serialize(withSession);
 		const roundtripped = IdCompressor.deserialize(nonLocalSerialized, createSessionId());
-		changeCapacity(roundtripped, capacity);
+		modifyClusterSize(roundtripped, capacity);
 		return [nonLocalSerialized, roundtripped];
 	}
 }
@@ -1045,13 +1068,17 @@ export function createAlwaysFinalizedIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
 ): IIdCompressor & IIdCompressorCore {
-	const compressor =
-		sessionIdOrLogger === undefined
-			? createIdCompressor()
-			: typeof sessionIdOrLogger === "string"
-				? createIdCompressor(sessionIdOrLogger, loggerOrUndefined)
-				: createIdCompressor(sessionIdOrLogger);
+	const sessionId =
+		typeof sessionIdOrLogger === "string" ? sessionIdOrLogger : createSessionId();
+	const logger =
+		(loggerOrUndefined ?? typeof sessionIdOrLogger === "object")
+			? (sessionIdOrLogger as ITelemetryBaseLogger)
+			: undefined;
+	// This local session is unused, but it needs to not collide with the GhostSession, so allocate a random one.
+	// This causes the compressor to serialize non-deterministically even when provided an explicit SessionId.
+	// This can be fixed in the future if needed.
+	const compressor = createIdCompressor(createSessionId(), logger);
 	// Permanently put the compressor in a ghost session
-	(compressor as IdCompressor).startGhostSession(createSessionId());
+	(compressor as IdCompressor).startGhostSession(sessionId);
 	return compressor;
 }

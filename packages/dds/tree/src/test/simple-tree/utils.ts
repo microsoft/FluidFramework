@@ -3,45 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
-import { initializeForest, TreeStoredSchemaRepository } from "../../core/index.js";
 import {
-	buildForest,
-	cursorForMapTreeNode,
-	defaultSchemaPolicy,
-	getSchemaAndPolicy,
-	MockNodeKeyManager,
-} from "../../feature-libraries/index.js";
-import {
-	HydratedContext,
+	comparePosetElements,
+	fieldRealizer,
+	getAllowedContentDiscrepancies,
 	isTreeNode,
 	isTreeNodeSchemaClass,
-	mapTreeFromNodeData,
-	normalizeFieldSchema,
-	SimpleContextSlot,
+	PosetComparisonResult,
+	TreeViewConfiguration,
+	type FieldDiscrepancy,
+	type FieldSchema,
 	type ImplicitFieldSchema,
-	type InsertableContent,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
+	type Realizer,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
 	type TreeNodeSchema,
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
-import {
-	getTreeNodeForField,
-	prepareContentForHydration,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/proxies.js";
-// eslint-disable-next-line import/no-internal-modules
-import { toStoredSchema } from "../../simple-tree/toStoredSchema.js";
-import { mintRevisionTag, testIdCompressor, testRevisionTagCodec } from "../utils.js";
+import { getView } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
-import { CheckoutFlexTreeView, createTreeCheckout } from "../../shared-tree/index.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
+import type { TreeStoredSchema } from "../../core/index.js";
 
 /**
  * Initializes a node with the given schema and content.
@@ -62,7 +48,7 @@ export function initNode<
 	hydrateNode: boolean,
 ): TreeFieldFromImplicitField<TSchema> {
 	if (hydrateNode) {
-		return hydrate(schema, content as InsertableTreeFieldFromImplicitField<TSchema>);
+		return hydrate(schema, content as InsertableField<TSchema>);
 	}
 
 	if (isTreeNode(content)) {
@@ -111,40 +97,18 @@ export function describeHydration(
 
 /**
  * Given the schema and initial tree data, returns a hydrated tree node.
- *
+ * @remarks
  * For minimal/concise targeted unit testing of specific simple-tree content.
  *
- * TODO: determine and document if this produces "cooked" or "marinated" nodes.
+ * This produces "marinated" nodes, meaning hydrated nodes which may not have an inner node cached yet.
  */
 export function hydrate<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
-	initialTree: InsertableTreeFieldFromImplicitField<TSchema>,
+	initialTree: InsertableField<TSchema> | InsertableTreeFieldFromImplicitField<TSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	const forest = buildForest();
-
-	const branch = createTreeCheckout(testIdCompressor, mintRevisionTag, testRevisionTagCodec, {
-		forest,
-		schema: new TreeStoredSchemaRepository(toStoredSchema(schema)),
-	});
-	const manager = new MockNodeKeyManager();
-	const checkout = new CheckoutFlexTreeView(branch, defaultSchemaPolicy, manager);
-	const field = checkout.flexTree;
-	branch.forest.anchors.slots.set(
-		SimpleContextSlot,
-		new HydratedContext(normalizeFieldSchema(schema).allowedTypeSet, checkout.context),
-	);
-	assert(field.context.isHydrated(), "Expected LazyField");
-	const mapTree = mapTreeFromNodeData(
-		initialTree as InsertableContent,
-		schema,
-		field.context.nodeKeyManager,
-		getSchemaAndPolicy(field),
-	);
-	prepareContentForHydration(mapTree, field.context.checkout.forest);
-	if (mapTree === undefined) return undefined as TreeFieldFromImplicitField<TSchema>;
-	const cursor = cursorForMapTreeNode(mapTree);
-	initializeForest(forest, [cursor], testRevisionTagCodec, testIdCompressor, true);
-	return getTreeNodeForField(field) as TreeFieldFromImplicitField<TSchema>;
+	const view = getView(new TreeViewConfiguration({ schema, enableSchemaValidation: true }));
+	view.initialize(initialTree as InsertableField<TSchema>);
+	return view.root;
 }
 
 /**
@@ -156,7 +120,7 @@ export function hydrateUnsafe<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	initialTree: InsertableField<UnsafeUnknownSchema>,
 ): TreeFieldFromImplicitField<TSchema> {
-	return hydrate(schema, initialTree as InsertableTreeFieldFromImplicitField<TSchema>);
+	return hydrate(schema, initialTree as InsertableField<TSchema>);
 }
 
 /**
@@ -194,4 +158,86 @@ export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema
 		),
 		forkCheckout,
 	};
+}
+
+/**
+ * This function uses discrepancies to determine if replacing the provided stored schema to a stored schema derived from the provided view schema would support a superset of the documents permitted by the provided stored schema.
+ *
+ * @remarks
+ * According to the policy of schema evolution, this function supports three types of changes:
+ * 1. Adding an optional field to an object node.
+ * 2. Expanding the set of allowed types for a field.
+ * 3. Relaxing a field kind to a more general field kind
+ * 4. Adding new node schema
+ * 5. Arbitrary changes to persisted metadata
+ *
+ * Notes: We expect this to return consistent results with allowsRepoSuperset. However, currently there are some scenarios
+ * where the inconsistency will occur:
+ * - Different Node Kinds: If view and stored have different node kinds (e.g., view is an objectNodeSchema and stored is a mapNodeSchema),
+ * This will determine that view can never be the superset of stored. In contrast, `allowsRepoSuperset` will continue
+ * validating internal fields.
+ *
+ * TODO: Evaluate if this function is needed at all. It is only used in tests and could possibly be replaced with `allowsRepoSuperset`.
+ * Maybe production code for canUpgrade should be using this?
+ */
+export function isViewSupersetOfStored(view: FieldSchema, stored: TreeStoredSchema): boolean {
+	const discrepancies = getAllowedContentDiscrepancies(view, stored);
+
+	for (const discrepancy of discrepancies) {
+		switch (discrepancy.mismatch) {
+			case "nodeKind": {
+				if (discrepancy.stored !== undefined) {
+					// It's fine for the view schema to know of a node type that the stored schema doesn't know about.
+					return false;
+				}
+				break;
+			}
+			case "valueSchema":
+			case "allowedTypes":
+			case "fieldKind": {
+				if (!isFieldDiscrepancyCompatible(discrepancy)) {
+					return false;
+				}
+				break;
+			}
+			case "fields": {
+				if (
+					discrepancy.differences.some(
+						(difference) => !isFieldDiscrepancyCompatible(difference),
+					)
+				) {
+					return false;
+				}
+				break;
+			}
+			// No default
+		}
+	}
+	return true;
+}
+
+function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
+	switch (discrepancy.mismatch) {
+		case "allowedTypes": {
+			// Since we only track the symmetric difference between the allowed types in the view and
+			// stored schemas, it's sufficient to check if any extra allowed types still exist in the
+			// stored schema.
+			return discrepancy.stored.length === 0;
+		}
+		case "fieldKind": {
+			return posetLte(discrepancy.stored, discrepancy.view, fieldRealizer);
+		}
+		case "valueSchema": {
+			return false;
+		}
+		// No default
+	}
+	return false;
+}
+
+export function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
+	const comparison = comparePosetElements(a, b, realizer);
+	return (
+		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
+	);
 }

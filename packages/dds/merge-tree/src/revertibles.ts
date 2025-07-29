@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	assert,
+	unreachableCase,
+	DoublyLinkedList,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { DoublyLinkedList } from "./collections/index.js";
 import { EndOfTreeSegment } from "./endOfTreeSegment.js";
 import { LocalReferenceCollection, LocalReferencePosition } from "./localReference.js";
 import { MergeTree, findRootMergeBlock } from "./mergeTree.js";
@@ -308,9 +311,8 @@ function revertLocalRemove(
 		driver.insertFromSpec(realPos, props.segSpec);
 		const insertSegment = mergeTreeWithRevert.getContainingSegment(
 			realPos,
-			mergeTreeWithRevert.collabWindow.currentSeq,
-			mergeTreeWithRevert.collabWindow.clientId,
-		).segment;
+			mergeTreeWithRevert.localPerspective,
+		)?.segment;
 		assertSegmentLeaf(insertSegment);
 
 		const localSlideFilter = (lref: LocalReferencePosition): boolean =>
@@ -395,11 +397,7 @@ function revertLocalAnnotate(
 }
 
 function getPosition(mergeTreeWithRevert: MergeTreeWithRevert, segment: ISegmentLeaf): number {
-	return mergeTreeWithRevert.getPosition(
-		segment,
-		mergeTreeWithRevert.collabWindow.currentSeq,
-		mergeTreeWithRevert.collabWindow.clientId,
-	);
+	return mergeTreeWithRevert.getPosition(segment, mergeTreeWithRevert.localPerspective);
 }
 
 /**

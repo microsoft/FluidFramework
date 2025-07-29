@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDocumentMessage,
 	INack,
 	INackContent,
@@ -11,7 +11,8 @@ import {
 	ISignalMessage,
 	ScopeType,
 } from "@fluidframework/protocol-definitions";
-import { LambdaName } from "./lambdas";
+
+import type { LambdaName } from "./lambdas";
 
 // String identifying the raw operation message
 /**

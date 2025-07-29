@@ -9,10 +9,7 @@ import {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	IDocumentStorageService,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
+import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
 	ITelemetryContext,
 	IFluidDataStoreContext,
@@ -20,6 +17,7 @@ import {
 	ISummarizeResult,
 	type IPendingMessagesState,
 	type IRuntimeMessageCollection,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -42,7 +40,9 @@ import { ISharedObjectRegistry } from "./dataStoreRuntime.js";
  */
 export abstract class LocalChannelContextBase implements IChannelContext {
 	private globallyVisible = false;
-	/** Tracks the messages for this channel that are sent while it's not loaded */
+	/**
+	 * Tracks the messages for this channel that are sent while it's not loaded
+	 */
 	protected pendingMessagesState: IPendingMessagesState = {
 		messageCollections: [],
 		pendingCount: 0,
@@ -57,7 +57,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		assert(!this.id.includes("/"), 0x30f /* Channel context ID cannot contain slashes */);
 	}
 
-	protected get isGloballyVisible() {
+	protected get isGloballyVisible(): boolean {
 		return this.globallyVisible;
 	}
 
@@ -72,7 +72,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		return this._channel !== undefined;
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		// Connection events are ignored if the data store is not yet globallyVisible or loaded
 		if (this.globallyVisible && this.isLoaded) {
 			this.services.value.deltaConnection.setConnectionState(connected);
@@ -101,21 +101,21 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 			);
 			const propsCopy = {
 				...messageCollection,
-				messagesContent: Array.from(messageCollection.messagesContent),
+				messagesContent: [...messageCollection.messagesContent],
 			};
 			this.pendingMessagesState.messageCollections.push(propsCopy);
 		}
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: unknown, localOpMetadata: unknown, squash: boolean): void {
 		assert(this.isLoaded, 0x18a /* "Channel should be loaded to resubmit ops" */);
 		assert(
 			this.globallyVisible,
 			0x2d4 /* "Local channel must be globally visible when resubmitting op" */,
 		);
-		this.services.value.deltaConnection.reSubmit(content, localOpMetadata);
+		this.services.value.deltaConnection.reSubmit(content, localOpMetadata, squash);
 	}
-	public rollback(content: any, localOpMetadata: unknown) {
+	public rollback(content: unknown, localOpMetadata: unknown): void {
 		assert(this.isLoaded, 0x2ee /* "Channel should be loaded to rollback ops" */);
 		assert(
 			this.globallyVisible,
@@ -198,7 +198,7 @@ export abstract class LocalChannelContextBase implements IChannelContext {
 		return channel.getGCData(fullGC);
 	}
 
-	public updateUsedRoutes(usedRoutes: string[]) {
+	public updateUsedRoutes(usedRoutes: string[]): void {
 		/**
 		 * Currently, DDSes are always considered referenced and are not garbage collected.
 		 * Once we have GC at DDS level, this channel context's used routes will be updated as per the passed
@@ -214,9 +214,9 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		registry: ISharedObjectRegistry,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		logger: ITelemetryLoggerExt,
-		submitFn: (content: any, localOpMetadata: unknown) => void,
+		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		private readonly snapshotTree: ISnapshotTree,
 		extraBlob?: Map<string, ArrayBufferLike>,
@@ -267,9 +267,9 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						this.services.value.deltaConnection.processMessages(messageCollection);
 					}
 					return channel;
-				} catch (err) {
+				} catch (error) {
 					throw DataProcessingError.wrapIfUnrecognized(
-						err,
+						error,
 						"rehydratedLocalChannelContextFailedToLoadChannel",
 						undefined,
 					);
@@ -282,7 +282,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		};
 	}
 
-	public override applyStashedOp(content) {
+	public override applyStashedOp(content: unknown): unknown {
 		return this.services.value.deltaConnection.applyStashedOp(content);
 	}
 
@@ -293,12 +293,12 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		let sanitize = false;
 		const blobsContents = snapshotTree.blobsContents;
 		if (blobsContents !== undefined) {
-			Object.entries(blobsContents).forEach(([key, value]) => {
+			for (const [key, value] of Object.entries(blobsContents)) {
 				blobMap.set(key, value);
 				if (snapshotTree.blobs[key] !== undefined) {
 					sanitize = true;
 				}
-			});
+			}
 		}
 		for (const value of Object.values(snapshotTree.trees)) {
 			sanitize = sanitize || this.isSnapshotInOldFormatAndCollectBlobs(value, blobMap);
@@ -306,7 +306,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		return sanitize;
 	}
 
-	private sanitizeSnapshot(snapshotTree: ISnapshotTree) {
+	private sanitizeSnapshot(snapshotTree: ISnapshotTree): void {
 		const blobMapInitial = new Map(Object.entries(snapshotTree.blobs));
 		for (const [blobName, blobId] of blobMapInitial.entries()) {
 			const blobValue = blobMapInitial.get(blobId);
@@ -327,9 +327,9 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		public readonly channel: IChannel,
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
-		storageService: IDocumentStorageService,
+		storageService: IRuntimeStorageService,
 		logger: ITelemetryLoggerExt,
-		submitFn: (content: any, localOpMetadata: unknown) => void,
+		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 	) {
 		super(
@@ -355,7 +355,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		};
 	}
 
-	public applyStashedOp() {
+	public applyStashedOp(): void {
 		throw new Error("no stashed ops on local channel");
 	}
 }

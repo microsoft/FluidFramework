@@ -4,10 +4,12 @@
  */
 
 import fs from "fs";
-import { ICommitDetails } from "@fluidframework/gitresources";
+
+import type { ICommitDetails } from "@fluidframework/gitresources";
 import { Router } from "express";
 import * as git from "isomorphic-git";
-import nconf from "nconf";
+import type nconf from "nconf";
+
 import { queryParamToNumber, queryParamToString } from "../../../utils";
 import * as utils from "../utils";
 

@@ -29,18 +29,16 @@ describe("Document Markdown rendering tests", () => {
 							[
 								new ParagraphNode([
 									new PlainTextNode("This is test inside of a paragraph. "),
-									new PlainTextNode(
-										"It is also inside of a hierarchical section node. ",
-									),
+									new PlainTextNode("It is also inside of a hierarchical section node. "),
 									SpanNode.createFromPlainText("That's real neat-o.", {
 										italic: true,
 									}),
 								]),
 							],
-							HeadingNode.createFromPlainText("Section Heading"),
+							new HeadingNode("Section Heading"),
 						),
 					],
-					HeadingNode.createFromPlainText("Sample Document"),
+					new HeadingNode("Sample Document"),
 				),
 			],
 			documentPath: "./test.md",
@@ -49,7 +47,7 @@ describe("Document Markdown rendering tests", () => {
 		const expected = [
 			"# Sample Document",
 			"",
-			"This is a sample document. It has very basic content.\t",
+			"This is a sample document. It has very basic content.&#x9;",
 			"",
 			"## Section Heading",
 			"",
