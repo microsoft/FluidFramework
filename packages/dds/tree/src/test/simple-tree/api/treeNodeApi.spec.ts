@@ -2574,6 +2574,30 @@ describe("treeNodeApi", () => {
 			const parent = TreeAlpha.create(Parent, { child: a });
 			assert.equal(parent.child, a);
 		});
+
+		describe("test trees", () => {
+			for (const testCase of testSimpleTrees) {
+				it(testCase.name, () => {
+					// Check create does not error.
+					const tree1 = TreeAlpha.create<UnsafeUnknownSchema>(
+						testCase.schema,
+						testCase.root(),
+					);
+					// We don't have a lot of ways to check the created tree is correct, so just do some sanity checks. Other more specific tests can cover the details.
+					const tree2 = TreeAlpha.create<UnsafeUnknownSchema>(testCase.schema, tree1);
+					assert.equal(
+						tree1,
+						tree2,
+						"create should return the same node when given an existing node",
+					);
+					const tree3 = TreeAlpha.create<UnsafeUnknownSchema>(
+						testCase.schema,
+						testCase.root(),
+					);
+					expectTreesEqual(tree1, tree3);
+				});
+			}
+		});
 	});
 
 	describe("concise", () => {
@@ -2611,45 +2635,40 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("roundtrip", () => {
-			for (const testCase of testSimpleTrees) {
-				if (testCase.root() !== undefined) {
-					it(testCase.name, () => {
-						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
-							testCase.schema,
-							testCase.root(),
+			for (const testCase of testDocuments) {
+				it(testCase.name, () => {
+					const view = testDocumentIndependentView(testCase);
+					const exported = TreeAlpha.exportConcise(view.root);
+					if (testCase.ambiguous) {
+						assert.throws(
+							() => TreeAlpha.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
+							validateUsageError(/compatible with more than one type/),
 						);
-						assert(tree !== undefined);
-						const exported = TreeAlpha.exportConcise(tree);
-						if (testCase.ambiguous) {
-							assert.throws(
-								() => TreeAlpha.importConcise<UnsafeUnknownSchema>(testCase.schema, exported),
-								validateUsageError(/compatible with more than one type/),
-							);
-						} else {
-							const imported = TreeAlpha.importConcise<UnsafeUnknownSchema>(
-								testCase.schema,
-								exported,
-							);
-							expectTreesEqual(tree, imported);
-						}
-					});
-				}
+					} else {
+						const imported = TreeAlpha.importConcise<UnsafeUnknownSchema>(
+							testCase.schema,
+							exported,
+						);
+						expectTreesEqual(view.root, imported);
+					}
+				});
 			}
 		});
 
 		describe("export-stored", () => {
-			for (const testCase of testSimpleTrees) {
-				if (testCase.root() !== undefined) {
-					it(testCase.name, () => {
-						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
-							testCase.schema,
-							testCase.root(),
-						);
-						assert(tree !== undefined);
-						const _exported = TreeAlpha.exportConcise(tree, { useStoredKeys: true });
-						// We have nothing that imports concise trees with stored keys, so no validation here.
-					});
-				}
+			for (const testCase of testDocuments) {
+				it(testCase.name, () => {
+					const view = testDocumentIndependentView(testCase);
+					const exported = TreeAlpha.exportConcise(view.root, { useStoredKeys: true });
+					// We have nothing that imports concise trees with stored keys, so no validation here.
+
+					// Test exporting unhydrated nodes.
+					// For nodes with unknown optional fields and thus are picky about the context, this can catch issues with the context.
+					const clone = TreeBeta.clone(view.root);
+					const exported2 = TreeAlpha.exportConcise(clone, { useStoredKeys: true });
+
+					assert.deepEqual(exported, exported2);
+				});
 			}
 		});
 
