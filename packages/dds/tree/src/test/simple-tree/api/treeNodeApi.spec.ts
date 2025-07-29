@@ -2649,7 +2649,11 @@ describe("treeNodeApi", () => {
 							testCase.schema,
 							exported,
 						);
-						expectTreesEqual(view.root, imported);
+						if (!testCase.hasUnknownOptionalFields) {
+							expectTreesEqual(view.root, imported);
+						}
+						const exported2 = TreeAlpha.exportConcise(imported);
+						assert.deepEqual(exported, exported2);
 					}
 				});
 			}
