@@ -76,7 +76,7 @@ export type {
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
 } from "./allowedTypes.js";
-export { walkAllowedTypes, type SchemaVisitor, walkNodeSchema } from "./walkSchema.js";
+export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";
 export {
 	getOrCreateNodeFromInnerNode,

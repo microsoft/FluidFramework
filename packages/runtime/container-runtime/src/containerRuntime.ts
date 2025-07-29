@@ -5089,7 +5089,7 @@ export class ContainerRuntime
 					),
 				)
 			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
-					logAndReturnPendingState(event, getSyncState()),
+					logAndReturnPendingState(event, getSyncState(this.blobManager.getPendingBlobs())),
 				);
 	}
 

@@ -25,8 +25,6 @@ export {
 	getOrCreateNodeFromInnerNode,
 	getOrCreateNodeFromInnerUnboxedNode,
 	getKernel,
-	type SchemaVisitor,
-	walkAllowedTypes,
 	type NodeFromSchema,
 	isTreeNodeSchemaClass,
 	type TreeNodeFromImplicitAllowedTypes,
@@ -55,7 +53,10 @@ export {
 	type FlexList,
 	type ExtractItemType,
 	walkNodeSchema,
+	walkAllowedTypes,
+	type SchemaVisitor,
 } from "./core/index.js";
+export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
 export {
 	type ITree,
@@ -246,7 +247,6 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
-export { walkFieldSchema } from "./walkFieldSchema.js";
 export {
 	getAllowedContentDiscrepancies,
 	type FieldDiscrepancy,

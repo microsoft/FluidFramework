@@ -746,10 +746,10 @@ export class BlobManager {
 		if (!blobId) {
 			// We submitted this op while offline. The blob should have been uploaded by now.
 			assert(
-				pendingEntry?.opsent === true && !!pendingEntry?.storageId,
+				pendingEntry?.opsent === true && !!pendingEntry.storageId,
 				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
 			);
-			return this.sendBlobAttachOp(localId, pendingEntry?.storageId);
+			return this.sendBlobAttachOp(localId, pendingEntry.storageId);
 		}
 		return this.sendBlobAttachOp(localId, blobId);
 	}
@@ -951,6 +951,34 @@ export class BlobManager {
 	}
 
 	/**
+	 * Similar to attachAndGetPendingBlobs, but to be used in getPendingLocalState flow.
+	 * We need to store pending blobs only if we have sent a blobAttach op but not seen an ack yet,
+	 * since we may be asked to resubmit that op when restoring the container. This lets us
+	 * avoid 0x725 by having a known pending blob in that case.
+	 */
+	public getPendingBlobs(): IPendingBlobs | undefined {
+		return PerformanceEvent.timedExec(this.mc.logger, { eventName: "GetPendingBlobs" }, () => {
+			if (this.pendingBlobs.size === 0) {
+				return;
+			}
+			const blobs = {};
+
+			for (const [localId, entry] of this.pendingBlobs) {
+				if (entry.opsent && !entry.acked) {
+					blobs[localId] = {
+						blob: bufferToString(entry.blob, "base64"),
+						storageId: entry.storageId,
+						acked: entry.acked,
+						minTTLInSeconds: entry.minTTLInSeconds,
+						uploadTime: entry.uploadTime,
+					};
+				}
+			}
+			return Object.keys(blobs).length > 0 ? blobs : undefined;
+		});
+	}
+
+	/**
 	 * Part of container serialization when imminent closure is enabled (Currently when calling closeAndGetPendingLocalState).
 	 * This asynchronous function resolves all pending createBlob calls and waits for each blob
 	 * to be attached. It will also send BlobAttach ops for each pending blob that hasn't sent it
@@ -965,7 +993,7 @@ export class BlobManager {
 	): Promise<IPendingBlobs | undefined> {
 		return PerformanceEvent.timedExecAsync(
 			this.mc.logger,
-			{ eventName: "GetPendingBlobs" },
+			{ eventName: "AttachAndGetPendingBlobs" },
 			async () => {
 				if (this.pendingBlobs.size === 0) {
 					return;

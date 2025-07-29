@@ -22,6 +22,7 @@ import type {
 	ISharedDirectory,
 	SharedDirectory,
 } from "@fluidframework/map/internal";
+import { isFluidHandlePayloadPending } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
@@ -137,12 +138,12 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
-					assert.strictEqual(blob.isAttached, false);
-					map.set(testKey, blob);
-					assert.strictEqual(blob.isAttached, true);
+					assert.strictEqual(blobHandle.isAttached, false);
+					map.set(testKey, blobHandle);
+					assert.strictEqual(blobHandle.isAttached, true);
 				});
 
 				it("blob is attached after usage in directory", async function () {
@@ -151,52 +152,81 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const directory = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
-					assert.strictEqual(blob.isAttached, false);
-					directory.set(testKey, blob);
-					assert.strictEqual(blob.isAttached, true);
+					assert.strictEqual(blobHandle.isAttached, false);
+					directory.set(testKey, blobHandle);
+					assert.strictEqual(blobHandle.isAttached, true);
 				});
 
 				it("removes pending blob when waiting for blob to be attached", async function () {
 					const testString = "this is a test string";
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
 					const pendingStateP: any = runtimeOf(dataStore1).getPendingLocalState({
 						notifyImminentClosure: true,
 					});
-					map.set("key", blob);
+					map.set("key", blobHandle);
 					const pendingState = await pendingStateP;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
 
+				// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
+				// Need to determine if the "attached and acked" tests remain relevant after bookkeeping is updated
 				it("removes pending blob after attached and acked", async function () {
 					const testString = "this is a test string";
 					const testKey = "a blob";
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
-					const blob = await dataStore1.runtime.uploadBlob(
+					const blobHandle = await dataStore1.runtime.uploadBlob(
 						stringToBuffer(testString, "utf-8"),
 					);
-					map.set(testKey, blob);
+					map.set(testKey, blobHandle);
+					if (
+						isFluidHandlePayloadPending(blobHandle) &&
+						blobHandle.payloadState !== "shared"
+					) {
+						// The payloadShared event is emitted after the blobAttach op is acked,
+						// so if we await all of them we expect to see no pending blobs.
+						// NOTE: Without awaiting here, the test would call getPendingLocalState before
+						// the blobAttach op is sent - this would result in a bad pass (because this test
+						// intends to test the behavior after the blobAttach op is acked).
+						await new Promise<void>((resolve) => {
+							blobHandle.events.on("payloadShared", resolve);
+						});
+					}
 					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
 						| IPendingRuntimeState
 						| undefined;
 					assert.strictEqual(pendingState?.pendingAttachmentBlobs, undefined);
 				});
 
+				// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
+				// Need to determine if the "attached and acked" tests remain relevant after bookkeeping is updated
 				it("removes multiple pending blobs after attached and acked", async function () {
 					const dataStore1 = (await container.getEntryPoint()) as ITestFluidObject;
 					const map = await dataStore1.getSharedObject<ISharedMap>(mapId);
 					const lots = 10;
 					for (let i = 0; i < lots; i++) {
-						const blob = await dataStore1.runtime.uploadBlob(stringToBuffer(`${i}`, "utf-8"));
-						map.set(`${i}`, blob);
+						const blobHandle = await dataStore1.runtime.uploadBlob(
+							stringToBuffer(`${i}`, "utf-8"),
+						);
+						map.set(`${i}`, blobHandle);
+						if (
+							isFluidHandlePayloadPending(blobHandle) &&
+							blobHandle.payloadState !== "shared"
+						) {
+							// The payloadShared event is emitted after the blobAttach op is acked,
+							// so if we await all of them we expect to see no pending blobs.
+							await new Promise<void>((resolve) => {
+								blobHandle.events.on("payloadShared", resolve);
+							});
+						}
 					}
 					const pendingState = (await runtimeOf(dataStore1).getPendingLocalState()) as
 						| IPendingRuntimeState
