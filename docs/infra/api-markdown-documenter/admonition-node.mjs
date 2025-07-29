@@ -8,6 +8,7 @@
 /** @typedef {import("@fluid-tools/api-markdown-documenter").ToMarkdownContext} ToMarkdownContext */
 /** @typedef {import("mdast").BlockContent} MdastBlockContent */
 /** @typedef {import("mdast").PhrasingContent} MdastPhrasingContent */
+/** @typedef {"note" | "tip" | "info" | "warning" | "danger"} AdmonitionKind */
 
 import {
 	blockContentToMarkdown,
@@ -49,7 +50,7 @@ import {
 export class AdmonitionNode extends DocumentationParentNodeBase {
 	/**
 	 * @param {BlockContent[]} children - Child node content.
-	 * @param {string} admonitionKind - The kind of admonition. See {@link https://docusaurus.io/docs/markdown-features/admonitions}.
+	 * @param {AdmonitionKind} admonitionKind - The kind of admonition. See {@link https://docusaurus.io/docs/markdown-features/admonitions}.
 	 * @param {string | undefined} title - (Optional) Title text for the admonition.
 	 */
 	constructor(children, admonitionKind, title) {
