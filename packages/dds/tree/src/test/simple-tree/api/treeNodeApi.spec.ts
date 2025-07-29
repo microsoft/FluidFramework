@@ -2803,9 +2803,6 @@ describe("treeNodeApi", () => {
 				);
 				const node = createTreeNodeFromInner(flex);
 
-				// TODO: AB#43548: remove this hack which is currently needed for export to not assert about missing schema!
-				(getUnhydratedContext(PointUnknown) as Mutable<Context>).schema = context.schema;
-
 				assert.deepEqual(TreeAlpha.exportVerbose(node, { useStoredKeys: true }), {
 					type: PointUnknown.identifier,
 					fields: { x: 1 },
@@ -2866,47 +2863,50 @@ describe("treeNodeApi", () => {
 				}
 			});
 
-			describe("hydrated test-documents", () => {
-				// As there is currently no way to create a unhydrated tree with unknown optional fields,
-				// we only test the hydrated case here.
-				// TODO: Fix clone, and use it to generated unhydrated trees with unknown optional fields,
-				// then generalize these tests to use that.
-
-				for (const testCase of testDocuments) {
-					it(testCase.name, () => {
-						const view = testDocumentIndependentView(testCase);
-						if (view.root !== undefined) {
-							// Stored keys
-							{
-								const exported = TreeAlpha.exportVerbose(view.root, { useStoredKeys: true });
-								if (testCase.hasUnknownOptionalFields) {
-									// is not defined in the schema
-									assert.throws(
-										() =>
-											TreeAlpha.importVerbose(view.schema, exported, {
+			describe("test-documents", () => {
+				for (const testKind of ["hydrated", "unhydrated"] as const) {
+					describe(testKind, () => {
+						for (const testCase of testDocuments) {
+							it(testCase.name, () => {
+								const view = testDocumentIndependentView(testCase);
+								const root = testKind === "hydrated" ? view.root : TreeBeta.clone(view.root);
+								expectTreesEqual(view.root, root);
+								if (root !== undefined) {
+									// Stored keys
+									{
+										const exported = TreeAlpha.exportVerbose(root, {
+											useStoredKeys: true,
+										});
+										if (testCase.hasUnknownOptionalFields) {
+											// is not defined in the schema
+											assert.throws(
+												() =>
+													TreeAlpha.importVerbose(view.schema, exported, {
+														useStoredKeys: true,
+													}),
+												validateUsageError(/is not defined in the schema/),
+											);
+										} else {
+											const imported = TreeAlpha.importVerbose(view.schema, exported, {
 												useStoredKeys: true,
-											}),
-										validateUsageError(/is not defined in the schema/),
-									);
-								} else {
-									const imported = TreeAlpha.importVerbose(view.schema, exported, {
-										useStoredKeys: true,
-									});
-									expectTreesEqual(view.root, imported);
-								}
-							}
+											});
+											expectTreesEqual(root, imported);
+										}
+									}
 
-							// property keys
-							{
-								const exported = TreeAlpha.exportVerbose(view.root);
-								const imported = TreeAlpha.importVerbose(view.schema, exported);
-								if (!testCase.hasUnknownOptionalFields) {
-									expectTreesEqual(view.root, imported);
+									// property keys
+									{
+										const exported = TreeAlpha.exportVerbose(root);
+										const imported = TreeAlpha.importVerbose(view.schema, exported);
+										if (!testCase.hasUnknownOptionalFields) {
+											expectTreesEqual(root, imported);
+										}
+										assert(imported !== undefined);
+										const reexported = TreeAlpha.exportVerbose(imported);
+										assert.deepEqual(exported, reexported);
+									}
 								}
-								assert(imported !== undefined);
-								const reexported = TreeAlpha.exportVerbose(imported);
-								assert.deepEqual(exported, reexported);
-							}
+							});
 						}
 					});
 				}

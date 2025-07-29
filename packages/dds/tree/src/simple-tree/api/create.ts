@@ -59,7 +59,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 		schema: context.flexContext.schema,
 	};
 
-	// TODO: AB#43548: Using a stored schema from the possibly unhydrated flex tree context does not handle schema evolution features like "allowUnknownOptionalFields".
+	// Assuming the caller provides the correct `contextForNewNodes`, this should handle unknown optional fields.
 	isFieldInSchema(mapTrees, rootFieldSchema, schemaAndPolicy, throwOutOfSchema);
 
 	if (mapTrees.length === 0) {
