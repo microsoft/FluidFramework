@@ -26,7 +26,7 @@ class MajorCodec implements IJsonCodec<Major> {
 	) {}
 
 	public encode(major: Major): EncodedRevisionTag | StableId {
-		assert(major !== undefined, 0x88e /* Unexpected undefined revision */);
+		assert(major !== undefined, "Unexpected undefined revision");
 		const id = this.revisionTagCodec.encode(major);
 
 		if (id !== "root" && id < 0) {
