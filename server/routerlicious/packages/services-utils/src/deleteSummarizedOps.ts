@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { CheckpointService, ICollection } from "@fluidframework/server-services-core";
+import type { CheckpointService, ICollection } from "@fluidframework/server-services-core";
 import { Lumberjack, getLumberBaseProperties } from "@fluidframework/server-services-telemetry";
 
 import { FluidServiceError, FluidServiceErrorCode } from "./errorUtils";

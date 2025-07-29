@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITokenClaims } from "@fluidframework/protocol-definitions";
+import type { ITokenClaims } from "@fluidframework/protocol-definitions";
 import { handleResponse } from "@fluidframework/server-services";
 import { getRandomName } from "@fluidframework/server-services-client";
-import {
+import type {
 	ISecretManager,
 	ITenantStorage,
 	ITenantOrderer,
@@ -14,11 +14,11 @@ import {
 	ICache,
 } from "@fluidframework/server-services-core";
 import { getGlobalTelemetryContext } from "@fluidframework/server-services-telemetry";
-import { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
+import type { ITenantKeyGenerator } from "@fluidframework/server-services-utils";
 import { Router } from "express";
 import { decode } from "jsonwebtoken";
 
-import { ITenantRepository } from "./mongoTenantRepository";
+import type { ITenantRepository } from "./mongoTenantRepository";
 import { TenantManager } from "./tenantManager";
 
 export function create(

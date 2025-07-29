@@ -130,21 +130,14 @@ describe("SchematizingSimpleTreeView", () => {
 					// allow invalid data through the public API.
 					(child.data as Mutable<typeof child.data>).value = "invalid value";
 
-					// Attempt to initialize with invalid content
-					if (enableSchemaValidation || additionalAsserts) {
-						assert.throws(
-							() => view.initialize(root),
-							validateUsageError(/Tree does not conform to schema./),
-						);
+					// Attempt to initialize with invalid content.
+					// Currently src/simple-tree/prepareForInsertion.ts has `validateSchema` unconditionally enabled, so this is detected regardless of the value of `enableSchemaValidation`.
+					assert.throws(
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
 
-						assert.throws(
-							() => view.root,
-							validateUsageError(/invalid state by another error/),
-						);
-					} else {
-						view.initialize(root);
-						assert.equal(view.root.content, "invalid value");
-					}
+					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 				});
 			}
 		}
@@ -282,7 +275,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(toStoredSchema([schema.number]));
+		checkout.updateSchema(toStoredSchema([schema.number]), true);
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);

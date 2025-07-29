@@ -38,9 +38,44 @@ export {
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
 
-// We want to make sure the entirety of this domain is accessible.
-// eslint-disable-next-line no-restricted-syntax
-export * from "./documentation-domain/index.js";
+export {
+	type BlockContent,
+	type BlockContentMap,
+	CodeSpanNode,
+	DocumentNode,
+	type DocumentNodeProps,
+	type DocumentationNode,
+	type DocumentationLiteralNode,
+	DocumentationLiteralNodeBase,
+	type DocumentationParentNode,
+	DocumentationParentNodeBase,
+	FencedCodeBlockNode,
+	type FencedCodeBlockNodeContent,
+	HeadingNode,
+	HorizontalRuleNode,
+	LineBreakNode,
+	LinkNode,
+	ListItemNode,
+	ListNode,
+	ParagraphNode,
+	type PhrasingContent,
+	type PhrasingContentMap,
+	PlainTextNode,
+	SectionNode,
+	type SectionContent,
+	SpanNode,
+	type TableCellContent,
+	TableCellNode,
+	TableBodyCellNode,
+	TableHeaderCellNode,
+	TableCellKind,
+	TableRowNode,
+	TableBodyRowNode,
+	TableHeaderRowNode,
+	TableRowKind,
+	TableNode,
+	type TextFormatting,
+} from "./documentation-domain/index.js";
 
 export {
 	documentToHtml,
@@ -52,12 +87,23 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
+	blockContentToMarkdown,
+	type BlockContentTransformations as BlockContentToMarkdownTransformations,
+	documentToMarkdown,
+	phrasingContentToMarkdown,
+	type PhrasingContentTransformations as PhrasingContentToMarkdownTransformations,
+	sectionContentToMarkdown,
+	type Transformation as ToMarkdownTransformation,
+	type TransformationConfiguration as ToMarkdownConfiguration,
+	type TransformationContext as ToMarkdownContext,
+	type Transformations as ToMarkdownTransformations,
+} from "./documentation-domain-to-markdown/index.js";
+export {
 	DocumentWriter,
 	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,
-	type MarkdownRenderContext,
-	type MarkdownRenderers,
-	type MarkdownRenderConfiguration,
+	type RenderDocumentAsMarkdownConfiguration,
+	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";

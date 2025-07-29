@@ -197,10 +197,13 @@ export function enumEntries(
 		}
 		// At this point, it is expected that all remaining cases are reverse mappings,
 		// but do some asserts to ensure that the above logic is sufficient.
-		assert(typeof value === "string", "expected reverse mapping and thus a string value");
+		assert(
+			typeof value === "string",
+			0xbe4 /* expected reverse mapping and thus a string value */,
+		);
 		assert(
 			Number.parseFloat(key).toString() === key,
-			"expected reverse mapping and thus a key that is a normalized number",
+			0xbe5 /* expected reverse mapping and thus a key that is a normalized number */,
 		);
 		// Discard the reverse mapping.
 		return false;

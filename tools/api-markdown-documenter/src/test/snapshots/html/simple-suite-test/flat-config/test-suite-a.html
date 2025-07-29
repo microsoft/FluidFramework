@@ -13,17 +13,23 @@
     <section>
       <h1 id="test-suite-a-remarks">Remarks</h1>
       <p>This remarks block includes a bulleted list!</p>
-      <p>- Bullet 1</p>
-      <p>- Bullet 2</p>
+      <ul>
+        <li>Bullet 1</li>
+        <li>Bullet 2</li>
+      </ul>
       <p>And an ordered list for good measure!</p>
-      <p>1. List item 1</p>
-      <p>2. List item 2</p>
-      <p>3. List item 3</p>
+      <ol>
+        <li>List item 1</li>
+        <li>List item 2</li>
+        <li>List item 3</li>
+      </ol>
       <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
-      <p>- Good link (no alias): <a href="docs/test-suite-a#testclass-class">TestClass</a></p>
-      <p>- Good link (with alias): <i>function alias text</i></p>
-      <p>- Bad link (no alias): <i>InvalidItem</i></p>
-      <p>- Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i></p>
+      <ul>
+        <li>Good link (no alias): <a href="docs/test-suite-a#testclass-class">TestClass</a></li>
+        <li>Good link (with alias): <i>function alias text</i></li>
+        <li>Bad link (no alias): <i>InvalidItem</i></li>
+        <li>Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i></li>
+      </ul>
     </section>
     <section>
       <h1 id="test-suite-a-example">Example</h1>
@@ -425,7 +431,7 @@
               <p>A test property with a getter and a setter.</p>
             </section>
             <section>
-              <h5 id="setterproperty-signature">Signature</h5><code>get setterProperty(): boolean;<br><br><br>set setterProperty(newValue: boolean);</code>
+              <h5 id="setterproperty-signature">Signature</h5><code>get setterProperty(): boolean;<br><br>set setterProperty(newValue: boolean);</code>
               <p><b>Type</b>: boolean</p>
             </section>
           </section>
@@ -581,9 +587,11 @@
         </section>
         <section>
           <h3 id="testinterfaceextendingotherinterfaces-see-also">See Also</h3>
-          <p>- <a href="docs/test-suite-a#testinterface-interface">TestInterface</a></p>
-          <p>- <a href="docs/test-suite-a#testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a></p>
-          <p>- <a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a></p>
+          <ul>
+            <li><a href="docs/test-suite-a#testinterface-interface">TestInterface</a></li>
+            <li><a href="docs/test-suite-a#testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a></li>
+            <li><a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a></li>
+          </ul>
         </section>
       </section>
       <section>
@@ -734,7 +742,10 @@
                 <td><a href="docs/test-suite-a#testabstractclass-abstractpropertygetter-property">abstractPropertyGetter</a></td>
                 <td><code>readonly</code></td>
                 <td><a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a></td>
-                <td>A test abstract getter property.</td>
+                <td>
+                  <p>A test abstract getter property.</p>
+                  <p>@escapedTag</p>
+                </td>
               </tr>
               <tr>
                 <td><a href="docs/test-suite-a#testabstractclass-protectedproperty-property">protectedProperty</a></td>
@@ -820,6 +831,7 @@
             <h4 id="testabstractclass-abstractpropertygetter-property">abstractPropertyGetter</h4>
             <section>
               <p>A test abstract getter property.</p>
+              <p>@escapedTag</p>
             </section>
             <section>
               <h5 id="abstractpropertygetter-signature">Signature</h5><code>abstract get abstractPropertyGetter(): TestMappedType;</code>
@@ -1142,7 +1154,7 @@
               <p>Test class property with both a getter and a setter.</p>
             </section>
             <section>
-              <h5 id="testclassgetterproperty-signature">Signature</h5><code>/** @virtual */<br>get testClassGetterProperty(): number;<br><br><br>set testClassGetterProperty(newValue: number);</code>
+              <h5 id="testclassgetterproperty-signature">Signature</h5><code>/** @virtual */<br>get testClassGetterProperty(): number;<br><br>set testClassGetterProperty(newValue: number);</code>
               <p><b>Type</b>: number</p>
             </section>
             <section>
@@ -1256,7 +1268,9 @@
             </section>
             <section>
               <h5 id="testclassstaticmethod-returns">Returns</h5>
-              <p>- Some string</p>
+              <ul>
+                <li>Some string</li>
+              </ul>
               <p><b>Return type</b>: string</p>
             </section>
           </section>
@@ -1603,12 +1617,10 @@
         <section>
           <h3 id="testnamespace-examples">Examples</h3>
           <section>
-            <h4 id="testnamespace-example1">Example: TypeScript Example</h4>
-            <p></p><code>const foo: Foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
+            <h4 id="testnamespace-example1">Example: TypeScript Example</h4><code>const foo: Foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
           </section>
           <section>
-            <h4 id="testnamespace-example2">Example: JavaScript Example</h4>
-            <p></p><code>const foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
+            <h4 id="testnamespace-example2">Example: JavaScript Example</h4><code>const foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
           </section>
         </section>
         <section>

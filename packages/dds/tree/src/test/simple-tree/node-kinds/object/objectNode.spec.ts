@@ -9,7 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
-	FieldKind,
+	type FieldKind,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -29,6 +29,7 @@ import {
 	type InsertableTreeNodeFromAllowedTypes,
 	type InsertableTypedNode,
 	type NodeFromSchema,
+	unhydratedFlexTreeFromInsertable,
 } from "../../../../simple-tree/index.js";
 import {
 	type FieldHasDefault,
@@ -39,6 +40,7 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../simple-tree/node-kinds/object/objectNode.js";
 import { describeHydration, hydrate, pretty } from "../../utils.js";
+import { brand } from "../../../../util/index.js";
 import type {
 	areSafelyAssignable,
 	isAssignableTo,
@@ -49,10 +51,13 @@ import type {
 } from "../../../../util/index.js";
 import { getView, validateUsageError } from "../../../utils.js";
 import { Tree } from "../../../../shared-tree/index.js";
-import {
-	createFieldSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../simple-tree/fieldSchema.js";
+import { FieldKinds } from "../../../../feature-libraries/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createField, UnhydratedFlexTreeNode } from "../../../../simple-tree/core/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../../../simple-tree/createContext.js";
+// eslint-disable-next-line import/no-internal-modules
+import { createTreeNodeFromInner } from "../../../../simple-tree/core/treeNodeKernel.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -922,13 +927,68 @@ describeHydration(
 			const builderB: BuildB = { a: 1, thisDoesNotExist: 5 };
 		});
 
+		it("Custom Keys", () => {
+			class A extends schemaFactory.object("A", {
+				a: SchemaFactory.required(schemaFactory.number, { key: "b" }),
+			}) {}
+
+			const a = new A({ a: 1 });
+			assert.equal(a.a, 1);
+
+			// Construct an A node from a flex node using the custom stored key.
+			const field = createField(
+				getUnhydratedContext(A).flexContext,
+				FieldKinds.optional.identifier,
+				brand("b"),
+				[unhydratedFlexTreeFromInsertable(1, SchemaFactory.number)],
+			);
+			const flex = new UnhydratedFlexTreeNode(
+				{ type: brand(A.identifier) },
+				new Map([[brand("b"), field]]),
+				getUnhydratedContext(A),
+			);
+
+			const fromFlex = createTreeNodeFromInner(flex);
+			assert(fromFlex instanceof A);
+			assert.equal(fromFlex.a, 1);
+		});
+
+		it("Colliding keys", () => {
+			assert.throws(
+				() => {
+					class B extends schemaFactory.object("B", {
+						a: SchemaFactory.required(SchemaFactory.number, { key: "c" }),
+						b: SchemaFactory.required(SchemaFactory.number, { key: "c" }),
+					}) {}
+				},
+				validateUsageError(/Duplicate stored key/),
+			);
+
+			assert.throws(
+				() => {
+					class C extends schemaFactory.object("C", {
+						a: schemaFactory.number,
+						b: SchemaFactory.required(SchemaFactory.number, { key: "a" }),
+					}) {}
+				},
+				validateUsageError(/conflicts with a property key of the same name/),
+			);
+		});
+
+		it("Overlapping property and key", () => {
+			class B extends schemaFactory.object("B", {
+				a: SchemaFactory.required(SchemaFactory.number, { key: "b" }),
+				b: SchemaFactory.required(SchemaFactory.number, { key: "a" }),
+			}) {}
+		});
+
 		describe("unannotateSchemaRecord", () => {
 			const stringSchema = schemaFactory.string;
 			const numberSchema = schemaFactory.number;
 
 			it("returns the same FieldSchema if no annotations are present", () => {
 				const schemaRecord = {
-					foo: createFieldSchema(FieldKind.Optional, stringSchema),
+					foo: SchemaFactory.optional(stringSchema),
 				};
 				const result = unannotateSchemaRecord(schemaRecord);
 				assert.deepStrictEqual(result, schemaRecord);
@@ -948,7 +1008,7 @@ describeHydration(
 			});
 
 			it("handles mixed FieldSchema and annotated types", () => {
-				const fieldSchema = createFieldSchema(FieldKind.Optional, stringSchema);
+				const fieldSchema = SchemaFactory.optional(stringSchema);
 				const schemaRecord = {
 					foo: fieldSchema,
 					bar: {

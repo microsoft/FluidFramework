@@ -3,27 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
-import {
+import type {
 	IFileEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { IWriteSummaryResponse } from "./../contracts.js";
+import type { IWriteSummaryResponse } from "./../contracts.js";
 import { ClpCompliantAppHeader, FileMetadataHeader } from "./../contractsPublic.js";
 import { createOdspUrl } from "./../createOdspUrl.js";
-import { EpochTracker } from "./../epochTracker.js";
+import type { EpochTracker } from "./../epochTracker.js";
 import { OdspDriverUrlResolver } from "./../odspDriverUrlResolver.js";
 import { getApiRoot } from "./../odspUrlHelper.js";
 import {
-	IExistingFileInfo,
+	type IExistingFileInfo,
 	createCacheSnapshotKey,
 	snapshotWithLoadingGroupIdSupported,
 } from "./../odspUtils.js";

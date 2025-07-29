@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISignalClient } from "@fluidframework/protocol-definitions";
+import type { ISignalClient } from "@fluidframework/protocol-definitions";
 
 /**
  * Client information used for tracking a collaboration session.

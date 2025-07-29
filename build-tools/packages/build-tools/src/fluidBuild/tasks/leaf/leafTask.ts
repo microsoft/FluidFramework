@@ -9,22 +9,26 @@ import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 
 import crypto from "crypto";
 import * as path from "path";
-import { AsyncPriorityQueue } from "async";
+import type { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
 import globby from "globby";
 import chalk from "picocolors";
 
 import { defaultLogger } from "../../../common/logging";
-import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
+import {
+	type ExecAsyncResult,
+	execAsync,
+	getExecutableFromCommand,
+} from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
-import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
+import { type BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import {
 	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
 } from "../../fluidBuildConfig";
 import { options } from "../../options";
-import { Task, TaskExec } from "../task";
+import { Task, type TaskExec } from "../task";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");

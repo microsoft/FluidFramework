@@ -37,6 +37,8 @@ import {
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type ValidateRecursiveSchema,
+	type LazyItem,
+	schemaStatics,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { jsonableTreesFromFieldCursor } from "./feature-libraries/chunked-forest/fieldCursorTestUtilities.js";
@@ -45,8 +47,7 @@ import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
-import { isLazy, type LazyItem } from "../simple-tree/core/flexList.js";
-import { schemaStatics } from "../simple-tree/index.js";
+import { isLazy } from "../simple-tree/core/index.js";
 import { fieldCursorFromInsertable } from "./utils.js";
 
 interface TestSimpleTree {
@@ -65,6 +66,10 @@ interface TestTree {
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
 }
+
+// TODO: AB#43548: Add a collection of "test documents" which can be used to test schema evolution related features where view and stored schema can diverge.
+// Include for example documents with unknown optional fields, and with staged allowed types (once supported) both before and after the stored schema update.
+// Use these test documents to test import and export APIs.
 
 function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 	name: string,

@@ -17,6 +17,8 @@ import {
 	type TestFluidObjectInternal,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 
 import {
 	CommitKind,
@@ -66,6 +68,9 @@ import {
 	type TreeViewAlpha,
 	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
+	asTreeViewAlpha,
+	SchemaFactoryAlpha,
+	type ITree,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -100,19 +105,13 @@ import type {
 	SharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
 import { TestAnchor } from "../testAnchor.js";
-// eslint-disable-next-line import/no-internal-modules
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/leafNodeSchema.js";
+import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
 import { AttachState } from "@fluidframework/container-definitions";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 import {
-	asTreeViewAlpha,
-	SchemaFactoryAlpha,
 	toSimpleTreeSchema,
-	type ITree,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../simple-tree/api/index.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
 // eslint-disable-next-line import/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
@@ -1743,7 +1742,8 @@ describe("SharedTree", () => {
 			await provider.opProcessingController.pauseProcessing(pausedContainer);
 			pausedTree.root.insertAt(1, "b");
 			pausedTree.root.insertAt(2, "c");
-			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState?.();
+			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 
 			const otherLoadedView = provider.trees[1].viewWith(
@@ -2055,7 +2055,8 @@ describe("SharedTree", () => {
 				}),
 			);
 			pausedView.initialize([]);
-			const pendingOps = await pausedContainer.closeAndGetPendingLocalState?.();
+			const pendingOps = await pausedContainer.getPendingLocalState?.();
+			pausedContainer.close();
 			provider.opProcessingController.resumeProcessing();
 
 			const loadedContainer = await provider.loadTestContainer(

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/azure-client-todo-list",
-	"version": "2.51.0",
+	"version": "2.52.0",
 	"private": true,
 	"description": "Minimal Fluid Container sample demonstrating the use of SharedTree and nested DDSs via a simple to-do list application.",
 	"homepage": "https://fluidframework.com",
@@ -43,6 +43,7 @@
 		"@fluid-example/example-utils": "workspace:~",
 		"@fluid-experimental/tree-react-api": "workspace:~",
 		"@fluidframework/azure-client": "workspace:~",
+		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/routerlicious-driver": "workspace:~",
 		"@fluidframework/telemetry-utils": "workspace:~",
 		"assert": "^2.0.0",

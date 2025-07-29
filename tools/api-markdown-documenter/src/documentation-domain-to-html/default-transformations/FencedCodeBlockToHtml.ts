@@ -9,7 +9,10 @@
  */
 import type { Element as HastElement } from "hast";
 
-import type { FencedCodeBlockNode } from "../../documentation-domain/index.js";
+import {
+	createNodesFromPlainText,
+	type FencedCodeBlockNode,
+} from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
 
@@ -24,5 +27,9 @@ export function fencedCodeBlockToHtml(
 	context: TransformationContext,
 ): HastElement {
 	// Note that HTML <code> tags don't support language attributes, so we don't pass anything through here.
-	return transformChildrenUnderTag({ name: "code" }, node.children, context);
+	return transformChildrenUnderTag(
+		{ name: "code" },
+		createNodesFromPlainText(node.value),
+		context,
+	);
 }

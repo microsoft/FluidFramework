@@ -218,7 +218,6 @@ export {
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
-	createUnknownOptionalFieldPolicy,
 	isRecordNodeSchema,
 	type RecordNodeCustomizableSchema,
 	type RecordNodeInsertableData,
@@ -237,7 +236,7 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export { toStoredSchema, getStoredSchema } from "./toStoredSchema.js";
+export { toStoredSchema, getStoredSchema, convertFieldKind } from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,
@@ -246,3 +245,11 @@ export {
 	nullSchema,
 } from "./leafNodeSchema.js";
 export type { LeafSchema } from "./leafNodeSchema.js";
+export {
+	getAllowedContentDiscrepancies,
+	type FieldDiscrepancy,
+	comparePosetElements,
+	fieldRealizer,
+	type Realizer,
+	PosetComparisonResult,
+} from "./discrepancies.js";

@@ -6,17 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import type { IClient } from "@fluidframework/driver-definitions";
-import {
+import type {
 	IResolvedUrl,
-	type IAnyDriverError,
+	IAnyDriverError,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IOdspResolvedUrl,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub, type SinonStub } from "sinon";
-import { Socket } from "socket.io-client";
+import type { Socket } from "socket.io-client";
 
 import { createOdspUrl } from "../createOdspUrl.js";
 import { mockify } from "../mockify.js";

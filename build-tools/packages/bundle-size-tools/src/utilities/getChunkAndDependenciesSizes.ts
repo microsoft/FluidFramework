@@ -4,7 +4,7 @@
  */
 
 import { fail } from "assert";
-import { StatsCompilation } from "webpack";
+import type { StatsCompilation } from "webpack";
 
 import { getChunkParsedSize } from "./getChunkParsedSize";
 
