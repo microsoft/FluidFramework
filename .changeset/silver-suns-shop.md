@@ -13,5 +13,5 @@ After this release, the behavior depends on the `CodecWriteOptions.oldestCompati
 * For values > `FluidClientVersion.v2_52`, the attach will succeed, but use a newer storage format.
 
 Applications should take care to saturate their clients with FF version `2.52` (or greater) before using a `CodecWriteOptions.oldestCompatibleClient` that is greater than `FluidClientVersion.v2_52`.
-Failure to do may lead clients with `CodecWriteOptions.oldestCompatibleClient` greater than `FluidClientVersion.v2_52` to attach SharedTree instances using a storage format that is not supported by FF versions prior to `2.52`.
+Failure to do may lead clients with `CodecWriteOptions.oldestCompatibleClient` greater than `FluidClientVersion.v2_52` to attach SharedTree instances using a storage format that is not supported by FF versions before `2.52`.
 This means that application versions using FF versions before `2.52` will be unable to open documents where such an operation has happened.
