@@ -85,6 +85,9 @@ const warn = console.warn;
 
 let testLogger: FluidTestRunLogger;
 
+// The delay after which the logger will flush events after the last test ran.
+const AFTER_FLUSH_DELAY_MS = 1250;
+
 /**
  * @internal
  */
@@ -107,7 +110,7 @@ export const mochaHooks = {
 				);
 			} else {
 				originalLogger = createTestLogger({
-					afterFlushDelayMs: 1250,
+					afterFlushDelayMs: AFTER_FLUSH_DELAY_MS,
 					throttleLogging: false,
 				});
 			}
@@ -158,7 +161,9 @@ export const mochaHooks = {
 		// test (e.g. during a `before` or `after` hook), it doesn't log events with the name of the last test that ran.
 		testLogger.clearCurrentTest();
 	},
-	async afterAll() {
+	async afterAll(this: Mocha.Context) {
+		// Allow 5 seconds for the logger to flush.
+		this.timeout(5000);
 		// After all tests ran, flush the logger to ensure all events are sent before the process exits.
 		await testLogger.flush();
 	},
