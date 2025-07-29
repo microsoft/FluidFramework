@@ -14,56 +14,53 @@ import {
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
 } from "../../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
+import {
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+	type TreeFieldFromImplicitField,
+} from "../fieldSchema.js";
 import {
 	type Context,
 	getOrCreateNodeFromInnerNode,
-	type NodeKind,
 	type Unhydrated,
 	UnhydratedFlexTreeNode,
 	createField,
 } from "../core/index.js";
 import {
 	defaultSchemaPolicy,
-	inSchemaOrThrow,
 	isFieldInSchema,
+	throwOutOfSchema,
 } from "../../feature-libraries/index.js";
 import { getUnhydratedContext } from "../createContext.js";
-import type { SimpleNodeSchema, SimpleNodeSchemaBase } from "../simpleSchema.js";
-import { getStoredSchema } from "../toStoredSchema.js";
+import { convertField } from "../toStoredSchema.js";
 import { unknownTypeError } from "./customTree.js";
 
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
  * @remarks
- * Does not support defaults.
- * Validates the field is in schema.
+ * Does not support providing missing defaults values.
+ * Validates the field is in schema using the provided `contextForNewNodes` of the default unhydrated context if not provided.
  *
  * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
  */
 export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	cursor: ITreeCursorSynchronous | undefined,
+	contextForNewNodes?: Context,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
-	const context = getUnhydratedContext(schema);
+	const context = contextForNewNodes ?? getUnhydratedContext(schema);
+	assert(context.flexContext.isHydrated() === false, "Expected unhydrated context");
 	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
 
-	const flexSchema = context.flexContext.schema;
+	const rootFieldSchema = convertField(normalizeFieldSchema(schema));
 
-	const schemaValidationPolicy: SchemaAndPolicy = {
-		policy: {
-			...defaultSchemaPolicy,
-		},
+	const schemaAndPolicy: SchemaAndPolicy = {
+		policy: defaultSchemaPolicy,
 		schema: context.flexContext.schema,
 	};
 
 	// TODO: AB#43548: Using a stored schema from the possibly unhydrated flex tree context does not handle schema evolution features like "allowUnknownOptionalFields".
-	const maybeError = isFieldInSchema(
-		mapTrees,
-		flexSchema.rootFieldSchema,
-		schemaValidationPolicy,
-	);
-	inSchemaOrThrow(maybeError);
+	isFieldInSchema(mapTrees, rootFieldSchema, schemaAndPolicy, throwOutOfSchema);
 
 	if (mapTrees.length === 0) {
 		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;
@@ -91,11 +88,10 @@ export function unhydratedFlexTreeFromCursor(
 	cursor: ITreeCursorSynchronous,
 ): UnhydratedFlexTreeNode {
 	assert(cursor.mode === CursorLocationType.Nodes, 0xbb4 /* Expected nodes cursor */);
-	const schema = context.schema.get(cursor.type) ?? unknownTypeError(cursor.type);
-	// TODO: AB#43548: Using a stored schema from for unhydrated flex trees does not handle schema evolution features like "allowUnknownOptionalFields".
-	const storedSchema = getStoredSchema(
-		schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,
-	);
+	const identifier = cursor.type;
+	const storedSchema =
+		context.flexContext.schema.nodeSchema.get(identifier) ?? unknownTypeError(identifier);
+
 	const fields = new Map(
 		mapCursorFields(cursor, () => {
 			const fieldSchema = storedSchema.getFieldSchema(cursor.getFieldKey());
@@ -107,7 +103,7 @@ export function unhydratedFlexTreeFromCursor(
 				// they would still error, but with that more confusing message about unknown types.
 				throw new UsageError(
 					// Using JSON.stringify to handle quoting and escaping since both key and identifier can technically contain quotes themselves.
-					`Field ${JSON.stringify(cursor.getFieldKey())} is not defined in the schema ${JSON.stringify(schema.identifier)}.`,
+					`Field ${JSON.stringify(cursor.getFieldKey())} is not defined in the schema ${JSON.stringify(identifier)}.`,
 				);
 			}
 			return [

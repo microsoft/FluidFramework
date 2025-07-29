@@ -12,6 +12,7 @@ import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import { type NormalizedUpPath, rootFieldKey } from "../../../core/index.js";
 import {
+	jsonableTreeFromFieldCursor,
 	MockNodeIdentifierManager,
 	TreeStatus,
 	type StableNodeIdentifier,
@@ -39,6 +40,7 @@ import {
 	chunkFromJsonableTrees,
 	fieldCursorFromInsertable,
 	getView,
+	testIdCompressor,
 	TestTreeProviderLite,
 	validateUsageError,
 } from "../../utils.js";
@@ -60,7 +62,11 @@ import {
 } from "../../../simple-tree/leafNodeSchema.js";
 // eslint-disable-next-line import/no-internal-modules
 import { tryGetSchema } from "../../../simple-tree/api/treeNodeApi.js";
-import { testSimpleTrees } from "../../testTrees.js";
+import {
+	testDocumentIndependentView,
+	testDocuments,
+	testSimpleTrees,
+} from "../../testTrees.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { ajvValidator } from "../../codec/index.js";
 import {
@@ -80,6 +86,8 @@ import {
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 // eslint-disable-next-line import/no-internal-modules
 import { createTreeNodeFromInner } from "../../../simple-tree/core/treeNodeKernel.js";
+// eslint-disable-next-line import/no-internal-modules
+import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
 
 const schema = new SchemaFactoryAlpha("com.example");
 
@@ -2396,14 +2404,26 @@ describe("treeNodeApi", () => {
 
 			// Create a new node and insert it.
 			const innerPoint1 = new TestPoint({ x: 2, y: 2 });
+			{
+				const clonedPoint1 = TreeBeta.clone<typeof TestPoint>(innerPoint1);
+				assert.deepEqual(innerPoint1, clonedPoint1, "Inner node not cloned properly");
+				assert.notEqual(
+					innerPoint1,
+					clonedPoint1,
+					"Cloned inner node object should be different",
+				);
+			}
+
 			rectangle.innerPoints.insertAtEnd(innerPoint1);
 
 			// Clone the new node inside the rectangle.
 			const point1 = rectangle.innerPoints.at(0);
-			assert(point1 !== undefined, "Point not inserted correctly");
-			const clonedPoint1 = TreeBeta.clone<typeof TestPoint>(point1);
-			assert.deepEqual(point1, clonedPoint1, "Inner node not cloned properly");
-			assert.notEqual(point1, clonedPoint1, "Cloned inner node object should be different");
+			assert(point1 === innerPoint1, "Point not inserted correctly");
+			{
+				const clonedPoint1 = TreeBeta.clone<typeof TestPoint>(point1);
+				assert.deepEqual(point1, clonedPoint1, "Inner node not cloned properly");
+				assert.notEqual(point1, clonedPoint1, "Cloned inner node object should be different");
+			}
 
 			// Modify the original rectangle and validate that the clone is not modified.
 			rectangle.topLeft = new TestPoint({ x: 2, y: 2 });
@@ -2451,6 +2471,20 @@ describe("treeNodeApi", () => {
 						assert.notEqual(tree, exported);
 					}
 					expectTreesEqual(tree, exported);
+				});
+			}
+		});
+
+		describe("test-documents", () => {
+			for (const testCase of testDocuments) {
+				it(testCase.name, () => {
+					const view = testDocumentIndependentView(testCase);
+					// Clone hydrated into unhydrated.
+					const exported = TreeBeta.clone(view.root);
+					expectTreesEqual(exported, view.root);
+					// Clone unhydrated into another unhydrated.
+					const exported2 = TreeBeta.clone(view.root);
+					expectTreesEqual(exported2, view.root);
 				});
 			}
 		});
@@ -2761,23 +2795,99 @@ describe("treeNodeApi", () => {
 					fields: {},
 				});
 			});
+
+			describe("test-documents", () => {
+				for (const testCase of testDocuments) {
+					it(testCase.name, () => {
+						const view = testDocumentIndependentView(testCase);
+						const exported =
+							view.root === undefined
+								? undefined
+								: TreeAlpha.exportVerbose(view.root, { useStoredKeys: true });
+						const fromView = view.checkout.exportVerbose();
+
+						assert.deepEqual(exported, fromView);
+
+						const jsonable = jsonableTreeFromFieldCursor(
+							fieldCursorFromVerbose(exported === undefined ? [] : [exported], {}),
+						);
+						assert.deepEqual(testCase.treeFactory(testIdCompressor), jsonable);
+					});
+				}
+			});
 		});
 
 		describe("roundtrip", () => {
-			for (const testCase of testSimpleTrees) {
-				if (testCase.root() !== undefined) {
+			describe("unhydrated test-trees", () => {
+				for (const testCase of testSimpleTrees) {
+					if (testCase.root() !== undefined) {
+						it(testCase.name, () => {
+							const tree = TreeAlpha.create<UnsafeUnknownSchema>(
+								testCase.schema,
+								testCase.root(),
+							);
+							assert(tree !== undefined);
+
+							const exported = TreeAlpha.exportVerbose(tree);
+							const imported = TreeAlpha.importVerbose(testCase.schema, exported);
+							expectTreesEqual(tree, imported);
+
+							const exportedStored = TreeAlpha.exportVerbose(tree, { useStoredKeys: true });
+							const importedStored = TreeAlpha.importVerbose(testCase.schema, exportedStored, {
+								useStoredKeys: true,
+							});
+							expectTreesEqual(tree, importedStored);
+							expectTreesEqual(imported, importedStored);
+						});
+					}
+				}
+			});
+
+			describe("hydrated test-documents", () => {
+				// As there is currently no way to create a unhydrated tree with unknown optional fields,
+				// we only test the hydrated case here.
+				// TODO: Fix clone, and use it to generated unhydrated trees with unknown optional fields,
+				// then generalize these tests to use that.
+
+				for (const testCase of testDocuments) {
 					it(testCase.name, () => {
-						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
-							testCase.schema,
-							testCase.root(),
-						);
-						assert(tree !== undefined);
-						const exported = TreeAlpha.exportVerbose(tree);
-						const imported = TreeAlpha.importVerbose(testCase.schema, exported);
-						expectTreesEqual(tree, imported);
+						const view = testDocumentIndependentView(testCase);
+						if (view.root !== undefined) {
+							// Stored keys
+							{
+								const exported = TreeAlpha.exportVerbose(view.root, { useStoredKeys: true });
+								if (testCase.hasUnknownOptionalFields) {
+									// is not defined in the schema
+									assert.throws(
+										() =>
+											TreeAlpha.importVerbose(view.schema, exported, {
+												useStoredKeys: true,
+											}),
+										validateUsageError(/is not defined in the schema/),
+									);
+								} else {
+									const imported = TreeAlpha.importVerbose(view.schema, exported, {
+										useStoredKeys: true,
+									});
+									expectTreesEqual(view.root, imported);
+								}
+							}
+
+							// property keys
+							{
+								const exported = TreeAlpha.exportVerbose(view.root);
+								const imported = TreeAlpha.importVerbose(view.schema, exported);
+								if (!testCase.hasUnknownOptionalFields) {
+									expectTreesEqual(view.root, imported);
+								}
+								assert(imported !== undefined);
+								const reexported = TreeAlpha.exportVerbose(imported);
+								assert.deepEqual(exported, reexported);
+							}
+						}
 					});
 				}
-			}
+			});
 
 			describe("with misaligned view and stored schema", () => {
 				it("does not preserve additional optional fields", () => {
@@ -2886,10 +2996,15 @@ function expectTreesEqual(
 	assert.equal(Tree.schema(a), Tree.schema(b));
 
 	// This should catch all cases, assuming exportVerbose works correctly.
-	assert.deepEqual(TreeAlpha.exportVerbose(a), TreeAlpha.exportVerbose(b));
+	// Use stored keys so unknown optional fields can be included.
+	assert.deepEqual(
+		TreeAlpha.exportVerbose(a, { useStoredKeys: true }),
+		TreeAlpha.exportVerbose(b, { useStoredKeys: true }),
+	);
 
 	// Since this uses some of the tools to compare trees that this is testing for, perform the comparison in a few ways to reduce risk of a bug making this pass when it shouldn't:
 	// This case could have false negatives (two trees with ambiguous schema could export the same concise tree),
 	// but should have no false positives since equal trees always have the same concise tree.
 	assert.deepEqual(TreeAlpha.exportConcise(a), TreeAlpha.exportConcise(b));
+	assert.deepEqual(TreeAlpha.exportVerbose(a), TreeAlpha.exportVerbose(b));
 }

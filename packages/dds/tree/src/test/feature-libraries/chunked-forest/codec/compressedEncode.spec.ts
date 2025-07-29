@@ -65,11 +65,11 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	fieldKinds,
+	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
@@ -129,7 +129,7 @@ describe("compressedEncode", () => {
 					idCompressor: testIdCompressor,
 					originatorId: testIdCompressor.localSessionId,
 				});
-				const decodedJson = decoded.map(jsonableTreesFromFieldCursor);
+				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 				assert.deepEqual([[jsonable]], decodedJson);
 
 				// This makes it clear when the format changes.

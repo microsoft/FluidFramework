@@ -21,6 +21,8 @@ const contextCache: WeakMap<ImplicitFieldSchema, Context> = new WeakMap();
 
 /**
  * Utility for creating {@link Context}s for unhydrated nodes.
+ * @remarks
+ * The resulting context will not allow any unknown optional fields.
  */
 export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 	return getOrCreate(contextCache, schema, (s) => {

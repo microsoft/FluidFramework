@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import {
+	Context,
 	getKernel,
 	isTreeNode,
+	normalizeAnnotatedAllowedTypes,
+	UnhydratedContext,
 	type NodeKind,
 	type TreeNode,
 	type Unhydrated,
@@ -128,8 +132,8 @@ export interface TreeBeta {
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 *
-	 * @privateRemarks
-	 * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
+	 * - If the node (or any node in its subtree) contains {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|unknown optional fields},
+	 * those fields will be cloned just like the known fields.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
@@ -178,7 +182,17 @@ export const TreeBeta: TreeBeta = {
 
 		const kernel = getKernel(node);
 		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-		return createFromCursor(kernel.schema, cursor) as Unhydrated<
+
+		// To handle when the node transitively contains unknown optional fields,
+		// derive the context from the source node's stored schema which has stored schema for any such fields and their contents.
+		const flexContext = new UnhydratedContext(
+			defaultSchemaPolicy,
+			kernel.context.flexContext.schema,
+		);
+		// TODO: this walks the schema creating a new map which has undesired time and space overhead.
+		const context = new Context(normalizeAnnotatedAllowedTypes(kernel.schema), flexContext);
+
+		return createFromCursor(kernel.schema, cursor, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>
 		>;
 	},
