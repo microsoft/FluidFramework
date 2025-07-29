@@ -323,7 +323,7 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		);
 		const schema = getSimpleSchema(view.schema);
 
-		const { domainTypes, domainRoot } = generateEditTypesForPrompt(view.schema, schema);
+		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
 		for (const [key, value] of Object.entries(domainTypes)) {
 			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
@@ -351,56 +351,66 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 			treeObjects[0] === undefined
 				? ""
 				: `When constructing new objects, you should wrap them in the appropriate builder function rather than simply making a javascript object.
-		The builders are available on the "create" property on the first argument of the \`${functionName}\` function and are named according to the type that they create.
-		For example:
+The builders are available on the "create" property on the first argument of the \`${functionName}\` function and are named according to the type that they create.
+For example:
 		
-		\`\`\`javascript
-		function ${functionName}({ root, create }) {
-			// This creates a new ${treeObjects[0].type} object:
-			const ${uncapitalize(treeObjects[0].type)} = create.${treeObjects[0].type}({ /* ...properties... */ });
-			// Don't do this:
-			// const ${uncapitalize(treeObjects[0].type)} = { /* ...properties... */ };
-		}
-		\`\`\`\n\n`;
+\`\`\`javascript
+function ${functionName}({ root, create }) {
+	// This creates a new ${treeObjects[0].type} object:
+	const ${uncapitalize(treeObjects[0].type)} = create.${treeObjects[0].type}({ /* ...properties... */ });
+	// Don't do this:
+	// const ${uncapitalize(treeObjects[0].type)} = { /* ...properties... */ };
+}
+\`\`\`\n\n`;
 
 		const rootTypes = [...schema.root.allowedTypesIdentifiers];
-		const prompt = `${this.getSystemPromptPreamble(domainTypes, domainRoot)}
-		
-		### Editing
-		
-		If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
-		The function must be named "${functionName}".
-		It may be synchronous or asynchronous.
-		The ${functionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
-		The current state of the \`root\` object is:
-		
-		\`\`\`JSON
-		${stringified}
-		\`\`\`
-		
-		You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
-		
-		#### Editing Arrays
-		
-		There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
-		Instead, they must be mutated via methods on the following TypeScript interface:
-		
-		\`\`\`typescript
-		${getTreeArrayNodeDocumentation(arrayInterfaceName)}
-		\`\`\`
-		
-		Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
-		
-		### Additional Notes
-		
-		Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
-		
-		When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
-		
-		Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
-		
-		${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
+		const prompt = `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
+The tree is a JSON object with the following Typescript schema:
 
+\`\`\`typescript
+${getZodSchemaAsTypeScript(domainTypes)}
+\`\`\`
+
+If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
+If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
+After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
+If it does not, or if you receive an error, you may try again with a different approach.
+Once the tree is in the desired state, you should inform the user that the request has been completed.
+
+### Editing
+
+If the user asks you to edit the data, you will use the ${this.editingTool.name} tool to write a JavaScript function that mutates the data in-place to achieve the user's goal.
+The function must be named "${functionName}".
+It may be synchronous or asynchronous.
+The ${functionName} function must have a first parameter which has a \`root\` property that is the JSON object you are to mutate.
+The current state of the \`root\` object is:
+
+\`\`\`JSON
+${stringified}
+\`\`\`
+
+You may set the \`root\` property to be a new root object if necessary, but you must ensure that the new object is one of the types allowed at the root of the tree (\`${rootTypes.map((t) => getFriendlySchemaName(t)).join(" | ")}\`).
+
+#### Editing Arrays
+
+There is a notable restriction: the arrays in the tree cannot be mutated in the normal way.
+Instead, they must be mutated via methods on the following TypeScript interface:
+
+\`\`\`typescript
+${getTreeArrayNodeDocumentation(arrayInterfaceName)}
+\`\`\`
+
+Outside of mutation, they behave like normal JavaScript arrays - you can create them, read from them, and call non-mutating methods on them (e.g. \`concat\`, \`map\`, \`filter\`, \`find\`, \`forEach\`, \`indexOf\`, \`slice\`, \`join\`, etc.).
+
+### Additional Notes
+
+Before outputting the ${functionName} function, you should check that it is valid according to both the application tree's schema and the restrictions of the editing language (e.g. the array methods you are allowed to use).
+
+When possible, ensure that the edits preserve the identity of objects already in the tree (for example, prefer \`array.moveToIndex\` or \`array.moveRange\` over \`array.removeAt\` + \`array.insertAt\`).
+
+Once data has been removed from the tree (e.g. replaced via assignment, or removed from an array), that data cannot be re-inserted into the tree - instead, it must be deep cloned and recreated.
+
+${builderExplanation}Finally, double check that the edits would accomplish the user's request (if it is possible).`;
 		return prompt;
 	}
 
@@ -441,27 +451,6 @@ export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 		);
 
 		return stringified.replace(new RegExp(`"${indexReplacementKey}":`, "g"), `// Index:`);
-	}
-
-	private getSystemPromptPreamble(
-		domainTypes: Record<string, z.ZodTypeAny>,
-		// TODO: use this domainRoot param?
-		_: string,
-	): string {
-		const domainSchemaString = getZodSchemaAsTypeScript(domainTypes);
-
-		return `You are a collaborative agent who assists a user with editing and analyzing a JSON tree.
-The tree is a JSON object with the following Typescript schema:
-
-\`\`\`typescript
-${domainSchemaString}
-\`\`\`
-
-If the user asks you a question about the tree, you should inspect the state of the tree and answer the question.
-If the user asks you to edit the tree, you should use the ${this.editingTool.name} tool to accomplish the user-specified goal.
-After editing the tree, review the latest state of the tree to see if it satisfies the user's request.
-If it does not, or if you receive an error, you may try again with a different approach.
-Once the tree is in the desired state, you should inform the user that the request has been completed.`;
 	}
 }
 
