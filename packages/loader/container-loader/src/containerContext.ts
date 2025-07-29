@@ -105,53 +105,111 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		["referenceSequenceNumbers", true],
 	]);
 
-	public readonly options: ILoaderOptions;
-	public readonly scope: FluidObject;
-	public readonly baseSnapshot: ISnapshotTree | undefined;
-	private readonly _version: IVersion | undefined;
-	public readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	public readonly storage: IContainerStorageService;
-	public readonly quorum: IQuorumClients;
-	public readonly audience: IAudience;
-	public readonly loader: ILoader;
-	public readonly submitFn: (
+	constructor(private readonly config: IContainerContextConfig) {}
+
+	public get options(): ILoaderOptions {
+		return this.config.options;
+	}
+
+	public get scope(): FluidObject {
+		return this.config.scope;
+	}
+
+	public get baseSnapshot(): ISnapshotTree | undefined {
+		return this.config.baseSnapshot;
+	}
+
+	public get deltaManager(): IDeltaManager<ISequencedDocumentMessage, IDocumentMessage> {
+		return this.config.deltaManager;
+	}
+
+	public get storage(): IContainerStorageService {
+		return this.config.storage;
+	}
+
+	public get quorum(): IQuorumClients {
+		return this.config.quorum;
+	}
+
+	public get audience(): IAudience {
+		return this.config.audience;
+	}
+
+	public get loader(): ILoader {
+		return this.config.loader;
+	}
+
+	public get submitFn(): (
 		type: MessageType,
 		contents: unknown,
 		batch: boolean,
 		appData: unknown,
-	) => number;
-	public readonly submitSummaryFn: (
+	) => number {
+		return this.config.submitFn;
+	}
+
+	public get submitSummaryFn(): (
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
-	) => number;
-	public readonly submitBatchFn: (
+	) => number {
+		return this.config.submitSummaryFn;
+	}
+
+	public get submitBatchFn(): (
 		batch: IBatchMessage[],
 		referenceSequenceNumber?: number,
-	) => number;
-	public readonly submitSignalFn: (
+	) => number {
+		return this.config.submitBatchFn;
+	}
+
+	public get submitSignalFn(): (
 		content: unknown | ISignalEnvelope,
 		targetClientId?: string,
-	) => void;
-	public readonly disposeFn: (error?: ICriticalContainerError) => void;
-	public readonly closeFn: (error?: ICriticalContainerError) => void;
-	public readonly updateDirtyContainerState: (dirty: boolean) => void;
-	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
-	private readonly _getContainerDiagnosticId: () => string | undefined;
-	private readonly _getClientId: () => string | undefined;
-	private readonly _getAttachState: () => AttachState;
-	private readonly _getConnected: () => boolean;
-	private readonly _getConnectionState: () => ConnectionState;
-	public readonly clientDetails: IClientDetails;
-	public readonly existing: boolean;
-	public readonly taggedLogger: ITelemetryLoggerExt;
-	public readonly pendingLocalState?: unknown;
-	public readonly snapshotWithContents?: ISnapshot;
+	) => void {
+		return this.config.submitSignalFn;
+	}
+
+	public get disposeFn(): (error?: ICriticalContainerError) => void {
+		return this.config.disposeFn;
+	}
+
+	public get closeFn(): (error?: ICriticalContainerError) => void {
+		return this.config.closeFn;
+	}
+
+	public get updateDirtyContainerState(): (dirty: boolean) => void {
+		return this.config.updateDirtyContainerState;
+	}
+
+	public get getAbsoluteUrl(): (relativeUrl: string) => Promise<string | undefined> {
+		return this.config.getAbsoluteUrl;
+	}
+
+	public get clientDetails(): IClientDetails {
+		return this.config.clientDetails;
+	}
+
+	public get existing(): boolean {
+		return this.config.existing;
+	}
+
+	public get taggedLogger(): ITelemetryLoggerExt {
+		return this.config.taggedLogger;
+	}
+
+	public get pendingLocalState(): unknown {
+		return this.config.pendingLocalState;
+	}
+
+	public get snapshotWithContents(): ISnapshot | undefined {
+		return this.config.snapshotWithContents;
+	}
 
 	/**
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		return this._getContainerDiagnosticId() ?? "";
+		return this.config.getContainerDiagnosticId() ?? "";
 	}
 
 	/**
@@ -159,15 +217,15 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	 * When false, ops should be kept as pending or rejected
 	 */
 	public get connected(): boolean {
-		return this._getConnected();
+		return this.config.getConnected();
 	}
 
 	public get clientId(): string | undefined {
-		return this._getClientId();
+		return this.config.getClientId();
 	}
 
-	public get connectionState(): ConnectionState {
-		return this._getConnectionState();
+	public getConnectionState(): ConnectionState {
+		return this.config.getConnectionState();
 	}
 
 	/**
@@ -178,41 +236,11 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return loaderCompatDetailsForRuntime;
 	}
 
-	constructor(config: IContainerContextConfig) {
-		this.options = config.options;
-		this.scope = config.scope;
-		this.baseSnapshot = config.baseSnapshot;
-		this._version = config.version;
-		this.deltaManager = config.deltaManager;
-		this.storage = config.storage;
-		this.quorum = config.quorum;
-		this.audience = config.audience;
-		this.loader = config.loader;
-		this.submitFn = config.submitFn;
-		this.submitSummaryFn = config.submitSummaryFn;
-		this.submitBatchFn = config.submitBatchFn;
-		this.submitSignalFn = config.submitSignalFn;
-		this.disposeFn = config.disposeFn;
-		this.closeFn = config.closeFn;
-		this.updateDirtyContainerState = config.updateDirtyContainerState;
-		this.getAbsoluteUrl = config.getAbsoluteUrl;
-		this._getContainerDiagnosticId = config.getContainerDiagnosticId;
-		this._getClientId = config.getClientId;
-		this._getAttachState = config.getAttachState;
-		this._getConnected = config.getConnected;
-		this._getConnectionState = config.getConnectionState;
-		this.clientDetails = config.clientDetails;
-		this.existing = config.existing;
-		this.taggedLogger = config.taggedLogger;
-		this.pendingLocalState = config.pendingLocalState;
-		this.snapshotWithContents = config.snapshotWithContents;
-	}
-
 	public getLoadedFromVersion(): IVersion | undefined {
-		return this._version;
+		return this.config.version;
 	}
 
 	public get attachState(): AttachState {
-		return this._getAttachState();
+		return this.config.getAttachState();
 	}
 }

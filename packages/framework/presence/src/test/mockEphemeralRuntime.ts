@@ -72,14 +72,13 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
-	public connected = false;
 	private connectionState: ConnectionState = 0;
 
 	public readonly listeners: {
-		connected: ((clientId: ClientConnectionId) => void)[];
+		connectedRead: ((clientId: ClientConnectionId) => void)[];
 		disconnected: (() => void)[];
 	} = {
-		connected: [],
+		connectedRead: [],
 		disconnected: [],
 	};
 
@@ -158,15 +157,13 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public connect(clientId: string): void {
 		this.clientId = clientId;
 		this.connectionState = 2 /* ConnectionState.Connected */;
-		this.connected = true;
-		for (const listener of this.listeners.connected) {
+		for (const listener of this.listeners.connectedRead) {
 			listener(clientId);
 		}
 	}
 
 	public disconnect(): void {
 		this.connectionState = 0 /* ConnectionState.Disconnected */;
-		this.connected = false;
 		for (const listener of this.listeners.disconnected) {
 			listener();
 		}
@@ -177,7 +174,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	}
 
 	// #region IEphemeralRuntime
-	public canSendOps = (): ReturnType<IEphemeralRuntime["canSendOps"]> => this.connected;
 	public canSendSignals = (): ReturnType<IEphemeralRuntime["canSendSignals"]> => {
 		return this.connectionState === 1 || this.connectionState === 2;
 	};

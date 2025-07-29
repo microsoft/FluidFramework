@@ -204,8 +204,27 @@ export interface ContainerExtension<
  * @internal
  */
 export interface ExtensionHostEvents {
+	/**
+	 * Emitted when the client is disconnected from the service.
+	 */
 	"disconnected": () => void;
-	"connected": (clientId: ClientConnectionId, canSendOps: boolean) => void;
+
+	/**
+	 * Emitted when the client is connected to the service but cannot send ops yet.
+	 * This typically occurs during the "catching up" phase when the client is receiving
+	 * ops to get up to date with the latest state.
+	 *
+	 * @param clientId - The client connection ID
+	 */
+	"connectedRead": (clientId: ClientConnectionId) => void;
+
+	/**
+	 * Emitted when the client is fully connected and can send both ops and signals.
+	 * This is the state where the client can perform all operations.
+	 *
+	 * @param clientId - The client connection ID
+	 */
+	"connectedWrite": (clientId: ClientConnectionId) => void;
 }
 
 /**
@@ -218,7 +237,6 @@ export interface ExtensionHostEvents {
  * @internal
  */
 export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
-	readonly canSendOps: () => boolean;
 	readonly canSendSignals: () => boolean;
 	readonly getClientId: () => ClientConnectionId | undefined;
 

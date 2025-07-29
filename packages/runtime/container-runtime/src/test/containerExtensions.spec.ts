@@ -39,7 +39,7 @@ class TestExtension implements ContainerExtension<TestExtensionRuntimeProperties
 	constructor(host: ExtensionHost<TestExtensionRuntimeProperties>) {
 		this.interface = {
 			get connectedToService(): boolean {
-				return host.canSendSignals() || host.canSendOps();
+				return host.canSendSignals();
 			},
 			events: host.events,
 		};
@@ -88,7 +88,7 @@ class MockContext implements IContainerContext {
 	public get connected(): boolean {
 		return this.container.connectionState === ConnectionState.Connected;
 	}
-	public get connectionState(): ConnectionState {
+	public getConnectionState(): ConnectionState {
 		return this.container.connectionState;
 	}
 
@@ -217,8 +217,8 @@ describe("Container Extension", () => {
 
 		it("should fallback to runtime.connected when connectionState is undefined and runtime is connected", async () => {
 			// Override the context to return undefined connectionState
-			Object.defineProperty(container.context, "connectionState", {
-				get: () => undefined,
+			Object.defineProperty(container.context, "getConnectionState", {
+				value: () => undefined,
 			});
 
 			container.setConnectionState(ConnectionState.Connected, "mockClientId");
@@ -237,8 +237,8 @@ describe("Container Extension", () => {
 
 		it("should fallback to runtime.connected when connectionState is undefined and runtime is disconnected", async () => {
 			// Override the context to return undefined connectionState
-			Object.defineProperty(container.context, "connectionState", {
-				get: () => undefined,
+			Object.defineProperty(container.context, "getConnectionState", {
+				value: () => undefined,
 			});
 
 			container.setConnectionState(ConnectionState.Disconnected);
@@ -263,14 +263,28 @@ describe("Container Extension", () => {
 			);
 
 			let disconnectCount = 0;
-			const connectedEvents: { clientId: string; canSendOps: boolean }[] = [];
+			let connectedReadCount = 0;
+			let connectedWriteCount = 0;
+			const connectedReadEvents: string[] = [];
+			const connectedWriteEvents: string[] = [];
 
-			extension.events.on("connected", (clientId: string, canSendOps: boolean) => {
-				connectedEvents.push({ clientId, canSendOps });
+			extension.events.on("connectedRead", (clientId: string) => {
+				connectedReadCount += 1;
+				connectedReadEvents.push(clientId);
 				assert.strictEqual(
 					clientId,
 					"mockClientId",
-					"Extension should emit connected event with correct clientId",
+					"Extension should emit connectedRead event with correct clientId",
+				);
+			});
+
+			extension.events.on("connectedWrite", (clientId: string) => {
+				connectedWriteCount += 1;
+				connectedWriteEvents.push(clientId);
+				assert.strictEqual(
+					clientId,
+					"mockClientId",
+					"Extension should emit connectedWrite event with correct clientId",
 				);
 			});
 
@@ -304,22 +318,14 @@ describe("Container Extension", () => {
 			// Transition to Connected
 			container.setConnectionState(ConnectionState.Connected, "mockClientId");
 			assert.strictEqual(
-				connectedEvents.length,
-				2,
-				"Should have received two connected events",
+				connectedReadCount,
+				1,
+				"Should still have only one connectedRead event",
 			);
-
-			// First event should be with canSendOps=false
 			assert.strictEqual(
-				connectedEvents[0].canSendOps,
-				false,
-				"First connected event should have canSendOps=false",
-			);
-			// Second event should be with canSendOps=true
-			assert.strictEqual(
-				connectedEvents[1].canSendOps,
-				true,
-				"Second connected event should have canSendOps=true",
+				connectedWriteCount,
+				1,
+				"Should have received one connectedWrite event when fully Connected",
 			);
 
 			assert.strictEqual(
@@ -352,24 +358,24 @@ describe("Container Extension", () => {
 				TestExtensionFactory,
 			);
 
-			let connectCount = 0;
+			let connectedReadCount = 0;
+			let connectedWriteCount = 0;
 			let disconnectCount = 0;
-			const connectedEvents: { clientId: string; canSendOps: boolean }[] = [];
+			const connectedReadEvents: string[] = [];
 
-			extension.events.on("connected", (clientId: string, canSendOps: boolean) => {
-				connectCount += 1;
-				connectedEvents.push({ clientId, canSendOps });
+			extension.events.on("connectedRead", (clientId: string) => {
+				connectedReadCount += 1;
+				connectedReadEvents.push(clientId);
 				assert.strictEqual(
 					clientId,
 					"mockClientId",
-					"Extension should emit connected event with correct clientId",
+					"Extension should emit connectedRead event with correct clientId",
 				);
-				// For read-only client, canSendOps should always be false
-				assert.strictEqual(
-					canSendOps,
-					false,
-					"Extension should emit connected event with canSendOps=false for read-only client",
-				);
+			});
+
+			extension.events.on("connectedWrite", (clientId: string) => {
+				connectedWriteCount += 1;
+				assert.fail("Extension should not emit connectedWrite event for read-only client");
 			});
 
 			extension.events.on("disconnected", () => {
@@ -401,7 +407,16 @@ describe("Container Extension", () => {
 
 			// Transition to Connected
 			readOnlyContainer.setConnectionState(ConnectionState.Connected, "mockClientId");
-			assert.strictEqual(connectCount, 1, "Extension should emit connected event once");
+			assert.strictEqual(
+				connectedReadCount,
+				1,
+				"Extension should still have only one connectedRead event",
+			);
+			assert.strictEqual(
+				connectedWriteCount,
+				0,
+				"Extension should not emit connectedWrite event for read-only client",
+			);
 			assert.strictEqual(
 				extension.connectedToService,
 				true,

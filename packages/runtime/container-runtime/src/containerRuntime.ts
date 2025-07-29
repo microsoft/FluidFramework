@@ -1525,8 +1525,6 @@ export class ContainerRuntime
 	) {
 		super();
 
-		this.getConnectionState = () => context.connectionState;
-
 		const {
 			options,
 			clientDetails,
@@ -1544,8 +1542,10 @@ export class ContainerRuntime
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
+			getConnectionState,
 		} = context;
 
+		this.getConnectionState = getConnectionState ?? (() => undefined);
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 
@@ -1689,12 +1689,11 @@ export class ContainerRuntime
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
 
-		this.canSendSignals =
-			this.getConnectionState() === undefined
-				? () => this.canSendOps
-				: () =>
-						this.getConnectionState() === 1 /* CatchingUp */ ||
-						this.getConnectionState() === 2 /* Connected */;
+		this.canSendSignals = getConnectionState
+			? () => this.canSendOps
+			: () =>
+					this.getConnectionState() === 1 /* CatchingUp */ ||
+					this.getConnectionState() === 2 /* Connected */;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -5128,11 +5127,9 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId: string) =>
-			eventEmitter.emit("connected", clientId, true /* canSendOps */),
-		);
+		this.on("connected", (clientId: string) => eventEmitter.emit("connectedWrite", clientId));
 		this.on("connectedToService", (clientId: string) => {
-			eventEmitter.emit("connected", clientId, false /* canSendOps */);
+			eventEmitter.emit("connectedRead", clientId);
 		});
 		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
@@ -5156,8 +5153,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				canSendOps: () => this.canSendOps,
-				canSendSignals: () => this.canSendSignals(),
+				canSendSignals: this.canSendSignals,
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
