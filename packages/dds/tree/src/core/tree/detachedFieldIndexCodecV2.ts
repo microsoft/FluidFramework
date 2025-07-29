@@ -42,13 +42,13 @@ class MajorCodec implements IJsonCodec<Major> {
 	}
 
 	public decode(major: EncodedRevisionTag | StableId): RevisionTag {
+		assert(
+			major === "root" || (typeof major === "string" && isStableId(major)) || major >= 0,
+			"Expected root, stable, or final compressed id",
+		);
 		if (typeof major === "string" && isStableId(major)) {
 			return this.idCompressor.recompress(major);
 		}
-		assert(
-			major === "root" || major >= 0,
-			0x890 /* Expected final id on decode of detached field index revision */,
-		);
 		return this.revisionTagCodec.decode(major, {
 			originatorId: this.revisionTagCodec.localSessionId,
 			idCompressor: this.idCompressor,
