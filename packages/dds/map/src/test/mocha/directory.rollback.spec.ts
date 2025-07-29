@@ -552,31 +552,25 @@ describe("SharedDirectory rollback", () => {
 
 			// Key checks
 			assert.deepStrictEqual(
-				[...existingOnRemote.entries()],
 				[
-					["key", "foo"],
-					["key2", "value2"],
+					[...existingOnRemote.entries()],
+					[...remoteCreatedOnRemote.entries()],
+					[...existingOnLocal.entries()],
+					[...remoteCreatedOnLocal.entries()],
 				],
-				"existing subdir on remote should have updated values",
-			);
-			assert.deepStrictEqual(
-				[...remoteCreatedOnRemote.entries()],
-				[["remoteKey", "remoteValue"]],
-				"remoteCreated subdir on remote should have correct values",
-			);
-
-			assert.deepStrictEqual(
-				[...existingOnLocal.entries()],
 				[
-					["key", "foo"],
-					["key2", "value2"],
+					[
+						["key", "foo"],
+						["key2", "value2"],
+					],
+					[["remoteKey", "remoteValue"]],
+					[
+						["key", "foo"],
+						["key2", "value2"],
+					],
+					[["remoteKey", "remoteValue"]],
 				],
-				"existing subdir on local should match remote after rollback",
-			);
-			assert.deepStrictEqual(
-				[...remoteCreatedOnLocal.entries()],
-				[["remoteKey", "remoteValue"]],
-				"remoteCreated subdir on local should match remote after rollback",
+				"Subdirectory entries should match expected values post-rollback",
 			);
 		});
 	});
