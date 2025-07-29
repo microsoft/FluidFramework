@@ -4,57 +4,22 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import { Tree, NodeKind } from "@fluidframework/tree/internal";
 import type {
+	TreeNodeSchema,
 	TreeNode,
 	TreeArrayNode,
 	TreeFieldFromImplicitField,
-} from "@fluidframework/tree/internal";
-
-import { failUsage } from "./utils.js";
+} from "@fluidframework/tree";
+import { Tree, NodeKind } from "@fluidframework/tree/internal";
 
 /**
  * Given a tree, generates a set of LLM-friendly, unique IDs for each node in the tree.
- * @remarks The ability to uniquely and stably in the tree is important for the LLM and this library to create and distinguish between different types certain {@link TreeEdit}s.
  */
 export class IdGenerator {
 	private readonly idCountMap = new Map<string, number>();
 	private readonly prefixMap = new Map<string, string>();
-	private readonly nodeToIdMap = new Map<TreeNode, string>();
-	private readonly idToNodeMap = new Map<string, TreeNode>();
-
-	public constructor() {}
-
-	public getOrCreateId(node: TreeNode, newId?: string): string {
-		const existingID = this.nodeToIdMap.get(node);
-		if (existingID !== undefined) {
-			return existingID;
-		}
-		if (newId !== undefined && this.idToNodeMap.has(newId)) {
-			throw new UsageError(`ID already exists: ${newId}. Do not reuse IDs.`);
-		}
-
-		const schema = Tree.schema(node).identifier;
-		const id = newId ?? this.generateID(schema);
-		this.nodeToIdMap.set(node, id);
-		this.idToNodeMap.set(id, node);
-
-		return id;
-	}
-
-	public get(id: string): TreeNode {
-		return (
-			this.getNode(id) ??
-			failUsage(
-				`No node found with ID ${id}. Either the node doesn't exist or it has been removed from the tree.`,
-			)
-		);
-	}
-
-	public getNode(id: string): TreeNode | undefined {
-		return this.idToNodeMap.get(id);
-	}
+	private readonly nodeToIdMap = new WeakMap<TreeNode, string>();
+	private readonly ids = new Set<string>();
 
 	public getId(node: TreeNode): string | undefined {
 		return this.nodeToIdMap.get(node);
@@ -82,8 +47,20 @@ export class IdGenerator {
 		return node;
 	}
 
-	private generateID(schema: string): string {
-		const segments = schema.split(".");
+	private getOrCreateId(node: TreeNode): string {
+		const existingID = this.nodeToIdMap.get(node);
+		if (existingID !== undefined) {
+			return existingID;
+		}
+
+		const id = this.generateID(Tree.schema(node));
+		this.nodeToIdMap.set(node, id);
+		this.ids.add(id);
+		return id;
+	}
+
+	private generateID(schema: TreeNodeSchema): string {
+		const segments = schema.identifier.split(".");
 
 		// If there's no period, the schema itself is the last segment
 		const lastSegment = segments[segments.length - 1] ?? oob();
@@ -101,7 +78,7 @@ export class IdGenerator {
 		let c = count + 1;
 		let newId = `${lastSegment}${c}`;
 		// We need this logic so that if the LLM already created this ID, we generate a different one instead
-		while (this.idToNodeMap.has(newId)) {
+		while (this.ids.has(newId)) {
 			newId = `${lastSegment}${++c}`;
 		}
 		this.idCountMap.set(lastSegment, c);
