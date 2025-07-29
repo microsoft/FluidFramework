@@ -33,11 +33,11 @@ import {
 import {
 	EncoderContext,
 	type FieldEncoder,
-	type FieldShaper,
+	type FieldEncodeBuilder,
 	InlineArrayEncoder,
 	NestedArrayEncoder,
 	type NodeEncoder,
-	type TreeShaper,
+	type NodeEncodeBuilder,
 	anyFieldEncoder,
 	anyNodeEncoder,
 	asNodesEncoder,
@@ -117,9 +117,11 @@ describe("compressedEncode", () => {
 			it(name, () => {
 				const input: FieldBatch = [cursorForJsonableTreeField([jsonable])];
 				const context = new EncoderContext(
-					(fieldShaper: FieldShaper, schemaName: TreeNodeSchemaIdentifier): NodeEncoder =>
-						anyNodeShape,
-					(treeShaper: TreeShaper, field: TreeFieldStoredSchema): FieldEncoder =>
+					(
+						fieldBuilder: FieldEncodeBuilder,
+						schemaName: TreeNodeSchemaIdentifier,
+					): NodeEncoder => anyNodeShape,
+					(nodeBuilder: NodeEncodeBuilder, field: TreeFieldStoredSchema): FieldEncoder =>
 						anyFieldEncoder,
 					fieldKinds,
 					testIdCompressor,

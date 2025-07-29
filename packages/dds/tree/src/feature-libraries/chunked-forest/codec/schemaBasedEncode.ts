@@ -22,9 +22,10 @@ import type { FullSchemaPolicy } from "../../modular-schema/index.js";
 import {
 	EncoderContext,
 	type FieldEncoder,
-	type FieldShaper,
+	type FieldEncodeBuilder,
 	type KeyedFieldEncoder,
-	type TreeShaper,
+	type NodeEncoder,
+	type NodeEncodeBuilder,
 	anyNodeEncoder,
 	asFieldEncoder,
 	compressedEncode,
@@ -49,15 +50,15 @@ export function schemaCompressedEncode(
 }
 
 export function buildContext(
-	schema: StoredSchemaCollection,
+	storedSchema: StoredSchemaCollection,
 	policy: FullSchemaPolicy,
 	idCompressor: IIdCompressor,
 ): EncoderContext {
 	const context: EncoderContext = new EncoderContext(
-		(fieldHandler: FieldShaper, schemaName: TreeNodeSchemaIdentifier) =>
-			treeShaper(schema, policy, fieldHandler, schemaName),
-		(treeHandler: TreeShaper, field: TreeFieldStoredSchema) =>
-			fieldShaper(treeHandler, field, context, schema),
+		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
+			getNodeEncoder(fieldBuilder, storedSchema, schemaName),
+		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
+			getFieldEncoder(nodeBuilder, fieldSchema, context, storedSchema),
 		policy.fieldKinds,
 		idCompressor,
 	);
@@ -65,17 +66,18 @@ export function buildContext(
 }
 
 /**
- * Selects shapes to use to encode fields.
+ * Selects encoder to use to encode fields.
  */
-export function fieldShaper(
-	treeHandler: TreeShaper,
+export function getFieldEncoder(
+	nodeBuilder: NodeEncodeBuilder,
 	field: TreeFieldStoredSchema,
 	context: EncoderContext,
 	storedSchema: StoredSchemaCollection,
 ): FieldEncoder {
 	const kind = context.fieldShapes.get(field.kind) ?? fail(0xb52 /* missing FieldKind */);
 	const type = oneFromSet(field.types);
-	const nodeEncoder = type !== undefined ? treeHandler.shapeFromTree(type) : anyNodeEncoder;
+	const nodeEncoder =
+		type !== undefined ? nodeBuilder.nodeEncoderFromSchema(type) : anyNodeEncoder;
 	if (kind.multiplicity === Multiplicity.Single) {
 		if (field.kind === identifierFieldKindIdentifier) {
 			assert(type !== undefined, 0x999 /* field type must be defined in identifier field */);
@@ -104,16 +106,15 @@ export function fieldShaper(
 }
 
 /**
- * Selects shapes to use to encode trees.
+ * Selects encoder to use to encode nodes.
  */
-export function treeShaper(
-	fullSchema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-	fieldHandler: FieldShaper,
+export function getNodeEncoder(
+	fieldBuilder: FieldEncodeBuilder,
+	storedSchema: StoredSchemaCollection,
 	schemaName: TreeNodeSchemaIdentifier,
 ): NodeShapeBasedEncoder {
 	const schema =
-		fullSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
+		storedSchema.nodeSchema.get(schemaName) ?? fail(0xb53 /* missing node schema */);
 
 	if (schema instanceof ObjectNodeStoredSchema) {
 		// TODO:Performance:
@@ -122,7 +123,7 @@ export function treeShaper(
 
 		const objectNodeFields: KeyedFieldEncoder[] = [];
 		for (const [key, field] of schema.objectNodeFields ?? []) {
-			objectNodeFields.push({ key, encoder: fieldHandler.shapeFromField(field) });
+			objectNodeFields.push({ key, encoder: fieldBuilder.fieldEncoderFromSchema(field) });
 		}
 
 		const shape = new NodeShapeBasedEncoder(schemaName, false, objectNodeFields, undefined);
@@ -142,7 +143,7 @@ export function treeShaper(
 			schemaName,
 			false,
 			[],
-			fieldHandler.shapeFromField(schema.mapFields),
+			fieldBuilder.fieldEncoderFromSchema(schema.mapFields),
 		);
 		return shape;
 	}
