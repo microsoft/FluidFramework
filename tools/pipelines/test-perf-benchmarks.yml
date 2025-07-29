@@ -446,7 +446,6 @@ stages:
         - ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
           - group: ${{ endpointObject.lockVariableGroupName }}
 
-
         # The following two paths are defined by the npm scripts invocations in @fluid-private/test-end-to-end-tests
         - name: executionTimeTestOutputFolder
           value: ${{ variables.testWorkspace }}/node_modules/@fluid-private/test-end-to-end-tests/.timeTestsOutput
