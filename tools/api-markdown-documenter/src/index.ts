@@ -57,6 +57,8 @@ export {
 	LinkNode,
 	ListItemNode,
 	ListNode,
+	MarkdownBlockContentNode,
+	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	type PhrasingContent,
 	type PhrasingContentMap,
