@@ -14,9 +14,11 @@ export {
 	type TreeNodeSchemaClass,
 	type TreeNodeSchemaNonClass,
 	type TreeNodeSchemaCore,
+	// TreeNode is only type exported, which prevents use of the class object for unsupported use-cases like direct sub-classing and instanceof.
+	// See docs on TreeNode for more details.
+	type TreeNode,
 	type Unhydrated,
 	type InternalTreeNode,
-	type TreeNode,
 	isTreeNode,
 	tryDisposeTreeNode,
 	HydratedContext,
@@ -49,8 +51,8 @@ export {
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
 	type LazyItem,
-	type FlexListToUnion,
 	type FlexList,
+	type FlexListToUnion,
 	type ExtractItemType,
 	walkNodeSchema,
 	walkAllowedTypes,
