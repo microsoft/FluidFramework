@@ -47,6 +47,23 @@ const functionName = "editTree";
 const paramsName = "params";
 
 /**
+ * TODO doc
+ * @alpha
+ */
+export function createSemanticAgent<TRoot extends ImplicitFieldSchema>(
+	client: BaseChatModel,
+	treeView: TreeView<TRoot>,
+	options?: {
+		readonly domainHints?: string;
+		readonly treeToString?: (root: ReadableField<TRoot>) => string;
+		readonly validator?: (js: string) => boolean;
+		readonly log?: Log;
+	},
+): SharedTreeSemanticAgent {
+	return new FunctioningSemanticAgent(client, treeView, options);
+}
+
+/**
  * @alpha
  */
 export interface SharedTreeSemanticAgent {
@@ -67,14 +84,14 @@ export type Log = (message: string) => void;
 /**
  * TODO
  */
-export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSchema>
+export class FunctioningSemanticAgent<TRoot extends ImplicitFieldSchema>
 	implements SharedTreeSemanticAgent
 {
 	#prompting: typeof this.prompting | undefined;
 	#messages: (HumanMessage | AIMessage | ToolMessage)[] = [];
 	#treeHasChangedSinceLastQuery = false;
 
-	protected get prompting(): {
+	private get prompting(): {
 		readonly branch: TreeViewAlpha<TRoot> & TreeBranch;
 		readonly idGenerator: IdGenerator;
 	} {
@@ -82,7 +99,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 	}
 
 	// TODO: it's weird that this is called by subclasses. Refactor to make it more robust.
-	protected setPrompting(): void {
+	private setPrompting(): void {
 		if (this.#prompting !== undefined) {
 			this.prompting.branch.dispose();
 		}
@@ -93,10 +110,10 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		this.#prompting.idGenerator.assignIds(this.#prompting.branch.root);
 	}
 
-	protected constructor(
+	public constructor(
 		public readonly client: BaseChatModel,
 		public readonly treeView: TreeView<TRoot>,
-		protected readonly options?: {
+		private readonly options?: {
 			readonly domainHints?: string;
 			readonly treeToString?: (root: ReadableField<TRoot>) => string;
 			readonly validator?: (js: string) => boolean;
@@ -191,7 +208,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		}),
 	});
 
-	protected getTreeTool = tool(
+	private readonly getTreeTool = tool(
 		// eslint-disable-next-line unicorn/consistent-function-scoping
 		() => {
 			const stringified = this.stringifyTree(
@@ -297,7 +314,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		throw new UsageError("LLM exceeded maximum number of messages");
 	}
 
-	protected getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string {
+	private getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string {
 		const arrayInterfaceName = "TreeArray";
 		// TODO: Support for non-object roots
 		assert(
@@ -387,7 +404,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		return prompt;
 	}
 
-	protected stringifyTree(
+	private stringifyTree(
 		root: ReadableField<TRoot>,
 		idGenerator: IdGenerator,
 		visitObject?: (
@@ -426,7 +443,7 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 		return stringified.replace(new RegExp(`"${indexReplacementKey}":`, "g"), `// Index:`);
 	}
 
-	protected getSystemPromptPreamble(
+	private getSystemPromptPreamble(
 		domainTypes: Record<string, z.ZodTypeAny>,
 		// TODO: use this domainRoot param?
 		_: string,

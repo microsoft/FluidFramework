@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-export type { Log, SharedTreeSemanticAgent } from "./agent.js";
-export { createFunctioningAgent } from "./functioningAgent.js";
+export type { Log, SharedTreeSemanticAgent, createSemanticAgent } from "./agent.js";
 export type { TreeView, llmDefault, instanceOf } from "./utils.js";
 export {
 	buildFunc,

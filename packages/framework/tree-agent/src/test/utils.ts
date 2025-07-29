@@ -29,8 +29,7 @@ import type { BaseChatModel } from "@langchain/core/language_models/chat_models"
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
-import type { Log } from "../agent.js";
-import { createFunctioningAgent } from "../functioningAgent.js";
+import { createSemanticAgent, type Log } from "../agent.js";
 import { fail, failUsage, getOrCreate } from "../utils.js";
 
 /**
@@ -131,7 +130,7 @@ export async function queryDomain<TRoot extends ImplicitFieldSchema>(
 	const view = tree.viewWith(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	const client = createLlmClient(provider);
-	const agent = createFunctioningAgent(client, asTreeViewAlpha(view), {
+	const agent = createSemanticAgent(client, asTreeViewAlpha(view), {
 		log: options?.log,
 		domainHints: options?.domainHints,
 		treeToString: options?.treeToString,
