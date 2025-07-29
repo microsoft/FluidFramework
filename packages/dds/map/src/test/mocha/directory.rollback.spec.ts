@@ -396,180 +396,187 @@ describe("SharedDirectory rollback", () => {
 		});
 
 		it("should rollback local subdirectory changes with remote changes", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
-			const { sharedDirectory: remote, containerRuntime: remoteRuntime } =
+			const {
+				sharedDirectory: localClient,
+				containerRuntimeFactory,
+				containerRuntime: localRuntime,
+			} = setupRollbackTest();
+			const { sharedDirectory: remoteClient, containerRuntime: remoteRuntime } =
 				createAdditionalClient(containerRuntimeFactory);
 
-			sharedDirectory.createSubDirectory("subdir1");
-			const subdir1 = sharedDirectory.getSubDirectory("subdir1");
-			assert(subdir1 !== undefined);
-			subdir1.set("key", "value");
-			containerRuntime.flush();
+			localClient.createSubDirectory("existing");
+			const existingSubdir = localClient.getSubDirectory("existing");
+			assert(existingSubdir !== undefined);
+			existingSubdir.set("key", "value");
+			localRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
 
 			// Local operations (will be rolled back)
-			sharedDirectory.createSubDirectory("local");
-			sharedDirectory.deleteSubDirectory("subdir1");
+			localClient.createSubDirectory("localCreated");
+			localClient.deleteSubDirectory("existing");
 
 			// Remote operations (should persist)
-			remote.createSubDirectory("remote");
-			const remoteDir = remote.getSubDirectory("remote");
-			assert(remoteDir !== undefined);
-			remoteDir.set("remoteKey", "remoteValue");
+			remoteClient.createSubDirectory("remoteCreated");
+			const remoteCreatedSubdir = remoteClient.getSubDirectory("remoteCreated");
+			assert(remoteCreatedSubdir !== undefined);
+			remoteCreatedSubdir.set("remoteKey", "remoteValue");
 			remoteRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify pre-rollback
-			assert(
-				sharedDirectory.getSubDirectory("local") !== undefined &&
-					sharedDirectory.getSubDirectory("remote") !== undefined &&
-					sharedDirectory.getSubDirectory("subdir1") === undefined,
-				"verify local subdir state pre-rollback",
-			);
-			assert(
-				remote.getSubDirectory("local") === undefined &&
-					remote.getSubDirectory("remote") !== undefined &&
-					remote.getSubDirectory("subdir1") !== undefined,
-				"verify remote subdir state pre-rollback",
+			assert.deepStrictEqual(
+				[
+					localClient.getSubDirectory("localCreated") === undefined,
+					localClient.getSubDirectory("remoteCreated") === undefined,
+					localClient.getSubDirectory("existing") === undefined,
+					remoteClient.getSubDirectory("localCreated") === undefined,
+					remoteClient.getSubDirectory("remoteCreated") === undefined,
+					remoteClient.getSubDirectory("existing") === undefined,
+				],
+				[false, false, true, true, false, false],
+				"verify subdirectory state pre-rollback",
 			);
 
-			containerRuntime.rollback?.();
+			localRuntime.rollback?.();
 
 			// Verify post-rollback (only remote changes persist)
-			const localSubdir1 = sharedDirectory.getSubDirectory("subdir1");
-			const remoteSubdir1 = remote.getSubDirectory("subdir1");
-			const localRemote = sharedDirectory.getSubDirectory("remote");
-			const remoteRemote = remote.getSubDirectory("remote");
-			const localLocal = sharedDirectory.getSubDirectory("local");
-			const remoteLocal = remote.getSubDirectory("local");
+			const existingOnLocal = localClient.getSubDirectory("existing");
+			const existingOnRemote = remoteClient.getSubDirectory("existing");
+			const remoteCreatedOnLocal = localClient.getSubDirectory("remoteCreated");
+			const remoteCreatedOnRemote = remoteClient.getSubDirectory("remoteCreated");
+			const localCreatedOnLocal = localClient.getSubDirectory("localCreated");
+			const localCreatedOnRemote = remoteClient.getSubDirectory("localCreated");
 
 			// Subdirectory existence checks
-			assert(
-				localSubdir1 !== undefined && remoteSubdir1 !== undefined,
-				"subdir1 should exist post-rollback",
-			);
-			assert(
-				localRemote !== undefined && remoteRemote !== undefined,
-				"remote subdir should exist post-rollback",
-			);
-			assert(
-				localLocal === undefined && remoteLocal === undefined,
-				"local subdir should not exist post-rollback",
+			assert.deepStrictEqual(
+				[
+					existingOnLocal === undefined,
+					existingOnRemote === undefined,
+					remoteCreatedOnLocal === undefined,
+					remoteCreatedOnRemote === undefined,
+					localCreatedOnLocal === undefined,
+					localCreatedOnRemote === undefined,
+				],
+				[false, false, false, false, true, true],
+				"Subdirectory existence checks failed post-rollback",
 			);
 
 			// Key checks
-			assert.strictEqual(
-				localSubdir1.get("key"),
-				"value",
-				"localSubdir1 key/value should exist post-rollback",
-			);
-			assert.strictEqual(
-				remoteSubdir1.get("key"),
-				"value",
-				"remoteSubdir1 key/value should exist post-rollback",
-			);
-			assert.strictEqual(
-				localRemote.get("remoteKey"),
-				"remoteValue",
-				"localRemote key/value should exist post-rollback",
-			);
-			assert.strictEqual(
-				remoteRemote.get("remoteKey"),
-				"remoteValue",
-				"remoteRemote key/value should exist post-rollback",
+			assert.deepStrictEqual(
+				[
+					existingOnLocal?.get("key"),
+					existingOnRemote?.get("key"),
+					remoteCreatedOnLocal?.get("remoteKey"),
+					remoteCreatedOnRemote?.get("remoteKey"),
+				],
+				["value", "value", "remoteValue", "remoteValue"],
+				"Subdirectory key values should match expected values post-rollback",
 			);
 		});
 
 		it("should rollback local subdirectory changes with remote changes and storage operations", () => {
-			const { sharedDirectory, containerRuntimeFactory, containerRuntime } =
-				setupRollbackTest();
-			const { sharedDirectory: remote, containerRuntime: remoteRuntime } =
+			const {
+				sharedDirectory: localClient,
+				containerRuntimeFactory,
+				containerRuntime: localRuntime,
+			} = setupRollbackTest();
+			const { sharedDirectory: remoteClient, containerRuntime: remoteRuntime } =
 				createAdditionalClient(containerRuntimeFactory);
 
-			sharedDirectory.createSubDirectory("subdir1");
-			const subdir1 = sharedDirectory.getSubDirectory("subdir1");
-			assert(subdir1 !== undefined);
-			subdir1.set("key", "value");
-			containerRuntime.flush();
+			localClient.createSubDirectory("existing");
+			const existingSubdir = localClient.getSubDirectory("existing");
+			assert(existingSubdir !== undefined);
+			existingSubdir.set("key", "value");
+			localRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
 
 			// Local operations (will be rolled back)
-			sharedDirectory.createSubDirectory("local");
-			sharedDirectory.deleteSubDirectory("subdir1");
+			localClient.createSubDirectory("localCreated");
+			localClient.deleteSubDirectory("existing");
 
 			// Remote operations (should persist)
-			remote.createSubDirectory("remote");
-			const remoteDir = remote.getSubDirectory("remote");
-			assert(remoteDir !== undefined);
-			remoteDir.set("remoteKey", "remoteValue");
-			remoteDir.set("key", "foo");
-			remoteDir.set("key2", "value2");
+			remoteClient.createSubDirectory("remoteCreated");
+			const remoteCreatedSubdir = remoteClient.getSubDirectory("remoteCreated");
+			assert(remoteCreatedSubdir !== undefined);
+			remoteCreatedSubdir.set("remoteKey", "remoteValue");
+			const existingFromRemote = remoteClient.getSubDirectory("existing");
+			assert(existingFromRemote !== undefined);
+			existingFromRemote.set("key", "foo");
+			existingFromRemote.set("key2", "value2");
 			remoteRuntime.flush();
 			containerRuntimeFactory.processAllMessages();
 
 			// Verify pre-rollback
-			assert(
-				sharedDirectory.getSubDirectory("local") !== undefined &&
-					sharedDirectory.getSubDirectory("remote") !== undefined &&
-					sharedDirectory.getSubDirectory("subdir1") === undefined,
-				"verify subdir state pre-rollback",
+			assert.deepStrictEqual(
+				[
+					localClient.getSubDirectory("localCreated") === undefined,
+					localClient.getSubDirectory("remoteCreated") === undefined,
+					localClient.getSubDirectory("existing") === undefined,
+					remoteClient.getSubDirectory("localCreated") === undefined,
+					remoteClient.getSubDirectory("remoteCreated") === undefined,
+					remoteClient.getSubDirectory("existing") === undefined,
+				],
+				[false, false, true, true, false, false],
+				"verify subdirectory state pre-rollback",
 			);
 
-			containerRuntime.rollback?.();
+			localRuntime.rollback?.();
 
 			// Verify post-rollback (only remote changes persist)
-			const localSubdir1 = sharedDirectory.getSubDirectory("subdir1");
-			const remoteSubdir1 = remote.getSubDirectory("subdir1");
-			const localRemote = sharedDirectory.getSubDirectory("remote");
-			const remoteRemote = remote.getSubDirectory("remote");
-			const localLocal = sharedDirectory.getSubDirectory("local");
-			const remoteLocal = remote.getSubDirectory("local");
+			const existingOnLocal = localClient.getSubDirectory("existing");
+			const existingOnRemote = remoteClient.getSubDirectory("existing");
+			const remoteCreatedOnLocal = localClient.getSubDirectory("remoteCreated");
+			const remoteCreatedOnRemote = remoteClient.getSubDirectory("remoteCreated");
+			const localCreatedOnLocal = localClient.getSubDirectory("localCreated");
+			const localCreatedOnRemote = remoteClient.getSubDirectory("localCreated");
 
 			// Subdirectory existence checks
-			assert(
-				localSubdir1 !== undefined && remoteSubdir1 !== undefined,
-				"subdir1 should exist post-rollback",
-			);
-			assert(
-				localRemote !== undefined && remoteRemote !== undefined,
-				"remote subdir should exist post-rollback",
-			);
-			assert(
-				localLocal === undefined && remoteLocal === undefined,
-				"local subdir should not exist post-rollback",
+			assert.deepStrictEqual(
+				[
+					existingOnLocal === undefined,
+					existingOnRemote === undefined,
+					remoteCreatedOnLocal === undefined,
+					remoteCreatedOnRemote === undefined,
+					localCreatedOnLocal === undefined,
+					localCreatedOnRemote === undefined,
+				],
+				[false, false, false, false, true, true],
+				"Subdirectory existence checks failed post-rollback",
 			);
 
+			// Extra asserts to make compiler happy below
+			assert(existingOnRemote);
+			assert(remoteCreatedOnRemote);
+			assert(existingOnLocal);
+			assert(remoteCreatedOnLocal);
+
 			// Key checks
-			assert.strictEqual(
-				localSubdir1.get("key"),
-				"foo",
-				"local subdir1 key should be set to foo post-rollback",
+			assert.deepStrictEqual(
+				[...existingOnRemote.entries()],
+				[
+					["key", "foo"],
+					["key2", "value2"],
+				],
+				"existing subdir on remote should have updated values",
 			);
-			assert.strictEqual(
-				remoteSubdir1.get("key"),
-				"foo",
-				"remote subdir1 key should be set to foo post-rollback",
+			assert.deepStrictEqual(
+				[...remoteCreatedOnRemote.entries()],
+				[["remoteKey", "remoteValue"]],
+				"remoteCreated subdir on remote should have correct values",
 			);
-			assert.strictEqual(
-				localSubdir1.get("key2"),
-				"value2",
-				"local subdir1 key2 should be set to value2 post-rollback",
+
+			assert.deepStrictEqual(
+				[...existingOnLocal.entries()],
+				[
+					["key", "foo"],
+					["key2", "value2"],
+				],
+				"existing subdir on local should match remote after rollback",
 			);
-			assert.strictEqual(
-				remoteSubdir1.get("key2"),
-				"value2",
-				"remote subdir1 key2 should be set to value2 post-rollback",
-			);
-			assert.strictEqual(
-				remoteRemote.get("remoteKey"),
-				"remoteValue",
-				"local subdir1 remoteKey should be set to remoteValue post-rollback",
-			);
-			assert.strictEqual(
-				remoteRemote.get("remoteKey"),
-				"remoteValue",
-				"remote subdir1 remoteKey should be set to remoteValue post-rollback",
+			assert.deepStrictEqual(
+				[...remoteCreatedOnLocal.entries()],
+				[["remoteKey", "remoteValue"]],
+				"remoteCreated subdir on local should match remote after rollback",
 			);
 		});
 	});
