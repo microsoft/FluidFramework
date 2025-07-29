@@ -304,7 +304,7 @@ function createDeprecationNoticeSection(apiItem, config) {
 
 	return new AdmonitionNode(
 		transformedDeprecatedBlockContents,
-		"Warning",
+		"warning",
 		"This API is deprecated and will be removed in a future release.",
 	);
 }
