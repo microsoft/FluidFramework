@@ -254,7 +254,7 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		// component wont be unloaded and reloaded if the user just changes the menu selection from one Container to another.
 		setContainerState(undefined);
 
-		// Request state info and supported features for the newly specified containerKey
+		// Request state info for the newly specified containerKey
 		messageRelay.postMessage(GetContainerState.createMessage({ containerKey }));
 
 		return (): void => {
