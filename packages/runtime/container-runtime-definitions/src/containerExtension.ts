@@ -199,14 +199,20 @@ export interface ContainerExtension<
 }
 
 /**
+ * Join status for container extensions.
+ *
+ * @internal
+ */
+export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriting";
+
+/**
  * Events emitted by the {@link ExtensionHost}.
  *
  * @internal
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
-	"connectedRead": (clientId: ClientConnectionId) => void;
-	"connectedWrite": (clientId: ClientConnectionId) => void;
+	"joined": (clientId: ClientConnectionId, canWrite: boolean) => void;
 }
 
 /**
@@ -219,7 +225,7 @@ export interface ExtensionHostEvents {
  * @internal
  */
 export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
-	readonly canSendSignals: () => boolean;
+	readonly getJoinedStatus: () => JoinedStatus;
 	readonly getClientId: () => ClientConnectionId | undefined;
 
 	readonly events: Listenable<ExtensionHostEvents>;

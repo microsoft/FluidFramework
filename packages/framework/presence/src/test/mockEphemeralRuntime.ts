@@ -75,10 +75,10 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	private connectionState: ConnectionState = 0;
 
 	public readonly listeners: {
-		connectedRead: ((clientId: ClientConnectionId) => void)[];
+		joined: ((clientId: ClientConnectionId, canWrite: boolean) => void)[];
 		disconnected: (() => void)[];
 	} = {
-		connectedRead: [],
+		joined: [],
 		disconnected: [],
 	};
 
@@ -113,7 +113,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 					throw new Error(`Event ${event} is not supported`);
 				}
 				// Switch to allowing a single listener as commented when
-				// implementation uses a single "connected" listener.
+				// implementation uses a single "joined" listener.
 				// if (this.listeners[event]) {
 				// 	throw new Error(`Event ${event} already has a listener`);
 				// }
@@ -157,8 +157,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public connect(clientId: string): void {
 		this.clientId = clientId;
 		this.connectionState = 2 /* ConnectionState.Connected */;
-		for (const listener of this.listeners.connectedRead) {
-			listener(clientId);
+		for (const listener of this.listeners.joined) {
+			listener(clientId, false);
 		}
 	}
 
@@ -174,8 +174,8 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	}
 
 	// #region IEphemeralRuntime
-	public canSendSignals = (): ReturnType<IEphemeralRuntime["canSendSignals"]> => {
-		return this.connectionState === 1 || this.connectionState === 2;
+	public getJoinedStatus = (): ReturnType<IEphemeralRuntime["getJoinedStatus"]> => {
+		return this.connectionState === 2 ? "joinedForReading" : "disconnected";
 	};
 	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
 

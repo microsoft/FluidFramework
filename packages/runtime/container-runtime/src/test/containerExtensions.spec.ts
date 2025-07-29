@@ -39,7 +39,7 @@ class TestExtension implements ContainerExtension<TestExtensionRuntimeProperties
 	constructor(host: ExtensionHost<TestExtensionRuntimeProperties>) {
 		this.interface = {
 			get connectedToService(): boolean {
-				return host.canSendSignals();
+				return host.getJoinedStatus() !== "disconnected";
 			},
 			events: host.events,
 		};
@@ -170,7 +170,7 @@ describe("Container Extension", () => {
 			assert.strictEqual(extension.connectedToService, true, "Extension should be connected");
 		});
 
-		it("should return true when 'CatchingUp'", async () => {
+		it("should return false when 'CatchingUp'", async () => {
 			container.setConnectionState(ConnectionState.CatchingUp);
 			assert(container.runtime, "Runtime should be initialized");
 			const extension = container.runtime.acquireExtension(
@@ -180,8 +180,8 @@ describe("Container Extension", () => {
 
 			assert.strictEqual(
 				extension.connectedToService,
-				true,
-				"Extension should be connected during CatchingUp state",
+				false,
+				"Extension should be disconnected during CatchingUp state",
 			);
 		});
 
@@ -262,34 +262,23 @@ describe("Container Extension", () => {
 				TestExtensionFactory,
 			);
 
-			let disconnectCount = 0;
-			let connectedReadCount = 0;
-			let connectedWriteCount = 0;
-			const connectedReadEvents: string[] = [];
-			const connectedWriteEvents: string[] = [];
+			const events: {
+				type: "joined" | "disconnected";
+				clientId?: string;
+				canWrite?: boolean;
+			}[] = [];
 
-			extension.events.on("connectedRead", (clientId: string) => {
-				connectedReadCount += 1;
-				connectedReadEvents.push(clientId);
+			extension.events.on("joined", (clientId: string, canWrite: boolean) => {
+				events.push({ type: "joined", clientId, canWrite });
 				assert.strictEqual(
 					clientId,
 					"mockClientId",
-					"Extension should emit connectedRead event with correct clientId",
-				);
-			});
-
-			extension.events.on("connectedWrite", (clientId: string) => {
-				connectedWriteCount += 1;
-				connectedWriteEvents.push(clientId);
-				assert.strictEqual(
-					clientId,
-					"mockClientId",
-					"Extension should emit connectedWrite event with correct clientId",
+					"Extension should emit joined event with correct clientId",
 				);
 			});
 
 			extension.events.on("disconnected", () => {
-				disconnectCount += 1;
+				events.push({ type: "disconnected" });
 			});
 
 			// Initially disconnected
@@ -311,21 +300,22 @@ describe("Container Extension", () => {
 			container.setConnectionState(ConnectionState.CatchingUp, "mockClientId");
 			assert.strictEqual(
 				extension.connectedToService,
-				true,
-				"Extension should be connected during CatchingUp",
+				false,
+				"Extension should be disconnected during CatchingUp",
 			);
 
 			// Transition to Connected
 			container.setConnectionState(ConnectionState.Connected, "mockClientId");
-			assert.strictEqual(
-				connectedReadCount,
-				1,
-				"Should still have only one connectedRead event",
+			assert.strictEqual(events.length, 2, "Should have received two joined events");
+			assert.deepStrictEqual(
+				events[0],
+				{ type: "joined", clientId: "mockClientId", canWrite: false },
+				"First event should be joined for reading",
 			);
-			assert.strictEqual(
-				connectedWriteCount,
-				1,
-				"Should have received one connectedWrite event when fully Connected",
+			assert.deepStrictEqual(
+				events[1],
+				{ type: "joined", clientId: "mockClientId", canWrite: true },
+				"Second event should be joined for writing",
 			);
 
 			assert.strictEqual(
@@ -336,10 +326,11 @@ describe("Container Extension", () => {
 
 			// Transition back to Disconnected
 			container.setConnectionState(ConnectionState.Disconnected);
-			assert.strictEqual(
-				disconnectCount,
-				1,
-				"Extension should emit exactly one disconnected event",
+			assert.strictEqual(events.length, 3, "Should have received three events total");
+			assert.deepStrictEqual(
+				events[2],
+				{ type: "disconnected" },
+				"Third event should be disconnected",
 			);
 			assert.strictEqual(
 				extension.connectedToService,
@@ -358,28 +349,28 @@ describe("Container Extension", () => {
 				TestExtensionFactory,
 			);
 
-			let connectedReadCount = 0;
-			let connectedWriteCount = 0;
-			let disconnectCount = 0;
-			const connectedReadEvents: string[] = [];
+			const events: {
+				type: "joined" | "disconnected";
+				clientId?: string;
+				canWrite?: boolean;
+			}[] = [];
 
-			extension.events.on("connectedRead", (clientId: string) => {
-				connectedReadCount += 1;
-				connectedReadEvents.push(clientId);
+			extension.events.on("joined", (clientId: string, canWrite: boolean) => {
+				events.push({ type: "joined", clientId, canWrite });
+				if (canWrite) {
+					assert.fail(
+						"Extension should not emit joined event with canWrite=true for read-only client",
+					);
+				}
 				assert.strictEqual(
 					clientId,
 					"mockClientId",
-					"Extension should emit connectedRead event with correct clientId",
+					"Extension should emit joined event with correct clientId",
 				);
 			});
 
-			extension.events.on("connectedWrite", (clientId: string) => {
-				connectedWriteCount += 1;
-				assert.fail("Extension should not emit connectedWrite event for read-only client");
-			});
-
 			extension.events.on("disconnected", () => {
-				disconnectCount += 1;
+				events.push({ type: "disconnected" });
 			});
 
 			// Initially disconnected
@@ -401,21 +392,21 @@ describe("Container Extension", () => {
 			readOnlyContainer.setConnectionState(ConnectionState.CatchingUp, "mockClientId");
 			assert.strictEqual(
 				extension.connectedToService,
-				true,
-				"Extension should be connected during CatchingUp",
+				false,
+				"Extension should be disconnected during CatchingUp",
 			);
 
 			// Transition to Connected
 			readOnlyContainer.setConnectionState(ConnectionState.Connected, "mockClientId");
 			assert.strictEqual(
-				connectedReadCount,
+				events.length,
 				1,
-				"Extension should still have only one connectedRead event",
+				"Should have received one event: joined for reading only",
 			);
-			assert.strictEqual(
-				connectedWriteCount,
-				0,
-				"Extension should not emit connectedWrite event for read-only client",
+			assert.deepStrictEqual(
+				events[0],
+				{ type: "joined", clientId: "mockClientId", canWrite: false },
+				"Event should be joined for reading",
 			);
 			assert.strictEqual(
 				extension.connectedToService,
@@ -425,10 +416,11 @@ describe("Container Extension", () => {
 
 			// Transition back to Disconnected
 			readOnlyContainer.setConnectionState(ConnectionState.Disconnected);
-			assert.strictEqual(
-				disconnectCount,
-				1,
-				"Extension should emit exactly one disconnected event",
+			assert.strictEqual(events.length, 2, "Should have received two events total");
+			assert.deepStrictEqual(
+				events[1],
+				{ type: "disconnected" },
+				"Second event should be disconnected",
 			);
 			assert.strictEqual(
 				extension.connectedToService,

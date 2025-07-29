@@ -37,6 +37,7 @@ import type {
 	IContainerRuntimeInternal,
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
+	JoinedStatus,
 	OutboundExtensionMessage,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
@@ -1341,9 +1342,8 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
-	private readonly canSendSignals: () => boolean;
 
-	private readonly getConnectionState: () => ConnectionState | undefined;
+	private readonly getConnectionState?: () => ConnectionState;
 
 	private consecutiveReconnects = 0;
 
@@ -1545,7 +1545,10 @@ export class ContainerRuntime
 			getConnectionState,
 		} = context;
 
-		this.getConnectionState = getConnectionState ?? (() => undefined);
+		this.getConnectionState = getConnectionState
+			? getConnectionState.bind(context)
+			: undefined;
+
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 
@@ -1688,12 +1691,6 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
-
-		this.canSendSignals = getConnectionState
-			? () => this.canSendOps
-			: () =>
-					this.getConnectionState() === 1 /* CatchingUp */ ||
-					this.getConnectionState() === 2 /* Connected */;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -2788,10 +2785,12 @@ export class ContainerRuntime
 		// "connected" is only emitted when canSendOps is true, which is always false in readonly mode.
 		// "connectedToService" is here to emit when container connection state transitions to 'Connected' regardless of connection mode.
 		// "disconnectedFromService" is also here to exclude the false "disconnected" events that happen when readonly client transitions to 'Connected'.
-		if (this.getConnectionState() === 2 /* Connected */) {
-			this.emit("connectedToService", clientId);
-		} else {
-			this.emit("disconnectedFromService");
+		if (this.getConnectionState) {
+			if (this.getConnectionState() === 2 /* Connected */) {
+				this.emit("connectedToService", clientId);
+			} else {
+				this.emit("disconnectedFromService");
+			}
 		}
 
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
@@ -5127,13 +5126,28 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId: string) => eventEmitter.emit("connectedWrite", clientId));
+		this.on("connected", (clientId: string) =>
+			eventEmitter.emit("joined", clientId, true /* canWrite */),
+		);
 		this.on("connectedToService", (clientId: string) => {
-			eventEmitter.emit("connectedRead", clientId);
+			eventEmitter.emit("joined", clientId, false /* canWrite */);
 		});
 		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
 	});
+
+	private getJoinedStatusForExtensions(): JoinedStatus {
+		const getConnectionState = this.getConnectionState;
+		if (getConnectionState) {
+			const connectionState = getConnectionState();
+			if (connectionState === 2 /* Connected */) {
+				return this.canSendOps ? "joinedForWriting" : "joinedForReading";
+			}
+		} else if (this.canSendOps) {
+			return "joinedForWriting";
+		}
+		return "disconnected";
+	}
 
 	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
 		id: string,
@@ -5153,7 +5167,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				canSendSignals: this.canSendSignals,
+				getJoinedStatus: this.getJoinedStatusForExtensions.bind(this),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,
