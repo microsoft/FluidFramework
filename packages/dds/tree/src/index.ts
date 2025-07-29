@@ -80,7 +80,7 @@ export {
 	TreeArrayNode,
 	type Unhydrated,
 	IterableTreeArrayContent,
-	type TreeNode,
+	TreeNode,
 	type ViewableTree,
 	type ITree,
 	type TreeNodeSchema,
