@@ -251,34 +251,14 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 
 	protected abstract getSystemPrompt(view: Omit<TreeView<TRoot>, "fork" | "merge">): string;
 
-	protected stringifyTree(
+	protected abstract stringifyTree(
 		root: ReadableField<TRoot>,
 		idGenerator: IdGenerator,
 		visitObject?: (
 			object: TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
 			id: string,
-		) => object | void,
-	): string {
-		idGenerator.assignIds(root);
-		return JSON.stringify(
-			root,
-			(_, value: unknown) => {
-				// TODO: Is this array check correct? What about POJO array nodes?
-				if (typeof value === "object" && !Array.isArray(value) && value !== null) {
-					const objectNode = value as TreeObjectNode<
-						RestrictiveStringRecord<ImplicitFieldSchema>
-					>;
-					const id =
-						idGenerator.getId(objectNode) ??
-						fail("Expected all object nodes in tree to have an ID.");
-
-					return visitObject?.(objectNode, id) ?? objectNode;
-				}
-				return value;
-			},
-			2,
-		);
-	}
+		) => void,
+	): string;
 
 	protected getSystemPromptPreamble(
 		domainTypes: Record<string, z.ZodTypeAny>,

@@ -236,16 +236,35 @@ ${builderExplanation}Finally, double check that the edits would accomplish the u
 		visitObject?: (
 			object: TreeObjectNode<RestrictiveStringRecord<ImplicitFieldSchema>>,
 			id: string,
-		) => object | void,
+		) => void,
 	): string {
 		const indexReplacementKey = "_27bb216b474d45e6aaee14d1ec267b96";
-		const stringified = super.stringifyTree(root, idGenerator, (object, id) => {
-			const key = Tree.key(object);
-			return {
-				[indexReplacementKey]: typeof key === "number" ? key : undefined,
-				...(visitObject?.(object, id) ?? object),
-			};
-		});
+		idGenerator.assignIds(root);
+		const stringified = JSON.stringify(
+			root,
+			(_, value: unknown) => {
+				// TODO: Is this array check correct? What about POJO array nodes?
+				if (typeof value === "object" && !Array.isArray(value) && value !== null) {
+					const objectNode = value as TreeObjectNode<
+						RestrictiveStringRecord<ImplicitFieldSchema>
+					>;
+
+					visitObject?.(
+						objectNode,
+						idGenerator.getId(objectNode) ??
+							fail("Expected all object nodes in tree to have an ID."),
+					);
+
+					const key = Tree.key(objectNode);
+					return {
+						[indexReplacementKey]: typeof key === "number" ? key : undefined,
+						...objectNode,
+					};
+				}
+				return value;
+			},
+			2,
+		);
 
 		return stringified.replace(new RegExp(`"${indexReplacementKey}":`, "g"), `// Index:`);
 	}
