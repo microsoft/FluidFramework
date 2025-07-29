@@ -5,16 +5,13 @@
 
 import assert from "node:assert";
 
-// eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
-// eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import {
 	getSimpleSchema,
 	SchemaFactory,
 	SharedTree,
 	TreeViewConfiguration,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { z } from "zod";
 

@@ -8,6 +8,20 @@ module.exports = {
 	parserOptions: {
 		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
 	},
+	rules: {
+		// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
+		"import/no-internal-modules": [
+			"error",
+			{
+				allow: [
+					"@fluidframework/*/alpha",
+					"@fluidframework/*/beta",
+					"@fluidframework/*/legacy",
+					"@fluidframework/*/internal",
+				],
+			},
+		],
+	},
 	overrides: [
 		{
 			// Rules only for test files
@@ -17,7 +31,13 @@ module.exports = {
 				"import/no-internal-modules": [
 					"error",
 					{
-						allow: ["*/index.js"],
+						allow: [
+							"*/index.js",
+							"@fluidframework/*/alpha",
+							"@fluidframework/*/beta",
+							"@fluidframework/*/legacy",
+							"@fluidframework/*/internal",
+						],
 					},
 				],
 			},

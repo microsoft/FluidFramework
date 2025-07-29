@@ -14,12 +14,8 @@ import type {
 	TreeNode,
 	TreeNodeSchema,
 	TreeViewAlpha,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/alpha";
-import {
-	ObjectNodeSchema,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/tree/alpha";
+import { ObjectNodeSchema } from "@fluidframework/tree/alpha";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";

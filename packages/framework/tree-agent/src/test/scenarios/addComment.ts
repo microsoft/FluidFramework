@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import type { VerboseTree } from "@fluidframework/tree/alpha";
 
 import { Page, Paragraph, Sentence, Word, Span, stringifyPage } from "../domains/index.js";

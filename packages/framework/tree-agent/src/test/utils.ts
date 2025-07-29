@@ -6,14 +6,10 @@
 import { strict as assert } from "node:assert";
 import { appendFileSync, closeSync, mkdirSync, openSync } from "node:fs";
 
-// eslint-disable-next-line import/no-internal-modules
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
-// eslint-disable-next-line import/no-internal-modules
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 import { type ImplicitFieldSchema, TreeViewConfiguration } from "@fluidframework/tree";
 import {
@@ -27,11 +23,9 @@ import {
 	type UnsafeUnknownSchema,
 	type VerboseTree,
 	type VerboseTreeNode,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/tree/internal";
 import { ChatAnthropic } from "@langchain/anthropic";
-// eslint-disable-next-line import/no-internal-modules
-import type { BaseChatModel } from "@langchain/core/language_models/chat_models";
+import type { BaseChatModel } from "@langchain/core/language_models/chat_models"; // eslint-disable-line import/no-internal-modules
 import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 

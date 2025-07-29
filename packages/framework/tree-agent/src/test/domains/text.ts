@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import {
-	SchemaFactoryAlpha,
-	// eslint-disable-next-line import/no-internal-modules
-} from "@fluidframework/tree/internal";
+import { SchemaFactoryAlpha } from "@fluidframework/tree/internal";
 
 import { fail } from "../../utils.js";
 

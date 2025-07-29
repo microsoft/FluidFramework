@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
 import type { UnsafeUnknownSchema } from "@fluidframework/tree/alpha";
 
 import { addCommentTest, smokeTest } from "./scenarios/index.js";
