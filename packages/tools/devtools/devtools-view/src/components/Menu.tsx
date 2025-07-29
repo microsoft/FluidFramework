@@ -454,7 +454,10 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 	// Use connected style as default since we're replacing colors with icons
 	const connectionStyle = styles.connected;
 
-	const style = mergeClasses(styles.root, baseStyle, connectionStyle);
+	const blinkStyle = blink ? styles.blinkText : undefined;
+	const closedStyle = isClosed ? styles.deleteButton : undefined;
+
+	const style = mergeClasses(styles.root, baseStyle, connectionStyle, blinkStyle, closedStyle);
 
 	return (
 		<div
@@ -465,7 +468,7 @@ export function MenuItem(props: MenuItemProps): React.ReactElement {
 			tabIndex={0}
 		>
 			<div className={styles.itemContent}>
-				<span className={mergeClasses(blink === true && styles.blinkText)}>{text}</span>
+				{text}
 				{stateIcon}
 			</div>
 			{isClosed && onDelete && (
