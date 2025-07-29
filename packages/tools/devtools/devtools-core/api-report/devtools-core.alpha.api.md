@@ -17,6 +17,24 @@ export type ContainerKey = string;
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
 // @alpha
+export interface DataObjectProps {
+    dataObject: PureDataObject;
+    label?: string;
+}
+
+// @alpha
+export interface DecomposedContainer extends IEventProvider<IContainerEvents> {
+    readonly attachState: AttachState;
+    readonly audience: IAudience;
+    readonly clientId?: string | undefined;
+    close?(error?: ICriticalContainerError): void;
+    readonly closed: boolean;
+    connect?(): void;
+    readonly connectionState: ConnectionState;
+    disconnect?(): void;
+}
+
+// @alpha
 export interface FluidDevtoolsProps {
     initialContainers?: ContainerDevtoolsProps[];
     logger?: IDevtoolsLogger;
@@ -35,6 +53,7 @@ export interface IDevtoolsLogger extends ITelemetryBaseLogger {
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
+    registerDataObject(props: DataObjectProps): void;
 }
 
 // @alpha
