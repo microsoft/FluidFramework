@@ -154,7 +154,7 @@ export function enumFromStrings<TScope extends string, const Members extends rea
 export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>): T;
 
 // @public @system
-export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
 export function extractPersistedSchema(schema: SimpleTreeSchema, oldestCompatibleClient: FluidClientVersion): JsonCompatible;
@@ -238,10 +238,10 @@ type FlattenKeys<T> = [{
 }][_InlineTrick];
 
 // @public @system
-export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
+type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public @system
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @alpha
 export enum FluidClientVersion {
@@ -373,7 +373,10 @@ declare namespace InternalTypes {
         ScopedSchemaName,
         DefaultProvider,
         typeNameSymbol,
-        InsertableObjectFromSchemaRecord
+        InsertableObjectFromSchemaRecord,
+        FlexList,
+        FlexListToUnion,
+        ExtractItemType
     }
 }
 export { InternalTypes }

@@ -81,7 +81,7 @@ export abstract class ErasedType<out Name = unknown> {
 }
 
 // @public @system
-export type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
+type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @public @system
 type FieldHasDefault<T extends ImplicitFieldSchema> = [T] extends [
@@ -129,10 +129,10 @@ type FlattenKeys<T> = [{
 }][_InlineTrick];
 
 // @public @system
-export type FlexList<Item = unknown> = readonly LazyItem<Item>[];
+type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 
 // @public @system
-export type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
+type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -503,7 +503,10 @@ declare namespace InternalTypes {
         ScopedSchemaName,
         DefaultProvider,
         typeNameSymbol,
-        InsertableObjectFromSchemaRecord
+        InsertableObjectFromSchemaRecord,
+        FlexList,
+        FlexListToUnion,
+        ExtractItemType
     }
 }
 export { InternalTypes }

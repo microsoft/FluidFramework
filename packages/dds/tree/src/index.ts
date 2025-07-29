@@ -171,9 +171,6 @@ export {
 	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
-	type FlexListToUnion,
-	type FlexList,
-	type ExtractItemType,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
