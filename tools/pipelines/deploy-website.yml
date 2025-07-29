@@ -136,6 +136,8 @@ stages:
             customCommand: 'run build'
           env:
             INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
+            TYPESENSE_API_KEY: $(TYPESENSE_API_KEY)
+            TYPESENSE_HOST: $(TYPESENSE_HOST)
 
         - task: Bash@3
           displayName: 'Check inline script hashes correctness'

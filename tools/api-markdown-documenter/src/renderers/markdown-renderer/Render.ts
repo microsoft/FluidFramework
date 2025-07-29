@@ -27,7 +27,7 @@ export interface RenderDocumentConfiguration
 		RenderMarkdownConfiguration {}
 
 /**
- * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a string.
+ * Renders a {@link DocumentNode} as Markdown and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
  * @param config - Markdown transformation configuration.
@@ -58,23 +58,23 @@ export interface RenderMarkdownConfiguration {
 }
 
 /**
- * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a string.
+ * Renders the provided Markdown tree and returns the resulting file contents as a string.
  *
  * @remarks Leverages {@link https://github.com/syntax-tree/mdast-util-to-markdown | mdast-util-to-markdown}
  *
- * @param document - The document to render.
+ * @param document - The document to transform.
  * @param config - Markdown transformation configuration.
  *
  * @public
  */
 export function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
 	const options: MdastToMarkdownOptions = {
-		emphasis: "_", // Backwards compat
-		bullet: "-", // Backwards compat
-		incrementListMarker: false, // Backwards compat
+		emphasis: "_",
+		bullet: "-",
+		incrementListMarker: false,
 		extensions: [
 			gfmToMarkdown({
-				tablePipeAlign: false, // Backwards compat
+				tablePipeAlign: false,
 			}),
 		],
 		...config.mdastToMarkdownOptions,

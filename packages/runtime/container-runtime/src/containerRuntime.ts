@@ -37,6 +37,7 @@ import type {
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
 	OutboundExtensionMessage,
+	UnverifiedBrand,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -52,7 +53,7 @@ import type {
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
-	JsonDeserialized,
+	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
@@ -123,6 +124,12 @@ import {
 	gcTreeKey,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultMinVersionForCollab,
+	isValidMinVersionForCollab,
+	type MinimumVersionForCollab,
+	type SemanticVersion,
+} from "@fluidframework/runtime-utils/internal";
+import {
 	GCDataBuilder,
 	RequestParser,
 	RuntimeHeaders,
@@ -178,18 +185,14 @@ import {
 	getSummaryForDatastores,
 	wrapContext,
 } from "./channelCollection.js";
-import {
-	defaultMinVersionForCollab,
-	getMinVersionForCollabDefaults,
-	isValidMinVersionForCollab,
-	type RuntimeOptionsAffectingDocSchema,
-	type MinimumVersionForCollab,
-	type SemanticVersion,
-	validateRuntimeOptions,
-} from "./compatUtils.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
+import {
+	getMinVersionForCollabDefaults,
+	type RuntimeOptionsAffectingDocSchema,
+	validateRuntimeOptions,
+} from "./containerCompatibility.js";
 import { ContainerFluidHandleContext } from "./containerHandleContext.js";
 import { channelToDataStore } from "./dataStore.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
@@ -368,7 +371,7 @@ export interface ISummaryRuntimeOptions {
  *
  * @privateRemarks If any new properties are added to this interface (or
  * {@link IContainerRuntimeOptionsInternal}), then we will also need to make
- * changes in {@link file://./compatUtils.ts}.
+ * changes in {@link file://./containerCompatibility.ts}.
  * If the new property does not change the DocumentSchema, then it must be
  * explicity omitted from {@link RuntimeOptionsAffectingDocSchema}.
  * If it does change the DocumentSchema, then a corresponding entry must be
@@ -701,6 +704,21 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 		getSingleUseLegacyLogCallback = () => () => {};
 	};
 };
+
+/**
+ * A {@link TypedMessage} that has unknown content explicitly
+ * noted as deserialized JSON.
+ */
+export interface UnknownIncomingTypedMessage extends TypedMessage {
+	content: OpaqueJsonDeserialized<unknown>;
+}
+
+/**
+ * Does nothing helper to apply unverified branding to a value.
+ */
+function markUnverified<const T>(value: T): T & UnverifiedBrand<T> {
+	return value as T & UnverifiedBrand<T>;
+}
 
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
@@ -3289,17 +3307,17 @@ export class ContainerRuntime
 	public processSignal(
 		message: ISignalMessage<{
 			type: string;
-			content: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+			content: ISignalEnvelope<{ type: string; content: OpaqueJsonDeserialized<unknown> }>;
 		}>,
 		local: boolean,
 	): void {
 		const envelope = message.content;
-		const transformed = {
+		const transformed = markUnverified({
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
 			targetClientId: message.targetClientId,
-		};
+		});
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
@@ -3322,7 +3340,8 @@ export class ContainerRuntime
 
 	private routeNonContainerSignal(
 		address: string,
-		signalMessage: IInboundSignalMessage<{ type: string; content: JsonDeserialized<unknown> }>,
+		signalMessage: IInboundSignalMessage<UnknownIncomingTypedMessage> &
+			UnverifiedBrand<UnknownIncomingTypedMessage>,
 		local: boolean,
 	): void {
 		// channelCollection signals are identified by no starting `/` in address.
@@ -3330,13 +3349,15 @@ export class ContainerRuntime
 			// Due to a mismatch between different layers in terms of
 			// what is the interface of passing signals, we need to adjust
 			// the signal envelope before sending it to the datastores to be processed
-			const envelope = {
-				address,
-				contents: signalMessage.content,
+			const channelSignalMessage = {
+				...signalMessage,
+				content: {
+					address,
+					contents: signalMessage.content,
+				},
 			};
-			signalMessage.content = envelope;
 
-			this.channelCollection.processSignal(signalMessage, local);
+			this.channelCollection.processSignal(channelSignalMessage, local);
 			return;
 		}
 
@@ -5054,7 +5075,7 @@ export class ContainerRuntime
 		};
 
 		// Flush pending batch.
-		// getPendingLocalState() is only exposed through Container.closeAndGetPendingLocalState(), so it's safe
+		// getPendingLocalState() is only exposed through Container.getPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
@@ -5068,7 +5089,7 @@ export class ContainerRuntime
 					),
 				)
 			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
-					logAndReturnPendingState(event, getSyncState()),
+					logAndReturnPendingState(event, getSyncState(this.blobManager.getPendingBlobs())),
 				);
 	}
 

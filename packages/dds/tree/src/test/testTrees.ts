@@ -67,6 +67,10 @@ interface TestTree {
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
 }
 
+// TODO: AB#43548: Add a collection of "test documents" which can be used to test schema evolution related features where view and stored schema can diverge.
+// Include for example documents with unknown optional fields, and with staged allowed types (once supported) both before and after the stored schema update.
+// Use these test documents to test import and export APIs.
+
 function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 	name: string,
 	schema: TSchema,

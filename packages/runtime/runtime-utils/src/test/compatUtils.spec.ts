@@ -14,9 +14,9 @@ import {
 	type SemanticVersion,
 	type ConfigValidationMap,
 	configValueToMinVersionForCollab,
-} from "../compatUtils.js";
+} from "../compatibilityBase.js";
 
-describe("compatUtils", () => {
+describe("compatibilityBase", () => {
 	describe("getConfigsForMinVersionForCollab", () => {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- type required for ConfigMap processing
 		type ITestConfigMap = {

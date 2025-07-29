@@ -27,7 +27,6 @@ import {
 	ModularEditBuilder,
 	type TreeChunk,
 	fieldKinds,
-	initializeForest,
 } from "../../feature-libraries/index.js";
 import {
 	type SharedTreeMutableChangeEnricher,
@@ -55,6 +54,7 @@ import {
 } from "../utils.js";
 import { FluidClientVersion } from "../../codec/index.js";
 import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
+import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 

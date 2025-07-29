@@ -25,7 +25,8 @@ class CustomDocumentationNode extends DocumentationLiteralNodeBase<string> {
 	public readonly singleLine: boolean = false;
 	public readonly isEmpty: boolean = false;
 	public constructor(value: string) {
-		super(value);
+		// Reverse the input string
+		super([...value].reverse().join(""));
 	}
 }
 
@@ -36,7 +37,12 @@ function customDocumentationNodeToMarkdown(
 	node: CustomDocumentationNode,
 	context: TransformationContext,
 ): [MdastText] {
-	return [{ type: "text", value: `${node.value}!` }];
+	return [
+		{
+			type: "text",
+			value: node.value,
+		},
+	];
 }
 
 // The following are testing our support for custom DocumentationNode implementations.
@@ -55,7 +61,7 @@ describe("Custom node Markdown transformation tests", () => {
 		// Using our standard extensibility model within the package causes issues, hence the cast here.
 		const output = phrasingContentToMarkdown(input as unknown as PhrasingContent, context);
 
-		expect(output).to.deep.equal([{ type: "text", value: "foo!" }]);
+		expect(output).to.deep.equal([{ type: "text", value: "oof" }]);
 	});
 
 	it("Throws while transforming a custom node type when no transform is specified for that kind of node", () => {
@@ -66,6 +72,6 @@ describe("Custom node Markdown transformation tests", () => {
 		expect(() =>
 			// Using our standard extensibility model within the package causes issues, hence the cast here.
 			phrasingContentToMarkdown(input as unknown as PhrasingContent, context),
-		).to.throw();
+		).to.throw(/No transformation defined for node type: custom/);
 	});
 });

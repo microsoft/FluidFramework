@@ -42,7 +42,15 @@ export interface TreeEncodingOptions {
 	 * If false, use the property keys.
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
+	 *
+	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional field} will be omitted when using property keys.
 	 * @defaultValue false.
+	 * @privateRemarks
+	 * TODO AB#43548:
+	 * Replace this with an enum that provides three options:
+	 * - `usePropertyKeys`: use property keys. Supported for import and export.
+	 * - `allStoredKeys`: use stored keys, and include unknown optional fields. Supported for export only, at least for the short term.
+	 * - `knownStoredKeys`: use stored keys but do not include unknown optional fields. Supported for import and export.
 	 */
 	readonly useStoredKeys?: boolean;
 }
@@ -116,11 +124,21 @@ export function customFromCursor<TChild>(
 					const children = mapCursorField(reader, () => childHandler(reader, options, schema));
 					if (children.length === 1) {
 						const storedKey = reader.getFieldKey();
-						const key =
-							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
-								? (nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
-									fail(0xb2f /* missing property key */))
-								: storedKey;
+						let key: string;
+						if (isObjectNodeSchema(nodeSchema) && !options.useStoredKeys) {
+							const propertyKey = nodeSchema.storedKeyToPropertyKey.get(storedKey);
+							if (propertyKey === undefined) {
+								assert(
+									nodeSchema.allowUnknownOptionalFields,
+									"found unknown field where not allowed",
+								);
+								// Skip unknown optional fields when using property keys.
+								return;
+							}
+							key = propertyKey;
+						} else {
+							key = storedKey;
+						}
 						// Length is checked above.
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 						fields[key] = children[0]!;

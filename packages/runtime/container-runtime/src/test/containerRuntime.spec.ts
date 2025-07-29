@@ -23,11 +23,11 @@ import {
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
+	IErrorBase,
 	ISignalEnvelope,
-	type IErrorBase,
-	type ITelemetryBaseLogger,
-	type JsonDeserialized,
+	ITelemetryBaseLogger,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
@@ -57,6 +57,7 @@ import {
 	type ISummarizeInternalResult,
 	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidErrorBase,
 	MockLogger,
@@ -74,7 +75,6 @@ import {
 import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { defaultMinVersionForCollab } from "../compatUtils.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -84,6 +84,7 @@ import {
 	getSingleUseLegacyLogCallback,
 	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
+	type UnknownIncomingTypedMessage,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -147,14 +148,12 @@ const changeConnectionState = (
 };
 
 interface ISignalEnvelopeWithClientIds {
-	envelope: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+	envelope: ISignalEnvelope<UnknownIncomingTypedMessage>;
 	clientId: string;
 	targetClientId?: string;
 }
 
-function isSignalEnvelope(
-	obj: unknown,
-): obj is ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }> {
+function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope<UnknownIncomingTypedMessage> {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
@@ -198,6 +197,12 @@ function stubChannelCollection(
 
 	containerRuntime.channelCollection = stub;
 	return stub;
+}
+
+function assertSignalContentIsAString(
+	content: OpaqueJsonDeserialized<unknown> | string,
+): asserts content is string {
+	assert(typeof content === "string", "Signal content expected to be a string");
 }
 
 describe("Runtime", () => {
@@ -3014,16 +3019,11 @@ describe("Runtime", () => {
 			function sendSignals(count: number): void {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
-					assert(
-						submittedSignals[submittedSignals.length - 1].envelope.contents.type ===
-							"TestSignalType",
-						"Signal type should match",
-					);
-					assert(
-						submittedSignals[submittedSignals.length - 1].envelope.contents.content ===
-							`TestSignalContent ${i + 1}`,
-						"Signal content should match",
-					);
+					const { type, content } =
+						submittedSignals[submittedSignals.length - 1].envelope.contents;
+					assert(type === "TestSignalType", "Signal type should match");
+					assertSignalContentIsAString(content);
+					assert(content === `TestSignalContent ${i + 1}`, "Signal content should match");
 				}
 			}
 
