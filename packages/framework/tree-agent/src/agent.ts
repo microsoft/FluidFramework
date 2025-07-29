@@ -22,7 +22,6 @@ import type { ToolMessage, AIMessage } from "@langchain/core/messages";
 import { tool, type StructuredTool } from "@langchain/core/tools";
 import { z } from "zod";
 
-import { objectIdKey } from "./agentEditTypes.js";
 import { IdGenerator } from "./idGenerator.js";
 import { fail, failUsage, getZodSchemaAsTypeScript, type TreeView } from "./utils.js";
 
@@ -269,9 +268,6 @@ export abstract class SharedTreeSemanticAgentBase<TRoot extends ImplicitFieldSch
 					const objectNode = value as TreeObjectNode<
 						RestrictiveStringRecord<ImplicitFieldSchema>
 					>;
-					if (objectIdKey in objectNode) {
-						throw new UsageError("Object ID property should not be present in the tree.");
-					}
 					const id =
 						idGenerator.getId(objectNode) ??
 						fail("Expected all object nodes in tree to have an ID.");

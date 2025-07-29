@@ -19,9 +19,8 @@ import type {
 	SimpleTreeSchema,
 	TreeNodeSchema,
 } from "@fluidframework/tree/internal";
-import { z, type ZodArray, type ZodTypeAny } from "zod";
+import { z, type ZodTypeAny } from "zod";
 
-import { objectIdKey, objectIdType, typeField } from "./agentEditTypes.js";
 import type { NodeSchema } from "./methodBinding.js";
 import { FunctionWrapper, getExposedMethods } from "./methodBinding.js";
 import { getFriendlySchemaName } from "./utils.js";
@@ -34,6 +33,27 @@ import {
 	tryGetSingleton,
 	type MapGetSet,
 } from "./utils.js";
+
+/**
+ *
+ * TODO: Add a prompt suggestion API!
+ *
+ * TODO: Handle rate limit errors.
+ *
+ * TODO: Pass descriptions from schema metadata to the generated TS types that we put in the prompt
+ *
+ * TODO make the Ids be "Vector-2" instead of "Vector2" (or else it gets weird when you have a type called "Vector2")
+ */
+
+/**
+ * This is the field we force the LLM to generate to avoid any type ambiguity (e.g. a vector and a point both have x/y and are ambiguous without the LLM telling us which it means).
+ */
+const typeField = "__schemaType";
+
+/**
+ * TODO
+ */
+const objectIdType = "ObjectId";
 
 const objectId = z.string().describe(`A unique identifier for this object in the tree.`);
 
@@ -88,11 +108,6 @@ const promptSchemaCache = new WeakMap<
 	SimpleTreeSchema,
 	ReturnType<typeof generateEditTypes>
 >();
-const insertionSchemaCache = new WeakMap<
-	SimpleTreeSchema,
-	ReturnType<typeof generateEditTypes>
->();
-const insertionObjectCache = new WeakMap<SimpleNodeSchema, ZodTypeAny>();
 
 /**
  * TODO
@@ -100,7 +115,6 @@ const insertionObjectCache = new WeakMap<SimpleNodeSchema, ZodTypeAny>();
 export function generateEditTypesForPrompt(
 	rootSchema: ImplicitFieldSchema,
 	schema: SimpleTreeSchema,
-	includeObjectIdKey: boolean, // TODO: If this changes, we will get a false cache hit because it's not part of the cache key
 ): {
 	editTypes: Record<string, ZodTypeAny>;
 	editRoot: string;
@@ -116,18 +130,8 @@ export function generateEditTypesForPrompt(
 		const treeNodeSchemaMap = new Map<string, NodeSchema>(
 			nodeSchemas.map((nodeSchema) => [nodeSchema.identifier, nodeSchema]),
 		);
-		return generateEditTypes(schema, false, new Map(), includeObjectIdKey, treeNodeSchemaMap);
+		return generateEditTypes(schema, false, new Map(), treeNodeSchemaMap);
 	});
-}
-
-/**
- * TODO
- */
-export function generateEditTypesForInsertion(schema: SimpleTreeSchema): ZodArray<ZodTypeAny> {
-	const { editTypes, editRoot } = getOrCreate(insertionSchemaCache, schema, () =>
-		generateEditTypes(schema, true, insertionObjectCache, true, undefined),
-	);
-	return editTypes[editRoot] as ZodArray<ZodTypeAny>;
 }
 
 /**
@@ -142,7 +146,6 @@ function generateEditTypes(
 	schema: SimpleTreeSchema,
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): {
 	editTypes: Record<string, ZodTypeAny>;
@@ -164,7 +167,6 @@ function generateEditTypes(
 			name,
 			transformForParsing,
 			objectCache,
-			includeObjectIdKey,
 			treeSchemaMap,
 		);
 	}
@@ -267,7 +269,6 @@ function generateEditTypes(
 			t,
 			transformForParsing,
 			objectCache,
-			includeObjectIdKey,
 			treeSchemaMap,
 		);
 	});
@@ -285,25 +286,6 @@ function generateEditTypes(
 	};
 }
 
-/**
- * Creates a Zod type for the provided definition.
- */
-export function getOrCreateTypeForInsertion(
-	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
-	definition: string,
-): ZodTypeAny {
-	return getOrCreateType(
-		definitionMap,
-		new Set<string>(),
-		new Set<string>(),
-		new Set<string>(),
-		definition,
-		true,
-		insertionObjectCache,
-		true,
-		undefined,
-	);
-}
 function getOrCreateType(
 	definitionMap: ReadonlyMap<string, SimpleNodeSchema>,
 	insertSet: Set<string>,
@@ -312,7 +294,6 @@ function getOrCreateType(
 	definition: string,
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): ZodTypeAny {
 	const simpleNodeSchema = definitionMap.get(definition) ?? fail("Unexpected definition");
@@ -342,7 +323,6 @@ function getOrCreateType(
 									field,
 									transformForParsing,
 									objectCache,
-									includeObjectIdKey,
 									treeSchemaMap,
 								),
 							];
@@ -351,9 +331,6 @@ function getOrCreateType(
 				);
 				if (transformForParsing) {
 					properties[typeField] = z.literal(getFriendlySchemaName(definition)).optional();
-				}
-				if (includeObjectIdKey) {
-					properties[objectIdKey] = z.optional(objectId);
 				}
 				if (treeSchemaMap) {
 					const nodeSchema = treeSchemaMap.get(definition) ?? fail("Unknown definition");
@@ -404,7 +381,6 @@ function getOrCreateType(
 						simpleNodeSchema.allowedTypesIdentifiers,
 						transformForParsing,
 						objectCache,
-						includeObjectIdKey,
 						treeSchemaMap,
 					),
 				);
@@ -446,7 +422,6 @@ function getOrCreateTypeForField(
 	fieldSchema: SimpleFieldSchema,
 	transformForParsing: boolean,
 	objectCache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): ZodTypeAny {
 	const getDefault: unknown = fieldSchema.metadata?.custom?.[llmDefault];
@@ -472,7 +447,6 @@ function getOrCreateTypeForField(
 		fieldSchema.allowedTypesIdentifiers,
 		transformForParsing,
 		objectCache,
-		includeObjectIdKey,
 		treeSchemaMap,
 	).describe(
 		getDefault === undefined
@@ -512,7 +486,6 @@ function getTypeForAllowedTypes(
 	allowedTypes: ReadonlySet<string>,
 	transformForParsing: boolean,
 	cache: MapGetSet<SimpleNodeSchema, ZodTypeAny>,
-	includeObjectIdKey: boolean,
 	treeSchemaMap: Map<string, NodeSchema> | undefined,
 ): ZodTypeAny {
 	const single = tryGetSingleton(allowedTypes);
@@ -527,7 +500,6 @@ function getTypeForAllowedTypes(
 					name,
 					transformForParsing,
 					cache,
-					includeObjectIdKey,
 					treeSchemaMap,
 				);
 			}),
@@ -543,7 +515,6 @@ function getTypeForAllowedTypes(
 			single,
 			transformForParsing,
 			cache,
-			includeObjectIdKey,
 			treeSchemaMap,
 		);
 	}

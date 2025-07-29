@@ -193,7 +193,7 @@ function formatDate(date: Date): string {
 export function describeIntegrationTests(
 	tests: LLMIntegrationTest<UnsafeUnknownSchema>[],
 ): void {
-	describe.skip(`LLM integration tests`, () => {
+	describe(`LLM integration tests`, () => {
 		const results: TestResult[] = [];
 		let startTime: Date | undefined;
 		before(() => {

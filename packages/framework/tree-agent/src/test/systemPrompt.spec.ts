@@ -93,7 +93,7 @@ describe("System prompt", () => {
 
 		const schema = getSimpleSchema(view.schema);
 
-		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema, false);
+		const { domainTypes } = generateEditTypesForPrompt(view.schema, schema);
 		for (const [key, value] of Object.entries(domainTypes)) {
 			const friendlyKey = getFriendlySchemaName(key);
 			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
