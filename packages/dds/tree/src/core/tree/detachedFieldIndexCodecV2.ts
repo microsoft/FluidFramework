@@ -34,27 +34,14 @@ class MajorCodec implements IJsonCodec<Major> {
 		const id = this.revisionTagCodec.encode(major);
 
 		if (id !== "root" && id < 0) {
+			/**
+			 * This code path handles the case where the major revision is not finalized.
+			 * This can happen the SharedTree is being attached to an already attached container.
+			 */
 			assert(major !== "root", "Major revision cannot be 'root'");
 			const long = this.idCompressor.decompress(major);
 			return long;
 		}
-		/**
-		 * Preface: this codec is only used at summarization time (not for ops).
-		 * Note that the decode path must provide a session id in which to interpret the revision tag.
-		 * The revision associated with a detached root generally comes from the session which detaches that subtree,
-		 * which isn't generally the local session (nor is it available at decode time with the layering of the tree
-		 * package), despite decode using the local session id.
-		 *
-		 * This is made OK by enforcing that all ids on encode/decode are non-local, since local ids won't be interpretable
-		 * at decode time.
-		 * This assert is valid because the revision for an acked edit will have already been finalized, and a revision
-		 * for a local-only edit will be finalizable at summarization time (local edits can only occur on a summarizing client
-		 * if they're created while detached, and local ids made while detached are finalized before generating the attach summary).
-		 */
-		assert(
-			id === "root" || id >= 0,
-			0x88f /* Expected final id on encode of detached field index revision */,
-		);
 		return id;
 	}
 

@@ -40,6 +40,10 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 		 * This assert is valid because the revision for an acked edit will have already been finalized, and a revision
 		 * for a local-only edit will be finalizable at summarization time (local edits can only occur on a summarizing client
 		 * if they're created while detached, and local ids made while detached are finalized before generating the attach summary).
+		 *
+		 * WARNING: the above is true when the whole container transitions from detached->attached,
+		 * but not when the container is already attached and it's just the shared-tree that is attaching.
+		 * The assert below will fail in such a scenario. This is addressed in the v2 codec.
 		 */
 		assert(
 			id === "root" || id >= 0,
