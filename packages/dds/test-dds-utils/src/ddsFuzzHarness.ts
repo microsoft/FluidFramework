@@ -459,7 +459,7 @@ export interface DDSFuzzSuiteOptions {
 	rebaseProbability: number;
 
 	/**
-	 * Each non-synchronization option has this probability of triggering a rollback and applying them during state transitions.
+	 * Each generated DDS operation has this probability of being rolled back immediately after application.
 	 */
 	rollbackProbability: number;
 
