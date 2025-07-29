@@ -36,7 +36,6 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatOpenAI } from "@langchain/openai";
 
 import type { Log } from "../agent.js";
-import { createEditingAgent } from "../editingAgent.js";
 import { createFunctioningAgent } from "../functioningAgent.js";
 import { fail, failUsage, getOrCreate } from "../utils.js";
 
@@ -114,11 +113,6 @@ export function createLlmClient(provider: LlmProvider): BaseChatModel {
 }
 
 /**
- * The type of LLM editing to leverage.
- */
-export type LlmEditingType = "editing" | "functioning";
-
-/**
  * Queries the LLM with the specified prompt and logs the results to a file.
  * @remarks Use the following environment variables to set the LLM API keys:
  * - `OPENAI_API_KEY` for OpenAI
@@ -129,7 +123,6 @@ export async function queryDomain<TRoot extends ImplicitFieldSchema>(
 	schema: TRoot,
 	initialTree: InsertableTreeFieldFromImplicitField<TRoot>,
 	provider: LlmProvider,
-	editingType: LlmEditingType,
 	prompt: string,
 	options?: {
 		domainHints?: string;
@@ -144,9 +137,7 @@ export async function queryDomain<TRoot extends ImplicitFieldSchema>(
 	const view = tree.viewWith(new TreeViewConfiguration({ schema }));
 	view.initialize(initialTree);
 	const client = createLlmClient(provider);
-	const createAgent = editingType === "editing" ? createEditingAgent : createFunctioningAgent;
-
-	const agent = createAgent(client, asTreeViewAlpha(view), {
+	const agent = createFunctioningAgent(client, asTreeViewAlpha(view), {
 		log: options?.log,
 		domainHints: options?.domainHints,
 		treeToString: options?.treeToString,
@@ -175,7 +166,6 @@ export interface LLMIntegrationTest<TRoot extends ImplicitFieldSchema | UnsafeUn
 interface TestResult {
 	readonly name: string;
 	readonly provider: LlmProvider;
-	readonly editingType: LlmEditingType;
 	readonly score: number;
 	readonly duration: number;
 }
@@ -214,10 +204,10 @@ export function describeIntegrationTests(
 		after(() => {
 			const filteredResults = results.filter((r) => r.name !== "");
 			assert(startTime !== undefined, "Expected startTime to be set");
-			let table = "| Test Name | Provider | Editing Type | Score | Elapsed Time (seconds) |\n";
-			table += "| --- | --- | --- | ---:| ---:|\n";
+			let table = "| Test Name | Provider | Score | Elapsed Time (seconds) |\n";
+			table += "| --- | --- | ---:| ---:|\n";
 			for (const result of filteredResults) {
-				table += `| ${result.name} | ${result.provider} | ${result.editingType} | ${(result.score * 100).toFixed(2)}% | ${Math.ceil(result.duration / 1000)} |\n`;
+				table += `| ${result.name} | ${result.provider} | ${(result.score * 100).toFixed(2)}% | ${Math.ceil(result.duration / 1000)} |\n`;
 			}
 			const resultsFile = openSync(
 				`${resultsFolderPath}/${formatDate(startTime)}/results.md`,
@@ -242,151 +232,134 @@ export function describeIntegrationTests(
 
 		it("RUN ALL (in parallel)", async () => {
 			const promises: Promise<void>[] = [];
-			for (const editingType of ["editing", "functioning"] as const) {
-				for (const test of grouped) {
-					for (const provider of ["openai", "anthropic", "gemini"] as const) {
-						const result = {
-							name: test.name,
-							provider,
-							editingType,
-							score: 0,
-							duration: 0,
-						} satisfies TestResult;
-						results.push(result);
-						promises.push(runTest(test, provider, editingType, result));
-					}
+			for (const test of grouped) {
+				for (const provider of ["openai", "anthropic", "gemini"] as const) {
+					const result = {
+						name: test.name,
+						provider,
+						score: 0,
+						duration: 0,
+					} satisfies TestResult;
+					results.push(result);
+					promises.push(runTest(test, provider, result));
 				}
 			}
 			await handleAllSettledResults(promises);
 		});
 
-		for (const editingType of ["editing", "functioning"] as const) {
-			describe(editingType === "editing"
-				? "editing via DSL"
-				: "editing via generated code", () => {
-				describe("sorted by scenario", () => {
-					it("RUN ALL (in parallel)", async () => {
-						const promises: Promise<void>[] = [];
-						for (const test of grouped) {
-							for (const provider of ["openai", "anthropic", "gemini"] as const) {
-								const result = {
-									name: test.name,
-									provider,
-									editingType,
-									score: 0,
-									duration: 0,
-								} satisfies TestResult;
-								results.push(result);
-								promises.push(runTest(test, provider, editingType, result));
-							}
-						}
-						await handleAllSettledResults(promises);
-					});
-					for (const test of grouped) {
-						describe(test.name, () => {
-							it("RUN ALL (in parallel)", async () => {
-								const promises: Promise<void>[] = [];
-								for (const provider of ["openai", "anthropic", "gemini"] as const) {
-									const result = {
-										name: test.name,
-										provider,
-										editingType,
-										score: 0,
-										duration: 0,
-									} satisfies TestResult;
-									results.push(result);
-									promises.push(runTest(test, provider, editingType, result));
-								}
-								await handleAllSettledResults(promises);
-							});
-							for (const provider of ["openai", "anthropic", "gemini"] as const) {
-								it(`via ${provider}`, async () => {
-									const result = {
-										name: test.name,
-										provider,
-										editingType,
-										score: 0,
-										duration: 0,
-									} satisfies TestResult;
-									results.push(result);
-									await runTest(test, provider, editingType, result);
-								});
-							}
-						});
+		describe("sorted by scenario", () => {
+			it("RUN ALL (in parallel)", async () => {
+				const promises: Promise<void>[] = [];
+				for (const test of grouped) {
+					for (const provider of ["openai", "anthropic", "gemini"] as const) {
+						const result = {
+							name: test.name,
+							provider,
+							score: 0,
+							duration: 0,
+						} satisfies TestResult;
+						results.push(result);
+						promises.push(runTest(test, provider, result));
 					}
-				});
-
-				describe("sorted by provider", () => {
+				}
+				await handleAllSettledResults(promises);
+			});
+			for (const test of grouped) {
+				describe(test.name, () => {
 					it("RUN ALL (in parallel)", async () => {
 						const promises: Promise<void>[] = [];
 						for (const provider of ["openai", "anthropic", "gemini"] as const) {
-							for (const test of grouped) {
-								const result = {
-									name: test.name,
-									provider,
-									editingType,
-									score: 0,
-									duration: 0,
-								} satisfies TestResult;
-								results.push(result);
-								promises.push(runTest(test, provider, editingType, result));
-							}
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							promises.push(runTest(test, provider, result));
 						}
 						await handleAllSettledResults(promises);
 					});
 					for (const provider of ["openai", "anthropic", "gemini"] as const) {
-						describe(`via ${provider}`, () => {
-							it("RUN ALL (in parallel)", async () => {
-								const promises: Promise<void>[] = [];
-								for (const test of grouped) {
-									const result = {
-										name: test.name,
-										provider,
-										editingType,
-										score: 0,
-										duration: 0,
-									} satisfies TestResult;
-									results.push(result);
-									promises.push(runTest(test, provider, editingType, result));
-								}
-								await handleAllSettledResults(promises);
-							});
-							for (const test of grouped) {
-								it(test.name, async () => {
-									const result = {
-										name: test.name,
-										provider,
-										editingType,
-										score: 0,
-										duration: 0,
-									} satisfies TestResult;
-									results.push(result);
-									await runTest(test, provider, editingType, result);
-								});
-							}
+						it(`via ${provider}`, async () => {
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							await runTest(test, provider, result);
 						});
 					}
 				});
+			}
+		});
+
+		describe("sorted by provider", () => {
+			it("RUN ALL (in parallel)", async () => {
+				const promises: Promise<void>[] = [];
+				for (const provider of ["openai", "anthropic", "gemini"] as const) {
+					for (const test of grouped) {
+						const result = {
+							name: test.name,
+							provider,
+							score: 0,
+							duration: 0,
+						} satisfies TestResult;
+						results.push(result);
+						promises.push(runTest(test, provider, result));
+					}
+				}
+				await handleAllSettledResults(promises);
 			});
-		}
+			for (const provider of ["openai", "anthropic", "gemini"] as const) {
+				describe(`via ${provider}`, () => {
+					it("RUN ALL (in parallel)", async () => {
+						const promises: Promise<void>[] = [];
+						for (const test of grouped) {
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							promises.push(runTest(test, provider, result));
+						}
+						await handleAllSettledResults(promises);
+					});
+					for (const test of grouped) {
+						it(test.name, async () => {
+							const result = {
+								name: test.name,
+								provider,
+								score: 0,
+								duration: 0,
+							} satisfies TestResult;
+							results.push(result);
+							await runTest(test, provider, result);
+						});
+					}
+				});
+			}
+		});
 
 		async function runTest(
 			test: LLMIntegrationTest<UnsafeUnknownSchema>,
 			provider: LlmProvider,
-			editingType: LlmEditingType,
 			result: { score: number; duration: number },
 		): Promise<void> {
 			assert(startTime !== undefined, "Expected startTime to be set");
 			const { name, schema, initialTree, prompt, expected, options } = test;
 			const fd = openSync(
-				`${resultsFolderPath}/${formatDate(startTime)}/${name}-${provider}-${editingType}.md`,
+				`${resultsFolderPath}/${formatDate(startTime)}/${name}-${provider}.md`,
 				"w",
 			);
 			const view = await queryDomain(
 				schema as unknown as ImplicitFieldSchema, // TODO: typing
 				initialTree() as never, // TODO: typing
 				provider,
-				editingType,
 				prompt,
 				{
 					domainHints: options?.domainHints,

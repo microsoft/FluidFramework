@@ -5,7 +5,6 @@
 
 export type { Log, SharedTreeSemanticAgent } from "./agent.js";
 export { createFunctioningAgent } from "./functioningAgent.js";
-export { createEditingAgent } from "./editingAgent.js";
 export type { TreeView, llmDefault, instanceOf } from "./utils.js";
 export {
 	buildFunc,

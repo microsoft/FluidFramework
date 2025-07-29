@@ -7,9 +7,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	FieldKind,
-	getSimpleSchema,
 	NodeKind,
-	Tree,
 	ValueSchema,
 	walkFieldSchema,
 } from "@fluidframework/tree/internal";
@@ -19,7 +17,6 @@ import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
 	SimpleTreeSchema,
-	TreeNode,
 	TreeNodeSchema,
 } from "@fluidframework/tree/internal";
 import { z, type ZodArray, type ZodTypeAny } from "zod";
@@ -550,21 +547,6 @@ function getTypeForAllowedTypes(
 			treeSchemaMap,
 		);
 	}
-}
-
-/**
- * Determines if the provided {@link TreeNode} contains an array schema.
- */
-export function doesNodeContainArraySchema(node: TreeNode): boolean {
-	const schema = Tree.schema(node);
-	const simpleSchema = getSimpleSchema(schema);
-	for (const [, nodeSchema] of simpleSchema.definitions) {
-		if (nodeSchema.kind === NodeKind.Array) {
-			return true;
-		}
-	}
-
-	return false;
 }
 
 function describeProp<T extends z.ZodTypeAny>(type: T, description: string): z.ZodUnion<[T]> {

@@ -18,13 +18,6 @@ export function buildFunc<const Return extends z.ZodTypeAny, const Args extends 
 }, ...args: Args): FunctionDef<Args, Return, Rest>;
 
 // @alpha
-export function createEditingAgent<TRoot extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TRoot>, options?: {
-    readonly domainHints?: string;
-    readonly treeToString?: (root: ReadableField<TRoot>) => string;
-    readonly log?: Log;
-}): SharedTreeSemanticAgent;
-
-// @alpha
 export function createFunctioningAgent<TRoot extends ImplicitFieldSchema>(client: BaseChatModel, treeView: TreeView<TRoot>, options?: {
     readonly domainHints?: string;
     readonly treeToString?: (root: ReadableField<TRoot>) => string;
