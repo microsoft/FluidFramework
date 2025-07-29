@@ -29,7 +29,10 @@ export function getUnhydratedContext(schema: ImplicitFieldSchema): Context {
 		const normalized = normalizeFieldSchema(schema);
 
 		const flexContext = new UnhydratedContext(defaultSchemaPolicy, toStoredSchema(schema));
-		return new Context(normalized.annotatedAllowedTypesNormalized, flexContext);
+		return new Context(
+			flexContext,
+			Context.schemaMapFromRootSchema(normalized.annotatedAllowedTypesNormalized),
+		);
 	});
 }
 

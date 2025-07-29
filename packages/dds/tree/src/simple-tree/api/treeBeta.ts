@@ -8,13 +8,13 @@ import {
 	Context,
 	getKernel,
 	isTreeNode,
-	normalizeAnnotatedAllowedTypes,
 	UnhydratedContext,
 	type NodeKind,
 	type TreeNode,
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
+import { getUnhydratedContext } from "../createContext.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 
 import { createFromCursor } from "./create.js";
@@ -189,8 +189,7 @@ export const TreeBeta: TreeBeta = {
 			defaultSchemaPolicy,
 			kernel.context.flexContext.schema,
 		);
-		// TODO: this walks the schema creating a new map which has undesired time and space overhead.
-		const context = new Context(normalizeAnnotatedAllowedTypes(kernel.schema), flexContext);
+		const context = new Context(flexContext, getUnhydratedContext(kernel.schema).schema);
 
 		return createFromCursor(kernel.schema, cursor, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>

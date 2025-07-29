@@ -320,8 +320,10 @@ export class SchematizingSimpleTreeView<
 			slots.set(
 				SimpleContextSlot,
 				new HydratedContext(
-					normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
 					this.flexTreeContext,
+					HydratedContext.schemaMapFromRootSchema(
+						normalizeFieldSchema(this.rootFieldSchema).annotatedAllowedTypesNormalized,
+					),
 				),
 			);
 
