@@ -167,10 +167,11 @@ export class FluidDevtools implements IFluidDevtools {
 			this.postContainerList();
 			return true;
 		},
-		[SetUnsampledTelemetry.MessageType]: async (untypedMessage) => {
-			const message = untypedMessage as SetUnsampledTelemetry.Message;
-			// TODO: Implement unsampled telemetry toggle
-			console.log("Unsampled telemetry toggle:", message.data.unsampledTelemetry);
+		[SetUnsampledTelemetry.MessageType]: async (message) => {
+			const newValue = (message as SetUnsampledTelemetry.Message).data.unsampledTelemetry;
+			globalThis.sessionStorage?.setItem(unsampledTelemetryKey, String(newValue));
+			this.postSupportedFeatures();
+			window.location.reload();
 			return true;
 		},
 		[RemoveContainer.MessageType]: async (untypedMessage) => {

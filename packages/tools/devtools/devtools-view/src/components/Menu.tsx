@@ -43,6 +43,8 @@ import { containersInfoTooltipText, dataObjectsInfoTooltipText } from "./Tooltip
 
 import { Waiting } from "./index.js";
 
+const BLINK_ANIMATION_DURATION = 600; // Duration for blinking animation in milliseconds
+
 const useMenuStyles = makeStyles({
 	root: {
 		...shorthands.gap("0px", "10px"),
@@ -600,7 +602,7 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): React.ReactEl
 								updatedSet.delete(containerKey);
 								return updatedSet;
 							});
-						}, 600); // Remove after 600ms (3 blinks at 200ms each)
+						}, BLINK_ANIMATION_DURATION);
 
 						return newSet;
 					});
