@@ -87,7 +87,6 @@ variables:
   - name: DisableCodeQL
     value: true
 
-lockBehavior: sequential
 stages:
   # Performance unit tests - runtime
   - stage: perf_unit_tests_runtime
@@ -439,6 +438,9 @@ stages:
     - stage: perf_e2e_tests_${{ endpointObject.endpointName }}
       displayName: Perf e2e tests - ${{ endpointObject.endpointName }}
       dependsOn: []
+      # If the stage needs locking, configure the lock behavior. Note that null gets coalesced into an empty string.
+      ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
+        lockBehavior: sequential
       variables:
         # Use contention-lock variable groups when appropriate. Note that null gets coalesced into an empty string.
         - ${{ if ne(endpointObject.lockVariableGroupName, '') }}:
