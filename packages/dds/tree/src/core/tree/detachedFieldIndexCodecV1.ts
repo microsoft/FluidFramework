@@ -6,7 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec } from "../../codec/index.js";
+import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
 import {
 	type EncodedRevisionTag,
 	type RevisionTagCodec,
@@ -41,7 +41,7 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 		 * for a local-only edit will be finalizable at summarization time (local edits can only occur on a summarizing client
 		 * if they're created while detached, and local ids made while detached are finalized before generating the attach summary).
 		 *
-		 * WARNING: the above is true when the whole container transitions from detached->attached,
+		 * WARNING: the above is true when the whole container transitions from detached to attached,
 		 * but not when the container is already attached and it's just the shared-tree that is attaching.
 		 * The assert below will fail in such a scenario. This is addressed in the v2 codec.
 		 */

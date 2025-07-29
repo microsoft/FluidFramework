@@ -22,6 +22,8 @@ import type {
 } from "./detachedFieldIndexTypes.js";
 import type { Static, TSchema } from "@sinclair/typebox";
 
+// Return type is intentionally derived.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 export function makeDetachedFieldIndexCodecFromMajorCodec<
 	TEncodedRevisionTag,
 	TEncodedRevisionTagSchema extends TSchema,

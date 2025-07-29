@@ -14,10 +14,10 @@ import {
 	type ForestRootId,
 	RevisionTagCodec,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
 import {
 	makeDetachedFieldIndexCodec,
 	makeDetachedFieldIndexCodecFamily,
+	// eslint-disable-next-line import/no-internal-modules
 } from "../../../core/tree/detachedFieldIndexCodecs.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../../../core/tree/detachedFieldIndexFormatV1.js";
@@ -150,11 +150,11 @@ interface TestCase {
 }
 
 function generateTestCases(
-	finalizedIdCompressor: IIdCompressor,
-	unfinalizedIdCompressor: IIdCompressor,
+	finalizedCompressor: IIdCompressor,
+	unfinalizedCompressor: IIdCompressor,
 ): TestCase[] {
-	const finalizedRevision = finalizedIdCompressor.generateCompressedId();
-	const unfinalizedRevision = unfinalizedIdCompressor.generateCompressedId();
+	const finalizedRevision = finalizedCompressor.generateCompressedId();
+	const unfinalizedRevision = unfinalizedCompressor.generateCompressedId();
 	const maxId: ForestRootId = brand(42);
 	return [
 		{
@@ -163,7 +163,7 @@ function generateTestCases(
 				maxId,
 				data: new Map(),
 			},
-			idCompressor: finalizedIdCompressor,
+			idCompressor: finalizedCompressor,
 		},
 		{
 			name: "single range with single node",
@@ -171,7 +171,7 @@ function generateTestCases(
 				maxId,
 				data: new Map([[finalizedRevision, new Map([[0, { root: 1 }]])]]),
 			},
-			idCompressor: finalizedIdCompressor,
+			idCompressor: finalizedCompressor,
 		},
 		{
 			name: "multiple nodes that do not form a single range",
@@ -188,7 +188,7 @@ function generateTestCases(
 					],
 				]),
 			},
-			idCompressor: finalizedIdCompressor,
+			idCompressor: finalizedCompressor,
 		},
 		{
 			name: "multiple nodes that form ranges",
@@ -207,7 +207,7 @@ function generateTestCases(
 					],
 				]),
 			},
-			idCompressor: finalizedIdCompressor,
+			idCompressor: finalizedCompressor,
 		},
 		{
 			name: "Unfinalized id",
@@ -216,7 +216,7 @@ function generateTestCases(
 				maxId,
 				data: new Map([[unfinalizedRevision, new Map([[0, { root: brand(1) }]])]]),
 			},
-			idCompressor: unfinalizedIdCompressor,
+			idCompressor: unfinalizedCompressor,
 		},
 	];
 }

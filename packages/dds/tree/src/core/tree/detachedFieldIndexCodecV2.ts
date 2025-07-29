@@ -6,12 +6,8 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 
-import { type ICodecOptions, type IJsonCodec } from "../../codec/index.js";
-import {
-	type EncodedRevisionTag,
-	type RevisionTagCodec,
-	type RevisionTag,
-} from "../rebase/index.js";
+import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import type { EncodedRevisionTag, RevisionTagCodec, RevisionTag } from "../rebase/index.js";
 
 import {
 	type FormatV2,
