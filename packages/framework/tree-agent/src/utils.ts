@@ -6,16 +6,18 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
+import { assert } from "@fluidframework/core-utils/internal";
+import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { ImplicitFieldSchema, TreeNodeSchemaClass } from "@fluidframework/tree";
 import type {
 	InsertableContent,
-	InternalTreeNode,
 	TreeNode,
 	TreeNodeSchema,
 	TreeViewAlpha,
+	UnsafeUnknownSchema,
 } from "@fluidframework/tree/alpha";
-import { ObjectNodeSchema } from "@fluidframework/tree/alpha";
+import { ObjectNodeSchema, TreeAlpha } from "@fluidframework/tree/alpha";
 import { z } from "zod";
 
 import { FunctionWrapper } from "./methodBinding.js";
@@ -133,15 +135,12 @@ export function failUsage(message: string): never {
  * Construct an object node from a schema and value.
  */
 export function constructNode(schema: TreeNodeSchema, value: InsertableContent): TreeNode {
-	// TODO:#34138: Until this bug is fixed, we need to use the constructor kludge.
-	// TODO:#34139: Until this bug is fixed, we need to use the constructor kludge.
-	// return (
-	// 	TreeAlpha.create<UnsafeUnknownSchema>(schema, value) ?? fail("Expected node to be created")
-	// );
-
-	return typeof schema === "function"
-		? new schema(value as unknown as InternalTreeNode)
-		: (schema as { create(data: InsertableContent): TreeNode }).create(value);
+	const node = TreeAlpha.create<UnsafeUnknownSchema>(schema, value);
+	assert(
+		node !== undefined && node !== null && typeof node === "object" && !isFluidHandle(node),
+		"Expected a constructed node to be an object",
+	);
+	return node;
 }
 
 /**
