@@ -85,7 +85,10 @@ const warn = console.warn;
 
 let testLogger: FluidTestRunLogger;
 
-// The delay after which the logger will flush events after the last test ran.
+/**
+ * The amount of time to wait after logging an event before flushing the logger.
+ * This amount was decided after doing tests with different values. See AB#44378 for details.
+ */
 const AFTER_FLUSH_DELAY_MS = 1250;
 
 /**
