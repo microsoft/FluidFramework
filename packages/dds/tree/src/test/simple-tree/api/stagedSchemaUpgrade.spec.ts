@@ -10,6 +10,7 @@ import {
 	schemaStatics,
 	toStoredSchema,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
@@ -35,7 +36,9 @@ describe("staged schema upgrade", () => {
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
 
-		let view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaA);
+		let view = new SchemaCompatibilityTester(
+			new TreeViewConfigurationAlpha({ schema: schemaA }),
+		);
 
 		// open document, and check its compatibility with our application
 		const compat = view.checkCompatibility(stored);
@@ -51,7 +54,7 @@ describe("staged schema upgrade", () => {
 		});
 
 		// view schema is B (includes staged string)
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaB);
+		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaB }));
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,
@@ -70,7 +73,7 @@ describe("staged schema upgrade", () => {
 		});
 
 		// view schema now wants full support for string (not just staged)
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaC);
+		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: false,
 			canUpgrade: true,
@@ -81,7 +84,7 @@ describe("staged schema upgrade", () => {
 		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaC).rootFieldSchema));
 
 		// validate C is now fully supported
-		view = new SchemaCompatibilityTester(defaultSchemaPolicy, schemaC);
+		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,

@@ -418,7 +418,6 @@ describe("SchemaCompatibilityTester", () => {
 				expectCompatibility(
 					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
 					{ canView: true, canUpgrade: true, isEquivalent: true },
-					undefined,
 					true, // containsStagedAllowedTypes
 				);
 			});
