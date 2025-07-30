@@ -21,6 +21,7 @@ import {
 	CodeSpanNode,
 	HeadingNode,
 	LinkNode,
+	MarkdownBlockContentNode,
 	MarkdownPhrasingContentNode,
 	type PhrasingContent,
 	PlainTextNode,
@@ -40,7 +41,7 @@ import {
 	injectSeparator,
 } from "../../utilities/index.js";
 import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
-import { transformAndWrapTsdoc } from "../TsdocNodeTransforms.js";
+import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
@@ -838,15 +839,13 @@ function transformTsdocSectionForTableCell(
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCellContent[] {
-	const transformed = transformAndWrapTsdoc(tsdocSection, contextApiItem, config);
+	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.
-	if (transformed.length === 1 && transformed[0].value.type === "paragraph") {
-		return transformed[0].value.children.map(
-			(child) => new MarkdownPhrasingContentNode(child),
-		);
+	if (transformed.length === 1 && transformed[0].type === "paragraph") {
+		return transformed[0].children.map((child) => new MarkdownPhrasingContentNode(child));
 	}
 
-	return transformed;
+	return transformed.map((node) => new MarkdownBlockContentNode(node));
 }
