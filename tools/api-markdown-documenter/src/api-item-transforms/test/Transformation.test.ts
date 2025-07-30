@@ -144,7 +144,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const expected = [
 			wrapInSection(
 				[
-					wrapInSection([ParagraphNode.createFromPlainText("Test Constant")]),
+					wrapInSection([
+						new MarkdownBlockContentNode({
+							type: "paragraph",
+							children: [{ type: "text", value: "Test Constant" }],
+						}),
+					]),
 					wrapInSection(
 						[new FencedCodeBlockNode('TestConst = "Hello world!"', "typescript")],
 						{
@@ -321,7 +326,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		const expected: DocumentationNode[] = [
 			// Summary section
-			wrapInSection([ParagraphNode.createFromPlainText("Test interface")]),
+			wrapInSection([
+				new MarkdownBlockContentNode({
+					type: "paragraph",
+					children: [{ type: "text", value: "Test interface" }],
+				}),
+			]),
 
 			// Signature section
 			wrapInSection(
@@ -331,7 +341,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 			// Remarks section
 			wrapInSection(
-				[ParagraphNode.createFromPlainText("Here are some remarks about the interface")],
+				[
+					new MarkdownBlockContentNode({
+						type: "paragraph",
+						children: [{ type: "text", value: "Here are some remarks about the interface" }],
+					}),
+				],
 				{ title: "Remarks", id: "testinterface-remarks" },
 			),
 
@@ -348,9 +363,19 @@ describe("ApiItem to Documentation transformation tests", () => {
 									),
 								]),
 								new TableBodyCellNode([new CodeSpanNode("optional")]),
-								TableBodyCellNode.createFromPlainText("0"),
+								new TableBodyCellNode([
+									new MarkdownPhrasingContentNode({
+										type: "text",
+										value: "0",
+									}),
+								]),
 								new TableBodyCellNode([new PlainTextNode("number")]),
-								TableBodyCellNode.createFromPlainText("Test optional property"),
+								new TableBodyCellNode([
+									new MarkdownPhrasingContentNode({
+										type: "text",
+										value: "Test optional property",
+									}),
+								]),
 							]),
 						],
 						new TableHeaderRowNode([
@@ -371,7 +396,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 					wrapInSection(
 						[
 							// Summary section
-							wrapInSection([ParagraphNode.createFromPlainText("Test optional property")]),
+							wrapInSection([
+								new MarkdownBlockContentNode({
+									type: "paragraph",
+									children: [{ type: "text", value: "Test optional property" }],
+								}),
+							]),
 							// Signature section
 							wrapInSection(
 								[
@@ -435,7 +465,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// Also note that child items are listed alphabetically, so we expect `bar` before `foo`.
 		const expected: DocumentationNode[] = [
 			// Summary section
-			wrapInSection([ParagraphNode.createFromPlainText("Test namespace")]),
+			wrapInSection([
+				new MarkdownBlockContentNode({
+					type: "paragraph",
+					children: [{ type: "text", value: "Test namespace" }],
+				}),
+			]),
 
 			// Signature section
 			wrapInSection(
@@ -605,7 +640,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 											]),
 											new TableBodyCellNode([new CodeSpanNode("readonly")]),
 											TableBodyCellNode.Empty, // Type
-											TableBodyCellNode.createFromPlainText("Test Constant"),
+											new TableBodyCellNode([
+												new MarkdownPhrasingContentNode({
+													type: "text",
+													value: "Test Constant",
+												}),
+											]),
 										]),
 									],
 									new TableHeaderRowNode([
@@ -625,7 +665,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new SectionNode(
 									[
 										// Summary
-										new SectionNode([ParagraphNode.createFromPlainText("Test Constant")]),
+										new SectionNode([
+											new MarkdownBlockContentNode({
+												type: "paragraph",
+												children: [{ type: "text", value: "Test Constant" }],
+											}),
+										]),
 
 										// Signature
 										new SectionNode(
@@ -672,7 +717,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 												new LinkNode("world", "/test-package/#world-variable"),
 											]),
 											TableBodyCellNode.Empty, // Type
-											TableBodyCellNode.createFromPlainText("Test Constant"),
+											new TableBodyCellNode([
+												new MarkdownPhrasingContentNode({
+													type: "text",
+													value: "Test Constant",
+												}),
+											]),
 										]),
 									],
 									new TableHeaderRowNode([
@@ -691,7 +741,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new SectionNode(
 									[
 										// Summary
-										new SectionNode([ParagraphNode.createFromPlainText("Test Constant")]),
+										new SectionNode([
+											new MarkdownBlockContentNode({
+												type: "paragraph",
+												children: [{ type: "text", value: "Test Constant" }],
+											}),
+										]),
 
 										// Signature
 										new SectionNode(
