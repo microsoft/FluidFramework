@@ -45,7 +45,7 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 	return false;
 }
 
-interface ReleaseInfoTags {
+interface ApiSupportTagInfo {
 	releaseTag: ReleaseTag;
 	isLegacy: boolean;
 }
@@ -55,7 +55,7 @@ interface ReleaseInfoTags {
  *
  * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getApiTagsFromDocs(jsdocs: JSDoc[]): ReleaseInfoTags | undefined {
+function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportTagInfo | undefined {
 	let releaseTag: ReleaseTag | undefined;
 	let isLegacy = false;
 	for (const jsdoc of jsdocs) {
@@ -82,7 +82,7 @@ function getApiTagsFromDocs(jsdocs: JSDoc[]): ReleaseInfoTags | undefined {
  *
  * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
  */
-function getNodeApiTags(node: Node): ReleaseInfoTags | undefined {
+function getNodeApiTags(node: Node): ApiSupportTagInfo | undefined {
 	if (Node.isJSDocable(node)) {
 		return getApiTagsFromDocs(node.getJsDocs());
 	}
@@ -104,7 +104,7 @@ function getNodeApiTags(node: Node): ReleaseInfoTags | undefined {
 	return undefined;
 }
 
-function getApiLevelFromTags(tags: ReleaseInfoTags): ApiLevel {
+function getApiLevelFromTags(tags: ApiSupportTagInfo): ApiLevel {
 	const { releaseTag, isLegacy } = tags;
 	switch (releaseTag) {
 		case "public": {
