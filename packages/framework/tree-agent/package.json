@@ -8,7 +8,6 @@
 		"url": "https://github.com/microsoft/FluidFramework.git",
 		"directory": "packages/framework/tree-agent"
 	},
-	"private": true,
 	"license": "MIT",
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
