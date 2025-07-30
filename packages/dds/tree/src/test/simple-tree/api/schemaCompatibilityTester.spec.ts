@@ -29,7 +29,6 @@ const factory = new SchemaFactoryAlpha("");
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
-	containsStagedAllowedTypes: boolean = false,
 ) {
 	const viewSchema = new SchemaCompatibilityTester(
 		new TreeViewConfigurationAlpha({ schema: view }),
@@ -37,12 +36,11 @@ function expectCompatibility(
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
 
-	// This includes all staged allowed types in the conversion.
+	// This does not include staged allowed types.
 	const viewStored = toStoredSchema(view);
 
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
-	// staged allowed types are not included in the conversion, so this is not guaranteed to be true
-	if (compatibility.canUpgrade && !containsStagedAllowedTypes) {
+	if (compatibility.canUpgrade) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
 		assert.equal(isViewSupersetOfStored(normalizeFieldSchema(view), stored), true);
 	}
@@ -384,7 +382,25 @@ describe("SchemaCompatibilityTester", () => {
 		});
 
 		describe("with staged allowed types", () => {
-			it("allows viewing and upgrading with staged type not in stored schema", () => {
+			it("adding a staged allowed type does not break compatibility", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: SchemaFactoryAlpha.number,
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+					],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible2, stored: toStoredSchema(Compatible1) },
+					{ canView: true, canUpgrade: true, isEquivalent: true },
+				);
+			});
+
+			it("can upgrade from staged to allowed", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
 					foo: [
 						SchemaFactoryAlpha.number,
@@ -393,17 +409,16 @@ describe("SchemaCompatibilityTester", () => {
 				}) {}
 
 				class Compatible2 extends factory.objectAlpha("MyType", {
-					foo: SchemaFactoryAlpha.number,
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
 				}) {}
 
 				expectCompatibility(
-					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
-					{ canView: true, canUpgrade: true, isEquivalent: true },
-					// This check can assume that staged allowed types are not upgraded in the stored schema
+					{ view: Compatible2, stored: toStoredSchema(Compatible1) },
+					{ canView: false, canUpgrade: true, isEquivalent: false },
 				);
 			});
 
-			it("allows viewing and upgrading with staged type also in stored schema as normal", () => {
+			it("clients with staged schema allow viewing but not upgrading after upgrade", () => {
 				class Compatible1 extends factory.objectAlpha("MyType", {
 					foo: [
 						SchemaFactoryAlpha.number,
@@ -417,8 +432,48 @@ describe("SchemaCompatibilityTester", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
-					{ canView: true, canUpgrade: true, isEquivalent: true },
-					true, // containsStagedAllowedTypes
+					{ canView: true, canUpgrade: false, isEquivalent: false },
+				);
+			});
+
+			it("staged schema which mismatches stored can not view", () => {
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [
+						SchemaFactoryAlpha.number,
+						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+					],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.null],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
+					{ canView: false, canUpgrade: false, isEquivalent: false },
+				);
+			});
+
+			it("staged schema which deeply mismatches stored can not view", () => {
+				class Deep1 extends factory.objectAlpha("Deep", {
+					foo: SchemaFactoryAlpha.number,
+				}) {}
+
+				class Deep2 extends factory.objectAlpha("Deep", {
+					bar: SchemaFactoryAlpha.number,
+				}) {}
+
+				class Compatible1 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(Deep1)],
+				}) {}
+
+				class Compatible2 extends factory.objectAlpha("MyType", {
+					foo: [SchemaFactoryAlpha.number, Deep2],
+				}) {}
+
+				expectCompatibility(
+					{ view: Compatible1, stored: toStoredSchema(Compatible2) },
+					{ canView: false, canUpgrade: false, isEquivalent: false },
 				);
 			});
 		});
