@@ -34,7 +34,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ConnectionState } from "./connectionState.js";
+import type { ConnectionState } from "./connectionState.js";
 import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 
 /**
@@ -105,7 +105,19 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		["referenceSequenceNumbers", true],
 	]);
 
-	constructor(private readonly config: IContainerContextConfig) {}
+	public readonly getConnectionState: () => ConnectionState;
+	public readonly getClientId: () => string | undefined;
+	public readonly getContainerDiagnosticId: () => string | undefined;
+	public readonly getConnected: () => boolean;
+	public readonly getAttachState: () => AttachState;
+
+	constructor(private readonly config: IContainerContextConfig) {
+		this.getConnectionState = config.getConnectionState;
+		this.getClientId = config.getClientId;
+		this.getContainerDiagnosticId = config.getContainerDiagnosticId;
+		this.getConnected = config.getConnected;
+		this.getAttachState = config.getAttachState;
+	}
 
 	public get options(): ILoaderOptions {
 		return this.config.options;
@@ -209,7 +221,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		return this.config.getContainerDiagnosticId() ?? "";
+		return this.getContainerDiagnosticId() ?? "";
 	}
 
 	/**
@@ -217,15 +229,11 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	 * When false, ops should be kept as pending or rejected
 	 */
 	public get connected(): boolean {
-		return this.config.getConnected();
+		return this.getConnected();
 	}
 
 	public get clientId(): string | undefined {
-		return this.config.getClientId();
-	}
-
-	public getConnectionState(): ConnectionState {
-		return this.config.getConnectionState();
+		return this.getClientId();
 	}
 
 	/**
@@ -241,6 +249,6 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	}
 
 	public get attachState(): AttachState {
-		return this.config.getAttachState();
+		return this.getAttachState();
 	}
 }

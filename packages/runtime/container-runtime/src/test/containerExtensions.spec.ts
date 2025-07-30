@@ -66,9 +66,6 @@ enum ConnectionState {
 }
 
 class MockContext implements IContainerContext {
-	constructor(private readonly container: MockContainer) {}
-
-	public readonly attachState = AttachState.Attached;
 	public readonly deltaManager = new MockDeltaManager();
 	public readonly quorum = new MockQuorumClients();
 	public readonly storage = {} as unknown as IContainerContext["storage"];
@@ -78,30 +75,44 @@ class MockContext implements IContainerContext {
 	public readonly clientDetails = { capabilities: { interactive: true } };
 	public readonly scope = {};
 	public readonly id = "mockId";
+	public readonly taggedLogger = new MockLogger();
+
+	public readonly getConnectionState: () => ConnectionState;
+	public readonly getClientId: () => string | undefined;
+	public readonly getConnected: () => boolean;
+	public readonly getAttachState: () => AttachState;
+	public readonly getContainerDiagnosticId: () => string | undefined;
+
+	public readonly updateDirtyContainerState = (): void => {};
+	public readonly getLoadedFromVersion = (): undefined => undefined;
+	public readonly submitBatchFn = (): number => 1;
+	public readonly submitSummaryFn = (): number => 1;
+	public readonly submitSignalFn = (): void => {};
+	public readonly submitFn = (): number => 1;
+	public readonly disposeFn = (): void => {};
+	public readonly closeFn = (): void => {};
+	public readonly getAbsoluteUrl = async (): Promise<string> => "mockUrl";
+
+	constructor(private readonly container: MockContainer) {
+		this.getConnectionState = () => this.container.connectionState;
+		this.getClientId = () => this.container.audience.getSelf()?.clientId;
+		this.getConnected = () => this.container.connectionState === ConnectionState.Connected;
+		this.getAttachState = () => AttachState.Attached;
+		this.getContainerDiagnosticId = () => "mockId";
+	}
 
 	public get audience(): MockAudience {
 		return this.container.audience;
 	}
 	public get clientId(): string | undefined {
-		return this.container.audience.getSelf()?.clientId;
+		return this.getClientId();
 	}
 	public get connected(): boolean {
-		return this.container.connectionState === ConnectionState.Connected;
+		return this.getConnected();
 	}
-	public getConnectionState(): ConnectionState {
-		return this.container.connectionState;
+	public get attachState(): AttachState {
+		return this.getAttachState();
 	}
-
-	public updateDirtyContainerState = (): void => {};
-	public getLoadedFromVersion = (): undefined => undefined;
-	public submitBatchFn = (): number => 1;
-	public submitSummaryFn = (): number => 1;
-	public submitSignalFn = (): void => {};
-	public submitFn = (): number => 1;
-	public disposeFn = (): void => {};
-	public closeFn = (): void => {};
-	public taggedLogger = new MockLogger();
-	public getAbsoluteUrl = async (): Promise<string> => "mockUrl";
 }
 
 class MockContainer {

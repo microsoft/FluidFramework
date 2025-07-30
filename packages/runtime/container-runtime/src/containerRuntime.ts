@@ -1543,9 +1543,7 @@ export class ContainerRuntime
 			getConnectionState,
 		} = context;
 
-		this.getConnectionState = getConnectionState
-			? getConnectionState.bind(context)
-			: undefined;
+		this.getConnectionState = getConnectionState;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
