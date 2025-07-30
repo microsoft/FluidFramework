@@ -143,15 +143,7 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 		return undefined;
 	}
 
-	const apiLevel = getApiLevelFromTags(apiTags);
-	if (apiLevel === undefined) {
-		throw new Error(
-			`No known level map from ${node.getSymbol()} with tags [${apiTags.releaseTag}${apiTags.isLegacy ? ", legacy" : ""}] at ${node
-				.getSourceFile()
-				.getFilePath()}:${node.getStartLineNumber()}.`,
-		);
-	}
-	return apiLevel;
+	return getApiLevelFromTags(apiTags);
 }
 
 /**
