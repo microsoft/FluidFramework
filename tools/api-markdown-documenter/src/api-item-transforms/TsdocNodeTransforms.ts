@@ -94,9 +94,7 @@ export function transformAndWrapTsdoc(
 	config: ApiItemTransformationConfiguration,
 ): MarkdownBlockContentNode[] {
 	const contents = transformTsdoc(node, contextApiItem, config);
-	return contents.length === 0
-		? []
-		: contents.map((mdastTree) => new MarkdownBlockContentNode(mdastTree));
+	return contents.map((mdastTree) => new MarkdownBlockContentNode(mdastTree));
 }
 
 /**
