@@ -136,7 +136,7 @@ export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
-	inSchemaOrThrow,
+	throwOutOfSchema,
 } from "./default-schema/index.js";
 
 export {
