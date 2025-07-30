@@ -657,6 +657,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
 					type: "list",
 					ordered: current.type === "orderedListItem",
 					children: items,
+					spread: false,
 				});
 				break;
 			}
