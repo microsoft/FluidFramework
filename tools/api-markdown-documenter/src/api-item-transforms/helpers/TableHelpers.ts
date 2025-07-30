@@ -40,7 +40,7 @@ import {
 	injectSeparator,
 } from "../../utilities/index.js";
 import { getLinkForApiItem } from "../ApiItemTransformUtilities.js";
-import { transformTsdoc } from "../TsdocNodeTransforms.js";
+import { transformAndWrapTsdoc } from "../TsdocNodeTransforms.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 import { createExcerptSpanWithHyperlinks } from "./Helpers.js";
@@ -838,7 +838,7 @@ function transformTsdocSectionForTableCell(
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableCellContent[] {
-	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
+	const transformed = transformAndWrapTsdoc(tsdocSection, contextApiItem, config);
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.

@@ -84,7 +84,23 @@ function getTsdocNodeTransformationOptions(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link MarkdownBlockContentNode}s.
+ *
+ * @public
+ */
+export function transformAndWrapTsdoc(
+	node: DocSection,
+	contextApiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): MarkdownBlockContentNode[] {
+	const contents = transformTsdoc(node, contextApiItem, config);
+	return contents.length === 0
+		? []
+		: contents.map((mdastTree) => new MarkdownBlockContentNode(mdastTree));
+}
+
+/**
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link MarkdownBlockContentNode}s.
  *
  * @public
  */
@@ -92,12 +108,9 @@ export function transformTsdoc(
 	node: DocSection,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): MarkdownBlockContentNode[] {
+): BlockContent[] {
 	const tsdocTransformConfig = getTsdocNodeTransformationOptions(contextApiItem, config);
-	const contents = transformTsdocSection(node, tsdocTransformConfig);
-	return contents.length === 0
-		? []
-		: contents.map((mdastTree) => new MarkdownBlockContentNode(mdastTree));
+	return transformTsdocSection(node, tsdocTransformConfig);
 }
 
 /**
