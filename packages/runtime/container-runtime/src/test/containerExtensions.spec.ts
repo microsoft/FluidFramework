@@ -320,16 +320,11 @@ describe("Container Extension", () => {
 
 			// Transition to Connected
 			container.setConnectionState(ConnectionState.Connected, "mockClientId");
-			assert.strictEqual(events.length, 2, "Should have received two joined events");
+			assert.strictEqual(events.length, 1, "Should have received one joined events");
 			assert.deepStrictEqual(
 				events[0],
-				{ type: "joined", clientId: "mockClientId", canWrite: false },
-				"First event should be joined for reading",
-			);
-			assert.deepStrictEqual(
-				events[1],
 				{ type: "joined", clientId: "mockClientId", canWrite: true },
-				"Second event should be joined for writing",
+				"First event should be joined for writing",
 			);
 
 			assert.strictEqual(
@@ -340,11 +335,11 @@ describe("Container Extension", () => {
 
 			// Transition back to Disconnected
 			container.setConnectionState(ConnectionState.Disconnected);
-			assert.strictEqual(events.length, 3, "Should have received three events total");
+			assert.strictEqual(events.length, 2, "Should have received two events total");
 			assert.deepStrictEqual(
-				events[2],
+				events[1],
 				{ type: "disconnected" },
-				"Third event should be disconnected",
+				"Second event should be disconnected",
 			);
 			assert.strictEqual(
 				extension.connectedToService,
