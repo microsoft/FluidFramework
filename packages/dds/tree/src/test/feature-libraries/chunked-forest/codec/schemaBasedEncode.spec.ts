@@ -39,6 +39,7 @@ import {
 	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
 	defaultSchemaPolicy,
+	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { ajvValidator } from "../../../codec/index.js";
@@ -50,7 +51,6 @@ import {
 	RecursiveType,
 	testTrees,
 } from "../../../testTrees.js";
-import { jsonableTreesFromFieldCursor } from "../fieldCursorTestUtilities.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
@@ -363,7 +363,7 @@ describe("schemaBasedEncoding", () => {
 				// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
 				const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);
 				const result = codec.decode(encoded, fieldBatchContext);
-				const resultTree = result.map(jsonableTreesFromFieldCursor);
+				const resultTree = result.map(jsonableTreeFromFieldCursor);
 				assert.deepEqual(resultTree, [tree]);
 
 				// This snapshot makes it clear when the format changes.
