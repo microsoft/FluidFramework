@@ -2367,7 +2367,7 @@ describe("SharedTree", () => {
 		const sharedObject = configuredSharedTree({
 			jsonValidator: typeboxValidator,
 			forest: ForestTypeExpensiveDebug,
-			oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+			oldestCompatibleClient: FluidClientVersion.v2_52,
 		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
