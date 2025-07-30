@@ -4,5 +4,12 @@
  */
 /* eslint-disable unicorn/no-empty-file */
 
+/**
+ * A library for creating AI agents to interact with a SharedTree.
+ *
+ * @packageDocumentation
+ */
+
 // This is a placeholder file.
 // Source code for the tree-agent package will be added in the future.
+
