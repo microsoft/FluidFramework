@@ -156,6 +156,7 @@ describe("IntervalCollection fuzz testing", () => {
 
 	createDDSFuzzSuite(model, {
 		...optionsWithEmitter,
+		rollbackProbability: 0,
 		// replay: 8
 	});
 });

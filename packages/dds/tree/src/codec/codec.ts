@@ -409,9 +409,10 @@ export enum FluidClientVersion {
 	// then update it to "2.001" once we actually have the opt in working.
 	// v2_1 = v2_0,
 
-	/** Fluid Framework Client 2.41 and newer. */
-	// If we land some new formats in 2.41, we can enable selecting
-	// v2_41 = 2.041,
+	/** Fluid Framework Client 2.52 and newer. */
+	// New formats introduced in 2.52:
+	// - DetachedFieldIndex FormatV2
+	v2_52 = 2.052,
 
 	/**
 	 * Enable unreleased and unfinished features.
