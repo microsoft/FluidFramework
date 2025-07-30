@@ -6,7 +6,7 @@
 /* eslint-disable unicorn/no-empty-file */
 
 /**
- * A library for creating AI agents to interact with a SharedTree.
+ * A library for creating AI agents to interact with a {@link SharedTree | https://fluidframework.com/docs/data-structures/tree/}.
  *
  * @packageDocumentation
  */
