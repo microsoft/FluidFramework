@@ -31,11 +31,11 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
-	EncoderCache,
+	EncoderContext,
 	type FieldEncoder,
 	type FieldShaper,
-	InlineArrayShape,
-	NestedArrayShape,
+	InlineArrayEncoder,
+	NestedArrayEncoder,
 	type NodeEncoder,
 	type TreeShaper,
 	anyFieldEncoder,
@@ -54,9 +54,9 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/format.js";
 import {
-	NodeShape,
+	NodeShapeBasedEncoder,
 	// eslint-disable-next-line import/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/nodeShape.js";
+} from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
 import type {
 	FieldBatch,
 	FieldBatchEncodingContext,
@@ -74,14 +74,14 @@ import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 import { testIdCompressor } from "../../../utils.js";
 
-const anyNodeShape = new NodeShape(undefined, undefined, [], anyFieldEncoder);
-const onlyTypeShape = new NodeShape(undefined, false, [], undefined);
+const anyNodeShape = new NodeShapeBasedEncoder(undefined, undefined, [], anyFieldEncoder);
+const onlyTypeShape = new NodeShapeBasedEncoder(undefined, false, [], undefined);
 
-const constantFooShape = new NodeShape(brand("foo"), false, [], undefined);
+const constantFooShape = new NodeShapeBasedEncoder(brand("foo"), false, [], undefined);
 
 function makeFieldBatchCodec(
 	options: ICodecOptions,
-	cache: EncoderCache,
+	encoderContext: EncoderContext,
 ): IJsonCodec<
 	FieldBatch,
 	EncodedFieldBatch,
@@ -89,14 +89,20 @@ function makeFieldBatchCodec(
 	FieldBatchEncodingContext
 > {
 	return makeVersionedValidatedCodec(options, validVersions, EncodedFieldBatch, {
-		encode: (data: FieldBatch, context: FieldBatchEncodingContext): EncodedFieldBatch => {
-			return compressedEncode(data, cache);
+		encode: (
+			data: FieldBatch,
+			fieldBatchContext: FieldBatchEncodingContext,
+		): EncodedFieldBatch => {
+			return compressedEncode(data, encoderContext);
 		},
-		decode: (data: EncodedFieldBatch, context: FieldBatchEncodingContext): FieldBatch => {
+		decode: (
+			data: EncodedFieldBatch,
+			fieldBatchContext: FieldBatchEncodingContext,
+		): FieldBatch => {
 			// TODO: consider checking data is in schema.
 			return decode(data, {
-				idCompressor: context.idCompressor,
-				originatorId: context.originatorId,
+				idCompressor: fieldBatchContext.idCompressor,
+				originatorId: fieldBatchContext.originatorId,
 			}).map((chunk) => chunk.cursor());
 		},
 	});
@@ -110,7 +116,7 @@ describe("compressedEncode", () => {
 		for (const [name, jsonable] of schemalessTestTrees) {
 			it(name, () => {
 				const input: FieldBatch = [cursorForJsonableTreeField([jsonable])];
-				const cache = new EncoderCache(
+				const context = new EncoderContext(
 					(fieldShaper: FieldShaper, schemaName: TreeNodeSchemaIdentifier): NodeEncoder =>
 						anyNodeShape,
 					(treeShaper: TreeShaper, field: TreeFieldStoredSchema): FieldEncoder =>
@@ -118,7 +124,7 @@ describe("compressedEncode", () => {
 					fieldKinds,
 					testIdCompressor,
 				);
-				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, cache);
+				const codec = makeFieldBatchCodec({ jsonValidator: typeboxValidator }, context);
 				const result = codec.encode(input, {
 					encodeType: TreeCompressionStrategy.Compressed,
 					idCompressor: testIdCompressor,
@@ -171,49 +177,49 @@ describe("compressedEncode", () => {
 	});
 
 	it("anyNodeEncoder", () => {
-		const cache = new EncoderCache(
+		const context = new EncoderContext(
 			() => anyNodeShape,
 			() => fail(),
 			fieldKinds,
 			testIdCompressor,
 		);
-		const buffer = checkNodeEncode(anyNodeEncoder, cache, { type: brand("foo") });
+		const buffer = checkNodeEncode(anyNodeEncoder, context, { type: brand("foo") });
 		assert.deepEqual(buffer, [anyNodeShape, new IdentifierToken("foo"), false, []]);
 	});
 
-	describe("InlineArrayShape", () => {
+	describe("InlineArrayEncoder", () => {
 		it("empty", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(InlineArrayShape.empty, cache, []);
+			const buffer = checkFieldEncode(InlineArrayEncoder.empty, context, []);
 			assert(compareArrays(buffer, []));
 		});
 
 		it("non-empty", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new InlineArrayShape(1, asNodesEncoder(onlyTypeShape));
-			const buffer = checkFieldEncode(shape, cache, [{ type: brand("foo") }]);
+			const shape = new InlineArrayEncoder(1, asNodesEncoder(onlyTypeShape));
+			const buffer = checkFieldEncode(shape, context, [{ type: brand("foo") }]);
 			assert.deepEqual(buffer, [new IdentifierToken("foo")]);
 		});
 
 		it("multiple", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new InlineArrayShape(2, asNodesEncoder(onlyTypeShape));
-			const buffer = checkFieldEncode(shape, cache, [
+			const shape = new InlineArrayEncoder(2, asNodesEncoder(onlyTypeShape));
+			const buffer = checkFieldEncode(shape, context, [
 				{ type: brand("foo") },
 				{ type: brand("bar") },
 			]);
@@ -221,15 +227,15 @@ describe("compressedEncode", () => {
 		});
 
 		it("nested", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shapeInner = new InlineArrayShape(2, asNodesEncoder(onlyTypeShape));
-			const shapeOuter = new InlineArrayShape(2, shapeInner);
-			const buffer = checkFieldEncode(shapeOuter, cache, [
+			const shapeInner = new InlineArrayEncoder(2, asNodesEncoder(onlyTypeShape));
+			const shapeOuter = new InlineArrayEncoder(2, shapeInner);
+			const buffer = checkFieldEncode(shapeOuter, context, [
 				{ type: brand("a") },
 				{ type: brand("b") },
 				{ type: brand("c") },
@@ -244,39 +250,39 @@ describe("compressedEncode", () => {
 		});
 	});
 
-	describe("NestedArrayShape", () => {
+	describe("NestedArrayEncoder", () => {
 		it("empty", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(new NestedArrayShape(onlyTypeShape), cache, []);
+			const buffer = checkFieldEncode(new NestedArrayEncoder(onlyTypeShape), context, []);
 			assert.deepEqual(buffer, [0]);
 		});
 
 		it("non-empty", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new NestedArrayShape(onlyTypeShape);
-			const buffer = checkFieldEncode(shape, cache, [{ type: brand("foo") }]);
+			const shape = new NestedArrayEncoder(onlyTypeShape);
+			const buffer = checkFieldEncode(shape, context, [{ type: brand("foo") }]);
 			assert.deepEqual(buffer, [[new IdentifierToken("foo")]]);
 		});
 
 		it("multiple", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const shape = new NestedArrayShape(onlyTypeShape);
-			const buffer = checkFieldEncode(shape, cache, [
+			const shape = new NestedArrayEncoder(onlyTypeShape);
+			const buffer = checkFieldEncode(shape, context, [
 				{ type: brand("foo") },
 				{ type: brand("bar") },
 			]);
@@ -285,26 +291,26 @@ describe("compressedEncode", () => {
 
 		// tests for case where child items have 0 encoded size: length can't be inferred from nested array so number is used instead.
 		it("single zero sized content", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(new NestedArrayShape(constantFooShape), cache, [
+			const buffer = checkFieldEncode(new NestedArrayEncoder(constantFooShape), context, [
 				{ type: brand("foo") },
 			]);
 			assert(compareArrays(buffer, [1]));
 		});
 
 		it("multiple zero sized content", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(new NestedArrayShape(constantFooShape), cache, [
+			const buffer = checkFieldEncode(new NestedArrayEncoder(constantFooShape), context, [
 				{ type: brand("foo") },
 				{ type: brand("foo") },
 				{ type: brand("foo") },
@@ -315,13 +321,13 @@ describe("compressedEncode", () => {
 
 	describe("anyFieldEncoder", () => {
 		it("empty", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => fail(),
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(anyFieldEncoder, cache, []);
+			const buffer = checkFieldEncode(anyFieldEncoder, context, []);
 			// For size purposes, this should remain true
 			assert.equal(
 				buffer.length,
@@ -330,35 +336,35 @@ describe("compressedEncode", () => {
 			);
 			// The exact encoding schema here is not important as long as the above holds (and the entry here is small):
 			// The current encoding scheme uses an empty inline array for encoding 0 size fields:
-			assert(compareArrays(buffer, [InlineArrayShape.empty]));
+			assert(compareArrays(buffer, [InlineArrayEncoder.empty]));
 		});
 
 		it("one item", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => onlyTypeShape,
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(anyFieldEncoder, cache, [{ type: brand("foo") }]);
-			// Should use anyNodeEncoder, which will lookup the shape from cache:
+			const buffer = checkFieldEncode(anyFieldEncoder, context, [{ type: brand("foo") }]);
+			// Should use anyNodeEncoder, which will lookup the shape from context:
 			assert.deepEqual(buffer, [onlyTypeShape, new IdentifierToken("foo")]);
 		});
 
 		it("multi item", () => {
-			const cache = new EncoderCache(
+			const context = new EncoderContext(
 				() => onlyTypeShape,
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
 			);
-			const buffer = checkFieldEncode(anyFieldEncoder, cache, [
+			const buffer = checkFieldEncode(anyFieldEncoder, context, [
 				{ type: brand("foo") },
 				{ type: brand("bar") },
 			]);
-			// Should use nestedArray, which will lookup the shape from cache:
+			// Should use nestedArray, which will lookup the shape from context:
 			assert.deepEqual(buffer, [
-				cache.nestedArray(anyNodeEncoder),
+				context.nestedArrayEncoder(anyNodeEncoder),
 				[onlyTypeShape, new IdentifierToken("foo"), onlyTypeShape, new IdentifierToken("bar")],
 			]);
 		});
