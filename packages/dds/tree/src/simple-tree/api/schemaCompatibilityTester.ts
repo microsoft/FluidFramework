@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { TreeStoredSchema } from "../../core/index.js";
 import {
+	allowsRepoSuperset,
 	defaultSchemaPolicy,
 	FieldKinds,
 	isNeverTree,
@@ -20,6 +21,7 @@ import {
 	PosetComparisonResult,
 	type FieldDiscrepancy,
 } from "../discrepancies.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "./configuration.js";
 import { isObjectNodeSchema } from "../node-kinds/index.js";
 
@@ -187,15 +189,15 @@ export class SchemaCompatibilityTester {
 			}
 		}
 
-		// TODO: It is no longer guaranteed that the result of toStoredSchema (which removes any staged allowed types in its conversion)
-		// is a superset of the stored schema, which may have upgraded staged allowed types from another client.
-		// if (canUpgrade) {
-		// 	// This includes staged allowed types in the conversion before their upgrade to ensure compatibility.
-		// 	assert(
-		// 		allowsRepoSuperset(policy, stored, toStoredSchema(this.viewSchema.root)),
-		// 		0xbf2 /* View schema must be a superset of the stored schema to allow upgrade */,
-		// 	);
-		// }
+		// If "canUpgrade" is true, then an upgrade, if done it would set the stored schema to `toStoredSchema(this.viewSchema.root)`.
+		// For that to be valid, that operation must not decrease the set of documents which are allowed by the stored schema:
+		// If it did, then the upgrade could cause the document to become out of schema, and thus invalid/corrupted.
+		if (canUpgrade) {
+			assert(
+				allowsRepoSuperset(policy, stored, toStoredSchema(this.viewSchema.root)),
+				0xbf2 /* View schema must be a superset of the stored schema to allow upgrade */,
+			);
+		}
 
 		return {
 			canView,
