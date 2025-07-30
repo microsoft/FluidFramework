@@ -36,15 +36,6 @@ export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
 		return this.value.length === 0;
 	}
 
-	/**
-	 * The text to display.
-	 *
-	 * @remarks Must not contain newline characters.
-	 */
-	public get text(): string {
-		return this.value;
-	}
-
 	public constructor(text: string) {
 		super(text);
 

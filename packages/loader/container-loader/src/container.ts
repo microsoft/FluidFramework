@@ -26,7 +26,6 @@ import type {
 	IFluidCodeDetails,
 	IFluidCodeDetailsComparer,
 	IFluidModuleWithDetails,
-	IGetPendingLocalStateProps,
 	IProvideFluidCodeDetailsComparer,
 	IProvideRuntimeFactory,
 	IRuntime,
@@ -246,6 +245,16 @@ export interface IContainerCreateProps {
 	 * protocol implementation for handling the quorum and/or the audience.
 	 */
 	readonly protocolHandlerBuilder?: ProtocolHandlerBuilder;
+
+	/**
+	 * Optional property for specifying a timeout for retry connection loop.
+	 *
+	 * If provided, container will use this value as the maximum time to wait
+	 * for a successful connection before giving up throwing the most recent error.
+	 *
+	 * If not provided, default behavior will be to retry until non-retryable error occurs.
+	 */
+	readonly retryConnectionTimeoutMs?: number;
 }
 
 /**
@@ -608,6 +617,7 @@ export class Container
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
+	private readonly _retryConnectionTimeoutMs: number | undefined;
 
 	private lastVisible: number | undefined;
 	private readonly visibilityEventHandler: (() => void) | undefined;
@@ -790,12 +800,14 @@ export class Container
 			scope,
 			subLogger,
 			protocolHandlerBuilder,
+			retryConnectionTimeoutMs,
 		} = createProps;
 
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
+		this._retryConnectionTimeoutMs = retryConnectionTimeoutMs;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -1178,30 +1190,12 @@ export class Container
 		}
 	}
 
-	public async closeAndGetPendingLocalState(
-		stopBlobAttachingSignal?: AbortSignal,
-	): Promise<string> {
-		// runtime matches pending ops to successful ones by clientId and client seq num, so we need to close the
-		// container at the same time we get pending state, otherwise this container could reconnect and resubmit with
-		// a new clientId and a future container using stale pending state without the new clientId would resubmit them
-		const pendingState = await this.getPendingLocalStateCore({
-			notifyImminentClosure: true,
-			stopBlobAttachingSignal,
-		});
-		this.close();
-		return pendingState;
-	}
-
 	/**
 	 * Serialize current container state required to rehydrate to the same position without dataloss.
 	 * Note: The container must already be attached. For detached containers use {@link serialize}
 	 * @returns stringified {@link IPendingContainerState} for the container
 	 */
 	public async getPendingLocalState(): Promise<string> {
-		return this.getPendingLocalStateCore({ notifyImminentClosure: false });
-	}
-
-	private async getPendingLocalStateCore(props: IGetPendingLocalStateProps): Promise<string> {
 		if (this.closed || this._disposed) {
 			throw new UsageError(
 				"Pending state cannot be retried if the container is closed or disposed",
@@ -1216,7 +1210,6 @@ export class Container
 			0x0d2 /* "resolved url should be valid Fluid url" */,
 		);
 		const pendingState = await this.serializedStateManager.getPendingLocalState(
-			props,
 			this.clientId,
 			this.runtime,
 			this.resolvedUrl,
@@ -1231,7 +1224,7 @@ export class Container
 	/**
 	 * Serialize current container state required to rehydrate to the same position without dataloss.
 	 * Note: The container must be detached and not closed. For attached containers use
-	 * {@link getPendingLocalState} or {@link closeAndGetPendingLocalState}
+	 * {@link getPendingLocalState}
 	 * @returns stringified {@link IPendingDetachedContainerState} for the container
 	 */
 	public serialize(): string {
@@ -2061,6 +2054,7 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
+					this._retryConnectionTimeoutMs,
 				),
 		);
 
@@ -2572,10 +2566,4 @@ export interface IContainerExperimental extends IContainer {
 	 * @returns serialized blob that can be passed to Loader.resolve()
 	 */
 	getPendingLocalState?(): Promise<string>;
-
-	/**
-	 * Closes the container and returns serialized local state intended to be
-	 * given to a newly loaded container.
-	 */
-	closeAndGetPendingLocalState?(stopBlobAttachingSignal?: AbortSignal): Promise<string>;
 }

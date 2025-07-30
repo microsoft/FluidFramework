@@ -24,8 +24,8 @@ describe("SharedArray fuzz", () => {
 			numOpsBeforeAttach: 5,
 			rehydrateDisabled: true,
 		},
+		rollbackProbability: 0,
 		defaultTestCount: 50,
 		saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
-		skip: [6, 10, 17, 31, 40],
 	});
 });

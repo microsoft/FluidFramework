@@ -123,28 +123,6 @@ export interface SchemaPolicy {
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
-
-	/**
-	 * This is not used for anything. New content that is inserted into the tree will always be validated against the stored schema except during initialization.
-	 * @remarks
-	 * TODO: AB#43546: This is not information used to interpret the stored schema: this configuration should be moved elsewhere.
-	 * TODO: Evaluate if this should be removed or renamed.
-	 */
-	readonly validateSchema: boolean;
-
-	/**
-	 * Whether to allow a document to be opened when a particular stored schema (identified by `identifier`)
-	 * contains optional fields that are not known to the view schema.
-	 *
-	 * @privateRemarks
-	 * Plumbing this in via `SchemaPolicy` avoids needing to walk the view schema representation repeatedly in places
-	 * that need it (schema validation, view vs stored compatibility checks).
-	 *
-	 * TODO: AB#43546
-	 * This is not information used to interpret the stored schema: it is instead about view schema, and how compatible they are with a stored schema.
-	 * SchemaCompatibilityTester should be updated to not store this table in here, and then this field should be removed.
-	 */
-	allowUnknownOptionalFields(identifier: TreeNodeSchemaIdentifier): boolean;
 }
 
 /**

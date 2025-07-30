@@ -99,6 +99,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     rollback?(): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
     // (undocumented)
+    runWithManualFlush(act: () => void | Promise<void>): Promise<void>;
+    // (undocumented)
     submit(messageContent: any, localOpMetadata?: unknown): number;
 }
 
@@ -363,7 +365,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     setChannelDirty(address: string): void;
     // (undocumented)
-    storage: IDocumentStorageService;
+    storage: IRuntimeStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)

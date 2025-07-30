@@ -43,14 +43,11 @@ import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
+	jsonableTreeFromFieldCursor,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 
-import {
-	assertChunkCursorEquals,
-	jsonableTreesFromFieldCursor,
-	numberSequenceField,
-} from "./fieldCursorTestUtilities.js";
+import { assertChunkCursorEquals, numberSequenceField } from "./fieldCursorTestUtilities.js";
 import { polygonTree, testData } from "./uniformChunkTestData.js";
 import {
 	nullSchema,
@@ -179,7 +176,7 @@ describe("chunkTree", () => {
 			assert.equal(chunks[0].topLevelLength, 1);
 			assert.equal(cursor.fieldIndex, 0);
 			assert(chunks[0] instanceof BasicChunk);
-			assert.deepEqual(jsonableTreesFromFieldCursor(chunks[0].cursor()), [
+			assert.deepEqual(jsonableTreeFromFieldCursor(chunks[0].cursor()), [
 				{
 					type: nullSchema.identifier,
 				},
@@ -216,7 +213,7 @@ describe("chunkTree", () => {
 			);
 			assert.equal(chunks.length, 2);
 			assert.equal(cursor.fieldIndex, 2);
-			assert.deepEqual(jsonableTreesFromFieldCursor(new SequenceChunk(chunks).cursor()), [
+			assert.deepEqual(jsonableTreeFromFieldCursor(new SequenceChunk(chunks).cursor()), [
 				{ type: nullSchema.identifier },
 				{ type: nullSchema.identifier },
 			]);
@@ -307,7 +304,7 @@ describe("chunkTree", () => {
 
 					checkChunks(chunks, expectedDepth);
 					assert.deepEqual(
-						jsonableTreesFromFieldCursor(new SequenceChunk(chunks).cursor()),
+						jsonableTreeFromFieldCursor(new SequenceChunk(chunks).cursor()),
 						field,
 					);
 				});

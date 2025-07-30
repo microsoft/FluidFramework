@@ -55,8 +55,8 @@ import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
-	inSchemaOrThrow,
 	isFieldInSchema,
+	throwOutOfSchema,
 } from "../default-schema/index.js";
 
 /** A `MapTree` with mutable fields */
@@ -158,11 +158,15 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 								// Metadata is not used for schema checks
 								persistedMetadata: undefined,
 							};
-				const maybeError = isFieldInSchema(documentRoot, fieldSchema, {
-					schema,
-					policy: defaultSchemaPolicy,
-				});
-				inSchemaOrThrow(maybeError);
+				isFieldInSchema(
+					documentRoot,
+					fieldSchema,
+					{
+						schema,
+						policy: defaultSchemaPolicy,
+					},
+					throwOutOfSchema,
+				);
 			}
 		}
 	}

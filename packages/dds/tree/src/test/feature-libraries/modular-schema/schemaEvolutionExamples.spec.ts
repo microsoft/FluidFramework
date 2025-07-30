@@ -12,6 +12,7 @@ import {
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
 	getAllowedContentDiscrepancies,
+	TreeViewConfigurationAlpha,
 	schemaStatics,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
@@ -52,7 +53,9 @@ describe("Schema Evolution Examples", () => {
 	 */
 	it("basic usage", () => {
 		// Compose all the view information together.
-		const view = new SchemaCompatibilityTester(defaultSchemaPolicy, root);
+		const view = new SchemaCompatibilityTester(
+			new TreeViewConfigurationAlpha({ schema: root }),
+		);
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -84,7 +87,9 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const view2 = new SchemaCompatibilityTester(defaultSchemaPolicy, tolerantRoot);
+			const view2 = new SchemaCompatibilityTester(
+				new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
+			);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
 
@@ -141,8 +146,7 @@ describe("Schema Evolution Examples", () => {
 			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const view3 = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				builder.optional(canvas2),
+				new TreeViewConfigurationAlpha({ schema: builder.optional(canvas2) }),
 			);
 
 			// With this new schema, we can load the document just like before:

@@ -4,13 +4,13 @@
  */
 
 import { validateMessages } from "@fluidframework/driver-base/internal";
-import {
+import type {
 	IDocumentDeltaStorageService,
 	IStream,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { Queue, emptyMessageStream } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Implementation of IDocumentDeltaStorageService that will return snapshot ops when fetching messages

@@ -4,7 +4,10 @@
  */
 
 import type { AttachState } from "@fluidframework/container-definitions";
-import type { IDeltaManager } from "@fluidframework/container-definitions/internal";
+import type {
+	IContainerStorageService,
+	IDeltaManager,
+} from "@fluidframework/container-definitions/internal";
 import type {
 	FluidObject,
 	IEvent,
@@ -15,7 +18,6 @@ import type {
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -179,7 +181,7 @@ export interface IContainerRuntime
 	readonly clientDetails: IClientDetails;
 	readonly connected: boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IContainerStorageService;
 	readonly flushMode: FlushMode;
 	readonly scope: FluidObject;
 	/**

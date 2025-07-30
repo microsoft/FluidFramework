@@ -11,6 +11,7 @@ import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSch
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `schema`, applying the visitor pattern.
+ * @internal
  */
 export function walkNodeSchema(
 	schema: TreeNodeSchema,
@@ -42,6 +43,7 @@ export function walkNodeSchema(
 
 /**
  * Traverses all {@link TreeNodeSchema} schema reachable from `allowedTypes`, applying the visitor pattern.
+ * @internal
  */
 export function walkAllowedTypes(
 	annotatedAllowedTypes: NormalizedAnnotatedAllowedTypes,
@@ -58,6 +60,7 @@ export function walkAllowedTypes(
 
 /**
  * Callbacks and options for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
+ * @internal
  */
 export interface SchemaVisitor {
 	/**

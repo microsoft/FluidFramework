@@ -11,20 +11,20 @@ import {
 	ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	ICacheEntry,
-	IEntry,
-	IFileEntry,
-	IOdspError,
-	IOdspErrorAugmentations,
-	IOdspResolvedUrl,
-	IPersistedCache,
+	type ICacheEntry,
+	type IEntry,
+	type IFileEntry,
+	type IOdspError,
+	type IOdspErrorAugmentations,
+	type IOdspResolvedUrl,
+	type IPersistedCache,
 	OdspErrorTypes,
 	maximumCacheDurationMs,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	loggerToMonitoringContext,
@@ -33,12 +33,12 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
+import { type IVersionedValueWithEpoch, persistedCacheValueVersion } from "./contracts.js";
 import { ClpCompliantAppHeader } from "./contractsPublic.js";
-import { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
+import type { INonPersistentCache, IOdspCache, IPersistedFileCache } from "./odspCache.js";
 import { patchOdspResolvedUrl } from "./odspLocationRedirection.js";
 import {
-	IOdspResponse,
+	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchArray,
 	fetchHelper,

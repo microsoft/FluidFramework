@@ -7,26 +7,26 @@ import { performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
-	ISnapshot,
-	ISnapshotFetchOptions,
-	ISummaryContext,
-	ICreateBlobResponse,
-	IVersion,
-	ISnapshotTree,
+	type ISnapshot,
+	type ISnapshotFetchOptions,
+	type ISummaryContext,
+	type ICreateBlobResponse,
+	type IVersion,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
 import {
-	IOdspResolvedUrl,
-	ISnapshotOptions,
-	InstrumentedStorageTokenFetcher,
+	type IOdspResolvedUrl,
+	type ISnapshotOptions,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	generateStack,
 	loggerToMonitoringContext,
@@ -35,7 +35,7 @@ import {
 	type IConfigProvider,
 } from "@fluidframework/telemetry-utils/internal";
 
-import {
+import type {
 	HostStoragePolicyInternal,
 	IDocumentStorageGetVersionsResponse,
 	// eslint-disable-next-line import/no-deprecated
@@ -44,22 +44,22 @@ import {
 	IVersionedValueWithEpoch,
 } from "./contracts.js";
 import { useCreateNewModule } from "./createFile/index.js";
-import { EpochTracker } from "./epochTracker.js";
+import type { EpochTracker } from "./epochTracker.js";
 import {
-	ISnapshotRequestAndResponseOptions,
-	SnapshotFormatSupportType,
+	type ISnapshotRequestAndResponseOptions,
+	type SnapshotFormatSupportType,
 	downloadSnapshot,
 	getTreeStats,
 	fetchSnapshot,
 	fetchSnapshotWithRedeem,
 } from "./fetchSnapshot.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
-import { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
-import { FlushResult } from "./odspDocumentDeltaConnection.js";
+import type { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
+import type { FlushResult } from "./odspDocumentDeltaConnection.js";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
 import {
-	IOdspResponse,
+	type IOdspResponse,
 	createCacheSnapshotKey,
 	getWithRetryForTokenRefresh,
 	isInstanceOfISnapshot,

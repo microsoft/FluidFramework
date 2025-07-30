@@ -4,12 +4,12 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import {
+import type {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IResolvedUrl,
 	ISnapshot,
 	IContainerPackageInfo,
@@ -28,17 +28,17 @@ import {
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	ICacheEntry,
-	IOdspResolvedUrl,
-	IOdspUrlParts,
-	ISharingLinkKind,
-	InstrumentedStorageTokenFetcher,
-	InstrumentedTokenFetcher,
+	type ICacheEntry,
+	type IOdspResolvedUrl,
+	type IOdspUrlParts,
+	type ISharingLinkKind,
+	type InstrumentedStorageTokenFetcher,
+	type InstrumentedTokenFetcher,
 	OdspErrorTypes,
 	authHeaderFromTokenResponse,
-	OdspResourceTokenFetchOptions,
-	TokenFetchOptions,
-	TokenFetcher,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetchOptions,
+	type TokenFetcher,
 	isTokenFromCache,
 	snapshotKey,
 	tokenFromResponse,
@@ -47,7 +47,7 @@ import {
 import {
 	type IConfigProvider,
 	type IFluidErrorBase,
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
 	createChildLogger,
@@ -56,7 +56,7 @@ import {
 
 import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
 // eslint-disable-next-line import/no-deprecated
-import { ISnapshotContents } from "./odspPublicUtils.js";
+import type { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const getWithRetryForTokenRefreshRepeat = "getWithRetryForTokenRefreshRepeat";

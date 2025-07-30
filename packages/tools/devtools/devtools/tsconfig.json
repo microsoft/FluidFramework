@@ -3,7 +3,7 @@
 	"compilerOptions": {
 		"rootDir": "src",
 		"outDir": "./lib",
-		"types": ["chai", "mocha"],
+		"types": ["mocha"],
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],

@@ -6,7 +6,7 @@
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 
 import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
-import {
+import type {
 	AsyncFluidObjectProvider,
 	AsyncOptionalFluidObjectProvider,
 	AsyncRequiredFluidObjectProvider,

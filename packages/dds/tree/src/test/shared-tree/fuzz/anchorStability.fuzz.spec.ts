@@ -203,6 +203,7 @@ describe("Fuzz - anchor stability", () => {
 			defaultTestCount: runsPerBatch,
 			detachedStartOptions: { numOpsBeforeAttach: 0 },
 			numberOfClients: 2,
+			rollbackProbability: 0,
 			emitter,
 			saveFailures: {
 				directory: failureDirectory,

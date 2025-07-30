@@ -168,7 +168,7 @@ function getStoredNodeSchemaType(nodeSchema: TreeNodeStoredSchema): SchemaFactor
 	if (nodeSchema instanceof LeafNodeStoredSchema) {
 		return LeafNodeStoredSchema;
 	}
-	fail("Invalid stored node schema type");
+	fail(0xbe8 /* Invalid stored node schema type */);
 }
 
 function doesNodeKindMatchStoredNodeKind(
@@ -307,7 +307,7 @@ function* getNodeDiscrepancies(
 		case NodeKind.Object: {
 			assert(
 				isObjectNodeSchema(view),
-				"schema with node kind of object must implement ObjectNodeSchema",
+				0xbe9 /* schema with node kind of object must implement ObjectNodeSchema */,
 			);
 			const fields: SimpleKeyMap | undefined = view.flexKeyMap;
 			const differences = Array.from(
@@ -326,7 +326,7 @@ function* getNodeDiscrepancies(
 		case NodeKind.Array: {
 			assert(
 				isArrayNodeSchema(view),
-				"schema with node kind of array must implement ArrayNodeSchema",
+				0xbea /* schema with node kind of array must implement ArrayNodeSchema */,
 			);
 			const fields: SimpleKeyMap = new Map([
 				[
@@ -359,7 +359,7 @@ function* getNodeDiscrepancies(
 		case NodeKind.Map: {
 			assert(
 				isMapNodeSchema(view),
-				"schema with node kind of map must implement MapNodeSchema",
+				0xbeb /* schema with node kind of map must implement MapNodeSchema */,
 			);
 
 			yield* getFieldDiscrepancies(
@@ -373,7 +373,7 @@ function* getNodeDiscrepancies(
 		case NodeKind.Record: {
 			assert(
 				isRecordNodeSchema(view),
-				"schema with node kind of record must implement RecordNodeSchema",
+				0xbec /* schema with node kind of record must implement RecordNodeSchema */,
 			);
 
 			yield* getFieldDiscrepancies(
@@ -387,7 +387,7 @@ function* getNodeDiscrepancies(
 		case NodeKind.Leaf: {
 			assert(
 				view instanceof LeafNodeSchema,
-				"schema with node kind of leaf must implement LeafNodeSchema",
+				0xbed /* schema with node kind of leaf must implement LeafNodeSchema */,
 			);
 			// TODO: leafKind seems like a bad name
 			const viewValue = view.leafKind;
@@ -452,7 +452,10 @@ function* getFieldDiscrepancies(
 	// TODO: This is a temporary workaround until the comparison logic is redesigned.
 	viewKindIsSequence = false,
 ): Iterable<FieldDiscrepancy> {
-	assert(view instanceof FieldSchemaAlpha, "all field schema should be FieldSchemaAlpha");
+	assert(
+		view instanceof FieldSchemaAlpha,
+		0xbee /* all field schema should be FieldSchemaAlpha */,
+	);
 	const [viewExtra, storedExtra] = findExtraAllowedTypes(
 		view.annotatedAllowedTypesNormalized.types,
 		stored.types,
@@ -469,7 +472,7 @@ function* getFieldDiscrepancies(
 
 	const viewKind =
 		convertFieldKind.get(view.kind) ??
-		fail("A conversion from a FieldKind to a FlexFieldKind should exist");
+		fail(0xbef /* A conversion from a FieldKind to a FlexFieldKind should exist */);
 
 	// This checks if the field kind in the view schema is not compatible with the stored schema.
 	// We cannot detect if the view schema is a sequence using the kind property so it is passed in separately.
@@ -526,7 +529,7 @@ function* computeObjectNodeDiscrepancies(
 		if (storedSchema === undefined) {
 			const viewKind =
 				convertFieldKind.get(fieldSchema.kind) ??
-				fail("A conversion from a FieldKind to a FlexFieldKind should exist");
+				fail(0xbf0 /* A conversion from a FieldKind to a FlexFieldKind should exist */);
 			yield {
 				identifier,
 				fieldKey,
@@ -650,7 +653,7 @@ export function comparePosetElements<T>(
 	for (const extension of realizer) {
 		const aIndex = extension.get(a);
 		const bIndex = extension.get(b);
-		assert(aIndex !== undefined && bIndex !== undefined, "Invalid realizer");
+		assert(aIndex !== undefined && bIndex !== undefined, 0xbf1 /* Invalid realizer */);
 		if (aIndex < bIndex) {
 			hasLessThanResult = true;
 		} else if (aIndex > bIndex) {

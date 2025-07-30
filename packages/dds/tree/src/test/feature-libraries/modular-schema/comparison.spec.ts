@@ -54,25 +54,31 @@ describe("Schema Comparison", () => {
 		schema: new ObjectNodeStoredSchema(new Map()),
 	};
 
-	const emptyLocalFieldTree = {
-		name: brand<TreeNodeSchemaIdentifier>("emptyLocalFieldTree"),
-		schema: new ObjectNodeStoredSchema(new Map([[brand("x"), storedEmptyFieldSchema]])),
-	};
+	const fieldOptionalEmptyTree = fieldSchema(FieldKinds.optional, [emptyTree.name]);
+	const fieldRequiredEmptyTree = fieldSchema(FieldKinds.required, [emptyTree.name]);
 
-	const optionalLocalFieldTree = {
-		name: brand<TreeNodeSchemaIdentifier>("optionalLocalFieldTree"),
-		schema: new ObjectNodeStoredSchema(
-			new Map([[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])]]),
-		),
-	};
-	const valueLocalFieldTree = {
-		name: brand<TreeNodeSchemaIdentifier>("valueLocalFieldTree"),
-		schema: new ObjectNodeStoredSchema(
-			new Map([[brand("x"), fieldSchema(FieldKinds.required, [emptyTree.name])]]),
-		),
-	};
-	const valueEmptyTreeField = fieldSchema(FieldKinds.required, [emptyTree.name]);
-	const optionalEmptyTreeField = fieldSchema(FieldKinds.optional, [emptyTree.name]);
+	// With x field that is storedEmptyFieldSchema
+	const nodeWithEmptyXField = new ObjectNodeStoredSchema(
+		new Map([[brand("x"), storedEmptyFieldSchema]]),
+	);
+
+	// With x field that optionally contains emptyTree
+	const nodeWithOptionalXField = new ObjectNodeStoredSchema(
+		new Map([[brand("x"), fieldOptionalEmptyTree]]),
+	);
+
+	// With x field that contains emptyTree
+	const nodeWithRequiredXField = new ObjectNodeStoredSchema(
+		new Map([[brand("x"), fieldRequiredEmptyTree]]),
+	);
+
+	// With x and y fields which optionally contain emptyTree
+	const nodeWithOptionalXAndYFields = new ObjectNodeStoredSchema(
+		new Map([
+			[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])],
+			[brand("y"), fieldSchema(FieldKinds.optional, [emptyTree.name])],
+		]),
+	);
 
 	function updateTreeSchema(
 		repo: MutableTreeStoredSchema,
@@ -145,10 +151,10 @@ describe("Schema Comparison", () => {
 		]);
 		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
-		testOrder(compare, [neverField, storedEmptyFieldSchema, optionalEmptyTreeField]);
-		testOrder(compare, [neverField, valueEmptyTreeField]);
+		testOrder(compare, [neverField, storedEmptyFieldSchema, fieldOptionalEmptyTree]);
+		testOrder(compare, [neverField, fieldRequiredEmptyTree]);
 		assert.equal(
-			getOrdering(valueEmptyTreeField, storedEmptyFieldSchema, compare),
+			getOrdering(fieldRequiredEmptyTree, storedEmptyFieldSchema, compare),
 			Ordering.Incomparable,
 		);
 		testPartialOrder(
@@ -157,8 +163,8 @@ describe("Schema Comparison", () => {
 				neverField,
 				neverField2,
 				storedEmptyFieldSchema,
-				valueEmptyTreeField,
-				valueEmptyTreeField,
+				fieldRequiredEmptyTree,
+				fieldRequiredEmptyTree,
 			],
 			[[neverField, neverField2]],
 		);
@@ -172,123 +178,90 @@ describe("Schema Comparison", () => {
 		};
 
 		it("Same rootFieldSchema with different TreeNodeStoredSchemas", () => {
+			// Test a bunch of different TreeStoredSchema which are all the same,
+			// except one node schema (identified by `schemaName` in them has changed.
+
 			const schemaName = brand<TreeNodeSchemaIdentifier>("testTree");
-			const rootFieldSchema = fieldSchema(FieldKinds.optional, [schemaName, emptyTree.name]);
 
-			const emptyTreeRepo = new TreeStoredSchemaRepository({
-				rootFieldSchema,
-				nodeSchema: new Map([[schemaName, emptyTree.schema]]),
+			function createTestCase(
+				nodeSchema: TreeNodeStoredSchema,
+				...extra: { name: TreeNodeSchemaIdentifier; schema: TreeNodeStoredSchema }[]
+			): TreeStoredSchema {
+				return new TreeStoredSchemaRepository({
+					rootFieldSchema: fieldSchema(FieldKinds.optional, [schemaName, emptyTree.name]),
+					nodeSchema: new Map([
+						[schemaName, nodeSchema],
+						[emptyTree.name, emptyTree.schema],
+						...extra.map(({ name, schema }) => [name, schema] as const),
+					]),
+				});
+			}
+
+			const emptyNode = createTestCase(emptyTree.schema);
+			const withEmptyXField = createTestCase(nodeWithEmptyXField);
+			const withOptionalXField = createTestCase(nodeWithOptionalXField);
+			const withRequiredXField = createTestCase(nodeWithRequiredXField);
+			const withOptionalXAndYFields = createTestCase(nodeWithOptionalXAndYFields);
+			const withRequiredXAndOptionalYFields = createTestCase(
+				new ObjectNodeStoredSchema(
+					new Map([
+						[brand("x"), fieldSchema(FieldKinds.required, [emptyTree.name])],
+						[brand("y"), fieldSchema(FieldKinds.optional, [emptyTree.name])],
+					]),
+				),
+			);
+
+			const emptyRepo = new TreeStoredSchemaRepository({
+				rootFieldSchema: storedEmptyFieldSchema,
+				nodeSchema: new Map(),
 			});
 
-			const emptyLocalFieldTreeRepo = new TreeStoredSchemaRepository({
-				rootFieldSchema,
-				nodeSchema: new Map([[schemaName, emptyLocalFieldTree.schema]]),
-			});
+			// Initializing
+			testOrder(compareTwoRepo, [emptyRepo, emptyNode]);
 
-			const valueLocalFieldTreeRepo = new TreeStoredSchemaRepository({
-				rootFieldSchema,
-				nodeSchema: new Map([
-					[schemaName, valueLocalFieldTree.schema],
-					[emptyTree.name, emptyTree.schema],
-				]),
-			});
+			// Making a field optional
+			testOrder(compareTwoRepo, [withRequiredXField, withOptionalXField]);
 
-			const optionalLocalFieldTreeRepo = new TreeStoredSchemaRepository({
-				rootFieldSchema,
-				nodeSchema: new Map([
-					[schemaName, optionalLocalFieldTree.schema],
-					[emptyTree.name, emptyTree.schema],
-				]),
-			});
+			// Adding optional fields
+			testOrder(compareTwoRepo, [
+				withEmptyXField,
+				withOptionalXField,
+				withOptionalXAndYFields,
+			]);
 
-			const optionalTreeRepoWithoutValue = new TreeStoredSchemaRepository({
-				rootFieldSchema,
-				nodeSchema: new Map([
-					[
-						schemaName,
-						new ObjectNodeStoredSchema(
-							new Map([[brand("x"), fieldSchema(FieldKinds.optional, [])]]),
-						),
-					],
-				]),
-			});
+			// Required fields can not be added or removed
+			assert.equal(
+				getOrdering(withRequiredXField, emptyNode, compareTwoRepo),
+				Ordering.Incomparable,
+			);
 
-			const optionalTreeRepoWithMultipleValues = new TreeStoredSchemaRepository({
-				rootFieldSchema,
-				nodeSchema: new Map([
-					[
-						brand<TreeNodeSchemaIdentifier>("testTree"),
-						new ObjectNodeStoredSchema(
-							new Map([
-								[brand("x"), fieldSchema(FieldKinds.optional, [])],
-								[brand("y"), fieldSchema(FieldKinds.optional, [])],
-							]),
-						),
-					],
-				]),
-			});
+			// Two changes with same compatibility directions compose (X: required -> optional, Y: empty -> optional).
+			assert.equal(
+				getOrdering(withRequiredXField, withOptionalXAndYFields, compareTwoRepo),
+				Ordering.Superset,
+			);
+
+			// Two changes with opposite compatibility directions results in incompatibility (X: required -> optional, Y: optional -> empty).
+			assert.equal(
+				getOrdering(withRequiredXAndOptionalYFields, withOptionalXField, compareTwoRepo),
+				Ordering.Incomparable,
+			);
 
 			testPartialOrder(
 				compareTwoRepo,
 				[
-					valueLocalFieldTreeRepo,
-					emptyLocalFieldTreeRepo,
-					emptyTreeRepo,
-					optionalLocalFieldTreeRepo,
-					optionalTreeRepoWithoutValue,
-					optionalTreeRepoWithMultipleValues,
+					emptyRepo,
+					emptyNode,
+					withEmptyXField,
+					withOptionalXField,
+					withOptionalXAndYFields,
+					withRequiredXField,
 				],
-				[[emptyLocalFieldTreeRepo, emptyTreeRepo]],
-			);
-
-			assert.equal(
-				allowsRepoSuperset(defaultSchemaPolicy, valueLocalFieldTreeRepo, emptyTreeRepo),
-				false,
-			);
-			assert.equal(
-				allowsRepoSuperset(
-					defaultSchemaPolicy,
-					valueLocalFieldTreeRepo,
-					optionalTreeRepoWithoutValue,
-				),
-				false,
-			);
-			assert.equal(
-				allowsRepoSuperset(
-					defaultSchemaPolicy,
-					optionalLocalFieldTreeRepo,
-					optionalTreeRepoWithMultipleValues,
-				),
-				false,
-			);
-
-			assert.equal(
-				allowsRepoSuperset(
-					defaultSchemaPolicy,
-					valueLocalFieldTreeRepo,
-					optionalLocalFieldTreeRepo,
-				),
-				true,
-			);
-			assert.equal(
-				allowsRepoSuperset(
-					defaultSchemaPolicy,
-					emptyTreeRepo,
-					optionalTreeRepoWithMultipleValues,
-				),
-				true,
-			);
-			assert.equal(
-				allowsRepoSuperset(
-					defaultSchemaPolicy,
-					optionalTreeRepoWithoutValue,
-					optionalTreeRepoWithMultipleValues,
-				),
-				true,
+				[[emptyNode, withEmptyXField]],
 			);
 		});
 
-		it("Same TreeNodeStoredSchema with different rootFieldSchemas", () => {
+		it("Differing root kinds", () => {
 			const rootFieldSchemas = [
 				fieldSchema(FieldKinds.required, [emptyTree.name]),
 				fieldSchema(FieldKinds.optional, [emptyTree.name]),
@@ -303,7 +276,7 @@ describe("Schema Comparison", () => {
 			});
 
 			testOrder(compareTwoRepo, repos);
-			assert.equal(allowsRepoSuperset(defaultSchemaPolicy, repos[0], repos[1]), true);
+			testPartialOrder(compareTwoRepo, repos);
 		});
 
 		it("Validate the ordering when the identifiers are different", () => {
@@ -345,22 +318,23 @@ describe("Schema Comparison", () => {
 			const name = brand<TreeNodeSchemaIdentifier>("testTree");
 			const root = fieldSchema(FieldKinds.optional, [name]);
 
-			const testTree1 = new ObjectNodeStoredSchema(
-				new Map([
-					[brand("x"), fieldSchema(FieldKinds.optional, [emptyTree.name])],
-					[brand("y"), fieldSchema(FieldKinds.optional, [emptyTree.name])],
-				]),
-			);
+			const testTree1 = nodeWithOptionalXAndYFields;
 			const testTree2 = new ObjectNodeStoredSchema(
 				new Map([[brand("x"), fieldSchema(FieldKinds.sequence, [emptyTree.name])]]),
 			);
 			const repo1 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root,
-				nodeSchema: new Map([[name, testTree1]]),
+				nodeSchema: new Map([
+					[name, testTree1],
+					[emptyTree.name, emptyTree.schema],
+				]),
 			});
 			const repo2 = new TreeStoredSchemaRepository({
 				rootFieldSchema: root,
-				nodeSchema: new Map([[name, testTree2]]),
+				nodeSchema: new Map([
+					[name, testTree2],
+					[emptyTree.name, emptyTree.schema],
+				]),
 			});
 			assert.equal(getOrdering(repo1, repo2, compareTwoRepo), Ordering.Incomparable);
 		});
@@ -373,7 +347,7 @@ describe("Schema Comparison", () => {
 			a: TreeNodeStoredSchema | undefined,
 			b: TreeNodeStoredSchema | undefined,
 		): boolean => allowsTreeSuperset(defaultSchemaPolicy, repo, a, b);
-		testOrder(compare, [neverTree, emptyTree.schema, optionalLocalFieldTree.schema]);
+		testOrder(compare, [neverTree, emptyTree.schema, nodeWithOptionalXField]);
 		testPartialOrder(
 			compare,
 			[
@@ -381,13 +355,13 @@ describe("Schema Comparison", () => {
 				neverTree2,
 				undefined,
 				emptyTree.schema,
-				emptyLocalFieldTree.schema,
-				optionalLocalFieldTree.schema,
-				valueLocalFieldTree.schema,
+				nodeWithEmptyXField,
+				nodeWithOptionalXField,
+				nodeWithRequiredXField,
 			],
 			[
 				[neverTree, neverTree2, undefined],
-				[emptyTree.schema, emptyLocalFieldTree.schema],
+				[emptyTree.schema, nodeWithEmptyXField],
 			],
 		);
 	});
@@ -406,13 +380,18 @@ describe("Schema Comparison", () => {
 			[[neverTree, neverTree2, undefined]],
 		);
 	});
+
+	it("testOrder", () => {
+		testOrder((a, b) => a <= b, [0, 1, 2]);
+		assert.throws(() => testOrder((a, b) => a <= b, [0, 1, 1]));
+	});
 });
 
 enum Ordering {
-	Subset,
-	Equal,
-	Incomparable,
-	Superset,
+	Subset = "Subset",
+	Equal = "Equal",
+	Incomparable = "Incomparable",
+	Superset = "Superset",
 }
 
 function getOrdering<T>(
@@ -436,6 +415,13 @@ function getOrdering<T>(
 	return Ordering.Incomparable;
 }
 
+/**
+ * Tests that `inOrder` is in order according to `compare`.
+ * @remarks
+ * Compare must return true when given equal values, or a greater b value.
+ *
+ * Assuming compare has the semantics  `b` is a superset of `a`, `inOrder` is checked to be in ascending order or size/containment.
+ */
 function testOrder<T>(compare: (a: T, b: T) => boolean, inOrder: T[]): void {
 	for (let index = 0; index < inOrder.length - 1; index++) {
 		const order = getOrdering(inOrder[index], inOrder[index + 1], compare);
