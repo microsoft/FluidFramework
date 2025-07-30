@@ -19,6 +19,7 @@ import {
 	FieldKinds,
 	type FlexibleFieldContent,
 	type FlexibleNodeContent,
+	throwOutOfSchema,
 } from "../feature-libraries/index.js";
 import { normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
 import {
@@ -34,7 +35,7 @@ import {
 	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { debugAssert, oob } from "@fluidframework/core-utils/internal";
-import { inSchemaOrThrow, isFieldInSchema } from "../feature-libraries/index.js";
+import { isFieldInSchema } from "../feature-libraries/index.js";
 import { convertField } from "./toStoredSchema.js";
 
 /**
@@ -146,8 +147,7 @@ function validateAndPrepare(
 		// they were already creating used the more specific context we have access to from `hydratedData`.
 		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
 		if (validateSchema === true) {
-			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
-			inSchemaOrThrow(maybeError);
+			isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy, throwOutOfSchema);
 		}
 	}
 }
