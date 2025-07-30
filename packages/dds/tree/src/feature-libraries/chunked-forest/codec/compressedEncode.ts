@@ -448,7 +448,7 @@ export function encodeValue(
 /**
  * Provides common contextual information during encoding, like schema and policy settings.
  * Also, provides a cache to avoid duplicating equivalent shapes during a batch of encode operations.
- * To avoid Shape duplication, any Shapes used in the encoding which cache is used with should either be:
+ * To avoid Shape duplication, any Shapes used in the encoding should either be:
  * - Singletons defined in a static scope.
  * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
  */
