@@ -219,6 +219,9 @@ function transformTsdocParagraph(
 	return parseContentAsBlock(transformedChildren);
 }
 
+/**
+ * Line break singleton
+ */
 const lineBreak: Break = {
 	type: "break",
 };
@@ -451,6 +454,9 @@ function transformTsdocInlineTag(node: DocInlineTag): PhrasingContent | undefine
 	};
 }
 
+/**
+ * Single space text singleton.
+ */
 const space: Text = {
 	type: "text",
 	value: " ",
