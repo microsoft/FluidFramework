@@ -3,14 +3,15 @@
 	"compilerOptions": {
 		"rootDir": "./",
 		"outDir": "../../lib/test",
-		"types": ["mocha", "node"],
-		// TODO: make this build without this setting
+		"types": ["node", "mocha"],
 		"exactOptionalPropertyTypes": false,
+		"declaration": true,
+		"declarationMap": true,
 	},
 	"include": ["./**/*"],
 	"references": [
 		{
-			"path": "../..",
+			"path": "../../tsconfig.json",
 		},
 	],
 }

@@ -6,7 +6,7 @@
 module.exports = {
 	extends: [require.resolve("@fluidframework/eslint-config-fluid/strict"), "prettier"],
 	parserOptions: {
-		project: ["./tsconfig.json", "./src/test/tsconfig.json"],
+		project: ["./tsconfig.json"],
 	},
 	rules: {
 		// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
@@ -24,8 +24,10 @@ module.exports = {
 	},
 	overrides: [
 		{
-			// Rules only for test files
-			files: ["*.spec.ts", "src/test/**"],
+			files: ["src/test/**/*"],
+			parserOptions: {
+				project: ["./src/test/tsconfig.json"],
+			},
 			rules: {
 				// Test files can import from submodules for testing purposes
 				"import/no-internal-modules": [

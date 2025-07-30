@@ -3,6 +3,5 @@
 	"extends": "./tsconfig.json",
 	"compilerOptions": {
 		"outDir": "./dist",
-		"skipLibCheck": true,
 	},
 }
