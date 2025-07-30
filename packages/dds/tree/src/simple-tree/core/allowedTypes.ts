@@ -143,14 +143,17 @@ export interface AllowedTypeMetadata {
 }
 
 /**
- * Package internal construction API.
+ * Package internal {@link SchemaUpgrade} construction API.
  */
 export let createSchemaUpgrade: () => SchemaUpgrade;
 
 /**
  * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
- *
- * TODO:#38722 implement runtime schema upgrades until then, the class purely behaves as a placeholder and we disable no-extraneous-class
+ * @remarks
+ * Create using {@link SchemaFactoryAlpha.staged}.
+ * @privateRemarks
+ * TODO:#38722 implement runtime schema upgrades until then, the class purely behaves as a placeholder.
+ * TODO: Consider allowing users to store a name for the upgrade to use in error messages.
  * @sealed @alpha
  */
 export class SchemaUpgrade {
