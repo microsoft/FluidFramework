@@ -27,6 +27,8 @@ import {
 	LinkNode,
 	ListItemNode,
 	ListNode,
+	MarkdownBlockContentNode,
+	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	PlainTextNode,
 	SectionNode,
@@ -175,7 +177,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 			wrapInSection(
 				[
 					// Summary section
-					wrapInSection([ParagraphNode.createFromPlainText("Test function")]),
+					wrapInSection([
+						new MarkdownBlockContentNode({
+							type: "paragraph",
+							children: [{ type: "text", value: "Test function" }],
+						}),
+					]),
 
 					// Signature section
 					wrapInSection(
@@ -190,7 +197,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 										[
 											new TableBodyRowNode([
 												TableBodyCellNode.createFromPlainText("TTypeParameter"),
-												TableBodyCellNode.createFromPlainText("A test type parameter"),
+												new TableBodyCellNode([
+													new MarkdownPhrasingContentNode({
+														type: "text",
+														value: "A test type parameter",
+													}),
+												]),
 											]),
 										],
 										new TableHeaderRowNode([
@@ -217,13 +229,23 @@ describe("ApiItem to Documentation transformation tests", () => {
 										TableBodyCellNode.createFromPlainText("testParameter"),
 										TableBodyCellNode.Empty,
 										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
-										TableBodyCellNode.createFromPlainText("A test parameter"),
+										new TableBodyCellNode([
+											new MarkdownPhrasingContentNode({
+												type: "text",
+												value: "A test parameter",
+											}),
+										]),
 									]),
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testOptionalParameter"),
 										TableBodyCellNode.createFromPlainText("optional"),
 										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
-										TableBodyCellNode.createFromPlainText("An optional parameter"),
+										new TableBodyCellNode([
+											new MarkdownPhrasingContentNode({
+												type: "text",
+												value: "An optional parameter",
+											}),
+										]),
 									]),
 								],
 								new TableHeaderRowNode([
@@ -243,7 +265,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 					// Returns section
 					wrapInSection(
 						[
-							ParagraphNode.createFromPlainText("The provided parameter"),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [{ type: "text", value: "The provided parameter" }],
+							}),
 							new ParagraphNode([
 								SpanNode.createFromPlainText("Return type", { bold: true }),
 								new PlainTextNode(": "),
@@ -258,7 +283,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 					// Throws section
 					wrapInSection(
-						[ParagraphNode.createFromPlainText("An Error when something bad happens.")],
+						[
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [{ type: "text", value: "An Error when something bad happens." }],
+							}),
+						],
 						{
 							title: "Throws",
 							id: `testfunction-throws`,
