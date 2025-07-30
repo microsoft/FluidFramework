@@ -9,12 +9,9 @@ import type {
 } from "mdast";
 
 import type {
-	BlockContent,
 	MarkdownBlockContentNode,
 	MarkdownPhrasingContentNode,
-	PhrasingContent,
 } from "../../documentation-domain/index.js";
-import { blockContentToMarkdown, phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -27,7 +24,7 @@ export function markdownBlockContentNodeToMarkdown(
 	node: MarkdownBlockContentNode,
 	context: TransformationContext,
 ): MdastBlockContent[] {
-	return blockContentToMarkdown(node.value as BlockContent, context);
+	return [node.value];
 }
 
 /**
@@ -40,5 +37,5 @@ export function markdownPhrasingContentNodeToMarkdown(
 	node: MarkdownPhrasingContentNode,
 	context: TransformationContext,
 ): MdastPhrasingContent[] {
-	return phrasingContentToMarkdown(node.value as PhrasingContent, context);
+	return [node.value];
 }
