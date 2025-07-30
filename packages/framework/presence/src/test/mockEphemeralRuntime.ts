@@ -75,7 +75,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	private connectionState: ConnectionState = 0;
 
 	public readonly listeners: {
-		joined: ((clientId: ClientConnectionId, canWrite: boolean) => void)[];
+		joined: ((props: { clientId: ClientConnectionId; canWrite: boolean }) => void)[];
 		disconnected: (() => void)[];
 	} = {
 		joined: [],
@@ -158,7 +158,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 		this.clientId = clientId;
 		this.connectionState = 2 /* ConnectionState.Connected */;
 		for (const listener of this.listeners.joined) {
-			listener(clientId, false);
+			listener({ clientId, canWrite: false });
 		}
 	}
 

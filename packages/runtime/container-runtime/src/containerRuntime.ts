@@ -5084,10 +5084,10 @@ export class ContainerRuntime
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
 		this.on("connected", (clientId: string) =>
-			eventEmitter.emit("joined", clientId, true /* canWrite */),
+			eventEmitter.emit("joined", { clientId, canWrite: true }),
 		);
 		this.on("connectedToService", (clientId: string) => {
-			eventEmitter.emit("joined", clientId, false /* canWrite */);
+			eventEmitter.emit("joined", { clientId, canWrite: false });
 		});
 		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;

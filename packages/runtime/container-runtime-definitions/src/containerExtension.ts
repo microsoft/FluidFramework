@@ -215,7 +215,7 @@ export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriti
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
-	"joined": (clientId: ClientConnectionId, canWrite: boolean) => void;
+	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
 }
 
 /**

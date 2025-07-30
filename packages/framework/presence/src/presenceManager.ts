@@ -90,9 +90,12 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 		this.attendees = this.systemWorkspace;
 
-		runtime.events.on("joined", (joinedClientId: string, canWrite: boolean) => {
-			this.onConnect(joinedClientId);
-		});
+		runtime.events.on(
+			"joined",
+			({ clientId: joinedClientId, canWrite }: { clientId: string; canWrite: boolean }) => {
+				this.onConnect(joinedClientId);
+			},
+		);
 
 		runtime.events.on("disconnected", () => {
 			const currentClientId = runtime.getClientId();

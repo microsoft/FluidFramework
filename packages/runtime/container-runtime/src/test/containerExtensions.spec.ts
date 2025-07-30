@@ -268,14 +268,17 @@ describe("Container Extension", () => {
 				canWrite?: boolean;
 			}[] = [];
 
-			extension.events.on("joined", (clientId: string, canWrite: boolean) => {
-				events.push({ type: "joined", clientId, canWrite });
-				assert.strictEqual(
-					clientId,
-					"mockClientId",
-					"Extension should emit joined event with correct clientId",
-				);
-			});
+			extension.events.on(
+				"joined",
+				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
+					events.push({ type: "joined", clientId, canWrite });
+					assert.strictEqual(
+						clientId,
+						"mockClientId",
+						"Extension should emit joined event with correct clientId",
+					);
+				},
+			);
 
 			extension.events.on("disconnected", () => {
 				events.push({ type: "disconnected" });
@@ -355,19 +358,22 @@ describe("Container Extension", () => {
 				canWrite?: boolean;
 			}[] = [];
 
-			extension.events.on("joined", (clientId: string, canWrite: boolean) => {
-				events.push({ type: "joined", clientId, canWrite });
-				if (canWrite) {
-					assert.fail(
-						"Extension should not emit joined event with canWrite=true for read-only client",
+			extension.events.on(
+				"joined",
+				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
+					events.push({ type: "joined", clientId, canWrite });
+					if (canWrite) {
+						assert.fail(
+							"Extension should not emit joined event with canWrite=true for read-only client",
+						);
+					}
+					assert.strictEqual(
+						clientId,
+						"mockClientId",
+						"Extension should emit joined event with correct clientId",
 					);
-				}
-				assert.strictEqual(
-					clientId,
-					"mockClientId",
-					"Extension should emit joined event with correct clientId",
-				);
-			});
+				},
+			);
 
 			extension.events.on("disconnected", () => {
 				events.push({ type: "disconnected" });

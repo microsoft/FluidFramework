@@ -278,7 +278,7 @@ export interface IContainerContext {
 	 *
 	 * @remarks
 	 * This provides more detailed connection state information beyond the simple boolean `connected` property.
-	 * Available starting from version 2.52.0. For version compatibility, this may be undefined in older versions.
+	 * Available starting from version 2.52.0. Property is not present in older versions.
 	 */
 	readonly getConnectionState?: () => ConnectionState;
 	/**
