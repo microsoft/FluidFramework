@@ -133,32 +133,32 @@ export interface ISharedMatrix<T = any>
 	 * Inserts columns into the matrix.
 	 * @param colStart - Index of the first column to insert.
 	 * @param count - Number of columns to insert.
-	 * @remarks
-	 * Inserting 0 columns is a noop.
+	 * @remarks Inserting 0 columns is a noop.
+	 * @throws Throws an error if the start index is out of bounds.
 	 */
 	insertCols(colStart: number, count: number): void;
 	/**
 	 * Removes columns from the matrix.
 	 * @param colStart - Index of the first column to remove.
 	 * @param count - Number of columns to remove.
-	 * @remarks
-	 * Removing 0 columns is a noop.
+	 * @remarks Removing 0 columns is a noop.
+	 * @throws Throws an error if the range is out of bounds.
 	 */
 	removeCols(colStart: number, count: number): void;
 	/**
 	 * Inserts rows into the matrix.
 	 * @param rowStart - Index of the first row to insert.
 	 * @param count - Number of rows to insert.
-	 * @remarks
-	 * Inserting 0 rows is a noop.
+	 * @remarks Inserting 0 rows is a noop.
+	 * @throws Throws an error if the start index is out of bounds.
 	 */
 	insertRows(rowStart: number, count: number): void;
 	/**
 	 * Removes rows from the matrix.
 	 * @param rowStart - Index of the first row to remove.
 	 * @param count - Number of rows to remove.
-	 * @remarks
-	 * Removing 0 rows is a noop.
+	 * @remarks Removing 0 rows is a noop.
+	 * @throws Throws an error if the range is out of bounds.
 	 */
 	removeRows(rowStart: number, count: number): void;
 
@@ -584,7 +584,7 @@ export class SharedMatrix<T = any>
 		if (count === 0) {
 			return;
 		}
-		if (colStart > this.colCount) {
+		if (colStart < 0 || colStart > this.colCount) {
 			throw new UsageError("insertCols: out of bounds");
 		}
 		this.protectAgainstReentrancy(() => {
@@ -598,7 +598,7 @@ export class SharedMatrix<T = any>
 		if (count === 0) {
 			return;
 		}
-		if (colStart > this.colCount) {
+		if (colStart < 0 || colStart > this.colCount || colStart + count > this.colCount) {
 			throw new UsageError("removeCols: out of bounds");
 		}
 		this.protectAgainstReentrancy(() =>
@@ -614,7 +614,7 @@ export class SharedMatrix<T = any>
 		if (count === 0) {
 			return;
 		}
-		if (rowStart > this.rowCount) {
+		if (rowStart < 0 || rowStart > this.rowCount) {
 			throw new UsageError("insertRows: out of bounds");
 		}
 		this.protectAgainstReentrancy(() => {
@@ -628,7 +628,7 @@ export class SharedMatrix<T = any>
 		if (count === 0) {
 			return;
 		}
-		if (rowStart > this.rowCount) {
+		if (rowStart < 0 || rowStart > this.rowCount || rowStart + count > this.rowCount) {
 			throw new UsageError("removeRows: out of bounds");
 		}
 		this.protectAgainstReentrancy(() =>
