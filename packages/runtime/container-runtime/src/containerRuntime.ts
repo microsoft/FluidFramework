@@ -2778,17 +2778,6 @@ export class ContainerRuntime
 			0x978 /* this.clientId does not match Audience */,
 		);
 
-		// "connected" is only emitted when canSendOps is true, which is always false in readonly mode.
-		// "connectedToService" is here to emit when container connection state transitions to 'Connected' regardless of connection mode.
-		// "disconnectedFromService" is also here to exclude the false "disconnected" events that happen when readonly client transitions to 'Connected'.
-		if (this.getConnectionState) {
-			if (this.getConnectionState() === 2 /* Connected */) {
-				this.emit("connectedToService", clientId);
-			} else {
-				this.emit("disconnectedFromService");
-			}
-		}
-
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			this.loadIdCompressor();
 		}
@@ -2856,6 +2845,17 @@ export class ContainerRuntime
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
+
+		// "connected" is only emitted when canSendOps is true, which is always false in readonly mode.
+		// "connectedToService" is here to emit when container connection state transitions to 'Connected' regardless of connection mode.
+		// "disconnectedFromService" is also here to exclude the false "disconnected" events that happen when readonly client transitions to 'Connected'.
+		if (this.getConnectionState) {
+			if (this.getConnectionState() === 2 /* Connected */) {
+				this.emit("connectedToService", clientId, canSendOps);
+			} else {
+				this.emit("disconnectedFromService");
+			}
+		}
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
@@ -5081,11 +5081,8 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId: string) =>
-			eventEmitter.emit("joined", { clientId, canWrite: true }),
-		);
-		this.on("connectedToService", (clientId: string) => {
-			eventEmitter.emit("joined", { clientId, canWrite: false });
+		this.on("connectedToService", (clientId: string, canWrite: boolean) => {
+			eventEmitter.emit("joined", { clientId, canWrite });
 		});
 		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
 		return eventEmitter;
