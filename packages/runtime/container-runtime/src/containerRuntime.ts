@@ -39,6 +39,7 @@ import type {
 	IContainerRuntimeWithResolveHandle_Deprecated,
 	JoinedStatus,
 	OutboundExtensionMessage,
+	UnverifiedBrand,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -49,12 +50,11 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces";
 import type {
-	IErrorBase,
 	IFluidHandleContext,
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
-	JsonDeserialized,
+	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
@@ -706,6 +706,21 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 	};
 };
 
+/**
+ * A {@link TypedMessage} that has unknown content explicitly
+ * noted as deserialized JSON.
+ */
+export interface UnknownIncomingTypedMessage extends TypedMessage {
+	content: OpaqueJsonDeserialized<unknown>;
+}
+
+/**
+ * Does nothing helper to apply unverified branding to a value.
+ */
+function markUnverified<const T>(value: T): T & UnverifiedBrand<T> {
+	return value as T & UnverifiedBrand<T>;
+}
+
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
@@ -1177,16 +1192,6 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
-		runtime.blobManager.stashedBlobsUploadP.then(
-			() => {
-				// make sure we didn't reconnect before the promise resolved
-				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {
-					runtime.delayConnectClientId = undefined;
-					runtime.setConnectionStateCore(true, runtime.delayConnectClientId);
-				}
-			},
-			(error: IErrorBase) => runtime.closeFn(error),
-		);
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
 
@@ -1198,7 +1203,6 @@ export class ContainerRuntime
 	}
 
 	public readonly options: Record<string | number, unknown>;
-	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -1346,12 +1350,6 @@ export class ContainerRuntime
 	private readonly getConnectionState?: () => ConnectionState;
 
 	private consecutiveReconnects = 0;
-
-	/**
-	 * Used to delay transition to "connected" state while we upload
-	 * attachment blobs that were added while disconnected
-	 */
-	private delayConnectClientId?: string;
 
 	private readonly dataModelChangeRunner = new RunCounter();
 
@@ -2797,29 +2795,6 @@ export class ContainerRuntime
 			this.loadIdCompressor();
 		}
 
-		if (canSendOps === false && this.delayConnectClientId !== undefined) {
-			this.delayConnectClientId = undefined;
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "UnsuccessfulConnectedTransition",
-			});
-			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
-			return;
-		}
-
-		// If there are stashed blobs in the pending state, we need to delay
-		// propagation of the "connected" event until we have uploaded them to
-		// ensure we don't submit ops referencing a blob that has not been uploaded
-		const connecting = canSendOps && !this.canSendOps;
-		if (connecting && this.blobManager.hasPendingStashedUploads()) {
-			assert(
-				!this.delayConnectClientId,
-				0x791 /* Connect event delay must be canceled before subsequent connect event */,
-			);
-			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
-			this.delayConnectClientId = clientId;
-			return;
-		}
-
 		this.setConnectionStateCore(canSendOps, clientId);
 	}
 
@@ -2829,10 +2804,6 @@ export class ContainerRuntime
 	 * @remarks The connection state from container context used here when raising connected events.
 	 */
 	private setConnectionStateCore(canSendOps: boolean, clientId?: string): void {
-		assert(
-			!this.delayConnectClientId,
-			0x394 /* connect event delay must be cleared before propagating connect event */,
-		);
 		this.verifyNotClosed();
 
 		// There might be no change of state due to Container calling this API after loading runtime.
@@ -3312,17 +3283,17 @@ export class ContainerRuntime
 	public processSignal(
 		message: ISignalMessage<{
 			type: string;
-			content: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+			content: ISignalEnvelope<{ type: string; content: OpaqueJsonDeserialized<unknown> }>;
 		}>,
 		local: boolean,
 	): void {
 		const envelope = message.content;
-		const transformed = {
+		const transformed = markUnverified({
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
 			targetClientId: message.targetClientId,
-		};
+		});
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
@@ -3345,7 +3316,8 @@ export class ContainerRuntime
 
 	private routeNonContainerSignal(
 		address: string,
-		signalMessage: IInboundSignalMessage<{ type: string; content: JsonDeserialized<unknown> }>,
+		signalMessage: IInboundSignalMessage<UnknownIncomingTypedMessage> &
+			UnverifiedBrand<UnknownIncomingTypedMessage>,
 		local: boolean,
 	): void {
 		// channelCollection signals are identified by no starting `/` in address.
@@ -3353,13 +3325,15 @@ export class ContainerRuntime
 			// Due to a mismatch between different layers in terms of
 			// what is the interface of passing signals, we need to adjust
 			// the signal envelope before sending it to the datastores to be processed
-			const envelope = {
-				address,
-				contents: signalMessage.content,
+			const channelSignalMessage = {
+				...signalMessage,
+				content: {
+					address,
+					contents: signalMessage.content,
+				},
 			};
-			signalMessage.content = envelope;
 
-			this.channelCollection.processSignal(signalMessage, local);
+			this.channelCollection.processSignal(channelSignalMessage, local);
 			return;
 		}
 
@@ -3628,9 +3602,7 @@ export class ContainerRuntime
 	private shouldSendOps(): boolean {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return (
-			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
-		);
+		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -5039,60 +5011,45 @@ export class ContainerRuntime
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
 		this.verifyNotClosed();
+		if (props?.notifyImminentClosure) {
+			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");
+		}
 
 		if (this.batchRunner.running) {
 			throw new UsageError("can't get state while manually accumulating a batch");
 		}
-		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
-
-		const getSyncState = (
-			pendingAttachmentBlobs?: IPendingBlobs,
-		): IPendingRuntimeState | undefined => {
-			const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
-			const sessionExpiryTimerStarted =
-				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
-
-			const pendingIdCompressorState = this._idCompressor?.serialize(true);
-
-			return {
-				pending,
-				pendingIdCompressorState,
-				pendingAttachmentBlobs,
-				sessionExpiryTimerStarted,
-			};
-		};
-		const perfEvent = {
-			eventName: "getPendingLocalState",
-			notifyImminentClosure: props?.notifyImminentClosure,
-		};
-		const logAndReturnPendingState = (
-			event: PerformanceEvent,
-			pendingState?: IPendingRuntimeState,
-		): IPendingRuntimeState | undefined => {
-			event.end({
-				attachmentBlobsSize: Object.keys(pendingState?.pendingAttachmentBlobs ?? {}).length,
-				pendingOpsSize: pendingState?.pending?.pendingStates.length,
-			});
-			return pendingState;
-		};
 
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.getPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
-		return props?.notifyImminentClosure === true
-			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
-					logAndReturnPendingState(
-						event,
-						getSyncState(
-							await this.blobManager.attachAndGetPendingBlobs(props?.stopBlobAttachingSignal),
-						),
-					),
-				)
-			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
-					logAndReturnPendingState(event, getSyncState()),
-				);
+		return PerformanceEvent.timedExec<IPendingRuntimeState | undefined>(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+			},
+			(event) => {
+				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const sessionExpiryTimerStarted =
+					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
+
+				const pendingIdCompressorState = this._idCompressor?.serialize(true);
+				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
+
+				const pendingRuntimeState: IPendingRuntimeState = {
+					pending,
+					pendingIdCompressorState,
+					pendingAttachmentBlobs,
+					sessionExpiryTimerStarted,
+				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pendingRuntimeState?.pending?.pendingStates.length,
+				});
+				return pendingRuntimeState;
+			},
+		);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {

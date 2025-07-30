@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import chai, { expect } from "chai";
+import { expect } from "chai";
+import * as chai from "chai";
 import assertArrays from "chai-arrays";
 import { describe, it } from "mocha";
 

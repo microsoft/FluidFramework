@@ -13,6 +13,7 @@ import type {
 	JsonDeserialized,
 	JsonSerializable,
 	Listenable,
+	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
@@ -102,7 +103,7 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: string;
-					content: JsonDeserialized<unknown>;
+					content: OpaqueJsonDeserialized<unknown>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
@@ -127,7 +128,9 @@ export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = Type
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: TMessage["type"];
-					content: JsonDeserialized<TMessage["content"]>;
+					content: unknown extends TMessage["content"]
+						? OpaqueJsonDeserialized<unknown>
+						: JsonDeserialized<TMessage["content"]>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
