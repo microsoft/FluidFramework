@@ -181,7 +181,6 @@ export class SchematizingSimpleTreeView<
 					policy: defaultSchemaPolicy,
 				},
 				this,
-				true,
 			);
 
 			initialize(this.checkout, {

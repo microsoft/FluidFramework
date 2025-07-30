@@ -110,10 +110,6 @@ export function prepareArrayContentForInsertion(
  *
  * @param hydratedData - If specified, the `mapTrees` will be prepared for hydration into this context.
  * `undefined` when `mapTrees` are being inserted into an {@link Unhydrated} tree.
- * @param isInitialization - If true, the content is being prepared for initialization of a tree.
- * Initialization input is not validated against schema, but is expected to be compatible with the schema.
- * This is to allow for staged allowed types to be loaded in the tree.
- * {@link SchemaCompatibilityStatus} is checked after initialization to ensure that the schema can still be read.
  *
  * @remarks
  * Adding this entry point is a workaround for initialize not currently having a context.
@@ -123,19 +119,12 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
-	isInitialization: boolean = false,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
 	const mapTree = unhydratedFlexTreeFromInsertable(data, schema);
 
 	const contentArray = mapTree === undefined ? [] : [mapTree];
 	const fieldSchema = convertField(normalizeFieldSchema(schema));
-	validateAndPrepare(
-		schemaAndPolicy,
-		hydratedData,
-		fieldSchema,
-		contentArray,
-		isInitialization,
-	);
+	validateAndPrepare(schemaAndPolicy, hydratedData, fieldSchema, contentArray);
 
 	return mapTree;
 }
@@ -151,7 +140,6 @@ function validateAndPrepare(
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 	fieldSchema: TreeFieldStoredSchema,
 	mapTrees: readonly UnhydratedFlexTreeNode[],
-	isInitialization: boolean = false,
 ): void {
 	if (hydratedData !== undefined) {
 		// Run `prepareContentForHydration` before walking the tree in `isFieldInSchema`.
