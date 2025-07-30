@@ -24,7 +24,6 @@ import {
 	type FieldEncoder,
 	type FieldEncodeBuilder,
 	type KeyedFieldEncoder,
-	type NodeEncoder,
 	type NodeEncodeBuilder,
 	anyNodeEncoder,
 	asFieldEncoder,
