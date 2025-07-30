@@ -445,29 +445,36 @@ export function encodeValue(
 	}
 }
 
+/**
+ * Provides common contextual information during encoding, like schema and policy settings.
+ * Also, provides a cache to avoid duplicating equivalent shapes during a batch of encode operations.
+ * To avoid Shape duplication, any Shapes used in the encoding which cache is used with should either be:
+ * - Singletons defined in a static scope.
+ * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
+ */
 export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 	private readonly nodeEncodersFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> =
 		new Map();
-	private readonly nestedArrays: Map<NodeEncoder, NestedArrayEncoder> = new Map();
+	private readonly nestedArrayEncoders: Map<NodeEncoder, NestedArrayEncoder> = new Map();
 	public constructor(
-		private readonly nodeEncoderPolicy: NodeEncoderPolicy,
-		private readonly fieldEncoderPolicy: FieldEncoderPolicy,
+		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
+		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly idCompressor: IIdCompressor,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.nodeEncodersFromSchema, schemaName, () =>
-			this.nodeEncoderPolicy(this, schemaName),
+			this.nodeEncoderFromPolicy(this, schemaName),
 		);
 	}
 
 	public fieldEncoderFromSchema(fieldSchema: TreeFieldStoredSchema): FieldEncoder {
-		return new LazyFieldEncoder(this, fieldSchema, this.fieldEncoderPolicy);
+		return new LazyFieldEncoder(this, fieldSchema, this.fieldEncoderFromPolicy);
 	}
 
 	public nestedArrayEncoder(inner: NodeEncoder): NestedArrayEncoder {
-		return getOrCreate(this.nestedArrays, inner, () => new NestedArrayEncoder(inner));
+		return getOrCreate(this.nestedArrayEncoders, inner, () => new NestedArrayEncoder(inner));
 	}
 }
 
@@ -501,7 +508,7 @@ class LazyFieldEncoder implements FieldEncoder {
 	public constructor(
 		public readonly nodeBuilder: NodeEncodeBuilder,
 		public readonly fieldSchema: TreeFieldStoredSchema,
-		private readonly fieldEncoderPolicy: FieldEncoderPolicy,
+		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 	) {}
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -513,7 +520,7 @@ class LazyFieldEncoder implements FieldEncoder {
 
 	private get encoder(): FieldEncoder {
 		if (this.encoderLazy === undefined) {
-			this.encoderLazy = this.fieldEncoderPolicy(this.nodeBuilder, this.fieldSchema);
+			this.encoderLazy = this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
 		}
 		return this.encoderLazy;
 	}

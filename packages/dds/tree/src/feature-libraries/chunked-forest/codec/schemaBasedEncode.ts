@@ -65,7 +65,7 @@ export function buildContext(
 }
 
 /**
- * Selects encoder to use to encode fields.
+ * Selects an encoder to use to encode fields.
  */
 export function getFieldEncoder(
 	nodeBuilder: NodeEncodeBuilder,
@@ -105,7 +105,7 @@ export function getFieldEncoder(
 }
 
 /**
- * Selects encoder to use to encode nodes.
+ * Selects an encoder to use to encode nodes.
  */
 export function getNodeEncoder(
 	fieldBuilder: FieldEncodeBuilder,
