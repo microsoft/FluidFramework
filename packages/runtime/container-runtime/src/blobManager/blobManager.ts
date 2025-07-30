@@ -41,6 +41,7 @@ import {
 	LoggingError,
 	MonitoringContext,
 	PerformanceEvent,
+	UsageError,
 	createChildMonitoringContext,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -214,7 +215,6 @@ export class BlobManager {
 	private readonly opsInFlight: Map<string, Set<string>> = new Map();
 
 	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
-	private stopAttaching: boolean = false;
 
 	private readonly routeContext: IFluidHandleContext;
 	private readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
@@ -682,7 +682,7 @@ export class BlobManager {
 		}
 
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
-		if ((entry.abortSignal?.aborted === true && !entry.opsent) || this.stopAttaching) {
+		if (entry.abortSignal?.aborted === true && !entry.opsent) {
 			this.mc.logger.sendTelemetryEvent({
 				eventName: "BlobAborted",
 				localId,
@@ -991,83 +991,7 @@ export class BlobManager {
 	public async attachAndGetPendingBlobs(
 		stopBlobAttachingSignal?: AbortSignal,
 	): Promise<IPendingBlobs | undefined> {
-		return PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "AttachAndGetPendingBlobs" },
-			async () => {
-				if (this.pendingBlobs.size === 0) {
-					return;
-				}
-				const blobs = {};
-				const localBlobs = new Set<PendingBlob>();
-				// This while is used to stash blobs created while attaching and getting blobs
-				while (localBlobs.size < this.pendingBlobs.size) {
-					const attachHandlesP: Promise<void>[] = [];
-					for (const [localId, entry] of this.pendingBlobs) {
-						if (!localBlobs.has(entry)) {
-							localBlobs.add(entry);
-							// In order to follow natural blob creation flow we need to:
-							// 1 send the blob attach op
-							// 2 resolve the blob handle
-							// 3 wait for op referencing the blob
-							if (!entry.opsent) {
-								this.sendBlobAttachOp(localId, entry.storageId);
-							}
-							// Resolving the blob handle to let hosts continue with their operations (it will resolve
-							// original createBlob call) and let them attach the blob. This is a lie we told since the upload
-							// hasn't finished yet, but it's fine since we will retry on rehydration.
-							entry.handleP.resolve(this.getBlobHandle(localId));
-							// Array of promises that will resolve when handles get attached.
-							attachHandlesP.push(
-								new Promise<void>((resolve, reject) => {
-									stopBlobAttachingSignal?.addEventListener(
-										"abort",
-										() => {
-											this.stopAttaching = true;
-											reject(new Error("Operation aborted"));
-										},
-										{ once: true },
-									);
-									const onHandleAttached = (attachedEntry: PendingBlob): void => {
-										if (attachedEntry === entry) {
-											this.internalEvents.off("handleAttached", onHandleAttached);
-											resolve();
-										}
-									};
-									if (entry.attached) {
-										resolve();
-									} else {
-										this.internalEvents.on("handleAttached", onHandleAttached);
-									}
-								}),
-							);
-						}
-					}
-					// Wait for all blobs to be attached. This is important, otherwise serialized container
-					// could send the blobAttach op without any op that references the blob, making it useless.
-					await Promise.allSettled(attachHandlesP);
-				}
-
-				for (const [localId, entry] of this.pendingBlobs) {
-					if (stopBlobAttachingSignal?.aborted && !entry.attached) {
-						this.mc.logger.sendTelemetryEvent({
-							eventName: "UnableToStashBlob",
-							id: localId,
-						});
-						continue;
-					}
-					assert(entry.attached === true, 0x790 /* stashed blob should be attached */);
-					blobs[localId] = {
-						blob: bufferToString(entry.blob, "base64"),
-						storageId: entry.storageId,
-						acked: entry.acked,
-						minTTLInSeconds: entry.minTTLInSeconds,
-						uploadTime: entry.uploadTime,
-					};
-				}
-				return Object.keys(blobs).length > 0 ? blobs : undefined;
-			},
-		);
+		throw new UsageError("attachAndGetPendingBlobs is no longer supported");
 	}
 }
 
