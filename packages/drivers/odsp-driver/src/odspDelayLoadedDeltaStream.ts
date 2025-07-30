@@ -4,14 +4,14 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentServicePolicies,
 	IResolvedUrl,
-	type IAnyDriverError,
+	IAnyDriverError,
 	ISequencedDocumentMessage,
 	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
@@ -21,27 +21,27 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { hasFacetCodes } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	HostStoragePolicy,
+	type HostStoragePolicy,
 	type IOdspError,
-	IOdspResolvedUrl,
-	ISocketStorageDiscovery,
-	InstrumentedStorageTokenFetcher,
+	type IOdspResolvedUrl,
+	type ISocketStorageDiscovery,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-	TokenFetchOptions,
+	type TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	IFluidErrorBase,
-	MonitoringContext,
+	type IFluidErrorBase,
+	type MonitoringContext,
 	normalizeError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { policyLabelsUpdatesSignalType } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
-import { IOdspCache } from "./odspCache.js";
+import type { EpochTracker } from "./epochTracker.js";
+import type { IOdspCache } from "./odspCache.js";
 import { OdspDocumentDeltaConnection } from "./odspDocumentDeltaConnection.js";
 import {
-	TokenFetchOptionsEx,
+	type TokenFetchOptionsEx,
 	getJoinSessionCacheKey,
 	getWithRetryForTokenRefresh,
 } from "./odspUtils.js";

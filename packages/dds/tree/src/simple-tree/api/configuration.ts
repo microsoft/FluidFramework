@@ -15,13 +15,16 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import {
 	type FieldSchemaAlpha,
 	type ImplicitFieldSchema,
-	evaluateLazySchema,
 	FieldKind,
-	isAnnotatedAllowedType,
-	markSchemaMostDerived,
 	normalizeFieldSchema,
-} from "../schemaTypes.js";
-import { NodeKind, type TreeNodeSchema } from "../core/index.js";
+} from "../fieldSchema.js";
+import {
+	NodeKind,
+	type TreeNodeSchema,
+	isAnnotatedAllowedType,
+	evaluateLazySchema,
+	markSchemaMostDerived,
+} from "../core/index.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,
@@ -44,14 +47,20 @@ import type { SimpleNodeSchema, SimpleTreeSchema } from "../simpleSchema.js";
  */
 export interface ITreeConfigurationOptions {
 	/**
-	 * If `true`, the tree will validate new content against its stored schema at insertion time
+	 * If `true`, the tree will perform additional validation of content against its stored schema
 	 * and throw an error if the new content doesn't match the expected schema.
 	 *
 	 * @defaultValue `false`.
 	 *
-	 * @remarks Enabling schema validation has a performance penalty when inserting new content into the tree because
+	 * @remarks
+	 * Currently most cases already have some schema validation, so this is mainly for additional validation which may be useful when debugging issues,
+	 * working with untyped APIs, or when the small performance overhead is a non-issue.
+	 *
+	 * Enabling schema validation has a performance penalty when inserting new content into the tree because
 	 * additional checks are done. Enable this option only in scenarios where you are ok with that operation being a
 	 * bit slower.
+	 *
+	 * For additional validation in more cases, see {@link ForestTypeExpensiveDebug}.
 	 */
 	enableSchemaValidation?: boolean;
 

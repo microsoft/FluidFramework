@@ -9,7 +9,7 @@ import { Spinner } from "picospinner";
 import { GitRepo } from "../common/gitRepo";
 import { defaultLogger } from "../common/logging";
 import { Timer } from "../common/timer";
-import { BuildGraph, BuildResult } from "./buildGraph";
+import { type BuildGraph, BuildResult } from "./buildGraph";
 import { commonOptions } from "./commonOptions";
 import { DEFAULT_FLUIDBUILD_CONFIG } from "./fluidBuildConfig";
 import { FluidRepoBuild } from "./fluidRepoBuild";

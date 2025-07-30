@@ -20,7 +20,7 @@ import type {
 	JsonLeafSchemaType,
 	JsonRecordNodeSchema,
 } from "./jsonSchema.js";
-import { FieldKind } from "../schemaTypes.js";
+import { FieldKind } from "../fieldSchema.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleLeafNodeSchema,

@@ -260,7 +260,8 @@ describeCompat(
 				const map2 = await getMap(dataStore2);
 				// generate ops with RSN === summary SN
 				map2.set("2", "2");
-				const stashBlob = await container2.closeAndGetPendingLocalState?.();
+				const stashBlob = await container2.getPendingLocalState?.();
+				container2.close();
 				assert(stashBlob);
 				const pendingState = JSON.parse(stashBlob);
 
@@ -294,7 +295,17 @@ describeCompat(
 					new Promise<string | undefined>((resolve, reject) =>
 						container.on("op", (op) => {
 							if (op.type === "summarize") {
-								resolve(container.closeAndGetPendingLocalState?.());
+								if (container.getPendingLocalState !== undefined) {
+									container
+										.getPendingLocalState()
+										.then((pendingState) => {
+											container.close();
+											resolve(pendingState);
+										})
+										.catch(reject);
+								} else {
+									resolve(undefined);
+								}
 							}
 						}),
 					),

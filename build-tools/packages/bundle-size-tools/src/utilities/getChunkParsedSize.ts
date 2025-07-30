@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { StatsCompilation } from "webpack";
+import type { StatsCompilation } from "webpack";
 
 /**
  * This gets the size of a chunk after minification, which is what the browser will parse.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
+import type { IEvent, IEventProvider, IFluidLoadable } from "@fluidframework/core-interfaces";
 
 /**
  * @legacy

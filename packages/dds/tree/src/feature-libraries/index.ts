@@ -84,22 +84,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
-	getAllowedContentDiscrepancies,
-	isRepoSuperset,
-	type AllowedTypeDiscrepancy,
-	type FieldKindDiscrepancy,
-	type ValueSchemaDiscrepancy,
-	type FieldDiscrepancy,
-	type NodeDiscrepancy,
-	type NodeKindDiscrepancy,
-	type NodeFieldsDiscrepancy,
 	isNeverTree,
-	type LinearExtension,
-	type Realizer,
-	fieldRealizer,
-	PosetComparisonResult,
-	comparePosetElements,
-	posetLte,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -183,6 +168,7 @@ export {
 	type FlexibleFieldContent,
 	type FlexTreeHydratedContextMinimal,
 	type HydratedFlexTreeNode,
+	getOrCreateHydratedFlexTreeNode,
 } from "./flex-tree/index.js";
 
 export { TreeCompressionStrategy } from "./treeCompressionUtils.js";
@@ -207,5 +193,3 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
-
-export { initializeForest } from "./initializeForest.js";

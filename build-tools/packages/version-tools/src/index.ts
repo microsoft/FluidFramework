@@ -10,16 +10,16 @@ export {
 	isVersionBumpTypeExtended,
 	isWorkspaceRange,
 	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-	RangeOperator,
+	type InterdependencyRange,
+	type RangeOperator,
 	RangeOperators,
-	RangeOperatorWithVersion,
-	ReleaseVersion,
-	VersionBumpType,
-	VersionBumpTypeExtended,
-	VersionChangeType,
-	VersionChangeTypeExtended,
-	WorkspaceRange,
+	type RangeOperatorWithVersion,
+	type ReleaseVersion,
+	type VersionBumpType,
+	type VersionBumpTypeExtended,
+	type VersionChangeType,
+	type VersionChangeTypeExtended,
+	type WorkspaceRange,
 	WorkspaceRanges,
 } from "./bumpTypes";
 export {
@@ -38,7 +38,7 @@ export {
 	getLatestReleaseFromList,
 	isVersionScheme,
 	sortVersions,
-	VersionScheme,
+	type VersionScheme,
 } from "./schemes";
 export { bumpRange, detectBumpType, isPrereleaseVersion, getPreviousVersions } from "./semver";
 export { getIsLatest, getSimpleVersion, getVersionsFromStrings } from "./versions";

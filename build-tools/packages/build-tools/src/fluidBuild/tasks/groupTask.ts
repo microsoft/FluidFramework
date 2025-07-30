@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { AsyncPriorityQueue } from "async";
+import type { AsyncPriorityQueue } from "async";
 
 import type { BuildContext } from "../buildContext";
-import { BuildPackage, BuildResult } from "../buildGraph";
-import { LeafTask } from "./leaf/leafTask";
-import { Task, TaskExec } from "./task";
+import { type BuildPackage, BuildResult } from "../buildGraph";
+import type { LeafTask } from "./leaf/leafTask";
+import { Task, type TaskExec } from "./task";
 
 export class GroupTask extends Task {
 	constructor(

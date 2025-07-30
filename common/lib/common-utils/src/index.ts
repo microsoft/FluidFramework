@@ -13,8 +13,8 @@ export { assert } from "./assert";
 export { fromBase64ToUtf8, fromUtf8ToBase64, toUtf8 } from "./base64Encoding";
 export { Uint8ArrayToArrayBuffer } from "./bufferShared";
 export { delay } from "./delay";
-export { doIfNotDisposed, IDisposable } from "./disposal";
-export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
+export { doIfNotDisposed, type IDisposable } from "./disposal";
+export { Heap, type IComparer, type IHeapNode, NumberComparer } from "./heap";
 /**
  * NOTE: This export is remapped to export from "./indexBrowser" in browser environments via package.json.
  * Because the two files don't have fully isomorphic exports, using named exports for the full API surface
@@ -26,30 +26,30 @@ export { Heap, IComparer, IHeapNode, NumberComparer } from "./heap";
 // eslint-disable-next-line no-restricted-syntax
 export * from "./indexNode";
 export { Lazy } from "./lazy";
-export { IsomorphicPerformance } from "./performanceIsomorphic";
-export { PromiseCache, PromiseCacheExpiry, PromiseCacheOptions } from "./promiseCache";
+export type { IsomorphicPerformance } from "./performanceIsomorphic";
+export { PromiseCache, type PromiseCacheExpiry, type PromiseCacheOptions } from "./promiseCache";
 export { Deferred, LazyPromise } from "./promises";
-export { IRange, IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
+export { type IRange, type IRangeTrackerSnapshot, RangeTracker } from "./rangeTracker";
 export { RateLimiter } from "./rateLimiter";
 export { safelyParseJSON } from "./safeParser";
 export {
-	IPromiseTimer,
-	IPromiseTimerResult,
-	ITimer,
+	type IPromiseTimer,
+	type IPromiseTimerResult,
+	type ITimer,
 	PromiseTimer,
 	setLongTimeout,
 	Timer,
 } from "./timer";
-export { ITraceEvent, Trace } from "./trace";
+export { type ITraceEvent, Trace } from "./trace";
 export {
-	EventEmitterEventType,
-	IEvent,
-	IEventProvider,
-	IEventThisPlaceHolder,
-	IEventTransformer,
-	ReplaceIEventThisPlaceHolder,
-	TransformedEvent,
+	type EventEmitterEventType,
+	type IEvent,
+	type IEventProvider,
+	type IEventThisPlaceHolder,
+	type IEventTransformer,
+	type ReplaceIEventThisPlaceHolder,
+	type TransformedEvent,
 	TypedEventEmitter,
-	TypedEventTransform,
+	type TypedEventTransform,
 } from "./typedEventEmitter";
 export { unreachableCase } from "./unreachable";

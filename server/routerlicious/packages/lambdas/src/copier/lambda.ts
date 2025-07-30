@@ -5,12 +5,12 @@
 
 import {
 	extractBoxcar,
-	ICollection,
-	IContext,
-	IQueuedMessage,
-	IPartitionLambda,
-	IRawOperationMessage,
-	IRawOperationMessageBatch,
+	type ICollection,
+	type IContext,
+	type IQueuedMessage,
+	type IPartitionLambda,
+	type IRawOperationMessage,
+	type IRawOperationMessageBatch,
 	isCompleteBoxcarMessage,
 } from "@fluidframework/server-services-core";
 

@@ -23,15 +23,14 @@ import {
 	IConfigProviderBase,
 	IResponse,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
+	IErrorBase,
 	ISignalEnvelope,
-	type IErrorBase,
-	type ITelemetryBaseLogger,
-	type JsonDeserialized,
+	ITelemetryBaseLogger,
+	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	ISnapshot,
 	ISummaryContext,
 	type ISnapshotTree,
@@ -56,7 +55,9 @@ import {
 	type IEnvelope,
 	type ITelemetryContext,
 	type ISummarizeInternalResult,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	IFluidErrorBase,
 	MockLogger,
@@ -74,7 +75,6 @@ import {
 import Sinon, { type SinonFakeTimers } from "sinon";
 
 import { ChannelCollection } from "../channelCollection.js";
-import { defaultMinVersionForCollab } from "../compatUtils.js";
 import { CompressionAlgorithms, enabledCompressionConfig } from "../compressionDefinitions.js";
 import {
 	ContainerRuntime,
@@ -84,6 +84,7 @@ import {
 	getSingleUseLegacyLogCallback,
 	type ContainerRuntimeOptionsInternal,
 	type IContainerRuntimeOptionsInternal,
+	type UnknownIncomingTypedMessage,
 } from "../containerRuntime.js";
 import {
 	ContainerMessageType,
@@ -147,14 +148,12 @@ const changeConnectionState = (
 };
 
 interface ISignalEnvelopeWithClientIds {
-	envelope: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+	envelope: ISignalEnvelope<UnknownIncomingTypedMessage>;
 	clientId: string;
 	targetClientId?: string;
 }
 
-function isSignalEnvelope(
-	obj: unknown,
-): obj is ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }> {
+function isSignalEnvelope(obj: unknown): obj is ISignalEnvelope<UnknownIncomingTypedMessage> {
 	return (
 		typeof obj === "object" &&
 		obj !== null &&
@@ -200,6 +199,12 @@ function stubChannelCollection(
 	return stub;
 }
 
+function assertSignalContentIsAString(
+	content: OpaqueJsonDeserialized<unknown> | string,
+): asserts content is string {
+	assert(typeof content === "string", "Signal content expected to be a string");
+}
+
 describe("Runtime", () => {
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 		getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -233,7 +238,7 @@ describe("Runtime", () => {
 	const mockClientId = "mockClientId";
 
 	// Mock the storage layer so "submitSummary" works.
-	const defaultMockStorage: Partial<IDocumentStorageService> = {
+	const defaultMockStorage: Partial<IRuntimeStorageService> = {
 		uploadSummaryWithContext: async (summary: ISummaryTree, context: ISummaryContext) => {
 			return "fakeHandle";
 		},
@@ -242,7 +247,7 @@ describe("Runtime", () => {
 		params: {
 			settings?: Record<string, ConfigTypes>;
 			logger?: ITelemetryBaseLogger;
-			mockStorage?: Partial<IDocumentStorageService>;
+			mockStorage?: Partial<IRuntimeStorageService>;
 			loadedFromVersion?: IVersion;
 			baseSnapshot?: ISnapshotTree;
 			connected?: boolean;
@@ -289,7 +294,7 @@ describe("Runtime", () => {
 			},
 			clientId,
 			connected,
-			storage: mockStorage as IDocumentStorageService,
+			storage: mockStorage as IRuntimeStorageService,
 			baseSnapshot,
 		} satisfies Partial<IContainerContext>;
 
@@ -2110,7 +2115,7 @@ describe("Runtime", () => {
 					summaryRefSeq: 100,
 					summaryLogger: createChildLogger({}),
 				};
-				class MockStorageService implements Partial<IDocumentStorageService> {
+				class MockStorageService implements Partial<IRuntimeStorageService> {
 					/**
 					 * This always returns the same snapshot. Basically, when container runtime receives an ack for the
 					 * deleted snapshot and tries to fetch the latest snapshot, return the latest snapshot.
@@ -3014,16 +3019,11 @@ describe("Runtime", () => {
 			function sendSignals(count: number): void {
 				for (let i = 0; i < count; i++) {
 					containerRuntime.submitSignal("TestSignalType", `TestSignalContent ${i + 1}`);
-					assert(
-						submittedSignals[submittedSignals.length - 1].envelope.contents.type ===
-							"TestSignalType",
-						"Signal type should match",
-					);
-					assert(
-						submittedSignals[submittedSignals.length - 1].envelope.contents.content ===
-							`TestSignalContent ${i + 1}`,
-						"Signal content should match",
-					);
+					const { type, content } =
+						submittedSignals[submittedSignals.length - 1].envelope.contents;
+					assert(type === "TestSignalType", "Signal type should match");
+					assertSignalContentIsAString(content);
+					assert(content === `TestSignalContent ${i + 1}`, "Signal content should match");
 				}
 			}
 

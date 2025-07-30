@@ -20,7 +20,7 @@ export declare abstract class TestAbstractClass
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias/) | A test abstract getter property. |
+| [abstractPropertyGetter](/test-suite-a/testabstractclass-class/abstractpropertygetter-property) | `readonly` | [TestMappedType](/test-suite-a/testmappedtype-typealias/) | <p>A test abstract getter property.</p><p>@escapedTag</p> |
 | [protectedProperty](/test-suite-a/testabstractclass-class/protectedproperty-property) | `readonly` | [TestEnum](/test-suite-a/testenum-enum/) | A test protected property. |
 
 ## Methods

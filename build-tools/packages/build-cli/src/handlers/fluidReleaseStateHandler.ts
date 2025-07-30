@@ -3,16 +3,20 @@
  * Licensed under the MIT License.
  */
 
-import { ReleaseVersion, VersionBumpType, VersionScheme } from "@fluid-tools/version-tools";
-import { Command } from "@oclif/core";
-import { Machine } from "jssm";
+import type {
+	ReleaseVersion,
+	VersionBumpType,
+	VersionScheme,
+} from "@fluid-tools/version-tools";
+import type { Command } from "@oclif/core";
+import type { Machine } from "jssm";
 import chalk from "picocolors";
 
-import { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
-import { Context } from "../library/index.js";
-import { CommandLogger } from "../logging.js";
-import { MachineState } from "../machines/index.js";
-import { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
+import type { InstructionalPromptWriter } from "../instructionalPromptWriter.js";
+import type { Context } from "../library/index.js";
+import type { CommandLogger } from "../logging.js";
+import type { MachineState } from "../machines/index.js";
+import type { ReleaseGroup, ReleasePackage } from "../releaseGroups.js";
 import { askForReleaseType } from "./askFunctions.js";
 import {
 	checkAssertTagging,

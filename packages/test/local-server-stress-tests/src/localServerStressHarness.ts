@@ -1143,9 +1143,11 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 		...providedOptions,
 	};
 
-	const only = new Set(options.only);
-	const skip = new Set(options.skip);
 	const replay = options.replay;
+	// replay supersedes only and skip, and only supersedes skip
+	// this allows all to be specified even if the seeds overlap
+	const only = new Set(replay === undefined ? options.only : undefined);
+	const skip = new Set(replay === undefined && only.size === 0 ? options.skip : undefined);
 	Object.assign(options, { only, skip });
 	assert(isInternalOptions(options));
 

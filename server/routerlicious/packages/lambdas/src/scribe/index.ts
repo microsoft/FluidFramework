@@ -4,7 +4,7 @@
  */
 
 export { CheckpointManager } from "./checkpointManager";
-export {
+export type {
 	ICheckpointManager,
 	ILatestSummaryState,
 	IPendingMessageReader,

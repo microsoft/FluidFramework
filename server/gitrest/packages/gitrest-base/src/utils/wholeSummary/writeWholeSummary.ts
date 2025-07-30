@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ICreateCommitParams, IRef } from "@fluidframework/gitresources";
-import {
+import type { ICreateCommitParams, IRef } from "@fluidframework/gitresources";
+import type {
 	IWholeFlatSummary,
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
@@ -16,10 +16,10 @@ import { GitRestLumberEventName } from "../gitrestTelemetryDefinitions";
 
 import { convertFullGitTreeToFullSummaryTree } from "./conversions";
 import {
-	IWriteSummaryTreeOptions,
+	type IWriteSummaryTreeOptions,
 	writeSummaryTree as writeSummaryTreeCore,
 } from "./coreWriteUtils";
-import { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
+import type { IFullGitTree, ISummaryVersion, IWholeSummaryOptions } from "./definitions";
 import { computeLowIoSummaryTreeEntries } from "./lowIoWriteUtils";
 
 /**

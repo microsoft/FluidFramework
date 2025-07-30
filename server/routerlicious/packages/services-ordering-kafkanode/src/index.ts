@@ -5,4 +5,4 @@
 
 export { KafkaNodeConsumer } from "./kafkaNodeConsumer";
 export { KafkaNodeProducer } from "./kafkaNodeProducer";
-export { IKafkaResources, KafkaResources, KafkaResourcesFactory } from "./resourcesFactory";
+export { type IKafkaResources, KafkaResources, KafkaResourcesFactory } from "./resourcesFactory";

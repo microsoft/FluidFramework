@@ -105,7 +105,14 @@ export interface SchemaAndPolicy {
 }
 
 /**
- * Extra data needed to interpret schema.
+ * Extra data needed to interpret stored schema.
+ * @remarks
+ * This contains information that describes the semantics of things which can be referenced in stored schema.
+ * For example, field kind identifiers refer to specific field kinds, which imply specific rules around what is valid in a given field (the multiplicity).
+ * This structure provides such information, allowing it to be possible to determine if a given tree complies with a particular stored schema.
+ *
+ * TODO: AB#43546
+ * Some additional data which is not needed to define compatibility with a given stored schema is currently included here, and should be removed.
  */
 export interface SchemaPolicy {
 	/**
@@ -116,21 +123,6 @@ export interface SchemaPolicy {
 	 * and will be unable to process any changes that use those FieldKinds.
 	 */
 	readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FieldKindData>;
-
-	/**
-	 * If true, new content inserted into the tree should be validated against the stored schema.
-	 */
-	readonly validateSchema: boolean;
-
-	/**
-	 * Whether to allow a document to be opened when a particular stored schema (identified by `identifier`)
-	 * contains optional fields that are not known to the view schema.
-	 *
-	 * @privateRemarks
-	 * Plumbing this in via `SchemaPolicy` avoids needing to walk the view schema representation repeatedly in places
-	 * that need it (schema validation, view vs stored compatibility checks).
-	 */
-	allowUnknownOptionalFields(identifier: TreeNodeSchemaIdentifier): boolean;
 }
 
 /**

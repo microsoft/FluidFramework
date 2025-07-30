@@ -4,10 +4,7 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import {
-	IGetPendingLocalStateProps,
-	IRuntime,
-} from "@fluidframework/container-definitions/internal";
+import { IRuntime } from "@fluidframework/container-definitions/internal";
 import type {
 	IEventProvider,
 	IEvent,
@@ -422,7 +419,6 @@ export class SerializedStateManager {
 	 * to be stored and used to rehydrate the container at a later time.
 	 */
 	public async getPendingLocalState(
-		props: IGetPendingLocalStateProps,
 		clientId: string | undefined,
 		runtime: Pick<IRuntime, "getPendingLocalState">,
 		resolvedUrl: IResolvedUrl,
@@ -432,9 +428,9 @@ export class SerializedStateManager {
 			{
 				eventName: "getPendingLocalState",
 				details: {
-					notifyImminentClosure: props.notifyImminentClosure,
-					sessionExpiryTimerStarted: props.sessionExpiryTimerStarted,
-					snapshotSequenceNumber: props.snapshotSequenceNumber,
+					notifyImminentClosure: false,
+					sessionExpiryTimerStarted: undefined,
+					snapshotSequenceNumber: undefined,
 					processedOpsSize: this.processedOps.length,
 				},
 				clientId,
@@ -445,7 +441,7 @@ export class SerializedStateManager {
 				}
 				assert(this.snapshot !== undefined, 0x8e5 /* no base data */);
 				const pendingRuntimeState = await runtime.getPendingLocalState({
-					...props,
+					notifyImminentClosure: false,
 					snapshotSequenceNumber: this.snapshot.snapshotSequenceNumber,
 					sessionExpiryTimerStarted: this.snapshot.snapshotFetchedTime,
 				});
