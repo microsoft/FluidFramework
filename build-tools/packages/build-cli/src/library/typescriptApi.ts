@@ -117,6 +117,9 @@ function getApiLevelFromTags(tags: ReleaseInfoTags): ApiLevel {
 			return isLegacy ? "legacyAlpha" : "alpha";
 		}
 		case "internal": {
+			if (isLegacy) {
+				throw new Error("@legacy + @internal is not supported. Use @internal only.");
+			}
 			return "internal";
 		}
 		default: {
