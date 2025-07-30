@@ -251,12 +251,7 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 			// TODO: Pull this side effect out if/when more diverse ancestry walking helpers are available
 			if (c !== commit) {
 				const revision = this.mintRevisionTag();
-				const inverse = this.changeFamily.rebaser.changeRevision(
-					this.changeFamily.rebaser.invert(c, true, revision),
-					revision,
-					c.revision,
-				);
-
+				const inverse = this.changeFamily.rebaser.invert(c, true, revision);
 				inverses.push(tagRollbackInverse(inverse, revision, c.revision));
 				return false;
 			}
