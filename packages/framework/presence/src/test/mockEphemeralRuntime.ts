@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ConnectionState } from "@fluidframework/container-definitions";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
@@ -69,10 +68,11 @@ function makeMockAudience(clients: ClientData[]): MockAudience {
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public clientId: string | undefined;
+	public connected: boolean = false;
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
-	private connectionState: ConnectionState = 0;
+
 
 	public readonly listeners: {
 		joined: ((props: { clientId: ClientConnectionId; canWrite: boolean }) => void)[];
@@ -156,26 +156,22 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public connect(clientId: string): void {
 		this.clientId = clientId;
-		this.connectionState = 2 /* ConnectionState.Connected */;
+		this.connected = true;
 		for (const listener of this.listeners.joined) {
 			listener({ clientId, canWrite: false });
 		}
 	}
 
 	public disconnect(): void {
-		this.connectionState = 0 /* ConnectionState.Disconnected */;
+		this.connected = false;
 		for (const listener of this.listeners.disconnected) {
 			listener();
 		}
 	}
 
-	public setConnectionState(state: ConnectionState): void {
-		this.connectionState = state;
-	}
-
 	// #region IEphemeralRuntime
 	public getJoinedStatus = (): ReturnType<IEphemeralRuntime["getJoinedStatus"]> => {
-		return this.connectionState === 2 ? "joinedForReading" : "disconnected";
+		return this.connected ? "joinedForReading" : "disconnected";
 	};
 	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
 

@@ -147,7 +147,7 @@ export function prepareConnectedPresence(
 } {
 	// Set runtime to connected state
 	runtime.clientId = clientConnectionId;
-	runtime.setConnectionState(2 /* ConnectionState.Connected */);
+	runtime.connected = true;
 
 	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
 
