@@ -5,7 +5,12 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { getOrCreate, isReadonlyArray, type IsUnion } from "../../util/index.js";
+import {
+	getOrCreate,
+	isReadonlyArray,
+	type IsUnion,
+	type MakeNominal,
+} from "../../util/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import {
 	NodeKind,
@@ -148,8 +153,8 @@ export let createSchemaUpgrade: () => SchemaUpgrade;
  * TODO:#38722 implement runtime schema upgrades until then, the class purely behaves as a placeholder and we disable no-extraneous-class
  * @sealed @alpha
  */
-// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export class SchemaUpgrade {
+	protected _typeCheck!: MakeNominal;
 	static {
 		createSchemaUpgrade = () => new SchemaUpgrade();
 	}
