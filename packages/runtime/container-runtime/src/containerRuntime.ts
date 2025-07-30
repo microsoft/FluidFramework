@@ -2848,12 +2848,12 @@ export class ContainerRuntime
 			}
 		}
 
-		this.channelCollection.setConnectionState(canSendOps, clientId);
-		this.garbageCollector.setConnectionState(canSendOps, clientId);
-
 		if (canSendOpsChanged) {
 			this.replayPendingStates();
 		}
+
+		this.channelCollection.setConnectionState(canSendOps, clientId);
+		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
 	}
