@@ -375,7 +375,7 @@ async function generateEntrypoints(
 	//         ^                ^                  ^
 	//         |                |                  |
 	//      (public)    ->    (beta)       ->    (alpha)
-	const releaseLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
+	const apiLevels: readonly Exclude<ApiLevel, typeof ApiLevel.internal>[] = [
 		ApiLevel.public,
 		ApiLevel.legacyPublic,
 		ApiLevel.beta,
@@ -418,21 +418,21 @@ async function generateEntrypoints(
 	let semVerExports = [...commonNamedExports];
 	let legacyExports = [...commonNamedExports];
 
-	for (const releaseLevel of releaseLevels) {
-		log.info(`\tProcessing @${releaseLevel} APIs...`);
+	for (const apiLevel of apiLevels) {
+		log.info(`\tProcessing @${apiLevel} APIs...`);
 
-		const isLegacyRelease = isLegacy(releaseLevel);
+		const isLegacyRelease = isLegacy(apiLevel);
 
 		const namedExports = isLegacyRelease ? [...legacyExports] : [...semVerExports];
 
 		// Append this level's additional (or only) exports sorted by ascending case-sensitive name
 		const orgLength = namedExports.length;
-		const levelExports = [...exports[releaseLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
+		const levelExports = [...exports[apiLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
 		for (const levelExport of levelExports) {
 			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
 		}
 		if (namedExports.length > orgLength) {
-			namedExports[orgLength].leadingTrivia = `\n\t// #region @${releaseLevel} APIs\n\t`;
+			namedExports[orgLength].leadingTrivia = `\n\t// #region @${apiLevel} APIs\n\t`;
 			namedExports[namedExports.length - 1].trailingTrivia = `\n\t// #endregion\n`;
 		}
 
@@ -444,14 +444,14 @@ async function generateEntrypoints(
 			semVerExports = namedExports;
 		}
 
-		const output = mapApiTagLevelToOutput.get(releaseLevel);
+		const output = mapApiTagLevelToOutput.get(apiLevel);
 		if (output === undefined) {
-			log.info(`\tNo output for ${releaseLevel} APIs, skipping`);
+			log.info(`\tNo output for ${apiLevel} APIs, skipping`);
 			continue;
 		}
 
 		const outFile = output.relPath;
-		log.info(`\tFound output for ${releaseLevel} APIs. Generating ${outFile}`);
+		log.info(`\tFound output for ${apiLevel} APIs. Generating ${outFile}`);
 		const sourceFile = project.createSourceFile(outFile, undefined, {
 			overwrite: true,
 			scriptKind: ScriptKind.TS,
@@ -471,7 +471,7 @@ async function generateEntrypoints(
 		} else {
 			// At this point we already know that package "export" has a request
 			// for this entrypoint. Warn of emptiness, but make it valid for use.
-			log.warning(`no exports for ${outFile} using API level tag ${releaseLevel}`);
+			log.warning(`no exports for ${outFile} using API level tag ${apiLevel}`);
 			sourceFile.insertText(0, `${newFileHeader}export {}\n\n`);
 		}
 
