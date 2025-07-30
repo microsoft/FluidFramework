@@ -11,4 +11,3 @@ UUIDs
 enum
 Enum
 openable
-@fluidframework
