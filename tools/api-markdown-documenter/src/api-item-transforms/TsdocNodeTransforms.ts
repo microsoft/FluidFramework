@@ -98,7 +98,7 @@ export function transformAndWrapTsdoc(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link MarkdownBlockContentNode}s.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link BlockContent}s.
  *
  * @public
  */
