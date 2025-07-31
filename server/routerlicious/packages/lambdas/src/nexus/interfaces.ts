@@ -105,7 +105,6 @@ export interface INexusLambdaSettings {
 	isClientConnectivityCountingEnabled: boolean;
 	maxNumberOfClientsPerDocument: number;
 	numberOfMessagesPerTrace: number;
-	preconnectTTLMs: number;
 }
 
 export interface INexusLambdaDependencies {
