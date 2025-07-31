@@ -35,6 +35,8 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get connected(): boolean;
     // (undocumented)
+    protected readonly contexts: Map<string, IChannelContext>;
+    // (undocumented)
     createChannel(idArg: string | undefined, type: string): IChannel;
     // (undocumented)
     get deltaManager(): IDeltaManagerErased;
@@ -122,6 +124,25 @@ export class FluidObjectHandle<T extends FluidObject = FluidObject> extends Flui
     readonly routeContext: IFluidHandleContext;
     // (undocumented)
     protected readonly value: T | Promise<T>;
+}
+
+// @alpha @legacy
+export interface IChannelContext {
+    // (undocumented)
+    applyStashedOp(content: unknown): unknown;
+    // (undocumented)
+    getChannel(): Promise<IChannel>;
+    getGCData(fullGC?: boolean): Promise<IGarbageCollectionData>;
+    processMessages(messageCollection: IRuntimeMessageCollection): void;
+    // (undocumented)
+    reSubmit(content: unknown, localOpMetadata: unknown, squash?: boolean): void;
+    // (undocumented)
+    rollback(message: unknown, localOpMetadata: unknown): void;
+    // (undocumented)
+    setConnectionState(connected: boolean, clientId?: string): any;
+    // (undocumented)
+    summarize(fullTree?: boolean, trackState?: boolean, telemetryContext?: ITelemetryContext): Promise<ISummarizeResult>;
+    updateUsedRoutes(usedRoutes: string[]): void;
 }
 
 // @alpha @legacy (undocumented)

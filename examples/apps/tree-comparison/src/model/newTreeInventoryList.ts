@@ -3,16 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
-import { IFluidHandle } from "@fluidframework/core-interfaces";
+import { TreeDataObject } from "@fluidframework/aqueduct/legacy";
 import {
-	type ITree,
 	NodeFromSchema,
 	SchemaFactory,
 	Tree,
 	TreeViewConfiguration,
 } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/legacy";
+import type { TreeView } from "@fluidframework/tree/legacy";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { v4 as uuid } from "uuid";
 
@@ -88,15 +86,8 @@ class NewTreeInventoryItem
 	};
 }
 
-export class NewTreeInventoryList extends DataObject implements IInventoryList {
+export class NewTreeInventoryList extends TreeDataObject implements IInventoryList {
 	public isNewTree = true;
-	private _sharedTree: ITree | undefined;
-	private get sharedTree(): ITree {
-		if (this._sharedTree === undefined) {
-			throw new Error("Not initialized properly");
-		}
-		return this._sharedTree;
-	}
 	private _inventoryItemList: InventoryItemList | undefined;
 	private get inventoryItemList(): InventoryItemList {
 		if (this._inventoryItemList === undefined) {
@@ -120,10 +111,24 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		return [...this._inventoryItems.values()];
 	};
 
+	#treeView: TreeView<typeof InventorySchema> | undefined;
+
+	/**
+	 * The schema-aware view of the tree.
+	 */
+	public get treeView(): TreeView<typeof InventorySchema> {
+		if (this.#treeView === undefined) {
+			throw new Error("treeView has not been initialized.");
+		}
+		return this.#treeView;
+	}
+
 	protected async initializingFirstTime(): Promise<void> {
-		this._sharedTree = SharedTree.create(this.runtime);
-		const view = this._sharedTree.viewWith(treeConfiguration);
-		view.initialize(
+		this.#treeView = this.tree.viewWith(treeConfiguration);
+		if (!this.treeView.compatibility.canInitialize) {
+			throw new Error("Incompatible schema");
+		}
+		this.#treeView.initialize(
 			new InventorySchema({
 				inventoryItemList: [
 					{
@@ -139,15 +144,18 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 				],
 			}),
 		);
-		view.dispose();
-		this.root.set(newSharedTreeKey, this._sharedTree.handle);
+	}
+
+	protected override async initializingFromExisting(): Promise<void> {
+		this.#treeView = this.tree.viewWith(treeConfiguration);
+		if (!this.treeView.compatibility.canView) {
+			throw new Error("Incompatible schema");
+		}
 	}
 
 	protected async hasInitialized(): Promise<void> {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		this._sharedTree = await this.root.get<IFluidHandle<ITree>>(newSharedTreeKey)!.get();
-		const view = this.sharedTree.viewWith(treeConfiguration);
-		this._inventoryItemList = view.root.inventoryItemList;
+		this._inventoryItemList = this.treeView.root.inventoryItemList;
 		// "treeChanged" will fire for any change of any type anywhere in the subtree. In this application we expect
 		// three types of tree changes that will trigger this handler - add items, delete items, change item quantities.
 		// Since "treeChanged" doesn't provide event args, we need to scan the tree and compare it to our InventoryItems
@@ -199,15 +207,3 @@ export class NewTreeInventoryList extends DataObject implements IInventoryList {
 		return inventoryItem;
 	}
 }
-
-/**
- * The DataObjectFactory is used by Fluid Framework to instantiate our DataObject.  We provide it with a unique name
- * and the constructor it will call.  The third argument lists the other data structures it will utilize.  In this
- * scenario, the fourth argument is not used.
- */
-export const NewTreeInventoryListFactory = new DataObjectFactory<NewTreeInventoryList>(
-	"new-tree-inventory-list",
-	NewTreeInventoryList,
-	[SharedTree.getFactory()],
-	{},
-);

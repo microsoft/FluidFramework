@@ -7,7 +7,11 @@ import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
 } from "@fluidframework/datastore/internal";
-import type { ISharedDirectory } from "@fluidframework/map/internal";
+import {
+	DirectoryFactory,
+	SharedDirectory,
+	type ISharedDirectory,
+} from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreChannel,
 	IRuntimeMessageCollection,
@@ -15,14 +19,14 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 
 import {
-	type DataObject,
 	type DataObjectTypes,
 	type PureDataObject,
+	type TreeDataObject,
 	dataObjectRootDirectoryId,
 } from "../data-objects/index.js";
 
-import { DataObjectFactory } from "./dataObjectFactory.js";
 import type { DataObjectFactoryProps } from "./pureDataObjectFactory.js";
+import { TreeDataObjectFactory } from "./treeDataObjectFactory.js";
 
 /**
  * Represents the properties required to create a ConverterDataObjectFactory.
@@ -34,19 +38,6 @@ export interface ConverterDataObjectFactoryProps<
 	TConversionData,
 	I extends DataObjectTypes = DataObjectTypes,
 > extends DataObjectFactoryProps<TObj, I> {
-	/**
-	 * Used for determining whether or not a conversion is necessary based on the current state.
-	 *
-	 * An example might look like:
-	 * ```
-	 * async (root) => {
-	 *     // Check if "mapKey" has been removed from the SharedDirectory. The presence of this key tells us if the conversion has happened or not (see `convertDataObject`)
-	 *     return root.get<IFluidHandle<SharedMap>>("mapKey") !== undefined;
-	 * }
-	 * ```
-	 */
-	isConversionNeeded: (root: ISharedDirectory) => Promise<boolean>;
-
 	/**
 	 * Data required for running conversion. This is necessary because the conversion must happen synchronously.
 	 *
@@ -75,11 +66,7 @@ export interface ConverterDataObjectFactoryProps<
 	 * ```
 	 * @param data - Provided by the "asyncGetDataForConversion" function
 	 */
-	convertDataObject: (
-		runtime: FluidDataStoreRuntime,
-		root: ISharedDirectory,
-		data: TConversionData,
-	) => void;
+	convertDataObject: (runtime: FluidDataStoreRuntime, data: TConversionData) => void;
 
 	/**
 	 * If not provided, the Container will be closed after conversion due to underlying changes affecting the data model.
@@ -93,26 +80,86 @@ export interface ConverterDataObjectFactoryProps<
  * @alpha
  */
 export class ConverterDataObjectFactory<
-	TObj extends DataObject<I>,
+	TObj extends TreeDataObject<I>,
 	TConversionData,
 	I extends DataObjectTypes = DataObjectTypes,
-> extends DataObjectFactory<TObj, I> {
+> extends TreeDataObjectFactory<TObj, I> {
 	private convertLock = false;
 
 	public constructor(props: ConverterDataObjectFactoryProps<TObj, TConversionData, I>) {
-		const fullConvertDataStore = async (runtime: IFluidDataStoreChannel): Promise<void> => {
-			const realRuntime = runtime as FluidDataStoreRuntime;
-			const root = (await realRuntime.getChannel(
-				dataObjectRootDirectoryId,
-			)) as ISharedDirectory;
-			if (!this.convertLock && (await props.isConversionNeeded(root))) {
+		const runtimeType = props.runtimeClass ?? FluidDataStoreRuntime;
+		const runtimeClass = class ConverterDataStoreRuntime extends runtimeType {
+			private conversionOpSeqNum = -1;
+			private readonly seqNumsToSkip = new Set<number>();
+
+			public processMessages(messageCollection: IRuntimeMessageCollection): void {
+				let contents: IRuntimeMessagesContent[] = [];
+				const sequenceNumber = messageCollection.envelope.sequenceNumber;
+
+				// ! TODO: extra validation if this client submitted "conversion" op but lost the race (close/reload Container if lost the race)
+				if (
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+					messageCollection.envelope.type === DataStoreMessageType.ChannelOp &&
+					messageCollection.messagesContent.some((val) => val.contents === "conversion")
+				) {
+					if (this.conversionOpSeqNum === -1) {
+						// This is the first conversion op we've seen
+						this.conversionOpSeqNum = sequenceNumber;
+					} else {
+						// Skip seqNums that lost the race
+						this.seqNumsToSkip.add(sequenceNumber);
+					}
+				}
+
+				contents = messageCollection.messagesContent.filter(
+					(val) => val.contents !== "conversion",
+				);
+
+				if (this.seqNumsToSkip.has(sequenceNumber) || contents.length === 0) {
+					return;
+				}
+
+				super.processMessages({
+					...messageCollection,
+					messagesContent: contents,
+				});
+			}
+
+			public reSubmit(
+				type2: DataStoreMessageType,
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				content: any,
+				localOpMetadata: unknown,
+			): void {
+				if (
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+					type2 === DataStoreMessageType.ChannelOp &&
+					content === "conversion"
+				) {
+					submitConversionOp(this);
+					return;
+				}
+				super.reSubmit(type2, content, localOpMetadata);
+			}
+
+			public removeRoot(): void {
+				this.contexts.delete("root");
+			}
+		};
+
+		const fullConvertDataStore = async (channel: IFluidDataStoreChannel): Promise<void> => {
+			const runtime = channel as FluidDataStoreRuntime;
+			const root = (await runtime.getChannel(dataObjectRootDirectoryId)) as ISharedDirectory;
+			if (!this.convertLock && root.attributes.type === DirectoryFactory.Type) {
 				this.convertLock = true;
 				const data = await props.asyncGetDataForConversion(root);
 
-				realRuntime.maintainOnlyLocal?.(() => {
-					realRuntime.orderSequentially?.(() => {
-						submitConversionOp(realRuntime);
-						props.convertDataObject(realRuntime, root, data);
+				runtime.maintainOnlyLocal?.(() => {
+					runtime.orderSequentially?.(() => {
+						submitConversionOp(runtime);
+						// eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+						(runtime as any).removeRoot();
+						props.convertDataObject(runtime, data);
 					});
 				});
 				this.convertLock = false;
@@ -123,65 +170,18 @@ export class ConverterDataObjectFactory<
 			runtime.submitMessage(DataStoreMessageType.ChannelOp, "conversion", undefined);
 		};
 
-		const runtimeClass = props.runtimeClass ?? FluidDataStoreRuntime;
+		const sharedObjects = [...(props.sharedObjects ?? [])];
+
+		if (!sharedObjects.some((factory) => factory.type === DirectoryFactory.Type)) {
+			// User did not register for directory
+			sharedObjects.push(SharedDirectory.getFactory());
+		}
 
 		super({
 			...props,
 			convertDataStore: fullConvertDataStore,
-			runtimeClass: class ConverterDataStoreRuntime extends runtimeClass {
-				private conversionOpSeqNum = -1;
-				private readonly seqNumsToSkip = new Set<number>();
-
-				public processMessages(messageCollection: IRuntimeMessageCollection): void {
-					let contents: IRuntimeMessagesContent[] = [];
-					const sequenceNumber = messageCollection.envelope.sequenceNumber;
-
-					// ! TODO: extra validation if this client submitted "conversion" op but lost the race (close/reload Container if lost the race)
-					if (
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-						messageCollection.envelope.type === DataStoreMessageType.ChannelOp &&
-						messageCollection.messagesContent.some((val) => val.contents === "conversion")
-					) {
-						if (this.conversionOpSeqNum === -1) {
-							// This is the first conversion op we've seen
-							this.conversionOpSeqNum = sequenceNumber;
-						} else {
-							// Skip seqNums that lost the race
-							this.seqNumsToSkip.add(sequenceNumber);
-						}
-					}
-
-					contents = messageCollection.messagesContent.filter(
-						(val) => val.contents !== "conversion",
-					);
-
-					if (this.seqNumsToSkip.has(sequenceNumber) || contents.length === 0) {
-						return;
-					}
-
-					super.processMessages({
-						...messageCollection,
-						messagesContent: contents,
-					});
-				}
-
-				public reSubmit(
-					type2: DataStoreMessageType,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					content: any,
-					localOpMetadata: unknown,
-				): void {
-					if (
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-						type2 === DataStoreMessageType.ChannelOp &&
-						content === "conversion"
-					) {
-						submitConversionOp(this);
-						return;
-					}
-					super.reSubmit(type2, content, localOpMetadata);
-				}
-			},
+			runtimeClass,
+			sharedObjects,
 		});
 	}
 }

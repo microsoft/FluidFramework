@@ -33,7 +33,6 @@ import type {
 import {
 	InventorySchema,
 	NewTreeInventoryList,
-	newSharedTreeKey,
 	treeConfiguration,
 } from "./newTreeInventoryList.js";
 
@@ -333,25 +332,25 @@ export const LegacyTreeInventoryListFactoryNew = new ConverterDataObjectFactory<
 	type: "legacy-tree-inventory-list",
 	ctor: NewTreeInventoryList,
 	sharedObjects: [LegacySharedTree.getFactory(), SharedTree.getFactory()],
-	isConversionNeeded: async (root) => {
-		return root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey) !== undefined;
-	} /* isConversionNeeded */,
 	asyncGetDataForConversion: async (root) => {
 		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 		return root.get<IFluidHandle<LegacySharedTree>>(legacySharedTreeKey)!.get();
-	} /* asyncGetDataForConversion */,
-	convertDataObject: (runtime, root, tree) => {
-		const rootNode = tree.currentView.getViewNode(tree.currentView.root);
-		const inventoryItemsNodeIds = tree.currentView
+	},
+	convertDataObject: (runtime, legacyTree) => {
+		const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
+		const inventoryItemsNodeIds = legacyTree.currentView
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			.getViewNode(rootNode.traits.get("inventory" as TraitLabel)![0])
 			.traits.get("inventoryItems" as TraitLabel);
 		const inventoryItems =
 			inventoryItemsNodeIds?.map((val) =>
-				makeInventoryItemFromInventoryItemNode(tree, tree.currentView.getViewNode(val)),
+				makeInventoryItemFromInventoryItemNode(
+					legacyTree,
+					legacyTree.currentView.getViewNode(val),
+				),
 			) ?? [];
 
-		const newSharedTree = SharedTree.create(runtime);
+		const newSharedTree = SharedTree.create(runtime, "root");
 		const view = newSharedTree.viewWith(treeConfiguration);
 		view.initialize(
 			new InventorySchema({
@@ -363,7 +362,5 @@ export const LegacyTreeInventoryListFactoryNew = new ConverterDataObjectFactory<
 			}),
 		);
 		view.dispose();
-		root.set(newSharedTreeKey, newSharedTree.handle);
-		root.delete(legacySharedTreeKey);
-	} /* convertDataStore */,
+	},
 });

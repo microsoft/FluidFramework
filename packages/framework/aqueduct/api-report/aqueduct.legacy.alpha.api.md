@@ -51,15 +51,14 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 }
 
 // @alpha @legacy
-export class ConverterDataObjectFactory<TObj extends DataObject<I>, TConversionData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactory<TObj, I> {
+export class ConverterDataObjectFactory<TObj extends TreeDataObject<I>, TConversionData, I extends DataObjectTypes = DataObjectTypes> extends TreeDataObjectFactory<TObj, I> {
     constructor(props: ConverterDataObjectFactoryProps<TObj, TConversionData, I>);
 }
 
 // @alpha @legacy
 export interface ConverterDataObjectFactoryProps<TObj extends PureDataObject<I>, TConversionData, I extends DataObjectTypes = DataObjectTypes> extends DataObjectFactoryProps<TObj, I> {
     asyncGetDataForConversion: (root: ISharedDirectory) => Promise<TConversionData>;
-    convertDataObject: (runtime: FluidDataStoreRuntime, root: ISharedDirectory, data: TConversionData) => void;
-    isConversionNeeded: (root: ISharedDirectory) => Promise<boolean>;
+    convertDataObject: (runtime: FluidDataStoreRuntime, data: TConversionData) => void;
     refreshDataObject?: () => Promise<void>;
 }
 
