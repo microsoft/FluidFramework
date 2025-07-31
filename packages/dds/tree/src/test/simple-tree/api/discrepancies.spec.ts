@@ -147,12 +147,6 @@ describe("Schema Discrepancies", () => {
 		class MapNode3 extends schemaFactory.mapAlpha(testTreeNodeName, ArrayNode) {}
 		const mapNodeSchema3 = SchemaFactory.required(MapNode3);
 
-		class MapNode4 extends schemaFactory.mapAlpha(testTreeNodeName, [
-			SchemaFactory.number,
-			SchemaFactory.string,
-		]) {}
-		const mapNodeSchema4 = SchemaFactory.optional(MapNode4);
-
 		assert.deepEqual(
 			[
 				...getDiscrepanciesInAllowedContent(
