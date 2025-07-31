@@ -205,14 +205,14 @@ export function makeSharedArrayOperationGenerator(weights: {
 				random.integer(0, Math.max(0, sharedArray.getMoveEntryIds().length - 1))
 			];
 		if (oldEntryId === undefined) {
-			throw new Error("OLD");
+			throw new Error("No old entryId found for toggleMove operation");
 		}
 		const newEntryId =
 			sharedArray.getMoveEntryIds()[
 				random.integer(0, Math.max(0, sharedArray.getMoveEntryIds().length - 1))
 			];
 		if (newEntryId === undefined) {
-			throw new Error("NEW");
+			throw new Error("No new entryId found for toggleMove operation");
 		}
 		return {
 			type: "toggleMove",
@@ -229,7 +229,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		> =>
 		({ client }) =>
 			criteria(client.channel.get().length);
-	const movelengthSatisfies =
+	const moveLengthSatisfies =
 		(
 			criteria: (length: number) => boolean,
 		): AcceptanceCondition<
@@ -246,7 +246,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		({ client }) =>
 			criteria((client.channel as SharedArrayClass<string>).getInsertEntryIds().length);
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
-	const hasNonzeroMoveLength = movelengthSatisfies((length) => length > 2);
+	const hasNonzeroMoveLength = moveLengthSatisfies((length) => length > 2);
 	const hasNonzeroInsertLength = insertLengthSatisfies((length) => length > 2);
 
 	const syncGenerator = createWeightedGenerator<

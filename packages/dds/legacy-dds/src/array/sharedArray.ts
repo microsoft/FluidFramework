@@ -242,8 +242,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		const entry = this.sharedArray[indexInternal];
 		assert(entry !== undefined, 0xb90 /* Invalid index */);
 		const entryId = entry.entryId;
-		// this.insertEntryId.delete(entryId);
-		// this.moveEntryId.delete(entryId);
 		this.deleteCore(indexInternal);
 
 		const op: IDeleteOperation = {
