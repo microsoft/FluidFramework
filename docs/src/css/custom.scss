@@ -17,7 +17,7 @@
 	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
 
 	// Search bar
-	--ifm-navbar-search-input-placeholder-color: dimgray;
+	--docsearch-muted-color: #666c77 !important;
 	--ifm-navbar-search-input-color: black;
 
 	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
@@ -39,7 +39,7 @@
 	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 
 	// Search bar
-	--ifm-navbar-search-input-placeholder-color: lightgray;
+	--docsearch-muted-color: #748497 !important;
 	--ifm-navbar-search-input-color: white;
 
 	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
