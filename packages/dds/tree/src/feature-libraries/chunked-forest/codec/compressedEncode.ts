@@ -221,7 +221,7 @@ export const anyNodeEncoder: NodeEncoder = {
 		outputBuffer: BufferFormat,
 	): void {
 		// TODO: Fast path uniform chunk content.
-		const shape = context.shapeFromTree(cursor.type);
+		const shape = context.nodeEncoderFromSchema(cursor.type);
 		AnyShape.encodeNode(cursor, context, outputBuffer, shape);
 	},
 
@@ -445,46 +445,60 @@ export function encodeValue(
 	}
 }
 
-export class EncoderContext implements TreeShaper, FieldShaper {
-	private readonly shapesFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> = new Map();
-	private readonly nestedArrays: Map<NodeEncoder, NestedArrayEncoder> = new Map();
+/**
+ * Provides common contextual information during encoding, like schema and policy settings.
+ * Also, provides a cache to avoid duplicating equivalent shapes during a batch of encode operations.
+ * To avoid Shape duplication, any Shapes used in the encoding should either be:
+ * - Singletons defined in a static scope.
+ * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
+ */
+export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
+	private readonly nodeEncodersFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> =
+		new Map();
+	private readonly nestedArrayEncoders: Map<NodeEncoder, NestedArrayEncoder> = new Map();
 	public constructor(
-		private readonly treeEncoder: TreeShapePolicy,
-		private readonly fieldEncoder: FieldShapePolicy,
+		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
+		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 		public readonly idCompressor: IIdCompressor,
 	) {}
 
-	public shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
-		return getOrCreate(this.shapesFromSchema, schemaName, () =>
-			this.treeEncoder(this, schemaName),
+	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
+		return getOrCreate(this.nodeEncodersFromSchema, schemaName, () =>
+			this.nodeEncoderFromPolicy(this, schemaName),
 		);
 	}
 
+	public fieldEncoderFromSchema(fieldSchema: TreeFieldStoredSchema): FieldEncoder {
+		return new LazyFieldEncoder(this, fieldSchema, this.fieldEncoderFromPolicy);
+	}
+
 	public nestedArrayEncoder(inner: NodeEncoder): NestedArrayEncoder {
-		return getOrCreate(this.nestedArrays, inner, () => new NestedArrayEncoder(inner));
-	}
-
-	public shapeFromField(field: TreeFieldStoredSchema): FieldEncoder {
-		return new LazyFieldEncoder(this, field, this.fieldEncoder);
+		return getOrCreate(this.nestedArrayEncoders, inner, () => new NestedArrayEncoder(inner));
 	}
 }
 
-export interface TreeShaper {
-	shapeFromTree(schemaName: TreeNodeSchemaIdentifier): NodeEncoder;
+export interface NodeEncodeBuilder {
+	nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder;
 }
 
-export interface FieldShaper {
-	shapeFromField(field: TreeFieldStoredSchema): FieldEncoder;
+export interface FieldEncodeBuilder {
+	fieldEncoderFromSchema(schema: TreeFieldStoredSchema): FieldEncoder;
 }
 
-export type FieldShapePolicy = (
-	treeShaper: TreeShaper,
-	field: TreeFieldStoredSchema,
+/**
+ * The policy for building a {@link FieldEncoder} for a field.
+ */
+export type FieldEncoderPolicy = (
+	nodeBuilder: NodeEncodeBuilder,
+	schema: TreeFieldStoredSchema,
 ) => FieldEncoder;
 
-export type TreeShapePolicy = (
-	fieldShaper: FieldShaper,
+/**
+ * The policy for building a {@link NodeEncoder} for a node.
+ */
+export type NodeEncoderPolicy = (
+	fieldBuilder: FieldEncodeBuilder,
 	schemaName: TreeNodeSchemaIdentifier,
 ) => NodeEncoder;
 
@@ -492,9 +506,9 @@ class LazyFieldEncoder implements FieldEncoder {
 	private encoderLazy: FieldEncoder | undefined;
 
 	public constructor(
-		public readonly treeShaper: TreeShaper,
-		public readonly field: TreeFieldStoredSchema,
-		private readonly fieldEncoder: FieldShapePolicy,
+		public readonly nodeBuilder: NodeEncodeBuilder,
+		public readonly fieldSchema: TreeFieldStoredSchema,
+		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 	) {}
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -506,7 +520,7 @@ class LazyFieldEncoder implements FieldEncoder {
 
 	private get encoder(): FieldEncoder {
 		if (this.encoderLazy === undefined) {
-			this.encoderLazy = this.fieldEncoder(this.treeShaper, this.field);
+			this.encoderLazy = this.fieldEncoderFromPolicy(this.nodeBuilder, this.fieldSchema);
 		}
 		return this.encoderLazy;
 	}
