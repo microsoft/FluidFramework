@@ -17,7 +17,7 @@ import type {
 	// eslint-disable-next-line import/no-internal-modules
 } from "openai/resources/index.mjs";
 import { v4 as uuidv4 } from "uuid";
-import { z } from "zod";
+import { z, type ZodTypeAny } from "zod";
 
 import type {
 	DebugEventLogHandler,
@@ -487,7 +487,7 @@ async function* generateEdits(
 async function getStructuredOutputFromLlm<T>(
 	prompt: string,
 	openAi: OpenAiClientOptions,
-	structuredOutputSchema: Zod.ZodTypeAny,
+	structuredOutputSchema: ZodTypeAny,
 	description?: string,
 	tokensUsed?: TokenUsage,
 	debugOptions?: {
