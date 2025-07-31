@@ -246,7 +246,8 @@ type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 // @alpha
 export enum FluidClientVersion {
     EnableUnstableFeatures,
-    v2_0 = 2
+    v2_0 = 2,
+    v2_52 = 2.052
 }
 
 // @alpha

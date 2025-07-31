@@ -51,6 +51,7 @@ import {
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
+	isTreeNode,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -492,14 +493,14 @@ export const TreeAlpha: TreeAlpha = {
 	exportConcise,
 
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
+		if (isTreeValue(node)) {
+			return node;
+		}
 		const config: TreeEncodingOptions = { ...options };
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return verboseFromCursor(
-			cursor,
-			tryGetSchema(node) ?? fail(0xace /* invalid input */),
-			config,
-		);
+		const kernel = getKernel(node);
+		return verboseFromCursor(cursor, kernel.context, config);
 	},
 
 	exportCompressed(
@@ -709,17 +710,14 @@ function exportConcise(
 	node: TreeNode | TreeLeafValue | undefined,
 	options?: TreeEncodingOptions,
 ): ConciseTree | undefined {
-	if (node === undefined) {
-		return undefined;
+	if (!isTreeNode(node)) {
+		return node;
 	}
 	const config: TreeEncodingOptions = { ...options };
 
+	const kernel = getKernel(node);
 	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	return conciseFromCursor(
-		cursor,
-		tryGetSchema(node) ?? fail(0xacd /* invalid input */),
-		config,
-	);
+	return conciseFromCursor(cursor, kernel.context, config);
 }
 
 /**
