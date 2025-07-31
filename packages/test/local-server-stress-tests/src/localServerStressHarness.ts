@@ -443,8 +443,6 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 		if (isOperationType<AddClient>("addClient", op)) {
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
-			const pendingLocalState = await state.client.getPendingLocalState?.();
-			assert(pendingLocalState !== undefined, "pending local state must be available");
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
@@ -452,7 +450,6 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				url,
 				state.seed,
 				options,
-				pendingLocalState,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -525,8 +522,6 @@ function mixinAttach<TOperation extends BaseOperation>(
 
 			await clientA.container.attach(createLocalResolverCreateNewRequest("stress test"));
 			const url = await clientA.container.getAbsoluteUrl("");
-			const pendingLocalState = await clientA.getPendingLocalState?.();
-			assert(pendingLocalState !== undefined, "pending local state must be available");
 			assert(url !== undefined, "container must have a url");
 			// After attaching, we use a newly loaded client as a read-only client for consistency comparison validation.
 			// This makes debugging easier as the state of a client is easier to interpret if it has no local changes.
@@ -538,7 +533,6 @@ function mixinAttach<TOperation extends BaseOperation>(
 				url,
 				state.seed,
 				options,
-				pendingLocalState,
 			);
 
 			return {
@@ -795,7 +789,7 @@ async function loadClient(
 	url: string,
 	seed: number,
 	options: LocalServerStressOptions,
-	pendingLocalState: string,
+	pendingLocalState?: string,
 ): Promise<Client> {
 	const container = await timeoutAwait(
 		loadExistingContainer({
@@ -1422,17 +1416,20 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 		LocalServerStressState
 	> = async (state, op) => {
 		if (isOperationType<GetClientPendingState>("getClientPendingState", op)) {
-			const sourceClient = state.clients.find((c) => c.tag === op.sourceClientTag);
-			assert(sourceClient !== undefined, `Client ${op.sourceClientTag} not found`);
+			const sourceClientIndex = state.clients.findIndex((c) => c.tag === op.sourceClientTag);
+			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
+			const sourceClient = state.clients[sourceClientIndex];
 
 			assert(
 				typeof sourceClient.getPendingLocalState === "function",
-				`Client ${op.sourceClientTag} does not have pending local state`,
+				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
 			);
+
 			const pendingLocalState = await sourceClient.getPendingLocalState?.();
 
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
+
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
@@ -1442,9 +1439,17 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 				options,
 				pendingLocalState,
 			);
+
+			// Remove and dispose the source client
+			state.clients.splice(sourceClientIndex, 1);
+			sourceClient.container.dispose();
+
+			// Add the new client
 			state.clients.push(newClient);
 			return state;
 		}
+
+		// Fallback to original reducer for other operations
 		return model.reducer(state, op);
 	};
 
