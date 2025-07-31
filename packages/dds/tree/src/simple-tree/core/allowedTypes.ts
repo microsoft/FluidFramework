@@ -379,9 +379,7 @@ export function checkForUninitializedSchema(
 ): void {
 	if (schema === undefined) {
 		throw new UsageError(
-			`Encountered an undefined schema.
-			This could indicate that some referenced schema has not yet been instantiated.
-			Consider using a lazy schema reference (like "() => schema") or delaying the evaluation of the lazy reference if one is already being used.`,
+			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated. Consider using a lazy schema reference (like "() => schema") or delaying the evaluation of the lazy reference if one is already being used.`
 		);
 	}
 }
