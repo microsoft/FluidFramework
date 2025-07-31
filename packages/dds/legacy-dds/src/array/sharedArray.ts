@@ -829,7 +829,37 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		deadEntry.isDeleted = true;
 	}
 
-	protected applyStashedOp(_content: unknown): void {
-		throw new Error("Not implemented");
+	protected applyStashedOp(content: unknown): void {
+		const arrayContent = content as ISharedArrayOperation<T>;
+
+		switch (arrayContent.type) {
+			case OperationType.insertEntry: {
+				const index = this.findIndexOfEntryId(arrayContent.insertAfterEntryId) + 1;
+				this.insert(index, arrayContent.value as Serializable<typeof arrayContent.value> & T);
+				break;
+			}
+			case OperationType.deleteEntry: {
+				const index = this.findIndexOfEntryId(arrayContent.entryId);
+				this.delete(index);
+				break;
+			}
+			case OperationType.moveEntry: {
+				const fromIndex = this.findIndexOfEntryId(arrayContent.entryId);
+				const toIndex = this.findIndexOfEntryId(arrayContent.insertAfterEntryId) + 1;
+				this.move(fromIndex, toIndex);
+				break;
+			}
+			case OperationType.toggle: {
+				this.toggle(arrayContent.entryId);
+				break;
+			}
+			case OperationType.toggleMove: {
+				this.toggleMove(arrayContent.entryId, arrayContent.changedToEntryId);
+				break;
+			}
+			default: {
+				throw new Error(`Unknown operation type`);
+			}
+		}
 	}
 }

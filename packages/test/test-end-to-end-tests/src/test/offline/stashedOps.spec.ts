@@ -45,6 +45,7 @@ import type {
 	ISequenceIntervalCollection,
 	SharedString,
 } from "@fluidframework/sequence/internal";
+import { SharedArray } from "@fluidframework/sequence-array/internal";
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
@@ -71,6 +72,7 @@ const counterId = "counterKey";
 const directoryId = "directoryKey";
 const collectionId = "collectionKey";
 const treeId = "treeKey";
+const arrayId = "arrayKey";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -126,6 +128,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
 		[treeId, SharedTree.getFactory()],
+		[arrayId, SharedArray.getFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
