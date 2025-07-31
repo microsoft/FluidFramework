@@ -5,72 +5,17 @@
 
 import { strict as assert } from "node:assert";
 
+import { EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
+import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
-	EmptyKey,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
-	TreeStoredSchemaRepository,
-	storedEmptyFieldSchema,
-} from "../../../core/index.js";
-import {
-	type FullSchemaPolicy,
-	defaultSchemaPolicy,
-} from "../../../feature-libraries/index.js";
-import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import {
-	getStoredSchema,
 	toStoredSchema,
 	SchemaCompatibilityTester,
-	type TreeNodeSchema,
-	type SimpleNodeSchema,
 	SchemaFactoryAlpha,
 	getAllowedContentDiscrepancies,
 	TreeViewConfigurationAlpha,
+	schemaStatics,
 } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
-import { schemaStatics } from "../../../simple-tree/index.js";
-
-class TestSchemaRepository extends TreeStoredSchemaRepository {
-	public constructor(
-		public readonly policy: FullSchemaPolicy,
-		data?: TreeStoredSchema,
-	) {
-		super(data);
-	}
-
-	/**
-	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-	 * @returns true iff update was performed.
-	 */
-	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
-		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
-			this.rootFieldSchemaData = schema;
-			this._events.emit("afterSchemaChange", this);
-			return true;
-		}
-		return false;
-	}
-	/**
-	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-	 * @returns true iff update was performed.
-	 */
-	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
-		const storedSchema = getStoredSchema(schema);
-		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
-		const original = this.nodeSchema.get(name);
-		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
-			this.nodeSchemaData.set(name, storedSchema);
-			this._events.emit("afterSchemaChange", this);
-			return true;
-		}
-		return false;
-	}
-}
+import { TestSchemaRepository } from "../../utils.js";
 
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,
