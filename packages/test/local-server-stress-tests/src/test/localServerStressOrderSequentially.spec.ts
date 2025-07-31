@@ -10,7 +10,6 @@ import {
 	makeGenerator,
 	reducer,
 	saveFailures,
-	saveSuccesses,
 	type StressOperations,
 } from "../baseModel.js";
 import {
@@ -94,11 +93,11 @@ describe("Local Server Stress with rollback", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		skipMinimization: true,
+		// skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		only: [2],
+		// only: [91],
 		saveFailures,
-		saveSuccesses,
+		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
 			...[12], // Values differ at key
