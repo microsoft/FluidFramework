@@ -73,7 +73,6 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
 
-
 	public readonly listeners: {
 		joined: ((props: { clientId: ClientConnectionId; canWrite: boolean }) => void)[];
 		disconnected: (() => void)[];
