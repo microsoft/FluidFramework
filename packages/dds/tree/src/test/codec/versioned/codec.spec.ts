@@ -5,17 +5,14 @@
 
 import { strict as assert } from "node:assert";
 
-import {
-	type FluidClientVersion,
-	type ICodecFamily,
-	type IJsonCodec,
-	makeCodecFamily,
-} from "../../../codec/index.js";
+import { type ICodecFamily, type IJsonCodec, makeCodecFamily } from "../../../codec/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { ClientVersionDispatchingCodecBuilder } from "../../../codec/versioned/codec.js";
 import { validateUsageError } from "../../utils.js";
 import { pkgVersion } from "../../../packageVersion.js";
+import { gt } from "semver-ts";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 
 describe("versioned Codecs", () => {
 	describe("ClientVersionDispatchingCodecBuilder", () => {
@@ -42,16 +39,17 @@ describe("versioned Codecs", () => {
 		]);
 		const builder = new ClientVersionDispatchingCodecBuilder(
 			family,
-			(oldestCompatibleClient: FluidClientVersion) => (oldestCompatibleClient > 5 ? 2 : 1),
+			(oldestCompatibleClient: MinimumVersionForCollab) =>
+				gt(oldestCompatibleClient, "5.0.0") ? 2 : 1,
 		);
 
 		it("round trip", () => {
 			const codec1 = builder.build({
-				oldestCompatibleClient: 2 as FluidClientVersion,
+				oldestCompatibleClient: "2.0.0" as MinimumVersionForCollab,
 				jsonValidator: typeboxValidator,
 			});
 			const codec2 = builder.build({
-				oldestCompatibleClient: 6 as FluidClientVersion,
+				oldestCompatibleClient: "6.0.0" as MinimumVersionForCollab,
 				jsonValidator: typeboxValidator,
 			});
 			const v1 = codec1.encode(42);
