@@ -94,9 +94,7 @@ describe("simple-tree tree", () => {
 			enableSchemaValidation: true,
 		});
 
-		// This is skipped because schema validation is not performed on initialization.
-		// If the option is added in the future, enable this.
-		it.skip("invalid default - initialize", () => {
+		it("invalid default - initialize", () => {
 			const view = getView(config);
 			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
 		});
