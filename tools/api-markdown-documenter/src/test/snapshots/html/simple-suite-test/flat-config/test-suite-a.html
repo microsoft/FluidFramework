@@ -26,14 +26,16 @@
       <p>Also, here is a link test, including a bad link, because we should have some reasonable support if this happens:</p>
       <ul>
         <li>Good link (no alias): <a href="docs/test-suite-a#testclass-class">TestClass</a></li>
-        <li>Good link (with alias): <i>function alias text</i></li>
-        <li>Bad link (no alias): <i>InvalidItem</i></li>
-        <li>Bad link (with alias): <i>even though I link to an invalid item, I would still like this text to be rendered</i></li>
+        <li>Good link (with alias): <em>function alias text</em></li>
+        <li>Bad link (no alias): <em>InvalidItem</em></li>
+        <li>Bad link (with alias): <em>even though I link to an invalid item, I would still like this text to be rendered</em></li>
       </ul>
     </section>
     <section>
       <h1 id="test-suite-a-example">Example</h1>
-      <p>A test example</p><code>const foo = bar;</code>
+      <p>A test example</p>
+      <pre><code class="language-typescript">const foo = bar;
+</code></pre>
     </section>
     <section>
       <h1>Interfaces</h1>
@@ -721,7 +723,7 @@
             <tbody>
               <tr>
                 <td><a href="docs/test-suite-a#testabstractclass-_constructor_-constructor">(constructor)(privateProperty, protectedProperty)</a></td>
-                <td>This is a <i>{@customTag constructor}</i>.</td>
+                <td>This is a <em>{@customTag constructor}</em>.</td>
               </tr>
             </tbody>
           </table>
@@ -794,7 +796,7 @@
           <section>
             <h4 id="testabstractclass-_constructor_-constructor">(constructor)</h4>
             <section>
-              <p>This is a <i>{@customTag constructor}</i>.</p>
+              <p>This is a <em>{@customTag constructor}</em>.</p>
             </section>
             <section>
               <h5 id="_constructor_-signature">Signature</h5><code>protected constructor(privateProperty: number, protectedProperty: TestEnum);</code>
@@ -1312,11 +1314,15 @@
           <h3 id="testenum-examples">Examples</h3>
           <section>
             <h4 id="testenum-example1">Example 1</h4>
-            <p>Some example</p><code>const foo = TestEnum.TestEnumValue1</code>
+            <p>Some example</p>
+            <pre><code class="language-typescript">const foo = TestEnum.TestEnumValue1
+</code></pre>
           </section>
           <section>
             <h4 id="testenum-example2">Example 2</h4>
-            <p>Another example</p><code>const bar = TestEnum.TestEnumValue2</code>
+            <p>Another example</p>
+            <pre><code class="language-ts">const bar = TestEnum.TestEnumValue2
+</code></pre>
           </section>
         </section>
         <section>
@@ -1618,11 +1624,19 @@
           <h3 id="testnamespace-examples">Examples</h3>
           <section>
             <h4 id="testnamespace-example1">Example: TypeScript Example</h4>
-            <p></p><code>const foo: Foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
+            <pre><code class="language-typescript">const foo: Foo = {
+	bar: "Hello world!";
+	baz = 42;
+};
+</code></pre>
           </section>
           <section>
             <h4 id="testnamespace-example2">Example: JavaScript Example</h4>
-            <p></p><code>const foo = {<br>bar: "Hello world!";<br>baz = 42;<br>};</code>
+            <pre><code class="language-javascript">const foo = {
+	bar: "Hello world!";
+	baz = 42;
+};
+</code></pre>
           </section>
         </section>
         <section>

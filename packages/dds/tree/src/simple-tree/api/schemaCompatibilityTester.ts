@@ -8,11 +8,10 @@ import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { TreeStoredSchema } from "../../core/index.js";
 import {
 	allowsRepoSuperset,
+	defaultSchemaPolicy,
 	FieldKinds,
-	type FullSchemaPolicy,
 	isNeverTree,
 } from "../../feature-libraries/index.js";
-import type { FieldSchema } from "../fieldSchema.js";
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
 import {
@@ -23,19 +22,20 @@ import {
 	type FieldDiscrepancy,
 } from "../discrepancies.js";
 import { toStoredSchema } from "../toStoredSchema.js";
+import type { TreeSchema } from "./configuration.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
- * A collection of View information for schema, including policy.
+ * A collection of View information for schema
  * @remarks
  * This contains everything needed to determine compatibility with a given stored schema.
  */
 export class SchemaCompatibilityTester {
-	/**
-	 * @param viewSchemaRoot - Schema for the root field.
-	 */
 	public constructor(
-		public readonly policy: FullSchemaPolicy,
-		public readonly viewSchemaRoot: FieldSchema,
+		/**
+		 * Schema for the view
+		 */
+		public readonly viewSchema: TreeSchema,
 	) {}
 
 	/**
@@ -51,6 +51,9 @@ export class SchemaCompatibilityTester {
 	public checkCompatibility(
 		stored: TreeStoredSchema,
 	): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+		// The public API surface assumes defaultSchemaPolicy
+		const policy = defaultSchemaPolicy;
+
 		// View schema allows a subset of documents that stored schema does, and the discrepancies are allowed by policy
 		// determined by the view schema (i.e. objects with extra optional fields in the stored schema have opted into allowing this.
 		// In the future, this would also include things like:
@@ -68,8 +71,7 @@ export class SchemaCompatibilityTester {
 					// stored schema.
 					if (
 						discrepancy.stored.some(
-							(identifier) =>
-								!isNeverTree(this.policy, stored, stored.nodeSchema.get(identifier)),
+							(identifier) => !isNeverTree(policy, stored, stored.nodeSchema.get(identifier)),
 						)
 					) {
 						// Stored schema has extra allowed types that the view schema does not.
@@ -93,10 +95,16 @@ export class SchemaCompatibilityTester {
 					if (result === PosetComparisonResult.Greater) {
 						// Stored schema is more relaxed than view schema.
 						canUpgrade = false;
+						// Get the node this field is under, if any:
+						const treeNodeSchema =
+							discrepancy.identifier === undefined
+								? undefined
+								: this.viewSchema.definitions.get(discrepancy.identifier);
 						if (
 							discrepancy.view === FieldKinds.forbidden.identifier &&
-							discrepancy.identifier !== undefined &&
-							this.policy.allowUnknownOptionalFields(discrepancy.identifier)
+							treeNodeSchema !== undefined &&
+							isObjectNodeSchema(treeNodeSchema) &&
+							treeNodeSchema.allowUnknownOptionalFields === true
 						) {
 							// When the application has opted into it, we allow viewing documents which have additional
 							// optional fields in the stored schema that are not present in the view schema.
@@ -127,7 +135,7 @@ export class SchemaCompatibilityTester {
 			}
 		};
 
-		for (const discrepancy of getAllowedContentDiscrepancies(this.viewSchemaRoot, stored)) {
+		for (const discrepancy of getAllowedContentDiscrepancies(this.viewSchema.root, stored)) {
 			if (!canView && !canUpgrade) {
 				break;
 			}
@@ -148,7 +156,7 @@ export class SchemaCompatibilityTester {
 					} else if (discrepancy.view === undefined) {
 						const storedIsNever =
 							storedNodeSchema !== undefined
-								? isNeverTree(this.policy, stored, storedNodeSchema)
+								? isNeverTree(policy, stored, storedNodeSchema)
 								: true;
 						if (!storedIsNever) {
 							// Stored schema has a node type that the view schema doesn't know about.
@@ -183,7 +191,7 @@ export class SchemaCompatibilityTester {
 
 		if (canUpgrade) {
 			assert(
-				allowsRepoSuperset(this.policy, stored, toStoredSchema(this.viewSchemaRoot)),
+				allowsRepoSuperset(policy, stored, toStoredSchema(this.viewSchema.root)),
 				0xbf2 /* View schema must be a superset of the stored schema to allow upgrade */,
 			);
 		}

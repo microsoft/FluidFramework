@@ -21,6 +21,8 @@ import type {
 	TableRowNode,
 	ListItemNode,
 	ListNode,
+	MarkdownBlockContentNode,
+	MarkdownPhrasingContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -37,6 +39,7 @@ import {
 	tableRowToHtml,
 	listItemToHtml,
 	listToHtml,
+	markdownNodeToHtml,
 } from "../default-transformations/index.js";
 
 /**
@@ -45,7 +48,7 @@ import {
  *
  * @remarks
  *
- * The system supplies a suite of default transformations for all nodes of types {@link DocumentationNode."type"}.
+ * The system supplies a suite of default transformations for all {@link DocumentationNode} types exported by this library.
  * For any other custom {@link DocumentationNode}s, transformations must be specified or the system will throw an error
  * when handling an unknown node kind.
  *
@@ -88,6 +91,10 @@ export const defaultTransformations: Transformations = {
 	lineBreak: () => hastLineBreak,
 	link: (node, context) => linkToHtml(node as LinkNode, context),
 	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
+	markdownBlockContent: (node, context) =>
+		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
+	markdownPhrasingContent: (node, context) =>
+		markdownNodeToHtml(node as MarkdownPhrasingContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
 	horizontalRule: () => hastHorizontalRule,
 	list: (node, context) => listToHtml(node as ListNode, context),

@@ -27,19 +27,19 @@ import {
 	type DocPlainText,
 	type DocSection,
 } from "@microsoft/tsdoc";
+import type { Nodes, Parent } from "mdast";
 
 import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
-	type DocumentationNode,
-	type DocumentationParentNode,
 	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
 	ListItemNode,
 	ListNode,
+	MarkdownBlockContentNode,
 	ParagraphNode,
 	type PhrasingContent,
 	PlainTextNode,
@@ -64,7 +64,7 @@ import {
 	doesItemKindRequireOwnDocument,
 	getLinkForApiItem,
 } from "../ApiItemTransformUtilities.js";
-import { transformTsdoc } from "../TsdocNodeTransforms.js";
+import { transformAndWrapTsdoc, transformTsdoc } from "../TsdocNodeTransforms.js";
 import {
 	HierarchyKind,
 	type ApiItemTransformationConfiguration,
@@ -303,7 +303,7 @@ export function createSeeAlsoSection(
 
 	const contents: BlockContent[] = [];
 	for (const seeBlock of seeBlocks) {
-		contents.push(...transformTsdoc(seeBlock, apiItem, config));
+		contents.push(...transformAndWrapTsdoc(seeBlock, apiItem, config));
 	}
 
 	return wrapInSection(contents, {
@@ -476,7 +476,7 @@ export function createSummarySection(
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-		const sectionContents = transformTsdoc(
+		const sectionContents = transformAndWrapTsdoc(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
 			config,
@@ -511,7 +511,7 @@ export function createRemarksSection(
 	}
 
 	return wrapInSection(
-		transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
+		transformAndWrapTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
 		{ title: "Remarks", id: `${getFileSafeNameForApiItem(apiItem)}-remarks` },
 	);
 }
@@ -542,7 +542,7 @@ export function createThrowsSection(
 
 	const contents: BlockContent[] = [];
 	for (const throwsBlock of throwsBlocks) {
-		contents.push(...transformTsdoc(throwsBlock, apiItem, config));
+		contents.push(...transformAndWrapTsdoc(throwsBlock, apiItem, config));
 	}
 
 	return wrapInSection(contents, {
@@ -580,7 +580,7 @@ export function createDeprecationNoticeSection(
 				{ bold: true },
 			),
 		]),
-		...transformTsdoc(deprecatedBlock, apiItem, config),
+		...transformAndWrapTsdoc(deprecatedBlock, apiItem, config),
 	]);
 }
 
@@ -714,9 +714,7 @@ function createExampleSection(
 ): SectionNode {
 	const { logger } = config;
 
-	let exampleSection: SectionNode = new SectionNode(
-		transformTsdoc(example.content, example.apiItem, config),
-	);
+	let transformedExampleContent = transformTsdoc(example.content, example.apiItem, config);
 
 	// Per TSDoc spec, if the `@example` comment has content on the same line as the tag,
 	// that line is expected to be treated as the title.
@@ -741,14 +739,23 @@ function createExampleSection(
 		logger?.verbose(
 			`Found example comment with title "${exampleTitle}". Adjusting output to adhere to TSDoc spec...`,
 		);
-		exampleSection = stripTitleFromExampleComment(exampleSection, exampleTitle, logger);
+		transformedExampleContent = stripTitleFromExampleComment(
+			transformedExampleContent,
+			exampleTitle,
+			logger,
+		);
 	}
 
 	const headingId = `${getFileSafeNameForApiItem(example.apiItem)}-example${
 		example.exampleNumber ?? ""
 	}`;
 
-	return wrapInSection(exampleSection.children, {
+	const sectionChildren = transformedExampleContent.map(
+		(node) => new MarkdownBlockContentNode(node),
+	);
+
+	// Always emit the section, even if the body is empty after stripping out the title.
+	return wrapInSection(sectionChildren, {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -806,76 +813,63 @@ function extractTitleFromExampleSection(sectionNode: DocSection): string | undef
  *
  * In the case where the output is not in a form we expect, we will log an error and return the node we were given,
  * rather than making a copy.
+ *
+ * @returns The updated node, if any content remains. Otherwise, `undefined`.
  */
-function stripTitleFromExampleComment<TNode extends DocumentationParentNode>(
-	node: TNode,
+function stripTitleFromExampleComment<TNode extends Nodes>(
+	nodes: readonly TNode[],
 	title: string,
 	logger: Logger | undefined,
-): TNode {
+): TNode[] {
 	// Verify title matches text of first plain text in output.
 	// This is an expected invariant. If this is not the case, then something has gone wrong.
 	// Note: if we ever allow consumers to provide custom DocNode transformations, this invariant will likely
 	// disappear, and this code will need to be updated to function differently.
 	// Reference: <https://tsdoc.org/pages/tags/example/>
-	const children = node.children;
-	if (children.length === 0) {
+	if (nodes.length === 0) {
 		logger?.error(
 			"Transformed example paragraph begins with empty parent node. This is unexpected and indicates a bug.",
 		);
-		return node;
+		return [];
 	}
 
-	const firstChild = children[0];
-	if (firstChild.isParent) {
-		const newFirstChild = stripTitleFromExampleComment(
-			firstChild as DocumentationParentNode,
-			title,
-			logger,
-		);
-
-		const newChildren: DocumentationNode[] = [newFirstChild, ...children.slice(1)];
-
-		return {
-			...node,
-			children: newChildren,
-			hasChildren: newChildren.length > 0,
+	const firstChild = nodes[0];
+	if ((firstChild as Partial<Parent>).children !== undefined) {
+		const newFirst = {
+			...firstChild,
+			children: stripTitleFromExampleComment((firstChild as Parent).children, title, logger),
 		};
+
+		const remaining = nodes.slice(1);
+
+		// If there are no remaining children under the first item after stripping out the title, omit that item altogether.
+		return newFirst.children.length === 0 ? remaining : [newFirst, ...remaining];
 	}
 
-	if (firstChild.isLiteral) {
-		if (firstChild.type === "text") {
-			const text = (firstChild as PlainTextNode).value;
-			if (text === title) {
-				// Remove from children, and remove any trailing line breaks
-				const newChildren = children.slice(1);
-				while (newChildren.length > 0 && newChildren[0].type === "lineBreak") {
-					newChildren.shift();
-				}
-				return {
-					...node,
-					children: newChildren,
-					hasChildren: newChildren.length > 0,
-				};
-			} else {
-				logger?.error(
-					"Transformed example paragraph does not begin with expected title. This is unexpected and indicates a bug.",
-					`Expected: "${title}".`,
-					`Found: "${text}".`,
-				);
-				return node;
+	if (firstChild.type === "text") {
+		const text = firstChild.value;
+		if (text === title) {
+			// Remove the title element from the input list, and remove any intervening line breaks
+			const remaining = nodes.slice(1);
+			while (remaining.length > 0 && remaining[0].type === "break") {
+				remaining.shift();
 			}
+			// If there are no remaining children under this parent after stripping out the title, omit this parent node.
+			return remaining;
 		} else {
 			logger?.error(
-				"Transformed example paragraph does not begin with plain text. This is unexpected and indicates a bug.",
+				"Transformed example paragraph does not begin with expected title. This is unexpected and indicates a bug.",
+				`Expected: "${title}".`,
+				`Found: "${text}".`,
 			);
-			return node;
+			return [...nodes];
 		}
+	} else {
+		logger?.error(
+			"Transformed example paragraph does not begin with plain text. This is unexpected and indicates a bug.",
+		);
+		return [...nodes];
 	}
-
-	logger?.error(
-		"Transformed example paragraph begins with a non-literal, non-parent node. This is unexpected and indicates a bug.",
-	);
-	return node;
 }
 
 /**
@@ -930,7 +924,7 @@ export function createReturnsSection(
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
-			children.push(...transformTsdoc(returnsBlock, apiItem, config));
+			children.push(...transformAndWrapTsdoc(returnsBlock, apiItem, config));
 		}
 	}
 

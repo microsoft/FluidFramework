@@ -57,6 +57,8 @@ export {
 	LinkNode,
 	ListItemNode,
 	ListNode,
+	MarkdownBlockContentNode,
+	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	type PhrasingContent,
 	type PhrasingContentMap,
@@ -87,12 +89,23 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
+	blockContentToMarkdown,
+	type BlockContentTransformations as BlockContentToMarkdownTransformations,
+	documentToMarkdown,
+	phrasingContentToMarkdown,
+	type PhrasingContentTransformations as PhrasingContentToMarkdownTransformations,
+	sectionContentToMarkdown,
+	type Transformation as ToMarkdownTransformation,
+	type TransformationConfiguration as ToMarkdownConfiguration,
+	type TransformationContext as ToMarkdownContext,
+	type Transformations as ToMarkdownTransformations,
+} from "./documentation-domain-to-markdown/index.js";
+export {
 	DocumentWriter,
 	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,
-	type MarkdownRenderContext,
-	type MarkdownRenderers,
-	type MarkdownRenderConfiguration,
+	type RenderDocumentAsMarkdownConfiguration,
+	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";

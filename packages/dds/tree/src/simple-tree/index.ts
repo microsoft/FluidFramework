@@ -54,7 +54,11 @@ export {
 	type FlexList,
 	type FlexListToUnion,
 	type ExtractItemType,
+	walkNodeSchema,
+	walkAllowedTypes,
+	type SchemaVisitor,
 } from "./core/index.js";
+export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
 export {
 	type ITree,
@@ -218,7 +222,6 @@ export {
 	type InsertableObjectFromAnnotatedSchemaRecord,
 	type TreeObjectNode,
 	setField,
-	createUnknownOptionalFieldPolicy,
 	isRecordNodeSchema,
 	type RecordNodeCustomizableSchema,
 	type RecordNodeInsertableData,

@@ -30,7 +30,7 @@ import {
 	numberSchema,
 	stringSchema,
 } from "../leafNodeSchema.js";
-import { isArrayNodeSchema, isObjectNodeSchema } from "../node-kinds/index.js";
+import { isObjectNodeSchema } from "../node-kinds/index.js";
 
 /**
  * Options for how to interpret or encode a tree when schema information is available.
@@ -42,7 +42,15 @@ export interface TreeEncodingOptions {
 	 * If false, use the property keys.
 	 * @remarks
 	 * Has no effect on {@link NodeKind}s other than {@link NodeKind.Object}.
+	 *
+	 * {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|Unknown optional field} will be omitted when using property keys.
 	 * @defaultValue false.
+	 * @privateRemarks
+	 * TODO AB#43548:
+	 * Replace this with an enum that provides three options:
+	 * - `usePropertyKeys`: use property keys. Supported for import and export.
+	 * - `allStoredKeys`: use stored keys, and include unknown optional fields. Supported for export only, at least for the short term.
+	 * - `knownStoredKeys`: use stored keys but do not include unknown optional fields. Supported for import and export.
 	 */
 	readonly useStoredKeys?: boolean;
 }
@@ -77,19 +85,31 @@ export type CustomTreeNode<TChild> = TChild[] | { [key: string]: TChild };
 
 /**
  * Builds an {@link CustomTree} from a cursor in Nodes mode.
+ *
+ * @param reader - The cursor to read from.
+ * @param options - Options for how to interpret the tree.
+ * @param storedSchema - Schema which the cursor must comply with.
+ * Must be be possible to map to a view schema (mainly that sequences can only occur in the special ArrayNode pattern).
+ * Must include even unknown optional fields.
+ * @param schema - View schema used to derive the property keys for fields when `options` selects them via {@link TreeEncodingOptions.useStoredKeys}.
+ * @param childHandler - Function to handle children of the cursor.
+ *
+ * @remarks
+ * This can handle unknown optional fields only because they are included in the `storedSchema` and `schema` is only needed when using property keys, which also skips unknown optional fields.
  */
 export function customFromCursor<TChild>(
 	reader: ITreeCursor,
 	options: Required<TreeEncodingOptions>,
+	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 	childHandler: (
 		reader: ITreeCursor,
 		options: Required<TreeEncodingOptions>,
+		storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 		schema: ReadonlyMap<string, TreeNodeSchema>,
 	) => TChild,
 ): CustomTree<TChild> {
 	const type = reader.type;
-	const nodeSchema = schema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
 
 	switch (type) {
 		case numberSchema.identifier:
@@ -105,28 +125,43 @@ export function customFromCursor<TChild>(
 			return reader.value;
 		default: {
 			assert(reader.value === undefined, 0xa54 /* out of schema: unexpected value */);
-			if (isArrayNodeSchema(nodeSchema)) {
+			const nodeSchema =
+				storedSchema.get(type) ?? fail(0xb2e /* missing schema for type in cursor */);
+			const arrayTypes = tryStoredSchemaAsArray(nodeSchema);
+
+			if (arrayTypes !== undefined) {
 				const fields = inCursorField(reader, EmptyKey, () =>
-					mapCursorField(reader, () => childHandler(reader, options, schema)),
+					mapCursorField(reader, () => childHandler(reader, options, storedSchema, schema)),
 				);
 				return fields;
 			} else {
 				const fields: Record<string, TChild> = {};
 				forEachField(reader, () => {
-					const children = mapCursorField(reader, () => childHandler(reader, options, schema));
-					if (children.length === 1) {
-						const storedKey = reader.getFieldKey();
-						const key =
-							isObjectNodeSchema(nodeSchema) && !options.useStoredKeys
-								? (nodeSchema.storedKeyToPropertyKey.get(storedKey) ??
-									fail(0xb2f /* missing property key */))
-								: storedKey;
-						// Length is checked above.
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						fields[key] = children[0]!;
+					assert(reader.getFieldLength() === 1, 0xa19 /* invalid children number */);
+					const storedKey = reader.getFieldKey();
+					let key: string;
+					if (!options.useStoredKeys) {
+						const viewSchema = schema.get(type) ?? fail("missing schema for type in cursor");
+						if (isObjectNodeSchema(viewSchema)) {
+							const propertyKey = viewSchema.storedKeyToPropertyKey.get(storedKey);
+							if (propertyKey === undefined) {
+								assert(
+									viewSchema.allowUnknownOptionalFields,
+									"found unknown field where not allowed",
+								);
+								// Skip unknown optional fields when using property keys.
+								return;
+							}
+							key = propertyKey;
+						} else {
+							key = storedKey;
+						}
 					} else {
-						assert(children.length === 0, 0xa19 /* invalid children number */);
+						key = storedKey;
 					}
+					reader.enterNode(0);
+					fields[key] = childHandler(reader, options, storedSchema, schema);
+					reader.exitNode();
 				});
 				return fields;
 			}

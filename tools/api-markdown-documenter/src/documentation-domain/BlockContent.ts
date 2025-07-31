@@ -6,6 +6,7 @@
 import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
 import type { ListNode } from "./ListNode.js";
+import type { MarkdownBlockContentNode } from "./MarkdownNode.js";
 import type { ParagraphNode } from "./ParagraphNode.js";
 import type { TableNode } from "./TableNode.js";
 
@@ -38,6 +39,7 @@ export interface BlockContentMap {
 	list: ListNode;
 	paragraph: ParagraphNode;
 	table: TableNode;
+	markdownBlockContent: MarkdownBlockContentNode;
 }
 
 /**
