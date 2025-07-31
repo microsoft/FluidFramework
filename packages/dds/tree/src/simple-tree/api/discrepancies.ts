@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assert,
-	debugAssert,
-	fail,
-	unreachableCase,
-} from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import {
 	EmptyKey,
@@ -25,62 +20,37 @@ import {
 	type TreeStoredSchema,
 	type TreeTypeSet,
 	type ValueSchema,
+} from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import {
+	NodeKind,
+	normalizeAnnotatedAllowedTypes,
+	type AnnotatedAllowedType,
+	type TreeNodeSchema,
 } from "../core/index.js";
-import { brand } from "../util/index.js";
-import { NodeKind, type AnnotatedAllowedType, type TreeNodeSchema } from "./core/index.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
 	isObjectNodeSchema,
 	isRecordNodeSchema,
-	type SimpleKeyMap,
-} from "./node-kinds/index.js";
-import { convertFieldKind } from "./toStoredSchema.js";
-import { walkFieldSchema } from "./walkFieldSchema.js";
+	type ObjectNodeSchemaPrivate,
+} from "../node-kinds/index.js";
+import { convertFieldKind } from "../toStoredSchema.js";
 import {
 	createFieldSchema,
 	FieldKind,
 	FieldSchemaAlpha,
 	type FieldSchema,
-} from "./fieldSchema.js";
-import { LeafNodeSchema } from "./leafNodeSchema.js";
+} from "../fieldSchema.js";
+import { LeafNodeSchema } from "../leafNodeSchema.js";
+import type { TreeSchema } from "./configuration.js";
+import { tryStoredSchemaAsArray } from "./customTree.js";
+import { FieldKinds } from "../../feature-libraries/index.js";
 
 /**
- * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema.
- * @remarks
- *
- * 1. FieldDiscrepancy
- *
- * `FieldDiscrepancy` represents the differences between two `TreeFieldStoredSchema` objects. It consists of
- * three types of incompatibilities:
- *
- * - FieldKindDiscrepancy: Indicates the differences in `FieldKindIdentifier` between two `TreeFieldStoredSchema`
- * objects (e.g., optional, required, sequence, etc.).
- * - AllowedTypesDiscrepancy: Indicates the differences in the allowed child types between the two schemas.
- * - ValueSchemaDiscrepancy: Specifically indicates the differences in the `ValueSchema` of two
- * `LeafNodeStoredSchema` objects.
- *
- * 2. NodeDiscrepancy
- *
- * `NodeDiscrepancy` represents the differences between two `TreeNodeStoredSchema` objects and includes:
- *
- * - NodeKindDiscrepancy: Indicates the differences in the types of `TreeNodeStoredSchema` (currently supports
- * `ObjectNodeStoredSchema`, `MapNodeStoredSchema`, and `LeafNodeStoredSchema`).
- * - NodeFieldsDiscrepancy: Indicates the `FieldDiscrepancy` of `TreeFieldStoredSchema` within two
- * `TreeNodeStoredSchema`. It includes an array of `FieldDiscrepancy` instances in the `differences` field.
- *
- * When comparing two nodes for compatibility, it only makes sense to compare their fields if the nodes are of
- * the same kind (map, object, leaf).
- *
- * 3. Discrepancy
- *
- * Discrepancy consists of both `NodeDiscrepancy` and `FieldDiscrepancy`, representing any kind of
- * schema differences. See {@link getAllowedContentDiscrepancies} for more details about how we process it
- * and the ordering.
+ * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema which prevent the view schema from being able to view the stored schema.
  */
-export type Discrepancy = FieldDiscrepancy | NodeDiscrepancy;
-
-export type NodeDiscrepancy = NodeKindDiscrepancy | NodeFieldsDiscrepancy;
+export type Discrepancy = FieldDiscrepancy | NodeKindDiscrepancy;
 
 /**
  * A discrepancy in the declaration of a field.
@@ -113,7 +83,7 @@ export interface FieldDiscrepancyLocation {
  * A discrepancy in the allowed types of a field.
  *
  * @remarks
- * This reports the symmetric difference of allowed types in view/stored to enable more efficient checks for compatibility
+ * This reports the symmetric difference of allowed types.
  */
 export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	readonly mismatch: "allowedTypes";
@@ -127,12 +97,18 @@ export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	readonly stored: readonly TreeNodeSchemaIdentifier[];
 }
 
+/**
+ * Differences in `FieldKindIdentifier` between two schema.
+ */
 export interface FieldKindDiscrepancy extends FieldDiscrepancyLocation {
 	readonly mismatch: "fieldKind";
 	readonly view: FieldKindIdentifier;
 	readonly stored: FieldKindIdentifier;
 }
 
+/**
+ * Differences in the `ValueSchema` of two `LeafNodeStoredSchema` objects.
+ */
 export interface ValueSchemaDiscrepancy {
 	identifier: TreeNodeSchemaIdentifier;
 	mismatch: "valueSchema";
@@ -140,17 +116,16 @@ export interface ValueSchemaDiscrepancy {
 	stored: ValueSchema | undefined;
 }
 
+/**
+ * Differences in the kind of node schema.
+ *
+ * Includes when stored object schema are expected to be compatible with an array node schema.
+ */
 export interface NodeKindDiscrepancy {
 	identifier: TreeNodeSchemaIdentifier;
 	mismatch: "nodeKind";
-	view: SchemaFactoryNodeKind | undefined;
-	stored: SchemaFactoryNodeKind | undefined;
-}
-
-export interface NodeFieldsDiscrepancy {
-	identifier: TreeNodeSchemaIdentifier;
-	mismatch: "fields";
-	differences: FieldDiscrepancy[];
+	view: NodeKind;
+	stored: SchemaFactoryNodeKind;
 }
 
 type SchemaFactoryNodeKind =
@@ -189,24 +164,6 @@ function doesNodeKindMatchStoredNodeKind(
 	}
 }
 
-function getViewNodeSchemaType(schema: TreeNodeSchema): SchemaFactoryNodeKind {
-	switch (schema.kind) {
-		case NodeKind.Leaf: {
-			return LeafNodeStoredSchema;
-		}
-		case NodeKind.Map:
-		case NodeKind.Record: {
-			return MapNodeStoredSchema;
-		}
-		case NodeKind.Object:
-		case NodeKind.Array: {
-			return ObjectNodeStoredSchema;
-		}
-		default:
-			unreachableCase(schema.kind);
-	}
-}
-
 /**
  * Finds and reports discrepancies between a view schema and a stored schema.
  *
@@ -219,50 +176,18 @@ function getViewNodeSchemaType(schema: TreeNodeSchema): SchemaFactoryNodeKind {
  * It is up to the caller to determine whether such discrepancies matter.
  */
 export function* getAllowedContentDiscrepancies(
-	view: FieldSchema,
+	view: TreeSchema,
 	stored: TreeStoredSchema,
 ): Iterable<Discrepancy> {
 	// check root schema discrepancies
-	yield* getFieldDiscrepancies(view, stored.rootFieldSchema, undefined, undefined);
-
-	const viewNodeSchema = new Map<TreeNodeSchemaIdentifier, TreeNodeSchema>();
-
-	walkFieldSchema(view, {
-		node: (schema) => {
-			const identifier: TreeNodeSchemaIdentifier = brand(schema.identifier);
-
-			debugAssert(() => !viewNodeSchema.has(identifier));
-			viewNodeSchema.set(identifier, schema);
-		},
-	});
-
-	for (const [identifier, viewSchema] of viewNodeSchema) {
-		const storedSchema = stored.nodeSchema.get(identifier);
-
-		// if the view schema has a node that's not in the stored schema
-		if (storedSchema === undefined) {
-			const viewType = getViewNodeSchemaType(viewSchema);
-			// TODO does it make sense to have this mismatch when there will also be an allowedTypes mismatch?
-			yield {
-				identifier,
-				mismatch: "nodeKind",
-				view: viewType,
-				stored: undefined,
-			};
-		} else {
-			yield* getNodeDiscrepancies(identifier, viewSchema, storedSchema);
-		}
-	}
+	yield* getFieldDiscrepancies(view.root, stored.rootFieldSchema, undefined, undefined);
 
 	for (const [identifier, storedSchema] of stored.nodeSchema) {
-		if (!viewNodeSchema.has(identifier)) {
-			const storedType = getStoredNodeSchemaType(storedSchema);
-			yield {
-				identifier,
-				mismatch: "nodeKind",
-				view: undefined,
-				stored: storedType,
-			};
+		const viewSchema = view.definitions.get(identifier);
+
+		// if the view schema has a node that's not in the stored schema
+		if (viewSchema !== undefined) {
+			yield* getNodeDiscrepancies(identifier, viewSchema, storedSchema);
 		}
 	}
 }
@@ -276,7 +201,7 @@ function* getNodeDiscrepancies(
 		yield {
 			identifier,
 			mismatch: "nodeKind",
-			view: getViewNodeSchemaType(view),
+			view: view.kind,
 			stored: getStoredNodeSchemaType(stored),
 		};
 		return;
@@ -288,18 +213,11 @@ function* getNodeDiscrepancies(
 				isObjectNodeSchema(view),
 				0xbe9 /* schema with node kind of object must implement ObjectNodeSchema */,
 			);
-			const fields: SimpleKeyMap | undefined = view.flexKeyMap;
-			const differences = Array.from(
-				computeObjectNodeDiscrepancies(identifier, fields, stored as ObjectNodeStoredSchema),
+			yield* computeObjectNodeDiscrepancies(
+				identifier,
+				view,
+				stored as ObjectNodeStoredSchema,
 			);
-
-			if (differences.length > 0) {
-				yield {
-					identifier,
-					mismatch: "fields",
-					differences,
-				} satisfies NodeFieldsDiscrepancy;
-			}
 			break;
 		}
 		case NodeKind.Array: {
@@ -307,32 +225,26 @@ function* getNodeDiscrepancies(
 				isArrayNodeSchema(view),
 				0xbea /* schema with node kind of array must implement ArrayNodeSchema */,
 			);
-			const fields: SimpleKeyMap = new Map([
-				[
-					EmptyKey,
-					{
-						storedKey: EmptyKey,
-						schema: createFieldSchema(FieldKind.Optional, view.info),
-					},
-				],
-			]);
 
-			const differences = Array.from(
-				computeObjectNodeDiscrepancies(
-					identifier,
-					fields,
-					stored as ObjectNodeStoredSchema,
-					true,
-				),
-			);
-
-			if (differences.length > 0) {
+			// TODO: maybe this should return undefined instead of assert in the case where it has additional fields.
+			const arrayStoredSchema = tryStoredSchemaAsArray(stored);
+			if (arrayStoredSchema === undefined) {
 				yield {
 					identifier,
-					mismatch: "fields",
-					differences,
-				} satisfies NodeFieldsDiscrepancy;
+					mismatch: "nodeKind",
+					view: NodeKind.Array,
+					stored: getStoredNodeSchemaType(stored),
+				};
+				return;
 			}
+
+			yield* getAllowedTypeDiscrepancies(
+				normalizeAnnotatedAllowedTypes(view.info).types,
+				arrayStoredSchema,
+				brand(view.identifier),
+				EmptyKey,
+			);
+
 			break;
 		}
 		case NodeKind.Map: {
@@ -395,17 +307,21 @@ function* getNodeDiscrepancies(
 export function findExtraAllowedTypes(
 	viewAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[],
 	storedAllowedTypes: TreeTypeSet,
-): [readonly AnnotatedAllowedType<TreeNodeSchema>[], TreeNodeSchemaIdentifier[]] {
+): {
+	viewExtra: readonly AnnotatedAllowedType<TreeNodeSchema>[];
+	storedExtra: TreeNodeSchemaIdentifier[];
+} {
 	const viewNodeSchemaIdentifiers = new Set(
 		viewAllowedTypes.map((value) => value.type.identifier),
 	);
-	const viewExtraneousAllowedTypes = [...viewAllowedTypes].filter(
+
+	const viewExtra = [...viewAllowedTypes].filter(
 		(value) => !storedAllowedTypes.has(brand(value.type.identifier)),
 	);
-	const storedExtraneousAllowedTypes = [...storedAllowedTypes].filter(
+	const storedExtra = [...storedAllowedTypes].filter(
 		(value) => !viewNodeSchemaIdentifiers.has(value),
 	);
-	return [viewExtraneousAllowedTypes, storedExtraneousAllowedTypes];
+	return { viewExtra, storedExtra };
 }
 
 /**
@@ -419,24 +335,60 @@ export function findExtraAllowedTypes(
  *
  * This function does not recurse into the nodes of the view schema and only makes comparisons at the field level.
  *
- * @param keyOrRoot - If the key is missing, it indicates that this is the root field schema.
+ * @param fieldKey - If the key is missing, it indicates that this is the root field schema.
  */
 function* getFieldDiscrepancies(
 	view: FieldSchema,
 	stored: TreeFieldStoredSchema,
 	identifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey | undefined,
-	// TODO: This is a temporary workaround until the comparison logic is redesigned.
-	viewKindIsSequence = false,
 ): Iterable<FieldDiscrepancy> {
 	assert(
 		view instanceof FieldSchemaAlpha,
 		0xbee /* all field schema should be FieldSchemaAlpha */,
 	);
-	const [viewExtra, storedExtra] = findExtraAllowedTypes(
+	yield* getAllowedTypeDiscrepancies(
 		view.annotatedAllowedTypesNormalized.types,
 		stored.types,
+		identifier,
+		fieldKey,
 	);
+
+	const viewKind =
+		convertFieldKind.get(view.kind) ??
+		fail(0xbef /* A conversion from a FieldKind to a FlexFieldKind should exist */);
+
+	// This checks if the field kind in the view schema is not compatible with the stored schema.
+	if (viewKind.identifier !== stored.kind) {
+		yield {
+			identifier,
+			fieldKey,
+			mismatch: "fieldKind",
+			view: viewKind.identifier,
+			stored: stored.kind,
+		} satisfies FieldKindDiscrepancy;
+	}
+}
+
+/**
+ * The function to track the discrepancies between a field view schema and a stored schema.
+ *
+ * @remarks
+ * This function yields discrepancies in the following cases:
+ * 1. If the view schema has allowed types that are not present in the stored schema.
+ * 2. If the stored schema has allowed types that are not present in the view schema.
+ *
+ * This function does not recurse into the nodes of the view schema and only makes comparisons at the field level.
+ *
+ * @param fieldKey - If the key is missing, it indicates that this is the root field schema.
+ */
+function* getAllowedTypeDiscrepancies(
+	view: readonly AnnotatedAllowedType<TreeNodeSchema>[],
+	stored: TreeTypeSet,
+	identifier: TreeNodeSchemaIdentifier | undefined,
+	fieldKey: FieldKey | undefined,
+): Iterable<FieldDiscrepancy> {
+	const { viewExtra, storedExtra } = findExtraAllowedTypes(view, stored);
 	if (viewExtra.length > 0 || storedExtra.length > 0) {
 		yield {
 			identifier,
@@ -445,25 +397,6 @@ function* getFieldDiscrepancies(
 			view: viewExtra,
 			stored: storedExtra,
 		} satisfies AllowedTypeDiscrepancy;
-	}
-
-	const viewKind =
-		convertFieldKind.get(view.kind) ??
-		fail(0xbef /* A conversion from a FieldKind to a FlexFieldKind should exist */);
-
-	// This checks if the field kind in the view schema is not compatible with the stored schema.
-	// We cannot detect if the view schema is a sequence using the kind property so it is passed in separately.
-	if (
-		(viewKindIsSequence && stored.kind !== "Sequence") ||
-		(!viewKindIsSequence && viewKind.identifier !== stored.kind)
-	) {
-		yield {
-			identifier,
-			fieldKey,
-			mismatch: "fieldKind",
-			view: viewKind.identifier,
-			stored: stored.kind,
-		} satisfies FieldKindDiscrepancy;
 	}
 }
 
@@ -481,9 +414,8 @@ function* getFieldDiscrepancies(
  */
 function* computeObjectNodeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier,
-	view: SimpleKeyMap,
+	view: ObjectNodeSchemaPrivate,
 	stored: ObjectNodeStoredSchema,
-	viewKindIsSequence = false,
 ): Iterable<FieldDiscrepancy> {
 	/**
 	 * Similar to the logic used for tracking discrepancies between two node schemas, we will identify
@@ -498,7 +430,7 @@ function* computeObjectNodeDiscrepancies(
 
 	const viewKeys = new Set<FieldKey>();
 
-	for (const [_, { storedKey: fieldKey, schema: fieldSchema }] of view) {
+	for (const [_, { storedKey: fieldKey, schema: fieldSchema }] of view.flexKeyMap) {
 		const storedSchema = stored.objectNodeFields.get(fieldKey);
 		viewKeys.add(fieldKey);
 
@@ -515,134 +447,31 @@ function* computeObjectNodeDiscrepancies(
 				stored: storedEmptyFieldSchema.kind,
 			} satisfies FieldKindDiscrepancy;
 		} else {
-			yield* getFieldDiscrepancies(
-				fieldSchema,
-				storedSchema,
-				identifier,
-				fieldKey,
-				viewKindIsSequence,
-			);
+			yield* getFieldDiscrepancies(fieldSchema, storedSchema, identifier, fieldKey);
 		}
 	}
 
 	for (const [fieldKey, schema] of stored.objectNodeFields) {
+		if (schema.kind === forbiddenFieldKindIdentifier) {
+			// In the stored schema the field is explicitly forbidden.
+			// This has the same semantics of the field not being mentioned in the stored schema,
+			// and thus can be skipped.
+			continue;
+		}
+
 		// If the stored schema has a field that's not in the view schema
 		if (!viewKeys.has(fieldKey)) {
-			if (schema.kind === forbiddenFieldKindIdentifier) {
-				// In the stored schema the field is explicitly forbidden.
-				// This has the same semantics of the field not being mentioned in the stored schema,
-				// and thus is compatible with the view schema which does not mention this field.
-				continue;
+			// When the application has opted into it, we allow viewing documents which have additional
+			// optional fields in the stored schema that are not present in the view schema.
+			if (!view.allowUnknownOptionalFields || schema.kind !== FieldKinds.optional.identifier) {
+				yield {
+					identifier,
+					fieldKey,
+					mismatch: "fieldKind",
+					view: storedEmptyFieldSchema.kind,
+					stored: schema.kind,
+				} satisfies FieldKindDiscrepancy;
 			}
-			yield {
-				identifier,
-				fieldKey,
-				mismatch: "fieldKind",
-				view: storedEmptyFieldSchema.kind,
-				stored: schema.kind,
-			} satisfies FieldKindDiscrepancy;
 		}
 	}
-}
-
-/**
- * A linear extension of a partially-ordered set of `T`s. See:
- * https://en.wikipedia.org/wiki/Linear_extension
- *
- * The linear extension is represented as a lookup from each poset element to its index in the linear extension.
- */
-export type LinearExtension<T> = Map<T, number>;
-
-/**
- * A realizer for a partially-ordered set. See:
- * https://en.wikipedia.org/wiki/Order_dimension
- */
-export type Realizer<T> = LinearExtension<T>[];
-
-/**
- * @privateRemarks
- * TODO: Knowledge of specific field kinds is not appropriate for modular schema.
- * This bit of field comparison should be dependency injected by default-schema if this comparison logic remains in modular-schema
- * (this is analogous to what is done in comparison.ts).
- */
-const FieldKindIdentifiers = {
-	forbidden: brand<FieldKindIdentifier>("Forbidden"),
-	required: brand<FieldKindIdentifier>("Value"),
-	identifier: brand<FieldKindIdentifier>("Identifier"),
-	optional: brand<FieldKindIdentifier>("Optional"),
-	sequence: brand<FieldKindIdentifier>("Sequence"),
-};
-
-/**
- * A realizer for the partial order of field kind relaxability.
- *
- * It seems extremely likely that this partial order will remain dimension 2 over time (i.e. the set of allowed relaxations can be visualized
- * with a [dominance drawing](https://en.wikipedia.org/wiki/Dominance_drawing)), so this strategy allows efficient comarison between field kinds
- * without excessive casework.
- *
- * Hasse diagram for the partial order is shown below (lower fields can be relaxed to higher fields):
- * ```
- * sequence
- *    |
- * optional
- *    |    \
- * required forbidden
- *    |
- * identifier
- * ```
- */
-export const fieldRealizer: Realizer<FieldKindIdentifier> = [
-	[
-		FieldKindIdentifiers.forbidden,
-		FieldKindIdentifiers.identifier,
-		FieldKindIdentifiers.required,
-		FieldKindIdentifiers.optional,
-		FieldKindIdentifiers.sequence,
-	],
-	[
-		FieldKindIdentifiers.identifier,
-		FieldKindIdentifiers.required,
-		FieldKindIdentifiers.forbidden,
-		FieldKindIdentifiers.optional,
-		FieldKindIdentifiers.sequence,
-	],
-].map((extension) => new Map(extension.map((identifier, index) => [identifier, index])));
-
-export const PosetComparisonResult = {
-	Less: "<",
-	Greater: ">",
-	Equal: "=",
-	Incomparable: "||",
-} as const;
-type PosetComparisonResult =
-	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
-
-/**
- * TODO: This is used by SchemaCompatibilityTester, revisit it during redesign and document
- */
-export function comparePosetElements<T>(
-	a: T,
-	b: T,
-	realizer: Realizer<T>,
-): PosetComparisonResult {
-	let hasLessThanResult = false;
-	let hasGreaterThanResult = false;
-	for (const extension of realizer) {
-		const aIndex = extension.get(a);
-		const bIndex = extension.get(b);
-		assert(aIndex !== undefined && bIndex !== undefined, 0xbf1 /* Invalid realizer */);
-		if (aIndex < bIndex) {
-			hasLessThanResult = true;
-		} else if (aIndex > bIndex) {
-			hasGreaterThanResult = true;
-		}
-	}
-
-	return hasLessThanResult
-		? hasGreaterThanResult
-			? PosetComparisonResult.Incomparable
-			: PosetComparisonResult.Less
-		: hasGreaterThanResult
-			? PosetComparisonResult.Greater
-			: PosetComparisonResult.Equal;
 }

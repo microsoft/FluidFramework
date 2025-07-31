@@ -23,7 +23,7 @@ import { withEditor } from "./fieldKindWithEditor.js";
 import { isNeverTree } from "./isNeverTree.js";
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *
@@ -123,7 +123,7 @@ export function allowsTreeSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -135,7 +135,7 @@ export function allowsValueSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -151,7 +151,7 @@ export function allowsFieldSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  */
@@ -168,7 +168,7 @@ export function allowsTreeSchemaIdentifierSuperset(
 }
 
 /**
- * @returns true iff `superset` is a superset of `original`.
+ * Returns true iff `superset` is a superset of `original`.
  *
  * This does not require a strict (aka proper) superset: equivalent schema will return true.
  *

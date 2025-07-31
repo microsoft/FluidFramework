@@ -29,11 +29,12 @@ import {
 	type TreeNodeSchema,
 	type SimpleNodeSchema,
 	SchemaFactoryAlpha,
-	getAllowedContentDiscrepancies,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { schemaStatics } from "../../../simple-tree/index.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getAllowedContentDiscrepancies } from "../../../simple-tree/api/discrepancies.js";
 
 class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
@@ -192,7 +193,12 @@ describe("Schema Evolution Examples", () => {
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
-			const report = Array.from(getAllowedContentDiscrepancies(tolerantRoot, stored));
+			const report = Array.from(
+				getAllowedContentDiscrepancies(
+					new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
+					stored,
+				),
+			);
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
 			assert.deepEqual(compatNew, { canView: true, canUpgrade: true, isEquivalent: true });

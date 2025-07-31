@@ -10,14 +10,12 @@ import {
 	toStoredSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	normalizeFieldSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
-import { isViewSupersetOfStored } from "../utils.js";
 
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
@@ -41,12 +39,10 @@ function expectCompatibility(
 	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
 	if (compatibility.canUpgrade) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
-		assert.equal(isViewSupersetOfStored(normalizeFieldSchema(view), stored), true);
 	}
 	// if it is viewable, the old stored schema is also a superset of the new one.
 	if (compatibility.canView) {
 		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
-		// isViewSupersetOfStored is not checked here as it checks that the view schema is a superset of the stored schema
 	}
 }
 
@@ -284,23 +280,17 @@ describe("SchemaCompatibilityTester", () => {
 					expectIncomparability(factory.array(factory.string), factory.identifier);
 				});
 
-				describe("due to a field kind difference", () => {
-					it("view: identifier vs stored: forbidden", () => {
-						expectIncomparability(factory.identifier, factory.required([]));
-					});
-
-					it("view: 2d Point vs stored: required 3d Point", () => {
-						class Point2D extends factory.objectAlpha("Point", {
-							x: factory.number,
-							y: factory.number,
-						}) {}
-						class Point3D extends factory.objectAlpha("Point", {
-							x: factory.number,
-							y: factory.number,
-							z: factory.number,
-						}) {}
-						expectIncomparability(Point2D, Point3D);
-					});
+				it("view: 2d Point vs stored: required 3d Point", () => {
+					class Point2D extends factory.objectAlpha("Point", {
+						x: factory.number,
+						y: factory.number,
+					}) {}
+					class Point3D extends factory.objectAlpha("Point", {
+						x: factory.number,
+						y: factory.number,
+						z: factory.number,
+					}) {}
+					expectIncomparability(Point2D, Point3D);
 				});
 			});
 

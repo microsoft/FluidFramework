@@ -19,6 +19,7 @@ import {
 	type ITreeCursor,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
+	type TreeTypeSet,
 } from "../../core/index.js";
 import { FieldKinds, valueSchemaAllows } from "../../feature-libraries/index.js";
 import { cloneWithReplacements } from "../../util/index.js";
@@ -220,9 +221,7 @@ export function customFromCursorStored<TChild>(
  * If it is an array schema, returns the allowed types for the array field.
  * Otherwise returns `undefined`.
  */
-export function tryStoredSchemaAsArray(
-	schema: TreeNodeStoredSchema,
-): ReadonlySet<string> | undefined {
+export function tryStoredSchemaAsArray(schema: TreeNodeStoredSchema): TreeTypeSet | undefined {
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const empty = schema.getFieldSchema(EmptyKey);
 		if (empty.kind === FieldKinds.sequence.identifier) {

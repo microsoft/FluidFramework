@@ -3,21 +3,16 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
-	comparePosetElements,
-	fieldRealizer,
-	getAllowedContentDiscrepancies,
 	isTreeNode,
 	isTreeNodeSchemaClass,
-	PosetComparisonResult,
 	TreeViewConfiguration,
-	type FieldDiscrepancy,
-	type FieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
-	type Realizer,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
@@ -27,7 +22,12 @@ import {
 import { getView } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
-import type { TreeStoredSchema } from "../../core/index.js";
+import type { FieldKindIdentifier } from "../../core/index.js";
+import { brand } from "../../util/index.js";
+import type {
+	FieldDiscrepancy,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../simple-tree/api/discrepancies.js";
 
 /**
  * Initializes a node with the given schema and content.
@@ -160,62 +160,6 @@ export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema
 	};
 }
 
-/**
- * This function uses discrepancies to determine if replacing the provided stored schema to a stored schema derived from the provided view schema would support a superset of the documents permitted by the provided stored schema.
- *
- * @remarks
- * According to the policy of schema evolution, this function supports three types of changes:
- * 1. Adding an optional field to an object node.
- * 2. Expanding the set of allowed types for a field.
- * 3. Relaxing a field kind to a more general field kind
- * 4. Adding new node schema
- * 5. Arbitrary changes to persisted metadata
- *
- * Notes: We expect this to return consistent results with allowsRepoSuperset. However, currently there are some scenarios
- * where the inconsistency will occur:
- * - Different Node Kinds: If view and stored have different node kinds (e.g., view is an objectNodeSchema and stored is a mapNodeSchema),
- * This will determine that view can never be the superset of stored. In contrast, `allowsRepoSuperset` will continue
- * validating internal fields.
- *
- * TODO: Evaluate if this function is needed at all. It is only used in tests and could possibly be replaced with `allowsRepoSuperset`.
- * Maybe production code for canUpgrade should be using this?
- */
-export function isViewSupersetOfStored(view: FieldSchema, stored: TreeStoredSchema): boolean {
-	const discrepancies = getAllowedContentDiscrepancies(view, stored);
-
-	for (const discrepancy of discrepancies) {
-		switch (discrepancy.mismatch) {
-			case "nodeKind": {
-				if (discrepancy.stored !== undefined) {
-					// It's fine for the view schema to know of a node type that the stored schema doesn't know about.
-					return false;
-				}
-				break;
-			}
-			case "valueSchema":
-			case "allowedTypes":
-			case "fieldKind": {
-				if (!isFieldDiscrepancyCompatible(discrepancy)) {
-					return false;
-				}
-				break;
-			}
-			case "fields": {
-				if (
-					discrepancy.differences.some(
-						(difference) => !isFieldDiscrepancyCompatible(difference),
-					)
-				) {
-					return false;
-				}
-				break;
-			}
-			// No default
-		}
-	}
-	return true;
-}
-
 function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
 	switch (discrepancy.mismatch) {
 		case "allowedTypes": {
@@ -241,3 +185,105 @@ export function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
 		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
 	);
 }
+
+/**
+ * TODO: This is used by SchemaCompatibilityTester, revisit it during redesign and document
+ */
+export function comparePosetElements<T>(
+	a: T,
+	b: T,
+	realizer: Realizer<T>,
+): PosetComparisonResult {
+	let hasLessThanResult = false;
+	let hasGreaterThanResult = false;
+	for (const extension of realizer) {
+		const aIndex = extension.get(a);
+		const bIndex = extension.get(b);
+		assert(aIndex !== undefined && bIndex !== undefined, "Invalid realizer");
+		if (aIndex < bIndex) {
+			hasLessThanResult = true;
+		} else if (aIndex > bIndex) {
+			hasGreaterThanResult = true;
+		}
+	}
+
+	return hasLessThanResult
+		? hasGreaterThanResult
+			? PosetComparisonResult.Incomparable
+			: PosetComparisonResult.Less
+		: hasGreaterThanResult
+			? PosetComparisonResult.Greater
+			: PosetComparisonResult.Equal;
+}
+
+export const PosetComparisonResult = {
+	Less: "<",
+	Greater: ">",
+	Equal: "=",
+	Incomparable: "||",
+} as const;
+type PosetComparisonResult =
+	(typeof PosetComparisonResult)[keyof typeof PosetComparisonResult];
+
+/**
+ * A linear extension of a partially-ordered set of `T`s. See:
+ * https://en.wikipedia.org/wiki/Linear_extension
+ *
+ * The linear extension is represented as a lookup from each poset element to its index in the linear extension.
+ */
+export type LinearExtension<T> = Map<T, number>;
+
+/**
+ * A realizer for a partially-ordered set. See:
+ * https://en.wikipedia.org/wiki/Order_dimension
+ */
+export type Realizer<T> = LinearExtension<T>[];
+
+/**
+ * @privateRemarks
+ * TODO: Knowledge of specific field kinds is not appropriate for modular schema.
+ * This bit of field comparison should be dependency injected by default-schema if this comparison logic remains in modular-schema
+ * (this is analogous to what is done in comparison.ts).
+ */
+const FieldKindIdentifiers = {
+	forbidden: brand<FieldKindIdentifier>("Forbidden"),
+	required: brand<FieldKindIdentifier>("Value"),
+	identifier: brand<FieldKindIdentifier>("Identifier"),
+	optional: brand<FieldKindIdentifier>("Optional"),
+	sequence: brand<FieldKindIdentifier>("Sequence"),
+};
+
+/**
+ * A realizer for the partial order of field kind relaxability.
+ *
+ * It seems extremely likely that this partial order will remain dimension 2 over time (i.e. the set of allowed relaxations can be visualized
+ * with a [dominance drawing](https://en.wikipedia.org/wiki/Dominance_drawing)), so this strategy allows efficient comarison between field kinds
+ * without excessive casework.
+ *
+ * Hasse diagram for the partial order is shown below (lower fields can be relaxed to higher fields):
+ * ```
+ * sequence
+ *    |
+ * optional
+ *    |    \
+ * required forbidden
+ *    |
+ * identifier
+ * ```
+ */
+export const fieldRealizer: Realizer<FieldKindIdentifier> = [
+	[
+		FieldKindIdentifiers.forbidden,
+		FieldKindIdentifiers.identifier,
+		FieldKindIdentifiers.required,
+		FieldKindIdentifiers.optional,
+		FieldKindIdentifiers.sequence,
+	],
+	[
+		FieldKindIdentifiers.identifier,
+		FieldKindIdentifiers.required,
+		FieldKindIdentifiers.forbidden,
+		FieldKindIdentifiers.optional,
+		FieldKindIdentifiers.sequence,
+	],
+].map((extension) => new Map(extension.map((identifier, index) => [identifier, index])));
