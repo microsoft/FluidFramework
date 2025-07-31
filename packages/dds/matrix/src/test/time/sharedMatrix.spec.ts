@@ -120,6 +120,7 @@ function runBenchmark({
 describe("SharedMatrix execution time", () => {
 	// The value to be set in the cells of the matrix.
 	const matrixValue = "cellValue";
+
 	// The test matrix's size will be 10*10, 100*100.
 	// Matrix size 1000 benchmarks removed due to high overhead and unreliable results.
 	const matrixSizes = isInPerformanceTestingMode
