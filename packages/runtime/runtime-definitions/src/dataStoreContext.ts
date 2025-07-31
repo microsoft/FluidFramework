@@ -27,6 +27,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
+import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -311,6 +312,11 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
+
+	/**
+	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 */
+	getMinVersionForCollab(): MinimumVersionForCollab;
 }
 
 /**

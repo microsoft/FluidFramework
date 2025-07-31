@@ -84,6 +84,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
     getAudience(): IAudience;
+    getMinVersionForCollab(): MinimumVersionForCollab;
     getQuorum(): IQuorumClients;
     getSnapshotForLoadingGroupId(loadingGroupIds: string[], pathParts: string[]): Promise<{
         snapshotTree: ISnapshotTree;

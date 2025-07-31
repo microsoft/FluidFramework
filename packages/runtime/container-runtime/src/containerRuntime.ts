@@ -140,6 +140,7 @@ import {
 	exceptionToResponse,
 	seqFromTree,
 } from "@fluidframework/runtime-utils/internal";
+import { semanticVersionToMinimumVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type {
 	IEventSampler,
 	IFluidErrorBase,
@@ -5110,6 +5111,10 @@ export class ContainerRuntime
 			entry.extension.onNewUse(...useContext);
 		}
 		return entry.interface as T;
+	}
+
+	public getMinVersionForCollab(): MinimumVersionForCollab {
+		return semanticVersionToMinimumVersionForCollab(this.minVersionForCollab);
 	}
 
 	private get groupedBatchingEnabled(): boolean {
