@@ -1360,42 +1360,41 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | CloneClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
-
-			// Control frequency with some probability (adjust as needed)
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
 				clients.length > 0 &&
-				random.bool(0.1) // 10% chance to clone
+				random.bool(options.clientJoinOptions.clientAddProbability)
 			) {
-				const sourceClient = random.pick(clients);
-
 				return {
 					type: "cloneClientFromPendingState",
-					sourceClientTag: sourceClient.tag,
+					sourceClientTag: random.pick(clients).tag,
 					newClientTag: state.tag("client"),
 				} satisfies CloneClientFromPendingState;
 			}
-
 			return baseGenerator(state);
 		};
 	};
+
+	const minimizationTransforms: MinimizationTransform<
+		TOperation | CloneClientFromPendingState
+	>[] =
+		(model.minimizationTransforms as
+			| MinimizationTransform<TOperation | CloneClientFromPendingState>[]
+			| undefined) ?? [];
 
 	const reducer: AsyncReducer<
 		TOperation | CloneClientFromPendingState,
 		LocalServerStressState
 	> = async (state, op) => {
-		if (op.type === "cloneClientFromPendingState") {
+		if (isOperationType<CloneClientFromPendingState>("cloneClientFromPendingState", op)) {
 			const sourceClient = state.clients.find((c) => c.tag === op.sourceClientTag);
 			assert(sourceClient !== undefined, `Client ${op.sourceClientTag} not found`);
 
-			// Get pending state from the source client's runtime
-			const pendingState = await sourceClient.getPendingLocalState();
+			// const pendingState = await sourceClient.getPendingLocalState();
 
 			const url = await state.validationClient.container.getAbsoluteUrl("");
-			assert(url !== undefined, "Container URL must be defined");
-
-			// Load new client using the pending state snapshot
+			assert(url !== undefined, "url of container must be available");
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
@@ -1403,19 +1402,16 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 				url,
 				state.seed,
 				options,
-				pendingState,
 			);
-
 			state.clients.push(newClient);
 			return state;
 		}
-
-		// For other operations, fallback to original reducer
 		return model.reducer(state, op);
 	};
 
 	return {
 		...model,
+		minimizationTransforms,
 		generatorFactory,
 		reducer,
 	};
