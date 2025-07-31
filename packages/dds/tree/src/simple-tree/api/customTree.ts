@@ -217,14 +217,18 @@ export function customFromCursorStored<TChild>(
 }
 
 /**
- * Assumes `schema` corresponds to a simple-tree schema.
+ * Checks if `schema` could correspond to a simple-tree array node.
  * If it is an array schema, returns the allowed types for the array field.
  * Otherwise returns `undefined`.
+ * @remarks
+ * If the schema was defined by the public API, this will be accurate since there is no way to define an object node with a sequence field.
  */
 export function tryStoredSchemaAsArray(schema: TreeNodeStoredSchema): TreeTypeSet | undefined {
 	if (schema instanceof ObjectNodeStoredSchema) {
 		const empty = schema.getFieldSchema(EmptyKey);
 		if (empty.kind === FieldKinds.sequence.identifier) {
+			// This assert can only be hit by schema created not using the public API surface.
+			// If at some point this case needs to be tolerated, it can be replaced by "return undefined"
 			assert(schema.objectNodeFields.size === 1, 0xa9f /* invalid schema */);
 			return empty.types;
 		}

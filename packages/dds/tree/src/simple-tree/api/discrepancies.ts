@@ -166,30 +166,26 @@ function doesNodeKindMatchStoredNodeKind(
 }
 
 /**
- * Finds and reports discrepancies between a view schema and a stored schema.
- *
- * See documentation on {@link Discrepancy} for details of possible discrepancies.
+ * Finds and reports discrepancies between a view schema and a stored schema which impact "canView".
  * @remarks
- * This function does not attempt to distinguish between equivalent representations of a node/field involving extraneous never trees.
- * For example, a Forbidden field with allowed type set `[]` is equivalent to an optional field with allowed type set `[]`,
- * as well as an optional field with an allowed type set containing only unconstructable types.
- *
- * It is up to the caller to determine whether such discrepancies matter.
+ * See documentation on {@link Discrepancy} and its subtypes for details of possible discrepancies.
  */
 export function* getAllowedContentDiscrepancies(
 	view: TreeSchema,
 	stored: TreeStoredSchema,
 ): Iterable<Discrepancy> {
-	// check root schema discrepancies
+	// check root field discrepancies
 	yield* getFieldDiscrepancies(view.root, stored.rootFieldSchema, undefined, undefined);
 
+	// Check all of the stored nodes, including their fields for discrepancies.
 	for (const [identifier, storedSchema] of stored.nodeSchema) {
 		const viewSchema = view.definitions.get(identifier);
 
-		// if the view schema has a node that's not in the stored schema
+		// if the view schema has a node that's not in the stored schema, check it.
 		if (viewSchema !== undefined) {
 			yield* getNodeDiscrepancies(identifier, viewSchema, storedSchema);
 		}
+		// Note that nodes that are missing in the view schema are only a problem if other stored schema nodes actually reference them which will produce its own discrepancy, so we can rely on that to produce any needed discrepancies.
 	}
 }
 
@@ -227,7 +223,6 @@ function* getNodeDiscrepancies(
 				0xbea /* schema with node kind of array must implement ArrayNodeSchema */,
 			);
 
-			// TODO: maybe this should return undefined instead of assert in the case where it has additional fields.
 			const arrayStoredSchema = tryStoredSchemaAsArray(stored);
 			if (arrayStoredSchema === undefined) {
 				yield {
