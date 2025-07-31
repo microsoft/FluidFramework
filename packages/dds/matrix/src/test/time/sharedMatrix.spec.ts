@@ -164,16 +164,19 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo insert the middle column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -225,16 +228,19 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo insert the middle row ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -252,12 +258,16 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.redoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -283,17 +293,20 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo insert the middle a row and a column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -311,12 +324,17 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < 2 * count; i++) {
 								undoRedoStack.undoOperation();
 							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 						},
 						operation: (_matrix, undoRedoStack) => {
 							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								undoRedoStack.redoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -348,12 +366,15 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -371,12 +392,16 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.redoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -405,12 +430,15 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -428,12 +456,16 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.redoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -464,12 +496,15 @@ describe("SharedMatrix execution time", () => {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -488,12 +523,16 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < 2 * count; i++) {
 								undoRedoStack.undoOperation();
 							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								undoRedoStack.redoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -521,19 +560,22 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
+							assert.equal(undoRedoStack.undoStackLength, 4 * count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -554,12 +596,16 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < 4 * count; i++) {
 								undoRedoStack.undoOperation();
 							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, 4 * count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.redoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
 								undoRedoStack.redoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -588,12 +634,15 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
 							}
+							assert.equal(undoRedoStack.undoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -611,12 +660,16 @@ describe("SharedMatrix execution time", () => {
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.undoOperation();
 							}
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
 								undoRedoStack.redoOperation();
 							}
+						},
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
