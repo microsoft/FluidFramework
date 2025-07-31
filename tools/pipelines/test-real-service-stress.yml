@@ -35,7 +35,6 @@ variables:
 - name: DisableCodeQL
   value: true
 
-lockBehavior: sequential
 stages:
   # stress tests odsp
   - template: /tools/pipelines/templates/include-test-real-service.yml@self
