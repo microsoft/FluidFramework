@@ -18,7 +18,6 @@ import {
 import type { DocSection } from "@microsoft/tsdoc";
 
 import {
-	CodeSpanNode,
 	HeadingNode,
 	LinkNode,
 	MarkdownBlockContentNode,
@@ -670,7 +669,7 @@ export function createModifiersCell(
 		if (needsComma) {
 			contents.push(new PlainTextNode(", "));
 		}
-		contents.push(new CodeSpanNode(modifier));
+		contents.push(new MarkdownPhrasingContentNode({ type: "inlineCode", value: modifier }));
 		needsComma = true;
 	}
 
@@ -705,7 +704,9 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: PhrasingContent[] = alerts.map((alert) => new CodeSpanNode(alert));
+	const alertNodes: PhrasingContent[] = alerts.map(
+		(alert) => new MarkdownPhrasingContentNode({ type: "inlineCode", value: alert }),
+	);
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty

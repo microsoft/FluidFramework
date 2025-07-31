@@ -192,15 +192,6 @@ export type BlockContentToMarkdownTransformations = {
     readonly [K in keyof BlockContentMap]: ToMarkdownTransformation<BlockContentMap[K], BlockContent_2[]>;
 };
 
-// @public @sealed
-export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
-    constructor(value: string);
-    static createFromPlainText(text: string): CodeSpanNode;
-    static readonly Empty: CodeSpanNode;
-    get isEmpty(): boolean;
-    readonly type = "codeSpan";
-}
-
 // @public
 function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
 
@@ -683,8 +674,6 @@ export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
 
 // @public
 export interface PhrasingContentMap {
-    // (undocumented)
-    codeSpan: CodeSpanNode;
     // (undocumented)
     lineBreak: LineBreakNode;
     // (undocumented)

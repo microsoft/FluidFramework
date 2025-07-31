@@ -19,7 +19,6 @@ import {
 import { expect } from "chai";
 
 import {
-	CodeSpanNode,
 	DocumentNode,
 	type DocumentationNode,
 	FencedCodeBlockNode,
@@ -362,7 +361,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 										"/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
 									),
 								]),
-								new TableBodyCellNode([new CodeSpanNode("optional")]),
+								new TableBodyCellNode([
+									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "optional" }),
+								]),
 								new TableBodyCellNode([
 									new MarkdownPhrasingContentNode({
 										type: "text",
@@ -488,8 +489,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new TableBodyCellNode([
 									new LinkNode("bar", "/test-package/testnamespace-namespace/#bar-variable"),
 								]),
-								new TableBodyCellNode([new CodeSpanNode("Beta")]), // Alert
-								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
+								new TableBodyCellNode([
+									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "Beta" }),
+								]), // Alert
+								new TableBodyCellNode([
+									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "readonly" }),
+								]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -499,7 +504,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 									new LinkNode("foo", "/test-package/testnamespace-namespace/#foo-variable"),
 								]),
 								TableBodyCellNode.Empty, // No alert for `@public`
-								new TableBodyCellNode([new CodeSpanNode("readonly")]), // Modifier
+								new TableBodyCellNode([
+									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "readonly" }),
+								]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -638,7 +645,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyCellNode([
 												new LinkNode("hello", "/test-package/#hello-variable"),
 											]),
-											new TableBodyCellNode([new CodeSpanNode("readonly")]),
+											new TableBodyCellNode([
+												new MarkdownPhrasingContentNode({
+													type: "inlineCode",
+													value: "readonly",
+												}),
+											]),
 											TableBodyCellNode.Empty, // Type
 											new TableBodyCellNode([
 												new MarkdownPhrasingContentNode({

@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { codeSpanToMarkdown } from "./CodeSpanToMarkdown.js";
 export { fencedCodeBlockToMarkdown } from "./FencedCodeBlockToMarkdown.js";
 export { headingToMarkdown } from "./HeadingToMarkdown.js";
 export { horizontalRuleToMarkdown } from "./HorizontalRuleToMarkdown.js";
