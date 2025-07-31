@@ -241,7 +241,7 @@ describe("allowedTypes", () => {
 			assert(result.has(Bar));
 		});
 
-		it("Normalization fails when a referenced schema has not yet been instantiated", () => {
+		describe("Normalization fails when a referenced schema has not yet been instantiated", () => {
 			const schemaFactory = new SchemaFactory("test");
 
 			let Bar: TreeNodeSchema;
@@ -256,10 +256,26 @@ describe("allowedTypes", () => {
 				x: [() => Bar],
 			}) {}
 
-			assert.throws(
-				() => normalizeAllowedTypes([Foo, Bar]),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
-			);
+			it("in an array", () => {
+				assert.throws(
+					() => normalizeAllowedTypes([Foo, Bar]),
+					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				);
+			});
+
+			it("directly", () => {
+				assert.throws(
+					() => normalizeAllowedTypes(Bar),
+					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				);
+			});
+
+			it("in a lazy reference", () => {
+				assert.throws(
+					() => normalizeAllowedTypes([() => Bar]),
+					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				);
+			});
 		});
 	});
 
