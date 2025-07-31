@@ -89,13 +89,14 @@ function runBenchmark({
 			do {
 				assert.equal(state.iterationsPerBatch, 1, "Expected exactly one iteration per batch");
 
-				// Setup
+				// Create matrix
 				const localMatrix = createLocalMatrix({
 					id: "testLocalMatrix",
 					size: matrixSize,
 					initialValue: cellValue,
 				});
 
+				// Configure undo/redo
 				const undoRedoStack = new UndoRedoStackManager();
 				localMatrix.openUndo(undoRedoStack);
 
@@ -168,10 +169,10 @@ describe("SharedMatrix execution time", () => {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -182,24 +183,24 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo insert the middle column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
-							assert.equal(stack.undoStackLength, 0);
-							assert.equal(stack.redoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, 0);
+							assert.equal(undoRedoStack.redoStackLength, count);
 						},
-						operation: (_matrix, stack) => {
+						operation: (_matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
-						afterOperation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, 0);
+						afterOperation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 0);
 						},
 						maxBenchmarkDurationSeconds,
 					});
@@ -229,10 +230,10 @@ describe("SharedMatrix execution time", () => {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -243,19 +244,19 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo insert the middle row ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -288,10 +289,10 @@ describe("SharedMatrix execution time", () => {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, 2 * count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -302,19 +303,19 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo insert the middle a row and a column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 							}
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, 2 * count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -343,15 +344,15 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo remove the middle column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -362,19 +363,19 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo remove the middle column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -400,15 +401,15 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo remove the middle row ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -419,19 +420,19 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo remove the middle row ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -458,16 +459,16 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo remove the middle row and column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, 2 * count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -478,20 +479,20 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo remove the middle row and column ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, 2 * count);
+							assert.equal(undoRedoStack.undoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, 2 * count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -528,10 +529,10 @@ describe("SharedMatrix execution time", () => {
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, 4 * count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -542,22 +543,22 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo insert a row and a column and remove them right away ${count} times`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 							}
-							assert.equal(stack.undoStackLength, 4 * count);
+							assert.equal(undoRedoStack.undoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, 4 * count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, 4 * count);
 							for (let i = 0; i < 4 * count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -583,15 +584,15 @@ describe("SharedMatrix execution time", () => {
 						title: `Undo set a 3-character string in ${count} cells`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.undoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -602,19 +603,19 @@ describe("SharedMatrix execution time", () => {
 						title: `Redo set a 3-character string in ${count} cells`,
 						matrixSize,
 						cellValue: matrixValue,
-						beforeOperation: (matrix, stack) => {
+						beforeOperation: (matrix, undoRedoStack) => {
 							for (let i = 0; i < count; i++) {
 								matrix.setCell(i, i, "abc");
 							}
-							assert.equal(stack.undoStackLength, count);
+							assert.equal(undoRedoStack.undoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.undoOperation();
+								undoRedoStack.undoOperation();
 							}
 						},
-						operation: (_matrix, stack) => {
-							assert.equal(stack.redoStackLength, count);
+						operation: (_matrix, undoRedoStack) => {
+							assert.equal(undoRedoStack.redoStackLength, count);
 							for (let i = 0; i < count; i++) {
-								stack.redoOperation();
+								undoRedoStack.redoOperation();
 							}
 						},
 						maxBenchmarkDurationSeconds,
