@@ -22,7 +22,6 @@ import {
 	DocumentNode,
 	type DocumentationNode,
 	HeadingNode,
-	LinkNode,
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
@@ -369,10 +368,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 						[
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									new LinkNode(
-										"testOptionalInterfaceProperty",
-										"/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
-									),
+									new MarkdownPhrasingContentNode({
+										type: "link",
+										url: "/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
+										children: [{ type: "text", value: "testOptionalInterfaceProperty" }],
+									}),
 								]),
 								new TableBodyCellNode([
 									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "optional" }),
@@ -507,7 +507,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Table row for `bar`
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									new LinkNode("bar", "/test-package/testnamespace-namespace/#bar-variable"),
+									new MarkdownPhrasingContentNode({
+										type: "link",
+										url: "/test-package/testnamespace-namespace/#bar-variable",
+										children: [{ type: "text", value: "bar" }],
+									}),
 								]),
 								new TableBodyCellNode([
 									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "Beta" }),
@@ -521,7 +525,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Table row for `foo`
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									new LinkNode("foo", "/test-package/testnamespace-namespace/#foo-variable"),
+									new MarkdownPhrasingContentNode({
+										type: "link",
+										url: "/test-package/testnamespace-namespace/#foo-variable",
+										children: [{ type: "text", value: "foo" }],
+									}),
 								]),
 								TableBodyCellNode.Empty, // No alert for `@public`
 								new TableBodyCellNode([
@@ -627,9 +635,17 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								new LinkNode("Packages", "/"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/",
+									children: [{ type: "text", value: "Packages" }],
+								}),
 								new PlainTextNode(" > "),
-								new LinkNode("test-package", "/test-package/"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/test-package/",
+									children: [{ type: "text", value: "test-package" }],
+								}),
 							]),
 						]),
 
@@ -639,10 +655,18 @@ describe("ApiItem to Documentation transformation tests", () => {
 								new ListNode(
 									[
 										new ListItemNode([
-											new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
+											new MarkdownPhrasingContentNode({
+												type: "link",
+												url: "/test-package/entry-point-a-entrypoint",
+												children: [{ type: "text", value: "entry-point-a" }],
+											}),
 										]),
 										new ListItemNode([
-											new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
+											new MarkdownPhrasingContentNode({
+												type: "link",
+												url: "/test-package/entry-point-b-entrypoint",
+												children: [{ type: "text", value: "entry-point-b" }],
+											}),
 										]),
 									],
 									/* ordered */ false,
@@ -666,11 +690,23 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								new LinkNode("Packages", "/"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/",
+									children: [{ type: "text", value: "Packages" }],
+								}),
 								new PlainTextNode(" > "),
-								new LinkNode("test-package", "/test-package/"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/test-package/",
+									children: [{ type: "text", value: "test-package" }],
+								}),
 								new PlainTextNode(" > "),
-								new LinkNode("entry-point-a", "/test-package/entry-point-a-entrypoint"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/test-package/entry-point-a-entrypoint",
+									children: [{ type: "text", value: "entry-point-a" }],
+								}),
 							]),
 						]),
 
@@ -681,7 +717,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												new LinkNode("hello", "/test-package/#hello-variable"),
+												new MarkdownPhrasingContentNode({
+													type: "link",
+													url: "/test-package/#hello-variable",
+													children: [{ type: "text", value: "hello" }],
+												}),
 											]),
 											new TableBodyCellNode([
 												new MarkdownPhrasingContentNode({
@@ -755,11 +795,23 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Breadcrumb
 						new SectionNode([
 							new ParagraphNode([
-								new LinkNode("Packages", "/"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/",
+									children: [{ type: "text", value: "Packages" }],
+								}),
 								new PlainTextNode(" > "),
-								new LinkNode("test-package", "/test-package/"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/test-package/",
+									children: [{ type: "text", value: "test-package" }],
+								}),
 								new PlainTextNode(" > "),
-								new LinkNode("entry-point-b", "/test-package/entry-point-b-entrypoint"),
+								new MarkdownPhrasingContentNode({
+									type: "link",
+									url: "/test-package/entry-point-b-entrypoint",
+									children: [{ type: "text", value: "entry-point-b" }],
+								}),
 							]),
 						]),
 
@@ -770,7 +822,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												new LinkNode("world", "/test-package/#world-variable"),
+												new MarkdownPhrasingContentNode({
+													type: "link",
+													url: "/test-package/#world-variable",
+													children: [{ type: "text", value: "world" }],
+												}),
 											]),
 											TableBodyCellNode.Empty, // Type
 											new TableBodyCellNode([

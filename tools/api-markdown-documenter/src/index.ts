@@ -51,7 +51,6 @@ export {
 	HeadingNode,
 	HorizontalRuleNode,
 	LineBreakNode,
-	LinkNode,
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
