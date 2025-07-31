@@ -297,7 +297,6 @@ export function normalizeAllowedTypes(
 export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
 	type: T | AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>>,
 ): AnnotatedAllowedType<T> {
-	Object.freeze(type);
 	return isAnnotatedAllowedType(type)
 		? {
 				metadata: type.metadata,
