@@ -147,4 +147,56 @@ describe("SharedDirectory iteration", () => {
 		assert.deepStrictEqual(keys1, ["key3", "key1", "key4"], "Keys should match expected");
 		assert.deepStrictEqual(keys1, keys2, "Keys should match between clients");
 	});
+
+	it("should have eventually consistent iteration order with nested subdirectory operations", () => {
+		const { sharedDirectory, containerRuntimeFactory, containerRuntime } = setupTest();
+		const { sharedDirectory: sharedDirectory2, containerRuntime: containerRuntime2 } =
+			createAdditionalClient(containerRuntimeFactory);
+
+		sharedDirectory.set("rootKey1", "rootValue1");
+		const subDir1 = sharedDirectory.createSubDirectory("subdir");
+		subDir1.set("subKey1", "subValue1");
+		sharedDirectory.set("rootKey2", "rootValue2");
+		containerRuntime.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		const subDir2 = sharedDirectory2.getSubDirectory("subdir");
+		assert(subDir2 !== undefined, "Subdirectory should exist on second client");
+
+		sharedDirectory.set("rootKey3", "rootValue3");
+		subDir1.set("subKey2", "subValue2");
+		sharedDirectory2.set("rootKey4", "rootValue4");
+		subDir2.set("subKey3", "subValue3");
+		sharedDirectory.delete("rootKey1");
+		subDir1.delete("subKey1");
+		sharedDirectory2.set("rootKey1", "newRootValue1");
+
+		containerRuntime.flush();
+		containerRuntime2.flush();
+		containerRuntimeFactory.processAllMessages();
+
+		const rootKeys1 = [...sharedDirectory.keys()];
+		const rootKeys2 = [...sharedDirectory2.keys()];
+
+		assert.deepStrictEqual(
+			rootKeys1,
+			["rootKey2", "rootKey3", "rootKey4", "rootKey1"],
+			"Root keys should match expected order",
+		);
+		assert.deepStrictEqual(rootKeys1, rootKeys2, "Root keys should match between clients");
+
+		const subKeys1 = [...subDir1.keys()];
+		const subKeys2 = [...subDir2.keys()];
+
+		assert.deepStrictEqual(
+			subKeys1,
+			["subKey2", "subKey3"],
+			"Subdirectory keys should match expected order",
+		);
+		assert.deepStrictEqual(
+			subKeys1,
+			subKeys2,
+			"Subdirectory keys should match between clients",
+		);
+	});
 });
