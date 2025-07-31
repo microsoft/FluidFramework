@@ -30,7 +30,7 @@ const optionDefaults = {
 	outFilePublic: ApiLevel.public,
 	outFileLegacyAlpha: "legacy-alpha",
 	outFileLegacyBeta: "legacy-beta",
-	outFileLegacyPublic: "legacy",
+	outFileLegacyPublic: "legacy-public",
 	outFileSuffix: ".d.ts",
 } as const;
 
@@ -415,33 +415,34 @@ async function generateEntrypoints(
 	log.info(`- Legacy Beta APIs: ${exports.legacyBeta.length}`);
 	log.info(`- Legacy Alpha APIs: ${exports.legacyAlpha.length}`);
 
-	let semVerExports = [...commonNamedExports];
-	let legacyExports = [...commonNamedExports];
+	const semVerExports = [...commonNamedExports];
+	const legacyExports = [...commonNamedExports];
 
 	for (const apiLevel of apiLevels) {
 		log.info(`\tProcessing @${apiLevel} APIs...`);
 
 		const isLegacyRelease = isLegacy(apiLevel);
 
-		const namedExports = isLegacyRelease ? [...legacyExports] : [...semVerExports];
-
-		// Append this level's additional (or only) exports sorted by ascending case-sensitive name
-		const orgLength = namedExports.length;
+		// Generate this level's additional (or only) exports sorted by ascending case-sensitive name
+		// const orgLength = namedExports.length;
 		const levelExports = [...exports[apiLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
+
+		const levelSectionExports: Omit<ExportSpecifierStructure, "kind">[] = [];
 		for (const levelExport of levelExports) {
-			namedExports.push({ ...levelExport, leadingTrivia: "\n\t" });
+			levelSectionExports.push({ ...levelExport, leadingTrivia: "\n\t" });
 		}
-		if (namedExports.length > orgLength) {
-			namedExports[orgLength].leadingTrivia = `\n\t// #region @${apiLevel} APIs\n\t`;
-			namedExports[namedExports.length - 1].trailingTrivia = `\n\t// #endregion\n`;
+		if (levelSectionExports.length > 0) {
+			levelSectionExports[0].leadingTrivia = `\n\t// #region @${apiLevel} APIs\n\t`;
+			levelSectionExports[levelSectionExports.length - 1].trailingTrivia =
+				`\n\t// #endregion\n`;
 		}
 
 		// Accumulate exports for next applicable level(s).
 		// Note: non-legacy APIs accumulate to legacy exports, but
 		// legacy exports do not accumulate to non-legacy exports.
-		legacyExports = namedExports;
+		legacyExports.push(...levelSectionExports);
 		if (!isLegacyRelease) {
-			semVerExports = namedExports;
+			semVerExports.push(...levelSectionExports);
 		}
 
 		const output = mapApiTagLevelToOutput.get(apiLevel);
@@ -456,6 +457,8 @@ async function generateEntrypoints(
 			overwrite: true,
 			scriptKind: ScriptKind.TS,
 		});
+
+		const namedExports = isLegacyRelease ? legacyExports : semVerExports;
 
 		// Avoid adding export declaration unless there are exports.
 		// Adding one without any named exports results in a * export (everything).
@@ -485,6 +488,8 @@ async function generateNode10TypeEntrypoints(
 	mapExportPathToData: ReadonlyMap<string, Node10CompatExportData>,
 	log: CommandLogger,
 ): Promise<void> {
+	log.info(`Generating Node10 entrypoints...`);
+
 	/**
 	 * List of out file save promises. Used to collect generated file save
 	 * promises so we can await them all at once.
