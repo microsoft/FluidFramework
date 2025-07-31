@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { CodeSpanNode } from "./CodeSpanNode.js";
 import type { LineBreakNode } from "./LineBreakNode.js";
 import type { LinkNode } from "./LinkNode.js";
 import type { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
@@ -33,7 +32,6 @@ import type { SpanNode } from "./SpanNode.js";
  * @public
  */
 export interface PhrasingContentMap {
-	codeSpan: CodeSpanNode;
 	lineBreak: LineBreakNode;
 	link: LinkNode;
 	span: SpanNode;

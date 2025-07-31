@@ -15,7 +15,6 @@
  */
 
 export type { BlockContent, BlockContentMap } from "./BlockContent.js";
-export { CodeSpanNode } from "./CodeSpanNode.js";
 export {
 	DocumentNode,
 	type DocumentNodeProperties as DocumentNodeProps,

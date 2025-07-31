@@ -25,7 +25,6 @@ import type {
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
-	codeSpanToMarkdown,
 	fencedCodeBlockToMarkdown,
 	headingToMarkdown,
 	horizontalRuleToMarkdown,
@@ -99,7 +98,6 @@ export type Transformation<
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/mdast | mdast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	codeSpan: codeSpanToMarkdown,
 	fencedCode: fencedCodeBlockToMarkdown,
 	heading: headingToMarkdown,
 	lineBreak: lineBreakToMarkdown,

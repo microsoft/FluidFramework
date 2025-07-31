@@ -41,7 +41,6 @@ export {
 export {
 	type BlockContent,
 	type BlockContentMap,
-	CodeSpanNode,
 	DocumentNode,
 	type DocumentNodeProps,
 	type DocumentationNode,
