@@ -32,9 +32,9 @@ export type {
 export { EditType } from "./CommonInterfaces.js";
 export { ContainerStateChangeKind } from "./Container.js";
 export type { ContainerDevtoolsProps } from "./ContainerDevtools.js";
-export type { DataObjectProps } from "./DataObjectDevtools.js";
-export type { DecomposedContainer } from "./DecomposedContainer.js";
+export type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
 export type { ContainerStateMetadata } from "./ContainerMetadata.js";
+export type { DecomposedContainer } from "./DecomposedContainer.js";
 export type {
 	FluidHandleNode,
 	FluidObjectNode,
@@ -97,6 +97,7 @@ export {
 	handleIncomingMessage,
 	handleIncomingWindowMessage,
 	isDevtoolsMessage,
+	RemoveContainer,
 	RootDataVisualizations,
 	TelemetryEvent,
 	TelemetryHistory,
