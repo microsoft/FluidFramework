@@ -37,6 +37,7 @@ export { LineBreakNode } from "./LineBreakNode.js";
 export { LinkNode } from "./LinkNode.js";
 export { ListItemNode } from "./ListItemNode.js";
 export { ListNode } from "./ListNode.js";
+export { MarkdownBlockContentNode, MarkdownPhrasingContentNode } from "./MarkdownNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
 export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { PlainTextNode } from "./PlainTextNode.js";

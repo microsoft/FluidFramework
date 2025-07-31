@@ -177,6 +177,8 @@ export interface BlockContentMap {
     // (undocumented)
     list: ListNode;
     // (undocumented)
+    markdownBlockContent: MarkdownBlockContentNode;
+    // (undocumented)
     paragraph: ParagraphNode;
     // (undocumented)
     table: TableNode;
@@ -661,6 +663,20 @@ export interface LoggingConfiguration {
 // @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
+// @public @sealed
+export class MarkdownBlockContentNode extends DocumentationLiteralNodeBase<BlockContent_2> {
+    constructor(value: BlockContent_2);
+    get isEmpty(): boolean;
+    readonly type = "markdownBlockContent";
+}
+
+// @public @sealed
+export class MarkdownPhrasingContentNode extends DocumentationLiteralNodeBase<PhrasingContent_2> {
+    constructor(value: PhrasingContent_2);
+    get isEmpty(): boolean;
+    readonly type = "markdownPhrasingContent";
+}
+
 declare namespace MarkdownRenderer {
     export {
         RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
@@ -695,6 +711,8 @@ export interface PhrasingContentMap {
     lineBreak: LineBreakNode;
     // (undocumented)
     link: LinkNode;
+    // (undocumented)
+    markdownPhrasingContent: MarkdownPhrasingContentNode;
     // (undocumented)
     span: SpanNode;
     // (undocumented)
@@ -924,7 +942,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
-export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
+export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode[];
 
 // @public
 export type UrlTarget = string;

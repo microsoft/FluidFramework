@@ -40,6 +40,8 @@ import {
 	tableRowToMarkdown,
 	listToMarkdown,
 	listItemToMarkdown,
+	markdownBlockContentNodeToMarkdown,
+	markdownPhrasingContentNodeToMarkdown,
 } from "../default-transformations/index.js";
 
 /**
@@ -104,6 +106,8 @@ export const defaultTransformations: Transformations = {
 	link: linkToMarkdown,
 	list: listToMarkdown,
 	listItem: listItemToMarkdown,
+	markdownBlockContent: markdownBlockContentNodeToMarkdown,
+	markdownPhrasingContent: markdownPhrasingContentNodeToMarkdown,
 	section: sectionToMarkdown,
 	horizontalRule: horizontalRuleToMarkdown,
 	paragraph: paragraphToMarkdown,

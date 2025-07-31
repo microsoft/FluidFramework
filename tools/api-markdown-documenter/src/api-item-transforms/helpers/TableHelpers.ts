@@ -21,6 +21,8 @@ import {
 	CodeSpanNode,
 	HeadingNode,
 	LinkNode,
+	MarkdownBlockContentNode,
+	MarkdownPhrasingContentNode,
 	type PhrasingContent,
 	PlainTextNode,
 	SectionNode,
@@ -842,8 +844,8 @@ function transformTsdocSectionForTableCell(
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.
 	if (transformed.length === 1 && transformed[0].type === "paragraph") {
-		return transformed[0].children;
+		return transformed[0].children.map((child) => new MarkdownPhrasingContentNode(child));
 	}
 
-	return transformed;
+	return transformed.map((node) => new MarkdownBlockContentNode(node));
 }

@@ -50,7 +50,7 @@ function transformCellContent(
 ): [MdastPhrasingContent] {
 	// Since our library supports block content under table cells, but Markdown does not,
 	// we need to wrap contents that are not simple phrasing content as HTML.
-	if (["text", "codeSpan", "link", "span"].includes(node.type)) {
+	if (["text", "codeSpan", "link", "span", "markdownPhrasingContent"].includes(node.type)) {
 		return phrasingContentToMarkdown(node as PhrasingContent, context);
 	}
 
