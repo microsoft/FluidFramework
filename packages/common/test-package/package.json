@@ -45,31 +45,11 @@
 		},
 		"./legacy": {
 			"import": {
-				"types": "./lib/legacy-public.d.ts",
+				"types": "./lib/legacy.d.ts",
 				"default": "./lib/index.js"
 			},
 			"require": {
-				"types": "./dist/legacy-public.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./legacy/beta": {
-			"import": {
-				"types": "./lib/legacy-beta.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy-beta.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./legacy/alpha": {
-			"import": {
-				"types": "./lib/legacy-alpha.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/legacy-alpha.d.ts",
+				"types": "./dist/legacy.d.ts",
 				"default": "./dist/index.js"
 			}
 		},

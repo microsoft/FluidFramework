@@ -23,18 +23,55 @@ import { getApiExports, getPackageDocumentationText } from "../typescriptApi.js"
 
 import { unscopedPackageNameString } from "./constants.js";
 
-const optionDefaults = {
+interface Options {
+	readonly mainEntrypoint: string;
+	readonly outDir: string;
+	readonly outFilePrefix: string;
+
+	/**
+	 * File path for `@alpha` API entrypoint.
+	 */
+	readonly outFileAlpha: string;
+	/**
+	 * File path for `@beta` API entrypoint.
+	 */
+	readonly outFileBeta: string;
+	/**
+	 * File path for `@public` API entrypoint.
+	 */
+	readonly outFilePublic: string;
+
+	/**
+	 * File path for `@legacy` + `@alpha` API entrypoint.
+	 * @remarks If not specified, no entrypoint will be generated for this API level.
+	 */
+	readonly outFileLegacyAlpha: string | undefined;
+	/**
+	 * File path for `@legacy` + `@beta` API entrypoint.
+	 * @remarks If not specified, no entrypoint will be generated for this API level.
+	 */
+	readonly outFileLegacyBeta: string | undefined;
+	/**
+	 * File path for `@legacy` + `@public` API entrypoint.
+	 * @remarks If not specified, no entrypoint will be generated for this API level.
+	 */
+	readonly outFileLegacyPublic: string | undefined;
+
+	readonly outFileSuffix: string;
+}
+
+const optionDefaults: Options = {
 	mainEntrypoint: "./src/index.ts",
 	outDir: "./lib",
 	outFilePrefix: "",
 	outFileAlpha: "alpha",
 	outFileBeta: "beta",
 	outFilePublic: "public",
-	outFileLegacyAlpha: "legacy-alpha",
-	outFileLegacyBeta: "legacy-beta",
-	outFileLegacyPublic: "legacy-public",
+	outFileLegacyAlpha: undefined,
+	outFileLegacyBeta: undefined,
+	outFileLegacyPublic: undefined,
 	outFileSuffix: ".d.ts",
-} as const;
+};
 
 /**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
@@ -206,7 +243,7 @@ function getLocalUnscopedPackageName(packageJson: PackageJson): string {
 }
 
 function getOutputConfiguration(
-	flags: Readonly<Record<keyof typeof optionDefaults, string>> & { node10TypeCompat: boolean },
+	flags: Options & { node10TypeCompat: boolean },
 	packageJson: PackageJson,
 	logger?: CommandLogger,
 ): {
@@ -231,10 +268,29 @@ function getOutputConfiguration(
 		[outFileAlpha, ApiLevel.alpha],
 		[outFileBeta, ApiLevel.beta],
 		[outFilePublic, ApiLevel.public],
-		[outFileLegacyAlpha, ApiLevel.legacyAlpha],
-		[outFileLegacyBeta, ApiLevel.legacyBeta],
-		[outFileLegacyPublic, ApiLevel.legacyPublic],
 	];
+
+	// Back compat: if no legacy files are specified, generate a single "/legacy" entrypoint for `@legacy` + `@alpha` APIs.
+	if (
+		outFileLegacyAlpha === undefined &&
+		outFileLegacyBeta === undefined &&
+		outFileLegacyPublic === undefined
+	) {
+		logger?.info(
+			`No legacy entrypoints specified. Generating a single entrypoint "/legacy" for @legacy @alpha APIs.`,
+		);
+		outFileToApiLevelEntries.push(["legacy", ApiLevel.legacyAlpha]);
+	} else {
+		if (outFileLegacyAlpha !== undefined) {
+			outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
+		}
+		if (outFileLegacyBeta !== undefined) {
+			outFileToApiLevelEntries.push([outFileLegacyBeta, ApiLevel.legacyBeta]);
+		}
+		if (outFileLegacyPublic !== undefined) {
+			outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
+		}
+	}
 
 	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map();
 	for (const [outFile, apiLevel] of outFileToApiLevelEntries) {
@@ -278,11 +334,8 @@ function getOutputConfiguration(
  * @param argQuery - record of arguments to read (keys) with default values
  * @returns record of argument values extracted or given default value
  */
-function readArgValues<TQuery extends Readonly<Record<string, string>>>(
-	commandLine: string,
-	argQuery: TQuery,
-): TQuery {
-	const values: Record<string, string> = {};
+function readArgValues(commandLine: string, argQuery: Options): Options {
+	const values: Record<string, unknown> = {};
 	const args = commandLine.split(" ");
 	for (const [argName, defaultValue] of Object.entries(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
@@ -291,7 +344,7 @@ function readArgValues<TQuery extends Readonly<Record<string, string>>>(
 				? args[indexOfArgValue]
 				: defaultValue;
 	}
-	return values as TQuery;
+	return values as unknown as Options;
 }
 
 export function getGenerateEntrypointsOutput(
