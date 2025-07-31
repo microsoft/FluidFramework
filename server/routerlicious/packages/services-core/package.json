@@ -69,7 +69,11 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_ITenantConfig": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "public"
 	}
 }
