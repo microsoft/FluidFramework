@@ -1381,8 +1381,7 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
-				clients.length > 0 &&
-				random.bool(options.clientJoinOptions.clientAddProbability)
+				clients.length > 0
 			) {
 				return {
 					type: "cloneClientFromPendingState",
