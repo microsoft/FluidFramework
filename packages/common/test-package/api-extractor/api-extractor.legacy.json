@@ -3,7 +3,7 @@
 	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.legacy.json",
 	"mainEntryPointFilePath": "<projectFolder>/lib/legacy-alpha.d.ts",
 	"apiReport": {
-		"reportFileName": "<unscopedPackageName>.legacy-alpha",
-		"reportVariants": ["public", "beta", "alpha"]
+		"reportFileName": "<unscopedPackageName>.legacy",
+		"reportVariants": ["beta", "alpha"]
 	}
 }
