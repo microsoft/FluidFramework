@@ -234,6 +234,8 @@ export class TreeViewConfiguration<
 					ambiguityErrors,
 				);
 			},
+			// All types should be validated and included in the map, regardless of whether they are staged or not.
+			walkStagedAllowedTypes: true,
 		});
 
 		this.definitionsInternal = definitions;
