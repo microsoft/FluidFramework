@@ -424,7 +424,6 @@ async function generateEntrypoints(
 		const isLegacyRelease = isLegacy(apiLevel);
 
 		// Generate this level's additional (or only) exports sorted by ascending case-sensitive name
-		// const orgLength = namedExports.length;
 		const levelExports = [...exports[apiLevel]].sort((a, b) => (a.name > b.name ? 1 : -1));
 
 		const levelSectionExports: Omit<ExportSpecifierStructure, "kind">[] = [];
