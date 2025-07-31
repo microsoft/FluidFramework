@@ -48,7 +48,8 @@ import { tryStoredSchemaAsArray } from "./customTree.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 
 /**
- * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema which prevent the view schema from being able to view the stored schema.
+ * Discriminated union (keyed on `mismatch`) of discrepancies between a view and stored schema which
+ * make it possible for content matching the stored schema to be incompatible with the view schema.
  */
 export type Discrepancy = FieldDiscrepancy | NodeKindDiscrepancy;
 
