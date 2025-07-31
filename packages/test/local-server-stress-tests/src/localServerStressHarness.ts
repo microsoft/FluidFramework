@@ -34,13 +34,13 @@ import {
 import {
 	AttachState,
 	type ICodeDetailsLoader,
-	type IContainer,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
+	IContainerExperimental,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -73,9 +73,10 @@ import {
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface Client {
-	container: IContainer;
+	container: IContainerExperimental;
 	tag: `client-${number}`;
 	entryPoint: DefaultStressDataObject;
+	getPendingLocalState?: () => Promise<string>;
 }
 
 /**
@@ -442,6 +443,8 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 		if (isOperationType<AddClient>("addClient", op)) {
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
+			const pendingLocalState = await state.client.getPendingLocalState?.();
+			assert(pendingLocalState !== undefined, "pending local state must be available");
 			const newClient = await loadClient(
 				state.localDeltaConnectionServer,
 				state.codeLoader,
@@ -449,6 +452,7 @@ function mixinAddRemoveClient<TOperation extends BaseOperation>(
 				url,
 				state.seed,
 				options,
+				pendingLocalState,
 			);
 			state.clients.push(newClient);
 			return state;
@@ -521,6 +525,8 @@ function mixinAttach<TOperation extends BaseOperation>(
 
 			await clientA.container.attach(createLocalResolverCreateNewRequest("stress test"));
 			const url = await clientA.container.getAbsoluteUrl("");
+			const pendingLocalState = await clientA.getPendingLocalState?.();
+			assert(pendingLocalState !== undefined, "pending local state must be available");
 			assert(url !== undefined, "container must have a url");
 			// After attaching, we use a newly loaded client as a read-only client for consistency comparison validation.
 			// This makes debugging easier as the state of a client is easier to interpret if it has no local changes.
@@ -532,6 +538,7 @@ function mixinAttach<TOperation extends BaseOperation>(
 				url,
 				state.seed,
 				options,
+				pendingLocalState,
 			);
 
 			return {
@@ -788,6 +795,7 @@ async function loadClient(
 	url: string,
 	seed: number,
 	options: LocalServerStressOptions,
+	pendingLocalState: string,
 ): Promise<Client> {
 	const container = await timeoutAwait(
 		loadExistingContainer({
@@ -799,6 +807,7 @@ async function loadClient(
 			configProvider: {
 				getRawConfig: (name) => options.configurations?.[name],
 			},
+			pendingLocalState,
 		}),
 		{
 			errorMsg: `Timed out waiting for client to load ${tag}`,
@@ -1391,11 +1400,11 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 			const sourceClient = state.clients.find((c) => c.tag === op.sourceClientTag);
 			assert(sourceClient !== undefined, `Client ${op.sourceClientTag} not found`);
 
-			const runtime = createRuntimeFactory();
-
-			
-
-			// const pendingState = await sourceClient.getPendingLocalState();
+			assert(
+				typeof sourceClient.getPendingLocalState === "function",
+				`Client ${op.sourceClientTag} does not have pending local state`,
+			);
+			const pendingLocalState = await sourceClient.getPendingLocalState?.();
 
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
@@ -1406,6 +1415,7 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 				url,
 				state.seed,
 				options,
+				pendingLocalState,
 			);
 			state.clients.push(newClient);
 			return state;
