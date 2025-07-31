@@ -4330,6 +4330,9 @@ importers:
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../../../packages/utils/telemetry-utils
+      '@fluidframework/tinylicious-client':
+        specifier: workspace:~
+        version: link:../../../../packages/service-clients/tinylicious-client
       assert:
         specifier: ^2.0.0
         version: 2.1.0
