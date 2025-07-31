@@ -1341,24 +1341,24 @@ export namespace createLocalServerStressSuite {
 			});
 }
 
-interface CloneClientFromPending {
-	type: "cloneClientFromPending";
-	sourceClientTag: string;
-	newClientTag: string;
+interface CloneClientFromPendingState {
+	type: "cloneClientFromPendingState";
+	sourceClientTag: `client-${number}`;
+	newClientTag: `client-${number}`;
 }
 
 function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | CloneClientFromPending> {
+): LocalServerStressModel<TOperation | CloneClientFromPendingState> {
 	const generatorFactory: () => AsyncGenerator<
-		TOperation | CloneClientFromPending,
+		TOperation | CloneClientFromPendingState,
 		LocalServerStressState
 	> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (
 			state: LocalServerStressState,
-		): Promise<TOperation | CloneClientFromPending | typeof done> => {
+		): Promise<TOperation | CloneClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
 
 			// Control frequency with some probability (adjust as needed)
@@ -1371,10 +1371,10 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 				const sourceClient = random.pick(clients);
 
 				return {
-					type: "cloneClientFromPending",
+					type: "cloneClientFromPendingState",
 					sourceClientTag: sourceClient.tag,
 					newClientTag: state.tag("client"),
-				} satisfies CloneClientFromPending;
+				} satisfies CloneClientFromPendingState;
 			}
 
 			return baseGenerator(state);
@@ -1382,10 +1382,10 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 	};
 
 	const reducer: AsyncReducer<
-		TOperation | CloneClientFromPending,
+		TOperation | CloneClientFromPendingState,
 		LocalServerStressState
 	> = async (state, op) => {
-		if (op.type === "cloneClientFromPending") {
+		if (op.type === "cloneClientFromPendingState") {
 			const sourceClient = state.clients.find((c) => c.tag === op.sourceClientTag);
 			assert(sourceClient !== undefined, `Client ${op.sourceClientTag} not found`);
 
@@ -1403,7 +1403,7 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 				url,
 				state.seed,
 				options,
-				pendingState, // pass the pending local state here!
+				pendingState,
 			);
 
 			state.clients.push(newClient);
