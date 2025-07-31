@@ -48,6 +48,7 @@ import type {
 	ISerializedValue,
 } from "./internalInterfaces.js";
 import { serializeValue, migrateIfSharedSerializable } from "./localValues.js";
+import { findLast, findLastIndex } from "./utils.js";
 
 // We use path-browserify since this code can run safely on the server or the browser.
 // We standardize on using posix slashes everywhere.
@@ -208,8 +209,7 @@ export type IDirectoryOperation = IDirectoryStorageOperation | IDirectorySubDire
 interface PendingKeySet {
 	type: "set";
 	path: string;
-	// eslint-disable-next-line import/no-deprecated
-	value: ISerializableValue;
+	value: unknown;
 }
 
 interface PendingKeyDelete {
@@ -240,25 +240,6 @@ interface PendingKeyLifetime {
  * compute optimistic values. Local sets are aggregated into lifetimes.
  */
 type PendingStorageEntry = PendingKeyLifetime | PendingKeyDelete | PendingClear;
-
-/**
- * Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
- */
-const findLastIndex = <T>(array: T[], callbackFn: (value: T) => boolean): number => {
-	for (let i = array.length - 1; i >= 0; i--) {
-		// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-		if (callbackFn(array[i]!)) {
-			return i;
-		}
-	}
-	return -1;
-};
-
-/**
- * Rough polyfill for Array.findLast until we target ES2023 or greater.
- */
-const findLast = <T>(array: T[], callbackFn: (value: T) => boolean): T | undefined =>
-	array[findLastIndex(array, callbackFn)];
 
 /**
  * Create info for the subdirectory.
@@ -1283,7 +1264,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * {@inheritDoc IDirectory.get}
 	 */
 	public get<T = unknown>(key: string): T | undefined {
-		return this.getOptimisticLocalValue(key) as T | undefined;
+		return this.getOptimisticValue(key) as T | undefined;
 	}
 
 	/**
@@ -1295,15 +1276,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (key === undefined || key === null) {
 			throw new Error("Undefined and null keys are not supported");
 		}
-		const localValue = value;
-		const previousOptimisticLocalValue = this.getOptimisticLocalValue(key);
+		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
 		// Create a local value and serialize it.
 		bindHandles(value, this.serializer, this.directory.handle);
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
-			this.sequencedData.set(key, localValue);
+			this.sequencedData.set(key, value);
 			const event: IDirectoryValueChanged = {
 				key,
 				path: this.absolutePath,
@@ -1337,8 +1317,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			path: this.absolutePath,
-			// eslint-disable-next-line import/no-deprecated
-			value: localValue as ISerializableValue,
+			value,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -1346,21 +1325,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			key,
 			path: this.absolutePath,
 			type: "set",
-			value: { type: ValueType[ValueType.Plain], value: localValue },
+			value: { type: ValueType[ValueType.Plain], value },
 		};
 		this.submitKeyMessage(op, pendingKeySet);
 
-		const event1: IDirectoryValueChanged = {
+		const directoryValueChanged: IDirectoryValueChanged = {
 			key,
 			path: this.absolutePath,
 			previousValue: previousOptimisticLocalValue,
 		};
-		this.directory.emit("valueChanged", event1, true, this.directory);
-		const containedEvent1: IValueChanged = {
+		this.directory.emit("valueChanged", directoryValueChanged, true, this.directory);
+		const valueChanged: IValueChanged = {
 			key,
 			previousValue: previousOptimisticLocalValue,
 		};
-		this.emit("containedValueChanged", containedEvent1, true, this);
+		this.emit("containedValueChanged", valueChanged, true, this);
 		return this;
 	}
 
@@ -1552,7 +1531,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public delete(key: string): boolean {
 		this.throwIfDisposed();
-		const previousOptimisticLocalValue = this.getOptimisticLocalValue(key);
+		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
 		if (!this.directory.isAttached()) {
 			const successfullyRemoved = this.sequencedData.delete(key);
@@ -1640,14 +1619,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		callback: (value: unknown, key: string, map: Map<string, unknown>) => void,
 	): void {
 		this.throwIfDisposed();
-		// It would be better to iterate over the data without a temp map.  However, we don't have a valid
-		// map to pass for the third argument here (really, it should probably should be a reference to the
-		// SharedMap and not the MapKernel).
-		const tempMap = new Map(this.internalIterator());
-		// eslint-disable-next-line unicorn/no-array-for-each
-		tempMap.forEach((localValue, key, m) => {
-			callback((localValue as { value: unknown }).value, key, m);
-		});
+		for (const [key, localValue] of this.internalIterator()) {
+			callback((localValue as { value: unknown }).value, key, this.sequencedData);
+		}
 	}
 
 	/**
@@ -1780,7 +1754,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					)
 				) {
 					assert(this.has(key), "key should exist in sequenced or pending data");
-					const optimisticValue = this.getOptimisticLocalValue(key);
+					const optimisticValue = this.getOptimisticValue(key);
 					return { value: [key, optimisticValue], done: false };
 				}
 				nextSequencedKey = sequencedDataIterator.next();
@@ -1833,7 +1807,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * Compute the optimistic local value for a given key. This combines the sequenced data with
 	 * any pending changes that have not yet been sequenced.
 	 */
-	private readonly getOptimisticLocalValue = (key: string): unknown => {
+	private readonly getOptimisticValue = (key: string): unknown => {
 		const latestPendingEntry = findLast(
 			this.pendingStorageData,
 			(entry) => entry.type === "clear" || entry.key === key,
@@ -2313,7 +2287,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public getLocalValue<T>(key: string): T {
 		this.throwIfDisposed();
-		return this.getOptimisticLocalValue(key) as T;
+		return this.getOptimisticValue(key) as T;
 	}
 
 	/**
@@ -2366,7 +2340,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (pendingEntry.type === "delete") {
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
-				if (this.getOptimisticLocalValue(directoryOp.key) !== undefined) {
+				if (this.getOptimisticValue(directoryOp.key) !== undefined) {
 					const event: IDirectoryValueChanged = {
 						key: directoryOp.key,
 						path: this.absolutePath,
