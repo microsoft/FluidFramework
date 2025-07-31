@@ -1391,6 +1391,10 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 			const sourceClient = state.clients.find((c) => c.tag === op.sourceClientTag);
 			assert(sourceClient !== undefined, `Client ${op.sourceClientTag} not found`);
 
+			const runtime = createRuntimeFactory();
+
+			
+
 			// const pendingState = await sourceClient.getPendingLocalState();
 
 			const url = await state.validationClient.container.getAbsoluteUrl("");

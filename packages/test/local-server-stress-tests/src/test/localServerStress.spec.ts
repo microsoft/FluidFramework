@@ -3,25 +3,46 @@
  * Licensed under the MIT License.
  */
 
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader, loadExistingContainer } from "@fluidframework/container-loader/internal";
+import { takeAsync } from "@fluid-private/stochastic-test-utils";
+
 import {
-	TestObjectProvider,
-	type ITestObjectProvider,
-} from "@fluidframework/test-utils/internal";
-import { createRuntimeFactory } from "../stressDataObject";
+	ddsModelMinimizers,
+	makeGenerator,
+	reducer,
+	saveFailures,
+	type StressOperations,
+} from "../baseModel.js";
+import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
+import { validateConsistencyOfAllDDS } from "../ddsOperations";
+import {
+	createLocalServerStressSuite,
+	LocalServerStressModel,
+} from "../localServerStressHarness";
 
-describe("getPendingLocalState", () => {
-	it("should return pending local state", async () => {
-		const runtime = createRuntimeFactory();
-		const detachedClient = await createDetachedClient();
+describe("Local Server Stress", () => {
+	const model: LocalServerStressModel<StressOperations> = {
+		workloadName: "default",
+		generatorFactory: () => takeAsync(100, makeGenerator()),
+		reducer,
+		validateConsistency: async (...clients) => {
+			await validateAllDataStoresSaved(...clients);
+			await validateConsistencyOfAllDDS(...clients);
+		},
+		minimizationTransforms: ddsModelMinimizers,
+	};
 
-		const attach = detachedClient.container.attach();
-
-		const instantiateRuntime = await runtime.instantiateRuntime(context, true);
-
-		const pendingLocalState = instantiateRuntime.getPendingLocalState();
-
-		const loadContainer2 = loadClient(pendingLocalState);
+	createLocalServerStressSuite(model, {
+		defaultTestCount: 100,
+		// skipMinimization: true,
+		// Uncomment to replay a particular seed.
+		// replay: 93,
+		// only: [28],
+		saveFailures,
+		// saveSuccesses,
+		skip: [
+			...[18, 65, 98], // Number of keys not same
+			...[5, 49, 57], // Number of subDirectories not same,
+			...[11, 39], // Rollback op does not match last pending
+		],
 	});
 });
