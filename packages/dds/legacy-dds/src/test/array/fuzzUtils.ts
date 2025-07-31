@@ -15,6 +15,8 @@ import {
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 
+// eslint-disable-next-line import/no-internal-modules
+import type { SharedArrayClass } from "../../array/sharedArray.js";
 import type { SerializableTypeForSharedArray } from "../../index.js";
 import { SharedArrayFactory } from "../../index.js";
 
@@ -128,6 +130,9 @@ export function makeSharedArrayOperationGenerator(weights: {
 	insert: number;
 	delete: number;
 	move: number;
+	insertBulkAfter: number;
+	toggle: number;
+	toggleMove: number;
 }): (
 	state: DDSFuzzTestState<SharedArrayFactory<string>>,
 ) => Promise<SharedArrayOperation<string>> {
@@ -157,6 +162,65 @@ export function makeSharedArrayOperationGenerator(weights: {
 		newIndex: random.integer(0, Math.max(0, client.channel.get().length)),
 	});
 
+	const insertBulkAfterOp = ({
+		random,
+		client,
+	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayInsertBulkAfter<string> => {
+		const ref = random.integer(0, Math.max(0, client.channel.get().length - 1));
+		const values = Array.from({ length: random.integer(1, 5) }, () =>
+			random.string(random.integer(1, 5)),
+		);
+		return {
+			type: "insertBulkAfter",
+			ref: client.channel.get()[ref],
+			values,
+		};
+	};
+
+	const toggleOp = ({
+		random,
+		client,
+	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggle => {
+		const sharedArray = client.channel as SharedArrayClass<string>;
+		const entryId =
+			sharedArray.getInsertEntryIds()[
+				random.integer(0, Math.max(0, sharedArray.getInsertEntryIds().length - 1))
+			];
+		if (entryId === undefined) {
+			throw new Error("No entryId found for toggle operation");
+		}
+		return {
+			type: "toggle",
+			entryId,
+		};
+	};
+
+	const toggleMoveOp = ({
+		random,
+		client,
+	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggleMove => {
+		const sharedArray = client.channel as SharedArrayClass<string>;
+		const oldEntryId =
+			sharedArray.getMoveEntryIds()[
+				random.integer(0, Math.max(0, sharedArray.getMoveEntryIds().length - 1))
+			];
+		if (oldEntryId === undefined) {
+			throw new Error("OLD");
+		}
+		const newEntryId =
+			sharedArray.getMoveEntryIds()[
+				random.integer(0, Math.max(0, sharedArray.getMoveEntryIds().length - 1))
+			];
+		if (newEntryId === undefined) {
+			throw new Error("NEW");
+		}
+		return {
+			type: "toggleMove",
+			oldEntryId,
+			newEntryId,
+		};
+	};
+
 	const lengthSatisfies =
 		(
 			criteria: (length: number) => boolean,
@@ -165,7 +229,25 @@ export function makeSharedArrayOperationGenerator(weights: {
 		> =>
 		({ client }) =>
 			criteria(client.channel.get().length);
+	const movelengthSatisfies =
+		(
+			criteria: (length: number) => boolean,
+		): AcceptanceCondition<
+			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
+		> =>
+		({ client }) =>
+			criteria((client.channel as SharedArrayClass<string>).getMoveEntryIds().length);
+	const insertLengthSatisfies =
+		(
+			criteria: (length: number) => boolean,
+		): AcceptanceCondition<
+			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
+		> =>
+		({ client }) =>
+			criteria((client.channel as SharedArrayClass<string>).getInsertEntryIds().length);
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
+	const hasNonzeroMoveLength = movelengthSatisfies((length) => length > 2);
+	const hasNonzeroInsertLength = insertLengthSatisfies((length) => length > 2);
 
 	const syncGenerator = createWeightedGenerator<
 		SharedArrayOperation<string>,
@@ -174,6 +256,9 @@ export function makeSharedArrayOperationGenerator(weights: {
 		[insertOp, weights.insert],
 		[deleteOp, weights.delete, hasNonzeroLength],
 		[moveOp, weights.move, hasNonzeroLength],
+		[insertBulkAfterOp, weights.insertBulkAfter, hasNonzeroLength],
+		[toggleOp, weights.toggle, hasNonzeroInsertLength],
+		// [toggleMoveOp, weights.toggleMove, hasNonzeroMoveLength],
 	]);
 
 	return async (state: DDSFuzzTestState<SharedArrayFactory<string>>) => {
@@ -200,8 +285,11 @@ export const baseSharedArrayModel: DDSFuzzModel<
 			100,
 			makeSharedArrayOperationGenerator({
 				insert: 5,
-				delete: 1,
-				move: 1,
+				delete: 3,
+				move: 3,
+				insertBulkAfter: 1,
+				toggle: 2,
+				toggleMove: 1,
 			}),
 		),
 	reducer: makeSharedArrayReducer<string>(),
