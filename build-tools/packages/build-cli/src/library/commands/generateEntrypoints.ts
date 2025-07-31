@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import fs from "node:fs/promises";
+/* eslint-disable import/no-named-as-default-member */
+
 import path from "node:path";
+import fs from "fs-extra";
 
 import type { PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
@@ -495,16 +497,20 @@ async function generateNode10TypeEntrypoints(
 	 */
 	const fileSavePromises: Promise<void>[] = [];
 
+	async function createEntrypointFile(filePath: string, content: string): Promise<void> {
+		await fs.ensureDir(path.dirname(filePath));
+		await fs.writeFile(filePath, content, "utf8");
+	}
+
 	for (const [outFile, { relPath, isTypeOnly }] of mapExportPathToData.entries()) {
 		log.info(`\tGenerating ${outFile}`);
 		const jsImport = relPath.replace(/\.d\.([cm]?)ts/, ".$1js");
 		fileSavePromises.push(
-			fs.writeFile(
+			createEntrypointFile(
 				outFile,
 				isTypeOnly
 					? `${generatedHeader}export type * from "${relPath}";\n`
 					: `${generatedHeader}export * from "${jsImport}";\n`,
-				"utf8",
 			),
 		);
 	}
