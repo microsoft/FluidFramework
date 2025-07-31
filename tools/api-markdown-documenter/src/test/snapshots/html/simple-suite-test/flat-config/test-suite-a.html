@@ -229,7 +229,9 @@
           <p>An empty interface</p>
         </section>
         <section>
-          <h3 id="testemptyinterface-signature">Signature</h3><code>export interface TestEmptyInterface</code>
+          <h3 id="testemptyinterface-signature">Signature</h3>
+          <pre><code class="language-typescript">export interface TestEmptyInterface
+</code></pre>
         </section>
       </section>
       <section>
@@ -238,7 +240,9 @@
           <p>Test interface</p>
         </section>
         <section>
-          <h3 id="testinterface-signature">Signature</h3><code>export interface TestInterface</code>
+          <h3 id="testinterface-signature">Signature</h3>
+          <pre><code class="language-typescript">export interface TestInterface
+</code></pre>
         </section>
         <section>
           <h3 id="testinterface-remarks">Remarks</h3>
@@ -383,7 +387,9 @@
               <p>Test construct signature.</p>
             </section>
             <section>
-              <h5 id="_new_-signature">Signature</h5><code>new (): TestInterface;</code>
+              <h5 id="_new_-signature">Signature</h5>
+              <pre><code class="language-typescript">new (): TestInterface;
+</code></pre>
             </section>
             <section>
               <h5 id="_new_-returns">Returns</h5>
@@ -399,7 +405,9 @@
               <p>Test interface event property</p>
             </section>
             <section>
-              <h5 id="testclasseventproperty-signature">Signature</h5><code>readonly testClassEventProperty: () => void;</code>
+              <h5 id="testclasseventproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">readonly testClassEventProperty: () => void;
+</code></pre>
               <p><b>Type</b>: () => void</p>
             </section>
             <section>
@@ -416,14 +424,18 @@
               <p>A test getter-only interface property.</p>
             </section>
             <section>
-              <h5 id="getterproperty-signature">Signature</h5><code>get getterProperty(): boolean;</code>
+              <h5 id="getterproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">get getterProperty(): boolean;
+</code></pre>
               <p><b>Type</b>: boolean</p>
             </section>
           </section>
           <section>
             <h4 id="testinterface-propertywithbadinheritdoctarget-propertysignature">propertyWithBadInheritDocTarget</h4>
             <section>
-              <h5 id="propertywithbadinheritdoctarget-signature">Signature</h5><code>propertyWithBadInheritDocTarget: boolean;</code>
+              <h5 id="propertywithbadinheritdoctarget-signature">Signature</h5>
+              <pre><code class="language-typescript">propertyWithBadInheritDocTarget: boolean;
+</code></pre>
               <p><b>Type</b>: boolean</p>
             </section>
           </section>
@@ -433,7 +445,11 @@
               <p>A test property with a getter and a setter.</p>
             </section>
             <section>
-              <h5 id="setterproperty-signature">Signature</h5><code>get setterProperty(): boolean;<br><br>set setterProperty(newValue: boolean);</code>
+              <h5 id="setterproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">get setterProperty(): boolean;
+
+set setterProperty(newValue: boolean);
+</code></pre>
               <p><b>Type</b>: boolean</p>
             </section>
           </section>
@@ -443,7 +459,9 @@
               <p>Test interface property</p>
             </section>
             <section>
-              <h5 id="testinterfaceproperty-signature">Signature</h5><code>testInterfaceProperty: number;</code>
+              <h5 id="testinterfaceproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">testInterfaceProperty: number;
+</code></pre>
               <p><b>Type</b>: number</p>
             </section>
             <section>
@@ -457,7 +475,9 @@
               <p>Test optional property</p>
             </section>
             <section>
-              <h5 id="testoptionalinterfaceproperty-signature">Signature</h5><code>testOptionalInterfaceProperty?: number;</code>
+              <h5 id="testoptionalinterfaceproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">testOptionalInterfaceProperty?: number;
+</code></pre>
               <p><b>Type</b>: number</p>
             </section>
           </section>
@@ -470,7 +490,9 @@
               <p>Test interface method</p>
             </section>
             <section>
-              <h5 id="testinterfacemethod-signature">Signature</h5><code>testInterfaceMethod(): void;</code>
+              <h5 id="testinterfacemethod-signature">Signature</h5>
+              <pre><code class="language-typescript">testInterfaceMethod(): void;
+</code></pre>
             </section>
             <section>
               <h5 id="testinterfacemethod-remarks">Remarks</h5>
@@ -486,7 +508,9 @@
               <p>Test interface event call signature</p>
             </section>
             <section>
-              <h5 id="_call_-signature">Signature</h5><code>(event: 'testCallSignature', listener: (input: unknown) => void): any;</code>
+              <h5 id="_call_-signature">Signature</h5>
+              <pre><code class="language-typescript">(event: 'testCallSignature', listener: (input: unknown) => void): any;
+</code></pre>
             </section>
             <section>
               <h5 id="_call_-remarks">Remarks</h5>
@@ -499,7 +523,9 @@
               <p>Another example call signature</p>
             </section>
             <section>
-              <h5 id="_call__1-signature">Signature</h5><code>(event: 'anotherTestCallSignature', listener: (input: number) => string): number;</code>
+              <h5 id="_call__1-signature">Signature</h5>
+              <pre><code class="language-typescript">(event: 'anotherTestCallSignature', listener: (input: number) => string): number;
+</code></pre>
             </section>
             <section>
               <h5 id="_call__1-remarks">Remarks</h5>
@@ -521,7 +547,9 @@
           <p>Test interface that extends other interfaces</p>
         </section>
         <section>
-          <h3 id="testinterfaceextendingotherinterfaces-signature">Signature</h3><code>export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter&#x3C;number></code>
+          <h3 id="testinterfaceextendingotherinterfaces-signature">Signature</h3>
+          <pre><code class="language-typescript">export interface TestInterfaceExtendingOtherInterfaces extends TestInterface, TestMappedType, TestInterfaceWithTypeParameter&#x3C;number>
+</code></pre>
           <p><b>Extends</b>: <a href="docs/test-suite-a#testinterface-interface">TestInterface</a>, <a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a>, <a href="docs/test-suite-a#testinterfacewithtypeparameter-interface">TestInterfaceWithTypeParameter</a>&#x3C;number></p>
         </section>
         <section>
@@ -555,7 +583,9 @@
               <p>Test interface method accepting a string and returning a number.</p>
             </section>
             <section>
-              <h5 id="testmethod-signature">Signature</h5><code>testMethod(input: string): number;</code>
+              <h5 id="testmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">testMethod(input: string): number;
+</code></pre>
             </section>
             <section>
               <h5 id="testmethod-remarks">Remarks</h5>
@@ -602,7 +632,9 @@
           <p>An interface with an index signature.</p>
         </section>
         <section>
-          <h3 id="testinterfacewithindexsignature-signature">Signature</h3><code>export interface TestInterfaceWithIndexSignature</code>
+          <h3 id="testinterfacewithindexsignature-signature">Signature</h3>
+          <pre><code class="language-typescript">export interface TestInterfaceWithIndexSignature
+</code></pre>
         </section>
         <section>
           <h3>Index Signatures</h3>
@@ -629,7 +661,11 @@
               <p>Test index signature.</p>
             </section>
             <section>
-              <h5 id="_indexer_-signature">Signature</h5><code>[foo: number]: {<br>bar: string;<br>};</code>
+              <h5 id="_indexer_-signature">Signature</h5>
+              <pre><code class="language-typescript">[foo: number]: {
+        bar: string;
+    };
+</code></pre>
             </section>
           </section>
         </section>
@@ -640,7 +676,9 @@
           <p>Test interface with generic type parameter</p>
         </section>
         <section>
-          <h3 id="testinterfacewithtypeparameter-signature">Signature</h3><code>export interface TestInterfaceWithTypeParameter&#x3C;T></code>
+          <h3 id="testinterfacewithtypeparameter-signature">Signature</h3>
+          <pre><code class="language-typescript">export interface TestInterfaceWithTypeParameter&#x3C;T>
+</code></pre>
           <section>
             <h4>Type Parameters</h4>
             <table>
@@ -690,7 +728,9 @@
               <p>A test interface property using generic type parameter</p>
             </section>
             <section>
-              <h5 id="testproperty-signature">Signature</h5><code>testProperty: T;</code>
+              <h5 id="testproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">testProperty: T;
+</code></pre>
               <p><b>Type</b>: T</p>
             </section>
             <section>
@@ -709,7 +749,9 @@
           <p>A test abstract class.</p>
         </section>
         <section>
-          <h3 id="testabstractclass-signature">Signature</h3><code>export declare abstract class TestAbstractClass</code>
+          <h3 id="testabstractclass-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare abstract class TestAbstractClass
+</code></pre>
         </section>
         <section>
           <h3>Constructors</h3>
@@ -799,7 +841,9 @@
               <p>This is a <em>{@customTag constructor}</em>.</p>
             </section>
             <section>
-              <h5 id="_constructor_-signature">Signature</h5><code>protected constructor(privateProperty: number, protectedProperty: TestEnum);</code>
+              <h5 id="_constructor_-signature">Signature</h5>
+              <pre><code class="language-typescript">protected constructor(privateProperty: number, protectedProperty: TestEnum);
+</code></pre>
             </section>
             <section>
               <h5 id="_constructor_-parameters">Parameters</h5>
@@ -836,7 +880,9 @@
               <p>@escapedTag</p>
             </section>
             <section>
-              <h5 id="abstractpropertygetter-signature">Signature</h5><code>abstract get abstractPropertyGetter(): TestMappedType;</code>
+              <h5 id="abstractpropertygetter-signature">Signature</h5>
+              <pre><code class="language-typescript">abstract get abstractPropertyGetter(): TestMappedType;
+</code></pre>
               <p><b>Type</b>: <a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a></p>
             </section>
           </section>
@@ -846,7 +892,9 @@
               <p>A test protected property.</p>
             </section>
             <section>
-              <h5 id="protectedproperty-signature">Signature</h5><code>protected readonly protectedProperty: TestEnum;</code>
+              <h5 id="protectedproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">protected readonly protectedProperty: TestEnum;
+</code></pre>
               <p><b>Type</b>: <a href="docs/test-suite-a#testenum-enum">TestEnum</a></p>
             </section>
           </section>
@@ -859,7 +907,9 @@
               <p>A test public abstract method.</p>
             </section>
             <section>
-              <h5 id="publicabstractmethod-signature">Signature</h5><code>abstract publicAbstractMethod(): void;</code>
+              <h5 id="publicabstractmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">abstract publicAbstractMethod(): void;
+</code></pre>
             </section>
           </section>
           <section>
@@ -868,7 +918,10 @@
               <p>A test <code>@sealed</code> method.</p>
             </section>
             <section>
-              <h5 id="sealedmethod-signature">Signature</h5><code>/** @sealed */<br>protected sealedMethod(): string;</code>
+              <h5 id="sealedmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">/** @sealed */
+protected sealedMethod(): string;
+</code></pre>
             </section>
             <section>
               <h5 id="sealedmethod-returns">Returns</h5>
@@ -882,7 +935,10 @@
               <p>A test <code>@virtual</code> method.</p>
             </section>
             <section>
-              <h5 id="virtualmethod-signature">Signature</h5><code>/** @virtual */<br>protected virtualMethod(): number;</code>
+              <h5 id="virtualmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">/** @virtual */
+protected virtualMethod(): number;
+</code></pre>
             </section>
             <section>
               <h5 id="virtualmethod-returns">Returns</h5>
@@ -898,7 +954,9 @@
           <p>Test class</p>
         </section>
         <section>
-          <h3 id="testclass-signature">Signature</h3><code>export declare class TestClass&#x3C;TTypeParameterA, TTypeParameterB> extends TestAbstractClass</code>
+          <h3 id="testclass-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare class TestClass&#x3C;TTypeParameterA, TTypeParameterB> extends TestAbstractClass
+</code></pre>
           <p><b>Extends</b>: <a href="docs/test-suite-a#testabstractclass-class">TestAbstractClass</a></p>
           <section>
             <h4>Type Parameters</h4>
@@ -1076,7 +1134,9 @@
               <p>Test class constructor</p>
             </section>
             <section>
-              <h5 id="_constructor_-signature">Signature</h5><code>constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);</code>
+              <h5 id="_constructor_-signature">Signature</h5>
+              <pre><code class="language-typescript">constructor(privateProperty: number, protectedProperty: TestEnum, testClassProperty: TTypeParameterB, testClassEventProperty: () => void);
+</code></pre>
             </section>
             <section>
               <h5 id="_constructor_-remarks">Remarks</h5>
@@ -1129,7 +1189,9 @@
               <p>Test class event property</p>
             </section>
             <section>
-              <h5 id="testclasseventproperty-signature">Signature</h5><code>readonly testClassEventProperty: () => void;</code>
+              <h5 id="testclasseventproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">readonly testClassEventProperty: () => void;
+</code></pre>
               <p><b>Type</b>: () => void</p>
             </section>
             <section>
@@ -1146,7 +1208,9 @@
               <p>A test abstract getter property.</p>
             </section>
             <section>
-              <h5 id="abstractpropertygetter-signature">Signature</h5><code>get abstractPropertyGetter(): TestMappedType;</code>
+              <h5 id="abstractpropertygetter-signature">Signature</h5>
+              <pre><code class="language-typescript">get abstractPropertyGetter(): TestMappedType;
+</code></pre>
               <p><b>Type</b>: <a href="docs/test-suite-a#testmappedtype-typealias">TestMappedType</a></p>
             </section>
           </section>
@@ -1156,7 +1220,12 @@
               <p>Test class property with both a getter and a setter.</p>
             </section>
             <section>
-              <h5 id="testclassgetterproperty-signature">Signature</h5><code>/** @virtual */<br>get testClassGetterProperty(): number;<br><br>set testClassGetterProperty(newValue: number);</code>
+              <h5 id="testclassgetterproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">/** @virtual */
+get testClassGetterProperty(): number;
+
+set testClassGetterProperty(newValue: number);
+</code></pre>
               <p><b>Type</b>: number</p>
             </section>
             <section>
@@ -1170,7 +1239,9 @@
               <p>Test class property</p>
             </section>
             <section>
-              <h5 id="testclassproperty-signature">Signature</h5><code>readonly testClassProperty: TTypeParameterB;</code>
+              <h5 id="testclassproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">readonly testClassProperty: TTypeParameterB;
+</code></pre>
               <p><b>Type</b>: TTypeParameterB</p>
             </section>
             <section>
@@ -1184,7 +1255,9 @@
               <p>Test static class property</p>
             </section>
             <section>
-              <h5 id="testclassstaticproperty-signature">Signature</h5><code>static testClassStaticProperty: (foo: number) => string;</code>
+              <h5 id="testclassstaticproperty-signature">Signature</h5>
+              <pre><code class="language-typescript">static testClassStaticProperty: (foo: number) => string;
+</code></pre>
               <p><b>Type</b>: (foo: number) => string</p>
             </section>
           </section>
@@ -1197,7 +1270,9 @@
               <p>A test public abstract method.</p>
             </section>
             <section>
-              <h5 id="publicabstractmethod-signature">Signature</h5><code>publicAbstractMethod(): void;</code>
+              <h5 id="publicabstractmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">publicAbstractMethod(): void;
+</code></pre>
             </section>
           </section>
           <section>
@@ -1206,7 +1281,10 @@
               <p>Test class method</p>
             </section>
             <section>
-              <h5 id="testclassmethod-signature">Signature</h5><code>/** @sealed */<br>testClassMethod(input: TTypeParameterA): TTypeParameterA;</code>
+              <h5 id="testclassmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">/** @sealed */
+testClassMethod(input: TTypeParameterA): TTypeParameterA;
+</code></pre>
             </section>
             <section>
               <h5 id="testclassmethod-remarks">Remarks</h5>
@@ -1247,7 +1325,9 @@
               <p>Test class static method</p>
             </section>
             <section>
-              <h5 id="testclassstaticmethod-signature">Signature</h5><code>static testClassStaticMethod(foo: number): string;</code>
+              <h5 id="testclassstaticmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">static testClassStaticMethod(foo: number): string;
+</code></pre>
             </section>
             <section>
               <h5 id="testclassstaticmethod-parameters">Parameters</h5>
@@ -1282,7 +1362,10 @@
               <p>Overrides <a href="docs/test-suite-a#testabstractclass-virtualmethod-method">virtualMethod()</a>.</p>
             </section>
             <section>
-              <h5 id="virtualmethod-signature">Signature</h5><code>/** @override */<br>protected virtualMethod(): number;</code>
+              <h5 id="virtualmethod-signature">Signature</h5>
+              <pre><code class="language-typescript">/** @override */
+protected virtualMethod(): number;
+</code></pre>
             </section>
             <section>
               <h5 id="virtualmethod-returns">Returns</h5>
@@ -1304,7 +1387,9 @@
           <p>Test Enum</p>
         </section>
         <section>
-          <h3 id="testenum-signature">Signature</h3><code>export declare enum TestEnum</code>
+          <h3 id="testenum-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare enum TestEnum
+</code></pre>
         </section>
         <section>
           <h3 id="testenum-remarks">Remarks</h3>
@@ -1357,7 +1442,9 @@
               <p>Test enum value 1 (string)</p>
             </section>
             <section>
-              <h5 id="testenumvalue1-signature">Signature</h5><code>TestEnumValue1 = "test-enum-value-1"</code>
+              <h5 id="testenumvalue1-signature">Signature</h5>
+              <pre><code class="language-typescript">TestEnumValue1 = "test-enum-value-1"
+</code></pre>
             </section>
             <section>
               <h5 id="testenumvalue1-remarks">Remarks</h5>
@@ -1370,7 +1457,9 @@
               <p>Test enum value 2 (number)</p>
             </section>
             <section>
-              <h5 id="testenumvalue2-signature">Signature</h5><code>TestEnumValue2 = 3</code>
+              <h5 id="testenumvalue2-signature">Signature</h5>
+              <pre><code class="language-typescript">TestEnumValue2 = 3
+</code></pre>
             </section>
             <section>
               <h5 id="testenumvalue2-remarks">Remarks</h5>
@@ -1383,7 +1472,9 @@
               <p>Test enum value 3 (default)</p>
             </section>
             <section>
-              <h5 id="testenumvalue3-signature">Signature</h5><code>TestEnumValue3 = 4</code>
+              <h5 id="testenumvalue3-signature">Signature</h5>
+              <pre><code class="language-typescript">TestEnumValue3 = 4
+</code></pre>
             </section>
             <section>
               <h5 id="testenumvalue3-remarks">Remarks</h5>
@@ -1401,7 +1492,11 @@
           <p>Test Mapped Type, using <a href="docs/test-suite-a#testenum-enum">TestEnum</a></p>
         </section>
         <section>
-          <h3 id="testmappedtype-signature">Signature</h3><code>export type TestMappedType = {<br>[K in TestEnum]: boolean;<br>};</code>
+          <h3 id="testmappedtype-signature">Signature</h3>
+          <pre><code class="language-typescript">export type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
+</code></pre>
         </section>
         <section>
           <h3 id="testmappedtype-remarks">Remarks</h3>
@@ -1414,7 +1509,9 @@
           <p>Test Type-Alias</p>
         </section>
         <section>
-          <h3 id="typealias-signature">Signature</h3><code>export type TypeAlias = string;</code>
+          <h3 id="typealias-signature">Signature</h3>
+          <pre><code class="language-typescript">export type TypeAlias = string;
+</code></pre>
         </section>
         <section>
           <h3 id="typealias-remarks">Remarks</h3>
@@ -1430,7 +1527,12 @@
           <p>Test function that returns an inline type</p>
         </section>
         <section>
-          <h3 id="testfunctionreturninginlinetype-signature">Signature</h3><code>export declare function testFunctionReturningInlineType(): {<br>foo: number;<br>bar: TestEnum;<br>};</code>
+          <h3 id="testfunctionreturninginlinetype-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare function testFunctionReturningInlineType(): {
+    foo: number;
+    bar: TestEnum;
+};
+</code></pre>
         </section>
         <section>
           <h3 id="testfunctionreturninginlinetype-returns">Returns</h3>
@@ -1448,7 +1550,9 @@
           <p>This is a test deprecation notice. Here is a <a href="docs/test-suite-a#testfunctionreturninguniontype-function">link</a> to something else!</p>
         </section>
         <section>
-          <h3 id="testfunctionreturningintersectiontype-signature">Signature</h3><code>export declare function testFunctionReturningIntersectionType(): TestEmptyInterface &#x26; TestInterfaceWithTypeParameter&#x3C;number>;</code>
+          <h3 id="testfunctionreturningintersectiontype-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare function testFunctionReturningIntersectionType(): TestEmptyInterface &#x26; TestInterfaceWithTypeParameter&#x3C;number>;
+</code></pre>
         </section>
         <section>
           <h3 id="testfunctionreturningintersectiontype-returns">Returns</h3>
@@ -1462,7 +1566,9 @@
           <p>Test function that returns an inline type</p>
         </section>
         <section>
-          <h3 id="testfunctionreturninguniontype-signature">Signature</h3><code>export declare function testFunctionReturningUnionType(): string | TestInterface;</code>
+          <h3 id="testfunctionreturninguniontype-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare function testFunctionReturningUnionType(): string | TestInterface;
+</code></pre>
         </section>
         <section>
           <h3 id="testfunctionreturninguniontype-returns">Returns</h3>
@@ -1482,7 +1588,9 @@
           <p><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></p>
         </section>
         <section>
-          <h3 id="testconst-signature">Signature</h3><code>testConst = 42</code>
+          <h3 id="testconst-signature">Signature</h3>
+          <pre><code class="language-typescript">testConst = 42
+</code></pre>
         </section>
         <section>
           <h3 id="testconst-remarks">Remarks</h3>
@@ -1498,7 +1606,9 @@
           <p><b>WARNING: This API is deprecated and will be removed in a future release.</b></p>
         </section>
         <section>
-          <h3 id="testconstwithemptydeprecatedblock-signature">Signature</h3><code>testConstWithEmptyDeprecatedBlock: string</code>
+          <h3 id="testconstwithemptydeprecatedblock-signature">Signature</h3>
+          <pre><code class="language-typescript">testConstWithEmptyDeprecatedBlock: string
+</code></pre>
           <p><b>Type</b>: string</p>
         </section>
       </section>
@@ -1514,7 +1624,9 @@
           <p><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></p>
         </section>
         <section>
-          <h3 id="testbetanamespace-signature">Signature</h3><code>export declare namespace TestBetaNamespace</code>
+          <h3 id="testbetanamespace-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare namespace TestBetaNamespace
+</code></pre>
         </section>
         <section>
           <h3 id="testbetanamespace-remarks">Remarks</h3>
@@ -1558,7 +1670,9 @@
               <p><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></p>
             </section>
             <section>
-              <h5 id="betamember-signature">Signature</h5><code>betaMember = "beta"</code>
+              <h5 id="betamember-signature">Signature</h5>
+              <pre><code class="language-typescript">betaMember = "beta"
+</code></pre>
             </section>
           </section>
           <section>
@@ -1567,7 +1681,9 @@
               <p><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></p>
             </section>
             <section>
-              <h5 id="publicmember-signature">Signature</h5><code>publicMember = "public"</code>
+              <h5 id="publicmember-signature">Signature</h5>
+              <pre><code class="language-typescript">publicMember = "public"
+</code></pre>
             </section>
           </section>
         </section>
@@ -1603,7 +1719,9 @@
               <p>Test constant in module.</p>
             </section>
             <section>
-              <h5 id="foo-signature">Signature</h5><code>foo = 2</code>
+              <h5 id="foo-signature">Signature</h5>
+              <pre><code class="language-typescript">foo = 2
+</code></pre>
             </section>
           </section>
         </section>
@@ -1614,7 +1732,9 @@
           <p>Test Namespace</p>
         </section>
         <section>
-          <h3 id="testnamespace-signature">Signature</h3><code>export declare namespace TestNamespace</code>
+          <h3 id="testnamespace-signature">Signature</h3>
+          <pre><code class="language-typescript">export declare namespace TestNamespace
+</code></pre>
         </section>
         <section>
           <h3 id="testnamespace-remarks">Remarks</h3>
@@ -1757,7 +1877,9 @@
               <p>Test class</p>
             </section>
             <section>
-              <h5 id="testclass-signature">Signature</h5><code>class TestClass</code>
+              <h5 id="testclass-signature">Signature</h5>
+              <pre><code class="language-typescript">class TestClass
+</code></pre>
             </section>
             <section>
               <h5>Constructors</h5>
@@ -1823,7 +1945,10 @@
                 <section>
                   <p>Test class constructor</p>
                 </section>
-                <section><a id="_constructor_-signature"></a><b>Signature</b><code>constructor(testClassProperty: string);</code></section>
+                <section><a id="_constructor_-signature"></a><b>Signature</b>
+                  <pre><code class="language-typescript">constructor(testClassProperty: string);
+</code></pre>
+                </section>
                 <section><a id="_constructor_-parameters"></a><b>Parameters</b>
                   <table>
                     <thead>
@@ -1851,7 +1976,9 @@
                 <section>
                   <p>Test interface property</p>
                 </section>
-                <section><a id="testclassproperty-signature"></a><b>Signature</b><code>readonly testClassProperty: string;</code>
+                <section><a id="testclassproperty-signature"></a><b>Signature</b>
+                  <pre><code class="language-typescript">readonly testClassProperty: string;
+</code></pre>
                   <p><b>Type</b>: string</p>
                 </section>
               </section>
@@ -1863,7 +1990,10 @@
                 <section>
                   <p>Test class method</p>
                 </section>
-                <section><a id="testclassmethod-signature"></a><b>Signature</b><code>testClassMethod(testParameter: string): Promise&#x3C;string>;</code></section>
+                <section><a id="testclassmethod-signature"></a><b>Signature</b>
+                  <pre><code class="language-typescript">testClassMethod(testParameter: string): Promise&#x3C;string>;
+</code></pre>
+                </section>
                 <section><a id="testclassmethod-parameters"></a><b>Parameters</b>
                   <table>
                     <thead>
@@ -1903,7 +2033,9 @@
               <p>Test Enum</p>
             </section>
             <section>
-              <h5 id="testenum-signature">Signature</h5><code>enum TestEnum</code>
+              <h5 id="testenum-signature">Signature</h5>
+              <pre><code class="language-typescript">enum TestEnum
+</code></pre>
             </section>
             <section>
               <h5>Flags</h5>
@@ -1932,14 +2064,20 @@
                 <section>
                   <p>Test enum value 1</p>
                 </section>
-                <section><a id="testenumvalue1-signature"></a><b>Signature</b><code>TestEnumValue1 = 0</code></section>
+                <section><a id="testenumvalue1-signature"></a><b>Signature</b>
+                  <pre><code class="language-typescript">TestEnumValue1 = 0
+</code></pre>
+                </section>
               </section>
               <section>
                 <h6 id="testnamespace-testenum-testenumvalue2-enummember">TestEnumValue2</h6>
                 <section>
                   <p>Test enum value 2</p>
                 </section>
-                <section><a id="testenumvalue2-signature"></a><b>Signature</b><code>TestEnumValue2 = 1</code></section>
+                <section><a id="testenumvalue2-signature"></a><b>Signature</b>
+                  <pre><code class="language-typescript">TestEnumValue2 = 1
+</code></pre>
+                </section>
               </section>
             </section>
           </section>
@@ -1952,7 +2090,9 @@
               <p>Test Type-Alias</p>
             </section>
             <section>
-              <h5 id="testtypealias-signature">Signature</h5><code>type TestTypeAlias = boolean;</code>
+              <h5 id="testtypealias-signature">Signature</h5>
+              <pre><code class="language-typescript">type TestTypeAlias = boolean;
+</code></pre>
             </section>
           </section>
         </section>
@@ -1964,7 +2104,9 @@
               <p>Test function</p>
             </section>
             <section>
-              <h5 id="testfunction-signature">Signature</h5><code>function testFunction(testParameter: number): number;</code>
+              <h5 id="testfunction-signature">Signature</h5>
+              <pre><code class="language-typescript">function testFunction(testParameter: number): number;
+</code></pre>
             </section>
             <section>
               <h5 id="testfunction-parameters">Parameters</h5>
@@ -2007,7 +2149,9 @@
               <p><b>WARNING: This API is provided as a beta preview and may change without notice. Use at your own risk.</b></p>
             </section>
             <section>
-              <h5 id="testconst-signature">Signature</h5><code>TestConst = "Hello world!"</code>
+              <h5 id="testconst-signature">Signature</h5>
+              <pre><code class="language-typescript">TestConst = "Hello world!"
+</code></pre>
             </section>
           </section>
         </section>
@@ -2019,7 +2163,9 @@
               <p>Test sub-namespace</p>
             </section>
             <section>
-              <h5 id="testsubnamespace-signature">Signature</h5><code>namespace TestSubNamespace</code>
+              <h5 id="testsubnamespace-signature">Signature</h5>
+              <pre><code class="language-typescript">namespace TestSubNamespace
+</code></pre>
             </section>
           </section>
         </section>

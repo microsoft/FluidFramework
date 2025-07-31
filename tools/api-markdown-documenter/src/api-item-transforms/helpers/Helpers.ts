@@ -34,7 +34,6 @@ import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
-	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
 	ListItemNode,
@@ -96,7 +95,13 @@ export function createSignatureSection(
 		if (signatureExcerpt !== "") {
 			const contents: SectionContent[] = [];
 
-			contents.push(new FencedCodeBlockNode(signatureExcerpt.trim(), "typescript"));
+			contents.push(
+				new MarkdownBlockContentNode({
+					type: "code",
+					lang: "typescript",
+					value: signatureExcerpt.trim(),
+				}),
+			);
 
 			const renderedHeritageTypes = createHeritageTypesContent(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {

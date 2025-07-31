@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-export { fencedCodeBlockToHtml } from "./FencedCodeBlockToHtml.js";
 export { headingToHtml } from "./HeadingToHtml.js";
 export { sectionToHtml } from "./SectionToHtml.js";
 export { linkToHtml } from "./LinkToHtml.js";

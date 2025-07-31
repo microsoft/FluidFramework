@@ -21,7 +21,6 @@ import { expect } from "chai";
 import {
 	DocumentNode,
 	type DocumentationNode,
-	FencedCodeBlockNode,
 	HeadingNode,
 	LinkNode,
 	ListItemNode,
@@ -150,7 +149,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 						}),
 					]),
 					wrapInSection(
-						[new FencedCodeBlockNode('TestConst = "Hello world!"', "typescript")],
+						[
+							new MarkdownBlockContentNode({
+								type: "code",
+								lang: "typescript",
+								value: 'TestConst = "Hello world!"',
+							}),
+						],
 						{
 							title: "Signature",
 							id: `testconst-signature`,
@@ -191,10 +196,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 					// Signature section
 					wrapInSection(
 						[
-							new FencedCodeBlockNode(
-								"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
-								"typescript",
-							),
+							new MarkdownBlockContentNode({
+								type: "code",
+								lang: "typescript",
+								value:
+									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
+							}),
 							new SectionNode(
 								[
 									new TableNode(
@@ -334,7 +341,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 			// Signature section
 			wrapInSection(
-				[new FencedCodeBlockNode("export interface TestInterface", "typescript")],
+				[
+					new MarkdownBlockContentNode({
+						type: "code",
+						lang: "typescript",
+						value: "export interface TestInterface",
+					}),
+				],
 				{ title: "Signature", id: "testinterface-signature" },
 			),
 
@@ -406,10 +419,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Signature section
 							wrapInSection(
 								[
-									new FencedCodeBlockNode(
-										"testOptionalInterfaceProperty?: number;",
-										"typescript",
-									),
+									new MarkdownBlockContentNode({
+										type: "code",
+										lang: "typescript",
+										value: "testOptionalInterfaceProperty?: number;",
+									}),
 									new ParagraphNode([
 										SpanNode.createFromPlainText("Type", { bold: true }),
 										new PlainTextNode(": "),
@@ -475,7 +489,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 			// Signature section
 			wrapInSection(
-				[new FencedCodeBlockNode("export declare namespace TestNamespace", "typescript")],
+				[
+					new MarkdownBlockContentNode({
+						type: "code",
+						lang: "typescript",
+						value: "export declare namespace TestNamespace",
+					}),
+				],
 				{ title: "Signature", id: "testnamespace-signature" },
 			),
 
@@ -535,10 +555,19 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Beta warning
 							wrapInSection([new ParagraphNode([betaWarningSpan])]),
 							// Signature
-							wrapInSection([new FencedCodeBlockNode('bar = "bar"', "typescript")], {
-								title: "Signature",
-								id: "bar-signature",
-							}),
+							wrapInSection(
+								[
+									new MarkdownBlockContentNode({
+										type: "code",
+										lang: "typescript",
+										value: 'bar = "bar"',
+									}),
+								],
+								{
+									title: "Signature",
+									id: "bar-signature",
+								},
+							),
 						],
 						{
 							title: "bar",
@@ -551,10 +580,19 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// No summary docs on `foo`
 
 							// Signature
-							wrapInSection([new FencedCodeBlockNode('foo = "foo"', "typescript")], {
-								title: "Signature",
-								id: "foo-signature",
-							}),
+							wrapInSection(
+								[
+									new MarkdownBlockContentNode({
+										type: "code",
+										lang: "typescript",
+										value: 'foo = "foo"',
+									}),
+								],
+								{
+									title: "Signature",
+									id: "foo-signature",
+								},
+							),
 						],
 						{
 							title: "foo",
@@ -686,7 +724,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 										// Signature
 										new SectionNode(
-											[new FencedCodeBlockNode('hello = "Hello"', "typescript")],
+											[
+												new MarkdownBlockContentNode({
+													type: "code",
+													lang: "typescript",
+													value: 'hello = "Hello"',
+												}),
+											],
 											new HeadingNode("Signature", "hello-signature"),
 										),
 									],
@@ -762,7 +806,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 										// Signature
 										new SectionNode(
-											[new FencedCodeBlockNode('world = "world"', "typescript")],
+											[
+												new MarkdownBlockContentNode({
+													type: "code",
+													lang: "typescript",
+													value: 'world = "world"',
+												}),
+											],
 											new HeadingNode("Signature", "world-signature"),
 										),
 									],

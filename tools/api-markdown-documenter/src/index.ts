@@ -48,8 +48,6 @@ export {
 	DocumentationLiteralNodeBase,
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
-	FencedCodeBlockNode,
-	type FencedCodeBlockNodeContent,
 	HeadingNode,
 	HorizontalRuleNode,
 	LineBreakNode,

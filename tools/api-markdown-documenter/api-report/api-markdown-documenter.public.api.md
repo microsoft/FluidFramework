@@ -171,8 +171,6 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    fencedCode: FencedCodeBlockNode;
-    // (undocumented)
     horizontalRule: HorizontalRuleNode;
     // (undocumented)
     list: ListNode;
@@ -368,19 +366,6 @@ export interface DocumentWriter {
 export namespace DocumentWriter {
     export function create(): DocumentWriter;
 }
-
-// @public @sealed
-export class FencedCodeBlockNode extends DocumentationLiteralNodeBase<string> {
-    constructor(value: string, language?: string);
-    static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
-    static readonly Empty: FencedCodeBlockNode;
-    get isEmpty(): boolean;
-    readonly language?: string;
-    readonly type = "fencedCode";
-}
-
-// @public
-export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
 
 // @public
 export interface FileSystemConfiguration {
