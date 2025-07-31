@@ -386,13 +386,11 @@ class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
  * The fact this is also a Shape is an implementation detail of the encoder: that allows the shape it uses to be itself,
  * which is an easy way to keep all the related code together without extra objects.
  */
-export class NestedArrayEncoder extends NestedArrayShape implements FieldEncoder {
-	public readonly shape: Shape;
-
-	public constructor(public readonly inner: NodeEncoder) {
-		super(inner.shape);
-		this.shape = this;
-	}
+export class NestedArrayEncoder implements FieldEncoder {
+	public constructor(
+		public readonly innerEncoder: NodeEncoder,
+		public readonly shape: Shape = innerEncoder.shape,
+	) {}
 
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -404,7 +402,7 @@ export class NestedArrayEncoder extends NestedArrayShape implements FieldEncoder
 		const length = cursor.getFieldLength();
 		forEachNode(cursor, () => {
 			const before = buffer.length;
-			this.inner.encodeNode(cursor, context, buffer);
+			this.innerEncoder.encodeNode(cursor, context, buffer);
 			allNonZeroSize &&= buffer.length - before !== 0;
 		});
 		if (buffer.length === 0) {
@@ -481,12 +479,9 @@ export const incrementalFieldEncoder: FieldEncoder = {
 			"incremental encoding must be enabled to use IncrementalFieldShape",
 		);
 
-		let chunkReferenceIds: ChunkReferenceId[] = [];
-		if (cursor.getFieldLength() !== 0) {
-			chunkReferenceIds = context.encodeIncrementalField(cursor, (chunk: TreeChunk) =>
-				IncrementalChunkShape.encodeChunk(chunk, context),
-			);
-		}
+		const chunkReferenceIds = context.encodeIncrementalField(cursor, (chunk: TreeChunk) =>
+			IncrementalChunkShape.encodeChunk(chunk, context),
+		);
 		outputBuffer.push(chunkReferenceIds);
 	},
 

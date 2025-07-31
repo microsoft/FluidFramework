@@ -294,6 +294,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 
 	/**
 	 * {@link IncrementalEncoder.encodeIncrementalField}
+	 * @remarks Returns an empty array if the field has no content.
 	 */
 	public encodeIncrementalField(
 		cursor: ITreeCursorSynchronous,
@@ -301,6 +302,10 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	): ChunkReferenceId[] {
 		// Validate that a summary is currently being tracked and that the tracked summary properties are defined.
 		validateTrackingSummary(this.forestSummaryState, this.trackedSummaryProperties);
+
+		if (cursor.getFieldLength() === 0) {
+			return [];
+		}
 
 		let chunkReferenceId: ChunkReferenceId;
 		let chunkProperties: ChunkSummaryProperties;

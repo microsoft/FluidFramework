@@ -240,16 +240,11 @@ export class InlineArrayDecoder implements ChunkDecoder {
 export class IncrementalChunkDecoder implements ChunkDecoder {
 	public constructor(private readonly cache: DecoderContext<EncodedChunkShape>) {}
 	public decode(_: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
-		const chunkReferenceId = readStream(stream);
-		assert(
-			typeof chunkReferenceId === "number",
-			"Expected incremental field's data to be a chunk reference id",
-		);
-
 		assert(
 			this.cache.incrementalDecoder !== undefined,
 			"incremental decoder not available for incremental field decoding",
 		);
+		const chunkReferenceId = readStreamNumber(stream);
 		const batch = this.cache.incrementalDecoder.getEncodedIncrementalChunk(chunkReferenceId);
 		assert(batch !== undefined, "Incremental chunk data missing");
 		const chunks = genericDecode(decoderLibrary, this.cache, batch, anyDecoder);
