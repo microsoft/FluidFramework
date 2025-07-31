@@ -2881,7 +2881,6 @@ export class ContainerRuntime
 			}
 		} else if (canSendOpsChanged) {
 			// If canSendSignals did not change but canSendOps did, then connection type has changed.
-			// This can be writable to readonly or vice versa, so we pass in canSendOps.
 			this.emit("connectionTypeChanged", canSendOps);
 		}
 	}

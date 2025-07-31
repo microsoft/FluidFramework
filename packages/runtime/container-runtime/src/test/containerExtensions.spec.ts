@@ -149,6 +149,10 @@ class MockContainer {
 			);
 		}
 	}
+
+	public forceReadonly(): void {
+		this.runtime?.setConnectionState(false, this.clientId);
+	}
 }
 
 async function createContainerRuntime(context: IContainerContext): Promise<ContainerRuntime> {
@@ -438,6 +442,51 @@ describe("Container Extension", () => {
 				extension.connectedToService,
 				false,
 				"Extension should be disconnected after transition back to Disconnected",
+			);
+		});
+
+		it("should handle connection type changes", async () => {
+			container.setConnectionState(ConnectionState.Connected, "mockClientId");
+			assert(container.runtime, "Runtime should be initialized");
+			const extension = container.runtime.acquireExtension(
+				testExtensionId,
+				TestExtensionFactory,
+			);
+			const events: {
+				type: "joined" | "disconnected" | "connectionTypeChanged";
+				clientId?: string;
+				canWrite?: boolean;
+			}[] = [];
+			extension.events.on(
+				"joined",
+				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
+					events.push({ type: "joined", clientId, canWrite });
+				},
+			);
+			extension.events.on("disconnected", () => {
+				events.push({ type: "disconnected" });
+			});
+			extension.events.on("connectionTypeChanged", (canWrite: boolean) => {
+				events.push({ type: "connectionTypeChanged", canWrite });
+			});
+
+			container.forceReadonly();
+			container.setConnectionState(ConnectionState.Connected, "newMockClientId");
+
+			assert.strictEqual(
+				events.length,
+				2,
+				"Should have received four events for connection type changes",
+			);
+			assert.deepStrictEqual(
+				events[0],
+				{ type: "connectionTypeChanged", canWrite: false },
+				"First event should indicate connection type changed to read-only",
+			);
+			assert.deepStrictEqual(
+				events[1],
+				{ type: "connectionTypeChanged", canWrite: true },
+				"Second event should indicate connection type changed to writable",
 			);
 		});
 	});
