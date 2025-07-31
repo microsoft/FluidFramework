@@ -10,6 +10,7 @@ import { SharedTreeFuzzTestFactory, createOnCreate } from "./fuzzUtils.js";
 import type { Operation } from "./operationTypes.js";
 import { takeAsync } from "@fluid-private/stochastic-test-utils";
 import { type EditGeneratorOpWeights, makeOpGenerator } from "./fuzzEditGenerators.js";
+import { FluidClientVersion } from "../../../codec/index.js";
 
 export const runsPerBatch = 50;
 // TODO: Enable other types of ops.
@@ -38,7 +39,9 @@ export const baseTreeModel: DDSFuzzModel<
 	DDSFuzzTestState<SharedTreeFuzzTestFactory>
 > = {
 	workloadName: "SharedTree",
-	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined)),
+	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
+		oldestCompatibleClient: FluidClientVersion.EnableUnstableFeatures,
+	}),
 	generatorFactory,
 	reducer: fuzzReducer,
 	validateConsistency: validateFuzzTreeConsistency,
