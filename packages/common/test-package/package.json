@@ -98,10 +98,6 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs && npm run build:test:esm:no-exactOptionalPropertyTypes",
-		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
-		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"build:test:esm:no-exactOptionalPropertyTypes": "tsc --project ./src/test/tsconfig.no-exactOptionalPropertyTypes.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
@@ -172,13 +168,6 @@
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^4.4.0",
 		"typescript": "~5.4.5"
-	},
-	"fluidBuild": {
-		"tasks": {
-			"build:test:esm:no-exactOptionalPropertyTypes": [
-				"build:esnext"
-			]
-		}
 	},
 	"typeValidation": {
 		"enabled": false,
