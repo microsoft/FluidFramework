@@ -32,7 +32,6 @@ import { ContainerMessageType } from "../messageTypes.js";
 describe("Runtime batching", () => {
 	const mockClientId = "mockClientId";
 
-	// here
 	const getMockContext = (deltaManager: MockDeltaManager): Partial<IContainerContext> => {
 		const mockContext = {
 			attachState: AttachState.Attached,
