@@ -10,6 +10,7 @@ import {
 	BenchmarkType,
 	isInPerformanceTestingMode,
 	type BenchmarkTimer,
+	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
 
 import type { SharedMatrix } from "../../index.js";
@@ -22,6 +23,19 @@ import { createLocalMatrix } from "../utils.js";
  * to ensure consistency and comparability between the two implementations.
  */
 
+interface BenchmarkConfig extends BenchmarkTimingOptions {
+	readonly title: string;
+	readonly matrixSize: number;
+	readonly cellValue: string;
+	readonly setup?: (matrix: SharedMatrix) => void;
+	/**
+	 * The operation to perform on the matrix. This should be a function that takes a SharedMatrix
+	 * and performs the desired operation.
+	 */
+	readonly operation: (matrix: SharedMatrix) => void;
+	readonly maxBenchmarkDurationSeconds: number;
+}
+
 /**
  * Runs a benchmark for measuring the execution time of operations on a SharedMatrix.
  */
@@ -33,19 +47,7 @@ function runBenchmark({
 	operation,
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
-}: {
-	title: string;
-	matrixSize: number;
-	cellValue: string;
-	setup?: (matrix: SharedMatrix) => void;
-	/**
-	 * The operation to perform on the matrix. This should be a function that takes a SharedMatrix
-	 * and performs the desired operation.
-	 */
-	operation: (matrix: SharedMatrix) => void;
-	minBatchDurationSeconds?: number;
-	maxBenchmarkDurationSeconds: number;
-}): void {
+}: BenchmarkConfig): void {
 	benchmark({
 		type: BenchmarkType.Measurement,
 		title,
