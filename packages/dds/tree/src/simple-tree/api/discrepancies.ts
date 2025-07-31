@@ -170,7 +170,7 @@ function doesNodeKindMatchStoredNodeKind(
  * @remarks
  * See documentation on {@link Discrepancy} and its subtypes for details of possible discrepancies.
  */
-export function* getAllowedContentDiscrepancies(
+export function* getDiscrepanciesInAllowedContent(
 	view: TreeSchema,
 	stored: TreeStoredSchema,
 ): Iterable<Discrepancy> {

@@ -7,7 +7,7 @@ import type { TreeStoredSchema } from "../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
-import { getAllowedContentDiscrepancies } from "./discrepancies.js";
+import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "./configuration.js";
 
@@ -46,7 +46,7 @@ export class SchemaCompatibilityTester {
 		// - fields with more allowed types in the stored schema than in the view schema have out-of-schema "unknown content" adapters
 		let canView = true;
 
-		for (const _discrepancy of getAllowedContentDiscrepancies(this.viewSchema, stored)) {
+		for (const _discrepancy of getDiscrepanciesInAllowedContent(this.viewSchema, stored)) {
 			canView = false;
 			break;
 		}

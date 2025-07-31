@@ -34,7 +34,7 @@ import {
 import { brand } from "../../../util/index.js";
 import { schemaStatics } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
-import { getAllowedContentDiscrepancies } from "../../../simple-tree/api/discrepancies.js";
+import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
 
 class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public constructor(
@@ -194,7 +194,7 @@ describe("Schema Evolution Examples", () => {
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
 			const report = Array.from(
-				getAllowedContentDiscrepancies(
+				getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
 					stored,
 				),

@@ -32,7 +32,7 @@ import {
 import { LeafNodeSchema } from "../../../simple-tree/leafNodeSchema.js";
 import {
 	findExtraAllowedTypes,
-	getAllowedContentDiscrepancies,
+	getDiscrepanciesInAllowedContent,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/discrepancies.js";
 import { fieldSchema } from "../../utils.js";
@@ -58,7 +58,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 					objectNodeStoredSchema,
 				),
@@ -68,7 +68,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 					mapNodeStoredSchema,
 				),
@@ -85,7 +85,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 					leafNodeStoredSchema,
 				),
@@ -102,7 +102,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: MapNode }),
 					mapNodeStoredSchema,
 				),
@@ -112,7 +112,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: MapNode }),
 					objectNodeStoredSchema,
 				),
@@ -155,7 +155,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: mapNodeSchema1 }),
 					toStoredSchema(mapNodeSchema2),
 				),
@@ -180,7 +180,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: mapNodeSchema2 }),
 					toStoredSchema(mapNodeSchema3),
 				),
@@ -221,7 +221,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: schemaFactory.optional(ObjectNode1) }),
 					objectNodeStoredSchema2,
 				),
@@ -244,7 +244,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: schemaFactory.optional(MapNode) }),
 					objectNodeStoredSchema2,
 				),
@@ -282,7 +282,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: objectNodeRoot1 }),
 					objectNodeStoredSchema2,
 				),
@@ -329,7 +329,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: viewNumber }),
 					storedBooleanRoot,
 				),
@@ -346,7 +346,7 @@ describe("Schema Discrepancies", () => {
 
 		assert.deepEqual(
 			[
-				...getAllowedContentDiscrepancies(
+				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: viewNumber }),
 					storedNumberRoot,
 				),
@@ -388,7 +388,7 @@ describe("Schema Discrepancies", () => {
 
 			assert.deepEqual(
 				[
-					...getAllowedContentDiscrepancies(
+					...getDiscrepanciesInAllowedContent(
 						new TreeViewConfigurationAlpha({ schema: emptyTree }),
 						emptyLocalFieldTreeStored,
 					),
@@ -418,7 +418,7 @@ describe("Schema Discrepancies", () => {
 
 			assert.deepEqual(
 				[
-					...getAllowedContentDiscrepancies(
+					...getDiscrepanciesInAllowedContent(
 						new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 						emptyTreeStored,
 					),
@@ -455,7 +455,7 @@ describe("Schema Discrepancies", () => {
 
 			assert.deepEqual(
 				[
-					...getAllowedContentDiscrepancies(
+					...getDiscrepanciesInAllowedContent(
 						new TreeViewConfigurationAlpha({ schema: ObjectNode }),
 						emptyLocalFieldTreeStored,
 					),
