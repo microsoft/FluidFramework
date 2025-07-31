@@ -22,6 +22,7 @@ The following kinds of nodes have been removed from the library.
 Usages should be converted to `MarkdownBlockContentNode` or `MarkdownPhrasingContentNode` as appropriate.
 
 - `CodeSpanNode`
+- `FencedCodeBlockNode`
 
 ## 0.21.0
 

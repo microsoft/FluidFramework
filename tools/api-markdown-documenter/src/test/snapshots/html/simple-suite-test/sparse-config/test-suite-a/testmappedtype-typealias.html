@@ -10,7 +10,11 @@
         <p>Test Mapped Type, using <a href="docs/test-suite-a/testenum-enum">TestEnum</a></p>
       </section>
       <section>
-        <h3 id="testmappedtype-signature">Signature</h3><code>export type TestMappedType = {<br>[K in TestEnum]: boolean;<br>};</code>
+        <h3 id="testmappedtype-signature">Signature</h3>
+        <pre><code class="language-typescript">export type TestMappedType = {
+    [K in TestEnum]: boolean;
+};
+</code></pre>
       </section>
       <section>
         <h3 id="testmappedtype-remarks">Remarks</h3>
