@@ -60,6 +60,12 @@ interface Options {
 	readonly outFileSuffix: string;
 }
 
+// For backwards compatibility, the default values for legacy exports are:
+// - `outFileLegacyAlpha` is `legacy`, and the others are disabled.
+// Future:
+// - `outFileLegacyAlpha`: `legacy-alpha`
+// - `outFileLegacyBeta`: `legacy-beta`
+// - `outFileLegacyPublic`: `legacy-public`
 const optionDefaults: Options = {
 	mainEntrypoint: "./src/index.ts",
 	outDir: "./lib",
@@ -67,7 +73,7 @@ const optionDefaults: Options = {
 	outFileAlpha: "alpha",
 	outFileBeta: "beta",
 	outFilePublic: "public",
-	outFileLegacyAlpha: undefined,
+	outFileLegacyAlpha: "legacy", // Back compat
 	outFileLegacyBeta: undefined,
 	outFileLegacyPublic: undefined,
 	outFileSuffix: ".d.ts",
@@ -270,26 +276,14 @@ function getOutputConfiguration(
 		[outFilePublic, ApiLevel.public],
 	];
 
-	// Back compat: if no legacy files are specified, generate a single "/legacy" entrypoint for `@legacy` + `@alpha` APIs.
-	if (
-		outFileLegacyAlpha === undefined &&
-		outFileLegacyBeta === undefined &&
-		outFileLegacyPublic === undefined
-	) {
-		logger?.info(
-			`No legacy entrypoints specified. Generating a single entrypoint "/legacy" for @legacy @alpha APIs.`,
-		);
-		outFileToApiLevelEntries.push(["legacy", ApiLevel.legacyAlpha]);
-	} else {
-		if (outFileLegacyAlpha !== undefined) {
-			outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
-		}
-		if (outFileLegacyBeta !== undefined) {
-			outFileToApiLevelEntries.push([outFileLegacyBeta, ApiLevel.legacyBeta]);
-		}
-		if (outFileLegacyPublic !== undefined) {
-			outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
-		}
+	if (outFileLegacyAlpha !== undefined) {
+		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
+	}
+	if (outFileLegacyBeta !== undefined) {
+		outFileToApiLevelEntries.push([outFileLegacyBeta, ApiLevel.legacyBeta]);
+	}
+	if (outFileLegacyPublic !== undefined) {
+		outFileToApiLevelEntries.push([outFileLegacyPublic, ApiLevel.legacyPublic]);
 	}
 
 	const mapQueryPathToApiTagLevel: Map<string | RegExp, ApiLevel | undefined> = new Map();
