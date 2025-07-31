@@ -1285,12 +1285,21 @@ const getFullModel = <TOperation extends BaseOperation>(
 	ddsModel: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<
-	TOperation | AddClient | RemoveClient | Attach | Synchronize | ChangeConnectionState
+	| TOperation
+	| AddClient
+	| RemoveClient
+	| Attach
+	| Synchronize
+	| ChangeConnectionState
+	| CloneClientFromPendingState
 > =>
 	mixinAttach(
 		mixinSynchronization(
 			mixinAddRemoveClient(
-				mixinClientSelection(mixinReconnect(ddsModel, options), options),
+				mixinCloneClientFromPending(
+					mixinClientSelection(mixinReconnect(ddsModel, options), options),
+					options,
+				),
 				options,
 			),
 			options,
