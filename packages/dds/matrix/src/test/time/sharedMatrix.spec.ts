@@ -24,15 +24,41 @@ import { createLocalMatrix } from "../utils.js";
  */
 
 interface BenchmarkConfig extends BenchmarkTimingOptions {
+	/**
+	 * The title of the benchmark test.
+	 */
 	readonly title: string;
+
+	/**
+	 * Height and width of the matrix to be used in the benchmark.
+	 */
 	readonly matrixSize: number;
-	readonly cellValue: string;
-	readonly setup?: (matrix: SharedMatrix) => void;
+
+	/**
+	 * Value used to fill the cells of the matrix.
+	 * @remarks If not provided, no cells will be filled.
+	 */
+	readonly cellValue?: string | undefined;
+
+	/**
+	 * Optional action to perform on the matrix before the operation being measured.
+	 */
+	readonly beforeOperation?: (matrix: SharedMatrix) => void;
+
 	/**
 	 * The operation to perform on the matrix. This should be a function that takes a SharedMatrix
 	 * and performs the desired operation.
 	 */
 	readonly operation: (matrix: SharedMatrix) => void;
+
+	/**
+	 * Optional action to perform on the matrix after the operation being measured.
+	 */
+	readonly afterOperation?: (matrix: SharedMatrix) => void;
+
+	/**
+	 * {@inheritDoc @fluid-tools/benchmark#BenchmarkTimingOptions.maxBenchmarkDurationSeconds}
+	 */
 	readonly maxBenchmarkDurationSeconds: number;
 }
 
@@ -43,8 +69,9 @@ function runBenchmark({
 	title,
 	matrixSize,
 	cellValue,
-	setup,
+	beforeOperation,
 	operation,
+	afterOperation,
 	minBatchDurationSeconds = 0,
 	maxBenchmarkDurationSeconds,
 }: BenchmarkConfig): void {
@@ -63,9 +90,7 @@ function runBenchmark({
 					initialValue: cellValue,
 				});
 
-				if (setup) {
-					setup(localMatrix);
-				}
+				beforeOperation?.(localMatrix);
 
 				// Operation
 				const before = state.timer.now();
@@ -74,6 +99,8 @@ function runBenchmark({
 
 				// Measure
 				duration = state.timer.toSeconds(before, after);
+
+				afterOperation?.(localMatrix);
 			} while (state.recordBatch(duration));
 		},
 		minBatchDurationSeconds,
