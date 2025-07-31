@@ -223,6 +223,10 @@ interface PendingClear {
 	path: string;
 }
 
+/**
+ * Represents the "lifetime" of a series of pending set operations before the pending
+ * set operations are ack'd.
+ */
 interface PendingKeyLifetime {
 	type: "lifetime";
 	key: string;
@@ -1287,7 +1291,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
-			this.sequencedData.set(key, value);
+			this.sequencedStorageData.set(key, value);
 			const event: IDirectoryValueChanged = {
 				key,
 				path: this.absolutePath,
@@ -1538,7 +1542,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
 
 		if (!this.directory.isAttached()) {
-			const successfullyRemoved = this.sequencedData.delete(key);
+			const successfullyRemoved = this.sequencedStorageData.delete(key);
 			// Only emit if we actually deleted something.
 			if (previousOptimisticLocalValue !== undefined && successfullyRemoved) {
 				const event: IDirectoryValueChanged = {
@@ -1595,7 +1599,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.throwIfDisposed();
 
 		if (!this.directory.isAttached()) {
-			this.sequencedData.clear();
+			this.sequencedStorageData.clear();
 			this.directory.emit("clear", true, this.directory);
 			return;
 		}
@@ -1623,7 +1627,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 		for (const [key, localValue] of this.internalIterator()) {
-			callback((localValue as { value: unknown }).value, key, this.sequencedData);
+			callback((localValue as { value: unknown }).value, key, this.sequencedStorageData);
 		}
 	}
 
@@ -1719,14 +1723,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	}
 
 	/**
-	 * The data the directory is storing, but only including sequenced values (no local pending
+	 * The data this SubDirectory instance is storing, but only including sequenced values (no local pending
 	 * modifications are included).
 	 */
-	private readonly sequencedData = new Map<string, unknown>();
+	private readonly sequencedStorageData = new Map<string, unknown>();
 
 	/**
-	 * A data structure containing all local pending modifications, which is used in combination
-	 * with the sequencedData to compute optimistic values.
+	 * A data structure containing all local pending storage modifications, which is used in combination
+	 * with the sequencedStorageData to compute optimistic values.
 	 *
 	 * Pending sets are aggregated into "lifetimes", which permit correct relative iteration order
 	 * even across remote operations and rollbacks.
@@ -1737,14 +1741,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * An internal iterator that iterates over the entries in the directory.
 	 */
 	private readonly internalIterator = (): IterableIterator<[string, unknown]> => {
-		// We perform iteration in two steps - first by iterating over members of the sequenced data that are not
+		// We perform iteration in two steps - first by iterating over members of the sequenced storage data that are not
 		// optimistically deleted or cleared, and then over the pending data lifetimes that have not subsequently
 		// been deleted or cleared.  In total, this give an ordering of members based on when they were initially
-		// added to the map (even if they were later modified), similar to the native Map.
-		const sequencedDataIterator = this.sequencedData.keys();
+		// added to the sub directory (even if they were later modified), similar to the native Map.
+		const sequencedStorageDataIterator = this.sequencedStorageData.keys();
 		const pendingStorageDataIterator = this.pendingStorageData.values();
 		const next = (): IteratorResult<[string, unknown]> => {
-			let nextSequencedKey = sequencedDataIterator.next();
+			let nextSequencedKey = sequencedStorageDataIterator.next();
 			while (!nextSequencedKey.done) {
 				const key = nextSequencedKey.value;
 				// If we have any pending deletes or clears, then we won't iterate to this key yet (if at all).
@@ -1760,7 +1764,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					const optimisticValue = this.getOptimisticValue(key);
 					return { value: [key, optimisticValue], done: false };
 				}
-				nextSequencedKey = sequencedDataIterator.next();
+				nextSequencedKey = sequencedStorageDataIterator.next();
 			}
 
 			let nextPending = pendingStorageDataIterator.next();
@@ -1784,7 +1788,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 						// This is not a perfect check in the case the map has changed since the iterator was created
 						// (e.g. if a remote client added the same key in the meantime).
 						if (
-							!this.sequencedData.has(nextPendingEntry.key) ||
+							!this.sequencedStorageData.has(nextPendingEntry.key) ||
 							mostRecentDeleteOrClearIndex !== -1
 						) {
 							return { value: [nextPendingEntry.key, latestPendingValue.value], done: false };
@@ -1817,7 +1821,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		);
 
 		if (latestPendingEntry === undefined) {
-			return this.sequencedData.get(key);
+			return this.sequencedStorageData.get(key);
 		} else if (latestPendingEntry.type === "lifetime") {
 			const latestPendingSet =
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1840,7 +1844,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		);
 
 		return latestPendingEntry === undefined
-			? this.sequencedData.has(key)
+			? this.sequencedStorageData.has(key)
 			: latestPendingEntry.type === "lifetime";
 	};
 
@@ -1864,7 +1868,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		if (local) {
-			this.sequencedData.clear();
+			this.sequencedStorageData.clear();
 			const pendingClear = this.pendingStorageData.shift();
 			assert(
 				pendingClear !== undefined &&
@@ -1877,11 +1881,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const pendingSets: { key: string; previousValue: unknown }[] = [];
 			for (const entry of this.pendingStorageData) {
 				if (entry.type === "lifetime") {
-					const previousValue = this.sequencedData.get(entry.key);
+					const previousValue = this.sequencedStorageData.get(entry.key);
 					pendingSets.push({ key: entry.key, previousValue });
 				}
 			}
-			this.sequencedData.clear();
+			this.sequencedStorageData.clear();
 
 			// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
@@ -1934,10 +1938,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				"Got a local delete message we weren't expecting",
 			);
 			this.pendingStorageData.splice(pendingEntryIndex, 1);
-			this.sequencedData.delete(op.key);
+			this.sequencedStorageData.delete(op.key);
 		} else {
-			const previousValue: unknown = this.sequencedData.get(op.key);
-			this.sequencedData.delete(op.key);
+			const previousValue: unknown = this.sequencedStorageData.get(op.key);
+			this.sequencedStorageData.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
 				!this.pendingStorageData.some(
@@ -1996,11 +2000,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
 
-			this.sequencedData.set(key, pendingKeySet.value);
+			this.sequencedStorageData.set(key, pendingKeySet.value);
 		} else {
 			// Get the previous value before setting the new value
-			const previousValue: unknown = this.sequencedData.get(key);
-			this.sequencedData.set(key, value);
+			const previousValue: unknown = this.sequencedStorageData.get(key);
+			this.sequencedStorageData.set(key, value);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
@@ -2237,7 +2241,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		serializer: IFluidSerializer,
 	): Generator<[string, ISerializedValue], void> {
 		this.throwIfDisposed();
-		for (const [key, value] of this.sequencedData.entries()) {
+		for (const [key, value] of this.sequencedStorageData.entries()) {
 			const serializedValue = serializeValue(value, serializer, this.directory.handle);
 			const res: [string, ISerializedValue] = [key, serializedValue];
 			yield res;
@@ -2260,7 +2264,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public populateStorage(key: string, value: unknown): void {
 		this.throwIfDisposed();
-		this.sequencedData.set(key, value);
+		this.sequencedStorageData.set(key, value);
 	}
 
 	/**
@@ -2497,7 +2501,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					}
 					// If this is delete op and we have keys in this subDirectory, then we need to delete these
 					// keys except the pending ones as they will be sequenced after this delete.
-					directory.sequencedData.clear();
+					directory.sequencedStorageData.clear();
 					directory.emit("clear", true, directory);
 
 					// In case of delete op, we need to reset the creation seqNum, clientSeqNum and client ids of
