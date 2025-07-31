@@ -181,7 +181,7 @@ export function* getDiscrepanciesInAllowedContent(
 	for (const [identifier, storedSchema] of stored.nodeSchema) {
 		const viewSchema = view.definitions.get(identifier);
 
-		// if the view schema has a node that's not in the stored schema, check it.
+		// if the view schema has a node that's also in the stored schema, check it.
 		if (viewSchema !== undefined) {
 			yield* getNodeDiscrepancies(identifier, viewSchema, storedSchema);
 		}
