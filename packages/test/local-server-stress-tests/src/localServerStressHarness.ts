@@ -1291,12 +1291,12 @@ const getFullModel = <TOperation extends BaseOperation>(
 	| Attach
 	| Synchronize
 	| ChangeConnectionState
-	| CloneClientFromPendingState
+	| GetClientPendingState
 > =>
 	mixinAttach(
 		mixinSynchronization(
 			mixinAddRemoveClient(
-				mixinCloneClientFromPending(
+				mixinGetClientPending(
 					mixinClientSelection(mixinReconnect(ddsModel, options), options),
 					options,
 				),
@@ -1359,24 +1359,24 @@ export namespace createLocalServerStressSuite {
 			});
 }
 
-interface CloneClientFromPendingState {
-	type: "cloneClientFromPendingState";
+interface GetClientPendingState {
+	type: "getClientPendingState";
 	sourceClientTag: `client-${number}`;
 	newClientTag: `client-${number}`;
 }
 
-function mixinCloneClientFromPending<TOperation extends BaseOperation>(
+function mixinGetClientPending<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | CloneClientFromPendingState> {
+): LocalServerStressModel<TOperation | GetClientPendingState> {
 	const generatorFactory: () => AsyncGenerator<
-		TOperation | CloneClientFromPendingState,
+		TOperation | GetClientPendingState,
 		LocalServerStressState
 	> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (
 			state: LocalServerStressState,
-		): Promise<TOperation | CloneClientFromPendingState | typeof done> => {
+		): Promise<TOperation | GetClientPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
 			if (
 				options.clientJoinOptions !== undefined &&
@@ -1384,27 +1384,25 @@ function mixinCloneClientFromPending<TOperation extends BaseOperation>(
 				clients.length > 0
 			) {
 				return {
-					type: "cloneClientFromPendingState",
+					type: "getClientPendingState",
 					sourceClientTag: random.pick(clients).tag,
 					newClientTag: state.tag("client"),
-				} satisfies CloneClientFromPendingState;
+				} satisfies GetClientPendingState;
 			}
 			return baseGenerator(state);
 		};
 	};
 
-	const minimizationTransforms: MinimizationTransform<
-		TOperation | CloneClientFromPendingState
-	>[] =
+	const minimizationTransforms: MinimizationTransform<TOperation | GetClientPendingState>[] =
 		(model.minimizationTransforms as
-			| MinimizationTransform<TOperation | CloneClientFromPendingState>[]
+			| MinimizationTransform<TOperation | GetClientPendingState>[]
 			| undefined) ?? [];
 
 	const reducer: AsyncReducer<
-		TOperation | CloneClientFromPendingState,
+		TOperation | GetClientPendingState,
 		LocalServerStressState
 	> = async (state, op) => {
-		if (isOperationType<CloneClientFromPendingState>("cloneClientFromPendingState", op)) {
+		if (isOperationType<GetClientPendingState>("getClientPendingState", op)) {
 			const sourceClient = state.clients.find((c) => c.tag === op.sourceClientTag);
 			assert(sourceClient !== undefined, `Client ${op.sourceClientTag} not found`);
 
