@@ -166,7 +166,7 @@ function doesNodeKindMatchStoredNodeKind(
 }
 
 /**
- * Finds and reports discrepancies between a view schema and a stored schema which impact "canView".
+ * Finds and reports discrepancies between a view schema and a stored schema which make "canView" false.
  * @remarks
  * See documentation on {@link Discrepancy} and its subtypes for details of possible discrepancies.
  */
