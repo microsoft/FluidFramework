@@ -123,6 +123,50 @@ describe("SchemaCompatibilityTester", () => {
 			});
 		});
 
+		describe("allows upgrades but not viewing when changing field kinds with compatible multiplicity", () => {
+			const expected: Omit<SchemaCompatibilityStatus, "canInitialize"> = {
+				canView: false,
+				canUpgrade: true,
+				isEquivalent: false,
+			};
+
+			it("identifier tro required string", () => {
+				expectCompatibility(
+					{
+						view: factory.string,
+						stored: toStoredSchema(factory.identifier),
+					},
+					expected,
+				);
+			});
+			it("required string to identifier: fails", () => {
+				// If this upgrade was allowed then it would be possible for two app versions to disagree
+				// about a schema and upgrade it back and forth causing unlimited schema edits.
+				// Preventing this is a policy choice: it could be allowed without corrupting documents since identifiers and
+				// required strings are compatible field shapes.
+				expectCompatibility(
+					{
+						view: factory.identifier,
+						stored: toStoredSchema(factory.string),
+					},
+					{
+						canView: false,
+						canUpgrade: false,
+						isEquivalent: false,
+					},
+				);
+			});
+			it("required to optional", () => {
+				expectCompatibility(
+					{
+						view: factory.optional(factory.string),
+						stored: toStoredSchema(factory.string),
+					},
+					expected,
+				);
+			});
+		});
+
 		describe("allows upgrades but not viewing when the view schema allows a strict superset of the stored schema", () => {
 			const expected: Omit<SchemaCompatibilityStatus, "canInitialize"> = {
 				canView: false,

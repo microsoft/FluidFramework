@@ -97,6 +97,10 @@ export const required = new FieldKindWithEditor(
 	Multiplicity.Single,
 	valueChangeHandler,
 	(types, other) =>
+		// By omitting nodeKey (aka identifier) here,
+		// this is making a policy choice that a schema upgrade can not be done from required to identifier.
+		// Since an identifier can be upgraded into a required field,
+		// preventing the inverse helps ensure that schema upgrades are monotonic.
 		(other.kind === sequence.identifier ||
 			other.kind === requiredIdentifier ||
 			other.kind === optional.identifier ||
