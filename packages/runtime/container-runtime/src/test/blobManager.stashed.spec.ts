@@ -3,22 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
-
-import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
-import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
-import { AttachState } from "@fluidframework/container-definitions/internal";
-import { Deferred } from "@fluidframework/core-utils/internal";
-import { ICreateBlobResponse } from "@fluidframework/driver-definitions/internal";
-import type { IRuntimeStorageService } from "@fluidframework/runtime-definitions/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-
-import { BlobManager, IBlobManagerRuntime, type IPendingBlobs } from "../blobManager/index.js";
-import {
-	ContainerFluidHandleContext,
-	IContainerHandleContextRuntime,
-} from "../containerHandleContext.js";
-
 export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 	const proxy: T = new Proxy<T>(handler as T, {
 		get: (t, p, r) => {
@@ -34,290 +18,68 @@ export const failProxy = <T extends object>(handler: Partial<T> = {}): T => {
 	return proxy;
 };
 
-function createBlobManager(overrides?: Partial<ConstructorParameters<typeof BlobManager>[0]>) {
-	const runtime = failProxy<IBlobManagerRuntime & IContainerHandleContextRuntime>({
-		baseLogger: createChildLogger(),
-		attachState: AttachState.Attached,
-		resolveHandle: async () => {
-			throw new Error("not implemented");
-		},
-	});
-	const routeContext = new ContainerFluidHandleContext("/", runtime, undefined);
-	return new BlobManager(
-		failProxy({
-			// defaults, these can still be overridden below
-			runtime,
-			routeContext,
-			blobManagerLoadInfo: {},
-			stashedBlobs: undefined,
-			localBlobIdGenerator: undefined,
-			storage: failProxy<IRuntimeStorageService>(),
-			sendBlobAttachOp: () => {},
-			blobRequested: () => {},
-			isBlobDeleted: () => false,
-			createBlobPayloadPending: false,
+// function createBlobManager(overrides?: Partial<ConstructorParameters<typeof BlobManager>[0]>) {
+// 	const runtime = failProxy<IBlobManagerRuntime & IContainerHandleContextRuntime>({
+// 		baseLogger: createChildLogger(),
+// 		attachState: AttachState.Attached,
+// 		resolveHandle: async () => {
+// 			throw new Error("not implemented");
+// 		},
+// 	});
+// 	const routeContext = new ContainerFluidHandleContext("/", runtime, undefined);
+// 	return new BlobManager(
+// 		failProxy({
+// 			// defaults, these can still be overridden below
+// 			runtime,
+// 			routeContext,
+// 			blobManagerLoadInfo: {},
+// 			stashedBlobs: undefined,
+// 			localBlobIdGenerator: undefined,
+// 			storage: failProxy<IRuntimeStorageService>(),
+// 			sendBlobAttachOp: () => {},
+// 			blobRequested: () => {},
+// 			isBlobDeleted: () => false,
+// 			createBlobPayloadPending: false,
 
-			// overrides
-			...overrides,
-		}),
-	);
-}
+// 			// overrides
+// 			...overrides,
+// 		}),
+// 	);
+// }
 
-const olderThanTTL: IPendingBlobs[string] = {
-	blob: "olderThanTTL",
-	minTTLInSeconds: 100,
-	uploadTime: Date.now() - 100 * 1000,
-};
+// const olderThanTTL: IPendingBlobs[string] = {
+// 	blob: "olderThanTTL",
+// 	minTTLInSeconds: 100,
+// 	uploadTime: Date.now() - 100 * 1000,
+// };
 
-const withinTTLHalfLife: IPendingBlobs[string] = {
-	blob: "withinTTLHalfLife",
-	storageId: "withinTTLHalfLife",
-	minTTLInSeconds: 100,
-	uploadTime: Date.now() - 25 * 1000,
-};
+// const withinTTLHalfLife: IPendingBlobs[string] = {
+// 	blob: "withinTTLHalfLife",
+// 	storageId: "withinTTLHalfLife",
+// 	minTTLInSeconds: 100,
+// 	uploadTime: Date.now() - 25 * 1000,
+// };
 
-const storageIdWithoutUploadTime: IPendingBlobs[string] = {
-	blob: "storageIdWithoutUploadTime",
-	storageId: "storageIdWithoutUploadTime",
-};
+// const storageIdWithoutUploadTime: IPendingBlobs[string] = {
+// 	blob: "storageIdWithoutUploadTime",
+// 	storageId: "storageIdWithoutUploadTime",
+// };
 
-describe("BlobManager.stashed", () => {
-	it("No Pending Stashed Uploads", async () => {
-		const blobManager = createBlobManager();
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-		await blobManager.stashedBlobsUploadP;
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-	});
+// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
+describe.skip("BlobManager.stashed", () => {
+	it("is in correct state when no stashed blobs are provided", async () => {});
 
-	// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
-	it.skip("Stashed blob", async () => {
-		const createResponse = new Deferred<ICreateBlobResponse>();
-		const blobManager = createBlobManager({
-			sendBlobAttachOp(_localId, _storageId) {},
-			stashedBlobs: {},
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async () => {
-					return createResponse.promise;
-				},
-			}),
-		});
-		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
-		const sameBlobAsStashedP = blobManager.createBlob(blob);
-		const pendingBlobsP = blobManager.attachAndGetPendingBlobs();
-		const sameBlobAsStashed = await sameBlobAsStashedP;
-		sameBlobAsStashed.attachGraph();
-		const pendingBlobs = await pendingBlobsP;
-		const blobManager2 = createBlobManager({
-			stashedBlobs: pendingBlobs,
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async () => {
-					return createResponse.promise;
-				},
-			}),
-		});
-		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
-	});
+	it("starts uploads for stashed blobs that had not finished their upload", async () => {});
 
-	// ADO#44999: Update for placeholder pending blob creation and getPendingLocalState
-	it.skip("Process blob and complete stashed upload after", async () => {
-		const createResponse = new Deferred<ICreateBlobResponse>();
-		const blobManager = createBlobManager({
-			sendBlobAttachOp(_localId, _storageId) {},
-			stashedBlobs: {},
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async () => {
-					return createResponse.promise;
-				},
-			}),
-			localBlobIdGenerator: () => "stubbed-local-id",
-			isBlobDeleted: () => false,
-			blobRequested: () => {},
-		});
-		const blob: ArrayBufferLike = stringToBuffer("content", "utf8");
-		const blobHandleP = blobManager.createBlob(blob);
-		const pendingBlobsP = blobManager.attachAndGetPendingBlobs();
-		const blobHandle = await blobHandleP;
-		blobHandle.attachGraph();
-		const pendingBlobs = await pendingBlobsP;
+	it("reacts appropriately if a BlobAttach op is processed while uploading the corresponding stashed blob", async () => {});
 
-		const createResponse2 = new Deferred<ICreateBlobResponse>();
-		const blobManager2 = createBlobManager({
-			stashedBlobs: pendingBlobs,
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async () => {
-					return createResponse2.promise;
-				},
-			}),
-			isBlobDeleted: () => false,
-		});
-		assert.strictEqual(blobManager2.hasPendingStashedUploads(), true);
+	it("reacts appropriately when a stashed blob completes its upload", async () => {});
 
-		blobManager2.processBlobAttachMessage(
-			{
-				clientId: "client-id",
-				minimumSequenceNumber: 1,
-				referenceSequenceNumber: 1,
-				sequenceNumber: 1,
-				type: "blobAttach",
-				metadata: {
-					localId: "stubbed-local-id",
-					blobId: "stubbed-storage-id",
-				},
-				timestamp: Date.now(),
-			},
-			true,
-		);
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager2.stashedBlobsUploadP,
-		]);
-		createResponse2.resolve({
-			id: "new-storage-id",
-		});
-		await blobManager2.stashedBlobsUploadP;
-	});
+	it("reuploads a stashed blob if its uploadTime is older than the TTL", async () => {});
 
-	it("Already stashed blob", async () => {
-		const createResponse = new Deferred<ICreateBlobResponse>();
-		const blobManager = createBlobManager({
-			stashedBlobs: {
-				a: {
-					blob: "a",
-				},
-			},
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async () => {
-					return createResponse.promise;
-				},
-			}),
-		});
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		createResponse.resolve({
-			id: "a",
-		});
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-		assert.strictEqual(blobManager.allBlobsAttached, true);
-	});
+	it("does not reupload a stashed blob if its uploadTime is within the TTL half-life", async () => {});
 
-	it("Stashed blob with upload older than TTL", async () => {
-		const createResponse = new Deferred<ICreateBlobResponse>();
-		const blobManager = createBlobManager({
-			stashedBlobs: {
-				olderThanTTL,
-			},
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async () => {
-					return createResponse.promise;
-				},
-			}),
-		});
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		createResponse.resolve({
-			id: "a",
-		});
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-		assert.strictEqual(blobManager.allBlobsAttached, true);
-	});
+	it("reuploads a stashed blob if it does not have an uploadTime", async () => {});
 
-	it("Stashed blob with upload within TTL half-life", async () => {
-		const blobManager = createBlobManager({
-			stashedBlobs: {
-				withinTTLHalfLife,
-			},
-		});
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-		await blobManager.stashedBlobsUploadP;
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-	});
-
-	it("Stashed blob without upload time", async () => {
-		const createResponse = new Deferred<ICreateBlobResponse>();
-		const blobManager = createBlobManager({
-			stashedBlobs: {
-				storageIdWithoutUploadTime,
-			},
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async () => {
-					return createResponse.promise;
-				},
-			}),
-		});
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		createResponse.resolve({
-			id: "a",
-		});
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-		assert.strictEqual(blobManager.allBlobsAttached, true);
-	});
-
-	it("Mixed stashed blobs", async () => {
-		const letUploadsComplete = new Deferred<void>();
-
-		const stashedBlobs = generatePairwiseOptions<IPendingBlobs[string]>({
-			acked: [undefined, true, false],
-			blob: ["content"],
-			minTTLInSeconds: [undefined, 100],
-			storageId: [undefined, "id"],
-			uploadTime: [Date.now() - 100 * 1000, Date.now() - 25 * 1000, undefined],
-		}).reduce<IPendingBlobs>((pv, cv, i) => {
-			if (cv.storageId) {
-				cv.storageId += i.toString();
-			}
-			cv.blob = i.toString();
-			pv[i] = cv;
-			return pv;
-		}, {});
-
-		const blobManager = createBlobManager({
-			stashedBlobs,
-			storage: failProxy<IRuntimeStorageService>({
-				createBlob: async (b) => {
-					await letUploadsComplete.promise;
-					return { id: `id:${bufferToString(b, "utf8")}` };
-				},
-			}),
-		});
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), true);
-		letUploadsComplete.resolve();
-
-		await Promise.race([
-			new Promise<void>((resolve) => setTimeout(() => resolve(), 10)),
-			blobManager.stashedBlobsUploadP,
-		]);
-		assert.strictEqual(blobManager.hasPendingStashedUploads(), false);
-
-		assert.strictEqual(blobManager.allBlobsAttached, true);
-	});
+	it("successfully completes uploads for a variety of starting stashed blob states", async () => {});
 });

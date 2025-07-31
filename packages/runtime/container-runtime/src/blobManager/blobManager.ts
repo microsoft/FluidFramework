@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, createEmitter, stringToBuffer } from "@fluid-internal/client-utils";
+import { createEmitter } from "@fluid-internal/client-utils";
 import {
 	AttachState,
 	type IContainerStorageService,
@@ -149,7 +149,6 @@ interface PendingBlob {
 	attached?: boolean;
 	acked?: boolean;
 	abortSignal?: AbortSignal;
-	stashedUpload?: boolean;
 }
 
 export interface IPendingBlobs {
@@ -171,16 +170,6 @@ interface IBlobManagerInternalEvents {
 	handleAttached: (pending: PendingBlob) => void;
 	processedBlobAttach: (localId: string, storageId: string) => void;
 }
-
-const stashedPendingBlobOverrides: Pick<
-	PendingBlob,
-	"stashedUpload" | "storageId" | "minTTLInSeconds" | "uploadTime"
-> = {
-	stashedUpload: true,
-	storageId: undefined,
-	minTTLInSeconds: undefined,
-	uploadTime: undefined,
-} as const;
 
 export const blobManagerBasePath = "_blobs" as const;
 
@@ -226,9 +215,6 @@ export class BlobManager {
 	private readonly isBlobDeleted: (blobPath: string) => boolean;
 	private readonly runtime: IBlobManagerRuntime;
 	private readonly localBlobIdGenerator: () => string;
-	private readonly pendingStashedBlobs: Map<string, Promise<ICreateBlobResponse | void>> =
-		new Map();
-	public readonly stashedBlobsUploadP: Promise<(void | ICreateBlobResponse)[]>;
 
 	private readonly createBlobPayloadPending: boolean;
 
@@ -267,7 +253,6 @@ export class BlobManager {
 			blobRequested,
 			isBlobDeleted,
 			runtime,
-			stashedBlobs,
 			localBlobIdGenerator,
 			createBlobPayloadPending,
 		} = props;
@@ -289,47 +274,6 @@ export class BlobManager {
 			this.mc.logger,
 			this.runtime.attachState,
 		);
-
-		// Begin uploading stashed blobs from previous container instance
-		for (const [localId, entry] of Object.entries(stashedBlobs ?? {})) {
-			const { acked, storageId, minTTLInSeconds, uploadTime } = entry;
-			const blob = stringToBuffer(entry.blob, "base64");
-			const pendingEntry: PendingBlob = {
-				blob,
-				opsent: true,
-				handleP: new Deferred(),
-				storageId,
-				uploadP: undefined,
-				uploadTime,
-				minTTLInSeconds,
-				attached: true,
-				acked,
-			};
-			this.pendingBlobs.set(localId, pendingEntry);
-
-			if (storageId !== undefined && minTTLInSeconds && uploadTime) {
-				const timeLapseSinceLocalUpload = (Date.now() - uploadTime) / 1000;
-				// stashed entries with more than half-life in storage will not be reuploaded
-				if (minTTLInSeconds - timeLapseSinceLocalUpload > minTTLInSeconds / 2) {
-					continue;
-				}
-			}
-			this.pendingStashedBlobs.set(localId, this.uploadBlob(localId, blob));
-			this.pendingBlobs.set(localId, {
-				...pendingEntry,
-				...stashedPendingBlobOverrides,
-				uploadP: this.pendingStashedBlobs.get(localId),
-			});
-		}
-
-		this.stashedBlobsUploadP = PerformanceEvent.timedExecAsync(
-			this.mc.logger,
-			{ eventName: "BlobUploadProcessStashedChanges", count: this.pendingStashedBlobs.size },
-			async () => Promise.all(this.pendingStashedBlobs.values()),
-			{ start: true, end: true },
-		).finally(() => {
-			this.pendingStashedBlobs.clear();
-		});
 
 		this.sendBlobAttachOp = (localId: string, blobId: string) => {
 			const pendingEntry = this.pendingBlobs.get(localId);
@@ -385,10 +329,6 @@ export class BlobManager {
 			acked: pending?.acked,
 			uploadTime: pending?.uploadTime,
 		});
-	}
-
-	public hasPendingStashedUploads(): boolean {
-		return [...this.pendingBlobs.values()].some((e) => e.stashedUpload === true);
 	}
 
 	public hasBlob(blobId: string): boolean {
@@ -671,15 +611,6 @@ export class BlobManager {
 		response: ICreateBlobResponseWithTTL,
 	): ICreateBlobResponseWithTTL | undefined {
 		const entry = this.pendingBlobs.get(localId);
-		if (entry === undefined && this.pendingStashedBlobs.has(localId)) {
-			// The blob was already processed and deleted. This can happen if the blob was reuploaded by
-			// the stashing process and the original upload was processed before the stashed upload.
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "StashedBlobAlreadyProcessed",
-				localId,
-			});
-			return;
-		}
 
 		assert(entry !== undefined, 0x6c8 /* pending blob entry not found for uploaded blob */);
 		if (entry.abortSignal?.aborted === true && !entry.opsent) {
@@ -694,7 +625,6 @@ export class BlobManager {
 			entry.storageId === undefined,
 			0x386 /* Must have pending blob entry for uploaded blob */,
 		);
-		entry.stashedUpload = undefined;
 		entry.storageId = response.id;
 		entry.uploadTime = Date.now();
 		entry.minTTLInSeconds = response.minTTLInSeconds;
@@ -740,7 +670,15 @@ export class BlobManager {
 	public reSubmit(metadata: Record<string, unknown> | undefined): void {
 		assert(isBlobMetadata(metadata), "Expected blob metadata for a BlobAttach op");
 		const { localId, blobId } = metadata;
-		return this.sendBlobAttachOp(localId, blobId);
+		// Any blob that we're actively trying to advance to attached state must have a
+		// pendingBlobs entry. Decline to resubmit for anything else.
+		// For example, we might be asked to resubmit stashed ops for blobs that never had
+		// their handle attached - these won't have a pendingBlobs entry and we shouldn't
+		// try to attach them since they won't be accessible to the customer and would just
+		// be considered garbage immediately.
+		if (this.pendingBlobs.has(localId)) {
+			this.sendBlobAttachOp(localId, blobId);
+		}
 	}
 
 	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
@@ -929,31 +867,18 @@ export class BlobManager {
 	}
 
 	/**
-	 * Similar to attachAndGetPendingBlobs, but to be used in getPendingLocalState flow.
-	 * We need to store pending blobs only if we have sent a blobAttach op but not seen an ack yet,
-	 * since we may be asked to resubmit that op when restoring the container. This lets us
-	 * avoid 0x725 by having a known pending blob in that case.
+	 * To be used in getPendingLocalState flow. Get a serializable record of the blobs that are
+	 * pending upload and/or their BlobAttach op, which can be given to a new BlobManager to
+	 * resume work.
+	 *
+	 * @privateRemarks
+	 * For now, we don't track any pending blobs since the getPendingBlobs flow doesn't enable
+	 * restoring to a state where an accessible handle has been stored by the customer (and we'll
+	 * just drop any BlobAttach ops on the ground during reSubmit). However, once we add support
+	 * for payload-pending handles, this will return the blobs associated with those handles.
 	 */
 	public getPendingBlobs(): IPendingBlobs | undefined {
-		return PerformanceEvent.timedExec(this.mc.logger, { eventName: "GetPendingBlobs" }, () => {
-			if (this.pendingBlobs.size === 0) {
-				return;
-			}
-			const blobs = {};
-
-			for (const [localId, entry] of this.pendingBlobs) {
-				if (entry.opsent && !entry.acked) {
-					blobs[localId] = {
-						blob: bufferToString(entry.blob, "base64"),
-						storageId: entry.storageId,
-						acked: entry.acked,
-						minTTLInSeconds: entry.minTTLInSeconds,
-						uploadTime: entry.uploadTime,
-					};
-				}
-			}
-			return Object.keys(blobs).length > 0 ? blobs : undefined;
-		});
+		return undefined;
 	}
 
 	/**
