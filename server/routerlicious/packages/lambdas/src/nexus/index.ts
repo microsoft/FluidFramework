@@ -108,7 +108,7 @@ function parseRelayUserAgent(relayUserAgent: string | undefined): Record<string,
  * @param isTokenExpiryEnabled - Whether token expiry is enabled. If true, the token will be checked for expiry and the client will be disconnected if it is expired. Default: false.
  * @param isClientConnectivityCountingEnabled - Whether client connectivity counting is enabled. If true, the client connectivity count will be counted for usage tracking. Default: false.
  * @param isSignalUsageCountingEnabled - Whether signal usage counting is enabled. If true, the signal send count will be counted for usage tracking. Default: false.
- * @param preconnectTTLMs - The time-to-live (TTL) for connected clients in milliseconds before a "connect_document" message is received. After this time, the client will be disconnected if no "connect_document" message is received, or if the "connect_document" attempt is rejected. Default: 3000.
+ * @param preconnectTTLMs - The time-to-live (TTL) for connected clients in milliseconds before a "connect_document" message is received. After this time, the client will be disconnected if no "connect_document" message is received, or if the "connect_document" attempt is rejected. Default: 60000 (1 minute).
  * @param cache - Unused.
  * @param connectThrottlerPerTenant - The throttler to use for connection requests per tenant.
  * @param connectThrottlerPerCluster - The throttler to use for connection requests per "cluster" (group of websocket servers).
@@ -133,11 +133,11 @@ export function configureWebSocketServices(
 	logger: core.ILogger,
 	maxNumberOfClientsPerDocument: number = 1000000,
 	numberOfMessagesPerTrace: number = 100,
-	maxTokenLifetimeSec: number = 60 * 60,
+	maxTokenLifetimeSec: number = 60 * 60, // 1 hour
 	isTokenExpiryEnabled: boolean = false,
 	isClientConnectivityCountingEnabled: boolean = false,
 	isSignalUsageCountingEnabled: boolean = false,
-	preconnectTTLMs: number = 3000,
+	preconnectTTLMs: number = 60 * 1000, // 1 minute
 	cache?: core.ICache,
 	connectThrottlerPerTenant?: core.IThrottler,
 	connectThrottlerPerCluster?: core.IThrottler,
@@ -182,6 +182,13 @@ export function configureWebSocketServices(
 		// Timer to check token expiry for this socket connection
 		const expirationTimer = new ExpirationTimer(() => socket.disconnect(true));
 
+		// Timer to disconnect the client if no "connect_document" message is received within the preconnect TTL.
+		const preconnectTTLTimer = new ExpirationTimer(() => {
+			socket.disconnect(true);
+			Lumberjack.warning("Client disconnected due to preconnect TTL expiration");
+		});
+		preconnectTTLTimer.set(lambdaSettings.preconnectTTLMs);
+
 		/**
 		 * Maps and sets to track various information related to client connections.
 		 * Note: These maps/sets are expected to have only one client id entry.
@@ -218,6 +225,7 @@ export function configureWebSocketServices(
 			clientMap,
 			connectionTimeMap,
 			expirationTimer,
+			preconnectTTLTimer,
 			disconnectedOrdererConnections,
 			disconnectedClients,
 			supportedFeaturesMap,
@@ -226,13 +234,6 @@ export function configureWebSocketServices(
 		let connectDocumentComplete: boolean = false;
 		let connectDocumentP: Promise<void> | undefined;
 		let disconnectDocumentP: Promise<void> | undefined;
-
-		// Timer to disconnect the client if no "connect_document" message is received within the preconnect TTL.
-		const preconnectTTLTimer = new ExpirationTimer(() => {
-			socket.disconnect(true);
-			Lumberjack.warning("Client disconnected due to preconnect TTL expiration");
-		});
-		preconnectTTLTimer.set(lambdaSettings.preconnectTTLMs);
 
 		const disposers: ((() => void) | undefined)[] = [socket.dispose?.bind(socket)];
 

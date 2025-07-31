@@ -132,6 +132,7 @@ export interface INexusLambdaDependencies {
 
 export interface INexusLambdaConnectionStateTrackers {
 	expirationTimer: ExpirationTimer;
+	preconnectTTLTimer: ExpirationTimer;
 	connectionsMap: Map<string, IOrdererConnection>;
 	connectionTimeMap: Map<string, number>;
 	scopeMap: Map<string, string[]>;
