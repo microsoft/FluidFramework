@@ -234,12 +234,19 @@ export function createLocalMatrix({
 	size,
 	initialValue,
 }: {
-	// The id of the matrix.
+	/**
+	 * The ID of the matrix.
+	 */
 	readonly id: string;
-	// The number of rows and columns that will be in the matrix.
+	/**
+	 * The number of rows and columns that will be in the matrix.
+	 */
 	readonly size: number;
-	// The initial value of each cell in the dense matrix. If not specified, no cell values will be inserted into the table, leaving it sparse.
-	readonly initialValue?: string;
+	/**
+	 * The initial value of each cell in the dense matrix.
+	 * @remarks If not specified, no cell values will be inserted into the table, leaving it sparse.
+	 */
+	readonly initialValue?: string | undefined;
 }): ISharedMatrix & IChannel {
 	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), id);
 	matrix.insertRows(0, size);
