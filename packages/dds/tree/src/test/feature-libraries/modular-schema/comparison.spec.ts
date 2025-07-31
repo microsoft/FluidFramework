@@ -31,6 +31,8 @@ import {
 } from "../../../feature-libraries/modular-schema/comparison.js";
 import { brand } from "../../../util/index.js";
 import { fieldSchema } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { withEditor } from "../../../feature-libraries/modular-schema/fieldKindWithEditor.js";
 
 describe("Schema Comparison", () => {
 	const numberLeaf: TreeNodeStoredSchema = new LeafNodeStoredSchema(ValueSchema.Number);
@@ -149,10 +151,18 @@ describe("Schema Comparison", () => {
 		const neverField2: TreeFieldStoredSchema = fieldSchema(FieldKinds.required, [
 			brand("never"),
 		]);
+		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
+		const sequenceField = fieldSchema(FieldKinds.sequence, [emptyTree.name]);
 		const compare = (a: TreeFieldStoredSchema, b: TreeFieldStoredSchema): boolean =>
 			allowsFieldSuperset(defaultSchemaPolicy, repo, a, b);
 		testOrder(compare, [neverField, storedEmptyFieldSchema, fieldOptionalEmptyTree]);
 		testOrder(compare, [neverField, fieldRequiredEmptyTree]);
+		testOrder(compare, [
+			identifierField,
+			fieldRequiredEmptyTree,
+			fieldOptionalEmptyTree,
+			sequenceField,
+		]);
 		assert.equal(
 			getOrdering(fieldRequiredEmptyTree, storedEmptyFieldSchema, compare),
 			Ordering.Incomparable,
@@ -165,9 +175,35 @@ describe("Schema Comparison", () => {
 				storedEmptyFieldSchema,
 				fieldRequiredEmptyTree,
 				fieldRequiredEmptyTree,
+				sequenceField,
+				identifierField,
 			],
 			[[neverField, neverField2]],
 		);
+	});
+
+	it("allowsFieldSuperset internals", () => {
+		const repo = new TreeStoredSchemaRepository();
+		updateTreeSchema(repo, emptyTree.name, emptyTree.schema);
+		const identifierField = fieldSchema(FieldKinds.identifier, [emptyTree.name]);
+		{
+			const result = withEditor(FieldKinds.required).allowsFieldSuperset(
+				defaultSchemaPolicy,
+				repo,
+				new Set([emptyTree.name]),
+				identifierField,
+			);
+			assert.equal(result, false);
+		}
+		{
+			const result = withEditor(FieldKinds.identifier).allowsFieldSuperset(
+				defaultSchemaPolicy,
+				repo,
+				new Set([emptyTree.name]),
+				fieldRequiredEmptyTree,
+			);
+			assert.equal(result, true);
+		}
 	});
 
 	// This helps provide some coverage for our schema evolution story, since repo compatibility
@@ -263,6 +299,7 @@ describe("Schema Comparison", () => {
 
 		it("Differing root kinds", () => {
 			const rootFieldSchemas = [
+				fieldSchema(FieldKinds.identifier, [emptyTree.name]),
 				fieldSchema(FieldKinds.required, [emptyTree.name]),
 				fieldSchema(FieldKinds.optional, [emptyTree.name]),
 				fieldSchema(FieldKinds.sequence, [emptyTree.name]),

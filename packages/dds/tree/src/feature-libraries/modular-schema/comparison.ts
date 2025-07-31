@@ -182,7 +182,8 @@ export function allowsRepoSuperset(
 		}
 	}
 	// Check if all schema in original are included in superset, and permit a superset of the node content.
-	// Note that any schema can be used in for a detached field, so we must check all schema in original, even if they are not reachable from the root.
+	// Note that any schema from `original.nodeSchema` can be used as the schema for a node at the root of a detached field,
+	// so we must check all of them, even if they are not reachable from the root field schema.
 	for (const [key, schema] of original.nodeSchema) {
 		if (!allowsTreeSuperset(policy, original, schema, superset.nodeSchema.get(key))) {
 			return false;

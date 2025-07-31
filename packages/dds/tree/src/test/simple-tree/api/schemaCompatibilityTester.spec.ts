@@ -172,21 +172,29 @@ describe("SchemaCompatibilityTester", () => {
 			});
 
 			describe("due to field kind relaxation", () => {
-				it("view: required field ⊃ stored: identifier field", () => {
+				it("stored identifier", () => {
 					// Identifiers are strings, so they should only be relaxable to fields which support strings.
 					expectCompatibility(
 						{
-							view: factory.required(factory.string),
+							view: factory.string,
 							stored: toStoredSchema(factory.identifier),
 						},
 						expected,
 					);
 					expectCompatibility(
 						{
-							view: factory.required(factory.number),
+							view: factory.number,
 							stored: toStoredSchema(factory.identifier),
 						},
 						{ canView: false, canUpgrade: false, isEquivalent: false },
+					);
+
+					expectCompatibility(
+						{
+							view: factory.optional(factory.string),
+							stored: toStoredSchema(factory.identifier),
+						},
+						expected,
 					);
 				});
 				it("view: optional field ⊃ stored: required field", () => {
