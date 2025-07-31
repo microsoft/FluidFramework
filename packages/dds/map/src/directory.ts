@@ -72,7 +72,7 @@ interface IDirectoryMessageHandler {
 		msg: ISequencedDocumentMessage,
 		op: IDirectoryOperation,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: DirectoryLocalOpMetadata | undefined,
 	): void;
 
 	/**
@@ -80,7 +80,7 @@ interface IDirectoryMessageHandler {
 	 * @param op - The directory operation to submit
 	 * @param localOpMetadata - The metadata to be submitted with the message.
 	 */
-	submit(op: IDirectoryOperation, localOpMetadata: unknown): void;
+	submit(op: IDirectoryOperation, localOpMetadata: DirectoryLocalOpMetadata | undefined): void;
 }
 
 /**
@@ -686,7 +686,10 @@ export class SharedDirectory
 	 * @param localOpMetadata - The local metadata associated with the op. We send a unique id that is used to track
 	 * this op while it has not been ack'd. This will be sent when we receive this op back from the server.
 	 */
-	public submitDirectoryMessage(op: IDirectoryOperation, localOpMetadata: unknown): void {
+	public submitDirectoryMessage(
+		op: IDirectoryOperation,
+		localOpMetadata: DirectoryLocalOpMetadata | undefined,
+	): void {
 		this.submitLocalMessage(op, localOpMetadata);
 	}
 
@@ -698,7 +701,10 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.reSubmitCore}
 	 */
-	protected override reSubmitCore(content: unknown, localOpMetadata: unknown): void {
+	protected override reSubmitCore(
+		content: unknown,
+		localOpMetadata: DirectoryLocalOpMetadata,
+	): void {
 		const message = content as IDirectoryOperation;
 		const handler = this.messageHandlers.get(message.type);
 		assert(handler !== undefined, 0x00d /* Missing message handler for message type */);
@@ -810,7 +816,7 @@ export class SharedDirectory
 	protected processCore(
 		message: ISequencedDocumentMessage,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: DirectoryLocalOpMetadata,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (message.type === MessageType.Operation) {
@@ -827,7 +833,10 @@ export class SharedDirectory
 	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
-	protected override rollback(content: unknown, localOpMetadata: unknown): void {
+	protected override rollback(
+		content: unknown,
+		localOpMetadata: DirectoryLocalOpMetadata,
+	): void {
 		const op: IDirectoryOperation = content as IDirectoryOperation;
 		const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 		if (subdir) {
@@ -879,13 +888,17 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
+				assert(
+					localOpMetadata === undefined ||
+						(localOpMetadata !== undefined && localOpMetadata.type === "clear"),
+					"unexpected localOpMetadata",
+				); // If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (op: IDirectoryClearOperation, localOpMetadata: unknown) => {
+			submit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitClearMessage(op, localOpMetadata);
@@ -903,10 +916,15 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
+					assert(
+						localOpMetadata === undefined ||
+							(localOpMetadata !== undefined && localOpMetadata.type === "delete"),
+						"unexpected localOpMetadata",
+					);
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (op: IDirectoryDeleteOperation, localOpMetadata: unknown) => {
+			submit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
@@ -926,10 +944,18 @@ export class SharedDirectory
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
+					assert(
+						localOpMetadata === undefined ||
+							(localOpMetadata !== undefined && localOpMetadata.type === "set"),
+						"unexpected localOpMetadata",
+					);
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
-			submit: (op: IDirectorySetOperation, localOpMetadata: unknown) => {
+			submit: (
+				op: IDirectorySetOperation,
+				localOpMetadata: EditLocalOpMetadata | undefined,
+			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir) {
 					subdir.resubmitKeyMessage(op, localOpMetadata);
@@ -948,10 +974,18 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (parentSubdir && !this.isSubDirectoryDeletePending(op.path)) {
+					assert(
+						localOpMetadata === undefined ||
+							(localOpMetadata !== undefined && localOpMetadata.type === "createSubDir"),
+						"unexpected localOpMetadata",
+					);
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (op: IDirectoryCreateSubDirectoryOperation, localOpMetadata: unknown) => {
+			submit: (
+				op: IDirectoryCreateSubDirectoryOperation,
+				localOpMetadata: SubDirLocalOpMetadata,
+			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (parentSubdir) {
 					// We don't reuse the metadata but send a new one on each submit.
@@ -971,10 +1005,18 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (parentSubdir && !this.isSubDirectoryDeletePending(op.path)) {
+					assert(
+						localOpMetadata === undefined ||
+							(localOpMetadata !== undefined && localOpMetadata.type === "deleteSubDir"),
+						"unexpected localOpMetadata",
+					);
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
-			submit: (op: IDirectoryDeleteSubDirectoryOperation, localOpMetadata: unknown) => {
+			submit: (
+				op: IDirectoryDeleteSubDirectoryOperation,
+				localOpMetadata: SubDirLocalOpMetadata | undefined,
+			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (parentSubdir) {
 					// We don't reuse the metadata but send a new one on each submit.
@@ -1086,16 +1128,6 @@ export class SharedDirectory
 	}
 }
 
-interface IKeyEditLocalOpMetadata {
-	type: "edit";
-	previousValue: unknown;
-}
-
-interface IClearLocalOpMetadata {
-	type: "clear";
-	previousStorage: Map<string, unknown>;
-}
-
 interface ICreateSubDirLocalOpMetadata {
 	type: "createSubDir";
 }
@@ -1107,44 +1139,16 @@ interface IDeleteSubDirLocalOpMetadata {
 
 type SubDirLocalOpMetadata = ICreateSubDirLocalOpMetadata | IDeleteSubDirLocalOpMetadata;
 
+type EditLocalOpMetadata = PendingKeySet | PendingKeyDelete;
+
+type ClearLocalOpMetadata = PendingClear;
+
+type StorageLocalOpMetadata = EditLocalOpMetadata | ClearLocalOpMetadata;
+
 /**
  * Types of local op metadata.
  */
-export type DirectoryLocalOpMetadata =
-	| IClearLocalOpMetadata
-	| IKeyEditLocalOpMetadata
-	| SubDirLocalOpMetadata;
-
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
-
-function isKeyEditLocalOpMetadata(metadata: any): metadata is IKeyEditLocalOpMetadata {
-	return metadata !== undefined && metadata.type === "edit";
-}
-
-function isClearLocalOpMetadata(metadata: any): metadata is IClearLocalOpMetadata {
-	return (
-		metadata !== undefined &&
-		metadata.type === "clear" &&
-		typeof metadata.previousStorage === "object"
-	);
-}
-
-function isSubDirLocalOpMetadata(metadata: any): metadata is SubDirLocalOpMetadata {
-	return (
-		metadata !== undefined &&
-		(metadata.type === "createSubDir" || metadata.type === "deleteSubDir")
-	);
-}
-
-function isDirectoryLocalOpMetadata(metadata: any): metadata is DirectoryLocalOpMetadata {
-	return (
-		isKeyEditLocalOpMetadata(metadata) ||
-		isClearLocalOpMetadata(metadata) ||
-		isSubDirLocalOpMetadata(metadata)
-	);
-}
-
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access */
+export type DirectoryLocalOpMetadata = StorageLocalOpMetadata | SubDirLocalOpMetadata;
 
 // eslint-disable-next-line @rushstack/no-new-null
 function assertNonNullClientId(clientId: string | null): asserts clientId is string {
@@ -1564,7 +1568,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			type: "delete",
 			path: this.absolutePath,
 		};
-		this.submitKeyMessage(op, previousOptimisticLocalValue);
+		this.submitKeyMessage(op, pendingKeyDelete);
 		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
 		// (permitting speculative deletion even if we don't see anything locally) but don't emit
 		// a valueChanged since we in fact did not locally observe a value change.
@@ -1602,13 +1606,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		};
 		this.pendingStorageData.push(pendingClear);
 
-		const copy = new Map<string, unknown>(this.sequencedData);
 		this.directory.emit("clear", true, this.directory);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
 		};
-		this.submitClearMessage(op, copy);
+		this.submitClearMessage(op, pendingClear);
 	}
 
 	/**
@@ -1853,7 +1856,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		msg: ISequencedDocumentMessage,
 		op: IDirectoryClearOperation,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: ClearLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
 		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
@@ -1864,10 +1867,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedData.clear();
 			const pendingClear = this.pendingStorageData.shift();
 			assert(
-				pendingClear !== undefined && pendingClear.type === "clear",
+				pendingClear !== undefined &&
+					pendingClear.type === "clear" &&
+					pendingClear === localOpMetadata,
 				"Got a local clear message we weren't expecting",
 			);
-			assert(isClearLocalOpMetadata(localOpMetadata), "Local op metadata should be a clear");
 		} else {
 			// For pending set operations, collect the previous values before clearing sequenced data
 			const pendingSets: { key: string; previousValue: unknown }[] = [];
@@ -1912,7 +1916,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		msg: ISequencedDocumentMessage,
 		op: IDirectoryDeleteOperation,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: EditLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
 		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
@@ -1965,7 +1969,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		op: IDirectorySetOperation,
 		value: unknown,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: EditLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
 		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
@@ -1985,9 +1989,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			const pendingKeySet = pendingEntry.keySets.shift();
 			assert(
-				pendingKeySet !== undefined &&
-					isKeyEditLocalOpMetadata(localOpMetadata) &&
-					pendingKeySet === localOpMetadata.previousValue,
+				pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
 				"Got a local set message we weren't expecting",
 			);
 			if (pendingEntry.keySets.length === 0) {
@@ -2024,7 +2026,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		msg: ISequencedDocumentMessage,
 		op: IDirectoryCreateSubDirectoryOperation,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: SubDirLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
 		if (
@@ -2056,7 +2058,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		msg: ISequencedDocumentMessage,
 		op: IDirectoryDeleteSubDirectoryOperation,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: SubDirLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
 		if (
@@ -2073,28 +2075,24 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * Submit a clear operation.
 	 * @param op - The operation
+	 * @param localOpMetadata - The pending operation metadata
 	 */
 	private submitClearMessage(
 		op: IDirectoryClearOperation,
-		previousValue: Map<string, unknown>,
+		localOpMetadata: ClearLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		const metadata: IClearLocalOpMetadata = {
-			type: "clear",
-			previousStorage: previousValue,
-		};
-		this.directory.submitDirectoryMessage(op, metadata);
+		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
 
 	/**
 	 * Resubmit a clear operation.
 	 * @param op - The operation
 	 */
-	public resubmitClearMessage(op: IDirectoryClearOperation, localOpMetadata: unknown): void {
-		assert(
-			isClearLocalOpMetadata(localOpMetadata),
-			0x32b /* Invalid localOpMetadata for clear */,
-		);
+	public resubmitClearMessage(
+		op: IDirectoryClearOperation,
+		localOpMetadata: ClearLocalOpMetadata | undefined,
+	): void {
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
 		const pendingEntryIndex = this.pendingStorageData.findIndex(
@@ -2102,19 +2100,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		);
 		const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 		if (pendingEntry !== undefined) {
-			this.submitClearMessage(op, localOpMetadata.previousStorage);
+			this.submitClearMessage(op, localOpMetadata);
 		}
 	}
 
 	/**
 	 * Submit a key operation.
 	 * @param op - The operation
-	 * @param previousValue - The value of the key before this op
+	 * @param localOpMetadata - The pending operation metadata
 	 */
-	private submitKeyMessage(op: IDirectoryKeyOperation, previousValue?: unknown): void {
+	private submitKeyMessage(
+		op: IDirectoryKeyOperation,
+		localOpMetadata: PendingKeySet | PendingKeyDelete,
+	): void {
 		this.throwIfDisposed();
-		const localMetadata = { type: "edit", previousValue };
-		this.directory.submitDirectoryMessage(op, localMetadata);
+		this.directory.submitDirectoryMessage(op, localOpMetadata);
 	}
 
 	/**
@@ -2122,11 +2122,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param op - The map key message
 	 * @param localOpMetadata - Metadata from the previous submit
 	 */
-	public resubmitKeyMessage(op: IDirectoryKeyOperation, localOpMetadata: unknown): void {
-		assert(
-			isKeyEditLocalOpMetadata(localOpMetadata),
-			0x32d /* Invalid localOpMetadata in submit */,
-		);
+	public resubmitKeyMessage(
+		op: IDirectoryKeyOperation,
+		localOpMetadata: EditLocalOpMetadata | undefined,
+	): void {
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
 		const pendingEntryIndex = this.pendingStorageData.findIndex(
@@ -2134,7 +2133,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		);
 		const pendingEntry = this.pendingStorageData[pendingEntryIndex];
 		if (pendingEntry !== undefined) {
-			this.submitKeyMessage(op, localOpMetadata.previousValue);
+			this.submitKeyMessage(op, localOpMetadata as PendingKeySet | PendingKeyDelete);
 		}
 	}
 
@@ -2203,13 +2202,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public resubmitSubDirectoryMessage(
 		op: IDirectorySubDirectoryOperation,
-		localOpMetadata: unknown,
+		localOpMetadata: SubDirLocalOpMetadata | undefined,
 	): void {
-		assert(
-			isSubDirLocalOpMetadata(localOpMetadata),
-			0x32f /* Invalid localOpMetadata for sub directory op */,
-		);
-
+		assert(localOpMetadata !== undefined, "localOpMetadata should be defined");
 		// Only submit the op, if we have record for it, otherwise it is possible that the older instance
 		// is already deleted, in which case we don't need to submit the op.
 		if (
@@ -2296,10 +2291,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 * @param localOpMetadata - The local metadata associated with the op.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	public rollback(op: any, localOpMetadata: unknown): void {
-		if (!isDirectoryLocalOpMetadata(localOpMetadata)) {
-			throw new Error("Invalid localOpMetadata");
-		}
+	public rollback(op: any, localOpMetadata: DirectoryLocalOpMetadata): void {
 		const directoryOp = op as IDirectoryOperation;
 
 		if (directoryOp.type === "clear") {
@@ -2323,7 +2315,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			}
 		} else if (
 			(directoryOp.type === "delete" || directoryOp.type === "set") &&
-			localOpMetadata.type === "edit"
+			(localOpMetadata.type === "set" || localOpMetadata.type === "delete")
 		) {
 			// A pending set/delete may not be last in the list, as the lifetimes' order is based on when
 			// they were created, not when they were last modified.
@@ -2338,6 +2330,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				"Unexpected pending data for set/delete op",
 			);
 			if (pendingEntry.type === "delete") {
+				assert(pendingEntry === localOpMetadata, "Unexpected delete rollback");
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticValue(directoryOp.key) !== undefined) {
@@ -2356,7 +2349,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			} else if (pendingEntry.type === "lifetime") {
 				const pendingKeySet = pendingEntry.keySets.pop();
 				assert(
-					pendingKeySet !== undefined && pendingKeySet === localOpMetadata.previousValue,
+					pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
 					"Unexpected set rollback",
 				);
 				if (pendingEntry.keySets.length === 0) {
@@ -2466,7 +2459,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		msg: ISequencedDocumentMessage,
 		op: IDirectorySubDirectoryOperation,
 		local: boolean,
-		localOpMetadata: unknown,
+		localOpMetadata: SubDirLocalOpMetadata | undefined,
 	): boolean {
 		assertNonNullClientId(msg.clientId);
 		const pendingDeleteCount = this.pendingDeleteSubDirectoriesTracker.get(op.subdirName);
@@ -2476,7 +2469,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			(pendingCreateCount !== undefined && pendingCreateCount > 0)
 		) {
 			if (local) {
-				assert(isSubDirLocalOpMetadata(localOpMetadata), "local op metadata is not subdir op");
+				assert(localOpMetadata !== undefined, "localOpMetadata should be defined");
 				if (localOpMetadata.type === "deleteSubDir") {
 					assert(
 						pendingDeleteCount !== undefined && pendingDeleteCount > 0,
@@ -2504,7 +2497,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					}
 					// If this is delete op and we have keys in this subDirectory, then we need to delete these
 					// keys except the pending ones as they will be sequenced after this delete.
-					// TODO: This may not be correct
 					directory.sequencedData.clear();
 					directory.emit("clear", true, directory);
 
