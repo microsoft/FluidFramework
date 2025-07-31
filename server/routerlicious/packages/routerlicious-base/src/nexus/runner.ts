@@ -117,7 +117,6 @@ export class NexusRunner implements IRunner {
 				isTokenExpiryEnabled,
 				isClientConnectivityCountingEnabled,
 				isSignalUsageCountingEnabled,
-				preconnectTTLMs,
 				this.redisCache,
 				this.socketConnectTenantThrottler,
 				this.socketConnectClusterThrottler,
@@ -131,6 +130,7 @@ export class NexusRunner implements IRunner {
 				this.clusterDrainingChecker,
 				this.collaborationSessionTracker,
 				this.denyList,
+				preconnectTTLMs,
 			);
 
 			if (this.tokenRevocationManager) {
