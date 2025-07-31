@@ -333,6 +333,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     getCreateChildSummarizerNodeFn(id: string, createParam: CreateChildSummarizerNodeParam): CreateChildSummarizerNodeFn;
     // (undocumented)
+    getMinVersionForCollab(): MinimumVersionForCollab;
+    // (undocumented)
     getQuorum(): IQuorumClients;
     // (undocumented)
     readonly id: string;

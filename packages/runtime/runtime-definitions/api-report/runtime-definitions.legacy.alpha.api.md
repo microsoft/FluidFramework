@@ -167,6 +167,7 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
     readonly createProps?: any;
     // @deprecated (undocumented)
     getBaseGCDetails(): Promise<IGarbageCollectionDetailsBase>;
+    getMinVersionForCollab(): MinimumVersionForCollab;
     // (undocumented)
     readonly id: string;
     readonly isLocalDataStore: boolean;

@@ -759,6 +759,11 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	createChildDataStore?<T extends IFluidDataStoreFactory>(
 		childFactory: T,
 	): ReturnType<Exclude<T["createDataStore"], undefined>>;
+
+	/**
+	 * Gets the minVersionForCollab passed into the ContainerRuntime.
+	 */
+	getMinVersionForCollab(): MinimumVersionForCollab;
 }
 
 /**
