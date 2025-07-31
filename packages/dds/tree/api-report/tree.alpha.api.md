@@ -881,6 +881,8 @@ export interface SchemaStatics {
 
 // @alpha @sealed
 export class SchemaUpgrade {
+    // (undocumented)
+    protected _typeCheck: MakeNominal;
 }
 
 // @alpha @input
