@@ -29,6 +29,7 @@ import type {
 } from "../../../util/index.js";
 
 import {
+	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
@@ -211,6 +212,27 @@ const schema = new SchemaFactory("com.example");
 }
 
 describe("allowedTypes", () => {
+	describe("isAnnotatedAllowedType", () => {
+		it("returns true for AnnotatedAllowedType", () => {
+			assert(isAnnotatedAllowedType({ metadata: {}, type: schema.string }));
+			assert(isAnnotatedAllowedType({ metadata: {}, type: () => schema.string }));
+		});
+
+		it("returns false for LazyItem", () => {
+			assert(!isAnnotatedAllowedType(() => schema.string));
+		});
+
+		it("returns false for schema", () => {
+			assert(!isAnnotatedAllowedType(schema.string));
+			class Test extends schema.object("Test", {}) {}
+			assert(!isAnnotatedAllowedType(Test));
+			class Test2 extends schema.object("Test", {}) {
+				public static override metadata = {};
+			}
+			assert(!isAnnotatedAllowedType(Test2));
+		});
+	});
+
 	describe("normalizeAllowedTypes", () => {
 		it("Normalizes single type", () => {
 			const schemaFactory = new SchemaFactory("test");

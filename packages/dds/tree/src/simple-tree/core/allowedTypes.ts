@@ -81,6 +81,7 @@ export interface NormalizedAnnotatedAllowedTypes {
 export function isAnnotatedAllowedTypes(
 	allowedTypes: ImplicitAnnotatedAllowedTypes,
 ): allowedTypes is AnnotatedAllowedTypes {
+	checkForUninitializedSchema(allowedTypes);
 	return (
 		// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
 		typeof allowedTypes === "object" && "metadata" in allowedTypes && "types" in allowedTypes
@@ -121,7 +122,9 @@ export interface AllowedTypesMetadata {
 export function isAnnotatedAllowedType(
 	allowedType: AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
 ): allowedType is AnnotatedAllowedType {
-	return "metadata" in allowedType && "type" in allowedType;
+	checkForUninitializedSchema(allowedType);
+	// Class based schema, and lazy schema references report type "function": filtering them out with typeof makes narrowing based on members mostly safe
+	return typeof allowedType === "object" && "metadata" in allowedType && "type" in allowedType;
 }
 
 /**
@@ -384,13 +387,25 @@ export function evaluateLazySchema<T extends TreeNodeSchema>(value: LazyItem<T>)
 	const evaluatedSchema = isLazy(value)
 		? (getOrCreate(cachedLazyItem, value, value) as T)
 		: value;
-	if (evaluatedSchema === undefined) {
-		throw new UsageError(
-			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated.`,
-		);
-	}
+
+	checkForUninitializedSchema(evaluatedSchema);
 	markSchemaMostDerived(evaluatedSchema);
 	return evaluatedSchema;
+}
+
+/**
+ * Throws a UsageError if the provided schema is undefined, most likely due to being used before it was initialized.
+ */
+export function checkForUninitializedSchema(
+	schema: ImplicitAnnotatedAllowedTypes | LazyItem<TreeNodeSchema>,
+): void {
+	if (schema === undefined) {
+		throw new UsageError(
+			`Encountered an undefined schema.
+			This could indicate that some referenced schema has not yet been instantiated.
+			Consider using a lazy schema reference (like "() => schema") or delaying the evaluation of the lazy reference if one is already being used.`,
+		);
+	}
 }
 
 /**
