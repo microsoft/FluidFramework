@@ -3,14 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
-import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
 import { ContainerDevtools, type ContainerDevtoolsProps } from "./ContainerDevtools.js";
-import { DataObjectDevtools, type DataObjectProps } from "./DataObjectDevtools.js";
-import { DecomposedContainerForDataStore } from "./DecomposedContainer.js";
+import type { ContainerRuntimeProps } from "./ContainerRuntimeDevtools.js";
+import { ContainerRuntimeDevtools } from "./ContainerRuntimeDevtools.js";
+import { DecomposedContainerForContainerRuntime } from "./DecomposedContainer.js";
 import type { IDevtoolsLogger } from "./DevtoolsLogger.js";
 import type { DevtoolsFeatureFlags } from "./Features.js";
 import type { IContainerDevtools } from "./IContainerDevtools.js";
@@ -140,9 +141,9 @@ export class FluidDevtools implements IFluidDevtools {
 
 	/**
 	 * Stores DataObject-level devtools instances registered with this object.
-	 * Maps from a {@link ContainerKey} to the corresponding {@link DataObjectDevtools} instance.
+	 * Maps from a {@link ContainerKey} to the corresponding {@link ContainerRuntimeDevtools} instance.
 	 */
-	private readonly dataObjects: Map<ContainerKey, DataObjectDevtools>;
+	private readonly containerRuntimes: Map<ContainerKey, ContainerRuntimeDevtools>;
 
 	// Track data object instances to assign sequential numbers
 	private readonly dataObjectInstanceCounts = new Map<string, number>();
@@ -221,15 +222,10 @@ export class FluidDevtools implements IFluidDevtools {
 		const containers: ContainerKey[] = this.getAllContainers().map(
 			(container) => container.containerKey,
 		);
-		const dataObjects: ContainerKey[] = this.getAllDataObjects().map(
-			(dataObject) => dataObject.containerKey,
-		);
-
 		postMessagesToWindow(
 			devtoolsMessageLoggingOptions,
 			ContainerList.createMessage({
 				containers,
-				dataObjects,
 			}),
 		);
 	};
@@ -244,7 +240,7 @@ export class FluidDevtools implements IFluidDevtools {
 	private constructor(props?: FluidDevtoolsProps) {
 		// Populate initial Container-level devtools
 		this.containers = new Map<ContainerKey, ContainerDevtools>();
-		this.dataObjects = new Map<ContainerKey, DataObjectDevtools>();
+		this.containerRuntimes = new Map<ContainerKey, ContainerRuntimeDevtools>();
 		if (props?.initialContainers !== undefined) {
 			for (const containerConfig of props.initialContainers) {
 				this.containers.set(
@@ -331,29 +327,65 @@ export class FluidDevtools implements IFluidDevtools {
 	/**
 	 * Registers a data object with the devtools.
 	 */
-	public registerDataObject(props: DataObjectProps): void {
-		const { dataObject, label } = props;
+	public async registerContainerRuntime(props: ContainerRuntimeProps): Promise<void> {
+		const { runtime, label, containerData } = props;
 
 		// Generate a readable key with sequential numbering
-		const dataObjectKey = this.generateReadableKey(dataObject, label);
+		const containerRuntimeKey = this.generateReadableKey(runtime, label);
 
-		const decomposedContainer = new DecomposedContainerForDataStore(
-			(dataObject as unknown as { runtime: IFluidDataStoreRuntime }).runtime,
-		);
+		const decomposedContainer = new DecomposedContainerForContainerRuntime(runtime);
 
 		// Check if the data object is already registered.
-		if (this.containers.has(dataObjectKey)) {
-			throw new UsageError(getContainerAlreadyRegisteredErrorText(dataObjectKey));
+		if (this.containers.has(containerRuntimeKey)) {
+			throw new UsageError(getContainerAlreadyRegisteredErrorText(containerRuntimeKey));
 		}
 
-		const dataObjectDevtools = new DataObjectDevtools({
-			containerKey: dataObjectKey,
+		const runtimeData =
+			containerData ?? (await FluidDevtools.extractContainerDataFromRuntime(runtime));
+
+		const containerRuntimeDevtools = new ContainerRuntimeDevtools({
+			containerKey: containerRuntimeKey,
 			container: decomposedContainer,
-			containerData: { appData: dataObject },
+			containerData: runtimeData,
 		});
-		this.dataObjects.set(dataObjectKey, dataObjectDevtools);
+		this.containerRuntimes.set(containerRuntimeKey, containerRuntimeDevtools);
 
 		this.postContainerList();
+	}
+
+	/**
+	 * Helper method to extract container data from IContainerRuntime for visualization.
+	 * This method attempts to access the entry point data store from the runtime.
+	 *
+	 * @param containerRuntime - The container runtime to extract data from
+	 * @returns A record of data store names to IFluidLoadable objects, or undefined if no data can be extracted
+	 */
+	public static async extractContainerDataFromRuntime(
+		containerRuntime: IContainerRuntime,
+	): Promise<Record<string, IFluidLoadable> | undefined> {
+		try {
+			// Get the entry point from the container runtime
+			// Cast to access getEntryPoint method which exists on the concrete implementation
+			const runtimeWithEntryPoint = containerRuntime as IContainerRuntime & {
+				getEntryPoint(): Promise<IFluidLoadable>;
+			};
+
+			if (
+				typeof runtimeWithEntryPoint.scope === "object" &&
+				typeof runtimeWithEntryPoint.getEntryPoint === "function"
+			) {
+				const entryPoint = await runtimeWithEntryPoint.getEntryPoint();
+				if (entryPoint !== undefined) {
+					return {
+						entryPoint,
+					};
+				}
+			}
+		} catch (error) {
+			console.warn("Could not extract container data from runtime:", error);
+		}
+
+		return undefined;
 	}
 
 	/**
@@ -400,31 +432,6 @@ export class FluidDevtools implements IFluidDevtools {
 	}
 
 	/**
-	 * Gets all data object devtools instances (not containers).
-	 */
-	public getAllDataObjects(): readonly DataObjectDevtools[] {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		return [...this.dataObjects.values()];
-	}
-
-	/**
-	 * Checks if a {@link DataObjectDevtools} was registered as a data object.
-	 * @param containerKey - The container key to check.
-	 * @returns `true` if the container was registered via `registerDataObject`, `false` otherwise.
-	 * @remarks Maps {@link ContainerKey} but actually referring to a {@link DataObject}
-	 */
-	public isDataObject(containerKey: ContainerKey): boolean {
-		if (this.disposed) {
-			throw new UsageError(useAfterDisposeErrorText);
-		}
-
-		return this.dataObjects.has(containerKey);
-	}
-
-	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#IDisposable.disposed}
 	 */
 	public get disposed(): boolean {
@@ -447,7 +454,7 @@ export class FluidDevtools implements IFluidDevtools {
 			containerDevtools.dispose();
 		}
 		this.containers.clear();
-		this.dataObjects.clear();
+		this.containerRuntimes.clear();
 
 		// Notify listeners that the list of Containers changed.
 		this.postContainerList();
@@ -466,29 +473,20 @@ export class FluidDevtools implements IFluidDevtools {
 	 * Gets the set of features supported by this instance.
 	 */
 	private getSupportedFeatures(): DevtoolsFeatureFlags {
-		const hasDataObjects = this.dataObjects.size > 0;
-
 		return {
 			telemetry: this.logger !== undefined,
 			// Most work completed, but not ready to completely enable.
 			opLatencyTelemetry: true,
-			// Enable dataObjects feature if there are data objects registered allowing both containers and data objects to coexist.
-			dataObjects: hasDataObjects,
 		};
 	}
 
 	/**
 	 * Generates a readable key for a data object using package path and sequential numbering.
 	 */
-	private generateReadableKey(dataObject: object, label?: string): string {
-		// Use label if provided, otherwise use package path
-		const baseKey =
-			label ??
-			(dataObject as unknown as { context: IFluidDataStoreContext }).context.packagePath.join(
-				"/",
-			);
+	private generateReadableKey(runtime: object, baseKey = "Container-Runtime"): string {
+		// TODO: Can't find good default-name for runtime (besides using client-id).
+		console.log(runtime); // TODO: Consoled to pass the build.
 
-		// Get the next number for this base key
 		const nextNumber = (this.dataObjectInstanceCounts.get(baseKey) ?? 0) + 1;
 		this.dataObjectInstanceCounts.set(baseKey, nextNumber);
 

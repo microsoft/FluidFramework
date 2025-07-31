@@ -44,7 +44,7 @@ import {
 
 /**
  * Abstract base class for devtools implementations.
- * Contains shared functionality between ContainerDevtools and DataObjectDevtools.
+ * Contains shared functionality between ContainerDevtools and ContainerRuntimeDevtools.
  */
 export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 	implements IContainerDevtools, HasContainerKey

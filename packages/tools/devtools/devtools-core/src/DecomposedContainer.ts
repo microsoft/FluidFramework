@@ -11,8 +11,8 @@ import type {
 	ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IEventProvider } from "@fluidframework/core-interfaces";
-import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 
 /**
  * A lightweight abstraction of a container that provides
@@ -63,22 +63,22 @@ export interface DecomposedContainer extends IEventProvider<IContainerEvents> {
 }
 
 /**
- * Implementation of {@link DecomposedContainer} that wraps an {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntime}.
- * This class provides a bridge between {@link @fluidframework/datastore-definitions/internal#IFluidDataStoreRuntime} and the devtools system by exposing runtime properties and events.
+ * Implementation of {@link DecomposedContainer} that wraps an {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime}.
+ * This class provides a bridge between {@link @fluidframework/container-runtime-definitions/internal#IContainerRuntime} and the devtools system by exposing runtime properties and events.
  */
-export class DecomposedContainerForDataStore
+export class DecomposedContainerForContainerRuntime
 	extends TypedEventEmitter<IContainerEvents>
 	implements DecomposedContainer
 {
 	private _disposed = false; // Track actual disposed state
 
-	public constructor(runtime: IFluidDataStoreRuntime) {
+	public constructor(runtime: IContainerRuntime) {
 		super();
 		this.runtime = runtime;
 		runtime.on("attached", this.attachedHandler);
 		runtime.on("connected", this.connectedHandler);
 		runtime.on("disconnected", this.disconnectedHandler);
-		runtime.on("dispose", this.disposedHandler);
+		runtime.on("disposed", this.disposedHandler);
 	}
 
 	private readonly attachedHandler = (): boolean => this.emit("attached");
@@ -90,7 +90,7 @@ export class DecomposedContainerForDataStore
 		return this.emit("disposed", error);
 	};
 
-	private readonly runtime: IFluidDataStoreRuntime;
+	private readonly runtime: IContainerRuntime;
 
 	public get audience(): IAudience {
 		return this.runtime.getAudience();
@@ -110,5 +110,22 @@ export class DecomposedContainerForDataStore
 
 	public get closed(): boolean {
 		return this._disposed; // Only return true if actually disposed, not just disconnected
+	}
+
+	// Container runtime doesn't have direct connect/disconnect/close methods
+	// These would need to be implemented through the container if needed
+	public connect?(): void {
+		// Container runtime doesn't have direct connect method
+		// This would need to be implemented through the container
+	}
+
+	public disconnect?(): void {
+		// Container runtime doesn't have direct disconnect method
+		// This would need to be implemented through the container
+	}
+
+	public close?(error?: ICriticalContainerError): void {
+		// Container runtime doesn't have direct close method
+		// This would need to be implemented through the container
 	}
 }

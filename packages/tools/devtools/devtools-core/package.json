@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "packages/tools/devtools/devtools-core"
+		"directory": "/workspaces/FluidFramework/packages/tools/devtools/devtools-core"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
@@ -117,6 +117,7 @@
 		"@fluidframework/cell": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/counter": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
