@@ -898,7 +898,8 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
 	};
-	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
+	const runtime = createRuntimeFactory();
+	const codeLoader = new LocalCodeLoader([[codeDetails, runtime]]);
 	const tagCount: Partial<Record<string, number>> = {};
 	// we reserve prefix-0 for initialization objects
 	const tag: LocalServerStressState["tag"] = (prefix) =>
@@ -941,6 +942,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			async () => finalSynchronization,
 		),
 	);
+
 	const reducer: AsyncReducer<
 		TOperation | typeof finalSynchronization,
 		LocalServerStressState
@@ -1337,4 +1339,84 @@ export namespace createLocalServerStressSuite {
 				...providedOptions,
 				skip: [...seeds, ...(providedOptions?.skip ?? [])],
 			});
+}
+
+interface CloneClientFromPending {
+	type: "cloneClientFromPending";
+	sourceClientTag: string;
+	newClientTag: string;
+}
+
+function mixinCloneClientFromPending<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | CloneClientFromPending> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | CloneClientFromPending,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (
+			state: LocalServerStressState,
+		): Promise<TOperation | CloneClientFromPending | typeof done> => {
+			const { clients, random, validationClient } = state;
+
+			// Control frequency with some probability (adjust as needed)
+			if (
+				options.clientJoinOptions !== undefined &&
+				validationClient.container.attachState !== AttachState.Detached &&
+				clients.length > 0 &&
+				random.bool(0.1) // 10% chance to clone
+			) {
+				const sourceClient = random.pick(clients);
+
+				return {
+					type: "cloneClientFromPending",
+					sourceClientTag: sourceClient.tag,
+					newClientTag: state.tag("client"),
+				} satisfies CloneClientFromPending;
+			}
+
+			return baseGenerator(state);
+		};
+	};
+
+	const reducer: AsyncReducer<
+		TOperation | CloneClientFromPending,
+		LocalServerStressState
+	> = async (state, op) => {
+		if (op.type === "cloneClientFromPending") {
+			const sourceClient = state.clients.find((c) => c.tag === op.sourceClientTag);
+			assert(sourceClient !== undefined, `Client ${op.sourceClientTag} not found`);
+
+			// Get pending state from the source client's runtime
+			const pendingState = await sourceClient.getPendingLocalState();
+
+			const url = await state.validationClient.container.getAbsoluteUrl("");
+			assert(url !== undefined, "Container URL must be defined");
+
+			// Load new client using the pending state snapshot
+			const newClient = await loadClient(
+				state.localDeltaConnectionServer,
+				state.codeLoader,
+				op.newClientTag,
+				url,
+				state.seed,
+				options,
+				pendingState, // pass the pending local state here!
+			);
+
+			state.clients.push(newClient);
+			return state;
+		}
+
+		// For other operations, fallback to original reducer
+		return model.reducer(state, op);
+	};
+
+	return {
+		...model,
+		generatorFactory,
+		reducer,
+	};
 }

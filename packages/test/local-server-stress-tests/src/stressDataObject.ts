@@ -382,6 +382,8 @@ export const createRuntimeFactory = (): IRuntimeFactory => {
 					return aliasedDefault.get();
 				},
 			});
+
+			// const pendingLocalState = runtime.getPendingLocalState();
 			// id compressor isn't made available via the interface right now.
 			// We could revisit exposing the safe part of its API (IIdCompressor, not IIdCompressorCore) in a way
 			// that would avoid this instanceof check, but most customers shouldn't really have a need for it.
