@@ -1359,12 +1359,31 @@ export namespace createLocalServerStressSuite {
 			});
 }
 
+/**
+ * Operation type for cloning a client using its pending local state.
+ *
+ * This operation triggers a clone of an existing client by capturing its
+ * pending local state (via `getPendingLocalState()`) and loading a new
+ * container from it.
+ */
 interface GetClientPendingState {
 	type: "getClientPendingState";
 	sourceClientTag: `client-${number}`;
 	newClientTag: `client-${number}`;
 }
 
+/**
+ * Adds support for "getPendingLocalState"-based client cloning to the stress model.
+ *
+ * This mixin extends the base fuzz model by occasionally inserting operations that:
+ * - Capture a given client's pending local state.
+ * - Instantiate a new client from that state using the same container URL.
+ * - Add the cloned client to the test state for further fuzzing.
+ *
+ * Preconditions:
+ * - Must have at least one client already in the system.
+ * - Must be in an attached container state.
+ */
 function mixinGetClientPending<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
