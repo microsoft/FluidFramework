@@ -47,7 +47,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
-import { IBlobMetadata } from "../metadata.js";
+import { isBlobMetadata } from "../metadata.js";
 
 import {
 	getStorageIds,
@@ -214,7 +214,7 @@ export class BlobManager {
 	 */
 	private readonly opsInFlight: Map<string, Set<string>> = new Map();
 
-	private readonly sendBlobAttachOp: (localId: string, storageId?: string) => void;
+	private readonly sendBlobAttachOp: (localId: string, storageId: string) => void;
 
 	private readonly routeContext: IFluidHandleContext;
 	private readonly storage: Pick<IContainerStorageService, "createBlob" | "readBlob">;
@@ -247,7 +247,7 @@ export class BlobManager {
 		 * knowledge of which they cannot request the blob from storage. It's important that this op is sequenced
 		 * before any ops that reference the local ID, otherwise, an invalid handle could be added to the document.
 		 */
-		sendBlobAttachOp: (localId: string, storageId?: string) => void;
+		sendBlobAttachOp: (localId: string, storageId: string) => void;
 		// Called when a blob node is requested. blobPath is the path of the blob's node in GC's graph.
 		// blobPath's format - `/<basePath>/<blobId>`.
 		readonly blobRequested: (blobPath: string) => void;
@@ -331,7 +331,7 @@ export class BlobManager {
 			this.pendingStashedBlobs.clear();
 		});
 
-		this.sendBlobAttachOp = (localId: string, blobId?: string) => {
+		this.sendBlobAttachOp = (localId: string, blobId: string) => {
 			const pendingEntry = this.pendingBlobs.get(localId);
 			assert(
 				pendingEntry !== undefined,
@@ -738,46 +738,24 @@ export class BlobManager {
 	 * @param metadata - op metadata containing storage and/or local IDs
 	 */
 	public reSubmit(metadata: Record<string, unknown> | undefined): void {
-		assert(!!metadata, 0x38b /* Resubmitted ops must have metadata */);
-		const { localId, blobId }: { localId?: string; blobId?: string } = metadata;
-		assert(localId !== undefined, 0x50d /* local ID not available on reSubmit */);
-		const pendingEntry = this.pendingBlobs.get(localId);
-
-		if (!blobId) {
-			// We submitted this op while offline. The blob should have been uploaded by now.
-			assert(
-				pendingEntry?.opsent === true && !!pendingEntry.storageId,
-				0x38d /* blob must be uploaded before resubmitting BlobAttach op */,
-			);
-			return this.sendBlobAttachOp(localId, pendingEntry.storageId);
-		}
+		assert(isBlobMetadata(metadata), "Expected blob metadata for a BlobAttach op");
+		const { localId, blobId } = metadata;
 		return this.sendBlobAttachOp(localId, blobId);
 	}
 
 	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
-		const localId = (message.metadata as IBlobMetadata | undefined)?.localId;
-		const blobId = (message.metadata as IBlobMetadata | undefined)?.blobId;
-
-		if (localId) {
-			const pendingEntry = this.pendingBlobs.get(localId);
-			if (pendingEntry?.abortSignal?.aborted) {
-				this.deletePendingBlob(localId);
-				return;
-			}
+		assert(isBlobMetadata(message.metadata), "Expected blob metadata for a BlobAttach op");
+		const { localId, blobId } = message.metadata;
+		const pendingEntry = this.pendingBlobs.get(localId);
+		if (pendingEntry?.abortSignal?.aborted) {
+			this.deletePendingBlob(localId);
+			return;
 		}
-		assert(blobId !== undefined, 0x12a /* "Missing blob id on metadata" */);
 
-		// Set up a mapping from local ID to storage ID. This is crucial since without this the blob cannot be
-		// requested from the server.
-		// Note: The check for undefined is needed for back-compat when localId was not part of the BlobAttach op that
-		// was sent when online.
-		if (localId !== undefined) {
-			this.setRedirection(localId, blobId);
-		}
+		this.setRedirection(localId, blobId);
 		// set identity (id -> id) entry
 		this.setRedirection(blobId, blobId);
 
-		assert(localId !== undefined, 0x50e /* local ID not present in blob attach message */);
 		if (local) {
 			const waitingBlobs = this.opsInFlight.get(blobId);
 			if (waitingBlobs !== undefined) {
