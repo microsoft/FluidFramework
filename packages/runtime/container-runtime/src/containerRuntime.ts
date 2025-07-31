@@ -1542,9 +1542,9 @@ export class ContainerRuntime
 		this.disposeFn = disposeFn ?? closeFn;
 
 		// Validate that the Loader is compatible with this Runtime.
-		const maybeloaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(
-			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails,
+			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
 		);
 
@@ -1763,7 +1763,7 @@ export class ContainerRuntime
 		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
 		// predates ILayerCompatDetails.
 		const referenceSequenceNumbersSupported =
-			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
+			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (
