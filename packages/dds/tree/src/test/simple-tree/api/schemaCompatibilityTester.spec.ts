@@ -4,7 +4,11 @@
  */
 
 import { strict as assert } from "node:assert";
-import { storedEmptyFieldSchema, type TreeStoredSchema } from "../../../core/index.js";
+import {
+	EmptyKey,
+	storedEmptyFieldSchema,
+	type TreeStoredSchema,
+} from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	toStoredSchema,
@@ -123,50 +127,6 @@ describe("SchemaCompatibilityTester", () => {
 			});
 		});
 
-		describe("allows upgrades but not viewing when changing field kinds with compatible multiplicity", () => {
-			const expected: Omit<SchemaCompatibilityStatus, "canInitialize"> = {
-				canView: false,
-				canUpgrade: true,
-				isEquivalent: false,
-			};
-
-			it("identifier tro required string", () => {
-				expectCompatibility(
-					{
-						view: factory.string,
-						stored: toStoredSchema(factory.identifier),
-					},
-					expected,
-				);
-			});
-			it("required string to identifier: fails", () => {
-				// If this upgrade was allowed then it would be possible for two app versions to disagree
-				// about a schema and upgrade it back and forth causing unlimited schema edits.
-				// Preventing this is a policy choice: it could be allowed without corrupting documents since identifiers and
-				// required strings are compatible field shapes.
-				expectCompatibility(
-					{
-						view: factory.identifier,
-						stored: toStoredSchema(factory.string),
-					},
-					{
-						canView: false,
-						canUpgrade: false,
-						isEquivalent: false,
-					},
-				);
-			});
-			it("required to optional", () => {
-				expectCompatibility(
-					{
-						view: factory.optional(factory.string),
-						stored: toStoredSchema(factory.string),
-					},
-					expected,
-				);
-			});
-		});
-
 		describe("allows upgrades but not viewing when the view schema allows a strict superset of the stored schema", () => {
 			const expected: Omit<SchemaCompatibilityStatus, "canInitialize"> = {
 				canView: false,
@@ -247,9 +207,88 @@ describe("SchemaCompatibilityTester", () => {
 						expected,
 					);
 				});
-				// Note: despite optional fields being relaxable to sequence fields in the stored schema representation,
-				// this is not possible to recreate using the current public API due to differences in array and sequence design
+
+				it("required string to identifier: fails", () => {
+					// If this upgrade was allowed then it would be possible for two app versions to disagree
+					// about a schema and upgrade it back and forth causing unlimited schema edits.
+					// Preventing this is a policy choice: it could be allowed without corrupting documents since identifiers and
+					// required strings are compatible field shapes.
+					expectCompatibility(
+						{
+							view: factory.identifier,
+							stored: toStoredSchema(factory.string),
+						},
+						{
+							canView: false,
+							canUpgrade: false,
+							isEquivalent: false,
+						},
+					);
+				});
+
+				it("to sequence", () => {
+					// Optional and required fields are relaxable to sequence fields in the stored schema representation.
+					// This is possible to recreate using the current public API with object and array nodes:
+					expectCompatibility(
+						{
+							view: factory.array("x", factory.string),
+							stored: toStoredSchema(factory.object("x", { [EmptyKey]: factory.string })),
+						},
+						{
+							canView: false,
+							canUpgrade: true,
+							isEquivalent: false,
+						},
+					);
+
+					expectCompatibility(
+						{
+							view: factory.array("x", factory.string),
+							stored: toStoredSchema(
+								factory.object("x", { [EmptyKey]: factory.optional(factory.string) }),
+							),
+						},
+						{
+							canView: false,
+							canUpgrade: true,
+							isEquivalent: false,
+						},
+					);
+
+					expectCompatibility(
+						{
+							view: factory.array("x", factory.string),
+							stored: toStoredSchema(factory.object("x", { [EmptyKey]: factory.identifier })),
+						},
+						{
+							canView: false,
+							canUpgrade: true,
+							isEquivalent: false,
+						},
+					);
+				});
 			});
+		});
+
+		it("object to map upgrade", () => {
+			expectCompatibility(
+				{
+					view: factory.map("x", [factory.string, factory.number]),
+					stored: toStoredSchema(
+						factory.object("x", {
+							a: factory.string,
+							b: factory.number,
+							c: factory.optional(factory.number),
+							d: [factory.string, factory.number],
+						}),
+					),
+				},
+				{
+					canView: false,
+					canUpgrade: true,
+					isEquivalent: false,
+				},
+			);
 		});
 
 		describe("allows viewing but not upgrading when the view schema has opted into allowing the differences", () => {
