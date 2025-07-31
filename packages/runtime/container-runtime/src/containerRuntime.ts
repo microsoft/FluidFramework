@@ -1346,6 +1346,7 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
+	private canSendSignals: boolean | undefined;
 
 	private readonly getConnectionState?: () => ConnectionState;
 
@@ -1687,6 +1688,9 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
+		this.canSendSignals = this.getConnectionState
+			? this.getConnectionState() === 2 /* Connected */
+			: undefined;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -2846,15 +2850,39 @@ export class ContainerRuntime
 
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
 
-		// "connected" is only emitted when canSendOps is true, which is always false in readonly mode.
-		// "connectedToService" is here to emit when container connection state transitions to 'Connected' regardless of connection mode.
-		// "disconnectedFromService" is also here to exclude the false "disconnected" events that happen when readonly client transitions to 'Connected'.
-		if (this.getConnectionState) {
-			if (this.getConnectionState() === 2 /* Connected */) {
+		this.emitServiceConnectionEvents(canSendOpsChanged, canSendOps, clientId);
+	}
+
+	/**
+	 * Emits service connection events based on connection state changes.
+	 * "connected" is only emitted when canSendOps is true, which is always false in readonly mode.
+	 * "connectedToService" is emitted when container connection state transitions to 'Connected' regardless of connection mode.
+	 * "disconnectedFromService" excludes false "disconnected" events that happen when readonly client transitions to 'Connected'.
+	 */
+	private emitServiceConnectionEvents(
+		canSendOpsChanged: boolean,
+		canSendOps: boolean,
+		clientId?: string,
+	): void {
+		if (!this.getConnectionState) {
+			return;
+		}
+		const canSendSignals = this.getConnectionState() === 2 /* Connected */;
+		const canSendSignalsChanged = this.canSendSignals !== canSendSignals;
+		this.canSendSignals = canSendSignals;
+		if (canSendSignalsChanged) {
+			// If canSendSignals changed, we either transitioned from Connected to Disconnected or CatchingUp to Connected
+			if (canSendSignals) {
+				// Emit for CatchingUp to Connected transition
 				this.emit("connectedToService", clientId, canSendOps);
 			} else {
+				// Emit for Connected to Disconnected transition
 				this.emit("disconnectedFromService");
 			}
+		} else if (canSendOpsChanged) {
+			// If canSendSignals did not change but canSendOps did, then connection type has changed.
+			// This can be writable to readonly or vice versa, so we pass in canSendOps.
+			this.emit("connectionTypeChanged", canSendOps);
 		}
 	}
 
@@ -5085,6 +5113,9 @@ export class ContainerRuntime
 			eventEmitter.emit("joined", { clientId, canWrite });
 		});
 		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+		this.on("connectionTypeChanged", (canWrite: boolean) =>
+			eventEmitter.emit("connectionTypeChanged", canWrite),
+		);
 		return eventEmitter;
 	});
 
