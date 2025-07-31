@@ -311,7 +311,7 @@ export function findExtraAllowedTypes(
 		viewAllowedTypes.map((value) => value.type.identifier),
 	);
 
-	const viewExtra = [...viewAllowedTypes].filter(
+	const viewExtra = viewAllowedTypes.filter(
 		(value) => !storedAllowedTypes.has(brand(value.type.identifier)),
 	);
 	const storedExtra = [...storedAllowedTypes].filter(
