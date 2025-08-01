@@ -50,7 +50,6 @@ export {
 	DocumentationParentNodeBase,
 	HeadingNode,
 	HorizontalRuleNode,
-	LinkNode,
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,

@@ -35,7 +35,6 @@ import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
 	HeadingNode,
-	LinkNode,
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
@@ -395,7 +394,13 @@ export function createExcerptSpanWithHyperlinks(
 					config,
 					unwrappedTokenText,
 				);
-				content.push(LinkNode.createFromPlainTextLink(link));
+				content.push(
+					new MarkdownPhrasingContentNode({
+						type: "link",
+						url: link.target,
+						children: [{ type: "text", value: link.text }],
+					}),
+				);
 				wroteHyperlink = true;
 			}
 		}
@@ -449,7 +454,14 @@ export function createBreadcrumbParagraph(
 
 	// #endregion
 
-	const renderedLinks = breadcrumbLinks.map((link) => LinkNode.createFromPlainTextLink(link));
+	const renderedLinks = breadcrumbLinks.map(
+		(link) =>
+			new MarkdownPhrasingContentNode({
+				type: "link",
+				url: link.target,
+				children: [{ type: "text", value: link.text }],
+			}),
+	);
 
 	const breadcrumbSeparator = new MarkdownPhrasingContentNode({
 		type: "text",
@@ -1079,12 +1091,16 @@ export function createEntryPointList(
 	}
 
 	return new ListNode(
-		apiEntryPoints.map(
-			(entryPoint) =>
-				new ListItemNode([
-					LinkNode.createFromPlainTextLink(getLinkForApiItem(entryPoint, config)),
-				]),
-		),
+		apiEntryPoints.map((entryPoint) => {
+			const link = getLinkForApiItem(entryPoint, config);
+			return new ListItemNode([
+				new MarkdownPhrasingContentNode({
+					type: "link",
+					url: link.target,
+					children: [{ type: "text", value: link.text }],
+				}),
+			]);
+		}),
 		/* ordered */ false,
 	);
 }

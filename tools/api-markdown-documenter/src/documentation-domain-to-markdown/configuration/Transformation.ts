@@ -28,7 +28,6 @@ import {
 	headingToMarkdown,
 	horizontalRuleToMarkdown,
 	sectionToMarkdown,
-	linkToMarkdown,
 	paragraphToMarkdown,
 	spanToMarkdown,
 	tableToMarkdown,
@@ -96,7 +95,6 @@ export type Transformation<
  */
 export const defaultTransformations: Transformations = {
 	heading: headingToMarkdown,
-	link: linkToMarkdown,
 	list: listToMarkdown,
 	listItem: listItemToMarkdown,
 	markdownBlockContent: markdownBlockContentNodeToMarkdown,

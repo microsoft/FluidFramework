@@ -5,7 +5,6 @@
 
 export { headingToHtml } from "./HeadingToHtml.js";
 export { sectionToHtml } from "./SectionToHtml.js";
-export { linkToHtml } from "./LinkToHtml.js";
 export { listItemToHtml } from "./ListItemToHtml.js";
 export { listToHtml } from "./ListToHtml.js";
 export { markdownNodeToHtml } from "./MarkdownNodeToHtml.js";

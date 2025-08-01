@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { LinkNode } from "./LinkNode.js";
 import type { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
 import type { SpanNode } from "./SpanNode.js";
 
@@ -30,7 +29,6 @@ import type { SpanNode } from "./SpanNode.js";
  * @public
  */
 export interface PhrasingContentMap {
-	link: LinkNode;
 	span: SpanNode;
 	markdownPhrasingContent: MarkdownPhrasingContentNode;
 }

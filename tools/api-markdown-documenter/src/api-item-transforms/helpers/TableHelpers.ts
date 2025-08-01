@@ -19,7 +19,6 @@ import type { DocSection } from "@microsoft/tsdoc";
 
 import {
 	HeadingNode,
-	LinkNode,
 	MarkdownBlockContentNode,
 	MarkdownPhrasingContentNode,
 	type PhrasingContent,
@@ -646,8 +645,14 @@ export function createApiTitleCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
-	const itemLink = getLinkForApiItem(apiItem, config);
-	return new TableBodyCellNode([LinkNode.createFromPlainTextLink(itemLink)]);
+	const link = getLinkForApiItem(apiItem, config);
+	return new TableBodyCellNode([
+		new MarkdownPhrasingContentNode({
+			type: "link",
+			url: link.target,
+			children: [{ type: "text", value: link.text }],
+		}),
+	]);
 }
 
 /**

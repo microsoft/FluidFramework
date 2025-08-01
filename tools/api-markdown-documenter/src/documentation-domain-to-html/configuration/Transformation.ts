@@ -9,7 +9,6 @@ import { h } from "hastscript";
 import type {
 	DocumentationNode,
 	HeadingNode,
-	LinkNode,
 	SectionNode,
 	ParagraphNode,
 	SpanNode,
@@ -25,7 +24,6 @@ import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToHtml,
 	sectionToHtml,
-	linkToHtml,
 	paragraphToHtml,
 	spanToHtml,
 	tableToHtml,
@@ -79,7 +77,6 @@ const hastHorizontalRule = h("hr");
  */
 export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	link: (node, context) => linkToHtml(node as LinkNode, context),
 	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
 	markdownBlockContent: (node, context) =>
 		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
