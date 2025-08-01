@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-named-as-default-member */
-
 import path from "node:path";
 import fs from "fs-extra";
 
@@ -43,9 +41,8 @@ interface Options {
 
 	/**
 	 * File path for `@legacy` + `@alpha` API entrypoint.
-	 * @remarks If not specified, no entrypoint will be generated for this API level.
 	 */
-	readonly outFileLegacyAlpha: string | undefined;
+	readonly outFileLegacyAlpha: string;
 	/**
 	 * File path for `@legacy` + `@beta` API entrypoint.
 	 * @remarks If not specified, no entrypoint will be generated for this API level.
