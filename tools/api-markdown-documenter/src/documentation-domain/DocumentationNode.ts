@@ -39,11 +39,6 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 	 * @remarks If true, `this` is a {@link DocumentationParentNode}.
 	 */
 	readonly isParent: boolean;
-
-	/**
-	 * True if and only if the node contains no content.
-	 */
-	readonly isEmpty: boolean;
 }
 
 /**
@@ -147,18 +142,6 @@ export abstract class DocumentationParentNodeBase<
 	 */
 	public readonly children: TDocumentationNode[];
 
-	/**
-	 * {@inheritDoc DocumentationNode.isEmpty}
-	 */
-	public get isEmpty(): boolean {
-		for (const child of this.children) {
-			if (!child.isEmpty) {
-				return false;
-			}
-		}
-		return true;
-	}
-
 	protected constructor(children: TDocumentationNode[]) {
 		this.children = children;
 	}
@@ -198,11 +181,6 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown>
 	 * {@inheritDoc DocumentationLiteralNode.value}
 	 */
 	public readonly value: TValue;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isEmpty}
-	 */
-	public abstract get isEmpty(): boolean;
 
 	protected constructor(value: TValue) {
 		this.value = value;

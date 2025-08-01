@@ -45,13 +45,6 @@ export class HeadingNode implements DocumentationNode, Heading {
 	 */
 	public readonly isParent = false;
 
-	/**
-	 * {@inheritDoc DocumentationNode.isEmpty}
-	 */
-	public get isEmpty(): boolean {
-		return this.title.length === 0;
-	}
-
 	public constructor(
 		/**
 		 * {@inheritDoc Heading.title}
