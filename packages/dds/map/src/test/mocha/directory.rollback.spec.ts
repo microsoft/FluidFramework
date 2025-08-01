@@ -836,33 +836,32 @@ describe("SharedDirectory rollback", () => {
 				"Subdirectory existence checks failed post-rollback",
 			);
 
-			// Extra asserts to make compiler happy below
-			assert(existingOnRemote);
-			assert(remoteCreatedOnRemote);
-			assert(existingOnLocal);
-			assert(remoteCreatedOnLocal);
+			// Extra asserts to make compiler happy (doesn't recognize above asserts)
+			assert(
+				existingOnRemote && remoteCreatedOnRemote && existingOnLocal && remoteCreatedOnLocal,
+			);
 
-			// Key checks
 			assert.deepStrictEqual(
-				[
-					[...existingOnRemote.entries()],
-					[...remoteCreatedOnRemote.entries()],
-					[...existingOnLocal.entries()],
-					[...remoteCreatedOnLocal.entries()],
-				],
+				[[...existingOnLocal.entries()], [...remoteCreatedOnLocal.entries()]],
 				[
 					[
 						["key", "foo"],
 						["key2", "value2"],
 					],
 					[["remoteKey", "remoteValue"]],
+				],
+				"Subdirectory entries on local client should match expected values post-rollback",
+			);
+			assert.deepStrictEqual(
+				[[...existingOnRemote.entries()], [...remoteCreatedOnRemote.entries()]],
+				[
 					[
 						["key", "foo"],
 						["key2", "value2"],
 					],
 					[["remoteKey", "remoteValue"]],
 				],
-				"Subdirectory entries should match expected values post-rollback",
+				"Subdirectory entries on remote client should match expected values post-rollback",
 			);
 		});
 	});

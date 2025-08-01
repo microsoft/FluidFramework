@@ -1638,33 +1638,26 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				);
 			},
 		).length;
-		const numPendingSubdirs = this.pendingSubDirectoryData.filter((entry) => {
-			if (entry.type !== "createSubDirectory") {
-				return false;
-			}
-			if (this.sequencedSubdirectories.has(entry.subdirName)) {
-				return false;
-			}
-			const hasDelete =
-				findLast(
-					this.pendingSubDirectoryData,
-					(entry2) =>
-						entry.subdirName === entry2.subdirName && entry2.type === "deleteSubDirectory",
-				) !== undefined;
-			if (hasDelete) {
-				return false;
-			}
-			const optimisticSubdir = this.getOptimisticSubDirectory(entry.subdirName);
-			return optimisticSubdir !== undefined;
+		const numPendingSubdirs = [
+			...new Set(this.pendingSubDirectoryData.map((entry) => entry.subdirName)),
+		].filter((subdirName) => {
+			const lastPendingEntry = findLast(
+				this.pendingSubDirectoryData,
+				(entry) => entry.subdirName === subdirName,
+			);
+			return (
+				lastPendingEntry !== undefined &&
+				lastPendingEntry.type !== "deleteSubDirectory" &&
+				!this.sequencedSubdirectories.has(subdirName)
+			);
 		}).length;
 
-		// TODO: This may be too aggressive.
+		// TODO: This may be too aggressive
 		// If we decide to keep this assert, then we can remove the telemetry logging below
-		// assert(
-		// 	numTrackedSubdirs === numSequencedSubdirs + numPendingSubdirs,
-		// 	"subdirectory count mismatch",
-		// );
-		// TODO: Remove this check/telemetry if we keep above assert
+		assert(
+			numTrackedSubdirs === numSequencedSubdirs + numPendingSubdirs,
+			"subdirectory count mismatch",
+		);
 		if (
 			numTrackedSubdirs !== numSequencedSubdirs + numPendingSubdirs &&
 			// TODO: AB#7022: Hitting this block indicates that the eventual consistency scheme for ordering subdirectories
@@ -2071,6 +2064,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	private readonly getOptimisticSubDirectory = (
 		subdirName: string,
+		getIfDisposed = false,
 	): SubDirectory | undefined => {
 		const latestPendingEntry = findLast(
 			this.pendingSubDirectoryData,
@@ -2088,7 +2082,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// If the subdirectory is disposed, treat it as non-existent for optimistic reads
-		if (subdir?.disposed) {
+		if (subdir?.disposed && !getIfDisposed) {
 			return undefined;
 		}
 
@@ -2320,51 +2314,40 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			this.emit("subDirectoryCreated", op.subdirName, local, this);
 
-			// When acknowledging a local operation, preserve the original creation order by getting
-			// the original sequence data from the local tracker before deleting it
-			const originalSeqData = this.localCreationSeqTracker.keyToIndex.get(op.subdirName);
-			this.localCreationSeqTracker.delete(op.subdirName);
-
-			if (!this.ackedCreationSeqTracker.has(op.subdirName)) {
-				// Subdirectory already exists in tracker - don't overwrite to preserve first creation order
-				const ackedSeqData =
-					originalSeqData === undefined
-						? {
-								seq: msg.sequenceNumber,
-								clientSeq: msg.clientSequenceNumber,
-							}
-						: {
-								seq: msg.sequenceNumber,
-								clientSeq: originalSeqData.clientSeq,
-							};
-				this.ackedCreationSeqTracker.set(op.subdirName, ackedSeqData);
-			}
-		} else {
-			if (this.sequencedSubdirectories.get(op.subdirName) !== undefined) {
-				// If the subdirectory already exists, we don't need to create it again.
-				// This can happen if remote clients also create the same subdir
-				return;
-			}
-
-			const absolutePath = posix.join(this.absolutePath, op.subdirName);
-			const subDir = new SubDirectory(
-				{ seq: msg.sequenceNumber, clientSeq: msg.clientSequenceNumber },
-				new Set([msg.clientId]),
-				this.directory,
-				this.runtime,
-				this.serializer,
-				absolutePath,
-				this.logger,
-			);
-			this.registerEventsOnSubDirectory(subDir, op.subdirName);
-			this.sequencedSubdirectories.set(op.subdirName, subDir);
-
-			// Always set tracking data for remote creates - this ensures proper recreation after delete
 			this.ackedCreationSeqTracker.set(op.subdirName, {
 				seq: msg.sequenceNumber,
 				clientSeq: msg.clientSequenceNumber,
 			});
-
+		} else {
+			let subdir = this.getOptimisticSubDirectory(op.subdirName, true);
+			if (subdir === undefined) {
+				const absolutePath = posix.join(this.absolutePath, op.subdirName);
+				subdir = new SubDirectory(
+					{ seq: msg.sequenceNumber, clientSeq: msg.clientSequenceNumber },
+					new Set([msg.clientId]),
+					this.directory,
+					this.runtime,
+					this.serializer,
+					absolutePath,
+					this.logger,
+				);
+			} else {
+				if (subdir.disposed) {
+					this.undeleteSubDirectoryTree(subdir);
+				}
+				// If the subdirectory already optimistically exists, we don't need to create it again.
+				// This can happen if remote clients also create the same subdir
+				subdir.clientIds.add(msg.clientId);
+			}
+			this.registerEventsOnSubDirectory(subdir, op.subdirName);
+			this.sequencedSubdirectories.set(op.subdirName, subdir);
+			this.ackedCreationSeqTracker.set(op.subdirName, {
+				seq: msg.sequenceNumber,
+				clientSeq: msg.clientSequenceNumber,
+			});
+			if (this.localCreationSeqTracker.has(op.subdirName)) {
+				this.localCreationSeqTracker.delete(op.subdirName);
+			}
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName)) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
@@ -2403,6 +2386,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.localCreationSeqTracker.delete(op.subdirName);
 		}
 
+		this.sequencedSubdirectories.delete(op.subdirName);
+
 		if (local) {
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
 				(entry) => entry.subdirName === op.subdirName,
@@ -2418,20 +2403,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedSubdirectories.delete(op.subdirName);
 			this.disposeSubDirectoryTree(previousValue);
 		} else {
-			// If we get a remote delete op and we have a pending create for the same subdirectory,
-			// then we should clear the sequenced data for that subdirectory so it will start from an
-			// empty state.
-			const nextPendingIndex = this.pendingSubDirectoryData.findIndex(
-				(entry) => entry.subdirName === op.subdirName,
-			);
-			const nextPendingEntry = this.pendingSubDirectoryData[nextPendingIndex];
-			if (nextPendingEntry !== undefined && nextPendingEntry.type === "createSubDirectory") {
-				nextPendingEntry.subdir.sequencedStorageData.clear();
-				nextPendingEntry.subdir.sequencedSubdirectories.clear();
-			}
-
-			this.sequencedSubdirectories.delete(op.subdirName);
-
 			// We still try to dispose the subdirectory tree in case the subdirectories do not also have pending creates
 			this.disposeSubDirectoryTree(previousValue);
 
@@ -2443,6 +2414,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (pendingEntry !== undefined) {
 				this.emit("subDirectoryDeleted", op.subdirName, local, this);
 			}
+		}
+
+		// If we get a remote delete op and we have a pending create for the same subdirectory,
+		// then we should clear the sequenced data for that subdirectory so it will start from an
+		// empty state.
+		const nextPendingIndex = this.pendingSubDirectoryData.findIndex(
+			(entry) => entry.subdirName === op.subdirName,
+		);
+		const nextPendingEntry = this.pendingSubDirectoryData[nextPendingIndex];
+		if (nextPendingEntry !== undefined && nextPendingEntry.type === "createSubDirectory") {
+			nextPendingEntry.subdir.sequencedStorageData.clear();
+			nextPendingEntry.subdir.sequencedSubdirectories.clear();
 		}
 	}
 
