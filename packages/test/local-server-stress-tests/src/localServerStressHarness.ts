@@ -1393,7 +1393,8 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
-				clients.length > 0
+				clients.length > 0 &&
+				random.bool(options.clientJoinOptions.clientAddProbability)
 			) {
 				return {
 					type: "restartClientFromPendingState",
@@ -1424,7 +1425,7 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
 			);
 
-			const pendingLocalState = await sourceClient.container.getPendingLocalState?.();
+			const pendingLocalState = await sourceClient.container.getPendingLocalState();
 
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
