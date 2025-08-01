@@ -7,13 +7,9 @@ import type {
 	PhrasingContent as MdastPhrasingContent,
 	TableCell as MdastTableCell,
 } from "mdast";
+import { phrasing } from "mdast-util-phrasing";
 
-import type {
-	PhrasingContent,
-	TableCellContent,
-	TableCellNode,
-} from "../../documentation-domain/index.js";
-import { phrasingContentToMarkdown } from "../ToMarkdown.js";
+import type { TableCellContent, TableCellNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 import { transformAsHtml } from "./Utilities.js";
@@ -48,11 +44,11 @@ function transformCellContent(
 	node: TableCellContent,
 	context: TransformationContext,
 ): [MdastPhrasingContent] {
-	// Since our library supports block content under table cells, but Markdown does not,
-	// we need to wrap contents that are not simple phrasing content as HTML.
-	if (["text", "codeSpan", "link", "span"].includes(node.type)) {
-		return phrasingContentToMarkdown(node as PhrasingContent, context);
+	if (phrasing(node)) {
+		return [node];
 	}
 
+	// Since our library supports block content under table cells, but Markdown does not,
+	// we need to wrap contents that are not simple phrasing content as HTML.
 	return [transformAsHtml(node, context)];
 }

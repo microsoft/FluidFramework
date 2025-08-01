@@ -28,7 +28,7 @@ export function makeDetachedFieldIndexCodec(
 ): IJsonCodec<DetachedFieldSummaryData> {
 	const family = makeDetachedFieldIndexCodecFamily(revisionTagCodec, options, idCompressor);
 	const writeVersion =
-		options.oldestCompatibleClient <= FluidClientVersion.v2_52 ? version1 : version2;
+		options.oldestCompatibleClient < FluidClientVersion.v2_52 ? version1 : version2;
 	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
 }
 

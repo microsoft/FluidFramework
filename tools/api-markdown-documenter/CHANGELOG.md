@@ -1,5 +1,37 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.22.0
+
+### Documentation Domain is being removed
+
+This is a work in progress.
+
+The goal is for transformations to target [mdast](https://github.com/syntax-tree/mdast) directly, rather than going through an intermediate domain.
+Transformations to HTML will use `mdast-util-to-hast`.
+
+#### Markdown Nodes
+
+`MarkdownBlockContentNode` has been added to the Documentation Domain temporarily.
+They allow `mdast` "block content" trees to be used directly within the `DocumentationNode` hierarchy.
+
+This functionality will be used to iteratively replace and remove `DocumentationNode` implementations, until the entire domain can be removed.
+
+Contexts that use conceptual "phrasing content" in the Documentation Domain now take `mdast` "phrasing content" directly as children.
+
+#### Removed Node kinds
+
+The following kinds of nodes have been removed from the library.
+Usages should be converted to `MarkdownBlockContentNode` or `mdast` directly as appropriate.
+
+- `CodeSpanNode`
+- `FencedCodeBlockNode`
+- `HorizontalRuleNode`
+- `LineBreakNode`
+- `LinkNode`
+- `ParagraphNode`
+- `PlainTextNode`
+- `SpanNode`
+
 ## 0.21.0
 
 ### Add DocumentationNode -> mdast transformation layer

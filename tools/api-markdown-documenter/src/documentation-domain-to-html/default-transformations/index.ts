@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
-export { codeSpanToHtml } from "./CodeSpanToHtml.js";
-export { fencedCodeBlockToHtml } from "./FencedCodeBlockToHtml.js";
 export { headingToHtml } from "./HeadingToHtml.js";
 export { sectionToHtml } from "./SectionToHtml.js";
-export { linkToHtml } from "./LinkToHtml.js";
 export { listItemToHtml } from "./ListItemToHtml.js";
 export { listToHtml } from "./ListToHtml.js";
-export { paragraphToHtml } from "./ParagraphToHtml.js";
-export { plainTextToHtml } from "./PlainTextToHtml.js";
-export { spanToHtml } from "./SpanToHtml.js";
+export { markdownNodeToHtml } from "./MarkdownNodeToHtml.js";
 export { tableCellToHtml } from "./TableCellToHtml.js";
 export { tableRowToHtml } from "./TableRowToHtml.js";
 export { tableToHtml } from "./TableToHtml.js";

@@ -28,16 +28,17 @@ import { walkAllowedTypes } from "./walkSchema.js";
  * This design is the same as {@link FlexTreeContext} with its base type and {@link FlexTreeHydratedContext} extending it.
  */
 export class Context {
-	/**
-	 * All schema which could transitively be used under the associated node.
-	 * @remarks
-	 * While generally {@link TreeNodeSchema} are referenced as objects and thus do not need to be looked up by identifier,
-	 * there are a few cases (mainly constructing new TreeNodes from existing tree data) where such a lookup is useful.
-	 * Having this map in the context addresses this use-case.
-	 * @privateRemarks
-	 * This design mirrors how {@link FlexTreeSchema} are accessed off the {@link FlexTreeContext}, making the migration away from them simpler.
-	 */
-	public readonly schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>;
+	public static schemaMapFromRootSchema(
+		rootSchema: NormalizedAnnotatedAllowedTypes,
+	): ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema> {
+		const schema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
+		walkAllowedTypes(rootSchema, {
+			node(nodeSchema) {
+				schema.set(brand(nodeSchema.identifier), nodeSchema);
+			},
+		});
+		return schema;
+	}
 
 	/**
 	 * Builds the context.
@@ -45,17 +46,18 @@ export class Context {
 	 * Since this walks the schema, it must not be invoked during schema declaration or schema forward references could fail to be resolved.
 	 */
 	public constructor(
-		rootSchema: NormalizedAnnotatedAllowedTypes,
 		public readonly flexContext: FlexTreeContext,
-	) {
-		const schema: Map<TreeNodeSchemaIdentifier, TreeNodeSchema> = new Map();
-		walkAllowedTypes(rootSchema, {
-			node(nodeSchema) {
-				schema.set(brand(nodeSchema.identifier), nodeSchema);
-			},
-		});
-		this.schema = schema;
-	}
+		/**
+		 * All schema which could transitively be used under the associated node.
+		 * @remarks
+		 * While generally {@link TreeNodeSchema} are referenced as objects and thus do not need to be looked up by identifier,
+		 * there are a few cases (mainly constructing new TreeNodes from existing tree data) where such a lookup is useful.
+		 * Having this map in the context addresses this use-case.
+		 * @privateRemarks
+		 * This design mirrors how {@link FlexTreeSchema} are accessed off the {@link FlexTreeContext}, making the migration away from them simpler.
+		 */
+		public readonly schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
+	) {}
 }
 
 /**
@@ -64,9 +66,9 @@ export class Context {
  */
 export class HydratedContext extends Context {
 	public constructor(
-		rootSchema: NormalizedAnnotatedAllowedTypes,
 		public override readonly flexContext: FlexTreeHydratedContext,
+		schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeSchema>,
 	) {
-		super(rootSchema, flexContext);
+		super(flexContext, schema);
 	}
 }

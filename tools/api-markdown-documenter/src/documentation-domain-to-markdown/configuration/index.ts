@@ -10,7 +10,6 @@ export {
 export {
 	type BlockContentTransformations,
 	defaultTransformations,
-	type PhrasingContentTransformations,
 	type Transformation,
 	type Transformations,
 } from "./Transformation.js";
