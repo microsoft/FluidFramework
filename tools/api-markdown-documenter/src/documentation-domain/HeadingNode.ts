@@ -35,16 +35,6 @@ export class HeadingNode implements DocumentationNode, Heading {
 	 */
 	public readonly type = "heading";
 
-	/**
-	 * {@inheritDoc DocumentationNode.isLiteral}
-	 */
-	public readonly isLiteral = false;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isParent}
-	 */
-	public readonly isParent = false;
-
 	public constructor(
 		/**
 		 * {@inheritDoc Heading.title}

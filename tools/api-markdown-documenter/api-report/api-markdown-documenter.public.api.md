@@ -246,8 +246,6 @@ export interface DocumentationHierarchyConfigurationBase {
 
 // @public
 export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TValue>, DocumentationNode {
-    readonly isLiteral: true;
-    readonly isParent: false;
     readonly type: string;
     readonly value: TValue;
 }
@@ -255,16 +253,12 @@ export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TVal
 // @public
 export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements DocumentationLiteralNode<TValue> {
     protected constructor(value: TValue);
-    readonly isLiteral = true;
-    readonly isParent = false;
     abstract type: string;
     readonly value: TValue;
 }
 
 // @public
 export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
-    readonly isLiteral: boolean;
-    readonly isParent: boolean;
     readonly type: string;
 }
 
@@ -283,9 +277,6 @@ export function documentationNodeToHtml(node: DocumentationNode, context: ToHtml
 // @public
 export interface DocumentationParentNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentationNode, Data>, DocumentationNode {
     readonly children: TDocumentationNode[];
-    readonly hasChildren: boolean;
-    readonly isLiteral: false;
-    readonly isParent: true;
     readonly type: string;
 }
 
@@ -293,9 +284,6 @@ export interface DocumentationParentNode<TDocumentationNode extends Documentatio
 export abstract class DocumentationParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode> implements DocumentationParentNode<TDocumentationNode> {
     protected constructor(children: TDocumentationNode[]);
     readonly children: TDocumentationNode[];
-    get hasChildren(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = true;
     abstract type: string;
 }
 
@@ -448,8 +436,6 @@ export class HeadingNode implements DocumentationNode, Heading {
     id?: string | undefined);
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
-    readonly isLiteral = false;
-    readonly isParent = false;
     readonly title: string;
     readonly type = "heading";
 }

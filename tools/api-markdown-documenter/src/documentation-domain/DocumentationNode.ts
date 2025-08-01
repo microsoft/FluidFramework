@@ -25,20 +25,6 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
 	 * @see {@link https://github.com/syntax-tree/unist#type}.
 	 */
 	readonly type: string;
-
-	/**
-	 * Whether or not this node is a {@link https://github.com/syntax-tree/unist#literal | Literal}.
-	 *
-	 * @remarks If true, `this` is a {@link DocumentationLiteralNode}.
-	 */
-	readonly isLiteral: boolean;
-
-	/**
-	 * Whether or not this node is a {@link https://github.com/syntax-tree/unist#parent | Parent}.
-	 *
-	 * @remarks If true, `this` is a {@link DocumentationParentNode}.
-	 */
-	readonly isParent: boolean;
 }
 
 /**
@@ -58,26 +44,11 @@ export interface DocumentationParentNode<
 	readonly type: string;
 
 	/**
-	 * {@inheritDoc DocumentationNode.isLiteral}
-	 */
-	readonly isLiteral: false;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isParent}
-	 */
-	readonly isParent: true;
-
-	/**
 	 * Child nodes.
 	 *
 	 * @see {@link https://github.com/syntax-tree/unist#parent}.
 	 */
 	readonly children: TDocumentationNode[];
-
-	/**
-	 * Whether or not the node has any {@link DocumentationParentNode.children}.
-	 */
-	readonly hasChildren: boolean;
 }
 
 /**
@@ -94,16 +65,6 @@ export interface DocumentationLiteralNode<TValue = unknown>
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	readonly type: string;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isLiteral}
-	 */
-	readonly isLiteral: true;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isParent}
-	 */
-	readonly isParent: false;
 
 	/**
 	 * Node value.
@@ -128,29 +89,12 @@ export abstract class DocumentationParentNodeBase<
 	public abstract type: string;
 
 	/**
-	 * {@inheritDoc DocumentationNode.isLiteral}
-	 */
-	public readonly isLiteral = false;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isParent}
-	 */
-	public readonly isParent = true;
-
-	/**
 	 * {@inheritDoc DocumentationParentNode.children}
 	 */
 	public readonly children: TDocumentationNode[];
 
 	protected constructor(children: TDocumentationNode[]) {
 		this.children = children;
-	}
-
-	/**
-	 * {@inheritDoc DocumentationParentNode.hasChildren}
-	 */
-	public get hasChildren(): boolean {
-		return this.children.length > 0;
 	}
 }
 
@@ -166,16 +110,6 @@ export abstract class DocumentationLiteralNodeBase<TValue = unknown>
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public abstract type: string;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isLiteral}
-	 */
-	public readonly isLiteral = true;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isParent}
-	 */
-	public readonly isParent = false;
 
 	/**
 	 * {@inheritDoc DocumentationLiteralNode.value}
