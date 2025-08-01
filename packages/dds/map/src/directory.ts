@@ -1512,10 +1512,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		};
 		this.submitCreateSubDirectoryMessage(op);
 		this.emit("subDirectoryCreated", subdirName, true, this);
-		if (isNewSubDirectory) {
-			this.localCreationSeqTracker.set(subdirName, {
-				...seqData,
-			});
+		if (isAcknowledgedOrDetached(seqData)) {
+			this.ackedCreationSeqTracker.set(subdirName, { ...seqData });
+		} else {
+			this.localCreationSeqTracker.set(subdirName, { ...seqData });
 		}
 		return subDir;
 	}
@@ -1656,7 +1656,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// If we decide to keep this assert, then we can remove the telemetry logging below
 		assert(
 			numTrackedSubdirs === numSequencedSubdirs + numPendingSubdirs,
-			"subdirectory count mismatch",
+			"number of tracked subdirectories should match the number of sequenced and pending subdirectories",
 		);
 		if (
 			numTrackedSubdirs !== numSequencedSubdirs + numPendingSubdirs &&
@@ -2309,6 +2309,20 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				"Got a local subdir create message we weren't expecting",
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			if (pendingEntry.subdir.disposed) {
+				this.undeleteSubDirectoryTree(pendingEntry.subdir);
+			}
+			// Child sub directory create seq number can't be lower than the parent subdirectory.
+			// The sequence number for multiple ops can be the same when multiple createSubDirectory occurs with grouped batching enabled, thus <= and not just <.
+			if (
+				this.seqData.seq !== -1 &&
+				this.seqData.seq <= msg.sequenceNumber &&
+				pendingEntry.subdir.seqData.seq === -1
+			) {
+				// Only set the sequence data based on the first message
+				pendingEntry.subdir.seqData.seq = msg.sequenceNumber;
+				pendingEntry.subdir.seqData.clientSeq = msg.clientSequenceNumber;
+			}
 
 			this.sequencedSubdirectories.set(op.subdirName, pendingEntry.subdir);
 
@@ -2318,6 +2332,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				seq: msg.sequenceNumber,
 				clientSeq: msg.clientSequenceNumber,
 			});
+			this.localCreationSeqTracker.delete(op.subdirName);
 		} else {
 			let subdir = this.getOptimisticSubDirectory(op.subdirName, true);
 			if (subdir === undefined) {
@@ -2376,14 +2391,26 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		const previousValue = this.sequencedSubdirectories.get(op.subdirName);
 		if (previousValue === undefined) {
+			// If here we attempted to delete a directory that does not exist.
+			// If local, we should make sure to still remove the pending delete entry.
+			if (local) {
+				const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
+					(entry) => entry.subdirName === op.subdirName,
+				);
+				const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+				assert(
+					pendingEntry !== undefined &&
+						pendingEntry.type === "deleteSubDirectory" &&
+						pendingEntry.subdirName === op.subdirName,
+					"Got a local deleteSubDirectory message we weren't expecting",
+				);
+				this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			}
 			return;
 		}
 
 		if (this.ackedCreationSeqTracker.has(op.subdirName)) {
 			this.ackedCreationSeqTracker.delete(op.subdirName);
-		}
-		if (this.localCreationSeqTracker.has(op.subdirName)) {
-			this.localCreationSeqTracker.delete(op.subdirName);
 		}
 
 		this.sequencedSubdirectories.delete(op.subdirName);
@@ -2401,7 +2428,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			this.sequencedSubdirectories.delete(op.subdirName);
-			this.disposeSubDirectoryTree(previousValue);
+			if (!previousValue.dispose) {
+				this.disposeSubDirectoryTree(previousValue);
+			}
 		} else {
 			// We still try to dispose the subdirectory tree in case the subdirectories do not also have pending creates
 			this.disposeSubDirectoryTree(previousValue);
