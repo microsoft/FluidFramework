@@ -380,7 +380,7 @@ describe("compressedEncode", () => {
 			]);
 			// Should use nestedArray, which will lookup the shape from context:
 			assert.deepEqual(buffer, [
-				context.nestedArrayEncoder(anyNodeEncoder),
+				context.nestedArrayEncoder(anyNodeEncoder).shape,
 				[onlyTypeShape, new IdentifierToken("foo"), onlyTypeShape, new IdentifierToken("bar")],
 			]);
 		});

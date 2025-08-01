@@ -352,7 +352,7 @@ export class InlineArrayEncoder
 /*
  * Encodes the shape for a nested array as {@link EncodedNestedArray} shape.
  */
-class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
+export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	/**
 	 * @param innerShape - the shape of each item in this nested array.
 	 */

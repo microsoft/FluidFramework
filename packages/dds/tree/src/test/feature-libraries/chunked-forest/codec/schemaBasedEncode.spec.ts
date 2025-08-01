@@ -169,7 +169,7 @@ describe("schemaBasedEncoding", () => {
 				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
-			assert.equal(fieldEncoder.shape, context.nestedArrayEncoder(onlyTypeShape));
+			assert.equal(fieldEncoder.shape, context.nestedArrayEncoder(onlyTypeShape).shape);
 			assert.deepEqual(checkFieldEncode(fieldEncoder, context, []), [0]);
 			assert.deepEqual(
 				checkFieldEncode(fieldEncoder, context, [{ type: brand(Minimal.identifier) }]),
