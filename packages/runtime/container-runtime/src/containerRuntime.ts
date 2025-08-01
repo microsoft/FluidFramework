@@ -24,7 +24,10 @@ import type {
 	ILoader,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { ConnectionState, isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import {
+	ConnectionState,
+	isIDeltaManagerFull,
+} from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtensionFactory,
 	ContainerExtensionId,
