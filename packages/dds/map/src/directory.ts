@@ -254,15 +254,7 @@ interface PendingSubDirectoryDelete {
 	subdirName: string;
 }
 
-// TODO: Do we need lifetime?
-interface PendingSubDirectoryLifetime {
-	type: "lifetimeSubDirectory";
-	path: string;
-	subdirName: string;
-	subdirCreates: PendingSubDirectoryCreate[];
-}
-
-type PendingSubDirectoryEntry = PendingSubDirectoryLifetime | PendingSubDirectoryDelete;
+type PendingSubDirectoryEntry = PendingSubDirectoryCreate | PendingSubDirectoryDelete;
 
 /**
  * Rough polyfill for Array.findLastIndex until we target ES2023 or greater.
@@ -958,9 +950,14 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
 					| SubDirectory
 					| undefined;
-				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
-				// as we are going to delete this subDirectory.
-				if (subdir && !subdir.disposed && !this.isSubDirectoryDeletePending(op.path)) {
+				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
+				// This is because if we rollback the pending delete, we want to make sure we still processed the
+				// messages that would now be visible.
+				if (
+					subdir &&
+					!subdir.disposed &&
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
+				) {
 					// Add the client ID to enable message processing for existing subdirectories
 					if (!local && msg.clientId !== null) {
 						subdir.addClientId(msg.clientId);
@@ -985,9 +982,14 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
 					| SubDirectory
 					| undefined;
-				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
-				// as we are going to delete this subDirectory.
-				if (subdir && !subdir.disposed && !this.isSubDirectoryDeletePending(op.path)) {
+				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
+				// This is because if we rollback the pending delete, we want to make sure we still processed the
+				// messages that would now be visible.
+				if (
+					subdir &&
+					!subdir.disposed &&
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
+				) {
 					// Add the client ID to enable message processing for existing subdirectories
 					if (!local && msg.clientId !== null) {
 						subdir.addClientId(msg.clientId);
@@ -1012,9 +1014,14 @@ export class SharedDirectory
 				const subdir = this.getWorkingDirectoryEvenIfPendingDelete(op.path) as
 					| SubDirectory
 					| undefined;
-				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
-				// as we are going to delete this subDirectory.
-				if (subdir && !subdir.disposed) {
+				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
+				// This is because if we rollback the pending delete, we want to make sure we still processed the
+				// messages that would now be visible.
+				if (
+					subdir &&
+					!subdir.disposed &&
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
+				) {
 					// Add the client ID to enable message processing for existing subdirectories
 					if (!local && msg.clientId !== null) {
 						subdir.addClientId(msg.clientId);
@@ -1040,12 +1047,13 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
-				// as we are going to delete this subDirectory.
+				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
+				// This is because if we rollback the pending delete, we want to make sure we still processed the
+				// messages that would now be visible.
 				if (
 					parentSubdir &&
 					!parentSubdir.disposed &&
-					!this.isSubDirectoryDeletePending(op.path)
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
 				) {
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
@@ -1067,12 +1075,13 @@ export class SharedDirectory
 				localOpMetadata,
 			) => {
 				const parentSubdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
-				// as we are going to delete this subDirectory.
+				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
+				// This is because if we rollback the pending delete, we want to make sure we still processed the
+				// messages that would now be visible.
 				if (
 					parentSubdir &&
 					!parentSubdir.disposed &&
-					!this.isSubDirectoryDeletePending(op.path)
+					(!this.isSubDirectoryDeletePending(op.path) || !local)
 				) {
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
@@ -1471,10 +1480,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				absolutePath,
 				this.logger,
 			);
-			this.registerEventsOnSubDirectory(subDir, subdirName);
 		} else {
 			subDir.clientIds.add(clientId);
 		}
+		this.registerEventsOnSubDirectory(subDir, subdirName);
 
 		assert(subDir !== undefined, "subdirectory should exist");
 
@@ -1488,30 +1497,13 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return subDir;
 		}
 
-		// A new pending key lifetime is created if:
-		// 1. There isn't any pending entry for the key yet
-		// 2. The most recent pending entry for the key was a deletion (as this terminates the prior lifetime)
-		// 3. A clear was sent after the last pending entry for the key (which also terminates the prior lifetime)
-		let latestPendingEntry = findLast(
-			this.pendingSubDirectoryData,
-			(entry) => entry.subdirName === subdirName,
-		);
-		if (latestPendingEntry === undefined || latestPendingEntry.type === "deleteSubDirectory") {
-			latestPendingEntry = {
-				type: "lifetimeSubDirectory",
-				path: this.absolutePath,
-				subdirName,
-				subdirCreates: [],
-			};
-			this.pendingSubDirectoryData.push(latestPendingEntry);
-		}
 		const pendingSubDirectoryCreate: PendingSubDirectoryCreate = {
 			type: "createSubDirectory",
 			path: this.absolutePath,
 			subdirName,
 			subdir: subDir,
 		};
-		latestPendingEntry.subdirCreates.push(pendingSubDirectoryCreate);
+		this.pendingSubDirectoryData.push(pendingSubDirectoryCreate);
 
 		const op: IDirectoryCreateSubDirectoryOperation = {
 			subdirName,
@@ -1647,7 +1639,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			},
 		).length;
 		const numPendingSubdirs = this.pendingSubDirectoryData.filter((entry) => {
-			if (entry.type !== "lifetimeSubDirectory") {
+			if (entry.type !== "createSubDirectory") {
 				return false;
 			}
 			if (this.sequencedSubdirectories.has(entry.subdirName)) {
@@ -2087,14 +2079,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		let subdir: SubDirectory | undefined;
 		if (latestPendingEntry === undefined) {
 			subdir = this.sequencedSubdirectories.get(subdirName);
-		} else if (latestPendingEntry.type === "lifetimeSubDirectory") {
-			const latestPendingSubdirCreate =
-				latestPendingEntry.subdirCreates[latestPendingEntry.subdirCreates.length - 1];
-			assert(
-				latestPendingSubdirCreate !== undefined,
-				"Subdirectory create should exist in lifetime",
-			);
-			subdir = latestPendingSubdirCreate.subdir;
+		} else if (latestPendingEntry.type === "createSubDirectory") {
+			subdir = latestPendingEntry.subdir;
+			assert(subdir !== undefined, "Subdirectory should exist in pending data");
 		} else {
 			// Pending delete
 			return undefined;
@@ -2113,22 +2100,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): SubDirectory | undefined => {
 		const latestPendingEntry = findLast(
 			this.pendingSubDirectoryData,
-			(entry) => entry.subdirName === subdirName && entry.type === "lifetimeSubDirectory",
+			(entry) => entry.subdirName === subdirName && entry.type === "createSubDirectory",
 		);
 		if (latestPendingEntry === undefined) {
 			return this.sequencedSubdirectories.get(subdirName);
 		} else {
 			assert(
-				latestPendingEntry.type === "lifetimeSubDirectory",
-				"Expected pending entry to be a lifetime subdirectory",
+				latestPendingEntry.type === "createSubDirectory",
+				"Expected pending entry to be a create subdirectory",
 			);
-			const latestPendingSubdirCreate =
-				latestPendingEntry.subdirCreates[latestPendingEntry.subdirCreates.length - 1];
-			assert(
-				latestPendingSubdirCreate !== undefined,
-				"Subdirectory create should exist in lifetime",
-			);
-			return latestPendingSubdirCreate.subdir;
+			const latestPendingSubdirCreate = latestPendingEntry.subdir;
+			assert(latestPendingSubdirCreate !== undefined, "Subdirectory should exist");
+			return latestPendingSubdirCreate;
 		}
 	};
 
@@ -2270,18 +2253,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type !== "clear" && entry.key === key,
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
-
-			if (pendingEntry !== undefined && pendingEntry.type === "lifetime") {
-				const pendingKeySet = pendingEntry.keySets.shift();
-				assert(
-					pendingKeySet !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
-					"Got a local set message we weren't expecting",
-				);
-				if (pendingEntry.keySets.length === 0) {
-					this.pendingStorageData.splice(pendingEntryIndex, 1);
-				}
-				this.sequencedStorageData.set(key, pendingKeySet.value);
+			assert(
+				pendingEntry !== undefined && pendingEntry.type === "lifetime",
+				"Got a local set message we weren't expecting",
+			);
+			const pendingKeySet = pendingEntry.keySets.shift();
+			assert(pendingKeySet !== undefined, "pending lifetime should exist");
+			if (pendingEntry.keySets.length === 0) {
+				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
+			this.sequencedStorageData.set(key, pendingKeySet.value);
 		} else {
 			// Get the previous value before setting the new value
 			const previousValue: unknown = this.sequencedStorageData.get(key);
@@ -2315,61 +2296,28 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	): void {
 		this.throwIfDisposed();
 
-		// For create operations, allow messages even if isMessageForCurrentInstanceOfSubDirectory returns false,
-		// as long as there's an existing subdirectory that can be merged with the remote create
-		const shouldProcess =
-			this.isMessageForCurrentInstanceOfSubDirectory(msg) ||
-			(!local && this.getOptimisticSubDirectory(op.subdirName) !== undefined);
-
-		if (!shouldProcess) {
+		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg)) {
 			return;
 		}
 		assertNonNullClientId(msg.clientId);
-
-		let subdir = this.getOptimisticSubDirectory(op.subdirName);
-		if (subdir === undefined) {
-			const absolutePath = posix.join(this.absolutePath, op.subdirName);
-			subdir = new SubDirectory(
-				{ seq: msg.sequenceNumber, clientSeq: msg.clientSequenceNumber },
-				new Set([msg.clientId]),
-				this.directory,
-				this.runtime,
-				this.serializer,
-				absolutePath,
-				this.logger,
-			);
-		} else {
-			subdir.clientIds.add(msg.clientId);
-		}
-		this.registerEventsOnSubDirectory(subdir, op.subdirName);
 
 		if (local) {
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
 				(entry) => entry.subdirName === op.subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			assert(
+				pendingEntry !== undefined &&
+					pendingEntry.type === "createSubDirectory" &&
+					pendingEntry.subdir !== undefined &&
+					isSubDirLocalOpMetadata(localOpMetadata) &&
+					localOpMetadata.type === "createSubDir",
+				"Got a local subdir create message we weren't expecting",
+			);
+			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 
-			if (pendingEntry !== undefined && pendingEntry.type === "lifetimeSubDirectory") {
-				const pendingSubdirCreate = pendingEntry.subdirCreates.shift();
-				assert(
-					pendingSubdirCreate !== undefined &&
-						isSubDirLocalOpMetadata(localOpMetadata) &&
-						localOpMetadata.type === "createSubDir",
-					"Got a local subdir create message we weren't expecting",
-				);
-				if (pendingEntry.subdirCreates.length === 0) {
-					this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
-				}
-			} else {
-				// Rollback scenario: local message for a subdirectory instance that was deleted and recreated.
-				// The pending operation was for a previous instance, so just proceed without removing pending data.
-				assert(
-					isSubDirLocalOpMetadata(localOpMetadata) && localOpMetadata.type === "createSubDir",
-					"Expected createSubDir metadata for local create subdirectory operation",
-				);
-			}
+			this.sequencedSubdirectories.set(op.subdirName, pendingEntry.subdir);
 
-			this.sequencedSubdirectories.set(op.subdirName, subdir);
 			this.emit("subDirectoryCreated", op.subdirName, local, this);
 
 			// When acknowledging a local operation, preserve the original creation order by getting
@@ -2392,7 +2340,24 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				this.ackedCreationSeqTracker.set(op.subdirName, ackedSeqData);
 			}
 		} else {
-			this.sequencedSubdirectories.set(op.subdirName, subdir);
+			if (this.sequencedSubdirectories.get(op.subdirName) !== undefined) {
+				// If the subdirectory already exists, we don't need to create it again.
+				// This can happen if remote clients also create the same subdir
+				return;
+			}
+
+			const absolutePath = posix.join(this.absolutePath, op.subdirName);
+			const subDir = new SubDirectory(
+				{ seq: msg.sequenceNumber, clientSeq: msg.clientSequenceNumber },
+				new Set([msg.clientId]),
+				this.directory,
+				this.runtime,
+				this.serializer,
+				absolutePath,
+				this.logger,
+			);
+			this.registerEventsOnSubDirectory(subDir, op.subdirName);
+			this.sequencedSubdirectories.set(op.subdirName, subDir);
 
 			// Always set tracking data for remote creates - this ensures proper recreation after delete
 			this.ackedCreationSeqTracker.set(op.subdirName, {
@@ -2453,15 +2418,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedSubdirectories.delete(op.subdirName);
 			this.disposeSubDirectoryTree(previousValue);
 		} else {
-			// Only dispose the subdirectory if there are no pending local operations for it
-			const hasPendingLifetime = this.pendingSubDirectoryData.some(
-				(entry) => entry.subdirName === op.subdirName && entry.type === "lifetimeSubDirectory",
+			// If we get a remote delete op and we have a pending create for the same subdirectory,
+			// then we should clear the sequenced data for that subdirectory so it will start from an
+			// empty state.
+			const nextPendingIndex = this.pendingSubDirectoryData.findIndex(
+				(entry) => entry.subdirName === op.subdirName,
 			);
-
-			if (!hasPendingLifetime) {
-				this.sequencedSubdirectories.delete(op.subdirName);
+			const nextPendingEntry = this.pendingSubDirectoryData[nextPendingIndex];
+			if (nextPendingEntry !== undefined && nextPendingEntry.type === "createSubDirectory") {
+				nextPendingEntry.subdir.sequencedStorageData.clear();
+				nextPendingEntry.subdir.sequencedSubdirectories.clear();
 			}
-			// We still try to dispose the subdirectory tree in case the subdirectories do not also have pending lifetime
+
+			this.sequencedSubdirectories.delete(op.subdirName);
+
+			// We still try to dispose the subdirectory tree in case the subdirectories do not also have pending creates
 			this.disposeSubDirectoryTree(previousValue);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
@@ -2609,7 +2580,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (localOpMetadata.type === "createSubDir") {
 			// For create operations, look specifically for lifetimeSubDirectory entries
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
-				(entry) => entry.subdirName === op.subdirName && entry.type === "lifetimeSubDirectory",
+				(entry) => entry.subdirName === op.subdirName && entry.type === "createSubDirectory",
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			if (pendingEntry !== undefined) {
@@ -2776,18 +2747,14 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			const pendingEntryIndex = findLastIndex(
 				this.pendingSubDirectoryData,
-				(entry) => entry.type === "lifetimeSubDirectory" && entry.subdirName === subdirName,
+				(entry) => entry.type === "createSubDirectory" && entry.subdirName === subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "lifetimeSubDirectory",
+				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
 				"Unexpected pending data for createSubDirectory op",
 			);
-
-			pendingEntry.subdirCreates.pop();
-			if (pendingEntry.subdirCreates.length === 0) {
-				this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
-			}
+			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			this.emit("subDirectoryDeleted", subdirName, true, this);
 			if (this.localCreationSeqTracker.has(subdirName)) {
 				this.localCreationSeqTracker.delete(subdirName);
@@ -2881,7 +2848,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		for (const [subdirName, subDirectory] of subDirectories) {
 			if (
 				this.pendingSubDirectoryData.some(
-					(entry) => entry.subdirName === subdirName && entry.type === "lifetimeSubDirectory",
+					(entry) => entry.subdirName === subdirName && entry.type === "createSubDirectory",
 				)
 			) {
 				// If the directory is pending, we do not dispose it, as it will be restored later.
