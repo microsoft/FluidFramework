@@ -1125,6 +1125,8 @@ export function createEntryPointList(
 		return undefined;
 	}
 
+	const link = getLinkForApiItem(entryPoint, config);
+
 	return new MarkdownBlockContentNode({
 		type: "list",
 		ordered: false,
@@ -1136,11 +1138,11 @@ export function createEntryPointList(
 					children: [
 						{
 							type: "link",
-							url: getLinkForApiItem(entryPoint, config).target,
+							url: link.target,
 							children: [
 								{
 									type: "text",
-									value: getLinkForApiItem(entryPoint, config).text,
+									value: link.text,
 								},
 							],
 						},
