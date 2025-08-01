@@ -11,7 +11,6 @@ import {
 	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	SectionNode,
-	SpanNode,
 } from "../../../documentation-domain/index.js";
 import { renderDocument } from "../Render.js";
 
@@ -42,8 +41,14 @@ describe("Document HTML rendering tests", () => {
 										type: "text",
 										value: "It is also inside of a hierarchical section node. ",
 									}),
-									SpanNode.createFromPlainText("That's real neat-o.", {
-										italic: true,
+									new MarkdownPhrasingContentNode({
+										type: "emphasis",
+										children: [
+											{
+												type: "text",
+												value: "That's real neat-o.",
+											},
+										],
 									}),
 								]),
 							],
@@ -68,7 +73,7 @@ describe("Document HTML rendering tests", () => {
 			"      <p>This is a sample document. It has very basic content.</p>",
 			"      <section>",
 			"        <h2>Section Heading</h2>",
-			"        <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <i>That's real neat-o.</i></p>",
+			"        <p>This is text inside of a paragraph. It is also inside of a hierarchical section node. <em>That's real neat-o.</em></p>",
 			"      </section>",
 			"    </section>",
 			"  </body>",

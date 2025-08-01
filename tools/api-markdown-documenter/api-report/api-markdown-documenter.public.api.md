@@ -637,8 +637,6 @@ export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
 export interface PhrasingContentMap {
     // (undocumented)
     markdownPhrasingContent: MarkdownPhrasingContentNode;
-    // (undocumented)
-    span: SpanNode;
 }
 
 // @public
@@ -719,15 +717,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
-
-// @public
-export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], formatting: TextFormatting);
-    static createFromPlainText(text: string, formatting: TextFormatting): SpanNode;
-    static readonly Empty: SpanNode;
-    readonly textFormatting: TextFormatting;
-    readonly type = "span";
-}
 
 // @public @sealed
 export class TableBodyCellNode extends TableCellNode {

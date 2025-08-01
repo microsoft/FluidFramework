@@ -12,7 +12,6 @@ import {
 	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	SectionNode,
-	SpanNode,
 } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
 
@@ -43,8 +42,14 @@ describe("documentToHtml tests", () => {
 										type: "text",
 										value: "It is also inside of a hierarchical section node. ",
 									}),
-									SpanNode.createFromPlainText("That's real neat-o.", {
-										italic: true,
+									new MarkdownPhrasingContentNode({
+										type: "emphasis",
+										children: [
+											{
+												type: "text",
+												value: "That's real neat-o.",
+											},
+										],
 									}),
 								]),
 							],
@@ -75,7 +80,7 @@ describe("documentToHtml tests", () => {
 							h("p", [
 								"This is test inside of a paragraph. ",
 								"It is also inside of a hierarchical section node. ",
-								h("i", "That's real neat-o."),
+								h("em", "That's real neat-o."),
 							]),
 						]),
 					]),

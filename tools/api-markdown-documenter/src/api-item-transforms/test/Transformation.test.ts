@@ -28,7 +28,6 @@ import {
 	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	SectionNode,
-	SpanNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
 	TableHeaderCellNode,
@@ -289,7 +288,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 								children: [{ type: "text", value: "The provided parameter" }],
 							}),
 							new ParagraphNode([
-								SpanNode.createFromPlainText("Return type", { bold: true }),
+								new MarkdownPhrasingContentNode({
+									type: "strong",
+									children: [{ type: "text", value: "Return type" }],
+								}),
 								new MarkdownPhrasingContentNode({ type: "text", value: ": " }),
 								new MarkdownPhrasingContentNode({ type: "text", value: "TTypeParameter" }),
 							]),
@@ -439,7 +441,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 										value: "testOptionalInterfaceProperty?: number;",
 									}),
 									new ParagraphNode([
-										SpanNode.createFromPlainText("Type", { bold: true }),
+										new MarkdownPhrasingContentNode({
+											type: "strong",
+											children: [{ type: "text", value: "Type" }],
+										}),
 										new MarkdownPhrasingContentNode({ type: "text", value: ": " }),
 										new MarkdownPhrasingContentNode({ type: "text", value: "number" }),
 									]),
