@@ -49,7 +49,6 @@ export {
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
 	HeadingNode,
-	HorizontalRuleNode,
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,

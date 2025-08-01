@@ -23,6 +23,7 @@ Usages should be converted to `MarkdownBlockContentNode` or `MarkdownPhrasingCon
 
 - `CodeSpanNode`
 - `FencedCodeBlockNode`
+- `HorizontalRuleNode`
 - `LineBreakNode`
 - `LinkNode`
 - `PlainTextNode`

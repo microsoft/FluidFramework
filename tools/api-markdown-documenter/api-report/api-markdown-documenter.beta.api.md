@@ -171,8 +171,6 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    horizontalRule: HorizontalRuleNode;
-    // (undocumented)
     list: ListNode;
     // (undocumented)
     markdownBlockContent: MarkdownBlockContentNode;
@@ -494,16 +492,6 @@ export type HierarchyOptions = {
     readonly getDocumentName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
     readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
-
-// @public @sealed
-export class HorizontalRuleNode implements DocumentationNode {
-    constructor();
-    readonly isEmpty = false;
-    readonly isLiteral = true;
-    readonly isParent = false;
-    static readonly Singleton: HorizontalRuleNode;
-    readonly type = "horizontalRule";
-}
 
 declare namespace HtmlRenderer {
     export {
