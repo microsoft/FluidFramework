@@ -834,32 +834,71 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 		switch (arrayContent.type) {
 			case OperationType.insertEntry: {
-				const index = this.findIndexOfEntryId(arrayContent.insertAfterEntryId) + 1;
-				this.insert(index, arrayContent.value as Serializable<typeof arrayContent.value> & T);
+				this.handleInsertOp<SerializableTypeForSharedArray>(
+					arrayContent.entryId,
+					arrayContent.insertAfterEntryId,
+					false, // treat it as remote op
+					arrayContent.value,
+				);
 				break;
 			}
 			case OperationType.deleteEntry: {
-				const index = this.findIndexOfEntryId(arrayContent.entryId);
-				this.delete(index);
+				if (!this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete")) {
+					// last element in skip list is the most recent and live entry, so marking it deleted
+					this.getLiveEntry(arrayContent.entryId).isDeleted = true;
+				}
 				break;
 			}
 			case OperationType.moveEntry: {
-				const fromIndex = this.findIndexOfEntryId(arrayContent.entryId);
-				const toIndex = this.findIndexOfEntryId(arrayContent.insertAfterEntryId) + 1;
-				this.move(fromIndex, toIndex);
+				const opEntry = this.getEntryForId(arrayContent.entryId);
+				this.handleInsertOp<SerializableTypeForSharedArray>(
+					arrayContent.changedToEntryId,
+					arrayContent.insertAfterEntryId,
+					true /* isLocal */,
+					opEntry.value,
+				);
+				const newElementEntryId = arrayContent.changedToEntryId;
+				const newElement = this.getEntryForId(newElementEntryId);
+				if (
+					this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete") ||
+					this.isLocalPending(arrayContent.entryId, "isLocalPendingMove")
+				) {
+					// If local pending then simply mark the new location dead as finally the local op will win
+					this.updateDeadEntry(arrayContent.entryId, newElementEntryId);
+				} else {
+					// move the element
+					const liveEntry = this.getLiveEntry(arrayContent.entryId);
+					const isDeleted = liveEntry.isDeleted;
+					this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
+					// mark newly added element as deleted if existing live element was already deleted
+					if (isDeleted) {
+						newElement.isDeleted = isDeleted;
+					}
+				}
 				break;
 			}
 			case OperationType.toggle: {
-				this.toggle(arrayContent.entryId);
+				if (!this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete")) {
+					this.getLiveEntry(arrayContent.entryId).isDeleted = arrayContent.isDeleted;
+				}
 				break;
 			}
 			case OperationType.toggleMove: {
-				this.toggleMove(arrayContent.entryId, arrayContent.changedToEntryId);
+				if (
+					!this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete") &&
+					!this.isLocalPending(arrayContent.entryId, "isLocalPendingMove")
+				) {
+					this.updateLiveEntry(
+						this.getLiveEntry(arrayContent.entryId).entryId,
+						arrayContent.entryId,
+					);
+				}
 				break;
 			}
 			default: {
 				throw new Error(`Unknown operation type`);
 			}
 		}
+		this.submitLocalMessage(arrayContent);
 	}
 }
