@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtension,
 	ContainerExtensionId,
@@ -57,13 +58,6 @@ const TestExtensionFactory = class extends TestExtension {
 };
 
 const testExtensionId: ContainerExtensionId = "test:extension";
-
-enum ConnectionState {
-	Disconnected = 0,
-	EstablishingConnection = 3,
-	CatchingUp = 1,
-	Connected = 2,
-}
 
 class MockContext implements IContainerContext {
 	public readonly deltaManager = new MockDeltaManager();

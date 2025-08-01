@@ -15,7 +15,7 @@ import type {
 	IAudienceEvents,
 } from "@fluidframework/container-definitions";
 import { AttachState } from "@fluidframework/container-definitions";
-import type {
+import {
 	IContainerContext,
 	IGetPendingLocalStateProps,
 	IRuntime,
@@ -1689,7 +1689,7 @@ export class ContainerRuntime
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
 		this.canSendSignals = this.getConnectionState
-			? this.getConnectionState() === 2 /* Connected */
+			? this.getConnectionState() === ConnectionState.Connected
 			: undefined;
 
 		this.mc.logger.sendTelemetryEvent({
@@ -2867,7 +2867,7 @@ export class ContainerRuntime
 		if (!this.getConnectionState) {
 			return;
 		}
-		const canSendSignals = this.getConnectionState() === 2 /* Connected */;
+		const canSendSignals = this.getConnectionState() === ConnectionState.Connected;
 		const canSendSignalsChanged = this.canSendSignals !== canSendSignals;
 		this.canSendSignals = canSendSignals;
 		if (canSendSignalsChanged) {
@@ -5122,7 +5122,7 @@ export class ContainerRuntime
 		const getConnectionState = this.getConnectionState;
 		if (getConnectionState) {
 			const connectionState = getConnectionState();
-			if (connectionState === 2 /* Connected */) {
+			if (connectionState === ConnectionState.Connected) {
 				return this.canSendOps ? "joinedForWriting" : "joinedForReading";
 			}
 		} else if (this.canSendOps) {
