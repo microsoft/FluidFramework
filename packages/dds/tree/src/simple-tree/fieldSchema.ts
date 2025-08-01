@@ -469,15 +469,7 @@ export class FieldSchemaAlpha<
 		);
 		this.lazyIdentifiers = new Lazy(
 			() =>
-				// The allowed types identifiers filter out any that are staged
-				// TODO:#38722 this should not filter out any that have been upgraded once the runtime schema upgrade
-				// mechanism is implemented
-				new Set(
-					this.annotatedAllowedTypesNormalized.types
-
-						.filter(({ metadata }) => metadata.stagedSchemaUpgrade === undefined)
-						.map(({ type }) => type.identifier),
-				),
+				new Set(this.annotatedAllowedTypesNormalized.types.map(({ type }) => type.identifier)),
 		);
 		this.propsAlpha = props;
 	}

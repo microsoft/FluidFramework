@@ -13,12 +13,9 @@ import {
 	mapCursorFields,
 	type ITreeCursorSynchronous,
 	type SchemaAndPolicy,
+	type TreeFieldStoredSchema,
 } from "../../core/index.js";
-import {
-	normalizeFieldSchema,
-	type ImplicitFieldSchema,
-	type TreeFieldFromImplicitField,
-} from "../fieldSchema.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 import {
 	type Context,
 	getOrCreateNodeFromInnerNode,
@@ -32,25 +29,23 @@ import {
 	throwOutOfSchema,
 } from "../../feature-libraries/index.js";
 import { getUnhydratedContext } from "../createContext.js";
-import { convertField } from "../toStoredSchema.js";
 import { unknownTypeError } from "./customTree.js";
 
 /**
  * Creates an unhydrated simple-tree field from a cursor in nodes mode.
  * @remarks
  * Does not support providing missing defaults values.
- * Validates the field is in schema using the provided `contextForNewNodes` of the default unhydrated context if not provided.
+ * Validates the field is in schema using `destinationSchema` the provided `contextForNewNodes` or the default unhydrated context if not provided.
  */
 export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	schema: TSchema,
 	cursor: ITreeCursorSynchronous | undefined,
+	destinationSchema: TreeFieldStoredSchema,
 	contextForNewNodes?: Context,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const context = contextForNewNodes ?? getUnhydratedContext(schema);
 	assert(context.flexContext.isHydrated() === false, "Expected unhydrated context");
 	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
-
-	const rootFieldSchema = convertField(normalizeFieldSchema(schema));
 
 	const schemaAndPolicy: SchemaAndPolicy = {
 		policy: defaultSchemaPolicy,
@@ -58,7 +53,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	};
 
 	// Assuming the caller provides the correct `contextForNewNodes`, this should handle unknown optional fields.
-	isFieldInSchema(mapTrees, rootFieldSchema, schemaAndPolicy, throwOutOfSchema);
+	isFieldInSchema(mapTrees, destinationSchema, schemaAndPolicy, throwOutOfSchema);
 
 	if (mapTrees.length === 0) {
 		return undefined as Unhydrated<TreeFieldFromImplicitField<TSchema>>;

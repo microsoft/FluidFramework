@@ -5,6 +5,7 @@
 
 import {
 	normalizeAnnotatedAllowedTypes,
+	type AnnotatedAllowedType,
 	type NormalizedAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
 import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
@@ -50,9 +51,9 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const { metadata, type } of annotatedAllowedTypes.types) {
-		if (metadata.stagedSchemaUpgrade === undefined || visitor.walkStagedAllowedTypes) {
-			walkNodeSchema(type, visitor, visitedSet);
+	for (const allowedType of annotatedAllowedTypes.types) {
+		if ((visitor.allowedTypeFilter ?? (() => true))(allowedType)) {
+			walkNodeSchema(allowedType.type, visitor, visitedSet);
 		}
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
@@ -75,9 +76,10 @@ export interface SchemaVisitor {
 	 */
 	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
 	/**
-	 * If true, will walk the {@link SchemaFactoryAlpha.staged | staged allowed types} of the schema.
-	 * This means they deeply traversed including them and the types they reference.
-	 * If undefined, the traversal will still report the `allowedTypes` which contain them, but will not traverse into them.
+	 * If true, will walk into this `allowedType`.
+	 * If false, the `allowedType` will not be walked into.
+	 *
+	 * If not provided, all allowedTypes will be walked into.
 	 */
-	walkStagedAllowedTypes?: true;
+	allowedTypeFilter?: (allowedType: AnnotatedAllowedType<TreeNodeSchema>) => boolean;
 }

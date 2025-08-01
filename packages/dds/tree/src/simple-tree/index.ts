@@ -241,7 +241,15 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export { toStoredSchema, getStoredSchema, convertFieldKind } from "./toStoredSchema.js";
+export {
+	toStoredSchema,
+	getStoredSchema,
+	convertFieldKind,
+	toUpgradeSchema,
+	toInitialSchema,
+	convertField,
+	toUnhydratedSchema,
+} from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,

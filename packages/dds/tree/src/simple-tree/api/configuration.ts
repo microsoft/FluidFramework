@@ -25,7 +25,11 @@ import {
 	evaluateLazySchema,
 	markSchemaMostDerived,
 } from "../core/index.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import {
+	permissiveStoredSchemaGenerationOptions,
+	restrictiveStoredSchemaGenerationOptions,
+	toStoredSchema,
+} from "../toStoredSchema.js";
 import {
 	isArrayNodeSchema,
 	isMapNodeSchema,
@@ -213,7 +217,8 @@ export class TreeViewConfiguration<
 
 		// Eagerly perform this conversion to surface errors sooner.
 		// Includes detection of duplicate schema identifiers.
-		toStoredSchema(config.schema);
+		toStoredSchema(config.schema, restrictiveStoredSchemaGenerationOptions);
+		toStoredSchema(config.schema, permissiveStoredSchemaGenerationOptions);
 
 		const definitions = new Map<string, SimpleNodeSchema & TreeNodeSchema>();
 
@@ -234,8 +239,6 @@ export class TreeViewConfiguration<
 					ambiguityErrors,
 				);
 			},
-			// All types should be validated and included in the map, regardless of whether they are staged or not.
-			walkStagedAllowedTypes: true,
 		});
 
 		this.definitionsInternal = definitions;

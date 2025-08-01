@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob, fail } from "@fluidframework/core-utils/internal";
+import { Lazy, oob, fail, assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey } from "../../../core/index.js";
+import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
 import type {
 	FlexibleFieldContent,
 	FlexTreeNode,
@@ -888,10 +888,19 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 		const contentArray = content.flatMap((c): InsertableContent[] =>
 			c instanceof IterableTreeArrayContent ? Array.from(c) : [c],
 		);
+
+		const kernel = getKernel(this);
+		const innerSchema = kernel.context.flexContext.schema.nodeSchema.get(
+			brand(kernel.schema.identifier),
+		);
+		assert(innerSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+		const fieldSchema = innerSchema.getFieldSchema(EmptyKey);
+
 		const mapTrees = prepareArrayContentForInsertion(
 			contentArray,
 			this.simpleSchema,
 			sequenceField.context,
+			fieldSchema.types,
 		);
 
 		return mapTrees;

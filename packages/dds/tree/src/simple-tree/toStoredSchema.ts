@@ -22,8 +22,13 @@ import {
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
 import { brand, getOrCreate } from "../util/index.js";
 
-import { NodeKind } from "./core/index.js";
-import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
+import { NodeKind, type AnnotatedAllowedType, type SchemaUpgrade } from "./core/index.js";
+import {
+	FieldKind,
+	FieldSchemaAlpha,
+	normalizeFieldSchema,
+	type ImplicitFieldSchema,
+} from "./fieldSchema.js";
 import type {
 	SimpleFieldSchema,
 	SimpleNodeSchema,
@@ -32,7 +37,66 @@ import type {
 } from "./simpleSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
-const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
+const viewToStoredCache = new WeakMap<
+	StoredSchemaGenerationOptions,
+	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
+>();
+
+/**
+ * Options for generating a {@link TreeStoredSchema} from view schema.
+ */
+export interface StoredSchemaGenerationOptions {
+	/**
+	 * Determines whether to include staged schema in the resulting stored schema.
+	 * @remarks
+	 * Due to caching, the behavior of this function must be pure.
+	 */
+	includeStaged(upgrade: SchemaUpgrade): boolean;
+}
+
+export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
+	includeStaged: () => false,
+};
+
+export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
+	includeStaged: () => true,
+};
+
+function allowedTypeFilter(
+	allowedType: AnnotatedAllowedType,
+	options: StoredSchemaGenerationOptions,
+): boolean {
+	// If the allowed type is staged, only include it if the options allow it.
+	if (allowedType.metadata.stagedSchemaUpgrade !== undefined) {
+		return options.includeStaged(allowedType.metadata.stagedSchemaUpgrade);
+	}
+	return true;
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
+ *
+ * TODO: once upgrades are more flexible, this should take in more options, including the old schema and specific upgrades to enable.
+ */
+export function toUpgradeSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use as initial document schema.
+ */
+export function toInitialSchema(root: ImplicitFieldSchema): TreeStoredSchema {
+	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
+}
+
+/**
+ * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} to used for unhydrated nodes.
+ * @remarks
+ * This allows as much as possible, relying on further validation when inserting the content.
+ *
+ * TODO: this should get additional options to enable support for unknown optional fields.
+ */
+export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
@@ -44,8 +108,13 @@ const viewToStoredCache = new WeakMap<ImplicitFieldSchema, TreeStoredSchema>();
  * @throws
  * Throws a `UsageError` if multiple schemas are encountered with the same identifier.
  */
-export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
-	return getOrCreate(viewToStoredCache, root, () => {
+export function toStoredSchema(
+	root: ImplicitFieldSchema,
+	options: StoredSchemaGenerationOptions,
+): TreeStoredSchema {
+	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
+	// If the root schema is
+	return getOrCreate(cache, root, () => {
 		const normalized = normalizeFieldSchema(root);
 		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 		walkFieldSchema(normalized, {
@@ -60,14 +129,18 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 				}
 				nodeSchema.set(
 					brand(schema.identifier),
-					getStoredSchema(schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema),
+					getStoredSchema(
+						schema as SimpleNodeSchemaBase<NodeKind> as SimpleNodeSchema,
+						options,
+					),
 				);
 			},
+			allowedTypeFilter: (allowedType) => allowedTypeFilter(allowedType, options),
 		});
 
 		const result: TreeStoredSchema = {
 			nodeSchema,
-			rootFieldSchema: convertField(normalized),
+			rootFieldSchema: convertField(normalized, options),
 		};
 		return result;
 	});
@@ -76,15 +149,18 @@ export function toStoredSchema(root: ImplicitFieldSchema): TreeStoredSchema {
 /**
  * Converts a {@link SimpleTreeSchema} into a {@link TreeStoredSchema}.
  */
-export function simpleToStoredSchema(root: SimpleTreeSchema): TreeStoredSchema {
+export function simpleToStoredSchema(
+	root: SimpleTreeSchema,
+	options: StoredSchemaGenerationOptions,
+): TreeStoredSchema {
 	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
 	for (const [identifier, schema] of root.definitions) {
-		nodeSchema.set(brand(identifier), getStoredSchema(schema));
+		nodeSchema.set(brand(identifier), getStoredSchema(schema, options));
 	}
 
 	const result: TreeStoredSchema = {
 		nodeSchema,
-		rootFieldSchema: convertField(root.root),
+		rootFieldSchema: convertField(root.root, options),
 	};
 	return result;
 }
@@ -92,10 +168,21 @@ export function simpleToStoredSchema(root: SimpleTreeSchema): TreeStoredSchema {
 /**
  * Normalizes an {@link ImplicitFieldSchema} into a {@link TreeFieldSchema}.
  */
-export function convertField(schema: SimpleFieldSchema): TreeFieldStoredSchema {
+export function convertField(
+	schema: SimpleFieldSchema | FieldSchemaAlpha,
+	options: StoredSchemaGenerationOptions,
+): TreeFieldStoredSchema {
 	const kind: FieldKindIdentifier =
 		convertFieldKind.get(schema.kind)?.identifier ?? fail(0xae3 /* Invalid field kind */);
-	const types: TreeTypeSet = schema.allowedTypesIdentifiers as TreeTypeSet;
+	let types: TreeTypeSet;
+	if (schema instanceof FieldSchemaAlpha) {
+		const filtered: TreeNodeSchemaIdentifier[] = schema.annotatedAllowedTypesNormalized.types
+			.filter((allowedType) => allowedTypeFilter(allowedType, options))
+			.map((a) => brand(a.type.identifier));
+		types = new Set(filtered);
+	} else {
+		types = schema.allowedTypesIdentifiers as TreeTypeSet;
+	}
 	return { kind, types, persistedMetadata: schema.persistedMetadata };
 }
 
@@ -119,7 +206,10 @@ export const convertFieldKind: ReadonlyMap<FieldKind, FlexFieldKind> = new Map<
  * TODO: AB#43548: Using a stored schema for unhydrated flex trees does not handle schema evolution features like "allowUnknownOptionalFields".
  * Usage of this and the conversion which wrap it should be audited and reduced.
  */
-export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema {
+export function getStoredSchema(
+	schema: SimpleNodeSchema,
+	options: StoredSchemaGenerationOptions,
+): TreeNodeStoredSchema {
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
@@ -152,7 +242,7 @@ export function getStoredSchema(schema: SimpleNodeSchema): TreeNodeStoredSchema 
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
 			for (const fieldSchema of schema.fields.values()) {
-				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema));
+				fields.set(brand(fieldSchema.storedKey), convertField(fieldSchema, options));
 			}
 			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
 		}
