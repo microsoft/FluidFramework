@@ -45,7 +45,7 @@ interface IConsensusOrderedCollectionValue<T> {
 interface IConsensusOrderedCollectionAddOperation<T> {
 	opName: "add";
 	// serialized value
-	value: string;
+	value?: string;
 	deserializedValue?: T;
 }
 
@@ -311,6 +311,7 @@ export class ConsensusOrderedCollection<T = any>
 			switch (op.opName) {
 				case "add": {
 					if (op.deserializedValue === undefined) {
+						assert(op.value !== undefined, "Invalid add op with no value");
 						this.addCore(this.deserializeValue(op.value, this.serializer) as T);
 					} else {
 						this.addCore(op.deserializedValue);
