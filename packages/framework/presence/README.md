@@ -74,11 +74,15 @@ A `NotificationsWorkspace` is similar to states workspace, but is dedicated to n
 
 #### Latest, LatestRaw
 
-`Latest` and `LatestRaw` (unvalidated data) retain the most recent atomic value each attendee has shared. Use `StateFactory.latest` to add one to `StatesWorkspace`.
+`Latest` and `LatestRaw` (unvalidated data) retain the most recent atomic value each attendee has shared.
+Use `StateFactory.latest` to add one to `StatesWorkspace`.
 
 #### LatestMap, LatestMapRaw
 
-`LatestMap` and `LatestMapRaw` (unvalidated data) retain the most recent atomic value each attendee has shared under arbitrary keys (mimics `Map` data structure). Values associated with a key may be set to `undefined` to represent deletion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`. (`LatestMap` support is pending.)
+`LatestMap` and `LatestMapRaw` (unvalidated data) retain the most recent atomic value each attendee has shared under arbitrary keys (mimics `Map` data structure).
+Values associated with a key may be set to `undefined` to represent deletion.
+Use `StateFactory.latestMap` to add one to a `StatesWorkspace`.
+(`LatestMap` support is pending.)
 
 #### NotificationsManager
 
@@ -123,7 +127,7 @@ function startTrackingOthersPositions(positionTracker: Latest<PointXY>): (() => 
 Accumulated data can be enumerated using `getRemotes`.
 
 ```typescript
-// Logs other attendee's current position (includes now disconnected attendees)
+// Logs other attendees' current positions (includes now disconnected attendees)
 function logOthersPositions(positionTracker: Latest<PointXY>): void {
 	for (const { attendee, value } of positionTracker.getRemotes()) {
 		const validated = value();
@@ -135,7 +139,8 @@ function logOthersPositions(positionTracker: Latest<PointXY>): void {
 
 #### LatestMap, LatestMapRaw use
 
-Changes to `local` property automatically initiates broadcast of updates to other attendees. `local` is a [StateMap](https://fluidframework.com/docs/api/presence/statemap-interface) that mimic `Map` though it only supports `string | number` as property keys.
+A change to the `local` property automatically initiates a broadcast of updates to other attendees.
+`local` is a [StateMap](https://fluidframework.com/docs/api/presence/statemap-interface) that mimics `Map` though it only supports `string | number` as property keys.
 
 ```typescript
 function updateCounter(counterTracker: LatestMapRaw<number, string>, counterName: string, value: number): void {
@@ -143,7 +148,8 @@ function updateCounter(counterTracker: LatestMapRaw<number, string>, counterName
 }
 ```
 
-Updates from remote clients can be listened for using `events`. `"remoteItemUpdated"` and `"remoteItemRemoved"` provide fine-grain updates and `"remoteUpdated"` (use not shown) notes any change but only provides complete new map.
+Updates from remote clients can be listened for using `events`.
+`"remoteItemUpdated"` and `"remoteItemRemoved"` provide fine-grain updates and `"remoteUpdated"` (use not shown) notes any change but only provides complete new map.
 
 ```typescript
 function startTrackingOthersCounters(counterTracker: LatestMapRaw<number, string>): (() => void) {
@@ -239,13 +245,21 @@ function getOurWorkspace(presence: Presence):
 
 ### Runtime data validation
 
-Runtime data validation is partially implemented. The StateFactory.latest API does accept a `validator` argument but StateFactory.latestMap API does not. Passing a validator function is recommended to ensure data from other attendees conforms to expectations. The validator will be invoked on the first attempt to read a remote value (always a `.value()` call) and validator may return data conforming to schema or `undefined`. Whatever the result, it will be cached and returned immediately for future `.value()` calls. **Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
+Runtime data validation is partially implemented.
+The StateFactory.latest API does accept a `validator` argument but StateFactory.latestMap API does not.
+Passing a validator function is recommended to ensure data from other attendees conforms to expectations.
+The validator will be invoked on the first attempt to read a remote value (always a `.value()` call) and validator may return data conforming to schema or `undefined`.
+Whatever the result, it will be cached and returned immediately for future `.value()` calls.
+**Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
 
 ## Limitations
 
 ### Data Supported
 
-Only plain old data is supported. If `JSON.parse(JSON.stringify(foo))` returns a deeply equal value, then that data is supported. Large data is not recommended and if used may exceed system capacity. A small image could be shared but sharing a URL to an image is recommended.
+Only plain old data is supported.
+If `JSON.parse(JSON.stringify(foo))` returns a deeply equal value, then that data is supported.
+Large data is not recommended and if used may exceed system capacity.
+A small image could be shared but sharing a URL to an image is recommended.
 
 ### Compatibility and Versioning
 
