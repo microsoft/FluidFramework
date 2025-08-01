@@ -36,7 +36,7 @@ describe("Local Server Stress", () => {
 		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// replay: 93,
-		only: [28],
+		only: [99],
 		saveFailures,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		// saveSuccesses,

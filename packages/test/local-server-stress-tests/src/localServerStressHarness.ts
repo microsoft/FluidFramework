@@ -1393,7 +1393,8 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
-				clients.length > 0
+				clients.length > 0 &&
+				random.bool(options.clientJoinOptions.clientAddProbability)
 			) {
 				return {
 					type: "getClientPendingState",
@@ -1440,8 +1441,8 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			);
 
 			// Remove and dispose the source client
-			// state.clients.splice(sourceClientIndex, 1);
-			// sourceClient.container.dispose();
+			state.clients.splice(sourceClientIndex, 1);
+			sourceClient.container.dispose();
 
 			// Add the new client
 			state.clients.push(newClient);
