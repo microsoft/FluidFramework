@@ -285,7 +285,7 @@ export namespace ConnectionState {
 	 */
 	export const Disconnected = 0;
 	/**
-	 * {@inheritdoc ConnectionState#Disconnected}
+	 * {@inheritdoc (ConnectionState:namespace).(Disconnected:variable)}
 	 */
 	export type Disconnected = typeof Disconnected;
 
@@ -296,7 +296,7 @@ export namespace ConnectionState {
 	 */
 	export const EstablishingConnection = 3;
 	/**
-	 * {@inheritdoc ConnectionState#EstablishingConnection}
+	 * {@inheritdoc (ConnectionState:namespace).(EstablishingConnection:variable)}
 	 */
 	export type EstablishingConnection = typeof EstablishingConnection;
 
@@ -306,7 +306,7 @@ export namespace ConnectionState {
 	 */
 	export const CatchingUp = 1;
 	/**
-	 * {@inheritdoc ConnectionState#CatchingUp}
+	 * {@inheritdoc (ConnectionState:namespace).(CatchingUp:variable)}
 	 */
 	export type CatchingUp = typeof CatchingUp;
 
@@ -316,7 +316,7 @@ export namespace ConnectionState {
 	 */
 	export const Connected = 2;
 	/**
-	 * {@inheritdoc ConnectionState#Connected}
+	 * {@inheritdoc (ConnectionState:namespace).(Connected:variable)}
 	 */
 	export type Connected = typeof Connected;
 }
