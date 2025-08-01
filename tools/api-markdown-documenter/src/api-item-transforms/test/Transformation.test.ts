@@ -27,7 +27,6 @@ import {
 	MarkdownBlockContentNode,
 	MarkdownPhrasingContentNode,
 	ParagraphNode,
-	PlainTextNode,
 	SectionNode,
 	SpanNode,
 	TableBodyCellNode,
@@ -238,7 +237,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testParameter"),
 										TableBodyCellNode.Empty,
-										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
+										new TableBodyCellNode([
+											new MarkdownPhrasingContentNode({
+												type: "text",
+												value: "TTypeParameter",
+											}),
+										]),
 										new TableBodyCellNode([
 											new MarkdownPhrasingContentNode({
 												type: "text",
@@ -249,7 +253,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testOptionalParameter"),
 										TableBodyCellNode.createFromPlainText("optional"),
-										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
+										new TableBodyCellNode([
+											new MarkdownPhrasingContentNode({
+												type: "text",
+												value: "TTypeParameter",
+											}),
+										]),
 										new TableBodyCellNode([
 											new MarkdownPhrasingContentNode({
 												type: "text",
@@ -281,8 +290,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 							}),
 							new ParagraphNode([
 								SpanNode.createFromPlainText("Return type", { bold: true }),
-								new PlainTextNode(": "),
-								new PlainTextNode("TTypeParameter"),
+								new MarkdownPhrasingContentNode({ type: "text", value: ": " }),
+								new MarkdownPhrasingContentNode({ type: "text", value: "TTypeParameter" }),
 							]),
 						],
 						{
@@ -383,7 +392,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 										value: "0",
 									}),
 								]),
-								new TableBodyCellNode([new PlainTextNode("number")]),
+								new TableBodyCellNode([
+									new MarkdownPhrasingContentNode({
+										type: "text",
+										value: "number",
+									}),
+								]),
 								new TableBodyCellNode([
 									new MarkdownPhrasingContentNode({
 										type: "text",
@@ -426,8 +440,8 @@ describe("ApiItem to Documentation transformation tests", () => {
 									}),
 									new ParagraphNode([
 										SpanNode.createFromPlainText("Type", { bold: true }),
-										new PlainTextNode(": "),
-										new PlainTextNode("number"),
+										new MarkdownPhrasingContentNode({ type: "text", value: ": " }),
+										new MarkdownPhrasingContentNode({ type: "text", value: "number" }),
 									]),
 								],
 								{
@@ -640,7 +654,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 									url: "/",
 									children: [{ type: "text", value: "Packages" }],
 								}),
-								new PlainTextNode(" > "),
+								new MarkdownPhrasingContentNode({
+									type: "text",
+									value: " > ",
+								}),
 								new MarkdownPhrasingContentNode({
 									type: "link",
 									url: "/test-package/",
@@ -695,13 +712,19 @@ describe("ApiItem to Documentation transformation tests", () => {
 									url: "/",
 									children: [{ type: "text", value: "Packages" }],
 								}),
-								new PlainTextNode(" > "),
+								new MarkdownPhrasingContentNode({
+									type: "text",
+									value: " > ",
+								}),
 								new MarkdownPhrasingContentNode({
 									type: "link",
 									url: "/test-package/",
 									children: [{ type: "text", value: "test-package" }],
 								}),
-								new PlainTextNode(" > "),
+								new MarkdownPhrasingContentNode({
+									type: "text",
+									value: " > ",
+								}),
 								new MarkdownPhrasingContentNode({
 									type: "link",
 									url: "/test-package/entry-point-a-entrypoint",
@@ -800,13 +823,19 @@ describe("ApiItem to Documentation transformation tests", () => {
 									url: "/",
 									children: [{ type: "text", value: "Packages" }],
 								}),
-								new PlainTextNode(" > "),
+								new MarkdownPhrasingContentNode({
+									type: "text",
+									value: " > ",
+								}),
 								new MarkdownPhrasingContentNode({
 									type: "link",
 									url: "/test-package/",
 									children: [{ type: "text", value: "test-package" }],
 								}),
-								new PlainTextNode(" > "),
+								new MarkdownPhrasingContentNode({
+									type: "text",
+									value: " > ",
+								}),
 								new MarkdownPhrasingContentNode({
 									type: "link",
 									url: "/test-package/entry-point-b-entrypoint",

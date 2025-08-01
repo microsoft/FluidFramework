@@ -8,8 +8,8 @@ import {
 	DocumentNode,
 	documentToMarkdown,
 	HeadingNode,
+	MarkdownPhrasingContentNode,
 	phrasingContentToMarkdown,
-	PlainTextNode,
 	SectionNode,
 	type PhrasingContent,
 } from "@fluid-tools/api-markdown-documenter";
@@ -33,7 +33,11 @@ declare module "@fluid-tools/api-markdown-documenter" {
 
 // Use the custom node!
 const sectionNode: SectionNode = new SectionNode(
-	[new CustomDocumentationNode([new PlainTextNode("Hello world!")])],
+	[
+		new CustomDocumentationNode([
+			new MarkdownPhrasingContentNode({ type: "text", value: "Hello world!" }),
+		]),
+	],
 	new HeadingNode("Section with custom children!"),
 );
 

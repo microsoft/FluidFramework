@@ -22,7 +22,6 @@ import {
 	MarkdownBlockContentNode,
 	MarkdownPhrasingContentNode,
 	type PhrasingContent,
-	PlainTextNode,
 	SectionNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
@@ -672,7 +671,7 @@ export function createModifiersCell(
 	let needsComma = false;
 	for (const modifier of modifiers) {
 		if (needsComma) {
-			contents.push(new PlainTextNode(", "));
+			contents.push(new MarkdownPhrasingContentNode({ type: "text", value: ", " }));
 		}
 		contents.push(new MarkdownPhrasingContentNode({ type: "inlineCode", value: modifier }));
 		needsComma = true;
@@ -715,7 +714,12 @@ export function createAlertsCell(alerts: string[]): TableBodyCellNode {
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
-		: new TableBodyCellNode(injectSeparator(alertNodes, new PlainTextNode(", ")));
+		: new TableBodyCellNode(
+				injectSeparator(
+					alertNodes,
+					new MarkdownPhrasingContentNode({ type: "text", value: ", " }),
+				),
+			);
 }
 
 /**

@@ -546,16 +546,6 @@ declare namespace LayoutUtilities {
 }
 export { LayoutUtilities }
 
-// @public @sealed
-export class LineBreakNode implements DocumentationNode {
-    constructor();
-    readonly isEmpty = false;
-    readonly isLiteral = true;
-    readonly isParent = false;
-    static readonly Singleton: LineBreakNode;
-    readonly type = "lineBreak";
-}
-
 // @public
 export interface Link {
     readonly target: UrlTarget;
@@ -668,13 +658,9 @@ export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
 // @public
 export interface PhrasingContentMap {
     // (undocumented)
-    lineBreak: LineBreakNode;
-    // (undocumented)
     markdownPhrasingContent: MarkdownPhrasingContentNode;
     // (undocumented)
     span: SpanNode;
-    // (undocumented)
-    text: PlainTextNode;
 }
 
 // @public
@@ -684,14 +670,6 @@ export function phrasingContentToMarkdown(node: PhrasingContent, context: ToMark
 export type PhrasingContentToMarkdownTransformations = {
     readonly [K in keyof PhrasingContentMap]: ToMarkdownTransformation<PhrasingContentMap[K], PhrasingContent_2[]>;
 };
-
-// @public @sealed
-export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
-    constructor(text: string);
-    static readonly Empty: PlainTextNode;
-    get isEmpty(): boolean;
-    readonly type = "text";
-}
 
 // @public
 export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;

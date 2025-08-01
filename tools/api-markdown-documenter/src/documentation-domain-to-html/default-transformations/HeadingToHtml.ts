@@ -10,7 +10,10 @@
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 
-import { PlainTextNode, type HeadingNode } from "../../documentation-domain/index.js";
+import {
+	MarkdownPhrasingContentNode,
+	type HeadingNode,
+} from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { transformChildrenUnderTag } from "../Utilities.js";
 
@@ -48,7 +51,7 @@ export function headingToHtml(
 
 		return transformChildrenUnderTag(
 			{ name: `h${headingLevel}`, attributes },
-			[new PlainTextNode(headingNode.title)],
+			[new MarkdownPhrasingContentNode({ type: "text", value: headingNode.title })],
 			context,
 		);
 	} else {
@@ -59,7 +62,7 @@ export function headingToHtml(
 		transformedChildren.push(
 			transformChildrenUnderTag(
 				{ name: "b" },
-				[new PlainTextNode(headingNode.title)],
+				[new MarkdownPhrasingContentNode({ type: "text", value: headingNode.title })],
 				context,
 			),
 		);

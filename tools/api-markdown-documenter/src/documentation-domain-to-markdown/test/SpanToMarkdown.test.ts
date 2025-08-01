@@ -5,7 +5,7 @@
 
 import { expect } from "chai";
 
-import { PlainTextNode, SpanNode } from "../../documentation-domain/index.js";
+import { MarkdownPhrasingContentNode, SpanNode } from "../../documentation-domain/index.js";
 import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import { createTransformationContext } from "../TransformationContext.js";
 
@@ -19,7 +19,15 @@ describe("spanToMarkdown", () => {
 	});
 
 	it("Italic", () => {
-		const input = new SpanNode([new PlainTextNode("Hello world!")], { italic: true });
+		const input = new SpanNode(
+			[
+				new MarkdownPhrasingContentNode({
+					type: "text",
+					value: "Hello world!",
+				}),
+			],
+			{ italic: true },
+		);
 
 		const result = phrasingContentToMarkdown(input, transformationContext);
 		expect(result).to.deep.equal([
@@ -28,7 +36,15 @@ describe("spanToMarkdown", () => {
 	});
 
 	it("Bold", () => {
-		const input = new SpanNode([new PlainTextNode("Hello world!")], { bold: true });
+		const input = new SpanNode(
+			[
+				new MarkdownPhrasingContentNode({
+					type: "text",
+					value: "Hello world!",
+				}),
+			],
+			{ bold: true },
+		);
 
 		const result = phrasingContentToMarkdown(input, transformationContext);
 		expect(result).to.deep.equal([
@@ -37,7 +53,15 @@ describe("spanToMarkdown", () => {
 	});
 
 	it("Strikethrough", () => {
-		const input = new SpanNode([new PlainTextNode("Hello world!")], { strikethrough: true });
+		const input = new SpanNode(
+			[
+				new MarkdownPhrasingContentNode({
+					type: "text",
+					value: "Hello world!",
+				}),
+			],
+			{ strikethrough: true },
+		);
 
 		const result = phrasingContentToMarkdown(input, transformationContext);
 		expect(result).to.deep.equal([
@@ -48,8 +72,19 @@ describe("spanToMarkdown", () => {
 	it("complex", () => {
 		const input = new SpanNode(
 			[
-				new PlainTextNode("Hello "),
-				new SpanNode([new PlainTextNode("world!")], { italic: true }),
+				new MarkdownPhrasingContentNode({
+					type: "text",
+					value: "Hello ",
+				}),
+				new SpanNode(
+					[
+						new MarkdownPhrasingContentNode({
+							type: "text",
+							value: "world!",
+						}),
+					],
+					{ italic: true },
+				),
 			],
 			{ bold: true, strikethrough: true },
 		);
