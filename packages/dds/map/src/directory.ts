@@ -1014,7 +1014,7 @@ export class SharedDirectory
 					| undefined;
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
-				if (subdir && !subdir.disposed) {
+				if (subdir && !subdir.disposed && !this.isSubDirectoryDeletePending(op.path)) {
 					// Add the client ID to enable message processing for existing subdirectories
 					if (!local && msg.clientId !== null) {
 						subdir.addClientId(msg.clientId);
@@ -1461,17 +1461,28 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const isNewSubDirectory = subDir === undefined;
 
 		if (subDir === undefined) {
-			const absolutePath = posix.join(this.absolutePath, subdirName);
-			subDir = new SubDirectory(
-				{ ...seqData },
-				new Set([clientId]),
-				this.directory,
-				this.runtime,
-				this.serializer,
-				absolutePath,
-				this.logger,
+			const pendingEntry = findLast(
+				this.pendingSubDirectoryData,
+				(entry) => entry.subdirName === subdirName && entry.type === "lifetimeSubDirectory",
 			);
-			this.registerEventsOnSubDirectory(subDir, subdirName);
+			if (pendingEntry === undefined) {
+				const absolutePath = posix.join(this.absolutePath, subdirName);
+				subDir = new SubDirectory(
+					{ ...seqData },
+					new Set([clientId]),
+					this.directory,
+					this.runtime,
+					this.serializer,
+					absolutePath,
+					this.logger,
+				);
+				this.registerEventsOnSubDirectory(subDir, subdirName);
+			} else {
+				assert(pendingEntry.type === "lifetimeSubDirectory", "should be lifetimeSubDirectory");
+				// TODO: This makes me think lifetime is unnecessary
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				subDir = pendingEntry.subdirCreates[pendingEntry.subdirCreates.length - 1]!.subdir;
+			}
 		} else {
 			subDir.clientIds.add(clientId);
 		}
@@ -1668,10 +1679,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 		// TODO: This may be too aggressive.
 		// If we decide to keep this assert, then we can remove the telemetry logging below
-		assert(
-			numTrackedSubdirs === numSequencedSubdirs + numPendingSubdirs,
-			"subdirectory count mismatch",
-		);
+		// assert(
+		// 	numTrackedSubdirs === numSequencedSubdirs + numPendingSubdirs,
+		// 	"subdirectory count mismatch",
+		// );
 		// TODO: Remove this check/telemetry if we keep above assert
 		if (
 			numTrackedSubdirs !== numSequencedSubdirs + numPendingSubdirs &&
@@ -2270,18 +2281,20 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type !== "clear" && entry.key === key,
 			);
 			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
-
-			if (pendingEntry !== undefined && pendingEntry.type === "lifetime") {
-				const pendingKeySet = pendingEntry.keySets.shift();
-				assert(
-					pendingKeySet !== undefined && isKeyEditLocalOpMetadata(localOpMetadata),
-					"Got a local set message we weren't expecting",
-				);
-				if (pendingEntry.keySets.length === 0) {
-					this.pendingStorageData.splice(pendingEntryIndex, 1);
-				}
-				this.sequencedStorageData.set(key, pendingKeySet.value);
+			assert(
+				pendingEntry !== undefined && pendingEntry.type === "lifetime",
+				"Couldn't match local set message to pending lifetime",
+			);
+			const pendingKeySet = pendingEntry.keySets.shift();
+			assert(
+				pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
+				"Got a local set message we weren't expecting",
+			);
+			if (pendingEntry.keySets.length === 0) {
+				this.pendingStorageData.splice(pendingEntryIndex, 1);
 			}
+
+			this.sequencedStorageData.set(key, pendingKeySet.value);
 		} else {
 			// Get the previous value before setting the new value
 			const previousValue: unknown = this.sequencedStorageData.get(key);
@@ -2350,7 +2363,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
 
 			if (pendingEntry !== undefined && pendingEntry.type === "lifetimeSubDirectory") {
-				// Normal case: we have a pending lifetime entry for this subdirectory
 				const pendingSubdirCreate = pendingEntry.subdirCreates.shift();
 				assert(
 					pendingSubdirCreate !== undefined &&
@@ -2378,20 +2390,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			const originalSeqData = this.localCreationSeqTracker.keyToIndex.get(op.subdirName);
 			this.localCreationSeqTracker.delete(op.subdirName);
 
-			// Only set sequence data if this subdirectory isn't already tracked (preserve first creation order)
-			if (this.ackedCreationSeqTracker.has(op.subdirName)) {
+			if (!this.ackedCreationSeqTracker.has(op.subdirName)) {
 				// Subdirectory already exists in tracker - don't overwrite to preserve first creation order
-			} else {
-				// Preserve the original client sequence for ordering, but update seq to indicate acknowledgment
-				const ackedSeqData = originalSeqData
-					? {
-							seq: msg.sequenceNumber,
-							clientSeq: originalSeqData.clientSeq,
-						}
-					: {
-							seq: msg.sequenceNumber,
-							clientSeq: msg.clientSequenceNumber,
-						};
+				const ackedSeqData =
+					originalSeqData === undefined
+						? {
+								seq: msg.sequenceNumber,
+								clientSeq: msg.clientSequenceNumber,
+							}
+						: {
+								seq: msg.sequenceNumber,
+								clientSeq: originalSeqData.clientSeq,
+							};
 				this.ackedCreationSeqTracker.set(op.subdirName, ackedSeqData);
 			}
 		} else {
@@ -2456,17 +2466,18 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedSubdirectories.delete(op.subdirName);
 			this.disposeSubDirectoryTree(previousValue);
 		} else {
-			this.sequencedSubdirectories.delete(op.subdirName);
-
 			// Only dispose the subdirectory if there are no pending local operations for it
 			const hasPendingLifetime = this.pendingSubDirectoryData.some(
 				(entry) => entry.subdirName === op.subdirName && entry.type === "lifetimeSubDirectory",
 			);
 
 			if (!hasPendingLifetime) {
-				this.disposeSubDirectoryTree(previousValue);
+				this.sequencedSubdirectories.delete(op.subdirName);
 			}
+			// We still try to dispose the subdirectory tree in case the subdirectories do not also have pending lifetime
+			this.disposeSubDirectoryTree(previousValue);
 
+			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
 				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
 			);
@@ -2860,8 +2871,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return (
 			(msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
 			this.clientIds.has("detached") ||
-			(isAcknowledgedOrDetached(this.seqData) &&
-				this.seqData.seq <= msg.referenceSequenceNumber)
+			(this.seqData.seq !== -1 && this.seqData.seq <= msg.referenceSequenceNumber)
 		);
 	}
 
@@ -2880,7 +2890,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 		// Dispose the subdirectory tree. This will dispose the subdirectories from bottom to top.
 		const subDirectories = directory.subdirectories();
-		for (const [_, subDirectory] of subDirectories) {
+		for (const [subdirName, subDirectory] of subDirectories) {
+			if (
+				this.pendingSubDirectoryData.some(
+					(entry) => entry.subdirName === subdirName && entry.type === "lifetimeSubDirectory",
+				)
+			) {
+				// If the directory is pending, we do not dispose it, as it will be restored later.
+				return;
+			}
+
 			this.disposeSubDirectoryTree(subDirectory);
 		}
 		if (typeof directory.dispose === "function") {
