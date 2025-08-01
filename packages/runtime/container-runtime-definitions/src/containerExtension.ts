@@ -202,7 +202,7 @@ export interface ContainerExtension<
 }
 
 /**
- * Join status for container extensions.
+ * Join status for container.
  *
  * @internal
  */
@@ -229,6 +229,20 @@ export interface ExtensionHostEvents {
  * @internal
  */
 export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
+	/**
+	 * Gets the current joined status of the container.
+	 *
+	 * @remarks
+	 * Returns one of three possible {@link JoinedStatus} values:
+	 * - "disconnected": The container is not connected to the service
+	 * - "joinedForReading": The container has a read-only connection
+	 * - "joinedForWriting": The container has a write connection
+	 *
+	 * Status changes are signaled through :
+	 * - {@link ExtensionHostEvents.disconnected}: Transitioning to Disconnected state
+	 * - {@link ExtensionHostEvents.joined}: Transition to Connected state (either for reading or writing)
+	 * - {@link ExtensionHostEvents.connectionTypeChanged}: When connection type has changed (e.g., write to read)
+	 */
 	readonly getJoinedStatus: () => JoinedStatus;
 	readonly getClientId: () => ClientConnectionId | undefined;
 

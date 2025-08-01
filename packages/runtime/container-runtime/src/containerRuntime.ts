@@ -23,7 +23,6 @@ import type {
 	IDeltaManagerFull,
 	ILoader,
 	IContainerStorageService,
-	ConnectionState,
 } from "@fluidframework/container-definitions/internal";
 import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
@@ -188,6 +187,7 @@ import {
 } from "./channelCollection.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
+import { ConnectionState } from "./connectionState.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import {
 	getMinVersionForCollabDefaults,
@@ -1689,7 +1689,7 @@ export class ContainerRuntime
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
 		this.canSendSignals = this.getConnectionState
-			? this.getConnectionState() === 2 /* Connected */
+			? this.getConnectionState() === ConnectionState.Connected
 			: undefined;
 
 		this.mc.logger.sendTelemetryEvent({
@@ -2849,13 +2849,13 @@ export class ContainerRuntime
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
-
 		this.emitServiceConnectionEvents(canSendOpsChanged, canSendOps, clientId);
 	}
 
 	/**
 	 * Emits service connection events based on connection state changes.
-	 * "connected" is only emitted when canSendOps is true, which is always false in readonly mode.
+	 *
+	 * @remarks
 	 * "connectedToService" is emitted when container connection state transitions to 'Connected' regardless of connection mode.
 	 * "disconnectedFromService" excludes false "disconnected" events that happen when readonly client transitions to 'Connected'.
 	 */
@@ -2865,9 +2865,17 @@ export class ContainerRuntime
 		clientId?: string,
 	): void {
 		if (!this.getConnectionState) {
+			if (canSendOpsChanged) {
+				if (canSendOps) {
+					this.emit("connectedToService", clientId, canSendOps);
+				} else {
+					this.emit("disconnectedFromService");
+				}
+			}
 			return;
 		}
-		const canSendSignals = this.getConnectionState() === 2 /* Connected */;
+
+		const canSendSignals = this.getConnectionState() === ConnectionState.Connected;
 		const canSendSignalsChanged = this.canSendSignals !== canSendSignals;
 		this.canSendSignals = canSendSignals;
 		if (canSendSignalsChanged) {
@@ -5118,11 +5126,11 @@ export class ContainerRuntime
 		return eventEmitter;
 	});
 
-	private getJoinedStatusForExtensions(): JoinedStatus {
+	private getJoinedStatus(): JoinedStatus {
 		const getConnectionState = this.getConnectionState;
 		if (getConnectionState) {
 			const connectionState = getConnectionState();
-			if (connectionState === 2 /* Connected */) {
+			if (connectionState === ConnectionState.Connected) {
 				return this.canSendOps ? "joinedForWriting" : "joinedForReading";
 			}
 		} else if (this.canSendOps) {
@@ -5149,7 +5157,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				getJoinedStatus: this.getJoinedStatusForExtensions.bind(this),
+				getJoinedStatus: this.getJoinedStatus.bind(this),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,

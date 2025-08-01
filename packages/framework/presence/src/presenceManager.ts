@@ -90,12 +90,9 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		);
 		this.attendees = this.systemWorkspace;
 
-		runtime.events.on(
-			"joined",
-			({ clientId: joinedClientId, canWrite }: { clientId: string; canWrite: boolean }) => {
-				this.onConnect(joinedClientId);
-			},
-		);
+		runtime.events.on("joined", ({ clientId: joinedClientId }: { clientId: string }) => {
+			this.onConnect(joinedClientId);
+		});
 
 		runtime.events.on("disconnected", () => {
 			const currentClientId = runtime.getClientId();
@@ -113,7 +110,6 @@ class PresenceManager implements Presence, PresenceExtensionInterface {
 		// Note: In some manual testing, this does not appear to be enough to
 		// always trigger an initial connect.
 		const clientId = runtime.getClientId();
-
 		if (clientId !== undefined && runtime.getJoinedStatus() !== "disconnected") {
 			this.onConnect(clientId);
 		}
