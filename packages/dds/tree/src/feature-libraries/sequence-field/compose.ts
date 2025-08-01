@@ -9,7 +9,6 @@ import type { ChangeAtomId, RevisionMetadataSource, RevisionTag } from "../../co
 import type { IdAllocator } from "../../util/index.js";
 import type {
 	ComposeNodeManager,
-	ContextualizedFieldChange,
 	NodeChangeComposer,
 	NodeId,
 } from "../modular-schema/index.js";
@@ -64,8 +63,8 @@ import {
  * - Support for slices is not implemented.
  */
 export function compose(
-	{ change: change1 }: ContextualizedFieldChange<Changeset>,
-	{ change: change2 }: ContextualizedFieldChange<Changeset>,
+	change1: Changeset,
+	change2: Changeset,
 	composeChild: NodeChangeComposer,
 	_genId: IdAllocator,
 	manager: ComposeNodeManager,

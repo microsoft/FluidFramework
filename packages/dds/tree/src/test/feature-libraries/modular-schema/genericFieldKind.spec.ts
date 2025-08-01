@@ -30,8 +30,6 @@ import { testSnapshots } from "./genericFieldSnapshots.test.js";
 import { newGenericChangeset } from "../../../feature-libraries/modular-schema/genericFieldKindTypes.js";
 import { failComposeManager, failInvertManager, failRebaseManager } from "./nodeQueryUtils.js";
 import type { DeltaFieldChanges } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { contextualizeFieldChangeset } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
 
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
@@ -65,8 +63,8 @@ describe("GenericField", () => {
 				[2, TestNodeId.create(nodeId2, TestChange.mint([], 2))],
 			]);
 			const actual = genericChangeHandler.rebaser.compose(
-				contextualizeFieldChangeset(changeA),
-				contextualizeFieldChangeset(changeB),
+				changeA,
+				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
 				failComposeManager,
@@ -90,8 +88,8 @@ describe("GenericField", () => {
 				[2, TestNodeId.create(nodeId4, TestChange.mint([], 4))],
 			]);
 			const actual = genericChangeHandler.rebaser.compose(
-				contextualizeFieldChangeset(changeA),
-				contextualizeFieldChangeset(changeB),
+				changeA,
+				changeB,
 				TestNodeId.composeChild,
 				fakeIdAllocator,
 				failComposeManager,
@@ -116,8 +114,8 @@ describe("GenericField", () => {
 				[2, TestNodeId.create(nodeId2, TestChange.mint([], 2))],
 			]);
 			const actual = genericChangeHandler.rebaser.rebase(
-				contextualizeFieldChangeset(changeA),
-				contextualizeFieldChangeset(changeB),
+				changeA,
+				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
 				failRebaseManager,
@@ -140,8 +138,8 @@ describe("GenericField", () => {
 				[1, TestNodeId.create(nodeId2, TestChange.mint([], 2))],
 			]);
 			const actual = genericChangeHandler.rebaser.rebase(
-				contextualizeFieldChangeset(changeA),
-				contextualizeFieldChangeset(changeB),
+				changeA,
+				changeB,
 				TestNodeId.rebaseChild,
 				fakeIdAllocator,
 				failRebaseManager,
@@ -161,7 +159,7 @@ describe("GenericField", () => {
 			[1, nodeId2],
 		]);
 		const actual = genericChangeHandler.rebaser.invert(
-			contextualizeFieldChangeset(forward, undefined),
+			forward,
 			true,
 			idAllocatorFromMaxId(),
 			mintRevisionTag(),

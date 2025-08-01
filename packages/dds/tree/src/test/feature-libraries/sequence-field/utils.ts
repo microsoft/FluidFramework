@@ -35,7 +35,6 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	contextualizeFieldChangeset,
 	rebaseRevisionMetadataFromInfo,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
@@ -305,26 +304,10 @@ function composePair(
 	idAllocator: IdAllocator,
 ): SF.Changeset {
 	const moveEffects = newComposeManager();
-	const change1Contextualized = contextualizeFieldChangeset(change1);
-	const change2Contextualized = contextualizeFieldChangeset(change2);
-	let composed = SF.compose(
-		change1Contextualized,
-		change2Contextualized,
-		composer,
-		idAllocator,
-		moveEffects,
-		metadata,
-	);
+	let composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 
 	if (moveEffects.isInvalidated) {
-		composed = SF.compose(
-			change1Contextualized,
-			change2Contextualized,
-			composer,
-			idAllocator,
-			moveEffects,
-			metadata,
-		);
+		composed = SF.compose(change1, change2, composer, idAllocator, moveEffects, metadata);
 	}
 	return composed;
 }
@@ -357,11 +340,9 @@ export function rebase(
 
 	const moveEffects = newRebaseManager();
 	const idAllocator = idAllocatorFromMaxId(getMaxId(change.change, base.change));
-	const changeContextualized = contextualizeFieldChangeset(change.change);
-	const baseContextualized = contextualizeFieldChangeset(base.change);
 	let rebasedChange = SF.rebase(
-		changeContextualized,
-		baseContextualized,
+		change.change,
+		base.change,
 		childRebaser,
 		idAllocator,
 		moveEffects,
@@ -369,8 +350,8 @@ export function rebase(
 	);
 	if (moveEffects.isInvalidated) {
 		rebasedChange = SF.rebase(
-			changeContextualized,
-			baseContextualized,
+			change.change,
+			base.change,
 			childRebaser,
 			idAllocator,
 			moveEffects,
@@ -445,9 +426,8 @@ export function invert(
 ): SF.Changeset {
 	deepFreeze(change.change);
 	const table = newInvertManager();
-	const changeContextualized = contextualizeFieldChangeset(change.change);
 	let inverted = SF.invert(
-		changeContextualized,
+		change.change,
 		isRollback,
 		// Sequence fields should not generate IDs during invert
 		fakeIdAllocator,
@@ -457,7 +437,7 @@ export function invert(
 
 	if (table.isInvalidated) {
 		inverted = SF.invert(
-			changeContextualized,
+			change.change,
 			isRollback,
 			// Sequence fields should not generate IDs during invert
 			fakeIdAllocator,

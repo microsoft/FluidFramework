@@ -32,7 +32,6 @@ import {
 	type InvertNodeManager,
 	type CrossFieldKeyRange,
 	CrossFieldTarget,
-	type ContextualizedFieldChange,
 } from "../modular-schema/index.js";
 
 import type { OptionalChangeset, Replace } from "./optionalFieldChangeTypes.js";
@@ -41,7 +40,7 @@ import { makeOptionalFieldCodecFamily } from "./optionalFieldCodecs.js";
 export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	compose,
 	invert: (
-		{ change }: ContextualizedFieldChange<OptionalChangeset>,
+		change: OptionalChangeset,
 		isRollback: boolean,
 		genId: IdAllocator<ChangesetLocalId>,
 		revision: RevisionTag | undefined,
@@ -87,8 +86,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 	},
 
 	rebase: (
-		{ change: newChange }: ContextualizedFieldChange<OptionalChangeset>,
-		{ change: overChange }: ContextualizedFieldChange<OptionalChangeset>,
+		newChange: OptionalChangeset,
+		overChange: OptionalChangeset,
 		rebaseChild: NodeChangeRebaser,
 		_genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
@@ -191,8 +190,8 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 };
 
 function compose(
-	{ change: change1 }: ContextualizedFieldChange<OptionalChangeset>,
-	{ change: change2 }: ContextualizedFieldChange<OptionalChangeset>,
+	change1: OptionalChangeset,
+	change2: OptionalChangeset,
 	composeChild: NodeChangeComposer,
 	_genId: IdAllocator,
 	nodeManager: ComposeNodeManager,

@@ -85,8 +85,8 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * See `ChangeRebaser` for more details.
 	 */
 	compose(
-		change1: ContextualizedFieldChange<TChangeset>,
-		change2: ContextualizedFieldChange<TChangeset>,
+		change1: TChangeset,
+		change2: TChangeset,
 		composeChild: NodeChangeComposer,
 		genId: IdAllocator,
 		nodeManager: ComposeNodeManager,
@@ -98,7 +98,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * See `ChangeRebaser` for details.
 	 */
 	invert(
-		change: ContextualizedFieldChange<TChangeset>,
+		change: TChangeset,
 		isRollback: boolean,
 		genId: IdAllocator,
 		revision: RevisionTag | undefined,
@@ -112,8 +112,8 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * See `ChangeRebaser` for details.
 	 */
 	rebase(
-		change: ContextualizedFieldChange<TChangeset>,
-		over: ContextualizedFieldChange<TChangeset>,
+		change: TChangeset,
+		over: TChangeset,
 		rebaseChild: NodeChangeRebaser,
 		genId: IdAllocator,
 		nodeManager: RebaseNodeManager,
@@ -136,11 +136,6 @@ export interface RootsInfo {
 	areSameNodes(oldId: ChangeAtomId, newId: ChangeAtomId, count?: number): boolean;
 }
 
-export interface ContextualizedFieldChange<TChangeset> {
-	readonly change: TChangeset;
-	readonly roots: RootsInfo;
-}
-
 /**
  * Helper for creating a {@link FieldChangeRebaser} which does not need access to revision tags.
  * This should only be used for fields where the child nodes cannot be edited.
@@ -151,10 +146,9 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
-		compose: (change1, change2, _composeChild, _genId) =>
-			data.compose(change1.change, change2.change),
-		invert: (change, _invertChild, _genId) => data.invert(change.change),
-		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change.change, over.change),
+		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
+		invert: (change, _invertChild, _genId) => data.invert(change),
+		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
 	});
 }
 

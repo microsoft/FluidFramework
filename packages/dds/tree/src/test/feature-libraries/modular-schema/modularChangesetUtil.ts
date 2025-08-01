@@ -58,7 +58,6 @@ import {
 } from "../../../util/index.js";
 import {
 	addNodeRename,
-	contextualizeFieldChangeset,
 	getChangeHandler,
 	getFieldKind,
 	getNodeParent,
@@ -619,8 +618,8 @@ function addNodeToField(
 	]);
 
 	return changeHandler.rebaser.compose(
-		contextualizeFieldChangeset(fieldWithChange),
-		contextualizeFieldChangeset(fieldChangeset),
+		fieldWithChange,
+		fieldChangeset,
 		(node1, node2) => node1 ?? node2 ?? assert.fail("Should not compose two undefined nodes"),
 		idAllocator,
 		dummyComposeManager,
