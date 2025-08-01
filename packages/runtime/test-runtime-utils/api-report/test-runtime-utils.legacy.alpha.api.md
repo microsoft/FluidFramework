@@ -467,6 +467,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
+    readonly minVersionForCollab: MinimumVersionForCollab;
+    // (undocumented)
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): IFluidHandleContext;

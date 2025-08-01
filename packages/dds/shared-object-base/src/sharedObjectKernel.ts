@@ -20,6 +20,7 @@ import type {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
+	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
@@ -140,6 +141,7 @@ class SharedObjectFromKernel<
 			logger: this.logger,
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			minVersionForCollab: runtime.minVersionForCollab,
 		};
 	}
 
@@ -289,6 +291,10 @@ export interface KernelArgs {
 	 * {@inheritdoc @fluidframework/container-definitions#IDeltaManager.lastSequenceNumber}
 	 */
 	readonly lastSequenceNumber: () => number;
+	/**
+	 * The minVersionForCollab specified when instantiating the ContainerRuntime.
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
 /**
