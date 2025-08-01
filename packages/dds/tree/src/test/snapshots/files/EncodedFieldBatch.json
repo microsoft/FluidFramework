@@ -130,6 +130,10 @@
           "d": {
             "const": 0,
             "type": "number"
+          },
+          "e": {
+            "const": 0,
+            "type": "number"
           }
         }
       }

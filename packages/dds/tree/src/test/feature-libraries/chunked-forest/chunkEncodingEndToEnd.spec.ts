@@ -70,6 +70,7 @@ import {
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
 import type {
 	EncodedFieldBatch,

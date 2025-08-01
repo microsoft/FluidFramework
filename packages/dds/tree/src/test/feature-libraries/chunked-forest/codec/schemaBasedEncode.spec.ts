@@ -94,6 +94,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -123,6 +124,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -148,6 +150,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const fieldEncoder = getFieldEncoder(
@@ -166,7 +169,7 @@ describe("schemaBasedEncoding", () => {
 				{ nodeSchema: new Map() },
 			);
 			// There are multiple choices about how this case should be optimized, but the current implementation does this:
-			assert.equal(fieldEncoder.shape, context.nestedArrayEncoder(onlyTypeShape));
+			assert.equal(fieldEncoder.shape, context.nestedArrayEncoder(onlyTypeShape).shape);
 			assert.deepEqual(checkFieldEncode(fieldEncoder, context, []), [0]);
 			assert.deepEqual(
 				checkFieldEncode(fieldEncoder, context, [{ type: brand(Minimal.identifier) }]),
@@ -187,6 +190,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: string[] = [];
 			const storedSchema: TreeFieldStoredSchema = {
@@ -229,6 +233,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const nodeEncoder = getNodeEncoder(
 				{ fieldEncoderFromSchema: () => fail() },
@@ -247,6 +252,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -285,6 +291,7 @@ describe("schemaBasedEncoding", () => {
 				() => fail(),
 				fieldKinds,
 				testIdCompressor,
+				undefined /* incrementalEncoder */,
 			);
 			const log: TreeFieldStoredSchema[] = [];
 			const nodeEncoder = getNodeEncoder(
@@ -323,6 +330,7 @@ describe("schemaBasedEncoding", () => {
 			toStoredSchema(RecursiveType),
 			defaultSchemaPolicy,
 			testIdCompressor,
+			undefined /* incrementalEncoder */,
 		);
 		const nodeEncoder = context.nodeEncoderFromSchema(brand(RecursiveType.identifier));
 		const bufferEmpty = checkNodeEncode(nodeEncoder, context, {
@@ -347,7 +355,12 @@ describe("schemaBasedEncoding", () => {
 				const storedSchema = schemaData;
 				const tree = treeFactory(idCompressor);
 				// Check with checkFieldEncode
-				const context = buildContext(storedSchema, defaultSchemaPolicy, idCompressor);
+				const context = buildContext(
+					storedSchema,
+					defaultSchemaPolicy,
+					idCompressor,
+					undefined /* incrementalEncoder */,
+				);
 				checkFieldEncode(anyFieldEncoder, context, tree, idCompressor);
 
 				const fieldBatchContext: FieldBatchEncodingContext = {
