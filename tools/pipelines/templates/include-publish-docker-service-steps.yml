@@ -93,9 +93,6 @@ jobs:
   condition: and(succeeded(), ne('${{ parameters.tagName }}', ''))
   variables:
     version: $[ stageDependencies.build.build.outputs['SetVersion.version']]
-    # The build stage/job already ran component governance tasks.
-    # We don't need them again here even if we're checking out the repo.
-    skipComponentGovernanceDetection: true
   steps:
   - checkout: self
     clean: true
