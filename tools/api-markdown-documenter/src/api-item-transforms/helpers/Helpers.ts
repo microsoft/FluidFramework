@@ -35,8 +35,6 @@ import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
 	HeadingNode,
-	ListItemNode,
-	ListNode,
 	MarkdownBlockContentNode,
 	type SectionContent,
 	SectionNode,
@@ -1122,22 +1120,33 @@ export function wrapInSection(nodes: SectionContent[], heading?: Heading): Secti
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): ListNode | undefined {
+): MarkdownBlockContentNode | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;
 	}
 
-	return new ListNode(
-		apiEntryPoints.map((entryPoint) => {
-			const link = getLinkForApiItem(entryPoint, config);
-			return new ListItemNode([
+	return new MarkdownBlockContentNode({
+		type: "list",
+		ordered: false,
+		children: apiEntryPoints.map((entryPoint) => ({
+			type: "listItem",
+			children: [
 				{
-					type: "link",
-					url: link.target,
-					children: [{ type: "text", value: link.text }],
+					type: "paragraph",
+					children: [
+						{
+							type: "link",
+							url: getLinkForApiItem(entryPoint, config).target,
+							children: [
+								{
+									type: "text",
+									value: getLinkForApiItem(entryPoint, config).text,
+								},
+							],
+						},
+					],
 				},
-			]);
-		}),
-		/* ordered */ false,
-	);
+			],
+		})),
+	});
 }
