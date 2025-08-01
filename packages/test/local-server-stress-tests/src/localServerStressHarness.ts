@@ -1286,10 +1286,10 @@ const getFullModel = <TOperation extends BaseOperation>(
 	| ChangeConnectionState
 	| GetClientPendingState
 > =>
-	mixinAttach(
-		mixinSynchronization(
-			mixinAddRemoveClient(
-				mixinGetClientPending(
+	mixinGetClientPending(
+		mixinAttach(
+			mixinSynchronization(
+				mixinAddRemoveClient(
 					mixinClientSelection(mixinReconnect(ddsModel, options), options),
 					options,
 				),
@@ -1390,11 +1390,14 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | GetClientPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
+			assert(
+				state.validationClient.container.attachState === AttachState.Attached,
+				"Validation client must be attached before getting pending state",
+			);
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
-				clients.length > 0 &&
-				random.bool(options.clientJoinOptions.clientAddProbability)
+				clients.length > 0
 			) {
 				return {
 					type: "getClientPendingState",
@@ -1440,12 +1443,8 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 				pendingLocalState,
 			);
 
-			// Remove and dispose the source client
-			state.clients.splice(sourceClientIndex, 1);
-			sourceClient.container.dispose();
-
-			// Add the new client
 			state.clients.push(newClient);
+			sourceClient.container.dispose();
 			return state;
 		}
 
