@@ -9,7 +9,8 @@ import {
 	ddsModelMinimizers,
 	makeGenerator,
 	reducer,
-	saveFailures,
+	// saveFailures,
+	saveSuccesses,
 	type StressOperations,
 } from "../baseModel.js";
 import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
@@ -37,9 +38,9 @@ describe("Local Server Stress", () => {
 		// Uncomment to replay a particular seed.
 		// replay: 93,
 		only: [99],
-		saveFailures,
+		// saveFailures,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
-		// saveSuccesses,
+		saveSuccesses,
 		skip: [
 			...[18, 65, 98], // Number of keys not same
 			...[5, 49, 57], // Number of subDirectories not same,

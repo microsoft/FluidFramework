@@ -1424,7 +1424,7 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
 			);
 
-			const pendingLocalState = await sourceClient.container.getPendingLocalState?.();
+			const pendingLocalState = await sourceClient.container.getPendingLocalState();
 
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
