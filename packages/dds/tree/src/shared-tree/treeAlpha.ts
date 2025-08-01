@@ -51,6 +51,7 @@ import {
 	NodeKind,
 	tryGetTreeNodeForField,
 	isObjectNodeSchema,
+	isTreeNode,
 } from "../simple-tree/index.js";
 import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js";
 import {
@@ -191,11 +192,19 @@ export interface TreeIdentifierUtils {
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
+ *
+ * The unhydrated node creation APIs in this interface do not support {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
+ * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
+ * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
+ *
+ * Export APIs in this interface include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}
+ * if they are using {@link TreeEncodingOptions.useStoredKeys | stored keys}.
+ *
  * @privateRemarks
- * TODO: AB#43548:
- * How all the create and all the import and export APIs handle unknown optional fields needs to be figured out, tested and documented.
- * This will need to be extended/generalized to cover other future schema evolution options as well once they exist.
- * See also TreeBeta.clone with a similar issue.
+ * TODO:
+ * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
+ * If an option were added to these APIs, it could also be used to enable unknown optional fields.
  *
  * @system @sealed @alpha
  */
@@ -219,8 +228,6 @@ export interface TreeAlpha {
 	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
-	 * @privateRemarks
-	 * TODO: AB#43548: There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
@@ -263,6 +270,14 @@ export interface TreeAlpha {
 	 * Construct tree content compatible with a field defined by the provided `schema`.
 	 * @param schema - The schema for what to construct. As this is an {@link ImplicitFieldSchema}, a {@link FieldSchema}, {@link TreeNodeSchema} or {@link AllowedTypes} array can be provided.
 	 * @param data - The data used to construct the field content. See {@link (TreeAlpha:interface).(exportVerbose:1)}.
+	 * @remarks
+	 * This currently does not support input containing {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields| unknown optional fields}.
+	 * @privateRemarks
+	 * See TODOs in {@link TreeEncodingOptions}.
+	 *
+	 * TODO: clarify how this handles out of schema data.
+	 * Does it robustly validate? How do you use it with schema evolution features like staged allowed types and allowUnknownOptionalFields? Which errors are deferred until insertion/hydration?
+	 * Ensure whatever policy is chosen is documented, enforces, tested and applied consistently to all import code paths.
 	 */
 	importVerbose<const TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
@@ -484,14 +499,14 @@ export const TreeAlpha: TreeAlpha = {
 	exportConcise,
 
 	exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree {
+		if (isTreeValue(node)) {
+			return node;
+		}
 		const config: TreeEncodingOptions = { ...options };
 
 		const cursor = borrowCursorFromTreeNodeOrValue(node);
-		return verboseFromCursor(
-			cursor,
-			tryGetSchema(node) ?? fail(0xace /* invalid input */),
-			config,
-		);
+		const kernel = getKernel(node);
+		return verboseFromCursor(cursor, kernel.context, config);
 	},
 
 	exportCompressed(
@@ -701,17 +716,14 @@ function exportConcise(
 	node: TreeNode | TreeLeafValue | undefined,
 	options?: TreeEncodingOptions,
 ): ConciseTree | undefined {
-	if (node === undefined) {
-		return undefined;
+	if (!isTreeNode(node)) {
+		return node;
 	}
 	const config: TreeEncodingOptions = { ...options };
 
+	const kernel = getKernel(node);
 	const cursor = borrowCursorFromTreeNodeOrValue(node);
-	return conciseFromCursor(
-		cursor,
-		tryGetSchema(node) ?? fail(0xacd /* invalid input */),
-		config,
-	);
+	return conciseFromCursor(cursor, kernel.context, config);
 }
 
 /**

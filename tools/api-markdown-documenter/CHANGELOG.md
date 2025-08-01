@@ -1,6 +1,86 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.22.0
+
+### Documentation Domain is being removed
+
+This is a work in progress.
+
+The goal is for transformations to target [mdast](https://github.com/syntax-tree/mdast) directly, rather than going through an intermediate domain.
+Transformations to HTML will use `mdast-util-to-hast`.
+
+#### Markdown Nodes
+
+`MarkdownBlockContentNode` has been added to the Documentation Domain temporarily.
+They allow `mdast` "block content" trees to be used directly within the `DocumentationNode` hierarchy.
+
+This functionality will be used to iteratively replace and remove `DocumentationNode` implementations, until the entire domain can be removed.
+
+Contexts that use conceptual "phrasing content" in the Documentation Domain now take `mdast` "phrasing content" directly as children.
+
+#### Removed Node kinds
+
+The following kinds of nodes have been removed from the library.
+Usages should be converted to `MarkdownBlockContentNode` or `mdast` directly as appropriate.
+
+- `CodeSpanNode`
+- `FencedCodeBlockNode`
+- `HorizontalRuleNode`
+- `LineBreakNode`
+- `LinkNode`
+- `ParagraphNode`
+- `PlainTextNode`
+- `SpanNode`
+
 ## 0.21.0
+
+### Add DocumentationNode -> mdast transformation layer
+
+Adds transformation library for generating [mdast](https://github.com/syntax-tree/mdast) from `DocumentationNode`s.
+
+#### Example
+
+```typescript
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+// Transform the API Model to documents
+const documents = transformApiModel({
+	apiModel,
+});
+
+// Convert the documents to Markdown via mdast
+const markdownDocuments = documents.map((document) => documentToMarkdown(document, {}));
+
+// Use the resulting Markdown documents with your favorite mdast-compatible library!
+```
+
+### List parsing
+
+Markdown-like list syntax is now supported in TSDoc comments.
+This support is limited to lists of a single depth (i.e., nested lists are not yet supported).
+
+#### Example
+
+```typescript
+/**
+ * Foo
+ * - bar
+ * - baz
+ */
+export function foo(): string {
+    ...
+}
+```
+
+TSDoc parses the above as a paragraph of content that would otherwise be rendered as `Foo -bar -baz`, since soft line wraps are not treated as line breaks.
+This is true for GitHub-flavored Markdown as well, but certain syntax like lists are special cased.
+
+This library now accounts for list-like syntax, and similarly special-cases it to ensure the output matches the intent of the input.
 
 ### `DocumentationNode.singleLine` has been removed
 
@@ -8,6 +88,12 @@ This flag was never more than a hack to make our custom Markdown rendering work 
 It doesn't make sense in the context of a general-purpose documentation domain, as it is specifically in terms of whether or not the associated content could be rendered on a single line in *Markdown*.
 
 It has been removed and is no longer used by the system.
+
+### `PlainTextNode.text` property removed
+
+`text` was a redundant alias for `value`, which `PlainTextNode` inherits as a literal node.
+This property has now been removed.
+Use `PlainTextNode.value` instead.
 
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
@@ -37,7 +123,7 @@ Their `createFromPlainText` static factory functions have also been removed, as 
 
 Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
 
-### `FencedCodeBlockNode` updated to only allow plain text and line breaks
+### `FencedCodeBlockNode` updated to be a literal node that accepts a string
 
 This matches the requirements for fenced code in Markdown and is all that was required by the system.
 

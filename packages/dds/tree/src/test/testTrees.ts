@@ -14,17 +14,24 @@ import {
 	ObjectNodeStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type TreeStoredSchema,
+	TreeStoredSchemaRepository,
 	type TreeTypeSet,
 } from "../core/index.js";
 import {
 	FieldKinds,
 	type FlexFieldKind,
 	type FullSchemaPolicy,
+	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	fieldKinds,
+	jsonableTreeFromFieldCursor,
 } from "../feature-libraries/index.js";
-import type { TreeStoredContent } from "../shared-tree/index.js";
+import {
+	ForestTypeExpensiveDebug,
+	type SchematizingSimpleTreeView,
+	type TreeStoredContent,
+} from "../shared-tree/index.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	getStoredSchema,
@@ -39,16 +46,20 @@ import {
 	type ValidateRecursiveSchema,
 	type LazyItem,
 	schemaStatics,
+	type TreeView,
+	TreeViewConfigurationAlpha,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { jsonableTreesFromFieldCursor } from "./feature-libraries/chunked-forest/fieldCursorTestUtilities.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
 import { brand } from "../util/index.js";
 import type { Partial } from "@sinclair/typebox";
 // eslint-disable-next-line import/no-internal-modules
 import { isLazy } from "../simple-tree/core/index.js";
-import { fieldCursorFromInsertable } from "./utils.js";
+import { fieldCursorFromInsertable, testIdCompressor } from "./utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { typeboxValidator } from "../external-utilities/typeboxValidator.js";
+// eslint-disable-next-line import/no-internal-modules
+import { independentInitializedViewInternal } from "../shared-tree/independentView.js";
 
 interface TestSimpleTree {
 	readonly name: string;
@@ -65,6 +76,16 @@ interface TestTree {
 	readonly schemaData: TreeStoredSchema;
 	readonly policy: FullSchemaPolicy;
 	readonly treeFactory: (idCompressor?: IIdCompressor) => JsonableTree[];
+}
+
+/**
+ * Content for a test document, which can have a different stored schema than just toStoredSchema(schema).
+ */
+export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
+	/**
+	 * True if and only if the document had content in unknown optional fields.
+	 */
+	readonly hasUnknownOptionalFields: boolean;
 }
 
 function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
@@ -86,7 +107,7 @@ function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
 	return test(
 		data.name,
 		toStoredSchema(data.schema),
-		jsonableTreesFromFieldCursor(
+		jsonableTreeFromFieldCursor(
 			fieldCursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root()),
 		),
 	);
@@ -283,7 +304,7 @@ export const testTrees: readonly TestTree[] = [
 				persistedMetadata: undefined,
 			},
 		},
-		jsonableTreesFromFieldCursor(fieldJsonCursor([1, 2, 3])),
+		jsonableTreeFromFieldCursor(fieldJsonCursor([1, 2, 3])),
 	),
 	{
 		name: "node-with-identifier-field",
@@ -291,7 +312,7 @@ export const testTrees: readonly TestTree[] = [
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
-			return jsonableTreesFromFieldCursor(
+			return jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(HasIdentifierField, { field: id }),
 			);
 		},
@@ -347,6 +368,111 @@ export const testTrees: readonly TestTree[] = [
 		],
 	),
 ];
+
+export class HasUnknownOptionalFields extends factory.objectAlpha(
+	"hasUnknownOptionalFields",
+	{},
+	{
+		allowUnknownOptionalFields: true,
+	},
+) {}
+
+export class HasUnknownOptionalFieldsV2 extends factory.objectRecursive(
+	"hasUnknownOptionalFields",
+	{
+		recursive: factory.optionalRecursive([() => HasUnknownOptionalFieldsV2]),
+		minimal: factory.optional(Minimal),
+		hasMinimalValueField: factory.optional(HasMinimalValueField),
+		leaf: factory.optional(SchemaFactoryAlpha.string),
+	},
+	{
+		allowUnknownOptionalFields: true,
+	},
+) {}
+
+/**
+ * Collection of {@link TestDocument|TestDocuments}.
+ *
+ * Use these test documents to test import and export APIs.
+ *
+ * Can be used to test schema evolution related features where view and stored schema can diverge.
+ * Includes for example documents with unknown optional fields;
+ *
+ * TODO: will include documents with staged allowed types (once supported) both before and after the stored schema update.
+ */
+export const testDocuments: readonly TestDocument[] = [
+	...testSimpleTrees.map(
+		(tree): TestDocument => ({
+			name: tree.name,
+			schema: tree.schema,
+			hasUnknownOptionalFields: false,
+			ambiguous: tree.ambiguous,
+			policy: defaultSchemaPolicy,
+			schemaData: toStoredSchema(tree.schema),
+			treeFactory: () =>
+				jsonableTreeFromFieldCursor(
+					fieldCursorFromInsertable<UnsafeUnknownSchema>(tree.schema, tree.root()),
+				),
+		}),
+	),
+	{
+		ambiguous: false,
+		name: "AllowsUnknownOptionalFields",
+		schema: HasUnknownOptionalFields,
+		// Unknown optional fields are allowed but empty in this document.
+		hasUnknownOptionalFields: false,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(HasUnknownOptionalFieldsV2),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasUnknownOptionalFields, {})),
+	},
+	{
+		ambiguous: false,
+		name: "HasUnknownOptionalFields",
+		schema: HasUnknownOptionalFields,
+		hasUnknownOptionalFields: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(HasUnknownOptionalFieldsV2),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(
+					HasUnknownOptionalFieldsV2,
+					new HasUnknownOptionalFieldsV2({
+						recursive: new HasUnknownOptionalFieldsV2({ leaf: "nested leaf" }),
+						minimal: {},
+						hasMinimalValueField: { field: {} },
+						leaf: "leaf",
+					}),
+				),
+			),
+	},
+];
+
+export function testDocumentIndependentView(
+	document: TestDocument,
+): SchematizingSimpleTreeView<UnsafeUnknownSchema> {
+	const config = new TreeViewConfigurationAlpha({
+		schema: document.schema,
+		preventAmbiguity: !document.ambiguous,
+		enableSchemaValidation: true,
+	});
+	const idCompressor = testIdCompressor;
+
+	const cursor = cursorForJsonableTreeField(document.treeFactory(idCompressor));
+
+	const view: SchematizingSimpleTreeView<ImplicitFieldSchema> =
+		independentInitializedViewInternal(
+			config,
+			{
+				forest: ForestTypeExpensiveDebug,
+				jsonValidator: typeboxValidator,
+			},
+			new TreeStoredSchemaRepository(document.schemaData),
+			cursor,
+			idCompressor,
+		);
+	return view as TreeView<ImplicitFieldSchema> as SchematizingSimpleTreeView<UnsafeUnknownSchema>;
+}
 
 // TODO: integrate data sources for wide and deep trees from ops size testing and large data generators for cursor performance testing.
 // TODO: whiteboard like data with near term and eventual schema approaches

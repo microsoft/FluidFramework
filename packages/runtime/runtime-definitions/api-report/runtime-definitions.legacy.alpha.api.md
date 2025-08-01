@@ -242,7 +242,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly scope: FluidObject;
     setChannelDirty(address: string): void;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IRuntimeStorageService;
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
@@ -297,6 +297,29 @@ export interface IRuntimeMessagesContent {
     readonly clientSequenceNumber: number;
     readonly contents: unknown;
     readonly localOpMetadata: unknown;
+}
+
+// @alpha @legacy
+export interface IRuntimeStorageService {
+    // @deprecated (undocumented)
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
+    // @deprecated (undocumented)
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    // @deprecated (undocumented)
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    // @deprecated (undocumented)
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    // @deprecated (undocumented)
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    // @deprecated (undocumented)
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    // @deprecated (undocumented)
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
 }
 
 // @alpha @legacy
@@ -394,6 +417,9 @@ export interface LocalAttributionKey {
     // (undocumented)
     type: "local";
 }
+
+// @alpha @legacy
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @alpha @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;

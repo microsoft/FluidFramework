@@ -31,14 +31,26 @@ const schemaFactory = new SchemaFactoryAlpha("Test");
 describe("simple-tree customTree", () => {
 	describe("customFromCursor", () => {
 		it("leaf", () => {
-			const schema = getUnhydratedContext(JsonAsTree.Tree).schema;
+			const context = getUnhydratedContext(JsonAsTree.Tree);
 			const leaf_options = { useStoredKeys: true };
 			assert.equal(
-				customFromCursor(singleJsonCursor(null), leaf_options, schema, () => fail()),
+				customFromCursor(
+					singleJsonCursor(null),
+					leaf_options,
+					context.flexContext.schema.nodeSchema,
+					context.schema,
+					() => fail(),
+				),
 				null,
 			);
 			assert.equal(
-				customFromCursor(singleJsonCursor(5), leaf_options, schema, () => fail()),
+				customFromCursor(
+					singleJsonCursor(5),
+					leaf_options,
+					context.flexContext.schema.nodeSchema,
+					context.schema,
+					() => fail(),
+				),
 				5,
 			);
 		});
@@ -49,7 +61,7 @@ describe("simple-tree customTree", () => {
 				b: schemaFactory.required(schemaFactory.number, { key: "stored" }),
 			}) {}
 
-			const schema = getUnhydratedContext(A).schema;
+			const context = getUnhydratedContext(A);
 			const contentCursor = fieldCursorFromInsertable(A, { a: 1, b: 2 });
 			contentCursor.enterNode(0);
 			assert.deepEqual(
@@ -58,7 +70,8 @@ describe("simple-tree customTree", () => {
 					{
 						useStoredKeys: true,
 					},
-					schema,
+					context.flexContext.schema.nodeSchema,
+					context.schema,
 					(cursor) => ({ child: cursor.value }),
 				),
 				{ a: { child: 1 }, stored: { child: 2 } },
@@ -70,7 +83,8 @@ describe("simple-tree customTree", () => {
 					{
 						useStoredKeys: false,
 					},
-					schema,
+					context.flexContext.schema.nodeSchema,
+					context.schema,
 					(cursor) => ({ child: cursor.value }),
 				),
 				{ a: { child: 1 }, b: { child: 2 } },

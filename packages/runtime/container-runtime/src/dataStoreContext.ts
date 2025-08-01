@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import {
 	IDeltaManager,
@@ -25,7 +29,6 @@ import {
 import { assert, LazyPromise, unreachableCase } from "@fluidframework/core-utils/internal";
 import { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import {
-	IDocumentStorageService,
 	type ISnapshot,
 	IDocumentMessage,
 	ISnapshotTree,
@@ -63,6 +66,7 @@ import {
 	type IRuntimeMessageCollection,
 	type IFluidDataStoreFactory,
 	type PackagePath,
+	type IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	addBlobToSummary,
@@ -146,7 +150,7 @@ export interface IFluidDataStoreContextInternal extends IFluidDataStoreContext {
 export interface IFluidDataStoreContextProps {
 	readonly id: string;
 	readonly parentContext: IFluidParentContextPrivate;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IRuntimeStorageService;
 	readonly scope: FluidObject;
 	readonly createSummarizerNodeFn: CreateChildSummarizerNodeFn;
 	/**
@@ -243,7 +247,11 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidDataStoreContext, IDisposable
+	implements
+		IFluidDataStoreContextInternal,
+		IFluidDataStoreContext,
+		IDisposable,
+		IProvideLayerCompatDetails
 {
 	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
@@ -424,7 +432,7 @@ export abstract class FluidDataStoreContext
 	 * The parent which provided this information currently can be the container runtime or a datastore (if the datastore this context is for is nested under another one).
 	 */
 	private readonly parentContext: IFluidParentContextPrivate;
-	public readonly storage: IDocumentStorageService;
+	public readonly storage: IRuntimeStorageService;
 	public readonly scope: FluidObject;
 	/**
 	 * The loading group to which the data store belongs to.

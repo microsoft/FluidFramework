@@ -53,6 +53,7 @@ export {
 	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
+	normalizeToAnnotatedAllowedType,
 	unannotateImplicitAllowedTypes,
 	markSchemaMostDerived,
 	evaluateLazySchema,
@@ -76,7 +77,7 @@ export type {
 	AllowedTypeMetadata,
 	AnnotatedAllowedTypes,
 } from "./allowedTypes.js";
-export { walkAllowedTypes, type SchemaVisitor } from "./walkSchema.js";
+export { walkAllowedTypes, walkNodeSchema, type SchemaVisitor } from "./walkSchema.js";
 export { Context, HydratedContext } from "./context.js";
 export {
 	getOrCreateNodeFromInnerNode,

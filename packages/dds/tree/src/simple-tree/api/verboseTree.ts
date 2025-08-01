@@ -12,14 +12,15 @@ import {
 	aboveRootPlaceholder,
 	EmptyKey,
 	keyAsDetachedField,
+	LeafNodeStoredSchema,
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
+	type TreeNodeStoredSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import type { ImplicitFieldSchema } from "../fieldSchema.js";
-import { NodeKind } from "../core/index.js";
-import type { TreeNodeSchema, ImplicitAllowedTypes, TreeLeafValue } from "../core/index.js";
+import type { Context, TreeLeafValue, TreeNodeSchema } from "../core/index.js";
 import {
 	isTreeValue,
 	stackTreeFieldCursor,
@@ -279,7 +280,7 @@ function verboseTreeAdapter(options: SchemalessParseOptions): CursorAdapter<Verb
  */
 export function verboseFromCursor(
 	reader: ITreeCursor,
-	rootSchema: ImplicitAllowedTypes,
+	context: Context,
 	options: TreeEncodingOptions,
 ): VerboseTree {
 	const config: Required<TreeEncodingOptions> = {
@@ -287,20 +288,28 @@ export function verboseFromCursor(
 		...options,
 	};
 
-	const schemaMap = getUnhydratedContext(rootSchema).schema;
+	const storedSchemaMap = context.flexContext.schema.nodeSchema;
+	const schemaMap = context.schema;
 
-	return verboseFromCursorInner(reader, config, schemaMap);
+	return verboseFromCursorInner(reader, config, storedSchemaMap, schemaMap);
 }
 
 function verboseFromCursorInner(
 	reader: ITreeCursor,
 	options: Required<TreeEncodingOptions>,
+	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): VerboseTree {
-	const fields = customFromCursor(reader, options, schema, verboseFromCursorInner);
+	const fields = customFromCursor(
+		reader,
+		options,
+		storedSchema,
+		schema,
+		verboseFromCursorInner,
+	);
 	const nodeSchema =
-		schema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);
-	if (nodeSchema.kind === NodeKind.Leaf) {
+		storedSchema.get(reader.type) ?? fail(0xb3c /* missing schema for type in cursor */);
+	if (nodeSchema instanceof LeafNodeStoredSchema) {
 		return fields as TreeLeafValue;
 	}
 

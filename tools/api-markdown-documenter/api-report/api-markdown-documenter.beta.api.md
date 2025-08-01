@@ -25,16 +25,25 @@ import { ApiProperty } from '@microsoft/api-extractor-model';
 import { ApiPropertySignature } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
+import type { BlockContent as BlockContent_2 } from 'mdast';
 import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
+import type { ListItem } from 'mdast';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
 import type { Nodes } from 'hast';
+import type { Nodes as Nodes_2 } from 'mdast';
+import { Options } from 'mdast-util-to-markdown';
 import type { Parent } from 'unist';
+import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
+import type { Root as Root_2 } from 'mdast';
+import type { RootContent } from 'mdast';
+import type { TableCell } from 'mdast';
+import type { TableRow } from 'mdast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
@@ -162,28 +171,23 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    fencedCode: FencedCodeBlockNode;
-    // (undocumented)
-    horizontalRule: HorizontalRuleNode;
-    // (undocumented)
     list: ListNode;
     // (undocumented)
-    paragraph: ParagraphNode;
+    markdownBlockContent: MarkdownBlockContentNode;
     // (undocumented)
     table: TableNode;
 }
 
-// @public @sealed
-export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
-    constructor(value: string);
-    static createFromPlainText(text: string): CodeSpanNode;
-    static readonly Empty: CodeSpanNode;
-    get isEmpty(): boolean;
-    readonly type = "codeSpan";
-}
+// @public
+export function blockContentToMarkdown(node: BlockContent, context: ToMarkdownContext): [BlockContent_2];
 
 // @public
-function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
+export type BlockContentToMarkdownTransformations = {
+    readonly [K in keyof BlockContentMap]: ToMarkdownTransformation<BlockContentMap[K], BlockContent_2[]>;
+};
+
+// @public
+function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode;
 
 // @public
 function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
@@ -240,8 +244,6 @@ export interface DocumentationHierarchyConfigurationBase {
 
 // @public
 export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TValue>, DocumentationNode {
-    readonly isLiteral: true;
-    readonly isParent: false;
     readonly type: string;
     readonly value: TValue;
 }
@@ -249,18 +251,12 @@ export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TVal
 // @public
 export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements DocumentationLiteralNode<TValue> {
     protected constructor(value: TValue);
-    abstract get isEmpty(): boolean;
-    readonly isLiteral = true;
-    readonly isParent = false;
     abstract type: string;
     readonly value: TValue;
 }
 
 // @public
 export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
-    readonly isEmpty: boolean;
-    readonly isLiteral: boolean;
-    readonly isParent: boolean;
     readonly type: string;
 }
 
@@ -277,22 +273,15 @@ export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlC
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
-export interface DocumentationParentNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentationNode, Data>, DocumentationNode {
+export interface DocumentationParentNode<TDocumentationNode extends Node_2> extends Parent<TDocumentationNode, Data>, DocumentationNode {
     readonly children: TDocumentationNode[];
-    readonly hasChildren: boolean;
-    readonly isLiteral: false;
-    readonly isParent: true;
     readonly type: string;
 }
 
 // @public
-export abstract class DocumentationParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode> implements DocumentationParentNode<TDocumentationNode> {
+export abstract class DocumentationParentNodeBase<TDocumentationNode extends Node_2> implements DocumentationParentNode<TDocumentationNode> {
     protected constructor(children: TDocumentationNode[]);
     readonly children: TDocumentationNode[];
-    get hasChildren(): boolean;
-    get isEmpty(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = true;
     abstract type: string;
 }
 
@@ -339,6 +328,9 @@ export interface DocumentNodeProps {
 export function documentToHtml(document: DocumentNode, config: ToHtmlConfiguration): Root;
 
 // @public
+export function documentToMarkdown(document: DocumentNode, config: ToMarkdownConfiguration): Root_2;
+
+// @public
 export interface DocumentWriter {
     decreaseIndent(): void;
     ensureNewLine(): void;
@@ -355,17 +347,6 @@ export interface DocumentWriter {
 export namespace DocumentWriter {
     export function create(): DocumentWriter;
 }
-
-// @public @sealed
-export class FencedCodeBlockNode extends DocumentationParentNodeBase<FencedCodeBlockNodeContent> {
-    constructor(children: FencedCodeBlockNodeContent[], language?: string);
-    static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
-    readonly language?: string;
-    readonly type = "fencedCode";
-}
-
-// @public
-export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
 
 // @public
 export interface FileSystemConfiguration {
@@ -453,9 +434,6 @@ export class HeadingNode implements DocumentationNode, Heading {
     id?: string | undefined);
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
-    get isEmpty(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = false;
     readonly title: string;
     readonly type = "heading";
 }
@@ -494,16 +472,6 @@ export type HierarchyOptions = {
     readonly getDocumentName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
     readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
-
-// @public @sealed
-export class HorizontalRuleNode implements DocumentationNode {
-    constructor();
-    readonly isEmpty = false;
-    readonly isLiteral = true;
-    readonly isParent = false;
-    static readonly Singleton: HorizontalRuleNode;
-    readonly type = "horizontalRule";
-}
 
 declare namespace HtmlRenderer {
     export {
@@ -546,34 +514,10 @@ declare namespace LayoutUtilities {
 }
 export { LayoutUtilities }
 
-// @public @sealed
-export class LineBreakNode implements DocumentationNode {
-    constructor();
-    readonly isEmpty = false;
-    readonly isLiteral = true;
-    readonly isParent = false;
-    static readonly Singleton: LineBreakNode;
-    readonly type = "lineBreak";
-}
-
 // @public
 export interface Link {
     readonly target: UrlTarget;
     readonly text: string;
-}
-
-// @public @sealed
-export class LinkNode implements DocumentationNode, Link {
-    constructor(
-    text: string,
-    target: UrlTarget);
-    static createFromPlainTextLink(link: Link): LinkNode;
-    get isEmpty(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = false;
-    readonly target: UrlTarget;
-    readonly text: string;
-    readonly type = "link";
 }
 
 // @beta
@@ -639,18 +583,10 @@ export interface LoggingConfiguration {
 // @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
-// @public
-export interface MarkdownRenderConfiguration extends LoggingConfiguration {
-    readonly customRenderers?: MarkdownRenderers;
-    readonly startingHeadingLevel?: number;
-}
-
-// @public
-export interface MarkdownRenderContext extends TextFormatting {
-    readonly customRenderers?: MarkdownRenderers;
-    readonly headingLevel: number;
-    readonly insideCodeBlock?: boolean;
-    readonly insideTable?: boolean;
+// @public @sealed
+export class MarkdownBlockContentNode extends DocumentationLiteralNodeBase<BlockContent_2> {
+    constructor(value: BlockContent_2);
+    readonly type = "markdownBlockContent";
 }
 
 declare namespace MarkdownRenderer {
@@ -660,52 +596,13 @@ declare namespace MarkdownRenderer {
         RenderDocumentsAsMarkdownOptions as RenderDocumentsOptions,
         renderDocumentsAsMarkdown as renderDocuments,
         renderDocument_2 as renderDocument,
-        renderNode,
-        renderNodes
+        RenderDocumentAsMarkdownConfiguration,
+        renderMarkdown
     }
 }
 export { MarkdownRenderer }
 
-// @public
-export interface MarkdownRenderers {
-    readonly [documentationNodeKind: string]: (node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext) => void;
-}
-
 export { NewlineKind }
-
-// @public @sealed
-export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainText(text: string): ParagraphNode;
-    static readonly Empty: ParagraphNode;
-    readonly type = "paragraph";
-}
-
-// @public
-export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
-
-// @public
-export interface PhrasingContentMap {
-    // (undocumented)
-    codeSpan: CodeSpanNode;
-    // (undocumented)
-    lineBreak: LineBreakNode;
-    // (undocumented)
-    link: LinkNode;
-    // (undocumented)
-    span: SpanNode;
-    // (undocumented)
-    text: PlainTextNode;
-}
-
-// @public @sealed
-export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
-    constructor(text: string);
-    static readonly Empty: PlainTextNode;
-    get isEmpty(): boolean;
-    get text(): string;
-    readonly type = "text";
-}
 
 // @public
 export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
@@ -716,24 +613,28 @@ export { ReleaseTag }
 function renderApiModelAsMarkdown(options: RenderApiModelAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, MarkdownRenderConfiguration, FileSystemConfiguration {
+interface RenderApiModelAsMarkdownOptions extends ApiItemTransformationOptions, RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
 }
 
 // @public
 function renderDocument(document: DocumentNode, config: RenderDocumentAsHtmlConfiguration): string;
 
 // @public
-function renderDocument_2(document: DocumentNode, config: MarkdownRenderConfiguration): string;
+function renderDocument_2(document: DocumentNode, config: RenderDocumentAsMarkdownConfiguration): string;
 
 // @public @sealed
 export interface RenderDocumentAsHtmlConfiguration extends ToHtmlConfiguration, RenderHtmlConfiguration {
+}
+
+// @public @sealed
+export interface RenderDocumentAsMarkdownConfiguration extends ToMarkdownConfiguration, RenderMarkdownConfiguration {
 }
 
 // @public
 function renderDocumentsAsMarkdown(documents: readonly DocumentNode[], options: RenderDocumentsAsMarkdownOptions): Promise<void>;
 
 // @public
-interface RenderDocumentsAsMarkdownOptions extends MarkdownRenderConfiguration, FileSystemConfiguration {
+interface RenderDocumentsAsMarkdownOptions extends RenderDocumentAsMarkdownConfiguration, FileSystemConfiguration {
 }
 
 // @public
@@ -745,13 +646,18 @@ export interface RenderHtmlConfiguration {
 }
 
 // @public
-function renderNode(node: DocumentationNode, writer: DocumentWriter, context: MarkdownRenderContext): void;
+function renderMarkdown(tree: Nodes_2, config: RenderMarkdownConfiguration): string;
 
-// @public
-function renderNodes(children: DocumentationNode[], writer: DocumentWriter, childContext: MarkdownRenderContext): void;
+// @public @sealed
+export interface RenderMarkdownConfiguration {
+    readonly mdastToMarkdownOptions?: Partial<Options>;
+}
 
 // @public
 export type SectionContent = BlockContent | SectionNode;
+
+// @public
+export function sectionContentToMarkdown(node: SectionContent, context: ToMarkdownContext): RootContent[];
 
 // @public @sealed
 export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
@@ -768,15 +674,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
-
-// @public
-export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], formatting: TextFormatting);
-    static createFromPlainText(text: string, formatting: TextFormatting): SpanNode;
-    static readonly Empty: SpanNode;
-    readonly textFormatting: TextFormatting;
-    readonly type = "span";
-}
 
 // @public @sealed
 export class TableBodyCellNode extends TableCellNode {
@@ -841,13 +738,6 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
     readonly type = "tableRow";
 }
 
-// @public @sealed
-export interface TextFormatting {
-    readonly bold?: true;
-    readonly italic?: true;
-    readonly strikethrough?: true;
-}
-
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
@@ -871,6 +761,31 @@ export interface ToHtmlTransformations {
 }
 
 // @public
+export interface ToMarkdownConfiguration extends LoggingConfiguration {
+    readonly customTransformations?: Partial<ToMarkdownTransformations>;
+    readonly startingHeadingLevel?: number;
+}
+
+// @public
+export interface ToMarkdownContext {
+    readonly headingLevel: number;
+    readonly logger: Logger;
+    readonly transformations: ToMarkdownTransformations;
+}
+
+// @public
+export type ToMarkdownTransformation<TIn extends DocumentationNode = DocumentationNode, TOut extends Nodes_2[] = [Nodes_2]> = (node: TIn, context: ToMarkdownContext) => TOut;
+
+// @public
+export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & {
+    readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
+    readonly ["listItem"]: ToMarkdownTransformation<ListItemNode, [ListItem]>;
+    readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;
+    readonly ["tableCell"]: ToMarkdownTransformation<TableCellNode, [TableCell]>;
+    readonly ["tableRow"]: ToMarkdownTransformation<TableRowNode, [TableRow]>;
+};
+
+// @public
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration, generateChildSection: (apiItem: ApiItem) => SectionNode[]) => SectionNode[];
 
 // @public
@@ -880,7 +795,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
-export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
+export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode[];
 
 // @public
 export type UrlTarget = string;

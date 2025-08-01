@@ -11,7 +11,7 @@ import {
 	bufferToString,
 	gitHashFile,
 } from "@fluid-internal/client-utils";
-import { AttachState } from "@fluidframework/container-definitions";
+import { AttachState } from "@fluidframework/container-definitions/internal";
 import { IContainerRuntimeEvents } from "@fluidframework/container-runtime-definitions/internal";
 import { ConfigTypes, IConfigProviderBase, IErrorBase } from "@fluidframework/core-interfaces";
 import {
@@ -20,8 +20,10 @@ import {
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClientDetails, SummaryType } from "@fluidframework/driver-definitions";
-import { IDocumentStorageService } from "@fluidframework/driver-definitions/internal";
-import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IRuntimeStorageService,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandleInternalPayloadPending,
 	isFluidHandlePayloadPending,
@@ -49,7 +51,7 @@ import {
 
 const MIN_TTL = 24 * 60 * 60; // same as ODSP
 abstract class BaseMockBlobStorage
-	implements Pick<IDocumentStorageService, "readBlob" | "createBlob">
+	implements Pick<IRuntimeStorageService, "readBlob" | "createBlob">
 {
 	public blobs: Map<string, ArrayBufferLike> = new Map();
 	public abstract createBlob(blob: ArrayBufferLike);
@@ -111,16 +113,16 @@ export class MockRuntime
 
 	public disposed: boolean = false;
 
-	public get storage(): IDocumentStorageService {
+	public get storage(): IRuntimeStorageService {
 		return (this.attachState === AttachState.Detached
 			? this.detachedStorage
-			: this.attachedStorage) as unknown as IDocumentStorageService;
+			: this.attachedStorage) as unknown as IRuntimeStorageService;
 	}
 
 	private processing = false;
 	public unprocessedBlobs = new Set();
 
-	public getStorage(): IDocumentStorageService {
+	public getStorage(): IRuntimeStorageService {
 		return {
 			createBlob: async (blob: ArrayBufferLike) => {
 				if (this.processing) {
@@ -141,7 +143,7 @@ export class MockRuntime
 				return P;
 			},
 			readBlob: async (id: string) => this.storage.readBlob(id),
-		} as unknown as IDocumentStorageService;
+		} as unknown as IRuntimeStorageService;
 	}
 
 	public sendBlobAttachOp(localId: string, blobId?: string): void {
@@ -268,7 +270,7 @@ export class MockRuntime
 	}
 
 	public async processStashed(processStashedWithRetry?: boolean): Promise<void> {
-		const uploadP = this.blobManager.stashedBlobsUploadP;
+		// const uploadP = this.blobManager.stashedBlobsUploadP;
 		this.processing = true;
 		if (processStashedWithRetry) {
 			await this.processBlobs(false, false, 0);
@@ -279,7 +281,7 @@ export class MockRuntime
 		} else {
 			await this.processBlobs(true);
 		}
-		await uploadP;
+		// await uploadP;
 		this.processing = false;
 	}
 

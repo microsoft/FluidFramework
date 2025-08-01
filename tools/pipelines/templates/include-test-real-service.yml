@@ -111,7 +111,7 @@ parameters:
 
 stages:
 - stage: ${{ parameters.stageId}}
-  ${{ if or(eq(parameters.stageId, 'e2e_routerlicious'), eq(parameters.stageId, 'e2e_frs')) }}:
+  ${{ if in(parameters.stageId, 'e2e_routerlicious', 'e2e_frs', 'stress_tests_odsp', 'stress_tests_odspdf', 'stress_tests_frs', 'stress_tests_frs_canary') }}:
     lockBehavior: sequential
   condition: ${{ parameters.condition }}
   displayName: ${{ parameters.stageDisplayName }}

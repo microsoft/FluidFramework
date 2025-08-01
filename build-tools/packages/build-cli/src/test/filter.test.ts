@@ -6,7 +6,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { type Package, getResolvedFluidRoot } from "@fluidframework/build-tools";
-import chai, { expect } from "chai";
+import { expect } from "chai";
+import * as chai from "chai";
 import assertArrays from "chai-arrays";
 import {
 	AllPackagesSelectionCriteria,

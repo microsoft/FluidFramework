@@ -131,7 +131,7 @@ export class TreeNodeKernel {
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
 	 *
-	 * @param initialContext - context from when this node was originally crated.
+	 * @param initialContext - context from when this node was originally created. Only used when unhydrated.
 	 * @param innerNode - When unhydrated/raw or marinated the MapTreeNode. FlexTreeNode when cooked.
 	 * @remarks
 	 * Exactly one kernel per TreeNode should be created.

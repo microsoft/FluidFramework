@@ -5,6 +5,8 @@
 
 import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
+import { phrasing } from "mdast-util-phrasing";
+import { toHast } from "mdast-util-to-hast";
 
 import type { DocumentNode, DocumentationNode } from "../documentation-domain/index.js";
 
@@ -91,6 +93,10 @@ export function documentationNodeToHtml(
 	configOrContext: TransformationConfiguration | TransformationContext,
 ): HastTree {
 	const context = getContext(configOrContext);
+
+	if (phrasing(node)) {
+		return toHast(node);
+	}
 
 	if (context.transformations[node.type] === undefined) {
 		throw new Error(

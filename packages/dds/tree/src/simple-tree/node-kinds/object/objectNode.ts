@@ -7,7 +7,7 @@ import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/inte
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { FieldKey, SchemaPolicy } from "../../../core/index.js";
+import type { FieldKey } from "../../../core/index.js";
 import {
 	FieldKinds,
 	isTreeValue,
@@ -55,12 +55,11 @@ import {
 	getUnhydratedContext,
 } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
-import {
-	isObjectNodeSchema,
-	type ObjectNodeSchema,
-	type ObjectNodeSchemaInternalData,
-	type ObjectNodeSchemaPrivate,
-	type UnannotateSchemaRecord,
+import type {
+	ObjectNodeSchema,
+	ObjectNodeSchemaInternalData,
+	ObjectNodeSchemaPrivate,
+	UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import {
@@ -224,8 +223,9 @@ function createFlexKeyMapping(
 ): SimpleKeyMap {
 	const keyMap: Map<string | symbol, { storedKey: FieldKey; schema: FieldSchema }> = new Map();
 	for (const [propertyKey, fieldSchema] of Object.entries(fields)) {
-		const storedKey = getStoredKey(propertyKey, fieldSchema);
-		keyMap.set(propertyKey, { storedKey, schema: normalizeFieldSchema(fieldSchema) });
+		const schema = normalizeFieldSchema(fieldSchema);
+		const storedKey = getStoredKey(propertyKey, schema);
+		keyMap.set(propertyKey, { storedKey, schema });
 	}
 
 	return keyMap;
@@ -647,24 +647,6 @@ function assertUniqueKeys<
 		}
 		derivedStoredKeys.add(storedKey);
 	}
-}
-
-/**
- * Creates a policy for allowing unknown optional fields on an object node which delegates to the policy defined
- * on the object node's internal schema data.
- */
-export function createUnknownOptionalFieldPolicy(
-	schema: ImplicitFieldSchema,
-): SchemaPolicy["allowUnknownOptionalFields"] {
-	const context = getUnhydratedContext(schema);
-	return (identifier) => {
-		const storedSchema = context.schema.get(identifier);
-		return (
-			storedSchema !== undefined &&
-			isObjectNodeSchema(storedSchema) &&
-			storedSchema.allowUnknownOptionalFields
-		);
-	};
 }
 
 /**

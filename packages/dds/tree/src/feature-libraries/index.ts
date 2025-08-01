@@ -136,7 +136,7 @@ export {
 	SchemaValidationError,
 	isNodeInSchema,
 	isFieldInSchema,
-	inSchemaOrThrow,
+	throwOutOfSchema,
 } from "./default-schema/index.js";
 
 export {
@@ -193,5 +193,3 @@ export {
 	type TreeIndexKey,
 	type TreeIndexNodes,
 } from "./indexing/index.js";
-
-export { initializeForest } from "./initializeForest.js";
