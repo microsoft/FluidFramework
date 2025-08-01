@@ -2848,7 +2848,9 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
+		// Emit "connected" and "disconnected" events based on ability to send ops
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
+		// Emit "connectedToService" and "disconnectedToService" events based on service connection status
 		this.emitServiceConnectionEvents(canSendOpsChanged, canSendOps, clientId);
 	}
 
