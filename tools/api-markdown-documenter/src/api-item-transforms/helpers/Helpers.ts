@@ -27,7 +27,7 @@ import {
 	type DocPlainText,
 	type DocSection,
 } from "@microsoft/tsdoc";
-import type { Nodes, Parent } from "mdast";
+import type { Link as MdastLink, Nodes, Parent, PhrasingContent, Strong, Text } from "mdast";
 
 import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
@@ -38,9 +38,7 @@ import {
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
 	ParagraphNode,
-	type PhrasingContent,
 	type SectionContent,
 	SectionNode,
 } from "../../documentation-domain/index.js";
@@ -229,14 +227,14 @@ function createTypeSpan(
 	}
 
 	return [
-		new MarkdownPhrasingContentNode({
+		{
 			type: "strong",
 			children: [{ type: "text", value: "Type" }],
-		}),
-		new MarkdownPhrasingContentNode({
+		},
+		{
 			type: "text",
 			value: ": ",
-		}),
+		},
 		...renderedExcerpt,
 	];
 }
@@ -275,26 +273,24 @@ function createHeritageTypeListSpan(
 	let needsComma = false;
 	for (const renderedExcerpt of renderedHeritageTypes) {
 		if (needsComma) {
-			renderedList.push(
-				new MarkdownPhrasingContentNode({
-					type: "text",
-					value: ", ",
-				}),
-			);
+			renderedList.push({
+				type: "text",
+				value: ", ",
+			});
 		}
 		renderedList.push(...renderedExcerpt);
 		needsComma = true;
 	}
 
 	return [
-		new MarkdownPhrasingContentNode({
+		{
 			type: "strong",
 			children: [{ type: "text", value: label }],
-		}),
-		new MarkdownPhrasingContentNode({
+		},
+		{
 			type: "text",
 			value: ": ",
-		}),
+		},
 		...renderedList,
 	];
 }
@@ -399,25 +395,21 @@ export function createExcerptSpanWithHyperlinks(
 					config,
 					unwrappedTokenText,
 				);
-				content.push(
-					new MarkdownPhrasingContentNode({
-						type: "link",
-						url: link.target,
-						children: [{ type: "text", value: link.text }],
-					}),
-				);
+				content.push({
+					type: "link",
+					url: link.target,
+					children: [{ type: "text", value: link.text }],
+				});
 				wroteHyperlink = true;
 			}
 		}
 
 		// If the token was not one from which we generated hyperlink text, write as plain text instead
 		if (!wroteHyperlink) {
-			content.push(
-				new MarkdownPhrasingContentNode({
-					type: "text",
-					value: unwrappedTokenText,
-				}),
-			);
+			content.push({
+				type: "text",
+				value: unwrappedTokenText,
+			});
 		}
 	}
 
@@ -459,19 +451,16 @@ export function createBreadcrumbParagraph(
 
 	// #endregion
 
-	const renderedLinks = breadcrumbLinks.map(
-		(link) =>
-			new MarkdownPhrasingContentNode({
-				type: "link",
-				url: link.target,
-				children: [{ type: "text", value: link.text }],
-			}),
-	);
+	const renderedLinks: MdastLink[] = breadcrumbLinks.map((link) => ({
+		type: "link",
+		url: link.target,
+		children: [{ type: "text", value: link.text }],
+	}));
 
-	const breadcrumbSeparator = new MarkdownPhrasingContentNode({
+	const breadcrumbSeparator: Text = {
 		type: "text",
 		value: " > ",
-	});
+	};
 
 	// Inject breadcrumb separator between each link
 	const contents: PhrasingContent[] = injectSeparator<PhrasingContent>(
@@ -491,10 +480,10 @@ export const alphaWarningText: string =
 /**
  * A simple italic span containing a warning about using `@alpha` APIs.
  */
-export const alphaWarningSpan = new MarkdownPhrasingContentNode({
+export const alphaWarningSpan: Strong = {
 	type: "strong",
 	children: [{ type: "text", value: alphaWarningText }],
-});
+};
 
 /**
  * Alert text used in {@link betaWarningSpan}.
@@ -505,10 +494,10 @@ export const betaWarningText: string =
 /**
  * A simple italic span containing a warning about using `@beta` APIs.
  */
-export const betaWarningSpan = new MarkdownPhrasingContentNode({
+export const betaWarningSpan: Strong = {
 	type: "strong",
 	children: [{ type: "text", value: betaWarningText }],
-});
+};
 
 /**
  * Renders a section containing the API item's summary comment if it has one.
@@ -622,7 +611,7 @@ export function createDeprecationNoticeSection(
 
 	return wrapInSection([
 		new ParagraphNode([
-			new MarkdownPhrasingContentNode({
+			{
 				type: "strong",
 				children: [
 					{
@@ -630,7 +619,7 @@ export function createDeprecationNoticeSection(
 						value: "WARNING: This API is deprecated and will be removed in a future release.",
 					},
 				],
-			}),
+			},
 		]),
 		...transformAndWrapTsdoc(deprecatedBlock, apiItem, config),
 	]);
@@ -996,14 +985,14 @@ export function createReturnsSection(
 			if (typeExcerptSpan.length > 0) {
 				children.push(
 					new ParagraphNode([
-						new MarkdownPhrasingContentNode({
+						{
 							type: "strong",
 							children: [{ type: "text", value: "Return type" }],
-						}),
-						new MarkdownPhrasingContentNode({
+						},
+						{
 							type: "text",
 							value: ": ",
-						}),
+						},
 						...typeExcerptSpan,
 					]),
 				);
@@ -1113,11 +1102,11 @@ export function createEntryPointList(
 		apiEntryPoints.map((entryPoint) => {
 			const link = getLinkForApiItem(entryPoint, config);
 			return new ListItemNode([
-				new MarkdownPhrasingContentNode({
+				{
 					type: "link",
 					url: link.target,
 					children: [{ type: "text", value: link.text }],
-				}),
+				},
 			]);
 		}),
 		/* ordered */ false,

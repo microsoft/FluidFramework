@@ -3,13 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	Paragraph as MdastParagraph,
-	PhrasingContent as MdastPhrasingContent,
-} from "mdast";
+import type { Paragraph as MdastParagraph } from "mdast";
 
 import type { ParagraphNode } from "../../documentation-domain/index.js";
-import { phrasingContentToMarkdown } from "../ToMarkdown.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -22,15 +18,10 @@ export function paragraphToMarkdown(
 	node: ParagraphNode,
 	context: TransformationContext,
 ): [MdastParagraph] {
-	const transformedChildren: MdastPhrasingContent[] = [];
-	for (const child of node.children) {
-		transformedChildren.push(...phrasingContentToMarkdown(child, context));
-	}
-
 	return [
 		{
 			type: "paragraph",
-			children: transformedChildren,
+			children: node.children,
 		},
 	];
 }

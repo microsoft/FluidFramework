@@ -52,10 +52,7 @@ export {
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
 	ParagraphNode,
-	type PhrasingContent,
-	type PhrasingContentMap,
 	SectionNode,
 	type SectionContent,
 	type TableCellContent,
@@ -68,7 +65,6 @@ export {
 	TableHeaderRowNode,
 	TableRowKind,
 	TableNode,
-	type TextFormatting,
 } from "./documentation-domain/index.js";
 
 export {
@@ -84,8 +80,6 @@ export {
 	blockContentToMarkdown,
 	type BlockContentTransformations as BlockContentToMarkdownTransformations,
 	documentToMarkdown,
-	phrasingContentToMarkdown,
-	type PhrasingContentTransformations as PhrasingContentToMarkdownTransformations,
 	sectionContentToMarkdown,
 	type Transformation as ToMarkdownTransformation,
 	type TransformationConfiguration as ToMarkdownConfiguration,

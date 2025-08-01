@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { PhrasingContent } from "mdast";
+
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
-import type { PhrasingContent } from "./PhrasingContent.js";
 
 /**
  * An item within a {@link ListNode}.
@@ -33,10 +33,10 @@ export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
 	 */
 	public static createFromPlainText(text: string): ListItemNode {
 		return new ListItemNode([
-			new MarkdownPhrasingContentNode({
+			{
 				type: "text",
 				value: text,
-			}),
+			},
 		]);
 	}
 }

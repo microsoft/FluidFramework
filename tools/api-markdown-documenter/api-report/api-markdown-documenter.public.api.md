@@ -37,7 +37,7 @@ import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Parent } from 'unist';
-import type { PhrasingContent as PhrasingContent_2 } from 'mdast';
+import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
 import type { Root as Root_2 } from 'mdast';
@@ -275,13 +275,13 @@ export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlC
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
-export interface DocumentationParentNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentationNode, Data>, DocumentationNode {
+export interface DocumentationParentNode<TDocumentationNode extends Node_2> extends Parent<TDocumentationNode, Data>, DocumentationNode {
     readonly children: TDocumentationNode[];
     readonly type: string;
 }
 
 // @public
-export abstract class DocumentationParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode> implements DocumentationParentNode<TDocumentationNode> {
+export abstract class DocumentationParentNodeBase<TDocumentationNode extends Node_2> implements DocumentationParentNode<TDocumentationNode> {
     protected constructor(children: TDocumentationNode[]);
     readonly children: TDocumentationNode[];
     abstract type: string;
@@ -569,12 +569,6 @@ export class MarkdownBlockContentNode extends DocumentationLiteralNodeBase<Block
     readonly type = "markdownBlockContent";
 }
 
-// @public @sealed
-export class MarkdownPhrasingContentNode extends DocumentationLiteralNodeBase<PhrasingContent_2> {
-    constructor(value: PhrasingContent_2);
-    readonly type = "markdownPhrasingContent";
-}
-
 declare namespace MarkdownRenderer {
     export {
         RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
@@ -597,23 +591,6 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
     static readonly Empty: ParagraphNode;
     readonly type = "paragraph";
 }
-
-// @public
-export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
-
-// @public
-export interface PhrasingContentMap {
-    // (undocumented)
-    markdownPhrasingContent: MarkdownPhrasingContentNode;
-}
-
-// @public
-export function phrasingContentToMarkdown(node: PhrasingContent, context: ToMarkdownContext): [PhrasingContent_2];
-
-// @public
-export type PhrasingContentToMarkdownTransformations = {
-    readonly [K in keyof PhrasingContentMap]: ToMarkdownTransformation<PhrasingContentMap[K], PhrasingContent_2[]>;
-};
 
 // @public
 export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
@@ -749,13 +726,6 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
     readonly type = "tableRow";
 }
 
-// @public @sealed
-export interface TextFormatting {
-    readonly bold?: true;
-    readonly italic?: true;
-    readonly strikethrough?: true;
-}
-
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
@@ -795,7 +765,7 @@ export interface ToMarkdownContext {
 export type ToMarkdownTransformation<TIn extends DocumentationNode = DocumentationNode, TOut extends Nodes_2[] = [Nodes_2]> = (node: TIn, context: ToMarkdownContext) => TOut;
 
 // @public
-export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & PhrasingContentToMarkdownTransformations & {
+export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & {
     readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
     readonly ["listItem"]: ToMarkdownTransformation<ListItemNode, [ListItem]>;
     readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;

@@ -5,11 +5,7 @@
 
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
-import {
-	MarkdownPhrasingContentNode,
-	ParagraphNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import { ParagraphNode, SectionNode } from "../../documentation-domain/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createTableWithHeading } from "../helpers/index.js";
 
@@ -25,7 +21,7 @@ export function transformApiModel(
 		return [
 			new SectionNode([
 				new ParagraphNode([
-					new MarkdownPhrasingContentNode({
+					{
 						type: "emphasis",
 						children: [
 							{
@@ -33,7 +29,7 @@ export function transformApiModel(
 								value: "No packages discovered while parsing model.",
 							},
 						],
-					}),
+					},
 				]),
 			]),
 		];

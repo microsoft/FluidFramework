@@ -16,12 +16,11 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
+import type { PhrasingContent } from "mdast";
 
 import {
 	HeadingNode,
 	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
-	type PhrasingContent,
 	SectionNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
@@ -647,11 +646,11 @@ export function createApiTitleCell(
 ): TableBodyCellNode {
 	const link = getLinkForApiItem(apiItem, config);
 	return new TableBodyCellNode([
-		new MarkdownPhrasingContentNode({
+		{
 			type: "link",
 			url: link.target,
 			children: [{ type: "text", value: link.text }],
-		}),
+		},
 	]);
 }
 
@@ -671,9 +670,9 @@ export function createModifiersCell(
 	let needsComma = false;
 	for (const modifier of modifiers) {
 		if (needsComma) {
-			contents.push(new MarkdownPhrasingContentNode({ type: "text", value: ", " }));
+			contents.push({ type: "text", value: ", " });
 		}
-		contents.push(new MarkdownPhrasingContentNode({ type: "inlineCode", value: modifier }));
+		contents.push({ type: "inlineCode", value: modifier });
 		needsComma = true;
 	}
 
@@ -708,18 +707,14 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: PhrasingContent[] = alerts.map(
-		(alert) => new MarkdownPhrasingContentNode({ type: "inlineCode", value: alert }),
-	);
+	const alertNodes: PhrasingContent[] = alerts.map((alert) => ({
+		type: "inlineCode",
+		value: alert,
+	}));
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
-		: new TableBodyCellNode(
-				injectSeparator(
-					alertNodes,
-					new MarkdownPhrasingContentNode({ type: "text", value: ", " }),
-				),
-			);
+		: new TableBodyCellNode(injectSeparator(alertNodes, { type: "text", value: ", " }));
 }
 
 /**
@@ -854,7 +849,7 @@ function transformTsdocSectionForTableCell(
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.
 	if (transformed.length === 1 && transformed[0].type === "paragraph") {
-		return transformed[0].children.map((child) => new MarkdownPhrasingContentNode(child));
+		return transformed[0].children;
 	}
 
 	return transformed.map((node) => new MarkdownBlockContentNode(node));
