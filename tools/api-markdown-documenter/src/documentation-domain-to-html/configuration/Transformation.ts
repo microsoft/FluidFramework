@@ -10,9 +10,6 @@ import type {
 	DocumentationNode,
 	HeadingNode,
 	SectionNode,
-	TableCellNode,
-	TableNode,
-	TableRowNode,
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
@@ -21,9 +18,6 @@ import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToHtml,
 	sectionToHtml,
-	tableToHtml,
-	tableCellToHtml,
-	tableRowToHtml,
 	listItemToHtml,
 	listToHtml,
 	markdownNodeToHtml,
@@ -78,7 +72,4 @@ export const defaultTransformations: Transformations = {
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
 	horizontalRule: () => hastHorizontalRule,
 	list: (node, context) => listToHtml(node as ListNode, context),
-	table: (node, context) => tableToHtml(node as TableNode, context),
-	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
-	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),
 };

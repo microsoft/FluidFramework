@@ -5,10 +5,9 @@
 
 import type { ListNode } from "./ListNode.js";
 import type { MarkdownBlockContentNode } from "./MarkdownNode.js";
-import type { TableNode } from "./TableNode.js";
 
 /**
- * Registry of all kinds of {@link DocumentationNode} that can occur as "block content" (required by {@link SectionNode}s, {@link TableCellNode}s, etc.).
+ * Registry of all kinds of {@link DocumentationNode} that can occur as "block content" (required by {@link SectionNode}s, etc.).
  *
  * @remarks
  *
@@ -32,12 +31,11 @@ import type { TableNode } from "./TableNode.js";
  */
 export interface BlockContentMap {
 	list: ListNode;
-	table: TableNode;
 	markdownBlockContent: MarkdownBlockContentNode;
 }
 
 /**
- * Union of all kinds of {@link DocumentationNode} that can occur as "block content" (required by {@link SectionNode}s, {@link TableCellNode}s, etc.).
+ * Union of all kinds of {@link DocumentationNode} that can occur as "block content" (required by {@link SectionNode}s, etc.).
  *
  * @remarks To register custom nodes, add them to {@link BlockContentMap}.
  *

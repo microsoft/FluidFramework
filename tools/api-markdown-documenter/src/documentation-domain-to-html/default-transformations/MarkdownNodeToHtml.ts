@@ -19,5 +19,11 @@ export function markdownNodeToHtml(
 	node: MarkdownBlockContentNode,
 	context: TransformationContext,
 ): HastNodes {
-	return toHast(node.value);
+	return toHast(node.value, {
+		// Needed as a temporary workaround for lack of support for `hast` trees directly in `mdast`.
+		// Only raw HTML strings are supported by default in `mdast`.
+		// In a future PR, we will introduce an extension that allows `hast` trees to be used directly instead of this.
+		// All HTML content is generated directly by this library. No user HTML content is passed through, so this is safe, just not a best practice.
+		allowDangerousHtml: true,
+	});
 }
