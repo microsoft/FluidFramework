@@ -41,14 +41,17 @@ import {
 	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
-import type {
-	areSafelyAssignable,
-	requireAssignableTo,
-	requireTrue,
+import {
+	brand,
+	type areSafelyAssignable,
+	type requireAssignableTo,
+	type requireTrue,
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
 import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import { EmptyKey } from "../../../core/index.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -1427,6 +1430,9 @@ describe("schemaFactory", () => {
 		});
 
 		describe("in arrays", () => {
+			/**
+			 * Allows numbers, and staged to allow strings.
+			 */
 			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
 				SchemaFactoryAlpha.number,
 				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
@@ -1449,9 +1455,12 @@ describe("schemaFactory", () => {
 				});
 				const view = provider.trees[0].viewWith(config);
 				view.initialize([]);
-				assert.throws(() => {
-					view.root = testArray;
-				});
+				assert.throws(
+					() => {
+						view.root = testArray;
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
 			});
 
 			it("can't be inserted", () => {
@@ -1463,9 +1472,75 @@ describe("schemaFactory", () => {
 				const view = provider.trees[0].viewWith(config);
 				view.initialize([]);
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.insertAtEnd("test");
+				assert.throws(
+					() => {
+						view.root.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted, deeper", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				class Root extends schemaFactory.objectAlpha("TestObject", {
+					foo: TestArray,
+				}) {}
+
+				const config = new TreeViewConfiguration({
+					schema: Root,
 				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+				});
+				provider.synchronizeMessages();
+
+				const x = (
+					view as SchematizingSimpleTreeView<typeof Root>
+				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
+
+				const f = x?.getFieldSchema(EmptyKey);
+
+				assert.throws(
+					() => {
+						view.root.foo.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted, even when type is referenced", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				class Root extends schemaFactory.objectAlpha("TestObject", {
+					foo: TestArray,
+					// Reference to string schema, so the node schema can be found.
+					bar: schemaFactory.string,
+				}) {}
+
+				const config = new TreeViewConfiguration({
+					schema: Root,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+					bar: "x",
+				});
+				provider.synchronizeMessages();
+
+				const x = (
+					view as SchematizingSimpleTreeView<typeof Root>
+				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
+
+				const f = x?.getFieldSchema(EmptyKey);
+
+				assert.throws(
+					() => {
+						view.root.foo.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
 			});
 
 			it("can't be moved in from another field", () => {
@@ -1483,9 +1558,12 @@ describe("schemaFactory", () => {
 					bar: ["test"],
 				});
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.foo.insertAtEnd("test", view.root.bar[0]);
-				});
+				assert.throws(
+					() => {
+						view.root.foo.moveToEnd(0, view.root.bar);
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
 			});
 		});
 	});

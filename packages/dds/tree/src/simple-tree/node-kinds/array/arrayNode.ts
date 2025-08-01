@@ -890,6 +890,8 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 		);
 
 		const kernel = getKernel(this);
+		const flexContext = kernel.getOrCreateInnerNode().context;
+		assert(flexContext === kernel.context.flexContext, "Expected flexContext to match");
 		const innerSchema = kernel.context.flexContext.schema.nodeSchema.get(
 			brand(kernel.schema.identifier),
 		);

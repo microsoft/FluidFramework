@@ -13,7 +13,7 @@ import {
 import {
 	extractPersistedSchema,
 	SchemaFactory,
-	toStoredSchema,
+	toInitialSchema,
 	TreeViewConfigurationAlpha,
 } from "../../simple-tree/index.js";
 import { ForestTypeExpensiveDebug, TreeAlpha } from "../../shared-tree/index.js";
@@ -33,7 +33,7 @@ describe("independentView", () => {
 					jsonValidator: ajvValidator,
 				},
 				{
-					schema: extractPersistedSchema(config, FluidClientVersion.v2_0),
+					schema: extractPersistedSchema(config, FluidClientVersion.v2_0, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
 						oldestCompatibleClient: FluidClientVersion.v2_0,
 					}),
@@ -54,7 +54,7 @@ describe("independentView", () => {
 					forest: ForestTypeExpensiveDebug,
 					jsonValidator: ajvValidator,
 				},
-				toStoredSchema(config.schema),
+				toInitialSchema(config.schema),
 				fieldCursorFromInsertable(config.schema, 1),
 				testIdCompressor,
 			);

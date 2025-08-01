@@ -25,6 +25,7 @@ describe("simple-tree storedSchema", () => {
 				const persisted = extractPersistedSchema(
 					new TreeViewConfigurationAlpha({ schema: test.schema }),
 					FluidClientVersion.v2_0,
+					() => true,
 				);
 
 				takeJsonSnapshot(persisted);
@@ -36,6 +37,7 @@ describe("simple-tree storedSchema", () => {
 				const persistedA = extractPersistedSchema(
 					new TreeViewConfigurationAlpha({ schema: test.schema }),
 					FluidClientVersion.v2_0,
+					() => true,
 				);
 
 				const status = comparePersistedSchema(persistedA, test.schema, {

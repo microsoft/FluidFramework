@@ -24,7 +24,7 @@ import {
 	type NodeFromSchema,
 	SchemaFactory,
 	SchemaFactoryAlpha,
-	toStoredSchema,
+	toInitialSchema,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -2456,19 +2456,16 @@ describe("treeNodeApi", () => {
 			assert.equal(clonedMetadata, topLeftPoint.metadata, "String not cloned properly");
 		});
 
-		it("errors when assigning a cloned staged allowed type to its original location", () => {
+		it("can clone staged types", () => {
 			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
 			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
 				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
 			}) {}
 
-			const view = getView(new TreeViewConfiguration({ schema: StagedSchema }));
-			view.initialize({ foo: "test" });
+			const original = new StagedSchema({ foo: "test" });
+			const clone = TreeBeta.clone(original);
 
-			const { root } = view;
-			assert.throws(() => {
-				view.root = TreeBeta.clone<typeof StagedSchema>(root);
-			});
+			expectTreesEqual(original, clone);
 		});
 
 		describe("test-trees", () => {
@@ -2993,7 +2990,7 @@ function checkoutWithInitialTree(
 		unhydratedInitialTree,
 	);
 	const treeContent: TreeStoredContent = {
-		schema: toStoredSchema(viewConfig.schema),
+		schema: toInitialSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);

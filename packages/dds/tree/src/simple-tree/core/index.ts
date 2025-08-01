@@ -103,4 +103,5 @@ export {
 	TreeNodeValid,
 	type MostDerivedData,
 	createTreeNodeSchemaPrivateData,
+	isClassBasedSchema,
 } from "./treeNodeValid.js";

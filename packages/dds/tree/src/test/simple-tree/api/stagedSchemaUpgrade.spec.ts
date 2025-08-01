@@ -8,7 +8,7 @@ import {
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
 	schemaStatics,
-	toStoredSchema,
+	toUpgradeSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
@@ -43,7 +43,7 @@ describe("staged schema upgrade", () => {
 		// open document, and check its compatibility with our application
 		const compat = view.checkCompatibility(stored);
 		assert.deepEqual(compat, { canView: false, canUpgrade: true, isEquivalent: false });
-		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaA).rootFieldSchema));
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaA).rootFieldSchema));
 		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
 
 		// view schema is A
@@ -61,11 +61,10 @@ describe("staged schema upgrade", () => {
 			isEquivalent: true,
 		});
 
-		// upgrade to schema B
-		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaB).rootFieldSchema));
-		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
+		// upgrade stored to schema B (no-op)
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaB).rootFieldSchema));
 
-		// schema is upgraded to support staged type
+		// nothing has changed, so compatibility is the same
 		assert.deepEqual(view.checkCompatibility(stored), {
 			canView: true,
 			canUpgrade: true,
@@ -80,8 +79,9 @@ describe("staged schema upgrade", () => {
 			isEquivalent: false,
 		});
 
-		// upgrade to full schema C
-		assert(stored.tryUpdateRootFieldSchema(toStoredSchema(schemaC).rootFieldSchema));
+		// to full schema C
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaC).rootFieldSchema));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
 
 		// validate C is now fully supported
 		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
@@ -90,6 +90,8 @@ describe("staged schema upgrade", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 		});
+
+		// TODO: TestSchemaRepository is not great for this. Also this does not test view against the future schema versions.
 	});
 
 	it("using user apis", () => {

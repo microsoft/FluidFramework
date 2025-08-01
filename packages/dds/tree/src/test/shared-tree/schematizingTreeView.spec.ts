@@ -22,8 +22,9 @@ import {
 	type UnsafeUnknownSchema,
 	type TransactionResult,
 	type TransactionResultExt,
-	toStoredSchema,
 	getKernel,
+	toInitialSchema,
+	toUpgradeSchema,
 } from "../../simple-tree/index.js";
 import {
 	checkoutWithContent,
@@ -63,14 +64,14 @@ function checkoutWithInitialTree(
 		unhydratedInitialTree,
 	);
 	const treeContent: TreeStoredContent = {
-		schema: toStoredSchema(viewConfig.schema),
+		schema: toInitialSchema(viewConfig.schema),
 		initialTree,
 	};
 	return checkoutWithContent(treeContent);
 }
 
 // Schema for tree that must always be empty.
-const emptySchema = toStoredSchema(schema.optional([]));
+const emptySchema = toInitialSchema(schema.optional([]));
 
 describe("SchematizingSimpleTreeView", () => {
 	describe("initialize", () => {
@@ -287,7 +288,7 @@ describe("SchematizingSimpleTreeView", () => {
 		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
 
 		// Modify schema to invalidate view
-		checkout.updateSchema(toStoredSchema([schema.number, schema.string]));
+		checkout.updateSchema(toUpgradeSchema([schema.number, schema.string]));
 
 		assert.deepEqual(log, [
 			["schemaChanged", "SchemaCompatibilityStatus canView: false canUpgrade: false"],
@@ -303,7 +304,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(toStoredSchema([schema.number]), true);
+		checkout.updateSchema(toUpgradeSchema([schema.number]), true);
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
@@ -573,7 +574,7 @@ describe("SchematizingSimpleTreeView", () => {
 	describe("events", () => {
 		it("schemaChanged", () => {
 			const content = {
-				schema: toStoredSchema(SchemaFactory.optional([])),
+				schema: toInitialSchema(SchemaFactory.optional([])),
 				initialTree: undefined,
 			};
 			const checkout = checkoutWithContent(content);
@@ -608,7 +609,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 		it("does not emit changed events for rebases", () => {
 			const stringArraySchema = schema.array([schema.string]);
-			const stringArrayStoredSchema = toStoredSchema(stringArraySchema);
+			const stringArrayStoredSchema = toInitialSchema(stringArraySchema);
 			const stringArrayContent = {
 				schema: stringArrayStoredSchema,
 				initialTree: fieldCursorFromInsertable(stringArraySchema, ["a", "b", "c"]),

@@ -249,6 +249,8 @@ export {
 	toInitialSchema,
 	convertField,
 	toUnhydratedSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	permissiveStoredSchemaGenerationOptions,
 } from "./toStoredSchema.js";
 export {
 	numberSchema,

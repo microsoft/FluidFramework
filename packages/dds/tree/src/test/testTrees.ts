@@ -48,6 +48,8 @@ import {
 	schemaStatics,
 	type TreeView,
 	TreeViewConfigurationAlpha,
+	toInitialSchema,
+	restrictiveStoredSchemaGenerationOptions,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
@@ -106,7 +108,7 @@ function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
 function convertSimpleTreeTest(data: TestSimpleTree): TestTree {
 	return test(
 		data.name,
-		toStoredSchema(data.schema),
+		toInitialSchema(data.schema),
 		jsonableTreeFromFieldCursor(
 			fieldCursorFromInsertable<UnsafeUnknownSchema>(data.schema, data.root()),
 		),
@@ -238,9 +240,15 @@ const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
 	nodeSchema: new Map([
-		[brand(Minimal.identifier), getStoredSchema(Minimal)],
+		[
+			brand(Minimal.identifier),
+			getStoredSchema(Minimal, restrictiveStoredSchemaGenerationOptions),
+		],
 		[allTheFieldsName, allTheFields],
-		[brand(factory.number.identifier), getStoredSchema(schemaStatics.number)],
+		[
+			brand(factory.number.identifier),
+			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
+		],
 	]),
 } satisfies Partial<TreeStoredSchema>;
 
@@ -297,7 +305,7 @@ export const testTrees: readonly TestTree[] = [
 	test(
 		"numericSequence",
 		{
-			...toStoredSchema(factory.number),
+			...toStoredSchema(factory.number, restrictiveStoredSchemaGenerationOptions),
 			rootFieldSchema: {
 				kind: FieldKinds.sequence.identifier,
 				types: numberSet,
@@ -308,7 +316,7 @@ export const testTrees: readonly TestTree[] = [
 	),
 	{
 		name: "node-with-identifier-field",
-		schemaData: toStoredSchema(HasIdentifierField),
+		schemaData: toStoredSchema(HasIdentifierField, restrictiveStoredSchemaGenerationOptions),
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
@@ -320,7 +328,7 @@ export const testTrees: readonly TestTree[] = [
 	},
 	{
 		name: "identifier-field",
-		schemaData: toStoredSchema(factory.identifier),
+		schemaData: toStoredSchema(factory.identifier, restrictiveStoredSchemaGenerationOptions),
 		treeFactory: (idCompressor?: IIdCompressor) => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
@@ -390,6 +398,17 @@ export class HasUnknownOptionalFieldsV2 extends factory.objectRecursive(
 	},
 ) {}
 
+export class HasStagedAllowedTypes extends factory.objectAlpha("hasStagedAllowedTypes", {
+	x: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+}) {}
+
+export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
+	"hasStagedAllowedTypes",
+	{
+		x: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.string],
+	},
+) {}
+
 /**
  * Collection of {@link TestDocument|TestDocuments}.
  *
@@ -408,7 +427,7 @@ export const testDocuments: readonly TestDocument[] = [
 			hasUnknownOptionalFields: false,
 			ambiguous: tree.ambiguous,
 			policy: defaultSchemaPolicy,
-			schemaData: toStoredSchema(tree.schema),
+			schemaData: toInitialSchema(tree.schema),
 			treeFactory: () =>
 				jsonableTreeFromFieldCursor(
 					fieldCursorFromInsertable<UnsafeUnknownSchema>(tree.schema, tree.root()),
@@ -422,7 +441,7 @@ export const testDocuments: readonly TestDocument[] = [
 		// Unknown optional fields are allowed but empty in this document.
 		hasUnknownOptionalFields: false,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(HasUnknownOptionalFieldsV2),
+		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasUnknownOptionalFields, {})),
 	},
@@ -432,7 +451,7 @@ export const testDocuments: readonly TestDocument[] = [
 		schema: HasUnknownOptionalFields,
 		hasUnknownOptionalFields: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(HasUnknownOptionalFieldsV2),
+		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(
@@ -444,6 +463,28 @@ export const testDocuments: readonly TestDocument[] = [
 						leaf: "leaf",
 					}),
 				),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "HasStagedAllowedTypesBeforeUpdate",
+		schema: HasStagedAllowedTypes,
+		hasUnknownOptionalFields: false,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(HasStagedAllowedTypes),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(HasStagedAllowedTypes, { x: 5 })),
+	},
+	{
+		ambiguous: false,
+		name: "HasStagedAllowedTypesAfterUpdate",
+		schema: HasStagedAllowedTypes,
+		hasUnknownOptionalFields: false,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(HasStagedAllowedTypesAfterUpdate),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(HasStagedAllowedTypes, { x: "text" }),
 			),
 	},
 ];
