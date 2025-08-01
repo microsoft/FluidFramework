@@ -11,7 +11,7 @@ import { h } from "hastscript";
 
 import {
 	HeadingNode,
-	HorizontalRuleNode,
+	MarkdownBlockContentNode,
 	ParagraphNode,
 	SectionNode,
 } from "../../documentation-domain/index.js";
@@ -23,7 +23,7 @@ describe("HierarchicalSection HTML rendering tests", () => {
 		const input = new SectionNode(
 			[
 				ParagraphNode.createFromPlainText("Foo"),
-				HorizontalRuleNode.Singleton,
+				new MarkdownBlockContentNode({ type: "thematicBreak" }),
 				ParagraphNode.createFromPlainText("Bar"),
 			],
 			/* heading: */ new HeadingNode("Hello World", /* id: */ "heading-id"),

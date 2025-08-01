@@ -27,7 +27,6 @@ export {
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
 export { HeadingNode } from "./HeadingNode.js";
-export { HorizontalRuleNode } from "./HorizontalRuleNode.js";
 export { ListItemNode } from "./ListItemNode.js";
 export { ListNode } from "./ListNode.js";
 export { MarkdownBlockContentNode, MarkdownPhrasingContentNode } from "./MarkdownNode.js";

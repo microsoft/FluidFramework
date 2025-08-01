@@ -4,7 +4,6 @@
  */
 
 export { headingToMarkdown } from "./HeadingToMarkdown.js";
-export { horizontalRuleToMarkdown } from "./HorizontalRuleToMarkdown.js";
 export { listToMarkdown } from "./ListToMarkdown.js";
 export { listItemToMarkdown } from "./ListItemToMarkdown.js";
 export {
