@@ -65,7 +65,6 @@ export {
 	TableHeaderRowNode,
 	TableRowKind,
 	TableNode,
-	type TextFormatting,
 } from "./documentation-domain/index.js";
 
 export {

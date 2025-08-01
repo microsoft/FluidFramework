@@ -748,13 +748,6 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
     readonly type = "tableRow";
 }
 
-// @public @sealed
-export interface TextFormatting {
-    readonly bold?: true;
-    readonly italic?: true;
-    readonly strikethrough?: true;
-}
-
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;

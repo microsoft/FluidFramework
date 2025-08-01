@@ -46,4 +46,3 @@ export {
 	TableRowKind,
 } from "./TableRowNode.js";
 export { TableNode } from "./TableNode.js";
-export type { TextFormatting } from "./TextFormatting.js";
