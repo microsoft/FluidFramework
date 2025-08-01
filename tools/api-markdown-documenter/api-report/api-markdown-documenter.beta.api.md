@@ -175,8 +175,6 @@ export interface BlockContentMap {
     // (undocumented)
     markdownBlockContent: MarkdownBlockContentNode;
     // (undocumented)
-    paragraph: ParagraphNode;
-    // (undocumented)
     table: TableNode;
 }
 
@@ -189,7 +187,7 @@ export type BlockContentToMarkdownTransformations = {
 };
 
 // @public
-function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
+function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode;
 
 // @public
 function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
@@ -605,14 +603,6 @@ declare namespace MarkdownRenderer {
 export { MarkdownRenderer }
 
 export { NewlineKind }
-
-// @public @sealed
-export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainText(text: string): ParagraphNode;
-    static readonly Empty: ParagraphNode;
-    readonly type = "paragraph";
-}
 
 // @public
 export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;

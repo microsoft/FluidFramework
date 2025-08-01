@@ -38,7 +38,6 @@ import {
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
-	ParagraphNode,
 	type SectionContent,
 	SectionNode,
 } from "../../documentation-domain/index.js";
@@ -147,7 +146,12 @@ function createHeritageTypesContent(
 					'No content was rendered for non-empty "extends" type list. This is not expected.',
 				);
 			} else {
-				contents.push(new ParagraphNode(extendsTypesSpan));
+				contents.push(
+					new MarkdownBlockContentNode({
+						type: "paragraph",
+						children: extendsTypesSpan,
+					}),
+				);
 			}
 		}
 
@@ -158,7 +162,12 @@ function createHeritageTypesContent(
 			config,
 		);
 		if (renderedImplementsTypes.length > 0) {
-			contents.push(new ParagraphNode(renderedImplementsTypes));
+			contents.push(
+				new MarkdownBlockContentNode({
+					type: "paragraph",
+					children: renderedImplementsTypes,
+				}),
+			);
 		}
 	}
 
@@ -171,7 +180,12 @@ function createHeritageTypesContent(
 		);
 
 		if (renderedExtendsTypes.length > 0) {
-			contents.push(new ParagraphNode(renderedExtendsTypes));
+			contents.push(
+				new MarkdownBlockContentNode({
+					type: "paragraph",
+					children: renderedExtendsTypes,
+				}),
+			);
 		}
 	}
 
@@ -183,7 +197,12 @@ function createHeritageTypesContent(
 		renderedTypeSpan = createTypeSpan(apiItem.variableTypeExcerpt, config);
 	}
 	if (renderedTypeSpan.length > 0) {
-		contents.push(new ParagraphNode(renderedTypeSpan));
+		contents.push(
+			new MarkdownBlockContentNode({
+				type: "paragraph",
+				children: renderedTypeSpan,
+			}),
+		);
 	}
 
 	// Render type parameters if there are any.
@@ -431,7 +450,7 @@ export function createExcerptSpanWithHyperlinks(
 export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): ParagraphNode {
+): MarkdownBlockContentNode {
 	// #region Get hierarchy of document items
 
 	const breadcrumbLinks: Link[] = [getLinkForApiItem(apiItem, config)];
@@ -468,7 +487,10 @@ export function createBreadcrumbParagraph(
 		breadcrumbSeparator,
 	);
 
-	return new ParagraphNode(contents);
+	return new MarkdownBlockContentNode({
+		type: "paragraph",
+		children: contents,
+	});
 }
 
 /**
@@ -610,17 +632,21 @@ export function createDeprecationNoticeSection(
 	}
 
 	return wrapInSection([
-		new ParagraphNode([
-			{
-				type: "strong",
-				children: [
-					{
-						type: "text",
-						value: "WARNING: This API is deprecated and will be removed in a future release.",
-					},
-				],
-			},
-		]),
+		new MarkdownBlockContentNode({
+			type: "paragraph",
+			children: [
+				{
+					type: "strong",
+					children: [
+						{
+							type: "text",
+							value:
+								"WARNING: This API is deprecated and will be removed in a future release.",
+						},
+					],
+				},
+			],
+		}),
 		...transformAndWrapTsdoc(deprecatedBlock, apiItem, config),
 	]);
 }
@@ -984,17 +1010,20 @@ export function createReturnsSection(
 			);
 			if (typeExcerptSpan.length > 0) {
 				children.push(
-					new ParagraphNode([
-						{
-							type: "strong",
-							children: [{ type: "text", value: "Return type" }],
-						},
-						{
-							type: "text",
-							value: ": ",
-						},
-						...typeExcerptSpan,
-					]),
+					new MarkdownBlockContentNode({
+						type: "paragraph",
+						children: [
+							{
+								type: "strong",
+								children: [{ type: "text", value: "Return type" }],
+							},
+							{
+								type: "text",
+								value: ": ",
+							},
+							...typeExcerptSpan,
+						],
+					}),
 				);
 			}
 		}
