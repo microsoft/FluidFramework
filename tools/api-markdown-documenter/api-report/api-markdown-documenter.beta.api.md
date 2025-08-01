@@ -171,11 +171,11 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    fencedCode: FencedCodeBlockNode;
-    // (undocumented)
     horizontalRule: HorizontalRuleNode;
     // (undocumented)
     list: ListNode;
+    // (undocumented)
+    markdownBlockContent: MarkdownBlockContentNode;
     // (undocumented)
     paragraph: ParagraphNode;
     // (undocumented)
@@ -189,15 +189,6 @@ export function blockContentToMarkdown(node: BlockContent, context: ToMarkdownCo
 export type BlockContentToMarkdownTransformations = {
     readonly [K in keyof BlockContentMap]: ToMarkdownTransformation<BlockContentMap[K], BlockContent_2[]>;
 };
-
-// @public @sealed
-export class CodeSpanNode extends DocumentationLiteralNodeBase<string> {
-    constructor(value: string);
-    static createFromPlainText(text: string): CodeSpanNode;
-    static readonly Empty: CodeSpanNode;
-    get isEmpty(): boolean;
-    readonly type = "codeSpan";
-}
 
 // @public
 function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
@@ -375,19 +366,6 @@ export interface DocumentWriter {
 export namespace DocumentWriter {
     export function create(): DocumentWriter;
 }
-
-// @public @sealed
-export class FencedCodeBlockNode extends DocumentationLiteralNodeBase<string> {
-    constructor(value: string, language?: string);
-    static createFromPlainText(text: string, language?: string): FencedCodeBlockNode;
-    static readonly Empty: FencedCodeBlockNode;
-    get isEmpty(): boolean;
-    readonly language?: string;
-    readonly type = "fencedCode";
-}
-
-// @public
-export type FencedCodeBlockNodeContent = PlainTextNode | LineBreakNode;
 
 // @public
 export interface FileSystemConfiguration {
@@ -584,20 +562,6 @@ export interface Link {
     readonly text: string;
 }
 
-// @public @sealed
-export class LinkNode implements DocumentationNode, Link {
-    constructor(
-    text: string,
-    target: UrlTarget);
-    static createFromPlainTextLink(link: Link): LinkNode;
-    get isEmpty(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = false;
-    readonly target: UrlTarget;
-    readonly text: string;
-    readonly type = "link";
-}
-
 // @beta
 export function lintApiModel(configuration: LintApiModelConfiguration): Promise<LinterErrors | undefined>;
 
@@ -661,6 +625,20 @@ export interface LoggingConfiguration {
 // @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
+// @public @sealed
+export class MarkdownBlockContentNode extends DocumentationLiteralNodeBase<BlockContent_2> {
+    constructor(value: BlockContent_2);
+    get isEmpty(): boolean;
+    readonly type = "markdownBlockContent";
+}
+
+// @public @sealed
+export class MarkdownPhrasingContentNode extends DocumentationLiteralNodeBase<PhrasingContent_2> {
+    constructor(value: PhrasingContent_2);
+    get isEmpty(): boolean;
+    readonly type = "markdownPhrasingContent";
+}
+
 declare namespace MarkdownRenderer {
     export {
         RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
@@ -690,11 +668,9 @@ export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
 // @public
 export interface PhrasingContentMap {
     // (undocumented)
-    codeSpan: CodeSpanNode;
-    // (undocumented)
     lineBreak: LineBreakNode;
     // (undocumented)
-    link: LinkNode;
+    markdownPhrasingContent: MarkdownPhrasingContentNode;
     // (undocumented)
     span: SpanNode;
     // (undocumented)
@@ -924,7 +900,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
-export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
+export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode[];
 
 // @public
 export type UrlTarget = string;

@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { FencedCodeBlockNode } from "./FencedCodeBlockNode.js";
 import type { HorizontalRuleNode } from "./HorizontalRuleNode.js";
 import type { ListNode } from "./ListNode.js";
+import type { MarkdownBlockContentNode } from "./MarkdownNode.js";
 import type { ParagraphNode } from "./ParagraphNode.js";
 import type { TableNode } from "./TableNode.js";
 
@@ -33,11 +33,11 @@ import type { TableNode } from "./TableNode.js";
  * @public
  */
 export interface BlockContentMap {
-	fencedCode: FencedCodeBlockNode;
 	horizontalRule: HorizontalRuleNode;
 	list: ListNode;
 	paragraph: ParagraphNode;
 	table: TableNode;
+	markdownBlockContent: MarkdownBlockContentNode;
 }
 
 /**

@@ -270,7 +270,7 @@ export class MockRuntime
 	}
 
 	public async processStashed(processStashedWithRetry?: boolean): Promise<void> {
-		const uploadP = this.blobManager.stashedBlobsUploadP;
+		// const uploadP = this.blobManager.stashedBlobsUploadP;
 		this.processing = true;
 		if (processStashedWithRetry) {
 			await this.processBlobs(false, false, 0);
@@ -281,7 +281,7 @@ export class MockRuntime
 		} else {
 			await this.processBlobs(true);
 		}
-		await uploadP;
+		// await uploadP;
 		this.processing = false;
 	}
 

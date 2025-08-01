@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import {
+	TypedEventEmitter,
+	type ILayerCompatDetails,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import { AttachState, IAudience } from "@fluidframework/container-definitions";
 import {
 	IDeltaManager,
@@ -244,7 +248,11 @@ class ContextDeltaManagerProxy extends BaseDeltaManagerProxy {
  */
 export abstract class FluidDataStoreContext
 	extends TypedEventEmitter<IFluidDataStoreContextEvents>
-	implements IFluidDataStoreContextInternal, IFluidDataStoreContext, IDisposable
+	implements
+		IFluidDataStoreContextInternal,
+		IFluidDataStoreContext,
+		IDisposable,
+		IProvideLayerCompatDetails
 {
 	public get packagePath(): PackagePath {
 		assert(this.pkg !== undefined, 0x139 /* "Undefined package path" */);
