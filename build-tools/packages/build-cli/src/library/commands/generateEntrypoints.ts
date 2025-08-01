@@ -329,16 +329,20 @@ function getOutputConfiguration(
  * @returns record of argument values extracted or given default value
  */
 function readArgValues(commandLine: string, argQuery: Options): Options {
-	const values: Record<string, unknown> = {};
+	const values: Record<string, string | undefined> = {};
 	const args = commandLine.split(" ");
-	for (const [argName, defaultValue] of Object.entries(argQuery)) {
+
+	const argValues: Record<string, string | undefined> = {};
+	for (const argName of Object.keys(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
-		values[argName] =
-			0 < indexOfArgValue && indexOfArgValue < args.length
-				? args[indexOfArgValue]
-				: defaultValue;
+		if (indexOfArgValue && indexOfArgValue < args.length){
+			values[argName] = args[indexOfArgValue];
+		}
 	}
-	return values as unknown as Options;
+	return {
+		...argQuery,
+		...argValues
+	};
 }
 
 export function getGenerateEntrypointsOutput(
