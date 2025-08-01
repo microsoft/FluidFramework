@@ -75,10 +75,16 @@ export class SchemaFactoryAlpha<
 	 * an {@link AllowedTypes} while supporting cross version collaboration.
 	 *
 	 * Once enough clients support reading the type, support for writing can be added by removing the use of
-	 * `staged` from the schema definition and upgrading the schema.
+	 * `staged` from the schema definition and {@link TreeView.upgradeSchema|upgrading the schema}.
 	 *
-	 * A future change will allow writing the type using a runtime schema upgrade so that the type can be upgraded
-	 * using a configuration flag change rather than a code change.
+	 * Future change may allow applying a specific {@link SchemaUpgrade} directly making it easier for applications to use configuration changes rather than a code change.
+	 *
+	 * Using a staged allowed type in a schema is just like using the schema as an allowed type with the following exceptions:
+	 *
+	 * 1. {@link TreeView.initialize} will omit the staged allowed type from the newly created stored schema.
+	 * 2. {@link TreeView.upgradeSchema} will omit the staged allowed type from the the upgraded stored schema.
+	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
+	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type when inserting the content into a tree who's stored schema does not permit it.
 	 *
 	 * @privateRemarks
 	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
