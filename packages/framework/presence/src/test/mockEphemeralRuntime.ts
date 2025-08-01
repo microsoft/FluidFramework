@@ -68,7 +68,7 @@ function makeMockAudience(clients: ClientData[]): MockAudience {
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public clientId: string | undefined;
-	public connected: boolean = false;
+	public joined: boolean = false;
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
@@ -155,14 +155,14 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public connect(clientId: string): void {
 		this.clientId = clientId;
-		this.connected = true;
+		this.joined = true;
 		for (const listener of this.listeners.joined) {
 			listener({ clientId, canWrite: false });
 		}
 	}
 
 	public disconnect(): void {
-		this.connected = false;
+		this.joined = false;
 		for (const listener of this.listeners.disconnected) {
 			listener();
 		}
@@ -170,7 +170,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	// #region IEphemeralRuntime
 	public getJoinedStatus = (): ReturnType<IEphemeralRuntime["getJoinedStatus"]> => {
-		return this.connected ? "joinedForReading" : "disconnected";
+		return this.joined ? "joinedForReading" : "disconnected";
 	};
 	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
 
