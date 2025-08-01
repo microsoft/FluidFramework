@@ -457,13 +457,13 @@ async function generateEntrypoints(
 		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n\t// #endregion\n\t";
 	}
 
-	log.info(`Generating entrypoints...`);
-	log.info(`- Public APIs: ${exports.public.length}`);
-	log.info(`- Beta APIs: ${exports.beta.length}`);
-	log.info(`- Alpha APIs: ${exports.alpha.length}`);
-	log.info(`- Legacy Public APIs: ${exports.legacyPublic.length}`);
-	log.info(`- Legacy Beta APIs: ${exports.legacyBeta.length}`);
-	log.info(`- Legacy Alpha APIs: ${exports.legacyAlpha.length}`);
+	log.verbose(`Generating entrypoints...`);
+	log.verbose(`- Public APIs: ${exports.public.length}`);
+	log.verbose(`- Beta APIs: ${exports.beta.length}`);
+	log.verbose(`- Alpha APIs: ${exports.alpha.length}`);
+	log.verbose(`- Legacy Public APIs: ${exports.legacyPublic.length}`);
+	log.verbose(`- Legacy Beta APIs: ${exports.legacyBeta.length}`);
+	log.verbose(`- Legacy Alpha APIs: ${exports.legacyAlpha.length}`);
 
 	const semVerExports = [...commonNamedExports];
 	const legacyExports = [...commonNamedExports];
