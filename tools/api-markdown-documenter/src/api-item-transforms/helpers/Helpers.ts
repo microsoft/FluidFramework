@@ -1125,30 +1125,31 @@ export function createEntryPointList(
 		return undefined;
 	}
 
-	const link = getLinkForApiItem(entryPoint, config);
-
 	return new MarkdownBlockContentNode({
 		type: "list",
 		ordered: false,
-		children: apiEntryPoints.map((entryPoint) => ({
-			type: "listItem",
-			children: [
-				{
-					type: "paragraph",
-					children: [
-						{
-							type: "link",
-							url: link.target,
-							children: [
-								{
-									type: "text",
-									value: link.text,
-								},
-							],
-						},
-					],
-				},
-			],
-		})),
+		children: apiEntryPoints.map((entryPoint) => {
+			const link = getLinkForApiItem(entryPoint, config);
+			return {
+				type: "listItem",
+				children: [
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "link",
+								url: link.target,
+								children: [
+									{
+										type: "text",
+										value: link.text,
+									},
+								],
+							},
+						],
+					},
+				],
+			};
+		}),
 	});
 }
