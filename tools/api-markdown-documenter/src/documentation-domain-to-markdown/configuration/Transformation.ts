@@ -28,10 +28,8 @@ import {
 	headingToMarkdown,
 	horizontalRuleToMarkdown,
 	sectionToMarkdown,
-	lineBreakToMarkdown,
 	linkToMarkdown,
 	paragraphToMarkdown,
-	plainTextToMarkdown,
 	spanToMarkdown,
 	tableToMarkdown,
 	tableCellToMarkdown,
@@ -98,7 +96,6 @@ export type Transformation<
  */
 export const defaultTransformations: Transformations = {
 	heading: headingToMarkdown,
-	lineBreak: lineBreakToMarkdown,
 	link: linkToMarkdown,
 	list: listToMarkdown,
 	listItem: listItemToMarkdown,
@@ -107,7 +104,6 @@ export const defaultTransformations: Transformations = {
 	section: sectionToMarkdown,
 	horizontalRule: horizontalRuleToMarkdown,
 	paragraph: paragraphToMarkdown,
-	text: plainTextToMarkdown,
 	span: spanToMarkdown,
 	table: tableToMarkdown,
 	tableCell: tableCellToMarkdown,

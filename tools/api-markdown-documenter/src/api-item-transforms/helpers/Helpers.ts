@@ -39,9 +39,9 @@ import {
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
+	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	type PhrasingContent,
-	PlainTextNode,
 	type SectionContent,
 	SectionNode,
 	SpanNode,
@@ -232,7 +232,10 @@ function createTypeSpan(
 
 	return [
 		SpanNode.createFromPlainText("Type", { bold: true }),
-		new PlainTextNode(": "),
+		new MarkdownPhrasingContentNode({
+			type: "text",
+			value: ": ",
+		}),
 		...renderedExcerpt,
 	];
 }
@@ -271,7 +274,12 @@ function createHeritageTypeListSpan(
 	let needsComma = false;
 	for (const renderedExcerpt of renderedHeritageTypes) {
 		if (needsComma) {
-			renderedList.push(new PlainTextNode(", "));
+			renderedList.push(
+				new MarkdownPhrasingContentNode({
+					type: "text",
+					value: ", ",
+				}),
+			);
 		}
 		renderedList.push(...renderedExcerpt);
 		needsComma = true;
@@ -279,7 +287,10 @@ function createHeritageTypeListSpan(
 
 	return [
 		SpanNode.createFromPlainText(label, { bold: true }),
-		new PlainTextNode(": "),
+		new MarkdownPhrasingContentNode({
+			type: "text",
+			value: ": ",
+		}),
 		...renderedList,
 	];
 }
@@ -391,7 +402,12 @@ export function createExcerptSpanWithHyperlinks(
 
 		// If the token was not one from which we generated hyperlink text, write as plain text instead
 		if (!wroteHyperlink) {
-			content.push(new PlainTextNode(unwrappedTokenText));
+			content.push(
+				new MarkdownPhrasingContentNode({
+					type: "text",
+					value: unwrappedTokenText,
+				}),
+			);
 		}
 	}
 
@@ -435,7 +451,10 @@ export function createBreadcrumbParagraph(
 
 	const renderedLinks = breadcrumbLinks.map((link) => LinkNode.createFromPlainTextLink(link));
 
-	const breadcrumbSeparator = new PlainTextNode(" > ");
+	const breadcrumbSeparator = new MarkdownPhrasingContentNode({
+		type: "text",
+		value: " > ",
+	});
 
 	// Inject breadcrumb separator between each link
 	const contents: PhrasingContent[] = injectSeparator<PhrasingContent>(
@@ -950,7 +969,10 @@ export function createReturnsSection(
 				children.push(
 					new ParagraphNode([
 						SpanNode.createFromPlainText("Return type", { bold: true }),
-						new PlainTextNode(": "),
+						new MarkdownPhrasingContentNode({
+							type: "text",
+							value: ": ",
+						}),
 						...typeExcerptSpan,
 					]),
 				);

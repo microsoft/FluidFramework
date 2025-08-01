@@ -9,7 +9,10 @@
  */
 import { h } from "hastscript";
 
-import { ParagraphNode, PlainTextNode } from "../../documentation-domain/index.js";
+import {
+	MarkdownPhrasingContentNode,
+	ParagraphNode,
+} from "../../documentation-domain/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
@@ -21,8 +24,10 @@ describe("ParagraphNode HTML rendering tests", () => {
 	it("Simple paragraph", () => {
 		const text1 = "This is some text. ";
 		const text2 = "This is more text!";
-
-		const input = new ParagraphNode([new PlainTextNode(text1), new PlainTextNode(text2)]);
+		const input = new ParagraphNode([
+			new MarkdownPhrasingContentNode({ type: "text", value: text1 }),
+			new MarkdownPhrasingContentNode({ type: "text", value: text2 }),
+		]);
 		const expected = h("p", [
 			{ type: "text", value: text1 },
 			{ type: "text", value: text2 },

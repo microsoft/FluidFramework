@@ -23,6 +23,8 @@ Usages should be converted to `MarkdownBlockContentNode` or `MarkdownPhrasingCon
 
 - `CodeSpanNode`
 - `FencedCodeBlockNode`
+- `LineBreakNode`
+- `PlainTextNode`
 
 ## 0.21.0
 

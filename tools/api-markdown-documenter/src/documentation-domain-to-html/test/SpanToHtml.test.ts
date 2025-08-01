@@ -6,8 +6,7 @@
 import { h } from "hastscript";
 
 import {
-	LineBreakNode,
-	PlainTextNode,
+	MarkdownPhrasingContentNode,
 	SpanNode,
 	type TextFormatting,
 } from "../../documentation-domain/index.js";
@@ -22,8 +21,8 @@ describe("Span to HTML transformation tests", () => {
 	it("Simple span", () => {
 		const text1 = "This is some text. ";
 		const text2 = "This is more text!";
-		const node1 = new PlainTextNode(text1);
-		const node2 = new PlainTextNode(text2);
+		const node1 = new MarkdownPhrasingContentNode({ type: "text", value: text1 });
+		const node2 = new MarkdownPhrasingContentNode({ type: "text", value: text2 });
 
 		const span = new SpanNode([node1, node2], {});
 		const expected = h("span", [text1, text2]);
@@ -37,21 +36,21 @@ describe("Span to HTML transformation tests", () => {
 		};
 		const text1 = "This is some text. ";
 		const text2 = "This is more text!";
-		const node1 = new PlainTextNode(text1);
-		const node2 = LineBreakNode.Singleton;
-		const node3 = new PlainTextNode(text2);
+		const node1 = new MarkdownPhrasingContentNode({ type: "text", value: text1 });
+		const node2 = new MarkdownPhrasingContentNode({ type: "break" });
+		const node3 = new MarkdownPhrasingContentNode({ type: "text", value: text2 });
 
 		const span = new SpanNode([node1, node2, node3], formatting);
-		const expected = h("b", h("i", [[text1, h("br"), text2]]));
+		const expected = h("b", h("i", [[text1, h("br"), "\n", text2]]));
 		assertTransformation(span, expected);
 	});
 
 	it("Nested spans with formatting", () => {
 		const text1 = "This is some text. ";
 		const text2 = "This is more text!";
-		const node1 = new PlainTextNode(text1);
-		const node2 = LineBreakNode.Singleton;
-		const node3 = new PlainTextNode(text2);
+		const node1 = new MarkdownPhrasingContentNode({ type: "text", value: text1 });
+		const node2 = new MarkdownPhrasingContentNode({ type: "break" });
+		const node3 = new MarkdownPhrasingContentNode({ type: "text", value: text2 });
 
 		const span = new SpanNode(
 			[
@@ -63,7 +62,7 @@ describe("Span to HTML transformation tests", () => {
 			{ strikethrough: true },
 		);
 
-		const expected = h("s", [text1, h("b", [h("br"), text2])]);
+		const expected = h("s", [text1, h("b", [h("br"), "\n", text2])]);
 
 		assertTransformation(span, expected);
 	});

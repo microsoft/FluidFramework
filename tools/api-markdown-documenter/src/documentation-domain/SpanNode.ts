@@ -4,9 +4,9 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
 import type { TextFormatting } from "./TextFormatting.js";
-import { createNodesFromPlainText } from "./Utilities.js";
 
 // TODO: Rename to "FormattedSpan" - this doesn't really correspond to a "span" in a traditional sense.
 // It just groups child nodes with formatting we want applied to them.
@@ -68,6 +68,14 @@ export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
 	 * @param text - The node contents.
 	 */
 	public static createFromPlainText(text: string, formatting: TextFormatting): SpanNode {
-		return new SpanNode(createNodesFromPlainText(text), formatting);
+		return new SpanNode(
+			[
+				new MarkdownPhrasingContentNode({
+					type: "text",
+					value: text,
+				}),
+			],
+			formatting,
+		);
 	}
 }

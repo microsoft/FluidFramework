@@ -12,7 +12,6 @@ import type {
 	LinkNode,
 	SectionNode,
 	ParagraphNode,
-	PlainTextNode,
 	SpanNode,
 	TableCellNode,
 	TableNode,
@@ -28,7 +27,6 @@ import {
 	sectionToHtml,
 	linkToHtml,
 	paragraphToHtml,
-	plainTextToHtml,
 	spanToHtml,
 	tableToHtml,
 	tableCellToHtml,
@@ -74,7 +72,6 @@ export type Transformation = (
 ) => HastNodes;
 
 // Constants used in transformations below as an allocation optimization.
-const hastLineBreak = h("br");
 const hastHorizontalRule = h("hr");
 
 /**
@@ -82,7 +79,6 @@ const hastHorizontalRule = h("hr");
  */
 export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	lineBreak: () => hastLineBreak,
 	link: (node, context) => linkToHtml(node as LinkNode, context),
 	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
 	markdownBlockContent: (node, context) =>
@@ -93,7 +89,6 @@ export const defaultTransformations: Transformations = {
 	horizontalRule: () => hastHorizontalRule,
 	list: (node, context) => listToHtml(node as ListNode, context),
 	paragraph: (node, context) => paragraphToHtml(node as ParagraphNode, context),
-	text: (node, context) => plainTextToHtml(node as PlainTextNode, context),
 	span: (node, context) => spanToHtml(node as SpanNode, context),
 	table: (node, context) => tableToHtml(node as TableNode, context),
 	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),

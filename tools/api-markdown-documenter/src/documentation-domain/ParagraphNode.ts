@@ -4,8 +4,8 @@
  */
 
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
-import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
  * A grouping of text content, potentially spanning multiple lines.
@@ -54,6 +54,11 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
 	 * @param text - The node contents.
 	 */
 	public static createFromPlainText(text: string): ParagraphNode {
-		return new ParagraphNode(createNodesFromPlainText(text));
+		return new ParagraphNode([
+			new MarkdownPhrasingContentNode({
+				type: "text",
+				value: text,
+			}),
+		]);
 	}
 }

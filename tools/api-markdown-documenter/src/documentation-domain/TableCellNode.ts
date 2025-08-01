@@ -5,8 +5,8 @@
 
 import type { BlockContent } from "./BlockContent.js";
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
+import { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
 import type { PhrasingContent } from "./PhrasingContent.js";
-import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
  * Kind of Table Cell.
@@ -100,7 +100,12 @@ export class TableHeaderCellNode extends TableCellNode {
 	public static createFromPlainText(text: string): TableHeaderCellNode {
 		return text.length === 0
 			? TableHeaderCellNode.Empty
-			: new TableHeaderCellNode(createNodesFromPlainText(text));
+			: new TableHeaderCellNode([
+					new MarkdownPhrasingContentNode({
+						type: "text",
+						value: text,
+					}),
+				]);
 	}
 }
 
@@ -127,6 +132,11 @@ export class TableBodyCellNode extends TableCellNode {
 	public static createFromPlainText(text: string): TableBodyCellNode {
 		return text.length === 0
 			? TableBodyCellNode.Empty
-			: new TableBodyCellNode(createNodesFromPlainText(text));
+			: new TableBodyCellNode([
+					new MarkdownPhrasingContentNode({
+						type: "text",
+						value: text,
+					}),
+				]);
 	}
 }
