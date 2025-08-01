@@ -15,6 +15,8 @@ import {
 	schemaStatics,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
 
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,
