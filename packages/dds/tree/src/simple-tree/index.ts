@@ -182,7 +182,7 @@ export {
 	type UnannotateImplicitFieldSchema,
 	FieldKind,
 	FieldSchema,
-	type FieldSchemaAlpha,
+	FieldSchemaAlpha,
 	type InsertableTreeFieldFromImplicitField,
 	type DefaultProvider,
 	type FieldProps,

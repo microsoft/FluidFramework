@@ -8,10 +8,7 @@ import { h } from "hastscript";
 
 import type {
 	DocumentationNode,
-	CodeSpanNode,
-	FencedCodeBlockNode,
 	HeadingNode,
-	LinkNode,
 	SectionNode,
 	ParagraphNode,
 	PlainTextNode,
@@ -21,14 +18,13 @@ import type {
 	TableRowNode,
 	ListItemNode,
 	ListNode,
+	MarkdownBlockContentNode,
+	MarkdownPhrasingContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
-	codeSpanToHtml,
-	fencedCodeBlockToHtml,
 	headingToHtml,
 	sectionToHtml,
-	linkToHtml,
 	paragraphToHtml,
 	plainTextToHtml,
 	spanToHtml,
@@ -37,6 +33,7 @@ import {
 	tableRowToHtml,
 	listItemToHtml,
 	listToHtml,
+	markdownNodeToHtml,
 } from "../default-transformations/index.js";
 
 /**
@@ -82,12 +79,13 @@ const hastHorizontalRule = h("hr");
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	codeSpan: (node, context) => codeSpanToHtml(node as CodeSpanNode, context),
-	fencedCode: (node, context) => fencedCodeBlockToHtml(node as FencedCodeBlockNode, context),
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
 	lineBreak: () => hastLineBreak,
-	link: (node, context) => linkToHtml(node as LinkNode, context),
 	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
+	markdownBlockContent: (node, context) =>
+		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
+	markdownPhrasingContent: (node, context) =>
+		markdownNodeToHtml(node as MarkdownPhrasingContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
 	horizontalRule: () => hastHorizontalRule,
 	list: (node, context) => listToHtml(node as ListNode, context),

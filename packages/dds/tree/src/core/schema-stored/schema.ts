@@ -110,9 +110,6 @@ export interface SchemaAndPolicy {
  * This contains information that describes the semantics of things which can be referenced in stored schema.
  * For example, field kind identifiers refer to specific field kinds, which imply specific rules around what is valid in a given field (the multiplicity).
  * This structure provides such information, allowing it to be possible to determine if a given tree complies with a particular stored schema.
- *
- * TODO: AB#43546
- * Some additional data which is not needed to define compatibility with a given stored schema is currently included here, and should be removed.
  */
 export interface SchemaPolicy {
 	/**

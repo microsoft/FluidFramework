@@ -192,11 +192,19 @@ export interface TreeIdentifierUtils {
  * Extensions to {@link (Tree:interface)} and {@link (TreeBeta:interface)} which are not yet stable.
  * @remarks
  * Use via the {@link (TreeAlpha:variable)} singleton.
+ *
+ * The unhydrated node creation APIs in this interface do not support {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}.
+ * This is because unknown optional fields still must have a schema: its just that the schema may come from the document's stored schema.
+ * Unhydrated nodes created via this interface are not associated with any document, so there is nowhere for them to get schema for unknown optional fields.
+ * Note that {@link (TreeBeta:interface).clone} can create an unhydrated node with unknown optional fields, as it uses the source node's stored schema (if any).
+ *
+ * Export APIs in this interface include {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields | unknown optional fields}
+ * if they are using {@link TreeEncodingOptions.useStoredKeys | stored keys}.
+ *
  * @privateRemarks
- * TODO: AB#43548:
- * How all the create and all the import and export APIs handle unknown optional fields needs to be figured out, tested and documented.
- * This will need to be extended/generalized to cover other future schema evolution options as well once they exist.
- * See also TreeBeta.clone with a similar issue.
+ * TODO:
+ * There should be a way to provide a source for defaulted identifiers for unhydrated node creation, either via these APIs or some way to add them to its output later.
+ * If an option were added to these APIs, it could also be used to enable unknown optional fields.
  *
  * @system @sealed @alpha
  */
@@ -220,8 +228,6 @@ export interface TreeAlpha {
 	 * When providing a {@link TreeNodeSchemaClass}, this is the same as invoking its constructor except that an unhydrated node can also be provided.
 	 * This function exists as a generalization that can be used in other cases as well,
 	 * such as when `undefined` might be allowed (for an optional field), or when the type should be inferred from the data when more than one type is possible.
-	 * @privateRemarks
-	 * TODO: AB#43548: There should be a way to provide a source for defaulted identifiers, either via this API or some way to add them to its output later.
 	 */
 	create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 		schema: UnsafeUnknownSchema extends TSchema
