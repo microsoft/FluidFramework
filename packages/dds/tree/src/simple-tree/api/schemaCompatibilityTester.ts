@@ -150,7 +150,7 @@ export class SchemaCompatibilityTester {
 						// View schema has added a node type that the stored schema doesn't know about.
 						// Note that all cases which trigger this should also trigger an AllowedTypeDiscrepancy (where the type is used).
 						// This means this case should be redundant and could be removed in the future if there is a reason to do so
-						// (like simplifying enablable type support).
+						// (like simplifying staged type support).
 						// See the TODO in getAllowedContentDiscrepancies.
 						canView = false;
 					} else if (discrepancy.view === undefined) {
@@ -189,6 +189,9 @@ export class SchemaCompatibilityTester {
 			}
 		}
 
+		// If "canUpgrade" is true, then an upgrade, if done it would set the stored schema to `toStoredSchema(this.viewSchema.root)`.
+		// For that to be valid, that operation must not decrease the set of documents which are allowed by the stored schema:
+		// If it did, then the upgrade could cause the document to become out of schema, and thus invalid/corrupted.
 		if (canUpgrade) {
 			assert(
 				allowsRepoSuperset(policy, stored, toStoredSchema(this.viewSchema.root)),
