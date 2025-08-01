@@ -1360,7 +1360,7 @@ export namespace createLocalServerStressSuite {
  * container from it.
  */
 interface GetClientPendingState {
-	type: "getClientPendingState";
+	type: "restartClientFromPendingState";
 	sourceClientTag: `client-${number}`;
 	newClientTag: `client-${number}`;
 }
@@ -1390,17 +1390,13 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | GetClientPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
-			assert(
-				state.validationClient.container.attachState === AttachState.Attached,
-				"Validation client must be attached before getting pending state",
-			);
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
 				clients.length > 0
 			) {
 				return {
-					type: "getClientPendingState",
+					type: "restartClientFromPendingState",
 					sourceClientTag: random.pick(clients).tag,
 					newClientTag: state.tag("client"),
 				} satisfies GetClientPendingState;
@@ -1418,7 +1414,7 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 		TOperation | GetClientPendingState,
 		LocalServerStressState
 	> = async (state, op) => {
-		if (isOperationType<GetClientPendingState>("getClientPendingState", op)) {
+		if (isOperationType<GetClientPendingState>("restartClientFromPendingState", op)) {
 			const sourceClientIndex = state.clients.findIndex((c) => c.tag === op.sourceClientTag);
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
 			const sourceClient = state.clients[sourceClientIndex];
@@ -1443,8 +1439,12 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 				pendingLocalState,
 			);
 
+			const removed = state.clients.splice(
+				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
+				1,
+			);
+			removed[0].container.dispose();
 			state.clients.push(newClient);
-			sourceClient.container.dispose();
 			return state;
 		}
 
