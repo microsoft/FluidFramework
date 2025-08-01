@@ -43,7 +43,6 @@ import {
 	type PhrasingContent,
 	type SectionContent,
 	SectionNode,
-	SpanNode,
 } from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
@@ -230,7 +229,10 @@ function createTypeSpan(
 	}
 
 	return [
-		SpanNode.createFromPlainText("Type", { bold: true }),
+		new MarkdownPhrasingContentNode({
+			type: "strong",
+			children: [{ type: "text", value: "Type" }],
+		}),
 		new MarkdownPhrasingContentNode({
 			type: "text",
 			value: ": ",
@@ -285,7 +287,10 @@ function createHeritageTypeListSpan(
 	}
 
 	return [
-		SpanNode.createFromPlainText(label, { bold: true }),
+		new MarkdownPhrasingContentNode({
+			type: "strong",
+			children: [{ type: "text", value: label }],
+		}),
 		new MarkdownPhrasingContentNode({
 			type: "text",
 			value: ": ",
@@ -486,7 +491,10 @@ export const alphaWarningText: string =
 /**
  * A simple italic span containing a warning about using `@alpha` APIs.
  */
-export const alphaWarningSpan = SpanNode.createFromPlainText(alphaWarningText, { bold: true });
+export const alphaWarningSpan = new MarkdownPhrasingContentNode({
+	type: "strong",
+	children: [{ type: "text", value: alphaWarningText }],
+});
 
 /**
  * Alert text used in {@link betaWarningSpan}.
@@ -497,7 +505,10 @@ export const betaWarningText: string =
 /**
  * A simple italic span containing a warning about using `@beta` APIs.
  */
-export const betaWarningSpan = SpanNode.createFromPlainText(betaWarningText, { bold: true });
+export const betaWarningSpan = new MarkdownPhrasingContentNode({
+	type: "strong",
+	children: [{ type: "text", value: betaWarningText }],
+});
 
 /**
  * Renders a section containing the API item's summary comment if it has one.
@@ -611,10 +622,15 @@ export function createDeprecationNoticeSection(
 
 	return wrapInSection([
 		new ParagraphNode([
-			SpanNode.createFromPlainText(
-				"WARNING: This API is deprecated and will be removed in a future release.",
-				{ bold: true },
-			),
+			new MarkdownPhrasingContentNode({
+				type: "strong",
+				children: [
+					{
+						type: "text",
+						value: "WARNING: This API is deprecated and will be removed in a future release.",
+					},
+				],
+			}),
 		]),
 		...transformAndWrapTsdoc(deprecatedBlock, apiItem, config),
 	]);
@@ -980,7 +996,10 @@ export function createReturnsSection(
 			if (typeExcerptSpan.length > 0) {
 				children.push(
 					new ParagraphNode([
-						SpanNode.createFromPlainText("Return type", { bold: true }),
+						new MarkdownPhrasingContentNode({
+							type: "strong",
+							children: [{ type: "text", value: "Return type" }],
+						}),
 						new MarkdownPhrasingContentNode({
 							type: "text",
 							value: ": ",

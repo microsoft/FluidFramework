@@ -4,10 +4,9 @@
  */
 
 import type { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
-import type { SpanNode } from "./SpanNode.js";
 
 /**
- * Registry of all kinds of {@link DocumentationNode} that can occur as "phrasing content" (required by {@link ParagraphNode}s, {@link SpanNode}s, etc.).
+ * Registry of all kinds of {@link DocumentationNode} that can occur as "phrasing content" (required by {@link ParagraphNode}s, etc.).
  *
  * @remarks
  *
@@ -29,12 +28,11 @@ import type { SpanNode } from "./SpanNode.js";
  * @public
  */
 export interface PhrasingContentMap {
-	span: SpanNode;
 	markdownPhrasingContent: MarkdownPhrasingContentNode;
 }
 
 /**
- * Union of all kinds of {@link DocumentationNode} that can occur as "phrasing content" (required by {@link ParagraphNode}s, {@link SpanNode}s, etc.).
+ * Union of all kinds of {@link DocumentationNode} that can occur as "phrasing content" (required by {@link ParagraphNode}s, etc.).
  *
  * @remarks To register custom nodes, add them to {@link PhrasingContentMap}.
  *

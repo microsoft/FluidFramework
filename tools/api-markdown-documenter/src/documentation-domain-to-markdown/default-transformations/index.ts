@@ -12,7 +12,6 @@ export {
 } from "./MarkdownNodeToMarkdown.js";
 export { paragraphToMarkdown } from "./ParagraphToMarkdown.js";
 export { sectionToMarkdown } from "./SectionToMarkdown.js";
-export { spanToMarkdown } from "./SpanToMarkdown.js";
 export { tableCellToMarkdown } from "./TableCellToMarkdown.js";
 export { tableRowToMarkdown } from "./TableRowToMarkdown.js";
 export { tableToMarkdown } from "./TableToMarkdown.js";

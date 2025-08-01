@@ -27,6 +27,7 @@ Usages should be converted to `MarkdownBlockContentNode` or `MarkdownPhrasingCon
 - `LineBreakNode`
 - `LinkNode`
 - `PlainTextNode`
+- `SpanNode`
 
 ## 0.21.0
 

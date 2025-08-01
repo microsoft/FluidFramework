@@ -58,7 +58,6 @@ export {
 	type PhrasingContentMap,
 	SectionNode,
 	type SectionContent,
-	SpanNode,
 	type TableCellContent,
 	TableCellNode,
 	TableBodyCellNode,

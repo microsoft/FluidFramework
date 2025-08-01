@@ -33,7 +33,6 @@ export { MarkdownBlockContentNode, MarkdownPhrasingContentNode } from "./Markdow
 export { ParagraphNode } from "./ParagraphNode.js";
 export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
-export { SpanNode } from "./SpanNode.js";
 export {
 	type TableCellContent,
 	TableCellNode,
