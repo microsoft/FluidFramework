@@ -7718,9 +7718,6 @@ importers:
       '@fluidframework/build-tools':
         specifier: link:../../../build-tools/packages/build-tools
         version: link:../../../build-tools/packages/build-tools
-      '@fluidframework/core-interfaces-previous':
-        specifier: npm:@fluidframework/core-interfaces@2.51.0
-        version: '@fluidframework/core-interfaces@2.51.0'
       '@fluidframework/eslint-config-fluid':
         specifier: ^5.7.4
         version: 5.7.4(eslint@8.55.0)(typescript@5.4.5)

@@ -66,6 +66,7 @@ fluid-framework
 @fluid-experimental/ink
 @fluidframework/counter
 @fluidframework/cell
+@fluidframework/test-package
 @fluidframework/driver-definitions
 @fluidframework/core-utils
 @fluidframework/core-interfaces
