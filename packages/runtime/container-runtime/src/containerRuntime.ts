@@ -121,11 +121,11 @@ import {
 	FlushModeExperimental,
 	channelsTreeName,
 	gcTreeKey,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
-	type MinimumVersionForCollab,
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
