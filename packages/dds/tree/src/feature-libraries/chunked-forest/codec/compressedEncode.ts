@@ -383,13 +383,13 @@ class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 /**
  * Encodes a field as a nested array with the {@link EncodedNestedArrayShape} shape.
  * @remarks
- * The fact this is also a Shape is an implementation detail of the encoder: that allows the shape it uses to be itself,
+ * The fact this is also exposes a Shape is an implementation detail: that allows the shape it uses to be itself
  * which is an easy way to keep all the related code together without extra objects.
  */
 export class NestedArrayEncoder implements FieldEncoder {
 	public constructor(
 		public readonly innerEncoder: NodeEncoder,
-		public readonly shape: Shape = innerEncoder.shape,
+		public readonly shape: NestedArrayShape = new NestedArrayShape(innerEncoder.shape),
 	) {}
 
 	public encodeField(
