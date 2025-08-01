@@ -51,9 +51,9 @@ interface ApiSupportTagInfo {
 }
 
 /**
- * Searches given JSDocs for known {@link ApiTag} tags.
+ * Searches given JSDocs for known {@link ReleaseTag | release tag}s and `@legacy`.
  *
- * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
+ * @returns The tag information, if a release tag is found. Otherwise, `undefined`.
  */
 function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportTagInfo | undefined {
 	let releaseTag: ReleaseTag | undefined;
@@ -78,9 +78,9 @@ function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportTagInfo | undefined {
 }
 
 /**
- * Searches given Node's JSDocs for known {@link ApiTag} tags.
+ * Searches given Node's JSDocs for known {@link ReleaseTag | release tag}s and `@legacy`.
  *
- * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
+ * @returns The tag information, if a release tag is found. Otherwise, `undefined`.
  */
 function getNodeApiTags(node: Node): ApiSupportTagInfo | undefined {
 	if (Node.isJSDocable(node)) {
@@ -129,13 +129,9 @@ function getApiLevelFromTags(tags: ApiSupportTagInfo): ApiLevel {
 }
 
 /**
- * Searches given Node's JSDocs for known {@link ApiTag} tags and derive export level.
+ * Searches given Node's JSDocs for known {@link ReleaseTag | release tag}s and `@legacy` to determine its {@link ApiLevel}.
  *
- * @remarks One of api-extractor standard tags will always be present as required by
- * api-extractor. So, "legacy" is treated as priority over other tags for determining
- * level. Otherwise, exactly one tag is required and will be exact level.
- *
- * @returns Computed {@link ApiLevel} from JSDocs or undefined.
+ * @returns The API level, if a release tag is found. Otherwise, `undefined`.
  */
 function getNodeApiLevel(node: Node): ApiLevel | undefined {
 	const apiTags = getNodeApiTags(node);
