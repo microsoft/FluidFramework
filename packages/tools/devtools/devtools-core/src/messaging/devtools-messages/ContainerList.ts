@@ -9,6 +9,8 @@ import type { IDevtoolsMessage } from "../Messages.js";
 /**
  * Encapsulates types and logic related to {@link ContainerList.Message}.
  *
+ * @remarks Handles both containers and data objects registered with the devtools.
+ *
  * @internal
  */
 export namespace ContainerList {
@@ -29,12 +31,17 @@ export namespace ContainerList {
 		 * List of keys for the Containers registered with the Devtools.
 		 */
 		containers: ContainerKey[];
+
+		/**
+		 * List of keys for the Data Objects registered with the Devtools.
+		 */
+		dataObjects?: ContainerKey[];
 	}
 
 	/**
-	 * Outbound message containing the list of Container-level devtools instances tracked by the root Devtools.
+	 * Outbound message containing the list of devtools instances tracked by the root Devtools.
 	 *
-	 * Includes the new list of active {@link ContainerKey}s associated with active Container Devtools instances.
+	 * Includes the new list of active {@link ContainerKey}s associated with active Container and Data Object devtools instances.
 	 *
 	 * @internal
 	 */
