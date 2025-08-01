@@ -1558,12 +1558,11 @@ describe("schemaFactory", () => {
 					bar: ["test"],
 				});
 				provider.synchronizeMessages();
-				assert.throws(
-					() => {
-						view.root.foo.moveToEnd(0, view.root.bar);
-					},
-					validateUsageError(/Tree does not conform to schema/),
-				);
+				assert.throws(() => {
+					view.root.foo.moveToEnd(0, view.root.bar);
+				}, validateUsageError(
+					"Type com.fluidframework.leaf.string in source sequence is not allowed in destination's stored schema: this would likely require upgrading the document to permit a staged schema.",
+				));
 			});
 		});
 	});

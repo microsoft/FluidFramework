@@ -1040,6 +1040,11 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 	): void {
 		const destinationField = getSequenceField(this);
 		const destinationSchema = this.allowedTypes;
+		const kernel = getKernel(this);
+		const destinationStored = (
+			kernel.context.flexContext.schema.nodeSchema.get(brand(kernel.schema.identifier)) ??
+			fail("missing schema for array node")
+		).getFieldSchema(EmptyKey).types;
 		const sourceField = source !== undefined ? getSequenceField(source) : destinationField;
 
 		validateIndex(destinationGap, destinationField, "moveRangeToIndex", true);
@@ -1051,7 +1056,15 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAnnotatedAllowedTypes
 				const sourceNode = sourceField.boxedAt(i) ?? oob();
 				const sourceSchema = getSimpleNodeSchemaFromInnerNode(sourceNode);
 				if (!destinationSchema.has(sourceSchema)) {
-					throw new UsageError("Type in source sequence is not allowed in destination.");
+					throw new UsageError(
+						`Type ${sourceNode.type} in source sequence is not allowed in destination.`,
+					);
+				}
+				if (!destinationStored.has(sourceNode.type)) {
+					// TODO: better and centralized messages for missing staged schema updates.
+					throw new UsageError(
+						`Type ${sourceNode.type} in source sequence is not allowed in destination's stored schema: this would likely require upgrading the document to permit a staged schema.`,
+					);
 				}
 			}
 		}
