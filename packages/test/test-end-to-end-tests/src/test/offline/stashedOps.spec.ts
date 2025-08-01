@@ -527,7 +527,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		});
 	});
 
-	it("resends insert and delete shared array ops", async function () {
+	it("resends insert, delete and move shared array ops", async function () {
 		const pendingOps = await generatePendingState(
 			testContainerConfig,
 			provider,
@@ -542,6 +542,10 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				array.insert(1, "test5");
 				array.insert(2, "test6");
 				array.insertBulkAfter("test6", ["test7", "test8"]);
+				array.move(0, 3);
+				array.move(1, 4);
+				array.delete(5);
+				array.insert(5, "test9");
 			},
 		);
 

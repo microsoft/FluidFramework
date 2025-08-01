@@ -830,44 +830,44 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	}
 
 	protected applyStashedOp(content: unknown): void {
-		const arrayContent = content as ISharedArrayOperation<T>;
+		const op = content as ISharedArrayOperation<T>;
 
-		switch (arrayContent.type) {
+		switch (op.type) {
 			case OperationType.insertEntry: {
 				this.handleInsertOp<SerializableTypeForSharedArray>(
-					arrayContent.entryId,
-					arrayContent.insertAfterEntryId,
+					op.entryId,
+					op.insertAfterEntryId,
 					false, // treat it as remote op
-					arrayContent.value,
+					op.value,
 				);
 				break;
 			}
 			case OperationType.deleteEntry: {
-				if (!this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete")) {
+				if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
 					// last element in skip list is the most recent and live entry, so marking it deleted
-					this.getLiveEntry(arrayContent.entryId).isDeleted = true;
+					this.getLiveEntry(op.entryId).isDeleted = true;
 				}
 				break;
 			}
 			case OperationType.moveEntry: {
-				const opEntry = this.getEntryForId(arrayContent.entryId);
+				const opEntry = this.getEntryForId(op.entryId);
 				this.handleInsertOp<SerializableTypeForSharedArray>(
-					arrayContent.changedToEntryId,
-					arrayContent.insertAfterEntryId,
-					true /* isLocal */,
+					op.changedToEntryId,
+					op.insertAfterEntryId,
+					false, // treat it as remote op
 					opEntry.value,
 				);
-				const newElementEntryId = arrayContent.changedToEntryId;
+				const newElementEntryId = op.changedToEntryId;
 				const newElement = this.getEntryForId(newElementEntryId);
 				if (
-					this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete") ||
-					this.isLocalPending(arrayContent.entryId, "isLocalPendingMove")
+					this.isLocalPending(op.entryId, "isLocalPendingDelete") ||
+					this.isLocalPending(op.entryId, "isLocalPendingMove")
 				) {
 					// If local pending then simply mark the new location dead as finally the local op will win
-					this.updateDeadEntry(arrayContent.entryId, newElementEntryId);
+					this.updateDeadEntry(op.entryId, newElementEntryId);
 				} else {
 					// move the element
-					const liveEntry = this.getLiveEntry(arrayContent.entryId);
+					const liveEntry = this.getLiveEntry(op.entryId);
 					const isDeleted = liveEntry.isDeleted;
 					this.updateLiveEntry(liveEntry.entryId, newElementEntryId);
 					// mark newly added element as deleted if existing live element was already deleted
@@ -877,28 +877,28 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				}
 				break;
 			}
-			case OperationType.toggle: {
-				if (!this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete")) {
-					this.getLiveEntry(arrayContent.entryId).isDeleted = arrayContent.isDeleted;
-				}
-				break;
-			}
-			case OperationType.toggleMove: {
-				if (
-					!this.isLocalPending(arrayContent.entryId, "isLocalPendingDelete") &&
-					!this.isLocalPending(arrayContent.entryId, "isLocalPendingMove")
-				) {
-					this.updateLiveEntry(
-						this.getLiveEntry(arrayContent.entryId).entryId,
-						arrayContent.entryId,
-					);
-				}
-				break;
-			}
+			// case OperationType.toggle: {
+			// 	if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+			// 		this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
+			// 	}
+			// 	break;
+			// }
+			// case OperationType.toggleMove: {
+			// 	if (
+			// 		!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
+			// 		!this.isLocalPending(op.entryId, "isLocalPendingMove")
+			// 	) {
+			// 		this.updateLiveEntry(
+			// 			this.getLiveEntry(op.entryId).entryId,
+			// 			op.entryId,
+			// 		);
+			// 	}
+			// 	break;
+			// }
 			default: {
-				throw new Error(`Unknown operation type`);
+				throw new Error(`Operation type not supported or recognized: ${op.type}`);
 			}
 		}
-		this.submitLocalMessage(arrayContent);
+		this.submitLocalMessage(op);
 	}
 }
