@@ -29,6 +29,7 @@ import {
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { SharedArray, type ISharedArray } from "@fluidframework/legacy-dds/internal";
 import type {
 	ISharedDirectory,
 	SharedDirectory,
@@ -71,6 +72,7 @@ const counterId = "counterKey";
 const directoryId = "directoryKey";
 const collectionId = "collectionKey";
 const treeId = "treeKey";
+const arrayId = "arrayKey";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -126,6 +128,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		[counterId, SharedCounter.getFactory()],
 		[directoryId, SharedDirectory.getFactory()],
 		[treeId, SharedTree.getFactory()],
+		[arrayId, SharedArray.getFactory()],
 	];
 
 	const testContainerConfig: ITestContainerConfig = {
@@ -194,6 +197,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 	let map1: ISharedMap;
 	let string1: SharedString;
 	let cell1: ISharedCell;
+	let array1: ISharedArray<string>;
 	let counter1: SharedCounter;
 	let directory1: ISharedDirectory;
 	let collection1: ISequenceIntervalCollection;
@@ -211,6 +215,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore1 = (await container1.getEntryPoint()) as ITestFluidObject;
 		map1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 		cell1 = await dataStore1.getSharedObject<ISharedCell>(cellId);
+		array1 = await dataStore1.getSharedObject<ISharedArray<string>>(arrayId);
 		counter1 = await dataStore1.getSharedObject<SharedCounter>(counterId);
 		directory1 = await dataStore1.getSharedObject<SharedDirectory>(directoryId);
 		string1 = await dataStore1.getSharedObject<SharedString>(stringId);
@@ -235,6 +240,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				const string = await d.getSharedObject<SharedString>(stringId);
 				const collection = string.getIntervalCollection(collectionId);
 				collection.add({ start: testStart, end: testEnd });
+				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
+				array.insert(0, "test");
 			},
 		);
 
@@ -243,6 +250,7 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 		const map2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 		const cell2 = await dataStore2.getSharedObject<ISharedCell>(cellId);
+		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
 		const counter2 = await dataStore2.getSharedObject<SharedCounter>(counterId);
 		const directory2 = await dataStore2.getSharedObject<SharedDirectory>(directoryId);
 		const string2 = await dataStore2.getSharedObject<SharedString>(stringId);
@@ -253,6 +261,8 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		assert.strictEqual(map2.get(testKey), testValue);
 		assert.strictEqual(cell1.get(), testValue);
 		assert.strictEqual(cell2.get(), testValue);
+		assert.strictEqual(array1.get()[0], "test");
+		assert.strictEqual(array2.get()[0], "test");
 		assert.strictEqual(counter1.value, testIncrementValue);
 		assert.strictEqual(counter2.value, testIncrementValue);
 		assert.strictEqual(directory1.get(testKey), testValue);
@@ -515,6 +525,37 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 				assert.strictEqual(map2.get(i.toString()), testValue),
 			);
 		});
+	});
+
+	it("resends insert, delete and move shared array ops", async function () {
+		const pendingOps = await generatePendingState(
+			testContainerConfig,
+			provider,
+			false, // Don't send ops from first container instance before closing
+			async (c, d) => {
+				const array = await d.getSharedObject<ISharedArray<string>>(arrayId);
+				array.insert(0, "test");
+				array.insert(1, "test2");
+				array.insert(2, "test3");
+				array.delete(0);
+				array.insert(0, "test4");
+				array.insert(1, "test5");
+				array.insert(2, "test6");
+				array.insertBulkAfter("test6", ["test7", "test8"]);
+				array.move(0, 3);
+				array.move(1, 4);
+				array.delete(5);
+				array.insert(5, "test9");
+			},
+		);
+
+		// load container with pending ops, which should resend the op not sent by previous container
+		const container2 = await loader.resolve({ url }, pendingOps);
+		const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
+		const array2 = await dataStore2.getSharedObject<ISharedArray<string>>(arrayId);
+		await waitForContainerConnection(container2);
+		await provider.ensureSynchronized();
+		assert.deepEqual(array1.get(), array2.get());
 	});
 
 	it("resends all shared directory ops", async function () {
