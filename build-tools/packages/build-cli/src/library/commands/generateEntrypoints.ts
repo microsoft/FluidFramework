@@ -287,8 +287,8 @@ function getOutputConfiguration(
 	for (const [outFile, apiLevel] of outFileToApiLevelEntries) {
 		const queryPath = `${pathPrefix}${outFile}${outFileSuffix}`;
 		if (mapQueryPathToApiTagLevel.has(queryPath)) {
-			throw new Error(
-				`The same outFile "${outFile}" is requested for multiple API levels: ${mapQueryPathToApiTagLevel.get(queryPath)} and ${apiLevel}. Please ensure that each API level is configured with a unique outFile.`,
+			logger?.warning(
+				`The same outFile "${outFile}" is requested for multiple API levels: ${mapQueryPathToApiTagLevel.get(queryPath)} and ${apiLevel}. ${apiLevel} will take precedence.`,
 			);
 		}
 		mapQueryPathToApiTagLevel.set(queryPath, apiLevel);
