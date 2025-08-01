@@ -16,13 +16,11 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
+import type { PhrasingContent } from "mdast";
 
 import {
-	CodeSpanNode,
 	HeadingNode,
-	LinkNode,
-	type PhrasingContent,
-	PlainTextNode,
+	MarkdownBlockContentNode,
 	SectionNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
@@ -646,8 +644,14 @@ export function createApiTitleCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 ): TableBodyCellNode {
-	const itemLink = getLinkForApiItem(apiItem, config);
-	return new TableBodyCellNode([LinkNode.createFromPlainTextLink(itemLink)]);
+	const link = getLinkForApiItem(apiItem, config);
+	return new TableBodyCellNode([
+		{
+			type: "link",
+			url: link.target,
+			children: [{ type: "text", value: link.text }],
+		},
+	]);
 }
 
 /**
@@ -666,9 +670,9 @@ export function createModifiersCell(
 	let needsComma = false;
 	for (const modifier of modifiers) {
 		if (needsComma) {
-			contents.push(new PlainTextNode(", "));
+			contents.push({ type: "text", value: ", " });
 		}
-		contents.push(new CodeSpanNode(modifier));
+		contents.push({ type: "inlineCode", value: modifier });
 		needsComma = true;
 	}
 
@@ -703,11 +707,14 @@ export function createDefaultValueCell(
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
 export function createAlertsCell(alerts: string[]): TableBodyCellNode {
-	const alertNodes: PhrasingContent[] = alerts.map((alert) => new CodeSpanNode(alert));
+	const alertNodes: PhrasingContent[] = alerts.map((alert) => ({
+		type: "inlineCode",
+		value: alert,
+	}));
 
 	return alerts.length === 0
 		? TableBodyCellNode.Empty
-		: new TableBodyCellNode(injectSeparator(alertNodes, new PlainTextNode(", ")));
+		: new TableBodyCellNode(injectSeparator(alertNodes, { type: "text", value: ", " }));
 }
 
 /**
@@ -845,5 +852,5 @@ function transformTsdocSectionForTableCell(
 		return transformed[0].children;
 	}
 
-	return transformed;
+	return transformed.map((node) => new MarkdownBlockContentNode(node));
 }

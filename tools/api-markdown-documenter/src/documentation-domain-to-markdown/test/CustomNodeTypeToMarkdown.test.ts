@@ -4,13 +4,13 @@
  */
 
 import { expect } from "chai";
-import type { Text as MdastText } from "mdast";
+import type { Paragraph } from "mdast";
 
 import {
 	DocumentationLiteralNodeBase,
-	type PhrasingContent,
+	type BlockContent,
 } from "../../documentation-domain/index.js";
-import { phrasingContentToMarkdown } from "../ToMarkdown.js";
+import { blockContentToMarkdown } from "../ToMarkdown.js";
 import {
 	createTransformationContext,
 	type TransformationContext,
@@ -36,11 +36,11 @@ class CustomDocumentationNode extends DocumentationLiteralNodeBase<string> {
 function customDocumentationNodeToMarkdown(
 	node: CustomDocumentationNode,
 	context: TransformationContext,
-): [MdastText] {
+): [Paragraph] {
 	return [
 		{
-			type: "text",
-			value: node.value,
+			type: "paragraph",
+			children: [{ type: "text", value: node.value }],
 		},
 	];
 }
@@ -59,9 +59,11 @@ describe("Custom node Markdown transformation tests", () => {
 		const input = new CustomDocumentationNode("foo");
 
 		// Using our standard extensibility model within the package causes issues, hence the cast here.
-		const output = phrasingContentToMarkdown(input as unknown as PhrasingContent, context);
+		const output = blockContentToMarkdown(input as unknown as BlockContent, context);
 
-		expect(output).to.deep.equal([{ type: "text", value: "oof" }]);
+		expect(output).to.deep.equal([
+			{ type: "paragraph", children: [{ type: "text", value: "oof" }] },
+		]);
 	});
 
 	it("Throws while transforming a custom node type when no transform is specified for that kind of node", () => {
@@ -71,7 +73,7 @@ describe("Custom node Markdown transformation tests", () => {
 
 		expect(() =>
 			// Using our standard extensibility model within the package causes issues, hence the cast here.
-			phrasingContentToMarkdown(input as unknown as PhrasingContent, context),
+			blockContentToMarkdown(input as unknown as BlockContent, context),
 		).to.throw(/No transformation defined for node type: custom/);
 	});
 });

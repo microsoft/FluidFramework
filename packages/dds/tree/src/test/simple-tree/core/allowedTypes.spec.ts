@@ -29,6 +29,7 @@ import type {
 } from "../../../util/index.js";
 
 import {
+	isAnnotatedAllowedType,
 	normalizeAllowedTypes,
 	normalizeAnnotatedAllowedTypes,
 	normalizeToAnnotatedAllowedType,
@@ -211,6 +212,31 @@ const schema = new SchemaFactory("com.example");
 }
 
 describe("allowedTypes", () => {
+	describe("isAnnotatedAllowedType", () => {
+		it("returns true for AnnotatedAllowedType", () => {
+			assert(isAnnotatedAllowedType({ metadata: {}, type: schema.string }));
+			assert(isAnnotatedAllowedType({ metadata: {}, type: () => schema.string }));
+		});
+
+		it("returns false for LazyItem", () => {
+			assert(!isAnnotatedAllowedType(() => schema.string));
+		});
+
+		it("does not evaluate LazyItem", () => {
+			assert(!isAnnotatedAllowedType(() => assert.fail()));
+		});
+
+		it("returns false for schema", () => {
+			assert(!isAnnotatedAllowedType(schema.string));
+			class Test extends schema.object("Test", {}) {}
+			assert(!isAnnotatedAllowedType(Test));
+			class Test2 extends schema.object("Test", {}) {
+				public static override metadata = {};
+			}
+			assert(!isAnnotatedAllowedType(Test2));
+		});
+	});
+
 	describe("normalizeAllowedTypes", () => {
 		it("Normalizes single type", () => {
 			const schemaFactory = new SchemaFactory("test");
@@ -241,7 +267,7 @@ describe("allowedTypes", () => {
 			assert(result.has(Bar));
 		});
 
-		it("Normalization fails when a referenced schema has not yet been instantiated", () => {
+		describe("Normalization fails when a referenced schema has not yet been instantiated", () => {
 			const schemaFactory = new SchemaFactory("test");
 
 			let Bar: TreeNodeSchema;
@@ -256,10 +282,26 @@ describe("allowedTypes", () => {
 				x: [() => Bar],
 			}) {}
 
-			assert.throws(
-				() => normalizeAllowedTypes([Foo, Bar]),
-				(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
-			);
+			it("in an array", () => {
+				assert.throws(
+					() => normalizeAllowedTypes([Foo, Bar]),
+					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				);
+			});
+
+			it("directly", () => {
+				assert.throws(
+					() => normalizeAllowedTypes(Bar),
+					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				);
+			});
+
+			it("in a lazy reference", () => {
+				assert.throws(
+					() => normalizeAllowedTypes([() => Bar]),
+					(error: Error) => validateAssertionError(error, /Encountered an undefined schema/),
+				);
+			});
 		});
 	});
 
@@ -323,11 +365,12 @@ describe("allowedTypes", () => {
 	});
 
 	describe("normalizeToAnnotatedAllowedType", () => {
-		const fakeSchema = schema.string;
+		const fakeSchema = SchemaFactory.string;
+		const lazy = () => fakeSchema;
 
-		it("wraps LazyItem<TreeNodeSchema> in an annotation", () => {
+		it("wraps TreeNodeSchema in an annotation", () => {
 			const result = normalizeToAnnotatedAllowedType(fakeSchema);
-			assert.deepStrictEqual(result, { metadata: {}, type: fakeSchema });
+			assert.deepEqual(result, { metadata: {}, type: fakeSchema });
 		});
 
 		it("returns input unchanged if already AnnotatedAllowedType", () => {
@@ -336,7 +379,19 @@ describe("allowedTypes", () => {
 				type: fakeSchema,
 			};
 			const result = normalizeToAnnotatedAllowedType(input);
-			assert.strictEqual(result, input);
+			assert.deepEqual(result, input);
+		});
+
+		it("evaluates any lazy schemas", () => {
+			const input: AnnotatedAllowedType = {
+				metadata: { custom: { something: true } },
+				type: lazy,
+			};
+			const result = normalizeToAnnotatedAllowedType(input);
+			assert.deepEqual(result, {
+				metadata: { custom: { something: true } },
+				type: fakeSchema,
+			});
 		});
 	});
 
@@ -348,7 +403,7 @@ describe("allowedTypes", () => {
 
 		it("adds metadata when it doesn't already exist", () => {
 			const result = normalizeAnnotatedAllowedTypes(stringSchema);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: {},
 				types: [{ metadata: {}, type: stringSchema }],
 			});
@@ -357,7 +412,7 @@ describe("allowedTypes", () => {
 		it("evaluates any lazy allowed types", () => {
 			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: {},
 				types: [
 					{ metadata: {}, type: stringSchema },
@@ -369,7 +424,7 @@ describe("allowedTypes", () => {
 		it("handles single AnnotatedAllowedType", () => {
 			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: {},
 				types: [{ metadata: { custom: 1 }, type: stringSchema }],
 			});
@@ -383,7 +438,7 @@ describe("allowedTypes", () => {
 				types: [{ metadata: { custom: 1 }, type: lazyString }],
 			};
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: { custom: "test" },
 				types: [{ metadata: { custom: 1 }, type: stringSchema }],
 			});

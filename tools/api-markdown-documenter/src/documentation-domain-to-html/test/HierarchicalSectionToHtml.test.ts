@@ -11,8 +11,7 @@ import { h } from "hastscript";
 
 import {
 	HeadingNode,
-	HorizontalRuleNode,
-	ParagraphNode,
+	MarkdownBlockContentNode,
 	SectionNode,
 } from "../../documentation-domain/index.js";
 
@@ -22,9 +21,15 @@ describe("HierarchicalSection HTML rendering tests", () => {
 	it("Simple section", () => {
 		const input = new SectionNode(
 			[
-				ParagraphNode.createFromPlainText("Foo"),
-				HorizontalRuleNode.Singleton,
-				ParagraphNode.createFromPlainText("Bar"),
+				new MarkdownBlockContentNode({
+					type: "paragraph",
+					children: [{ type: "text", value: "Foo" }],
+				}),
+				new MarkdownBlockContentNode({ type: "thematicBreak" }),
+				new MarkdownBlockContentNode({
+					type: "paragraph",
+					children: [{ type: "text", value: "Bar" }],
+				}),
 			],
 			/* heading: */ new HeadingNode("Hello World", /* id: */ "heading-id"),
 		);
@@ -43,14 +48,24 @@ describe("HierarchicalSection HTML rendering tests", () => {
 		const input = new SectionNode(
 			[
 				new SectionNode(
-					[ParagraphNode.createFromPlainText("Foo")],
+					[
+						new MarkdownBlockContentNode({
+							type: "paragraph",
+							children: [{ type: "text", value: "Foo" }],
+						}),
+					],
 					/* heading: */ new HeadingNode("Sub-Heading 1", /* id: */ "sub-heading-1"),
 				),
 
 				new SectionNode(
 					[
 						new SectionNode(
-							[ParagraphNode.createFromPlainText("Bar")],
+							[
+								new MarkdownBlockContentNode({
+									type: "paragraph",
+									children: [{ type: "text", value: "Bar" }],
+								}),
+							],
 							/* heading: */ new HeadingNode("Sub-Heading 2b"),
 						),
 					],

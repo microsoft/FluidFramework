@@ -14,11 +14,17 @@ import {
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/conciseTree.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
 
 describe("simple-tree conciseTree", () => {
 	it("conciseFromCursor", () => {
 		assert.deepEqual(
-			conciseFromCursor(singleJsonCursor({ a: { b: 1 } }), JsonAsTree.Tree, {}),
+			conciseFromCursor(
+				singleJsonCursor({ a: { b: 1 } }),
+				getUnhydratedContext(JsonAsTree.Tree),
+				{},
+			),
 			{
 				a: { b: 1 },
 			},
