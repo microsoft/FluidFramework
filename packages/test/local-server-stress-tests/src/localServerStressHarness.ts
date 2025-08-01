@@ -76,7 +76,6 @@ export interface Client {
 	container: IContainerExperimental;
 	tag: `client-${number}`;
 	entryPoint: DefaultStressDataObject;
-	getPendingLocalState?: () => Promise<string>;
 }
 
 /**
@@ -1421,11 +1420,11 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			const sourceClient = state.clients[sourceClientIndex];
 
 			assert(
-				typeof sourceClient.getPendingLocalState === "function",
+				typeof sourceClient.container.getPendingLocalState === "function",
 				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
 			);
 
-			const pendingLocalState = await sourceClient.getPendingLocalState?.();
+			const pendingLocalState = await sourceClient.container.getPendingLocalState?.();
 
 			const url = await state.validationClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
@@ -1441,8 +1440,8 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			);
 
 			// Remove and dispose the source client
-			state.clients.splice(sourceClientIndex, 1);
-			sourceClient.container.dispose();
+			// state.clients.splice(sourceClientIndex, 1);
+			// sourceClient.container.dispose();
 
 			// Add the new client
 			state.clients.push(newClient);
