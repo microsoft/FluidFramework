@@ -9,7 +9,7 @@ import {
 	generateSchemaFromSimpleSchema,
 	getSimpleSchema,
 	SchemaFactory,
-	toStoredSchema,
+	toInitialSchema,
 	type ImplicitFieldSchema,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
@@ -19,12 +19,12 @@ import { testSimpleTrees } from "../../testTrees.js";
 
 describe("schemaFromSimple", () => {
 	function roundtrip(root: ImplicitFieldSchema): void {
-		const stored = toStoredSchema(root);
+		const stored = toInitialSchema(root);
 		const simpleFromStored = exportSimpleSchema(stored);
 		// This can be lossy compared to root as metadata like property keys is lost.
 		const roundTripped = generateSchemaFromSimpleSchema(simpleFromStored);
 		// This should exactly match stored as it should have lost the exact same information.
-		const stored2 = toStoredSchema(roundTripped.root);
+		const stored2 = toInitialSchema(roundTripped.root);
 		assert.deepEqual(stored2, stored);
 
 		// This should not lose metadata like property keys as it doesn't go through the stored schema.
@@ -32,7 +32,7 @@ describe("schemaFromSimple", () => {
 		const roundTripped2 = generateSchemaFromSimpleSchema(simpleFromView);
 
 		// Lossy extraction of stored schema should still be the same
-		const stored3 = toStoredSchema(roundTripped2.root);
+		const stored3 = toInitialSchema(roundTripped2.root);
 		assert.deepEqual(stored3, stored);
 
 		// Simple schema should be the same after round trip from TreeSchema -> Simple -> TreeSchema -> Simple

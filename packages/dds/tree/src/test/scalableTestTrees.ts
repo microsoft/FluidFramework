@@ -22,12 +22,12 @@ import {
 import { brand } from "../util/index.js";
 import {
 	SchemaFactory,
+	toInitialSchema,
 	type InsertableContent,
 	type UnsafeUnknownSchema,
 	type ValidateRecursiveSchema,
 } from "../simple-tree/index.js";
 import type { TreeStoredContent } from "../shared-tree/index.js";
-import { toStoredSchema } from "../simple-tree/index.js";
 
 import type {
 	TreeSimpleContent,
@@ -97,7 +97,7 @@ export function makeDeepStoredContent(
 			content.schema,
 			content.initialTree,
 		),
-		schema: toStoredSchema(content.schema),
+		schema: toInitialSchema(content.schema),
 	};
 }
 
@@ -132,7 +132,7 @@ export function makeWideStoredContentWithEndValue(
 			content.schema,
 			content.initialTree,
 		),
-		schema: toStoredSchema(content.schema),
+		schema: toInitialSchema(content.schema),
 	};
 }
 

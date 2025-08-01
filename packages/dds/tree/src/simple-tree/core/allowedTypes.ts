@@ -5,7 +5,12 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { getOrCreate, isReadonlyArray, type IsUnion } from "../../util/index.js";
+import {
+	getOrCreate,
+	isReadonlyArray,
+	type IsUnion,
+	type MakeNominal,
+} from "../../util/index.js";
 import { isLazy, type FlexListToUnion, type LazyItem } from "./flexList.js";
 import {
 	NodeKind,
@@ -134,7 +139,33 @@ export interface AllowedTypeMetadata {
 	 */
 	readonly custom?: unknown;
 
-	// TODO metadata for enablable types will be added here
+	/**
+	 * If defined, indicates that an allowed type is {@link SchemaFactoryAlpha.staged | staged}.
+	 */
+	readonly stagedSchemaUpgrade?: SchemaUpgrade;
+}
+
+/**
+ * Package internal {@link SchemaUpgrade} construction API.
+ */
+export let createSchemaUpgrade: () => SchemaUpgrade;
+
+/**
+ * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
+ * @remarks
+ * Create using {@link SchemaFactoryAlpha.staged}.
+ * @privateRemarks
+ * TODO:#38722 implement runtime schema upgrades until then, the class purely behaves as a placeholder.
+ * TODO: Consider allowing users to store a name for the upgrade to use in error messages.
+ * @sealed @alpha
+ */
+export class SchemaUpgrade {
+	protected _typeCheck!: MakeNominal;
+	static {
+		createSchemaUpgrade = () => new SchemaUpgrade();
+	}
+
+	private constructor() {}
 }
 
 /**

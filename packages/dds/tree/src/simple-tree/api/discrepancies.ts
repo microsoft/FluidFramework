@@ -311,8 +311,11 @@ export function findExtraAllowedTypes(
 		viewAllowedTypes.map((value) => value.type.identifier),
 	);
 
+	// TODO: Record status of staged schema upgrades
 	const viewExtra = viewAllowedTypes.filter(
-		(value) => !storedAllowedTypes.has(brand(value.type.identifier)),
+		(value) =>
+			!storedAllowedTypes.has(brand(value.type.identifier)) &&
+			value.metadata.stagedSchemaUpgrade === undefined,
 	);
 	const storedExtra = [...storedAllowedTypes].filter(
 		(value) => !viewNodeSchemaIdentifiers.has(value),

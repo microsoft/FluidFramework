@@ -8,7 +8,7 @@ import {
 	encodeTreeSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../feature-libraries/schema-index/schemaSummarizer.js";
-import { toStoredSchema } from "../../../simple-tree/index.js";
+import { toInitialSchema } from "../../../simple-tree/index.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { supportedSchemaFormats } from "./codecUtil.js";
@@ -29,7 +29,7 @@ describe("schemaSummarizer", () => {
 			});
 
 			it(`simple encoded schema - schema v${schemaFormat}`, () => {
-				const encoded = encodeTreeSchema(toStoredSchema(JsonAsTree.Tree), schemaFormat);
+				const encoded = encodeTreeSchema(toInitialSchema(JsonAsTree.Tree), schemaFormat);
 				takeJsonSnapshot(encoded);
 			});
 		}

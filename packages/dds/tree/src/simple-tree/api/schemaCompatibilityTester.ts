@@ -8,7 +8,7 @@ import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries
 
 import type { SchemaCompatibilityStatus } from "./tree.js";
 import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
-import { toStoredSchema } from "../toStoredSchema.js";
+import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "./configuration.js";
 
 /**
@@ -51,18 +51,14 @@ export class SchemaCompatibilityTester {
 			break;
 		}
 
-		const canUpgrade = allowsRepoSuperset(
-			policy,
-			stored,
-			toStoredSchema(this.viewSchema.root),
-		);
+		const wouldUpgradeTo = toUpgradeSchema(this.viewSchema.root);
+
+		const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
 
 		// If true, then upgrading has no effect on what can be stored in the document.
 		// TODO: This should likely be changed to indicate up a schema upgrade would be a no-op, including stored schema metadata.
 		const isEquivalent =
-			canView &&
-			canUpgrade &&
-			allowsRepoSuperset(policy, toStoredSchema(this.viewSchema.root), stored);
+			canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
 
 		return {
 			canView,

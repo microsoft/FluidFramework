@@ -26,15 +26,18 @@ import {
 } from "./schemaFactory.js";
 import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import type {
-	NodeKind,
-	TreeNodeSchema,
-	TreeNodeSchemaBoth,
-	TreeNodeSchemaClass,
-	TreeNodeSchemaNonClass,
-	WithType,
-	ImplicitAllowedTypes,
-	ImplicitAnnotatedAllowedTypes,
+import {
+	type NodeKind,
+	type TreeNodeSchema,
+	type TreeNodeSchemaBoth,
+	type TreeNodeSchemaClass,
+	type TreeNodeSchemaNonClass,
+	type WithType,
+	type ImplicitAllowedTypes,
+	type ImplicitAnnotatedAllowedTypes,
+	type AnnotatedAllowedType,
+	normalizeToAnnotatedAllowedType,
+	createSchemaUpgrade,
 } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
@@ -61,6 +64,44 @@ export class SchemaFactoryAlpha<
 		return (
 			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
 		) as ScopedSchemaName<TScope, Name>;
+	}
+
+	/**
+	 * Declares a staged type in a set of {@link AllowedTypes}.
+	 *
+	 * @remarks
+	 *
+	 * Staged allowed types add support for reading a type which can be used for schema evolution to add members to
+	 * an {@link AllowedTypes} while supporting cross version collaboration.
+	 *
+	 * Once enough clients support reading the type, support for writing can be added by removing the use of
+	 * `staged` from the schema definition and {@link TreeView.upgradeSchema|upgrading the schema}.
+	 *
+	 * Future change may allow applying a specific {@link SchemaUpgrade} directly making it easier for applications to use configuration changes rather than a code change.
+	 *
+	 * Using a staged allowed type in a schema is just like using the schema as an allowed type with the following exceptions:
+	 *
+	 * 1. {@link TreeView.initialize} will omit the staged allowed type from the newly created stored schema.
+	 * 2. {@link TreeView.upgradeSchema} will omit the staged allowed type from the the upgraded stored schema.
+	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
+	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type when inserting the content into a tree who's stored schema does not permit it.
+	 *
+	 * @privateRemarks
+	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
+	 * user friendly and should be improved, particularly in the case of staged allowed types
+	 *
+	 */
+	public static staged<const T extends TreeNodeSchema>(
+		t: T | AnnotatedAllowedType<T>,
+	): AnnotatedAllowedType<T> {
+		const annotatedType = normalizeToAnnotatedAllowedType(t);
+		return {
+			type: annotatedType.type,
+			metadata: {
+				...annotatedType.metadata,
+				stagedSchemaUpgrade: createSchemaUpgrade(),
+			},
+		};
 	}
 
 	/**

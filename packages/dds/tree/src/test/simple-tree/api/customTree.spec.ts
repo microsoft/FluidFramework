@@ -7,9 +7,10 @@ import { strict as assert, fail } from "node:assert";
 
 import {
 	getStoredSchema,
+	restrictiveStoredSchemaGenerationOptions,
 	SchemaFactoryAlpha,
 	schemaStatics,
-	toStoredSchema,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 
 import {
@@ -94,25 +95,33 @@ describe("simple-tree customTree", () => {
 
 	it("tryStoredSchemaAsArray", () => {
 		const arraySchema = schemaFactory.arrayAlpha("A", schemaFactory.number);
-		const arrayCase = tryStoredSchemaAsArray(getStoredSchema(arraySchema));
+		const arrayCase = tryStoredSchemaAsArray(
+			getStoredSchema(arraySchema, restrictiveStoredSchemaGenerationOptions),
+		);
 		assert.deepEqual(arrayCase, new Set([schemaFactory.number.identifier]));
 
 		const objectSchema = schemaFactory.objectAlpha("x", {});
-		const objectCase = tryStoredSchemaAsArray(getStoredSchema(objectSchema));
+		const objectCase = tryStoredSchemaAsArray(
+			getStoredSchema(objectSchema, restrictiveStoredSchemaGenerationOptions),
+		);
 		assert.deepEqual(objectCase, undefined);
 
 		const objectSchemaEmptyKey = schemaFactory.objectAlpha("x", {
 			[""]: schemaFactory.number,
 		});
-		const objectEmptyKeyCase = tryStoredSchemaAsArray(getStoredSchema(objectSchemaEmptyKey));
+		const objectEmptyKeyCase = tryStoredSchemaAsArray(
+			getStoredSchema(objectSchemaEmptyKey, restrictiveStoredSchemaGenerationOptions),
+		);
 		assert.deepEqual(objectEmptyKeyCase, undefined);
 
-		const nonObjectCase = tryStoredSchemaAsArray(getStoredSchema(schemaStatics.number));
+		const nonObjectCase = tryStoredSchemaAsArray(
+			getStoredSchema(schemaStatics.number, restrictiveStoredSchemaGenerationOptions),
+		);
 		assert.deepEqual(nonObjectCase, undefined);
 	});
 
 	it("customFromCursorStored", () => {
-		const schema = toStoredSchema(JsonAsTree.Tree).nodeSchema;
+		const schema = toInitialSchema(JsonAsTree.Tree).nodeSchema;
 		assert.equal(
 			customFromCursorStored(singleJsonCursor(null), schema, () => fail()),
 			null,

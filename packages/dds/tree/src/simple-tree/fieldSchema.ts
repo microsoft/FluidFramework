@@ -468,7 +468,8 @@ export class FieldSchemaAlpha<
 			normalizeAnnotatedAllowedTypes(annotatedAllowedTypes),
 		);
 		this.lazyIdentifiers = new Lazy(
-			() => new Set([...this.allowedTypeSet].map((t) => t.identifier)),
+			() =>
+				new Set(this.annotatedAllowedTypesNormalized.types.map(({ type }) => type.identifier)),
 		);
 		this.propsAlpha = props;
 	}

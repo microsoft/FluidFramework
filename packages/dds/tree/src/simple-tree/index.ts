@@ -50,6 +50,7 @@ export {
 	type UnannotateAllowedTypeOrLazyItem,
 	type AllowedTypeMetadata,
 	type AnnotatedAllowedTypes,
+	type SchemaUpgrade,
 	type LazyItem,
 	type FlexList,
 	type FlexListToUnion,
@@ -240,7 +241,17 @@ export {
 	prepareForInsertion,
 	prepareForInsertionContextless,
 } from "./prepareForInsertion.js";
-export { toStoredSchema, getStoredSchema, convertFieldKind } from "./toStoredSchema.js";
+export {
+	toStoredSchema,
+	getStoredSchema,
+	convertFieldKind,
+	toUpgradeSchema,
+	toInitialSchema,
+	convertField,
+	toUnhydratedSchema,
+	restrictiveStoredSchemaGenerationOptions,
+	permissiveStoredSchemaGenerationOptions,
+} from "./toStoredSchema.js";
 export {
 	numberSchema,
 	stringSchema,

@@ -30,7 +30,7 @@ import {
 	validateUsageError,
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence, remove } from "../sequenceRootUtils.js";
-import { numberSchema, SchemaFactory, toStoredSchema } from "../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
 import { JsonAsTree } from "../../jsonDomainSchema.js";
 
 const rootField: NormalizedFieldUpPath = {
@@ -53,7 +53,7 @@ const rootNode2: NormalizedUpPath = {
 };
 
 const emptyJsonContent: TreeStoredContent = {
-	schema: toStoredSchema(SchemaFactory.optional(JsonAsTree.Tree)),
+	schema: toInitialSchema(SchemaFactory.optional(JsonAsTree.Tree)),
 	initialTree: undefined,
 };
 

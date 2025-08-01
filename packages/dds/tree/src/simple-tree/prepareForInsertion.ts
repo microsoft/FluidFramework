@@ -11,6 +11,7 @@ import type {
 	FieldKey,
 	DetachedField,
 	TreeFieldStoredSchema,
+	TreeTypeSet,
 } from "../core/index.js";
 import {
 	type FlexTreeContext,
@@ -21,7 +22,7 @@ import {
 	type FlexibleNodeContent,
 	throwOutOfSchema,
 } from "../feature-libraries/index.js";
-import { normalizeFieldSchema, type ImplicitAnnotatedFieldSchema } from "./fieldSchema.js";
+import type { ImplicitAnnotatedFieldSchema } from "./fieldSchema.js";
 import {
 	type InsertableContent,
 	unhydratedFlexTreeFromInsertable,
@@ -36,7 +37,6 @@ import {
 } from "./core/index.js";
 import { debugAssert, oob } from "@fluidframework/core-utils/internal";
 import { isFieldInSchema } from "../feature-libraries/index.js";
-import { convertField } from "./toStoredSchema.js";
 
 /**
  * For now, schema validation for inserted content is always enabled.
@@ -58,12 +58,14 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
 	schema: ImplicitAnnotatedFieldSchema,
 	destinationContext: FlexTreeContext,
+	destinationSchema: TreeFieldStoredSchema,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
 	return prepareForInsertionContextless(
 		data,
 		schema,
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
+		destinationSchema,
 	);
 }
 
@@ -84,19 +86,18 @@ export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
 	schema: ImplicitAnnotatedAllowedTypes,
 	destinationContext: FlexTreeContext,
+	destinationSchema: TreeTypeSet,
 ): FlexibleFieldContent {
 	const mapTrees: UnhydratedFlexTreeNode[] = data.map((item) =>
 		unhydratedFlexTreeFromInsertable(item, schema),
 	);
-
-	const fieldSchema = convertField(normalizeFieldSchema(schema));
 
 	validateAndPrepare(
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
 		{
 			kind: FieldKinds.sequence.identifier,
-			types: fieldSchema.types,
+			types: destinationSchema,
 			persistedMetadata: undefined,
 		},
 		mapTrees,
@@ -119,12 +120,12 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
 	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
 	hydratedData: FlexTreeHydratedContextMinimal | undefined,
+	destinationSchema: TreeFieldStoredSchema,
 ): TIn extends undefined ? undefined : FlexibleNodeContent {
 	const mapTree = unhydratedFlexTreeFromInsertable(data, schema);
 
 	const contentArray = mapTree === undefined ? [] : [mapTree];
-	const fieldSchema = convertField(normalizeFieldSchema(schema));
-	validateAndPrepare(schemaAndPolicy, hydratedData, fieldSchema, contentArray);
+	validateAndPrepare(schemaAndPolicy, hydratedData, destinationSchema, contentArray);
 
 	return mapTree;
 }

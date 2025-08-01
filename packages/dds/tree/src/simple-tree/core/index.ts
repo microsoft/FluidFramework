@@ -57,6 +57,8 @@ export {
 	unannotateImplicitAllowedTypes,
 	markSchemaMostDerived,
 	evaluateLazySchema,
+	createSchemaUpgrade,
+	type SchemaUpgrade,
 } from "./allowedTypes.js";
 export type {
 	AnnotatedAllowedType,
@@ -101,4 +103,5 @@ export {
 	TreeNodeValid,
 	type MostDerivedData,
 	createTreeNodeSchemaPrivateData,
+	isClassBasedSchema,
 } from "./treeNodeValid.js";

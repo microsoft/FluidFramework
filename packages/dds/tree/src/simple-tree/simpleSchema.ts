@@ -230,7 +230,9 @@ export interface SimpleTreeSchema {
 	/**
 	 * The complete set of node schema definitions recursively referenced by the tree's {@link SimpleTreeSchema.root}.
 	 *
-	 * @remarks the keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
+	 * @remarks
+	 * The keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
+	 * If there are any {@link SchemaFactoryAlpha.staged | staged} schemas, they will be included here.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
 }

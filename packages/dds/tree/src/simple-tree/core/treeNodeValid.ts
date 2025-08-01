@@ -27,6 +27,8 @@ import {
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
 import type { ImplicitAnnotatedAllowedTypes } from "./allowedTypes.js";
+// TODO: ideally this dependency would be moved as core should not depend on top level simple-schema stuff.
+import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -233,7 +235,7 @@ export interface MostDerivedData {
 export function schemaAsTreeNodeValid(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 ): typeof TreeNodeValid & TreeNodeSchema {
-	if (!inPrototypeChain(schema, TreeNodeValid)) {
+	if (!isClassBasedSchema(schema)) {
 		// Use JSON.stringify to quote and escape identifier string.
 		throw new UsageError(
 			`Schema for ${JSON.stringify(
@@ -242,7 +244,16 @@ export function schemaAsTreeNodeValid(
 		);
 	}
 
-	return schema as typeof TreeNodeValid & TreeNodeSchema;
+	return schema;
+}
+
+/**
+ * Check if a schema is a {@link TreeNodeValid}.
+ */
+export function isClassBasedSchema(
+	schema: SimpleNodeSchemaBase<NodeKind>,
+): schema is typeof TreeNodeValid & TreeNodeSchema {
+	return inPrototypeChain(schema, TreeNodeValid);
 }
 
 /**

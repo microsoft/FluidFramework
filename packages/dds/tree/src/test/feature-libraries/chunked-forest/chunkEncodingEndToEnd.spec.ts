@@ -67,7 +67,7 @@ import {
 	SchemaFactory,
 	stringSchema,
 	TreeViewConfiguration,
-	toStoredSchema,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { Format } from "../../../feature-libraries/forest-summary/format.js";
@@ -111,7 +111,7 @@ class HasIdentifier extends schemaFactory.object("parent", {
 function getIdentifierEncodingContext(id: string) {
 	const view = getView(new TreeViewConfiguration({ schema: HasIdentifier }));
 	view.initialize({ identifier: id });
-	const flexSchema = toStoredSchema(HasIdentifier);
+	const flexSchema = toInitialSchema(HasIdentifier);
 	const checkout = view.checkout;
 
 	const encoderContext: FieldBatchEncodingContext = {

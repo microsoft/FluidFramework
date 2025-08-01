@@ -41,14 +41,17 @@ import {
 	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
-import type {
-	areSafelyAssignable,
-	requireAssignableTo,
-	requireTrue,
+import {
+	brand,
+	type areSafelyAssignable,
+	type requireAssignableTo,
+	type requireTrue,
 } from "../../../util/index.js";
 
 import { hydrate } from "../utils.js";
-import { getView, validateUsageError } from "../../utils.js";
+import { getView, TestTreeProviderLite, validateUsageError } from "../../utils.js";
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/index.js";
+import { EmptyKey } from "../../../core/index.js";
 
 {
 	const schema = new SchemaFactory("Blah");
@@ -1290,6 +1293,278 @@ describe("schemaFactory", () => {
 		}
 		const inferred2 = inferScope2(scopedFactory);
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
+	});
+
+	describe("staged", () => {
+		const schemaFactory = new SchemaFactoryAlpha("staged tests");
+
+		class TestObject extends schemaFactory.objectAlpha("TestObject", {
+			foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+		}) {}
+
+		describe("in objects", () => {
+			it("are permitted when unhydrated", () => {
+				const testObject = new TestObject({ foo: "test" });
+				assert.equal(testObject.foo, "test");
+				testObject.foo = 42;
+				assert.equal(testObject.foo, 42);
+				testObject.foo = "test";
+				assert.equal(testObject.foo, "test");
+			});
+
+			it("can't be hydrated", () => {
+				const testObject = new TestObject({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestObject,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testObject;
+				});
+			});
+
+			it("can't be set", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestObject,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo = "test";
+				});
+			});
+		});
+
+		describe("in maps", () => {
+			class TestMap extends schemaFactory.mapAlpha("TestMap", [
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]) {}
+
+			it("are permitted when unhydrated", () => {
+				const testMap = new TestMap({ foo: "test" });
+				assert.equal(testMap.get("foo"), "test");
+				testMap.set("foo", 42);
+				assert.equal(testMap.get("foo"), 42);
+				testMap.set("foo", "test");
+				assert.equal(testMap.get("foo"), "test");
+			});
+
+			it("can't be hydrated", () => {
+				const testMap = new TestMap({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testMap;
+				});
+			});
+
+			it("can't be set", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestMap,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.set("foo", "test");
+				});
+			});
+		});
+
+		describe("in records", () => {
+			class TestRecord extends schemaFactory.recordAlpha("TestRecord", [
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]) {}
+
+			it("are permitted when unhydrated", () => {
+				const testRecord = new TestRecord({ foo: "test" });
+				assert.equal(testRecord.foo, "test");
+				testRecord.foo = 42;
+				assert.equal(testRecord.foo, 42);
+				testRecord.foo = "test";
+				assert.equal(testRecord.foo, "test");
+			});
+
+			it("can't be hydrated", () => {
+				const testRecord = new TestRecord({ foo: "test" });
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestRecord,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({ foo: 3 });
+				assert.throws(() => {
+					view.root = testRecord;
+				});
+			});
+
+			it("can't be set", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestRecord,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo = "test";
+				});
+			});
+		});
+
+		describe("in arrays", () => {
+			/**
+			 * Allows numbers, and staged to allow strings.
+			 */
+			class TestArray extends schemaFactory.arrayAlpha("TestArray", [
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+			]) {}
+
+			it("are permitted when unhydrated", () => {
+				const testArray = new TestArray(["test"]);
+				testArray.insertAtEnd("test");
+				assert.deepEqual(Array.from(testArray.values()), ["test", "test"]);
+				testArray.insertAtEnd(5);
+				assert.deepEqual(Array.from(testArray.values()), ["test", "test", 5]);
+			});
+
+			it("can't be hydrated", () => {
+				const testArray = new TestArray(["test"]);
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestArray,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize([]);
+				assert.throws(
+					() => {
+						view.root = testArray;
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: TestArray,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize([]);
+				provider.synchronizeMessages();
+				assert.throws(
+					() => {
+						view.root.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted, deeper", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				class Root extends schemaFactory.objectAlpha("TestObject", {
+					foo: TestArray,
+				}) {}
+
+				const config = new TreeViewConfiguration({
+					schema: Root,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+				});
+				provider.synchronizeMessages();
+
+				const x = (
+					view as SchematizingSimpleTreeView<typeof Root>
+				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
+
+				const f = x?.getFieldSchema(EmptyKey);
+
+				assert.throws(
+					() => {
+						view.root.foo.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be inserted, even when type is referenced", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				class Root extends schemaFactory.objectAlpha("TestObject", {
+					foo: TestArray,
+					// Reference to string schema, so the node schema can be found.
+					bar: schemaFactory.string,
+				}) {}
+
+				const config = new TreeViewConfiguration({
+					schema: Root,
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+					bar: "x",
+				});
+				provider.synchronizeMessages();
+
+				const x = (
+					view as SchematizingSimpleTreeView<typeof Root>
+				).checkout.storedSchema.nodeSchema.get(brand(Root.identifier));
+
+				const f = x?.getFieldSchema(EmptyKey);
+
+				assert.throws(
+					() => {
+						view.root.foo.insertAtEnd("test");
+					},
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("can't be moved in from another field", () => {
+				const provider = new TestTreeProviderLite(1);
+
+				const config = new TreeViewConfiguration({
+					schema: schemaFactory.objectAlpha("TestObject", {
+						foo: TestArray,
+						bar: schemaFactory.arrayAlpha("StringArray", schemaFactory.string),
+					}),
+				});
+				const view = provider.trees[0].viewWith(config);
+				view.initialize({
+					foo: [],
+					bar: ["test"],
+				});
+				provider.synchronizeMessages();
+				assert.throws(() => {
+					view.root.foo.moveToEnd(0, view.root.bar);
+				}, validateUsageError(
+					"Type com.fluidframework.leaf.string in source sequence is not allowed in destination's stored schema: this would likely require upgrading the document to permit a staged schema.",
+				));
+			});
+		});
 	});
 });
 

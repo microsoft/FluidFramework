@@ -7,7 +7,11 @@ import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/inte
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
-import type { FieldKey } from "../../../core/index.js";
+import {
+	ObjectNodeStoredSchema,
+	type FieldKey,
+	type TreeFieldStoredSchema,
+} from "../../../core/index.js";
 import {
 	FieldKinds,
 	isTreeValue,
@@ -288,10 +292,16 @@ function createProxyHandler(
 					: false;
 			}
 
+			const innerNode = getOrCreateInnerNode(proxy);
+
+			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
+			assert(innerSchema instanceof ObjectNodeStoredSchema, "Expected ObjectNodeStoredSchema");
+
 			setField(
-				getOrCreateInnerNode(proxy).getBoxed(fieldInfo.storedKey),
+				innerNode.getBoxed(fieldInfo.storedKey),
 				fieldInfo.schema,
 				value,
+				innerSchema.getFieldSchema(fieldInfo.storedKey),
 			);
 			return true;
 		},
@@ -348,8 +358,14 @@ export function setField(
 	field: FlexTreeField,
 	simpleFieldSchema: FieldSchema,
 	value: InsertableContent | undefined,
+	destinationSchema: TreeFieldStoredSchema,
 ): void {
-	const mapTree = prepareForInsertion(value, simpleFieldSchema, field.context);
+	const mapTree = prepareForInsertion(
+		value,
+		simpleFieldSchema,
+		field.context,
+		destinationSchema,
+	);
 
 	switch (field.schema) {
 		case FieldKinds.required.identifier: {

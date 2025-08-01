@@ -63,7 +63,6 @@ import {
 import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	SchemaFactory,
-	toStoredSchema,
 	type TreeFieldFromImplicitField,
 	type TreeViewAlpha,
 	TreeViewConfiguration,
@@ -71,6 +70,7 @@ import {
 	asTreeViewAlpha,
 	SchemaFactoryAlpha,
 	type ITree,
+	toInitialSchema,
 } from "../../simple-tree/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -389,7 +389,7 @@ describe("SharedTree", () => {
 					},
 				},
 			]);
-			expectSchemaEqual(snapshot.schema, toStoredSchema(StringArray));
+			expectSchemaEqual(snapshot.schema, toInitialSchema(StringArray));
 		}
 	});
 
@@ -411,7 +411,7 @@ describe("SharedTree", () => {
 
 		// Ensure that the first tree has the state we expect
 		assert.deepEqual([...view.root], [value]);
-		expectSchemaEqual(provider.trees[0].kernel.storedSchema, toStoredSchema(StringArray));
+		expectSchemaEqual(provider.trees[0].kernel.storedSchema, toInitialSchema(StringArray));
 		// Ensure that the second tree receives the expected state from the first tree
 		await provider.ensureSynchronized();
 		validateTreeConsistency(provider.trees[0], provider.trees[1]);
@@ -1977,7 +1977,7 @@ describe("SharedTree", () => {
 
 			await provider.ensureSynchronized();
 			assert.deepEqual([...view1.root], [value1]);
-			expectSchemaEqual(tree2.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree2.kernel.storedSchema, toInitialSchema(StringArray));
 			validateTreeConsistency(tree1, tree2);
 		});
 
@@ -2022,19 +2022,19 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation }),
 			);
 			view.initialize([]);
-			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree.kernel.storedSchema, toInitialSchema(StringArray));
 
 			tree
 				.viewWith(
 					new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 				)
 				.upgradeSchema();
-			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(JsonAsTree.Array));
+			expectSchemaEqual(tree.kernel.storedSchema, toInitialSchema(JsonAsTree.Array));
 
 			const revertible = undoStack.pop();
 			revertible?.revert();
 
-			expectSchemaEqual(tree.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree.kernel.storedSchema, toInitialSchema(StringArray));
 		});
 	});
 
@@ -2072,8 +2072,8 @@ describe("SharedTree", () => {
 			await provider.ensureSynchronized();
 
 			const otherLoadedTree = provider.trees[1];
-			expectSchemaEqual(tree.contentSnapshot().schema, toStoredSchema(StringArray));
-			expectSchemaEqual(otherLoadedTree.kernel.storedSchema, toStoredSchema(StringArray));
+			expectSchemaEqual(tree.contentSnapshot().schema, toInitialSchema(StringArray));
+			expectSchemaEqual(otherLoadedTree.kernel.storedSchema, toInitialSchema(StringArray));
 		});
 	});
 

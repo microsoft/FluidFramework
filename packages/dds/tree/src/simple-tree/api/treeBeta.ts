@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { defaultSchemaPolicy } from "../../feature-libraries/index.js";
+import type { TreeFieldStoredSchema } from "../../core/index.js";
+import { defaultSchemaPolicy, FieldKinds } from "../../feature-libraries/index.js";
+import { brand } from "../../util/index.js";
 import {
 	Context,
 	getKernel,
@@ -191,7 +193,12 @@ export const TreeBeta: TreeBeta = {
 		);
 		const context = new Context(flexContext, getUnhydratedContext(kernel.schema).schema);
 
-		return createFromCursor(kernel.schema, cursor, context) as Unhydrated<
+		const fieldSchema: TreeFieldStoredSchema = {
+			kind: FieldKinds.required.identifier,
+			types: new Set([brand(kernel.schema.identifier)]),
+			persistedMetadata: undefined,
+		};
+		return createFromCursor(kernel.schema, cursor, fieldSchema, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>
 		>;
 	},

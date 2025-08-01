@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy } from "@fluidframework/core-utils/internal";
+import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { type JsonCompatibleReadOnlyObject, brand } from "../../../util/index.js";
@@ -57,6 +57,7 @@ import {
 } from "../../../feature-libraries/index.js";
 import { prepareForInsertion } from "../../prepareForInsertion.js";
 import { recordLikeDataToFlexContent } from "../common.js";
+import { MapNodeStoredSchema } from "../../../core/index.js";
 
 /**
  * Create a proxy which implements the {@link TreeRecordNode} API.
@@ -122,11 +123,14 @@ function createRecordNodeProxy(
 			const innerNode = getOrCreateInnerNode(receiver);
 			const field = innerNode.getBoxed(brand(key)) as FlexTreeOptionalField;
 			const kernel = getKernel(receiver);
+			const innerSchema = innerNode.context.schema.nodeSchema.get(brand(schema.identifier));
+			assert(innerSchema instanceof MapNodeStoredSchema, "Expected MapNodeStoredSchema");
 
 			const mapTree = prepareForInsertion(
 				value,
 				createFieldSchema(FieldKind.Optional, kernel.schema.info as ImplicitAllowedTypes),
 				innerNode.context,
+				innerSchema.mapFields,
 			);
 
 			field.editor.set(mapTree, field.length === 0);

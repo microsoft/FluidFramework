@@ -5,6 +5,7 @@
 
 import {
 	normalizeAnnotatedAllowedTypes,
+	type AnnotatedAllowedType,
 	type NormalizedAnnotatedAllowedTypes,
 } from "./allowedTypes.js";
 import { getTreeNodeSchemaPrivateData, type TreeNodeSchema } from "./treeNodeSchema.js";
@@ -50,14 +51,16 @@ export function walkAllowedTypes(
 	visitor: SchemaVisitor,
 	visitedSet: Set<TreeNodeSchema> = new Set(),
 ): void {
-	for (const { type } of annotatedAllowedTypes.types) {
-		walkNodeSchema(type, visitor, visitedSet);
+	for (const allowedType of annotatedAllowedTypes.types) {
+		if ((visitor.allowedTypeFilter ?? (() => true))(allowedType)) {
+			walkNodeSchema(allowedType.type, visitor, visitedSet);
+		}
 	}
 	visitor.allowedTypes?.(annotatedAllowedTypes);
 }
 
 /**
- * Callbacks for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
+ * Callbacks and options for use in {@link walkFieldSchema} / {@link walkAllowedTypes} / {@link walkNodeSchema}.
  * @internal
  */
 export interface SchemaVisitor {
@@ -72,4 +75,11 @@ export interface SchemaVisitor {
 	 * This includes every field, but also the allowed types array for maps and arrays and the root if starting at {@link walkAllowedTypes}.
 	 */
 	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
+	/**
+	 * If true, will walk into this `allowedType`.
+	 * If false, the `allowedType` will not be walked into.
+	 *
+	 * If not provided, all allowedTypes will be walked into.
+	 */
+	allowedTypeFilter?: (allowedType: AnnotatedAllowedType<TreeNodeSchema>) => boolean;
 }
