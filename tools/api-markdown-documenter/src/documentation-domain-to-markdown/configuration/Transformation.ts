@@ -26,7 +26,6 @@ import type {
 import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToMarkdown,
-	horizontalRuleToMarkdown,
 	sectionToMarkdown,
 	paragraphToMarkdown,
 	spanToMarkdown,
@@ -100,7 +99,6 @@ export const defaultTransformations: Transformations = {
 	markdownBlockContent: markdownBlockContentNodeToMarkdown,
 	markdownPhrasingContent: markdownPhrasingContentNodeToMarkdown,
 	section: sectionToMarkdown,
-	horizontalRule: horizontalRuleToMarkdown,
 	paragraph: paragraphToMarkdown,
 	span: spanToMarkdown,
 	table: tableToMarkdown,
