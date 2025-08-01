@@ -302,7 +302,7 @@ Notifications are fundamentally unreliable at this time as there are no built-in
 
 Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast them after a configurable delay.
 
-The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances, enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1) specified during configuration of a [States Workspace](#states-workspace) or [States](#states) and/or (2) updated later using the `controls` member of Workspace or States. The [States Workspace](#states-workspace) configuration is used when States do not have their own setting.
+The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances, enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1) specified during configuration of a [States Workspace](#states-workspace) or [States](#state-objects) and/or (2) updated later using the `controls` member of Workspace or States. The [States Workspace](#states-workspace) configuration is used when States do not have their own setting.
 
 Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
 
