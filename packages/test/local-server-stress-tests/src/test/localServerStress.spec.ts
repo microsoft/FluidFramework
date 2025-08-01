@@ -38,6 +38,7 @@ describe("Local Server Stress", () => {
 		// replay: 93,
 		only: [28],
 		saveFailures,
+		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		// saveSuccesses,
 		skip: [
 			...[18, 65, 98], // Number of keys not same
