@@ -27,9 +27,10 @@ export interface IThrottlingMetrics extends IThrottlerResponse {
 /**
  * @internal
  */
-export class ThrottlingError implements INackContent {
+export class ThrottlingError extends Error implements INackContent {
 	readonly code = 429;
 	readonly type = NackErrorType.ThrottlingError;
+	readonly name = "ThrottlingError";
 
 	constructor(
 		/**
@@ -40,7 +41,9 @@ export class ThrottlingError implements INackContent {
 		 * Client should retry operation after this many seconds.
 		 */
 		readonly retryAfter: number,
-	) {}
+	) {
+		super(message);
+	}
 }
 
 /**
