@@ -53,7 +53,7 @@ export interface ITypeValidationConfig {
 }
 
 export const defaultTypeValidationConfig: ITypeValidationConfig = {
-	entrypoint: "legacyBeta",
+	entrypoint: "legacyAlpha",
 	broken: {},
 	disabled: undefined,
 };
