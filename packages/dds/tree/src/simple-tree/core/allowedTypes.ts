@@ -258,7 +258,7 @@ export type UnannotateAllowedTypes<T extends AnnotatedAllowedTypes> =
  * Removes annotations from an allowed type.
  * @system @alpha
  */
-export type UnannotateAllowedType<T extends AnnotatedAllowedType> =
+export type UnannotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> =
 	T extends AnnotatedAllowedType<infer X> ? [X] : T;
 
 /**
@@ -362,17 +362,26 @@ export function unannotateImplicitAllowedTypes<Types extends ImplicitAnnotatedAl
 ): UnannotateImplicitAllowedTypes<Types> {
 	return (
 		isAnnotatedAllowedTypes(types)
-			? types.types.map((allowedType) =>
-					isAnnotatedAllowedType(allowedType) ? allowedType.type : allowedType,
-				)
+			? types.types.map(unannotateAllowedType)
 			: isReadonlyArray(types)
-				? types.map((allowedType) =>
-						isAnnotatedAllowedType(allowedType) ? allowedType.type : allowedType,
-					)
+				? types.map(unannotateAllowedType)
 				: isAnnotatedAllowedType(types)
-					? (types.type as UnannotateImplicitAllowedTypes<Types>)
+					? types.type
 					: types
 	) as UnannotateImplicitAllowedTypes<Types>;
+}
+
+/**
+ * Converts an {@link AnnotatedAllowedType} to an {@link LazyItem} by removing any annotations.
+ * @remarks
+ * This does not evaluate any lazy schemas.
+ */
+export function unannotateAllowedType<
+	Type extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>,
+>(allowedType: Type): UnannotateAllowedType<Type> {
+	return isAnnotatedAllowedType(allowedType)
+		? (allowedType.type as UnannotateAllowedType<Type>)
+		: (allowedType as UnannotateAllowedType<Type>);
 }
 
 const cachedLazyItem = new WeakMap<() => unknown, unknown>();
@@ -401,9 +410,7 @@ export function checkForUninitializedSchema(
 ): void {
 	if (schema === undefined) {
 		throw new UsageError(
-			`Encountered an undefined schema.
-			This could indicate that some referenced schema has not yet been instantiated.
-			Consider using a lazy schema reference (like "() => schema") or delaying the evaluation of the lazy reference if one is already being used.`,
+			`Encountered an undefined schema. This could indicate that some referenced schema has not yet been instantiated. Consider using a lazy schema reference (like "() => schema") or delaying the evaluation of the lazy reference if one is already being used.`,
 		);
 	}
 }

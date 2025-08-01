@@ -25,13 +25,10 @@ import type {
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
-	codeSpanToMarkdown,
-	fencedCodeBlockToMarkdown,
 	headingToMarkdown,
 	horizontalRuleToMarkdown,
 	sectionToMarkdown,
 	lineBreakToMarkdown,
-	linkToMarkdown,
 	paragraphToMarkdown,
 	plainTextToMarkdown,
 	spanToMarkdown,
@@ -40,6 +37,8 @@ import {
 	tableRowToMarkdown,
 	listToMarkdown,
 	listItemToMarkdown,
+	markdownBlockContentNodeToMarkdown,
+	markdownPhrasingContentNodeToMarkdown,
 } from "../default-transformations/index.js";
 
 /**
@@ -97,13 +96,12 @@ export type Transformation<
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/mdast | mdast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	codeSpan: codeSpanToMarkdown,
-	fencedCode: fencedCodeBlockToMarkdown,
 	heading: headingToMarkdown,
 	lineBreak: lineBreakToMarkdown,
-	link: linkToMarkdown,
 	list: listToMarkdown,
 	listItem: listItemToMarkdown,
+	markdownBlockContent: markdownBlockContentNodeToMarkdown,
+	markdownPhrasingContent: markdownPhrasingContentNodeToMarkdown,
 	section: sectionToMarkdown,
 	horizontalRule: horizontalRuleToMarkdown,
 	paragraph: paragraphToMarkdown,

@@ -2848,6 +2848,9 @@ describe("treeNodeApi", () => {
 		});
 
 		describe("roundtrip", () => {
+			// These tests don't include any unknown optional fields: see the "test-documents" for those.
+			// These tests are mostly redundant with the large set of tests in the "test-documents",
+			// but these are simpler and have less dependencies.
 			describe("unhydrated test-trees", () => {
 				for (const testCase of testSimpleTrees) {
 					if (testCase.root() !== undefined) {
@@ -2954,26 +2957,6 @@ describe("treeNodeApi", () => {
 					);
 				});
 			});
-		});
-
-		describe("roundtrip-stored", () => {
-			// TODO AB#43548: This should include test cases with unknown optional fields.
-			for (const testCase of testSimpleTrees) {
-				if (testCase.root() !== undefined) {
-					it(testCase.name, () => {
-						const tree = TreeAlpha.create<UnsafeUnknownSchema>(
-							testCase.schema,
-							testCase.root(),
-						);
-						assert(tree !== undefined);
-						const exported = TreeAlpha.exportVerbose(tree, { useStoredKeys: true });
-						const imported = TreeAlpha.importVerbose(testCase.schema, exported, {
-							useStoredKeys: true,
-						});
-						expectTreesEqual(tree, imported);
-					});
-				}
-			}
 		});
 	});
 

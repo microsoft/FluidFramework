@@ -1555,7 +1555,7 @@ const typeNameSymbol: unique symbol;
 export const typeSchemaSymbol: unique symbol;
 
 // @alpha @system
-export type UnannotateAllowedType<T extends AnnotatedAllowedType> = T extends AnnotatedAllowedType<infer X> ? [X] : T;
+export type UnannotateAllowedType<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? [X] : T;
 
 // @alpha @system
 export type UnannotateAllowedTypeOrLazyItem<T extends AnnotatedAllowedType | LazyItem<TreeNodeSchema>> = T extends AnnotatedAllowedType<infer X> ? X : T;

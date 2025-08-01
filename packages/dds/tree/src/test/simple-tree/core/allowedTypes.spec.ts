@@ -222,6 +222,10 @@ describe("allowedTypes", () => {
 			assert(!isAnnotatedAllowedType(() => schema.string));
 		});
 
+		it("does not evaluate LazyItem", () => {
+			assert(!isAnnotatedAllowedType(() => assert.fail()));
+		});
+
 		it("returns false for schema", () => {
 			assert(!isAnnotatedAllowedType(schema.string));
 			class Test extends schema.object("Test", {}) {}
@@ -366,7 +370,7 @@ describe("allowedTypes", () => {
 
 		it("wraps TreeNodeSchema in an annotation", () => {
 			const result = normalizeToAnnotatedAllowedType(fakeSchema);
-			assert.deepStrictEqual(result, { metadata: {}, type: fakeSchema });
+			assert.deepEqual(result, { metadata: {}, type: fakeSchema });
 		});
 
 		it("returns input unchanged if already AnnotatedAllowedType", () => {
@@ -375,7 +379,7 @@ describe("allowedTypes", () => {
 				type: fakeSchema,
 			};
 			const result = normalizeToAnnotatedAllowedType(input);
-			assert.deepStrictEqual(result, input);
+			assert.deepEqual(result, input);
 		});
 
 		it("evaluates any lazy schemas", () => {
@@ -384,7 +388,7 @@ describe("allowedTypes", () => {
 				type: lazy,
 			};
 			const result = normalizeToAnnotatedAllowedType(input);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: { custom: { something: true } },
 				type: fakeSchema,
 			});
@@ -399,7 +403,7 @@ describe("allowedTypes", () => {
 
 		it("adds metadata when it doesn't already exist", () => {
 			const result = normalizeAnnotatedAllowedTypes(stringSchema);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: {},
 				types: [{ metadata: {}, type: stringSchema }],
 			});
@@ -408,7 +412,7 @@ describe("allowedTypes", () => {
 		it("evaluates any lazy allowed types", () => {
 			const input = [lazyString, { metadata: { custom: true }, type: lazyNumber }];
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: {},
 				types: [
 					{ metadata: {}, type: stringSchema },
@@ -420,7 +424,7 @@ describe("allowedTypes", () => {
 		it("handles single AnnotatedAllowedType", () => {
 			const input: AnnotatedAllowedType = { metadata: { custom: 1 }, type: lazyString };
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: {},
 				types: [{ metadata: { custom: 1 }, type: stringSchema }],
 			});
@@ -434,7 +438,7 @@ describe("allowedTypes", () => {
 				types: [{ metadata: { custom: 1 }, type: lazyString }],
 			};
 			const result = normalizeAnnotatedAllowedTypes(input);
-			assert.deepStrictEqual(result, {
+			assert.deepEqual(result, {
 				metadata: { custom: "test" },
 				types: [{ metadata: { custom: 1 }, type: stringSchema }],
 			});

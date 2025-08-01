@@ -50,7 +50,7 @@ export {
 	createThrowsSection,
 	createTypeParametersSection,
 } from "./helpers/index.js";
-export { transformTsdoc } from "./TsdocNodeTransforms.js";
+export { transformAndWrapTsdoc as transformTsdoc } from "./TsdocNodeTransforms.js";
 export { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
 export { transformApiModel } from "./TransformApiModel.js";
 export { checkForDuplicateDocumentPaths } from "./Utilities.js";
