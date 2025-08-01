@@ -2869,13 +2869,6 @@ export class ContainerRuntime
 		clientId?: string,
 	): void {
 		if (!this.getConnectionState) {
-			if (canSendOpsChanged) {
-				if (canSendOps) {
-					this.emit("connectedToService", clientId, canSendOps);
-				} else {
-					this.emit("disconnectedFromService");
-				}
-			}
 			return;
 		}
 
@@ -5120,13 +5113,20 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connectedToService", (clientId: string, canWrite: boolean) => {
-			eventEmitter.emit("joined", { clientId, canWrite });
-		});
-		this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
-		this.on("connectionTypeChanged", (canWrite: boolean) =>
-			eventEmitter.emit("connectionTypeChanged", canWrite),
-		);
+		if (this.getConnectionState) {
+			this.on("connectedToService", (clientId: string, canWrite: boolean) => {
+				eventEmitter.emit("joined", { clientId, canWrite });
+			});
+			this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+			this.on("connectionTypeChanged", (canWrite: boolean) =>
+				eventEmitter.emit("connectionTypeChanged", canWrite),
+			);
+		} else {
+			this.on("connected", (clientId: string) => {
+				eventEmitter.emit("joined", { clientId, canWrite: true });
+			});
+			this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+		}
 		return eventEmitter;
 	});
 
