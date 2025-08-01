@@ -31,6 +31,9 @@ Usages should be converted to `MarkdownBlockContentNode` or `mdast` directly as 
 - `ParagraphNode`
 - `PlainTextNode`
 - `SpanNode`
+- `TableCellNode`
+- `TableNode`
+- `TableRowNode`
 
 ## 0.21.0
 
