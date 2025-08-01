@@ -64,6 +64,7 @@ import {
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -294,6 +295,11 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
+	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab.
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -442,6 +448,8 @@ export class FluidDataStoreRuntime
 		// They're accessed via IFluidDataStoreRuntimeExperimental interface.
 		// eslint-disable-next-line no-void
 		void [this.inStagingMode, this.isDirty];
+
+		this.minVersionForCollab = this.dataStoreContext.getMinVersionForCollab();
 	}
 
 	/**

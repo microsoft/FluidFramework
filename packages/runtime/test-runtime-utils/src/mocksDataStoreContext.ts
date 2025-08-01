@@ -26,6 +26,7 @@ import {
 	IFluidDataStoreRegistry,
 	IGarbageCollectionDetailsBase,
 	type IRuntimeStorageService,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITelemetryLoggerExt,
@@ -155,6 +156,10 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public addedGCOutboundRoute(fromPath: string, toPath: string, messageTimestampMs?: number) {
+		throw new Error("Method not implemented.");
+	}
+
+	public getMinVersionForCollab(): MinimumVersionForCollab {
 		throw new Error("Method not implemented.");
 	}
 }
