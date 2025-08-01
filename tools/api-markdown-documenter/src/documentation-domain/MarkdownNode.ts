@@ -27,13 +27,6 @@ export class MarkdownBlockContentNode extends DocumentationLiteralNodeBase<Mdast
 	 */
 	public readonly type = "markdownBlockContent";
 
-	/**
-	 * {@inheritDoc DocumentationNode.isEmpty}
-	 */
-	public get isEmpty(): boolean {
-		return false; // Not well defined
-	}
-
 	public constructor(value: MdastBlockContent) {
 		super(value);
 	}
@@ -55,13 +48,6 @@ export class MarkdownPhrasingContentNode extends DocumentationLiteralNodeBase<Md
 	 * {@inheritDoc DocumentationNode."type"}
 	 */
 	public readonly type = "markdownPhrasingContent";
-
-	/**
-	 * {@inheritDoc DocumentationNode.isEmpty}
-	 */
-	public get isEmpty(): boolean {
-		return false; // Not well defined
-	}
 
 	public constructor(value: MdastPhrasingContent) {
 		super(value);
