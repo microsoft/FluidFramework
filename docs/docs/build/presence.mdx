@@ -40,7 +40,7 @@ A `StatesWorkspace` allows sharing of simple data across attendees where each at
 
 A `NotificationsWorkspace` is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
 
-### States
+### State objects
 
 #### Latest, LatestRaw
 
@@ -48,7 +48,7 @@ A `NotificationsWorkspace` is similar to states workspace, but is dedicated to n
 
 #### LatestMap, LatestMapRaw
 
-`LatestMap` and `LatestMapRaw` (unvalidated data) retain retains the most recent atomic value each attendee has shared under arbitrary keys (mimics `Map` data structure). Values associated with a key may be set to `undefined` to represent deletion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`. (`LatestMap` support is pending.)
+`LatestMap` and `LatestMapRaw` (unvalidated data) retain the most recent atomic value each attendee has shared under arbitrary keys (mimics `Map` data structure). Values associated with a key may be set to `undefined` to represent deletion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`. (`LatestMap` support is pending.)
 
 #### NotificationsManager
 
@@ -56,55 +56,9 @@ Notifications are a special case where no data is retained during a session and 
 
 ## Using Presence
 
-### Initialization
+### State object use
 
-To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
-
-```typescript
-import { getPresence } from "@fluidframework/presence/beta";
-
-function usePresence(container: IFluidContainer): void {
-   const presence = getPresence(container);
-}
-```
-
-### Schema Definition and Workspace
-
-```typescript
-import type { LatestRaw, LatestMapRaw, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
-import { StatesFactory } from "@fluidframework/presence/beta";
-
-interface PointXY { x: number; y: number }
-
-// Basic custom type guard
-function isPointXY(value: unknown): value is PointXY {
-	return typeof value === "object" && value !== null && "x" in value && "y" in value &&
-		typeof value.x === "number" && typeof value.y === "number";
-}
-
-// A Presence workspace schema with two State Objects named "position" and "counters".
-const PresenceSchemaV1 = {
-	// This `Latest<PointXY>` state defaults all values to (0, 0).
-	position: StateFactory.latest<PointXY>({
-		local: { x: 0, y: 0 },
-		validator: (v) => isPointXY(v) ? v : undefined
-	}),
-	// This `LatestMap<number, string>` state has `string` keys storing `number` values.
-	counters: StateFactory.latestMap<number, string>({ }),
-} as const satisfies StatesWorkspaceSchema;
-
-function acquireWorkspace(presence: Presence):
-	{
-		position: Latest<PointXY>;
-		counters: LatestMapRaw<number, string>;
-	} {
-	return presence.states.getWorkspace("name:PointsAndCountersV1", PresenceSchemaV1).states;
-}
-```
-
-### State Object use
-
-State Objects have:
+State objects have:
 
 1. a `local` property representing local clients state data
 1. an `events` property to listen for remote and local updates
@@ -204,14 +158,64 @@ function logOthersCounters(counterTracker: LatestMapRaw<number, string>): void {
 }
 ```
 
+### Setup
+
+To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
+
+```typescript
+import { getPresence } from "@fluidframework/presence/beta";
+
+function usePresence(container: IFluidContainer): void {
+   const presence = getPresence(container);
+}
+```
+
+#### Schema Definition and Workspace
+
+```typescript
+import type { LatestRaw, LatestMapRaw, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
+import { StatesFactory } from "@fluidframework/presence/beta";
+
+interface PointXY { x: number; y: number }
+
+// Basic custom type guard
+function isPointXY(value: unknown): value is PointXY {
+	return typeof value === "object" && value !== null && "x" in value && "y" in value &&
+		typeof value.x === "number" && typeof value.y === "number";
+}
+
+// A Presence workspace schema with two State objects named "position" and "counters".
+const PresenceSchemaV1 = {
+	// This `Latest<PointXY>` state defaults all values to (0, 0).
+	position: StateFactory.latest<PointXY>({
+		local: { x: 0, y: 0 },
+		validator: (v) => isPointXY(v) ? v : undefined
+	}),
+	// This `LatestMap<number, string>` state has `string` keys storing `number` values.
+	counters: StateFactory.latestMap<number, string>({ }),
+} as const satisfies StatesWorkspaceSchema;
+
+// Creates our unique workspace with the State objects declared in above schema.
+function getOurWorkspace(presence: Presence):
+	{
+		position: Latest<PointXY>;
+		counters: LatestMapRaw<number, string>;
+	} {
+	return presence.states.getWorkspace("name:PointsAndCountersV1", PresenceSchemaV1).states;
+}
+```
+
 ## Other Capabilities
 
 ### Runtime data validation
 
-Runtime data validation is not yet implemented. The StateFactory.latest and StateFactory.latestMap APIs do not yet
-accept a `validator` argument. The validator argument is reserved for future use. **Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
+Runtime data validation is partially implemented. The StateFactory.latest API does accept a `validator` argument but StateFactory.latestMap API does not. Passing a validator function is recommended to ensure data from other attendees conforms to expectations. The validator will be invoked on the first attempt to read a remote value (always a `.value()` call) and validator may return data conforming to schema or `undefined`. Whatever the result, it will be cached and returned immediately for future `.value()` calls. **Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
 
 ## Limitations
+
+### Data Supported
+
+Only plain old data is supported. If `JSON.parse(JSON.stringify(foo))` returns a deeply equal value, then that data is supported. Large data is not recommended and if used may exceed system capacity. A small image could be shared but sharing a URL to an image is recommended.
 
 ### Compatibility and Versioning
 
