@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
+import { ConnectionState } from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtension,
 	ContainerExtensionId,
@@ -22,7 +23,6 @@ import {
 	MockQuorumClients,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import { ConnectionState } from "../connectionState.js";
 import { ContainerRuntime } from "../containerRuntime.js";
 
 interface TestExtensionRuntimeProperties extends ExtensionRuntimeProperties {

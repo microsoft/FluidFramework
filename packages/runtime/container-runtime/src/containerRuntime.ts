@@ -24,7 +24,7 @@ import type {
 	ILoader,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import { ConnectionState, isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtensionFactory,
 	ContainerExtensionId,
@@ -187,7 +187,6 @@ import {
 } from "./channelCollection.js";
 import type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 import { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
-import { ConnectionState } from "./connectionState.js";
 import { ReportOpPerfTelemetry } from "./connectionTelemetry.js";
 import {
 	getMinVersionForCollabDefaults,
