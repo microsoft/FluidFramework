@@ -19,22 +19,21 @@ import {
 	type DocHtmlStartTag,
 	type DocEscapedText,
 } from "@microsoft/tsdoc";
+import type {
+	Break,
+	BlockContent,
+	Code,
+	InlineCode,
+	List,
+	ListItem,
+	Paragraph,
+	PhrasingContent,
+	Text,
+} from "mdast";
 
 import type { Link } from "../Link.js";
 import type { LoggingConfiguration } from "../LoggingConfiguration.js";
-import {
-	type BlockContent,
-	CodeSpanNode,
-	FencedCodeBlockNode,
-	LineBreakNode,
-	LinkNode,
-	ListItemNode,
-	ListNode,
-	ParagraphNode,
-	type PhrasingContent,
-	PlainTextNode,
-	SpanNode,
-} from "../documentation-domain/index.js";
+import { MarkdownBlockContentNode } from "../documentation-domain/index.js";
 
 import { resolveSymbolicLink } from "./Utilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
@@ -85,7 +84,21 @@ function getTsdocNodeTransformationOptions(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a {@link SectionNode}.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link MarkdownBlockContentNode}s.
+ *
+ * @public
+ */
+export function transformAndWrapTsdoc(
+	node: DocSection,
+	contextApiItem: ApiItem,
+	config: ApiItemTransformationConfiguration,
+): MarkdownBlockContentNode[] {
+	const contents = transformTsdoc(node, contextApiItem, config);
+	return contents.map((mdastTree) => new MarkdownBlockContentNode(mdastTree));
+}
+
+/**
+ * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link BlockContent}s.
  *
  * @public
  */
@@ -167,7 +180,7 @@ function transformTsdocSectionContent(
 function transformTsdocParagraph(
 	node: DocParagraph,
 	options: TsdocNodeTransformOptions,
-): (ParagraphNode | ListNode)[] {
+): (Paragraph | List)[] {
 	// TODO: HTML contents come in as a start tag, followed by the content, followed by an end tag, rather than something with hierarchy.
 	// To ensure we map the content correctly, we should scan the child list for matching open/close tags,
 	// and map the subsequence to an "html" node.
@@ -185,16 +198,15 @@ function transformTsdocParagraph(
 	// and trim trailing whitespace from last child if it is plain text.
 	if (transformedChildren.length > 0) {
 		if (transformedChildren[0].type === "text") {
-			const plainTextNode = transformedChildren[0];
-			transformedChildren[0] = new PlainTextNode(plainTextNode.value.trimStart());
+			const text = transformedChildren[0];
+			transformedChildren[0] = { type: "text", value: text.value.trimStart() };
 		}
 		if (transformedChildren[transformedChildren.length - 1].type === "text") {
-			const plainTextNode = transformedChildren[
-				transformedChildren.length - 1
-			] as PlainTextNode;
-			transformedChildren[transformedChildren.length - 1] = new PlainTextNode(
-				plainTextNode.value.trimEnd(),
-			);
+			const text = transformedChildren[transformedChildren.length - 1];
+			transformedChildren[transformedChildren.length - 1] = {
+				type: "text",
+				value: (text as Text).value.trimEnd(),
+			};
 		}
 	}
 
@@ -204,6 +216,13 @@ function transformTsdocParagraph(
 
 	return parseContentAsBlock(transformedChildren);
 }
+
+/**
+ * Line break singleton
+ */
+const lineBreak: Break = {
+	type: "break",
+};
 
 // Default TSDoc implementation only supports the following DocNode kinds under a section node:
 // - DocNodeKind.BlockTag,
@@ -248,7 +267,7 @@ function transformTsdocParagraphContent(
 			return [transformTsdocPlainText(node as DocPlainText, options)];
 		}
 		case DocNodeKind.SoftBreak: {
-			return [LineBreakNode.Singleton];
+			return [lineBreak];
 		}
 		default: {
 			options.logger.error(
@@ -266,8 +285,11 @@ function transformTsdocParagraphContent(
 function transformTsdocCodeSpan(
 	node: DocCodeSpan,
 	options: TsdocNodeTransformOptions,
-): CodeSpanNode {
-	return new CodeSpanNode(node.code.trim());
+): InlineCode {
+	return {
+		type: "inlineCode",
+		value: node.code.trim(),
+	};
 }
 
 /**
@@ -301,8 +323,11 @@ function transformTsdocHtmlTag(
 function transformTsdocPlainText(
 	node: DocPlainText,
 	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	return new PlainTextNode(node.text);
+): Text {
+	return {
+		type: "text",
+		value: node.text,
+	};
 }
 
 /**
@@ -311,8 +336,11 @@ function transformTsdocPlainText(
 function transformTsdocEscapedText(
 	node: DocEscapedText,
 	options: TsdocNodeTransformOptions,
-): PlainTextNode {
-	return new PlainTextNode(node.decodedText);
+): Text {
+	return {
+		type: "text",
+		value: node.decodedText,
+	};
 }
 
 /**
@@ -321,8 +349,12 @@ function transformTsdocEscapedText(
 function transformTsdocFencedCode(
 	node: DocFencedCode,
 	options: TsdocNodeTransformOptions,
-): FencedCodeBlockNode {
-	return new FencedCodeBlockNode(node.code.trim(), node.language);
+): Code {
+	return {
+		type: "code",
+		value: node.code.trim(),
+		lang: node.language,
+	};
 }
 
 /**
@@ -331,26 +363,51 @@ function transformTsdocFencedCode(
 function transformTsdocLinkTag(
 	input: DocLinkTag,
 	options: TsdocNodeTransformOptions,
-): LinkNode | SpanNode {
+): PhrasingContent {
 	if (input.codeDestination !== undefined) {
 		const link = options.resolveApiReference(input.codeDestination);
 
 		if (link === undefined) {
 			// If the code link could not be resolved, print the unresolved text in italics.
 			const linkText = input.linkText?.trim() ?? input.codeDestination.emitAsTsdoc().trim();
-			return SpanNode.createFromPlainText(linkText, { italic: true });
+			return {
+				type: "emphasis",
+				children: [
+					{
+						type: "text",
+						value: linkText,
+					},
+				],
+			};
 		} else {
 			const linkText = input.linkText?.trim() ?? link.text;
 			const linkTarget = link.target;
-			return new LinkNode(linkText, linkTarget);
+			return {
+				type: "link",
+				url: linkTarget,
+				children: [
+					{
+						type: "text",
+						value: linkText,
+					},
+				],
+			};
 		}
 	}
 
 	if (input.urlDestination !== undefined) {
 		// If link text was not provided, use the name of the referenced element.
 		const linkText = input.linkText ?? input.urlDestination;
-
-		return new LinkNode(linkText, input.urlDestination);
+		return {
+			type: "link",
+			url: input.urlDestination,
+			children: [
+				{
+					type: "text",
+					value: linkText,
+				},
+			],
+		};
 	}
 
 	throw new Error(
@@ -377,17 +434,31 @@ function transformTsdocLinkTag(
  * for use in `{@link}` and `{@inheritDoc}` tags, so we will simply ignore them here. I.e. we
  * will return `undefined`.
  */
-function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
+function transformTsdocInlineTag(node: DocInlineTag): PhrasingContent | undefined {
 	if (node.tagName === "@label") {
 		return undefined;
 	}
 
 	// For all other inline tags, there isn't really anything we can do with them except emit them
 	// as is. However, to help differentiate them in the output, we will italicize them.
-	return SpanNode.createFromPlainText(`{${node.tagName} ${node.tagContent}}`, {
-		italic: true,
-	});
+	return {
+		type: "emphasis",
+		children: [
+			{
+				type: "text",
+				value: `{${node.tagName} ${node.tagContent}}`,
+			},
+		],
+	};
 }
+
+/**
+ * Single space text singleton.
+ */
+const space: Text = {
+	type: "text",
+	value: " ",
+};
 
 /**
  * Parse the provided list of {@link PhrasingContent} into a list of {@link ParagraphNode} or {@link ListNode}, following Markdown syntax rules.
@@ -395,7 +466,7 @@ function transformTsdocInlineTag(node: DocInlineTag): SpanNode | undefined {
  * @remarks This is a workaround for TSDoc not parsing its input as Markdown.
  * We add explicit support for lists as a post-processing step.
  */
-function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNode)[] {
+function parseContentAsBlock(nodes: PhrasingContent[]): (Paragraph | List)[] {
 	// #region Step 1: parse source lines into lines of non-lists (paragraphs) and list items
 
 	// This regex matches lines that look like Markdown list items:
@@ -456,13 +527,13 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNod
 								type: "orderedListItem",
 								delimiter: orderedListItemDelimiterMatch[1] as "." | ")",
 								indentationLevel,
-								content: [new PlainTextNode(listItemContent)],
+								content: [{ type: "text", value: listItemContent }],
 							}
 						: {
 								type: "unorderedListItem",
 								delimiter: listItemDelimiter as "*" | "+" | "-",
 								indentationLevel,
-								content: [new PlainTextNode(listItemContent)],
+								content: [{ type: "text", value: listItemContent }],
 							};
 				} else {
 					// If the line doesn't start with the list item pattern, we will treat the line as the start of a paragraph.
@@ -479,7 +550,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNod
 			}
 		} else {
 			// Case: continuation of the current line
-			if (node.type === "lineBreak") {
+			if (node.type === "break") {
 				// When we encounter a line break, we will finalize the current line content.
 				parsedSourceLines.push(currentLineState);
 				currentLineState = undefined;
@@ -518,7 +589,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNod
 				) {
 					if (items.length > 0) {
 						// Add a space between content on adjacent lines in the same paragraph.
-						items.push(new PlainTextNode(" "));
+						items.push(space);
 					}
 					items.push(...parsedSourceLines[iParsed].content);
 					iParsed++;
@@ -539,7 +610,7 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNod
 				) {
 					if (items.length > 0) {
 						// Add a space between content on adjacent lines in the same paragraph.
-						items.push(new PlainTextNode(" "));
+						items.push(space);
 					}
 					items.push(...parsedSourceLines[iParsed].content);
 					iParsed++;
@@ -568,30 +639,43 @@ function parseContentAsBlock(nodes: PhrasingContent[]): (ParagraphNode | ListNod
 	// This means that all adjacent list items are treated as separate items in a single root list.
 	// This is sufficient for our needs at the moment, but in the future we should add support for parsing nested lists.
 
-	const result: (ParagraphNode | ListNode)[] = [];
+	const result: (Paragraph | List)[] = [];
 	let iOutput = 0;
 	while (iOutput < outputLines.length) {
 		const current = outputLines[iOutput];
 
 		switch (current.type) {
 			case "paragraphLine": {
-				result.push(new ParagraphNode(current.content));
+				result.push({ type: "paragraph", children: current.content });
 				iOutput++;
 				break;
 			}
 			case "orderedListItem":
 			case "unorderedListItem": {
-				const items: ListItemNode[] = [];
+				const items: ListItem[] = [];
 				while (
 					iOutput < outputLines.length &&
 					outputLines[iOutput].type === current.type &&
 					(outputLines[iOutput] as ParsedOrderedListItem | ParsedUnorderedListItem)
 						.delimiter === current.delimiter
 				) {
-					items.push(new ListItemNode(combineAdjacentPlainText(outputLines[iOutput].content)));
+					items.push({
+						type: "listItem",
+						children: [
+							{
+								type: "paragraph",
+								children: combineAdjacentPlainText(outputLines[iOutput].content),
+							},
+						],
+					});
 					iOutput++;
 				}
-				result.push(new ListNode(items, current.type === "orderedListItem"));
+				result.push({
+					type: "list",
+					ordered: current.type === "orderedListItem",
+					children: items,
+					spread: false,
+				});
 				break;
 			}
 			// No default
@@ -619,14 +703,14 @@ function combineAdjacentPlainText(nodes: readonly PhrasingContent[]): PhrasingCo
 			buffer += node.value;
 		} else {
 			if (buffer.length > 0) {
-				result.push(new PlainTextNode(buffer));
+				result.push({ type: "text", value: buffer });
 				buffer = "";
 			}
 			result.push(node);
 		}
 	}
 	if (buffer.length > 0) {
-		result.push(new PlainTextNode(buffer));
+		result.push({ type: "text", value: buffer });
 	}
 
 	return result;

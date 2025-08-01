@@ -803,6 +803,14 @@ export class Container
 			retryConnectionTimeoutMs,
 		} = createProps;
 
+		// Validate that the Driver is compatible with this Loader.
+		const maybeDriverCompatDetails =
+			documentServiceFactory as FluidObject<ILayerCompatDetails>;
+		validateDriverCompatibility(
+			maybeDriverCompatDetails.ILayerCompatDetails,
+			(error) => {} /* disposeFn */, // There is nothing to dispose here, so just ignore the error.
+		);
+
 		this.connectionTransitionTimes[ConnectionState.Disconnected] = performanceNow();
 		const pendingLocalState = loadProps?.pendingLocalState;
 
@@ -1612,13 +1620,6 @@ export class Container
 				}, // progress
 			);
 		}
-
-		// Validate that the Driver is compatible with this Loader.
-		const maybeDriverCompatDetails = service as FluidObject<ILayerCompatDetails>;
-		validateDriverCompatibility(maybeDriverCompatDetails.ILayerCompatDetails, (error) =>
-			this.dispose(error),
-		);
-
 		return service;
 	}
 

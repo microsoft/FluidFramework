@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { PhrasingContent } from "mdast";
+
 import type { BlockContent } from "./BlockContent.js";
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import type { PhrasingContent } from "./PhrasingContent.js";
-import { createNodesFromPlainText } from "./Utilities.js";
 
 /**
  * Kind of Table Cell.
@@ -100,7 +100,12 @@ export class TableHeaderCellNode extends TableCellNode {
 	public static createFromPlainText(text: string): TableHeaderCellNode {
 		return text.length === 0
 			? TableHeaderCellNode.Empty
-			: new TableHeaderCellNode(createNodesFromPlainText(text));
+			: new TableHeaderCellNode([
+					{
+						type: "text",
+						value: text,
+					},
+				]);
 	}
 }
 
@@ -127,6 +132,11 @@ export class TableBodyCellNode extends TableCellNode {
 	public static createFromPlainText(text: string): TableBodyCellNode {
 		return text.length === 0
 			? TableBodyCellNode.Empty
-			: new TableBodyCellNode(createNodesFromPlainText(text));
+			: new TableBodyCellNode([
+					{
+						type: "text",
+						value: text,
+					},
+				]);
 	}
 }
