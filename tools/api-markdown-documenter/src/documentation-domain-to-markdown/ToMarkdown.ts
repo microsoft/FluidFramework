@@ -7,13 +7,11 @@ import type {
 	BlockContent as MdastBlockContent,
 	Root as MdastRoot,
 	RootContent as MdastRootContent,
-	PhrasingContent as MdastPhrasingContent,
 } from "mdast";
 
 import type {
 	BlockContent,
 	DocumentNode,
-	PhrasingContent,
 	SectionContent,
 } from "../documentation-domain/index.js";
 
@@ -89,30 +87,6 @@ export function blockContentToMarkdown(
 	const transformation = transformations[node.type] as Transformation<
 		BlockContent,
 		[MdastBlockContent]
-	>;
-	if (transformation === undefined) {
-		throw new Error(`No transformation defined for node type: ${node.type}`);
-	}
-	return transformation(node, context);
-}
-
-/**
- * Generates a Markdown AST from the provided {@link SectionContent}.
- *
- * @param node - The node to transform.
- * @param config - Markdown transformation configuration.
- *
- * @public
- */
-export function phrasingContentToMarkdown(
-	node: PhrasingContent,
-	context: TransformationContext,
-): [MdastPhrasingContent] {
-	const { transformations } = context;
-
-	const transformation = transformations[node.type] as Transformation<
-		PhrasingContent,
-		[MdastPhrasingContent]
 	>;
 	if (transformation === undefined) {
 		throw new Error(`No transformation defined for node type: ${node.type}`);

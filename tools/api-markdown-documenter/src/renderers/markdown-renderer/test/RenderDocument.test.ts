@@ -8,7 +8,6 @@ import { expect } from "chai";
 import {
 	DocumentNode,
 	HeadingNode,
-	MarkdownPhrasingContentNode,
 	ParagraphNode,
 	SectionNode,
 } from "../../../documentation-domain/index.js";
@@ -21,27 +20,27 @@ describe("Document Markdown rendering tests", () => {
 				new SectionNode(
 					[
 						new ParagraphNode([
-							new MarkdownPhrasingContentNode({
+							{
 								type: "text",
 								value: "This is a sample document. ",
-							}),
-							new MarkdownPhrasingContentNode({
+							},
+							{
 								type: "text",
 								value: "It has very basic content.\t",
-							}),
+							},
 						]),
 						new SectionNode(
 							[
 								new ParagraphNode([
-									new MarkdownPhrasingContentNode({
+									{
 										type: "text",
 										value: "This is test inside of a paragraph. ",
-									}),
-									new MarkdownPhrasingContentNode({
+									},
+									{
 										type: "text",
 										value: "It is also inside of a hierarchical section node. ",
-									}),
-									new MarkdownPhrasingContentNode({
+									},
+									{
 										type: "emphasis",
 										children: [
 											{
@@ -49,7 +48,7 @@ describe("Document Markdown rendering tests", () => {
 												value: "That's real neat-o.",
 											},
 										],
-									}),
+									},
 								]),
 							],
 							new HeadingNode("Section Heading"),

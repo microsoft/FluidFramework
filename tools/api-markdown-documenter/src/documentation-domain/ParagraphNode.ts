@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { PhrasingContent } from "mdast";
+
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
-import type { PhrasingContent } from "./PhrasingContent.js";
 
 /**
  * A grouping of text content, potentially spanning multiple lines.
@@ -55,10 +55,10 @@ export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> 
 	 */
 	public static createFromPlainText(text: string): ParagraphNode {
 		return new ParagraphNode([
-			new MarkdownPhrasingContentNode({
+			{
 				type: "text",
 				value: text,
-			}),
+			},
 		]);
 	}
 }

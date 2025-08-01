@@ -6,10 +6,7 @@
 import type { Nodes as HastNodes } from "hast";
 import { toHast } from "mdast-util-to-hast";
 
-import type {
-	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
-} from "../../documentation-domain/index.js";
+import type { MarkdownBlockContentNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -19,7 +16,7 @@ import type { TransformationContext } from "../TransformationContext.js";
  * @param context - See {@link TransformationContext}.
  */
 export function markdownNodeToHtml(
-	node: MarkdownBlockContentNode | MarkdownPhrasingContentNode,
+	node: MarkdownBlockContentNode,
 	context: TransformationContext,
 ): HastNodes {
 	return toHast(node.value);

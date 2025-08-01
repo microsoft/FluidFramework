@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import type { PhrasingContent } from "mdast";
+
 import type { BlockContent } from "./BlockContent.js";
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
-import { MarkdownPhrasingContentNode } from "./MarkdownNode.js";
-import type { PhrasingContent } from "./PhrasingContent.js";
 
 /**
  * Kind of Table Cell.
@@ -101,10 +101,10 @@ export class TableHeaderCellNode extends TableCellNode {
 		return text.length === 0
 			? TableHeaderCellNode.Empty
 			: new TableHeaderCellNode([
-					new MarkdownPhrasingContentNode({
+					{
 						type: "text",
 						value: text,
-					}),
+					},
 				]);
 	}
 }
@@ -133,10 +133,10 @@ export class TableBodyCellNode extends TableCellNode {
 		return text.length === 0
 			? TableBodyCellNode.Empty
 			: new TableBodyCellNode([
-					new MarkdownPhrasingContentNode({
+					{
 						type: "text",
 						value: text,
-					}),
+					},
 				]);
 	}
 }

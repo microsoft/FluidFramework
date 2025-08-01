@@ -3,15 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BlockContent as MdastBlockContent,
-	PhrasingContent as MdastPhrasingContent,
-} from "mdast";
+import type { BlockContent as MdastBlockContent } from "mdast";
 
-import type {
-	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
-} from "../../documentation-domain/index.js";
+import type { MarkdownBlockContentNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -24,18 +18,5 @@ export function markdownBlockContentNodeToMarkdown(
 	node: MarkdownBlockContentNode,
 	context: TransformationContext,
 ): MdastBlockContent[] {
-	return [node.value];
-}
-
-/**
- * Transform a {@link MarkdownPhrasingContentNode} to Markdown.
- *
- * @param node - The node to transform.
- * @param context - See {@link TransformationContext}.
- */
-export function markdownPhrasingContentNodeToMarkdown(
-	node: MarkdownPhrasingContentNode,
-	context: TransformationContext,
-): MdastPhrasingContent[] {
 	return [node.value];
 }

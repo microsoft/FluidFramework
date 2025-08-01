@@ -17,7 +17,6 @@ import type {
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
@@ -78,8 +77,6 @@ export const defaultTransformations: Transformations = {
 	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
 	markdownBlockContent: (node, context) =>
 		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
-	markdownPhrasingContent: (node, context) =>
-		markdownNodeToHtml(node as MarkdownPhrasingContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
 	horizontalRule: () => hastHorizontalRule,
 	list: (node, context) => listToHtml(node as ListNode, context),

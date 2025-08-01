@@ -34,9 +34,8 @@ export interface DocumentationNode<TData extends object = UnistData> extends Uni
  *
  * @public
  */
-export interface DocumentationParentNode<
-	TDocumentationNode extends DocumentationNode = DocumentationNode,
-> extends UnistParent<TDocumentationNode, UnistData>,
+export interface DocumentationParentNode<TDocumentationNode extends UnistNode>
+	extends UnistParent<TDocumentationNode, UnistData>,
 		DocumentationNode {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}
@@ -79,9 +78,8 @@ export interface DocumentationLiteralNode<TValue = unknown>
  *
  * @public
  */
-export abstract class DocumentationParentNodeBase<
-	TDocumentationNode extends DocumentationNode = DocumentationNode,
-> implements DocumentationParentNode<TDocumentationNode>
+export abstract class DocumentationParentNodeBase<TDocumentationNode extends UnistNode>
+	implements DocumentationParentNode<TDocumentationNode>
 {
 	/**
 	 * {@inheritDoc DocumentationNode."type"}

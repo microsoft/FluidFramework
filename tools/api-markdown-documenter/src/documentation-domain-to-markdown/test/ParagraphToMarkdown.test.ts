@@ -5,10 +5,7 @@
 
 import { expect } from "chai";
 
-import {
-	MarkdownPhrasingContentNode,
-	ParagraphNode,
-} from "../../documentation-domain/index.js";
+import { ParagraphNode } from "../../documentation-domain/index.js";
 import { blockContentToMarkdown } from "../ToMarkdown.js";
 import { createTransformationContext } from "../TransformationContext.js";
 
@@ -26,8 +23,8 @@ describe("paragraphToMarkdown", () => {
 		const text2 = "This is more text!";
 
 		const input = new ParagraphNode([
-			new MarkdownPhrasingContentNode({ type: "text", value: text1 }),
-			new MarkdownPhrasingContentNode({ type: "text", value: text2 }),
+			{ type: "text", value: text1 },
+			{ type: "text", value: text2 },
 		]);
 		const result = blockContentToMarkdown(input, transformationContext);
 		expect(result).to.deep.equal([

@@ -29,9 +29,8 @@ export {
 export { HeadingNode } from "./HeadingNode.js";
 export { ListItemNode } from "./ListItemNode.js";
 export { ListNode } from "./ListNode.js";
-export { MarkdownBlockContentNode, MarkdownPhrasingContentNode } from "./MarkdownNode.js";
+export { MarkdownBlockContentNode } from "./MarkdownNode.js";
 export { ParagraphNode } from "./ParagraphNode.js";
-export type { PhrasingContent, PhrasingContentMap } from "./PhrasingContent.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
 export {
 	type TableCellContent,
