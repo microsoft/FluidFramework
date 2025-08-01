@@ -563,20 +563,6 @@ export interface Link {
 }
 
 // @public @sealed
-export class LinkNode implements DocumentationNode, Link {
-    constructor(
-    text: string,
-    target: UrlTarget);
-    static createFromPlainTextLink(link: Link): LinkNode;
-    get isEmpty(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = false;
-    readonly target: UrlTarget;
-    readonly text: string;
-    readonly type = "link";
-}
-
-// @public @sealed
 export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
     constructor(children: PhrasingContent[]);
     static createFromPlainText(text: string): ListItemNode;
@@ -661,8 +647,6 @@ export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
 export interface PhrasingContentMap {
     // (undocumented)
     lineBreak: LineBreakNode;
-    // (undocumented)
-    link: LinkNode;
     // (undocumented)
     markdownPhrasingContent: MarkdownPhrasingContentNode;
     // (undocumented)
