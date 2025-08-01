@@ -34,13 +34,13 @@ import {
 import {
 	AttachState,
 	type ICodeDetailsLoader,
-	type IContainer,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import {
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
+	IContainerExperimental,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -73,7 +73,7 @@ import {
 import { makeUnreachableCodePathProxy } from "./utils.js";
 
 export interface Client {
-	container: IContainer;
+	container: IContainerExperimental;
 	tag: `client-${number}`;
 	entryPoint: DefaultStressDataObject;
 }
@@ -788,6 +788,7 @@ async function loadClient(
 	url: string,
 	seed: number,
 	options: LocalServerStressOptions,
+	pendingLocalState?: string,
 ): Promise<Client> {
 	const container = await timeoutAwait(
 		loadExistingContainer({
@@ -799,6 +800,7 @@ async function loadClient(
 			configProvider: {
 				getRawConfig: (name) => options.configurations?.[name],
 			},
+			pendingLocalState,
 		}),
 		{
 			errorMsg: `Timed out waiting for client to load ${tag}`,
@@ -898,7 +900,8 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
 	};
-	const codeLoader = new LocalCodeLoader([[codeDetails, createRuntimeFactory()]]);
+	const runtime = createRuntimeFactory();
+	const codeLoader = new LocalCodeLoader([[codeDetails, runtime]]);
 	const tagCount: Partial<Record<string, number>> = {};
 	// we reserve prefix-0 for initialization objects
 	const tag: LocalServerStressState["tag"] = (prefix) =>
@@ -941,6 +944,7 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 			async () => finalSynchronization,
 		),
 	);
+
 	const reducer: AsyncReducer<
 		TOperation | typeof finalSynchronization,
 		LocalServerStressState
@@ -1274,12 +1278,21 @@ const getFullModel = <TOperation extends BaseOperation>(
 	ddsModel: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<
-	TOperation | AddClient | RemoveClient | Attach | Synchronize | ChangeConnectionState
+	| TOperation
+	| AddClient
+	| RemoveClient
+	| Attach
+	| Synchronize
+	| ChangeConnectionState
+	| GetClientPendingState
 > =>
-	mixinAttach(
-		mixinSynchronization(
-			mixinAddRemoveClient(
-				mixinClientSelection(mixinReconnect(ddsModel, options), options),
+	mixinGetClientPending(
+		mixinAttach(
+			mixinSynchronization(
+				mixinAddRemoveClient(
+					mixinClientSelection(mixinReconnect(ddsModel, options), options),
+					options,
+				),
 				options,
 			),
 			options,
@@ -1337,4 +1350,112 @@ export namespace createLocalServerStressSuite {
 				...providedOptions,
 				skip: [...seeds, ...(providedOptions?.skip ?? [])],
 			});
+}
+
+/**
+ * Operation type for cloning a client using its pending local state.
+ *
+ * This operation triggers a clone of an existing client by capturing its
+ * pending local state (via `getPendingLocalState()`) and loading a new
+ * container from it.
+ */
+interface GetClientPendingState {
+	type: "restartClientFromPendingState";
+	sourceClientTag: `client-${number}`;
+	newClientTag: `client-${number}`;
+}
+
+/**
+ * Adds support for "getPendingLocalState"-based client cloning to the stress model.
+ *
+ * This mixin extends the base fuzz model by occasionally inserting operations that:
+ * - Capture a given client's pending local state.
+ * - Instantiate a new client from that state using the same container URL.
+ * - Add the cloned client to the test state for further fuzzing.
+ *
+ * Preconditions:
+ * - Must have at least one client already in the system.
+ * - Must be in an attached container state.
+ */
+function mixinGetClientPending<TOperation extends BaseOperation>(
+	model: LocalServerStressModel<TOperation>,
+	options: LocalServerStressOptions,
+): LocalServerStressModel<TOperation | GetClientPendingState> {
+	const generatorFactory: () => AsyncGenerator<
+		TOperation | GetClientPendingState,
+		LocalServerStressState
+	> = () => {
+		const baseGenerator = model.generatorFactory();
+		return async (
+			state: LocalServerStressState,
+		): Promise<TOperation | GetClientPendingState | typeof done> => {
+			const { clients, random, validationClient } = state;
+			if (
+				options.clientJoinOptions !== undefined &&
+				validationClient.container.attachState !== AttachState.Detached &&
+				clients.length > 0
+			) {
+				return {
+					type: "restartClientFromPendingState",
+					sourceClientTag: random.pick(clients).tag,
+					newClientTag: state.tag("client"),
+				} satisfies GetClientPendingState;
+			}
+			return baseGenerator(state);
+		};
+	};
+
+	const minimizationTransforms: MinimizationTransform<TOperation | GetClientPendingState>[] =
+		(model.minimizationTransforms as
+			| MinimizationTransform<TOperation | GetClientPendingState>[]
+			| undefined) ?? [];
+
+	const reducer: AsyncReducer<
+		TOperation | GetClientPendingState,
+		LocalServerStressState
+	> = async (state, op) => {
+		if (isOperationType<GetClientPendingState>("restartClientFromPendingState", op)) {
+			const sourceClientIndex = state.clients.findIndex((c) => c.tag === op.sourceClientTag);
+			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
+			const sourceClient = state.clients[sourceClientIndex];
+
+			assert(
+				typeof sourceClient.container.getPendingLocalState === "function",
+				`Client ${op.sourceClientTag} does not support getPendingLocalState`,
+			);
+
+			const pendingLocalState = await sourceClient.container.getPendingLocalState();
+
+			const url = await state.validationClient.container.getAbsoluteUrl("");
+			assert(url !== undefined, "url of container must be available");
+
+			const newClient = await loadClient(
+				state.localDeltaConnectionServer,
+				state.codeLoader,
+				op.newClientTag,
+				url,
+				state.seed,
+				options,
+				pendingLocalState,
+			);
+
+			const removed = state.clients.splice(
+				state.clients.findIndex((c) => c.tag === op.sourceClientTag),
+				1,
+			);
+			removed[0].container.dispose();
+			state.clients.push(newClient);
+			return state;
+		}
+
+		// Fallback to original reducer for other operations
+		return model.reducer(state, op);
+	};
+
+	return {
+		...model,
+		minimizationTransforms,
+		generatorFactory,
+		reducer,
+	};
 }
