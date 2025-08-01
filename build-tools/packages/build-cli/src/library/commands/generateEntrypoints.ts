@@ -335,13 +335,13 @@ function readArgValues(commandLine: string, argQuery: Options): Options {
 	const argValues: Record<string, string | undefined> = {};
 	for (const argName of Object.keys(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
-		if (indexOfArgValue && indexOfArgValue < args.length){
+		if (indexOfArgValue && indexOfArgValue < args.length) {
 			values[argName] = args[indexOfArgValue];
 		}
 	}
 	return {
 		...argQuery,
-		...argValues
+		...argValues,
 	};
 }
 
