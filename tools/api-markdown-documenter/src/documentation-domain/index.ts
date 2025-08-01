@@ -30,7 +30,6 @@ export { HeadingNode } from "./HeadingNode.js";
 export { ListItemNode } from "./ListItemNode.js";
 export { ListNode } from "./ListNode.js";
 export { MarkdownBlockContentNode } from "./MarkdownNode.js";
-export { ParagraphNode } from "./ParagraphNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";
 export {
 	type TableCellContent,

@@ -25,7 +25,6 @@ import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToMarkdown,
 	sectionToMarkdown,
-	paragraphToMarkdown,
 	tableToMarkdown,
 	tableCellToMarkdown,
 	tableRowToMarkdown,
@@ -81,7 +80,6 @@ export const defaultTransformations: Transformations = {
 	listItem: listItemToMarkdown,
 	markdownBlockContent: markdownBlockContentNodeToMarkdown,
 	section: sectionToMarkdown,
-	paragraph: paragraphToMarkdown,
 	table: tableToMarkdown,
 	tableCell: tableCellToMarkdown,
 	tableRow: tableRowToMarkdown,

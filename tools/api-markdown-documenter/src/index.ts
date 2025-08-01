@@ -52,7 +52,6 @@ export {
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
-	ParagraphNode,
 	SectionNode,
 	type SectionContent,
 	type TableCellContent,

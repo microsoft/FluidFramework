@@ -25,7 +25,6 @@ import {
 	ListItemNode,
 	ListNode,
 	MarkdownBlockContentNode,
-	ParagraphNode,
 	SectionNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
@@ -263,11 +262,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 								type: "paragraph",
 								children: [{ type: "text", value: "The provided parameter" }],
 							}),
-							new ParagraphNode([
-								{ type: "strong", children: [{ type: "text", value: "Return type" }] },
-								{ type: "text", value: ": " },
-								{ type: "text", value: "TTypeParameter" },
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{ type: "strong", children: [{ type: "text", value: "Return type" }] },
+									{ type: "text", value: ": " },
+									{ type: "text", value: "TTypeParameter" },
+								],
+							}),
 						],
 						{
 							title: "Returns",
@@ -396,14 +398,17 @@ describe("ApiItem to Documentation transformation tests", () => {
 										lang: "typescript",
 										value: "testOptionalInterfaceProperty?: number;",
 									}),
-									new ParagraphNode([
-										{
-											type: "strong",
-											children: [{ type: "text", value: "Type" }],
-										},
-										{ type: "text", value: ": " },
-										{ type: "text", value: "number" },
-									]),
+									new MarkdownBlockContentNode({
+										type: "paragraph",
+										children: [
+											{
+												type: "strong",
+												children: [{ type: "text", value: "Type" }],
+											},
+											{ type: "text", value: ": " },
+											{ type: "text", value: "number" },
+										],
+									}),
 								],
 								{
 									title: "Signature",
@@ -530,7 +535,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// No summary docs on `bar`
 
 							// Beta warning
-							wrapInSection([new ParagraphNode([betaWarningSpan])]),
+							wrapInSection([
+								new MarkdownBlockContentNode({
+									type: "paragraph",
+									children: [betaWarningSpan],
+								}),
+							]),
 							// Signature
 							wrapInSection(
 								[
@@ -603,22 +613,25 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new ParagraphNode([
-								{
-									type: "link",
-									url: "/",
-									children: [{ type: "text", value: "Packages" }],
-								},
-								{
-									type: "text",
-									value: " > ",
-								},
-								{
-									type: "link",
-									url: "/test-package/",
-									children: [{ type: "text", value: "test-package" }],
-								},
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{
+										type: "link",
+										url: "/",
+										children: [{ type: "text", value: "Packages" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/",
+										children: [{ type: "text", value: "test-package" }],
+									},
+								],
+							}),
 						]),
 
 						// Body
@@ -661,31 +674,34 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new ParagraphNode([
-								{
-									type: "link",
-									url: "/",
-									children: [{ type: "text", value: "Packages" }],
-								},
-								{
-									type: "text",
-									value: " > ",
-								},
-								{
-									type: "link",
-									url: "/test-package/",
-									children: [{ type: "text", value: "test-package" }],
-								},
-								{
-									type: "text",
-									value: " > ",
-								},
-								{
-									type: "link",
-									url: "/test-package/entry-point-a-entrypoint",
-									children: [{ type: "text", value: "entry-point-a" }],
-								},
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{
+										type: "link",
+										url: "/",
+										children: [{ type: "text", value: "Packages" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/",
+										children: [{ type: "text", value: "test-package" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/entry-point-a-entrypoint",
+										children: [{ type: "text", value: "entry-point-a" }],
+									},
+								],
+							}),
 						]),
 
 						// Variables table
@@ -772,31 +788,34 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new ParagraphNode([
-								{
-									type: "link",
-									url: "/",
-									children: [{ type: "text", value: "Packages" }],
-								},
-								{
-									type: "text",
-									value: " > ",
-								},
-								{
-									type: "link",
-									url: "/test-package/",
-									children: [{ type: "text", value: "test-package" }],
-								},
-								{
-									type: "text",
-									value: " > ",
-								},
-								{
-									type: "link",
-									url: "/test-package/entry-point-b-entrypoint",
-									children: [{ type: "text", value: "entry-point-b" }],
-								},
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{
+										type: "link",
+										url: "/",
+										children: [{ type: "text", value: "Packages" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/",
+										children: [{ type: "text", value: "test-package" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/entry-point-b-entrypoint",
+										children: [{ type: "text", value: "entry-point-b" }],
+									},
+								],
+							}),
 						]),
 
 						// Variables table

@@ -9,7 +9,7 @@ import { h } from "hastscript";
 import {
 	DocumentNode,
 	HeadingNode,
-	ParagraphNode,
+	MarkdownBlockContentNode,
 	SectionNode,
 } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
@@ -20,37 +20,43 @@ describe("documentToHtml tests", () => {
 			children: [
 				new SectionNode(
 					[
-						new ParagraphNode([
-							{
-								type: "text",
-								value: "This is a sample document. ",
-							},
-							{
-								type: "text",
-								value: "It has very basic content.\t",
-							},
-						]),
+						new MarkdownBlockContentNode({
+							type: "paragraph",
+							children: [
+								{
+									type: "text",
+									value: "This is a sample document. ",
+								},
+								{
+									type: "text",
+									value: "It has very basic content.\t",
+								},
+							],
+						}),
 						new SectionNode(
 							[
-								new ParagraphNode([
-									{
-										type: "text",
-										value: "This is test inside of a paragraph. ",
-									},
-									{
-										type: "text",
-										value: "It is also inside of a hierarchical section node. ",
-									},
-									{
-										type: "emphasis",
-										children: [
-											{
-												type: "text",
-												value: "That's real neat-o.",
-											},
-										],
-									},
-								]),
+								new MarkdownBlockContentNode({
+									type: "paragraph",
+									children: [
+										{
+											type: "text",
+											value: "This is test inside of a paragraph. ",
+										},
+										{
+											type: "text",
+											value: "It is also inside of a hierarchical section node. ",
+										},
+										{
+											type: "emphasis",
+											children: [
+												{
+													type: "text",
+													value: "That's real neat-o.",
+												},
+											],
+										},
+									],
+								}),
 							],
 							new HeadingNode("Section Heading"),
 						),
