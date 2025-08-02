@@ -7,11 +7,7 @@ import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
 import { toHast } from "mdast-util-to-hast";
 
-import type {
-	DocumentNode,
-	HeadingNode,
-	SectionContent,
-} from "../documentation-domain/index.js";
+import type { DocumentationNode, DocumentNode } from "../documentation-domain/index.js";
 
 import {
 	createTransformationContext,
@@ -73,7 +69,7 @@ export function treeFromBody(body: HastTree[], config: TransformationConfigurati
  * @public
  */
 export function documentationNodeToHtml(
-	node: SectionContent | HeadingNode,
+	node: DocumentationNode,
 	config: TransformationConfiguration,
 ): HastTree;
 /**
@@ -85,14 +81,14 @@ export function documentationNodeToHtml(
  * @public
  */
 export function documentationNodeToHtml(
-	node: SectionContent | HeadingNode,
+	node: DocumentationNode,
 	context: TransformationContext,
 ): HastTree;
 /**
  * `documentationNodeToHtml` implementation.
  */
 export function documentationNodeToHtml(
-	node: SectionContent | HeadingNode,
+	node: DocumentationNode,
 	configOrContext: TransformationConfiguration | TransformationContext,
 ): HastTree {
 	const context = getContext(configOrContext);
@@ -123,7 +119,7 @@ export function documentationNodeToHtml(
  * @public
  */
 export function documentationNodesToHtml(
-	nodes: (SectionContent | HeadingNode)[],
+	nodes: readonly DocumentationNode[],
 	config: TransformationConfiguration,
 ): HastTree[];
 /**
@@ -132,14 +128,14 @@ export function documentationNodesToHtml(
  * @public
  */
 export function documentationNodesToHtml(
-	nodes: (SectionContent | HeadingNode)[],
+	nodes: readonly DocumentationNode[],
 	transformationContext: TransformationContext,
 ): HastTree[];
 /**
  * `documentationNodesToHtml` implementation.
  */
 export function documentationNodesToHtml(
-	nodes: (SectionContent | HeadingNode)[],
+	nodes: readonly DocumentationNode[],
 	configOrContext: TransformationConfiguration | TransformationContext,
 ): HastTree[] {
 	const context = getContext(configOrContext);

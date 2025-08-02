@@ -47,9 +47,6 @@ export interface DocumentNodeProperties {
  * @public
  */
 export class DocumentNode implements UnistParent<SectionNode>, DocumentNodeProperties {
-	/**
-	 * {@inheritDoc DocumentationNode."type"}
-	 */
 	public readonly type = "document";
 
 	/**

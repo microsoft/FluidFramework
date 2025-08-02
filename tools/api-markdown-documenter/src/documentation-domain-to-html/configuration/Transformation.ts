@@ -15,7 +15,7 @@ import { headingToHtml, sectionToHtml } from "../default-transformations/index.j
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
- * specified by {@link DocumentationNode."type"}.
+ * specified by its "type".
  *
  * @remarks
  *
@@ -29,7 +29,7 @@ import { headingToHtml, sectionToHtml } from "../default-transformations/index.j
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface Transformations {
 	/**
-	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a transformation implementation
+	 * Maps from a {@link DocumentationNode}'s "type" to a transformation implementation
 	 * for that kind of node.
 	 */
 	readonly [documentationNodeKind: string]: Transformation;

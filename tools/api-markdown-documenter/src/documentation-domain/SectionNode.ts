@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { BlockContent } from "mdast";
+import type { BlockContent, Node } from "mdast";
 
-import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import type { HeadingNode } from "./HeadingNode.js";
 
 /**
@@ -41,28 +40,20 @@ export type SectionContent = BlockContent | SectionNode;
  * @sealed
  * @public
  */
-export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
-	/**
-	 * {@inheritDoc DocumentationNode."type"}
-	 */
+export class SectionNode implements Node {
 	public readonly type = "section";
 
-	/**
-	 * Optional heading to display for the section.
-	 *
-	 * @remarks If not specified, no heading will be displayed in the section contents.
-	 * Note that this section will still influence heading hierarchy of child contents regardless.
-	 */
-	public readonly heading?: HeadingNode;
-
-	/**
-	 * Empty section singleton.
-	 */
-	public static readonly Empty = new SectionNode([]);
-
-	public constructor(children: SectionContent[], heading?: HeadingNode) {
-		super(children);
-
-		this.heading = heading;
-	}
+	public constructor(
+		/**
+		 * The section's contents
+		 */
+		public readonly children: readonly SectionContent[],
+		/**
+		 * Optional heading to display for the section.
+		 *
+		 * @remarks If not specified, no heading will be displayed in the section contents.
+		 * Note that this section will still influence heading hierarchy of child contents regardless.
+		 */
+		public readonly heading?: HeadingNode,
+	) {}
 }

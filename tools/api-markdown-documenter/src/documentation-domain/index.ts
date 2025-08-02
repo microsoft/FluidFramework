@@ -18,12 +18,6 @@ export {
 	DocumentNode,
 	type DocumentNodeProperties as DocumentNodeProps,
 } from "./DocumentNode.js";
-export {
-	type DocumentationNode,
-	type DocumentationLiteralNode,
-	DocumentationLiteralNodeBase,
-	type DocumentationParentNode,
-	DocumentationParentNodeBase,
-} from "./DocumentationNode.js";
+export { type DocumentationNode } from "./DocumentationNode.js";
 export { HeadingNode } from "./HeadingNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";

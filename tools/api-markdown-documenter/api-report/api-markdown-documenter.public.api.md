@@ -26,17 +26,16 @@ import { ApiPropertySignature } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
 import type { BlockContent } from 'mdast';
-import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
-import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
-import type { Node as Node_2 } from 'unist';
+import type { Node as Node_2 } from 'mdast';
 import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
 import type { Parent } from 'unist';
+import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
 import type { Root as Root_2 } from 'mdast';
@@ -219,47 +218,19 @@ export interface DocumentationHierarchyConfigurationBase {
 }
 
 // @public
-export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TValue>, DocumentationNode {
-    readonly type: string;
-    readonly value: TValue;
-}
+export type DocumentationNode = SectionNode | HeadingNode | PhrasingContent | BlockContent;
 
 // @public
-export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements DocumentationLiteralNode<TValue> {
-    protected constructor(value: TValue);
-    abstract type: string;
-    readonly value: TValue;
-}
+export function documentationNodesToHtml(nodes: readonly DocumentationNode[], config: ToHtmlConfiguration): Nodes[];
 
 // @public
-export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
-    readonly type: string;
-}
+export function documentationNodesToHtml(nodes: readonly DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
 
 // @public
-export function documentationNodesToHtml(nodes: (SectionContent | HeadingNode)[], config: ToHtmlConfiguration): Nodes[];
+export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfiguration): Nodes;
 
 // @public
-export function documentationNodesToHtml(nodes: (SectionContent | HeadingNode)[], transformationContext: ToHtmlContext): Nodes[];
-
-// @public
-export function documentationNodeToHtml(node: SectionContent | HeadingNode, config: ToHtmlConfiguration): Nodes;
-
-// @public
-export function documentationNodeToHtml(node: SectionContent | HeadingNode, context: ToHtmlContext): Nodes;
-
-// @public
-export interface DocumentationParentNode<TDocumentationNode extends Node_2> extends Parent<TDocumentationNode, Data>, DocumentationNode {
-    readonly children: TDocumentationNode[];
-    readonly type: string;
-}
-
-// @public
-export abstract class DocumentationParentNodeBase<TDocumentationNode extends Node_2> implements DocumentationParentNode<TDocumentationNode> {
-    protected constructor(children: TDocumentationNode[]);
-    readonly children: TDocumentationNode[];
-    abstract type: string;
-}
+export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
 export interface DocumentationSuiteConfiguration {
@@ -290,6 +261,7 @@ export class DocumentNode implements Parent<SectionNode>, DocumentNodeProps {
     readonly apiItem?: ApiItem;
     readonly children: SectionNode[];
     readonly documentPath: string;
+    // (undocumented)
     readonly type = "document";
 }
 
@@ -404,13 +376,14 @@ export interface Heading {
 }
 
 // @public @sealed
-export class HeadingNode implements DocumentationNode, Heading {
+export class HeadingNode implements Node_2, Heading {
     constructor(
     title: string,
     id?: string | undefined);
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
     readonly title: string;
+    // (undocumented)
     readonly type = "heading";
 }
 
@@ -597,10 +570,13 @@ export interface SectionHierarchyConfiguration extends DocumentationHierarchyCon
 }
 
 // @public @sealed
-export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
-    constructor(children: SectionContent[], heading?: HeadingNode);
-    static readonly Empty: SectionNode;
-    readonly heading?: HeadingNode;
+export class SectionNode implements Node_2 {
+    constructor(
+    children: readonly SectionContent[],
+    heading?: HeadingNode | undefined);
+    readonly children: readonly SectionContent[];
+    readonly heading?: HeadingNode | undefined;
+    // (undocumented)
     readonly type = "section";
 }
 
