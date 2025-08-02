@@ -285,8 +285,7 @@ export namespace ConnectionState {
 	 */
 	export const Disconnected = 0;
 	/**
-	 * Type representing the disconnected connection state.
-	 * @public
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(Disconnected:variable)}
 	 */
 	export type Disconnected = typeof Disconnected;
 
@@ -297,8 +296,7 @@ export namespace ConnectionState {
 	 */
 	export const EstablishingConnection = 3;
 	/**
-	 * Type representing the establishing connection state.
-	 * @public
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(EstablishingConnection:variable)}
 	 */
 	export type EstablishingConnection = typeof EstablishingConnection;
 
@@ -308,8 +306,7 @@ export namespace ConnectionState {
 	 */
 	export const CatchingUp = 1;
 	/**
-	 * Type representing the catching up connection state.
-	 * @public
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(CatchingUp:variable)}
 	 */
 	export type CatchingUp = typeof CatchingUp;
 
@@ -319,8 +316,7 @@ export namespace ConnectionState {
 	 */
 	export const Connected = 2;
 	/**
-	 * Type representing the connected connection state.
-	 * @public
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(Connected:variable)}
 	 */
 	export type Connected = typeof Connected;
 }
