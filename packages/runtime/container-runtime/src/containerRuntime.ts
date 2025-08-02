@@ -2852,7 +2852,7 @@ export class ContainerRuntime
 
 		// Emit "connected" and "disconnected" events based on ability to send ops
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
-		// Emit "connectedToService" and "disconnectedToService" events based on service connection status
+		// Emit "connectedToService" and "disconnectedFromService" events based on service connection status
 		this.emitServiceConnectionEvents(canSendOpsChanged, canSendOps, clientId);
 	}
 
@@ -5125,7 +5125,7 @@ export class ContainerRuntime
 			this.on("connected", (clientId: string) => {
 				eventEmitter.emit("joined", { clientId, canWrite: true });
 			});
-			this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+			this.on("disconnected", () => eventEmitter.emit("disconnected"));
 		}
 		return eventEmitter;
 	});

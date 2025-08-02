@@ -482,5 +482,62 @@ describe("Container Extension", () => {
 				"Second event should indicate connection type changed to writable",
 			);
 		});
+
+		it("should still emit joined and disconnected eventswhen getConnectionState is undefined", async () => {
+			// Override the context to return undefined connectionState
+			Object.defineProperty(container.context, "getConnectionState", {
+				value: () => undefined,
+			});
+
+			assert(container.runtime, "Runtime should be initialized");
+			const extension = container.runtime.acquireExtension(
+				testExtensionId,
+				TestExtensionFactory,
+			);
+
+			// Setup event listeners
+			const events: {
+				type: "joined" | "disconnected" | "connectionTypeChanged";
+				clientId?: string;
+				canWrite?: boolean;
+			}[] = [];
+
+			extension.events.on(
+				"joined",
+				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
+					events.push({ type: "joined", clientId, canWrite });
+				},
+			);
+			extension.events.on("disconnected", () => {
+				events.push({ type: "disconnected" });
+			});
+			extension.events.on("connectionTypeChanged", (canWrite: boolean) => {
+				events.push({ type: "connectionTypeChanged", canWrite });
+			});
+
+			// Connect
+			container.setConnectionState(ConnectionState.Connected, "mockClientId");
+			assert.strictEqual(extension.connectedToService, true, "Extension should be connected");
+			assert.strictEqual(events.length, 1, "Should have received one joined event");
+			assert.deepStrictEqual(
+				events[0],
+				{ type: "joined", clientId: "mockClientId", canWrite: true },
+				"Event should be joined with canWrite = true when getConnectionState is undefined",
+			);
+
+			// Disconnect
+			container.setConnectionState(ConnectionState.Disconnected);
+			assert.strictEqual(
+				extension.connectedToService,
+				false,
+				"Extension should be disconnected",
+			);
+			assert.strictEqual(events.length, 2, "Should have received two events total");
+			assert.deepStrictEqual(
+				events[1],
+				{ type: "disconnected" },
+				"Second event should be disconnected",
+			);
+		});
 	});
 });
