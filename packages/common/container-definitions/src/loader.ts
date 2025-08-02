@@ -285,7 +285,8 @@ export namespace ConnectionState {
 	 */
 	export const Disconnected = 0;
 	/**
-	 * {@inheritdoc (ConnectionState:namespace).(Disconnected:variable)}
+	 * Type representing the disconnected connection state.
+	 * @public
 	 */
 	export type Disconnected = typeof Disconnected;
 
@@ -296,7 +297,8 @@ export namespace ConnectionState {
 	 */
 	export const EstablishingConnection = 3;
 	/**
-	 * {@inheritdoc (ConnectionState:namespace).(EstablishingConnection:variable)}
+	 * Type representing the establishing connection state.
+	 * @public
 	 */
 	export type EstablishingConnection = typeof EstablishingConnection;
 
@@ -306,7 +308,8 @@ export namespace ConnectionState {
 	 */
 	export const CatchingUp = 1;
 	/**
-	 * {@inheritdoc (ConnectionState:namespace).(CatchingUp:variable)}
+	 * Type representing the catching up connection state.
+	 * @public
 	 */
 	export type CatchingUp = typeof CatchingUp;
 
@@ -316,7 +319,8 @@ export namespace ConnectionState {
 	 */
 	export const Connected = 2;
 	/**
-	 * {@inheritdoc (ConnectionState:namespace).(Connected:variable)}
+	 * Type representing the connected connection state.
+	 * @public
 	 */
 	export type Connected = typeof Connected;
 }
