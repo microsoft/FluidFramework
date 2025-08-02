@@ -2439,37 +2439,39 @@ export class Container
 
 			const existing = snapshotTree !== undefined;
 
-			const context = new ContainerContext(
-				this.options,
-				this.scope,
-				snapshotTree,
-				this._loadedFromVersion,
-				this._deltaManager,
-				this.storageAdapter,
-				this.protocolHandler.quorum,
-				this.protocolHandler.audience,
+			const context = new ContainerContext({
+				options: this.options,
+				scope: this.scope,
+				baseSnapshot: snapshotTree,
+				version: this._loadedFromVersion,
+				deltaManager: this._deltaManager,
+				storage: this.storageAdapter,
+				quorum: this.protocolHandler.quorum,
+				audience: this.protocolHandler.audience,
 				loader,
-				(type, contents, batch, metadata) =>
+				submitFn: (type, contents, batch, metadata) =>
 					this.submitContainerMessage(type, contents, batch, metadata),
-				(summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
+				submitSummaryFn: (summaryOp: ISummaryContent, referenceSequenceNumber?: number) =>
 					this.submitSummaryMessage(summaryOp, referenceSequenceNumber),
-				(batch: IBatchMessage[], referenceSequenceNumber?: number) =>
+				submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) =>
 					this.submitBatch(batch, referenceSequenceNumber),
-				(content, targetClientId) => this.submitSignal(content, targetClientId),
-				(error?: ICriticalContainerError) => this.dispose(error),
-				(error?: ICriticalContainerError) => this.close(error),
-				this.updateDirtyContainerState,
-				this.getAbsoluteUrl,
-				() => this.resolvedUrl?.id,
-				() => this.clientId,
-				() => this.attachState,
-				() => this.connected,
-				this._deltaManager.clientDetails,
+				submitSignalFn: (content, targetClientId) =>
+					this.submitSignal(content, targetClientId),
+				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
+				closeFn: (error?: ICriticalContainerError) => this.close(error),
+				updateDirtyContainerState: this.updateDirtyContainerState,
+				getAbsoluteUrl: this.getAbsoluteUrl,
+				getContainerDiagnosticId: () => this.resolvedUrl?.id,
+				getClientId: () => this.clientId,
+				getAttachState: () => this.attachState,
+				getConnected: () => this.connected,
+				getConnectionState: () => this.connectionState,
+				clientDetails: this._deltaManager.clientDetails,
 				existing,
-				this.subLogger,
+				taggedLogger: this.subLogger,
 				pendingLocalState,
-				snapshot,
-			);
+				snapshotWithContents: snapshot,
+			});
 
 			const runtime = await PerformanceEvent.timedExecAsync(
 				this.subLogger,

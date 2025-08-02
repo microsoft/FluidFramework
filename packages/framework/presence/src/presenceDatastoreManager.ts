@@ -228,7 +228,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			options: RuntimeLocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
-			if (!this.runtime.isConnected()) {
+			if (this.runtime.getJoinedStatus() === "disconnected") {
 				return;
 			}
 
@@ -319,7 +319,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		// Check for connectivity before sending updates.
-		if (!this.runtime.isConnected()) {
+		if (this.runtime.getJoinedStatus() === "disconnected") {
 			// Clear the queued data since we're disconnected. We don't want messages
 			// to queue infinitely while disconnected.
 			this.queuedData = undefined;
@@ -470,7 +470,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// It is possible for some signals to come in while client is not connected due
 			// to how work is scheduled. If we are not connected, we can't respond to the
 			// join request. We will make our own Join request once we are connected.
-			if (this.runtime.isConnected()) {
+			if (this.runtime.getJoinedStatus() !== "disconnected") {
 				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 			}
 			// It is okay to continue processing the contained updates even if we are not
@@ -612,7 +612,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			setTimeout(() => {
 				// Make sure a broadcast is still needed and we are currently connected.
 				// If not connected, nothing we can do.
-				if (this.refreshBroadcastRequested && this.runtime.isConnected()) {
+				if (
+					this.refreshBroadcastRequested &&
+					this.runtime.getJoinedStatus() !== "disconnected"
+				) {
 					this.broadcastAllKnownState();
 					this.logger?.sendTelemetryEvent({
 						eventName: "JoinResponse",

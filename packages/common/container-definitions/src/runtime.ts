@@ -32,7 +32,7 @@ import type {
 import type { IAudience } from "./audience.js";
 import type { IDeltaManager } from "./deltas.js";
 import type { ICriticalContainerError } from "./error.js";
-import type { ILoader } from "./loader.js";
+import type { ConnectionState, ILoader } from "./loader.js";
 
 /**
  * The attachment state of some Fluid data (e.g. a container or data store), denoting whether it is uploaded to the
@@ -272,6 +272,15 @@ export interface IContainerContext {
 	readonly storage: IContainerStorageService;
 	readonly connected: boolean;
 	readonly baseSnapshot: ISnapshotTree | undefined;
+
+	/**
+	 * Gets the current connection state of the container.
+	 *
+	 * @remarks
+	 * This provides more detailed connection state information beyond the simple boolean `connected` property.
+	 * Available starting from version 2.52.0. Property is not present in older versions.
+	 */
+	readonly getConnectionState?: () => ConnectionState;
 	/**
 	 * @deprecated Please use submitBatchFn & submitSummaryFn
 	 */
