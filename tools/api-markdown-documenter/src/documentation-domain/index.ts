@@ -14,7 +14,6 @@
  * transformations, or by writing your own!
  */
 
-export type { BlockContent, BlockContentMap } from "./BlockContent.js";
 export {
 	DocumentNode,
 	type DocumentNodeProperties as DocumentNodeProps,
@@ -27,5 +26,4 @@ export {
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
 export { HeadingNode } from "./HeadingNode.js";
-export { MarkdownBlockContentNode } from "./MarkdownNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";

@@ -9,14 +9,9 @@ import type {
 	DocumentationNode,
 	HeadingNode,
 	SectionNode,
-	MarkdownBlockContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import {
-	headingToHtml,
-	sectionToHtml,
-	markdownNodeToHtml,
-} from "../default-transformations/index.js";
+import { headingToHtml, sectionToHtml } from "../default-transformations/index.js";
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
@@ -58,7 +53,5 @@ export type Transformation = (
  */
 export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	markdownBlockContent: (node, context) =>
-		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
 };

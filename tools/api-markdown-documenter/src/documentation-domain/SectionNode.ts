@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { BlockContent } from "./BlockContent.js";
+import type { BlockContent } from "mdast";
+
 import { DocumentationParentNodeBase } from "./DocumentationNode.js";
 import type { HeadingNode } from "./HeadingNode.js";
 
 /**
- * Union of all kinds of {@link DocumentationNode} that can occur as children of {@link SectionNode}
- *
- * @remarks To register custom nodes, add them to {@link BlockContentMap}.
+ * Union of the kinds of nodes that can occur as children of {@link SectionNode}
  *
  * @public
  */

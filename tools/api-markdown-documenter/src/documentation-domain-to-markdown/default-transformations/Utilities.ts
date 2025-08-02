@@ -6,7 +6,7 @@
 import type { Html as MdastHtml } from "mdast";
 
 import { renderHtml } from "../../HtmlRendererModule.js";
-import type { DocumentationNode } from "../../documentation-domain/index.js";
+import type { HeadingNode, SectionContent } from "../../documentation-domain/index.js";
 import {
 	documentationNodeToHtml,
 	type TransformationConfiguration as HtmlTransformationConfiguration,
@@ -17,7 +17,7 @@ import type { TransformationContext } from "../TransformationContext.js";
  * Transforms the provided {@link DocumentationNode}s using HTML syntax.
  */
 export function transformAsHtml(
-	nodes: DocumentationNode,
+	nodes: SectionContent | HeadingNode,
 	context: TransformationContext,
 ): MdastHtml {
 	const htmlTransformationConfig: HtmlTransformationConfiguration = {

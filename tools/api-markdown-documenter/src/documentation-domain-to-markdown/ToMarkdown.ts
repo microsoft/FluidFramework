@@ -3,17 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	BlockContent as MdastBlockContent,
-	Root as MdastRoot,
-	RootContent as MdastRootContent,
-} from "mdast";
+import type { Root as MdastRoot, RootContent as MdastRootContent } from "mdast";
 
-import type {
-	BlockContent,
-	DocumentNode,
-	SectionContent,
-} from "../documentation-domain/index.js";
+import type { DocumentNode, SectionContent } from "../documentation-domain/index.js";
 
 import {
 	createTransformationContext,
@@ -60,33 +52,14 @@ export function sectionContentToMarkdown(
 ): MdastRootContent[] {
 	const { transformations } = context;
 
+	// If the node is not a section, then it is Markdown "block content" and can be returned directly.
+	if (node.type !== "section") {
+		return [node];
+	}
+
 	const transformation = transformations[node.type] as Transformation<
 		SectionContent,
 		MdastRootContent[]
-	>;
-	if (transformation === undefined) {
-		throw new Error(`No transformation defined for node type: ${node.type}`);
-	}
-	return transformation(node, context);
-}
-
-/**
- * Generates a Markdown AST from the provided {@link SectionContent}.
- *
- * @param node - The node to transform.
- * @param config - Markdown transformation configuration.
- *
- * @public
- */
-export function blockContentToMarkdown(
-	node: BlockContent,
-	context: TransformationContext,
-): [MdastBlockContent] {
-	const { transformations } = context;
-
-	const transformation = transformations[node.type] as Transformation<
-		BlockContent,
-		[MdastBlockContent]
 	>;
 	if (transformation === undefined) {
 		throw new Error(`No transformation defined for node type: ${node.type}`);

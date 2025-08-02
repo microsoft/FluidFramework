@@ -5,4 +5,3 @@
 
 export { headingToHtml } from "./HeadingToHtml.js";
 export { sectionToHtml } from "./SectionToHtml.js";
-export { markdownNodeToHtml } from "./MarkdownNodeToHtml.js";

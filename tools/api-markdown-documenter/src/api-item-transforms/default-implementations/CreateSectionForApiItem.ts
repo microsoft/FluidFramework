@@ -5,10 +5,7 @@
 
 import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import {
-	MarkdownBlockContentNode,
-	type SectionNode,
-} from "../../documentation-domain/index.js";
+import type { SectionNode } from "../../documentation-domain/index.js";
 import { getEffectiveReleaseLevel } from "../../utilities/index.js";
 import {
 	doesItemRequireOwnDocument,
@@ -81,19 +78,19 @@ export function createSectionForApiItem(
 	if (releaseLevel === ReleaseTag.Alpha) {
 		sections.push(
 			wrapInSection([
-				new MarkdownBlockContentNode({
+				{
 					type: "paragraph",
 					children: [alphaWarningSpan],
-				}),
+				},
 			]),
 		);
 	} else if (releaseLevel === ReleaseTag.Beta) {
 		sections.push(
 			wrapInSection([
-				new MarkdownBlockContentNode({
+				{
 					type: "paragraph",
 					children: [betaWarningSpan],
-				}),
+				},
 			]),
 		);
 	}

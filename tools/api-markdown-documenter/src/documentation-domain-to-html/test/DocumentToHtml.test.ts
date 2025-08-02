@@ -6,12 +6,7 @@
 import { expect } from "chai";
 import { h } from "hastscript";
 
-import {
-	DocumentNode,
-	HeadingNode,
-	MarkdownBlockContentNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import { DocumentNode, HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
 
 describe("documentToHtml tests", () => {
@@ -20,7 +15,7 @@ describe("documentToHtml tests", () => {
 			children: [
 				new SectionNode(
 					[
-						new MarkdownBlockContentNode({
+						{
 							type: "paragraph",
 							children: [
 								{
@@ -32,10 +27,10 @@ describe("documentToHtml tests", () => {
 									value: "It has very basic content.\t",
 								},
 							],
-						}),
+						},
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "paragraph",
 									children: [
 										{
@@ -56,7 +51,7 @@ describe("documentToHtml tests", () => {
 											],
 										},
 									],
-								}),
+								},
 							],
 							new HeadingNode("Section Heading"),
 						),

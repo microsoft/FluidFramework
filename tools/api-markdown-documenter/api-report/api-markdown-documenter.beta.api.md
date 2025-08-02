@@ -25,7 +25,7 @@ import { ApiProperty } from '@microsoft/api-extractor-model';
 import { ApiPropertySignature } from '@microsoft/api-extractor-model';
 import { ApiTypeAlias } from '@microsoft/api-extractor-model';
 import { ApiVariable } from '@microsoft/api-extractor-model';
-import type { BlockContent as BlockContent_2 } from 'mdast';
+import type { BlockContent } from 'mdast';
 import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
@@ -35,6 +35,7 @@ import type { Node as Node_2 } from 'unist';
 import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
+import type { Paragraph } from 'mdast';
 import type { Parent } from 'unist';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
@@ -162,24 +163,7 @@ export { ApiPackage }
 export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 
 // @public
-export type BlockContent = BlockContentMap[keyof BlockContentMap];
-
-// @public
-export interface BlockContentMap {
-    // (undocumented)
-    markdownBlockContent: MarkdownBlockContentNode;
-}
-
-// @public
-export function blockContentToMarkdown(node: BlockContent, context: ToMarkdownContext): [BlockContent_2];
-
-// @public
-export type BlockContentToMarkdownTransformations = {
-    readonly [K in keyof BlockContentMap]: ToMarkdownTransformation<BlockContentMap[K], BlockContent_2[]>;
-};
-
-// @public
-function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode;
+function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Paragraph;
 
 // @public
 function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
@@ -253,16 +237,16 @@ export interface DocumentationNode<TData extends object = Data> extends Node_2<T
 }
 
 // @public
-export function documentationNodesToHtml(nodes: DocumentationNode[], config: ToHtmlConfiguration): Nodes[];
+export function documentationNodesToHtml(nodes: (SectionContent | HeadingNode)[], config: ToHtmlConfiguration): Nodes[];
 
 // @public
-export function documentationNodesToHtml(nodes: DocumentationNode[], transformationContext: ToHtmlContext): Nodes[];
+export function documentationNodesToHtml(nodes: (SectionContent | HeadingNode)[], transformationContext: ToHtmlContext): Nodes[];
 
 // @public
-export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlConfiguration): Nodes;
+export function documentationNodeToHtml(node: SectionContent | HeadingNode, config: ToHtmlConfiguration): Nodes;
 
 // @public
-export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
+export function documentationNodeToHtml(node: SectionContent | HeadingNode, context: ToHtmlContext): Nodes;
 
 // @public
 export interface DocumentationParentNode<TDocumentationNode extends Node_2> extends Parent<TDocumentationNode, Data>, DocumentationNode {
@@ -559,12 +543,6 @@ export interface LoggingConfiguration {
 // @public
 export type LoggingFunction = (message: string | Error, ...parameters: unknown[]) => void;
 
-// @public @sealed
-export class MarkdownBlockContentNode extends DocumentationLiteralNodeBase<BlockContent_2> {
-    constructor(value: BlockContent_2);
-    readonly type = "markdownBlockContent";
-}
-
 declare namespace MarkdownRenderer {
     export {
         RenderApiModelAsMarkdownOptions as RenderApiModelOptions,
@@ -690,10 +668,12 @@ export interface ToMarkdownContext {
 export type ToMarkdownTransformation<TIn extends DocumentationNode = DocumentationNode, TOut extends Nodes_2[] = [Nodes_2]> = (node: TIn, context: ToMarkdownContext) => TOut;
 
 // @public
-export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & {
-    readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
+export interface ToMarkdownTransformations {
+    // (undocumented)
+    readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent[]>;
+    // (undocumented)
     readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;
-};
+}
 
 // @public
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration, generateChildSection: (apiItem: ApiItem) => SectionNode[]) => SectionNode[];
@@ -705,7 +685,7 @@ export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem
 export function transformApiModel(options: ApiItemTransformationOptions): DocumentNode[];
 
 // @public
-export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode[];
+export function transformTsdoc(node: DocSection, contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): BlockContent[];
 
 // @public
 export type UrlTarget = string;
