@@ -60,15 +60,7 @@ export interface IContainerContextConfig {
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
-	/**
-	 * @returns clientSequenceNumber of last message in a batch
-	 */
 	readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
-	/**
-	 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
-	 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
-	 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
-	 */
 	readonly submitSignalFn: (
 		content: unknown | ISignalEnvelope,
 		targetClientId?: string,
@@ -123,10 +115,18 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		summaryOp: ISummaryContent,
 		referenceSequenceNumber?: number,
 	) => number;
+	/**
+	 * @returns clientSequenceNumber of last message in a batch
+	 */
 	public readonly submitBatchFn: (
 		batch: IBatchMessage[],
 		referenceSequenceNumber?: number,
 	) => number;
+	/**
+	 * `unknown` should be removed once `@alpha` tag is removed from IContainerContext
+	 * @see {@link https://dev.azure.com/fluidframework/internal/_workitems/edit/7462}
+	 * Any changes to submitSignalFn `content` should be checked internally by temporarily changing IContainerContext and removing all `unknown`s
+	 */
 	public readonly submitSignalFn: (
 		content: unknown | ISignalEnvelope,
 		targetClientId?: string,
@@ -142,20 +142,16 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	public readonly snapshotWithContents: ISnapshot | undefined;
 
 	public readonly getConnectionState: () => ConnectionState;
-	public readonly getClientId: () => string | undefined;
-	public readonly getContainerDiagnosticId: () => string | undefined;
-	public readonly getConnected: () => boolean;
-	public readonly getAttachState: () => AttachState;
 
 	public get clientId(): string | undefined {
-		return this.getClientId();
+		return this.config.getClientId();
 	}
 
 	/**
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		return this.getContainerDiagnosticId() ?? "";
+		return this.config.getContainerDiagnosticId() ?? "";
 	}
 
 	/**
@@ -163,7 +159,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	 * When false, ops should be kept as pending or rejected
 	 */
 	public get connected(): boolean {
-		return this.getConnected();
+		return this.config.getConnected();
 	}
 
 	/**
@@ -198,10 +194,6 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		this.snapshotWithContents = config.snapshotWithContents;
 
 		this.getConnectionState = config.getConnectionState;
-		this.getClientId = config.getClientId;
-		this.getContainerDiagnosticId = config.getContainerDiagnosticId;
-		this.getConnected = config.getConnected;
-		this.getAttachState = config.getAttachState;
 	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
@@ -209,6 +201,6 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	}
 
 	public get attachState(): AttachState {
-		return this.getAttachState();
+		return this.config.getAttachState();
 	}
 }
