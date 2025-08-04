@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type AcceptanceCondition,
 	type Reducer,
@@ -12,10 +13,14 @@ import {
 	createWeightedGenerator,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
-import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import type {
+	DDSFuzzHarnessEvents,
+	DDSFuzzModel,
+	DDSFuzzTestState,
+} from "@fluid-private/test-dds-utils";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 
-import type { SerializableTypeForSharedArray } from "../../index.js";
+import type { ISharedArray, SerializableTypeForSharedArray } from "../../index.js";
 import { OperationType, SharedArrayFactory } from "../../index.js";
 
 /**
@@ -88,23 +93,38 @@ export type SharedArrayOperation<T> =
 	| SharedArrayToggleMove
 	| SharedArrayInsertBulkAfter<T>;
 
-const arrayInsertIdMap = new Map<string, string[]>();
-const arrayMoveIdMap = new Map<string, string[]>();
-const insertListenerRegistry = new Set<string>();
-const moveListenerRegistry = new Set<string>();
-
 /**
- * Cleans entryId maps and listener registries for SharedArray operations.
- *
- * This function is used to reset the state before each test run to ensure that
- * previous test runs do not affect the current test.
+ * Event emitter for the fuzz harness.
  */
-export function cleanPreviousState(): void {
-	arrayInsertIdMap.clear();
-	arrayMoveIdMap.clear();
-	insertListenerRegistry.clear();
-	moveListenerRegistry.clear();
-}
+export const eventEmitterForFuzzHarness = new TypedEventEmitter<DDSFuzzHarnessEvents>();
+
+type TrackableSharedArray = ISharedArray<SerializableTypeForSharedArray> & {
+	// This is used to track the entry IDs for insert and move operations.
+	arrayInsertIdMap: Map<string, string[]>;
+	arrayMoveIdMap: Map<string, string[]>;
+};
+
+eventEmitterForFuzzHarness.on("clientCreate", (client) => {
+	const channel = client.channel as TrackableSharedArray;
+	channel.arrayInsertIdMap = new Map();
+	channel.arrayMoveIdMap = new Map();
+
+	// Register listener to track insert entry IDs
+	channel.on("valueChanged", (op, _isLocal, _target) => {
+		if (op.type === OperationType.insertEntry) {
+			const entryId = op.entryId;
+			const entryIds = channel.arrayInsertIdMap.get(channel.id) ?? [];
+			entryIds.push(entryId);
+			channel.arrayInsertIdMap.set(channel.id, entryIds);
+		}
+		if (op.type === OperationType.moveEntry) {
+			const entryId = op.entryId;
+			const entryIds = channel.arrayMoveIdMap.get(channel.id) ?? [];
+			entryIds.push(entryId);
+			channel.arrayMoveIdMap.set(channel.id, entryIds);
+		}
+	});
+});
 /**
  * Creates a reducer for SharedArray operations.
  */
@@ -114,19 +134,7 @@ export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>
 > {
 	return combineReducers({
 		insert: ({ client }, { index, value }) => {
-			const array = client.channel;
-			if (!insertListenerRegistry.has(array.id)) {
-				insertListenerRegistry.add(array.id);
-				array.on("valueChanged", (op, isLocal, _target) => {
-					if (op.type === OperationType.insertEntry && isLocal) {
-						const entryId = op.entryId;
-						const entryIds = arrayInsertIdMap.get(array.id) ?? [];
-						entryIds.push(entryId);
-						arrayInsertIdMap.set(array.id, entryIds);
-					}
-				});
-			}
-			array.insert(index, value as Serializable<typeof value> & T);
+			client.channel.insert(index, value as Serializable<typeof value> & T);
 		},
 		insertBulkAfter: ({ client }, { ref, values }) => {
 			client.channel.insertBulkAfter(
@@ -138,19 +146,6 @@ export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>
 			client.channel.delete(index);
 		},
 		move: ({ client }, { oldIndex, newIndex }) => {
-			const array = client.channel;
-			if (!moveListenerRegistry.has(array.id)) {
-				moveListenerRegistry.add(array.id);
-				// Register listener to track move entry IDs
-				array.on("valueChanged", (op, isLocal, _target) => {
-					if (op.type === OperationType.moveEntry && isLocal) {
-						const entryId = op.entryId;
-						const entryIds = arrayMoveIdMap.get(array.id) ?? [];
-						entryIds.push(entryId);
-						arrayMoveIdMap.set(array.id, entryIds);
-					}
-				});
-			}
 			client.channel.move(oldIndex, newIndex);
 		},
 		toggle: ({ client }, { entryId }) => {
@@ -221,12 +216,12 @@ export function makeSharedArrayOperationGenerator(weights: {
 		random,
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggle => {
-		const sharedArray = client.channel;
-		const entryIds = arrayInsertIdMap.get(sharedArray.id) ?? [];
+		const sharedArray = client.channel as TrackableSharedArray;
+		const entryIds = sharedArray.arrayInsertIdMap.get(sharedArray.id) ?? [];
 		if (entryIds.length === 0) {
 			throw new Error("No entryIds found for toggle operation");
 		}
-		assert(arrayInsertIdMap.has(sharedArray.id));
+		assert(sharedArray.arrayInsertIdMap.has(sharedArray.id));
 		const entryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (entryId === undefined) {
 			throw new Error("No entryId found for toggle operation");
@@ -241,8 +236,8 @@ export function makeSharedArrayOperationGenerator(weights: {
 		random,
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggleMove => {
-		const sharedArray = client.channel;
-		const entryIds = arrayMoveIdMap.get(sharedArray.id) ?? [];
+		const sharedArray = client.channel as TrackableSharedArray;
+		const entryIds = sharedArray.arrayMoveIdMap.get(sharedArray.id) ?? [];
 		const oldEntryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (oldEntryId === undefined) {
 			throw new Error("No old entryId found for toggleMove operation");
@@ -273,7 +268,10 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria(arrayMoveIdMap.get(client.channel.id)?.length ?? 0);
+			criteria(
+				(client.channel as TrackableSharedArray).arrayMoveIdMap.get(client.channel.id)
+					?.length ?? 0,
+			);
 	const insertLengthSatisfies =
 		(
 			criteria: (length: number) => boolean,
@@ -281,7 +279,10 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria(arrayInsertIdMap.get(client.channel.id)?.length ?? 0);
+			criteria(
+				(client.channel as TrackableSharedArray).arrayInsertIdMap.get(client.channel.id)
+					?.length ?? 0,
+			);
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
 	const hasEnoughMoveLength = moveLengthSatisfies((length) => length > 2);
 	const hasEnoughInsertLength = insertLengthSatisfies((length) => length > 0);
