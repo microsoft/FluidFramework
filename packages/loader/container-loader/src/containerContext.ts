@@ -143,21 +143,21 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 
 	public readonly getConnectionState: () => ConnectionState;
 
-	private readonly getClientIdFn: () => string | undefined;
-	private readonly getContainerDiagnosticIdFn: () => string | undefined;
-	private readonly getConnectedFn: () => boolean;
-	private readonly getAttachStateFn: () => AttachState;
+	private readonly _getClientId: () => string | undefined;
+	private readonly _getContainerDiagnosticId: () => string | undefined;
+	private readonly _getConnected: () => boolean;
+	private readonly _getAttachState: () => AttachState;
 	private readonly version: IVersion | undefined;
 
 	public get clientId(): string | undefined {
-		return this.getClientIdFn();
+		return this._getClientId();
 	}
 
 	/**
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		return this.getContainerDiagnosticIdFn() ?? "";
+		return this._getContainerDiagnosticId() ?? "";
 	}
 
 	/**
@@ -165,7 +165,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	 * When false, ops should be kept as pending or rejected
 	 */
 	public get connected(): boolean {
-		return this.getConnectedFn();
+		return this._getConnected();
 	}
 
 	/**
@@ -200,10 +200,10 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		this.snapshotWithContents = config.snapshotWithContents;
 
 		this.getConnectionState = config.getConnectionState;
-		this.getClientIdFn = config.getClientId;
-		this.getContainerDiagnosticIdFn = config.getContainerDiagnosticId;
-		this.getConnectedFn = config.getConnected;
-		this.getAttachStateFn = config.getAttachState;
+		this._getClientId = config.getClientId;
+		this._getContainerDiagnosticId = config.getContainerDiagnosticId;
+		this._getConnected = config.getConnected;
+		this._getAttachState = config.getAttachState;
 		this.version = config.version;
 	}
 
@@ -212,6 +212,6 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	}
 
 	public get attachState(): AttachState {
-		return this.getAttachStateFn();
+		return this._getAttachState();
 	}
 }
