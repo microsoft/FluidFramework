@@ -150,7 +150,6 @@ export class ConsensusOrderedCollection<T = any>
 
 		await this.submit<IConsensusOrderedCollectionAddOperation<T>>({
 			opName: "add",
-			value: valueSer,
 			deserializedValue: value,
 		});
 	}
