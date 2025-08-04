@@ -14,4 +14,4 @@
 The `minVersionForCollab` on the Container is now available in the Datastore layer
 
 `minVersionForCollab` is now passed down from the ContainerRuntime to the Datastore layer where it is made available for SharedObject construction.
-DDSs may optionally consume this value and use it to determine which sets of feature flags should be enabled.
+DDSes may optionally consume this value and use it to determine which sets of feature flags should be enabled.

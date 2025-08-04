@@ -12,3 +12,4 @@ enum
 Enum
 openable
 Datastore
+DDSes
