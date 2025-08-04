@@ -25,6 +25,8 @@ import {
 
 import { ContainerRuntime } from "../containerRuntime.js";
 
+const testExtensionId: ContainerExtensionId = "test:extension";
+
 interface TestExtensionRuntimeProperties extends ExtensionRuntimeProperties {
 	SignalMessages: { type: string; content: unknown };
 }
@@ -56,6 +58,7 @@ const TestExtensionFactory = class extends TestExtension {
 		super(host);
 	}
 };
+
 class MockContext implements IContainerContext {
 	public readonly deltaManager = new MockDeltaManager();
 	public readonly quorum = new MockQuorumClients();
@@ -77,40 +80,26 @@ class MockContext implements IContainerContext {
 	public readonly disposeFn = (): void => {};
 	public readonly closeFn = (): void => {};
 	public readonly getAbsoluteUrl = async (): Promise<string> => "mockUrl";
+	public readonly getConnectionState = (): ConnectionState => this.connectionState;
 
-	public readonly getConnectionState = (): ConnectionState => this.container.connectionState;
-
-	constructor(private readonly container: MockContainer) {}
-
-	public get audience(): MockAudience {
-		return this.container.audience;
-	}
-	public get clientId(): string | undefined {
-		return this.container.audience.getSelf()?.clientId;
-	}
-	public get connected(): boolean {
-		return this.container.connectionState === ConnectionState.Connected;
-	}
-	public get attachState(): AttachState {
-		return AttachState.Attached;
-	}
-}
-
-class MockContainer {
 	public readonly audience = new MockAudience();
-	public connectionState: ConnectionState = ConnectionState.Disconnected;
-	public runtime: ContainerRuntime | undefined;
-	public context: IContainerContext | undefined;
 
-	public constructor(public readonly: boolean = false) {}
+	// State for testing purposes
+	private connectionState: ConnectionState = ConnectionState.Disconnected;
+	public readonly isReadonly: boolean;
+
+	constructor(isReadonly: boolean = false) {
+		this.isReadonly = isReadonly;
+	}
 
 	public get clientId(): string | undefined {
 		return this.audience.getSelf()?.clientId;
 	}
-
-	public async initialize(): Promise<void> {
-		this.context = new MockContext(this);
-		this.runtime = await createContainerRuntime(this.context);
+	public get connected(): boolean {
+		return this.connectionState === ConnectionState.Connected;
+	}
+	public get attachState(): AttachState {
+		return AttachState.Attached;
 	}
 
 	public setConnectionState(connectionState: ConnectionState, clientId?: string): void {
@@ -118,63 +107,95 @@ class MockContainer {
 		if (clientId !== undefined) {
 			this.audience.setCurrentClientId(clientId);
 		}
-
-		if (
-			this.runtime &&
-			(connectionState === ConnectionState.Connected ||
-				connectionState === ConnectionState.Disconnected)
-		) {
-			this.runtime.setConnectionState(
-				this.connectionState === ConnectionState.Connected && !this.readonly,
-				this.clientId,
-			);
-		}
-	}
-
-	public forceReadonly(): void {
-		this.runtime?.setConnectionState(false, this.clientId);
 	}
 }
 
-const testExtensionId: ContainerExtensionId = "test:extension";
-
-async function createContainerRuntime(context: IContainerContext): Promise<ContainerRuntime> {
-	const containerRuntime = await ContainerRuntime.loadRuntime({
+async function createRuntimeWithMockContext(isReadonly: boolean = false): Promise<{
+	runtime: ContainerRuntime;
+	context: MockContext;
+}> {
+	const context = new MockContext(isReadonly);
+	const runtime = await ContainerRuntime.loadRuntime({
 		context,
 		registryEntries: [],
 		existing: false,
 		provideEntryPoint: async () => ({}),
 	});
-	return containerRuntime;
+	return { runtime, context };
+}
+
+function updateConnectionState(
+	runtime: ContainerRuntime,
+	context: MockContext,
+	connectionState: ConnectionState,
+	clientId?: string,
+): void {
+	context.setConnectionState(connectionState, clientId);
+
+	if (
+		connectionState === ConnectionState.Connected ||
+		connectionState === ConnectionState.Disconnected
+	) {
+		runtime.setConnectionState(
+			connectionState === ConnectionState.Connected && !context.isReadonly,
+			context.clientId,
+		);
+	}
+}
+
+function setupExtensionEventListeners(extensionInterface: {
+	connectedToService: boolean;
+	events: Listenable<ExtensionHostEvents>;
+}): {
+	type: "joined" | "disconnected" | "connectionTypeChanged";
+	clientId?: string;
+	canWrite?: boolean;
+}[] {
+	const events: {
+		type: "joined" | "disconnected" | "connectionTypeChanged";
+		clientId?: string;
+		canWrite?: boolean;
+	}[] = [];
+
+	extensionInterface.events.on(
+		"joined",
+		({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
+			events.push({ type: "joined", clientId, canWrite });
+		},
+	);
+
+	extensionInterface.events.on("disconnected", () => {
+		events.push({ type: "disconnected" });
+	});
+
+	extensionInterface.events.on("connectionTypeChanged", (canWrite: boolean) => {
+		events.push({ type: "connectionTypeChanged", canWrite });
+	});
+
+	return events;
 }
 
 describe("Container Extension", () => {
-	let container: MockContainer;
+	let runtime: ContainerRuntime;
+	let context: MockContext;
+	let extension: { connectedToService: boolean; events: Listenable<ExtensionHostEvents> };
 
 	beforeEach(async () => {
-		container = new MockContainer();
-		await container.initialize();
+		const setup = await createRuntimeWithMockContext();
+		runtime = setup.runtime;
+		context = setup.context;
+		extension = runtime.acquireExtension(testExtensionId, TestExtensionFactory);
 	});
 
-	describe("connected to service", () => {
-		it("should return true when 'Connected'", async () => {
-			container.setConnectionState(ConnectionState.Connected, "mockClientId");
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
+	describe("connection status", () => {
+		it("should return true when context is `Connected`", async () => {
+			updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
 
 			assert.strictEqual(extension.connectedToService, true, "Extension should be connected");
 		});
 
-		it("should return false when 'CatchingUp'", async () => {
-			container.setConnectionState(ConnectionState.CatchingUp);
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
+		it("should return false when context is `CatchingUp`", async () => {
+			updateConnectionState(runtime, context, ConnectionState.CatchingUp);
 
 			assert.strictEqual(
 				extension.connectedToService,
@@ -183,13 +204,8 @@ describe("Container Extension", () => {
 			);
 		});
 
-		it("should return false when 'Disconnected'", async () => {
-			container.setConnectionState(ConnectionState.Disconnected);
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
+		it("should return false when context is `Disconnected`", async () => {
+			updateConnectionState(runtime, context, ConnectionState.Disconnected);
 
 			assert.strictEqual(
 				extension.connectedToService,
@@ -198,13 +214,8 @@ describe("Container Extension", () => {
 			);
 		});
 
-		it("should return false when 'EstablishingConnection'", async () => {
-			container.setConnectionState(ConnectionState.EstablishingConnection);
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
+		it("should return false when context is `EstablishingConnection`", async () => {
+			updateConnectionState(runtime, context, ConnectionState.EstablishingConnection);
 
 			assert.strictEqual(
 				extension.connectedToService,
@@ -213,100 +224,80 @@ describe("Container Extension", () => {
 			);
 		});
 
-		it("should fallback to runtime.connected when connectionState is undefined and runtime is connected", async () => {
-			// Override the context to return undefined connectionState
-			Object.defineProperty(container.context, "getConnectionState", {
-				value: () => undefined,
+		describe("fallback behavior when getConnectionState is undefined", () => {
+			beforeEach(() => {
+				// Remove the getConnectionState method to test fallback behavior
+				Object.defineProperty(context, "getConnectionState", {
+					value: undefined,
+				});
 			});
 
-			container.setConnectionState(ConnectionState.Connected, "mockClientId");
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
+			it("should fallback to canSendOps when context is `Connected`", async () => {
+				updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
 
-			assert.strictEqual(
-				extension.connectedToService,
-				true,
-				"Extension should fallback to runtime.connected when connectionState is undefined",
-			);
+				assert.strictEqual(
+					extension.connectedToService,
+					true,
+					"Extension should fallback to runtime.connected when connectionState is undefined",
+				);
+			});
+
+			it("should fallback to canSendOps when context is `Disconnected`", async () => {
+				updateConnectionState(runtime, context, ConnectionState.Disconnected);
+
+				assert.strictEqual(
+					extension.connectedToService,
+					false,
+					"Extension should fallback to runtime.connected when connectionState is undefined and runtime is disconnected",
+				);
+			});
 		});
+	});
 
-		it("should fallback to runtime.connected when connectionState is undefined and runtime is disconnected", async () => {
-			// Override the context to return undefined connectionState
-			Object.defineProperty(container.context, "getConnectionState", {
-				value: () => undefined,
-			});
+	describe("event handling", () => {
+		let events: {
+			type: "joined" | "disconnected" | "connectionTypeChanged";
+			clientId?: string;
+			canWrite?: boolean;
+		}[];
 
-			container.setConnectionState(ConnectionState.Disconnected);
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
-
-			assert.strictEqual(
-				extension.connectedToService,
-				false,
-				"Extension should fallback to runtime.connected when connectionState is undefined and runtime is disconnected",
-			);
+		beforeEach(() => {
+			events = setupExtensionEventListeners(extension);
 		});
 
 		it("should handle dynamic connection state transitions - write client", async () => {
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
-
-			const events: {
-				type: "joined" | "disconnected";
-				clientId?: string;
-				canWrite?: boolean;
-			}[] = [];
-
-			extension.events.on(
-				"joined",
-				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
-					events.push({ type: "joined", clientId, canWrite });
-					assert.strictEqual(
-						clientId,
-						"mockClientId",
-						"Extension should emit joined event with correct clientId",
-					);
-				},
-			);
-
-			extension.events.on("disconnected", () => {
-				events.push({ type: "disconnected" });
-			});
-
 			// Initially disconnected
 			assert.strictEqual(
 				extension.connectedToService,
 				false,
 				"Extension should initially be disconnected",
 			);
+			assert.strictEqual(events.length, 0, "Should have no events initially");
 
 			// Transition to EstablishingConnection
-			container.setConnectionState(ConnectionState.EstablishingConnection);
+			updateConnectionState(runtime, context, ConnectionState.EstablishingConnection);
 			assert.strictEqual(
 				extension.connectedToService,
 				false,
 				"Extension should remain disconnected during EstablishingConnection",
 			);
+			assert.strictEqual(
+				events.length,
+				0,
+				"Should have no events during EstablishingConnection",
+			);
 
 			// Transition to CatchingUp
-			container.setConnectionState(ConnectionState.CatchingUp, "mockClientId");
+			updateConnectionState(runtime, context, ConnectionState.CatchingUp, "mockClientId");
 			assert.strictEqual(
 				extension.connectedToService,
 				false,
 				"Extension should be disconnected during CatchingUp",
 			);
+			assert.strictEqual(events.length, 0, "Should have no events during CatchingUp");
 
 			// Transition to Connected
-			container.setConnectionState(ConnectionState.Connected, "mockClientId");
+			updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
 			assert.strictEqual(events.length, 1, "Should have received one joined events");
 			assert.deepStrictEqual(
 				events[0],
@@ -321,7 +312,7 @@ describe("Container Extension", () => {
 			);
 
 			// Transition back to Disconnected
-			container.setConnectionState(ConnectionState.Disconnected);
+			updateConnectionState(runtime, context, ConnectionState.Disconnected);
 			assert.strictEqual(events.length, 2, "Should have received two events total");
 			assert.deepStrictEqual(
 				events[1],
@@ -336,177 +327,134 @@ describe("Container Extension", () => {
 		});
 
 		it("should handle dynamic connection state transitions - read client", async () => {
-			// Create a read-only container
-			const readOnlyContainer = new MockContainer(true /* readonly */);
-			await readOnlyContainer.initialize();
-			assert(readOnlyContainer.runtime, "Runtime should be initialized");
-			const extension = readOnlyContainer.runtime.acquireExtension(
+			// Create a read-only runtime setup
+			const readOnlySetup = await createRuntimeWithMockContext(true /* readonly */);
+			const readOnlyRuntime = readOnlySetup.runtime;
+			const readOnlyContext = readOnlySetup.context;
+
+			const readOnlyExtension = readOnlyRuntime.acquireExtension(
 				testExtensionId,
 				TestExtensionFactory,
 			);
-
-			const events: {
-				type: "joined" | "disconnected";
-				clientId?: string;
-				canWrite?: boolean;
-			}[] = [];
-
-			extension.events.on(
-				"joined",
-				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
-					events.push({ type: "joined", clientId, canWrite });
-					if (canWrite) {
-						assert.fail(
-							"Extension should not emit joined event with canWrite=true for read-only client",
-						);
-					}
-					assert.strictEqual(
-						clientId,
-						"mockClientId",
-						"Extension should emit joined event with correct clientId",
-					);
-				},
-			);
-
-			extension.events.on("disconnected", () => {
-				events.push({ type: "disconnected" });
-			});
+			const readOnlyEvents = setupExtensionEventListeners(readOnlyExtension);
 
 			// Initially disconnected
 			assert.strictEqual(
-				extension.connectedToService,
+				readOnlyExtension.connectedToService,
 				false,
 				"Extension should initially be disconnected",
 			);
+			assert.strictEqual(readOnlyEvents.length, 0, "Should have no events initially");
 
 			// Transition to EstablishingConnection
-			readOnlyContainer.setConnectionState(ConnectionState.EstablishingConnection);
+			updateConnectionState(
+				readOnlyRuntime,
+				readOnlyContext,
+				ConnectionState.EstablishingConnection,
+			);
 			assert.strictEqual(
-				extension.connectedToService,
+				readOnlyExtension.connectedToService,
 				false,
 				"Extension should remain disconnected during EstablishingConnection",
 			);
+			assert.strictEqual(
+				readOnlyEvents.length,
+				0,
+				"Should have no events during EstablishingConnection",
+			);
 
 			// Transition to CatchingUp
-			readOnlyContainer.setConnectionState(ConnectionState.CatchingUp, "mockClientId");
+			updateConnectionState(
+				readOnlyRuntime,
+				readOnlyContext,
+				ConnectionState.CatchingUp,
+				"mockClientId",
+			);
 			assert.strictEqual(
-				extension.connectedToService,
+				readOnlyExtension.connectedToService,
 				false,
 				"Extension should be disconnected during CatchingUp",
 			);
+			assert.strictEqual(readOnlyEvents.length, 0, "Should have no events during CatchingUp");
 
 			// Transition to Connected
-			readOnlyContainer.setConnectionState(ConnectionState.Connected, "mockClientId");
+			updateConnectionState(
+				readOnlyRuntime,
+				readOnlyContext,
+				ConnectionState.Connected,
+				"mockClientId",
+			);
 			assert.strictEqual(
-				events.length,
+				readOnlyEvents.length,
 				1,
 				"Should have received one event: joined for reading only",
 			);
 			assert.deepStrictEqual(
-				events[0],
+				readOnlyEvents[0],
 				{ type: "joined", clientId: "mockClientId", canWrite: false },
 				"Event should be joined for reading",
 			);
 			assert.strictEqual(
-				extension.connectedToService,
+				readOnlyExtension.connectedToService,
 				true,
 				"Extension should be connected when fully Connected",
 			);
 
 			// Transition back to Disconnected
-			readOnlyContainer.setConnectionState(ConnectionState.Disconnected);
-			assert.strictEqual(events.length, 2, "Should have received two events total");
+			updateConnectionState(readOnlyRuntime, readOnlyContext, ConnectionState.Disconnected);
+			assert.strictEqual(readOnlyEvents.length, 2, "Should have received two events total");
 			assert.deepStrictEqual(
-				events[1],
+				readOnlyEvents[1],
 				{ type: "disconnected" },
 				"Second event should be disconnected",
 			);
 			assert.strictEqual(
-				extension.connectedToService,
+				readOnlyExtension.connectedToService,
 				false,
 				"Extension should be disconnected after transition back to Disconnected",
 			);
 		});
 
 		it("should handle connection type changes", async () => {
-			container.setConnectionState(ConnectionState.Connected, "mockClientId");
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
-			const events: {
-				type: "joined" | "disconnected" | "connectionTypeChanged";
-				clientId?: string;
-				canWrite?: boolean;
-			}[] = [];
-			extension.events.on(
-				"joined",
-				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
-					events.push({ type: "joined", clientId, canWrite });
-				},
-			);
-			extension.events.on("disconnected", () => {
-				events.push({ type: "disconnected" });
-			});
-			extension.events.on("connectionTypeChanged", (canWrite: boolean) => {
-				events.push({ type: "connectionTypeChanged", canWrite });
-			});
+			updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
 
-			container.forceReadonly();
-			container.setConnectionState(ConnectionState.Connected, "newMockClientId");
+			// Should have initial joined event
+			assert.strictEqual(events.length, 1, "Should have received initial joined event");
+			assert.deepStrictEqual(
+				events[0],
+				{ type: "joined", clientId: "mockClientId", canWrite: true },
+				"Initial event should be joined with write access",
+			);
+
+			// Force readonly mode and reconnect
+			runtime.setConnectionState(false, context.clientId);
+			updateConnectionState(runtime, context, ConnectionState.Connected, "newMockClientId");
 
 			assert.strictEqual(
 				events.length,
-				2,
-				"Should have received four events for connection type changes",
-			);
-			assert.deepStrictEqual(
-				events[0],
-				{ type: "connectionTypeChanged", canWrite: false },
-				"First event should indicate connection type changed to read-only",
+				3,
+				"Should have received three events total: joined + two connectionTypeChanged",
 			);
 			assert.deepStrictEqual(
 				events[1],
+				{ type: "connectionTypeChanged", canWrite: false },
+				"Second event should indicate connection type changed to read-only",
+			);
+			assert.deepStrictEqual(
+				events[2],
 				{ type: "connectionTypeChanged", canWrite: true },
-				"Second event should indicate connection type changed to writable",
+				"Third event should indicate connection type changed to writable",
 			);
 		});
 
-		it("should still emit joined and disconnected eventswhen getConnectionState is undefined", async () => {
-			// Override the context to return undefined connectionState
-			Object.defineProperty(container.context, "getConnectionState", {
-				value: () => undefined,
-			});
-
-			assert(container.runtime, "Runtime should be initialized");
-			const extension = container.runtime.acquireExtension(
-				testExtensionId,
-				TestExtensionFactory,
-			);
-
-			// Setup event listeners
-			const events: {
-				type: "joined" | "disconnected" | "connectionTypeChanged";
-				clientId?: string;
-				canWrite?: boolean;
-			}[] = [];
-
-			extension.events.on(
-				"joined",
-				({ clientId, canWrite }: { clientId: string; canWrite: boolean }) => {
-					events.push({ type: "joined", clientId, canWrite });
-				},
-			);
-			extension.events.on("disconnected", () => {
-				events.push({ type: "disconnected" });
-			});
-			extension.events.on("connectionTypeChanged", (canWrite: boolean) => {
-				events.push({ type: "connectionTypeChanged", canWrite });
+		it("should still emit joined and disconnected events when getConnectionState is undefined", async () => {
+			// Remove the getConnectionState method to test fallback behavior
+			Object.defineProperty(context, "getConnectionState", {
+				value: undefined,
 			});
 
 			// Connect
-			container.setConnectionState(ConnectionState.Connected, "mockClientId");
+			updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
 			assert.strictEqual(extension.connectedToService, true, "Extension should be connected");
 			assert.strictEqual(events.length, 1, "Should have received one joined event");
 			assert.deepStrictEqual(
@@ -516,7 +464,7 @@ describe("Container Extension", () => {
 			);
 
 			// Disconnect
-			container.setConnectionState(ConnectionState.Disconnected);
+			updateConnectionState(runtime, context, ConnectionState.Disconnected);
 			assert.strictEqual(
 				extension.connectedToService,
 				false,
