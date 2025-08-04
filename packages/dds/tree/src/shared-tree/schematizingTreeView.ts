@@ -320,7 +320,7 @@ export class SchematizingSimpleTreeView<
 			assert(!slots.has(SimpleContextSlot), 0xa47 /* extra simple tree context */);
 			assert(
 				this.rootFieldSchema instanceof FieldSchemaAlpha,
-				"all field schema should be FieldSchemaAlpha",
+				0xbfa /* all field schema should be FieldSchemaAlpha */,
 			);
 			slots.set(
 				SimpleContextSlot,
