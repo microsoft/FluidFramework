@@ -80,7 +80,7 @@ class MockContext implements IContainerContext {
 	public readonly disposeFn = (): void => {};
 	public readonly closeFn = (): void => {};
 	public readonly getAbsoluteUrl = async (): Promise<string> => "mockUrl";
-	public readonly getConnectionState = (): ConnectionState => this.connectionState;
+	public getConnectionState = (): ConnectionState => this.connectionState;
 
 	public readonly audience = new MockAudience();
 
@@ -115,6 +115,22 @@ async function createRuntimeWithMockContext(isReadonly: boolean = false): Promis
 	context: MockContext;
 }> {
 	const context = new MockContext(isReadonly);
+	const runtime = await ContainerRuntime.loadRuntime({
+		context,
+		registryEntries: [],
+		existing: false,
+		provideEntryPoint: async () => ({}),
+	});
+	return { runtime, context };
+}
+
+async function createRuntimeWithoutConnectionState(isReadonly: boolean = false): Promise<{
+	runtime: ContainerRuntime;
+	context: MockContext;
+}> {
+	const context = new MockContext(isReadonly);
+	// Delete the getConnectionState method before creating the runtime
+	Reflect.deleteProperty(context, "getConnectionState");
 	const runtime = await ContainerRuntime.loadRuntime({
 		context,
 		registryEntries: [],
@@ -225,28 +241,44 @@ describe("Container Extension", () => {
 		});
 
 		describe("fallback behavior when getConnectionState is undefined", () => {
-			beforeEach(() => {
-				// Remove the getConnectionState method to test fallback behavior
-				Object.defineProperty(context, "getConnectionState", {
-					value: undefined,
-				});
+			let fallbackRuntime: ContainerRuntime;
+			let fallbackContext: MockContext;
+			let fallbackExtension: {
+				connectedToService: boolean;
+				events: Listenable<ExtensionHostEvents>;
+			};
+
+			beforeEach(async () => {
+				// Create runtime without getConnectionState to test fallback behavior
+				const setup = await createRuntimeWithoutConnectionState();
+				fallbackRuntime = setup.runtime;
+				fallbackContext = setup.context;
+				fallbackExtension = fallbackRuntime.acquireExtension(
+					testExtensionId,
+					TestExtensionFactory,
+				);
 			});
 
 			it("should fallback to canSendOps when context is `Connected`", async () => {
-				updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
+				updateConnectionState(
+					fallbackRuntime,
+					fallbackContext,
+					ConnectionState.Connected,
+					"mockClientId",
+				);
 
 				assert.strictEqual(
-					extension.connectedToService,
+					fallbackExtension.connectedToService,
 					true,
 					"Extension should fallback to runtime.connected when connectionState is undefined",
 				);
 			});
 
 			it("should fallback to canSendOps when context is `Disconnected`", async () => {
-				updateConnectionState(runtime, context, ConnectionState.Disconnected);
+				updateConnectionState(fallbackRuntime, fallbackContext, ConnectionState.Disconnected);
 
 				assert.strictEqual(
-					extension.connectedToService,
+					fallbackExtension.connectedToService,
 					false,
 					"Extension should fallback to runtime.connected when connectionState is undefined and runtime is disconnected",
 				);
@@ -451,31 +483,45 @@ describe("Container Extension", () => {
 		});
 
 		it("should still emit joined and disconnected events when getConnectionState is undefined", async () => {
-			// Remove the getConnectionState method to test fallback behavior
-			Object.defineProperty(context, "getConnectionState", {
-				value: undefined,
-			});
+			// Create a new runtime without getConnectionState to test fallback behavior
+			const fallbackSetup = await createRuntimeWithoutConnectionState();
+			const fallbackRuntime = fallbackSetup.runtime;
+			const fallbackContext = fallbackSetup.context;
+			const fallbackExtension = fallbackRuntime.acquireExtension(
+				testExtensionId,
+				TestExtensionFactory,
+			);
+			const fallbackEvents = setupExtensionEventListeners(fallbackExtension);
 
 			// Connect
-			updateConnectionState(runtime, context, ConnectionState.Connected, "mockClientId");
-			assert.strictEqual(extension.connectedToService, true, "Extension should be connected");
-			assert.strictEqual(events.length, 1, "Should have received one joined event");
+			updateConnectionState(
+				fallbackRuntime,
+				fallbackContext,
+				ConnectionState.Connected,
+				"mockClientId",
+			);
+			assert.strictEqual(
+				fallbackExtension.connectedToService,
+				true,
+				"Extension should be connected",
+			);
+			assert.strictEqual(fallbackEvents.length, 1, "Should have received one joined event");
 			assert.deepStrictEqual(
-				events[0],
+				fallbackEvents[0],
 				{ type: "joined", clientId: "mockClientId", canWrite: true },
 				"Event should be joined with canWrite = true when getConnectionState is undefined",
 			);
 
 			// Disconnect
-			updateConnectionState(runtime, context, ConnectionState.Disconnected);
+			updateConnectionState(fallbackRuntime, fallbackContext, ConnectionState.Disconnected);
 			assert.strictEqual(
-				extension.connectedToService,
+				fallbackExtension.connectedToService,
 				false,
 				"Extension should be disconnected",
 			);
-			assert.strictEqual(events.length, 2, "Should have received two events total");
+			assert.strictEqual(fallbackEvents.length, 2, "Should have received two events total");
 			assert.deepStrictEqual(
-				events[1],
+				fallbackEvents[1],
 				{ type: "disconnected" },
 				"Second event should be disconnected",
 			);
