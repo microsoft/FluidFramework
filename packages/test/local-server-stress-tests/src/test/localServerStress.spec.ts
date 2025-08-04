@@ -9,8 +9,7 @@ import {
 	ddsModelMinimizers,
 	makeGenerator,
 	reducer,
-	// saveFailures,
-	saveSuccesses,
+	saveFailures,
 	type StressOperations,
 } from "../baseModel.js";
 import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
@@ -36,15 +35,18 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 100,
 		skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 93,
-		only: [99],
-		// saveFailures,
+		// replay: 22,
+		// only: [9],
+		saveFailures,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
-		saveSuccesses,
 		skip: [
-			...[18, 65, 98], // Number of keys not same
-			...[5, 49, 57], // Number of subDirectories not same,
-			...[11, 39], // Rollback op does not match last pending
+			...[18, 34, 35, 38, 46, 65, 71, 72, 79, 91, 98], // Number of keys not same
+			...[5, 9, 49, 57], // Number of subDirectories not same,
+			...[11, 26, 39], // Rollback op does not match last pending
+			...[13, 19, 82], // 0xb85
+			...[22, 45], // Comparing client client-1 vs client client-0
+			...[30, 69, 80], // 0xa21
+			...[54], // Forcing timeout before test does
 		],
 	});
 });

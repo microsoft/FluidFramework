@@ -825,14 +825,13 @@ async function loadClient(
 async function synchronizeClients(connectedClients: Client[]) {
 	return timeoutPromise((resolve, reject) => {
 		const rejectHandler = (error?: IErrorBase | undefined) => {
-			const client = connectedClients.find(
-				(c) => c.container.closed || c.container.disposed === true,
-			);
+			const client = connectedClients.find((c) => c.container.closed || c.container.disposed);
 			if (client !== undefined) {
 				reject(
 					wrapError(
 						error,
-						(message) => new LoggingError(`${client.tag} closed or disposed: ${message}`),
+						(message) =>
+							new LoggingError(`HERE - ${client.tag} closed or disposed: ${message}`),
 					),
 				);
 				off();
@@ -859,11 +858,11 @@ async function synchronizeClients(connectedClients: Client[]) {
 		// process by setting a breakpoint on
 		// resolveHandler
 		//
-		// const timeout = setInterval(() => {
-		// resolveHandler();
-		// }, 1000);
+		const timeout = setInterval(() => {
+			resolveHandler();
+		}, 1000);
 		const off = () => {
-			// clearInterval(timeout);
+			clearInterval(timeout);
 			for (const c of connectedClients) {
 				c.container.off("closed", rejectHandler);
 				c.container.off("disposed", rejectHandler);
@@ -1286,9 +1285,9 @@ const getFullModel = <TOperation extends BaseOperation>(
 	| ChangeConnectionState
 	| GetClientPendingState
 > =>
-	mixinGetClientPending(
-		mixinAttach(
-			mixinSynchronization(
+	mixinAttach(
+		mixinSynchronization(
+			mixinGetClientPending(
 				mixinAddRemoveClient(
 					mixinClientSelection(mixinReconnect(ddsModel, options), options),
 					options,
@@ -1390,6 +1389,7 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | GetClientPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
+
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
@@ -1449,7 +1449,6 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 			return state;
 		}
 
-		// Fallback to original reducer for other operations
 		return model.reducer(state, op);
 	};
 

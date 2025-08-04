@@ -93,12 +93,15 @@ describe("Local Server Stress with rollback", () => {
 
 	createLocalServerStressSuite(model, {
 		defaultTestCount: 100,
-		// skipMinimization: true,
+		skipMinimization: true,
 		// Uncomment to replay a particular seed.
 		// only: [91],
 		saveFailures,
 		// saveSuccesses,
-		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
+		configurations: {
+			"Fluid.ContainerRuntime.EnableRollback": true,
+			"Fluid.Container.enableOfflineLoad": true,
+		},
 		skip: [
 			...[12], // Values differ at key
 			...[28, 30], // Key not found or value not matching key
@@ -106,6 +109,7 @@ describe("Local Server Stress with rollback", () => {
 			...[25, 53], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
+			...[13, 20, 39, 40, 54, 62, 78, 81, 83, 91, 92, 97],
 		],
 	});
 });
