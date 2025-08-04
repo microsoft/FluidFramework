@@ -93,7 +93,7 @@ export function documentationNodeToHtml(
 ): HastTree {
 	const context = getContext(configOrContext);
 
-	// If the node is not a section, then it is Markdown "block content" and can be returned directly.
+	// If the node is a section or a heading, then transform it using the configured transformation.
 	if (node.type === "section" || node.type === "heading") {
 		if (context.transformations[node.type] === undefined) {
 			throw new Error(
@@ -104,6 +104,7 @@ export function documentationNodeToHtml(
 		return context.transformations[node.type](node, context);
 	}
 
+	// If the node is not a section or a heading, then it is Markdown "block content" and can be converted directly to HTML.
 	return toHast(node, {
 		// Needed as a temporary workaround for lack of support for `hast` trees directly in `mdast`.
 		// Only raw HTML strings are supported by default in `mdast`.
