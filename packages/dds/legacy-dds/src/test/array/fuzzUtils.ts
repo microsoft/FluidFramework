@@ -100,28 +100,24 @@ export const eventEmitterForFuzzHarness = new TypedEventEmitter<DDSFuzzHarnessEv
 
 type TrackableSharedArray = ISharedArray<SerializableTypeForSharedArray> & {
 	// This is used to track the entry IDs for insert and move operations.
-	arrayInsertIdMap: Map<string, string[]>;
-	arrayMoveIdMap: Map<string, string[]>;
+	insertIds: Set<string>;
+	moveIds: Set<string>;
 };
 
 eventEmitterForFuzzHarness.on("clientCreate", (client) => {
 	const channel = client.channel as TrackableSharedArray;
-	channel.arrayInsertIdMap = new Map();
-	channel.arrayMoveIdMap = new Map();
+	channel.insertIds = new Set<string>();
+	channel.moveIds = new Set<string>();
 
 	// Register listener to track insert entry IDs
 	channel.on("valueChanged", (op, _isLocal, _target) => {
 		if (op.type === OperationType.insertEntry) {
 			const entryId = op.entryId;
-			const entryIds = channel.arrayInsertIdMap.get(channel.id) ?? [];
-			entryIds.push(entryId);
-			channel.arrayInsertIdMap.set(channel.id, entryIds);
+			channel.insertIds.add(entryId);
 		}
 		if (op.type === OperationType.moveEntry) {
 			const entryId = op.entryId;
-			const entryIds = channel.arrayMoveIdMap.get(channel.id) ?? [];
-			entryIds.push(entryId);
-			channel.arrayMoveIdMap.set(channel.id, entryIds);
+			channel.moveIds.add(entryId);
 		}
 	});
 });
@@ -217,11 +213,10 @@ export function makeSharedArrayOperationGenerator(weights: {
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggle => {
 		const sharedArray = client.channel as TrackableSharedArray;
-		const entryIds = sharedArray.arrayInsertIdMap.get(sharedArray.id) ?? [];
+		const entryIds = [...sharedArray.insertIds];
 		if (entryIds.length === 0) {
 			throw new Error("No entryIds found for toggle operation");
 		}
-		assert(sharedArray.arrayInsertIdMap.has(sharedArray.id));
 		const entryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (entryId === undefined) {
 			throw new Error("No entryId found for toggle operation");
@@ -237,7 +232,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggleMove => {
 		const sharedArray = client.channel as TrackableSharedArray;
-		const entryIds = sharedArray.arrayMoveIdMap.get(sharedArray.id) ?? [];
+		const entryIds = [...sharedArray.moveIds];
 		const oldEntryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (oldEntryId === undefined) {
 			throw new Error("No old entryId found for toggleMove operation");
@@ -268,10 +263,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria(
-				(client.channel as TrackableSharedArray).arrayMoveIdMap.get(client.channel.id)
-					?.length ?? 0,
-			);
+			criteria((client.channel as TrackableSharedArray).moveIds.size);
 	const insertLengthSatisfies =
 		(
 			criteria: (length: number) => boolean,
@@ -279,10 +271,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria(
-				(client.channel as TrackableSharedArray).arrayInsertIdMap.get(client.channel.id)
-					?.length ?? 0,
-			);
+			criteria((client.channel as TrackableSharedArray).insertIds.size);
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
 	const hasEnoughMoveLength = moveLengthSatisfies((length) => length > 2);
 	const hasEnoughInsertLength = insertLengthSatisfies((length) => length > 0);
