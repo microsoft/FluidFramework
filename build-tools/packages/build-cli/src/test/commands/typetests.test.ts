@@ -8,6 +8,7 @@ import { describe, it } from "mocha";
 
 import {
 	VersionOptions,
+	normalizeConfig,
 	previousVersion,
 	resetBrokenTests,
 	updateTypeTestDependency,
@@ -207,5 +208,36 @@ describe("typetests tests", () => {
 				assert.equal(previousVersion(input), expected);
 			});
 		}
+	});
+
+	describe("normalizeConfig", () => {
+		it("undefined config", () => {
+			const result = normalizeConfig(undefined);
+			expect(result).to.deep.equal({
+				broken: {},
+			});
+		});
+
+		it("config with defaults", () => {
+			const result = normalizeConfig(defaultTypeValidationConfig);
+			expect(result).to.deep.equal({
+				broken: {},
+			});
+		});
+
+		it("disabled config", () => {
+			const result = normalizeConfig({
+				disabled: true,
+				broken: {
+					"broken-api": {
+						backCompat: false,
+					},
+				},
+				entrypoint: defaultTypeValidationConfig.entrypoint,
+			});
+			expect(result).to.deep.equal({
+				disabled: true,
+			});
+		});
 	});
 });
