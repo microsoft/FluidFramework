@@ -4,7 +4,7 @@
  */
 
 import type { PackageJson } from "@fluidframework/build-tools";
-import type { ApiLevel } from "../library/index.js";
+import { ApiLevel } from "../library/index.js";
 
 /**
  * Metadata about known-broken types.
@@ -23,9 +23,9 @@ export interface ITypeValidationConfig {
 	/**
 	 * The entrypoint (API level) for which type tests should be generated. This value can be overridden when using
 	 * `flub generate typetests` by passing the `--entrypoint` flag. If this value is not provided, it will default to
-	 * {@link ApiLevel.legacy}.
+	 * {@link ApiLevel.legacyAlpha}.
 	 *
-	 * @defaultValue "legacyAlpha"
+	 * @defaultValue {@link ApiLevel.legacyAlpha}
 	 */
 	entrypoint: ApiLevel;
 
@@ -43,7 +43,7 @@ export interface ITypeValidationConfig {
 }
 
 export const defaultTypeValidationConfig: ITypeValidationConfig = {
-	entrypoint: "legacyAlpha",
+	entrypoint: ApiLevel.legacyAlpha,
 	broken: {},
 	disabled: undefined,
 };
