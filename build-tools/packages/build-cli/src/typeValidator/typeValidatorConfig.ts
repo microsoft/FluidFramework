@@ -30,12 +30,12 @@ export interface ITypeValidationConfig {
 	 *
 	 * @defaultValue {@link ApiLevel.legacy}
 	 */
-	entrypoint: ApiLevel;
+	entrypoint?: ApiLevel;
 
 	/**
 	 * An object containing types that are known to be broken.
 	 */
-	broken: BrokenCompatTypes;
+	broken?: BrokenCompatTypes;
 
 	/**
 	 * If true, disables type test preparation and generation for the package.
@@ -45,10 +45,10 @@ export interface ITypeValidationConfig {
 	disabled?: boolean;
 }
 
-export const defaultTypeValidationConfig: ITypeValidationConfig = {
+export const defaultTypeValidationConfig: Required<ITypeValidationConfig> = {
 	entrypoint: "legacy",
 	broken: {},
-	disabled: undefined,
+	disabled: false,
 };
 
 /**

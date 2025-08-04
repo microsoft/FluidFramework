@@ -112,18 +112,42 @@ If targeting prerelease versions, skipping versions, or using skipping some alte
 			}
 
 			if (this.flags.normalize) {
-				json.typeValidation = {
-					disabled:
-						json.typeValidation?.disabled === true
-							? true
-							: defaultTypeValidationConfig.disabled,
-					broken: json.typeValidation?.broken ?? defaultTypeValidationConfig.broken,
-					entrypoint:
-						json.typeValidation?.entrypoint ?? defaultTypeValidationConfig.entrypoint,
-				};
+				json.typeValidation = normalizeConfig(json.typeValidation);
 			}
 		});
 	}
+}
+
+/**
+ * Generates a simplified version of the input config.
+ * @remarks Omits some defaults, and removes other properties when the config is `disabled`.
+ */
+export function normalizeConfig(
+	config: Readonly<ITypeValidationConfig> | undefined,
+): ITypeValidationConfig {
+	const normalized: ITypeValidationConfig = {
+		...config,
+	};
+	if (normalized.disabled === true) {
+		// If disabled, remove other properties (which will not be used).
+		delete normalized.entrypoint;
+		delete normalized.broken;
+	} else {
+		// Omit `disabled` when false (this is the default).
+		delete normalized.disabled;
+
+		// Omit entrypoint if it is the default.
+		if (normalized.entrypoint === defaultTypeValidationConfig.entrypoint) {
+			delete normalized.entrypoint;
+		}
+
+		// Populate empty `broken` property if it is not set.
+		// This helps make the property more discoverable and easier to edit as needed.
+		if (normalized.broken === undefined) {
+			normalized.broken = defaultTypeValidationConfig.broken;
+		}
+	}
+	return normalized;
 }
 
 export enum VersionOptions {
