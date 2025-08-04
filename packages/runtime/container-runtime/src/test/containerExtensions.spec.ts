@@ -56,8 +56,6 @@ const TestExtensionFactory = class extends TestExtension {
 		super(host);
 	}
 };
-
-const testExtensionId: ContainerExtensionId = "test:extension";
 class MockContext implements IContainerContext {
 	public readonly deltaManager = new MockDeltaManager();
 	public readonly quorum = new MockQuorumClients();
@@ -70,12 +68,6 @@ class MockContext implements IContainerContext {
 	public readonly id = "mockId";
 	public readonly taggedLogger = new MockLogger();
 
-	public readonly getConnectionState: () => ConnectionState;
-	public readonly getClientId: () => string | undefined;
-	public readonly getConnected: () => boolean;
-	public readonly getAttachState: () => AttachState;
-	public readonly getContainerDiagnosticId: () => string | undefined;
-
 	public readonly updateDirtyContainerState = (): void => {};
 	public readonly getLoadedFromVersion = (): undefined => undefined;
 	public readonly submitBatchFn = (): number => 1;
@@ -86,25 +78,21 @@ class MockContext implements IContainerContext {
 	public readonly closeFn = (): void => {};
 	public readonly getAbsoluteUrl = async (): Promise<string> => "mockUrl";
 
-	constructor(private readonly container: MockContainer) {
-		this.getConnectionState = () => this.container.connectionState;
-		this.getClientId = () => this.container.audience.getSelf()?.clientId;
-		this.getConnected = () => this.container.connectionState === ConnectionState.Connected;
-		this.getAttachState = () => AttachState.Attached;
-		this.getContainerDiagnosticId = () => "mockId";
-	}
+	public readonly getConnectionState = (): ConnectionState => this.container.connectionState;
+
+	constructor(private readonly container: MockContainer) {}
 
 	public get audience(): MockAudience {
 		return this.container.audience;
 	}
 	public get clientId(): string | undefined {
-		return this.getClientId();
+		return this.container.audience.getSelf()?.clientId;
 	}
 	public get connected(): boolean {
-		return this.getConnected();
+		return this.container.connectionState === ConnectionState.Connected;
 	}
 	public get attachState(): AttachState {
-		return this.getAttachState();
+		return AttachState.Attached;
 	}
 }
 
@@ -147,6 +135,8 @@ class MockContainer {
 		this.runtime?.setConnectionState(false, this.clientId);
 	}
 }
+
+const testExtensionId: ContainerExtensionId = "test:extension";
 
 async function createContainerRuntime(context: IContainerContext): Promise<ContainerRuntime> {
 	const containerRuntime = await ContainerRuntime.loadRuntime({
