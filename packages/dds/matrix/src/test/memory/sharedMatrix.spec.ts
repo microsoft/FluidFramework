@@ -22,6 +22,10 @@ import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
  * to ensure consistency and comparability between the two implementations.
  */
 
+// TODOs:
+// - single helper function with before and after hooks for setup and teardown
+// - unify with time measurement tests (in terms of API)
+
 /**
  * Initializes a SharedMatrix for testing.
  * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
