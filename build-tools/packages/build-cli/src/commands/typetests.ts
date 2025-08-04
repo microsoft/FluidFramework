@@ -147,7 +147,7 @@ export function normalizeConfig(
 	// Populate empty `broken` property if it is not set.
 	// This helps make the property more discoverable and easier to edit as needed.
 	if (normalized.broken === undefined) {
-		normalized.broken = defaultTypeValidationConfig.broken;
+		normalized.broken = { ...defaultTypeValidationConfig.broken };
 	}
 	return normalized;
 }
