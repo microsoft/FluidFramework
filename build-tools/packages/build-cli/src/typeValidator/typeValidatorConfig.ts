@@ -19,11 +19,13 @@ export interface BrokenCompatSettings {
  */
 export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
+/**
+ * Configuration for type validation in Fluid packages.
+ * @remarks Configured via the `typeValidation` property in the package.json.
+ */
 export interface ITypeValidationConfig {
 	/**
-	 * The entrypoint (API level) for which type tests should be generated. This value can be overridden when using
-	 * `flub generate typetests` by passing the `--entrypoint` flag. If this value is not provided, it will default to
-	 * {@link ApiLevel.legacyAlpha}.
+	 * The entrypoint (API level) for which type tests should be generated.
 	 *
 	 * @defaultValue {@link ApiLevel.legacyAlpha}
 	 */
