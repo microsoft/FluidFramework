@@ -226,14 +226,9 @@ export function insertFragmented(
 }
 
 /**
- * Creates a local matrix with the specified size and for dense test matrix given initial value.
- * Otherwise, leaving the initial value as undefined will create a sparse matrix.
+ * {@link createLocalMatrix} options.
  */
-export function createLocalMatrix({
-	id,
-	size,
-	initialValue,
-}: {
+export interface TestMatrixOptions {
 	/**
 	 * The ID of the matrix.
 	 */
@@ -247,7 +242,17 @@ export function createLocalMatrix({
 	 * @remarks If not specified, no cell values will be inserted into the table, leaving it sparse.
 	 */
 	readonly initialValue?: string | undefined;
-}): ISharedMatrix & IChannel {
+}
+
+/**
+ * Creates a local matrix with the specified size and for dense test matrix given initial value.
+ * Otherwise, leaving the initial value as undefined will create a sparse matrix.
+ */
+export function createLocalMatrix({
+	id,
+	size,
+	initialValue,
+}: TestMatrixOptions): ISharedMatrix & IChannel {
 	const matrix = matrixFactory.create(new MockFluidDataStoreRuntime(), id);
 	matrix.insertRows(0, size);
 	matrix.insertCols(0, size);
