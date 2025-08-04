@@ -854,6 +854,7 @@ export class MockFluidDataStoreRuntime
 		idCompressor?: IIdCompressor & IIdCompressorCore;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
+		minVersionForCollab?: MinimumVersionForCollab;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -877,7 +878,7 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = defaultMinVersionForCollab;
+		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
 	}
 
 	public readonly minVersionForCollab: MinimumVersionForCollab;

@@ -388,6 +388,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         idCompressor?: IIdCompressor & IIdCompressorCore;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
+        minVersionForCollab?: MinimumVersionForCollab;
     });
     // (undocumented)
     get absolutePath(): string;

@@ -13,12 +13,14 @@ import type {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
 import { createSharedObjectKind } from "../sharedObject.js";
 
 interface IFoo {
 	foo: string;
+	minVersionForCollab: MinimumVersionForCollab;
 }
 class SharedFooFactory implements IChannelFactory<IFoo> {
 	public static readonly Type: string = "SharedFoo";
@@ -41,6 +43,7 @@ class SharedFooFactory implements IChannelFactory<IFoo> {
 			foo: "bar",
 			attributes: this.attributes,
 			id,
+			minVersionForCollab: runtime.minVersionForCollab,
 			// Note: other IChannel methods aren't relevant
 		} as IFoo & IChannel;
 	}
@@ -80,5 +83,14 @@ describe("createSharedObjectKind's return type", () => {
 				});
 			}
 		});
+	});
+});
+
+describe("createSharedObjectKind with minVersionForCollab", () => {
+	it("SharedObject can ready minVersionForCollab from the runtime", () => {
+		const factory = SharedFoo.getFactory();
+		const runtime = new MockFluidDataStoreRuntime({ minVersionForCollab: "1.2.3" });
+		const sharedObject = factory.create(runtime, "test-id");
+		assert.strictEqual(sharedObject.minVersionForCollab, "1.2.3");
 	});
 });
