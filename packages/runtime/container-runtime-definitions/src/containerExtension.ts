@@ -212,8 +212,8 @@ export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriti
  * Events emitted by the {@link ExtensionHost}.
  *
  * @remarks
- * With older loaders (before version 2.52.0) both "connectionTypeChanged" and "joined" with canWrite = false will not be available
- * In this case, extension must rely only on "joined" with canWrite = true and "disconnected" events.
+ * With loaders prior to 2.52.0, readonly clients will not get joined status or events.
+ * The only events emitted will be "joined" with canWrite = true and "disconnected".
  * @internal
  */
 export interface ExtensionHostEvents {
