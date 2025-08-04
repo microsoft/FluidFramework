@@ -4,6 +4,7 @@
  */
 
 import type { PackageJson } from "@fluidframework/build-tools";
+import type { ApiLevel } from "../library/index.js";
 
 /**
  * Metadata about known-broken types.
@@ -18,24 +19,13 @@ export interface BrokenCompatSettings {
  */
 export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
-// Duplicate of the ApiLevel type defined in build-cli/src/library/apiLevel.ts
-// AB#12469 tracks moving the type test infra into build-cli, at which point this duplicate type won't be needed.
-export type ApiLevel =
-	| "public"
-	| "beta"
-	| "alpha"
-	| "internal"
-	| "legacyPublic"
-	| "legacyBeta"
-	| "legacyAlpha";
-
 export interface ITypeValidationConfig {
 	/**
 	 * The entrypoint (API level) for which type tests should be generated. This value can be overridden when using
 	 * `flub generate typetests` by passing the `--entrypoint` flag. If this value is not provided, it will default to
 	 * {@link ApiLevel.legacy}.
 	 *
-	 * @defaultValue {@link ApiLevel.legacy}
+	 * @defaultValue "legacyAlpha"
 	 */
 	entrypoint: ApiLevel;
 
