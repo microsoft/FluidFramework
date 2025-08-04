@@ -12,25 +12,8 @@ Transformations to HTML will use `mdast-util-to-hast`.
 #### Markdown Nodes
 
 `SectionNode` has been updated to take `mdast` "block content" directly.
-
-#### Removed Node kinds
-
-The following kinds of nodes have been removed from the library.
-Usages should be converted `mdast`.
-
-- `CodeSpanNode`
-- `FencedCodeBlockNode`
-- `HorizontalRuleNode`
-- `LineBreakNode`
-- `LinkNode`
-- `ListItemNode`
-- `ListNode`
-- `ParagraphNode`
-- `PlainTextNode`
-- `SpanNode`
-- `TableCellNode`
-- `TableNode`
-- `TableRowNode`
+All `DocumentationNode` implementations except `SectionNode` and `HeadingNode` (which don't have direct Markdown correlaries) have been removed.
+Markdown trees via `mdast` are now used directly in API item and TSDoc transformations.
 
 #### Extensibility support removed
 
