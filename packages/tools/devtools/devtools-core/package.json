@@ -6,7 +6,7 @@
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "/workspaces/FluidFramework/packages/tools/devtools/devtools-core"
+		"directory": "packages/tools/devtools/devtools-core"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",

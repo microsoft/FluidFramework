@@ -118,29 +118,16 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 	protected abstract getSupportedFeatures(): ContainerDevtoolsFeatureFlags;
 
 	/**
-	 * Generates state metadata describing the current state of the associated Container or DataObject.
+	 * Generates state metadata describing the current state of the associated Container or Container Runtime.
 	 */
 	protected getContainerState(): ContainerStateMetadata {
-		const clientId = this.container.clientId;
 		return {
 			containerKey: this.containerKey,
 			attachState: this.container.attachState,
 			connectionState: this.container.connectionState,
 			closed: this.container.closed,
 			clientId: this.container.clientId,
-			userId: clientId === undefined ? undefined : this.audience.getMember(clientId)?.user.id,
 		};
-	}
-
-	/**
-	 * Gets the client ID for this devtools instance.
-	 */
-	protected getClientId(): string | undefined {
-		return this.container.clientId;
-	}
-
-	public isClosed(): boolean {
-		return this.getContainerState().closed;
 	}
 
 	// #endregion
@@ -358,7 +345,7 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 			this.messageLoggingOptions,
 			AudienceSummary.createMessage({
 				containerKey: this.containerKey,
-				clientId: this.getClientId(),
+				clientId: this.container.clientId,
 				audienceState: audienceClientMetadata,
 				audienceHistory: this.getAudienceHistory(),
 			}),
@@ -441,7 +428,10 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 		this.container.on("connected", this.containerConnectedHandler);
 		this.container.on("disconnected", this.containerDisconnectedHandler);
 		this.container.on("disposed", this.containerDisposedHandler);
-		this.container.on("closed", this.containerClosedHandler);
+		// Only bind "closed" event if the container supports it
+		if ("closed" in this.container) {
+			this.container.on("closed", this.containerClosedHandler);
+		}
 	}
 
 	/**
@@ -452,7 +442,10 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 		this.container.off("connected", this.containerConnectedHandler);
 		this.container.off("disconnected", this.containerDisconnectedHandler);
 		this.container.off("disposed", this.containerDisposedHandler);
-		this.container.off("closed", this.containerClosedHandler);
+		// Only unbind "closed" event if the container supports it
+		if ("closed" in this.container) {
+			this.container.off("closed", this.containerClosedHandler);
+		}
 	}
 
 	/**

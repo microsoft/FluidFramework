@@ -33,15 +33,15 @@ export namespace ContainerList {
 		containers: ContainerKey[];
 
 		/**
-		 * List of keys for the Data Objects registered with the Devtools.
+		 * List of keys for the Container Runtimes registered with the Devtools.
 		 */
-		dataObjects?: ContainerKey[];
+		containerRuntimes?: ContainerKey[];
 	}
 
 	/**
 	 * Outbound message containing the list of devtools instances tracked by the root Devtools.
 	 *
-	 * Includes the new list of active {@link ContainerKey}s associated with active Container and Data Object devtools instances.
+	 * Includes the lists of active {@link ContainerKey}s associated with active Container and Data Object devtools instances.
 	 *
 	 * @internal
 	 */

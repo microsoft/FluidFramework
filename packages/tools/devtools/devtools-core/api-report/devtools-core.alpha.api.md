@@ -13,18 +13,18 @@ export interface ContainerDevtoolsProps extends HasContainerKey {
 // @beta
 export type ContainerKey = string;
 
+// @alpha
+export interface ContainerRuntimeDevtoolsProps {
+    label?: string;
+    runtime: IContainerRuntime;
+}
+
 // @beta
 export function createDevtoolsLogger(baseLogger?: ITelemetryBaseLogger): IDevtoolsLogger;
 
 // @alpha
-export interface DataObjectProps {
-    dataObject: PureDataObject;
-    label?: string;
-}
-
-// @alpha
 export interface DecomposedContainer extends IEventProvider<IContainerEvents> {
-    readonly attachState: AttachState;
+    readonly attachState: AttachState_2;
     readonly audience: IAudience;
     readonly clientId?: string | undefined;
     close?(error?: ICriticalContainerError): void;
@@ -53,7 +53,7 @@ export interface IDevtoolsLogger extends ITelemetryBaseLogger {
 export interface IFluidDevtools extends IDisposable {
     closeContainerDevtools(containerKey: ContainerKey): void;
     registerContainerDevtools(props: ContainerDevtoolsProps): void;
-    registerDataObject(props: DataObjectProps): void;
+    registerContainerRuntimeDevtools(props: ContainerRuntimeDevtoolsProps): Promise<void>;
 }
 
 // @alpha

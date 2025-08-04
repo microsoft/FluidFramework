@@ -75,19 +75,23 @@ export class DecomposedContainerForContainerRuntime
 	public constructor(runtime: IContainerRuntime) {
 		super();
 		this.runtime = runtime;
+		// Note: IContainerRuntime doesn't emit "closed" events like IContainer does
+		// Only bind to events that IContainerRuntime actually supports
 		runtime.on("attached", this.attachedHandler);
 		runtime.on("connected", this.connectedHandler);
 		runtime.on("disconnected", this.disconnectedHandler);
-		runtime.on("disposed", this.disposedHandler);
+		runtime.on("dispose", this.disposedHandler);
 	}
 
 	private readonly attachedHandler = (): boolean => this.emit("attached");
 	private readonly connectedHandler = (clientId: string): boolean =>
 		this.emit("connected", clientId);
 	private readonly disconnectedHandler = (): boolean => this.emit("disconnected");
-	private readonly disposedHandler = (error?: ICriticalContainerError): boolean => {
+	private readonly disposedHandler = (): boolean => {
 		this._disposed = true; // Mark as disposed when dispose event occurs
-		return this.emit("disposed", error);
+		// IContainerRuntime emits "dispose" (no error) but we emit "disposed" (optional error) to match IContainerEvents
+		// Since IContainerRuntime doesn't provide error info, we emit without error parameter
+		return this.emit("disposed");
 	};
 
 	private readonly runtime: IContainerRuntime;
@@ -105,27 +109,11 @@ export class DecomposedContainerForContainerRuntime
 	}
 
 	public get connectionState(): ConnectionState {
+		// TODO: Investigate if this is an accurate mapping of the connection state.
 		return this.runtime.connected ? ConnectionState.Connected : ConnectionState.Disconnected;
 	}
 
 	public get closed(): boolean {
 		return this._disposed; // Only return true if actually disposed, not just disconnected
-	}
-
-	// Container runtime doesn't have direct connect/disconnect/close methods
-	// These would need to be implemented through the container if needed
-	public connect?(): void {
-		// Container runtime doesn't have direct connect method
-		// This would need to be implemented through the container
-	}
-
-	public disconnect?(): void {
-		// Container runtime doesn't have direct disconnect method
-		// This would need to be implemented through the container
-	}
-
-	public close?(error?: ICriticalContainerError): void {
-		// Container runtime doesn't have direct close method
-		// This would need to be implemented through the container
 	}
 }

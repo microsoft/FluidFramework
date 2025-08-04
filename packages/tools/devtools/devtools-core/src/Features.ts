@@ -28,10 +28,6 @@ export interface DevtoolsFeatureFlags {
 	 * Indicates that the {@link IFluidDevtools} instance is capable of providing Fluid Op Latency telemetry events
 	 */
 	opLatencyTelemetry?: boolean;
-	/**
-	 * Indicates that the {@link IFluidDevtools} instance supports data object registration and visualization.
-	 */
-	dataObjects?: boolean;
 }
 
 /**
