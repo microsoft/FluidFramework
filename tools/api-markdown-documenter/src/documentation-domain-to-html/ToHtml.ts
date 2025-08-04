@@ -97,7 +97,7 @@ export function documentationNodeToHtml(
 	if (node.type === "section" || node.type === "heading") {
 		if (context.transformations[node.type] === undefined) {
 			throw new Error(
-				`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: "${node.type}". Please provide a transformation for this type.`,
+				`Missing HTML transformation for type: "${node.type}".`,
 			);
 		}
 
