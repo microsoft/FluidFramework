@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { ListNode } from "./ListNode.js";
 import type { MarkdownBlockContentNode } from "./MarkdownNode.js";
 import type { TableNode } from "./TableNode.js";
 
@@ -31,7 +30,6 @@ import type { TableNode } from "./TableNode.js";
  * @public
  */
 export interface BlockContentMap {
-	list: ListNode;
 	table: TableNode;
 	markdownBlockContent: MarkdownBlockContentNode;
 }
