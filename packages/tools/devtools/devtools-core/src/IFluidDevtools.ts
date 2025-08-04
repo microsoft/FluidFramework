@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IDisposable } from "@fluidframework/core-interfaces";
 
 import type { ContainerKey } from "./CommonInterfaces.js";
@@ -33,6 +34,14 @@ export interface IFluidDevtools extends IDisposable {
 	 * @throws Will throw if devtools have already been registered for the specified {@link ContainerKey}.
 	 */
 	registerContainerDevtools(props: ContainerDevtoolsProps): void;
+
+	/**
+	 * TODO
+	 */
+	registerContainerRuntimeDevtools(props: {
+		runtime: IContainerRuntime;
+		label?: string;
+	}): void;
 
 	/**
 	 * Registers a data object with the devtools.
