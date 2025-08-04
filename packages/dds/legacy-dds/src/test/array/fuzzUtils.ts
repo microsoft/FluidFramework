@@ -18,7 +18,7 @@ import type { Serializable } from "@fluidframework/datastore-definitions/interna
 // eslint-disable-next-line import/no-internal-modules
 import type { SharedArrayClass } from "../../array/sharedArray.js";
 import type { SerializableTypeForSharedArray } from "../../index.js";
-import { SharedArrayFactory } from "../../index.js";
+import { OperationType, SharedArrayFactory } from "../../index.js";
 
 /**
  * Type for the SharedArray operation
@@ -90,6 +90,21 @@ export type SharedArrayOperation<T> =
 	| SharedArrayToggleMove
 	| SharedArrayInsertBulkAfter<T>;
 
+const arrayInsertIdMap = new Map<string, string[]>();
+const arrayMoveIdMap = new Map<string, string[]>();
+const insertListenerRegistry = new Set<string>();
+const moveListenerRegistry = new Set<string>();
+
+/**
+ * Cleans the previous state of the SharedArray operations.
+ * This is useful to reset the state before running tests.
+ */
+export function cleanPreviousState(): void {
+	arrayInsertIdMap.clear();
+	arrayMoveIdMap.clear();
+	insertListenerRegistry.clear();
+	moveListenerRegistry.clear();
+}
 /**
  * Creates a reducer for SharedArray operations.
  */
@@ -99,7 +114,19 @@ export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>
 > {
 	return combineReducers({
 		insert: ({ client }, { index, value }) => {
-			client.channel.insert(index, value as Serializable<typeof value> & T);
+			const array = client.channel;
+			if (!insertListenerRegistry.has(array.id)) {
+				insertListenerRegistry.add(array.id);
+				array.on("valueChanged", (op, isLocal, _target) => {
+					if (op.type === OperationType.insertEntry && isLocal) {
+						const entryId = op.entryId;
+						const entryIds = arrayInsertIdMap.get(array.id) ?? [];
+						entryIds.push(entryId);
+						arrayInsertIdMap.set(array.id, entryIds);
+					}
+				});
+			}
+			array.insert(index, value as Serializable<typeof value> & T);
 		},
 		insertBulkAfter: ({ client }, { ref, values }) => {
 			client.channel.insertBulkAfter(
@@ -111,6 +138,19 @@ export function makeSharedArrayReducer<T extends SerializableTypeForSharedArray>
 			client.channel.delete(index);
 		},
 		move: ({ client }, { oldIndex, newIndex }) => {
+			const array = client.channel;
+			if (!moveListenerRegistry.has(array.id)) {
+				moveListenerRegistry.add(array.id);
+				// Register listener to track move entry IDs
+				array.on("valueChanged", (op, isLocal, _target) => {
+					if (op.type === OperationType.moveEntry && isLocal) {
+						const entryId = op.entryId;
+						const entryIds = arrayMoveIdMap.get(array.id) ?? [];
+						entryIds.push(entryId);
+						arrayMoveIdMap.set(array.id, entryIds);
+					}
+				});
+			}
 			client.channel.move(oldIndex, newIndex);
 		},
 		toggle: ({ client }, { entryId }) => {
@@ -182,10 +222,12 @@ export function makeSharedArrayOperationGenerator(weights: {
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggle => {
 		const sharedArray = client.channel as SharedArrayClass<string>;
-		const entryId =
-			sharedArray.getInsertEntryIds()[
-				random.integer(0, Math.max(0, sharedArray.getInsertEntryIds().length - 1))
-			];
+		const entryIds = arrayInsertIdMap.get(sharedArray.id) ?? [];
+		if (entryIds.length === 0) {
+			throw new Error("No entryIds found for toggle operation");
+		}
+		assert(arrayInsertIdMap.has(sharedArray.id));
+		const entryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (entryId === undefined) {
 			throw new Error("No entryId found for toggle operation");
 		}
@@ -200,17 +242,12 @@ export function makeSharedArrayOperationGenerator(weights: {
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggleMove => {
 		const sharedArray = client.channel as SharedArrayClass<string>;
-		const oldEntryId =
-			sharedArray.getMoveEntryIds()[
-				random.integer(0, Math.max(0, sharedArray.getMoveEntryIds().length - 1))
-			];
+		const entryIds = arrayMoveIdMap.get(sharedArray.id) ?? [];
+		const oldEntryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (oldEntryId === undefined) {
 			throw new Error("No old entryId found for toggleMove operation");
 		}
-		const newEntryId =
-			sharedArray.getMoveEntryIds()[
-				random.integer(0, Math.max(0, sharedArray.getMoveEntryIds().length - 1))
-			];
+		const newEntryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (newEntryId === undefined) {
 			throw new Error("No new entryId found for toggleMove operation");
 		}
@@ -236,7 +273,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria((client.channel as SharedArrayClass<string>).getMoveEntryIds().length);
+			criteria(arrayMoveIdMap.get(client.channel.id)?.length ?? 0);
 	const insertLengthSatisfies =
 		(
 			criteria: (length: number) => boolean,
@@ -244,10 +281,10 @@ export function makeSharedArrayOperationGenerator(weights: {
 			DDSFuzzTestState<SharedArrayFactory<SerializableTypeForSharedArray>>
 		> =>
 		({ client }) =>
-			criteria((client.channel as SharedArrayClass<string>).getInsertEntryIds().length);
+			criteria(arrayInsertIdMap.get(client.channel.id)?.length ?? 0);
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
-	const hasNonzeroMoveLength = moveLengthSatisfies((length) => length > 2);
-	const hasNonzeroInsertLength = insertLengthSatisfies((length) => length > 2);
+	const hasEnoughMoveLength = moveLengthSatisfies((length) => length > 2);
+	const hasEnoughInsertLength = insertLengthSatisfies((length) => length > 2);
 
 	const syncGenerator = createWeightedGenerator<
 		SharedArrayOperation<string>,
@@ -257,8 +294,8 @@ export function makeSharedArrayOperationGenerator(weights: {
 		[deleteOp, weights.delete, hasNonzeroLength],
 		[moveOp, weights.move, hasNonzeroLength],
 		[insertBulkAfterOp, weights.insertBulkAfter, hasNonzeroLength],
-		[toggleOp, weights.toggle, hasNonzeroInsertLength],
-		// [toggleMoveOp, weights.toggleMove, hasNonzeroMoveLength],
+		[toggleOp, weights.toggle, hasEnoughInsertLength],
+		// [toggleMoveOp, weights.toggleMove, hasEnoughMoveLength],
 	]);
 
 	return async (state: DDSFuzzTestState<SharedArrayFactory<string>>) => {
@@ -288,7 +325,7 @@ export const baseSharedArrayModel: DDSFuzzModel<
 				delete: 3,
 				move: 3,
 				insertBulkAfter: 1,
-				toggle: 2,
+				toggle: 1,
 				toggleMove: 1,
 			}),
 		),

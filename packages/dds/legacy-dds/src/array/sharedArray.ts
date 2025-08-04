@@ -120,21 +120,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		return this.sharedArray.filter((item) => !item.isDeleted).map((entry) => entry.value);
 	}
 
-	/**
-	 * Returns the entryId of the item
-	 * only for test purposes.
-	 *
-	 * @param index - The index of the item
-	 * @returns The entryId of the item or undefined if not found
-	 */
-	public getInsertEntryIds(): string[] {
-		return [...this.insertEntryId];
-	}
-
-	public getMoveEntryIds(): string[] {
-		return [...this.moveEntryId];
-	}
-
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		// Deep copy and unset the local flags. Needed when snapshotting is happening for runtime not attached
 		const dataArrayCopy: SharedArrayEntryCore<T>[] = [];

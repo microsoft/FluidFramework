@@ -551,6 +551,8 @@ export interface DDSFuzzSuiteOptions {
 	 * If enabled, connection state change operations will sometimes use squashed resubmits.
 	 */
 	testSquashResubmit?: true;
+
+	beforeEach?: () => void;
 }
 
 /**
@@ -1563,6 +1565,9 @@ function runTest<TChannelFactory extends IChannelFactory, TOperation extends Bas
 ): void {
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`workload: ${model.workloadName} seed: ${seed}`, async function () {
+		if (options.beforeEach !== undefined) {
+			options.beforeEach();
+		}
 		const inCi = !!process.env.TF_BUILD;
 		const shouldMinimize =
 			!options.skipMinimization && saveInfo && saveInfo.saveOnFailure !== false && !inCi;
