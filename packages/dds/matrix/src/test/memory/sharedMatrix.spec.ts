@@ -17,6 +17,12 @@ import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 import { createLocalMatrix, type TestMatrixOptions } from "../utils.js";
 
 /**
+ * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
+ * If you modify or add tests here, consider updating the corresponding SharedTree benchmarks as well
+ * to ensure consistency and comparability between the two implementations.
+ */
+
+/**
  * Initializes a SharedMatrix for testing.
  * @remarks Includes initialization of the undo/redo stack, as well as mock event subscriptions.
  */
@@ -47,23 +53,18 @@ function createMatrix(options: TestMatrixOptions): {
 }
 
 /**
- * Note: These benchmarks are designed to closely match the benchmarks in SharedTree.
- * If you modify or add tests here, consider updating the corresponding SharedTree benchmarks as well
- * to ensure consistency and comparability between the two implementations.
+ * Creates a benchmark for operations on a SharedMatrix.
  */
-
 function createBenchmark({
 	title,
 	matrixSize,
 	initialValue,
-	operationCount,
 	operation,
 }: {
 	title: string;
 	matrixSize: number;
 	initialValue: string;
-	operationCount: number;
-	operation: (matrix: ISharedMatrix, count: number) => void;
+	operation: (matrix: ISharedMatrix) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
@@ -71,7 +72,7 @@ function createBenchmark({
 
 		async run(): Promise<void> {
 			assert(this.localMatrix !== undefined, "localMatrix is not initialized");
-			operation(this.localMatrix, operationCount);
+			operation(this.localMatrix);
 		}
 
 		beforeIteration(): void {
@@ -91,16 +92,14 @@ function createUndoBenchmark({
 	title,
 	matrixSize,
 	initialValue,
-	operationCount,
 	stackCount,
 	operation,
 }: {
 	title: string;
 	matrixSize: number;
 	initialValue: string;
-	operationCount: number;
 	stackCount: number;
-	operation: (matrix: ISharedMatrix, count: number) => void;
+	operation: (matrix: ISharedMatrix) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
@@ -123,7 +122,7 @@ function createUndoBenchmark({
 			this.localMatrix = matrix;
 			this.undoRedoStack = undoStack;
 
-			operation(this.localMatrix, operationCount);
+			operation(this.localMatrix);
 			assert.equal(this.undoRedoStack.undoStackLength, stackCount);
 		}
 	})();
@@ -136,16 +135,14 @@ function createRedoBenchmark({
 	title,
 	matrixSize,
 	initialValue,
-	operationCount,
 	stackCount,
 	operation,
 }: {
 	title: string;
 	matrixSize: number;
 	initialValue: string;
-	operationCount: number;
 	stackCount: number;
-	operation: (matrix: ISharedMatrix, count: number) => void;
+	operation: (matrix: ISharedMatrix) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
@@ -168,7 +165,7 @@ function createRedoBenchmark({
 			this.localMatrix = matrix;
 			this.undoRedoStack = undoStack;
 
-			operation(this.localMatrix, operationCount);
+			operation(this.localMatrix);
 			assert.equal(this.undoRedoStack.undoStackLength, stackCount);
 
 			for (let i = 0; i < stackCount; i++) {
@@ -229,9 +226,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Insert a column in the middle ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -244,10 +240,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo insert column in the middle ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -260,10 +255,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo insert column in the middle ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -278,9 +272,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Insert a row in the middle ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -293,10 +286,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo insert row in the middle ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -309,10 +301,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo insert row in the middle ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertRows(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -327,9 +318,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Insert a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -343,10 +333,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo insert a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -360,10 +349,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -384,9 +372,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Insert and remove a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -402,10 +389,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo insert and remove a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: 4 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -421,10 +407,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo insert a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: 4 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.insertCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.insertRows(Math.floor(matrix.rowCount / 2), 1);
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
@@ -445,9 +430,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Remove the middle column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -460,10 +444,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo remove the middle column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -476,10 +459,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo remove the middle column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 								}
 							},
@@ -494,9 +476,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Remove the middle row ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
 							},
@@ -509,10 +490,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo remove the middle row ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
 							},
@@ -525,10 +505,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo remove the middle row ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
 							},
@@ -543,9 +522,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Remove a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -559,10 +537,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo remove a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -576,10 +553,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo remove a row and a column ${count} times`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: 2 * count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.removeCols(Math.floor(matrix.colCount / 2), 1);
 									matrix.removeRows(Math.floor(matrix.rowCount / 2), 1);
 								}
@@ -595,9 +571,8 @@ describe("SharedMatrix memory usage", () => {
 							title: `Set a 3-character string in ${count} cells`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.setCell(i, i, "abc");
 								}
 							},
@@ -610,10 +585,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Undo setting a 3-character string in ${count} cells`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.setCell(i, i, "abc");
 								}
 							},
@@ -626,10 +600,9 @@ describe("SharedMatrix memory usage", () => {
 							title: `Redo setting a 3-character string in ${count} cells`,
 							matrixSize,
 							initialValue: matrixValue,
-							operationCount: count,
 							stackCount: count,
-							operation: (matrix, operationCount) => {
-								for (let i = 0; i < operationCount; i++) {
+							operation: (matrix) => {
+								for (let i = 0; i < count; i++) {
 									matrix.setCell(i, i, "abc");
 								}
 							},
