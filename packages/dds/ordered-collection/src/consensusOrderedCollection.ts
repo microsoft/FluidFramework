@@ -143,7 +143,10 @@ export class ConsensusOrderedCollection<T = any>
 		if (!this.isAttached()) {
 			// For the case where this is not attached yet, explicitly JSON
 			// clone the value to match the behavior of going thru the wire.
-			const addValue = this.deserializeValue(valueSer, this.serializer) as T;
+			const addValue = this.deserializeValue(
+				valueSer,
+				this.serializer,
+			) as T;
 			this.addCore(addValue);
 			return;
 		}
