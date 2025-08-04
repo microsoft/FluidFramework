@@ -58,9 +58,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	 */
 	private sharedArray: SharedArrayEntry<T>[];
 
-	private readonly insertEntryId: Set<string> = new Set<string>();
-	private readonly moveEntryId: Set<string> = new Set<string>();
-
 	/**
 	 * Stores a map of entryid to entries of the sharedArray. This is meant of search optimizations and
 	 * so shouldn't be snapshotted.
@@ -615,7 +612,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 	private createAddEntry<TWrite>(index: number, value: Serializable<TWrite> & T): string {
 		const newEntry = this.createNewEntry(uuid(), value);
 		this.addEntry(index, newEntry);
-		this.insertEntryId.add(newEntry.entryId);
 		return newEntry.entryId;
 	}
 
@@ -670,7 +666,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		oldEntry.isLocalPendingMove += 1;
 
 		this.addEntry(newIndex /* insertIndex */, newEntry);
-		this.moveEntryId.add(newEntry.entryId);
 
 		return newEntry.entryId;
 	}

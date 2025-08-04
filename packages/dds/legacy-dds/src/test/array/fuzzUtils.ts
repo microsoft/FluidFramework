@@ -15,8 +15,6 @@ import {
 import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 
-// eslint-disable-next-line import/no-internal-modules
-import type { SharedArrayClass } from "../../array/sharedArray.js";
 import type { SerializableTypeForSharedArray } from "../../index.js";
 import { OperationType, SharedArrayFactory } from "../../index.js";
 
@@ -221,7 +219,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		random,
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggle => {
-		const sharedArray = client.channel as SharedArrayClass<string>;
+		const sharedArray = client.channel;
 		const entryIds = arrayInsertIdMap.get(sharedArray.id) ?? [];
 		if (entryIds.length === 0) {
 			throw new Error("No entryIds found for toggle operation");
@@ -241,7 +239,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 		random,
 		client,
 	}: DDSFuzzTestState<SharedArrayFactory<string>>): SharedArrayToggleMove => {
-		const sharedArray = client.channel as SharedArrayClass<string>;
+		const sharedArray = client.channel;
 		const entryIds = arrayMoveIdMap.get(sharedArray.id) ?? [];
 		const oldEntryId = entryIds[random.integer(0, Math.max(0, entryIds.length - 1))];
 		if (oldEntryId === undefined) {
@@ -284,7 +282,7 @@ export function makeSharedArrayOperationGenerator(weights: {
 			criteria(arrayInsertIdMap.get(client.channel.id)?.length ?? 0);
 	const hasNonzeroLength = lengthSatisfies((length) => length > 0);
 	const hasEnoughMoveLength = moveLengthSatisfies((length) => length > 2);
-	const hasEnoughInsertLength = insertLengthSatisfies((length) => length > 2);
+	const hasEnoughInsertLength = insertLengthSatisfies((length) => length > 0);
 
 	const syncGenerator = createWeightedGenerator<
 		SharedArrayOperation<string>,
