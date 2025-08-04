@@ -90,7 +90,7 @@ import {
 	type FactoryContentObject,
 	type InsertableContent,
 } from "../../unhydratedFlexTreeFromInsertable.js";
-import { convertFieldKind } from "../../toStoredSchema.js";
+import { convertField, convertFieldKind } from "../../toStoredSchema.js";
 
 /**
  * Generates the properties for an ObjectNode from its field schema object.
@@ -601,6 +601,20 @@ export function objectSchema<
 					flexKeyMap.values(),
 					({ schema }) => normalizeFieldSchema(schema).annotatedAllowedTypes,
 				),
+				(storedOptions) => {
+					const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
+					for (const fieldSchema of flexKeyMap.values()) {
+						assert(
+							fieldSchema.schema instanceof FieldSchemaAlpha,
+							"Expected FieldSchemaAlpha",
+						);
+						fields.set(
+							brand(fieldSchema.storedKey),
+							convertField(fieldSchema.schema, storedOptions),
+						);
+					}
+					return new ObjectNodeStoredSchema(fields, persistedMetadata);
+				},
 			));
 		}
 	}

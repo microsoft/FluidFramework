@@ -34,6 +34,7 @@ import {
 	type FlexContent,
 	CompatibilityLevel,
 	type TreeNodeSchemaPrivateData,
+	convertAllowedTypes,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { tryGetTreeNodeForField } from "../../getTreeNodeForField.js";
@@ -51,6 +52,7 @@ import type {
 	TreeRecordNode,
 } from "./recordNodeTypes.js";
 import {
+	FieldKinds,
 	isTreeValue,
 	type FlexTreeNode,
 	type FlexTreeOptionalField,
@@ -394,7 +396,19 @@ export function recordSchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(
+				this,
+				[info],
+				(storedOptions) =>
+					new MapNodeStoredSchema(
+						{
+							kind: FieldKinds.optional.identifier,
+							types: convertAllowedTypes(info, storedOptions),
+							persistedMetadata,
+						},
+						persistedMetadata,
+					),
+			));
 		}
 	}
 

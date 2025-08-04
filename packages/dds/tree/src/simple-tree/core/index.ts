@@ -105,3 +105,9 @@ export {
 	createTreeNodeSchemaPrivateData,
 	isClassBasedSchema,
 } from "./treeNodeValid.js";
+export type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
+export {
+	type StoredSchemaGenerationOptions,
+	convertAllowedTypes,
+	allowedTypeFilter,
+} from "./toStored.js";

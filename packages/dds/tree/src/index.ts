@@ -172,6 +172,7 @@ export {
 	type UnannotateAllowedTypeOrLazyItem,
 	type UnannotateImplicitFieldSchema,
 	type UnannotateSchemaRecord,
+	type SchemaStaticsAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,

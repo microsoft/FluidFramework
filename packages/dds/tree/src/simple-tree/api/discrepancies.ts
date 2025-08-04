@@ -89,11 +89,13 @@ export interface FieldDiscrepancyLocation {
 export interface AllowedTypeDiscrepancy extends FieldDiscrepancyLocation {
 	readonly mismatch: "allowedTypes";
 	/**
-	 * List of annotated allowed types in viewed schema which are not allowed in stored schema
+	 * Annotated allowed types in viewed schema
+	 * (excluding {@link SchemaStaticsAlpha.staged | staged} schema) which are not allowed in stored schema.
 	 */
 	readonly view: readonly AnnotatedAllowedType<TreeNodeSchema>[];
 	/**
-	 * List of allowed type identifiers in stored schema which are not allowed in view schema
+	 * Allowed type identifiers in stored schema which are not allowed in view schema
+	 * (including the view schema's {@link SchemaStaticsAlpha.staged | staged} schema).
 	 */
 	readonly stored: readonly TreeNodeSchemaIdentifier[];
 }
@@ -296,31 +298,27 @@ function* getNodeDiscrepancies(
 
 /**
  * Returns the allowed types that are not present in both the given view and stored schemas.
- * It returns a tuple containing two arrays:
- * 1. The first array contains the allowed types that are present in the view schema but not in the stored schema.
- * 2. The second array contains the allowed types that are present in the stored schema but not in the view schema.
  */
 export function findExtraAllowedTypes(
 	viewAllowedTypes: readonly AnnotatedAllowedType<TreeNodeSchema>[],
 	storedAllowedTypes: TreeTypeSet,
-): {
-	viewExtra: readonly AnnotatedAllowedType<TreeNodeSchema>[];
-	storedExtra: TreeNodeSchemaIdentifier[];
-} {
+): Pick<AllowedTypeDiscrepancy, "view" | "stored"> {
 	const viewNodeSchemaIdentifiers = new Set(
 		viewAllowedTypes.map((value) => value.type.identifier),
 	);
 
-	// TODO: Record status of staged schema upgrades
-	const viewExtra = viewAllowedTypes.filter(
+	// TODO:
+	// Add detecting which SchemaUpgrades have been made.
+	// When doing so, each will fall into one of three states: staged, partially applied, or fully applied.
+	const view = viewAllowedTypes.filter(
 		(value) =>
 			!storedAllowedTypes.has(brand(value.type.identifier)) &&
 			value.metadata.stagedSchemaUpgrade === undefined,
 	);
-	const storedExtra = [...storedAllowedTypes].filter(
+	const stored = [...storedAllowedTypes].filter(
 		(value) => !viewNodeSchemaIdentifiers.has(value),
 	);
-	return { viewExtra, storedExtra };
+	return { view, stored };
 }
 
 /**
@@ -387,14 +385,13 @@ function* getAllowedTypeDiscrepancies(
 	identifier: TreeNodeSchemaIdentifier | undefined,
 	fieldKey: FieldKey | undefined,
 ): Iterable<FieldDiscrepancy> {
-	const { viewExtra, storedExtra } = findExtraAllowedTypes(view, stored);
-	if (viewExtra.length > 0 || storedExtra.length > 0) {
+	const discrepancies = findExtraAllowedTypes(view, stored);
+	if (discrepancies.view.length > 0 || discrepancies.stored.length > 0) {
 		yield {
+			...discrepancies,
 			identifier,
 			fieldKey,
 			mismatch: "allowedTypes",
-			view: viewExtra,
-			stored: storedExtra,
 		} satisfies AllowedTypeDiscrepancy;
 	}
 }

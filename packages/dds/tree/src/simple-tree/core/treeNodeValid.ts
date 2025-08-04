@@ -27,8 +27,7 @@ import {
 import type { InternalTreeNode } from "./types.js";
 import { typeSchemaSymbol } from "./withType.js";
 import type { ImplicitAnnotatedAllowedTypes } from "./allowedTypes.js";
-// TODO: ideally this dependency would be moved as core should not depend on top level simple-schema stuff.
-import type { SimpleNodeSchemaBase } from "../simpleSchema.js";
+import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 
 /**
  * Class which all {@link TreeNode}s must extend.
@@ -264,6 +263,7 @@ export function isClassBasedSchema(
 export function createTreeNodeSchemaPrivateData(
 	schema: TreeNodeSchemaCore<string, NodeKind, boolean>,
 	childAnnotatedAllowedTypes: readonly ImplicitAnnotatedAllowedTypes[],
+	toStored: TreeNodeSchemaPrivateData["toStored"],
 ): TreeNodeSchemaPrivateData {
 	const schemaValid = schemaAsTreeNodeValid(schema);
 	// Since this closes over the schema, ensure this schema is marked as most derived
@@ -273,6 +273,7 @@ export function createTreeNodeSchemaPrivateData(
 	return {
 		idempotentInitialize: () => schemaValid.oneTimeInitialize().oneTimeInitialized,
 		childAnnotatedAllowedTypes,
+		toStored,
 	};
 }
 

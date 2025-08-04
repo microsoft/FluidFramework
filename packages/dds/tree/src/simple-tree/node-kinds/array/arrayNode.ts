@@ -48,6 +48,7 @@ import {
 	createTreeNodeSchemaPrivateData,
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
+	convertAllowedTypes,
 } from "../../core/index.js";
 import {
 	type FactoryContent,
@@ -68,6 +69,7 @@ import type {
 } from "./arrayNodeTypes.js";
 import { brand, type JsonCompatibleReadOnlyObject } from "../../../util/index.js";
 import { nullSchema } from "../../leafNodeSchema.js";
+import { arrayNodeStoredSchema } from "../../toStoredSchema.js";
 
 /**
  * A covariant base type for {@link (TreeArrayNode:interface)}.
@@ -1274,7 +1276,9 @@ export function arraySchema<
 		}
 
 		public static get [privateDataSymbol](): TreeNodeSchemaPrivateData {
-			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info]));
+			return (privateData ??= createTreeNodeSchemaPrivateData(this, [info], (storedOptions) =>
+				arrayNodeStoredSchema(convertAllowedTypes(info, storedOptions), persistedMetadata),
+			));
 		}
 	}
 

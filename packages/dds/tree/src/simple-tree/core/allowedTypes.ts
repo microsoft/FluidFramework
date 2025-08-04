@@ -140,7 +140,7 @@ export interface AllowedTypeMetadata {
 	readonly custom?: unknown;
 
 	/**
-	 * If defined, indicates that an allowed type is {@link SchemaFactoryAlpha.staged | staged}.
+	 * If defined, indicates that an allowed type is {@link SchemaStaticsAlpha.staged | staged}.
 	 */
 	readonly stagedSchemaUpgrade?: SchemaUpgrade;
 }
@@ -153,9 +153,10 @@ export let createSchemaUpgrade: () => SchemaUpgrade;
 /**
  * Unique token used to upgrade schemas and determine if a particular upgrade has been completed.
  * @remarks
- * Create using {@link SchemaFactoryAlpha.staged}.
+ * Create using {@link SchemaStaticsAlpha.staged}.
  * @privateRemarks
- * TODO:#38722 implement runtime schema upgrades until then, the class purely behaves as a placeholder.
+ * TODO:#38722 implement runtime schema upgrades.
+ * Until then, the class purely behaves mostly as a placeholder.
  * TODO: Consider allowing users to store a name for the upgrade to use in error messages.
  * @sealed @alpha
  */

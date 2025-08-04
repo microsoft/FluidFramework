@@ -851,7 +851,8 @@ export class SchemaFactoryAlpha<out TScope extends string | undefined = string |
     static readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Required, T, TCustomMetadata>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldPropsAlpha_2<TCustomMetadata>, "defaultProvider"> | undefined) => FieldSchemaAlphaUnsafe_2<FieldKind_2.Required, T, TCustomMetadata>;
     scopedFactory<const T extends TName, TNameInner extends number | string = string>(name: T): SchemaFactoryAlpha<ScopedSchemaName<TScope, T>, TNameInner>;
-    static staged<const T extends TreeNodeSchema>(t: T | AnnotatedAllowedType<T>): AnnotatedAllowedType<T>;
+    static staged: <const T extends TreeNodeSchema>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
+    staged: <const T extends TreeNodeSchema>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
 }
 
 // @alpha
@@ -877,6 +878,11 @@ export interface SchemaStatics {
     readonly required: <const T extends ImplicitAllowedTypes, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => FieldSchema<FieldKind.Required, T, TCustomMetadata>;
     readonly requiredRecursive: <const T extends System_Unsafe.ImplicitAllowedTypesUnsafe, const TCustomMetadata = unknown>(t: T, props?: Omit<FieldProps<TCustomMetadata>, "defaultProvider">) => System_Unsafe.FieldSchemaUnsafe<FieldKind.Required, T, TCustomMetadata>;
     readonly string: LeafSchema<"string", string>;
+}
+
+// @alpha @sealed @system
+export interface SchemaStaticsAlpha {
+    staged: <const T extends TreeNodeSchema>(t: T | AnnotatedAllowedType<T>) => AnnotatedAllowedType<T>;
 }
 
 // @alpha @sealed

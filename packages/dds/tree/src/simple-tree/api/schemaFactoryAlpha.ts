@@ -26,19 +26,18 @@ import {
 } from "./schemaFactory.js";
 import type { ImplicitAnnotatedFieldSchema, ImplicitFieldSchema } from "../fieldSchema.js";
 import type { RestrictiveStringRecord } from "../../util/index.js";
-import {
-	type NodeKind,
-	type TreeNodeSchema,
-	type TreeNodeSchemaBoth,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchemaNonClass,
-	type WithType,
-	type ImplicitAllowedTypes,
-	type ImplicitAnnotatedAllowedTypes,
-	type AnnotatedAllowedType,
-	normalizeToAnnotatedAllowedType,
-	createSchemaUpgrade,
+import type {
+	NodeKind,
+	TreeNodeSchema,
+	TreeNodeSchemaBoth,
+	TreeNodeSchemaClass,
+	TreeNodeSchemaNonClass,
+	WithType,
+	ImplicitAllowedTypes,
+	ImplicitAnnotatedAllowedTypes,
+	AnnotatedAllowedType,
 } from "../core/index.js";
+import { normalizeToAnnotatedAllowedType, createSchemaUpgrade } from "../core/index.js";
 import type {
 	ArrayNodeCustomizableSchemaUnsafe,
 	MapNodeCustomizableSchemaUnsafe,
@@ -48,29 +47,16 @@ import type {
 import type { SimpleObjectNodeSchema } from "../simpleSchema.js";
 
 /**
- * {@link SchemaFactory} with additional alpha APIs.
- *
- * @alpha
- * @privateRemarks
- *
- * Some private methods on `SchemaFactory` are intentionally duplicated here to avoid increasing their exposure to `protected`.
- * If we were to do so, they would be exposed on the public API surface of `SchemaFactory`.
+ * Stateless APIs exposed via {@link SchemaFactoryAlpha} as both instance properties and as statics.
+ * @remarks
+ * See {@link SchemaStatics} for why this is useful.
+ * @system @sealed @alpha
  */
-export class SchemaFactoryAlpha<
-	out TScope extends string | undefined = string | undefined,
-	TName extends number | string = string,
-> extends SchemaFactory<TScope, TName> {
-	private scoped2<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
-		return (
-			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
-		) as ScopedSchemaName<TScope, Name>;
-	}
-
+export interface SchemaStaticsAlpha {
 	/**
 	 * Declares a staged type in a set of {@link AllowedTypes}.
 	 *
 	 * @remarks
-	 *
 	 * Staged allowed types add support for reading a type which can be used for schema evolution to add members to
 	 * an {@link AllowedTypes} while supporting cross version collaboration.
 	 *
@@ -91,9 +77,15 @@ export class SchemaFactoryAlpha<
 	 * user friendly and should be improved, particularly in the case of staged allowed types
 	 *
 	 */
-	public static staged<const T extends TreeNodeSchema>(
+	staged: <const T extends TreeNodeSchema>(
 		t: T | AnnotatedAllowedType<T>,
-	): AnnotatedAllowedType<T> {
+	) => AnnotatedAllowedType<T>;
+}
+
+const schemaStaticsAlpha: SchemaStaticsAlpha = {
+	staged: <const T extends TreeNodeSchema>(
+		t: T | AnnotatedAllowedType<T>,
+	): AnnotatedAllowedType<T> => {
 		const annotatedType = normalizeToAnnotatedAllowedType(t);
 		return {
 			type: annotatedType.type,
@@ -102,6 +94,26 @@ export class SchemaFactoryAlpha<
 				stagedSchemaUpgrade: createSchemaUpgrade(),
 			},
 		};
+	},
+};
+
+/**
+ * {@link SchemaFactory} with additional alpha APIs.
+ *
+ * @alpha
+ * @privateRemarks
+ *
+ * Some private methods on `SchemaFactory` are intentionally duplicated here to avoid increasing their exposure to `protected`.
+ * If we were to do so, they would be exposed on the public API surface of `SchemaFactory`.
+ */
+export class SchemaFactoryAlpha<
+	out TScope extends string | undefined = string | undefined,
+	TName extends number | string = string,
+> extends SchemaFactory<TScope, TName> {
+	private scoped2<Name extends TName | string>(name: Name): ScopedSchemaName<TScope, Name> {
+		return (
+			this.scope === undefined ? `${name}` : `${this.scope}.${name}`
+		) as ScopedSchemaName<TScope, Name>;
 	}
 
 	/**
@@ -253,6 +265,16 @@ export class SchemaFactoryAlpha<
 	 * {@inheritDoc SchemaStatics.requiredRecursive}
 	 */
 	public override readonly requiredRecursive = schemaStatics.requiredRecursive;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.staged}
+	 */
+	public static staged = schemaStaticsAlpha.staged;
+
+	/**
+	 * {@inheritDoc SchemaStaticsAlpha.staged}
+	 */
+	public staged = schemaStaticsAlpha.staged;
 
 	/**
 	 * Define a {@link TreeNodeSchema} for a {@link TreeMapNode}.

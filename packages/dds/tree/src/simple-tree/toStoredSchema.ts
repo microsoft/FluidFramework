@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -20,15 +20,16 @@ import {
 	type TreeTypeSet,
 } from "../core/index.js";
 import { FieldKinds, type FlexFieldKind } from "../feature-libraries/index.js";
-import { brand, getOrCreate } from "../util/index.js";
+import { brand, getOrCreate, type JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import {
+	allowedTypeFilter,
+	convertAllowedTypes,
+	getTreeNodeSchemaPrivateData,
 	isClassBasedSchema,
 	NodeKind,
-	normalizeAnnotatedAllowedTypes,
-	type AnnotatedAllowedType,
-	type ImplicitAnnotatedAllowedTypes,
-	type SchemaUpgrade,
+	type SimpleNodeSchemaBase,
+	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
 import {
 	FieldKind,
@@ -37,31 +38,13 @@ import {
 	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 } from "./fieldSchema.js";
-import type {
-	SimpleFieldSchema,
-	SimpleNodeSchema,
-	SimpleNodeSchemaBase,
-	SimpleTreeSchema,
-} from "./simpleSchema.js";
+import type { SimpleFieldSchema, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
-import { isArrayNodeSchema, isMapNodeSchema, isRecordNodeSchema } from "./node-kinds/index.js";
 
 const viewToStoredCache = new WeakMap<
 	StoredSchemaGenerationOptions,
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
-
-/**
- * Options for generating a {@link TreeStoredSchema} from view schema.
- */
-export interface StoredSchemaGenerationOptions {
-	/**
-	 * Determines whether to include staged schema in the resulting stored schema.
-	 * @remarks
-	 * Due to caching, the behavior of this function must be pure.
-	 */
-	includeStaged(upgrade: SchemaUpgrade): boolean;
-}
 
 export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
 	includeStaged: () => false,
@@ -70,17 +53,6 @@ export const restrictiveStoredSchemaGenerationOptions: StoredSchemaGenerationOpt
 export const permissiveStoredSchemaGenerationOptions: StoredSchemaGenerationOptions = {
 	includeStaged: () => true,
 };
-
-function allowedTypeFilter(
-	allowedType: AnnotatedAllowedType,
-	options: StoredSchemaGenerationOptions,
-): boolean {
-	// If the allowed type is staged, only include it if the options allow it.
-	if (allowedType.metadata.stagedSchemaUpgrade !== undefined) {
-		return options.includeStaged(allowedType.metadata.stagedSchemaUpgrade);
-	}
-	return true;
-}
 
 /**
  * Converts a {@link ImplicitAnnotatedFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
@@ -217,22 +189,17 @@ export function getStoredSchema(
 	schema: SimpleNodeSchema,
 	options: StoredSchemaGenerationOptions,
 ): TreeNodeStoredSchema {
+	if (isClassBasedSchema(schema)) {
+		return getTreeNodeSchemaPrivateData(schema).toStored(options);
+	}
 	const kind = schema.kind;
 	switch (kind) {
 		case NodeKind.Leaf: {
-			assert(schema.kind === NodeKind.Leaf, 0xa4a /* invalid kind */);
 			return new LeafNodeStoredSchema(schema.leafKind);
 		}
 		case NodeKind.Map:
 		case NodeKind.Record: {
-			let types: TreeTypeSet;
-			if (isClassBasedSchema(schema)) {
-				assert(isMapNodeSchema(schema) || isRecordNodeSchema(schema), "invalid schema");
-				types = convertAllowedTypes(schema.info, options);
-			} else {
-				types = schema.allowedTypesIdentifiers as TreeTypeSet;
-			}
-
+			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
 			return new MapNodeStoredSchema(
 				{
 					kind: FieldKinds.optional.identifier,
@@ -244,21 +211,8 @@ export function getStoredSchema(
 			);
 		}
 		case NodeKind.Array: {
-			let types: TreeTypeSet;
-			if (isClassBasedSchema(schema)) {
-				assert(isArrayNodeSchema(schema), "invalid schema");
-				types = convertAllowedTypes(schema.info, options);
-			} else {
-				types = schema.allowedTypesIdentifiers as TreeTypeSet;
-			}
-
-			const field = {
-				kind: FieldKinds.sequence.identifier,
-				types,
-				persistedMetadata: schema.persistedMetadata,
-			};
-			const fields = new Map([[EmptyKey, field]]);
-			return new ObjectNodeStoredSchema(fields, schema.persistedMetadata);
+			const types = schema.allowedTypesIdentifiers as TreeTypeSet;
+			return arrayNodeStoredSchema(types, schema.persistedMetadata);
 		}
 		case NodeKind.Object: {
 			const fields: Map<FieldKey, TreeFieldStoredSchema> = new Map();
@@ -273,12 +227,15 @@ export function getStoredSchema(
 	}
 }
 
-function convertAllowedTypes(
-	schema: ImplicitAnnotatedAllowedTypes,
-	options: StoredSchemaGenerationOptions,
-): TreeTypeSet {
-	const filtered: TreeNodeSchemaIdentifier[] = normalizeAnnotatedAllowedTypes(schema)
-		.types.filter((allowedType) => allowedTypeFilter(allowedType, options))
-		.map((a) => brand(a.type.identifier));
-	return new Set(filtered);
+export function arrayNodeStoredSchema(
+	types: TreeTypeSet,
+	persistedMetadata: JsonCompatibleReadOnlyObject | undefined,
+): ObjectNodeStoredSchema {
+	const field = {
+		kind: FieldKinds.sequence.identifier,
+		types,
+		persistedMetadata,
+	};
+	const fields = new Map([[EmptyKey, field]]);
+	return new ObjectNodeStoredSchema(fields, persistedMetadata);
 }

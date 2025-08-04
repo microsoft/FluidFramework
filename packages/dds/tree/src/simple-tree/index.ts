@@ -58,6 +58,7 @@ export {
 	walkNodeSchema,
 	walkAllowedTypes,
 	type SchemaVisitor,
+	type SimpleNodeSchemaBase,
 } from "./core/index.js";
 export { walkFieldSchema } from "./walkFieldSchema.js";
 export type { UnsafeUnknownSchema, Insertable } from "./unsafeUnknownSchema.js";
@@ -162,6 +163,7 @@ export {
 	type TreeChangeEvents,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,
+	type SchemaStaticsAlpha,
 } from "./api/index.js";
 export type {
 	SimpleTreeSchema,
@@ -171,7 +173,6 @@ export type {
 	SimpleMapNodeSchema,
 	SimpleArrayNodeSchema,
 	SimpleObjectNodeSchema,
-	SimpleNodeSchemaBase,
 	SimpleNodeSchemaBaseAlpha,
 	SimpleObjectFieldSchema,
 	SimpleRecordNodeSchema,
