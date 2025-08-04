@@ -142,13 +142,14 @@ export function customFromCursor<TChild>(
 					const storedKey = reader.getFieldKey();
 					let key: string;
 					if (!options.useStoredKeys) {
-						const viewSchema = schema.get(type) ?? fail("missing schema for type in cursor");
+						const viewSchema =
+							schema.get(type) ?? fail(0xbff /* missing schema for type in cursor */);
 						if (isObjectNodeSchema(viewSchema)) {
 							const propertyKey = viewSchema.storedKeyToPropertyKey.get(storedKey);
 							if (propertyKey === undefined) {
 								assert(
 									viewSchema.allowUnknownOptionalFields,
-									"found unknown field where not allowed",
+									0xc00 /* found unknown field where not allowed */,
 								);
 								// Skip unknown optional fields when using property keys.
 								return;
