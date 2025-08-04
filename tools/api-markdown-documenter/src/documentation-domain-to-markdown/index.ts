@@ -5,7 +5,6 @@
 
 export type {
 	BlockContentTransformations,
-	PhrasingContentTransformations,
 	TransformationConfiguration,
 	Transformation,
 	Transformations,
@@ -13,7 +12,6 @@ export type {
 export {
 	blockContentToMarkdown,
 	documentToMarkdown,
-	phrasingContentToMarkdown,
 	sectionContentToMarkdown,
 } from "./ToMarkdown.js";
 export type { TransformationContext } from "./TransformationContext.js";

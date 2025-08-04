@@ -29,7 +29,6 @@ import type { BlockContent as BlockContent_2 } from 'mdast';
 import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
-import type { ListItem } from 'mdast';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -37,7 +36,7 @@ import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Parent } from 'unist';
-import type { PhrasingContent as PhrasingContent_2 } from 'mdast';
+import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
 import type { Root as Root_2 } from 'mdast';
@@ -171,13 +170,7 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    horizontalRule: HorizontalRuleNode;
-    // (undocumented)
-    list: ListNode;
-    // (undocumented)
     markdownBlockContent: MarkdownBlockContentNode;
-    // (undocumented)
-    paragraph: ParagraphNode;
     // (undocumented)
     table: TableNode;
 }
@@ -191,7 +184,7 @@ export type BlockContentToMarkdownTransformations = {
 };
 
 // @public
-function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): ParagraphNode;
+function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): MarkdownBlockContentNode;
 
 // @public
 function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionNode | undefined;
@@ -248,8 +241,6 @@ export interface DocumentationHierarchyConfigurationBase {
 
 // @public
 export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TValue>, DocumentationNode {
-    readonly isLiteral: true;
-    readonly isParent: false;
     readonly type: string;
     readonly value: TValue;
 }
@@ -257,18 +248,12 @@ export interface DocumentationLiteralNode<TValue = unknown> extends Literal<TVal
 // @public
 export abstract class DocumentationLiteralNodeBase<TValue = unknown> implements DocumentationLiteralNode<TValue> {
     protected constructor(value: TValue);
-    abstract get isEmpty(): boolean;
-    readonly isLiteral = true;
-    readonly isParent = false;
     abstract type: string;
     readonly value: TValue;
 }
 
 // @public
 export interface DocumentationNode<TData extends object = Data> extends Node_2<TData> {
-    readonly isEmpty: boolean;
-    readonly isLiteral: boolean;
-    readonly isParent: boolean;
     readonly type: string;
 }
 
@@ -285,22 +270,15 @@ export function documentationNodeToHtml(node: DocumentationNode, config: ToHtmlC
 export function documentationNodeToHtml(node: DocumentationNode, context: ToHtmlContext): Nodes;
 
 // @public
-export interface DocumentationParentNode<TDocumentationNode extends DocumentationNode = DocumentationNode> extends Parent<TDocumentationNode, Data>, DocumentationNode {
+export interface DocumentationParentNode<TDocumentationNode extends Node_2> extends Parent<TDocumentationNode, Data>, DocumentationNode {
     readonly children: TDocumentationNode[];
-    readonly hasChildren: boolean;
-    readonly isLiteral: false;
-    readonly isParent: true;
     readonly type: string;
 }
 
 // @public
-export abstract class DocumentationParentNodeBase<TDocumentationNode extends DocumentationNode = DocumentationNode> implements DocumentationParentNode<TDocumentationNode> {
+export abstract class DocumentationParentNodeBase<TDocumentationNode extends Node_2> implements DocumentationParentNode<TDocumentationNode> {
     protected constructor(children: TDocumentationNode[]);
     readonly children: TDocumentationNode[];
-    get hasChildren(): boolean;
-    get isEmpty(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = true;
     abstract type: string;
 }
 
@@ -453,9 +431,6 @@ export class HeadingNode implements DocumentationNode, Heading {
     id?: string | undefined);
     static createFromPlainTextHeading(heading: Heading): HeadingNode;
     readonly id?: string | undefined;
-    get isEmpty(): boolean;
-    readonly isLiteral = false;
-    readonly isParent = false;
     readonly title: string;
     readonly type = "heading";
 }
@@ -494,16 +469,6 @@ export type HierarchyOptions = {
     readonly getDocumentName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
     readonly getFolderName?: (apiItem: ApiItem, config: HierarchyConfiguration) => string;
 };
-
-// @public @sealed
-export class HorizontalRuleNode implements DocumentationNode {
-    constructor();
-    readonly isEmpty = false;
-    readonly isLiteral = true;
-    readonly isParent = false;
-    static readonly Singleton: HorizontalRuleNode;
-    readonly type = "horizontalRule";
-}
 
 declare namespace HtmlRenderer {
     export {
@@ -546,16 +511,6 @@ declare namespace LayoutUtilities {
 }
 export { LayoutUtilities }
 
-// @public @sealed
-export class LineBreakNode implements DocumentationNode {
-    constructor();
-    readonly isEmpty = false;
-    readonly isLiteral = true;
-    readonly isParent = false;
-    static readonly Singleton: LineBreakNode;
-    readonly type = "lineBreak";
-}
-
 // @public
 export interface Link {
     readonly target: UrlTarget;
@@ -582,22 +537,6 @@ export interface LinterReferenceError {
     readonly referenceTarget: string;
     readonly sourceItem: string;
     readonly tagName: string;
-}
-
-// @public @sealed
-export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainText(text: string): ListItemNode;
-    static readonly Empty: ListItemNode;
-    readonly type = "listItem";
-}
-
-// @public @sealed
-export class ListNode extends DocumentationParentNodeBase<ListItemNode> {
-    constructor(children: ListItemNode[], ordered: boolean);
-    static createFromPlainTextEntries(entries: string[], ordered: boolean): ListNode;
-    readonly ordered: boolean;
-    readonly type = "list";
 }
 
 // @public
@@ -628,15 +567,7 @@ export type LoggingFunction = (message: string | Error, ...parameters: unknown[]
 // @public @sealed
 export class MarkdownBlockContentNode extends DocumentationLiteralNodeBase<BlockContent_2> {
     constructor(value: BlockContent_2);
-    get isEmpty(): boolean;
     readonly type = "markdownBlockContent";
-}
-
-// @public @sealed
-export class MarkdownPhrasingContentNode extends DocumentationLiteralNodeBase<PhrasingContent_2> {
-    constructor(value: PhrasingContent_2);
-    get isEmpty(): boolean;
-    readonly type = "markdownPhrasingContent";
 }
 
 declare namespace MarkdownRenderer {
@@ -653,45 +584,6 @@ declare namespace MarkdownRenderer {
 export { MarkdownRenderer }
 
 export { NewlineKind }
-
-// @public @sealed
-export class ParagraphNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainText(text: string): ParagraphNode;
-    static readonly Empty: ParagraphNode;
-    readonly type = "paragraph";
-}
-
-// @public
-export type PhrasingContent = PhrasingContentMap[keyof PhrasingContentMap];
-
-// @public
-export interface PhrasingContentMap {
-    // (undocumented)
-    lineBreak: LineBreakNode;
-    // (undocumented)
-    markdownPhrasingContent: MarkdownPhrasingContentNode;
-    // (undocumented)
-    span: SpanNode;
-    // (undocumented)
-    text: PlainTextNode;
-}
-
-// @public
-export function phrasingContentToMarkdown(node: PhrasingContent, context: ToMarkdownContext): [PhrasingContent_2];
-
-// @public
-export type PhrasingContentToMarkdownTransformations = {
-    readonly [K in keyof PhrasingContentMap]: ToMarkdownTransformation<PhrasingContentMap[K], PhrasingContent_2[]>;
-};
-
-// @public @sealed
-export class PlainTextNode extends DocumentationLiteralNodeBase<string> {
-    constructor(text: string);
-    static readonly Empty: PlainTextNode;
-    get isEmpty(): boolean;
-    readonly type = "text";
-}
 
 // @public
 export type ReleaseLevel = Exclude<ReleaseTag, ReleaseTag.None>;
@@ -764,15 +656,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
 
-// @public
-export class SpanNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[], formatting: TextFormatting);
-    static createFromPlainText(text: string, formatting: TextFormatting): SpanNode;
-    static readonly Empty: SpanNode;
-    readonly textFormatting: TextFormatting;
-    readonly type = "span";
-}
-
 // @public @sealed
 export class TableBodyCellNode extends TableCellNode {
     constructor(children: TableCellContent[]);
@@ -836,13 +719,6 @@ export abstract class TableRowNode extends DocumentationParentNodeBase<TableCell
     readonly type = "tableRow";
 }
 
-// @public @sealed
-export interface TextFormatting {
-    readonly bold?: true;
-    readonly italic?: true;
-    readonly strikethrough?: true;
-}
-
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
@@ -882,9 +758,8 @@ export interface ToMarkdownContext {
 export type ToMarkdownTransformation<TIn extends DocumentationNode = DocumentationNode, TOut extends Nodes_2[] = [Nodes_2]> = (node: TIn, context: ToMarkdownContext) => TOut;
 
 // @public
-export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & PhrasingContentToMarkdownTransformations & {
+export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & {
     readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
-    readonly ["listItem"]: ToMarkdownTransformation<ListItemNode, [ListItem]>;
     readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;
     readonly ["tableCell"]: ToMarkdownTransformation<TableCellNode, [TableCell]>;
     readonly ["tableRow"]: ToMarkdownTransformation<TableRowNode, [TableRow]>;

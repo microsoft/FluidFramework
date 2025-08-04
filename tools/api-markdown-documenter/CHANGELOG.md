@@ -11,19 +11,28 @@ Transformations to HTML will use `mdast-util-to-hast`.
 
 #### Markdown Nodes
 
-`MarkdownBlockContentNode` and `MarkdownPhrasingContentNode` have been added to the Documentation Domain temporarily.
-They allow `mdast` trees to be used directly within the `DocumentationNode` hierarchy.
+`MarkdownBlockContentNode` has been added to the Documentation Domain temporarily.
+They allow `mdast` "block content" trees to be used directly within the `DocumentationNode` hierarchy.
 
 This functionality will be used to iteratively replace and remove `DocumentationNode` implementations, until the entire domain can be removed.
+
+Contexts that use conceptual "phrasing content" in the Documentation Domain now take `mdast` "phrasing content" directly as children.
 
 #### Removed Node kinds
 
 The following kinds of nodes have been removed from the library.
-Usages should be converted to `MarkdownBlockContentNode` or `MarkdownPhrasingContentNode` as appropriate.
+Usages should be converted to `MarkdownBlockContentNode` or `mdast` directly as appropriate.
 
 - `CodeSpanNode`
 - `FencedCodeBlockNode`
+- `HorizontalRuleNode`
+- `LineBreakNode`
 - `LinkNode`
+- `ListItemNode`
+- `ListNode`
+- `ParagraphNode`
+- `PlainTextNode`
+- `SpanNode`
 
 ## 0.21.0
 

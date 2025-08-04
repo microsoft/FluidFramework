@@ -22,14 +22,8 @@ import {
 	DocumentNode,
 	type DocumentationNode,
 	HeadingNode,
-	ListItemNode,
-	ListNode,
 	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
-	ParagraphNode,
-	PlainTextNode,
 	SectionNode,
-	SpanNode,
 	TableBodyCellNode,
 	TableBodyRowNode,
 	TableHeaderCellNode,
@@ -208,10 +202,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											new TableBodyRowNode([
 												TableBodyCellNode.createFromPlainText("TTypeParameter"),
 												new TableBodyCellNode([
-													new MarkdownPhrasingContentNode({
-														type: "text",
-														value: "A test type parameter",
-													}),
+													{ type: "text", value: "A test type parameter" },
 												]),
 											]),
 										],
@@ -238,24 +229,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testParameter"),
 										TableBodyCellNode.Empty,
-										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
-										new TableBodyCellNode([
-											new MarkdownPhrasingContentNode({
-												type: "text",
-												value: "A test parameter",
-											}),
-										]),
+										new TableBodyCellNode([{ type: "text", value: "TTypeParameter" }]),
+										new TableBodyCellNode([{ type: "text", value: "A test parameter" }]),
 									]),
 									new TableBodyRowNode([
 										TableBodyCellNode.createFromPlainText("testOptionalParameter"),
 										TableBodyCellNode.createFromPlainText("optional"),
-										new TableBodyCellNode([new PlainTextNode("TTypeParameter")]),
-										new TableBodyCellNode([
-											new MarkdownPhrasingContentNode({
-												type: "text",
-												value: "An optional parameter",
-											}),
-										]),
+										new TableBodyCellNode([{ type: "text", value: "TTypeParameter" }]),
+										new TableBodyCellNode([{ type: "text", value: "An optional parameter" }]),
 									]),
 								],
 								new TableHeaderRowNode([
@@ -279,11 +260,14 @@ describe("ApiItem to Documentation transformation tests", () => {
 								type: "paragraph",
 								children: [{ type: "text", value: "The provided parameter" }],
 							}),
-							new ParagraphNode([
-								SpanNode.createFromPlainText("Return type", { bold: true }),
-								new PlainTextNode(": "),
-								new PlainTextNode("TTypeParameter"),
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{ type: "strong", children: [{ type: "text", value: "Return type" }] },
+									{ type: "text", value: ": " },
+									{ type: "text", value: "TTypeParameter" },
+								],
+							}),
 						],
 						{
 							title: "Returns",
@@ -368,28 +352,16 @@ describe("ApiItem to Documentation transformation tests", () => {
 						[
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({
+									{
 										type: "link",
 										url: "/test-package/testinterface-interface#testoptionalinterfaceproperty-propertysignature",
 										children: [{ type: "text", value: "testOptionalInterfaceProperty" }],
-									}),
+									},
 								]),
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "optional" }),
-								]),
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({
-										type: "text",
-										value: "0",
-									}),
-								]),
-								new TableBodyCellNode([new PlainTextNode("number")]),
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({
-										type: "text",
-										value: "Test optional property",
-									}),
-								]),
+								new TableBodyCellNode([{ type: "inlineCode", value: "optional" }]),
+								new TableBodyCellNode([{ type: "text", value: "0" }]),
+								new TableBodyCellNode([{ type: "text", value: "number" }]),
+								new TableBodyCellNode([{ type: "text", value: "Test optional property" }]),
 							]),
 						],
 						new TableHeaderRowNode([
@@ -424,11 +396,17 @@ describe("ApiItem to Documentation transformation tests", () => {
 										lang: "typescript",
 										value: "testOptionalInterfaceProperty?: number;",
 									}),
-									new ParagraphNode([
-										SpanNode.createFromPlainText("Type", { bold: true }),
-										new PlainTextNode(": "),
-										new PlainTextNode("number"),
-									]),
+									new MarkdownBlockContentNode({
+										type: "paragraph",
+										children: [
+											{
+												type: "strong",
+												children: [{ type: "text", value: "Type" }],
+											},
+											{ type: "text", value: ": " },
+											{ type: "text", value: "number" },
+										],
+									}),
 								],
 								{
 									title: "Signature",
@@ -507,34 +485,28 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Table row for `bar`
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({
+									{
 										type: "link",
 										url: "/test-package/testnamespace-namespace/#bar-variable",
 										children: [{ type: "text", value: "bar" }],
-									}),
+									},
 								]),
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "Beta" }),
-								]), // Alert
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "readonly" }),
-								]), // Modifier
+								new TableBodyCellNode([{ type: "inlineCode", value: "Beta" }]), // Alert
+								new TableBodyCellNode([{ type: "inlineCode", value: "readonly" }]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
 							// Table row for `foo`
 							new TableBodyRowNode([
 								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({
+									{
 										type: "link",
 										url: "/test-package/testnamespace-namespace/#foo-variable",
 										children: [{ type: "text", value: "foo" }],
-									}),
+									},
 								]),
 								TableBodyCellNode.Empty, // No alert for `@public`
-								new TableBodyCellNode([
-									new MarkdownPhrasingContentNode({ type: "inlineCode", value: "readonly" }),
-								]), // Modifier
+								new TableBodyCellNode([{ type: "inlineCode", value: "readonly" }]), // Modifier
 								TableBodyCellNode.Empty, // Type
 								TableBodyCellNode.Empty, // Description
 							]),
@@ -561,7 +533,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// No summary docs on `bar`
 
 							// Beta warning
-							wrapInSection([new ParagraphNode([betaWarningSpan])]),
+							wrapInSection([
+								new MarkdownBlockContentNode({
+									type: "paragraph",
+									children: [betaWarningSpan],
+								}),
+							]),
 							// Signature
 							wrapInSection(
 								[
@@ -634,43 +611,66 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new ParagraphNode([
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/",
-									children: [{ type: "text", value: "Packages" }],
-								}),
-								new PlainTextNode(" > "),
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/test-package/",
-									children: [{ type: "text", value: "test-package" }],
-								}),
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{
+										type: "link",
+										url: "/",
+										children: [{ type: "text", value: "Packages" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/",
+										children: [{ type: "text", value: "test-package" }],
+									},
+								],
+							}),
 						]),
 
 						// Body
 						new SectionNode(
 							[
-								new ListNode(
-									[
-										new ListItemNode([
-											new MarkdownPhrasingContentNode({
-												type: "link",
-												url: "/test-package/entry-point-a-entrypoint",
-												children: [{ type: "text", value: "entry-point-a" }],
-											}),
-										]),
-										new ListItemNode([
-											new MarkdownPhrasingContentNode({
-												type: "link",
-												url: "/test-package/entry-point-b-entrypoint",
-												children: [{ type: "text", value: "entry-point-b" }],
-											}),
-										]),
+								new MarkdownBlockContentNode({
+									type: "list",
+									ordered: false,
+									children: [
+										{
+											type: "listItem",
+											children: [
+												{
+													type: "paragraph",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/entry-point-a-entrypoint",
+															children: [{ type: "text", value: "entry-point-a" }],
+														},
+													],
+												},
+											],
+										},
+										{
+											type: "listItem",
+											children: [
+												{
+													type: "paragraph",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/entry-point-b-entrypoint",
+															children: [{ type: "text", value: "entry-point-b" }],
+														},
+													],
+												},
+											],
+										},
 									],
-									/* ordered */ false,
-								),
+								}),
 							],
 							new HeadingNode("Entry Points"),
 						),
@@ -689,25 +689,34 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new ParagraphNode([
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/",
-									children: [{ type: "text", value: "Packages" }],
-								}),
-								new PlainTextNode(" > "),
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/test-package/",
-									children: [{ type: "text", value: "test-package" }],
-								}),
-								new PlainTextNode(" > "),
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/test-package/entry-point-a-entrypoint",
-									children: [{ type: "text", value: "entry-point-a" }],
-								}),
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{
+										type: "link",
+										url: "/",
+										children: [{ type: "text", value: "Packages" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/",
+										children: [{ type: "text", value: "test-package" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/entry-point-a-entrypoint",
+										children: [{ type: "text", value: "entry-point-a" }],
+									},
+								],
+							}),
 						]),
 
 						// Variables table
@@ -717,24 +726,24 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												new MarkdownPhrasingContentNode({
+												{
 													type: "link",
 													url: "/test-package/#hello-variable",
 													children: [{ type: "text", value: "hello" }],
-												}),
+												},
 											]),
 											new TableBodyCellNode([
-												new MarkdownPhrasingContentNode({
+												{
 													type: "inlineCode",
 													value: "readonly",
-												}),
+												},
 											]),
 											TableBodyCellNode.Empty, // Type
 											new TableBodyCellNode([
-												new MarkdownPhrasingContentNode({
+												{
 													type: "text",
 													value: "Test Constant",
-												}),
+												},
 											]),
 										]),
 									],
@@ -794,25 +803,34 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new ParagraphNode([
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/",
-									children: [{ type: "text", value: "Packages" }],
-								}),
-								new PlainTextNode(" > "),
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/test-package/",
-									children: [{ type: "text", value: "test-package" }],
-								}),
-								new PlainTextNode(" > "),
-								new MarkdownPhrasingContentNode({
-									type: "link",
-									url: "/test-package/entry-point-b-entrypoint",
-									children: [{ type: "text", value: "entry-point-b" }],
-								}),
-							]),
+							new MarkdownBlockContentNode({
+								type: "paragraph",
+								children: [
+									{
+										type: "link",
+										url: "/",
+										children: [{ type: "text", value: "Packages" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/",
+										children: [{ type: "text", value: "test-package" }],
+									},
+									{
+										type: "text",
+										value: " > ",
+									},
+									{
+										type: "link",
+										url: "/test-package/entry-point-b-entrypoint",
+										children: [{ type: "text", value: "entry-point-b" }],
+									},
+								],
+							}),
 						]),
 
 						// Variables table
@@ -822,18 +840,18 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										new TableBodyRowNode([
 											new TableBodyCellNode([
-												new MarkdownPhrasingContentNode({
+												{
 													type: "link",
 													url: "/test-package/#world-variable",
 													children: [{ type: "text", value: "world" }],
-												}),
+												},
 											]),
 											TableBodyCellNode.Empty, // Type
 											new TableBodyCellNode([
-												new MarkdownPhrasingContentNode({
+												{
 													type: "text",
 													value: "Test Constant",
-												}),
+												},
 											]),
 										]),
 									],

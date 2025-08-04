@@ -4,35 +4,23 @@
  */
 
 import type { Nodes as HastNodes } from "hast";
-import { h } from "hastscript";
 
 import type {
 	DocumentationNode,
 	HeadingNode,
 	SectionNode,
-	ParagraphNode,
-	PlainTextNode,
-	SpanNode,
 	TableCellNode,
 	TableNode,
 	TableRowNode,
-	ListItemNode,
-	ListNode,
 	MarkdownBlockContentNode,
-	MarkdownPhrasingContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToHtml,
 	sectionToHtml,
-	paragraphToHtml,
-	plainTextToHtml,
-	spanToHtml,
 	tableToHtml,
 	tableCellToHtml,
 	tableRowToHtml,
-	listItemToHtml,
-	listToHtml,
 	markdownNodeToHtml,
 } from "../default-transformations/index.js";
 
@@ -71,27 +59,14 @@ export type Transformation = (
 	context: TransformationContext,
 ) => HastNodes;
 
-// Constants used in transformations below as an allocation optimization.
-const hastLineBreak = h("br");
-const hastHorizontalRule = h("hr");
-
 /**
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	lineBreak: () => hastLineBreak,
-	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
 	markdownBlockContent: (node, context) =>
 		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
-	markdownPhrasingContent: (node, context) =>
-		markdownNodeToHtml(node as MarkdownPhrasingContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
-	horizontalRule: () => hastHorizontalRule,
-	list: (node, context) => listToHtml(node as ListNode, context),
-	paragraph: (node, context) => paragraphToHtml(node as ParagraphNode, context),
-	text: (node, context) => plainTextToHtml(node as PlainTextNode, context),
-	span: (node, context) => spanToHtml(node as SpanNode, context),
 	table: (node, context) => tableToHtml(node as TableNode, context),
 	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
 	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),

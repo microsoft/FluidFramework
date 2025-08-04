@@ -44,7 +44,7 @@ export function createFromCursor<const TSchema extends ImplicitFieldSchema>(
 	contextForNewNodes?: Context,
 ): Unhydrated<TreeFieldFromImplicitField<TSchema>> {
 	const context = contextForNewNodes ?? getUnhydratedContext(schema);
-	assert(context.flexContext.isHydrated() === false, "Expected unhydrated context");
+	assert(context.flexContext.isHydrated() === false, 0xbfe /* Expected unhydrated context */);
 	const mapTrees = cursor === undefined ? [] : [unhydratedFlexTreeFromCursor(context, cursor)];
 
 	const schemaAndPolicy: SchemaAndPolicy = {
