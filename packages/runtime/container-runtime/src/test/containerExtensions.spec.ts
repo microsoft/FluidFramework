@@ -426,7 +426,10 @@ describe("Container Extension", () => {
 				"Initial event should be joined with write access",
 			);
 
-			// Force readonly mode and reconnect
+			// Act: forceReadonly
+			// forceReadonly would change the connection type of container
+			// This "readonly" event from deltaManager would then trigger
+			// setConnectionState to be called with canSendOps being false (Connected && !readonly)
 			runtime.setConnectionState(false, context.clientId);
 			updateConnectionState(runtime, context, ConnectionState.Connected, "newMockClientId");
 

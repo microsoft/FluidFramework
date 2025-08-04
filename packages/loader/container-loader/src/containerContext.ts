@@ -143,15 +143,21 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 
 	public readonly getConnectionState: () => ConnectionState;
 
+	private readonly getClientIdFn: () => string | undefined;
+	private readonly getContainerDiagnosticIdFn: () => string | undefined;
+	private readonly getConnectedFn: () => boolean;
+	private readonly getAttachStateFn: () => AttachState;
+	private readonly version: IVersion | undefined;
+
 	public get clientId(): string | undefined {
-		return this.config.getClientId();
+		return this.getClientIdFn();
 	}
 
 	/**
 	 * DISCLAIMER: this id is only for telemetry purposes. Not suitable for any other usages.
 	 */
 	public get id(): string {
-		return this.config.getContainerDiagnosticId() ?? "";
+		return this.getContainerDiagnosticIdFn() ?? "";
 	}
 
 	/**
@@ -159,7 +165,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 	 * When false, ops should be kept as pending or rejected
 	 */
 	public get connected(): boolean {
-		return this.config.getConnected();
+		return this.getConnectedFn();
 	}
 
 	/**
@@ -170,7 +176,7 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		return loaderCompatDetailsForRuntime;
 	}
 
-	constructor(private readonly config: IContainerContextConfig) {
+	constructor(config: IContainerContextConfig) {
 		this.options = config.options;
 		this.scope = config.scope;
 		this.baseSnapshot = config.baseSnapshot;
@@ -194,13 +200,18 @@ export class ContainerContext implements IContainerContext, IProvideLayerCompatD
 		this.snapshotWithContents = config.snapshotWithContents;
 
 		this.getConnectionState = config.getConnectionState;
+		this.getClientIdFn = config.getClientId;
+		this.getContainerDiagnosticIdFn = config.getContainerDiagnosticId;
+		this.getConnectedFn = config.getConnected;
+		this.getAttachStateFn = config.getAttachState;
+		this.version = config.version;
 	}
 
 	public getLoadedFromVersion(): IVersion | undefined {
-		return this.config.version;
+		return this.version;
 	}
 
 	public get attachState(): AttachState {
-		return this.config.getAttachState();
+		return this.getAttachStateFn();
 	}
 }
