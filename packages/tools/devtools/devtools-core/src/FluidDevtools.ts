@@ -333,7 +333,7 @@ export class FluidDevtools implements IFluidDevtools {
 	): Promise<void> {
 		const { runtime, label } = props;
 
-		const containerRuntimeKey = this.generateReadableKey(runtime, label);
+		const containerRuntimeKey = this.generateReadableKey(label ?? "Container-Runtime");
 		const extractedContainerRuntimeData =
 			await FluidDevtools.extractContainerDataFromRuntime(runtime);
 
@@ -542,14 +542,18 @@ export class FluidDevtools implements IFluidDevtools {
 		this.postContainerList();
 	}
 
+	// Track data object instances to assign sequential numbers
+	private readonly containerRuntimesInstanceCounts = new Map<string, number>();
+
 	/**
 	 * Generates a readable key for a container runtime using package path and sequential numbering.
 	 */
-	private generateReadableKey(runtime: object, baseKey = "Container-Runtime"): string {
-		// Use label if provided, otherwise use package path
+	private generateReadableKey(baseKey: string): string {
+		// Get the next number for this base key
+		const nextNumber = (this.containerRuntimesInstanceCounts.get(baseKey) ?? 0) + 1;
+		this.containerRuntimesInstanceCounts.set(baseKey, nextNumber);
 
-		// For now, just return the base key since we don't have instance counting
-		return baseKey;
+		return `${baseKey}-${nextNumber}`;
 	}
 }
 

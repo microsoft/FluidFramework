@@ -127,6 +127,10 @@ export abstract class BaseDevtools<DevtoolsType extends DecomposedContainer>
 			connectionState: this.container.connectionState,
 			closed: this.container.closed,
 			clientId: this.container.clientId,
+			userId:
+				this.container.clientId === undefined
+					? undefined
+					: this.audience.getMember(this.container.clientId)?.user.id,
 		};
 	}
 
