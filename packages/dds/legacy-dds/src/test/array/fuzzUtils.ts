@@ -94,8 +94,10 @@ const insertListenerRegistry = new Set<string>();
 const moveListenerRegistry = new Set<string>();
 
 /**
- * Cleans the previous state of the SharedArray operations.
- * This is useful to reset the state before running tests.
+ * Cleans entryId maps and listener registries for SharedArray operations.
+ *
+ * This function is used to reset the state before each test run to ensure that
+ * previous test runs do not affect the current test.
  */
 export function cleanPreviousState(): void {
 	arrayInsertIdMap.clear();
