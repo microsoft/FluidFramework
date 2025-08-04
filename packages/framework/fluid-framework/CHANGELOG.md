@@ -1,5 +1,48 @@
 # fluid-framework
 
+## 2.52.0
+
+### Minor Changes
+
+- Change and clarify limitations related to alpha features allowUnknownOptionalFields and importVerbose ([#25074](https://github.com/microsoft/FluidFramework/pull/25074)) [62dc0b0095](https://github.com/microsoft/FluidFramework/commit/62dc0b0095226ade66648f6fd6b4f13b8c7880d8)
+
+  [allowUnknownOptionalFields](https://fluidframework.com/docs/api/fluid-framework/schemafactoryobjectoptions-interface#allowunknownoptionalfields-propertysignature) currently has some limitations.
+  To mitigate some bugs, [importVerbose](https://fluidframework.com/docs/api/fluid-framework/treealpha-interface#importverbose-methodsignature) has dropped support for unknown optional fields.
+  Previously `importVerbose` would tolerate some unknown optional fields, but could not validate they comply with the document stored schema.
+  This could cause some crashes, and likely document corruption.
+  This support has been removed: now trying to create nodes containing unknown optional fields via `importVerbose` will throw a `UsageError`.
+  There is no longer a way to create and insert nodes which contain subtrees for which there is no schema.
+
+  Ideally `exportVerbose` and `importVerbose` could be used to round trip data while optionally preserving unknown optional fields, but this is currently not working and thus not supported.
+
+  If exporting using [useStoredKeys](https://fluidframework.com/docs/api/fluid-framework/treeencodingoptions-interface#usestoredkeys-propertysignature), the unknown optional fields will be preserved but may not be able to be imported.
+  If exporting not using `useStoredKeys`, unknown optional fields will be omitted.
+
+- Support unknown optional fields in TreeBeta.clone, TreeAlpha.exportConcise and TreeAlpha.exportVerbose ([#25106](https://github.com/microsoft/FluidFramework/pull/25106)) [e3a126ffac](https://github.com/microsoft/FluidFramework/commit/e3a126ffac46bb91e8b553535410d5532b05e662)
+
+  Trees with [unknown optional fields](https://fluidframework.com/docs/api/fluid-framework/schemafactoryobjectoptions-interface#allowunknownoptionalfields-propertysignature) are now supported in [TreeBeta.clone](https://fluidframework.com/docs/api/tree/treebeta-interface#clone-methodsignature), [TreeBeta.exportConcise](https://fluidframework.com/docs/api/tree/treealpha-interface#exportconcise-methodsignature) and [TreeBeta.exportVerbose](https://fluidframework.com/docs/api/tree/treealpha-interface#exportverbose-methodsignature).
+
+  Previously, attempts to clone or export such nodes could error in some cases, but should now work robustly.
+
+- Fix independentInitializedView when used with ForestTypeExpensiveDebug ([#25083](https://github.com/microsoft/FluidFramework/pull/25083)) [2570b650b6](https://github.com/microsoft/FluidFramework/commit/2570b650b64f261fdf8cbfbfddaf3174577a5da2)
+
+  Previously, when using [independentInitializedView](https://fluidframework.com/docs/api/tree/#independentinitializedview-function) with [ForestTypeExpensiveDebug](https://fluidframework.com/docs/api/tree/#foresttypeexpensivedebug-variable) and the root schema was not an optional field, an error was thrown about the tree being out of schema.
+  This has been fixed.
+
+- Allow attaching a SharedTree to an already attached container ([#25102](https://github.com/microsoft/FluidFramework/pull/25102)) [3e03f94f0e](https://github.com/microsoft/FluidFramework/commit/3e03f94f0e3529094304e272df75dae4bf43618e)
+
+  Before this release, attaching a SharedTree instance to an already attached container would fail with assert code `0x88f` if that instance needed to include data about removed nodes in its attach summary.
+  (This is the case when nodes are removed before attaching and there is a local branch that forks from a commit that made such a removal or from an earlier commit. This is also the case when retaining `Revertible` objects for those commits).
+
+  After this release, the behavior depends on the `CodecWriteOptions.oldestCompatibleClient` value:
+
+  - For values < `FluidClientVersion.v2_52`, the behavior is the same.
+  - For values >= `FluidClientVersion.v2_52`, the attach will succeed, but use a newer storage format.
+
+  Applications should take care to saturate their clients with FF version `2.52` (or greater) before using a `CodecWriteOptions.oldestCompatibleClient` that is equal to or greater than `FluidClientVersion.v2_52`.
+  Failure to do so may lead clients with `CodecWriteOptions.oldestCompatibleClient` equal to or greater than `FluidClientVersion.v2_52` to attach SharedTree instances using a storage format that is not supported by FF versions before `2.52`.
+  This means that application versions using FF versions before `2.52` will be unable to open documents where such an operation has happened.
+
 ## 2.51.0
 
 ### Minor Changes
