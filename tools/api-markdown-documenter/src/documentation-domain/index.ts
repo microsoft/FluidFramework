@@ -27,7 +27,5 @@ export {
 	DocumentationParentNodeBase,
 } from "./DocumentationNode.js";
 export { HeadingNode } from "./HeadingNode.js";
-export { ListItemNode } from "./ListItemNode.js";
-export { ListNode } from "./ListNode.js";
 export { MarkdownBlockContentNode } from "./MarkdownNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";

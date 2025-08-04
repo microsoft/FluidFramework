@@ -29,7 +29,6 @@ import type { BlockContent as BlockContent_2 } from 'mdast';
 import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
-import type { ListItem } from 'mdast';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -37,7 +36,6 @@ import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Parent } from 'unist';
-import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
 import type { Root as Root_2 } from 'mdast';
@@ -168,8 +166,6 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 
 // @public
 export interface BlockContentMap {
-    // (undocumented)
-    list: ListNode;
     // (undocumented)
     markdownBlockContent: MarkdownBlockContentNode;
 }
@@ -516,22 +512,6 @@ export interface Link {
     readonly text: string;
 }
 
-// @public @sealed
-export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainText(text: string): ListItemNode;
-    static readonly Empty: ListItemNode;
-    readonly type = "listItem";
-}
-
-// @public @sealed
-export class ListNode extends DocumentationParentNodeBase<ListItemNode> {
-    constructor(children: ListItemNode[], ordered: boolean);
-    static createFromPlainTextEntries(entries: string[], ordered: boolean): ListNode;
-    readonly ordered: boolean;
-    readonly type = "list";
-}
-
 // @public
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
@@ -690,7 +670,6 @@ export type ToMarkdownTransformation<TIn extends DocumentationNode = Documentati
 // @public
 export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & {
     readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
-    readonly ["listItem"]: ToMarkdownTransformation<ListItemNode, [ListItem]>;
     readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;
 };
 

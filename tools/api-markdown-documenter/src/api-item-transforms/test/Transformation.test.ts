@@ -22,8 +22,6 @@ import {
 	DocumentNode,
 	type DocumentationNode,
 	HeadingNode,
-	ListItemNode,
-	ListNode,
 	MarkdownBlockContentNode,
 	SectionNode,
 } from "../../documentation-domain/index.js";
@@ -745,25 +743,42 @@ describe("ApiItem to Documentation transformation tests", () => {
 						// Body
 						new SectionNode(
 							[
-								new ListNode(
-									[
-										new ListItemNode([
-											{
-												type: "link",
-												url: "/test-package/entry-point-a-entrypoint",
-												children: [{ type: "text", value: "entry-point-a" }],
-											},
-										]),
-										new ListItemNode([
-											{
-												type: "link",
-												url: "/test-package/entry-point-b-entrypoint",
-												children: [{ type: "text", value: "entry-point-b" }],
-											},
-										]),
+								new MarkdownBlockContentNode({
+									type: "list",
+									ordered: false,
+									children: [
+										{
+											type: "listItem",
+											children: [
+												{
+													type: "paragraph",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/entry-point-a-entrypoint",
+															children: [{ type: "text", value: "entry-point-a" }],
+														},
+													],
+												},
+											],
+										},
+										{
+											type: "listItem",
+											children: [
+												{
+													type: "paragraph",
+													children: [
+														{
+															type: "link",
+															url: "/test-package/entry-point-b-entrypoint",
+															children: [{ type: "text", value: "entry-point-b" }],
+														},
+													],
+												},
+											],
+										},
 									],
-									/* ordered */ false,
-								),
+								}),
 							],
 							new HeadingNode("Entry Points"),
 						),

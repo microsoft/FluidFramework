@@ -6,7 +6,6 @@
 import type {
 	Nodes as MdastTree,
 	BlockContent as MdastBlockContent,
-	ListItem as MdastListItem,
 	RootContent as MdastRootContent,
 } from "mdast";
 
@@ -15,14 +14,11 @@ import type {
 	DocumentationNode,
 	SectionNode,
 	HeadingNode,
-	ListItemNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToMarkdown,
 	sectionToMarkdown,
-	listToMarkdown,
-	listItemToMarkdown,
 	markdownBlockContentNodeToMarkdown,
 } from "../default-transformations/index.js";
 
@@ -45,7 +41,6 @@ export type BlockContentTransformations = {
  */
 export type Transformations = BlockContentTransformations & {
 	readonly ["heading"]: Transformation<HeadingNode, MdastBlockContent[]>;
-	readonly ["listItem"]: Transformation<ListItemNode, [MdastListItem]>;
 	readonly ["section"]: Transformation<SectionNode, MdastRootContent[]>;
 };
 
@@ -67,8 +62,6 @@ export type Transformation<
  */
 export const defaultTransformations: Transformations = {
 	heading: headingToMarkdown,
-	list: listToMarkdown,
-	listItem: listItemToMarkdown,
 	markdownBlockContent: markdownBlockContentNodeToMarkdown,
 	section: sectionToMarkdown,
 };

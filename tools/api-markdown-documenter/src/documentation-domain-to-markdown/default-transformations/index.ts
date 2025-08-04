@@ -4,7 +4,5 @@
  */
 
 export { headingToMarkdown } from "./HeadingToMarkdown.js";
-export { listToMarkdown } from "./ListToMarkdown.js";
-export { listItemToMarkdown } from "./ListItemToMarkdown.js";
 export { markdownBlockContentNodeToMarkdown } from "./MarkdownNodeToMarkdown.js";
 export { sectionToMarkdown } from "./SectionToMarkdown.js";

@@ -4,22 +4,17 @@
  */
 
 import type { Nodes as HastNodes } from "hast";
-import { h } from "hastscript";
 
 import type {
 	DocumentationNode,
 	HeadingNode,
 	SectionNode,
-	ListItemNode,
-	ListNode,
 	MarkdownBlockContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToHtml,
 	sectionToHtml,
-	listItemToHtml,
-	listToHtml,
 	markdownNodeToHtml,
 } from "../default-transformations/index.js";
 
@@ -58,18 +53,12 @@ export type Transformation = (
 	context: TransformationContext,
 ) => HastNodes;
 
-// Constants used in transformations below as an allocation optimization.
-const hastHorizontalRule = h("hr");
-
 /**
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
 	markdownBlockContent: (node, context) =>
 		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
-	horizontalRule: () => hastHorizontalRule,
-	list: (node, context) => listToHtml(node as ListNode, context),
 };
