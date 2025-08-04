@@ -28,6 +28,7 @@ import {
 	type IRuntimeStorageService,
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import { defaultMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import {
 	ITelemetryLoggerExt,
 	createChildLogger,
@@ -76,6 +77,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	 */
 	public createProps?: any;
 	public scope: FluidObject = undefined as any;
+
+	public minVersionForCollab: MinimumVersionForCollab = defaultMinVersionForCollab;
 
 	constructor(
 		public readonly id: string = uuid(),
@@ -160,6 +163,6 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	}
 
 	public getMinVersionForCollab(): MinimumVersionForCollab {
-		throw new Error("Method not implemented.");
+		return this.minVersionForCollab;
 	}
 }

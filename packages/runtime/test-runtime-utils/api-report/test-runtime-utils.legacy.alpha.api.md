@@ -351,6 +351,8 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     makeLocallyVisible(): void;
     // (undocumented)
+    minVersionForCollab: MinimumVersionForCollab;
+    // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
     on(event: string | symbol, listener: (...args: any[]) => void): this;
