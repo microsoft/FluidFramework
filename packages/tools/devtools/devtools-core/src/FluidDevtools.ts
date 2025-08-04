@@ -542,7 +542,9 @@ export class FluidDevtools implements IFluidDevtools {
 		this.postContainerList();
 	}
 
-	// Track data object instances to assign sequential numbers
+	/**
+	 * Tracks the number of {@link ContainerRuntimeDevtools} instances created for each base key.
+	 */
 	private readonly containerRuntimesInstanceCounts = new Map<string, number>();
 
 	/**
