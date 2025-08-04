@@ -5,7 +5,7 @@
 
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
-import { MarkdownBlockContentNode, SectionNode } from "../../documentation-domain/index.js";
+import { SectionNode } from "../../documentation-domain/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createTableWithHeading } from "../helpers/index.js";
 
@@ -20,7 +20,7 @@ export function transformApiModel(
 		// If no packages under model, print simple note.
 		return [
 			new SectionNode([
-				new MarkdownBlockContentNode({
+				{
 					type: "paragraph",
 					children: [
 						{
@@ -33,7 +33,7 @@ export function transformApiModel(
 							],
 						},
 					],
-				}),
+				},
 			]),
 		];
 	}

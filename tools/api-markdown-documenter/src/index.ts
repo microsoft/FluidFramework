@@ -39,17 +39,10 @@ export {
 } from "./api-item-transforms/index.js";
 
 export {
-	type BlockContent,
-	type BlockContentMap,
 	DocumentNode,
 	type DocumentNodeProps,
 	type DocumentationNode,
-	type DocumentationLiteralNode,
-	DocumentationLiteralNodeBase,
-	type DocumentationParentNode,
-	DocumentationParentNodeBase,
 	HeadingNode,
-	MarkdownBlockContentNode,
 	SectionNode,
 	type SectionContent,
 } from "./documentation-domain/index.js";
@@ -64,8 +57,6 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
-	blockContentToMarkdown,
-	type BlockContentTransformations as BlockContentToMarkdownTransformations,
 	documentToMarkdown,
 	sectionContentToMarkdown,
 	type Transformation as ToMarkdownTransformation,
