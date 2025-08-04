@@ -53,6 +53,31 @@ function createMatrix(options: TestMatrixOptions): {
 }
 
 /**
+ * {@link createBenchmark} options.
+ */
+interface BenchmarkOptions {
+	/**
+	 * Benchmark test title.
+	 */
+	readonly title: string;
+
+	/**
+	 * Initial size of the matrix.
+	 */
+	readonly matrixSize: number;
+
+	/**
+	 * Initial value for each cell in the matrix.
+	 */
+	readonly initialValue: string | undefined;
+
+	/**
+	 * The operation to be measured.
+	 */
+	readonly operation: (matrix: ISharedMatrix) => void;
+}
+
+/**
  * Creates a benchmark for operations on a SharedMatrix.
  */
 function createBenchmark({
@@ -60,12 +85,7 @@ function createBenchmark({
 	matrixSize,
 	initialValue,
 	operation,
-}: {
-	title: string;
-	matrixSize: number;
-	initialValue: string;
-	operation: (matrix: ISharedMatrix) => void;
-}): IMemoryTestObject {
+}: BenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
 		private localMatrix: ISharedMatrix | undefined;
@@ -85,6 +105,13 @@ function createBenchmark({
 	})();
 }
 
+interface UndoRedoBenchmarkOptions extends BenchmarkOptions {
+	/**
+	 * The number of times undo/redo operations should be performed.
+	 */
+	readonly stackCount: number;
+}
+
 /**
  * Creates a benchmark for undo operations on a SharedMatrix.
  */
@@ -94,13 +121,7 @@ function createUndoBenchmark({
 	initialValue,
 	stackCount,
 	operation,
-}: {
-	title: string;
-	matrixSize: number;
-	initialValue: string;
-	stackCount: number;
-	operation: (matrix: ISharedMatrix) => void;
-}): IMemoryTestObject {
+}: UndoRedoBenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
 		private localMatrix: ISharedMatrix | undefined;
@@ -137,13 +158,7 @@ function createRedoBenchmark({
 	initialValue,
 	stackCount,
 	operation,
-}: {
-	title: string;
-	matrixSize: number;
-	initialValue: string;
-	stackCount: number;
-	operation: (matrix: ISharedMatrix) => void;
-}): IMemoryTestObject {
+}: UndoRedoBenchmarkOptions): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
 		private localMatrix: ISharedMatrix | undefined;
