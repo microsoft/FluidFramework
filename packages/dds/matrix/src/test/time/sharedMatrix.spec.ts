@@ -14,7 +14,7 @@ import {
 } from "@fluid-tools/benchmark";
 import type { IMatrixConsumer } from "@tiny-calc/nano";
 
-import type { SharedMatrix } from "../../index.js";
+import type { ISharedMatrix } from "../../index.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 import { createLocalMatrix } from "../utils.js";
 
@@ -45,7 +45,7 @@ interface BenchmarkConfig extends BenchmarkTimingOptions {
 	 * Optional action to perform on the matrix before the operation being measured.
 	 */
 	readonly beforeOperation?: (
-		matrix: SharedMatrix,
+		matrix: ISharedMatrix,
 		undoRedoStack: UndoRedoStackManager,
 	) => void;
 
@@ -53,13 +53,13 @@ interface BenchmarkConfig extends BenchmarkTimingOptions {
 	 * The operation to perform on the matrix. This should be a function that takes a SharedMatrix
 	 * and performs the desired operation.
 	 */
-	readonly operation: (matrix: SharedMatrix, undoRedoStack: UndoRedoStackManager) => void;
+	readonly operation: (matrix: ISharedMatrix, undoRedoStack: UndoRedoStackManager) => void;
 
 	/**
 	 * Optional action to perform on the matrix after the operation being measured.
 	 */
 	readonly afterOperation?: (
-		matrix: SharedMatrix,
+		matrix: ISharedMatrix,
 		undoRedoStack: UndoRedoStackManager,
 	) => void;
 
