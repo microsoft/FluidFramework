@@ -211,7 +211,6 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
-		"entrypoint": "legacy"
+		"broken": {}
 	}
 }

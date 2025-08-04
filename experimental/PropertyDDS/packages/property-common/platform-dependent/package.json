@@ -23,8 +23,6 @@
 		"@biomejs/biome": "~1.9.3"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
