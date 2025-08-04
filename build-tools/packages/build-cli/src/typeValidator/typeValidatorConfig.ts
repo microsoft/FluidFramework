@@ -33,7 +33,7 @@ export interface ITypeValidationConfig {
 	entrypoint?: ApiLevel;
 
 	/**
-	 * An object containing types that are known to be broken.
+	 * An optional record of types that are known to be broken.
 	 */
 	broken?: BrokenCompatTypes;
 
