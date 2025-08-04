@@ -42,6 +42,9 @@ export interface ITypeValidationConfig {
 	disabled?: boolean;
 }
 
+/**
+ * {@link ITypeValidationConfig} with default values.
+ */
 export const defaultTypeValidationConfig: ITypeValidationConfig = {
 	entrypoint: ApiLevel.legacyAlpha,
 	broken: {},
