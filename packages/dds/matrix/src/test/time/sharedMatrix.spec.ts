@@ -12,6 +12,7 @@ import {
 	type BenchmarkTimer,
 	type BenchmarkTimingOptions,
 } from "@fluid-tools/benchmark";
+import type { IMatrixConsumer } from "@tiny-calc/nano";
 
 import type { SharedMatrix } from "../../index.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
@@ -96,6 +97,14 @@ function runBenchmark({
 					initialValue: cellValue,
 				});
 
+				// Configure event listeners
+				const eventListeners: IMatrixConsumer<string> = {
+					rowsChanged: () => {},
+					colsChanged: () => {},
+					cellsChanged: () => {},
+				};
+				localMatrix.openMatrix(eventListeners);
+
 				// Configure undo/redo
 				const undoRedoStack = new UndoRedoStackManager();
 				localMatrix.openUndo(undoRedoStack);
@@ -111,6 +120,9 @@ function runBenchmark({
 				duration = state.timer.toSeconds(before, after);
 
 				afterOperation?.(localMatrix, undoRedoStack);
+
+				// Cleanup
+				localMatrix.closeMatrix(eventListeners);
 			} while (state.recordBatch(duration));
 		},
 		minBatchDurationSeconds,
