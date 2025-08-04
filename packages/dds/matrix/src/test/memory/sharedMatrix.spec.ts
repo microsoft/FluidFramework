@@ -11,7 +11,7 @@ import {
 	isInPerformanceTestingMode,
 } from "@fluid-tools/benchmark";
 
-import type { SharedMatrix } from "../../index.js";
+import type { ISharedMatrix } from "../../index.js";
 import { UndoRedoStackManager } from "../undoRedoStackManager.js";
 import { createLocalMatrix } from "../utils.js";
 
@@ -37,11 +37,11 @@ function createUndoBenchmark({
 	initialValue: string;
 	operationCount: number;
 	stackCount: number;
-	operation: (matrix: SharedMatrix, count: number) => void;
+	operation: (matrix: ISharedMatrix, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
-		private localMatrix: SharedMatrix | undefined;
+		private localMatrix: ISharedMatrix | undefined;
 		private undoStack: UndoRedoStackManager | undefined;
 
 		async run(): Promise<void> {
@@ -81,11 +81,11 @@ function createRedoBenchmark({
 	initialValue: string;
 	operationCount: number;
 	stackCount: number;
-	operation: (matrix: SharedMatrix, count: number) => void;
+	operation: (matrix: ISharedMatrix, count: number) => void;
 }): IMemoryTestObject {
 	return new (class implements IMemoryTestObject {
 		readonly title = title;
-		private localMatrix: SharedMatrix | undefined;
+		private localMatrix: ISharedMatrix | undefined;
 		private redoStack: UndoRedoStackManager | undefined;
 
 		async run(): Promise<void> {
@@ -160,7 +160,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Insert a column in the middle ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
@@ -217,7 +217,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Insert a row in the middle ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
@@ -274,7 +274,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Insert a row and a column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
@@ -339,7 +339,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Insert a row and a column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
@@ -408,7 +408,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Remove the middle column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
@@ -465,7 +465,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Remove the middle row ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
@@ -522,7 +522,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Remove a row and a column ${count} times`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
@@ -582,7 +582,7 @@ describe("SharedMatrix memory usage", () => {
 					benchmarkMemory(
 						new (class implements IMemoryTestObject {
 							readonly title = `Set a 3-character string in ${count} cells`;
-							private localMatrix: SharedMatrix | undefined;
+							private localMatrix: ISharedMatrix | undefined;
 
 							async run(): Promise<void> {
 								assert(this.localMatrix !== undefined, "localMatrix is not initialized");
