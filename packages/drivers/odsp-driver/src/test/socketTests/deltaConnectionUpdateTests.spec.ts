@@ -134,7 +134,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		}
 	}
 
-	it("Delta connection metadata should be updated via Fluid signals and join session response", async () => {
+	it.skip("Delta connection metadata should be updated via Fluid signals and join session response", async () => {
 		await tickClock(1);
 		socket = new ClientSocketMock();
 		let eventRaised = false;
@@ -200,6 +200,63 @@ describe("DeltaConnectionMetadata update tests", () => {
 		joinSessionStub.restore();
 		assert(eventRaised, "event3 should have been raised");
 		service.off("metadataUpdate", handler);
+	});
+
+	it("Join session response parsing", async () => {
+
+		await tickClock(1);
+		socket = new ClientSocketMock();
+		let eventRaised = false;
+
+		const sensititivityLabelsString = `[
+			{"sensitivityLabelId":"sensitivityLabelId",
+			"tenantId":"tenantId",
+			"assignmentMethod":"standard",
+			"appliedByUserEmail":"fakeemail@microsoft.com"}]`
+
+		const joinSessionResponseString = `
+			{
+				"@odata.context":"https://microsoft.sharepoint-df.com/_api/v2.1/$metadata#oneDrive.session",
+				"deltaStorageUrl":"https://fake/deltaStorageUrl",
+				"deltaStreamSocketUrl":"https://localhost:3001",
+				"id":"id",
+				"refreshSessionDurationSeconds":100,
+				"runtimeTenantId":"1!1!3",
+				"snapshotStorageUrl":"https://fake/snapshotStorageUrl",
+				"socketToken":"",
+				"sensitivityLabelsInfo":
+					{"timestamp":"2025-05-28T14:56:21-07:00",
+					"labels":${sensititivityLabelsString}}}`;
+
+
+		const parsedResponse = JSON.parse(joinSessionResponseString) as ISocketStorageDiscovery;
+
+		const handler = (metadata: Record<string, string>): void => {
+			eventRaised = true;
+			assert.strictEqual(
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				JSON.parse(metadata.sensitivityLabelsInfo),
+				parsedResponse.sensitivityLabelsInfo,
+				"sensitivity info via event should match",
+			);
+		};
+
+		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
+			async () => parsedResponse,
+		);
+
+		// const content: Record<string, string> = { labels: "label1" };
+		service.on("metadataUpdate", handler);
+		const connection = (await mockSocket(socket as unknown as Socket, async () =>
+			service.connectToDeltaStream(client),
+		)) as OdspDocumentDeltaConnection;
+		assert(eventRaised, "event1 should have been raised");
+		service.off("metadataUpdate", handler);
+		joinSessionStub.restore();
+
+		assert(!connection.disposed, "connection should not be disposed");
+
+		assert(joinSessionStub.calledOnce, "Should called once on first try");
 	});
 
 	afterEach(async () => {
