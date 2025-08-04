@@ -87,7 +87,7 @@ describe("createSharedObjectKind's return type", () => {
 });
 
 describe("createSharedObjectKind with minVersionForCollab", () => {
-	it("SharedObject can ready minVersionForCollab from the runtime", () => {
+	it("SharedObject can read minVersionForCollab from the runtime", () => {
 		const factory = SharedFoo.getFactory();
 		const runtime = new MockFluidDataStoreRuntime({ minVersionForCollab: "1.2.3" });
 		const sharedObject = factory.create(runtime, "test-id");
