@@ -17,8 +17,6 @@ import type { IEventProvider } from "@fluidframework/core-interfaces";
 /**
  * A lightweight abstraction of a container that provides
  * only the essential properties and methods needed for Fluid DevTools functionality.
- *
- * @alpha
  */
 export interface DecomposedContainer extends IEventProvider<IContainerEvents> {
 	/**
