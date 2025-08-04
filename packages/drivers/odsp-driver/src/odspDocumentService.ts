@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, type ILayerCompatDetails } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
@@ -38,7 +38,6 @@ import {
 	OdspDeltaStorageWithCache,
 } from "./odspDeltaStorageService.js";
 import { OdspDocumentStorageService } from "./odspDocumentStorageManager.js";
-import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
 import { hasOdcOrigin } from "./odspUrlHelper.js";
 import { getOdspResolvedUrl } from "./odspUtils.js";
 import { OpsCache } from "./opsCaching.js";
@@ -99,14 +98,6 @@ export class OdspDocumentService
 			socketReferenceKeyPrefix,
 			clientIsSummarizer,
 		);
-	}
-
-	/**
-	 * The compatibility details of the ODSP Driver layer that is exposed to the Loader layer
-	 * for validating Loader-Driver compatibility.
-	 */
-	public get ILayerCompatDetails(): ILayerCompatDetails {
-		return odspDriverCompatDetailsForLoader;
 	}
 
 	private storageManager?: OdspDocumentStorageService;

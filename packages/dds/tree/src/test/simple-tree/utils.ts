@@ -4,20 +4,13 @@
  */
 
 import {
-	comparePosetElements,
-	fieldRealizer,
-	getAllowedContentDiscrepancies,
 	isTreeNode,
 	isTreeNodeSchemaClass,
-	PosetComparisonResult,
 	TreeViewConfiguration,
-	type FieldDiscrepancy,
-	type FieldSchema,
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	type NodeKind,
-	type Realizer,
 	type TreeFieldFromImplicitField,
 	type TreeLeafValue,
 	type TreeNode,
@@ -27,7 +20,6 @@ import {
 import { getView } from "../utils.js";
 import type { TreeCheckout } from "../../shared-tree/index.js";
 import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
-import type { TreeStoredSchema } from "../../core/index.js";
 
 /**
  * Initializes a node with the given schema and content.
@@ -158,86 +150,4 @@ export function getViewForForkedBranch<const TSchema extends ImplicitFieldSchema
 		),
 		forkCheckout,
 	};
-}
-
-/**
- * This function uses discrepancies to determine if replacing the provided stored schema to a stored schema derived from the provided view schema would support a superset of the documents permitted by the provided stored schema.
- *
- * @remarks
- * According to the policy of schema evolution, this function supports three types of changes:
- * 1. Adding an optional field to an object node.
- * 2. Expanding the set of allowed types for a field.
- * 3. Relaxing a field kind to a more general field kind
- * 4. Adding new node schema
- * 5. Arbitrary changes to persisted metadata
- *
- * Notes: We expect this to return consistent results with allowsRepoSuperset. However, currently there are some scenarios
- * where the inconsistency will occur:
- * - Different Node Kinds: If view and stored have different node kinds (e.g., view is an objectNodeSchema and stored is a mapNodeSchema),
- * This will determine that view can never be the superset of stored. In contrast, `allowsRepoSuperset` will continue
- * validating internal fields.
- *
- * TODO: Evaluate if this function is needed at all. It is only used in tests and could possibly be replaced with `allowsRepoSuperset`.
- * Maybe production code for canUpgrade should be using this?
- */
-export function isViewSupersetOfStored(view: FieldSchema, stored: TreeStoredSchema): boolean {
-	const discrepancies = getAllowedContentDiscrepancies(view, stored);
-
-	for (const discrepancy of discrepancies) {
-		switch (discrepancy.mismatch) {
-			case "nodeKind": {
-				if (discrepancy.stored !== undefined) {
-					// It's fine for the view schema to know of a node type that the stored schema doesn't know about.
-					return false;
-				}
-				break;
-			}
-			case "valueSchema":
-			case "allowedTypes":
-			case "fieldKind": {
-				if (!isFieldDiscrepancyCompatible(discrepancy)) {
-					return false;
-				}
-				break;
-			}
-			case "fields": {
-				if (
-					discrepancy.differences.some(
-						(difference) => !isFieldDiscrepancyCompatible(difference),
-					)
-				) {
-					return false;
-				}
-				break;
-			}
-			// No default
-		}
-	}
-	return true;
-}
-
-function isFieldDiscrepancyCompatible(discrepancy: FieldDiscrepancy): boolean {
-	switch (discrepancy.mismatch) {
-		case "allowedTypes": {
-			// Since we only track the symmetric difference between the allowed types in the view and
-			// stored schemas, it's sufficient to check if any extra allowed types still exist in the
-			// stored schema.
-			return discrepancy.stored.length === 0;
-		}
-		case "fieldKind": {
-			return posetLte(discrepancy.stored, discrepancy.view, fieldRealizer);
-		}
-		case "valueSchema": {
-			return false;
-		}
-		// No default
-	}
-	return false;
-}
-
-export function posetLte<T>(a: T, b: T, realizer: Realizer<T>): boolean {
-	const comparison = comparePosetElements(a, b, realizer);
-	return (
-		comparison === PosetComparisonResult.Less || comparison === PosetComparisonResult.Equal
-	);
 }

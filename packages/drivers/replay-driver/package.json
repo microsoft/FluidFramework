@@ -102,7 +102,17 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_ReplayDocumentService": {
+				"backCompat": false
+			},
+			"ClassStatics_ReplayDocumentService": {
+				"backCompat": false
+			},
+			"Class_ReplayDocumentServiceFactory": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }
