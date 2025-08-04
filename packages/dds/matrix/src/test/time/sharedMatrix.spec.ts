@@ -328,7 +328,6 @@ describe("SharedMatrix execution time", () => {
 							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 						},
 						operation: (_matrix, undoRedoStack) => {
-							assert.equal(undoRedoStack.redoStackLength, 2 * count);
 							for (let i = 0; i < 2 * count; i++) {
 								undoRedoStack.redoOperation();
 							}
