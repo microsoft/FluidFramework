@@ -9,18 +9,12 @@ import type {
 	DocumentationNode,
 	HeadingNode,
 	SectionNode,
-	TableCellNode,
-	TableNode,
-	TableRowNode,
 	MarkdownBlockContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import {
 	headingToHtml,
 	sectionToHtml,
-	tableToHtml,
-	tableCellToHtml,
-	tableRowToHtml,
 	markdownNodeToHtml,
 } from "../default-transformations/index.js";
 
@@ -67,7 +61,4 @@ export const defaultTransformations: Transformations = {
 	markdownBlockContent: (node, context) =>
 		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
-	table: (node, context) => tableToHtml(node as TableNode, context),
-	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
-	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),
 };
