@@ -367,7 +367,10 @@ export function createTypeParametersSection(
 		config,
 	);
 
-	return new SectionNode([typeParametersTable], new HeadingNode("Type Parameters"));
+	return new SectionNode(
+		[new MarkdownBlockContentNode(typeParametersTable)],
+		new HeadingNode("Type Parameters"),
+	);
 }
 
 /**
@@ -952,7 +955,11 @@ export function createParametersSection(
 	}
 
 	return wrapInSection(
-		[createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config)],
+		[
+			new MarkdownBlockContentNode(
+				createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config),
+			),
+		],
 		{
 			title: "Parameters",
 			id: `${getFileSafeNameForApiItem(apiFunctionLike)}-parameters`,

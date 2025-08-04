@@ -35,7 +35,6 @@ import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Paragraph } from 'mdast';
 import type { Parent } from 'unist';
-import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
 import type { Root as Root_2 } from 'mdast';
