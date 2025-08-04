@@ -684,7 +684,7 @@ export class BlobManager {
 	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
 		assert(
 			isBlobMetadata(message.metadata),
-			0xc01 /* Expected blob metadata for a BlobAttach op */,
+			0xc02 /* Expected blob metadata for a BlobAttach op */,
 		);
 		const { localId, blobId } = message.metadata;
 		const pendingEntry = this.pendingBlobs.get(localId);

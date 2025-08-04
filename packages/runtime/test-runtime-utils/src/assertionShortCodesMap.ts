@@ -1841,5 +1841,6 @@ export const shortCodeMap = {
 	"0xbfe": "Expected unhydrated context",
 	"0xbff": "missing schema for type in cursor",
 	"0xc00": "found unknown field where not allowed",
-	"0xc01": "Expected blob metadata for a BlobAttach op"
+	"0xc01": "Expected blob metadata for a BlobAttach op",
+	"0xc02": "Expected blob metadata for a BlobAttach op"
 };
