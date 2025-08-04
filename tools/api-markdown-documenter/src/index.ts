@@ -49,21 +49,9 @@ export {
 	type DocumentationParentNode,
 	DocumentationParentNodeBase,
 	HeadingNode,
-	ListItemNode,
-	ListNode,
 	MarkdownBlockContentNode,
 	SectionNode,
 	type SectionContent,
-	type TableCellContent,
-	TableCellNode,
-	TableBodyCellNode,
-	TableHeaderCellNode,
-	TableCellKind,
-	TableRowNode,
-	TableBodyRowNode,
-	TableHeaderRowNode,
-	TableRowKind,
-	TableNode,
 } from "./documentation-domain/index.js";
 
 export {

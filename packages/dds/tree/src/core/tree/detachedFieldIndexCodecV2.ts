@@ -26,7 +26,7 @@ class MajorCodec implements IJsonCodec<Major> {
 	) {}
 
 	public encode(major: Major): EncodedRevisionTag | StableId {
-		assert(major !== undefined, "Unexpected undefined revision");
+		assert(major !== undefined, 0xbfb /* Unexpected undefined revision */);
 		const id = this.revisionTagCodec.encode(major);
 
 		if (id !== "root" && id < 0) {
@@ -34,7 +34,7 @@ class MajorCodec implements IJsonCodec<Major> {
 			 * This code path handles the case where the major revision is not finalized.
 			 * This can happen the SharedTree is being attached to an already attached container.
 			 */
-			assert(major !== "root", "Major revision cannot be 'root'");
+			assert(major !== "root", 0xbfc /* Major revision cannot be 'root' */);
 			const long = this.idCompressor.decompress(major);
 			return long;
 		}
@@ -44,7 +44,7 @@ class MajorCodec implements IJsonCodec<Major> {
 	public decode(major: EncodedRevisionTag | StableId): RevisionTag {
 		assert(
 			major === "root" || (typeof major === "string" && isStableId(major)) || major >= 0,
-			"Expected root, stable, or final compressed id",
+			0xbfd /* Expected root, stable, or final compressed id */,
 		);
 		if (typeof major === "string" && isStableId(major)) {
 			return this.idCompressor.recompress(major);

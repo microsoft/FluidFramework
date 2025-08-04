@@ -29,7 +29,6 @@ import type { BlockContent as BlockContent_2 } from 'mdast';
 import type { Data } from 'unist';
 import { DocSection } from '@microsoft/tsdoc';
 import { Excerpt } from '@microsoft/api-extractor-model';
-import type { ListItem } from 'mdast';
 import type { Literal } from 'unist';
 import { NewlineKind } from '@rushstack/node-core-library';
 import type { Node as Node_2 } from 'unist';
@@ -37,13 +36,10 @@ import type { Nodes } from 'hast';
 import type { Nodes as Nodes_2 } from 'mdast';
 import { Options } from 'mdast-util-to-markdown';
 import type { Parent } from 'unist';
-import type { PhrasingContent } from 'mdast';
 import { ReleaseTag } from '@microsoft/api-extractor-model';
 import type { Root } from 'hast';
 import type { Root as Root_2 } from 'mdast';
 import type { RootContent } from 'mdast';
-import type { TableCell } from 'mdast';
-import type { TableRow } from 'mdast';
 import { TypeParameter } from '@microsoft/api-extractor-model';
 
 // @public
@@ -171,11 +167,7 @@ export type BlockContent = BlockContentMap[keyof BlockContentMap];
 // @public
 export interface BlockContentMap {
     // (undocumented)
-    list: ListNode;
-    // (undocumented)
     markdownBlockContent: MarkdownBlockContentNode;
-    // (undocumented)
-    table: TableNode;
 }
 
 // @public
@@ -520,22 +512,6 @@ export interface Link {
     readonly text: string;
 }
 
-// @public @sealed
-export class ListItemNode extends DocumentationParentNodeBase<PhrasingContent> {
-    constructor(children: PhrasingContent[]);
-    static createFromPlainText(text: string): ListItemNode;
-    static readonly Empty: ListItemNode;
-    readonly type = "listItem";
-}
-
-// @public @sealed
-export class ListNode extends DocumentationParentNodeBase<ListItemNode> {
-    constructor(children: ListItemNode[], ordered: boolean);
-    static createFromPlainTextEntries(entries: string[], ordered: boolean): ListNode;
-    readonly ordered: boolean;
-    readonly type = "list";
-}
-
 // @public
 export function loadModel(options: LoadModelOptions): Promise<ApiModel>;
 
@@ -653,69 +629,6 @@ export class SectionNode extends DocumentationParentNodeBase<SectionContent> {
 // @public
 function shouldItemBeIncluded(apiItem: ApiItem, config: ApiItemTransformationConfiguration): boolean;
 
-// @public @sealed
-export class TableBodyCellNode extends TableCellNode {
-    constructor(children: TableCellContent[]);
-    static createFromPlainText(text: string): TableBodyCellNode;
-    static readonly Empty: TableBodyCellNode;
-}
-
-// @public @sealed
-export class TableBodyRowNode extends TableRowNode {
-    constructor(cells: TableCellNode[]);
-    static readonly Empty: TableBodyRowNode;
-}
-
-// @public
-export type TableCellContent = PhrasingContent | BlockContent;
-
-// @public
-export enum TableCellKind {
-    Body = "Body",
-    Header = "Header"
-}
-
-// @public @sealed
-export abstract class TableCellNode extends DocumentationParentNodeBase<TableCellContent> {
-    protected constructor(children: TableCellContent[], cellKind: TableCellKind);
-    readonly cellKind: TableCellKind;
-    readonly type = "tableCell";
-}
-
-// @public @sealed
-export class TableHeaderCellNode extends TableCellNode {
-    constructor(children: TableCellContent[]);
-    static createFromPlainText(text: string): TableHeaderCellNode;
-    static readonly Empty: TableHeaderCellNode;
-}
-
-// @public @sealed
-export class TableHeaderRowNode extends TableRowNode {
-    constructor(cells: TableHeaderCellNode[]);
-    static readonly Empty: TableHeaderRowNode;
-}
-
-// @public @sealed
-export class TableNode extends DocumentationParentNodeBase<TableBodyRowNode> {
-    constructor(bodyRows: TableBodyRowNode[], headingRow?: TableHeaderRowNode);
-    static readonly Empty: TableNode;
-    readonly headerRow?: TableHeaderRowNode;
-    readonly type = "table";
-}
-
-// @public
-export enum TableRowKind {
-    Body = "Body",
-    Header = "Header"
-}
-
-// @public @sealed
-export abstract class TableRowNode extends DocumentationParentNodeBase<TableCellNode> {
-    protected constructor(cells: TableCellNode[], rowKind: TableRowKind);
-    readonly rowKind: TableRowKind;
-    readonly type = "tableRow";
-}
-
 // @public
 export interface ToHtmlConfiguration extends LoggingConfiguration {
     readonly customTransformations?: ToHtmlTransformations;
@@ -757,10 +670,7 @@ export type ToMarkdownTransformation<TIn extends DocumentationNode = Documentati
 // @public
 export type ToMarkdownTransformations = BlockContentToMarkdownTransformations & {
     readonly ["heading"]: ToMarkdownTransformation<HeadingNode, BlockContent_2[]>;
-    readonly ["listItem"]: ToMarkdownTransformation<ListItemNode, [ListItem]>;
     readonly ["section"]: ToMarkdownTransformation<SectionNode, RootContent[]>;
-    readonly ["tableCell"]: ToMarkdownTransformation<TableCellNode, [TableCell]>;
-    readonly ["tableRow"]: ToMarkdownTransformation<TableRowNode, [TableRow]>;
 };
 
 // @public

@@ -28,9 +28,14 @@ Usages should be converted to `MarkdownBlockContentNode` or `mdast` directly as 
 - `HorizontalRuleNode`
 - `LineBreakNode`
 - `LinkNode`
+- `ListItemNode`
+- `ListNode`
 - `ParagraphNode`
 - `PlainTextNode`
 - `SpanNode`
+- `TableCellNode`
+- `TableNode`
+- `TableRowNode`
 
 ## 0.21.0
 

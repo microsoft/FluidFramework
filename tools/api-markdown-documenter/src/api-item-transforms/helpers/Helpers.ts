@@ -35,8 +35,6 @@ import type { Logger } from "../../Logging.js";
 import {
 	type BlockContent,
 	HeadingNode,
-	ListItemNode,
-	ListNode,
 	MarkdownBlockContentNode,
 	type SectionContent,
 	SectionNode,
@@ -371,7 +369,10 @@ export function createTypeParametersSection(
 		config,
 	);
 
-	return new SectionNode([typeParametersTable], new HeadingNode("Type Parameters"));
+	return new SectionNode(
+		[new MarkdownBlockContentNode(typeParametersTable)],
+		new HeadingNode("Type Parameters"),
+	);
 }
 
 /**
@@ -960,7 +961,11 @@ export function createParametersSection(
 	}
 
 	return wrapInSection(
-		[createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config)],
+		[
+			new MarkdownBlockContentNode(
+				createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config),
+			),
+		],
 		{
 			title: "Parameters",
 			id: `${getFileSafeNameForApiItem(apiFunctionLike)}-parameters`,
@@ -1122,22 +1127,36 @@ export function wrapInSection(nodes: SectionContent[], heading?: Heading): Secti
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): ListNode | undefined {
+): MarkdownBlockContentNode | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;
 	}
 
-	return new ListNode(
-		apiEntryPoints.map((entryPoint) => {
+	return new MarkdownBlockContentNode({
+		type: "list",
+		ordered: false,
+		children: apiEntryPoints.map((entryPoint) => {
 			const link = getLinkForApiItem(entryPoint, config);
-			return new ListItemNode([
-				{
-					type: "link",
-					url: link.target,
-					children: [{ type: "text", value: link.text }],
-				},
-			]);
+			return {
+				type: "listItem",
+				children: [
+					{
+						type: "paragraph",
+						children: [
+							{
+								type: "link",
+								url: link.target,
+								children: [
+									{
+										type: "text",
+										value: link.text,
+									},
+								],
+							},
+						],
+					},
+				],
+			};
 		}),
-		/* ordered */ false,
-	);
+	});
 }
