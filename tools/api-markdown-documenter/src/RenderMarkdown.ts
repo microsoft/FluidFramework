@@ -7,12 +7,13 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { ApiDocument } from "./ApiDocument.js";
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import type { DocumentNode } from "./documentation-domain/index.js";
+import type { SectionNode } from "./documentation-domain/index.js";
 import {
 	type RenderDocumentAsMarkdownConfiguration,
 	renderDocumentAsMarkdown,
@@ -59,7 +60,7 @@ export interface RenderDocumentsAsMarkdownOptions
  * @public
  */
 export async function renderDocumentsAsMarkdown(
-	documents: readonly DocumentNode[],
+	documents: readonly ApiDocument<SectionNode[]>[],
 	options: RenderDocumentsAsMarkdownOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;

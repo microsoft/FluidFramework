@@ -14,10 +14,6 @@
  * transformations, or by writing your own!
  */
 
-export {
-	DocumentNode,
-	type DocumentNodeProperties as DocumentNodeProps,
-} from "./DocumentNode.js";
 export { type DocumentationNode } from "./DocumentationNode.js";
 export { HeadingNode } from "./HeadingNode.js";
 export { type SectionContent, SectionNode } from "./SectionNode.js";

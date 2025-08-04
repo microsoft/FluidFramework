@@ -96,9 +96,7 @@ export function documentationNodeToHtml(
 	// If the node is not a section, then it is Markdown "block content" and can be returned directly.
 	if (node.type === "section" || node.type === "heading") {
 		if (context.transformations[node.type] === undefined) {
-			throw new Error(
-				`Missing HTML transformation for type: "${node.type}".`,
-			);
+			throw new Error(`Missing HTML transformation for type: "${node.type}".`);
 		}
 
 		return context.transformations[node.type](node, context);

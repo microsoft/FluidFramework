@@ -7,16 +7,18 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { ApiDocument } from "./ApiDocument.js";
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import type { DocumentNode } from "./documentation-domain/index.js";
 import {
 	type RenderDocumentAsHtmlConfiguration,
 	renderDocumentAsHtml,
 } from "./renderers/index.js";
+
+import type { SectionNode } from "./index.js";
 
 /**
  * API Model HTML rendering options.
@@ -59,7 +61,7 @@ export interface RenderDocumentsAsHtmlOptions
  * @alpha
  */
 export async function renderDocumentsAsHtml(
-	documents: readonly DocumentNode[],
+	documents: readonly ApiDocument<SectionNode[]>[],
 	options: RenderDocumentsAsHtmlOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;
