@@ -11,28 +11,19 @@ Transformations to HTML will use `mdast-util-to-hast`.
 
 #### Markdown Nodes
 
-`MarkdownBlockContentNode` has been added to the Documentation Domain temporarily.
-They allow `mdast` "block content" trees to be used directly within the `DocumentationNode` hierarchy.
+`SectionNode` has been updated to take `mdast` "block content" directly.
+All `DocumentationNode` implementations except `SectionNode` and `HeadingNode` (which don't have direct Markdown correlaries) have been removed.
+Markdown trees via `mdast` are now used directly in API item and TSDoc transformations.
 
-This functionality will be used to iteratively replace and remove `DocumentationNode` implementations, until the entire domain can be removed.
+#### Extensibility support removed
 
-Contexts that use conceptual "phrasing content" in the Documentation Domain now take `mdast` "phrasing content" directly as children.
+The Documentation Domain is no longer extensible.
+Since it is now a thin wrapper around `mdast`, `mdast`'s own extensibility model can be leveraged for custom content types.
 
-#### Removed Node kinds
+### `DocumentNode` renamed to `ApiDocument`
 
-The following kinds of nodes have been removed from the library.
-Usages should be converted to `MarkdownBlockContentNode` or `mdast` directly as appropriate.
-
-- `CodeSpanNode`
-- `FencedCodeBlockNode`
-- `HorizontalRuleNode`
-- `LineBreakNode`
-- `LinkNode`
-- `ListItemNode`
-- `ListNode`
-- `ParagraphNode`
-- `PlainTextNode`
-- `SpanNode`
+It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
 
 ## 0.21.0
 

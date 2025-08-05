@@ -9,24 +9,13 @@ import type {
 	DocumentationNode,
 	HeadingNode,
 	SectionNode,
-	TableCellNode,
-	TableNode,
-	TableRowNode,
-	MarkdownBlockContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import {
-	headingToHtml,
-	sectionToHtml,
-	tableToHtml,
-	tableCellToHtml,
-	tableRowToHtml,
-	markdownNodeToHtml,
-} from "../default-transformations/index.js";
+import { headingToHtml, sectionToHtml } from "../default-transformations/index.js";
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
- * specified by {@link DocumentationNode."type"}.
+ * specified by its "type".
  *
  * @remarks
  *
@@ -40,7 +29,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface Transformations {
 	/**
-	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a transformation implementation
+	 * Maps from a {@link DocumentationNode}'s "type" to a transformation implementation
 	 * for that kind of node.
 	 */
 	readonly [documentationNodeKind: string]: Transformation;
@@ -64,10 +53,5 @@ export type Transformation = (
  */
 export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	markdownBlockContent: (node, context) =>
-		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
-	table: (node, context) => tableToHtml(node as TableNode, context),
-	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
-	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),
 };

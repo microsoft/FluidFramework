@@ -27,15 +27,23 @@ import {
 	type DocPlainText,
 	type DocSection,
 } from "@microsoft/tsdoc";
-import type { Link as MdastLink, Nodes, Parent, PhrasingContent, Strong, Text } from "mdast";
+import type {
+	BlockContent,
+	List,
+	Link as MdastLink,
+	Nodes,
+	Paragraph,
+	Parent,
+	PhrasingContent,
+	Strong,
+	Text,
+} from "mdast";
 
 import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
 import {
-	type BlockContent,
 	HeadingNode,
-	MarkdownBlockContentNode,
 	type SectionContent,
 	SectionNode,
 } from "../../documentation-domain/index.js";
@@ -56,7 +64,7 @@ import {
 	doesItemKindRequireOwnDocument,
 	getLinkForApiItem,
 } from "../ApiItemTransformUtilities.js";
-import { transformAndWrapTsdoc, transformTsdoc } from "../TsdocNodeTransforms.js";
+import { transformTsdoc } from "../TsdocNodeTransforms.js";
 import {
 	HierarchyKind,
 	type ApiItemTransformationConfiguration,
@@ -88,13 +96,11 @@ export function createSignatureSection(
 		if (signatureExcerpt !== "") {
 			const contents: SectionContent[] = [];
 
-			contents.push(
-				new MarkdownBlockContentNode({
-					type: "code",
-					lang: "typescript",
-					value: signatureExcerpt.trim(),
-				}),
-			);
+			contents.push({
+				type: "code",
+				lang: "typescript",
+				value: signatureExcerpt.trim(),
+			});
 
 			const renderedHeritageTypes = createHeritageTypesContent(apiItem, config);
 			if (renderedHeritageTypes !== undefined) {
@@ -144,12 +150,10 @@ function createHeritageTypesContent(
 					'No content was rendered for non-empty "extends" type list. This is not expected.',
 				);
 			} else {
-				contents.push(
-					new MarkdownBlockContentNode({
-						type: "paragraph",
-						children: extendsTypesSpan,
-					}),
-				);
+				contents.push({
+					type: "paragraph",
+					children: extendsTypesSpan,
+				});
 			}
 		}
 
@@ -160,12 +164,10 @@ function createHeritageTypesContent(
 			config,
 		);
 		if (renderedImplementsTypes.length > 0) {
-			contents.push(
-				new MarkdownBlockContentNode({
-					type: "paragraph",
-					children: renderedImplementsTypes,
-				}),
-			);
+			contents.push({
+				type: "paragraph",
+				children: renderedImplementsTypes,
+			});
 		}
 	}
 
@@ -178,12 +180,10 @@ function createHeritageTypesContent(
 		);
 
 		if (renderedExtendsTypes.length > 0) {
-			contents.push(
-				new MarkdownBlockContentNode({
-					type: "paragraph",
-					children: renderedExtendsTypes,
-				}),
-			);
+			contents.push({
+				type: "paragraph",
+				children: renderedExtendsTypes,
+			});
 		}
 	}
 
@@ -195,12 +195,10 @@ function createHeritageTypesContent(
 		renderedTypeSpan = createTypeSpan(apiItem.variableTypeExcerpt, config);
 	}
 	if (renderedTypeSpan.length > 0) {
-		contents.push(
-			new MarkdownBlockContentNode({
-				type: "paragraph",
-				children: renderedTypeSpan,
-			}),
-		);
+		contents.push({
+			type: "paragraph",
+			children: renderedTypeSpan,
+		});
 	}
 
 	// Render type parameters if there are any.
@@ -334,9 +332,9 @@ export function createSeeAlsoSection(
 		return undefined;
 	}
 
-	const contents: BlockContent[] = [];
+	const contents: SectionContent[] = [];
 	for (const seeBlock of seeBlocks) {
-		contents.push(...transformAndWrapTsdoc(seeBlock, apiItem, config));
+		contents.push(...transformTsdoc(seeBlock, apiItem, config));
 	}
 
 	return wrapInSection(contents, {
@@ -448,7 +446,7 @@ export function createExcerptSpanWithHyperlinks(
 export function createBreadcrumbParagraph(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): MarkdownBlockContentNode {
+): Paragraph {
 	// #region Get hierarchy of document items
 
 	const breadcrumbLinks: Link[] = [getLinkForApiItem(apiItem, config)];
@@ -485,10 +483,10 @@ export function createBreadcrumbParagraph(
 		breadcrumbSeparator,
 	);
 
-	return new MarkdownBlockContentNode({
+	return {
 		type: "paragraph",
 		children: contents,
-	});
+	};
 }
 
 /**
@@ -532,7 +530,7 @@ export function createSummarySection(
 	config: ApiItemTransformationConfiguration,
 ): SectionNode | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-		const sectionContents = transformAndWrapTsdoc(
+		const sectionContents = transformTsdoc(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
 			config,
@@ -567,7 +565,7 @@ export function createRemarksSection(
 	}
 
 	return wrapInSection(
-		transformAndWrapTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
+		transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
 		{ title: "Remarks", id: `${getFileSafeNameForApiItem(apiItem)}-remarks` },
 	);
 }
@@ -598,7 +596,7 @@ export function createThrowsSection(
 
 	const contents: BlockContent[] = [];
 	for (const throwsBlock of throwsBlocks) {
-		contents.push(...transformAndWrapTsdoc(throwsBlock, apiItem, config));
+		contents.push(...transformTsdoc(throwsBlock, apiItem, config));
 	}
 
 	return wrapInSection(contents, {
@@ -630,7 +628,7 @@ export function createDeprecationNoticeSection(
 	}
 
 	return wrapInSection([
-		new MarkdownBlockContentNode({
+		{
 			type: "paragraph",
 			children: [
 				{
@@ -644,8 +642,8 @@ export function createDeprecationNoticeSection(
 					],
 				},
 			],
-		}),
-		...transformAndWrapTsdoc(deprecatedBlock, apiItem, config),
+		},
+		...transformTsdoc(deprecatedBlock, apiItem, config),
 	]);
 }
 
@@ -815,12 +813,8 @@ function createExampleSection(
 		example.exampleNumber ?? ""
 	}`;
 
-	const sectionChildren = transformedExampleContent.map(
-		(node) => new MarkdownBlockContentNode(node),
-	);
-
 	// Always emit the section, even if the body is empty after stripping out the title.
-	return wrapInSection(sectionChildren, {
+	return wrapInSection(transformedExampleContent, {
 		title: headingTitle,
 		id: headingId,
 	});
@@ -989,7 +983,7 @@ export function createReturnsSection(
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const returnsBlock = getReturnsBlock(apiItem);
 		if (returnsBlock !== undefined) {
-			children.push(...transformAndWrapTsdoc(returnsBlock, apiItem, config));
+			children.push(...transformTsdoc(returnsBlock, apiItem, config));
 		}
 	}
 
@@ -1007,22 +1001,20 @@ export function createReturnsSection(
 				config,
 			);
 			if (typeExcerptSpan.length > 0) {
-				children.push(
-					new MarkdownBlockContentNode({
-						type: "paragraph",
-						children: [
-							{
-								type: "strong",
-								children: [{ type: "text", value: "Return type" }],
-							},
-							{
-								type: "text",
-								value: ": ",
-							},
-							...typeExcerptSpan,
-						],
-					}),
-				);
+				children.push({
+					type: "paragraph",
+					children: [
+						{
+							type: "strong",
+							children: [{ type: "text", value: "Return type" }],
+						},
+						{
+							type: "text",
+							value: ": ",
+						},
+						...typeExcerptSpan,
+					],
+				});
 			}
 		}
 	}
@@ -1120,12 +1112,12 @@ export function wrapInSection(nodes: SectionContent[], heading?: Heading): Secti
 export function createEntryPointList(
 	apiEntryPoints: readonly ApiEntryPoint[],
 	config: ApiItemTransformationConfiguration,
-): MarkdownBlockContentNode | undefined {
+): List | undefined {
 	if (apiEntryPoints.length === 0) {
 		return undefined;
 	}
 
-	return new MarkdownBlockContentNode({
+	return {
 		type: "list",
 		ordered: false,
 		children: apiEntryPoints.map((entryPoint) => {
@@ -1151,5 +1143,5 @@ export function createEntryPointList(
 				],
 			};
 		}),
-	});
+	};
 }

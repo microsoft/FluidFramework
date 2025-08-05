@@ -16,19 +16,11 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 import type { DocSection } from "@microsoft/tsdoc";
-import type { PhrasingContent } from "mdast";
+import { toHtml } from "hast-util-to-html";
+import type { Html, PhrasingContent, Table, TableCell, TableRow } from "mdast";
+import { toHast } from "mdast-util-to-hast";
 
-import {
-	HeadingNode,
-	MarkdownBlockContentNode,
-	SectionNode,
-	TableBodyCellNode,
-	TableBodyRowNode,
-	type TableCellContent,
-	TableHeaderCellNode,
-	TableHeaderRowNode,
-	TableNode,
-} from "../../documentation-domain/index.js";
+import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
 	type ApiModifier,
@@ -140,7 +132,7 @@ export function createSummaryTable(
 	itemKind: ApiItemKind,
 	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
-): TableNode | undefined {
+): Table | undefined {
 	if (itemKind === ApiItemKind.Model || itemKind === ApiItemKind.EntryPoint) {
 		throw new Error(
 			`Summary table creation does not support provided API item kind: "${itemKind}".`,
@@ -197,7 +189,7 @@ export function createDefaultSummaryTable(
 	itemKind: ApiItemKind,
 	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
-): TableNode | undefined {
+): Table | undefined {
 	if (apiItems.length === 0) {
 		return undefined;
 	}
@@ -211,21 +203,24 @@ export function createDefaultSummaryTable(
 		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
 	);
 
-	const headerRowCells: TableHeaderCellNode[] = [
-		TableHeaderCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
+	const headerRowCells: TableCell[] = [
+		createPlainTextTableCell(getTableHeadingTitleForApiKind(itemKind)),
 	];
 	if (hasAlerts) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(createPlainTextTableCell("Alerts"));
 	}
 	if (hasModifiers) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(createPlainTextTableCell("Modifiers"));
 	}
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
-	const headerRow = new TableHeaderRowNode(headerRowCells);
+	headerRowCells.push(createPlainTextTableCell("Description"));
+	const headerRow: TableRow = {
+		type: "tableRow",
+		children: headerRowCells,
+	};
 
-	const bodyRows: TableBodyRowNode[] = [];
+	const bodyRows: TableRow[] = [];
 	for (let i = 0; i < apiItems.length; i++) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItems[i], config)];
+		const bodyRowCells: TableCell[] = [createApiTitleCell(apiItems[i], config)];
 		if (hasAlerts) {
 			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
@@ -234,10 +229,16 @@ export function createDefaultSummaryTable(
 		}
 		bodyRowCells.push(createApiSummaryCell(apiItems[i], config));
 
-		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+		bodyRows.push({
+			type: "tableRow",
+			children: bodyRowCells,
+		});
 	}
 
-	return new TableNode(bodyRows, headerRow);
+	return {
+		type: "table",
+		children: [headerRow, ...bodyRows],
+	};
 }
 
 /**
@@ -252,39 +253,44 @@ export function createParametersSummaryTable(
 	apiParameters: readonly Parameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableNode {
+): Table {
 	// Only display "Modifiers" column if there are any optional parameters present.
 	const hasOptionalParameters = apiParameters.some((apiParameter) => apiParameter.isOptional);
 
-	const headerRowCells: TableHeaderCellNode[] = [
-		TableHeaderCellNode.createFromPlainText("Parameter"),
-	];
+	const headerRowCells: TableCell[] = [createPlainTextTableCell("Parameter")];
 	if (hasOptionalParameters) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(createPlainTextTableCell("Modifiers"));
 	}
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Type"));
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
-	const headerRow = new TableHeaderRowNode(headerRowCells);
+	headerRowCells.push(createPlainTextTableCell("Type"));
+	headerRowCells.push(createPlainTextTableCell("Description"));
+	const headerRow: TableRow = {
+		type: "tableRow",
+		children: headerRowCells,
+	};
 
-	function createModifierCell(apiParameter: Parameter): TableBodyCellNode {
-		return apiParameter.isOptional
-			? TableBodyCellNode.createFromPlainText("optional")
-			: TableBodyCellNode.Empty;
+	function createModifierCell(apiParameter: Parameter): TableCell {
+		return apiParameter.isOptional ? createPlainTextTableCell("optional") : emptyTableCell;
 	}
 
-	const bodyRows: TableBodyRowNode[] = [];
+	const bodyRows: TableRow[] = [];
 	for (const apiParameter of apiParameters) {
-		const bodyRowCells: TableBodyCellNode[] = [createParameterTitleCell(apiParameter)];
+		const bodyRowCells: TableCell[] = [createParameterTitleCell(apiParameter)];
 		if (hasOptionalParameters) {
 			bodyRowCells.push(createModifierCell(apiParameter));
 		}
 		bodyRowCells.push(createParameterTypeCell(apiParameter, config));
 		bodyRowCells.push(createParameterSummaryCell(apiParameter, contextApiItem, config));
 
-		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+		bodyRows.push({
+			type: "tableRow",
+			children: bodyRowCells,
+		});
 	}
 
-	return new TableNode(bodyRows, headerRow);
+	return {
+		type: "table",
+		children: [headerRow, ...bodyRows],
+	};
 }
 
 /**
@@ -299,7 +305,7 @@ export function createTypeParametersSummaryTable(
 	apiTypeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableNode {
+): Table {
 	// Only display the "Constraint" column if there are any constraints present among the type parameters.
 	const hasAnyConstraints = apiTypeParameters.some(
 		(apiTypeParameter) => !apiTypeParameter.constraintExcerpt.isEmpty,
@@ -310,39 +316,44 @@ export function createTypeParametersSummaryTable(
 		(apiTypeParameter) => !apiTypeParameter.defaultTypeExcerpt.isEmpty,
 	);
 
-	const headerRowCells: TableHeaderCellNode[] = [
-		TableHeaderCellNode.createFromPlainText("Parameter"),
-	];
+	const headerRowCells: TableCell[] = [createPlainTextTableCell("Parameter")];
 	if (hasAnyConstraints) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Constraint"));
+		headerRowCells.push(createPlainTextTableCell("Constraint"));
 	}
 	if (hasAnyDefaults) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Default"));
+		headerRowCells.push(createPlainTextTableCell("Default"));
 	}
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
-	const headerRow = new TableHeaderRowNode(headerRowCells);
+	headerRowCells.push(createPlainTextTableCell("Description"));
+	const headerRow: TableRow = {
+		type: "tableRow",
+		children: headerRowCells,
+	};
 
-	function createTypeConstraintCell(apiParameter: TypeParameter): TableBodyCellNode {
+	function createTypeConstraintCell(apiParameter: TypeParameter): TableCell {
 		const constraintSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.constraintExcerpt,
 			config,
 		);
-		return new TableBodyCellNode(constraintSpan);
+		return {
+			type: "tableCell",
+			children: constraintSpan,
+		};
 	}
 
-	function createTypeDefaultCell(apiParameter: TypeParameter): TableBodyCellNode {
+	function createTypeDefaultCell(apiParameter: TypeParameter): TableCell {
 		const excerptSpan = createExcerptSpanWithHyperlinks(
 			apiParameter.defaultTypeExcerpt,
 			config,
 		);
-		return new TableBodyCellNode(excerptSpan);
+		return {
+			type: "tableCell",
+			children: excerptSpan,
+		};
 	}
 
-	const bodyRows: TableBodyRowNode[] = [];
+	const bodyRows: TableRow[] = [];
 	for (const apiTypeParameter of apiTypeParameters) {
-		const bodyRowCells: TableBodyCellNode[] = [
-			TableBodyCellNode.createFromPlainText(apiTypeParameter.name),
-		];
+		const bodyRowCells: TableCell[] = [createPlainTextTableCell(apiTypeParameter.name)];
 		if (hasAnyConstraints) {
 			bodyRowCells.push(createTypeConstraintCell(apiTypeParameter));
 		}
@@ -353,10 +364,16 @@ export function createTypeParametersSummaryTable(
 			createTypeParameterSummaryCell(apiTypeParameter, contextApiItem, config),
 		);
 
-		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+		bodyRows.push({
+			type: "tableRow",
+			children: bodyRowCells,
+		});
 	}
 
-	return new TableNode(bodyRows, headerRow);
+	return {
+		type: "table",
+		children: [headerRow, ...bodyRows],
+	};
 }
 
 /**
@@ -373,7 +390,7 @@ export function createFunctionLikeSummaryTable(
 	itemKind: ApiItemKind,
 	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
-): TableNode | undefined {
+): Table | undefined {
 	if (apiItems.length === 0) {
 		return undefined;
 	}
@@ -388,24 +405,27 @@ export function createFunctionLikeSummaryTable(
 	);
 	const hasReturnTypes = apiItems.some((apiItem) => ApiReturnTypeMixin.isBaseClassOf(apiItem));
 
-	const headerRowCells: TableHeaderCellNode[] = [
-		TableHeaderCellNode.createFromPlainText(getTableHeadingTitleForApiKind(itemKind)),
+	const headerRowCells: TableCell[] = [
+		createPlainTextTableCell(getTableHeadingTitleForApiKind(itemKind)),
 	];
 	if (hasAlerts) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(createPlainTextTableCell("Alerts"));
 	}
 	if (hasModifiers) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(createPlainTextTableCell("Modifiers"));
 	}
 	if (hasReturnTypes) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Return Type"));
+		headerRowCells.push(createPlainTextTableCell("Return Type"));
 	}
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
-	const headerRow = new TableHeaderRowNode(headerRowCells);
+	headerRowCells.push(createPlainTextTableCell("Description"));
+	const headerRow: TableRow = {
+		type: "tableRow",
+		children: headerRowCells,
+	};
 
-	const bodyRows: TableBodyRowNode[] = [];
+	const bodyRows: TableRow[] = [];
 	for (let i = 0; i < apiItems.length; i++) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiItems[i], config)];
+		const bodyRowCells: TableCell[] = [createApiTitleCell(apiItems[i], config)];
 		if (hasAlerts) {
 			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
@@ -417,10 +437,16 @@ export function createFunctionLikeSummaryTable(
 		}
 		bodyRowCells.push(createApiSummaryCell(apiItems[i], config));
 
-		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+		bodyRows.push({
+			type: "tableRow",
+			children: bodyRowCells,
+		});
 	}
 
-	return new TableNode(bodyRows, headerRow);
+	return {
+		type: "table",
+		children: [headerRow, ...bodyRows],
+	};
 }
 
 /**
@@ -435,7 +461,7 @@ export function createPropertiesTable(
 	apiProperties: readonly ApiPropertyItem[],
 	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
-): TableNode | undefined {
+): Table | undefined {
 	if (apiProperties.length === 0) {
 		return undefined;
 	}
@@ -452,25 +478,26 @@ export function createPropertiesTable(
 		(apiItem) => getDefaultValueBlock(apiItem, config.logger) !== undefined,
 	);
 
-	const headerRowCells: TableHeaderCellNode[] = [
-		TableHeaderCellNode.createFromPlainText("Property"),
-	];
+	const headerRowCells: TableCell[] = [createPlainTextTableCell("Property")];
 	if (hasAlerts) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(createPlainTextTableCell("Alerts"));
 	}
 	if (hasModifiers) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(createPlainTextTableCell("Modifiers"));
 	}
 	if (hasDefaultValues) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Default Value"));
+		headerRowCells.push(createPlainTextTableCell("Default Value"));
 	}
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Type"));
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
-	const headerRow = new TableHeaderRowNode(headerRowCells);
+	headerRowCells.push(createPlainTextTableCell("Type"));
+	headerRowCells.push(createPlainTextTableCell("Description"));
+	const headerRow: TableRow = {
+		type: "tableRow",
+		children: headerRowCells,
+	};
 
-	const bodyRows: TableBodyRowNode[] = [];
+	const bodyRows: TableRow[] = [];
 	for (let i = 0; i < apiProperties.length; i++) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiProperties[i], config)];
+		const bodyRowCells: TableCell[] = [createApiTitleCell(apiProperties[i], config)];
 		if (hasAlerts) {
 			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
@@ -483,10 +510,16 @@ export function createPropertiesTable(
 		bodyRowCells.push(createTypeExcerptCell(apiProperties[i].propertyTypeExcerpt, config));
 		bodyRowCells.push(createApiSummaryCell(apiProperties[i], config));
 
-		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+		bodyRows.push({
+			type: "tableRow",
+			children: bodyRowCells,
+		});
 	}
 
-	return new TableNode(bodyRows, headerRow);
+	return {
+		type: "table",
+		children: [headerRow, ...bodyRows],
+	};
 }
 
 /**
@@ -501,7 +534,7 @@ export function createVariablesTable(
 	apiVariables: readonly ApiVariable[],
 	config: ApiItemTransformationConfiguration,
 	options?: TableCreationOptions,
-): TableNode | undefined {
+): Table | undefined {
 	if (apiVariables.length === 0) {
 		return undefined;
 	}
@@ -515,22 +548,23 @@ export function createVariablesTable(
 		(apiItem) => getModifiers(apiItem, options?.modifiersToOmit).length > 0,
 	);
 
-	const headerRowCells: TableHeaderCellNode[] = [
-		TableHeaderCellNode.createFromPlainText("Variable"),
-	];
+	const headerRowCells: TableCell[] = [createPlainTextTableCell("Variable")];
 	if (hasAlerts) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(createPlainTextTableCell("Alerts"));
 	}
 	if (hasModifiers) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Modifiers"));
+		headerRowCells.push(createPlainTextTableCell("Modifiers"));
 	}
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Type"));
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
-	const headerRow = new TableHeaderRowNode(headerRowCells);
+	headerRowCells.push(createPlainTextTableCell("Type"));
+	headerRowCells.push(createPlainTextTableCell("Description"));
+	const headerRow: TableRow = {
+		type: "tableRow",
+		children: headerRowCells,
+	};
 
-	const bodyRows: TableBodyRowNode[] = [];
+	const bodyRows: TableRow[] = [];
 	for (let i = 0; i < apiVariables.length; i++) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiVariables[i], config)];
+		const bodyRowCells: TableCell[] = [createApiTitleCell(apiVariables[i], config)];
 		if (hasAlerts) {
 			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
@@ -540,10 +574,16 @@ export function createVariablesTable(
 		bodyRowCells.push(createTypeExcerptCell(apiVariables[i].variableTypeExcerpt, config));
 		bodyRowCells.push(createApiSummaryCell(apiVariables[i], config));
 
-		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+		bodyRows.push({
+			type: "tableRow",
+			children: bodyRowCells,
+		});
 	}
 
-	return new TableNode(bodyRows, headerRow);
+	return {
+		type: "table",
+		children: [headerRow, ...bodyRows],
+	};
 }
 
 /**
@@ -557,7 +597,7 @@ export function createVariablesTable(
 export function createPackagesTable(
 	apiPackages: readonly ApiPackage[],
 	config: ApiItemTransformationConfiguration,
-): TableNode | undefined {
+): Table | undefined {
 	if (apiPackages.length === 0) {
 		return undefined;
 	}
@@ -566,27 +606,34 @@ export function createPackagesTable(
 	const alerts = apiPackages.map((apiItem) => config.getAlertsForItem(apiItem));
 	const hasAlerts = alerts.some((itemAlerts) => itemAlerts.length > 0);
 
-	const headerRowCells: TableHeaderCellNode[] = [
-		TableHeaderCellNode.createFromPlainText("Package"),
-	];
+	const headerRowCells: TableCell[] = [createPlainTextTableCell("Package")];
 	if (hasAlerts) {
-		headerRowCells.push(TableHeaderCellNode.createFromPlainText("Alerts"));
+		headerRowCells.push(createPlainTextTableCell("Alerts"));
 	}
-	headerRowCells.push(TableHeaderCellNode.createFromPlainText("Description"));
-	const headerRow = new TableHeaderRowNode(headerRowCells);
+	headerRowCells.push(createPlainTextTableCell("Description"));
+	const headerRow: TableRow = {
+		type: "tableRow",
+		children: headerRowCells,
+	};
 
-	const bodyRows: TableBodyRowNode[] = [];
+	const bodyRows: TableRow[] = [];
 	for (let i = 0; i < apiPackages.length; i++) {
-		const bodyRowCells: TableBodyCellNode[] = [createApiTitleCell(apiPackages[i], config)];
+		const bodyRowCells: TableCell[] = [createApiTitleCell(apiPackages[i], config)];
 		if (hasAlerts) {
 			bodyRowCells.push(createAlertsCell(alerts[i]));
 		}
 		bodyRowCells.push(createApiSummaryCell(apiPackages[i], config));
 
-		bodyRows.push(new TableBodyRowNode(bodyRowCells));
+		bodyRows.push({
+			type: "tableRow",
+			children: bodyRowCells,
+		});
 	}
 
-	return new TableNode(bodyRows, headerRow);
+	return {
+		type: "table",
+		children: [headerRow, ...bodyRows],
+	};
 }
 
 /**
@@ -599,17 +646,16 @@ export function createPackagesTable(
 export function createApiSummaryCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
-		const summaryComment = transformTsdocSectionForTableCell(
+		return createTableCellFromTsdocSection(
 			apiItem.tsdocComment.summarySection,
 			apiItem,
 			config,
 		);
-		return new TableBodyCellNode(summaryComment);
 	}
 
-	return TableBodyCellNode.Empty;
+	return emptyTableCell;
 }
 
 /**
@@ -625,10 +671,10 @@ export function createApiSummaryCell(
 export function createReturnTypeCell(
 	apiItem: ApiFunctionLike,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	return ApiReturnTypeMixin.isBaseClassOf(apiItem)
 		? createTypeExcerptCell(apiItem.returnTypeExcerpt, config)
-		: TableBodyCellNode.Empty;
+		: emptyTableCell;
 }
 
 /**
@@ -643,15 +689,18 @@ export function createReturnTypeCell(
 export function createApiTitleCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	const link = getLinkForApiItem(apiItem, config);
-	return new TableBodyCellNode([
-		{
-			type: "link",
-			url: link.target,
-			children: [{ type: "text", value: link.text }],
-		},
-	]);
+	return {
+		type: "tableCell",
+		children: [
+			{
+				type: "link",
+				url: link.target,
+				children: [{ type: "text", value: link.text }],
+			},
+		],
+	};
 }
 
 /**
@@ -663,7 +712,7 @@ export function createApiTitleCell(
 export function createModifiersCell(
 	apiItem: ApiItem,
 	modifiersToOmit?: ApiModifier[],
-): TableBodyCellNode {
+): TableCell {
 	const modifiers = getModifiers(apiItem, modifiersToOmit);
 
 	const contents: PhrasingContent[] = [];
@@ -676,7 +725,12 @@ export function createModifiersCell(
 		needsComma = true;
 	}
 
-	return modifiers.length === 0 ? TableBodyCellNode.Empty : new TableBodyCellNode(contents);
+	return modifiers.length === 0
+		? emptyTableCell
+		: {
+				type: "tableCell",
+				children: contents,
+			};
 }
 
 /**
@@ -688,16 +742,14 @@ export function createModifiersCell(
 export function createDefaultValueCell(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	const defaultValueSection = getDefaultValueBlock(apiItem, config.logger);
 
 	if (defaultValueSection === undefined) {
-		return TableBodyCellNode.Empty;
+		return emptyTableCell;
 	}
 
-	const contents = transformTsdocSectionForTableCell(defaultValueSection, apiItem, config);
-
-	return new TableBodyCellNode(contents);
+	return createTableCellFromTsdocSection(defaultValueSection, apiItem, config);
 }
 
 /**
@@ -706,15 +758,18 @@ export function createDefaultValueCell(
  * @param apiItem - The alert values to display.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  */
-export function createAlertsCell(alerts: string[]): TableBodyCellNode {
+export function createAlertsCell(alerts: string[]): TableCell {
 	const alertNodes: PhrasingContent[] = alerts.map((alert) => ({
 		type: "inlineCode",
 		value: alert,
 	}));
 
 	return alerts.length === 0
-		? TableBodyCellNode.Empty
-		: new TableBodyCellNode(injectSeparator(alertNodes, { type: "text", value: ", " }));
+		? emptyTableCell
+		: {
+				type: "tableCell",
+				children: injectSeparator(alertNodes, { type: "text", value: ", " }),
+			};
 }
 
 /**
@@ -722,8 +777,8 @@ export function createAlertsCell(alerts: string[]): TableBodyCellNode {
  *
  * @param apiParameter - The parameter whose name will be displayed in the cell.
  */
-export function createParameterTitleCell(apiParameter: Parameter): TableBodyCellNode {
-	return TableBodyCellNode.createFromPlainText(apiParameter.name);
+export function createParameterTitleCell(apiParameter: Parameter): TableCell {
+	return createPlainTextTableCell(apiParameter.name);
 }
 
 /**
@@ -738,7 +793,7 @@ export function createParameterTitleCell(apiParameter: Parameter): TableBodyCell
 export function createParameterTypeCell(
 	apiParameter: Parameter,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	return createTypeExcerptCell(apiParameter.parameterTypeExcerpt, config);
 }
 
@@ -755,18 +810,16 @@ export function createParameterSummaryCell(
 	apiParameter: Parameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	if (apiParameter.tsdocParamBlock === undefined) {
-		return TableBodyCellNode.Empty;
+		return emptyTableCell;
 	}
 
-	const cellContent = transformTsdocSectionForTableCell(
+	return createTableCellFromTsdocSection(
 		apiParameter.tsdocParamBlock.content,
 		contextApiItem,
 		config,
 	);
-
-	return new TableBodyCellNode(cellContent);
 }
 
 /**
@@ -782,18 +835,16 @@ export function createTypeParameterSummaryCell(
 	apiTypeParameter: TypeParameter,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	if (apiTypeParameter.tsdocTypeParamBlock === undefined) {
-		return TableBodyCellNode.Empty;
+		return emptyTableCell;
 	}
 
-	const cellContent = transformTsdocSectionForTableCell(
+	return createTableCellFromTsdocSection(
 		apiTypeParameter.tsdocTypeParamBlock.content,
 		contextApiItem,
 		config,
 	);
-
-	return new TableBodyCellNode(cellContent);
 }
 
 /**
@@ -807,9 +858,12 @@ export function createTypeParameterSummaryCell(
 export function createTypeExcerptCell(
 	typeExcerpt: Excerpt,
 	config: ApiItemTransformationConfiguration,
-): TableBodyCellNode {
+): TableCell {
 	const excerptSpan = createExcerptSpanWithHyperlinks(typeExcerpt, config);
-	return new TableBodyCellNode(excerptSpan);
+	return {
+		type: "tableCell",
+		children: excerptSpan,
+	};
 }
 
 /**
@@ -839,18 +893,47 @@ function getTableHeadingTitleForApiKind(itemKind: ApiItemKind): string {
  * Notably, this optimizes away the generation of paragraph nodes around inner contents when there is only a
  * single paragraph.
  */
-function transformTsdocSectionForTableCell(
+function createTableCellFromTsdocSection(
 	tsdocSection: DocSection,
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): TableCellContent[] {
+): TableCell {
 	const transformed = transformTsdoc(tsdocSection, contextApiItem, config);
+
+	if (transformed.length === 0) {
+		return emptyTableCell;
+	}
 
 	// If the transformed contents consist of a single paragraph (common case), inline that paragraph's contents
 	// directly in the cell.
 	if (transformed.length === 1 && transformed[0].type === "paragraph") {
-		return transformed[0].children;
+		return {
+			type: "tableCell",
+			children: transformed[0].children,
+		};
 	}
 
-	return transformed.map((node) => new MarkdownBlockContentNode(node));
+	// `mdast` does not allow block content in table cells, but we want to be able to include things like fenced code blocks, etc. in our table cells.
+	// To accommodate this, we convert the contents to HTML and put that inside the table cell.
+	const htmlTrees = transformed.map((node) => toHast(node));
+	const htmlNodes: Html[] = htmlTrees.map((node) => ({
+		type: "html",
+		value: toHtml(node),
+	}));
+	return {
+		type: "tableCell",
+		children: htmlNodes,
+	};
+}
+
+const emptyTableCell: TableCell = {
+	type: "tableCell",
+	children: [],
+};
+
+function createPlainTextTableCell(text: string): TableCell {
+	return {
+		type: "tableCell",
+		children: [{ type: "text", value: text }],
+	};
 }
