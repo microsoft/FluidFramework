@@ -8,7 +8,6 @@ import { expect } from "chai";
 import {
 	DocumentNode,
 	HeadingNode,
-	MarkdownBlockContentNode,
 	SectionNode,
 } from "../../../documentation-domain/index.js";
 import { renderDocument } from "../Render.js";
@@ -19,7 +18,7 @@ describe("Document Markdown rendering tests", () => {
 			children: [
 				new SectionNode(
 					[
-						new MarkdownBlockContentNode({
+						{
 							type: "paragraph",
 							children: [
 								{
@@ -31,10 +30,10 @@ describe("Document Markdown rendering tests", () => {
 									value: "It has very basic content.\t",
 								},
 							],
-						}),
+						},
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "paragraph",
 									children: [
 										{
@@ -55,7 +54,7 @@ describe("Document Markdown rendering tests", () => {
 											],
 										},
 									],
-								}),
+								},
 							],
 							new HeadingNode("Section Heading"),
 						),

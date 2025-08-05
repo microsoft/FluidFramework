@@ -6,12 +6,7 @@
 import { expect } from "chai";
 import type { Root } from "mdast";
 
-import {
-	DocumentNode,
-	HeadingNode,
-	MarkdownBlockContentNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import { DocumentNode, HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 import { documentToMarkdown } from "../ToMarkdown.js";
 
 describe("documentToMarkdown", () => {
@@ -20,7 +15,7 @@ describe("documentToMarkdown", () => {
 			children: [
 				new SectionNode(
 					[
-						new MarkdownBlockContentNode({
+						{
 							type: "paragraph",
 							children: [
 								{
@@ -32,10 +27,10 @@ describe("documentToMarkdown", () => {
 									value: "It has very basic content.\t",
 								},
 							],
-						}),
+						},
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "paragraph",
 									children: [
 										{
@@ -56,7 +51,7 @@ describe("documentToMarkdown", () => {
 											],
 										},
 									],
-								}),
+								},
 							],
 							new HeadingNode("Section Heading"),
 						),

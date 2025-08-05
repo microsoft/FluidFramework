@@ -22,7 +22,6 @@ import {
 	DocumentNode,
 	type DocumentationNode,
 	HeadingNode,
-	MarkdownBlockContentNode,
 	SectionNode,
 } from "../../documentation-domain/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
@@ -131,18 +130,18 @@ describe("ApiItem to Documentation transformation tests", () => {
 			wrapInSection(
 				[
 					wrapInSection([
-						new MarkdownBlockContentNode({
+						{
 							type: "paragraph",
 							children: [{ type: "text", value: "Test Constant" }],
-						}),
+						},
 					]),
 					wrapInSection(
 						[
-							new MarkdownBlockContentNode({
+							{
 								type: "code",
 								lang: "typescript",
 								value: 'TestConst = "Hello world!"',
-							}),
+							},
 						],
 						{
 							title: "Signature",
@@ -175,24 +174,24 @@ describe("ApiItem to Documentation transformation tests", () => {
 				[
 					// Summary section
 					wrapInSection([
-						new MarkdownBlockContentNode({
+						{
 							type: "paragraph",
 							children: [{ type: "text", value: "Test function" }],
-						}),
+						},
 					]),
 
 					// Signature section
 					wrapInSection(
 						[
-							new MarkdownBlockContentNode({
+							{
 								type: "code",
 								lang: "typescript",
 								value:
 									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
-							}),
+							},
 							new SectionNode(
 								[
-									new MarkdownBlockContentNode({
+									{
 										type: "table",
 										children: [
 											{
@@ -222,7 +221,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 												],
 											},
 										],
-									}),
+									},
 								],
 								new HeadingNode("Type Parameters"),
 							),
@@ -236,7 +235,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					// Parameters table section
 					wrapInSection(
 						[
-							new MarkdownBlockContentNode({
+							{
 								type: "table",
 								children: [
 									{
@@ -288,7 +287,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										],
 									},
 								],
-							}),
+							},
 						],
 						{
 							title: "Parameters",
@@ -299,18 +298,18 @@ describe("ApiItem to Documentation transformation tests", () => {
 					// Returns section
 					wrapInSection(
 						[
-							new MarkdownBlockContentNode({
+							{
 								type: "paragraph",
 								children: [{ type: "text", value: "The provided parameter" }],
-							}),
-							new MarkdownBlockContentNode({
+							},
+							{
 								type: "paragraph",
 								children: [
 									{ type: "strong", children: [{ type: "text", value: "Return type" }] },
 									{ type: "text", value: ": " },
 									{ type: "text", value: "TTypeParameter" },
 								],
-							}),
+							},
 						],
 						{
 							title: "Returns",
@@ -321,10 +320,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 					// Throws section
 					wrapInSection(
 						[
-							new MarkdownBlockContentNode({
+							{
 								type: "paragraph",
 								children: [{ type: "text", value: "An Error when something bad happens." }],
-							}),
+							},
 						],
 						{
 							title: "Throws",
@@ -359,20 +358,20 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const expected: DocumentationNode[] = [
 			// Summary section
 			wrapInSection([
-				new MarkdownBlockContentNode({
+				{
 					type: "paragraph",
 					children: [{ type: "text", value: "Test interface" }],
-				}),
+				},
 			]),
 
 			// Signature section
 			wrapInSection(
 				[
-					new MarkdownBlockContentNode({
+					{
 						type: "code",
 						lang: "typescript",
 						value: "export interface TestInterface",
-					}),
+					},
 				],
 				{ title: "Signature", id: "testinterface-signature" },
 			),
@@ -380,10 +379,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			// Remarks section
 			wrapInSection(
 				[
-					new MarkdownBlockContentNode({
+					{
 						type: "paragraph",
 						children: [{ type: "text", value: "Here are some remarks about the interface" }],
-					}),
+					},
 				],
 				{ title: "Remarks", id: "testinterface-remarks" },
 			),
@@ -391,7 +390,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			// Properties section
 			wrapInSection(
 				[
-					new MarkdownBlockContentNode({
+					{
 						type: "table",
 
 						children: [
@@ -437,7 +436,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 							},
 						],
-					}),
+					},
 				],
 				{ title: "Properties" },
 			),
@@ -449,20 +448,20 @@ describe("ApiItem to Documentation transformation tests", () => {
 						[
 							// Summary section
 							wrapInSection([
-								new MarkdownBlockContentNode({
+								{
 									type: "paragraph",
 									children: [{ type: "text", value: "Test optional property" }],
-								}),
+								},
 							]),
 							// Signature section
 							wrapInSection(
 								[
-									new MarkdownBlockContentNode({
+									{
 										type: "code",
 										lang: "typescript",
 										value: "testOptionalInterfaceProperty?: number;",
-									}),
-									new MarkdownBlockContentNode({
+									},
+									{
 										type: "paragraph",
 										children: [
 											{
@@ -472,7 +471,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											{ type: "text", value: ": " },
 											{ type: "text", value: "number" },
 										],
-									}),
+									},
 								],
 								{
 									title: "Signature",
@@ -525,20 +524,20 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const expected: DocumentationNode[] = [
 			// Summary section
 			wrapInSection([
-				new MarkdownBlockContentNode({
+				{
 					type: "paragraph",
 					children: [{ type: "text", value: "Test namespace" }],
-				}),
+				},
 			]),
 
 			// Signature section
 			wrapInSection(
 				[
-					new MarkdownBlockContentNode({
+					{
 						type: "code",
 						lang: "typescript",
 						value: "export declare namespace TestNamespace",
-					}),
+					},
 				],
 				{ title: "Signature", id: "testnamespace-signature" },
 			),
@@ -546,7 +545,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			// Variables section
 			wrapInSection(
 				[
-					new MarkdownBlockContentNode({
+					{
 						type: "table",
 
 						children: [
@@ -627,7 +626,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							},
 							// No entry for `baz`
 						],
-					}),
+					},
 				],
 				{ title: "Variables" },
 			),
@@ -642,19 +641,19 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 							// Beta warning
 							wrapInSection([
-								new MarkdownBlockContentNode({
+								{
 									type: "paragraph",
 									children: [betaWarningSpan],
-								}),
+								},
 							]),
 							// Signature
 							wrapInSection(
 								[
-									new MarkdownBlockContentNode({
+									{
 										type: "code",
 										lang: "typescript",
 										value: 'bar = "bar"',
-									}),
+									},
 								],
 								{
 									title: "Signature",
@@ -675,11 +674,11 @@ describe("ApiItem to Documentation transformation tests", () => {
 							// Signature
 							wrapInSection(
 								[
-									new MarkdownBlockContentNode({
+									{
 										type: "code",
 										lang: "typescript",
 										value: 'foo = "foo"',
-									}),
+									},
 								],
 								{
 									title: "Signature",
@@ -719,7 +718,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new MarkdownBlockContentNode({
+							{
 								type: "paragraph",
 								children: [
 									{
@@ -737,13 +736,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 										children: [{ type: "text", value: "test-package" }],
 									},
 								],
-							}),
+							},
 						]),
 
 						// Body
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "list",
 									ordered: false,
 									children: [
@@ -778,7 +777,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											],
 										},
 									],
-								}),
+								},
 							],
 							new HeadingNode("Entry Points"),
 						),
@@ -797,7 +796,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new MarkdownBlockContentNode({
+							{
 								type: "paragraph",
 								children: [
 									{
@@ -824,13 +823,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 										children: [{ type: "text", value: "entry-point-a" }],
 									},
 								],
-							}),
+							},
 						]),
 
 						// Variables table
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "table",
 
 									children: [
@@ -887,7 +886,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											],
 										},
 									],
-								}),
+								},
 							],
 							new HeadingNode("Variables"),
 						),
@@ -899,20 +898,20 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										// Summary
 										new SectionNode([
-											new MarkdownBlockContentNode({
+											{
 												type: "paragraph",
 												children: [{ type: "text", value: "Test Constant" }],
-											}),
+											},
 										]),
 
 										// Signature
 										new SectionNode(
 											[
-												new MarkdownBlockContentNode({
+												{
 													type: "code",
 													lang: "typescript",
 													value: 'hello = "Hello"',
-												}),
+												},
 											],
 											new HeadingNode("Signature", "hello-signature"),
 										),
@@ -937,7 +936,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					[
 						// Breadcrumb
 						new SectionNode([
-							new MarkdownBlockContentNode({
+							{
 								type: "paragraph",
 								children: [
 									{
@@ -964,13 +963,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 										children: [{ type: "text", value: "entry-point-b" }],
 									},
 								],
-							}),
+							},
 						]),
 
 						// Variables table
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "table",
 
 									children: [
@@ -1014,7 +1013,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 											],
 										},
 									],
-								}),
+								},
 							],
 							new HeadingNode("Variables"),
 						),
@@ -1026,20 +1025,20 @@ describe("ApiItem to Documentation transformation tests", () => {
 									[
 										// Summary
 										new SectionNode([
-											new MarkdownBlockContentNode({
+											{
 												type: "paragraph",
 												children: [{ type: "text", value: "Test Constant" }],
-											}),
+											},
 										]),
 
 										// Signature
 										new SectionNode(
 											[
-												new MarkdownBlockContentNode({
+												{
 													type: "code",
 													lang: "typescript",
 													value: 'world = "world"',
-												}),
+												},
 											],
 											new HeadingNode("Signature", "world-signature"),
 										),

@@ -3,17 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import { h } from "hastscript";
 
-import {
-	HeadingNode,
-	MarkdownBlockContentNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
@@ -21,15 +13,17 @@ describe("HierarchicalSection HTML rendering tests", () => {
 	it("Simple section", () => {
 		const input = new SectionNode(
 			[
-				new MarkdownBlockContentNode({
+				{
 					type: "paragraph",
 					children: [{ type: "text", value: "Foo" }],
-				}),
-				new MarkdownBlockContentNode({ type: "thematicBreak" }),
-				new MarkdownBlockContentNode({
+				},
+				{
+					type: "thematicBreak",
+				},
+				{
 					type: "paragraph",
 					children: [{ type: "text", value: "Bar" }],
-				}),
+				},
 			],
 			/* heading: */ new HeadingNode("Hello World", /* id: */ "heading-id"),
 		);
@@ -49,10 +43,10 @@ describe("HierarchicalSection HTML rendering tests", () => {
 			[
 				new SectionNode(
 					[
-						new MarkdownBlockContentNode({
+						{
 							type: "paragraph",
 							children: [{ type: "text", value: "Foo" }],
-						}),
+						},
 					],
 					/* heading: */ new HeadingNode("Sub-Heading 1", /* id: */ "sub-heading-1"),
 				),
@@ -61,10 +55,10 @@ describe("HierarchicalSection HTML rendering tests", () => {
 					[
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "paragraph",
 									children: [{ type: "text", value: "Bar" }],
-								}),
+								},
 							],
 							/* heading: */ new HeadingNode("Sub-Heading 2b"),
 						),

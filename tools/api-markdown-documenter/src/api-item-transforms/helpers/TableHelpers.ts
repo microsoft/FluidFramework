@@ -20,11 +20,7 @@ import { toHtml } from "hast-util-to-html";
 import type { Html, PhrasingContent, Table, TableCell, TableRow } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import {
-	HeadingNode,
-	MarkdownBlockContentNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 import {
 	type ApiFunctionLike,
 	type ApiModifier,
@@ -117,10 +113,7 @@ export function createTableWithHeading(
 
 	return table === undefined
 		? undefined
-		: new SectionNode(
-				[new MarkdownBlockContentNode(table)],
-				new HeadingNode(memberTableProperties.headingTitle),
-			);
+		: new SectionNode([table], new HeadingNode(memberTableProperties.headingTitle));
 }
 
 /**

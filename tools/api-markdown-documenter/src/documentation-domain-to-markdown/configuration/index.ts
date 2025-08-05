@@ -8,7 +8,6 @@ export {
 	type TransformationConfiguration,
 } from "./Configuration.js";
 export {
-	type BlockContentTransformations,
 	defaultTransformations,
 	type Transformation,
 	type Transformations,
