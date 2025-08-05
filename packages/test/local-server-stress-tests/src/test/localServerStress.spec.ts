@@ -35,9 +35,10 @@ describe("Local Server Stress", () => {
 		defaultTestCount: 100,
 		skipMinimization: true,
 		// Uncomment to replay a particular seed.
-		// replay: 22,
-		// only: [9],
+		// replay: 93,
+		// only: [28],
 		saveFailures,
+		// saveSuccesses,
 		configurations: { "Fluid.Container.enableOfflineLoad": true },
 		skip: [
 			...[18, 34, 35, 38, 46, 65, 71, 72, 79, 91, 98], // Number of keys not same

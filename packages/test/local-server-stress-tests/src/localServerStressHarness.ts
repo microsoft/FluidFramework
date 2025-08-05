@@ -830,8 +830,7 @@ async function synchronizeClients(connectedClients: Client[]) {
 				reject(
 					wrapError(
 						error,
-						(message) =>
-							new LoggingError(`HERE - ${client.tag} closed or disposed: ${message}`),
+						(message) => new LoggingError(`${client.tag} closed or disposed: ${message}`),
 					),
 				);
 				off();
@@ -858,11 +857,11 @@ async function synchronizeClients(connectedClients: Client[]) {
 		// process by setting a breakpoint on
 		// resolveHandler
 		//
-		const timeout = setInterval(() => {
-			resolveHandler();
-		}, 1000);
+		// const timeout = setInterval(() => {
+		// 	resolveHandler();
+		// }, 1000);
 		const off = () => {
-			clearInterval(timeout);
+			// clearInterval(timeout);
 			for (const c of connectedClients) {
 				c.container.off("closed", rejectHandler);
 				c.container.off("disposed", rejectHandler);
