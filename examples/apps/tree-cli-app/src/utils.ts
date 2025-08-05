@@ -163,7 +163,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 					idCompressor,
 				}),
 
-				schema: extractPersistedSchema(config, compatVersion),
+				schema: extractPersistedSchema(config, compatVersion, () => true),
 				idCompressor: idCompressor.serialize(true),
 			};
 			return file as JsonCompatible;

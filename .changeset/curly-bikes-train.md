@@ -11,8 +11,6 @@ Staged allowed types can be used for schema evolution to add members to an [`All
 Staged allowed types are [allowed types](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) that can be upgraded by [schema upgrades}(https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature).
 Before being upgraded, any attempt to insert or move a node to a location which requires its type to be upgraded to be valid will throw an error.
 
-To enable this feature, [schema validation](https://fluidframework.com/docs/api/fluid-framework/treeviewconfiguration-class#enableschemavalidation-property) is now performed by default when editing the tree.
-
 To add a new member to an `AllowedTypes`, add the type wrapped by `staged`.
 For example, migrating an array which previously supported only numbers to support both numbers and strings would start by deploying a version of the app using `staged`:
 ```typescript
@@ -29,6 +27,8 @@ Then when opening old documents [upgradeSchema](https://fluidframework.com/docs/
 ```typescript
 view.upgradeSchema()
 ```
+
+[extractPersistedSchema](https://fluidframework.com/docs/api/fluid-framework#extractpersistedschema-function) now takes an additional parameter to filter which staged upgrades it includes.
 
 In the future, SharedTree may add an API that allows staged allowed types to be upgraded via a runtime schema upgrade so that the type can be more easily deployed using a configuration flag change rather than a code change.
 
