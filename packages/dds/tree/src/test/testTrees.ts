@@ -534,7 +534,7 @@ export const testDocuments: readonly TestDocument[] = [
 		]),
 		hasStagedSchema: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toInitialSchema(HasStagedAllowedTypes),
+		schemaData: toInitialSchema(SchemaFactoryAlpha.number),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(SchemaFactoryAlpha.number, 5)),
 	},

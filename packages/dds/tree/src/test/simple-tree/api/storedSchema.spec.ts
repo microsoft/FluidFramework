@@ -49,24 +49,28 @@ describe("simple-tree storedSchema", () => {
 				}
 			});
 
-			// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
-			// but might as will give it a simple smoke test for the various test schema.
-			it(`comparePersistedSchema to self ${test.name} - schema v1`, () => {
-				const persistedA = extractPersistedSchema(
-					new TreeViewConfigurationAlpha({ schema: test.schema }),
-					FluidClientVersion.v2_0,
-					() => true,
-				);
+			// These tests assert that extractPersistedSchema gives the same result as the stored schema.
+			// This is not always the case if there are staged schema. As the details of such cases are tested elsewhere, its fine to filter them out here.
+			if (!test.hasStagedSchema) {
+				// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
+				// but might as will give it a simple smoke test for the various test schema.
+				it(`comparePersistedSchema to self ${test.name} - schema v1`, () => {
+					const persistedA = extractPersistedSchema(
+						new TreeViewConfigurationAlpha({ schema: test.schema }),
+						FluidClientVersion.v2_0,
+						() => assert.fail("Should not have staged schema"),
+					);
 
-				const status = comparePersistedSchema(persistedA, test.schema, {
-					jsonValidator: typeboxValidator,
+					const status = comparePersistedSchema(persistedA, test.schema, {
+						jsonValidator: typeboxValidator,
+					});
+					assert.deepEqual(status, {
+						isEquivalent: true,
+						canView: true,
+						canUpgrade: true,
+					});
 				});
-				assert.deepEqual(status, {
-					isEquivalent: true,
-					canView: true,
-					canUpgrade: true,
-				});
-			});
+			}
 		}
 	});
 });
