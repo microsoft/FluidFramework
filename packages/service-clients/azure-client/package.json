@@ -129,7 +129,6 @@
 		"uuid": "^11.1.0"
 	},
 	"typeValidation": {
-		"broken": {},
-		"entrypoint": "legacy"
+		"broken": {}
 	}
 }

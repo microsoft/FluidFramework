@@ -42,8 +42,6 @@
 		"rimraf": "^4.4.0"
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

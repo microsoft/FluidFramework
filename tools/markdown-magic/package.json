@@ -39,8 +39,6 @@
 		"chalk is left at version 4 (not 5) to keep CommonJS support."
 	],
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }
