@@ -1286,7 +1286,7 @@ const getFullModel = <TOperation extends BaseOperation>(
 > =>
 	mixinAttach(
 		mixinSynchronization(
-			mixinGetClientPending(
+			mixinRestartClientFromPendingState(
 				mixinAddRemoveClient(
 					mixinClientSelection(mixinReconnect(ddsModel, options), options),
 					options,
@@ -1375,7 +1375,7 @@ interface RestartClientFromPendingState {
  * - Must have at least one client already in the system.
  * - Must be in an attached container state.
  */
-function mixinGetClientPending<TOperation extends BaseOperation>(
+function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
 ): LocalServerStressModel<TOperation | RestartClientFromPendingState> {
