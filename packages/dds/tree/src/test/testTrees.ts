@@ -610,7 +610,7 @@ export const testDocuments: readonly TestDocument[] = [
 ];
 
 export function testDocumentIndependentView(
-	document: TestDocument,
+	document: Pick<TestDocument, "schema" | "treeFactory" | "schemaData" | "ambiguous">,
 ): SchematizingSimpleTreeView<UnsafeUnknownSchema> {
 	const config = new TreeViewConfigurationAlpha({
 		schema: document.schema,

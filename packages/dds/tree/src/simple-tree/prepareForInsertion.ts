@@ -147,6 +147,10 @@ function validateAndPrepare(
 		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),
 		// they were already creating used the more specific context we have access to from `hydratedData`.
 		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
+		// TODO: AB#45723
+		// Now that staged schema rely on this validation, its a bit odd we don't do it for insertion into unhydrated contexts.
+		// We can't simply enable it for them however due to contextual default fields which would not have been created yet (see comment above).
+		// Specifically at least clone can result in unhydrated trees which can end up violating their stored schema (but not view schema) just using the type safe APIs.
 		if (validateSchema === true) {
 			isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy, throwOutOfSchema);
 		}

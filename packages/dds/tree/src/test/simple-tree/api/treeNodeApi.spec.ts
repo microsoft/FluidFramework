@@ -22,9 +22,11 @@ import {
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	isTreeNode,
 	type NodeFromSchema,
+	permissiveStoredSchemaGenerationOptions,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	toInitialSchema,
+	toStoredSchema,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -79,8 +81,11 @@ import {
 } from "../../../simple-tree/core/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { getUnhydratedContext } from "../../../simple-tree/createContext.js";
-// eslint-disable-next-line import/no-internal-modules
-import { createTreeNodeFromInner } from "../../../simple-tree/core/treeNodeKernel.js";
+import {
+	createTreeNodeFromInner,
+	getOrCreateInnerNode,
+	// eslint-disable-next-line import/no-internal-modules
+} from "../../../simple-tree/core/treeNodeKernel.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldCursorFromVerbose } from "../../../simple-tree/api/verboseTree.js";
 
@@ -2466,6 +2471,97 @@ describe("treeNodeApi", () => {
 			const clone = TreeBeta.clone(original);
 
 			expectTreesEqual(original, clone);
+		});
+
+		describe("clone uses stored schema from source, breaking insertion of staged types the source lacked", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("shared tree tests");
+			class StagedSchema extends schemaFactoryAlpha.objectAlpha("TestObject", {
+				foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
+			}) {}
+			it("Unhydrated case: staged type is allowed", () => {
+				const original = new StagedSchema({ foo: 5 });
+				const clone = TreeBeta.clone<typeof StagedSchema>(original);
+				expectTreesEqual(original, clone);
+				clone.foo = "text";
+			});
+
+			it("Hydrated case: staged type is not allowed", () => {
+				const view = testDocumentIndependentView({
+					ambiguous: false,
+					schema: StagedSchema,
+					schemaData: toInitialSchema(StagedSchema),
+					treeFactory: () =>
+						jsonableTreeFromFieldCursor(fieldCursorFromInsertable(StagedSchema, { foo: 5 })),
+				});
+				const original = view.root;
+				assert(Tree.is(original, StagedSchema));
+
+				assert.throws(
+					() => (original.foo = "text"),
+					validateUsageError(/Tree does not conform to schema/),
+				);
+
+				const clone = TreeBeta.clone<typeof StagedSchema>(original);
+				expectTreesEqual(original, clone);
+
+				const context = getOrCreateInnerNode(clone).context;
+				const flexSchema =
+					context.schema.nodeSchema.get(brand(StagedSchema.identifier)) ?? assert.fail();
+
+				const field = flexSchema.getFieldSchema(brand("foo"));
+				assert.deepEqual(field.types, new Set([numberSchema.identifier]));
+
+				// Clone uses the context from the source, which is necessary to ensure that unknown optional fields work correctly (test-documents tests below validate this).
+				// This however violates the policy which other unhydrated nodes follow where staged types are allowed until insertion.
+				// TODO: AB#45725: This is a known limitation of the current implementation, and we should consider changing it in the future.
+
+				// TODO: AB#45723: despite this edit putting the tree in violating of the stored schema, no error is produced:
+				clone.foo = "text";
+
+				// The above corrupted tree is detected as invalid when inserted:
+				assert.throws(
+					() => (view.root = clone),
+					validateUsageError(/Tree does not conform to schema/),
+				);
+
+				// Other well formed trees also fail to insert when our of schema in destination:
+				const new2 = new StagedSchema({ foo: "text" });
+				assert.throws(
+					() => (view.root = new2),
+					validateUsageError(/Tree does not conform to schema/),
+				);
+			});
+
+			it("Hydrated case: staged type is not allowed using hydrate", () => {
+				const original = hydrate(StagedSchema, { foo: 5 });
+
+				assert.throws(
+					() => (original.foo = "text"),
+					validateUsageError(/Tree does not conform to schema/),
+				);
+
+				const clone = TreeBeta.clone<typeof StagedSchema>(original);
+				expectTreesEqual(original, clone);
+
+				// TODO: See AB#45723 and notes in above test. Currently this put the tree out of schema and should throw:
+				clone.foo = "text";
+			});
+
+			it("Hydrated case after upgrade: staged type is allowed", () => {
+				const view = testDocumentIndependentView({
+					ambiguous: false,
+					schema: StagedSchema,
+					schemaData: toStoredSchema(StagedSchema, permissiveStoredSchemaGenerationOptions),
+					treeFactory: () =>
+						jsonableTreeFromFieldCursor(fieldCursorFromInsertable(StagedSchema, { foo: 5 })),
+				});
+				const original = view.root;
+				assert(Tree.is(original, StagedSchema));
+				const clone = TreeBeta.clone<typeof StagedSchema>(original);
+				expectTreesEqual(original, clone);
+				clone.foo = "text";
+				view.root = clone;
+			});
 		});
 
 		describe("test-trees", () => {
