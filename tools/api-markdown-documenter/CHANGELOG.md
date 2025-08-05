@@ -23,6 +23,7 @@ Since it is now a thin wrapper around `mdast`, `mdast`'s own extensibility model
 ### `DocumentNode` renamed to `ApiDocument`
 
 It is no longer a `unist` node, and is now an interface rather than a class.
+Its "children" property has also been renamed to "contents`.
 
 ## 0.21.0
 
