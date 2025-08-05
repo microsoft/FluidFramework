@@ -3,23 +3,21 @@
  * Licensed under the MIT License.
  */
 
+import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import {
-	DocumentNode,
-	HeadingNode,
-	MarkdownBlockContentNode,
-	SectionNode,
-} from "../../../documentation-domain/index.js";
+import type { ApiDocument } from "../../../ApiDocument.js";
+import { HeadingNode, SectionNode } from "../../../documentation-domain/index.js";
 import { renderDocument } from "../Render.js";
 
 describe("Document Markdown rendering tests", () => {
 	it("Renders a simple document", () => {
-		const document = new DocumentNode({
-			children: [
+		const document: ApiDocument = {
+			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
+			contents: [
 				new SectionNode(
 					[
-						new MarkdownBlockContentNode({
+						{
 							type: "paragraph",
 							children: [
 								{
@@ -31,10 +29,10 @@ describe("Document Markdown rendering tests", () => {
 									value: "It has very basic content.\t",
 								},
 							],
-						}),
+						},
 						new SectionNode(
 							[
-								new MarkdownBlockContentNode({
+								{
 									type: "paragraph",
 									children: [
 										{
@@ -55,7 +53,7 @@ describe("Document Markdown rendering tests", () => {
 											],
 										},
 									],
-								}),
+								},
 							],
 							new HeadingNode("Section Heading"),
 						),
@@ -64,7 +62,7 @@ describe("Document Markdown rendering tests", () => {
 				),
 			],
 			documentPath: "./test.md",
-		});
+		};
 
 		const expected = [
 			"# Sample Document",

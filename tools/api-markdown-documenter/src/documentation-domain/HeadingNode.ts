@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Heading } from "../Heading.js";
+import type { Node } from "mdast";
 
-import type { DocumentationNode } from "./DocumentationNode.js";
+import type { Heading } from "../Heading.js";
 
 /**
  * A document heading.
@@ -29,10 +29,7 @@ import type { DocumentationNode } from "./DocumentationNode.js";
  * @sealed
  * @public
  */
-export class HeadingNode implements DocumentationNode, Heading {
-	/**
-	 * {@inheritDoc DocumentationNode."type"}
-	 */
+export class HeadingNode implements Node, Heading {
 	public readonly type = "heading";
 
 	public constructor(

@@ -4,5 +4,4 @@
  */
 
 export { headingToMarkdown } from "./HeadingToMarkdown.js";
-export { markdownBlockContentNodeToMarkdown } from "./MarkdownNodeToMarkdown.js";
 export { sectionToMarkdown } from "./SectionToMarkdown.js";

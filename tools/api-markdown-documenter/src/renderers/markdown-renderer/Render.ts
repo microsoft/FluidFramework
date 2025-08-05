@@ -10,7 +10,7 @@ import {
 	type Options as MdastToMarkdownOptions,
 } from "mdast-util-to-markdown";
 
-import type { DocumentNode } from "../../documentation-domain/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
 import {
 	documentToMarkdown,
 	type TransformationConfiguration,
@@ -27,7 +27,7 @@ export interface RenderDocumentConfiguration
 		RenderMarkdownConfiguration {}
 
 /**
- * Renders a {@link DocumentNode} as Markdown and returns the resulting file contents as a string.
+ * Renders a {@link ApiDocument} as Markdown and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
  * @param config - Markdown transformation configuration.
@@ -35,7 +35,7 @@ export interface RenderDocumentConfiguration
  * @public
  */
 export function renderDocument(
-	document: DocumentNode,
+	document: ApiDocument,
 	config: RenderDocumentConfiguration,
 ): string {
 	const markdownTree = documentToMarkdown(document, config);
