@@ -8,7 +8,7 @@ Adds staged allowed types to SchemaFactoryAlpha
 This adds the `staged` API to [`SchemaFactoryAlpha`](https://fluidframework.com/docs/api/fluid-framework/schemafactoryalpha-class).
 Staged allowed types can be used for schema evolution to add members to an [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) while supporting cross version collaboration.
 
-Staged allowed types are [allowed types](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) that can be upgraded by [schema upgrades}(https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature).
+Staged allowed types are [allowed types](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) that can be upgraded by [schema upgrades](https://fluidframework.com/docs/api/fluid-framework/treeview-interface#upgradeschema-methodsignature).
 Before being upgraded, any attempt to insert or move a node to a location which requires its type to be upgraded to be valid will throw an error.
 
 To add a new member to an `AllowedTypes`, add the type wrapped by `staged`.
@@ -30,9 +30,8 @@ view.upgradeSchema()
 
 [extractPersistedSchema](https://fluidframework.com/docs/api/fluid-framework#extractpersistedschema-function) now takes an additional parameter to filter which staged upgrades it includes.
 
-In the future, SharedTree may add an API that allows staged allowed types to be upgraded via a runtime schema upgrade so that the type can be more easily deployed using a configuration flag change rather than a code change.
-
-Below is a full example of how the schema migration process works. This can also be found in our [tests](https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
+Below is a full example of how the schema migration process works.
+This can also be found in the [tests](https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
 
 ```typescript
 // Initialize with schema A.
