@@ -15,7 +15,6 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
-import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
@@ -398,69 +397,6 @@ function isAcknowledgedOrDetached(seqData: SequenceData): boolean {
 interface SequenceData {
 	seq: number;
 	clientSeq?: number;
-}
-
-/**
- * A utility class for tracking associations between keys and their creation indices.
- * This is relevant to support map iteration in insertion order, see
- * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/%40%40iterator
- *
- * TODO: It can be combined with the creation tracker utilized in SharedMap
- */
-class DirectoryCreationTracker {
-	public readonly indexToKey: RedBlackTree<SequenceData, string>;
-
-	public readonly keyToIndex: Map<string, SequenceData>;
-
-	public constructor() {
-		this.indexToKey = new RedBlackTree<SequenceData, string>(seqDataComparator);
-		this.keyToIndex = new Map<string, SequenceData>();
-	}
-
-	public set(key: string, seqData: SequenceData): void {
-		this.indexToKey.put(seqData, key);
-		this.keyToIndex.set(key, seqData);
-	}
-
-	public has(keyOrSeqData: string | SequenceData): boolean {
-		return typeof keyOrSeqData === "string"
-			? this.keyToIndex.has(keyOrSeqData)
-			: this.indexToKey.get(keyOrSeqData) !== undefined;
-	}
-
-	public delete(keyOrSeqData: string | SequenceData): void {
-		if (this.has(keyOrSeqData)) {
-			if (typeof keyOrSeqData === "string") {
-				const seqData = this.keyToIndex.get(keyOrSeqData) as SequenceData;
-				this.keyToIndex.delete(keyOrSeqData);
-				this.indexToKey.remove(seqData);
-			} else {
-				const key = this.indexToKey.get(keyOrSeqData)?.data as string;
-				this.indexToKey.remove(keyOrSeqData);
-				this.keyToIndex.delete(key);
-			}
-		}
-	}
-
-	/**
-	 * Retrieves all subdirectories with creation order that satisfy an optional constraint function.
-	 * @param constraint - An optional constraint function that filters keys.
-	 * @returns An array of keys that satisfy the constraint (or all keys if no constraint is provided).
-	 */
-	public keys(constraint?: (key: string) => boolean): string[] {
-		const keys: string[] = [];
-		this.indexToKey.mapRange((node) => {
-			if (!constraint || constraint(node.data)) {
-				keys.push(node.data);
-			}
-			return true;
-		}, keys);
-		return keys;
-	}
-
-	public get size(): number {
-		return this.keyToIndex.size;
-	}
 }
 
 /**
@@ -850,10 +786,6 @@ export class SharedDirectory
 							this.logger,
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
-						// Record the newly inserted subdirectory to the creation tracker
-						currentSubDir.ackedCreationSeqTracker.set(subdirName, {
-							...seqData,
-						});
 					}
 					stack.push([newSubDir, subdirObject]);
 				}
@@ -1017,11 +949,7 @@ export class SharedDirectory
 				// Note: We allow processing **remote** messages of subdirectories that are pending delete.
 				// This is because if we rollback the pending delete, we want to make sure we still processed the
 				// messages that would now be visible.
-				if (
-					subdir &&
-					!subdir.disposed &&
-					(!this.isSubDirectoryDeletePending(op.path) || !local)
-				) {
+				if (subdir && (!this.isSubDirectoryDeletePending(op.path) || !local)) {
 					// Add the client ID to enable message processing for existing subdirectories
 					if (!local && msg.clientId !== null) {
 						subdir.addClientId(msg.clientId);
@@ -1263,8 +1191,6 @@ function assertNonNullClientId(clientId: string | null): asserts clientId is str
 	assert(clientId !== null, 0x6af /* client id should never be null */);
 }
 
-let hasLoggedDirectoryInconsistency = false;
-
 /**
  * Node of the directory tree.
  * @sealed
@@ -1292,17 +1218,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	public localCreationSeq: number = 0;
 
 	/**
-	 * Maintains a bidirectional association between ack'd subdirectories and their seqData.
-	 * This helps to ensure iteration order which is consistent with the JS map spec.
-	 */
-	public readonly ackedCreationSeqTracker: DirectoryCreationTracker;
-
-	/**
-	 * Similar to {@link ackedCreationSeqTracker}, but for local (unacked) entries.
-	 */
-	public readonly localCreationSeqTracker: DirectoryCreationTracker;
-
-	/**
 	 * Constructor.
 	 * @param sequenceNumber - Message seq number at which this was created.
 	 * @param clientIds - Ids of client which created this directory.
@@ -1321,8 +1236,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly logger: ITelemetryLoggerExt,
 	) {
 		super();
-		this.localCreationSeqTracker = new DirectoryCreationTracker();
-		this.ackedCreationSeqTracker = new DirectoryCreationTracker();
 	}
 
 	public dispose(error?: Error): void {
@@ -1492,7 +1405,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (isNewSubDirectory) {
 				this.sequencedSubdirectories.set(subdirName, subDir);
 				this.emit("subDirectoryCreated", subdirName, true, this);
-				this.ackedCreationSeqTracker.set(subdirName, { ...seqData });
 			}
 			return subDir;
 		}
@@ -1512,11 +1424,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		};
 		this.submitCreateSubDirectoryMessage(op);
 		this.emit("subDirectoryCreated", subdirName, true, this);
-		if (isAcknowledgedOrDetached(seqData)) {
-			this.ackedCreationSeqTracker.set(subdirName, { ...seqData });
-		} else {
-			this.localCreationSeqTracker.set(subdirName, { ...seqData });
-		}
 		return subDir;
 	}
 
@@ -1545,10 +1452,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		const subDir = this.getOptimisticSubDirectory(subdirName);
 		// When a client gets access to a subdirectory, add its client ID to enable
 		// the subdirectory to process messages from this client
-		if (subDir && this.directory.isAttached()) {
-			const clientId = this.runtime.clientId ?? "detached";
-			subDir.clientIds.add(clientId);
-		}
+		// if (subDir && this.directory.isAttached()) {
+		// 	const clientId = this.runtime.clientId ?? "detached";
+		// 	subDir.clientIds.add(clientId);
+		// }
 		return subDir;
 	}
 
@@ -1582,7 +1489,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (successfullyRemoved) {
 				this.disposeSubDirectoryTree(previousValue);
 				this.emit("subDirectoryDeleted", subdirName, true, this);
-				this.ackedCreationSeqTracker.delete(subdirName);
 			}
 			return successfullyRemoved;
 		}
@@ -1605,9 +1511,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		};
 		this.submitDeleteSubDirectoryMessage(op, previousOptimisticSubDirectory);
 		this.emit("subDirectoryDeleted", subdirName, true, this);
-		if (this.localCreationSeqTracker.has(subdirName)) {
-			this.localCreationSeqTracker.delete(subdirName);
-		}
 		return true;
 	}
 
@@ -1616,99 +1519,40 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	 */
 	public subdirectories(): IterableIterator<[string, IDirectory]> {
 		this.throwIfDisposed();
-
-		// TODO: Cleanup + comments since this is pretty ugly right now
-		const ackedSubdirsInOrder = [...this.ackedCreationSeqTracker.keyToIndex.keys()];
-		const localSubdirsInOrder = [...this.localCreationSeqTracker.keyToIndex.keys()].filter(
-			(entry) => !this.ackedCreationSeqTracker.has(entry),
-		);
-		const trackedSubdirs = [...ackedSubdirsInOrder, ...localSubdirsInOrder];
-		const numTrackedSubdirs = trackedSubdirs.filter((subdirName) => {
+		const sequencedSubdirs: [string, SubDirectory][] = [];
+		const sequencedSubdirNames = new Set([...this.sequencedSubdirectories.keys()]);
+		for (const subdirName of sequencedSubdirNames) {
 			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName);
-			return optimisticSubdir !== undefined;
-		}).length;
-		const numSequencedSubdirs = [...this.sequencedSubdirectories.keys()].filter(
-			(subdirName) => {
-				const lastPendingEntry = findLast(
-					this.pendingSubDirectoryData,
-					(entry) => entry.subdirName === subdirName,
-				);
-				return (
-					lastPendingEntry === undefined || lastPendingEntry.type !== "deleteSubDirectory"
-				);
-			},
-		).length;
-		const numPendingSubdirs = [
-			...new Set(this.pendingSubDirectoryData.map((entry) => entry.subdirName)),
-		].filter((subdirName) => {
-			const lastPendingEntry = findLast(
-				this.pendingSubDirectoryData,
-				(entry) => entry.subdirName === subdirName,
-			);
-			return (
-				lastPendingEntry !== undefined &&
-				lastPendingEntry.type !== "deleteSubDirectory" &&
-				!this.sequencedSubdirectories.has(subdirName)
-			);
-		}).length;
-
-		// TODO: This may be too aggressive
-		// If we decide to keep this assert, then we can remove the telemetry logging below
-		assert(
-			numTrackedSubdirs === numSequencedSubdirs + numPendingSubdirs,
-			"number of tracked subdirectories should match the number of sequenced and pending subdirectories",
-		);
-		if (
-			numTrackedSubdirs !== numSequencedSubdirs + numPendingSubdirs &&
-			// TODO: AB#7022: Hitting this block indicates that the eventual consistency scheme for ordering subdirectories
-			// has failed. Fall back to previous directory behavior, which didn't guarantee ordering.
-			// It's not currently clear how to reach this state, so log some diagnostics to help understand the issue.
-			// This whole block should eventually be replaced by an assert that the two sizes align.
-			!hasLoggedDirectoryInconsistency
-		) {
-			this.logger.sendTelemetryEvent({
-				eventName: "inconsistentSubdirectoryOrdering",
-				localKeyCount: this.localCreationSeqTracker.size,
-				ackedKeyCount: this.ackedCreationSeqTracker.size,
-				subdirNamesLength: numTrackedSubdirs,
-				subdirectoriesSize: numSequencedSubdirs + numPendingSubdirs,
-			});
-			hasLoggedDirectoryInconsistency = true;
+			if (optimisticSubdir !== undefined) {
+				sequencedSubdirs.push([subdirName, optimisticSubdir]);
+			}
 		}
 
-		// Iterate in creation order by using the tracked subdirectory names from the creation order trackers.
-		// This respects the order subdirectories were first created, regardless of whether they are sequenced or pending.
-		const trackedSubdirsIterator = trackedSubdirs[Symbol.iterator]();
-
-		const next = (): IteratorResult<[string, IDirectory]> => {
-			let nextTrackedSubdir = trackedSubdirsIterator.next();
-			while (!nextTrackedSubdir.done) {
-				const subdirName = nextTrackedSubdir.value;
-
-				// Check if this subdirectory is optimistically deleted
-				const isOptimisticallyDeleted = this.pendingSubDirectoryData.some(
-					(entry) => entry.type === "deleteSubDirectory" && entry.subdirName === subdirName,
-				);
-
-				if (!isOptimisticallyDeleted) {
-					const optimisticSubdir = this.getOptimisticSubDirectory(subdirName);
-					if (optimisticSubdir !== undefined) {
-						return { value: [subdirName, optimisticSubdir], done: false };
-					}
-				}
-				nextTrackedSubdir = trackedSubdirsIterator.next();
+		const pendingSubdirNames = [
+			...new Set(
+				this.pendingSubDirectoryData
+					.map((entry) => entry.subdirName)
+					.filter((subdirName) => !sequencedSubdirNames.has(subdirName)),
+			),
+		];
+		const pendingSubdirs: [string, SubDirectory][] = [];
+		for (const subdirName of pendingSubdirNames) {
+			const optimisticSubdir = this.getOptimisticSubDirectory(subdirName);
+			if (optimisticSubdir !== undefined) {
+				pendingSubdirs.push([subdirName, optimisticSubdir]);
 			}
+		}
 
-			return { value: undefined, done: true };
-		};
+		const allSubdirs = [...sequencedSubdirs, ...pendingSubdirs];
 
-		const iterator = {
-			next,
-			[Symbol.iterator](): IterableIterator<[string, IDirectory]> {
-				return this;
-			},
-		};
-		return iterator;
+		const orderedSubdirs = allSubdirs.sort((a, b) => {
+			const aSeqData = a[1].seqData;
+			const bSeqData = b[1].seqData;
+			assert(aSeqData !== undefined && bSeqData !== undefined, "seqData should be defined");
+			return seqDataComparator(aSeqData, bSeqData);
+		});
+
+		return orderedSubdirs[Symbol.iterator]();
 	}
 
 	/**
@@ -2062,9 +1906,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			: latestPendingEntry.type === "lifetime";
 	};
 
+	// TODO: Add separate fn for getIfDisposed
 	private readonly getOptimisticSubDirectory = (
 		subdirName: string,
-		getIfDisposed = false,
 	): SubDirectory | undefined => {
 		const latestPendingEntry = findLast(
 			this.pendingSubDirectoryData,
@@ -2082,7 +1926,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		}
 
 		// If the subdirectory is disposed, treat it as non-existent for optimistic reads
-		if (subdir?.disposed && !getIfDisposed) {
+		if (subdir?.disposed) {
+			return undefined;
+		}
+
+		return subdir;
+	};
+
+	// TODO: maybe merge with above
+	private readonly getOptimisticSubDirectoryEvenIfDisposed = (
+		subdirName: string,
+	): SubDirectory | undefined => {
+		const latestPendingEntry = findLast(
+			this.pendingSubDirectoryData,
+			(entry) => entry.subdirName === subdirName,
+		);
+		let subdir: SubDirectory | undefined;
+		if (latestPendingEntry === undefined) {
+			subdir = this.sequencedSubdirectories.get(subdirName);
+		} else if (latestPendingEntry.type === "createSubDirectory") {
+			subdir = latestPendingEntry.subdir;
+			assert(subdir !== undefined, "Subdirectory should exist in pending data");
+		} else {
+			// Pending delete
 			return undefined;
 		}
 
@@ -2309,11 +2175,19 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				"Got a local subdir create message we weren't expecting",
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			const existingSubdir = this.sequencedSubdirectories.get(op.subdirName);
+			if (existingSubdir !== undefined) {
+				// If the subdirectory already exists, we don't need to create it again.
+				// This can happen if remote clients also create the same subdir and we processed
+				// that message first.
+				return;
+			}
+
 			if (pendingEntry.subdir.disposed) {
 				this.undeleteSubDirectoryTree(pendingEntry.subdir);
 			}
-			// Child sub directory create seq number can't be lower than the parent subdirectory.
-			// The sequence number for multiple ops can be the same when multiple createSubDirectory occurs with grouped batching enabled, thus <= and not just <.
+
+			// Ensure sequence nums are updated if necessary!
 			if (
 				this.seqData.seq !== -1 &&
 				this.seqData.seq <= msg.sequenceNumber &&
@@ -2327,14 +2201,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedSubdirectories.set(op.subdirName, pendingEntry.subdir);
 
 			this.emit("subDirectoryCreated", op.subdirName, local, this);
-
-			this.ackedCreationSeqTracker.set(op.subdirName, {
-				seq: msg.sequenceNumber,
-				clientSeq: msg.clientSequenceNumber,
-			});
-			this.localCreationSeqTracker.delete(op.subdirName);
 		} else {
-			let subdir = this.getOptimisticSubDirectory(op.subdirName, true);
+			let subdir = this.getOptimisticSubDirectoryEvenIfDisposed(op.subdirName);
 			if (subdir === undefined) {
 				const absolutePath = posix.join(this.absolutePath, op.subdirName);
 				subdir = new SubDirectory(
@@ -2353,16 +2221,21 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// If the subdirectory already optimistically exists, we don't need to create it again.
 				// This can happen if remote clients also create the same subdir
 				subdir.clientIds.add(msg.clientId);
+
+				if (
+					this.seqData.seq !== -1 &&
+					this.seqData.seq <= msg.sequenceNumber &&
+					subdir.seqData.seq === -1
+				) {
+					// Update seq numbers if necessary
+					subdir.seqData.seq = msg.sequenceNumber;
+					subdir.seqData.clientSeq = msg.clientSequenceNumber;
+				}
 			}
+
 			this.registerEventsOnSubDirectory(subdir, op.subdirName);
 			this.sequencedSubdirectories.set(op.subdirName, subdir);
-			this.ackedCreationSeqTracker.set(op.subdirName, {
-				seq: msg.sequenceNumber,
-				clientSeq: msg.clientSequenceNumber,
-			});
-			if (this.localCreationSeqTracker.has(op.subdirName)) {
-				this.localCreationSeqTracker.delete(op.subdirName);
-			}
+
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName)) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
@@ -2409,10 +2282,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			return;
 		}
 
-		if (this.ackedCreationSeqTracker.has(op.subdirName)) {
-			this.ackedCreationSeqTracker.delete(op.subdirName);
-		}
-
 		this.sequencedSubdirectories.delete(op.subdirName);
 
 		if (local) {
@@ -2427,34 +2296,30 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				"Got a local deleteSubDirectory message we weren't expecting",
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
-			this.sequencedSubdirectories.delete(op.subdirName);
 			if (!previousValue.dispose) {
 				this.disposeSubDirectoryTree(previousValue);
 			}
 		} else {
 			// We still try to dispose the subdirectory tree in case the subdirectories do not also have pending creates
 			this.disposeSubDirectoryTree(previousValue);
-
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			const pendingEntryIndex = this.pendingSubDirectoryData.findIndex(
 				(entry) => entry.subdirName === op.subdirName && entry.type === "deleteSubDirectory",
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
-			if (pendingEntry !== undefined) {
+			if (pendingEntry === undefined) {
 				this.emit("subDirectoryDeleted", op.subdirName, local, this);
 			}
 		}
 
-		// If we get a remote delete op and we have a pending create for the same subdirectory,
-		// then we should clear the sequenced data for that subdirectory so it will start from an
-		// empty state.
 		const nextPendingIndex = this.pendingSubDirectoryData.findIndex(
 			(entry) => entry.subdirName === op.subdirName,
 		);
 		const nextPendingEntry = this.pendingSubDirectoryData[nextPendingIndex];
 		if (nextPendingEntry !== undefined && nextPendingEntry.type === "createSubDirectory") {
-			nextPendingEntry.subdir.sequencedStorageData.clear();
-			nextPendingEntry.subdir.sequencedSubdirectories.clear();
+			// If we delete a subdirectory that has also has a pending create, we need to clear
+			// that pending subdir's sequenced data so it starts from an empty state.
+			nextPendingEntry.subdir.clearSubDirectorySequencedData();
 		}
 	}
 
@@ -2768,9 +2633,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 			this.emit("subDirectoryDeleted", subdirName, true, this);
-			if (this.localCreationSeqTracker.has(subdirName)) {
-				this.localCreationSeqTracker.delete(subdirName);
-			}
 		} else if (
 			directoryOp.type === "deleteSubDirectory" &&
 			localOpMetadata.type === "deleteSubDir"
@@ -2791,16 +2653,10 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			// Restore the subdirectory from the metadata if available
 			const subDirectoryToRestore = localOpMetadata.subDirectory;
 			if (subDirectoryToRestore !== undefined) {
+				// TODO: Do. we need this check?
 				if (isAcknowledgedOrDetached(subDirectoryToRestore.seqData)) {
-					this.ackedCreationSeqTracker.set(subdirName, {
-						...subDirectoryToRestore.seqData,
-					});
 					// Since this was an ack'd subdirectory, we need to re-add it to the sequenced subdirectories
 					this.sequencedSubdirectories.set(subdirName, subDirectoryToRestore);
-				} else {
-					this.localCreationSeqTracker.set(subdirName, {
-						...subDirectoryToRestore.seqData,
-					});
 				}
 
 				// Re-register events
@@ -2881,5 +2737,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		for (const [_, subDirectory] of directory.subdirectories()) {
 			this.undeleteSubDirectoryTree(subDirectory as SubDirectory);
 		}
+	}
+
+	public clearSubDirectorySequencedData(): void {
+		this.sequencedStorageData.clear();
+		this.sequencedSubdirectories.clear();
+		this.clientIds.clear();
+		this.clientIds.add(this.runtime.clientId ?? "detached");
 	}
 }
