@@ -1601,6 +1601,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				isClearLocalOpMetadata(localOpMetadata),
 				0x00f /* pendingMessageId is missing from the local client's operation */,
 			);
+
 			const pendingClearMessageId = this.pendingClearMessageIds.shift();
 			assert(
 				pendingClearMessageId === localOpMetadata.pendingMessageId,

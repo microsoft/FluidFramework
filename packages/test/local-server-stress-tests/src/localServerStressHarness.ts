@@ -40,7 +40,7 @@ import {
 	ConnectionState,
 	createDetachedContainer,
 	loadExistingContainer,
-	IContainerExperimental,
+	type IContainerExperimental,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
@@ -898,8 +898,8 @@ async function runTestForSeed<TOperation extends BaseOperation>(
 	const codeDetails: IFluidCodeDetails = {
 		package: "local-server-stress-tests",
 	};
-	const runtime = createRuntimeFactory();
-	const codeLoader = new LocalCodeLoader([[codeDetails, runtime]]);
+	const runtimeFactory = createRuntimeFactory();
+	const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 	const tagCount: Partial<Record<string, number>> = {};
 	// we reserve prefix-0 for initialization objects
 	const tag: LocalServerStressState["tag"] = (prefix) =>
@@ -1282,7 +1282,7 @@ const getFullModel = <TOperation extends BaseOperation>(
 	| Attach
 	| Synchronize
 	| ChangeConnectionState
-	| GetClientPendingState
+	| RestartClientFromPendingState
 > =>
 	mixinAttach(
 		mixinSynchronization(
@@ -1357,7 +1357,7 @@ export namespace createLocalServerStressSuite {
  * pending local state (via `getPendingLocalState()`) and loading a new
  * container from it.
  */
-interface GetClientPendingState {
+interface RestartClientFromPendingState {
 	type: "restartClientFromPendingState";
 	sourceClientTag: `client-${number}`;
 	newClientTag: `client-${number}`;
@@ -1378,15 +1378,15 @@ interface GetClientPendingState {
 function mixinGetClientPending<TOperation extends BaseOperation>(
 	model: LocalServerStressModel<TOperation>,
 	options: LocalServerStressOptions,
-): LocalServerStressModel<TOperation | GetClientPendingState> {
+): LocalServerStressModel<TOperation | RestartClientFromPendingState> {
 	const generatorFactory: () => AsyncGenerator<
-		TOperation | GetClientPendingState,
+		TOperation | RestartClientFromPendingState,
 		LocalServerStressState
 	> = () => {
 		const baseGenerator = model.generatorFactory();
 		return async (
 			state: LocalServerStressState,
-		): Promise<TOperation | GetClientPendingState | typeof done> => {
+		): Promise<TOperation | RestartClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
 
 			if (
@@ -1399,22 +1399,24 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 					type: "restartClientFromPendingState",
 					sourceClientTag: random.pick(clients).tag,
 					newClientTag: state.tag("client"),
-				} satisfies GetClientPendingState;
+				} satisfies RestartClientFromPendingState;
 			}
 			return baseGenerator(state);
 		};
 	};
 
-	const minimizationTransforms: MinimizationTransform<TOperation | GetClientPendingState>[] =
+	const minimizationTransforms: MinimizationTransform<
+		TOperation | RestartClientFromPendingState
+	>[] =
 		(model.minimizationTransforms as
-			| MinimizationTransform<TOperation | GetClientPendingState>[]
+			| MinimizationTransform<TOperation | RestartClientFromPendingState>[]
 			| undefined) ?? [];
 
 	const reducer: AsyncReducer<
-		TOperation | GetClientPendingState,
+		TOperation | RestartClientFromPendingState,
 		LocalServerStressState
 	> = async (state, op) => {
-		if (isOperationType<GetClientPendingState>("restartClientFromPendingState", op)) {
+		if (isOperationType<RestartClientFromPendingState>("restartClientFromPendingState", op)) {
 			const sourceClientIndex = state.clients.findIndex((c) => c.tag === op.sourceClientTag);
 			assert(sourceClientIndex !== -1, `Client ${op.sourceClientTag} not found`);
 			const sourceClient = state.clients[sourceClientIndex];
