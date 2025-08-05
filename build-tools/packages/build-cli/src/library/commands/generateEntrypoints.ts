@@ -67,12 +67,6 @@ interface Options {
 	readonly outFileSuffix: string;
 }
 
-// For backwards compatibility, the default values for legacy exports are:
-// - `outFileLegacyAlpha` is `legacy`, and the others are disabled.
-// Future:
-// - `outFileLegacyAlpha`: `legacy-alpha`
-// - `outFileLegacyBeta`: `legacy-beta`
-// - `outFileLegacyPublic`: `legacy-public`
 const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
 	outDir: "./lib",
@@ -80,7 +74,7 @@ const optionDefaults = {
 	outFileAlpha: "alpha",
 	outFileBeta: "beta",
 	outFilePublic: "public",
-	outFileLegacyAlpha: "legacy", // Back compat
+	outFileLegacyAlpha: undefined,
 	outFileLegacyBeta: undefined,
 	outFileLegacyPublic: undefined,
 	outFileSuffix: ".d.ts",
