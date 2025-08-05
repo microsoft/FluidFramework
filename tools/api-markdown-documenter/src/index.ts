@@ -37,16 +37,13 @@ export {
 	transformApiModel,
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
-
+export type { ApiDocument } from "./ApiDocument.js";
 export {
-	DocumentNode,
-	type DocumentNodeProps,
 	type DocumentationNode,
 	HeadingNode,
 	SectionNode,
 	type SectionContent,
 } from "./documentation-domain/index.js";
-
 export {
 	documentToHtml,
 	documentationNodeToHtml,

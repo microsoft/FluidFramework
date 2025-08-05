@@ -3,19 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import {
-	DocumentNode,
-	HeadingNode,
-	SectionNode,
-} from "../../../documentation-domain/index.js";
+import type { ApiDocument } from "../../../ApiDocument.js";
+import { HeadingNode, SectionNode } from "../../../documentation-domain/index.js";
 import { renderDocument } from "../Render.js";
 
 describe("Document HTML rendering tests", () => {
 	it("Renders a simple document", () => {
-		const document = new DocumentNode({
-			children: [
+		const document: ApiDocument = {
+			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
+			contents: [
 				new SectionNode(
 					[
 						{
@@ -63,7 +62,7 @@ describe("Document HTML rendering tests", () => {
 				),
 			],
 			documentPath: "./test",
-		});
+		};
 
 		const expected = [
 			"<!doctype html>",

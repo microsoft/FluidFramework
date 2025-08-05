@@ -18,8 +18,8 @@ import {
 } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
+import type { ApiDocument } from "../../ApiDocument.js";
 import {
-	DocumentNode,
 	type DocumentationNode,
 	HeadingNode,
 	SectionNode,
@@ -710,10 +710,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 
 		// The model-level doc in this case isn't particularly interesting, so we will skip evaluating it.
 
-		const expectedPackageDocument = new DocumentNode({
+		const expectedPackageDocument: ApiDocument = {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
-			children: [
+			contents: [
 				new SectionNode(
 					[
 						// Breadcrumb
@@ -785,13 +785,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 					new HeadingNode("test-package"),
 				),
 			],
-		});
+		};
 		expect(documents[1]).to.deep.equal(expectedPackageDocument);
 
-		const expectedEntryPointADocument = new DocumentNode({
+		const expectedEntryPointADocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
-			children: [
+			contents: [
 				new SectionNode(
 					[
 						// Breadcrumb
@@ -925,13 +925,13 @@ describe("ApiItem to Documentation transformation tests", () => {
 					new HeadingNode("entry-point-a"),
 				),
 			],
-		});
+		};
 		expect(documents[2]).to.deep.equal(expectedEntryPointADocument);
 
-		const expectedEntryPointBDocument = new DocumentNode({
+		const expectedEntryPointBDocument: ApiDocument = {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
-			children: [
+			contents: [
 				new SectionNode(
 					[
 						// Breadcrumb
@@ -1052,7 +1052,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					new HeadingNode("entry-point-b"),
 				),
 			],
-		});
+		};
 		expect(documents[3]).to.deep.equal(expectedEntryPointBDocument);
 	});
 });
