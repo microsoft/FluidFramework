@@ -382,7 +382,7 @@ describe("allowedTypes", () => {
 			assert.deepEqual(result, input);
 		});
 
-		it("does not evaluates any lazy schema", () => {
+		it("does not evaluate any lazy schema", () => {
 			const noEval: () => typeof SchemaFactory.string = () =>
 				assert.fail("Should not evaluate lazy schema");
 
