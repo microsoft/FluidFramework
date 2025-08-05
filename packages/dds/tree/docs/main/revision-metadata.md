@@ -14,6 +14,11 @@ The idea of cells is introduced in [cell-model-of-collaborative-editing.md](cell
 The core idea is that, in addition to requiring a way to refer to positions that nodes occupy
 (which we accomplish using integer indices for nodes in a given sequence, at a given point in the commit graph)
 we need a way to refer to the positions that nodes will occupy or have occupied in the past.
+We call these "cells".
+
+We accomplish this by assigning a unique ID to each such cell.
+Each cell ID is associated with the commit that introduced it,
+which makes it easy to check if a given commit introduced a given cell.
 
 Being able to refer to empty cells makes it possible for commits to convey position information relative to such cells.
 For example, if some commit `A` inserts content before some empty cell `c`
@@ -86,14 +91,13 @@ In the remainder of this section, we consider the cell-ordering scenarios that c
 
 ### Compose
 
-When composing `A ○ B`, we know that commit `A` is a direct ancestor of commit `B`.
-This tell us the following:
+When composing `A ○ B`, we know the following about the commit graph:
 
 * `A` comes before `B` in sequencing order.
 * `A` and `B` are not concurrent.
 * There are no commits between `A` and `B` in sequencing order.
 
-We can represent this situation with the following commit graph:
+We can represent this situation with the following commit graph:<br />
 ![P->A->C](../.attachments/revision-metadata/compose-a-b.png)<br />
 The commit `P` represents another prior commit (which is not being composed).
 It is included here because `A` and/or `B` may refer to cells that `P` introduces.
@@ -102,54 +106,105 @@ using a single commit is sufficient to fully consider the relevant cases.
 
 For each pair of cells (`ca`, `cb`) referred to by `A` and `B` respectively,
 we need to be able to determine the relative ordering of `ca` and `cb`.
-Its helpful to visualize the possible scenarios and group them in the following groups:
+Its helpful to visualize the possible scenarios and group them as follows:
 
-1. `B` refers to cells introduced further back than `A` does:<br />
-![](../.attachments/revision-metadata/compose-farther.png)<br />
-1. `B` refers to cells introduced as far back as `A` does:<br />
+1. `A` only refers to cells introduced no earlier than the cells referred to by `B` were introduced:<br />
 ![](../.attachments/revision-metadata/compose-as-far-1.png)<br />
 ![](../.attachments/revision-metadata/compose-as-far-2.png)<br />
-1. `B` does not refer to cells introduced as far back as `A` does:<br />
+![](../.attachments/revision-metadata/compose-farther.png)<br />
+1. `B` only refers to cells introduced later than cells referred to by `A` were introduced:<br />
 ![](../.attachments/revision-metadata/compose-not-as-far-1.png)<br />
 ![](../.attachments/revision-metadata/compose-not-as-far-2.png)<br />
 
-In the first and second groups of scenarios,
+In the first group of scenarios,
 `B` must include references to both `ca` and `cb`,
 so their relative ordering is already fully defined in `B`.
 This does not require consider the sequencing order of commits.
 
-In the third group of scenarios,
+In the second group of scenarios,
 `ca` must be referring cell introduced by either `P` or `A`,
 while `cb` must be referring cell introduced by `B`.
 We can order the two cells by relying on the fact that commits `P` and `A` both come before `B` in sequencing order.
 While this does require that we consider the sequencing order of commits,
 the relevant ordering information
-(i.e., that `B` comes after any other commit that might have introduced cells that `A` and `B` might refer to)
+(i.e., that `B` comes after any other commit that might have introduced cells that `A` might refer to)
 is implicitly derivable from the fact that we're composing `A ○ B` as opposed to `B ○ A`.
+
+The implementation of compose doesn't know which group of scenarios it's dealing with on a case by case basis,
+but it can handle both groups by checking if `B` contains a reference to `ca`,
+and if not, treating `ca` as older than `cb`.
 
 ### Rebase
 
-When rebasing commit B over commit X, we know that X comes before B in sequencing order, and we know that X and B are concurrent.
-As with compose, their lineage should be consistent where they overlap.
-Unlike with compose, however, there may be some commits that, in sequencing order, occur between X and B. This is the case when rebasing dependent commits on a branch. This can lead to a situation where X (in a scenario where it has longer lineage) refers to a cell that B has no lineage for, and B refers to a cell to a cell that X has no lineage for.
+When rebasing `B ↷ X`, we know the following about the commit graph:
 
-The information we store in changesets is not always enough to determine the relative ordering of commits.
-If you have a branch with commits [A, B, C, D] where C references a cell created by B, and D references a cell created by A, when we do rebase(D, C⁻¹) we have to determine the relative order of the cells created in A and B, but neither D nor C⁻¹ carries ordering information about A and B.
-This means we have to pass to that rebase operation some metadata about the ordering of commits A and B.
+* `X` and `B` are concurrent and have the same ancestry.
+* `X` comes before `B` in sequencing order.
 
-How can we tell what ordering metadata may be needed for a given scenario?
-Changesets may refer to cells introduced in the following commits:
+Note that it does _not_ follow from the above that `B` comes directly after `X` in sequencing order.
+In the simplest case, `B` does comes directly after `X`,
+which amounts to the following graph:<br />
+![](../.attachments/revision-metadata/rebase-b-over-x.png)<br />
+with the goal to produce `B'`:<br />
+![](../.attachments/revision-metadata/rebase-to-bprime.png)<br />
 
-Their own commit
-The commit they are the rollback or undo of
-Commits they have rebased over
-Invert
-The metadata is made in MCF, passed to fields which do not use it.
-Compose
-The metadata is made in MCF (leveraging rollback info), passed into fields, used by sequence field.
-A: remove [0] (Introduces cell X)
-B: insert @[0] (Does not carry information about cell X. Introduces cell Y)
-compose(B⁻¹, A⁻¹) requires ordering the cell Y (emptied by B⁻¹) and cell X but neither change has information about the other cell. This is a consequence of a shortcut we take when we generate rollbacks: we assume that it's OK to tack on A⁻¹ after B⁻¹ without first rebasing A⁻¹ over [B, B⁻¹]. If we performed this rebase, then the resulting changeset (A⁻¹') would have ordering information about cell Y because it would gain that information when rebasing over B.
-We get away with this by inferring the order of A and B from the fact that we're composing [B⁻¹, A⁻¹]: rollbacks are always ordered in reverse from their original changeset.
-Rebase
-The metadata is passed to MCF (leveraging sandwich knowledge), used by sequence field.
+In the more general case, there can be any number of commits between `P` and `B`,
+which amounts to the following graph:<br />
+![](../.attachments/revision-metadata/rebase-ab-over-x.png)<br />
+with the goal to produce `A'` and `B'`:<br />
+![](../.attachments/revision-metadata/rebase-to-abprime.png)<br />
+
+When confronted to this general case,
+we first rebase `B` over the inverses of all the commits between `P` and `B`.
+This produces to a commit `B2` that is akin to what `B` would have been if `P` were its direct ancestor:
+![](../.attachments/revision-metadata/rebase-b2.png)<br />
+
+It is this `B2` commit is is passed to the rebase function when performing `B ↷ X`.
+The graph of relevant commits in the general case therefore looks like this:<br />
+![](../.attachments/revision-metadata/rebase-b2-over-x.png)
+
+In the remainder of this section, we use `B` to refer to all variants of `B`,
+and `B2` when statements apply to that variant of B more specifically.
+
+For each pair of cells (`cb`, `cx`) referred to by `B2` and `X` respectively,
+we need to be able to determine the relative ordering of `cb` and `cx`.
+Its helpful to visualize the possible scenarios and group them as follows:
+
+1. `B2` only refer to cells introduced later than the cells referred to by `X` were introduced:<br />
+![](../.attachments/revision-metadata/rebase-b2-over-x-later1.png)<br />
+![](../.attachments/revision-metadata/rebase-b2-over-x-later2.png)<br />
+1. `B2` only refers to cells introduced no earlier than the cells referred to by `X` were introduced:<br />
+![](../.attachments/revision-metadata/rebase-b2-over-x-as-early.png)<br />
+1. `B2` refers to cells introduced both earlier and later than the cells referred to by `X` were introduced:<br />
+![](../.attachments/revision-metadata/rebase-b2-over-x-earlier.png)<br />
+
+In the first group of scenarios,
+`cx` must be referring to a cell introduced by either `P` or `X` while `cb` must be referring to a cell introduced by `A` or `B`.
+We can order the two cells by relying on the fact that commits `P` and `X` both come before `A` and `B` in sequencing order.
+
+The second group of scenarios is similar to the first,
+with the added possibly that both `cb` and `cx` refer to a cell introduced by `P`.
+When that's the case, both `X` and `B2` will include references to both `cb` and `cx`,
+so they fully define the correct ordering.
+
+In the third group of scenarios,
+`cx` must be referring to a cell introduced `X` while `ca` may be referring to a cell introduced by either `P`, `A`, or `B`.
+Given a cell ID and a commit, we can check if the cells corresponding to the ID was introduced in the commit.
+This enables the rebase implementation to check whether `ca` corresponds to a cell that was introduced in `B`.
+If it does, then `cb` was introduced by a later commit than `cx`.
+If it does not, then we need outside knowledge to differentiate cells that refer to ancestors of `X` such as `P`,
+from cells that refer commits that are sequenced between `X` and `B` such as `A`.
+This knowledge is provided in the form of metadata that can, for any cell reference,
+determine whether it refers to a commit on the branch being rebased (`A` or `B` in our example).
+
+The implementation of rebase doesn't know which group of scenarios it's dealing with on a case by case basis,
+but it can handle them all using the following steps:
+1. Use the provided metadata to check if `cb` refers to a cell introduced in the branch being rebased.
+   If so, then `cx` is older than `cb`.
+2. If not, check if `X` also refers to `cb`,
+   If so, then `X` carries information defining the ordering between `cx` and `cb`.
+3. If not, then `cb` must be referring to a cell introduced by a common ancestor of `X` and `B`,
+   while `cx` must be referring to a cell introduced by `X`.
+   It's therefore safe to treat `cb` as older than `cx`.
+
+
