@@ -396,6 +396,7 @@ export class ConsensusRegisterCollection<T>
 	}
 
 	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 * @sealed
 	 */
 	protected rollback(content: unknown, localOpMetadata: unknown): void {
