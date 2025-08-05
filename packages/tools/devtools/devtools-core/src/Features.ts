@@ -64,7 +64,7 @@ export interface ContainerDevtoolsFeatureFlags {
 	 * When `false`, these operations are not available (typical for data object devtools
 	 * which don't have direct control over container lifecycle).
 	 *
-	 * If this property is `undefined`, it should be treated as `true` by consumers.
+	 * @defaultValue `true`
 	 */
 	canModifyContainerState?: boolean;
 }
