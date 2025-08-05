@@ -72,6 +72,7 @@ export function exceptionToResponse(error: unknown): IResponse {
  * @internal
  */
 export function responseToException(response: IResponse, request: IRequest): Error {
+	// IResponse.value is typed as 'any', but we expect it to be a string error message
 	const message = response.value as string;
 	const errWithStack = generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
