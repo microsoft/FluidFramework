@@ -10,25 +10,43 @@ import {
 	extractPersistedSchema,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
-import { testSimpleTrees } from "../../testTrees.js";
+import { testDocuments } from "../../testTrees.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
 import { typeboxValidator } from "../../../external-utilities/index.js";
 import { FluidClientVersion } from "../../../codec/index.js";
-import { TreeViewConfigurationAlpha } from "../../../simple-tree/index.js";
+import { TreeViewConfigurationAlpha, type SchemaUpgrade } from "../../../simple-tree/index.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
 		useSnapshotDirectory("simple-tree-storedSchema");
 		// TODO: Should also loop over schema formats once `extractPersistedSchema` takes the format version as an argument.
-		for (const test of testSimpleTrees) {
+		for (const test of testDocuments) {
 			it(`${test.name} - schema v1`, () => {
+				const config = new TreeViewConfigurationAlpha({ schema: test.schema });
+				const upgrades: SchemaUpgrade[] = [];
 				const persisted = extractPersistedSchema(
-					new TreeViewConfigurationAlpha({ schema: test.schema }),
+					config,
 					FluidClientVersion.v2_0,
-					() => true,
+					(upgrade) => {
+						upgrades.push(upgrade);
+						return true;
+					},
 				);
 
 				takeJsonSnapshot(persisted);
+
+				const withoutStaged = extractPersistedSchema(
+					config,
+					FluidClientVersion.v2_0,
+					() => false,
+				);
+				if (test.hasStagedSchema) {
+					assert.notDeepEqual(withoutStaged, persisted);
+					takeJsonSnapshot(withoutStaged, "withoutStaged");
+				} else {
+					assert.deepEqual(upgrades, []);
+					assert.deepEqual(withoutStaged, persisted);
+				}
 			});
 
 			// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,

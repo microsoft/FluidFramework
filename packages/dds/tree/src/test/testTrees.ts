@@ -50,6 +50,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	restrictiveStoredSchemaGenerationOptions,
+	permissiveStoredSchemaGenerationOptions,
 } from "../simple-tree/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import { fieldJsonCursor } from "./json/jsonCursor.js";
@@ -87,7 +88,19 @@ export interface TestDocument extends TestTree, Omit<TestSimpleTree, "root"> {
 	/**
 	 * True if and only if the document had content in unknown optional fields.
 	 */
-	readonly hasUnknownOptionalFields: boolean;
+	readonly hasUnknownOptionalFields?: true;
+
+	/**
+	 * True if and only if the document had staged allowed types.
+	 */
+	readonly hasStagedSchema?: true;
+
+	/**
+	 * True if and only if the document content requires staged allowed types.
+	 *
+	 * For this to be the case, the stored schema must also have had the staged type included.
+	 */
+	readonly requiresStagedSchema?: true;
 }
 
 function testSimpleTree<const TSchema extends ImplicitFieldSchema>(
@@ -409,6 +422,32 @@ export class HasStagedAllowedTypesAfterUpdate extends factory.objectAlpha(
 	},
 ) {}
 
+class MapWithStaged extends factory.mapAlpha("MapWithStaged", [
+	SchemaFactoryAlpha.number,
+	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+]) {}
+
+class ArrayWithStaged extends factory.arrayAlpha("ArrayWithStaged", [
+	SchemaFactoryAlpha.number,
+	SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+]) {}
+
+const multiStageCUpgrade = SchemaFactoryAlpha.staged(ArrayWithStaged);
+
+class NestedMultiStage extends factory.object("NestedMultiStage", {
+	a: SchemaFactoryAlpha.optional(SchemaFactoryAlpha.staged(SchemaFactoryAlpha.number)),
+	b: SchemaFactoryAlpha.required([
+		SchemaFactoryAlpha.staged({
+			type: () => MapWithStaged,
+			metadata: {},
+		}),
+		SchemaFactoryAlpha.null,
+	]),
+	c: SchemaFactoryAlpha.required([multiStageCUpgrade, SchemaFactoryAlpha.null]),
+}) {}
+
+// TODO: AB#45711: add recursive staged schema tests documents
+
 /**
  * Collection of {@link TestDocument|TestDocuments}.
  *
@@ -424,7 +463,6 @@ export const testDocuments: readonly TestDocument[] = [
 		(tree): TestDocument => ({
 			name: tree.name,
 			schema: tree.schema,
-			hasUnknownOptionalFields: false,
 			ambiguous: tree.ambiguous,
 			policy: defaultSchemaPolicy,
 			schemaData: toInitialSchema(tree.schema),
@@ -439,7 +477,6 @@ export const testDocuments: readonly TestDocument[] = [
 		name: "AllowsUnknownOptionalFields",
 		schema: HasUnknownOptionalFields,
 		// Unknown optional fields are allowed but empty in this document.
-		hasUnknownOptionalFields: false,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasUnknownOptionalFieldsV2),
 		treeFactory: () =>
@@ -469,7 +506,7 @@ export const testDocuments: readonly TestDocument[] = [
 		ambiguous: false,
 		name: "HasStagedAllowedTypesBeforeUpdate",
 		schema: HasStagedAllowedTypes,
-		hasUnknownOptionalFields: false,
+		hasStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasStagedAllowedTypes),
 		treeFactory: () =>
@@ -479,12 +516,95 @@ export const testDocuments: readonly TestDocument[] = [
 		ambiguous: false,
 		name: "HasStagedAllowedTypesAfterUpdate",
 		schema: HasStagedAllowedTypes,
-		hasUnknownOptionalFields: false,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
 		schemaData: toInitialSchema(HasStagedAllowedTypesAfterUpdate),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(HasStagedAllowedTypes, { x: "text" }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "Staged in root",
+		schema: SchemaFactoryAlpha.required([
+			SchemaFactoryAlpha.number,
+			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+		]),
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(HasStagedAllowedTypes),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(SchemaFactoryAlpha.number, 5)),
+	},
+	{
+		ambiguous: false,
+		name: "Staged node in root",
+		schema: SchemaFactoryAlpha.required([
+			SchemaFactoryAlpha.number,
+			SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
+		]),
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toInitialSchema(
+			SchemaFactoryAlpha.required([SchemaFactoryAlpha.number, SchemaFactoryAlpha.string]),
+		),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(SchemaFactoryAlpha.string, "text"),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "Staged in map",
+		schema: MapWithStaged,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(MapWithStaged, permissiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(MapWithStaged, [["key", "text"]])),
+	},
+	{
+		ambiguous: false,
+		name: "NestedMultiStage with no upgrades",
+		schema: NestedMultiStage,
+		hasStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedMultiStage, restrictiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedMultiStage, { b: null, c: null }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "NestedMultiStage with one upgrade",
+		schema: NestedMultiStage,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedMultiStage, {
+			includeStaged: (upgrade) => upgrade === multiStageCUpgrade.metadata.stagedSchemaUpgrade,
+		}),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedMultiStage, { b: null, c: [5] }),
+			),
+	},
+	{
+		ambiguous: false,
+		name: "NestedMultiStage with all upgrades",
+		schema: NestedMultiStage,
+		hasStagedSchema: true,
+		requiresStagedSchema: true,
+		policy: defaultSchemaPolicy,
+		schemaData: toStoredSchema(NestedMultiStage, permissiveStoredSchemaGenerationOptions),
+		treeFactory: () =>
+			jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable(NestedMultiStage, { a: 5, b: [], c: ["text"] }),
 			),
 	},
 ];
