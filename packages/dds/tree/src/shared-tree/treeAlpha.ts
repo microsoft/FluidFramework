@@ -557,7 +557,7 @@ export const TreeAlpha: TreeAlpha = {
 		const content: ViewContent = {
 			// Always use a v1 schema codec for consistency.
 			// TODO: reevaluate how staged schema should behave in schema import/export APIs before stabilizing this.
-			schema: extractPersistedSchema(config, FluidClientVersion.v2_0, () => true),
+			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 			tree: compressedData,
 			idCompressor: options.idCompressor ?? createIdCompressor(),
 		};

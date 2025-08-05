@@ -33,7 +33,7 @@ describe("independentView", () => {
 					jsonValidator: ajvValidator,
 				},
 				{
-					schema: extractPersistedSchema(config, FluidClientVersion.v2_0, () => true),
+					schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_0, () => true),
 					tree: TreeAlpha.exportCompressed(1, {
 						oldestCompatibleClient: FluidClientVersion.v2_0,
 					}),

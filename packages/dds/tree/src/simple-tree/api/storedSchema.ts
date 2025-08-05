@@ -13,9 +13,12 @@ import {
 } from "../../feature-libraries/schema-index/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
-import type { SimpleTreeSchema } from "../simpleSchema.js";
-import { simpleToStoredSchema } from "../toStoredSchema.js";
+import {
+	normalizeFieldSchema,
+	type ImplicitAnnotatedFieldSchema,
+	type ImplicitFieldSchema,
+} from "../fieldSchema.js";
+import { toStoredSchema } from "../toStoredSchema.js";
 import { TreeViewConfigurationAlpha } from "./configuration.js";
 
 import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
@@ -54,11 +57,11 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * @alpha
  */
 export function extractPersistedSchema(
-	schema: SimpleTreeSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	oldestCompatibleClient: FluidClientVersion,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
-	const stored = simpleToStoredSchema(schema, { includeStaged });
+	const stored = toStoredSchema(schema, { includeStaged });
 	const schemaWriteVersion = clientVersionToSchemaVersion(oldestCompatibleClient);
 	return encodeTreeSchema(stored, schemaWriteVersion);
 }

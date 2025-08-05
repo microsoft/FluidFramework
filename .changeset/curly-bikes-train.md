@@ -28,7 +28,7 @@ Then when opening old documents [upgradeSchema](https://fluidframework.com/docs/
 view.upgradeSchema()
 ```
 
-[extractPersistedSchema](https://fluidframework.com/docs/api/fluid-framework#extractpersistedschema-function) now takes an additional parameter to filter which staged upgrades it includes.
+The `@alpha` API [extractPersistedSchema](https://fluidframework.com/docs/api/fluid-framework#extractpersistedschema-function) now takes the schema as an `ImplicitAnnotatedFieldSchema` and additional parameter to filter which staged upgrades it includes.
 
 Below is a full example of how the schema migration process works.
 This can also be found in the [tests](https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).

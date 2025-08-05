@@ -172,7 +172,7 @@ describe("staged schema upgrade", () => {
 			}),
 
 			// TODO: we need a way to get the stored schema from independent views. Allow constructing a ViewAbleTree instead of a view directly (maybe an independentTree API?)?
-			schema: extractPersistedSchema(configA, FluidClientVersion.v2_0, () => false),
+			schema: extractPersistedSchema(configA.schema, FluidClientVersion.v2_0, () => false),
 			idCompressor,
 		};
 

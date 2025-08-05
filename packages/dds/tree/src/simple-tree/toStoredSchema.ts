@@ -38,7 +38,7 @@ import {
 	type ImplicitAnnotatedFieldSchema,
 	type ImplicitFieldSchema,
 } from "./fieldSchema.js";
-import type { SimpleFieldSchema, SimpleNodeSchema, SimpleTreeSchema } from "./simpleSchema.js";
+import type { SimpleFieldSchema, SimpleNodeSchema } from "./simpleSchema.js";
 import { walkFieldSchema } from "./walkFieldSchema.js";
 
 const viewToStoredCache = new WeakMap<
@@ -124,25 +124,6 @@ export function toStoredSchema(
 		};
 		return result;
 	});
-}
-
-/**
- * Converts a {@link SimpleTreeSchema} into a {@link TreeStoredSchema}.
- */
-export function simpleToStoredSchema(
-	root: SimpleTreeSchema,
-	options: StoredSchemaGenerationOptions,
-): TreeStoredSchema {
-	const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
-	for (const [identifier, schema] of root.definitions) {
-		nodeSchema.set(brand(identifier), getStoredSchema(schema, options));
-	}
-
-	const result: TreeStoredSchema = {
-		nodeSchema,
-		rootFieldSchema: convertField(root.root, options),
-	};
-	return result;
 }
 
 /**

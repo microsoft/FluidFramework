@@ -25,7 +25,7 @@ describe("simple-tree storedSchema", () => {
 				const config = new TreeViewConfigurationAlpha({ schema: test.schema });
 				const upgrades: SchemaUpgrade[] = [];
 				const persisted = extractPersistedSchema(
-					config,
+					config.schema,
 					FluidClientVersion.v2_0,
 					(upgrade) => {
 						upgrades.push(upgrade);
@@ -36,13 +36,13 @@ describe("simple-tree storedSchema", () => {
 				takeJsonSnapshot(persisted);
 
 				const withoutStaged = extractPersistedSchema(
-					config,
+					config.schema,
 					FluidClientVersion.v2_0,
 					() => false,
 				);
 				if (test.hasStagedSchema) {
 					assert.notDeepEqual(withoutStaged, persisted);
-					takeJsonSnapshot(withoutStaged, "withoutStaged");
+					takeJsonSnapshot(withoutStaged, ": withoutStaged");
 				} else {
 					assert.deepEqual(upgrades, []);
 					assert.deepEqual(withoutStaged, persisted);
@@ -55,10 +55,8 @@ describe("simple-tree storedSchema", () => {
 				// comparePersistedSchema is a trivial wrapper around functionality that is tested elsewhere,
 				// but might as will give it a simple smoke test for the various test schema.
 				it(`comparePersistedSchema to self ${test.name} - schema v1`, () => {
-					const persistedA = extractPersistedSchema(
-						new TreeViewConfigurationAlpha({ schema: test.schema }),
-						FluidClientVersion.v2_0,
-						() => assert.fail("Should not have staged schema"),
+					const persistedA = extractPersistedSchema(test.schema, FluidClientVersion.v2_0, () =>
+						assert.fail("Should not have staged schema"),
 					);
 
 					const status = comparePersistedSchema(persistedA, test.schema, {
