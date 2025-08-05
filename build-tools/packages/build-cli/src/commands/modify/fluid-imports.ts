@@ -39,6 +39,32 @@ const knownFFScopes = [
 ] as const;
 
 /**
+ * Known export paths for Fluid Framework packages.
+ */
+enum ExportPath {
+	Public = "",
+	Legacy = "legacy",
+	Beta = "beta",
+	LegacyBeta = "legacy/beta",
+	Alpha = "alpha",
+	LegacyAlpha = "legacy/alpha",
+	Internal = "internal",
+}
+
+/**
+ * Maps export paths to their expected ordering when sorting imports.
+ */
+const exportPathOrder = {
+	[ExportPath.Public]: 0,
+	[ExportPath.Legacy]: 1,
+	[ExportPath.Beta]: 2,
+	[ExportPath.LegacyBeta]: 3,
+	[ExportPath.Alpha]: 4,
+	[ExportPath.LegacyAlpha]: 5,
+	[ExportPath.Internal]: 6,
+} as const satisfies { [key in ExportPath]: number };
+
+/**
  * FF packages that exist outside of a scope that starts with `@fluid`.
  */
 const unscopedFFPackages: ReadonlySet<string> = new Set(["fluid-framework", "tinylicious"]);
@@ -120,7 +146,7 @@ type PackageName = string;
 interface FluidImportDataBase {
 	index: number;
 	packageName: PackageName;
-	level: ApiLevel;
+	path: string;
 	/**
 	 * package relative ordinal for levels (alphabetically) ("public" is really "" so first)
 	 * and type-only before not.
@@ -173,7 +199,7 @@ class FluidImportManager {
 		for (const {
 			importDeclaration,
 			packageName,
-			level,
+			path,
 			declaration: { moduleSpecifier },
 		} of this.fluidImports) {
 			const data = this.apiMap.get(packageName);
@@ -199,24 +225,19 @@ class FluidImportManager {
 				 * This ensures aliases and individual type-only imports are maintained when rewritten.
 				 */
 				const fullImportSpecifierText = importSpecifier.getFullText().trim();
-				const expectedLevel = getApiLevelForImportName(
-					name,
-					data,
-					/* default */ ApiLevel.public,
-					this.log,
-				);
+				const expectedPath = getPathForImportName(name, data, ExportPath.Public, this.log);
 
 				this.log.verbose(
-					`\t\tFound import named: '${fullImportSpecifierText}' (${expectedLevel})`,
+					`\t\tFound import named: '${fullImportSpecifierText}' (${expectedPath})`,
 				);
 
 				const properImport = this.ensureFluidImport({
 					packageName,
-					level: expectedLevel,
+					path: expectedPath,
 					isTypeOnly,
 				});
 
-				if (level !== expectedLevel) {
+				if (path !== expectedPath) {
 					modificationsRequired = true;
 					importSpecifier.remove();
 					properImport.declaration.namedImports.push(fullImportSpecifierText);
@@ -315,16 +336,16 @@ class FluidImportManager {
 	 */
 	private ensureFluidImport({
 		packageName,
-		level,
+		path,
 		isTypeOnly,
 	}: {
 		packageName: PackageName;
-		level: ApiLevel;
+		path: ExportPath;
 		isTypeOnly: boolean;
 	}): FluidImportData {
 		const match = (element: FluidImportData): boolean =>
 			element.packageName === packageName &&
-			element.level === level &&
+			element.path === path &&
 			element.declaration.isTypeOnly === isTypeOnly;
 
 		const preexisting = this.fluidImports.find(match);
@@ -339,9 +360,9 @@ class FluidImportManager {
 		}
 
 		const moduleSpecifier =
-			level === ApiLevel.public ? packageName : `${packageName}/${level}`;
+			path === ExportPath.Public ? packageName : `${packageName}/${path}`;
 		// Order imports primarily by level then secondarily: type, untyped
-		const order = knownApiLevels.indexOf(level) * 2 + (isTypeOnly ? 0 : 1);
+		const order = exportPathOrder[path] * 2 + (isTypeOnly ? 0 : 1);
 		const { index, after } = this.findInsertionPoint(packageName, order);
 		const newFluidImport: FluidImportDataPending = {
 			declaration: {
@@ -351,7 +372,7 @@ class FluidImportManager {
 			},
 			index,
 			packageName,
-			level,
+			path,
 			order,
 			insertAfterIndex: after,
 		};
@@ -383,19 +404,19 @@ class FluidImportManager {
 }
 
 /**
- * Returns the ApiLevel for an API based on provided data.
+ * Returns the package sub-path for an API based on provided data.
  */
-function getApiLevelForImportName(
+function getPathForImportName(
 	name: string,
-	data: NamedExportToLevel,
-	defaultValue: ApiLevel,
+	data: NamedExportToPath,
+	defaultValue: ExportPath,
 	log: CommandLogger,
-): ApiLevel {
+): ExportPath {
 	const level = data.get(name);
 	if (level !== undefined) {
 		return level;
 	}
-	log.warning(`\tassuming ${defaultValue} level for "${name}"`);
+	log.warning(`\tassuming "${defaultValue}" path for "${name}"`);
 	return defaultValue;
 }
 
@@ -485,8 +506,8 @@ function parseImport(
 	const modulePieces = moduleSpecifier.split("/");
 	const levelIndex = moduleSpecifier.startsWith("@") ? 2 : 1;
 	const packageName = modulePieces.slice(0, levelIndex).join("/");
-	const level = modulePieces.length > levelIndex ? modulePieces[levelIndex] : "public";
-	if (!isKnownApiLevel(level)) {
+	const path = modulePieces.length > levelIndex ? modulePieces[levelIndex] : ExportPath.Public;
+	if (!isKnownApiLevel(path)) {
 		return undefined;
 	}
 	// Check for complicated path - beyond basic leveled import
@@ -503,7 +524,7 @@ function parseImport(
 		return undefined;
 	}
 
-	const order = knownApiLevels.indexOf(level) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
+	const order = knownApiLevels.indexOf(path) * 2 + (importDeclaration.isTypeOnly() ? 0 : 1);
 	return {
 		importDeclaration,
 		declaration: {
@@ -513,7 +534,7 @@ function parseImport(
 		},
 		index,
 		packageName,
-		level,
+		path,
 		order,
 		originallyUnassigned: isImportUnassigned(importDeclaration),
 	};
@@ -566,8 +587,8 @@ interface MemberDataRaw {
 	name: string;
 }
 
-type NamedExportToLevel = Map<string, ApiLevel>;
-type MapData = Map<PackageName, NamedExportToLevel>;
+type NamedExportToPath = Map<string, ExportPath>;
+type MapData = Map<PackageName, NamedExportToPath>;
 
 class ApiLevelReader {
 	private readonly project = new Project({
@@ -578,7 +599,7 @@ class ApiLevelReader {
 	});
 
 	private readonly tempSource = this.project.createSourceFile("flub-fluid-importer-temp.ts");
-	private readonly map: Map<PackageName, NamedExportToLevel | undefined>;
+	private readonly map: Map<PackageName, NamedExportToPath | undefined>;
 
 	constructor(
 		private readonly log: CommandLogger,
@@ -586,7 +607,7 @@ class ApiLevelReader {
 		private readonly onlyInternal: boolean,
 		initialMap?: MapData,
 	) {
-		this.map = new Map<PackageName, NamedExportToLevel>(initialMap);
+		this.map = new Map<PackageName, NamedExportToPath>(initialMap);
 		for (const k of this.map.keys()) {
 			if (!this.packagesRegex.test(k)) {
 				this.map.set(k, undefined);
@@ -594,7 +615,7 @@ class ApiLevelReader {
 		}
 	}
 
-	public get(packageName: PackageName): NamedExportToLevel | undefined {
+	public get(packageName: PackageName): NamedExportToPath | undefined {
 		if (this.map.has(packageName)) {
 			return this.map.get(packageName);
 		}
@@ -605,7 +626,7 @@ class ApiLevelReader {
 		return loadResult;
 	}
 
-	private loadPackageData(packageName: PackageName): NamedExportToLevel | undefined {
+	private loadPackageData(packageName: PackageName): NamedExportToPath | undefined {
 		const internalImport = this.tempSource.addImportDeclaration({
 			moduleSpecifier: `${packageName}/internal`,
 		});
@@ -625,56 +646,80 @@ class ApiLevelReader {
 			}
 		}
 
-		const memberData = new Map<string, ApiLevel>();
-		addUniqueNamedExportsToMap(exports.public, memberData, ApiLevel.public);
+		const memberData = new Map<string, ExportPath>();
+		addUniqueNamedExportsToMap(exports.public, memberData, ExportPath.Public);
 		if (this.onlyInternal) {
-			addUniqueNamedExportsToMap(exports.alpha, memberData, ApiLevel.internal);
-			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.internal);
+			addUniqueNamedExportsToMap(exports.alpha, memberData, ExportPath.Internal);
+			addUniqueNamedExportsToMap(exports.beta, memberData, ExportPath.Internal);
 
-			addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ApiLevel.internal);
-			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ApiLevel.internal);
-			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ApiLevel.internal);
+			addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ExportPath.Internal);
+			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ExportPath.Internal);
+			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Internal);
 		} else {
-			addUniqueNamedExportsToMap(exports.alpha, memberData, ApiLevel.alpha);
-			addUniqueNamedExportsToMap(exports.beta, memberData, ApiLevel.beta);
-
 			if (exports.alpha.length > 0) {
 				// @alpha APIs have been mapped to both /alpha and /legacy paths.
 				// Later @legacy tag was added explicitly.
 				// Check for a /alpha export to map @alpha as alpha.
-				const alphaExport =
+				const useAlphaExport =
 					this.tempSource
 						.addImportDeclaration({
-							moduleSpecifier: `${packageName}/alpha`,
+							moduleSpecifier: `${packageName}/${ExportPath.Alpha}`,
 						})
 						.getModuleSpecifierSourceFile() !== undefined;
-				addUniqueNamedExportsToMap(
-					exports.alpha,
-					memberData,
-					alphaExport ? ApiLevel.alpha : ApiLevel.legacyAlpha,
-				);
+
+				if (useAlphaExport) {
+					addUniqueNamedExportsToMap(exports.alpha, memberData, ExportPath.Alpha);
+				} else {
+					this.log.verbose(
+						`BACKWARD COMPATIBILITY: Mapping @alpha APIs to /${ExportPath.Legacy}.`,
+					);
+					addUniqueNamedExportsToMap(exports.alpha, memberData, ExportPath.Legacy);
+				}
 			}
 
-			addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ApiLevel.legacyAlpha);
-			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ApiLevel.legacyBeta);
-			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ApiLevel.legacyPublic);
+			addUniqueNamedExportsToMap(exports.beta, memberData, ExportPath.Beta);
+
+			if (exports.legacyAlpha.length > 0) {
+				// Historically, all @legacy APIs were mapped to /legacy.
+				// Now, we support separate paths for all release levels with @legacy APIs.
+				// Check for a /legacy/alpha export to map @legacy + @alpha as "legacy/alpha" and map @legacy + @beta to "/legacy".
+				// Otherwise, map all @legacy APIs to /legacy.
+				const useLegacyAlphaExport =
+					this.tempSource
+						.addImportDeclaration({
+							moduleSpecifier: `${packageName}/${ExportPath.LegacyAlpha}`,
+						})
+						.getModuleSpecifierSourceFile() !== undefined;
+
+				if (useLegacyAlphaExport) {
+					addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ExportPath.LegacyAlpha);
+				} else {
+					this.log.verbose(
+						`BACKWARD COMPATIBILITY: Mapping all @legacy APIs to /${ExportPath.Legacy}.`,
+					);
+					addUniqueNamedExportsToMap(exports.legacyAlpha, memberData, ExportPath.Legacy);
+				}
+			}
+
+			addUniqueNamedExportsToMap(exports.legacyBeta, memberData, ExportPath.Legacy);
+			addUniqueNamedExportsToMap(exports.legacyPublic, memberData, ExportPath.Legacy);
 		}
-		addUniqueNamedExportsToMap(exports.internal, memberData, ApiLevel.internal);
+		addUniqueNamedExportsToMap(exports.internal, memberData, ExportPath.Internal);
 		return memberData;
 	}
 }
 
 function addUniqueNamedExportsToMap(
 	exports: { name: string }[],
-	map: Map<string, ApiLevel>,
-	level: ApiLevel,
+	nameToExportPathMap: Map<string, string>,
+	exportPath: string,
 ): void {
 	for (const { name } of exports) {
-		const existing = map.get(name);
+		const existing = nameToExportPathMap.get(name);
 		if (existing !== undefined) {
 			throw new Error(`"${name}" already has entry mapped to ${existing}`);
 		}
-		map.set(name, level);
+		nameToExportPathMap.set(name, exportPath);
 	}
 }
 
@@ -685,9 +730,9 @@ async function loadData(dataFile: string, onlyInternal: boolean): Promise<MapDat
 	const apiLevelDataRaw: Record<string, MemberDataRaw[]> = JSON5.parse(rawData);
 
 	// Transform the raw data into a more useable form
-	const apiLevelData = new Map<PackageName, NamedExportToLevel>();
+	const apiLevelData = new Map<PackageName, NamedExportToPath>();
 	for (const [moduleName, members] of Object.entries(apiLevelDataRaw)) {
-		const entry = apiLevelData.get(moduleName) ?? new Map<string, ApiLevel>();
+		const entry = apiLevelData.get(moduleName) ?? new Map<string, ExportPath>();
 		for (const member of members) {
 			const { level } = member;
 			if (!isKnownApiLevel(level)) {
