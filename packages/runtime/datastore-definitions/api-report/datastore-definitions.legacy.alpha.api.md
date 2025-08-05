@@ -94,6 +94,7 @@ export interface IFluidDataStoreRuntime extends IEventProvider<IFluidDataStoreRu
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
+    readonly minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     readonly objectsRoutingContext: IFluidHandleContext;
     // (undocumented)

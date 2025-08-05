@@ -130,6 +130,27 @@ export function isValidMinVersionForCollab(
 }
 
 /**
+ * Converts a SemanticVersion to a MinimumVersionForCollab.
+ * @param semanticVersion - The version to convert.
+ * @returns The version as a MinimumVersionForCollab.
+ * @throws UsageError if the version is not a valid MinimumVersionForCollab.
+ *
+ * @internal
+ */
+export function semanticVersionToMinimumVersionForCollab(
+	semanticVersion: SemanticVersion,
+): MinimumVersionForCollab {
+	const minVersionForCollab = semanticVersion as MinimumVersionForCollab;
+	if (!isValidMinVersionForCollab(minVersionForCollab)) {
+		throw new UsageError(
+			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab.`,
+		);
+	}
+
+	return minVersionForCollab;
+}
+
+/**
  * Generic function to validate runtime options against the minVersionForCollab.
  *
  * @internal

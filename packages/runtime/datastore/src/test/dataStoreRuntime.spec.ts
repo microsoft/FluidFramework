@@ -20,6 +20,7 @@ import {
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
 	type ISequencedMessageEnvelope,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	MockFluidDataStoreContext,
@@ -413,5 +414,26 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
+	});
+});
+
+describe("FluidDataStoreRuntime.minVersionForCollab", () => {
+	function createRuntime(
+		id: string,
+		minVersionForCollab: MinimumVersionForCollab,
+	): FluidDataStoreRuntime_ForTesting {
+		const context = new MockFluidDataStoreContext(id);
+		context.minVersionForCollab = minVersionForCollab;
+		return new FluidDataStoreRuntime(
+			context,
+			{} as unknown as ISharedObjectRegistry,
+			/* existing */ false,
+			async (rt) => rt,
+		) as unknown as FluidDataStoreRuntime_ForTesting;
+	}
+
+	it("minVersionForCollab is read from the FluidDataStoreContext and stored on FluidDataStoreRuntime", () => {
+		const runtime = createRuntime("minVersionTest", "1.2.3");
+		assert.deepStrictEqual(runtime.minVersionForCollab, "1.2.3");
 	});
 });
