@@ -17,7 +17,7 @@ import { PackageName } from "@rushstack/node-core-library";
 import * as changeCase from "change-case";
 import { readJson } from "fs-extra/esm";
 import {
-	JSDoc,
+	type JSDoc,
 	ModuleKind,
 	type NameableNodeSpecific,
 	type NamedNodeSpecificBase,

@@ -13,10 +13,14 @@ export enum AttachState {
 
 // @public
 export namespace ConnectionState {
-    export type CatchingUp = 1;
-    export type Connected = 2;
-    export type Disconnected = 0;
-    export type EstablishingConnection = 3;
+    const Disconnected = 0;
+    export type CatchingUp = typeof CatchingUp;
+    const EstablishingConnection = 3;
+    export type Connected = typeof Connected;
+    const CatchingUp = 1;
+    export type Disconnected = typeof Disconnected;
+    const Connected = 2;
+    export type EstablishingConnection = typeof EstablishingConnection;
 }
 
 // @public
@@ -140,6 +144,7 @@ export interface IContainerContext {
     // (undocumented)
     readonly disposeFn?: (error?: ICriticalContainerError) => void;
     getAbsoluteUrl?(relativeUrl: string): Promise<string | undefined>;
+    readonly getConnectionState?: () => ConnectionState;
     // (undocumented)
     getLoadedFromVersion(): IVersion | undefined;
     // @deprecated
@@ -154,7 +159,7 @@ export interface IContainerContext {
     readonly scope: FluidObject;
     readonly snapshotWithContents?: ISnapshot;
     // (undocumented)
-    readonly storage: IDocumentStorageService;
+    readonly storage: IContainerStorageService;
     // (undocumented)
     readonly submitBatchFn: (batch: IBatchMessage[], referenceSequenceNumber?: number) => number;
     // @deprecated (undocumented)
@@ -200,6 +205,25 @@ export interface IContainerLoadMode {
 export type IContainerPolicies = {
     maxClientLeaveWaitTime?: number;
 };
+
+// @alpha @legacy
+export interface IContainerStorageService {
+    createBlob(file: ArrayBufferLike): Promise<ICreateBlobResponse>;
+    // @deprecated
+    dispose?(error?: Error): void;
+    // @deprecated
+    readonly disposed?: boolean;
+    // @deprecated
+    downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree>;
+    getSnapshot?(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot>;
+    getSnapshotTree(version?: IVersion, scenarioName?: string): Promise<ISnapshotTree | null>;
+    getVersions(versionId: string | null, count: number, scenarioName?: string, fetchSource?: FetchSource): Promise<IVersion[]>;
+    readonly maximumCacheDurationMs?: IDocumentStorageServicePolicies["maximumCacheDurationMs"];
+    // @deprecated
+    readonly policies?: IDocumentStorageServicePolicies | undefined;
+    readBlob(id: string): Promise<ArrayBufferLike>;
+    uploadSummaryWithContext(summary: ISummaryTree, context: ISummaryContext): Promise<string>;
+}
 
 // @public
 export type ICriticalContainerError = IErrorBase_2;

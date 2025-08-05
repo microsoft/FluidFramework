@@ -41,9 +41,12 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 		return mod;
 	});
 
-	if (process.env.FLUID_TEST_LOGGER_PKG_PATH) {
-		// Inject implementation of getTestLogger, put it first before mocha-test-setup
-		requiredModulePaths.unshift(process.env.FLUID_TEST_LOGGER_PKG_PATH);
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
+		const modulePath = path.join(moduleDir, process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
+		// Inject implementation of createTestLogger, put it first before mocha-test-setup
+		if (existsSync(modulePath)) {
+			requiredModulePaths.unshift(modulePath);
+		}
 	}
 
 	const config = {

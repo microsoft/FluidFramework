@@ -4,12 +4,12 @@
  */
 
 import { unreachableCase } from "@fluidframework/common-utils";
-import * as git from "@fluidframework/gitresources";
+import type * as git from "@fluidframework/gitresources";
 import {
 	FileMode,
-	ISnapshotTreeEx,
+	type ISnapshotTreeEx,
 	SummaryType,
-	SummaryObject,
+	type SummaryObject,
 } from "@fluidframework/protocol-definitions";
 
 /**

@@ -21,7 +21,6 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-definitions";
 import type {
-	IDocumentStorageService,
 	IDocumentMessage,
 	ISnapshotTree,
 	ISequencedDocumentMessage,
@@ -37,7 +36,11 @@ import type {
 	IGarbageCollectionData,
 	IGarbageCollectionDetailsBase,
 } from "./garbageCollectionDefinitions.js";
-import type { IInboundSignalMessage, IRuntimeMessageCollection } from "./protocol.js";
+import type {
+	IInboundSignalMessage,
+	IRuntimeMessageCollection,
+	IRuntimeStorageService,
+} from "./protocol.js";
 import type {
 	CreateChildSummarizerNodeParam,
 	ISummarizerNodeWithGC,
@@ -174,7 +177,7 @@ export type AliasResult = "Success" | "Conflict" | "AlreadyAliased";
  * - Can be assigned an alias
  *
  * @privateRemarks
- * TODO: These docs should define what a datastore is, and not do so by just referencing "data store".
+ * TODO: These docs should define what a "data store" is, and not do so by just referencing "data store".
  *
  * @legacy
  * @alpha
@@ -240,10 +243,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * When not specified the datastore will belong to a `default` group. Read more about it in this
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}
 	 */
-	createDataStore(
-		pkg: Readonly<string | string[]>,
-		loadingGroupId?: string,
-	): Promise<IDataStore>;
+	createDataStore(pkg: string | PackagePath, loadingGroupId?: string): Promise<IDataStore>;
 
 	/**
 	 * Creates detached data store context. Only after context.attachRuntime() is called,
@@ -539,10 +539,16 @@ export interface IPendingMessagesState {
 }
 
 /**
- * Represents the context for the data store like objects. It is used by the data store runtime to
- * get information and call functionality to its parent.
+ * Context for an {@link IDataStore} like object.
+ * @remarks
+ * This context does NOT represent common information provided to all channels under a specific parent.
+ * Each implementation of {@link IFluidDataStoreChannel} will receive its own instance of this context that contains specifically the data it needs.
  *
  * This layout is temporary, as {@link IFluidParentContext} and {@link IFluidDataStoreContext} will converge.
+ * Therefore the semantics of these two interfaces is not really distinct.
+ *
+ * @privateRemarks
+ * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy
  * @alpha
@@ -560,7 +566,7 @@ export interface IFluidParentContext
 	 */
 	readonly isReadOnly?: () => boolean;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
-	readonly storage: IDocumentStorageService;
+	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
 	readonly clientDetails: IClientDetails;
 	readonly idCompressor?: IIdCompressor;
@@ -672,8 +678,22 @@ export interface IFluidParentContext
 }
 
 /**
- * Represents the context for the data store. It is used by the data store runtime to
- * get information and call functionality to the container.
+ * A path which selects a {@link (IFluidDataStoreFactory:interface)} within a hierarchial registry.
+ * @remarks
+ * Each string in the array is the "identifier" to pick a specific {@link NamedFluidDataStoreRegistryEntry2} within a {@link NamedFluidDataStoreRegistryEntries}.
+ *
+ * Due to some usages joining this array with "/", it is recommended to avoid using "/" in the strings.
+ * @legacy
+ * @alpha
+ */
+export type PackagePath = readonly string[];
+
+/**
+ * Extension to {@link IFluidParentContext} specifically for {@link IDataStore}s.
+ *
+ * @remarks
+ * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
+ *
  * @legacy
  * @alpha
  */
@@ -689,9 +709,11 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 	 */
 	readonly isLocalDataStore: boolean;
 	/**
-	 * The package path of the data store as per the package factory.
+	 * The {@link PackagePath} of the data store as per the package factory.
+	 * @remarks
+	 * This defines what {@link (IFluidDataStoreFactory:interface)} would be used to create the {@link IDataStore.entryPoint} of the {@link IDataStore}.
 	 */
-	readonly packagePath: readonly string[];
+	readonly packagePath: PackagePath;
 	readonly baseSnapshot: ISnapshotTree | undefined;
 
 	/**

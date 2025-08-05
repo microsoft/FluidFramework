@@ -4,7 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../schemaTypes.js";
+import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
 import type {
 	SimpleArrayNodeSchema,
 	SimpleFieldSchema,
@@ -13,10 +13,16 @@ import type {
 	SimpleNodeSchema,
 	SimpleObjectFieldSchema,
 	SimpleObjectNodeSchema,
+	SimpleRecordNodeSchema,
 	SimpleTreeSchema,
 } from "../simpleSchema.js";
 import { NodeKind } from "../core/index.js";
-import { ArrayNodeSchema, MapNodeSchema, ObjectNodeSchema } from "../node-kinds/index.js";
+import {
+	ArrayNodeSchema,
+	MapNodeSchema,
+	ObjectNodeSchema,
+	RecordNodeSchema,
+} from "../node-kinds/index.js";
 import { walkFieldSchema } from "../walkFieldSchema.js";
 import { LeafNodeSchema } from "../leafNodeSchema.js";
 
@@ -49,7 +55,8 @@ export function toSimpleTreeSchema(
 				nodeSchema instanceof ArrayNodeSchema ||
 					nodeSchema instanceof MapNodeSchema ||
 					nodeSchema instanceof LeafNodeSchema ||
-					nodeSchema instanceof ObjectNodeSchema,
+					nodeSchema instanceof ObjectNodeSchema ||
+					nodeSchema instanceof RecordNodeSchema,
 				0xb60 /* Invalid schema */,
 			);
 			const outSchema = copySchemaObjects ? copySimpleNodeSchema(nodeSchema) : nodeSchema;
@@ -82,7 +89,8 @@ function copySimpleNodeSchema(schema: SimpleNodeSchema): SimpleNodeSchema {
 			return copySimpleLeafSchema(schema);
 		case NodeKind.Array:
 		case NodeKind.Map:
-			return copySimpleMapOrArraySchema(schema);
+		case NodeKind.Record:
+			return copySimpleSchemaWithAllowedTypes(schema);
 		case NodeKind.Object:
 			return copySimpleObjectSchema(schema);
 		default:
@@ -99,9 +107,9 @@ function copySimpleLeafSchema(schema: SimpleLeafNodeSchema): SimpleLeafNodeSchem
 	};
 }
 
-function copySimpleMapOrArraySchema(
-	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema,
-): SimpleMapNodeSchema | SimpleArrayNodeSchema {
+function copySimpleSchemaWithAllowedTypes(
+	schema: SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema,
+): SimpleMapNodeSchema | SimpleArrayNodeSchema | SimpleRecordNodeSchema {
 	return {
 		kind: schema.kind,
 		allowedTypesIdentifiers: schema.allowedTypesIdentifiers,

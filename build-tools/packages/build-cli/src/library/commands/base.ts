@@ -4,13 +4,13 @@
  */
 
 import { getResolvedFluidRoot } from "@fluidframework/build-tools";
-import { Command, Flags, Interfaces } from "@oclif/core";
+import { Command, Flags, type Interfaces } from "@oclif/core";
 // eslint-disable-next-line import/no-internal-modules
 import type { PrettyPrintableError } from "@oclif/core/errors";
 import chalk from "picocolors";
 
 import { type IBuildProject, loadBuildProject } from "@fluid-tools/build-infrastructure";
-import { CommandLogger } from "../../logging.js";
+import type { CommandLogger } from "../../logging.js";
 import { Context } from "../context.js";
 import { indentString } from "../text.js";
 

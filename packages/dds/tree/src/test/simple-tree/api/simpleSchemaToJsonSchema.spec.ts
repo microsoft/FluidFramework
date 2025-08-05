@@ -219,6 +219,71 @@ describe("simpleSchemaToJsonSchema", () => {
 		);
 	});
 
+	it("Record schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				allowedTypesIdentifiers: new Set<string>(["test.record"]),
+				metadata: {},
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.record": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Record,
+					patternProperties: {
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.record",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
 	describe("convertObjectNodeSchema", () => {
 		it("empty", () => {
 			const schemaFactory = new SchemaFactoryAlpha("test");

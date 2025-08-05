@@ -64,11 +64,10 @@ describe("Fuzz - Top-Level", () => {
 				clientAddProbability: 0,
 				maxNumberOfClients: 3,
 			},
-			// AB#7162: enabling rehydrate in these tests hits 0x744 and 0x79d. Disabling rehydrate for now
-			// and using the default number of ops before attach.
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
-				rehydrateDisabled: true,
+				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
+				attachingBeforeRehydrateDisable: true,
 			},
 			reconnectProbability: 0.1,
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
@@ -92,15 +91,17 @@ describe("Fuzz - Top-Level", () => {
 		const options: Partial<DDSFuzzSuiteOptions> = {
 			...baseOptions,
 			reconnectProbability: 0.0,
+			rollbackProbability: 0,
 			defaultTestCount: runsPerBatch,
 			rebaseProbability: 0.2,
 			containerRuntimeOptions: {
 				flushMode: FlushMode.TurnBased,
 				enableGroupedBatching: true,
 			},
-			// AB#7162: see comment above.
 			detachedStartOptions: {
 				numOpsBeforeAttach: 5,
+				// AB#43127: fully allowing rehydrate after attach is currently not supported in tests (but should be in prod) due to limitations in the test mocks.
+				attachingBeforeRehydrateDisable: true,
 			},
 			saveFailures: {
 				directory: failureDirectory,

@@ -4,17 +4,15 @@
  */
 
 import type { TreeArrayNode } from "./arrayNode.js";
+import { NodeKind } from "../../core/index.js";
 import type {
+	TreeNodeSchemaClass,
+	TreeNodeSchema,
+	TreeNodeSchemaNonClass,
+	WithType,
 	ImplicitAnnotatedAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
 	UnannotateImplicitAllowedTypes,
-} from "../../schemaTypes.js";
-import {
-	NodeKind,
-	type TreeNodeSchemaClass,
-	type TreeNodeSchema,
-	type TreeNodeSchemaNonClass,
-	type WithType,
 } from "../../core/index.js";
 
 import type { SimpleArrayNodeSchema } from "../../simpleSchema.js";

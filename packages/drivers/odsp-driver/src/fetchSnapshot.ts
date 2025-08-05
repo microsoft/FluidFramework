@@ -6,9 +6,9 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	DriverErrorTelemetryProps,
+	type DriverErrorTelemetryProps,
 	NonRetryableError,
 	isRuntimeMessage,
 } from "@fluidframework/driver-utils/internal";
@@ -18,13 +18,13 @@ import {
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	type IOdspError,
-	IOdspResolvedUrl,
-	ISnapshotOptions,
-	InstrumentedStorageTokenFetcher,
+	type IOdspResolvedUrl,
+	type ISnapshotOptions,
+	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	ITelemetryLoggerExt,
+	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	wrapError,
@@ -32,24 +32,25 @@ import {
 import { v4 as uuid } from "uuid";
 
 import {
-	ISnapshotContentsWithProps,
+	type ISnapshotContentsWithProps,
 	currentReadVersion,
 	parseCompactSnapshotResponse,
 } from "./compactSnapshotParser.js";
 import {
-	IOdspSnapshot,
-	ISnapshotCachedEntry2,
-	IVersionedValueWithEpoch,
+	type IOdspSnapshot,
+	type ISnapshotCachedEntry2,
+	type IVersionedValueWithEpoch,
 	persistedCacheValueVersion,
 } from "./contracts.js";
-import { EpochTracker } from "./epochTracker.js";
+import { ClpCompliantAppHeader } from "./contractsPublic.js";
+import type { EpochTracker } from "./epochTracker.js";
 import { getQueryString } from "./getQueryString.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import { mockify } from "./mockify.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "./odspSnapshotParser.js";
 import { checkForKnownServerFarmType } from "./odspUrlHelper.js";
 import {
-	IOdspResponse,
+	type IOdspResponse,
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
@@ -739,9 +740,15 @@ export const downloadSnapshot = mockify(
 		// This error thrown by server will contain the new redirect location. Look at the 404 error parsing
 		// for further reference here: \packages\utils\odsp-doclib-utils\src\odspErrorUtils.ts
 		// If the share link is non-durable, we will add the nonDurableRedeem header to the header.prefer.
-		const header = isRedemptionNonDurable
+		const header: { [key: string]: string } = isRedemptionNonDurable
 			? { prefer: "manualredirect, nonDurableRedeem" }
 			: { prefer: "manualredirect" };
+		// Epoch tracker is handling adding the CLP Compliant App header, so only when a flow does not
+		// use epoch tracker, we add the header.
+		if (epochTracker === undefined && odspResolvedUrl.isClpCompliantApp !== undefined) {
+			header[ClpCompliantAppHeader.isClpCompliantApp] =
+				odspResolvedUrl.isClpCompliantApp.toString();
+		}
 		const authHeader = await getAuthHeader(
 			{ ...tokenFetchOptions, request: { url, method } },
 			"downloadSnapshot",

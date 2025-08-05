@@ -9,22 +9,26 @@ import { readFile, stat, unlink, writeFile } from "node:fs/promises";
 
 import crypto from "crypto";
 import * as path from "path";
-import { AsyncPriorityQueue } from "async";
+import type { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
 import globby from "globby";
 import chalk from "picocolors";
 
 import { defaultLogger } from "../../../common/logging";
-import { ExecAsyncResult, execAsync, getExecutableFromCommand } from "../../../common/utils";
+import {
+	type ExecAsyncResult,
+	execAsync,
+	getExecutableFromCommand,
+} from "../../../common/utils";
 import type { BuildContext } from "../../buildContext";
-import { BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
+import { type BuildPackage, BuildResult, summarizeBuildResult } from "../../buildGraph";
 import {
 	type GitIgnoreSetting,
 	type GitIgnoreSettingValue,
 	gitignoreDefaultValue,
 } from "../../fluidBuildConfig";
 import { options } from "../../options";
-import { Task, TaskExec } from "../task";
+import { Task, type TaskExec } from "../task";
 
 const { log } = defaultLogger;
 const traceTaskTrigger = registerDebug("fluid-build:task:trigger");
@@ -678,12 +682,20 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	/**
 	 * @returns The list of globs for all the files that this task depends on.
 	 */
-	protected abstract getInputGlobs(): Promise<string[]>;
+	protected abstract getInputGlobs(): Promise<readonly string[]>;
 
 	/**
 	 * @returns The list of globs for all the files that this task generates.
 	 */
-	protected abstract getOutputGlobs(): Promise<string[]>;
+	protected abstract getOutputGlobs(): Promise<readonly string[]>;
+
+	/**
+	 * @returns If the lock file should be included as input files for this task.
+	 */
+	protected get includeLockFiles(): boolean {
+		// Include the lock file by default.
+		return true;
+	}
 
 	/**
 	 * Configures how gitignore rules are applied. "input" applies gitignore rules to the input, "output" applies them to
@@ -700,7 +712,15 @@ export abstract class LeafWithGlobInputOutputDoneFileTask extends LeafWithFileSt
 	}
 
 	protected override async getInputFiles(): Promise<string[]> {
-		return this.getFiles("input");
+		const inputs = await this.getFiles("input");
+		if (this.includeLockFiles) {
+			const lockFilePath = this.node.pkg.getLockFilePath();
+			if (lockFilePath === undefined) {
+				throw new Error(`Lock file missing for ${this.node.pkg.nameColored}.`);
+			}
+			inputs.push(lockFilePath);
+		}
+		return inputs;
 	}
 
 	protected override async getOutputFiles(): Promise<string[]> {

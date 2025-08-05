@@ -5,7 +5,11 @@
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { InternalTypes } from "./exposedInternalTypes.js";
-import type { ClientRecord } from "./internalTypes.js";
+import type {
+	ClientRecord,
+	ValidatableValueDirectoryOrState,
+	ValidatableValueStructure,
+} from "./internalTypes.js";
 import type { AttendeeId, PresenceWithNotifications as Presence } from "./presence.js";
 
 // type StateDatastoreSchemaNode<
@@ -43,20 +47,22 @@ export interface LocalStateUpdateOptions {
  */
 export interface StateDatastore<
 	TKey extends string,
-	TValue extends InternalTypes.ValueDirectoryOrState<any>,
+	TUpdateValue extends InternalTypes.ValueDirectoryOrState<unknown>,
+	TStoredValue extends
+		ValidatableValueDirectoryOrState<unknown> = ValidatableValueStructure<TUpdateValue>,
 > {
 	readonly presence: Presence;
 	localUpdate(
 		key: TKey,
-		value: TValue & {
+		value: TUpdateValue & {
 			ignoreUnmonitored?: true;
 		},
 		options: LocalStateUpdateOptions,
 	): void;
-	update(key: TKey, attendeeId: AttendeeId, value: TValue): void;
+	update(key: TKey, attendeeId: AttendeeId, value: TStoredValue): void;
 	knownValues(key: TKey): {
 		self: AttendeeId | undefined;
-		states: ClientRecord<TValue>;
+		states: ClientRecord<TStoredValue>;
 	};
 }
 

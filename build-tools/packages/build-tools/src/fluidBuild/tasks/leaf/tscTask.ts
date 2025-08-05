@@ -8,9 +8,9 @@ import { type BigIntStats, type Stats, existsSync, lstatSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import isEqual from "lodash.isequal";
-import * as tsTypes from "typescript";
+import type * as tsTypes from "typescript";
 
-import { TscUtil, getTscUtils } from "../../tscUtils";
+import { type TscUtil, getTscUtils } from "../../tscUtils";
 import { getInstalledPackageVersion } from "../taskUtils";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask";
 
@@ -359,6 +359,10 @@ export class TscTask extends LeafTask {
 		const options = this.readTsConfig();
 		if (!options || !options.options.incremental) {
 			return undefined;
+		}
+
+		if (options.options.tsBuildInfoFile) {
+			return options.options.tsBuildInfoFile;
 		}
 
 		const outFile = options.options.out ? options.options.out : options.options.outFile;

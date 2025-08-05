@@ -5,7 +5,7 @@
 
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
-import { ParagraphNode, SectionNode, SpanNode } from "../../documentation-domain/index.js";
+import { SectionNode } from "../../documentation-domain/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createTableWithHeading } from "../helpers/index.js";
 
@@ -20,11 +20,20 @@ export function transformApiModel(
 		// If no packages under model, print simple note.
 		return [
 			new SectionNode([
-				new ParagraphNode([
-					SpanNode.createFromPlainText("No packages discovered while parsing model.", {
-						italic: true,
-					}),
-				]),
+				{
+					type: "paragraph",
+					children: [
+						{
+							type: "emphasis",
+							children: [
+								{
+									type: "text",
+									value: "No packages discovered while parsing model.",
+								},
+							],
+						},
+					],
+				},
 			]),
 		];
 	}

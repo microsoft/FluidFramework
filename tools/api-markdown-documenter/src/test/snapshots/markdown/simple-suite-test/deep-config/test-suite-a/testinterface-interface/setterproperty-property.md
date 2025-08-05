@@ -8,6 +8,7 @@ A test property with a getter and a setter.
 
 ```typescript
 get setterProperty(): boolean;
+
 set setterProperty(newValue: boolean);
 ```
 

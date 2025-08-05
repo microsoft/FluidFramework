@@ -283,26 +283,42 @@ export namespace ConnectionState {
 	 * or may remain disconnected until explicitly told to connect.
 	 * @public
 	 */
-	export type Disconnected = 0;
+	export const Disconnected = 0;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(Disconnected:variable)}
+	 */
+	export type Disconnected = typeof Disconnected;
 
 	/**
 	 * The container is disconnected but actively trying to establish a new connection.
 	 * PLEASE NOTE that this numerical value falls out of the order you may expect for this state.
 	 * @public
 	 */
-	export type EstablishingConnection = 3;
+	export const EstablishingConnection = 3;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(EstablishingConnection:variable)}
+	 */
+	export type EstablishingConnection = typeof EstablishingConnection;
 
 	/**
 	 * The container has an inbound connection only, and is catching up to the latest known state from the service.
 	 * @public
 	 */
-	export type CatchingUp = 1;
+	export const CatchingUp = 1;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(CatchingUp:variable)}
+	 */
+	export type CatchingUp = typeof CatchingUp;
 
 	/**
 	 * The container is fully connected and syncing.
 	 * @public
 	 */
-	export type Connected = 2;
+	export const Connected = 2;
+	/**
+	 * {@inheritdoc @fluidframework/container-definitions#(ConnectionState:namespace).(Connected:variable)}
+	 */
+	export type Connected = typeof Connected;
 }
 
 /**
@@ -462,7 +478,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 *
 	 * @remarks
 	 *
-	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).Connected}, and the
+	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).(Connected:variable)}, and the
 	 * "connected" event will be fired if/when connection succeeds.
 	 */
 	connect(): void;
@@ -472,7 +488,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 *
 	 * @remarks
 	 *
-	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).Disconnected}, and the
+	 * {@link IContainer.connectionState} will be set to {@link (ConnectionState:namespace).(Disconnected:variable)}, and the
 	 * "disconnected" event will be fired when disconnection completes.
 	 */
 	disconnect(): void;
@@ -485,7 +501,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	/**
 	 * The server provided ID of the client.
 	 *
-	 * Set once {@link IContainer.connectionState} is {@link (ConnectionState:namespace).Connected},
+	 * Set once {@link IContainer.connectionState} is {@link (ConnectionState:namespace).(Connected:variable)},
 	 * otherwise will be `undefined`.
 	 */
 	readonly clientId?: string | undefined;

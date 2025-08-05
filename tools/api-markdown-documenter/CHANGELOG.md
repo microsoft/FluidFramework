@@ -1,6 +1,74 @@
 # @fluid-tools/api-markdown-documenter
 
+## 0.22.0
+
+### Documentation Domain is being removed
+
+This is a work in progress.
+
+The goal is for transformations to target [mdast](https://github.com/syntax-tree/mdast) directly, rather than going through an intermediate domain.
+Transformations to HTML will use `mdast-util-to-hast`.
+
+#### Markdown Nodes
+
+`SectionNode` has been updated to take `mdast` "block content" directly.
+All `DocumentationNode` implementations except `SectionNode` and `HeadingNode` (which don't have direct Markdown correlaries) have been removed.
+Markdown trees via `mdast` are now used directly in API item and TSDoc transformations.
+
+#### Extensibility support removed
+
+The Documentation Domain is no longer extensible.
+Since it is now a thin wrapper around `mdast`, `mdast`'s own extensibility model can be leveraged for custom content types.
+
 ## 0.21.0
+
+### Add DocumentationNode -> mdast transformation layer
+
+Adds transformation library for generating [mdast](https://github.com/syntax-tree/mdast) from `DocumentationNode`s.
+
+#### Example
+
+```typescript
+const modelDirectoryPath = "<PATH-TO-YOUR-DIRECTORY-CONTAINING-API-REPORTS>";
+
+// Create the API Model from our API reports
+const apiModel = await loadModel({
+	modelDirectoryPath,
+});
+
+// Transform the API Model to documents
+const documents = transformApiModel({
+	apiModel,
+});
+
+// Convert the documents to Markdown via mdast
+const markdownDocuments = documents.map((document) => documentToMarkdown(document, {}));
+
+// Use the resulting Markdown documents with your favorite mdast-compatible library!
+```
+
+### List parsing
+
+Markdown-like list syntax is now supported in TSDoc comments.
+This support is limited to lists of a single depth (i.e., nested lists are not yet supported).
+
+#### Example
+
+```typescript
+/**
+ * Foo
+ * - bar
+ * - baz
+ */
+export function foo(): string {
+    ...
+}
+```
+
+TSDoc parses the above as a paragraph of content that would otherwise be rendered as `Foo -bar -baz`, since soft line wraps are not treated as line breaks.
+This is true for GitHub-flavored Markdown as well, but certain syntax like lists are special cased.
+
+This library now accounts for list-like syntax, and similarly special-cases it to ensure the output matches the intent of the input.
 
 ### `DocumentationNode.singleLine` has been removed
 
@@ -9,10 +77,23 @@ It doesn't make sense in the context of a general-purpose documentation domain, 
 
 It has been removed and is no longer used by the system.
 
+### `PlainTextNode.text` property removed
+
+`text` was a redundant alias for `value`, which `PlainTextNode` inherits as a literal node.
+This property has now been removed.
+Use `PlainTextNode.value` instead.
+
 ### `PlainTextNode` no longer supports unsafe "escaped" text
 
 This type previously supported an unsafe escape hatch for text escaping.
 This support is no longer needed and has been removed.
+
+### `SpanNode` now requires formatting options
+
+This type's formatting options were previously optional, which encouraged using the type as general purpose grouping mechanism for children.
+This resulted in unnecessary hierarchy in the generated trees.
+
+Formatting options are now required when constructing `SpanNode`s.
 
 ### `LineBreakNode` removed from `BlockContent`
 
@@ -30,7 +111,7 @@ Their `createFromPlainText` static factory functions have also been removed, as 
 
 Additionally, the structure of `ListNode` has been updated to utilize `ListItemNode`s as children to make it easier to group child contents within a single list entry.
 
-### `FencedCodeBlockNode` updated to only allow plain text and line breaks
+### `FencedCodeBlockNode` updated to be a literal node that accepts a string
 
 This matches the requirements for fenced code in Markdown and is all that was required by the system.
 
@@ -44,6 +125,17 @@ If this type is required, it can be re-introduced via the Documentation Domain's
 The `DocumentationNodeType` enum has been removed.
 Enumerations of supported node kinds in various contexts is now handled via type unions like `BlockContent` and `PhrasingContent`.
 String literal types makes typing much simpler to reason about, and more inline with `unist` patterns.
+
+### `TextFormatting` no longer permits *disabling* formatting
+
+This type previously allowed formatting to be disabled at lower scopes in the tree.
+E.g., some parent context could set `bold`, and a lower context could *unset* it.
+This functionality was unused, does not align with Markdown nor HTML, and made transformation logic more complicated than it strictly needs to be.
+
+This support has been removed.
+
+Additionally, the `toHtml` transformations no longer accept "rootFormatting" as an argument.
+Contents may be formatted using `SpanNode`s to introduce formatting to the tree instead.
 
 ## 0.20.0
 

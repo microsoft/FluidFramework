@@ -1,5 +1,24 @@
 # @fluidframework/odsp-driver
 
+## 2.52.0
+
+### Minor Changes
+
+- New ILayerCompatDetails property on LocalDocumentServiceFactory and OdspDocumentServiceFactoryCore ([#25120](https://github.com/microsoft/FluidFramework/pull/25120)) [02acccaa06](https://github.com/microsoft/FluidFramework/commit/02acccaa06bf377ceb044e3eac4ba6ebb89e3d4f)
+
+  A new optional property, `ILayerCompatDetails`, has been added to `LocalDocumentServiceFactory` and `OdspDocumentServiceFactoryCore`.
+  This property is used by `Container` in the Loader layer to validate that the Loader and Driver layers are compatible.
+
+  Important: this property is intended for use by Fluid Framework code only. No code outside the Fluid Framework should use or depend on this property in any way.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
 ## 2.43.0
 
 Dependency updates only.

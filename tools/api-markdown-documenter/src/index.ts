@@ -38,9 +38,14 @@ export {
 	transformTsdoc,
 } from "./api-item-transforms/index.js";
 
-// We want to make sure the entirety of this domain is accessible.
-// eslint-disable-next-line no-restricted-syntax
-export * from "./documentation-domain/index.js";
+export {
+	DocumentNode,
+	type DocumentNodeProps,
+	type DocumentationNode,
+	HeadingNode,
+	SectionNode,
+	type SectionContent,
+} from "./documentation-domain/index.js";
 
 export {
 	documentToHtml,
@@ -52,12 +57,19 @@ export {
 	type TransformationContext as ToHtmlContext,
 } from "./documentation-domain-to-html/index.js";
 export {
+	documentToMarkdown,
+	sectionContentToMarkdown,
+	type Transformation as ToMarkdownTransformation,
+	type TransformationConfiguration as ToMarkdownConfiguration,
+	type TransformationContext as ToMarkdownContext,
+	type Transformations as ToMarkdownTransformations,
+} from "./documentation-domain-to-markdown/index.js";
+export {
 	DocumentWriter,
 	type RenderDocumentAsHtmlConfiguration,
 	type RenderHtmlConfiguration,
-	type MarkdownRenderContext,
-	type MarkdownRenderers,
-	type MarkdownRenderConfiguration,
+	type RenderDocumentAsMarkdownConfiguration,
+	type RenderMarkdownConfiguration,
 } from "./renderers/index.js";
 export type { LoggingConfiguration } from "./LoggingConfiguration.js";
 export type { FileSystemConfiguration } from "./FileSystemConfiguration.js";

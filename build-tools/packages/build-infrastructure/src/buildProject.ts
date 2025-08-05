@@ -12,14 +12,14 @@ import { type SimpleGit, simpleGit } from "simple-git";
 import { type BuildProjectConfig, getBuildProjectConfig } from "./config.js";
 import { NotInGitRepository } from "./errors.js";
 import { findGitRootSync } from "./git.js";
-import {
-	type IBuildProject,
-	type IPackage,
-	type IReleaseGroup,
-	type IWorkspace,
-	type PackageName,
-	type ReleaseGroupName,
-	type WorkspaceName,
+import type {
+	IBuildProject,
+	IPackage,
+	IReleaseGroup,
+	IWorkspace,
+	PackageName,
+	ReleaseGroupName,
+	WorkspaceName,
 } from "./types.js";
 import { Workspace } from "./workspace.js";
 import { loadWorkspacesFromLegacyConfig } from "./workspaceCompat.js";

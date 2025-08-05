@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Handler } from "./common.js";
+import type { Handler } from "./common.js";
 
 /**
  * A policy handler that checks for JavaScript source files that just use the .js file extension. Such files may be

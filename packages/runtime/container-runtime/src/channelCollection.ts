@@ -121,7 +121,7 @@ interface FluidDataStoreMessage {
 }
 
 /**
- * This version of the interface is private to this the package. it should never be exported under any tag.
+ * This version of the interface is private to this the package. It should never be exported under any tag.
  * It is used to manage interactions within the container-runtime package. If something is needed
  * cross package, it is likely it is also being used cross layer (ContainerRuntime * DataStoreRuntime).
  * If that is the case, the change likely needs to be staged directly on IFluidParentContext. Changes
