@@ -73,7 +73,7 @@ interface Options {
 // - `outFileLegacyAlpha`: `legacy-alpha`
 // - `outFileLegacyBeta`: `legacy-beta`
 // - `outFileLegacyPublic`: `legacy-public`
-const optionDefaults: Options = {
+const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
 	outDir: "./lib",
 	outFilePrefix: "",
@@ -84,7 +84,7 @@ const optionDefaults: Options = {
 	outFileLegacyBeta: undefined,
 	outFileLegacyPublic: undefined,
 	outFileSuffix: ".d.ts",
-};
+} as const satisfies Options;
 
 /**
  * Parses an input string and returns undefined if the input is "false" (case insensitive).
