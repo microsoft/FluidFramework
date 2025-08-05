@@ -896,7 +896,8 @@ export class SharedDirectory
 					localOpMetadata === undefined ||
 						(localOpMetadata !== undefined && localOpMetadata.type === "clear"),
 					"unexpected localOpMetadata",
-				); // If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
+				);
+				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					subdir.processClearMessage(msg, op, local, localOpMetadata);
