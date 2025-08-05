@@ -239,15 +239,21 @@ FLAGS
   --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
   --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
   --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
-  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files.
-  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files.
-  --outFileLegacyAlpha=<value>   [default: legacy] Base file name for legacyAlpha entrypoint declaration files.
-  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files.
-  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files.
+  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `false`.
+  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `false`.
+  --outFileLegacyAlpha=<value>   [default: legacy] Base file name for legacyAlpha entrypoint declaration files. To opt
+                                 out of generating this entrypoint, set to `false`.
+  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt out of generating
+                                 this entrypoint, set to `false`.
+  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt out of generating
+                                 this entrypoint, set to `false`.
   --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
                                  '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
                                  package.
-  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files.
+  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
+                                 generating this entrypoint, set to `false`.
   --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
                                  declaration files.
 

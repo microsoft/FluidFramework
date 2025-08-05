@@ -7,12 +7,12 @@ import * as Path from "node:path";
 
 import { FileSystem, NewlineKind } from "@rushstack/node-core-library";
 
+import type { ApiDocument } from "./ApiDocument.js";
 import type { FileSystemConfiguration } from "./FileSystemConfiguration.js";
 import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import type { DocumentNode } from "./documentation-domain/index.js";
 import {
 	type RenderDocumentAsHtmlConfiguration,
 	renderDocumentAsHtml,
@@ -42,7 +42,7 @@ export async function renderApiModelAsHtml(
 }
 
 /**
- * Options for rendering {@link DocumentNode}s as HTML.
+ * Options for rendering {@link ApiDocument}s as HTML.
  *
  * @alpha
  */
@@ -54,12 +54,12 @@ export interface RenderDocumentsAsHtmlOptions
  * Renders the provided documents using HTML syntax, and writes each document to a file on disk.
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
- * {@link DocumentNode.documentPath} (relative to the provided output directory).
+ * {@link ApiDocument.documentPath} (relative to the provided output directory).
  *
  * @alpha
  */
 export async function renderDocumentsAsHtml(
-	documents: readonly DocumentNode[],
+	documents: readonly ApiDocument[],
 	options: RenderDocumentsAsHtmlOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;

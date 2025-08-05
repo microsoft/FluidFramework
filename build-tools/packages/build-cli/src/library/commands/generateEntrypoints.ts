@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-named-as-default-member */
-
 import path from "node:path";
 import fs from "fs-extra";
 
@@ -30,30 +28,39 @@ interface Options {
 
 	/**
 	 * File path for `@alpha` API entrypoint.
+	 * @remarks To opt out of generating this entrypoint, set to `undefined`.
+	 * @defaultValue "alpha"
 	 */
-	readonly outFileAlpha: string;
+	readonly outFileAlpha: string | undefined;
 	/**
 	 * File path for `@beta` API entrypoint.
+	 * @remarks To opt out of generating this entrypoint, set to `undefined`.
+	 * @defaultValue "beta"
 	 */
-	readonly outFileBeta: string;
+	readonly outFileBeta: string | undefined;
 	/**
 	 * File path for `@public` API entrypoint.
+	 * @remarks To opt out of generating this entrypoint, set to `undefined`.
+	 * @defaultValue "public"
 	 */
-	readonly outFilePublic: string;
+	readonly outFilePublic: string | undefined;
 
 	/**
 	 * File path for `@legacy` + `@alpha` API entrypoint.
-	 * @remarks If not specified, no entrypoint will be generated for this API level.
+	 * @remarks To opt out of generating this entrypoint, set to `undefined`.
+	 * @defaultValue "legacy"
 	 */
 	readonly outFileLegacyAlpha: string | undefined;
 	/**
 	 * File path for `@legacy` + `@beta` API entrypoint.
-	 * @remarks If not specified, no entrypoint will be generated for this API level.
+	 * @remarks To opt out of generating this entrypoint, set to `undefined`.
+	 * @defaultValue `undefined`
 	 */
 	readonly outFileLegacyBeta: string | undefined;
 	/**
 	 * File path for `@legacy` + `@public` API entrypoint.
-	 * @remarks If not specified, no entrypoint will be generated for this API level.
+	 * @remarks To opt out of generating this entrypoint, set to `undefined`.
+	 * @defaultValue `undefined`
 	 */
 	readonly outFileLegacyPublic: string | undefined;
 
@@ -80,6 +87,16 @@ const optionDefaults: Options = {
 };
 
 /**
+ * Parses an input string and returns undefined if the input is "false" (case insensitive).
+ */
+async function parseStringOrFalse(input: string): Promise<string | undefined> {
+	if (input.toLocaleLowerCase() === "false") {
+		return undefined;
+	}
+	return input;
+}
+
+/**
  * Generates type declarations files for Fluid Framework APIs to support API levels (/alpha, /beta. etc.).
  */
 export class GenerateEntrypointsCommand extends BaseCommand<
@@ -104,33 +121,46 @@ export class GenerateEntrypointsCommand extends BaseCommand<
 			default: optionDefaults.outFilePrefix,
 		}),
 		outFileAlpha: Flags.string({
-			description: "Base file name for alpha entrypoint declaration files.",
+			description:
+				"Base file name for alpha entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
 			default: optionDefaults.outFileAlpha,
+			parse: parseStringOrFalse,
 		}),
 		outFileBeta: Flags.string({
-			description: "Base file name for beta entrypoint declaration files.",
+			description:
+				"Base file name for beta entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
 			default: optionDefaults.outFileBeta,
+			parse: parseStringOrFalse,
 		}),
 		outFilePublic: Flags.string({
-			description: "Base file name for public entrypoint declaration files.",
+			description:
+				"Base file name for public entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
 			default: optionDefaults.outFilePublic,
+			parse: parseStringOrFalse,
 		}),
 		outFileLegacyAlpha: Flags.string({
-			description: "Base file name for legacyAlpha entrypoint declaration files.",
+			description:
+				"Base file name for legacyAlpha entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
 			default: optionDefaults.outFileLegacyAlpha,
+			parse: parseStringOrFalse,
 		}),
 		outFileLegacyBeta: Flags.string({
-			description: "Base file name for legacyBeta entrypoint declaration files.",
+			description:
+				"Base file name for legacyBeta entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
 			default: optionDefaults.outFileLegacyBeta,
+			parse: parseStringOrFalse,
 		}),
 		outFileLegacyPublic: Flags.string({
-			description: "Base file name for legacyPublic entrypoint declaration files.",
+			description:
+				"Base file name for legacyPublic entrypoint declaration files. To opt out of generating this entrypoint, set to `false`.",
 			default: optionDefaults.outFileLegacyPublic,
+			parse: parseStringOrFalse,
 		}),
 		outFileSuffix: Flags.string({
 			description:
 				"File name suffix including extension for emitting entrypoint declaration files.",
 			default: optionDefaults.outFileSuffix,
+			parse: parseStringOrFalse,
 		}),
 		node10TypeCompat: Flags.boolean({
 			description: `Optional generation of Node10 resolution compatible type entrypoints matching others.`,
@@ -270,12 +300,16 @@ function getOutputConfiguration(
 
 	const pathPrefix = getOutPathPrefix(flags, packageJson).replace(/\\/g, "/");
 
-	const outFileToApiLevelEntries: [string, ApiLevel][] = [
-		[outFileAlpha, ApiLevel.alpha],
-		[outFileBeta, ApiLevel.beta],
-		[outFilePublic, ApiLevel.public],
-	];
-
+	const outFileToApiLevelEntries: [string, ApiLevel][] = [];
+	if (outFileAlpha !== undefined) {
+		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.legacyAlpha]);
+	}
+	if (outFileBeta !== undefined) {
+		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.legacyBeta]);
+	}
+	if (outFilePublic !== undefined) {
+		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.legacyPublic]);
+	}
 	if (outFileLegacyAlpha !== undefined) {
 		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
 	}
@@ -290,8 +324,8 @@ function getOutputConfiguration(
 	for (const [outFile, apiLevel] of outFileToApiLevelEntries) {
 		const queryPath = `${pathPrefix}${outFile}${outFileSuffix}`;
 		if (mapQueryPathToApiTagLevel.has(queryPath)) {
-			throw new Error(
-				`The same outFile "${outFile}" is requested for multiple API levels: ${mapQueryPathToApiTagLevel.get(queryPath)} and ${apiLevel}. Please ensure that each API level is configured with a unique outFile.`,
+			logger?.warning(
+				`The same outFile "${outFile}" is requested for multiple API levels: ${mapQueryPathToApiTagLevel.get(queryPath)} and ${apiLevel}. ${apiLevel} will take precedence.`,
 			);
 		}
 		mapQueryPathToApiTagLevel.set(queryPath, apiLevel);
@@ -335,7 +369,7 @@ function readArgValues(commandLine: string, argQuery: Options): Options {
 	const argValues: Record<string, string | undefined> = {};
 	for (const argName of Object.keys(argQuery)) {
 		const indexOfArgValue = args.indexOf(`--${argName}`) + 1;
-		if (indexOfArgValue && indexOfArgValue < args.length) {
+		if (0 < indexOfArgValue && indexOfArgValue < args.length) {
 			values[argName] = args[indexOfArgValue];
 		}
 	}
@@ -460,13 +494,13 @@ async function generateEntrypoints(
 		commonNamedExports[commonNamedExports.length - 1].trailingTrivia = "\n\t// #endregion\n\t";
 	}
 
-	log.info(`Generating entrypoints...`);
-	log.info(`- Public APIs: ${exports.public.length}`);
-	log.info(`- Beta APIs: ${exports.beta.length}`);
-	log.info(`- Alpha APIs: ${exports.alpha.length}`);
-	log.info(`- Legacy Public APIs: ${exports.legacyPublic.length}`);
-	log.info(`- Legacy Beta APIs: ${exports.legacyBeta.length}`);
-	log.info(`- Legacy Alpha APIs: ${exports.legacyAlpha.length}`);
+	log.verbose(`Generating entrypoints...`);
+	log.verbose(`- Public APIs: ${exports.public.length}`);
+	log.verbose(`- Beta APIs: ${exports.beta.length}`);
+	log.verbose(`- Alpha APIs: ${exports.alpha.length}`);
+	log.verbose(`- Legacy Public APIs: ${exports.legacyPublic.length}`);
+	log.verbose(`- Legacy Beta APIs: ${exports.legacyBeta.length}`);
+	log.verbose(`- Legacy Alpha APIs: ${exports.legacyAlpha.length}`);
 
 	const semVerExports = [...commonNamedExports];
 	const legacyExports = [...commonNamedExports];

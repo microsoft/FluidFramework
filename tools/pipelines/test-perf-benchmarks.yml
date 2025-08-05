@@ -84,7 +84,8 @@ variables:
     value: 'PerformanceBenchmark'
     readonly: true
   # This is a test pipeline, not a build one, so we don't need to run CodeQL tasks
-  - name: DisableCodeQL
+  # Note that using this variable only works for non-1ES-template pipelines.
+  - name: Codeql.SkipTaskAutoInjection
     value: true
 
 stages:
@@ -193,7 +194,7 @@ stages:
         displayName: Publish Artifact - Perf tests output - execution time
         inputs:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_execution-time'
+          artifactName: 'perf-test-outputs_execution-time_attempt-$(System.JobAttempt)'
         condition: succeededOrFailed()
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
@@ -308,7 +309,7 @@ stages:
         displayName: Publish Artifact - Perf tests output - memory usage
         inputs:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_memory-usage'
+          artifactName: 'perf-test-outputs_memory-usage_attempt-$(System.JobAttempt)'
         condition: succeededOrFailed()
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
@@ -422,7 +423,7 @@ stages:
         displayName: Publish Artifact - Perf tests output - custom data usage
         inputs:
           targetPath: '${{ variables.consolidatedTestsOutputFolder }}'
-          artifactName: 'perf-test-outputs_custom-data'
+          artifactName: 'perf-test-outputs_custom-data_attempt-$(System.JobAttempt)'
         condition: succeededOrFailed()
 
       - template: /tools/pipelines/templates/include-upload-npm-logs.yml@self
@@ -576,14 +577,14 @@ stages:
 
           inputs:
             targetPath: '${{ variables.executionTimeTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpointObject.endpointName }}'
+            artifactName: 'perf-test-outputs-e2e_execution-time-${{ endpointObject.endpointName }}_attempt-$(System.JobAttempt)'
 
         - task: PublishPipelineArtifact@1
           displayName: Publish Artifact - E2E perf tests output - memory usage {{ $stage }}
           condition: succeededOrFailed()
           inputs:
             targetPath: '${{ variables.memoryUsageTestOutputFolder }}'
-            artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpointObject.endpointName }}'
+            artifactName: 'perf-test-outputs-e2e_memory-usage-${{ endpointObject.endpointName }}_attempt-$(System.JobAttempt)'
 
         - task: Bash@3
           displayName: Remove Output Folders from local server run ${{ endpointObject.endpointName }}

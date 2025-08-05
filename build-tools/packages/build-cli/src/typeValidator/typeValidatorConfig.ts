@@ -4,6 +4,7 @@
  */
 
 import type { PackageJson } from "@fluidframework/build-tools";
+import { ApiLevel } from "../library/index.js";
 
 /**
  * Metadata about known-broken types.
@@ -18,31 +19,22 @@ export interface BrokenCompatSettings {
  */
 export type BrokenCompatTypes = Partial<Record<string, BrokenCompatSettings>>;
 
-// Duplicate of the ApiLevel type defined in build-cli/src/library/apiLevel.ts
-// AB#12469 tracks moving the type test infra into build-cli, at which point this duplicate type won't be needed.
-export type ApiLevel =
-	| "public"
-	| "beta"
-	| "alpha"
-	| "internal"
-	| "legacyPublic"
-	| "legacyBeta"
-	| "legacyAlpha";
-
+/**
+ * Configuration for type validation in Fluid packages.
+ * @remarks Configured via the `typeValidation` property in the package.json.
+ */
 export interface ITypeValidationConfig {
 	/**
-	 * The entrypoint (API level) for which type tests should be generated. This value can be overridden when using
-	 * `flub generate typetests` by passing the `--entrypoint` flag. If this value is not provided, it will default to
-	 * {@link ApiLevel.legacy}.
+	 * The entrypoint (API level) for which type tests should be generated.
 	 *
-	 * @defaultValue {@link ApiLevel.legacy}
+	 * @defaultValue {@link ApiLevel.legacyAlpha}
 	 */
-	entrypoint: ApiLevel;
+	entrypoint?: ApiLevel;
 
 	/**
-	 * An object containing types that are known to be broken.
+	 * An optional record of types that are known to be broken.
 	 */
-	broken: BrokenCompatTypes;
+	broken?: BrokenCompatTypes;
 
 	/**
 	 * If true, disables type test preparation and generation for the package.
@@ -52,10 +44,10 @@ export interface ITypeValidationConfig {
 	disabled?: boolean;
 }
 
-export const defaultTypeValidationConfig: ITypeValidationConfig = {
-	entrypoint: "legacyAlpha",
+export const defaultTypeValidationConfig: Required<ITypeValidationConfig> = {
+	entrypoint: ApiLevel.legacyAlpha,
 	broken: {},
-	disabled: undefined,
+	disabled: false,
 };
 
 /**
