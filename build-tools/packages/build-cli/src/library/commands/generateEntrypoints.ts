@@ -302,13 +302,13 @@ function getOutputConfiguration(
 
 	const outFileToApiLevelEntries: [string, ApiLevel][] = [];
 	if (outFileAlpha !== undefined) {
-		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.legacyAlpha]);
+		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.alpha]);
 	}
 	if (outFileBeta !== undefined) {
-		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.legacyBeta]);
+		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.beta]);
 	}
 	if (outFilePublic !== undefined) {
-		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.legacyPublic]);
+		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.public]);
 	}
 	if (outFileLegacyAlpha !== undefined) {
 		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
