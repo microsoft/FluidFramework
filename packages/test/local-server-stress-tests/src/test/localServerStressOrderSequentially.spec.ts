@@ -100,9 +100,9 @@ describe("Local Server Stress with rollback", () => {
 		// saveSuccesses,
 		configurations: { "Fluid.ContainerRuntime.EnableRollback": true },
 		skip: [
-			...[12], // Values differ at key
-			...[28, 30], // Key not found or value not matching key
-			...[15, 31, 38], // Number of keys not same (directory)
+			...[], // Values differ at key
+			...[28], // Key not found or value not matching key
+			...[31], // Number of keys not same (directory)
 			...[25, 53], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)

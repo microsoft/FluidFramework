@@ -40,9 +40,9 @@ describe("Local Server Stress", () => {
 		saveFailures,
 		// saveSuccesses,
 		skip: [
-			...[18, 65, 98], // Number of keys not same
+			...[98], // Number of keys not same
 			...[5, 49, 57], // Number of subDirectories not same,
-			...[11, 39], // Rollback op does not match last pending
+			...[11], // Rollback op does not match last pending
 		],
 	});
 });
