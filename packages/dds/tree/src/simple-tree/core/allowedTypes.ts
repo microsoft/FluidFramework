@@ -290,22 +290,13 @@ export function normalizeAllowedTypes(
 }
 
 /**
- * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist
- * and eagerly evaluating any lazy schema declarations.
- *
- * @remarks
- * Note: this must only be called after all required schemas have been declared, otherwise evaluation of
- * recursive schemas may fail.
- * type is frozen and should not be modified after being passed in.
+ * Normalizes an allowed type to an {@link AnnotatedAllowedType}, by adding empty annotations if they don't already exist.
  */
-export function normalizeToAnnotatedAllowedType<T extends TreeNodeSchema>(
-	type: T | AnnotatedAllowedType<T> | AnnotatedAllowedType<LazyItem<T>>,
+export function normalizeToAnnotatedAllowedType<T extends LazyItem<TreeNodeSchema>>(
+	type: T | AnnotatedAllowedType<T>,
 ): AnnotatedAllowedType<T> {
 	return isAnnotatedAllowedType(type)
-		? {
-				metadata: type.metadata,
-				type: evaluateLazySchema(type.type),
-			}
+		? type
 		: {
 				metadata: {},
 				type,

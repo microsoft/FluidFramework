@@ -1564,6 +1564,19 @@ describe("schemaFactory", () => {
 					"Type com.fluidframework.leaf.string in source sequence is not allowed in destination's stored schema: this would likely require upgrading the document to permit a staged schema.",
 				));
 			});
+
+			it("allows forward references", () => {
+				const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
+				class A extends schemaFactoryAlpha.objectAlpha("A", {
+					foo: SchemaFactoryAlpha.staged(() => B),
+				}) {}
+
+				class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
+
+				const config = new TreeViewConfiguration({
+					schema: A,
+				});
+			});
 		});
 	});
 });

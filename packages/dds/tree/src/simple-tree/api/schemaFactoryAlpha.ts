@@ -36,6 +36,7 @@ import type {
 	ImplicitAllowedTypes,
 	ImplicitAnnotatedAllowedTypes,
 	AnnotatedAllowedType,
+	LazyItem,
 } from "../core/index.js";
 import { normalizeToAnnotatedAllowedType, createSchemaUpgrade } from "../core/index.js";
 import type {
@@ -77,13 +78,13 @@ export interface SchemaStaticsAlpha {
 	 * user friendly and should be improved, particularly in the case of staged allowed types
 	 *
 	 */
-	staged: <const T extends TreeNodeSchema>(
+	staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,
 	) => AnnotatedAllowedType<T>;
 }
 
 const schemaStaticsAlpha: SchemaStaticsAlpha = {
-	staged: <const T extends TreeNodeSchema>(
+	staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,
 	): AnnotatedAllowedType<T> => {
 		const annotatedType = normalizeToAnnotatedAllowedType(t);
