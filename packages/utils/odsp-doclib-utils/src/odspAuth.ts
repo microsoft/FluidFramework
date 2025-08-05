@@ -16,6 +16,8 @@ import { unauthPostAsync } from "./odspRequest.js";
 export interface IOdspTokens {
 	readonly accessToken: string;
 	readonly refreshToken: string;
+	readonly receivedAt?: number; // Unix timestamp in seconds
+	readonly expiresIn?: number; // Seconds from reception until the token expires
 }
 
 /**
@@ -191,8 +193,13 @@ export async function fetchTokens(
 			throw error;
 		}
 	}
+
+	const receivedAt = Math.floor(Date.now() / 1000); // Convert milliseconds to seconds
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+	const expiresIn = parsedResponse.expires_in ?? 3600; // Default to 1 hour (3600 seconds) if not provided
+
 	// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-	return { accessToken, refreshToken };
+	return { accessToken, refreshToken, receivedAt, expiresIn };
 }
 
 /**
@@ -243,8 +250,7 @@ export async function refreshTokens(
 	};
 	const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
 
-	// Instead of returning, update the passed in tokens object
-	return { accessToken: newTokens.accessToken, refreshToken: newTokens.refreshToken };
+	return newTokens;
 }
 
 const createConfig = (token: string): RequestInit => ({

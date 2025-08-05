@@ -103,7 +103,6 @@
 		"@fluidframework/odsp-doclib-utils": "workspace:~",
 		"async-mutex": "^0.3.1",
 		"debug": "^4.3.4",
-		"jwt-decode": "^4.0.0",
 		"proper-lockfile": "^4.1.2"
 	},
 	"devDependencies": {
