@@ -94,7 +94,6 @@ export function toStoredSchema(
 	options: StoredSchemaGenerationOptions,
 ): TreeStoredSchema {
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
-	// If the root schema is
 	return getOrCreate(cache, root, () => {
 		const normalized = normalizeFieldSchema(root);
 		const nodeSchema: Map<TreeNodeSchemaIdentifier, TreeNodeStoredSchema> = new Map();
