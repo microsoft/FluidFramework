@@ -73,7 +73,7 @@ interface Options {
 // - `outFileLegacyAlpha`: `legacy-alpha`
 // - `outFileLegacyBeta`: `legacy-beta`
 // - `outFileLegacyPublic`: `legacy-public`
-const optionDefaults: Options = {
+const optionDefaults = {
 	mainEntrypoint: "./src/index.ts",
 	outDir: "./lib",
 	outFilePrefix: "",
@@ -84,7 +84,7 @@ const optionDefaults: Options = {
 	outFileLegacyBeta: undefined,
 	outFileLegacyPublic: undefined,
 	outFileSuffix: ".d.ts",
-};
+} as const satisfies Options;
 
 /**
  * Parses an input string and returns undefined if the input is "false" (case insensitive).
@@ -302,13 +302,13 @@ function getOutputConfiguration(
 
 	const outFileToApiLevelEntries: [string, ApiLevel][] = [];
 	if (outFileAlpha !== undefined) {
-		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.legacyAlpha]);
+		outFileToApiLevelEntries.push([outFileAlpha, ApiLevel.alpha]);
 	}
 	if (outFileBeta !== undefined) {
-		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.legacyBeta]);
+		outFileToApiLevelEntries.push([outFileBeta, ApiLevel.beta]);
 	}
 	if (outFilePublic !== undefined) {
-		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.legacyPublic]);
+		outFileToApiLevelEntries.push([outFilePublic, ApiLevel.public]);
 	}
 	if (outFileLegacyAlpha !== undefined) {
 		outFileToApiLevelEntries.push([outFileLegacyAlpha, ApiLevel.legacyAlpha]);
