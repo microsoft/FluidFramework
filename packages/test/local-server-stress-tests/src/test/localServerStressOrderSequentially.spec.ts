@@ -109,7 +109,7 @@ describe("Local Server Stress with rollback", () => {
 			...[25, 53], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
-			...[13, 20, 39, 40, 54, 62, 78, 81, 83, 91, 92, 97],
+			...[13, 20, 39, 40, 54, 62, 78, 81, 83, 91, 92, 97], // fails due to getPendingLocalState mixin
 		],
 	});
 });
