@@ -72,6 +72,7 @@ const rootField: FieldKey = brand("Root");
 const fieldA: FieldKey = brand("FieldA");
 const fieldB: FieldKey = brand("FieldB");
 const fieldC: FieldKey = brand("FieldC");
+const fieldD: FieldKey = brand("FieldD");
 
 const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
@@ -495,7 +496,11 @@ describe("ModularChangeFamily integration", () => {
 			assertDeltaEqual(rebasedDelta, expectedDelta);
 		});
 
-		// This test demonstrates that a field may need three rebasing passes.
+		// This test demonstrates that a field may need more than two rebasing passes.
+		// When rebasing a field we may find a move into a subtree which is not represented in the new changeset.
+		// To add that subtree we may have to invalidate an ancestor field, and may then discover that the base changeset
+		// moved that subtree to another unrepresented field.
+		// Note that this only happens once in this test, but could happen an arbitrary number of times.
 		it("over change which moves into moved subtree", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(family, mintRevisionTag, changeReceiver);
@@ -516,9 +521,17 @@ describe("ModularChangeFamily integration", () => {
 				0,
 			);
 
-			// This edit moves node1 in field A to the beginning of the field.
+			// This edit moves node1 in field A to field D under another node in field A
 			const fieldAPath = { parent: undefined, field: fieldA };
-			moveWithin(editor, fieldAPath, 1, 1, 0);
+			const nodePath0: NormalizedUpPath = {
+				parent: undefined,
+				parentField: fieldA,
+				parentIndex: 0,
+				detachedNodeId: undefined,
+			};
+
+			const fieldDPath = { parent: nodePath0, field: fieldD };
+			editor.move(fieldAPath, 1, 1, fieldDPath, 0);
 
 			// The changeset to be rebased consists of the following two edits.
 			// This is an arbitrary edit to field A.
@@ -544,15 +557,24 @@ describe("ModularChangeFamily integration", () => {
 			);
 
 			const expected = Change.build(
-				{ family, maxId: 6 },
+				{ family, maxId: 7 },
 				Change.field(
 					fieldA,
 					sequence.identifier,
-					[MarkMaker.skip(2), MarkMaker.tomb(tag1, brand(3)), MarkMaker.remove(1, brand(5))],
+					[MarkMaker.skip(1), MarkMaker.tomb(tag1, brand(3)), MarkMaker.remove(1, brand(6))],
 					Change.nodeWithId(
 						0,
-						{ revision: tag1, localId: brand(2) },
-						Change.field(fieldC, sequence.identifier, [MarkMaker.remove(1, brand(6))]),
+						{ revision: tag1, localId: brand(5) },
+						Change.field(
+							fieldD,
+							sequence.identifier,
+							[],
+							Change.nodeWithId(
+								0,
+								{ revision: tag1, localId: brand(2) },
+								Change.field(fieldC, sequence.identifier, [MarkMaker.remove(1, brand(7))]),
+							),
+						),
 					),
 				),
 			);

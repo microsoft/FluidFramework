@@ -994,7 +994,7 @@ export class ModularChangeFamily
 			rebaseMetadata,
 		);
 
-		this.rebaseInvalidatedElements(
+		this.rebaseInvalidatedFields(
 			rebasedFields,
 			rebasedNodes,
 			crossFieldTable,
@@ -1098,53 +1098,6 @@ export class ModularChangeFamily
 		return rebasedFields;
 	}
 
-	// This processes fields which have no new changes but have been invalidated by another field.
-	private rebaseFieldsWithoutNewChanges(
-		rebasedFields: FieldChangeMap,
-		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
-		crossFieldTable: RebaseTable,
-		genId: IdAllocator,
-		metadata: RebaseRevisionMetadata,
-	): void {
-		const baseChange = crossFieldTable.baseChange;
-		const baseFields = crossFieldTable.affectedBaseFields.clone();
-		crossFieldTable.affectedBaseFields.clear();
-
-		for (const fieldIdKey of baseFields.keys()) {
-			const normalizedFieldId = normalizeFieldId(
-				fieldIdFromFieldIdKey(fieldIdKey),
-				crossFieldTable.baseChange.nodeAliases,
-			);
-
-			const baseFieldChange = fieldMapFromNodeId(
-				baseChange.fieldChanges,
-				baseChange.nodeChanges,
-				baseChange.nodeAliases,
-				normalizedFieldId.nodeId,
-			).get(normalizedFieldId.field);
-
-			assert(
-				baseFieldChange !== undefined,
-				0x9c2 /* Cross field key registered for empty field */,
-			);
-
-			if (crossFieldTable.baseFieldToContext.has(baseFieldChange)) {
-				crossFieldTable.affectedBaseFields.set(fieldIdKey, true);
-				continue;
-			}
-
-			this.rebaseFieldWithoutNewChanges(
-				baseFieldChange,
-				normalizedFieldId,
-				crossFieldTable,
-				rebasedFields,
-				rebasedNodes,
-				genId,
-				metadata,
-			);
-		}
-	}
-
 	private rebaseFieldWithoutNewChanges(
 		baseFieldChange: FieldChange,
 		baseFieldId: FieldId,
@@ -1233,71 +1186,57 @@ export class ModularChangeFamily
 		);
 	}
 
-	private rebaseInvalidatedElements(
+	private rebaseInvalidatedFields(
 		rebasedFields: FieldChangeMap,
 		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
-		table: RebaseTable,
-		metadata: RebaseRevisionMetadata,
-		idAllocator: IdAllocator,
-	): void {
-		this.rebaseFieldsWithoutNewChanges(
-			rebasedFields,
-			rebasedNodes,
-			table,
-			idAllocator,
-			metadata,
-		);
-
-		this.rebaseFieldsWithUnattachedChild(table, metadata, idAllocator);
-		this.rebaseInvalidatedFields(table, metadata, idAllocator);
-	}
-
-	private rebaseInvalidatedFields(
 		crossFieldTable: RebaseTable,
 		rebaseMetadata: RebaseRevisionMetadata,
 		genId: IdAllocator,
 	): void {
-		const baseFields = crossFieldTable.affectedBaseFields.clone();
-		crossFieldTable.affectedBaseFields.clear();
-		for (const baseFieldId of baseFields.keys()) {
-			const baseFieldChange = fieldChangeFromId(
-				crossFieldTable.baseChange,
-				fieldIdFromFieldIdKey(baseFieldId),
-			);
+		while (crossFieldTable.affectedBaseFields.size > 0) {
+			const baseFields = crossFieldTable.affectedBaseFields.clone();
+			crossFieldTable.affectedBaseFields.clear();
 
-			assert(
-				baseFieldChange !== undefined,
-				0x9c2 /* Cross field key registered for empty field */,
-			);
+			for (const baseFieldIdKey of baseFields.keys()) {
+				const baseFieldId = fieldIdFromFieldIdKey(baseFieldIdKey);
+				const baseField = fieldChangeFromId(crossFieldTable.baseChange, baseFieldId);
 
-			assert(
-				crossFieldTable.baseFieldToContext.has(baseFieldChange),
-				"Fields with no new change should already have been processed",
-			);
+				assert(
+					baseField !== undefined,
+					0x9c2 /* Cross field key registered for empty field */,
+				);
 
-			this.rebaseInvalidatedField(baseFieldChange, crossFieldTable, rebaseMetadata, genId);
-		}
-	}
-
-	private rebaseFieldsWithUnattachedChild(
-		table: RebaseTable,
-		metadata: RebaseRevisionMetadata,
-		idAllocator: IdAllocator,
-	): void {
-		for (const field of table.fieldsWithUnattachedChild) {
-			this.rebaseInvalidatedField(field, table, metadata, idAllocator, true);
+				const context = crossFieldTable.baseFieldToContext.get(baseField);
+				if (context === undefined) {
+					this.rebaseFieldWithoutNewChanges(
+						baseField,
+						baseFieldId,
+						crossFieldTable,
+						rebasedFields,
+						rebasedNodes,
+						genId,
+						rebaseMetadata,
+					);
+				} else {
+					this.rebaseInvalidatedField(
+						baseField,
+						crossFieldTable,
+						context,
+						rebaseMetadata,
+						genId,
+					);
+				}
+			}
 		}
 	}
 
 	private rebaseInvalidatedField(
 		baseField: FieldChange,
 		crossFieldTable: RebaseTable,
+		context: RebaseFieldContext,
 		rebaseMetadata: RebaseRevisionMetadata,
 		genId: IdAllocator,
-		allowInval = false,
 	): void {
-		const context = crossFieldTable.baseFieldToContext.get(baseField);
-		assert(context !== undefined, 0x852 /* Every field should have a context */);
 		const {
 			changeHandler,
 			change1: fieldChangeset,
@@ -1322,6 +1261,15 @@ export class ModularChangeFamily
 
 			return undefined;
 		};
+
+		let allowInval = false;
+		if (crossFieldTable.fieldsWithUnattachedChild.has(baseField)) {
+			// XXX: It seems like this scheme will allow an infinite loop.
+			// We need to make sure that fieldsWithUnattachedChild can only cause inval once per child.
+			// And that materialized ancestors are shared by multiple children, so they don't overwrite each other.
+			crossFieldTable.fieldsWithUnattachedChild.delete(baseField);
+			allowInval = true;
+		}
 
 		context.rebasedChange.change = brand(
 			changeHandler.rebaser.rebase(
@@ -1437,9 +1385,10 @@ export class ModularChangeFamily
 		const context = table.baseFieldToContext.get(baseFieldChange);
 		if (context !== undefined) {
 			// We've already processed this field.
-			// The new child node will be attached in rebaseFieldsWithUnattachedChild.
+			// The new child node will be attached in the next pass.
 			context.baseNodeIds.push(baseNodeId);
 			table.fieldsWithUnattachedChild.add(baseFieldChange);
+			table.affectedBaseFields.set(fieldIdKeyFromFieldId(parentFieldIdBase), true);
 			return;
 		}
 
@@ -3985,7 +3934,10 @@ function rebaseRename(
 		// This rename represents an intention to detach these nodes.
 		// The rebased change should have a detach in the field where the base change attaches the nodes,
 		// so we need to ensure that field is processed.
-		affectedBaseFields.set(fieldIdKeyFromFieldId(baseAttachEntry.value), true);
+		affectedBaseFields.set(
+			fieldIdKeyFromFieldId(normalizeFieldId(baseAttachEntry.value, base.nodeAliases)),
+			true,
+		);
 	} else {
 		addNodeRename(rebasedRoots, baseRenameEntry.value, renameEntry.value, count);
 	}
@@ -4322,4 +4274,13 @@ function offsetDetachedNodeEntry(entry: DetachedNodeEntry, count: number): Detac
 	return entry.detachId !== undefined
 		? { ...entry, detachId: offsetChangeAtomId(entry.detachId, count) }
 		: entry;
+}
+
+function popFromBTree<K, V>(tree: BTree<K, V>): [K, V] | undefined {
+	for (const entry of tree.entries()) {
+		tree.delete(entry[0]);
+		return entry;
+	}
+
+	return undefined;
 }
