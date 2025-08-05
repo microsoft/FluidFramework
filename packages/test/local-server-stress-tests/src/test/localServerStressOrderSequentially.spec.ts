@@ -104,12 +104,15 @@ describe("Local Server Stress with rollback", () => {
 		},
 		skip: [
 			...[12], // Values differ at key
-			...[28, 30], // Key not found or value not matching key
-			...[15, 31, 38], // Number of keys not same (directory)
-			...[25, 53], // Number of subDirectories not same
+			...[28, 30, 39, 91], // Key not found or value not matching key
+			...[15, 31, 38, 40], // Number of keys not same (directory)
+			...[25, 53, 83], // Number of subDirectories not same
 			...[], // SubDirectory with name ... not present in second directory
 			...[], // 0x2fa (Unexpected pending message received)
-			...[13, 20, 39, 40, 54, 62, 78, 81, 83, 91, 92, 97], // fails due to getPendingLocalState mixin
+			...[13, 62], // 0xb85
+			...[20, 54, 92], // 0xa21
+			...[78, 81], // 0xb89
+			...[97], // channel maps should be the same size
 		],
 	});
 });
