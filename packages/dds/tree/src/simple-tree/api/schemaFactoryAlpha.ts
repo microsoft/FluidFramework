@@ -107,7 +107,47 @@ export interface SchemaStaticsAlpha {
 	 * 	schema: [A, B],
 	 * });
 	 * ```
+	 * @example
+	 * Below is a full example of how the schema migration process works.
+	 * This can also be found in our {@link https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | tests}.
+	 * ```typescript
+	 * // Initialize with schema A.
+	 * const configA = new TreeViewConfiguration({
+	 * 	schema: schemaA,
+	 * });
+	 * const viewA = treeA.viewWith(configA);
+	 * viewA.initialize(5);
 	 *
+	 * synchronizeTrees();
+	 *
+	 * assert.deepEqual(viewA.root, 5);
+	 *
+	 * // View same document in a second tree using schema B.
+	 * const configB = new TreeViewConfiguration({
+	 * 	schema: schemaB,
+	 * });
+	 * const viewB = treeB.viewWith(configB);
+	 * // B cannot write strings to the root.
+	 * assert.throws(() => (viewB.root = "test"));
+	 *
+	 * // View same document with third tree using schema C.
+	 * const configC = new TreeViewConfiguration({
+	 * 	schema: schemaC,
+	 * });
+	 * const viewC = treeC.viewWith(configC);
+	 * // Upgrade to schema C
+	 * viewC.upgradeSchema();
+	 * // Use the newly enabled schema.
+	 * viewC.root = "test";
+	 *
+	 * synchronizeTrees();
+	 *
+	 * // View A is now incompatible with the stored schema:
+	 * assert.equal(viewA.compatibility.canView, false);
+	 *
+	 * // View B can still read the document, and now sees the string root which relies on the staged schema.
+	 * assert.deepEqual(viewB.root, "test");
+	 * ```
 	 * @privateRemarks
 	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
 	 * user friendly and should be improved, particularly in the case of staged allowed types

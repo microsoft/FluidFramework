@@ -35,60 +35,40 @@ In the future, SharedTree may add an API that allows staged allowed types to be 
 Below is a full example of how the schema migration process works. This can also be found in our [tests](https://github.com/jenn-le/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts).
 
 ```typescript
-// schema A: only number allowed
-const schemaA = factory.optional([SchemaFactoryAlpha.number]);
-
-// schema B: number or string (string is staged)
-const schemaB = factory.optional([
-	SchemaFactoryAlpha.number,
-	factory.staged(SchemaFactoryAlpha.string),
-]);
-
-// schema C: number or string, both fully allowed
-const schemaC = factory.optional([SchemaFactoryAlpha.number, SchemaFactoryAlpha.string]);
-
-const provider = new TestTreeProviderLite(3);
-
-// initialize with schema A
+// Initialize with schema A.
 const configA = new TreeViewConfiguration({
 	schema: schemaA,
 });
-const viewA = provider.trees[0].viewWith(configA);
+const viewA = treeA.viewWith(configA);
 viewA.initialize(5);
-provider.synchronizeMessages();
+
+synchronizeTrees();
 
 assert.deepEqual(viewA.root, 5);
 
-// view second tree with schema B
+// View same document in a second tree using schema B.
 const configB = new TreeViewConfiguration({
 	schema: schemaB,
 });
-const viewB = provider.trees[1].viewWith(configB);
-// check that we can read the tree
-assert.deepEqual(viewB.root, 5);
-// upgrade to schema B
-viewB.upgradeSchema();
-provider.synchronizeMessages();
+const viewB = treeB.viewWith(configB);
+// B cannot write strings to the root.
+assert.throws(() => (viewB.root = "test"));
 
-// check view A can read the document
-assert.deepEqual(viewA.root, 5);
-// check view B cannot write strings to the root
-assert.throws(() => {
-	viewB.root = "test";
-});
-
-// view third tree with schema C
+// View same document with third tree using schema C.
 const configC = new TreeViewConfiguration({
 	schema: schemaC,
 });
-const viewC = provider.trees[2].viewWith(configC);
-// upgrade to schema C and change the root to a string
+const viewC = treeC.viewWith(configC);
+// Upgrade to schema C
 viewC.upgradeSchema();
+// Use the newly enabled schema.
 viewC.root = "test";
-provider.synchronizeMessages();
 
-// view A is now incompatible with the stored schema
-assert.throws(viewA.canView, false);
+synchronizeTrees();
+
+// View A is now incompatible with the stored schema:
+assert.equal(viewA.compatibility.canView, false);
+
+// View B can still read the document, and now sees the string root which relies on the staged schema.
 assert.deepEqual(viewB.root, "test");
-assert.deepEqual(viewC.root, "test");
 ```

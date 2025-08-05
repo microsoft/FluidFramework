@@ -4,7 +4,10 @@
  */
 
 import { strict as assert } from "node:assert";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import {
+	extractPersistedSchema,
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
 	schemaStatics,
@@ -15,6 +18,16 @@ import {
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import { storedEmptyFieldSchema } from "../../../core/index.js";
+import {
+	independentInitializedView,
+	independentView,
+	TreeAlpha,
+	type ViewContent,
+} from "../../../shared-tree/index.js";
+import { typeboxValidator } from "../../../external-utilities/index.js";
+import { FluidClientVersion } from "../../../codec/index.js";
+
+// Some documentation links to this file on GitHub: renaming it may break those links.
 
 describe("staged schema upgrade", () => {
 	const factory = new SchemaFactoryAlpha("upgrade");
@@ -30,6 +43,170 @@ describe("staged schema upgrade", () => {
 
 	// schema C: number or string, both fully allowed
 	const schemaC = factory.optional([SchemaFactoryAlpha.number, SchemaFactoryAlpha.string]);
+
+	it("using user apis", () => {
+		const provider = new TestTreeProviderLite(3);
+
+		const [treeA, treeB, treeC] = provider.trees;
+
+		const synchronizeTrees = () => {
+			provider.synchronizeMessages();
+		};
+
+		// initialize with schema A
+		const configA = new TreeViewConfiguration({
+			schema: schemaA,
+		});
+		const viewA = treeA.viewWith(configA);
+		viewA.initialize(5);
+		synchronizeTrees();
+
+		assert.deepEqual(viewA.root, 5);
+
+		// view second tree with schema B
+		const configB = new TreeViewConfiguration({
+			schema: schemaB,
+		});
+		const viewB = treeB.viewWith(configB);
+		// check that we can read the tree
+		assert.deepEqual(viewB.root, 5);
+		// upgrade to schema B: this is a no-op
+		viewB.upgradeSchema();
+		synchronizeTrees();
+
+		// check view A can read the document
+		assert.deepEqual(viewA.root, 5);
+		// check view B cannot write strings to the root
+		assert.throws(() => {
+			viewB.root = "test";
+		});
+
+		// view third tree with schema C
+		const configC = new TreeViewConfiguration({
+			schema: schemaC,
+		});
+		const viewC = treeC.viewWith(configC);
+		// upgrade to schema C and change the root to a string
+		viewC.upgradeSchema();
+		viewC.root = "test";
+		synchronizeTrees();
+
+		// view A is now incompatible with the stored schema
+		assert.equal(viewA.compatibility.canView, false);
+		assert.deepEqual(viewB.root, "test");
+		assert.deepEqual(viewC.root, "test");
+	});
+
+	it("using user apis: minimal example", () => {
+		// This top section of this example uses APIs not available to customers.
+		// TODO: We should ensure the customer facing APIs make writing tests like this easy, and update this test to use them.
+		const provider = new TestTreeProviderLite(3);
+		const [treeA, treeB, treeC] = provider.trees;
+		const synchronizeTrees = () => {
+			provider.synchronizeMessages();
+		};
+
+		// Initialize with schema A.
+		const configA = new TreeViewConfiguration({
+			schema: schemaA,
+		});
+		const viewA = treeA.viewWith(configA);
+		viewA.initialize(5);
+
+		synchronizeTrees();
+
+		assert.deepEqual(viewA.root, 5);
+
+		// View same document in a second tree using schema B.
+		const configB = new TreeViewConfiguration({
+			schema: schemaB,
+		});
+		const viewB = treeB.viewWith(configB);
+		// B cannot write strings to the root.
+		assert.throws(() => (viewB.root = "test"));
+
+		// View same document with third tree using schema C.
+		const configC = new TreeViewConfiguration({
+			schema: schemaC,
+		});
+		const viewC = treeC.viewWith(configC);
+		// Upgrade to schema C
+		viewC.upgradeSchema();
+		// Use the newly enabled schema.
+		viewC.root = "test";
+
+		synchronizeTrees();
+
+		// View A is now incompatible with the stored schema:
+		assert.equal(viewA.compatibility.canView, false);
+
+		// View B can still read the document, and now sees the string root which relies on the staged schema.
+		assert.deepEqual(viewB.root, "test");
+	});
+
+	it("using independent view user apis", () => {
+		// initialize with schema A
+		const configA = new TreeViewConfigurationAlpha({
+			schema: schemaA,
+		});
+
+		const viewA = independentView(configA, {});
+		viewA.initialize(5);
+
+		assert.deepEqual(viewA.root, 5);
+
+		// view second tree with schema B
+		const configB = new TreeViewConfigurationAlpha({
+			schema: schemaB,
+		});
+
+		// TODO: this is a legacy API: we need a stable alternative.
+		const idCompressor = createIdCompressor();
+
+		const content: ViewContent = {
+			tree: TreeAlpha.exportCompressed(viewA.root, {
+				idCompressor,
+
+				// TODO: this should use the framework level options, not this packages temporary placeholder
+				oldestCompatibleClient: FluidClientVersion.v2_0,
+			}),
+
+			// TODO: we need a way to get the stored schema from independent views. Allow constructing a ViewAbleTree instead of a view directly (maybe an independentTree API?)?
+			schema: extractPersistedSchema(configA, FluidClientVersion.v2_0, () => false),
+			idCompressor,
+		};
+
+		const viewB = independentInitializedView(
+			configB,
+			{ jsonValidator: typeboxValidator },
+			content,
+		);
+		// check that we can read the tree
+		assert.deepEqual(viewB.root, 5);
+
+		// check view A can read the document
+		assert.deepEqual(viewA.root, 5);
+		// check view B cannot write strings to the root
+		assert.throws(() => {
+			viewB.root = "test";
+		});
+
+		// view third tree with schema C
+		const configC = new TreeViewConfigurationAlpha({
+			schema: schemaC,
+		});
+
+		const viewC = independentInitializedView(
+			configC,
+			{ jsonValidator: typeboxValidator },
+			content,
+		);
+
+		assert.equal(viewC.compatibility.canView, false);
+		// upgrade to schema C and change the root to a string
+		viewC.upgradeSchema();
+		viewC.root = "test";
+	});
 
 	it("using the schema compatibility tester", () => {
 		// start with an empty document:
@@ -92,52 +269,5 @@ describe("staged schema upgrade", () => {
 		});
 
 		// TODO: TestSchemaRepository is not great for this. Also this does not test view against the future schema versions.
-	});
-
-	it("using user apis", () => {
-		const provider = new TestTreeProviderLite(3);
-
-		// initialize with schema A
-		const configA = new TreeViewConfiguration({
-			schema: schemaA,
-		});
-		const viewA = provider.trees[0].viewWith(configA);
-		viewA.initialize(5);
-		provider.synchronizeMessages();
-
-		assert.deepEqual(viewA.root, 5);
-
-		// view second tree with schema B
-		const configB = new TreeViewConfiguration({
-			schema: schemaB,
-		});
-		const viewB = provider.trees[1].viewWith(configB);
-		// check that we can read the tree
-		assert.deepEqual(viewB.root, 5);
-		// upgrade to schema B
-		viewB.upgradeSchema();
-		provider.synchronizeMessages();
-
-		// check view A can read the document
-		assert.deepEqual(viewA.root, 5);
-		// check view B cannot write strings to the root
-		assert.throws(() => {
-			viewB.root = "test";
-		});
-
-		// view third tree with schema C
-		const configC = new TreeViewConfiguration({
-			schema: schemaC,
-		});
-		const viewC = provider.trees[2].viewWith(configC);
-		// upgrade to schema C and change the root to a string
-		viewC.upgradeSchema();
-		viewC.root = "test";
-		provider.synchronizeMessages();
-
-		// view A is now incompatible with the stored schema
-		assert.equal(viewA.compatibility.canView, false);
-		assert.deepEqual(viewB.root, "test");
-		assert.deepEqual(viewC.root, "test");
 	});
 });
