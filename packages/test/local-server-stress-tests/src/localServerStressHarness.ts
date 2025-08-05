@@ -1426,7 +1426,7 @@ function mixinGetClientPending<TOperation extends BaseOperation>(
 
 			const pendingLocalState = await sourceClient.container.getPendingLocalState();
 
-			const url = await state.validationClient.container.getAbsoluteUrl("");
+			const url = await sourceClient.container.getAbsoluteUrl("");
 			assert(url !== undefined, "url of container must be available");
 
 			const newClient = await loadClient(
