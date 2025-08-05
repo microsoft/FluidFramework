@@ -42,7 +42,7 @@ describe("simple-tree storedSchema", () => {
 				);
 				if (test.hasStagedSchema) {
 					assert.notDeepEqual(withoutStaged, persisted);
-					takeJsonSnapshot(withoutStaged, ": withoutStaged");
+					takeJsonSnapshot(withoutStaged, " - without staged");
 				} else {
 					assert.deepEqual(upgrades, []);
 					assert.deepEqual(withoutStaged, persisted);
