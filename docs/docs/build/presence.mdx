@@ -38,7 +38,7 @@ A `StatesWorkspace` allows sharing of simple data across attendees where each at
 
 #### Notifications Workspace
 
-A `NotificationsWorkspace` is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
+A `NotificationsWorkspace` is similar to `StatesWorkspace`, but is dedicated to notification use-cases via `NotificationsManager`.
 
 ### State objects
 
@@ -138,19 +138,19 @@ Accumulated data can be enumerated using `getRemotes`.
 ```typescript
 // Logs other attendee's current counters (excludes now _disconnected_ attendees)
 function logOthersCounters(counterTracker: LatestMapRaw<number, string>): void {
-	function getOrCreateEntry<K extends string, V>(record: Map<K, V[]>, key: K): V[] {
-		if (!record.has(key)) { record.set(key, []); }
-		return record.get(key)!;
-	}
-
 	const counterMap = new Map<string, { attendee: Attendee; value: number }[]>();
 	// Collect counters from all remote attendees
 	for (const { attendee, items } of counterTracker.getRemotes()) {
 		// Only collect from *connected* attendees
 		if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
 			// `items` is a simple `ReadonlyMap` of remote data
-			for (const [counterName, value] of items.entries()) {
-				getOrCreateEntry(counterMap, counterName).push({ attendee, value: value.value });
+			for (const [counterName, state] of items.entries()) {
+				let entry = counterMap.get(counterName);
+				if (!entry) {
+					entry = [];
+					counterMap.set(counterName, entry);
+				}
+				entry.push({ attendee, value: state.value });
 			}
 		}
 	}
@@ -179,8 +179,8 @@ function usePresence(container: IFluidContainer): void {
 #### Schema Definition and Workspace
 
 ```typescript
-import type { LatestRaw, LatestMapRaw, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
-import { StatesFactory } from "@fluidframework/presence/beta";
+import type { Latest, LatestMapRaw, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
+import { StateFactory } from "@fluidframework/presence/beta";
 
 interface PointXY { x: number; y: number }
 
