@@ -42,6 +42,7 @@ import {
 } from "@fluidframework/devtools-core/internal";
 import React from "react";
 
+import { useContainerFeaturesContext } from "../ContainerFeatureFlagHelper.js";
 import { useMessageRelay } from "../MessageRelayContext.js";
 import { useLogger } from "../TelemetryUtils.js";
 import { connectionStateToString } from "../Utilities.js";
@@ -208,6 +209,8 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 		ContainerStateMetadata | undefined
 	>();
 
+	const { containerFeatureFlags } = useContainerFeaturesContext();
+
 	const [columns] = React.useState<TableColumnDefinition<Item>[]>(columnsDef);
 	const [columnSizingOptions] = React.useState<TableColumnSizingOptions>({
 		containerProperty: {
@@ -320,7 +323,11 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					<TableBody>
 						<DataRow
 							label="Status"
-							infoTooltipContent={containerStatusTooltipText}
+							infoTooltipContent={containerStatusTooltipText(
+								containerFeatureFlags.canModifyContainerState === false
+									? "Container Runtime"
+									: "Container",
+							)}
 							value={containerStatusValueCell(statusComponents)}
 							columnProps={columnSizing_unstable}
 						/>
@@ -339,15 +346,17 @@ export function ContainerSummaryView(props: ContainerSummaryViewProps): React.Re
 					</TableBody>
 				</Table>
 			</div>
-			<div className={styles.actions}>
-				<ActionsBar
-					isContainerConnected={containerState.connectionState === ConnectionState.Connected}
-					containerState={containerState}
-					tryConnect={tryConnect}
-					forceDisconnect={forceDisconnect}
-					closeContainer={closeContainer}
-				/>
-			</div>
+			{containerFeatureFlags.canModifyContainerState !== false && (
+				<div className={styles.actions}>
+					<ActionsBar
+						isContainerConnected={containerState.connectionState === ConnectionState.Connected}
+						containerState={containerState}
+						tryConnect={tryConnect}
+						forceDisconnect={forceDisconnect}
+						closeContainer={closeContainer}
+					/>
+				</div>
+			)}
 		</div>
 	);
 }

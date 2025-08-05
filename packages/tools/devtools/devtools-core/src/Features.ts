@@ -66,5 +66,5 @@ export interface ContainerDevtoolsFeatureFlags {
 	 *
 	 * @defaultValue true
 	 */
-	canModifyConnectionState?: boolean;
+	canModifyContainerState?: boolean;
 }
