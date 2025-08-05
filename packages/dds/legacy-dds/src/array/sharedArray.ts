@@ -877,26 +877,23 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				}
 				break;
 			}
-			// case OperationType.toggle: {
-			// 	if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
-			// 		this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
-			// 	}
-			// 	break;
-			// }
-			// case OperationType.toggleMove: {
-			// 	if (
-			// 		!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
-			// 		!this.isLocalPending(op.entryId, "isLocalPendingMove")
-			// 	) {
-			// 		this.updateLiveEntry(
-			// 			this.getLiveEntry(op.entryId).entryId,
-			// 			op.entryId,
-			// 		);
-			// 	}
-			// 	break;
-			// }
+			case OperationType.toggle: {
+				if (!this.isLocalPending(op.entryId, "isLocalPendingDelete")) {
+					this.getLiveEntry(op.entryId).isDeleted = op.isDeleted;
+				}
+				break;
+			}
+			case OperationType.toggleMove: {
+				if (
+					!this.isLocalPending(op.entryId, "isLocalPendingDelete") &&
+					!this.isLocalPending(op.entryId, "isLocalPendingMove")
+				) {
+					this.updateLiveEntry(this.getLiveEntry(op.entryId).entryId, op.entryId);
+				}
+				break;
+			}
 			default: {
-				throw new Error(`Operation type not supported or recognized: ${op.type}`);
+				throw new Error(`Operation type not supported or recognized: ${op}`);
 			}
 		}
 		this.submitLocalMessage(op);
