@@ -4,13 +4,11 @@
  */
 
 export type {
-	BlockContentTransformations,
 	TransformationConfiguration,
 	Transformation,
 	Transformations,
 } from "./configuration/index.js";
 export {
-	blockContentToMarkdown,
 	documentToMarkdown,
 	sectionContentToMarkdown,
 } from "./ToMarkdown.js";

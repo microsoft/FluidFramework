@@ -95,3 +95,5 @@ extends:
     taskLint: true
     taskTest:
     - test
+    checks:
+    - check:format

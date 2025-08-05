@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { DocumentationNode } from "../../../documentation-domain/index.js";
+import type { HeadingNode, SectionContent } from "../../../documentation-domain/index.js";
 import {
 	documentationNodeToHtml,
 	treeFromBody,
@@ -14,7 +14,7 @@ import { renderHtml, type RenderDocumentConfiguration } from "../Render.js";
  * Tests the rendering of an individual {@link DocumentationNode}, returning the generated string content.
  */
 export function testRender(
-	node: DocumentationNode,
+	node: SectionContent | HeadingNode,
 	maybeConfig?: RenderDocumentConfiguration,
 ): string {
 	const config = maybeConfig ?? {};
