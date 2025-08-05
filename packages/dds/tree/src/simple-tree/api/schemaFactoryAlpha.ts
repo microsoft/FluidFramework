@@ -58,13 +58,12 @@ export interface SchemaStaticsAlpha {
 	 * Declares a staged type in a set of {@link AllowedTypes}.
 	 *
 	 * @remarks
-	 * Staged allowed types add support for reading a type which can be used for schema evolution to add members to
-	 * an {@link AllowedTypes} while supporting cross version collaboration.
+	 * Staged allowed types add support for loading documents which may or may not permit an allowed type in a location in a schema.
+	 * This allows for an incremental rollout of a schema change to add a {@link TreeNodeSchema} to an {@link AllowedTypes} without breaking cross version collaboration.
 	 *
-	 * Once enough clients support reading the type, support for writing can be added by removing the use of
-	 * `staged` from the schema definition and {@link TreeView.upgradeSchema|upgrading the schema}.
-	 *
-	 * Future change may allow applying a specific {@link SchemaUpgrade} directly making it easier for applications to use configuration changes rather than a code change.
+	 * Once enough clients have the type staged and thus can read documents which allow it documents can start being created and upgraded to allow the staged type.
+	 * This is done by deploying a new version of the app which removes the `staged` wrapper around the allowed type in the the schema definition.
+	 * This will also require {@link TreeView.upgradeSchema|upgrading the schema} for existing documents.
 	 *
 	 * Using a staged allowed type in a schema is just like using the schema as an allowed type with the following exceptions:
 	 *
@@ -73,10 +72,49 @@ export interface SchemaStaticsAlpha {
 	 * 3. When evaluating {@link TreeView.compatibility}, it will be viewable even if the staged allowed type is not present in the stored schema's corresponding allowed types.
 	 * 4. Because of the above, it is possible to get errors when inserting content which uses the staged allowed type when inserting the content into a tree who's stored schema does not permit it.
 	 *
+	 * Currently `staged` is not supported in the recursive type APIs: this is a known limitation which future versions of the API will address.
+	 *
+	 * @example
+	 * Suppose you have a schema which has a a field which allows some type `A`, but you want to add support for type `B`.
+	 *
+	 * The first change is to use to mark the new type as staged, replacing `A` in the schema with `[A, SchemaStaticsAlpha.staged(B)]`.
+	 * Once this is done, and any code which reads contents from documents is updated to handle any `B` content that may be present, this version of the code can be deployed.
+	 *
+	 * Once all users have the above changes, the schema can be updated again to `[A, B]`, and the app can be updated to allow creating of `B` content.
+	 * This updated version of the app will need to call {@link TreeView.upgradeSchema} when opening documents created by earlier versions.
+	 *
+	 * The schema the for an actual app, doing a migration to add `B` as an option in the root could look like this:
+	 * ```typescript
+	 * const factory = new SchemaFactoryAlpha("test");
+	 * class A extends factory.objectAlpha("A", {}) {}
+	 * class B extends factory.objectAlpha("B", {}) {}
+	 *
+	 * // Does not support B
+	 * const configBefore = new TreeViewConfigurationAlpha({
+	 * 	schema: A,
+	 * });
+	 *
+	 * // Supports documents with or without B
+	 * const configStaged = new TreeViewConfigurationAlpha({
+	 * 	// Adds staged support for B.
+	 * 	// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
+	 * 	// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
+	 * 	schema: SchemaFactoryAlpha.required([A, SchemaFactoryAlpha.staged(B)]),
+	 * });
+	 *
+	 * // Only supports documents with A and B: can be used to upgrade schema to add B.
+	 * const configAfter = new TreeViewConfigurationAlpha({
+	 * 	schema: [A, B],
+	 * });
+	 * ```
+	 *
 	 * @privateRemarks
 	 * TODO:#44317 staged allowed types rely on schema validation of stored schema to output errors, these errors are not very
 	 * user friendly and should be improved, particularly in the case of staged allowed types
 	 *
+	 * TODO: the example above does not work tell in intellisense: its formatted to work onm the website. We should find a solution that works well for both.
+	 *
+	 * TODO: AB#45711: Update the docs above when recursive type support is added.
 	 */
 	staged: <const T extends LazyItem<TreeNodeSchema>>(
 		t: T | AnnotatedAllowedType<T>,

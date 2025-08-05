@@ -28,6 +28,7 @@ import {
 	isTreeNode,
 	NodeKind,
 	type TreeFieldFromImplicitField,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
 import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
@@ -1302,6 +1303,43 @@ describe("schemaFactory", () => {
 			foo: [SchemaFactoryAlpha.number, SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string)],
 		}) {}
 
+		it("allows forward references", () => {
+			const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
+			class A extends schemaFactoryAlpha.objectAlpha("A", {
+				foo: SchemaFactoryAlpha.staged(() => B),
+			}) {}
+
+			class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
+
+			const config = new TreeViewConfiguration({
+				schema: A,
+			});
+		});
+
+		it("example", () => {
+			const factory = new SchemaFactoryAlpha("test");
+			class A extends factory.objectAlpha("A", {}) {}
+			class B extends factory.objectAlpha("B", {}) {}
+
+			// Does not support B
+			const configBefore = new TreeViewConfigurationAlpha({
+				schema: A,
+			});
+
+			// Supports documents with or without B
+			const configStaged = new TreeViewConfigurationAlpha({
+				// Adds staged support for B.
+				// Currently this requires wrapping the root field with `SchemaFactoryAlpha.required`:
+				// this is normally implicitly included, but is currently required while the "staged" APIs are `@alpha`.
+				schema: SchemaFactoryAlpha.required([A, SchemaFactoryAlpha.staged(B)]),
+			});
+
+			// Only supports documents with A and B: can be used to upgrade schema to add B.
+			const configAfter = new TreeViewConfigurationAlpha({
+				schema: [A, B],
+			});
+		});
+
 		describe("in objects", () => {
 			it("are permitted when unhydrated", () => {
 				const testObject = new TestObject({ foo: "test" });
@@ -1563,19 +1601,6 @@ describe("schemaFactory", () => {
 				}, validateUsageError(
 					"Type com.fluidframework.leaf.string in source sequence is not allowed in destination's stored schema: this would likely require upgrading the document to permit a staged schema.",
 				));
-			});
-
-			it("allows forward references", () => {
-				const schemaFactoryAlpha = new SchemaFactoryAlpha("test");
-				class A extends schemaFactoryAlpha.objectAlpha("A", {
-					foo: SchemaFactoryAlpha.staged(() => B),
-				}) {}
-
-				class B extends schemaFactoryAlpha.objectAlpha("B", {}) {}
-
-				const config = new TreeViewConfiguration({
-					schema: A,
-				});
 			});
 		});
 	});
