@@ -248,9 +248,7 @@ export async function refreshTokens(
 		grant_type: "refresh_token",
 		refresh_token,
 	};
-	const newTokens = await fetchTokens(server, scope, clientConfig, credentials);
-
-	return newTokens;
+	return fetchTokens(server, scope, clientConfig, credentials);
 }
 
 const createConfig = (token: string): RequestInit => ({
