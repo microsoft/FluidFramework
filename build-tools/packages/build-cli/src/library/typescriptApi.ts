@@ -7,8 +7,8 @@ import type { ExportDeclaration, ExportedDeclarations, JSDoc, SourceFile } from 
 import { Node, SyntaxKind } from "ts-morph";
 
 import type { ApiLevel } from "./apiLevel.js";
-import type { ApiTag } from "./apiTag.js";
-import { isKnownApiTag } from "./apiTag.js";
+import type { ReleaseTag } from "./releaseTag.js";
+import { isReleaseTag } from "./releaseTag.js";
 
 interface ExportRecord {
 	name: string;
@@ -16,10 +16,12 @@ interface ExportRecord {
 }
 interface ExportRecords {
 	public: ExportRecord[];
-	legacy: ExportRecord[];
 	beta: ExportRecord[];
 	alpha: ExportRecord[];
 	internal: ExportRecord[];
+	legacyPublic: ExportRecord[];
+	legacyBeta: ExportRecord[];
+	legacyAlpha: ExportRecord[];
 	/**
 	 * Entries here represent exports with unrecognized tags.
 	 * These may be errors or just concerns depending on context.
@@ -43,30 +45,44 @@ function isTypeExport(_decl: ExportedDeclarations): boolean {
 	return false;
 }
 
-/**
- * Searches given JSDocs for known {@link ApiTag} tags.
- *
- * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
- */
-function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiTag[] | undefined {
-	const tags: ApiTag[] = [];
-	for (const jsdoc of jsdocs) {
-		for (const tag of jsdoc.getTags()) {
-			const tagName = tag.getTagName();
-			if (isKnownApiTag(tagName)) {
-				tags.push(tagName);
-			}
-		}
-	}
-	return tags.length > 0 ? tags : undefined;
+interface ApiSupportTagInfo {
+	releaseTag: ReleaseTag;
+	isLegacy: boolean;
 }
 
 /**
- * Searches given Node's JSDocs for known {@link ApiTag} tags.
+ * Searches given JSDocs for known {@link ReleaseTag | release tag}s and `@legacy`.
  *
- * @returns Recognized {@link ApiTag}s from JSDocs or undefined.
+ * @returns The tag information, if a release tag is found. Otherwise, `undefined`.
  */
-function getNodeApiTags(node: Node): ApiTag[] | undefined {
+function getApiTagsFromDocs(jsdocs: JSDoc[]): ApiSupportTagInfo | undefined {
+	let releaseTag: ReleaseTag | undefined;
+	let isLegacy = false;
+	for (const jsdoc of jsdocs) {
+		const tags = jsdoc.getTags();
+		for (const tag of tags) {
+			const tagName = tag.getTagName();
+			if (isReleaseTag(tagName)) {
+				if (releaseTag !== undefined) {
+					throw new Error(
+						`Multiple release tags found in JSDoc: ${releaseTag} and ${tagName}. An API must have at most 1 release tag.`,
+					);
+				}
+				releaseTag = tagName;
+			} else if (tagName === "legacy") {
+				isLegacy = true;
+			}
+		}
+	}
+	return releaseTag === undefined ? undefined : { releaseTag, isLegacy };
+}
+
+/**
+ * Searches given Node's JSDocs for known {@link ReleaseTag | release tag}s and `@legacy`.
+ *
+ * @returns The tag information, if a release tag is found. Otherwise, `undefined`.
+ */
+function getNodeApiTags(node: Node): ApiSupportTagInfo | undefined {
 	if (Node.isJSDocable(node)) {
 		return getApiTagsFromDocs(node.getJsDocs());
 	}
@@ -88,31 +104,42 @@ function getNodeApiTags(node: Node): ApiTag[] | undefined {
 	return undefined;
 }
 
+function getApiLevelFromTags(tags: ApiSupportTagInfo): ApiLevel {
+	const { releaseTag, isLegacy } = tags;
+	switch (releaseTag) {
+		case "public": {
+			return isLegacy ? "legacyPublic" : "public";
+		}
+		case "beta": {
+			return isLegacy ? "legacyBeta" : "beta";
+		}
+		case "alpha": {
+			return isLegacy ? "legacyAlpha" : "alpha";
+		}
+		case "internal": {
+			if (isLegacy) {
+				throw new Error("@legacy + @internal is not supported. Use @internal only.");
+			}
+			return "internal";
+		}
+		default: {
+			throw new Error(`Unknown release tag: ${releaseTag}`);
+		}
+	}
+}
+
 /**
- * Searches given Node's JSDocs for known {@link ApiTag} tags and derive export level.
+ * Searches given Node's JSDocs for known {@link ReleaseTag | release tag}s and `@legacy` to determine its {@link ApiLevel}.
  *
- * @remarks One of api-extractor standard tags will always be present as required by
- * api-extractor. So, "legacy" is treated as priority over other tags for determining
- * level. Otherwise, exactly one tag is required and will be exact level.
- *
- * @returns Computed {@link ApiLevel} from JSDocs or undefined.
+ * @returns The API level, if a release tag is found. Otherwise, `undefined`.
  */
 function getNodeApiLevel(node: Node): ApiLevel | undefined {
 	const apiTags = getNodeApiTags(node);
 	if (apiTags === undefined) {
 		return undefined;
 	}
-	if (apiTags.includes("legacy")) {
-		return "legacy";
-	}
-	if (apiTags.length === 1) {
-		return apiTags[0];
-	}
-	throw new Error(
-		`No known level map from ${node.getSymbol()} with tags [${apiTags.join(",")}] at ${node
-			.getSourceFile()
-			.getFilePath()}:${node.getStartLineNumber()}.`,
-	);
+
+	return getApiLevelFromTags(apiTags);
 }
 
 /**
@@ -123,9 +150,11 @@ export function getApiExports(sourceFile: SourceFile): ExportRecords {
 	const exported = sourceFile.getExportedDeclarations();
 	const records: ExportRecords = {
 		public: [],
-		legacy: [],
 		beta: [],
 		alpha: [],
+		legacyPublic: [],
+		legacyBeta: [],
+		legacyAlpha: [],
 		internal: [],
 		unknown: new Map(),
 	};

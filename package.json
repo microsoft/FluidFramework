@@ -377,7 +377,9 @@
 			"oclif>@aws-sdk/client-cloudfront": "npm:empty-npm-package@1.0.0",
 			"oclif>@aws-sdk/client-s3": "npm:empty-npm-package@1.0.0",
 			"socket.io-client": "~4.7.5",
-			"axios@<0.30.0": "^0.30.0"
+			"axios@<0.30.0": "^0.30.0",
+			"@fluid-tools/build-cli": "link:./build-tools/packages/build-cli",
+			"@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
 		},
 		"peerDependencyComments": [
 			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
