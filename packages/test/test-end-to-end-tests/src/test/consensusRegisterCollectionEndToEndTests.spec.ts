@@ -265,7 +265,7 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 		sharedMap1.set("collection", collection1.handle);
 		await provider.ensureSynchronized();
 		const write1P = collection1.write("key1", "value1");
-		if (container1.dispose !== undefined) {
+		if (typeof container1.dispose === "function") {
 			container1.dispose();
 		} else {
 			// 1.4.0 doesn't have dispose, close is good enough
