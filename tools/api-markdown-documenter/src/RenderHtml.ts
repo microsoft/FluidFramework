@@ -18,8 +18,6 @@ import {
 	renderDocumentAsHtml,
 } from "./renderers/index.js";
 
-import type { SectionNode } from "./index.js";
-
 /**
  * API Model HTML rendering options.
  *
@@ -44,7 +42,7 @@ export async function renderApiModelAsHtml(
 }
 
 /**
- * Options for rendering {@link DocumentNode}s as HTML.
+ * Options for rendering {@link ApiDocument}s as HTML.
  *
  * @alpha
  */
@@ -56,12 +54,12 @@ export interface RenderDocumentsAsHtmlOptions
  * Renders the provided documents using HTML syntax, and writes each document to a file on disk.
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
- * {@link DocumentNode.documentPath} (relative to the provided output directory).
+ * {@link ApiDocument.documentPath} (relative to the provided output directory).
  *
  * @alpha
  */
 export async function renderDocumentsAsHtml(
-	documents: readonly ApiDocument<SectionNode[]>[],
+	documents: readonly ApiDocument[],
 	options: RenderDocumentsAsHtmlOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;

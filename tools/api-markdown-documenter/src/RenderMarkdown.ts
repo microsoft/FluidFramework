@@ -13,7 +13,6 @@ import {
 	type ApiItemTransformationOptions,
 	transformApiModel,
 } from "./api-item-transforms/index.js";
-import type { SectionNode } from "./documentation-domain/index.js";
 import {
 	type RenderDocumentAsMarkdownConfiguration,
 	renderDocumentAsMarkdown,
@@ -43,7 +42,7 @@ export async function renderApiModelAsMarkdown(
 }
 
 /**
- * Options for rendering {@link DocumentNode}s as Markdown.
+ * Options for rendering {@link ApiDocument}s as Markdown.
  *
  * @public
  */
@@ -55,12 +54,12 @@ export interface RenderDocumentsAsMarkdownOptions
  * Renders the provided documents using Markdown syntax, and writes each document to a file on disk.
  *
  * @param documents - The documents to render. Each will be rendered to its own file on disk per
- * {@link DocumentNode.documentPath} (relative to the provided output directory).
+ * {@link ApiDocument.documentPath} (relative to the provided output directory).
  *
  * @public
  */
 export async function renderDocumentsAsMarkdown(
-	documents: readonly ApiDocument<SectionNode[]>[],
+	documents: readonly ApiDocument[],
 	options: RenderDocumentsAsMarkdownOptions,
 ): Promise<void> {
 	const { logger, newlineKind, outputDirectoryPath } = options;

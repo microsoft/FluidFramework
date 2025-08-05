@@ -7,7 +7,8 @@ import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { h } from "hastscript";
 import { toHast } from "mdast-util-to-hast";
 
-import type { DocumentationNode, DocumentNode } from "../documentation-domain/index.js";
+import type { ApiDocument } from "../ApiDocument.js";
+import type { DocumentationNode } from "../documentation-domain/index.js";
 
 import {
 	createTransformationContext,
@@ -16,7 +17,7 @@ import {
 import type { TransformationConfiguration } from "./configuration/index.js";
 
 /**
- * Generates an HTML AST from the provided {@link DocumentNode}.
+ * Generates an HTML AST from the provided {@link ApiDocument}.
  *
  * @param document - The document to transform.
  * @param config - HTML transformation configuration.
@@ -24,13 +25,13 @@ import type { TransformationConfiguration } from "./configuration/index.js";
  * @public
  */
 export function documentToHtml(
-	document: DocumentNode,
+	document: ApiDocument,
 	config: TransformationConfiguration,
 ): HastRoot {
 	const transformationContext = createTransformationContext(config);
 
 	const transformedChildren = documentationNodesToHtml(
-		document.children,
+		document.contents,
 		transformationContext,
 	);
 	return treeFromBody(transformedChildren, config);

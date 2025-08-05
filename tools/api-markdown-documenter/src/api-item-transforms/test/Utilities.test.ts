@@ -5,8 +5,7 @@
 
 import { expect } from "chai";
 
-import type { Document } from "../../ApiDocument.js";
-import type { SectionNode } from "../../documentation-domain/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
 import { checkForDuplicateDocumentPaths } from "../Utilities.js";
 
 describe("ApiItem to Documentation transformation utilities tests", () => {
@@ -16,19 +15,19 @@ describe("ApiItem to Documentation transformation utilities tests", () => {
 		});
 
 		it("No duplicates", () => {
-			const documents: Document<SectionNode[]>[] = [
-				{ documentPath: "foo" } as unknown as Document<SectionNode[]>,
-				{ documentPath: "bar" } as unknown as Document<SectionNode[]>,
-				{ documentPath: "baz" } as unknown as Document<SectionNode[]>,
+			const documents: ApiDocument[] = [
+				{ documentPath: "foo" } as unknown as ApiDocument,
+				{ documentPath: "bar" } as unknown as ApiDocument,
+				{ documentPath: "baz" } as unknown as ApiDocument,
 			];
 			expect(() => checkForDuplicateDocumentPaths(documents)).to.not.throw();
 		});
 
 		it("Contains duplicates", () => {
-			const documents: Document<SectionNode[]>[] = [
-				{ documentPath: "foo" } as unknown as Document<SectionNode[]>,
-				{ documentPath: "bar" } as unknown as Document<SectionNode[]>,
-				{ documentPath: "foo" } as unknown as Document<SectionNode[]>,
+			const documents: ApiDocument[] = [
+				{ documentPath: "foo" } as unknown as ApiDocument,
+				{ documentPath: "bar" } as unknown as ApiDocument,
+				{ documentPath: "foo" } as unknown as ApiDocument,
 			];
 			expect(() => checkForDuplicateDocumentPaths(documents)).to.throw();
 		});

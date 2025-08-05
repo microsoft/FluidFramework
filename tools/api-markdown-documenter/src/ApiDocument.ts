@@ -5,13 +5,15 @@
 
 import type { ApiItem } from "@microsoft/api-extractor-model";
 
+import type { SectionNode } from "./documentation-domain/index.js";
+
 /**
  * A document for an API item.
  *
  * @public
  * @sealed
  */
-export interface ApiDocument<TContents> {
+export interface ApiDocument {
 	/**
 	 * The API item this document was created for.
 	 */
@@ -20,7 +22,7 @@ export interface ApiDocument<TContents> {
 	/**
 	 * Document contents.
 	 */
-	readonly contents: TContents;
+	readonly contents: readonly SectionNode[];
 
 	/**
 	 * Path to which the resulting document should be saved.
