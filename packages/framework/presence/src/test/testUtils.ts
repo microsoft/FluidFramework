@@ -3,18 +3,32 @@
  * Licensed under the MIT License.
  */
 
-import type { InternalUtilityTypes } from "@fluidframework/core-interfaces/internal";
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	InternalUtilityTypes,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal";
 import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
+import { spy } from "sinon";
 import type { SinonFakeTimers } from "sinon";
 
 import { createPresenceManager } from "../presenceManager.js";
-import type { InboundClientJoinMessage, OutboundClientJoinMessage } from "../protocol.js";
+import type {
+	InboundClientJoinMessage,
+	OutboundClientJoinMessage,
+	SignalMessages,
+} from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 
-import type { AttendeeId, ClientConnectionId } from "@fluidframework/presence/alpha";
+import type {
+	AttendeeId,
+	ClientConnectionId,
+	PresenceWithNotifications,
+	StateSchemaValidator,
+} from "@fluidframework/presence/alpha";
 
 /**
  * Use to compile-time assert types of two variables are identical.
@@ -51,24 +65,17 @@ export function createSpecificAttendeeId<const T extends string>(
  */
 export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
 /**
+ * Mock {@link ClientConnectionId}.
+ */
+export const connectionId1 = "client1" as const satisfies ClientConnectionId;
+/**
  * Mock {@link AttendeeId}.
  */
 export const attendeeId2 = createSpecificAttendeeId("attendeeId-2");
 /**
  * Mock {@link ClientConnectionId}.
- *
- * @remarks
- * This is an {@link AttendeeId} as a workaround to TypeScript expectation
- * that specific properties overriding an indexed property still conform
- * to the index signature. This makes cases where it is used as
- * `clientConnectionId` key in {@link SystemWorkspaceDatastore} also
- * satisfy {@link GeneralDatastoreMessageContent}'s `AttendeeId` key.
- *
- * The only known alternative is to use
- * `satisfies SystemWorkspaceDatastore as SystemWorkspaceDatastore`
- * wherever "system:presence" is defined.
  */
-export const connectionId2 = createSpecificAttendeeId("client2");
+export const connectionId2 = "client2" as const satisfies ClientConnectionId;
 
 /**
  * Generates expected inbound join signal for a client that was initialized while connected.
@@ -115,6 +122,11 @@ export function generateBasicClientJoin(
 }
 
 /**
+ * Function signature for sending a signal to the presence manager.
+ */
+export type ProcessSignalFunction = ReturnType<typeof createPresenceManager>["processSignal"];
+
+/**
  * Prepares an instance of presence as it would be if initialized while connected.
  *
  * @param runtime - the mock runtime
@@ -129,12 +141,13 @@ export function prepareConnectedPresence(
 	clientConnectionId: ClientConnectionId,
 	clock: Omit<SinonFakeTimers, "restore">,
 	logger?: EventAndErrorTrackingLogger,
-): ReturnType<typeof createPresenceManager> {
+): {
+	presence: PresenceWithNotifications;
+	processSignal: ProcessSignalFunction;
+} {
 	// Set runtime to connected state
 	runtime.clientId = clientConnectionId;
-	// TODO: runtime.connected has been hacked in past to lie about true connection.
-	// This will need to be updated to an alternate status provider.
-	runtime.connected = true;
+	runtime.joined = true;
 
 	logger?.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
 
@@ -157,6 +170,25 @@ export function prepareConnectedPresence(
 
 	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
 
+	const processSignal = (
+		addressChain: string[],
+		signalMessage: InboundExtensionMessage<SignalMessages>,
+		local: boolean,
+	): void => {
+		// Pass on to presence manager, but first clone the message to avoid
+		// possibility of Presence mutating the original message which often
+		// contains reference to general (shared) test data.
+		// Additionally JSON.parse(JSON.stringify(signalMessage)) is used to
+		// ensure only regular JSON-serializable data is passed to Presence.
+		// In production environment, the message is always extracted from
+		// the network and Presence can safely mutate it.
+		presence.processSignal(
+			addressChain,
+			JSON.parse(JSON.stringify(signalMessage)) as InboundExtensionMessage<SignalMessages>,
+			local,
+		);
+	};
+
 	// Validate expectations post initialization to make sure logger
 	// and runtime are left in a clean expectation state.
 	const logErrors = getUnexpectedLogErrorException(logger);
@@ -169,9 +201,12 @@ export function prepareConnectedPresence(
 	clock.tick(10);
 
 	// Return the join signal
-	presence.processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
 
-	return presence;
+	return {
+		presence,
+		processSignal,
+	};
 }
 
 /**
@@ -189,3 +224,21 @@ export function assertFinalExpectations(
 	// Make sure all expected signals were sent.
 	runtime.assertAllSignalsSubmitted();
 }
+
+/**
+ * A null validator (one that does nothing) for a given type T. It simply casts the value to
+ * `JsonDeserialized<T>`.
+ */
+const nullValidator = <T extends object>(data: unknown): JsonDeserialized<T> => {
+	return data as JsonDeserialized<T>;
+};
+
+/**
+ * Creates a spied validator for test purposes.
+ *
+ * @param validatorFunction - A {@link StateSchemaValidator} to wrap in a spy.
+ */
+export const createSpiedValidator = <T extends object>(
+	validatorFunction: StateSchemaValidator<T> = nullValidator<T>,
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+) => spy(validatorFunction) satisfies StateSchemaValidator<T>;

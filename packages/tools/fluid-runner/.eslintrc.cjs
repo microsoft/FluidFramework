@@ -31,5 +31,17 @@ module.exports = {
 				ignore: ["fluid-runner", "sample-executable"],
 			},
 		],
+
+		// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
+		"@typescript-eslint/consistent-type-exports": [
+			"error",
+			{ fixMixedExportsWithInlineTypeSpecifier: true },
+		],
+		"@typescript-eslint/consistent-type-imports": [
+			"error",
+			{ fixStyle: "inline-type-imports" },
+		],
+		"@typescript-eslint/no-import-type-side-effects": "error",
+		// #endregion
 	},
 };

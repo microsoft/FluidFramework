@@ -5,10 +5,8 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
-import type { ITreeCursor } from "../../core/index.js";
-import type { TreeNodeSchema } from "../core/index.js";
-import { getUnhydratedContext } from "../createContext.js";
-import type { TreeLeafValue, ImplicitAllowedTypes } from "../schemaTypes.js";
+import type { ITreeCursor, TreeNodeStoredSchema } from "../../core/index.js";
+import type { TreeNodeSchema, TreeLeafValue, Context } from "../core/index.js";
 
 import {
 	customFromCursor,
@@ -44,7 +42,7 @@ export type ConciseTree<THandle = IFluidHandle> =
  */
 export function conciseFromCursor(
 	reader: ITreeCursor,
-	rootSchema: ImplicitAllowedTypes,
+	context: Context,
 	options: TreeEncodingOptions,
 ): ConciseTree {
 	const config: Required<TreeEncodingOptions> = {
@@ -52,16 +50,19 @@ export function conciseFromCursor(
 		...options,
 	};
 
-	const schemaMap = getUnhydratedContext(rootSchema).schema;
-	return conciseFromCursorInner(reader, config, schemaMap);
+	const storedSchemaMap = context.flexContext.schema.nodeSchema;
+	const schemaMap = context.schema;
+
+	return conciseFromCursorInner(reader, config, storedSchemaMap, schemaMap);
 }
 
 function conciseFromCursorInner(
 	reader: ITreeCursor,
 	options: Required<TreeEncodingOptions>,
+	storedSchema: ReadonlyMap<string, TreeNodeStoredSchema>,
 	schema: ReadonlyMap<string, TreeNodeSchema>,
 ): ConciseTree {
-	return customFromCursor(reader, options, schema, conciseFromCursorInner);
+	return customFromCursor(reader, options, storedSchema, schema, conciseFromCursorInner);
 }
 
 /**

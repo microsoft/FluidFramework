@@ -96,7 +96,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
         content: any;
         localOpMetadata?: unknown;
     }[]): void;
+    rollback?(): void;
     protected readonly runtimeOptions: Required<IMockContainerRuntimeOptions>;
+    // (undocumented)
+    runWithManualFlush(act: () => void | Promise<void>): Promise<void>;
     // (undocumented)
     submit(messageContent: any, localOpMetadata?: unknown): number;
 }
@@ -187,7 +190,9 @@ export class MockDeltaConnection implements IDeltaConnection {
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    // (undocumented)
+    rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
     setConnectionState(connected: boolean): void;
     // (undocumented)
@@ -360,7 +365,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     setChannelDirty(address: string): void;
     // (undocumented)
-    storage: IDocumentStorageService;
+    storage: IRuntimeStorageService;
     // (undocumented)
     submitMessage(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -480,7 +485,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -516,8 +521,6 @@ export class MockHandle<T> extends FluidHandleBase<T> {
     readonly absolutePath: string;
     // (undocumented)
     attachGraph(): void;
-    // @deprecated (undocumented)
-    bind(): void;
     // (undocumented)
     get(): Promise<T>;
     // (undocumented)
@@ -608,6 +611,8 @@ export class MockStorage implements IChannelStorageService {
     contains(path: string): Promise<boolean>;
     // (undocumented)
     static createFromSummary(summaryTree: ISummaryTree): MockStorage;
+    // (undocumented)
+    getSnapshotTree(): ISnapshotTree | undefined;
     // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)

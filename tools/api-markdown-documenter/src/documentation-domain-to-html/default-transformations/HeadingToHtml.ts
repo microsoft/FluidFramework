@@ -3,16 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 
 import type { HeadingNode } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import { transformChildrenUnderTag } from "../Utilities.js";
 
 /**
  * Maximum heading level supported by most systems.
@@ -46,19 +41,13 @@ export function headingToHtml(
 			attributes.id = headingNode.id;
 		}
 
-		return transformChildrenUnderTag(
-			{ name: `h${headingLevel}`, attributes },
-			headingNode.children,
-			context,
-		);
+		return h(`h${headingLevel}`, attributes, [{ type: "text", value: headingNode.title }]);
 	} else {
 		const transformedChildren: HastElement[] = [];
 		if (headingNode.id !== undefined) {
 			transformedChildren.push(h("a", { id: headingNode.id }));
 		}
-		transformedChildren.push(
-			transformChildrenUnderTag({ name: "b" }, headingNode.children, context),
-		);
+		transformedChildren.push(h("b", [{ type: "text", value: headingNode.title }]));
 
 		// Wrap the 2 child elements in a fragment
 		return h(undefined, transformedChildren);

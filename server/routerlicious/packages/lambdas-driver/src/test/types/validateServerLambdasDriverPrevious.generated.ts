@@ -22,7 +22,6 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Class_DocumentContext": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_DocumentContext = requireAssignableTo<TypeOnly<old.DocumentContext>, TypeOnly<current.DocumentContext>>
 
 /*
@@ -41,8 +40,7 @@ declare type current_as_old_for_Class_DocumentContext = requireAssignableTo<Type
  * typeValidation.broken:
  * "Class_DocumentLambdaFactory": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type old_as_current_for_Class_DocumentLambdaFactory = requireAssignableTo<TypeOnly<old.DocumentLambdaFactory>, TypeOnly<current.DocumentLambdaFactory>>
+declare type old_as_current_for_Class_DocumentLambdaFactory = requireAssignableTo<TypeOnly<old.DocumentLambdaFactory<never>>, TypeOnly<current.DocumentLambdaFactory<never>>>
 
 /*
  * Validate backward compatibility by using the current type in place of the old type.
@@ -51,8 +49,7 @@ declare type old_as_current_for_Class_DocumentLambdaFactory = requireAssignableT
  * typeValidation.broken:
  * "Class_DocumentLambdaFactory": {"backCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
-declare type current_as_old_for_Class_DocumentLambdaFactory = requireAssignableTo<TypeOnly<current.DocumentLambdaFactory>, TypeOnly<old.DocumentLambdaFactory>>
+declare type current_as_old_for_Class_DocumentLambdaFactory = requireAssignableTo<TypeOnly<current.DocumentLambdaFactory<never>>, TypeOnly<old.DocumentLambdaFactory<never>>>
 
 /*
  * Validate forward compatibility by using the old type in place of the current type.
@@ -61,7 +58,6 @@ declare type current_as_old_for_Class_DocumentLambdaFactory = requireAssignableT
  * typeValidation.broken:
  * "Class_KafkaRunner": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_KafkaRunner = requireAssignableTo<TypeOnly<old.KafkaRunner>, TypeOnly<current.KafkaRunner>>
 
 /*
@@ -98,7 +94,6 @@ declare type current_as_old_for_Class_KafkaRunnerFactory = requireAssignableTo<T
  * typeValidation.broken:
  * "Class_PartitionManager": {"forwardCompat": false}
  */
-// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Class_PartitionManager = requireAssignableTo<TypeOnly<old.PartitionManager>, TypeOnly<current.PartitionManager>>
 
 /*

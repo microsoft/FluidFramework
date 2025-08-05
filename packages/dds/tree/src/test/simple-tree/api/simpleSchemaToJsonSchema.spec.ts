@@ -88,7 +88,12 @@ describe("simpleSchemaToJsonSchema", () => {
 			definitions: new Map<string, SimpleNodeSchema>([
 				[
 					"test.handle",
-					{ leafKind: ValueSchema.FluidHandle, metadata: {}, kind: NodeKind.Leaf },
+					{
+						leafKind: ValueSchema.FluidHandle,
+						metadata: {},
+						persistedMetadata: undefined,
+						kind: NodeKind.Leaf,
+					},
 				],
 			]),
 		};
@@ -109,6 +114,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Array,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 					},
 				],
@@ -161,6 +167,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Map,
 						metadata: {},
+						persistedMetadata: undefined,
 						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 					},
 				],
@@ -185,6 +192,71 @@ describe("simpleSchemaToJsonSchema", () => {
 				},
 			},
 			$ref: "#/$defs/test.map",
+		};
+		assert.deepEqual(actual, expected);
+
+		// Verify that the generated schema is valid.
+		const validator = getJsonValidator(actual);
+
+		// Verify expected data validation behavior.
+		validator("Hello world", false);
+		validator([], false);
+		validator({}, true);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+			},
+			true,
+		);
+		validator(
+			{
+				foo: "Hello",
+				bar: "World",
+				baz: 42,
+			},
+			false,
+		);
+	});
+
+	it("Record schema", () => {
+		const input: SimpleTreeSchema = {
+			root: {
+				kind: FieldKind.Required,
+				allowedTypesIdentifiers: new Set<string>(["test.record"]),
+				metadata: {},
+			},
+			definitions: new Map<string, SimpleNodeSchema>([
+				[
+					"test.record",
+					{
+						kind: NodeKind.Record,
+						metadata: {},
+						persistedMetadata: undefined,
+						allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
+					},
+				],
+				[stringSchema.identifier, stringSchema],
+			]),
+		};
+
+		const actual = simpleToJsonSchema(input);
+
+		const expected: JsonTreeSchema = {
+			$defs: {
+				"test.record": {
+					type: "object",
+					_treeNodeSchemaKind: NodeKind.Record,
+					patternProperties: {
+						"^.*$": { $ref: "#/$defs/com.fluidframework.leaf.string" },
+					},
+				},
+				[stringSchema.identifier]: {
+					type: "string",
+					_treeNodeSchemaKind: NodeKind.Leaf,
+				},
+			},
+			$ref: "#/$defs/test.record",
 		};
 		assert.deepEqual(actual, expected);
 
@@ -271,6 +343,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
@@ -278,6 +351,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Optional,
 									allowedTypesIdentifiers: new Set<string>([numberSchema.identifier]),
 									metadata: { description: "A number representing the concept of Foo." },
+									persistedMetadata: undefined,
 									storedKey: "foo",
 								},
 							],
@@ -287,6 +361,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									kind: FieldKind.Required,
 									allowedTypesIdentifiers: new Set<string>([stringSchema.identifier]),
 									metadata: { description: "A string representing the concept of Bar." },
+									persistedMetadata: undefined,
 									storedKey: "bar",
 								},
 							],
@@ -298,6 +373,7 @@ describe("simpleSchemaToJsonSchema", () => {
 									metadata: {
 										description: "Unique identifier for the test object.",
 									},
+									persistedMetadata: undefined,
 									storedKey: "id",
 								},
 							],
@@ -404,6 +480,7 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"id",
@@ -459,12 +536,14 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Required,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set<string>([
 										numberSchema.identifier,
 										stringSchema.identifier,
@@ -525,12 +604,14 @@ describe("simpleSchemaToJsonSchema", () => {
 					{
 						kind: NodeKind.Object,
 						metadata: {},
+						persistedMetadata: undefined,
 						fields: new Map([
 							[
 								"foo",
 								{
 									kind: FieldKind.Optional,
 									metadata: {},
+									persistedMetadata: undefined,
 									allowedTypesIdentifiers: new Set<string>([
 										stringSchema.identifier,
 										"test.recursive-object",

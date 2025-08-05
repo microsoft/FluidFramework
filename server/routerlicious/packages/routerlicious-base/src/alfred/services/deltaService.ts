@@ -4,8 +4,8 @@
  */
 
 import { toUtf8 } from "@fluidframework/common-utils";
-import { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
-import {
+import type { ISequencedDocumentMessage } from "@fluidframework/protocol-definitions";
+import type {
 	ICollection,
 	IDeltaService,
 	ISequencedOperationMessage,

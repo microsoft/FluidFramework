@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/protocol-base",
-	"version": "6.0.0",
+	"version": "8.0.0",
 	"description": "Fluid protocol base",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -65,11 +65,11 @@
 		"events_pkg": "npm:events@^3.1.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.56.0",
+		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
-		"@fluidframework/eslint-config-fluid": "^5.7.4",
-		"@fluidframework/protocol-base-previous": "npm:@fluidframework/protocol-base@5.0.0",
+		"@fluidframework/build-tools": "^0.57.0",
+		"@fluidframework/eslint-config-fluid": "^5.8.0",
+		"@fluidframework/protocol-base-previous": "npm:@fluidframework/protocol-base@7.0.0",
 		"@microsoft/api-extractor": "^7.45.1",
 		"@types/assert": "^1.5.1",
 		"@types/mocha": "^10.0.1",

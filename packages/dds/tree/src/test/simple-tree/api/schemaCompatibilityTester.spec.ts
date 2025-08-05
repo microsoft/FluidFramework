@@ -5,29 +5,22 @@
 
 import { strict as assert } from "node:assert";
 import {
+	EmptyKey,
 	storedEmptyFieldSchema,
-	type Adapters,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
-import {
-	defaultSchemaPolicy,
-	type FullSchemaPolicy,
-} from "../../../feature-libraries/index.js";
+import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
 	toStoredSchema,
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	normalizeFieldSchema,
+	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
-import {
-	createUnknownOptionalFieldPolicy,
-	SchemaFactoryAlpha,
-} from "../../../simple-tree/index.js";
+import { SchemaFactoryAlpha } from "../../../simple-tree/index.js";
 
 // eslint-disable-next-line import/no-internal-modules
 import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 
-const noAdapters: Adapters = {};
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
 	rootFieldSchema: storedEmptyFieldSchema,
@@ -38,18 +31,23 @@ const factory = new SchemaFactoryAlpha("");
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
 	expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
-	policy: FullSchemaPolicy = {
-		...defaultSchemaPolicy,
-		allowUnknownOptionalFields: createUnknownOptionalFieldPolicy(view),
-	},
 ) {
 	const viewSchema = new SchemaCompatibilityTester(
-		policy,
-		noAdapters,
-		normalizeFieldSchema(view),
+		new TreeViewConfigurationAlpha({ schema: view }),
 	);
 	const compatibility = viewSchema.checkCompatibility(stored);
 	assert.deepEqual(compatibility, expected);
+
+	const viewStored = toStoredSchema(view);
+
+	// if it says upgradable, deriving a stored schema from the view schema gives one thats a superset of the old stored schema
+	if (compatibility.canUpgrade) {
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, stored, viewStored), true);
+	}
+	// if it is viewable, the old stored schema is also a superset of the new one.
+	if (compatibility.canView) {
+		assert.equal(allowsRepoSuperset(defaultSchemaPolicy, viewStored, stored), true);
+	}
 }
 
 describe("SchemaCompatibilityTester", () => {
@@ -174,21 +172,29 @@ describe("SchemaCompatibilityTester", () => {
 			});
 
 			describe("due to field kind relaxation", () => {
-				it("view: required field ⊃ stored: identifier field", () => {
+				it("stored identifier", () => {
 					// Identifiers are strings, so they should only be relaxable to fields which support strings.
 					expectCompatibility(
 						{
-							view: factory.required(factory.string),
+							view: factory.string,
 							stored: toStoredSchema(factory.identifier),
 						},
 						expected,
 					);
 					expectCompatibility(
 						{
-							view: factory.required(factory.number),
+							view: factory.number,
 							stored: toStoredSchema(factory.identifier),
 						},
 						{ canView: false, canUpgrade: false, isEquivalent: false },
+					);
+
+					expectCompatibility(
+						{
+							view: factory.optional(factory.string),
+							stored: toStoredSchema(factory.identifier),
+						},
+						expected,
 					);
 				});
 				it("view: optional field ⊃ stored: required field", () => {
@@ -209,9 +215,88 @@ describe("SchemaCompatibilityTester", () => {
 						expected,
 					);
 				});
-				// Note: despite optional fields being relaxable to sequence fields in the stored schema representation,
-				// this is not possible to recreate using the current public API due to differences in array and sequence design
+
+				it("required string to identifier: fails", () => {
+					// If this upgrade was allowed then it would be possible for two app versions to disagree
+					// about a schema and upgrade it back and forth causing unlimited schema edits.
+					// Preventing this is a policy choice: it could be allowed without corrupting documents since identifiers and
+					// required strings are compatible field shapes.
+					expectCompatibility(
+						{
+							view: factory.identifier,
+							stored: toStoredSchema(factory.string),
+						},
+						{
+							canView: false,
+							canUpgrade: false,
+							isEquivalent: false,
+						},
+					);
+				});
+
+				it("to sequence", () => {
+					// Optional and required fields are relaxable to sequence fields in the stored schema representation.
+					// This is possible to recreate using the current public API with object and array nodes:
+					expectCompatibility(
+						{
+							view: factory.array("x", factory.string),
+							stored: toStoredSchema(factory.object("x", { [EmptyKey]: factory.string })),
+						},
+						{
+							canView: false,
+							canUpgrade: true,
+							isEquivalent: false,
+						},
+					);
+
+					expectCompatibility(
+						{
+							view: factory.array("x", factory.string),
+							stored: toStoredSchema(
+								factory.object("x", { [EmptyKey]: factory.optional(factory.string) }),
+							),
+						},
+						{
+							canView: false,
+							canUpgrade: true,
+							isEquivalent: false,
+						},
+					);
+
+					expectCompatibility(
+						{
+							view: factory.array("x", factory.string),
+							stored: toStoredSchema(factory.object("x", { [EmptyKey]: factory.identifier })),
+						},
+						{
+							canView: false,
+							canUpgrade: true,
+							isEquivalent: false,
+						},
+					);
+				});
 			});
+		});
+
+		it("object to map upgrade", () => {
+			expectCompatibility(
+				{
+					view: factory.map("x", [factory.string, factory.number]),
+					stored: toStoredSchema(
+						factory.object("x", {
+							a: factory.string,
+							b: factory.number,
+							c: factory.optional(factory.number),
+							d: [factory.string, factory.number],
+						}),
+					),
+				},
+				{
+					canView: false,
+					canUpgrade: true,
+					isEquivalent: false,
+				},
+			);
 		});
 
 		describe("allows viewing but not upgrading when the view schema has opted into allowing the differences", () => {
@@ -286,23 +371,17 @@ describe("SchemaCompatibilityTester", () => {
 					expectIncomparability(factory.array(factory.string), factory.identifier);
 				});
 
-				describe("due to a field kind difference", () => {
-					it("view: identifier vs stored: forbidden", () => {
-						expectIncomparability(factory.identifier, factory.required([]));
-					});
-
-					it("view: 2d Point vs stored: required 3d Point", () => {
-						class Point2D extends factory.objectAlpha("Point", {
-							x: factory.number,
-							y: factory.number,
-						}) {}
-						class Point3D extends factory.objectAlpha("Point", {
-							x: factory.number,
-							y: factory.number,
-							z: factory.number,
-						}) {}
-						expectIncomparability(Point2D, Point3D);
-					});
+				it("view: 2d Point vs stored: required 3d Point", () => {
+					class Point2D extends factory.objectAlpha("Point", {
+						x: factory.number,
+						y: factory.number,
+					}) {}
+					class Point3D extends factory.objectAlpha("Point", {
+						x: factory.number,
+						y: factory.number,
+						z: factory.number,
+					}) {}
+					expectIncomparability(Point2D, Point3D);
 				});
 			});
 

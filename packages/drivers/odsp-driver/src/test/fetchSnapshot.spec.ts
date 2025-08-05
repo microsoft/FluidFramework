@@ -8,9 +8,9 @@
 import { strict as assert } from "node:assert";
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
-	IOdspResolvedUrl,
+	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
@@ -22,16 +22,23 @@ import {
 import { stub } from "sinon";
 
 import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
-import { HostStoragePolicyInternal } from "../contracts.js";
+import type { HostStoragePolicyInternal } from "../contracts.js";
 import { createOdspUrl } from "../createOdspUrl.js";
 import { EpochTracker } from "../epochTracker.js";
-import { downloadSnapshot, ISnapshotRequestAndResponseOptions } from "../fetchSnapshot.js";
+import {
+	downloadSnapshot,
+	type ISnapshotRequestAndResponseOptions,
+} from "../fetchSnapshot.js";
 import { mockify } from "../mockify.js";
 import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { INewFileInfo, IOdspResponse, createCacheSnapshotKey } from "../odspUtils.js";
+import {
+	type INewFileInfo,
+	type IOdspResponse,
+	createCacheSnapshotKey,
+} from "../odspUtils.js";
 
 import {
 	createResponse,
@@ -561,16 +568,21 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "RedeemShareLink_end" },
+				{
+					eventName: "RedeemShareLink_end",
+					details:
+						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":false}',
+				},
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),
 		);
 	});
 
-	it("RedeemFallback behavior when fallback succeeds with using siteUrl", async () => {
+	it("nonDurableRedeem header is set during RedeemFallback behavior", async () => {
 		resolved.shareLinkInfo = {
 			sharingLinkToRedeem: "https://microsoft.sharepoint-df.com/sharelink",
+			isRedemptionNonDurable: true,
 		};
 		hostPolicy.enableRedeemFallback = true;
 
@@ -594,7 +606,6 @@ describe("Tests1 for snapshot fetch", () => {
 					async () => service.getSnapshot({}),
 					[
 						notFound,
-						notFound,
 						async (): Promise<MockResponse> => okResponse({}, {}),
 						async (): Promise<Response> => {
 							return response;
@@ -606,8 +617,11 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(
 			mockLogger.matchEvents([
 				{ eventName: "TreesLatest_cancel", shareLinkPresent: true },
-				{ eventName: "ShareLinkRedeemFailedWithTenantDomain", statusCode: 404 },
-				{ eventName: "RedeemShareLink_end" },
+				{
+					eventName: "RedeemShareLink_end",
+					details:
+						'{"shareLinkUrlLength":45,"queryParamsLength":0,"useHeaders":true,"isRedemptionNonDurable":true}',
+				},
 				{ eventName: "RedeemFallback", errorType: "fileNotFoundOrAccessDeniedError" },
 				{ eventName: "TreesLatest_end" },
 			]),

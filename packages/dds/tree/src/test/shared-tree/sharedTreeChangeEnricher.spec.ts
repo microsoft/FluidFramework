@@ -27,7 +27,6 @@ import {
 	ModularEditBuilder,
 	type TreeChunk,
 	fieldKinds,
-	initializeForest,
 } from "../../feature-libraries/index.js";
 import {
 	type SharedTreeMutableChangeEnricher,
@@ -53,7 +52,9 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../utils.js";
+import { FluidClientVersion } from "../../codec/index.js";
 import { jsonSequenceRootSchema } from "../sequenceRootUtils.js";
+import { initializeForest } from "../feature-libraries/index.js";
 
 const content: JsonCompatible = { x: 42 };
 
@@ -92,7 +93,7 @@ export function setupEnricher() {
 		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 		testRevisionTagCodec,
 		testIdCompressor,
-		{ jsonValidator: typeboxValidator },
+		{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
 	);
 	const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 	const forest = buildTestForest({ additionalAsserts: true, schema });

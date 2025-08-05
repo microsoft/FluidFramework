@@ -6,11 +6,11 @@
 import fs from "fs";
 
 import { Uint8ArrayToString } from "@fluidframework/common-utils";
-import { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
+import type { IBlob, ICreateBlobParams, ICreateBlobResponse } from "@fluidframework/gitresources";
 // eslint-disable-next-line import/no-deprecated
 import { Router } from "express";
 import * as git from "isomorphic-git";
-import nconf from "nconf";
+import type nconf from "nconf";
 
 import * as utils from "../utils";
 

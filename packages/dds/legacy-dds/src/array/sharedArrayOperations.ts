@@ -4,7 +4,8 @@
  */
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export const OperationType = {
 	insertEntry: 0,
@@ -15,12 +16,14 @@ export const OperationType = {
 } as const;
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export type OperationType = (typeof OperationType)[keyof typeof OperationType];
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IInsertOperation<T = unknown> {
 	type: typeof OperationType.insertEntry;
@@ -30,7 +33,8 @@ export interface IInsertOperation<T = unknown> {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IDeleteOperation {
 	type: typeof OperationType.deleteEntry;
@@ -38,7 +42,8 @@ export interface IDeleteOperation {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IMoveOperation {
 	type: typeof OperationType.moveEntry;
@@ -48,7 +53,8 @@ export interface IMoveOperation {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IToggleOperation {
 	type: typeof OperationType.toggle;
@@ -57,7 +63,8 @@ export interface IToggleOperation {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export interface IToggleMoveOperation {
 	type: typeof OperationType.toggleMove;
@@ -66,12 +73,14 @@ export interface IToggleMoveOperation {
 }
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export type ISharedArrayRevertibleOperation = IToggleOperation | IToggleMoveOperation;
 
 /**
- * @internal
+ * @legacy
+ * @alpha
  */
 export type ISharedArrayOperation<T = unknown> =
 	| IInsertOperation<T>

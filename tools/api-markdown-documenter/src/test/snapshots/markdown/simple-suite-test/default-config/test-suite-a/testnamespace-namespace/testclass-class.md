@@ -1,6 +1,6 @@
 # TestClass
 
-[Packages](/) &gt; [test-suite-a](/test-suite-a/) &gt; [TestNamespace](/test-suite-a/testnamespace-namespace/) &gt; [TestClass](/test-suite-a/testnamespace-namespace/testclass-class)
+[Packages](/) > [test-suite-a](/test-suite-a/) > [TestNamespace](/test-suite-a/testnamespace-namespace/) > [TestClass](/test-suite-a/testnamespace-namespace/testclass-class)
 
 Test class
 
@@ -13,20 +13,20 @@ class TestClass
 ## Constructors
 
 | Constructor | Description |
-| --- | --- |
+| - | - |
 | [(constructor)(testClassProperty)](/test-suite-a/testnamespace-namespace/testclass-class#_constructor_-constructor) | Test class constructor |
 
 ## Properties
 
 | Property | Modifiers | Type | Description |
-| --- | --- | --- | --- |
+| - | - | - | - |
 | [testClassProperty](/test-suite-a/testnamespace-namespace/testclass-class#testclassproperty-property) | `readonly` | string | Test interface property |
 
 ## Methods
 
 | Method | Return Type | Description |
-| --- | --- | --- |
-| [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class#testclassmethod-method) | Promise&lt;string&gt; | Test class method |
+| - | - | - |
+| [testClassMethod(testParameter)](/test-suite-a/testnamespace-namespace/testclass-class#testclassmethod-method) | Promise\<string> | Test class method |
 
 ## Constructor Details
 
@@ -43,7 +43,7 @@ constructor(testClassProperty: string);
 #### Parameters {#\_constructor\_-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testClassProperty | string | See [testClassProperty](/test-suite-a/testclass-class#testclassproperty-property) |
 
 ## Property Details
@@ -58,7 +58,7 @@ Test interface property
 readonly testClassProperty: string;
 ```
 
-**Type:** string
+**Type**: string
 
 ## Method Details
 
@@ -75,14 +75,14 @@ testClassMethod(testParameter: string): Promise<string>;
 #### Parameters {#testclassmethod-parameters}
 
 | Parameter | Type | Description |
-| --- | --- | --- |
+| - | - | - |
 | testParameter | string | A string |
 
 #### Returns {#testclassmethod-returns}
 
 A Promise
 
-**Return type:** Promise&lt;string&gt;
+**Return type**: Promise\<string>
 
 #### Throws {#testclassmethod-throws}
 

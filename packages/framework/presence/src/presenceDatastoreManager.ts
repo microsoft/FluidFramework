@@ -10,11 +10,17 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 
 import type { ClientConnectionId } from "./baseTypes.js";
 import type { BroadcastControlSettings } from "./broadcastControls.js";
-import type { IEphemeralRuntime, PostUpdateAction } from "./internalTypes.js";
+import type { InternalTypes } from "./exposedInternalTypes.js";
+import type {
+	IEphemeralRuntime,
+	PostUpdateAction,
+	ValidatableOptionalState,
+	ValidatableValueDirectory,
+	ValidatableValueStructure,
+} from "./internalTypes.js";
 import { objectEntries } from "./internalUtils.js";
 import type {
 	AttendeeId,
-	Attendee,
 	PresenceWithNotifications as Presence,
 	PresenceEvents,
 } from "./presence.js";
@@ -30,14 +36,20 @@ import {
 	mergeValueDirectory,
 } from "./presenceStates.js";
 import type {
+	DatastoreMessageContent,
 	GeneralDatastoreMessageContent,
 	InboundClientJoinMessage,
 	InboundDatastoreUpdateMessage,
+	InternalWorkspaceAddress,
 	OutboundDatastoreUpdateMessage,
 	SignalMessages,
 	SystemDatastore,
 } from "./protocol.js";
-import { datastoreUpdateMessageType, joinMessageType } from "./protocol.js";
+import {
+	acknowledgementMessageType,
+	datastoreUpdateMessageType,
+	joinMessageType,
+} from "./protocol.js";
 import type { SystemWorkspaceDatastore } from "./systemWorkspace.js";
 import { TimerManager } from "./timerManager.js";
 import type {
@@ -54,18 +66,24 @@ interface AnyWorkspaceEntry<TSchema extends StatesWorkspaceSchema> {
 	internal: PresenceStatesInternal;
 }
 
+/**
+ * Datastore structure used for broadcasting to other clients.
+ * Validation metadata is stripped before transmission.
+ */
 type PresenceDatastore = SystemDatastore & {
-	[WorkspaceAddress: string]: ValueElementMap<StatesWorkspaceSchema>;
+	[WorkspaceAddress: InternalWorkspaceAddress]: ValueElementMap<StatesWorkspaceSchema>;
 };
-
-type InternalWorkspaceAddress = `${"s" | "n"}:${WorkspaceAddress}`;
 
 const internalWorkspaceTypes: Readonly<Record<string, "States" | "Notifications">> = {
 	s: "States",
 	n: "Notifications",
 } as const;
 
-const knownMessageTypes = new Set([joinMessageType, datastoreUpdateMessageType]);
+const knownMessageTypes = new Set([
+	joinMessageType,
+	datastoreUpdateMessageType,
+	acknowledgementMessageType,
+]);
 function isPresenceMessage(
 	message: InboundExtensionMessage<SignalMessages>,
 ): message is InboundDatastoreUpdateMessage | InboundClientJoinMessage {
@@ -73,7 +91,20 @@ function isPresenceMessage(
 }
 
 /**
- * @internal
+ * Type guard to check if a value hierarchy object is a directory (has "items"
+ * property).
+ *
+ * @param obj - The object to check
+ * @returns True if the object is a {@link ValidatableValueDirectory}
+ */
+export function isValueDirectory<T>(
+	obj: ValidatableValueDirectory<T> | ValidatableOptionalState<T>,
+): obj is ValidatableValueDirectory<T> {
+	return "items" in obj;
+}
+
+/**
+ * High-level contract for manager of singleton Presence datastore
  */
 export interface PresenceDatastoreManager {
 	joinSession(clientId: ClientConnectionId): void;
@@ -102,7 +133,7 @@ function mergeGeneralDatastoreMessageContent(
 
 	// Merge the current data with the existing data, if any exists.
 	// Iterate over the current message data; individual items are workspaces.
-	for (const [workspaceName, workspaceData] of Object.entries(newData)) {
+	for (const [workspaceName, workspaceData] of objectEntries(newData)) {
 		// Initialize the merged data as the queued datastore entry for the workspace.
 		// Since the key might not exist, create an empty object in that case. It will
 		// be set explicitly after the loop.
@@ -138,11 +169,11 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 	private refreshBroadcastRequested = false;
 	private readonly timer = new TimerManager();
 	private readonly workspaces = new Map<string, AnyWorkspaceEntry<StatesWorkspaceSchema>>();
+	private readonly targetedSignalSupport: boolean;
 
 	public constructor(
 		private readonly attendeeId: AttendeeId,
 		private readonly runtime: IEphemeralRuntime,
-		private readonly lookupClient: (clientId: AttendeeId) => Attendee,
 		private readonly logger: ITelemetryLoggerExt | undefined,
 		private readonly events: IEmitter<PresenceEvents>,
 		private readonly presence: Presence,
@@ -152,6 +183,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 		this.datastore = { "system:presence": systemWorkspaceDatastore } as PresenceDatastore;
 		this.workspaces.set("system:presence", systemWorkspace);
+		this.targetedSignalSupport = this.runtime.supportedFeatures.has("submit_signals_v2");
 	}
 
 	public joinSession(clientId: ClientConnectionId): void {
@@ -169,7 +201,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			content: {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 				updateProviders,
 			},
 		});
@@ -196,7 +228,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			options: RuntimeLocalUpdateOptions,
 		): void => {
 			// Check for connectivity before sending updates.
-			if (!this.runtime.isConnected()) {
+			if (this.runtime.getJoinedStatus() === "disconnected") {
 				return;
 			}
 
@@ -217,7 +249,6 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			{
 				presence: this.presence,
 				attendeeId: this.attendeeId,
-				lookupClient: this.lookupClient,
 				localUpdate,
 			},
 			workspaceDatastore,
@@ -288,7 +319,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		}
 
 		// Check for connectivity before sending updates.
-		if (!this.runtime.isConnected()) {
+		if (this.runtime.getJoinedStatus() === "disconnected") {
 			// Clear the queued data since we're disconnected. We don't want messages
 			// to queue infinitely while disconnected.
 			this.queuedData = undefined;
@@ -323,6 +354,76 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		this.runtime.submitSignal({ type: datastoreUpdateMessageType, content: newMessage });
 	}
 
+	/**
+	 * Recursively strips validation metadata (validatedValue) from datastore before broadcasting.
+	 * This ensures that validation metadata doesn't leak into signals sent to other clients.
+	 */
+	private stripValidationMetadata(datastore: PresenceDatastore): DatastoreMessageContent {
+		const messageContent: DatastoreMessageContent = {
+			["system:presence"]: datastore["system:presence"],
+		};
+
+		for (const [workspaceAddress, workspace] of objectEntries(datastore)) {
+			// System workspace has no validation metadata and is already
+			// set in messageContent; so, it can be skipped.
+			if (workspaceAddress === "system:presence") continue;
+
+			const workspaceData: GeneralDatastoreMessageContent[typeof workspaceAddress] = {};
+
+			for (const [stateName, clientRecord] of objectEntries(workspace)) {
+				const cleanClientRecord: GeneralDatastoreMessageContent[typeof workspaceAddress][typeof stateName] =
+					{};
+
+				for (const [attendeeId, valueData] of objectEntries(clientRecord)) {
+					cleanClientRecord[attendeeId] = this.stripValidationFromValueData(valueData);
+				}
+
+				workspaceData[stateName] = cleanClientRecord;
+			}
+
+			messageContent[workspaceAddress] = workspaceData;
+		}
+
+		return messageContent;
+	}
+
+	/**
+	 * Strips validation metadata from individual value data entries.
+	 */
+	private stripValidationFromValueData<
+		T extends
+			| InternalTypes.ValueDirectory<unknown>
+			| InternalTypes.ValueRequiredState<unknown>
+			| InternalTypes.ValueOptionalState<unknown>,
+	>(valueDataIn: ValidatableValueStructure<T>): T {
+		// Clone the input object since we may mutate it
+		const valueData = { ...valueDataIn };
+
+		// Handle directory structures (with "items" property)
+		if (isValueDirectory(valueData)) {
+			for (const [key, item] of Object.entries(valueData.items)) {
+				valueData.items[key] = this.stripValidationFromValueData(item);
+			}
+
+			// This `satisfies` test is rather weak while ValidatableValueDirectory
+			// only has optional properties over InternalTypes.ValueDirectory and
+			// thus readily does satisfy. If `validatedValue?: never` is uncommented
+			// in Value*State then this will fail.
+			valueData satisfies InternalTypes.ValueDirectory<unknown>;
+			return valueData as T;
+		}
+
+		delete valueData.validatedValue;
+		// This `satisfies` test is rather weak while Validatable*State
+		// only has optional properties over InternalTypes.Value*State and
+		// thus readily does satisfy. If `validatedValue?: never` is uncommented
+		// in Value*State then this will fail.
+		valueData satisfies
+			| InternalTypes.ValueRequiredState<unknown>
+			| InternalTypes.ValueOptionalState<unknown>;
+		return valueData as T;
+	}
+
 	private broadcastAllKnownState(): void {
 		this.runtime.submitSignal({
 			type: datastoreUpdateMessageType,
@@ -330,7 +431,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 				sendTimestamp: Date.now(),
 				avgLatency: this.averageLatency,
 				isComplete: true,
-				data: this.datastore,
+				data: this.stripValidationMetadata(this.datastore),
 			},
 		});
 		this.refreshBroadcastRequested = false;
@@ -347,6 +448,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			assert(optional, "Unrecognized message type in critical message");
 			return;
 		}
+
 		if (local) {
 			const deliveryDelta = received - message.content.sendTimestamp;
 			// Limit returnedMessages count to 256 such that newest message
@@ -368,7 +470,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			// It is possible for some signals to come in while client is not connected due
 			// to how work is scheduled. If we are not connected, we can't respond to the
 			// join request. We will make our own Join request once we are connected.
-			if (this.runtime.isConnected()) {
+			if (this.runtime.getJoinedStatus() !== "disconnected") {
 				this.prepareJoinResponse(message.content.updateProviders, message.clientId);
 			}
 			// It is okay to continue processing the contained updates even if we are not
@@ -377,10 +479,22 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			if (message.content.isComplete) {
 				this.refreshBroadcastRequested = false;
 			}
+			// If the message requests an acknowledgement, we will send a targeted acknowledgement message back to just the requestor.
+			if (message.content.acknowledgementId !== undefined) {
+				assert(
+					this.targetedSignalSupport,
+					"Acknowledgment message was requested while targeted signal capability is not supported",
+				);
+				this.runtime.submitSignal({
+					type: acknowledgementMessageType,
+					content: { id: message.content.acknowledgementId },
+					targetClientId: message.clientId,
+				});
+			}
 		}
 
 		// Handle activation of unregistered workspaces before processing updates.
-		for (const [workspaceAddress] of Object.entries(message.content.data)) {
+		for (const [workspaceAddress] of objectEntries(message.content.data)) {
 			// The first part of OR condition checks if workspace is already registered.
 			// The second part checks if the workspace has already been seen before.
 			// In either case we can skip emitting 'workspaceActivated' event.
@@ -409,7 +523,7 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 		// While the system workspace is processed here too, it is declared as
 		// conforming to the general schema. So drop its override.
 		const data = message.content.data as Omit<typeof message.content.data, "system:presence">;
-		for (const [workspaceAddress, remoteDatastore] of Object.entries(data)) {
+		for (const [workspaceAddress, remoteDatastore] of objectEntries(data)) {
 			// Direct to the appropriate Presence Workspace, if present.
 			const workspace = this.workspaces.get(workspaceAddress);
 			if (workspace) {
@@ -498,7 +612,10 @@ export class PresenceDatastoreManagerImpl implements PresenceDatastoreManager {
 			setTimeout(() => {
 				// Make sure a broadcast is still needed and we are currently connected.
 				// If not connected, nothing we can do.
-				if (this.refreshBroadcastRequested && this.runtime.isConnected()) {
+				if (
+					this.refreshBroadcastRequested &&
+					this.runtime.getJoinedStatus() !== "disconnected"
+				) {
 					this.broadcastAllKnownState();
 					this.logger?.sendTelemetryEvent({
 						eventName: "JoinResponse",

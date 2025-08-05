@@ -19,7 +19,7 @@ import {
 	defaultSchemaPolicy,
 	mapTreeFromCursor,
 } from "../feature-libraries/index.js";
-import type { SchemaCompatibilityTester } from "../simple-tree/index.js";
+import { toStoredSchema, type SchemaCompatibilityTester } from "../simple-tree/index.js";
 import { isReadonlyArray } from "../util/index.js";
 
 import type { ITreeCheckout } from "./treeCheckout.js";
@@ -68,18 +68,14 @@ export function initializeContent(
 			rootFieldSchema: {
 				kind: FieldKinds.optional.identifier,
 				types: rootSchema.types,
+				persistedMetadata: rootSchema.persistedMetadata,
 			},
 		};
 	}
 
-	// TODO: fix issues with schema comparison and enable this.
-	// assert(
-	// 	allowsRepoSuperset(defaultSchemaPolicy, tree.storedSchema, incrementalSchemaUpdate),
-	// 	"Incremental Schema update should support the existing empty tree",
-	// );
 	assert(
 		allowsRepoSuperset(defaultSchemaPolicy, newSchema, incrementalSchemaUpdate),
-		0x5c9 /* Incremental Schema during update should be a allow a superset of the final schema */,
+		0x5c9 /* Incremental Schema during update should allow a superset of the final schema */,
 	);
 	// Update to intermediate schema
 	schemaRepository.updateSchema(incrementalSchemaUpdate);
@@ -88,7 +84,8 @@ export function initializeContent(
 
 	// If intermediate schema is not final desired schema, update to the final schema:
 	if (incrementalSchemaUpdate !== newSchema) {
-		schemaRepository.updateSchema(newSchema);
+		// This makes the root more strict, so set allowNonSupersetSchema to true.
+		schemaRepository.updateSchema(newSchema, true);
 	}
 }
 
@@ -222,7 +219,7 @@ export function ensureSchema(
 			return false;
 		}
 		case UpdateType.SchemaCompatible: {
-			checkout.updateSchema(viewSchema.viewSchemaAsStored);
+			checkout.updateSchema(toStoredSchema(viewSchema.viewSchema.root));
 			return true;
 		}
 		default: {

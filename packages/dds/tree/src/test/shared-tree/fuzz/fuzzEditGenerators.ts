@@ -777,6 +777,7 @@ export interface FieldPathWithCount {
 
 function upPathFromNode(node: TreeNode): UpPath {
 	const flexNode = getOrCreateInnerNode(node);
+	assert(flexNode.isHydrated());
 	const anchorNode = flexNode.anchorNode;
 	return anchorNode;
 }

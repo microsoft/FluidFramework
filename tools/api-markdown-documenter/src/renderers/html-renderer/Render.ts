@@ -7,7 +7,7 @@ import type { Root as HastRoot, Nodes as HastTree } from "hast";
 import { format } from "hast-util-format";
 import { toHtml as toHtmlString } from "hast-util-to-html";
 
-import type { DocumentNode } from "../../documentation-domain/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
 import {
 	documentToHtml,
 	type TransformationConfiguration,
@@ -38,7 +38,7 @@ export interface RenderDocumentConfiguration
 		RenderHtmlConfiguration {}
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
+ * Renders a {@link ApiDocument} as HTML, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
  * @param config - HTML transformation configuration.
@@ -46,7 +46,7 @@ export interface RenderDocumentConfiguration
  * @public
  */
 export function renderDocument(
-	document: DocumentNode,
+	document: ApiDocument,
 	config: RenderDocumentConfiguration,
 ): string {
 	const htmlTree = documentToHtml(document, config);
@@ -54,7 +54,7 @@ export function renderDocument(
 }
 
 /**
- * Renders a {@link DocumentNode} as HTML, and returns the resulting file contents as a string.
+ * Renders a {@link ApiDocument} as HTML, and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
  * @param config - HTML transformation configuration.
@@ -69,5 +69,11 @@ export function renderHtml(html: HastTree, config: RenderHtmlConfiguration): str
 		// TODO: file an issue.
 		format(html as HastRoot);
 	}
-	return toHtmlString(html);
+	return toHtmlString(html, {
+		// Needed as a temporary workaround for lack of support for `hast` trees directly in `mdast`.
+		// Only raw HTML strings are supported by default in `mdast`.
+		// In a future PR, we will introduce an extension that allows `hast` trees to be used directly instead of this.
+		// All HTML content is generated directly by this library. No user HTML content is passed through, so this is safe, just not a best practice.
+		allowDangerousHtml: true,
+	});
 }

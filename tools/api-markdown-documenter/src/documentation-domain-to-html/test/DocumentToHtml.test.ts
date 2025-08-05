@@ -3,47 +3,67 @@
  * Licensed under the MIT License.
  */
 
+import type { ApiItem } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 import { h } from "hastscript";
 
-import {
-	DocumentNode,
-	HeadingNode,
-	ParagraphNode,
-	PlainTextNode,
-	SectionNode,
-	SpanNode,
-} from "../../documentation-domain/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
+import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 import { documentToHtml } from "../ToHtml.js";
 
 describe("documentToHtml tests", () => {
 	it("Renders a simple document", () => {
-		const document = new DocumentNode({
-			children: [
+		const document: ApiDocument = {
+			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
+			contents: [
 				new SectionNode(
 					[
-						new ParagraphNode([
-							new PlainTextNode("This is a sample document. "),
-							new PlainTextNode("It has very basic content.\t"),
-						]),
+						{
+							type: "paragraph",
+							children: [
+								{
+									type: "text",
+									value: "This is a sample document. ",
+								},
+								{
+									type: "text",
+									value: "It has very basic content.\t",
+								},
+							],
+						},
 						new SectionNode(
 							[
-								new ParagraphNode([
-									new PlainTextNode("This is test inside of a paragraph. "),
-									new PlainTextNode("It is also inside of a hierarchical section node. "),
-									SpanNode.createFromPlainText("That's real neat-o.", {
-										italic: true,
-									}),
-								]),
+								{
+									type: "paragraph",
+									children: [
+										{
+											type: "text",
+											value: "This is test inside of a paragraph. ",
+										},
+										{
+											type: "text",
+											value: "It is also inside of a hierarchical section node. ",
+										},
+										{
+											type: "emphasis",
+											children: [
+												{
+													type: "text",
+													value: "That's real neat-o.",
+												},
+											],
+										},
+									],
+								},
 							],
-							HeadingNode.createFromPlainText("Section Heading"),
+							new HeadingNode("Section Heading"),
 						),
 					],
-					HeadingNode.createFromPlainText("Sample Document"),
+					new HeadingNode("Sample Document"),
 				),
 			],
 			documentPath: "./test",
-		});
+		};
 
 		const result = documentToHtml(document, {});
 
@@ -63,7 +83,7 @@ describe("documentToHtml tests", () => {
 							h("p", [
 								"This is test inside of a paragraph. ",
 								"It is also inside of a hierarchical section node. ",
-								h("span", [h("i", "That's real neat-o.")]),
+								h("em", "That's real neat-o."),
 							]),
 						]),
 					]),

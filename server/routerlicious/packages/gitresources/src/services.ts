@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IBlob, ITree } from "./resources";
+import type { IBlob, ITree } from "./resources";
 
 /**
  * Document header returned from the server

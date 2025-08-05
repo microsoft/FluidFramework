@@ -5,20 +5,20 @@
 
 import {
 	ContainerMessageType,
-	IChunkedOp,
+	type IChunkedOp,
 	unpackRuntimeMessage,
 } from "@fluidframework/container-runtime/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { DataStoreMessageType } from "@fluidframework/datastore/internal";
 import {
-	ISummaryAck,
-	ISummaryNack,
-	ISummaryProposal,
+	type ISummaryAck,
+	type ISummaryNack,
+	type ISummaryProposal,
 	MessageType,
 	TreeEntry,
-	ISequencedDocumentMessage,
+	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type { IAttachMessage, IEnvelope } from "@fluidframework/runtime-definitions/internal";
 
 const noClientName = "No Client";
 const objectTypePrefix = "https://graph.microsoft.com/types/";

@@ -18,7 +18,6 @@ import type {
 	TreeView,
 	ImplicitFieldSchema,
 	InsertableTreeFieldFromImplicitField,
-	ITree,
 } from "@fluidframework/tree";
 import { configuredSharedTree, typeboxValidator } from "@fluidframework/tree/internal";
 import * as React from "react";
@@ -55,9 +54,7 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(
 export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 	treeConfiguration: TreeViewConfiguration<TSchema>,
 	createInitialTree: () => InsertableTreeFieldFromImplicitField<TSchema>,
-): SharedObjectKind<
-	IReactTreeDataObject<TSchema> & IFluidLoadable & TreeDataObject<TreeView<TSchema>>
-> & {
+): SharedObjectKind<IReactTreeDataObject<TSchema> & IFluidLoadable & TreeDataObject> & {
 	readonly factory: IFluidDataStoreFactory;
 } {
 	class SchemaAwareTreeDataObject extends ReactTreeDataObject<TSchema> {
@@ -70,9 +67,42 @@ export function treeDataObjectInternal<TSchema extends ImplicitFieldSchema>(
 			{},
 		);
 
-		// Populate tree with initial data on document create
+		#treeView: TreeView<TSchema> | undefined;
+
+		/**
+		 * The schema-aware view of the tree.
+		 */
+		public get treeView(): TreeView<TSchema> {
+			if (this.#treeView === undefined) {
+				throw new Error("treeView has not been initialized.");
+			}
+			return this.#treeView;
+		}
+
+		/**
+		 * Converts the underlying ITree into a typed TreeView using the provided schema configuration.
+		 *
+		 * @param tree - The ITree instance to view.
+		 * @returns A typed TreeView using the TodoList schema.
+		 */
+		private initializeView(): void {
+			this.#treeView = this.tree.viewWith(this.config);
+		}
+
 		protected override async initializingFirstTime(): Promise<void> {
+			this.initializeView();
+			if (!this.treeView.compatibility.canInitialize) {
+				throw new Error("Incompatible schema");
+			}
+
 			this.treeView.initialize(createInitialTree());
+		}
+
+		protected override async initializingFromExisting(): Promise<void> {
+			this.initializeView();
+			if (!this.treeView.compatibility.canView) {
+				throw new Error("Incompatible schema");
+			}
 		}
 	}
 	return createDataObjectKind(SchemaAwareTreeDataObject);
@@ -141,13 +171,21 @@ export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
 export abstract class ReactTreeDataObject<
 		TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
 	>
-	extends TreeDataObject<TreeView<TSchema>>
+	extends TreeDataObject
 	implements IReactTreeDataObject<TSchema>
 {
 	public abstract readonly config: TreeViewConfiguration<TSchema>;
 
-	public override generateView(tree: ITree): TreeView<TSchema> {
-		return tree.viewWith(this.config);
+	#treeView: TreeView<TSchema> | undefined;
+
+	/**
+	 * The schema-aware view of the tree.
+	 */
+	public get treeView(): TreeView<TSchema> {
+		if (this.#treeView === undefined) {
+			throw new Error("treeView has not been initialized.");
+		}
+		return this.#treeView;
 	}
 
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type

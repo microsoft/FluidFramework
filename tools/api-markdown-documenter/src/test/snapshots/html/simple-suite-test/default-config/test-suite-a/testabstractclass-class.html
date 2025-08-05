@@ -13,7 +13,9 @@
         <p>A test abstract class.</p>
       </section>
       <section>
-        <h2 id="testabstractclass-signature">Signature</h2><code>export declare abstract class TestAbstractClass</code>
+        <h2 id="testabstractclass-signature">Signature</h2>
+        <pre><code class="language-typescript">export declare abstract class TestAbstractClass
+</code></pre>
       </section>
       <section>
         <h2>Constructors</h2>
@@ -27,7 +29,7 @@
           <tbody>
             <tr>
               <td><a href="/test-suite-a/testabstractclass-class#_constructor_-constructor">(constructor)(privateProperty, protectedProperty)</a></td>
-              <td>This is a <span><i>{@customTag constructor}</i></span>.</td>
+              <td>This is a <em>{@customTag constructor}</em>.</td>
             </tr>
           </tbody>
         </table>
@@ -47,13 +49,13 @@
             <tr>
               <td><a href="/test-suite-a/testabstractclass-class#abstractpropertygetter-property">abstractPropertyGetter</a></td>
               <td><code>readonly</code></td>
-              <td><span><a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></span></td>
-              <td>A test abstract getter property.</td>
+              <td><a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></td>
+              <td><p>A test abstract getter property.</p><p>@escapedTag</p></td>
             </tr>
             <tr>
               <td><a href="/test-suite-a/testabstractclass-class#protectedproperty-property">protectedProperty</a></td>
               <td><code>readonly</code></td>
-              <td><span><a href="/test-suite-a/testenum-enum">TestEnum</a></span></td>
+              <td><a href="/test-suite-a/testenum-enum">TestEnum</a></td>
               <td>A test protected property.</td>
             </tr>
           </tbody>
@@ -74,19 +76,19 @@
             <tr>
               <td><a href="/test-suite-a/testabstractclass-class#publicabstractmethod-method">publicAbstractMethod()</a></td>
               <td></td>
-              <td><span>void</span></td>
+              <td>void</td>
               <td>A test public abstract method.</td>
             </tr>
             <tr>
               <td><a href="/test-suite-a/testabstractclass-class#sealedmethod-method">sealedMethod()</a></td>
               <td><code>sealed</code></td>
-              <td><span>string</span></td>
+              <td>string</td>
               <td>A test <code>@sealed</code> method.</td>
             </tr>
             <tr>
               <td><a href="/test-suite-a/testabstractclass-class#virtualmethod-method">virtualMethod()</a></td>
               <td><code>virtual</code></td>
-              <td><span>number</span></td>
+              <td>number</td>
               <td>A test <code>@virtual</code> method.</td>
             </tr>
           </tbody>
@@ -97,10 +99,12 @@
         <section>
           <h3 id="_constructor_-constructor">(constructor)</h3>
           <section>
-            <p>This is a <span><i>{@customTag constructor}</i></span>.</p>
+            <p>This is a <em>{@customTag constructor}</em>.</p>
           </section>
           <section>
-            <h4 id="_constructor_-signature">Signature</h4><code>protected constructor(privateProperty: number, protectedProperty: TestEnum);</code>
+            <h4 id="_constructor_-signature">Signature</h4>
+            <pre><code class="language-typescript">protected constructor(privateProperty: number, protectedProperty: TestEnum);
+</code></pre>
           </section>
           <section>
             <h4 id="_constructor_-parameters">Parameters</h4>
@@ -115,12 +119,12 @@
               <tbody>
                 <tr>
                   <td>privateProperty</td>
-                  <td><span>number</span></td>
+                  <td>number</td>
                   <td></td>
                 </tr>
                 <tr>
                   <td>protectedProperty</td>
-                  <td><span><a href="/test-suite-a/testenum-enum">TestEnum</a></span></td>
+                  <td><a href="/test-suite-a/testenum-enum">TestEnum</a></td>
                   <td></td>
                 </tr>
               </tbody>
@@ -134,10 +138,13 @@
           <h3 id="abstractpropertygetter-property">abstractPropertyGetter</h3>
           <section>
             <p>A test abstract getter property.</p>
+            <p>@escapedTag</p>
           </section>
           <section>
-            <h4 id="abstractpropertygetter-signature">Signature</h4><code>abstract get abstractPropertyGetter(): TestMappedType;</code>
-            <p><span><span><b>Type: </b></span><span><a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></span></span></p>
+            <h4 id="abstractpropertygetter-signature">Signature</h4>
+            <pre><code class="language-typescript">abstract get abstractPropertyGetter(): TestMappedType;
+</code></pre>
+            <p><strong>Type</strong>: <a href="/test-suite-a/testmappedtype-typealias">TestMappedType</a></p>
           </section>
         </section>
         <section>
@@ -146,8 +153,10 @@
             <p>A test protected property.</p>
           </section>
           <section>
-            <h4 id="protectedproperty-signature">Signature</h4><code>protected readonly protectedProperty: TestEnum;</code>
-            <p><span><span><b>Type: </b></span><span><a href="/test-suite-a/testenum-enum">TestEnum</a></span></span></p>
+            <h4 id="protectedproperty-signature">Signature</h4>
+            <pre><code class="language-typescript">protected readonly protectedProperty: TestEnum;
+</code></pre>
+            <p><strong>Type</strong>: <a href="/test-suite-a/testenum-enum">TestEnum</a></p>
           </section>
         </section>
       </section>
@@ -159,7 +168,9 @@
             <p>A test public abstract method.</p>
           </section>
           <section>
-            <h4 id="publicabstractmethod-signature">Signature</h4><code>abstract publicAbstractMethod(): void;</code>
+            <h4 id="publicabstractmethod-signature">Signature</h4>
+            <pre><code class="language-typescript">abstract publicAbstractMethod(): void;
+</code></pre>
           </section>
         </section>
         <section>
@@ -168,12 +179,15 @@
             <p>A test <code>@sealed</code> method.</p>
           </section>
           <section>
-            <h4 id="sealedmethod-signature">Signature</h4><code>/** @sealed */<br>protected sealedMethod(): string;</code>
+            <h4 id="sealedmethod-signature">Signature</h4>
+            <pre><code class="language-typescript">/** @sealed */
+protected sealedMethod(): string;
+</code></pre>
           </section>
           <section>
             <h4 id="sealedmethod-returns">Returns</h4>
             <p>A string!</p>
-            <p><span><b>Return type: </b></span><span>string</span></p>
+            <p><strong>Return type</strong>: string</p>
           </section>
         </section>
         <section>
@@ -182,12 +196,15 @@
             <p>A test <code>@virtual</code> method.</p>
           </section>
           <section>
-            <h4 id="virtualmethod-signature">Signature</h4><code>/** @virtual */<br>protected virtualMethod(): number;</code>
+            <h4 id="virtualmethod-signature">Signature</h4>
+            <pre><code class="language-typescript">/** @virtual */
+protected virtualMethod(): number;
+</code></pre>
           </section>
           <section>
             <h4 id="virtualmethod-returns">Returns</h4>
             <p>A number!</p>
-            <p><span><b>Return type: </b></span><span>number</span></p>
+            <p><strong>Return type</strong>: number</p>
           </section>
         </section>
       </section>

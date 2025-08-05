@@ -4,14 +4,16 @@
  */
 
 //@ts-check
-/** @typedef {import("@fluid-tools/api-markdown-documenter").DocumentationNode} DocumentationNode */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").BlockContent} BlockContent */
+/** @typedef {import("@fluid-tools/api-markdown-documenter").ToMarkdownContext} ToMarkdownContext */
+/** @typedef {import("mdast").BlockContent} MdastBlockContent */
+/** @typedef {import("mdast").PhrasingContent} MdastPhrasingContent */
+/** @typedef {"note" | "tip" | "info" | "warning" | "danger"} AdmonitionKind */
 
-import { DocumentationParentNodeBase } from "@fluid-tools/api-markdown-documenter";
-
-/**
- * The {@link @fluid-tools/api-markdown-documenter#DocumentationNode."type"} of {@link AdmonitionNode}.
- */
-export const admonitionNodeType = "Admonition";
+import {
+	blockContentToMarkdown,
+	DocumentationParentNodeBase,
+} from "@fluid-tools/api-markdown-documenter";
 
 /**
  * A block of content representing a notice that should be highlighted for the user.
@@ -47,16 +49,58 @@ export const admonitionNodeType = "Admonition";
  */
 export class AdmonitionNode extends DocumentationParentNodeBase {
 	/**
-	 * @param {DocumentationNode[]} children - Child node content.
-	 * @param {string} admonitionKind - The kind of admonition. See {@link https://docusaurus.io/docs/markdown-features/admonitions}.
+	 * @param {BlockContent[]} children - Child node content.
+	 * @param {AdmonitionKind} admonitionKind - The kind of admonition. See {@link https://docusaurus.io/docs/markdown-features/admonitions}.
 	 * @param {string | undefined} title - (Optional) Title text for the admonition.
 	 */
 	constructor(children, admonitionKind, title) {
 		super(children);
 
-		this.type = admonitionNodeType;
+		this.type = "admonition";
 
 		this.admonitionKind = admonitionKind;
 		this.title = title;
+	}
+
+	/**
+	 * Generates Markdown representing a Docusaurus Admonition.
+	 *
+	 * @param {ToMarkdownContext} context - The transformation context.
+	 *
+	 * @returns {MdastBlockContent[]} The Markdown AST representing the admonition.
+	 */
+	toMarkdown(context) {
+		/**
+		 * @type {MdastBlockContent[]}
+		 */
+		const transformedChildren = [];
+		for (const child of this.children) {
+			// @ts-ignore -- Limitation of using types in JavaScript: we can't explicitly mark `AdmonitionNode` as only containing phrasing content.
+			transformedChildren.push(...blockContentToMarkdown(child, context));
+		}
+
+		// If the admonition has a title, prepend it to the list of children with the `directiveLabel` property set.
+		if (this.title !== undefined) {
+			transformedChildren.unshift({
+				type: "paragraph",
+				data: {
+					directiveLabel: true,
+				},
+				children: [
+					{
+						type: "text",
+						value: this.title,
+					},
+				],
+			});
+		}
+
+		return [
+			{
+				type: "containerDirective",
+				name: this.admonitionKind,
+				children: transformedChildren,
+			},
+		];
 	}
 }

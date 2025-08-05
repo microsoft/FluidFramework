@@ -1,5 +1,48 @@
 # @fluidframework/driver-definitions
 
+## 2.52.0
+
+Dependency updates only.
+
+## 2.51.0
+
+Dependency updates only.
+
+## 2.50.0
+
+Dependency updates only.
+
+## 2.43.0
+
+### Minor Changes
+
+- The reason parameter on the disconnect event is now optional to allow for clean, non-error disconnections ([#24840](https://github.com/microsoft/FluidFramework/pull/24840)) [82a1c5a1362](https://github.com/microsoft/FluidFramework/commit/82a1c5a1362d3362886bdcc12859ce60a2744bdb)
+
+  To enable better handling of intentional disconnects (for example [`Container.dispose()`](https://fluidframework.com/docs/api/container-loader/container/dispose)), the `reason` parameter of the `disconnect` event on [`IDocumentDeltaConnectionEvents`](https://fluidframework.com/docs/api/driver-definitions/idocumentdeltaconnectionevents) is being deprecated as a required parameter.
+
+  In a future release, the `reason` parameter will become optional.
+
+  **Old signature:**
+
+  ```typescript
+  listener: (reason: IAnyDriverError) => void
+  ```
+
+  **New signature:**
+
+  ```typescript
+  listener: (reason?: IAnyDriverError) => void
+  ```
+
+  Developers with listeners for the `disconnect` event should update their implementations to handle cases where the `reason` parameter is `undefined`.
+  This indicates a clean disconnect, which should not be treated as an error.
+
+  The breaking change is scheduled to be released in version **2.60**.
+
+## 2.42.0
+
+Dependency updates only.
+
 ## 2.41.0
 
 Dependency updates only.

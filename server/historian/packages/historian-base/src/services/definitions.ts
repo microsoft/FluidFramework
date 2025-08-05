@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ITenantConfig, ITenantCustomData } from "@fluidframework/server-services-core";
+import type { ITenantConfig, ITenantCustomData } from "@fluidframework/server-services-core";
 
 /**
  * Interface for a git object cache

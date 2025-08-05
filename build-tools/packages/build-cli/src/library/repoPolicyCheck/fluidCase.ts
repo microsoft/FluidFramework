@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { Handler, readFile, writeFile } from "./common.js";
+import { type Handler, readFile, writeFile } from "./common.js";
 
 export const handler: Handler = {
 	name: "fluid-case",

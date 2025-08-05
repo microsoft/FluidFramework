@@ -3,25 +3,25 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import {
-	FluidObject,
+	type FluidObject,
 	IFluidLoadable,
-	IProvideFluidLoadable,
+	type IProvideFluidLoadable,
 } from "@fluidframework/core-interfaces";
-import {
+import type {
 	IFluidHandleContext,
 	IProvideFluidHandle,
-	type IFluidHandleInternal,
+	IFluidHandleInternal,
 } from "@fluidframework/core-interfaces/internal";
 import { LazyPromise } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 
-import { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
+import type { IFluidDependencySynthesizer } from "../IFluidDependencySynthesizer.js";
 import { DependencyContainer } from "../index.js";
-import {
+import type {
 	AsyncFluidObjectProvider,
 	FluidObjectProvider,
 	FluidObjectSymbolProvider,
@@ -30,7 +30,7 @@ import {
 const mockHandleContext: IFluidHandleContext = {
 	absolutePath: "",
 	isAttached: false,
-	IFluidHandleContext: undefined as any,
+	IFluidHandleContext: undefined as unknown as IFluidHandleContext,
 
 	attachGraph: () => {
 		throw new Error("Method not implemented.");
@@ -41,10 +41,10 @@ const mockHandleContext: IFluidHandleContext = {
 };
 
 class MockLoadable implements IFluidLoadable {
-	public get IFluidLoadable() {
+	public get IFluidLoadable(): IFluidLoadable {
 		return this;
 	}
-	public get handle() {
+	public get handle(): FluidObjectHandle {
 		return new FluidObjectHandle(this, "", mockHandleContext);
 	}
 }
@@ -57,7 +57,7 @@ interface ISomeObject extends IProvideSomeObject {
 	value: number;
 }
 class MockSomeObject implements ISomeObject {
-	public get ISomeObject() {
+	public get ISomeObject(): ISomeObject {
 		return this;
 	}
 	public readonly value = 0;
@@ -91,7 +91,7 @@ describe("someObjectlicious", () => {
 			it(`One Optional Provider registered via factory`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				const mock = new MockLoadable();
-				const factory = () => mock;
+				const factory = (): IFluidLoadable => mock;
 				dc.register(IFluidLoadable, factory);
 
 				const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, undefined);
@@ -103,7 +103,7 @@ describe("someObjectlicious", () => {
 			it(`One Optional Provider registered via Promise factory`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				const mock = new MockLoadable();
-				const factory = async () => mock;
+				const factory = async (): Promise<IFluidLoadable> => mock;
 				dc.register(IFluidLoadable, factory);
 
 				const s = dc.synthesize<IFluidLoadable>({ IFluidLoadable }, undefined);
@@ -162,7 +162,7 @@ describe("someObjectlicious", () => {
 			it(`One Required Provider registered via factory`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				const mock = new MockLoadable();
-				const factory = () => mock;
+				const factory = (): IFluidLoadable => mock;
 				dc.register(IFluidLoadable, factory);
 
 				const s = dc.synthesize<undefined, IProvideFluidLoadable>(undefined, {
@@ -176,7 +176,7 @@ describe("someObjectlicious", () => {
 			it(`One Required Provider registered via Promise factory`, async () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				const mock = new MockLoadable();
-				const factory = async () => mock;
+				const factory = async (): Promise<IFluidLoadable> => mock;
 				dc.register(IFluidLoadable, factory);
 
 				const s = dc.synthesize<undefined, IProvideFluidLoadable>(undefined, {
@@ -452,7 +452,8 @@ describe("someObjectlicious", () => {
 					const loadable = fds.synthesize<undefined, IProvideFluidLoadable>(undefined, {
 						IFluidLoadable,
 					});
-					return toFluidHandleInternal((await loadable.IFluidLoadable).handle);
+					const loadedLoadable = await loadable.IFluidLoadable;
+					return toFluidHandleInternal(loadedLoadable.handle);
 				};
 				parentDc.register("IFluidHandle", loadableToHandle);
 
@@ -478,8 +479,11 @@ describe("someObjectlicious", () => {
 				const dc = new DependencyContainer<FluidObject<IFluidLoadable>>();
 				const loadableMock = new MockLoadable();
 				dc.register(IFluidLoadable, loadableMock);
-				const testGetProvider = (deps: IFluidDependencySynthesizer, scenario: string) => {
-					const old = deps as any as {
+				const testGetProvider = (
+					deps: IFluidDependencySynthesizer,
+					scenario: string,
+				): void => {
+					const old = deps as unknown as {
 						getProvider(
 							key: "IFluidLoadable",
 						): FluidObjectProvider<FluidObject<IFluidLoadable>>;
@@ -513,7 +517,7 @@ class PassThru<TMap> implements IFluidDependencySynthesizer {
 	readonly IFluidDependencySynthesizer = this;
 
 	getProvider<K extends keyof TMap>(key: K): FluidObjectProvider<TMap[K]> | undefined {
-		const maybe = this.parent as any as Partial<this>;
+		const maybe = this.parent as unknown as Partial<this>;
 		if (maybe.getProvider) {
 			return maybe.getProvider(key);
 		}

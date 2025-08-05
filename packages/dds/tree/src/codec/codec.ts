@@ -35,7 +35,7 @@ export interface IDecoder<TDecoded, TEncoded, TContext> {
 /**
  * Validates data complies with some particular schema.
  * Implementations are typically created by a {@link JsonValidator}.
- * @alpha
+ * @alpha @input
  */
 export interface SchemaValidationFunction<Schema extends TSchema> {
 	/**
@@ -46,7 +46,7 @@ export interface SchemaValidationFunction<Schema extends TSchema> {
 
 /**
  * JSON schema validator compliant with draft 6 schema. See https://json-schema.org.
- * @alpha
+ * @alpha @input
  */
 export interface JsonValidator {
 	/**
@@ -63,7 +63,9 @@ export interface JsonValidator {
 
 /**
  * Options relating to handling of persisted data.
- * @alpha
+ *
+ * @see {@link CodecWriteOptions} for options that are specific to encoding data.
+ * @alpha @input
  */
 export interface ICodecOptions {
 	/**
@@ -80,6 +82,25 @@ export interface ICodecOptions {
 	 * which reduces the risk of unrecoverable data corruption.
 	 */
 	readonly jsonValidator: JsonValidator;
+}
+
+/**
+ * Options relating to encoding of persisted data.
+ * @remarks
+ * Extends {@link ICodecOptions} with options that are specific to encoding data.
+ * @alpha @input
+ */
+export interface CodecWriteOptions extends ICodecOptions {
+	/**
+	 * The minimum version of the Fluid Framework client output must be encoded to be compatible with.
+	 * @remarks
+	 * This is used to ensure that the the output from this codec can be used with older versions of the Fluid Framework client.
+	 * This includes both concurrent collaboration, and an older version opening the document later.
+	 *
+	 * Note that versions older than this should not result in data corruption if they access the data:
+	 * the data's format should be versioned and if they can't handle the format they should error.
+	 */
+	readonly oldestCompatibleClient: FluidClientVersion;
 }
 
 /**
@@ -388,9 +409,10 @@ export enum FluidClientVersion {
 	// then update it to "2.001" once we actually have the opt in working.
 	// v2_1 = v2_0,
 
-	/** Fluid Framework Client 2.41 and newer. */
-	// If we land some new formats in 2.41, we can enable selecting
-	// v2_41 = 2.041,
+	/** Fluid Framework Client 2.52 and newer. */
+	// New formats introduced in 2.52:
+	// - DetachedFieldIndex FormatV2
+	v2_52 = 2.052,
 
 	/**
 	 * Enable unreleased and unfinished features.

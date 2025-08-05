@@ -32,7 +32,6 @@ import {
 import { typeboxValidator } from "../external-utilities/index.js";
 import {
 	cursorForJsonableTreeField,
-	initializeForest,
 	jsonableTreeFromCursor,
 } from "../feature-libraries/index.js";
 import {
@@ -62,6 +61,8 @@ import {
 import { jsonSequenceRootSchema } from "./sequenceRootUtils.js";
 import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 import { JsonAsTree } from "../jsonDomainSchema.js";
+import { FluidClientVersion } from "../codec/index.js";
+import { initializeForest } from "./feature-libraries/index.js";
 
 /**
  * Configuration for the forest test suite.
@@ -432,7 +433,7 @@ export function testForest(config: ForestTestConfiguration): void {
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			testRevisionTagCodec,
 			testIdCompressor,
-			{ jsonValidator: typeboxValidator },
+			{ jsonValidator: typeboxValidator, oldestCompatibleClient: FluidClientVersion.v2_0 },
 		);
 		const delta: DeltaFieldMap = new Map<FieldKey, DeltaFieldChanges>([
 			[rootFieldKey, [mark]],

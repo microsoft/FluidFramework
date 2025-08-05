@@ -4,10 +4,8 @@
  */
 
 import type {
-	ExclusiveMapTree,
 	SchemaAndPolicy,
 	IForestSubscription,
-	MapTree,
 	UpPath,
 	NodeIndex,
 	FieldKey,
@@ -17,26 +15,36 @@ import type {
 import {
 	type FlexTreeContext,
 	getSchemaAndPolicy,
-	type FlexTreeHydratedContext,
+	type FlexTreeHydratedContextMinimal,
 	FieldKinds,
+	type FlexibleFieldContent,
+	type FlexibleNodeContent,
+	throwOutOfSchema,
 } from "../feature-libraries/index.js";
+import { normalizeFieldSchema, type ImplicitAnnotatedFieldSchema } from "./fieldSchema.js";
 import {
-	normalizeFieldSchema,
-	type ImplicitAllowedTypes,
-	type ImplicitFieldSchema,
-} from "./schemaTypes.js";
-import { type InsertableContent, mapTreeFromNodeData } from "./toMapTree.js";
+	type InsertableContent,
+	unhydratedFlexTreeFromInsertable,
+} from "./unhydratedFlexTreeFromInsertable.js";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { brand } from "../util/index.js";
 import {
 	getKernel,
+	type ImplicitAnnotatedAllowedTypes,
 	type TreeNode,
-	tryUnhydratedFlexTreeNode,
-	unhydratedFlexTreeNodeToTreeNode,
+	type UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { debugAssert, oob } from "@fluidframework/core-utils/internal";
-import { inSchemaOrThrow, isFieldInSchema } from "../feature-libraries/index.js";
+import { isFieldInSchema } from "../feature-libraries/index.js";
 import { convertField } from "./toStoredSchema.js";
+
+/**
+ * For now, schema validation for inserted content is always enabled.
+ * @remarks
+ * If this ends up being too much of a performance overhead, AND nothing depends on it (like staged allowed types likely will),
+ * this could be changed.
+ */
+const validateSchema = true;
 
 /**
  * Prepare content from a user for insertion into a tree.
@@ -48,9 +56,9 @@ import { convertField } from "./toStoredSchema.js";
  */
 export function prepareForInsertion<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	destinationContext: FlexTreeContext,
-): TIn extends undefined ? undefined : ExclusiveMapTree {
+): TIn extends undefined ? undefined : FlexibleNodeContent {
 	return prepareForInsertionContextless(
 		data,
 		schema,
@@ -74,15 +82,11 @@ export function prepareForInsertion<TIn extends InsertableContent | undefined>(
  */
 export function prepareArrayContentForInsertion(
 	data: readonly InsertableContent[],
-	schema: ImplicitAllowedTypes,
+	schema: ImplicitAnnotatedAllowedTypes,
 	destinationContext: FlexTreeContext,
-): ExclusiveMapTree[] {
-	const mapTrees: ExclusiveMapTree[] = data.map((item) =>
-		mapTreeFromNodeData(
-			item,
-			schema,
-			destinationContext.isHydrated() ? destinationContext.nodeKeyManager : undefined,
-		),
+): FlexibleFieldContent {
+	const mapTrees: UnhydratedFlexTreeNode[] = data.map((item) =>
+		unhydratedFlexTreeFromInsertable(item, schema),
 	);
 
 	const fieldSchema = convertField(normalizeFieldSchema(schema));
@@ -90,7 +94,11 @@ export function prepareArrayContentForInsertion(
 	validateAndPrepare(
 		getSchemaAndPolicy(destinationContext),
 		destinationContext.isHydrated() ? destinationContext : undefined,
-		{ kind: FieldKinds.sequence.identifier, types: fieldSchema.types },
+		{
+			kind: FieldKinds.sequence.identifier,
+			types: fieldSchema.types,
+			persistedMetadata: undefined,
+		},
 		mapTrees,
 	);
 
@@ -108,11 +116,11 @@ export function prepareArrayContentForInsertion(
  */
 export function prepareForInsertionContextless<TIn extends InsertableContent | undefined>(
 	data: TIn,
-	schema: ImplicitFieldSchema,
+	schema: ImplicitAnnotatedFieldSchema,
 	schemaAndPolicy: SchemaAndPolicy,
-	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
-): TIn extends undefined ? undefined : ExclusiveMapTree {
-	const mapTree = mapTreeFromNodeData(data, schema, hydratedData?.nodeKeyManager);
+	hydratedData: FlexTreeHydratedContextMinimal | undefined,
+): TIn extends undefined ? undefined : FlexibleNodeContent {
+	const mapTree = unhydratedFlexTreeFromInsertable(data, schema);
 
 	const contentArray = mapTree === undefined ? [] : [mapTree];
 	const fieldSchema = convertField(normalizeFieldSchema(schema));
@@ -129,16 +137,18 @@ export function prepareForInsertionContextless<TIn extends InsertableContent | u
  */
 function validateAndPrepare(
 	schemaAndPolicy: SchemaAndPolicy,
-	hydratedData: Pick<FlexTreeHydratedContext, "checkout" | "nodeKeyManager"> | undefined,
+	hydratedData: FlexTreeHydratedContextMinimal | undefined,
 	fieldSchema: TreeFieldStoredSchema,
-	mapTrees: ExclusiveMapTree[],
+	mapTrees: readonly UnhydratedFlexTreeNode[],
 ): void {
 	if (hydratedData !== undefined) {
-		if (schemaAndPolicy.policy.validateSchema === true) {
-			const maybeError = isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy);
-			inSchemaOrThrow(maybeError);
+		// Run `prepareContentForHydration` before walking the tree in `isFieldInSchema`.
+		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),
+		// they were already creating used the more specific context we have access to from `hydratedData`.
+		prepareContentForHydration(mapTrees, hydratedData.checkout.forest, hydratedData);
+		if (validateSchema === true) {
+			isFieldInSchema(mapTrees, fieldSchema, schemaAndPolicy, throwOutOfSchema);
 		}
-		prepareContentForHydration(mapTrees, hydratedData.checkout.forest);
 	}
 }
 
@@ -176,17 +186,21 @@ interface LocatedNodesBatch {
 const placeholderKey: DetachedField & FieldKey = brand("placeholder" as const);
 
 /**
- * Records any proxies in the given content tree and does the necessary bookkeeping to ensure they are synchronized with subsequent reads of the tree.
- * @remarks If the content tree contains any proxies, this function must be called just prior to inserting the content into the tree.
+ * Records any {@link TreeNode}s in the given `content` tree and does the necessary bookkeeping to ensure they are synchronized with subsequent reads of the tree.
+ * Additionally populates any {@link UnhydratedFlexTreeField.pendingDefault}s using the provided `context`.
+ *
+ * @remarks If the content tree contains has any associated {@link TreeNode}s, this function must be called just prior to inserting the content into the tree.
  * Specifically, no other content may be inserted into the tree between the invocation of this function and the insertion of `content`.
  * The insertion of `content` must occur or else this function will cause memory leaks.
+ *
+ * Exported for testing purposes: otherwise should not be used outside this module.
  * @param content - the content subsequence to be inserted, of which might deeply contain {@link TreeNode}s which need to be hydrated.
  * @param forest - the forest the content is being inserted into.
- * See {@link extractFactoryContent} for more details.
  */
-function prepareContentForHydration(
-	content: readonly MapTree[],
+export function prepareContentForHydration(
+	content: readonly UnhydratedFlexTreeNode[],
 	forest: IForestSubscription,
+	context: FlexTreeHydratedContextMinimal,
 ): void {
 	const batches: LocatedNodesBatch[] = [];
 	for (const item of content) {
@@ -199,39 +213,45 @@ function prepareContentForHydration(
 			paths: [],
 		};
 		batches.push(batch);
-		walkMapTree(item, batch.rootPath, (p, node) => {
-			batch.paths.push({ path: p, node });
-		});
+		walkMapTree(
+			item,
+			batch.rootPath,
+			(p, node) => {
+				batch.paths.push({ path: p, node });
+			},
+			context,
+		);
 	}
 
 	scheduleHydration(batches, forest);
 }
 
 function walkMapTree(
-	mapTree: MapTree,
+	root: UnhydratedFlexTreeNode,
 	path: UpPath,
 	onVisitTreeNode: (path: UpPath, treeNode: TreeNode) => void,
+	context: FlexTreeHydratedContextMinimal,
 ): void {
-	if (tryUnhydratedFlexTreeNode(mapTree)?.parentField.parent.parent !== undefined) {
+	if (root.parentField.parent.parent !== undefined) {
 		throw new UsageError(
 			"Attempted to insert a node which is already under a parent. If this is desired, remove the node from its parent before inserting it elsewhere.",
 		);
 	}
 
-	type Next = [path: UpPath, tree: MapTree];
+	type Next = [path: UpPath, tree: UnhydratedFlexTreeNode];
 	const nexts: Next[] = [];
-	for (let next: Next | undefined = [path, mapTree]; next !== undefined; next = nexts.pop()) {
-		const [p, m] = next;
-		const mapTreeNode = tryUnhydratedFlexTreeNode(m);
-		if (mapTreeNode !== undefined) {
-			const treeNode = unhydratedFlexTreeNodeToTreeNode.get(mapTreeNode);
+	for (let next: Next | undefined = [path, root]; next !== undefined; next = nexts.pop()) {
+		const [p, node] = next;
+		if (node !== undefined) {
+			const treeNode = node.treeNode;
 			if (treeNode !== undefined) {
 				onVisitTreeNode(p, treeNode);
 			}
 		}
 
-		for (const [key, field] of m.fields) {
-			for (const [i, child] of field.entries()) {
+		for (const [key, field] of node.allFieldsLazy) {
+			field.fillPendingDefaults(context);
+			for (const [i, child] of field.children.entries()) {
 				nexts.push([
 					{
 						parent: p,

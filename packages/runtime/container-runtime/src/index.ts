@@ -21,6 +21,12 @@ export {
 export type { ICompressionRuntimeOptions } from "./compressionDefinitions.js";
 export { CompressionAlgorithms, disabledCompressionConfig } from "./compressionDefinitions.js";
 export {
+	/**
+	 * @deprecated Import from `@fluidframework/runtime-definitions/legacy` instead.
+	 */
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+export {
 	ContainerMessageType,
 	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
@@ -31,7 +37,6 @@ export {
 	ChannelCollectionFactory,
 	AllowTombstoneRequestHeaderKey,
 } from "./channelCollection.js";
-export type { MinimumVersionForCollab } from "./compatUtils.js";
 export {
 	GCNodeType,
 	IGCMetadata,
@@ -91,11 +96,13 @@ export {
 	IRetriableFailureError,
 	IdCompressorMode,
 	IDocumentSchema,
+	IDocumentSchemaInfo,
 	DocumentSchemaValueType,
 	IDocumentSchemaCurrent,
 	currentDocumentVersionSchema,
 	DocumentsSchemaController,
-	IDocumentSchemaChangeMessage,
+	IDocumentSchemaChangeMessageIncoming,
+	IDocumentSchemaChangeMessageOutgoing,
 	IDocumentSchemaFeatures,
 	ReadFluidDataStoreAttributes,
 	IFluidDataStoreAttributes0,
@@ -110,3 +117,10 @@ export {
 	DefaultSummaryConfiguration,
 } from "./summary/index.js";
 export { IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
+export {
+	runtimeCoreCompatDetails,
+	runtimeCompatDetailsForLoader,
+	runtimeCompatDetailsForDataStore,
+	loaderSupportRequirementsForRuntime,
+	dataStoreSupportRequirementsForRuntime,
+} from "./runtimeLayerCompatState.js";

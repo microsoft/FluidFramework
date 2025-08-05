@@ -26,7 +26,7 @@ export function asEmptyBatchLocalOpMetadata(
  */
 export interface IEmptyBatchMetadata {
 	// Set to true on localOpMetadata for empty batches
-	emptyBatch?: boolean;
+	emptyBatch?: true;
 }
 /**
  * Properties put on the op metadata object for batch tracking
@@ -46,9 +46,17 @@ export interface IBatchMetadata {
  * Blob handling makes assumptions about what might be on the metadata. This interface codifies those assumptions, but does not validate them.
  */
 export interface IBlobMetadata {
-	blobId?: string;
-	localId?: string;
+	blobId: string;
+	localId: string;
 }
+
+export const isBlobMetadata = (metadata: unknown): metadata is IBlobMetadata => {
+	return (
+		!!metadata &&
+		typeof (metadata as IBlobMetadata).blobId === "string" &&
+		typeof (metadata as IBlobMetadata).localId === "string"
+	);
+};
 
 /**
  * ContainerRuntime needs to know if this is a replayed savedOp as those need to be skipped in stashed ops scenarios.

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
+import type { IFluidDependencySynthesizer } from "./IFluidDependencySynthesizer.js";
 
 /**
  * This is a condensed version of Record that requires the object has all
@@ -32,6 +32,7 @@ export type FluidObjectSymbolProvider<T> = {
 export type AsyncRequiredFluidObjectProvider<T> = T extends undefined
 	? Record<string, never>
 	: {
+			// eslint-disable-next-line @rushstack/no-new-null --  supported by JavaScript; it isn't deprecated
 			[P in keyof T]: Promise<NonNullable<Exclude<T[P], undefined | null>>>;
 		};
 

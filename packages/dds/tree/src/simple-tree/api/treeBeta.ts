@@ -3,15 +3,19 @@
  * Licensed under the MIT License.
  */
 
+import { defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import {
+	Context,
 	getKernel,
 	isTreeNode,
+	UnhydratedContext,
 	type NodeKind,
 	type TreeNode,
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
-import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../schemaTypes.js";
+import { getUnhydratedContext } from "../createContext.js";
+import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 
 import { createFromCursor } from "./create.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
@@ -85,8 +89,8 @@ export interface TreeChangeEventsBeta<TNode extends TreeNode = TreeNode>
 	 */
 	nodeChanged: (
 		data: NodeChangedData<TNode> &
-			// For object and Map nodes, make properties specific to them required instead of optional:
-			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object>
+			// Make the properties of object, map, and record nodes required:
+			(TNode extends WithType<string, NodeKind.Map | NodeKind.Object | NodeKind.Record>
 				? Required<Pick<NodeChangedData<TNode>, "changedProperties">>
 				: unknown),
 	) => void;
@@ -127,6 +131,9 @@ export interface TreeBeta {
 	 * - Value node types (i.e., numbers, strings, booleans, nulls and Fluid handles) will be returned as is.
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
+	 *
+	 * - If the node (or any node in its subtree) contains {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|unknown optional fields},
+	 * those fields will be cloned just like the known fields.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
@@ -134,7 +141,7 @@ export interface TreeBeta {
 
 	// TODO: support more clone options
 	// /**
-	//  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
+	//  * Like {@link (TreeBeta:interface).create}, except deeply clones existing nodes.
 	//  * @remarks
 	//  * This only clones the persisted data associated with a node.
 	//  * Local state, such as properties added to customized schema classes, will not be cloned:
@@ -175,7 +182,16 @@ export const TreeBeta: TreeBeta = {
 
 		const kernel = getKernel(node);
 		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-		return createFromCursor(kernel.schema, cursor) as Unhydrated<
+
+		// To handle when the node transitively contains unknown optional fields,
+		// derive the context from the source node's stored schema which has stored schema for any such fields and their contents.
+		const flexContext = new UnhydratedContext(
+			defaultSchemaPolicy,
+			kernel.context.flexContext.schema,
+		);
+		const context = new Context(flexContext, getUnhydratedContext(kernel.schema).schema);
+
+		return createFromCursor(kernel.schema, cursor, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>
 		>;
 	},

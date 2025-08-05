@@ -3,77 +3,81 @@
  * Licensed under the MIT License.
  */
 
-import type { DocumentNode, DocumentationNode } from "../../documentation-domain/index.js";
-import { DocumentWriter } from "../DocumentWriter.js";
+import type { Nodes as MdastTree } from "mdast";
+import { gfmToMarkdown } from "mdast-util-gfm";
+import {
+	toMarkdown as toMarkdownString,
+	type Options as MdastToMarkdownOptions,
+} from "mdast-util-to-markdown";
 
-import { type RenderContext, getContextWithDefaults } from "./RenderContext.js";
-import { type RenderConfiguration, defaultRenderers } from "./configuration/index.js";
+import type { ApiDocument } from "../../ApiDocument.js";
+import {
+	documentToMarkdown,
+	type TransformationConfiguration,
+} from "../../documentation-domain-to-markdown/index.js";
 
 /**
- * Renders a {@link DocumentNode} as Markdown, and returns the resulting file contents as a `string`.
+ * Configuration for rendering a document as Markdown.
+ *
+ * @sealed
+ * @public
+ */
+export interface RenderDocumentConfiguration
+	extends TransformationConfiguration,
+		RenderMarkdownConfiguration {}
+
+/**
+ * Renders a {@link ApiDocument} as Markdown and returns the resulting file contents as a string.
  *
  * @param document - The document to render.
- * @param config - Markdown rendering configuration.
+ * @param config - Markdown transformation configuration.
  *
  * @public
  */
-export function renderDocument(document: DocumentNode, config: RenderConfiguration): string {
-	const writer = DocumentWriter.create();
-	const renderContext = getContextWithDefaults({
-		headingLevel: config.startingHeadingLevel,
-		customRenderers: config.customRenderers,
-	});
-
-	renderNodes(document.children, writer, renderContext);
-
-	// Trim any leading and trailing whitespace
-	let renderedDocument = writer.getText().trim();
-
-	// Ensure file ends with a single newline.
-	renderedDocument = [renderedDocument, ""].join("\n");
-
-	return renderedDocument;
+export function renderDocument(
+	document: ApiDocument,
+	config: RenderDocumentConfiguration,
+): string {
+	const markdownTree = documentToMarkdown(document, config);
+	return renderMarkdown(markdownTree, config);
 }
 
 /**
- * Renders the provided {@link DocumentationNode} per the configured
- * {@link MarkdownRenderContext.customRenderers | renderers}.
+ * Configuration for rendering Markdown content.
  *
+ * @sealed
  * @public
  */
-export function renderNode(
-	node: DocumentationNode,
-	writer: DocumentWriter,
-	context: RenderContext,
-): void {
-	if (
-		context.customRenderers !== undefined &&
-		Object.keys(context.customRenderers).includes(node.type)
-	) {
-		// User-provided renderers take precedence. If we found an appropriate one, use it.
-		context.customRenderers[node.type](node, writer, context);
-	} else if (Object.keys(defaultRenderers).includes(node.type)) {
-		// If no user-provided renderer was given for this node type, but we have a default, use the default.
-		defaultRenderers[node.type](node, writer, context);
-	} else {
-		throw new Error(
-			`Encountered a DocumentationNode with neither a user-provided nor system-default renderer. Type: ${node.type}. Please provide a renderer for this type.`,
-		);
-	}
+export interface RenderMarkdownConfiguration {
+	/**
+	 * Options for the Markdown renderer.
+	 *
+	 * @see {@link https://github.com/syntax-tree/mdast-util-to-markdown?tab=readme-ov-file#options}
+	 */
+	readonly mdastToMarkdownOptions?: Partial<MdastToMarkdownOptions>;
 }
 
 /**
- * Renders a list of child {@link DocumentationNode}s per the configured
- * {@link MarkdownRenderContext.customRenderers | renderers}.
+ * Renders the provided Markdown tree and returns the resulting file contents as a string.
+ *
+ * @remarks Leverages {@link https://github.com/syntax-tree/mdast-util-to-markdown | mdast-util-to-markdown}
+ *
+ * @param document - The document to transform.
+ * @param config - Markdown transformation configuration.
  *
  * @public
  */
-export function renderNodes(
-	children: DocumentationNode[],
-	writer: DocumentWriter,
-	childContext: RenderContext,
-): void {
-	for (const child of children) {
-		renderNode(child, writer, childContext);
-	}
+export function renderMarkdown(tree: MdastTree, config: RenderMarkdownConfiguration): string {
+	const options: MdastToMarkdownOptions = {
+		emphasis: "_",
+		bullet: "-",
+		incrementListMarker: false,
+		extensions: [
+			gfmToMarkdown({
+				tablePipeAlign: false,
+			}),
+		],
+		...config.mdastToMarkdownOptions,
+	};
+	return toMarkdownString(tree, options);
 }

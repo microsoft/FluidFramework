@@ -10,7 +10,6 @@ import {
 	type AnchorNode,
 	CursorLocationType,
 	type FieldKey,
-	type ITreeCursorSynchronous,
 	type FieldKindIdentifier,
 	type ITreeSubscriptionCursor,
 	type TreeNavigationResult,
@@ -28,7 +27,7 @@ import type { Context } from "./context.js";
 import {
 	FlexTreeEntityKind,
 	type FlexTreeField,
-	type FlexTreeNode,
+	type HydratedFlexTreeNode,
 	flexTreeMarker,
 	flexTreeSlot,
 } from "./flexTreeTypes.js";
@@ -36,9 +35,14 @@ import { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
 
 /**
+ * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicated by the cursor.
+ * @remarks
  * This does not take ownership of this cursor: Node will fork it as needed.
  */
-export function makeTree(context: Context, cursor: ITreeSubscriptionCursor): LazyTreeNode {
+export function getOrCreateHydratedFlexTreeNode(
+	context: Context,
+	cursor: ITreeSubscriptionCursor,
+): HydratedFlexTreeNode {
 	const anchor = cursor.buildAnchor();
 	const anchorNode =
 		context.checkout.forest.anchors.locate(anchor) ??
@@ -63,7 +67,7 @@ function cleanupTree(anchor: AnchorNode): void {
 /**
  * Lazy implementation of {@link FlexTreeNode}.
  */
-export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
+export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTreeNode {
 	public get [flexTreeMarker](): FlexTreeEntityKind.Node {
 		return FlexTreeEntityKind.Node;
 	}
@@ -75,21 +79,21 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 
 	public constructor(
 		context: Context,
-		public readonly schema: TreeNodeSchemaIdentifier,
+		public readonly type: TreeNodeSchemaIdentifier,
 		cursor: ITreeSubscriptionCursor,
 		public readonly anchorNode: AnchorNode,
 		anchor: Anchor,
 	) {
 		super(context, cursor, anchor);
 		this.storedSchema =
-			context.schema.nodeSchema.get(this.schema) ?? fail(0xb14 /* missing schema */);
+			context.schema.nodeSchema.get(this.type) ?? fail(0xb14 /* missing schema */);
 		assert(cursor.mode === CursorLocationType.Nodes, 0x783 /* must be in nodes mode */);
 		anchorNode.slots.set(flexTreeSlot, this);
 		this.#removeDeleteCallback = anchorNode.events.on("afterDestroy", cleanupTree);
 	}
 
-	public borrowCursor(): ITreeCursorSynchronous {
-		return this.cursor as ITreeCursorSynchronous;
+	public isHydrated(): this is HydratedFlexTreeNode {
+		return true;
 	}
 
 	protected override tryMoveCursorToAnchor(
@@ -111,6 +115,20 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 		return this.cursor.value;
 	}
 
+	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
+		{
+			get: (key: FieldKey): FlexTreeField | undefined => this.tryGetField(key),
+			[Symbol.iterator]: (): IterableIterator<[FieldKey, FlexTreeField]> =>
+				mapCursorFields(this.cursor, (cursor) => {
+					const key: FieldKey = cursor.getFieldKey();
+					const pair: [FieldKey, FlexTreeField] = [
+						key,
+						makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
+					];
+					return pair;
+				}).values(),
+		};
+
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
 		const schema = this.storedSchema.getFieldSchema(fieldKey);
 		return inCursorField(this.cursor, fieldKey, (cursor) => {
@@ -128,7 +146,7 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements FlexTreeNode {
 		});
 	}
 
-	public boxedIterator(): IterableIterator<FlexTreeField> {
+	public [Symbol.iterator](): IterableIterator<FlexTreeField> {
 		return mapCursorFields(this.cursor, (cursor) =>
 			makeField(
 				this.context,

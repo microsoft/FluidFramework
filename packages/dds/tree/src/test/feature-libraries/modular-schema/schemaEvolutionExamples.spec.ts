@@ -5,72 +5,18 @@
 
 import { strict as assert } from "node:assert";
 
+import { EmptyKey, storedEmptyFieldSchema } from "../../../core/index.js";
+import { defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 import {
-	type Adapters,
-	EmptyKey,
-	type TreeFieldStoredSchema,
-	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
-	TreeStoredSchemaRepository,
-	storedEmptyFieldSchema,
-} from "../../../core/index.js";
-import {
-	type FullSchemaPolicy,
-	defaultSchemaPolicy,
-} from "../../../feature-libraries/index.js";
-import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	getAllowedContentDiscrepancies,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../feature-libraries/modular-schema/index.js";
-import {
-	getStoredSchema,
 	toStoredSchema,
 	SchemaCompatibilityTester,
-	type TreeNodeSchema,
-	type SimpleNodeSchema,
 	SchemaFactoryAlpha,
+	TreeViewConfigurationAlpha,
+	schemaStatics,
 } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
-import { schemaStatics } from "../../../simple-tree/index.js";
-
-class TestSchemaRepository extends TreeStoredSchemaRepository {
-	public constructor(
-		public readonly policy: FullSchemaPolicy,
-		data?: TreeStoredSchema,
-	) {
-		super(data);
-	}
-
-	/**
-	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-	 * @returns true iff update was performed.
-	 */
-	public tryUpdateRootFieldSchema(schema: TreeFieldStoredSchema): boolean {
-		if (allowsFieldSuperset(this.policy, this, this.rootFieldSchema, schema)) {
-			this.rootFieldSchemaData = schema;
-			this._events.emit("afterSchemaChange", this);
-			return true;
-		}
-		return false;
-	}
-	/**
-	 * Updates the specified schema iff all possible in schema data would remain in schema after the change.
-	 * @returns true iff update was performed.
-	 */
-	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
-		const storedSchema = getStoredSchema(schema);
-		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
-		const original = this.nodeSchema.get(name);
-		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
-			this.nodeSchemaData.set(name, storedSchema);
-			this._events.emit("afterSchemaChange", this);
-			return true;
-		}
-		return false;
-	}
-}
+import { TestSchemaRepository } from "../../utils.js";
+// eslint-disable-next-line import/no-internal-modules
+import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discrepancies.js";
 
 function assertEnumEqual<TEnum extends { [key: number]: string }>(
 	enumObject: TEnum,
@@ -117,10 +63,10 @@ describe("Schema Evolution Examples", () => {
 	 * (since adapters are not implemented yet, and they are the nice way to handle that).
 	 */
 	it("basic usage", () => {
-		// This is where legacy schema handling logic for schematize.
-		const adapters: Adapters = {};
 		// Compose all the view information together.
-		const view = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, root);
+		const view = new SchemaCompatibilityTester(
+			new TreeViewConfigurationAlpha({ schema: root }),
+		);
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -152,7 +98,9 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const view2 = new SchemaCompatibilityTester(defaultSchemaPolicy, adapters, tolerantRoot);
+			const view2 = new SchemaCompatibilityTester(
+				new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
+			);
 			// When we open this document, we should check it's compatibility with our application:
 			const compat = view2.checkCompatibility(stored);
 
@@ -191,7 +139,10 @@ describe("Schema Evolution Examples", () => {
 			// They can recheck their compatibility:
 			const compatNew = view2.checkCompatibility(stored);
 			const report = Array.from(
-				getAllowedContentDiscrepancies(toStoredSchema(tolerantRoot), stored),
+				getDiscrepanciesInAllowedContent(
+					new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
+					stored,
+				),
 			);
 			assert.deepEqual(report, []);
 			// It is now possible to write our date into the document.
@@ -211,9 +162,7 @@ describe("Schema Evolution Examples", () => {
 			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
 			const view3 = new SchemaCompatibilityTester(
-				defaultSchemaPolicy,
-				adapters,
-				builder.optional(canvas2),
+				new TreeViewConfigurationAlpha({ schema: builder.optional(canvas2) }),
 			);
 
 			// With this new schema, we can load the document just like before:

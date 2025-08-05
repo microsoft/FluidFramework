@@ -35,7 +35,6 @@ import {
 } from "../utils.js";
 import { insert, makeTreeFromJsonSequence } from "../sequenceRootUtils.js";
 import {
-	CheckoutFlexTreeView,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
 	type TreeCheckout,
@@ -58,12 +57,10 @@ const configGeneralized2 = new TreeViewConfiguration({
 function checkoutWithInitialTree(
 	viewConfig: TreeViewConfiguration,
 	unhydratedInitialTree: InsertableField<UnsafeUnknownSchema>,
-	nodeKeyManager = new MockNodeIdentifierManager(),
 ): TreeCheckout {
 	const initialTree = fieldCursorFromInsertable<UnsafeUnknownSchema>(
 		viewConfig.schema,
 		unhydratedInitialTree,
-		nodeKeyManager,
 	);
 	const treeContent: TreeStoredContent = {
 		schema: toStoredSchema(viewConfig.schema),
@@ -121,7 +118,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 					const root = new Root({ content: 5 });
 
-					const inner = getKernel(root).tryGetInnerNode() ?? assert.fail("Expected child");
+					const inner = getKernel(root).getOrCreateInnerNode();
 					const field = inner.getBoxed(brand("content"));
 					const child = field.boxedAt(0) ?? assert.fail("Expected child");
 					assert(child instanceof UnhydratedFlexTreeNode);
@@ -131,23 +128,16 @@ describe("SchematizingSimpleTreeView", () => {
 					// so this hack using internal APIs is needed a workaround to test the additional schema validation layer.
 					// In production cases this extra validation exists to help prevent corruption when bugs
 					// allow invalid data through the public API.
-					(child.mapTree as Mutable<typeof child.mapTree>).value = "invalid value";
+					(child.data as Mutable<typeof child.data>).value = "invalid value";
 
-					// Attempt to initialize with invalid content
-					if (enableSchemaValidation || additionalAsserts) {
-						assert.throws(
-							() => view.initialize(root),
-							validateUsageError(/Tree does not conform to schema./),
-						);
+					// Attempt to initialize with invalid content.
+					// Currently src/simple-tree/prepareForInsertion.ts has `validateSchema` unconditionally enabled, so this is detected regardless of the value of `enableSchemaValidation`.
+					assert.throws(
+						() => view.initialize(root),
+						validateUsageError(/Tree does not conform to schema./),
+					);
 
-						assert.throws(
-							() => view.root,
-							validateUsageError(/invalid state by another error/),
-						);
-					} else {
-						view.initialize(root);
-						assert.equal(view.root.content, "invalid value");
-					}
+					assert.throws(() => view.root, validateUsageError(/invalid state by another error/));
 				});
 			}
 		}
@@ -237,6 +227,26 @@ describe("SchematizingSimpleTreeView", () => {
 		assert.deepEqual(log, [["rootChanged", 6]]);
 	});
 
+	it("Modify root to undefined", () => {
+		const config2 = new TreeViewConfiguration({
+			schema: SchemaFactory.optional(schema.number),
+		});
+		const checkout = checkoutWithInitialTree(config2, 5);
+		const view = new SchematizingSimpleTreeView(
+			checkout,
+			config2,
+			new MockNodeIdentifierManager(),
+		);
+		view.events.on("schemaChanged", () => log.push(["schemaChanged", getChangeData(view)]));
+		view.events.on("rootChanged", () => log.push(["rootChanged", getChangeData(view)]));
+		assert.equal(view.root, 5);
+		const log: [string, unknown][] = [];
+
+		view.root = undefined;
+
+		assert.deepEqual(log, [["rootChanged", undefined]]);
+	});
+
 	it("Schema becomes un-upgradeable then exact match again", () => {
 		const checkout = checkoutWithInitialTree(config, 5);
 		const view = new SchematizingSimpleTreeView(
@@ -265,7 +275,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 		view.breaker.clearError();
 		// Modify schema to be compatible again
-		checkout.updateSchema(toStoredSchema([schema.number]));
+		checkout.updateSchema(toStoredSchema([schema.number]), true);
 		assert.equal(view.compatibility.isEquivalent, true);
 		assert.equal(view.compatibility.canUpgrade, true);
 		assert.equal(view.compatibility.canView, true);
@@ -771,11 +781,7 @@ describe("SchematizingSimpleTreeView", () => {
 
 			it("undoes and redoes entire transaction", () => {
 				const view = getTestObjectView();
-				const checkoutView = view.getView();
-				assert(checkoutView instanceof CheckoutFlexTreeView);
-				const { undoStack, redoStack } = createTestUndoRedoStacks(
-					checkoutView.checkout.events,
-				);
+				const { undoStack, redoStack } = createTestUndoRedoStacks(view.checkout.events);
 
 				const runTransactionResult = view.runTransaction(() => {
 					view.root.content = 43;

@@ -4,7 +4,7 @@
  */
 
 import { gitHashFile, IsoBuffer } from "@fluidframework/common-utils";
-import {
+import type {
 	IAuthor,
 	IBlob,
 	ICommit,
@@ -25,13 +25,13 @@ import {
 	ITreeEntry,
 } from "@fluidframework/gitresources";
 import {
-	IHistorian,
-	IWholeFlatSummary,
-	IWholeSummaryPayload,
-	IWriteSummaryResponse,
+	type IHistorian,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayload,
+	type IWriteSummaryResponse,
 	NetworkError,
 } from "@fluidframework/server-services-client";
-import { ICollection, IDb } from "@fluidframework/server-services-core";
+import type { ICollection, IDb } from "@fluidframework/server-services-core";
 import { v4 as uuid } from "uuid";
 
 import { TestDb } from "./testCollection";

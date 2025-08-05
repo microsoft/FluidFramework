@@ -114,12 +114,16 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.handler?.processMessages?.(messageCollection);
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
-		this.handler?.reSubmit(content, localOpMetadata);
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+		this.handler?.reSubmit(content, localOpMetadata, squash);
 	}
 
 	public applyStashedOp(content: any): unknown {
 		return this.handler?.applyStashedOp(content);
+	}
+
+	public rollback?(message: any, localOpMetadata: unknown): void {
+		this.handler?.rollback?.(message, localOpMetadata);
 	}
 }
 
@@ -256,6 +260,18 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
 	}
 
+	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
+	#manualFlushCalls: number = 0;
+
+	public async runWithManualFlush(act: () => void | Promise<void>) {
+		this.#manualFlushCalls++;
+		try {
+			await act();
+		} finally {
+			this.#manualFlushCalls--;
+		}
+	}
+
 	public submit(messageContent: any, localOpMetadata?: unknown): number {
 		const clientSequenceNumber = ++this.deltaManager.clientSequenceNumber;
 		const message: IInternalMockRuntimeMessage = {
@@ -266,7 +282,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 
 		const isAllocationMessage = this.isAllocationMessage(message.content);
 
-		switch (this.runtimeOptions.flushMode) {
+		const currentFlushMode =
+			this.#manualFlushCalls > 0 ? FlushMode.TurnBased : this.runtimeOptions.flushMode;
+
+		switch (currentFlushMode) {
 			case FlushMode.Immediate: {
 				if (!isAllocationMessage) {
 					const idAllocationOp = this.generateIdAllocationOp();
@@ -399,6 +418,21 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			} else {
 				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
 			}
+		});
+	}
+
+	/**
+	 * Rolls back all pending messages.
+	 * @remarks
+	 * This only works when the FlushMode is not immediate as immediate
+	 * flush mode send the ops to the mock runtime factory for processing/sequencing, and so those
+	 * ops are no longer local, so not available for rollback.
+	 */
+	public rollback?(): void {
+		const messagesToRollback = this.outbox.slice().reverse();
+		this.outbox.length = 0;
+		messagesToRollback.forEach((pm) => {
+			this.dataStoreRuntime.rollback?.(pm.content, pm.localOpMetadata);
 		});
 	}
 
@@ -1142,9 +1176,9 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
 		this.deltaConnections.forEach((dc) => {
-			dc.reSubmit(content, localOpMetadata);
+			dc.reSubmit(content, localOpMetadata, squash);
 		});
 	}
 
@@ -1153,7 +1187,9 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public rollback?(message: any, localOpMetadata: unknown): void {
-		return;
+		this.deltaConnections.forEach((dc) => {
+			dc.rollback?.(message, localOpMetadata);
+		});
 	}
 }
 

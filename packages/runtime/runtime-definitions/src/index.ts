@@ -25,6 +25,7 @@ export type {
 	IPendingMessagesState,
 	StageControlsExperimental,
 	CommitStagedChangesOptionsExperimental,
+	PackagePath,
 } from "./dataStoreContext.js";
 export { FlushMode, FlushModeExperimental, VisibilityState } from "./dataStoreContext.js";
 export type { IProvideFluidDataStoreFactory } from "./dataStoreFactory.js";
@@ -56,6 +57,7 @@ export type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
+	IRuntimeStorageService,
 } from "./protocol.js";
 export {
 	encodeHandlesInContainerRuntime,
@@ -82,3 +84,4 @@ export {
 	CreateSummarizerNodeSource,
 	totalBlobSizePropertyName,
 } from "./summary.js";
+export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";

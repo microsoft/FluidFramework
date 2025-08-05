@@ -13,6 +13,10 @@ import DocsVersions from "./config/docs-versions.mjs";
 
 dotenv.config();
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
+const TYPESENSE_HOST = process.env.TYPESENSE_HOST;
+const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
+
+const isTypesenseConfigured = TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY !== undefined;
 
 const githubUrl = "https://github.com/microsoft/FluidFramework";
 const githubMainBranchUrl = `${githubUrl}/tree/main`;
@@ -126,6 +130,11 @@ const config: Config = {
 		format: "detect",
 		mermaid: true,
 	},
+	themes: [
+		// Theme for rendering Mermaid diagrams in markdown.
+		"@docusaurus/theme-mermaid",
+		...(isTypesenseConfigured ? ["docusaurus-theme-search-typesense"] : []),
+	],
 	themeConfig: {
 		colorMode: {
 			// Default to user's browser preference
@@ -167,30 +176,32 @@ const config: Config = {
 			theme: prismThemes.vsLight,
 			darkTheme: prismThemes.vsDark,
 		},
-	} satisfies Preset.ThemeConfig,
-	themes: [
-		// Theme for rendering Mermaid diagrams in markdown.
-		"@docusaurus/theme-mermaid",
-
-		// Theme that adds local search support (including generating an index as a part of the build).
-		// TODO: This is a temporary workaround until we can replace it with a more robust search solution(Typesense/Algolia etc).
-		// AB#29144: Remove this fork dependency once we have implemented a long term search solution.
-		[
-			"@wayneferrao/docusaurus-search-local",
-			{
-				// `hashed` is recommended as long-term-cache of index file is possible.
-				hashed: true,
-
-				// Include pages (as opposed to docs) in search results.
-				// Default: false
-				indexPages: true,
+		...(isTypesenseConfigured && {
+			typesense: {
+				typesenseCollectionName: "fluidframeworkdocs",
+				typesenseServerConfig: {
+					nodes: [
+						{
+							host: TYPESENSE_HOST,
+							port: 443,
+							protocol: "https",
+						},
+					],
+					apiKey: TYPESENSE_API_KEY,
+				},
+				// Optional
+				contextualSearch: true,
 			},
-		],
-	],
+		}),
+	} satisfies Preset.ThemeConfig,
 	customFields: {
 		INSTRUMENTATION_KEY: process.env.INSTRUMENTATION_KEY,
 	},
 	scripts: [
+		{
+			src: "/dompurify/purify.min.js",
+			async: false,
+		},
 		{
 			src: "/trusted-types-policy.js",
 			async: false,

@@ -7,6 +7,7 @@ import { AttachState } from "@fluidframework/container-definitions";
 import {
 	type IContainer,
 	type IFluidModuleWithDetails,
+	type IRuntimeFactory,
 	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import {
@@ -42,6 +43,7 @@ import { createAzureAudienceMember } from "./AzureAudience.js";
 import { AzureUrlResolver, createAzureCreateNewRequest } from "./AzureUrlResolver.js";
 import type {
 	AzureClientProps,
+	AzureClientPropsInternal,
 	AzureConnectionConfig,
 	AzureContainerServices,
 	AzureContainerVersion,
@@ -93,6 +95,14 @@ export class AzureClient {
 	private readonly connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
 	private readonly logger: ITelemetryBaseLogger | undefined;
 
+	private readonly createContainerRuntimeFactory?: ({
+		schema,
+		compatibilityMode,
+	}: {
+		schema: ContainerSchema;
+		compatibilityMode: CompatibilityMode;
+	}) => IRuntimeFactory;
+
 	/**
 	 * Creates a new client instance using configuration parameters.
 	 * @param properties - Properties for initializing a new AzureClient instance
@@ -117,6 +127,10 @@ export class AzureClient {
 			properties.summaryCompression,
 		);
 		this.configProvider = wrapConfigProvider(properties.configProvider);
+
+		this.createContainerRuntimeFactory = (
+			properties as Partial<AzureClientPropsInternal>
+		).createContainerRuntimeFactory;
 	}
 
 	/**
@@ -274,10 +288,16 @@ export class AzureClient {
 		schema: ContainerSchema,
 		compatibilityMode: CompatibilityMode,
 	): ILoaderProps {
-		const runtimeFactory = createDOProviderContainerRuntimeFactory({
-			schema,
-			compatibilityMode,
-		});
+		const runtimeFactory = this.createContainerRuntimeFactory
+			? this.createContainerRuntimeFactory({
+					schema,
+					compatibilityMode,
+				})
+			: createDOProviderContainerRuntimeFactory({
+					schema,
+					compatibilityMode,
+				});
+
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
 				module: { fluidExport: runtimeFactory },

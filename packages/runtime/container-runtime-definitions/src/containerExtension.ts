@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ILayerCompatDetails } from "@fluid-internal/client-utils";
 import type { IAudience } from "@fluidframework/container-definitions/internal";
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports -- BrandedType is a class declaration only
 import type {
@@ -12,6 +13,7 @@ import type {
 	JsonDeserialized,
 	JsonSerializable,
 	Listenable,
+	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import type { IQuorumClients } from "@fluidframework/driver-definitions/internal";
@@ -62,11 +64,24 @@ export type OutboundExtensionMessage<TMessage extends TypedMessage = TypedMessag
 /**
  * Brand for value that has not been verified.
  *
+ * @remarks
  * Usage:
  *
- * - Cast to with `as unknown as UnverifiedBrand<T>` when value of or containing expected type `T` is yet unknown.
+ * - Cast any value to `UnverifiedBrand` using `as unknown as UnverifiedBrand<T>`
+ * when it is not yet confirmed that value is of type `T`.
  *
- * - Cast from with `as unknown` when "instance" will be parsed to `T`.
+ * - When `T` value is needed, use narrowing type guards to check (preferred)
+ * or cast from `UnverifiedBrand` using `as unknown` when "instance" must
+ * be parsed to `T`.
+ *
+ * @example Example narrowing type guard:
+ * ```typescript
+ * function validateFoo(
+ *   unverified: Foo | (Record<string, unknown> & UnverifiedBrand<Foo>)
+ * ): unverified is Foo {
+ *   return unverified.IFooProvider === unverified;
+ * }
+ * ```
  *
  * @sealed
  * @internal
@@ -88,7 +103,7 @@ export type RawInboundExtensionMessage<TMessage extends TypedMessage = TypedMess
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: string;
-					content: JsonDeserialized<unknown>;
+					content: OpaqueJsonDeserialized<unknown>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
@@ -113,7 +128,9 @@ export type VerifiedInboundExtensionMessage<TMessage extends TypedMessage = Type
 		? InternalUtilityTypes.FlattenIntersection<
 				ExtensionMessage<{
 					type: TMessage["type"];
-					content: JsonDeserialized<TMessage["content"]>;
+					content: unknown extends TMessage["content"]
+						? OpaqueJsonDeserialized<unknown>
+						: JsonDeserialized<TMessage["content"]>;
 				}> & {
 					/**
 					 * The client ID that submitted the message.
@@ -136,6 +153,12 @@ export type InboundExtensionMessage<TMessage extends TypedMessage = TypedMessage
 	| VerifiedInboundExtensionMessage<TMessage>;
 
 /**
+ * Runtime properties of an extension.
+ *
+ * @remarks
+ * This is used to coordinate select types that are known only to the extension, but
+ * that host will respect where it calls back or provides extension specific data.
+ *
  * @internal
  */
 export interface ExtensionRuntimeProperties {
@@ -179,13 +202,24 @@ export interface ContainerExtension<
 }
 
 /**
+ * Join status for container.
+ *
+ * @internal
+ */
+export type JoinedStatus = "disconnected" | "joinedForReading" | "joinedForWriting";
+
+/**
  * Events emitted by the {@link ExtensionHost}.
  *
+ * @remarks
+ * With loaders prior to 2.52.0, readonly clients will not get joined status or events.
+ * The only events emitted will be "joined" with canWrite = true and "disconnected".
  * @internal
  */
 export interface ExtensionHostEvents {
 	"disconnected": () => void;
-	"connected": (clientId: ClientConnectionId) => void;
+	"joined": (props: { clientId: ClientConnectionId; canWrite: boolean }) => void;
+	"connectionTypeChanged": (canWrite: boolean) => void;
 }
 
 /**
@@ -198,12 +232,28 @@ export interface ExtensionHostEvents {
  * @internal
  */
 export interface ExtensionHost<TRuntimeProperties extends ExtensionRuntimeProperties> {
-	readonly isConnected: () => boolean;
+	/**
+	 * Gets the current joined status of the container.
+	 *
+	 * @remarks
+	 * Returns one of three possible {@link JoinedStatus} values:
+	 * - "disconnected": The container is not connected to the service
+	 * - "joinedForReading": The container has a read-only connection
+	 * - "joinedForWriting": The container has a write connection
+	 *
+	 * Status changes are signaled through :
+	 * - {@link ExtensionHostEvents.disconnected}: Transitioning to Disconnected state
+	 * - {@link ExtensionHostEvents.joined}: Transition to Connected state (either for reading or writing)
+	 * - {@link ExtensionHostEvents.connectionTypeChanged}: When connection type has changed (e.g., write to read)
+	 */
+	readonly getJoinedStatus: () => JoinedStatus;
 	readonly getClientId: () => ClientConnectionId | undefined;
 
 	readonly events: Listenable<ExtensionHostEvents>;
 
 	readonly logger: ITelemetryBaseLogger;
+
+	readonly supportedFeatures: ILayerCompatDetails["supportedFeatures"];
 
 	/**
 	 * Submits a signal to be sent to other clients.

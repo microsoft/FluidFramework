@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "./users.js";
+import type { IUser } from "./users.js";
 
 /**
  * {@link https://jwt.io/introduction/ | JSON Web Token (JWT)} Claims
  *
  * See {@link https://datatracker.ietf.org/doc/html/rfc7519#section-4}
- * @alpha
+ * @legacy @alpha
  */
 export interface ITokenClaims {
 	/**

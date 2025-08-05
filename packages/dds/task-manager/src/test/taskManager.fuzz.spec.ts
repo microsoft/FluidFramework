@@ -261,6 +261,7 @@ describe("TaskManager fuzz testing", () => {
 		// Leaving the tests enabled without reconnect on mimics previous behavior (and provides more coverage
 		// than skipping them)
 		reconnectProbability: 0,
+		rollbackProbability: 0,
 		detachedStartOptions: {
 			numOpsBeforeAttach: 5,
 			// similar to reconnect there are eventual consistency errors when we enter attaching before rehydrate
@@ -297,8 +298,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 	createDDSFuzzSuite(model, {
 		validationStrategy: { type: "fixedInterval", interval: defaultOptions.validateInterval },
 		// AB#5185: enabling rebasing indicates some unknown eventual consistency issue
-		forceGlobalSeed: true,
-		skip: [5, 7],
+		skip: [0, 4, 6, 7],
 		rebaseProbability: 0.15,
 		containerRuntimeOptions: {
 			flushMode: FlushMode.TurnBased,
@@ -315,6 +315,7 @@ describe("TaskManager fuzz testing with rebasing", () => {
 		detachedStartOptions: {
 			numOpsBeforeAttach: 0,
 		},
+		rollbackProbability: 0,
 		// Uncomment this line to replay a specific seed:
 		// replay: 0,
 		// This can be useful for quickly minimizing failure json while attempting to root-cause a failure.

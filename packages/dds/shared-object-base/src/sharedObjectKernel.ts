@@ -6,31 +6,31 @@
 import type { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelStorageService,
-	type IChannel,
-	type IChannelAttributes,
-	type IChannelFactory,
-	type IChannelServices,
-	type IFluidDataStoreRuntime,
+	IChannel,
+	IChannelAttributes,
+	IChannelFactory,
+	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor/internal";
-import {
+import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	type IExperimentalIncrementalSummaryContext,
-	type IRuntimeMessageCollection,
+	IExperimentalIncrementalSummaryContext,
+	IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { IFluidSerializer } from "./serializer.js";
+import type { IFluidSerializer } from "./serializer.js";
 import {
 	createSharedObjectKind,
 	SharedObject,
 	type ISharedObjectKind,
 	type SharedObjectKind,
 } from "./sharedObject.js";
-import { ISharedObjectEvents, type ISharedObject } from "./types.js";
+import type { ISharedObjectEvents, ISharedObject } from "./types.js";
 import type { IChannelView } from "./utils.js";
 
 /**
@@ -62,6 +62,7 @@ export interface SharedKernel {
 		serializer: IFluidSerializer,
 		telemetryContext: ITelemetryContext | undefined,
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats;
 
 	/**
@@ -146,8 +147,14 @@ class SharedObjectFromKernel<
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
+		fullTree?: boolean,
 	): ISummaryTreeWithStats {
-		return this.#kernel.summarizeCore(serializer, telemetryContext, incrementalSummaryContext);
+		return this.#kernel.summarizeCore(
+			serializer,
+			telemetryContext,
+			incrementalSummaryContext,
+			fullTree,
+		);
 	}
 
 	protected override initializeLocalCore(): void {

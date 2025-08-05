@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import { strict as assert } from "node:assert";
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
@@ -15,8 +14,13 @@ import {
 	MockHandle,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { IToggleOperation, IToggleMoveOperation, IRevertible } from "../../index.js";
-import { SharedArray, SharedArrayRevertible } from "../../index.js";
+import type {
+	IToggleOperation,
+	IToggleMoveOperation,
+	IRevertible,
+	ISharedArray,
+} from "../../index.js";
+import { SharedArrayBuilder, SharedArrayRevertible } from "../../index.js";
 import {
 	verifyEventsEmitted,
 	verifyEntries,
@@ -26,22 +30,22 @@ import {
 } from "../utilities.js";
 
 describe("SharedArray", () => {
-	let sharedArray: SharedArray<number>;
-	let factory: IChannelFactory;
+	let sharedArray: ISharedArray<number>;
+	let factory: IChannelFactory<ISharedArray<number>>;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
 	let testData: number[];
 	let expectedSharedArray: number[];
 
 	beforeEach(async () => {
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
-		factory = SharedArray.getFactory();
-		sharedArray = factory.create(dataStoreRuntime, "sharedArray") as SharedArray<number>;
+		factory = SharedArrayBuilder<number>().getFactory();
+		sharedArray = factory.create(dataStoreRuntime, "sharedArray");
 		testData = [1, 2, 3, 4];
 		expectedSharedArray = testData;
 	});
 
 	describe("SharedArray in connected state with a remote SharedArray", () => {
-		let remoteSharedArray: SharedArray<number>;
+		let remoteSharedArray: ISharedArray<number>;
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 
 		beforeEach(async () => {
@@ -66,10 +70,7 @@ describe("SharedArray", () => {
 				objectStorage: new MockStorage(),
 			};
 
-			remoteSharedArray = factory.create(
-				dataStoreRuntime2,
-				"remoteSharedArray",
-			) as SharedArray<number>;
+			remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArray");
 			remoteSharedArray.connect(services2);
 		});
 
@@ -128,10 +129,9 @@ describe("SharedArray", () => {
 						type: 3,
 						isDeleted: false,
 					} satisfies IToggleOperation);
-
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -175,8 +175,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -289,8 +289,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -333,8 +333,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -451,8 +451,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleMoveOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -499,8 +499,8 @@ describe("SharedArray", () => {
 					} satisfies IToggleMoveOperation);
 
 					// Attach the revertible event listener.
-					sharedArray.on("revertible", (revertibleItem: SharedArrayRevertible) => {
-						revertible = revertibleItem as IRevertible;
+					sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+						revertible = revertibleItem;
 					});
 
 					// Perform the actual operation.
@@ -555,15 +555,15 @@ describe("SharedArray", () => {
 });
 
 describe("SharedArray in connected state with a remote SharedArray with IFluidHandle", () => {
-	let factory: IChannelFactory;
+	let factory: IChannelFactory<ISharedArray<IFluidHandle>>;
 	let dataStoreRuntime: MockFluidDataStoreRuntime;
-	let localSharedArray: SharedArray<IFluidHandle>;
-	let remoteSharedArray: SharedArray<IFluidHandle>;
+	let localSharedArray: ISharedArray<IFluidHandle>;
+	let remoteSharedArray: ISharedArray<IFluidHandle>;
 	let containerRuntimeFactory: MockContainerRuntimeFactory;
 	// const mockHandle = new MockHandle({});
 
 	beforeEach(async () => {
-		factory = SharedArray.getFactory();
+		factory = SharedArrayBuilder<IFluidHandle>().getFactory();
 		dataStoreRuntime = new MockFluidDataStoreRuntime();
 		containerRuntimeFactory = new MockContainerRuntimeFactory();
 
@@ -574,10 +574,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 			deltaConnection: containerRuntime1.createDeltaConnection(),
 			objectStorage: new MockStorage(),
 		};
-		localSharedArray = factory.create(
-			dataStoreRuntime,
-			"sharedArrayIFluidHandle",
-		) as SharedArray<IFluidHandle>;
+		localSharedArray = factory.create(dataStoreRuntime, "sharedArrayIFluidHandle");
 		localSharedArray.connect(services1);
 
 		// Create and connect a second SharedArray.
@@ -589,10 +586,7 @@ describe("SharedArray in connected state with a remote SharedArray with IFluidHa
 			objectStorage: new MockStorage(),
 		};
 
-		remoteSharedArray = factory.create(
-			dataStoreRuntime2,
-			"remoteSharedArrayId",
-		) as SharedArray<IFluidHandle>;
+		remoteSharedArray = factory.create(dataStoreRuntime2, "remoteSharedArrayId");
 		remoteSharedArray.connect(services2);
 	});
 

@@ -55,8 +55,8 @@ import { type CursorWithNode, SynchronousCursor } from "../treeCursorUtils.js";
 import {
 	defaultSchemaPolicy,
 	FieldKinds,
-	inSchemaOrThrow,
 	isFieldInSchema,
+	throwOutOfSchema,
 } from "../default-schema/index.js";
 
 /** A `MapTree` with mutable fields */
@@ -154,12 +154,19 @@ export class ObjectForest implements IEditableForest, WithBreakable {
 								// Some detached fields may have multiple nodes, so we must treat them as sequences:
 								kind: FieldKinds.sequence.identifier,
 								types: new Set(documentRoot.map((node) => node.type)),
+
+								// Metadata is not used for schema checks
+								persistedMetadata: undefined,
 							};
-				const maybeError = isFieldInSchema(documentRoot, fieldSchema, {
-					schema,
-					policy: defaultSchemaPolicy,
-				});
-				inSchemaOrThrow(maybeError);
+				isFieldInSchema(
+					documentRoot,
+					fieldSchema,
+					{
+						schema,
+						policy: defaultSchemaPolicy,
+					},
+					throwOutOfSchema,
+				);
 			}
 		}
 	}

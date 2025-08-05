@@ -20,15 +20,18 @@ import {
 	type TreeArrayNode,
 	type TreeMapNode,
 	type TreeView,
-} from "../../../simple-tree/index.js";
-import {
+	typeSchemaSymbol,
+	type NodeFromSchema,
+	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchema,
 	type WithType,
 	isTreeNode,
 	NodeKind,
+	type TreeFieldFromImplicitField,
+} from "../../../simple-tree/index.js";
+import {
 	// Import directly to get the non-type import to allow testing of the package only instanceof
 	TreeNode,
-	typeSchemaSymbol,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/core/index.js";
 import {
@@ -38,12 +41,6 @@ import {
 	type SchemaStatics,
 	// eslint-disable-next-line import/no-internal-modules
 } from "../../../simple-tree/api/schemaFactory.js";
-import type {
-	NodeFromSchema,
-	TreeFieldFromImplicitField,
-	TreeNodeFromImplicitAllowedTypes,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../../simple-tree/schemaTypes.js";
 import type {
 	areSafelyAssignable,
 	requireAssignableTo,
@@ -413,6 +410,56 @@ describe("schemaFactory", () => {
 			assert.deepEqual(schema.fields.get("bar")!.metadata, barMetadata);
 		});
 
+		it("Node schema persisted metadata", () => {
+			const factory = new SchemaFactoryAlpha("com.example");
+
+			const fooMetadata = { "a": 2 };
+
+			class Foo extends factory.objectAlpha(
+				"Foo",
+				{ bar: factory.number },
+				{ persistedMetadata: fooMetadata },
+			) {}
+
+			assert.deepEqual(Foo.persistedMetadata, fooMetadata);
+		});
+
+		it("Field schema persisted metadata", () => {
+			const schemaFactory = new SchemaFactoryAlpha("com.example");
+			const fooMetadata = { "a": 2 };
+
+			class Foo extends schemaFactory.objectAlpha(
+				"Foo",
+				{
+					bar: schemaFactory.required(schemaFactory.number, {
+						persistedMetadata: fooMetadata,
+					}),
+					baz: schemaFactory.optional(schemaFactory.string, {
+						persistedMetadata: fooMetadata,
+					}),
+					qux: schemaFactory.optionalRecursive(
+						schemaFactory.objectAlpha("Qux", { quux: schemaFactory.string }),
+						{ persistedMetadata: fooMetadata },
+					),
+				},
+				{ persistedMetadata: fooMetadata },
+			) {}
+
+			const foo = hydrate(Foo, {
+				bar: 37,
+				baz: "test",
+				qux: { quux: "test" },
+			});
+
+			const schema = Tree.schema(foo) as ObjectNodeSchema;
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("bar")!.persistedMetadata, fooMetadata);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("baz")!.persistedMetadata, fooMetadata);
+			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+			assert.deepEqual(schema.fields.get("qux")!.persistedMetadata, fooMetadata);
+		});
+
 		describe("deep equality", () => {
 			const schema = new SchemaFactory("com.example");
 
@@ -640,6 +687,73 @@ describe("schemaFactory", () => {
 			};
 
 			class Foo extends factory.mapAlpha("Foo", factory.number, { metadata: fooMetadata }) {}
+
+			assert.deepEqual(Foo.metadata, fooMetadata);
+
+			// Ensure `Foo.metadata` is typed as we expect, and we can access its fields without casting.
+			const description = Foo.metadata.description;
+			const baz = Foo.metadata.custom.baz;
+		});
+	});
+
+	describe("Record", () => {
+		it("Structural", () => {
+			const factory = new SchemaFactoryAlpha("test");
+
+			// Explicit structural example
+			const MyRecord = factory.record(factory.number);
+			type MyRecord = NodeFromSchema<typeof MyRecord>;
+
+			// Inline structural example
+			factory.object("Foo", { myMap: factory.record(factory.number) });
+
+			function broken() {
+				// @ts-expect-error structural map schema are not typed as classes.
+				class NotAClass extends factory.record(factory.number) {}
+			}
+		});
+
+		it("Named", () => {
+			const factory = new SchemaFactoryAlpha("test");
+			class NamedRecord extends factory.record("name", factory.number) {}
+
+			// Due to missing unhydrated map support, make a wrapper object
+			class Parent extends factory.object("parent", { child: NamedRecord }) {}
+
+			// Due to lack of support for navigating unhydrated nodes, create an actual tree so we can navigate to the map node:
+			const treeConfiguration = new TreeViewConfiguration({ schema: Parent });
+			const view = getView(treeConfiguration);
+			view.initialize(new Parent({ child: { x: 5 } }));
+
+			const recordNode = view.root.child;
+			assert(recordNode instanceof NamedRecord);
+			assert(isTreeNode(recordNode));
+
+			// Test record property access
+			assert.equal(recordNode.x, 5);
+			recordNode.x = 42;
+			assert.equal(recordNode.x, 42);
+		});
+
+		it("Unhydrated", () => {
+			const factory = new SchemaFactoryAlpha("test");
+			class NamedRecord extends factory.record("name", factory.number) {}
+			const namedInstance = new NamedRecord({ x: 5 });
+		});
+
+		it("Node schema metadata", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			const fooMetadata = {
+				description: "A map of numbers",
+				custom: {
+					baz: true,
+				},
+			};
+
+			class Foo extends factory.recordAlpha("Foo", factory.number, {
+				metadata: fooMetadata,
+			}) {}
 
 			assert.deepEqual(Foo.metadata, fooMetadata);
 
@@ -1119,6 +1233,63 @@ describe("schemaFactory", () => {
 			},
 			validateUsageError(/collision/),
 		);
+	});
+
+	it("variance with respect to scope and alpha", () => {
+		// Covariant over scope
+		type _check1 = requireAssignableTo<SchemaFactory<"x">, SchemaFactory<string>>;
+		type _check2 = requireAssignableTo<SchemaFactoryAlpha<"x">, SchemaFactoryAlpha<string>>;
+
+		// Still covariant when there is a "." in the scope.
+		type _check3 = requireAssignableTo<SchemaFactory<"x.y">, SchemaFactory<string>>;
+		type _check4 = requireAssignableTo<SchemaFactoryAlpha<"x.y">, SchemaFactoryAlpha<string>>;
+
+		// Alpha assignable to non-alpha
+		type _check5 = requireAssignableTo<SchemaFactoryAlpha<"x">, SchemaFactory<string>>;
+		type _check7 = requireAssignableTo<SchemaFactoryAlpha<"x.y">, SchemaFactory<"x.y">>;
+
+		// TODO: For some reason, alpha can not be assigned to non alpha with "." in the scope.
+		// This is a known issue, and there is a note about it in the docs for `adaptEnum`.
+		// @ts-expect-error Known issue
+		type _check6 = requireAssignableTo<SchemaFactoryAlpha<"x.y">, SchemaFactory<string>>;
+
+		// TODO: AB#43345
+		// This error seems to be related to `objectRecursive` and:
+		type _check8<Name extends string> = requireAssignableTo<
+			// @ts-expect-error Known issue: https://github.com/microsoft/TypeScript/issues/61990
+			`x.y.${Name}`,
+			`${string}.${Name}`
+		>;
+	});
+
+	it("scopedFactory", () => {
+		const factory = new SchemaFactoryAlpha("test.blah");
+
+		const scopedFactory: SchemaFactoryAlpha<"test.blah.scoped"> =
+			factory.scopedFactory("scoped");
+		assert.equal(scopedFactory.scope, "test.blah.scoped");
+		type _check = requireTrue<
+			areSafelyAssignable<typeof scopedFactory.scope, "test.blah.scoped">
+		>;
+
+		type Scope = typeof scopedFactory extends SchemaFactoryAlpha<infer S> ? S : never;
+
+		function inferScope<TScope extends string>(f: SchemaFactory<TScope>) {
+			return f.scope;
+		}
+
+		const inferred = inferScope(scopedFactory);
+		// TODO: AB#43345
+		// @ts-expect-error Known issue: see "variance with respect to scope and alpha" test.
+		type _check2 = requireTrue<areSafelyAssignable<typeof inferred, "test.blah.scoped">>;
+
+		function inferScope2<TScope extends string>(
+			f: SchemaFactory<TScope> | SchemaFactoryAlpha<TScope>,
+		) {
+			return f.scope;
+		}
+		const inferred2 = inferScope2(scopedFactory);
+		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 });
 

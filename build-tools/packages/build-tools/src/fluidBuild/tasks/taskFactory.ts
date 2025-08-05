@@ -5,12 +5,13 @@
 
 import { getExecutableFromCommand } from "../../common/utils";
 import type { BuildContext } from "../buildContext";
-import { BuildPackage } from "../buildGraph";
+import type { BuildPackage } from "../buildGraph";
+import type { TaskFileDependencies } from "../fluidTaskDefinitions";
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands";
 import { GroupTask } from "./groupTask";
 import { ApiExtractorTask } from "./leaf/apiExtractorTask";
 import { BiomeTask } from "./leaf/biomeTasks";
-import { createDeclarativeTaskHandler } from "./leaf/declarativeTask";
+import { DeclarativeLeafTask } from "./leaf/declarativeTask";
 import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
 import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
@@ -28,8 +29,8 @@ import { PrettierTask } from "./leaf/prettierTask";
 import { Ts2EsmTask } from "./leaf/ts2EsmTask";
 import { TscTask } from "./leaf/tscTask";
 import { WebpackTask } from "./leaf/webpackTask";
-import { type Task } from "./task";
-import { type TaskHandler, isConstructorFunction } from "./taskHandlers";
+import type { Task } from "./task";
+import type { TaskHandler } from "./taskHandlers";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {
@@ -69,20 +70,34 @@ const executableToLeafTask: {
 } as const;
 
 /**
- * Given a command executable, attempts to find a matching `TaskHandler` that will handle the task. If one is found, it
- * is returned; otherwise, it returns `UnknownLeafTask` as the default handler.
+ * Create a leaf task for the given command.
+ * If the task has file dependencies specified, or the executable is a declarative task, create a declarative task.
+ * Otherwise, find a known executable task handler for the executable, or use the UnknownLeafTask as a fallback.
  *
- * Any DeclarativeTasks that are defined in the fluid-build config are checked first, followed by the built-in
- * executableToLeafTask constant.
- *
- * @param executable The command executable to find a matching task handler for.
+ * @param node - build package for the target task
+ * @param command - the command to create the task for
+ * @param context - the build context
+ * @param taskName - target name
+ * @param files - file dependencies for the task, if any
  * @returns A `TaskHandler` for the task, if found. Otherwise `UnknownLeafTask` as the default handler.
  */
-function getTaskForExecutable(
-	executable: string,
+function getLeafTaskForCommand(
 	node: BuildPackage,
+	command: string,
 	context: BuildContext,
-): TaskHandler {
+	taskName?: string,
+	files?: TaskFileDependencies,
+) {
+	// If the task has file dependencies specification, create a declarative task
+	if (files !== undefined) {
+		return new DeclarativeLeafTask(node, command, context, taskName, files);
+	}
+
+	// If the executable has a declarative task defined, use that
+	const executable = getExecutableFromCommand(
+		command,
+		context.fluidBuildConfig?.multiCommandExecutables ?? [],
+	);
 	const config = context.fluidBuildConfig;
 	const declarativeTasks = config?.declarativeTasks;
 	const taskMatch =
@@ -90,15 +105,12 @@ function getTaskForExecutable(
 		declarativeTasks?.[executable];
 
 	if (taskMatch !== undefined) {
-		return createDeclarativeTaskHandler(taskMatch);
+		return new DeclarativeLeafTask(node, command, context, taskName, taskMatch);
 	}
 
-	// No declarative task found matching the executable, so look it up in the built-in list.
-	const builtInHandler: TaskHandler | undefined = executableToLeafTask[executable];
-
-	// If no handler is found, return the UnknownLeafTask as the default handler. The task won't support incremental
-	// builds.
-	return builtInHandler ?? UnknownLeafTask;
+	// Create a task using task handler of a known executable, or use the UnknownLeafTask as a fallback
+	const handler = executableToLeafTask[executable] ?? UnknownLeafTask;
+	return new handler(node, command, context, taskName);
 }
 
 function getRunScriptName(command: string, packageManager: string): string | undefined {
@@ -124,6 +136,7 @@ export class TaskFactory {
 		context: BuildContext,
 		pendingInitDep: Task[],
 		taskName?: string,
+		files?: TaskFileDependencies,
 	): GroupTask | LeafTask {
 		// Split the "&&" first
 		const subTasks = new Array<Task>();
@@ -132,12 +145,23 @@ export class TaskFactory {
 			for (const step of steps) {
 				subTasks.push(TaskFactory.Create(node, step.trim(), context, pendingInitDep));
 			}
+
+			if (files !== undefined) {
+				throw new Error(
+					`File dependency specification not allowed on multi-command tasks: ${taskName}`,
+				);
+			}
 			// create a sequential group task
 			return new GroupTask(node, command, context, subTasks, taskName, true);
 		}
 
 		// Parse concurrently
 		if (isConcurrentlyCommand(command)) {
+			if (files !== undefined) {
+				throw new Error(
+					`File dependency specification not allowed on concurrently command tasks: ${taskName}`,
+				);
+			}
 			const subTasks = new Array<Task>();
 			// Note: result of no matches is allowed from concurrenly wildcard, so long as another
 			// concurrently step has a match.
@@ -178,27 +202,19 @@ export class TaskFactory {
 		if (runScript !== undefined) {
 			const subTask = node.getScriptTask(runScript, pendingInitDep);
 			if (subTask !== undefined) {
+				if (files !== undefined) {
+					throw new Error(
+						`File dependency specification not allowed on package manager run command tasks: ${taskName}`,
+					);
+				}
 				// Even though there is only one task, create a group task for the taskName
 				return new GroupTask(node, command, context, [subTask], taskName);
 			}
 			// Unable find the script.  Treat it as if it is a plain leaf task.
 		}
 
-		// Leaf tasks; map the executable to a known task type. If none is found, the UnknownLeafTask is used.
-		const executable = getExecutableFromCommand(
-			command,
-			context.fluidBuildConfig?.multiCommandExecutables ?? [],
-		).toLowerCase();
-
-		// Will return a task-specific handler or the UnknownLeafTask
-		const handler = getTaskForExecutable(executable, node, context);
-
-		// Invoke the function or constructor to create the task handler
-		if (isConstructorFunction(handler)) {
-			return new handler(node, command, context, taskName);
-		} else {
-			return handler(node, command, context, taskName);
-		}
+		// Leaf tasks
+		return getLeafTaskForCommand(node, command, context, taskName, files);
 	}
 
 	/**

@@ -95,6 +95,14 @@ export interface ShareLinkInfoType {
 	 * permission then this link can be redeemed for the permissions in the same network call.
 	 */
 	sharingLinkToRedeem?: string;
+
+	/**
+	 * When a sharingLinkToRedeem is used, this parameter can be set to make the request with
+	 * the redemption expire after a certain time period.
+	 * The duration of the redemption is not set by Fluid.
+	 * @defaultValue false
+	 */
+	isRedemptionNonDurable?: boolean;
 }
 /**
  * @legacy
@@ -161,4 +169,14 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	 * Can be ommited in case it is not necessary for the link handling logic.
 	 */
 	appName?: string;
+
+	/**
+	 * File metadata such as eTag.
+	 */
+	fileMetadata?: {
+		/**
+		 * ETag (entity tag) identifier for a specific version of the file.
+		 */
+		eTag?: string;
+	};
 }

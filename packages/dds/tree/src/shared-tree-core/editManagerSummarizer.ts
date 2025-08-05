@@ -8,6 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
+	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
 } from "@fluidframework/runtime-definitions/internal";
@@ -49,22 +50,14 @@ export class EditManagerSummarizer<TChangeset> implements Summarizable {
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 	) {}
 
-	public getAttachSummary(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): ISummaryTreeWithStats {
-		return this.summarizeCore(stringify);
-	}
-
-	public async summarize(
-		stringify: SummaryElementStringifier,
-		fullTree?: boolean,
-		trackState?: boolean,
-		telemetryContext?: ITelemetryContext,
-	): Promise<ISummaryTreeWithStats> {
-		return this.summarizeCore(stringify);
+	public summarize(props: {
+		stringify: SummaryElementStringifier;
+		fullTree?: boolean;
+		trackState?: boolean;
+		telemetryContext?: ITelemetryContext;
+		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext;
+	}): ISummaryTreeWithStats {
+		return this.summarizeCore(props.stringify);
 	}
 
 	private summarizeCore(stringify: SummaryElementStringifier): ISummaryTreeWithStats {

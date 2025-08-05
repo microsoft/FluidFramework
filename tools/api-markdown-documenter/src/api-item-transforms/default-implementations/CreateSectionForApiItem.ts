@@ -76,9 +76,23 @@ export function createSectionForApiItem(
 	// Render alpha/beta notice if applicable
 	const releaseLevel = getEffectiveReleaseLevel(apiItem);
 	if (releaseLevel === ReleaseTag.Alpha) {
-		sections.push(wrapInSection([alphaWarningSpan]));
+		sections.push(
+			wrapInSection([
+				{
+					type: "paragraph",
+					children: [alphaWarningSpan],
+				},
+			]),
+		);
 	} else if (releaseLevel === ReleaseTag.Beta) {
-		sections.push(wrapInSection([betaWarningSpan]));
+		sections.push(
+			wrapInSection([
+				{
+					type: "paragraph",
+					children: [betaWarningSpan],
+				},
+			]),
+		);
 	}
 
 	// Render signature (if any)

@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import { type ISerializedHandle } from "@fluidframework/runtime-utils/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
+import type { ISerializedHandle } from "@fluidframework/runtime-utils/internal";
 
 import { FluidSerializer } from "./serializer.js";
 

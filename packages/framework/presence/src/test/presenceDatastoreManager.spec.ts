@@ -5,15 +5,24 @@
 
 import { strict as assert } from "node:assert";
 
+import type {
+	InboundExtensionMessage,
+	RawInboundExtensionMessage,
+} from "@fluidframework/container-runtime-definitions/internal";
+import type { JsonSerializable, TypedMessage } from "@fluidframework/core-interfaces/internal";
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers, spy } from "sinon";
 
-import type { AttendeeId } from "../presence.js";
+import { toOpaqueJson } from "../internalUtils.js";
+import type { AttendeeId, PresenceWithNotifications } from "../presence.js";
 import { createPresenceManager } from "../presenceManager.js";
+import type { InternalWorkspaceAddress, SignalMessages } from "../protocol.js";
 import type { SystemWorkspaceDatastore } from "../systemWorkspace.js";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	connectionId2,
@@ -75,10 +84,16 @@ describe("Presence", () => {
 		});
 
 		describe("responds to ClientJoin", () => {
-			let presence: ReturnType<typeof createPresenceManager>;
+			let processSignal: ProcessSignalFunction;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(runtime, "attendeeId-2", "client2", clock, logger);
+				({ processSignal } = prepareConnectedPresence(
+					runtime,
+					"attendeeId-2",
+					"client2",
+					clock,
+					logger,
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -117,7 +132,7 @@ describe("Presence", () => {
 				]);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:ClientJoin",
@@ -141,7 +156,7 @@ describe("Presence", () => {
 			it("with broadcast after delay when NOT preferred responder", () => {
 				// #region Part 1 (no response)
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:ClientJoin",
@@ -203,7 +218,8 @@ describe("Presence", () => {
 		});
 
 		describe("receiving DatastoreUpdate", () => {
-			let presence: ReturnType<typeof createPresenceManager>;
+			let presence: PresenceWithNotifications;
+			let processSignal: ProcessSignalFunction;
 
 			const systemWorkspaceUpdate = {
 				"clientToSessionId": {
@@ -220,7 +236,7 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 1,
 						"timestamp": 0,
-						"value": {},
+						"value": toOpaqueJson({}),
 					},
 				},
 			};
@@ -230,20 +246,20 @@ describe("Presence", () => {
 					[attendeeId1]: {
 						"rev": 0,
 						"timestamp": 0,
-						"value": {},
+						"value": toOpaqueJson({}),
 						"ignoreUnmonitored": true,
 					},
 				},
 			} as const;
 
 			beforeEach(() => {
-				presence = prepareConnectedPresence(
+				({ presence, processSignal } = prepareConnectedPresence(
 					runtime,
 					attendeeId2,
 					connectionId2,
 					clock,
 					logger,
-				);
+				));
 
 				// Pass a little time (to mimic reality)
 				clock.tick(10);
@@ -255,7 +271,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -283,7 +299,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -314,7 +330,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -323,12 +339,12 @@ describe("Presence", () => {
 							avgLatency: 20,
 							data: {
 								"system:presence": systemWorkspaceUpdate,
-								"u:name:testUnknownWorkspace": {
+								["u:name:testUnknownWorkspace" as InternalWorkspaceAddress]: {
 									"latest": {
 										[attendeeId1]: {
 											"rev": 1,
 											"timestamp": 0,
-											"value": { x: 1, y: 1, z: 1 },
+											"value": toOpaqueJson({ x: 1, y: 1, z: 1 }),
 										},
 									},
 								},
@@ -352,7 +368,7 @@ describe("Presence", () => {
 				presence.notifications.getWorkspace("name:testNotificationWorkspace", {});
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -380,7 +396,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -390,7 +406,8 @@ describe("Presence", () => {
 							data: {
 								"system:presence": systemWorkspaceUpdate,
 								// Unrecognized internal address
-								"sn:name:testStateWorkspace": statesWorkspaceUpdate,
+								["sn:name:testStateWorkspace" as InternalWorkspaceAddress]:
+									statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -408,7 +425,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -418,7 +435,7 @@ describe("Presence", () => {
 							data: {
 								"system:presence": systemWorkspaceUpdate,
 								// Invalid public address (must be `${string}:${string}`)
-								"s:testStateWorkspace": statesWorkspaceUpdate,
+								["s:testStateWorkspace" as InternalWorkspaceAddress]: statesWorkspaceUpdate,
 							},
 						},
 						clientId: "client1",
@@ -436,7 +453,7 @@ describe("Presence", () => {
 				presence.events.on("workspaceActivated", listener);
 
 				// Act
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -452,7 +469,7 @@ describe("Presence", () => {
 					},
 					false,
 				);
-				presence.processSignal(
+				processSignal(
 					[],
 					{
 						type: "Pres:DatastoreUpdate",
@@ -470,6 +487,136 @@ describe("Presence", () => {
 				);
 				// Verify
 				assert.strictEqual(listener.callCount, 1);
+			});
+
+			it("with acknowledgementId sends targeted acknowledgment message back to requestor", () => {
+				// We expect to send a targeted acknowledgment back to the requestor
+				runtime.signalsExpected.push([
+					{
+						type: "Pres:Ack",
+						content: { id: "ackID" },
+						targetClientId: "client4",
+					},
+				]);
+
+				// Act - send generic datastore update with acknowledgement id specified
+				processSignal(
+					[],
+					{
+						type: "Pres:DatastoreUpdate",
+						content: {
+							sendTimestamp: clock.now - 10,
+							avgLatency: 20,
+							data: {
+								"system:presence": systemWorkspaceUpdate,
+								"s:name:testStateWorkspace": statesWorkspaceUpdate,
+							},
+							acknowledgementId: "ackID",
+						},
+						clientId: "client4",
+					},
+					false,
+				);
+
+				// Verify
+				assertFinalExpectations(runtime, logger);
+			});
+		});
+
+		describe("receiving unrecognized message", () => {
+			let presence: PresenceWithNotifications;
+			let processSignal: ProcessSignalFunction;
+
+			const systemWorkspaceUpdate = {
+				"clientToSessionId": {
+					"client1": {
+						"rev": 0,
+						"timestamp": 0,
+						"value": attendeeId1,
+					},
+				},
+			};
+
+			const statesWorkspaceUpdate = {
+				"latest": {
+					[attendeeId1]: {
+						"rev": 1,
+						"timestamp": 0,
+						"value": toOpaqueJson({}),
+					},
+				},
+			};
+
+			beforeEach(() => {
+				({ presence, processSignal } = prepareConnectedPresence(
+					runtime,
+					attendeeId2,
+					connectionId2,
+					clock,
+					logger,
+				));
+
+				// Pass a little time (to mimic reality)
+				clock.tick(10);
+			});
+
+			/**
+			 * Use to pretend any general inbound message is an unverified Presence message
+			 */
+			function markUnverifiedIncomingMessage<T extends TypedMessage>(
+				// make sure message "was" at least serializable
+				message: InboundExtensionMessage<T> & JsonSerializable<T>,
+			): RawInboundExtensionMessage<SignalMessages> {
+				return message as RawInboundExtensionMessage<SignalMessages>;
+			}
+
+			function processUnrecognizedMessage({ optional }: { optional: boolean }): void {
+				// Mocked to look very much like a Presence message, but with an unrecognized type.
+				const unrecognizedMessage = {
+					type: "Pres: Unrecognized Message",
+					content: {
+						sendTimestamp: clock.now - 10,
+						avgLatency: 20,
+						data: {
+							"system:presence": systemWorkspaceUpdate,
+							"s:name:testStateWorkspace": statesWorkspaceUpdate,
+						},
+					} as const satisfies InboundExtensionMessage<SignalMessages>["content"],
+					clientId: "client1",
+				} as const;
+				processSignal(
+					optional ? ["?"] : [],
+					markUnverifiedIncomingMessage(unrecognizedMessage),
+					false,
+				);
+			}
+
+			it("that is NOT optional, throws", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act & Verify
+				assert.throws(
+					() => processUnrecognizedMessage({ optional: false }),
+					(e: Error) =>
+						validateAssertionError(e, /Unrecognized message type in critical message/),
+				);
+
+				// Verify
+				assert.strictEqual(listener.called, false);
+			});
+
+			it("that is optional, ignores message and does NOT throw", () => {
+				// Setup
+				const listener = spy();
+				presence.events.on("workspaceActivated", listener);
+
+				// Act & Verify
+				processUnrecognizedMessage({ optional: true });
+
+				// Verify
+				assert.strictEqual(listener.called, false);
 			});
 		});
 	});

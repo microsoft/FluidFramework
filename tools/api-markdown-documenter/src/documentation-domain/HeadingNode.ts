@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Heading } from "../Heading.js";
+import type { Node } from "mdast";
 
-import { DocumentationParentNodeBase, type DocumentationNode } from "./DocumentationNode.js";
-import { DocumentationNodeType } from "./DocumentationNodeType.js";
-import { PlainTextNode } from "./PlainTextNode.js";
+import type { Heading } from "../Heading.js";
 
 /**
  * A document heading.
@@ -28,49 +26,28 @@ import { PlainTextNode } from "./PlainTextNode.js";
  * <h1>Documentation 101</h1>
  * ```
  *
+ * @sealed
  * @public
  */
-export class HeadingNode
-	extends DocumentationParentNodeBase
-	implements Omit<Heading, "title">
-{
-	/**
-	 * {@inheritDoc DocumentationNode."type"}
-	 */
-	public readonly type = DocumentationNodeType.Heading;
+export class HeadingNode implements Node, Heading {
+	public readonly type = "heading";
 
-	/**
-	 * {@inheritDoc Heading.id}
-	 */
-	public readonly id?: string;
+	public constructor(
+		/**
+		 * {@inheritDoc Heading.title}
+		 */
+		public readonly title: string,
 
-	/**
-	 * {@inheritDoc DocumentationNode.singleLine}
-	 */
-	public override get singleLine(): false {
-		return false;
-	}
-
-	public constructor(content: DocumentationNode[], id?: string) {
-		super(content);
-
-		this.id = id;
-	}
-
-	/**
-	 * Generates a `HeadingNode` from the provided string.
-	 * @param text - The node contents. Note: this must not contain newline characters.
-	 * @param id - See {@link Heading.id}
-	 * @param level - See {@link Heading.level}
-	 */
-	public static createFromPlainText(text: string, id?: string): HeadingNode {
-		return new HeadingNode([new PlainTextNode(text)], id);
-	}
+		/**
+		 * {@inheritDoc Heading.id}
+		 */
+		public readonly id?: string,
+	) {}
 
 	/**
 	 * Generates a `HeadingNode` from the provided {@link Heading}.
 	 */
 	public static createFromPlainTextHeading(heading: Heading): HeadingNode {
-		return HeadingNode.createFromPlainText(heading.title, heading.id);
+		return new HeadingNode(heading.title, heading.id);
 	}
 }

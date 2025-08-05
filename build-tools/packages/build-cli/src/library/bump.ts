@@ -5,14 +5,14 @@
 
 import {
 	DEFAULT_INTERDEPENDENCY_RANGE,
-	InterdependencyRange,
-	VersionChangeType,
-	VersionScheme,
+	type InterdependencyRange,
+	type VersionChangeType,
+	type VersionScheme,
 	bumpVersionScheme,
 	isVersionBumpType,
 } from "@fluid-tools/version-tools";
-import { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
-import { Context } from "./context.js";
+import type { Logger, MonoRepo, Package } from "@fluidframework/build-tools";
+import type { Context } from "./context.js";
 
 import { setVersion } from "./package.js";
 

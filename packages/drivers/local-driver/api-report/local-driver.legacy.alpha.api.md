@@ -14,6 +14,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     createContainer(createNewSummary: ISummaryTree | undefined, resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     disconnectClient(clientId: string, disconnectReason: string): void;
+    readonly ILayerCompatDetails?: unknown;
     nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any): void;
 }
 
