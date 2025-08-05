@@ -3,14 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import {
+	Context,
 	getKernel,
 	isTreeNode,
+	UnhydratedContext,
 	type NodeKind,
 	type TreeNode,
 	type Unhydrated,
 	type WithType,
 } from "../core/index.js";
+import { getUnhydratedContext } from "../createContext.js";
 import type { ImplicitFieldSchema, TreeFieldFromImplicitField } from "../fieldSchema.js";
 
 import { createFromCursor } from "./create.js";
@@ -128,8 +132,8 @@ export interface TreeBeta {
 	 *
 	 * - The identifiers in the node's subtree will be preserved, i.e., they are not replaced with new values.
 	 *
-	 * @privateRemarks
-	 * TODO: AB#43548: How this handles unknown optional fields needs to be figured out, tested and documented.
+	 * - If the node (or any node in its subtree) contains {@link SchemaFactoryObjectOptions.allowUnknownOptionalFields|unknown optional fields},
+	 * those fields will be cloned just like the known fields.
 	 */
 	clone<const TSchema extends ImplicitFieldSchema>(
 		node: TreeFieldFromImplicitField<TSchema>,
@@ -137,7 +141,7 @@ export interface TreeBeta {
 
 	// TODO: support more clone options
 	// /**
-	//  * Like {@link TreeBeta.create}, except deeply clones existing nodes.
+	//  * Like {@link (TreeBeta:interface).create}, except deeply clones existing nodes.
 	//  * @remarks
 	//  * This only clones the persisted data associated with a node.
 	//  * Local state, such as properties added to customized schema classes, will not be cloned:
@@ -178,7 +182,16 @@ export const TreeBeta: TreeBeta = {
 
 		const kernel = getKernel(node);
 		const cursor = kernel.getOrCreateInnerNode().borrowCursor();
-		return createFromCursor(kernel.schema, cursor) as Unhydrated<
+
+		// To handle when the node transitively contains unknown optional fields,
+		// derive the context from the source node's stored schema which has stored schema for any such fields and their contents.
+		const flexContext = new UnhydratedContext(
+			defaultSchemaPolicy,
+			kernel.context.flexContext.schema,
+		);
+		const context = new Context(flexContext, getUnhydratedContext(kernel.schema).schema);
+
+		return createFromCursor(kernel.schema, cursor, context) as Unhydrated<
 			TreeFieldFromImplicitField<TSchema>
 		>;
 	},

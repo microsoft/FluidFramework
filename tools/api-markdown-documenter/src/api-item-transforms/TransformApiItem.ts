@@ -24,7 +24,8 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import type { DocumentNode, SectionNode } from "../documentation-domain/index.js";
+import type { ApiDocument } from "../ApiDocument.js";
+import type { SectionNode } from "../documentation-domain/index.js";
 import { getApiItemKind } from "../utilities/index.js";
 
 import {
@@ -36,7 +37,7 @@ import type { ApiItemTransformationConfiguration } from "./configuration/index.j
 import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
 
 /**
- * Creates a {@link DocumentNode} for the specified `apiItem`.
+ * Creates a {@link ApiDocument} for the specified `apiItem`.
  *
  * @remarks
  *
@@ -58,7 +59,7 @@ import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
 export function apiItemToDocument(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): DocumentNode {
+): ApiDocument {
 	const itemKind = getApiItemKind(apiItem);
 
 	if (

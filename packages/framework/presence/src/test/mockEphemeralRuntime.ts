@@ -68,16 +68,16 @@ function makeMockAudience(clients: ClientData[]): MockAudience {
  */
 export class MockEphemeralRuntime implements IEphemeralRuntime {
 	public clientId: string | undefined;
-	public connected: boolean = false;
+	public joined: boolean = false;
 	public logger?: ITelemetryBaseLogger;
 	public readonly quorum: MockQuorumClients;
 	public readonly audience: MockAudience;
 
 	public readonly listeners: {
-		connected: ((clientId: ClientConnectionId) => void)[];
+		joined: ((props: { clientId: ClientConnectionId; canWrite: boolean }) => void)[];
 		disconnected: (() => void)[];
 	} = {
-		connected: [],
+		joined: [],
 		disconnected: [],
 	};
 
@@ -112,7 +112,7 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 					throw new Error(`Event ${event} is not supported`);
 				}
 				// Switch to allowing a single listener as commented when
-				// implementation uses a single "connected" listener.
+				// implementation uses a single "joined" listener.
 				// if (this.listeners[event]) {
 				// 	throw new Error(`Event ${event} already has a listener`);
 				// }
@@ -155,22 +155,23 @@ export class MockEphemeralRuntime implements IEphemeralRuntime {
 
 	public connect(clientId: string): void {
 		this.clientId = clientId;
-		this.connected = true;
-		for (const listener of this.listeners.connected) {
-			listener(clientId);
+		this.joined = true;
+		for (const listener of this.listeners.joined) {
+			listener({ clientId, canWrite: false });
 		}
 	}
 
 	public disconnect(): void {
-		this.connected = false;
+		this.joined = false;
 		for (const listener of this.listeners.disconnected) {
 			listener();
 		}
 	}
 
 	// #region IEphemeralRuntime
-
-	public isConnected = (): ReturnType<IEphemeralRuntime["isConnected"]> => this.connected;
+	public getJoinedStatus = (): ReturnType<IEphemeralRuntime["getJoinedStatus"]> => {
+		return this.joined ? "joinedForReading" : "disconnected";
+	};
 	public getClientId = (): ReturnType<IEphemeralRuntime["getClientId"]> => this.clientId;
 
 	public events: IEphemeralRuntime["events"];

@@ -79,9 +79,9 @@
 		"winston": "^3.6.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.56.0",
+		"@fluid-tools/build-cli": "^0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.56.0",
+		"@fluidframework/build-tools": "^0.57.0",
 		"@fluidframework/eslint-config-fluid": "^5.8.0",
 		"@fluidframework/server-services-shared-previous": "npm:@fluidframework/server-services-shared@7.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",

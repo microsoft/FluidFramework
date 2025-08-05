@@ -302,8 +302,10 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 		it("OpaqueJsonDeserialized is covariant (more general is NOT assignable to specific)", () => {
 			// Setup
 			const deserializedGeneralValue = saveJsonDeserialized(generalValue);
-			let deserializedSpecificValue = saveJsonDeserialized({ a: 1 });
-			use(deserializedSpecificValue);
+			// saveJsonDeserialized specifies `const T` yet without `as const` or
+			// `as <specific type>`, `number` is used for `a` type.
+			let deserializedSpecificValues = saveJsonDeserialized({ a: 1 as 1 | 2 });
+			use(deserializedSpecificValues);
 			let deserializedValueWithMore = saveJsonDeserialized({
 				a: 2 as number,
 				b: "test",
@@ -312,7 +314,7 @@ describe("OpaqueJsonSerializable and OpaqueJsonDeserialized", () => {
 
 			// Act & Verify
 			// @ts-expect-error 'OpaqueJsonDeserialized<{ readonly a: number; }>' is not assignable to type 'OpaqueJsonDeserialized<{ readonly a: 1; }>'
-			deserializedSpecificValue = deserializedGeneralValue; // should not be assignable
+			deserializedSpecificValues = deserializedGeneralValue; // should not be assignable
 			// @ts-expect-error 'OpaqueJsonDeserialized<{ readonly a: number; }>' is not assignable to type 'OpaqueJsonDeserialized<{ readonly a: number; b: "test"; }>'
 			deserializedValueWithMore = deserializedGeneralValue; // should not be assignable
 		});

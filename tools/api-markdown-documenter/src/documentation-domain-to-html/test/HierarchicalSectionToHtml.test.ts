@@ -3,18 +3,9 @@
  * Licensed under the MIT License.
  */
 
-/*!
- * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
- * Licensed under the MIT License.
- */
 import { h } from "hastscript";
 
-import {
-	HeadingNode,
-	HorizontalRuleNode,
-	ParagraphNode,
-	SectionNode,
-} from "../../documentation-domain/index.js";
+import { HeadingNode, SectionNode } from "../../documentation-domain/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
@@ -22,9 +13,17 @@ describe("HierarchicalSection HTML rendering tests", () => {
 	it("Simple section", () => {
 		const input = new SectionNode(
 			[
-				ParagraphNode.createFromPlainText("Foo"),
-				HorizontalRuleNode.Singleton,
-				ParagraphNode.createFromPlainText("Bar"),
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Foo" }],
+				},
+				{
+					type: "thematicBreak",
+				},
+				{
+					type: "paragraph",
+					children: [{ type: "text", value: "Bar" }],
+				},
 			],
 			/* heading: */ new HeadingNode("Hello World", /* id: */ "heading-id"),
 		);
@@ -43,14 +42,24 @@ describe("HierarchicalSection HTML rendering tests", () => {
 		const input = new SectionNode(
 			[
 				new SectionNode(
-					[ParagraphNode.createFromPlainText("Foo")],
+					[
+						{
+							type: "paragraph",
+							children: [{ type: "text", value: "Foo" }],
+						},
+					],
 					/* heading: */ new HeadingNode("Sub-Heading 1", /* id: */ "sub-heading-1"),
 				),
 
 				new SectionNode(
 					[
 						new SectionNode(
-							[ParagraphNode.createFromPlainText("Bar")],
+							[
+								{
+									type: "paragraph",
+									children: [{ type: "text", value: "Bar" }],
+								},
+							],
 							/* heading: */ new HeadingNode("Sub-Heading 2b"),
 						),
 					],

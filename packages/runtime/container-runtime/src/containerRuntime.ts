@@ -24,7 +24,10 @@ import type {
 	ILoader,
 	IContainerStorageService,
 } from "@fluidframework/container-definitions/internal";
-import { isIDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import {
+	ConnectionState,
+	isIDeltaManagerFull,
+} from "@fluidframework/container-definitions/internal";
 import type {
 	ContainerExtensionFactory,
 	ContainerExtensionId,
@@ -36,7 +39,9 @@ import type {
 	IContainerRuntimeInternal,
 	// eslint-disable-next-line import/no-deprecated
 	IContainerRuntimeWithResolveHandle_Deprecated,
+	JoinedStatus,
 	OutboundExtensionMessage,
+	UnverifiedBrand,
 } from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	FluidObject,
@@ -47,12 +52,11 @@ import type {
 	Listenable,
 } from "@fluidframework/core-interfaces";
 import type {
-	IErrorBase,
 	IFluidHandleContext,
 	IFluidHandleInternal,
 	IProvideFluidHandleContext,
 	ISignalEnvelope,
-	JsonDeserialized,
+	OpaqueJsonDeserialized,
 	TypedMessage,
 } from "@fluidframework/core-interfaces/internal";
 import {
@@ -121,11 +125,11 @@ import {
 	FlushModeExperimental,
 	channelsTreeName,
 	gcTreeKey,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
 	isValidMinVersionForCollab,
-	type MinimumVersionForCollab,
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import {
@@ -704,6 +708,21 @@ export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: s
 	};
 };
 
+/**
+ * A {@link TypedMessage} that has unknown content explicitly
+ * noted as deserialized JSON.
+ */
+export interface UnknownIncomingTypedMessage extends TypedMessage {
+	content: OpaqueJsonDeserialized<unknown>;
+}
+
+/**
+ * Does nothing helper to apply unverified branding to a value.
+ */
+function markUnverified<const T>(value: T): T & UnverifiedBrand<T> {
+	return value as T & UnverifiedBrand<T>;
+}
+
 type UnsequencedSignalEnvelope = Omit<ISignalEnvelope, "clientBroadcastSignalSequenceNumber">;
 
 /**
@@ -1175,16 +1194,6 @@ export class ContainerRuntime
 			recentBatchInfo,
 		);
 
-		runtime.blobManager.stashedBlobsUploadP.then(
-			() => {
-				// make sure we didn't reconnect before the promise resolved
-				if (runtime.delayConnectClientId !== undefined && !runtime.disposed) {
-					runtime.delayConnectClientId = undefined;
-					runtime.setConnectionStateCore(true, runtime.delayConnectClientId);
-				}
-			},
-			(error: IErrorBase) => runtime.closeFn(error),
-		);
 		// Initialize the base state of the runtime before it's returned.
 		await runtime.initializeBaseState(context.loader);
 
@@ -1196,7 +1205,6 @@ export class ContainerRuntime
 	}
 
 	public readonly options: Record<string | number, unknown>;
-	private imminentClosure: boolean = false;
 
 	private readonly _getClientId: () => string | undefined;
 	public get clientId(): string | undefined {
@@ -1340,14 +1348,11 @@ export class ContainerRuntime
 	private flushScheduled = false;
 
 	private canSendOps: boolean;
+	private canSendSignals: boolean | undefined;
+
+	private readonly getConnectionState?: () => ConnectionState;
 
 	private consecutiveReconnects = 0;
-
-	/**
-	 * Used to delay transition to "connected" state while we upload
-	 * attachment blobs that were added while disconnected
-	 */
-	private delayConnectClientId?: string;
 
 	private readonly dataModelChangeRunner = new RunCounter();
 
@@ -1538,15 +1543,18 @@ export class ContainerRuntime
 			pendingLocalState,
 			supportedFeatures,
 			snapshotWithContents,
+			getConnectionState,
 		} = context;
+
+		this.getConnectionState = getConnectionState;
 
 		// In old loaders without dispose functionality, closeFn is equivalent but will also switch container to readonly mode
 		this.disposeFn = disposeFn ?? closeFn;
 
 		// Validate that the Loader is compatible with this Runtime.
-		const maybeloaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
+		const maybeLoaderCompatDetailsForRuntime = context as FluidObject<ILayerCompatDetails>;
 		validateLoaderCompatibility(
-			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails,
+			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails,
 			this.disposeFn,
 		);
 
@@ -1682,6 +1690,9 @@ export class ContainerRuntime
 		// Note that we only need to pull the *initial* connected state from the context.
 		// Later updates come through calls to setConnectionState.
 		this.canSendOps = connected;
+		this.canSendSignals = this.getConnectionState
+			? this.getConnectionState() === ConnectionState.Connected
+			: undefined;
 
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "GCFeatureMatrix",
@@ -1765,7 +1776,7 @@ export class ContainerRuntime
 		// If the context has ILayerCompatDetails, it supports referenceSequenceNumbers since that features
 		// predates ILayerCompatDetails.
 		const referenceSequenceNumbersSupported =
-			maybeloaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
+			maybeLoaderCompatDetailsForRuntime.ILayerCompatDetails === undefined
 				? supportedFeatures?.get("referenceSequenceNumbers") === true
 				: true;
 		if (
@@ -1900,7 +1911,7 @@ export class ContainerRuntime
 			routeContext: this.handleContext,
 			blobManagerLoadInfo,
 			storage: this.storage,
-			sendBlobAttachOp: (localId: string, blobId?: string) => {
+			sendBlobAttachOp: (localId: string, blobId: string) => {
 				if (!this.disposed) {
 					this.submit(
 						{ type: ContainerMessageType.BlobAttach, contents: undefined },
@@ -2776,28 +2787,6 @@ export class ContainerRuntime
 		if (canSendOps && this.sessionSchema.idCompressorMode === "delayed") {
 			this.loadIdCompressor();
 		}
-		if (canSendOps === false && this.delayConnectClientId !== undefined) {
-			this.delayConnectClientId = undefined;
-			this.mc.logger.sendTelemetryEvent({
-				eventName: "UnsuccessfulConnectedTransition",
-			});
-			// Don't propagate "disconnected" event because we didn't propagate the previous "connected" event
-			return;
-		}
-
-		// If there are stashed blobs in the pending state, we need to delay
-		// propagation of the "connected" event until we have uploaded them to
-		// ensure we don't submit ops referencing a blob that has not been uploaded
-		const connecting = canSendOps && !this.canSendOps;
-		if (connecting && this.blobManager.hasPendingStashedUploads()) {
-			assert(
-				!this.delayConnectClientId,
-				0x791 /* Connect event delay must be canceled before subsequent connect event */,
-			);
-			assert(!!clientId, 0x792 /* Must have clientId when connecting */);
-			this.delayConnectClientId = clientId;
-			return;
-		}
 
 		this.setConnectionStateCore(canSendOps, clientId);
 	}
@@ -2808,10 +2797,6 @@ export class ContainerRuntime
 	 * @remarks The connection state from container context used here when raising connected events.
 	 */
 	private setConnectionStateCore(canSendOps: boolean, clientId?: string): void {
-		assert(
-			!this.delayConnectClientId,
-			0x394 /* connect event delay must be cleared before propagating connect event */,
-		);
 		this.verifyNotClosed();
 
 		// There might be no change of state due to Container calling this API after loading runtime.
@@ -2865,7 +2850,44 @@ export class ContainerRuntime
 		this.channelCollection.setConnectionState(canSendOps, clientId);
 		this.garbageCollector.setConnectionState(canSendOps, clientId);
 
+		// Emit "connected" and "disconnected" events based on ability to send ops
 		raiseConnectedEvent(this.mc.logger, this, this.connected /* canSendOps */, clientId);
+		// Emit "connectedToService" and "disconnectedFromService" events based on service connection status
+		this.emitServiceConnectionEvents(canSendOpsChanged, canSendOps, clientId);
+	}
+
+	/**
+	 * Emits service connection events based on connection state changes.
+	 *
+	 * @remarks
+	 * "connectedToService" is emitted when container connection state transitions to 'Connected' regardless of connection mode.
+	 * "disconnectedFromService" excludes false "disconnected" events that happen when readonly client transitions to 'Connected'.
+	 */
+	private emitServiceConnectionEvents(
+		canSendOpsChanged: boolean,
+		canSendOps: boolean,
+		clientId?: string,
+	): void {
+		if (!this.getConnectionState) {
+			return;
+		}
+
+		const canSendSignals = this.getConnectionState() === ConnectionState.Connected;
+		const canSendSignalsChanged = this.canSendSignals !== canSendSignals;
+		this.canSendSignals = canSendSignals;
+		if (canSendSignalsChanged) {
+			// If canSendSignals changed, we either transitioned from Connected to Disconnected or CatchingUp to Connected
+			if (canSendSignals) {
+				// Emit for CatchingUp to Connected transition
+				this.emit("connectedToService", clientId, canSendOps);
+			} else {
+				// Emit for Connected to Disconnected transition
+				this.emit("disconnectedFromService");
+			}
+		} else if (canSendOpsChanged) {
+			// If canSendSignals did not change but canSendOps did, then connection type has changed.
+			this.emit("connectionTypeChanged", canSendOps);
+		}
 	}
 
 	public async notifyOpReplay(message: ISequencedDocumentMessage): Promise<void> {
@@ -3291,17 +3313,17 @@ export class ContainerRuntime
 	public processSignal(
 		message: ISignalMessage<{
 			type: string;
-			content: ISignalEnvelope<{ type: string; content: JsonDeserialized<unknown> }>;
+			content: ISignalEnvelope<{ type: string; content: OpaqueJsonDeserialized<unknown> }>;
 		}>,
 		local: boolean,
 	): void {
 		const envelope = message.content;
-		const transformed = {
+		const transformed = markUnverified({
 			clientId: message.clientId,
 			content: envelope.contents.content,
 			type: envelope.contents.type,
 			targetClientId: message.targetClientId,
-		};
+		});
 
 		// Only collect signal telemetry for broadcast messages sent by the current client.
 		if (message.clientId === this.clientId) {
@@ -3324,7 +3346,8 @@ export class ContainerRuntime
 
 	private routeNonContainerSignal(
 		address: string,
-		signalMessage: IInboundSignalMessage<{ type: string; content: JsonDeserialized<unknown> }>,
+		signalMessage: IInboundSignalMessage<UnknownIncomingTypedMessage> &
+			UnverifiedBrand<UnknownIncomingTypedMessage>,
 		local: boolean,
 	): void {
 		// channelCollection signals are identified by no starting `/` in address.
@@ -3332,13 +3355,15 @@ export class ContainerRuntime
 			// Due to a mismatch between different layers in terms of
 			// what is the interface of passing signals, we need to adjust
 			// the signal envelope before sending it to the datastores to be processed
-			const envelope = {
-				address,
-				contents: signalMessage.content,
+			const channelSignalMessage = {
+				...signalMessage,
+				content: {
+					address,
+					contents: signalMessage.content,
+				},
 			};
-			signalMessage.content = envelope;
 
-			this.channelCollection.processSignal(signalMessage, local);
+			this.channelCollection.processSignal(channelSignalMessage, local);
 			return;
 		}
 
@@ -3607,9 +3632,7 @@ export class ContainerRuntime
 	private shouldSendOps(): boolean {
 		// Note that the real (non-proxy) delta manager is needed here to get the readonly info. This is because
 		// container runtime's ability to send ops depend on the actual readonly state of the delta manager.
-		return (
-			this.connected && !this.innerDeltaManager.readOnlyInfo.readonly && !this.imminentClosure
-		);
+		return this.connected && !this.innerDeltaManager.readOnlyInfo.readonly;
 	}
 
 	private readonly _quorum: IQuorumClients;
@@ -5018,60 +5041,45 @@ export class ContainerRuntime
 
 	public getPendingLocalState(props?: IGetPendingLocalStateProps): unknown {
 		this.verifyNotClosed();
+		if (props?.notifyImminentClosure) {
+			throw new UsageError("notifyImminentClosure is no longer supported in ContainerRuntime");
+		}
 
 		if (this.batchRunner.running) {
 			throw new UsageError("can't get state while manually accumulating a batch");
 		}
-		this.imminentClosure ||= props?.notifyImminentClosure ?? false;
-
-		const getSyncState = (
-			pendingAttachmentBlobs?: IPendingBlobs,
-		): IPendingRuntimeState | undefined => {
-			const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
-			const sessionExpiryTimerStarted =
-				props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
-
-			const pendingIdCompressorState = this._idCompressor?.serialize(true);
-
-			return {
-				pending,
-				pendingIdCompressorState,
-				pendingAttachmentBlobs,
-				sessionExpiryTimerStarted,
-			};
-		};
-		const perfEvent = {
-			eventName: "getPendingLocalState",
-			notifyImminentClosure: props?.notifyImminentClosure,
-		};
-		const logAndReturnPendingState = (
-			event: PerformanceEvent,
-			pendingState?: IPendingRuntimeState,
-		): IPendingRuntimeState | undefined => {
-			event.end({
-				attachmentBlobsSize: Object.keys(pendingState?.pendingAttachmentBlobs ?? {}).length,
-				pendingOpsSize: pendingState?.pending?.pendingStates.length,
-			});
-			return pendingState;
-		};
 
 		// Flush pending batch.
 		// getPendingLocalState() is only exposed through Container.getPendingLocalState(), so it's safe
 		// to close current batch.
 		this.flush();
 
-		return props?.notifyImminentClosure === true
-			? PerformanceEvent.timedExecAsync(this.mc.logger, perfEvent, async (event) =>
-					logAndReturnPendingState(
-						event,
-						getSyncState(
-							await this.blobManager.attachAndGetPendingBlobs(props?.stopBlobAttachingSignal),
-						),
-					),
-				)
-			: PerformanceEvent.timedExec(this.mc.logger, perfEvent, (event) =>
-					logAndReturnPendingState(event, getSyncState()),
-				);
+		return PerformanceEvent.timedExec<IPendingRuntimeState | undefined>(
+			this.mc.logger,
+			{
+				eventName: "getPendingLocalState",
+			},
+			(event) => {
+				const pending = this.pendingStateManager.getLocalState(props?.snapshotSequenceNumber);
+				const sessionExpiryTimerStarted =
+					props?.sessionExpiryTimerStarted ?? this.garbageCollector.sessionExpiryTimerStarted;
+
+				const pendingIdCompressorState = this._idCompressor?.serialize(true);
+				const pendingAttachmentBlobs = this.blobManager.getPendingBlobs();
+
+				const pendingRuntimeState: IPendingRuntimeState = {
+					pending,
+					pendingIdCompressorState,
+					pendingAttachmentBlobs,
+					sessionExpiryTimerStarted,
+				};
+				event.end({
+					attachmentBlobsSize: Object.keys(pendingAttachmentBlobs ?? {}).length,
+					pendingOpsSize: pendingRuntimeState?.pending?.pendingStates.length,
+				});
+				return pendingRuntimeState;
+			},
+		);
 	}
 
 	public summarizeOnDemand(options: IOnDemandSummarizeOptions): ISummarizeResults {
@@ -5105,10 +5113,35 @@ export class ContainerRuntime
 	// It is lazily create to avoid listeners (old events) that ultimately go nowhere.
 	private readonly lazyEventsForExtensions = new Lazy<Listenable<ExtensionHostEvents>>(() => {
 		const eventEmitter = createEmitter<ExtensionHostEvents>();
-		this.on("connected", (clientId) => eventEmitter.emit("connected", clientId));
-		this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		if (this.getConnectionState) {
+			this.on("connectedToService", (clientId: string, canWrite: boolean) => {
+				eventEmitter.emit("joined", { clientId, canWrite });
+			});
+			this.on("disconnectedFromService", () => eventEmitter.emit("disconnected"));
+			this.on("connectionTypeChanged", (canWrite: boolean) =>
+				eventEmitter.emit("connectionTypeChanged", canWrite),
+			);
+		} else {
+			this.on("connected", (clientId: string) => {
+				eventEmitter.emit("joined", { clientId, canWrite: true });
+			});
+			this.on("disconnected", () => eventEmitter.emit("disconnected"));
+		}
 		return eventEmitter;
 	});
+
+	private getJoinedStatus(): JoinedStatus {
+		const getConnectionState = this.getConnectionState;
+		if (getConnectionState) {
+			const connectionState = getConnectionState();
+			if (connectionState === ConnectionState.Connected) {
+				return this.canSendOps ? "joinedForWriting" : "joinedForReading";
+			}
+		} else if (this.canSendOps) {
+			return "joinedForWriting";
+		}
+		return "disconnected";
+	}
 
 	private readonly submitExtensionSignal: <TMessage extends TypedMessage>(
 		id: string,
@@ -5128,7 +5161,7 @@ export class ContainerRuntime
 		let entry = this.extensions.get(id);
 		if (entry === undefined) {
 			const runtime = {
-				isConnected: () => this.connected,
+				getJoinedStatus: this.getJoinedStatus.bind(this),
 				getClientId: () => this.clientId,
 				events: this.lazyEventsForExtensions.value,
 				logger: this.baseLogger,

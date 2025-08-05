@@ -41,9 +41,9 @@ import {
 	type EncodedAnyShape,
 	type EncodedChunkShape,
 	type EncodedFieldBatch,
-	type EncodedInlineArray,
-	type EncodedNestedArray,
-	type EncodedTreeShape,
+	type EncodedInlineArrayShape,
+	type EncodedNestedArrayShape,
+	type EncodedNodeShape,
 	type EncodedValueShape,
 	SpecialField,
 } from "./format.js";
@@ -72,17 +72,17 @@ export function decode(
 
 const decoderLibrary = new DiscriminatedUnionDispatcher<
 	EncodedChunkShape,
-	[cache: DecoderContext<EncodedChunkShape>],
+	[context: DecoderContext<EncodedChunkShape>],
 	ChunkDecoder
 >({
-	a(shape: EncodedNestedArray, cache): ChunkDecoder {
+	a(shape: EncodedNestedArrayShape, context): ChunkDecoder {
 		return new NestedArrayDecoder(shape);
 	},
-	b(shape: EncodedInlineArray, cache): ChunkDecoder {
+	b(shape: EncodedInlineArrayShape, context): ChunkDecoder {
 		return new InlineArrayDecoder(shape);
 	},
-	c(shape: EncodedTreeShape, cache): ChunkDecoder {
-		return new TreeDecoder(shape, cache);
+	c(shape: EncodedNodeShape, context): ChunkDecoder {
+		return new NodeDecoder(shape, context);
 	},
 	d(shape: EncodedAnyShape): ChunkDecoder {
 		return anyDecoder;
@@ -180,10 +180,10 @@ export function aggregateChunks(input: TreeChunk[]): TreeChunk {
 }
 
 /**
- * Decoder for {@link EncodedNestedArray}s.
+ * Decoder for {@link EncodedNestedArrayShape}s.
  */
 export class NestedArrayDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: EncodedNestedArray) {}
+	public constructor(private readonly shape: EncodedNestedArrayShape) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const decoder = decoders[this.shape] ?? oob();
 
@@ -213,10 +213,10 @@ export class NestedArrayDecoder implements ChunkDecoder {
 }
 
 /**
- * Decoder for {@link EncodedInlineArray}s.
+ * Decoder for {@link EncodedInlineArrayShape}s.
  */
 export class InlineArrayDecoder implements ChunkDecoder {
-	public constructor(private readonly shape: EncodedInlineArray) {}
+	public constructor(private readonly shape: EncodedInlineArrayShape) {}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const length = this.shape.length;
 		const decoder = decoders[this.shape.shape] ?? oob();
@@ -248,14 +248,14 @@ type BasicFieldDecoder = (
 ) => [FieldKey, TreeChunk];
 
 /**
- * Get a decoder for fields of a provided (via `shape` and `cache`) {@link EncodedChunkShape}.
+ * Get a decoder for fields of a provided (via `shape` and `context`) {@link EncodedChunkShape}.
  */
 function fieldDecoder(
-	cache: DecoderContext<EncodedChunkShape>,
+	context: DecoderContext<EncodedChunkShape>,
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
-	assertValidIndex(shape, cache.shapes);
+	assertValidIndex(shape, context.shapes);
 	return (decoders, stream) => {
 		const decoder = decoders[shape] ?? oob();
 		return [key, decoder.decode(decoders, stream)];
@@ -263,30 +263,30 @@ function fieldDecoder(
 }
 
 /**
- * Decoder for {@link EncodedTreeShape}s.
+ * Decoder for {@link EncodedNodeShape}s.
  */
-export class TreeDecoder implements ChunkDecoder {
+export class NodeDecoder implements ChunkDecoder {
 	private readonly type?: TreeNodeSchemaIdentifier;
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
-		private readonly shape: EncodedTreeShape,
-		private readonly cache: DecoderContext<EncodedChunkShape>,
+		private readonly shape: EncodedNodeShape,
+		private readonly context: DecoderContext<EncodedChunkShape>,
 	) {
-		this.type = shape.type === undefined ? undefined : cache.identifier(shape.type);
+		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
 
 		const fieldDecoders: BasicFieldDecoder[] = [];
 		for (const [fieldKey, fieldShape] of shape.fields ?? []) {
-			const key: FieldKey = cache.identifier(fieldKey);
-			fieldDecoders.push(fieldDecoder(cache, key, fieldShape));
+			const key: FieldKey = context.identifier(fieldKey);
+			fieldDecoders.push(fieldDecoder(context, key, fieldShape));
 		}
 		this.fieldDecoders = fieldDecoders;
 	}
 	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
 		const type: TreeNodeSchemaIdentifier =
-			this.type ?? readStreamIdentifier(stream, this.cache);
+			this.type ?? readStreamIdentifier(stream, this.context);
 		// TODO: Consider typechecking against stored schema in here somewhere.
 
-		const value = readValue(stream, this.shape.value, this.cache.idDecodingContext);
+		const value = readValue(stream, this.shape.value, this.context.idDecodingContext);
 		const fields: Map<FieldKey, TreeChunk[]> = new Map();
 
 		// Helper to add fields, but with unneeded array chunks removed.
@@ -309,7 +309,7 @@ export class TreeDecoder implements ChunkDecoder {
 			const decoder = decoders[this.shape.extraFields] ?? oob();
 			const inner = readStreamStream(stream);
 			while (inner.offset !== inner.data.length) {
-				const key: FieldKey = readStreamIdentifier(inner, this.cache);
+				const key: FieldKey = readStreamIdentifier(inner, this.context);
 				addField(key, decoder.decode(decoders, inner));
 			}
 		}

@@ -1,6 +1,6 @@
 {
 	"name": "build-tools-release-group-root",
-	"version": "0.57.0",
+	"version": "0.58.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -74,9 +74,9 @@
 		"@commitlint/cli": "^17.8.1",
 		"@commitlint/config-conventional": "^17.8.1",
 		"@commitlint/cz-commitlint": "^17.8.1",
-		"@fluid-tools/build-cli": "~0.49.0",
+		"@fluid-tools/build-cli": "~0.57.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "~0.49.0",
+		"@fluidframework/build-tools": "~0.57.0",
 		"@microsoft/api-documenter": "^7.25.21",
 		"@microsoft/api-extractor": "^7.50.1",
 		"c8": "^7.14.0",
