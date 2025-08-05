@@ -5,27 +5,27 @@
 ```ts
 
 // @public (undocumented)
-export interface A {
+export interface A_Public {
 }
 
 // @beta (undocumented)
-export interface B {
+export interface B_Beta {
 }
 
 // @alpha (undocumented)
-export interface C {
+export interface C_Alpha {
 }
 
 // @public @legacy (undocumented)
-export interface D {
+export interface D_LegacyPublic {
 }
 
 // @beta @legacy (undocumented)
-export interface E {
+export interface E_LegacyBeta {
 }
 
 // @alpha @legacy (undocumented)
-export interface F {
+export interface F_LegacyAlpha {
 }
 
 // (No @packageDocumentation comment for this package)

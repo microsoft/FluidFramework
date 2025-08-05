@@ -5,15 +5,15 @@
 ```ts
 
 // @public (undocumented)
-export interface A {
+export interface A_Public {
 }
 
 // @beta (undocumented)
-export interface B {
+export interface B_Beta {
 }
 
 // @alpha (undocumented)
-export interface C {
+export interface C_Alpha {
 }
 
 // (No @packageDocumentation comment for this package)

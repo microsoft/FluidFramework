@@ -5,11 +5,11 @@
 ```ts
 
 // @public (undocumented)
-export interface A {
+export interface A_Public {
 }
 
 // @beta (undocumented)
-export interface B {
+export interface B_Beta {
 }
 
 // (No @packageDocumentation comment for this package)

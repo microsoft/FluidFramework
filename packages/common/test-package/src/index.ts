@@ -8,34 +8,34 @@
 /**
  * @public
  */
-export interface A {}
+export interface A_Public {}
 
 /**
  * @beta
  */
-export interface B {}
+export interface B_Beta {}
 
 /**
  * @alpha
  */
-export interface C {}
+export interface C_Alpha {}
 
 /**
  * @legacy @public
  */
-export interface D {}
+export interface D_LegacyPublic {}
 
 /**
  * @legacy @beta
  */
-export interface E {}
+export interface E_LegacyBeta {}
 
 /**
  * @legacy @alpha
  */
-export interface F {}
+export interface F_LegacyAlpha {}
 
 /**
  * @internal
  */
-export interface G {}
+export interface G_Internal {}

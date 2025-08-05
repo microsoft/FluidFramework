@@ -5,7 +5,7 @@
 ```ts
 
 // @public (undocumented)
-export interface A {
+export interface A_Public {
 }
 
 // (No @packageDocumentation comment for this package)
