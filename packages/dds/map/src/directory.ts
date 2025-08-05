@@ -2175,6 +2175,12 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				"Got a local subdir create message we weren't expecting",
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
+			// Update sequence numbers when local op is acknowledged
+			if (pendingEntry.subdir.seqData.seq === -1) {
+				// Only set the sequence data based on the first message
+				pendingEntry.subdir.seqData.seq = msg.sequenceNumber;
+				pendingEntry.subdir.seqData.clientSeq = msg.clientSequenceNumber;
+			}
 			const existingSubdir = this.sequencedSubdirectories.get(op.subdirName);
 			if (existingSubdir !== undefined) {
 				// If the subdirectory already exists, we don't need to create it again.
@@ -2185,17 +2191,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			if (pendingEntry.subdir.disposed) {
 				this.undeleteSubDirectoryTree(pendingEntry.subdir);
-			}
-
-			// Ensure sequence nums are updated if necessary!
-			if (
-				this.seqData.seq !== -1 &&
-				this.seqData.seq <= msg.sequenceNumber &&
-				pendingEntry.subdir.seqData.seq === -1
-			) {
-				// Only set the sequence data based on the first message
-				pendingEntry.subdir.seqData.seq = msg.sequenceNumber;
-				pendingEntry.subdir.seqData.clientSeq = msg.clientSequenceNumber;
 			}
 
 			this.sequencedSubdirectories.set(op.subdirName, pendingEntry.subdir);
@@ -2222,12 +2217,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// This can happen if remote clients also create the same subdir
 				subdir.clientIds.add(msg.clientId);
 
-				if (
-					this.seqData.seq !== -1 &&
-					this.seqData.seq <= msg.sequenceNumber &&
-					subdir.seqData.seq === -1
-				) {
-					// Update seq numbers if necessary
+				// Update seq numbers if the subdirectory hasn't been sequenced yet
+				if (subdir.seqData.seq === -1) {
 					subdir.seqData.seq = msg.sequenceNumber;
 					subdir.seqData.clientSeq = msg.clientSequenceNumber;
 				}
