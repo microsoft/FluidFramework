@@ -27,7 +27,7 @@ import type {
 // 	G_Internal,
 // } from "@fluidframework/test-package/internal";
 
-// OUTPUT FOR NEW SETUP:
+// OUTPUT FOR NEW SETUP (with both legacy-beta and legacy-alpha outputs):
 //
 // import type { A_Public } from "@fluidframework/test-package/public";
 // import type { D_LegacyPublic, E_LegacyBeta } from "@fluidframework/test-package/legacy";
@@ -38,7 +38,8 @@ import type {
 // import type { C_Alpha } from "@fluidframework/test-package/alpha";
 // import type { F_LegacyAlpha } from "@fluidframework/test-package/legacy/alpha";
 
-// OUTPUT FOR CURRENT SETUP:
+
+// OUTPUT FOR NEW SETUP (with only legacy-beta output):
 //
 // import type { A_Public } from "@fluidframework/test-package";
 // import type { D_LegacyPublic, E_LegacyBeta, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
@@ -48,10 +49,10 @@ import type {
 // } from "@fluidframework/test-package/internal";
 // import type { C_Alpha } from "@fluidframework/test-package/alpha";
 
-// OUTPUT FOR CURRENT SETUP (no legacy-alpha):
+// OUTPUT FOR CURRENT SETUP:
 //
 // import type { A_Public } from "@fluidframework/test-package";
-// import type { D_LegacyPublic, E_LegacyBeta } from "@fluidframework/test-package/legacy";
+// import type { D_LegacyPublic, E_LegacyBeta, F_LegacyAlpha } from "@fluidframework/test-package/legacy";
 // import type { B_Beta } from "@fluidframework/test-package/beta";
 // import type {
 // 	G_Internal,
