@@ -106,33 +106,137 @@ using a single commit is sufficient to fully consider the relevant cases.
 
 For each pair of cells (`ca`, `cb`) referred to by `A` and `B` respectively,
 we need to be able to determine the relative ordering of `ca` and `cb`.
-Its helpful to visualize the possible scenarios and group them as follows:
+The space of possible comparisons looks like this:
+```
+                       +------------------+
+                       | cb introduced by |
+                       +-----+------+-----+
+                       |  P  |   A  |  B  |
++------------------+---+-----+------+-----+
+| ca introduced by | P |     |      |     |
+|                  +---+-----+------+-----+
+|                  | A |     |      |     |
++------------------+---+-----+------+-----+
+```
 
-1. `A` only refers to cells introduced no earlier than the cells referred to by `B` were introduced:<br />
+There are multiple ways the implementation of compose could be structured to deal with these cases.
+For the purposes of this document, we are not interested in coming up with or describing a specific implementation.
+We instead consider what relevant information is available to the space of all possible implementations.
+
+#### Pairs of Cells Introduced by The Same Commit
+
+If `ca` and `cb` both refer to cells introduced by the same commit
+(whether or not they refer to the exact same cell), then,
+because commits always contain ordered references to either none or all cells introduced in a commit,
+`A` or `B` must both contain ordered references both `ca` and `cb`.
+This ordering can be looked up in either commit.
+This takes care of the following cases:
+```
+                       +------------------+
+                       | cb introduced by |
+                       +-----+------+-----+
+                       |  P  |   A  |  B  |
++------------------+---+-----+------+-----+
+| ca introduced by | P | ### |      |     |
+|                  +---+-----+------+-----+
+|                  | A |     | #### |     |
++------------------+---+-----+------+-----+
+```
+
+#### Pairs of Cells Introduced by Different Input Commits
+
+Given a commit `C` and a reference to a cell `c`,
+we can use the ID used to reference `c` to check if `c` was introduced by `C`.
+The compose function can use this to detect cases where `ca` refers to `A` and `cb` refers to `B`.
+These cases are trivially resolvable because we know `A` comes before `B` in sequencing order.
+This takes care of the following cases:
+```
+                       +------------------+
+                       | cb introduced by |
+                       +-----+------+-----+
+                       |  P  |   A  |  B  |
++------------------+---+-----+------+-----+
+| ca introduced by | P |     |      |     |
+|                  +---+-----+------+-----+
+|                  | A |     |      | ### |
++------------------+---+-----+------+-----+
+```
+
+#### Pairs of Cells With One Cell Introduced by Input Commits
+
+Being able to detect whether `ca` and/or `cb` were introduced by `A` or `B` also allows us to handle cases where only one of `ca` and `cb` refers to a cell introduced by `A` or `B`.
+This is because any commit other than `A` and `B` that introduced cells that `A` or `B` might refer to must be an ancestor of `A` and `B`,
+thus making the corresponding cell older.
+This takes care of the following cases:
+```
+                       +------------------+
+                       | cb introduced by |
+                       +-----+------+-----+
+                       |  P  |   A  |  B  |
++------------------+---+-----+------+-----+
+| ca introduced by | P |     | #### | ### |
+|                  +---+-----+------+-----+
+|                  | A | ### |      |     |
++------------------+---+-----+------+-----+
+```
+
+#### Pairs of Cells Both Referred to by Either Commit
+
+If `A` refers to both `ca` and `cb`, then the relative order of `ca` and `cb` can be looked up in `A`.
+Similarly, if `B` refers to both `ca` and `cb`, then the relative order of `ca` and `cb` can be looked up in `B`.
+
+This insight subsumes the one about cells introduced by the same commit
+because `A` and `B` both refer to both `ca` and `cb` if `ca` and `cb` were introduced by the same commit.
+However, this insight is more complex to leverage
+because it requires taking into consideration how the set of commits that have introduced cells that `A` refers to intersects with the set of commits that have introduced a cells that `B` refers to.
+
+In order to see how this applies to composition, its helpful to visualize the possible scenarios and group them as follows:
+
+1. First group: `A` only refers to cells introduced no earlier than the cells referred to by `B` were introduced:<br />
 ![](../.attachments/revision-metadata/compose-as-far-1.png)<br />
+_`A` can refer to cells introduced in `A`.
+`B` can refer to cells introduced in `A` or `B`._<br />
+<br />
 ![](../.attachments/revision-metadata/compose-as-far-2.png)<br />
+_`A` can refer to cells introduced in `P` or `A`.
+`B` can refer to cells introduced in `P`, `A` or `B`._<br />
+<br />
 ![](../.attachments/revision-metadata/compose-farther.png)<br />
-1. `B` only refers to cells introduced later than cells referred to by `A` were introduced:<br />
+_`A` can refer to cells introduced in `A`.
+`B` can refer to cells introduced in `P`, `A` or `B`._<br />
+<br />
+1. Second group: `B` only refers to cells introduced later than cells referred to by `A` were introduced:<br />
 ![](../.attachments/revision-metadata/compose-not-as-far-1.png)<br />
+_`A` can refer to cells introduced in `A`.
+`B` can refer to cells introduced in `B`._<br />
+<br />
 ![](../.attachments/revision-metadata/compose-not-as-far-2.png)<br />
+_`A` can refer to cells introduced in `P` or `A`.
+`B` can refer to cells introduced in `B`._<br />
+
+Checking if `B` contains a reference to `ca` is sufficient to determine which group of scenarios is occurring.
 
 In the first group of scenarios,
-`B` must include references to both `ca` and `cb`,
+`B` includes a reference to `ca` (in addition to the reference to `cb`),
 so their relative ordering is already fully defined in `B`.
-This does not require consider the sequencing order of commits.
+
+This means that, when confronted to this first group of scenarios, this insight makes it possible to handle all cases:
+```
+                       +------------------+
+                       | cb introduced by |
+                       +-----+------+-----+
+                       |  P  |   A  |  B  |
++------------------+---+-----+------+-----+
+| ca introduced by | P | ### | #### | ### |
+|                  +---+-----+------+-----+
+|                  | A | ### | #### | ### |
++------------------+---+-----+------+-----+
+```
 
 In the second group of scenarios,
-`ca` must be referring cell introduced by either `P` or `A`,
-while `cb` must be referring cell introduced by `B`.
+`ca` must be referring to a cell introduced by either `P` or `A`,
+while `cb` must be referring to a cell introduced by `B`.
 We can order the two cells by relying on the fact that commits `P` and `A` both come before `B` in sequencing order.
-While this does require that we consider the sequencing order of commits,
-the relevant ordering information
-(i.e., that `B` comes after any other commit that might have introduced cells that `A` might refer to)
-is implicitly derivable from the fact that we're composing `A ○ B` as opposed to `B ○ A`.
-
-The implementation of compose doesn't know which group of scenarios it's dealing with on a case by case basis,
-but it can handle both groups by checking if `B` contains a reference to `ca`,
-and if not, treating `ca` as older than `cb`.
 
 ### Rebase
 
@@ -151,7 +255,7 @@ with the goal to produce `B'`:<br />
 In the more general case, there can be any number of commits between `P` and `B`,
 which amounts to the following graph:<br />
 ![](../.attachments/revision-metadata/rebase-ab-over-x.png)<br />
-with the goal to produce `A'` and `B'`:<br />
+with the goal to produce rebased versions of each before `B'`:<br />
 ![](../.attachments/revision-metadata/rebase-to-abprime.png)<br />
 
 When confronted to this general case,
@@ -159,7 +263,7 @@ we first rebase `B` over the inverses of all the commits between `P` and `B`.
 This produces to a commit `B2` that is akin to what `B` would have been if `P` were its direct ancestor:
 ![](../.attachments/revision-metadata/rebase-b2.png)<br />
 
-It is this `B2` commit is is passed to the rebase function when performing `B ↷ X`.
+It is this `B2` commit that is passed to the rebase function when performing `B ↷ X`.
 The graph of relevant commits in the general case therefore looks like this:<br />
 ![](../.attachments/revision-metadata/rebase-b2-over-x.png)
 
