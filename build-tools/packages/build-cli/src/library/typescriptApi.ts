@@ -144,7 +144,17 @@ function getNodeApiLevel(node: Node): ApiLevel | undefined {
 		return undefined;
 	}
 
-	return getApiLevelFromTags(apiTags);
+	try {
+		return getApiLevelFromTags(apiTags);
+	} catch (error) {
+		console.error(
+			`Error getting API level for ${node.getSymbol()} at ${node
+				.getSourceFile()
+				.getFilePath()}:${node.getStartLineNumber()}:`,
+			error,
+		);
+		return undefined;
+	}
 }
 
 /**
