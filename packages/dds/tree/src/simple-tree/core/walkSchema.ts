@@ -75,7 +75,7 @@ export interface SchemaVisitor {
 	 *
 	 * Each allowed types in the schema is visited as it was in the original schema except for normalization.
 	 *
-	 * After this is called {@link allowedTypeFilter} is applied to each allowed type in the schema to determine which of them are walked into.
+	 * After this is called {@link SchemaVisitor.allowedTypeFilter} is applied to each allowed type in the schema to determine which of them are walked into.
 	 */
 	allowedTypes?: (allowedTypes: NormalizedAnnotatedAllowedTypes) => void;
 	/**
@@ -84,7 +84,7 @@ export interface SchemaVisitor {
 	 *
 	 * If not provided, all allowedTypes will be walked into.
 	 * @remarks
-	 * Called after {@link allowedTypes}.
+	 * Called after {@link SchemaVisitor.allowedTypes}.
 	 * @privateRemarks
 	 * It would be possible to combine this with `allowedTypes` into a single callback, but for the current usage this separation is more convenient.
 	 */
