@@ -591,6 +591,17 @@ function mixinSynchronization<TOperation extends BaseOperation>(
 		if (isSynchronizeOp(operation)) {
 			const { clients, validationClient } = state;
 
+			// const anyClientInStaging = state.clients.some(
+			// 	(c) =>
+			// 		(!c.container.closed || !(c.container.disposed ?? false)) &&
+			// 		c.entryPoint.inStagingMode(),
+			// );
+
+			// if (anyClientInStaging) {
+			// 	console.log("Skipping sync because a client is in staging mode");
+			// 	return state;
+			// }
+
 			const connectedClients = clients.filter((client) => {
 				if (client.container.closed || client.container.disposed === true) {
 					throw new Error(`Client ${client.tag} is closed`);
@@ -1388,12 +1399,14 @@ function mixinRestartClientFromPendingState<TOperation extends BaseOperation>(
 			state: LocalServerStressState,
 		): Promise<TOperation | RestartClientFromPendingState | typeof done> => {
 			const { clients, random, validationClient } = state;
+			const anyClientInStaging = clients.some((c) => c.entryPoint.inStagingMode());
 
 			if (
 				options.clientJoinOptions !== undefined &&
 				validationClient.container.attachState !== AttachState.Detached &&
 				clients.length > 0 &&
-				random.bool(options.clientJoinOptions.clientAddProbability)
+				random.bool(options.clientJoinOptions.clientAddProbability) &&
+				!anyClientInStaging
 			) {
 				return {
 					type: "restartClientFromPendingState",
