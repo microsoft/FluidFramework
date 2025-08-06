@@ -353,13 +353,6 @@ function getUnscopedPackageName(apiPackage: ApiPackage): string;
 // @public
 function hasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 
-// @public
-export interface Heading {
-    readonly id?: string;
-    readonly level?: number;
-    readonly title: string;
-}
-
 // @public @sealed
 export interface HierarchicalSection extends Node_2 {
     children: BlockContent[];

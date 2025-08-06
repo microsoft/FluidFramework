@@ -39,10 +39,9 @@ import type {
 	Text,
 } from "mdast";
 
-import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { HierarchicalSection, IdentifiableHeading } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -1084,19 +1083,19 @@ export interface ChildSectionProperties {
 	/**
 	 * Heading for the section being rendered.
 	 */
-	heading: Heading; // TODO: IdentifiableHeading
+	readonly heading: IdentifiableHeading;
 
 	/**
 	 * The API item kind of all child items.
 	 */
-	itemKind: ValidApiItemKind;
+	readonly itemKind: ValidApiItemKind;
 
 	/**
 	 * The child items to be rendered.
 	 *
 	 * @remarks Every item's `kind` must be `itemKind`.
 	 */
-	items: readonly ApiItem[];
+	readonly items: readonly ApiItem[];
 }
 
 /**
@@ -1137,11 +1136,7 @@ export function createChildDetailsSection(
 			sections.push({
 				type: "hierarchicalSection",
 				children: childContents,
-				heading: {
-					type: "identifiableHeading",
-					title: childItem.heading.title,
-					...(childItem.heading.id !== undefined && { id: childItem.heading.id }),
-				},
+				heading: childItem.heading,
 			});
 		}
 	}

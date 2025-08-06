@@ -255,7 +255,7 @@ export function createQualifiedDocumentNameForApiItem(
 }
 
 /**
- * Generates a {@link Heading} for the specified API item.
+ * Generates a {@link IdentifiableHeading} for the specified API item.
  *
  * @param apiItem - The API item for which the heading is being generated.
  * @param config - See {@link ApiItemTransformationConfiguration}.

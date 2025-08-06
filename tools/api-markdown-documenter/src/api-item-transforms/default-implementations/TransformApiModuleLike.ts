@@ -170,37 +170,37 @@ export function transformApiModuleLike(
 		const detailsSections = createChildDetailsSection(
 			[
 				{
-					heading: { title: "Interface Details" },
+					heading: { type: "identifiableHeading", title: "Interface Details" },
 					itemKind: ApiItemKind.Interface,
 					items: interfaces,
 				},
 				{
-					heading: { title: "Class Details" },
+					heading: { type: "identifiableHeading", title: "Class Details" },
 					itemKind: ApiItemKind.Class,
 					items: classes,
 				},
 				{
-					heading: { title: "Enumeration Details" },
+					heading: { type: "identifiableHeading", title: "Enumeration Details" },
 					itemKind: ApiItemKind.Enum,
 					items: enums,
 				},
 				{
-					heading: { title: "Type Details" },
+					heading: { type: "identifiableHeading", title: "Type Details" },
 					itemKind: ApiItemKind.TypeAlias,
 					items: types,
 				},
 				{
-					heading: { title: "Function Details" },
+					heading: { type: "identifiableHeading", title: "Function Details" },
 					itemKind: ApiItemKind.Function,
 					items: functions,
 				},
 				{
-					heading: { title: "Variable Details" },
+					heading: { type: "identifiableHeading", title: "Variable Details" },
 					itemKind: ApiItemKind.Variable,
 					items: variables,
 				},
 				{
-					heading: { title: "Namespace Details" },
+					heading: { type: "identifiableHeading", title: "Namespace Details" },
 					itemKind: ApiItemKind.Namespace,
 					items: namespaces,
 				},
