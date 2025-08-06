@@ -17,7 +17,6 @@ import {
 	shouldItemBeIncluded,
 } from "./ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
-import { wrapInSection } from "./helpers/index.js";
 
 /**
  * Creates a {@link ApiDocument} representing the provided API item.
@@ -36,8 +35,17 @@ export function createDocument(
 	const title = config.getHeadingTextForItem(documentItem);
 
 	// Wrap sections in a root section if top-level heading is requested.
-	const contents = config.includeTopLevelDocumentHeading
-		? [wrapInSection(sections, { title })]
+	const contents: HierarchicalSection[] = config.includeTopLevelDocumentHeading
+		? [
+				{
+					type: "hierarchicalSection",
+					children: sections,
+					heading: {
+						type: "identifiableHeading",
+						title,
+					},
+				},
+			]
 		: sections;
 
 	return {

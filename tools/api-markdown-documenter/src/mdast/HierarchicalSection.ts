@@ -37,6 +37,28 @@ export interface HierarchicalSection extends Node {
 	heading?: IdentifiableHeading;
 }
 
+/**
+ * Wraps the provided contents in a {@link HierarchicalSection}.
+ * @param nodes - The section's child contents.
+ * @param heading - Optional heading to associate with the section.
+ */
+export function createHierarchicalSection({
+	children,
+	heading,
+}: { children: BlockContent[]; heading?: IdentifiableHeading }): HierarchicalSection {
+	const section: HierarchicalSection = {
+		type: "hierarchicalSection",
+		children,
+	};
+
+	// Only append `heading` property if specified to avoid clutter in the generated nodes.
+	if (heading !== undefined) {
+		section.heading = heading;
+	}
+
+	return section;
+}
+
 // Extend the mdast to include `HierarchicalSection` in "block content" and "root content" contexts
 declare module "mdast" {
 	interface BlockContentMap {

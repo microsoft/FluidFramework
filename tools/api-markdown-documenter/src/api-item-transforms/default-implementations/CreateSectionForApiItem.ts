@@ -22,7 +22,6 @@ import {
 	createSignatureSection,
 	createSummarySection,
 	createThrowsSection,
-	wrapInSection,
 } from "../helpers/index.js";
 
 /**
@@ -76,23 +75,25 @@ export function createSectionForApiItem(
 	// Render alpha/beta notice if applicable
 	const releaseLevel = getEffectiveReleaseLevel(apiItem);
 	if (releaseLevel === ReleaseTag.Alpha) {
-		sections.push(
-			wrapInSection([
+		sections.push({
+			type: "hierarchicalSection",
+			children: [
 				{
 					type: "paragraph",
 					children: [alphaWarningSpan],
 				},
-			]),
-		);
+			],
+		});
 	} else if (releaseLevel === ReleaseTag.Beta) {
-		sections.push(
-			wrapInSection([
+		sections.push({
+			type: "hierarchicalSection",
+			children: [
 				{
 					type: "paragraph",
 					children: [betaWarningSpan],
 				},
-			]),
-		);
+			],
+		});
 	}
 
 	// Render signature (if any)
@@ -135,5 +136,11 @@ export function createSectionForApiItem(
 	// Document items have their headings handled specially.
 	return doesItemRequireOwnDocument(apiItem, config.hierarchy)
 		? sections
-		: [wrapInSection(sections, getHeadingForApiItem(apiItem, config))];
+		: [
+				{
+					type: "hierarchicalSection",
+					children: sections,
+					heading: getHeadingForApiItem(apiItem, config),
+				},
+			];
 }

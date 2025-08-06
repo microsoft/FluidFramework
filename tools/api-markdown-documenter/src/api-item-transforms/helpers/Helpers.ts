@@ -42,7 +42,7 @@ import type {
 import type { Heading } from "../../Heading.js";
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
-import type { HierarchicalSection, IdentifiableHeading } from "../../mdast/index.js";
+import type { HierarchicalSection } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -103,10 +103,15 @@ export function createSignatureSection(
 				contents.push(...renderedHeritageTypes);
 			}
 
-			return wrapInSection(contents, {
-				title: "Signature",
-				id: `${getFileSafeNameForApiItem(apiItem)}-signature`,
-			});
+			return {
+				type: "hierarchicalSection",
+				children: contents,
+				heading: {
+					type: "identifiableHeading",
+					title: "Signature",
+					id: `${getFileSafeNameForApiItem(apiItem)}-signature`,
+				},
+			};
 		}
 	}
 	return undefined;
@@ -333,10 +338,15 @@ export function createSeeAlsoSection(
 		contents.push(...transformTsdoc(seeBlock, apiItem, config));
 	}
 
-	return wrapInSection(contents, {
-		title: "See Also",
-		id: `${getFileSafeNameForApiItem(apiItem)}-see-also`,
-	});
+	return {
+		type: "hierarchicalSection",
+		children: contents,
+		heading: {
+			type: "identifiableHeading",
+			title: "See Also",
+			id: `${getFileSafeNameForApiItem(apiItem)}-see-also`,
+		},
+	};
 }
 
 /**
@@ -572,10 +582,15 @@ export function createRemarksSection(
 		return undefined;
 	}
 
-	return wrapInSection(
-		transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
-		{ title: "Remarks", id: `${getFileSafeNameForApiItem(apiItem)}-remarks` },
-	);
+	return {
+		type: "hierarchicalSection",
+		children: transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
+		heading: {
+			type: "identifiableHeading",
+			title: "Remarks",
+			id: `${getFileSafeNameForApiItem(apiItem)}-remarks`,
+		},
+	};
 }
 
 /**
@@ -607,10 +622,15 @@ export function createThrowsSection(
 		contents.push(...transformTsdoc(throwsBlock, apiItem, config));
 	}
 
-	return wrapInSection(contents, {
-		title: headingText,
-		id: `${getFileSafeNameForApiItem(apiItem)}-throws`,
-	});
+	return {
+		type: "hierarchicalSection",
+		children: contents,
+		heading: {
+			type: "identifiableHeading",
+			title: headingText,
+			id: `${getFileSafeNameForApiItem(apiItem)}-throws`,
+		},
+	};
 }
 
 /**
@@ -635,24 +655,27 @@ export function createDeprecationNoticeSection(
 		return undefined;
 	}
 
-	return wrapInSection([
-		{
-			type: "paragraph",
-			children: [
-				{
-					type: "strong",
-					children: [
-						{
-							type: "text",
-							value:
-								"WARNING: This API is deprecated and will be removed in a future release.",
-						},
-					],
-				},
-			],
-		},
-		...transformTsdoc(deprecatedBlock, apiItem, config),
-	]);
+	return {
+		type: "hierarchicalSection",
+		children: [
+			{
+				type: "paragraph",
+				children: [
+					{
+						type: "strong",
+						children: [
+							{
+								type: "text",
+								value:
+									"WARNING: This API is deprecated and will be removed in a future release.",
+							},
+						],
+					},
+				],
+			},
+			...transformTsdoc(deprecatedBlock, apiItem, config),
+		],
+	};
 }
 
 /**
@@ -697,10 +720,15 @@ export function createExamplesSection(
 		);
 	}
 
-	return wrapInSection(exampleSections, {
-		title: headingText,
-		id: `${getFileSafeNameForApiItem(apiItem)}-examples`,
-	});
+	return {
+		type: "hierarchicalSection",
+		children: exampleSections,
+		heading: {
+			type: "identifiableHeading",
+			title: headingText,
+			id: `${getFileSafeNameForApiItem(apiItem)}-examples`,
+		},
+	};
 }
 
 /**
@@ -822,10 +850,15 @@ function createExampleSection(
 	}`;
 
 	// Always emit the section, even if the body is empty after stripping out the title.
-	return wrapInSection(transformedExampleContent, {
-		title: headingTitle,
-		id: headingId,
-	});
+	return {
+		type: "hierarchicalSection",
+		children: transformedExampleContent,
+		heading: {
+			type: "identifiableHeading",
+			title: headingTitle,
+			id: headingId,
+		},
+	};
 }
 
 /**
@@ -959,13 +992,17 @@ export function createParametersSection(
 		return undefined;
 	}
 
-	return wrapInSection(
-		[createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config)],
-		{
+	return {
+		type: "hierarchicalSection",
+		children: [
+			createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config),
+		],
+		heading: {
+			type: "identifiableHeading",
 			title: "Parameters",
 			id: `${getFileSafeNameForApiItem(apiFunctionLike)}-parameters`,
 		},
-	);
+	};
 }
 
 /**
@@ -1029,10 +1066,15 @@ export function createReturnsSection(
 
 	return children.length === 0
 		? undefined
-		: wrapInSection(children, {
-				title: "Returns",
-				id: `${getFileSafeNameForApiItem(apiItem)}-returns`,
-			});
+		: {
+				type: "hierarchicalSection",
+				children,
+				heading: {
+					type: "identifiableHeading",
+					title: "Returns",
+					id: `${getFileSafeNameForApiItem(apiItem)}-returns`,
+				},
+			};
 }
 
 /**
@@ -1042,7 +1084,7 @@ export interface ChildSectionProperties {
 	/**
 	 * Heading for the section being rendered.
 	 */
-	heading: Heading;
+	heading: Heading; // TODO: IdentifiableHeading
 
 	/**
 	 * The API item kind of all child items.
@@ -1092,41 +1134,19 @@ export function createChildDetailsSection(
 				childContents.push(...createChildContent(item));
 			}
 
-			sections.push(wrapInSection(childContents, childItem.heading));
+			sections.push({
+				type: "hierarchicalSection",
+				children: childContents,
+				heading: {
+					type: "identifiableHeading",
+					title: childItem.heading.title,
+					...(childItem.heading.id !== undefined && { id: childItem.heading.id }),
+				},
+			});
 		}
 	}
 
 	return sections.length === 0 ? undefined : sections;
-}
-
-// TODO: remove this helper
-/**
- * Wraps the provided contents in a {@link HierarchicalSection}.
- * @param nodes - The section's child contents.
- * @param heading - Optional heading to associate with the section.
- */
-export function wrapInSection(nodes: BlockContent[], heading?: Heading): HierarchicalSection {
-	const section: HierarchicalSection = {
-		type: "hierarchicalSection",
-		children: nodes,
-	};
-
-	// Only append `heading` property if specified to avoid clutter in the generated nodes.
-	if (heading !== undefined) {
-		const headingNode: IdentifiableHeading = {
-			type: "identifiableHeading",
-			title: heading.title,
-		};
-
-		// Only append `id` property if specified to avoid clutter in the generated nodes.
-		if (heading.id !== undefined) {
-			headingNode.id = heading.id;
-		}
-
-		section.heading = headingNode;
-	}
-
-	return section;
 }
 
 /**

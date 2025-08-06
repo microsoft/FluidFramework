@@ -15,7 +15,7 @@ import type { HierarchicalSection } from "../../mdast/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
-import { createMemberTables, wrapInSection } from "../helpers/index.js";
+import { createMemberTables } from "../helpers/index.js";
 
 /**
  * Default documentation transform for `Enum` items.
@@ -70,7 +70,10 @@ export function transformApiEnum(
 			for (const flag of flags) {
 				detailsSubSections.push(...generateChildContent(flag));
 			}
-			const detailsSection = wrapInSection(detailsSubSections);
+			const detailsSection: HierarchicalSection = {
+				type: "hierarchicalSection",
+				children: detailsSubSections,
+			};
 			sections.push(detailsSection);
 		}
 	}

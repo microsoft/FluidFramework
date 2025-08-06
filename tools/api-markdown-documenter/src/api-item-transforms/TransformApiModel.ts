@@ -25,11 +25,7 @@ import {
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
-import {
-	createBreadcrumbParagraph,
-	createEntryPointList,
-	wrapInSection,
-} from "./helpers/index.js";
+import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link ApiDocument}s.
@@ -204,7 +200,10 @@ function createDocumentForSingleEntryPointPackage(
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
+		sections.push({
+			type: "hierarchicalSection",
+			children: [createBreadcrumbParagraph(apiPackage, config)],
+		});
 	}
 
 	// Render sub-sections for the single entry-point. We will bundle these with body comments from the package item.
@@ -247,17 +246,23 @@ function createDocumentForMultiEntryPointPackage(
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiPackage, config)]));
+		sections.push({
+			type: "hierarchicalSection",
+			children: [createBreadcrumbParagraph(apiPackage, config)],
+		});
 	}
 
 	// Render list of links to entry-points, each of which will get its own document.
 	const renderedEntryPointList = createEntryPointList(apiEntryPoints, config);
 	if (renderedEntryPointList !== undefined) {
-		sections.push(
-			wrapInSection([renderedEntryPointList], {
+		sections.push({
+			type: "hierarchicalSection",
+			children: [renderedEntryPointList],
+			heading: {
+				type: "identifiableHeading",
 				title: "Entry Points",
-			}),
-		);
+			},
+		});
 	}
 
 	logger.verbose(`Package document rendered successfully.`);
@@ -277,7 +282,10 @@ function createDocumentForApiEntryPoint(
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiEntryPoint, config)]));
+		sections.push({
+			type: "hierarchicalSection",
+			children: [createBreadcrumbParagraph(apiEntryPoint, config)],
+		});
 	}
 
 	// Render body contents

@@ -324,7 +324,7 @@ function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 function getFileSafeNameForApiItem(apiItem: ApiItem): string;
 
 // @public
-function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingLevel?: number): Heading;
+function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration): IdentifiableHeading;
 
 // @public
 function getLinkForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, textOverride?: string): Link;

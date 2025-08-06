@@ -3,5 +3,5 @@
  * Licensed under the MIT License.
  */
 
-export type { HierarchicalSection } from "./HierarchicalSection.js";
+export { createHierarchicalSection, type HierarchicalSection } from "./HierarchicalSection.js";
 export type { IdentifiableHeading } from "./IdentifiableHeading.js";

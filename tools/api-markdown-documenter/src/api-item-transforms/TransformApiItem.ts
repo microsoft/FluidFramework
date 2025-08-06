@@ -34,7 +34,7 @@ import {
 } from "./ApiItemTransformUtilities.js";
 import { createDocument } from "./Utilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
-import { createBreadcrumbParagraph, wrapInSection } from "./helpers/index.js";
+import { createBreadcrumbParagraph } from "./helpers/index.js";
 
 /**
  * Creates a {@link ApiDocument} for the specified `apiItem`.
@@ -90,7 +90,10 @@ export function apiItemToDocument(
 
 	// Render breadcrumb
 	if (config.includeBreadcrumb) {
-		sections.push(wrapInSection([createBreadcrumbParagraph(apiItem, config)]));
+		sections.push({
+			type: "hierarchicalSection",
+			children: [createBreadcrumbParagraph(apiItem, config)],
+		});
 	}
 
 	// Render body content for the item
