@@ -1064,7 +1064,7 @@ for (const createBlobPayloadPending of [false, true]) {
 		});
 
 		describe("Garbage Collection", () => {
-			let redirectTable: Map<string, string | undefined>;
+			let redirectTable: Map<string, string>;
 
 			/**
 			 * Creates a blob with the given content and returns its local and storage id.
@@ -1167,13 +1167,13 @@ for (const createBlobPayloadPending of [false, true]) {
 					// since the blob only had one reference.
 					runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
 					assert(!redirectTable.has(blob1.localId));
-					assert(!redirectTable.has(blob1.storageId));
+					assert(![...redirectTable.values()].includes(blob1.storageId));
 
 					// Delete blob2's local id. The local id and the storage id should both be deleted from the redirect table
 					// since the blob only had one reference.
 					runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
 					assert(!redirectTable.has(blob2.localId));
-					assert(!redirectTable.has(blob2.storageId));
+					assert(![...redirectTable.values()].includes(blob2.storageId));
 				});
 
 			it("deletes unused de-duped blobs", async () => {
@@ -1194,6 +1194,10 @@ for (const createBlobPayloadPending of [false, true]) {
 				// should not because the blob has another referenced from the de-duped blob.
 				runtime.blobManager.deleteSweepReadyNodes([blob1.localGCNodeId]);
 				assert(!redirectTable.has(blob1.localId), "blob1 localId should have been deleted");
+				assert(
+					[...redirectTable.values()].includes(blob1.storageId),
+					"blob1 storageId should not have been deleted",
+				);
 				// Delete blob1's de-duped local id. The local id and the storage id should both be deleted from the redirect table
 				// since all the references for the blob are now deleted.
 				runtime.blobManager.deleteSweepReadyNodes([blob1Duplicate.localGCNodeId]);
@@ -1202,7 +1206,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					"blob1Duplicate localId should have been deleted",
 				);
 				assert(
-					!redirectTable.has(blob1.storageId),
+					![...redirectTable.values()].includes(blob1.storageId),
 					"blob1 storageId should have been deleted",
 				);
 
@@ -1210,6 +1214,10 @@ for (const createBlobPayloadPending of [false, true]) {
 				// should not because the blob has another referenced from the de-duped blob.
 				runtime.blobManager.deleteSweepReadyNodes([blob2.localGCNodeId]);
 				assert(!redirectTable.has(blob2.localId), "blob2 localId should have been deleted");
+				assert(
+					[...redirectTable.values()].includes(blob2.storageId),
+					"blob2 storageId should not have been deleted",
+				);
 				// Delete blob2's de-duped local id. The local id and the storage id should both be deleted from the redirect table
 				// since all the references for the blob are now deleted.
 				runtime.blobManager.deleteSweepReadyNodes([blob2Duplicate.localGCNodeId]);
@@ -1218,7 +1226,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					"blob2Duplicate localId should have been deleted",
 				);
 				assert(
-					!redirectTable.has(blob2.storageId),
+					![...redirectTable.values()].includes(blob2.storageId),
 					"blob2 storageId should have been deleted",
 				);
 			});
