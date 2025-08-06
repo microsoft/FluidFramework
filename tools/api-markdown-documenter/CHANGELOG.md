@@ -2,23 +2,10 @@
 
 ## 0.22.0
 
-### Documentation Domain is being removed
+### Documentation Domain has been removed
 
-This is a work in progress.
-
-The goal is for transformations to target [mdast](https://github.com/syntax-tree/mdast) directly, rather than going through an intermediate domain.
-Transformations to HTML will use `mdast-util-to-hast`.
-
-#### Markdown Nodes
-
-`SectionNode` has been updated to take `mdast` "block content" directly.
-All `DocumentationNode` implementations except `SectionNode` and `HeadingNode` (which don't have direct Markdown correlaries) have been removed.
-Markdown trees via `mdast` are now used directly in API item and TSDoc transformations.
-
-#### Extensibility support removed
-
-The Documentation Domain is no longer extensible.
-Since it is now a thin wrapper around `mdast`, `mdast`'s own extensibility model can be leveraged for custom content types.
+`DocumentationNode` and its implementations have been removed.
+Their usage has been replaced with [mdast](https://github.com/syntax-tree/mdast) directly.
 
 ### `DocumentNode` renamed to `ApiDocument`
 
