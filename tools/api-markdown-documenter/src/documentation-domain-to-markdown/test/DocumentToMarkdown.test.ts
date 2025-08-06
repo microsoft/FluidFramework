@@ -16,7 +16,7 @@ describe("documentToMarkdown", () => {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: [
 				{
-					type: "hierarchicalSection",
+					type: "section",
 					children: [
 						{
 							type: "paragraph",
@@ -32,7 +32,7 @@ describe("documentToMarkdown", () => {
 							],
 						},
 						{
-							type: "hierarchicalSection",
+							type: "section",
 							children: [
 								{
 									type: "paragraph",

@@ -7,7 +7,7 @@ import type { ApiItem, ApiModel } from "@microsoft/api-extractor-model";
 
 import { defaultConsoleLogger } from "../../Logging.js";
 import type { LoggingConfiguration } from "../../LoggingConfiguration.js";
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import { createSectionForApiItem } from "../default-implementations/index.js";
 
 import {
@@ -77,13 +77,13 @@ export interface ApiItemTransformationConfiguration
 	 *
 	 * API item kind-specific details are passed in, and can be displayed as desired.
 	 *
-	 * @returns The list of {@link HierarchicalSection}s that comprise the top-level section body for the API item.
+	 * @returns The list of {@link Section}s that comprise the top-level section body for the API item.
 	 */
 	readonly defaultSectionLayout: (
 		apiItem: ApiItem,
-		childSections: HierarchicalSection[] | undefined,
+		childSections: Section[] | undefined,
 		config: ApiItemTransformationConfiguration,
-	) => HierarchicalSection[];
+	) => Section[];
 }
 
 /**
@@ -112,9 +112,9 @@ export interface ApiItemTransformationOptions
 	 */
 	readonly defaultSectionLayout?: (
 		apiItem: ApiItem,
-		childSections: HierarchicalSection[] | undefined,
+		childSections: Section[] | undefined,
 		config: ApiItemTransformationConfiguration,
-	) => HierarchicalSection[];
+	) => Section[];
 }
 
 /**

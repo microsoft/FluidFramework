@@ -15,7 +15,7 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import type { ApiModuleLike } from "../../utilities/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { filterItems } from "../ApiItemTransformUtilities.js";
@@ -62,9 +62,9 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
 export function transformApiModuleLike(
 	apiItem: ApiModuleLike,
 	config: ApiItemTransformationConfiguration,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSection[],
-): HierarchicalSection[] {
-	const children: HierarchicalSection[] = [];
+	generateChildContent: (apiItem: ApiItem) => Section[],
+): Section[] {
+	const children: Section[] = [];
 
 	const filteredChildren = filterItems(apiItem.members, config);
 	if (filteredChildren.length > 0) {

@@ -6,7 +6,7 @@
 import { expect } from "chai";
 import type { Nodes as HastNodes } from "hast";
 
-import type { HierarchicalSection, IdentifiableHeading } from "../../mdast/index.js";
+import type { Section, SectionHeading } from "../../mdast/index.js";
 import { documentationNodeToHtml } from "../ToHtml.js";
 import { createTransformationContext } from "../TransformationContext.js";
 import type { TransformationConfiguration } from "../configuration/index.js";
@@ -15,7 +15,7 @@ import type { TransformationConfiguration } from "../configuration/index.js";
  * Tests transforming an individual documentation node to HTML.
  */
 function testTransformation(
-	node: HierarchicalSection | IdentifiableHeading,
+	node: Section | SectionHeading,
 	config?: Partial<TransformationConfiguration>,
 ): HastNodes {
 	return documentationNodeToHtml(node, createTransformationContext(config));
@@ -26,7 +26,7 @@ function testTransformation(
  * `hast` tree.
  */
 export function assertTransformation(
-	input: HierarchicalSection | IdentifiableHeading,
+	input: Section | SectionHeading,
 	expected: HastNodes,
 	transformationConfig?: TransformationConfiguration,
 ): void {

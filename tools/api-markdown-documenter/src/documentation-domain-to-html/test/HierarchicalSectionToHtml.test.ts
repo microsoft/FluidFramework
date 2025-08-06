@@ -5,14 +5,14 @@
 
 import { h } from "hastscript";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
 describe("HierarchicalSection HTML rendering tests", () => {
 	it("Simple section", () => {
-		const input: HierarchicalSection = {
-			type: "hierarchicalSection",
+		const input: Section = {
+			type: "section",
 			children: [
 				{
 					type: "paragraph",
@@ -44,11 +44,11 @@ describe("HierarchicalSection HTML rendering tests", () => {
 	});
 
 	it("Nested section", () => {
-		const input: HierarchicalSection = {
-			type: "hierarchicalSection",
+		const input: Section = {
+			type: "section",
 			children: [
 				{
-					type: "hierarchicalSection",
+					type: "section",
 					children: [
 						{
 							type: "paragraph",
@@ -63,10 +63,10 @@ describe("HierarchicalSection HTML rendering tests", () => {
 				},
 
 				{
-					type: "hierarchicalSection",
+					type: "section",
 					children: [
 						{
-							type: "hierarchicalSection",
+							type: "section",
 							children: [
 								{
 									type: "paragraph",

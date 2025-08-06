@@ -10,7 +10,7 @@ import type {
 	Nodes,
 } from "mdast";
 
-import type { HierarchicalSection, IdentifiableHeading } from "../../mdast/index.js";
+import type { Section, SectionHeading } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { headingToMarkdown, sectionToMarkdown } from "../default-transformations/index.js";
 
@@ -20,8 +20,8 @@ import { headingToMarkdown, sectionToMarkdown } from "../default-transformations
  * @public
  */
 export interface Transformations {
-	readonly sectionHeading: Transformation<IdentifiableHeading, MdastBlockContent[]>;
-	readonly hierarchicalSection: Transformation<HierarchicalSection, MdastRootContent[]>;
+	readonly sectionHeading: Transformation<SectionHeading, MdastBlockContent[]>;
+	readonly section: Transformation<Section, MdastRootContent[]>;
 }
 
 /**
@@ -33,7 +33,7 @@ export interface Transformations {
  * @public
  */
 export type Transformation<
-	TIn extends Nodes | IdentifiableHeading = Nodes | IdentifiableHeading,
+	TIn extends Nodes | SectionHeading = Nodes | SectionHeading,
 	TOut extends MdastTree[] = [MdastTree],
 > = (node: TIn, context: TransformationContext) => TOut;
 
@@ -42,5 +42,5 @@ export type Transformation<
  */
 export const defaultTransformations: Transformations = {
 	sectionHeading: headingToMarkdown,
-	hierarchicalSection: sectionToMarkdown,
+	section: sectionToMarkdown,
 };

@@ -46,7 +46,7 @@ function ancestryHasModifierTag(apiItem: ApiItem, tagName: string): boolean;
 // @public @sealed
 export interface ApiDocument {
     readonly apiItem: ApiItem;
-    readonly contents: readonly HierarchicalSection[];
+    readonly contents: readonly Section[];
     readonly documentPath: string;
 }
 
@@ -59,7 +59,7 @@ export { ApiItemKind }
 
 // @public
 export interface ApiItemTransformationConfiguration extends ApiItemTransformationConfigurationBase, DocumentationSuiteConfiguration, Required<LoggingConfiguration> {
-    readonly defaultSectionLayout: (apiItem: ApiItem, childSections: HierarchicalSection[] | undefined, config: ApiItemTransformationConfiguration) => HierarchicalSection[];
+    readonly defaultSectionLayout: (apiItem: ApiItem, childSections: Section[] | undefined, config: ApiItemTransformationConfiguration) => Section[];
     readonly transformations: ApiItemTransformations;
     readonly uriRoot: string;
 }
@@ -71,7 +71,7 @@ export interface ApiItemTransformationConfigurationBase {
 
 // @public
 export interface ApiItemTransformationOptions extends ApiItemTransformationConfigurationBase, DocumentationSuiteOptions, LoggingConfiguration {
-    readonly defaultSectionLayout?: (apiItem: ApiItem, childSections: HierarchicalSection[] | undefined, config: ApiItemTransformationConfiguration) => HierarchicalSection[];
+    readonly defaultSectionLayout?: (apiItem: ApiItem, childSections: Section[] | undefined, config: ApiItemTransformationConfiguration) => Section[];
     readonly transformations?: Partial<ApiItemTransformations>;
     readonly uriRoot?: string | undefined;
 }
@@ -170,37 +170,37 @@ export type ApiSignatureLike = ApiCallSignature | ApiIndexSignature;
 function createBreadcrumbParagraph(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Paragraph;
 
 // @public
-function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): HierarchicalSection | undefined;
+function createDeprecationNoticeSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
-function createExamplesSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): HierarchicalSection | undefined;
+function createExamplesSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): Section | undefined;
 
 // @public
-function createParametersSection(apiFunctionLike: ApiFunctionLike, config: ApiItemTransformationConfiguration): HierarchicalSection | undefined;
+function createParametersSection(apiFunctionLike: ApiFunctionLike, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
 function createQualifiedDocumentNameForApiItem(apiItem: ApiItem, hierarchyConfig: HierarchyConfiguration): string;
 
 // @public
-function createRemarksSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): HierarchicalSection | undefined;
+function createRemarksSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
-function createReturnsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): HierarchicalSection | undefined;
+function createReturnsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
-function createSeeAlsoSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): HierarchicalSection | undefined;
+function createSeeAlsoSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
-function createSignatureSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): HierarchicalSection | undefined;
+function createSignatureSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
-function createSummarySection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): HierarchicalSection | undefined;
+function createSummarySection(apiItem: ApiItem, config: ApiItemTransformationConfiguration): Section | undefined;
 
 // @public
-function createThrowsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): HierarchicalSection | undefined;
+function createThrowsSection(apiItem: ApiItem, config: ApiItemTransformationConfiguration, headingText?: string): Section | undefined;
 
 // @public
-function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): HierarchicalSection;
+function createTypeParametersSection(typeParameters: readonly TypeParameter[], contextApiItem: ApiItem, config: ApiItemTransformationConfiguration): Section;
 
 // @public
 export const defaultConsoleLogger: Logger;
@@ -223,16 +223,16 @@ export interface DocumentationHierarchyConfigurationBase {
 }
 
 // @public
-export function documentationNodesToHtml(nodes: readonly (Nodes | IdentifiableHeading)[], config: ToHtmlConfiguration): Nodes_2[];
+export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], config: ToHtmlConfiguration): Nodes_2[];
 
 // @public
-export function documentationNodesToHtml(nodes: readonly (Nodes | IdentifiableHeading)[], transformationContext: ToHtmlContext): Nodes_2[];
+export function documentationNodesToHtml(nodes: readonly (Nodes | SectionHeading)[], transformationContext: ToHtmlContext): Nodes_2[];
 
 // @public
-export function documentationNodeToHtml(node: Nodes | IdentifiableHeading, config: ToHtmlConfiguration): Nodes_2;
+export function documentationNodeToHtml(node: Nodes | SectionHeading, config: ToHtmlConfiguration): Nodes_2;
 
 // @public
-export function documentationNodeToHtml(node: Nodes | IdentifiableHeading, context: ToHtmlContext): Nodes_2;
+export function documentationNodeToHtml(node: Nodes | SectionHeading, context: ToHtmlContext): Nodes_2;
 
 // @public
 export interface DocumentationSuiteConfiguration {
@@ -324,7 +324,7 @@ function getExampleBlocks(apiItem: ApiItem): readonly DocSection[] | undefined;
 function getFileSafeNameForApiItem(apiItem: ApiItem): string;
 
 // @public
-function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration): IdentifiableHeading;
+function getHeadingForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration): SectionHeading;
 
 // @public
 function getLinkForApiItem(apiItem: ApiItem, config: ApiItemTransformationConfiguration, textOverride?: string): Link;
@@ -352,13 +352,6 @@ function getUnscopedPackageName(apiPackage: ApiPackage): string;
 
 // @public
 function hasModifierTag(apiItem: ApiItem, tagName: string): boolean;
-
-// @public @sealed
-export interface HierarchicalSection extends Node_2 {
-    children: BlockContent[];
-    heading?: IdentifiableHeading;
-    type: "hierarchicalSection";
-}
 
 // @public
 export type HierarchyConfiguration = {
@@ -406,13 +399,6 @@ declare namespace HtmlRenderer {
     }
 }
 export { HtmlRenderer }
-
-// @public @sealed
-export interface IdentifiableHeading extends Node_2 {
-    id?: string;
-    title: string;
-    type: "sectionHeading";
-}
 
 // @public
 function isDeprecated(apiItem: ApiItem): boolean;
@@ -560,8 +546,22 @@ export interface RenderMarkdownConfiguration {
     readonly mdastToMarkdownOptions?: Partial<Options>;
 }
 
+// @public @sealed
+export interface Section extends Node_2 {
+    children: BlockContent[];
+    heading?: SectionHeading;
+    type: "section";
+}
+
 // @public
 export function sectionContentToMarkdown(node: BlockContent, context: ToMarkdownContext): RootContent[];
+
+// @public @sealed
+export interface SectionHeading extends Node_2 {
+    id?: string;
+    title: string;
+    type: "sectionHeading";
+}
 
 // @public @sealed
 export interface SectionHierarchyConfiguration extends DocumentationHierarchyConfigurationBase {
@@ -586,7 +586,7 @@ export interface ToHtmlContext {
 }
 
 // @public
-export type ToHtmlTransformation = (node: Nodes | IdentifiableHeading, context: ToHtmlContext) => Nodes_2;
+export type ToHtmlTransformation = (node: Nodes | SectionHeading, context: ToHtmlContext) => Nodes_2;
 
 // @public
 export interface ToHtmlTransformations {
@@ -607,21 +607,21 @@ export interface ToMarkdownContext {
 }
 
 // @public
-export type ToMarkdownTransformation<TIn extends Nodes | IdentifiableHeading = Nodes | IdentifiableHeading, TOut extends Nodes[] = [Nodes]> = (node: TIn, context: ToMarkdownContext) => TOut;
+export type ToMarkdownTransformation<TIn extends Nodes | SectionHeading = Nodes | SectionHeading, TOut extends Nodes[] = [Nodes]> = (node: TIn, context: ToMarkdownContext) => TOut;
 
 // @public
 export interface ToMarkdownTransformations {
     // (undocumented)
-    readonly hierarchicalSection: ToMarkdownTransformation<HierarchicalSection, RootContent[]>;
+    readonly section: ToMarkdownTransformation<Section, RootContent[]>;
     // (undocumented)
-    readonly sectionHeading: ToMarkdownTransformation<IdentifiableHeading, BlockContent[]>;
+    readonly sectionHeading: ToMarkdownTransformation<SectionHeading, BlockContent[]>;
 }
 
 // @public
-export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration, generateChildSection: (apiItem: ApiItem) => HierarchicalSection[]) => HierarchicalSection[];
+export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration, generateChildSection: (apiItem: ApiItem) => Section[]) => Section[];
 
 // @public
-export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration) => HierarchicalSection[];
+export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (apiItem: TApiItem, config: ApiItemTransformationConfiguration) => Section[];
 
 // @public
 export function transformApiModel(options: ApiItemTransformationOptions): ApiDocument[];

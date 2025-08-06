@@ -26,13 +26,13 @@ import {
 	type ApiVariable,
 } from "@microsoft/api-extractor-model";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import * as DefaultTransformationImplementations from "../default-implementations/index.js";
 
 import type { ApiItemTransformationConfiguration } from "./Configuration.js";
 
 /**
- * Signature for a function which generates one or more {@link HierarchicalSection}s describing an
+ * Signature for a function which generates one or more {@link Section}s describing an
  * API item that potentially has child items to be rendered as content under it.
  *
  * @public
@@ -40,11 +40,11 @@ import type { ApiItemTransformationConfiguration } from "./Configuration.js";
 export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: ApiItemTransformationConfiguration,
-	generateChildSection: (apiItem: ApiItem) => HierarchicalSection[],
-) => HierarchicalSection[];
+	generateChildSection: (apiItem: ApiItem) => Section[],
+) => Section[];
 
 /**
- * Signature for a function which generates one or more {@link HierarchicalSection}s describing an
+ * Signature for a function which generates one or more {@link Section}s describing an
  * API item that *does not* have child items to be rendered.
  *
  * @public
@@ -52,7 +52,7 @@ export type TransformApiItemWithChildren<TApiItem extends ApiItem> = (
 export type TransformApiItemWithoutChildren<TApiItem extends ApiItem> = (
 	apiItem: TApiItem,
 	config: ApiItemTransformationConfiguration,
-) => HierarchicalSection[];
+) => Section[];
 
 /**
  * Transformations for generating Markdown trees from different kinds of API content.

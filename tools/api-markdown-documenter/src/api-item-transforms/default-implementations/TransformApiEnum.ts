@@ -11,7 +11,7 @@ import {
 } from "@microsoft/api-extractor-model";
 import type { BlockContent } from "mdast";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
 import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
@@ -23,9 +23,9 @@ import { createMemberTables } from "../helpers/index.js";
 export function transformApiEnum(
 	apiEnum: ApiEnum,
 	config: ApiItemTransformationConfiguration,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSection[],
-): HierarchicalSection[] {
-	const sections: HierarchicalSection[] = [];
+	generateChildContent: (apiItem: ApiItem) => Section[],
+): Section[] {
+	const sections: Section[] = [];
 
 	const filteredChildren = getFilteredMembers(apiEnum, config);
 	if (filteredChildren.length > 0) {
@@ -70,8 +70,8 @@ export function transformApiEnum(
 			for (const flag of flags) {
 				detailsSubSections.push(...generateChildContent(flag));
 			}
-			const detailsSection: HierarchicalSection = {
-				type: "hierarchicalSection",
+			const detailsSection: Section = {
+				type: "section",
 				children: detailsSubSections,
 			};
 			sections.push(detailsSection);

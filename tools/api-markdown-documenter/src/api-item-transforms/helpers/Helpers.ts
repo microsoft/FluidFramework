@@ -41,7 +41,7 @@ import type {
 
 import type { Link } from "../../Link.js";
 import type { Logger } from "../../Logging.js";
-import type { HierarchicalSection, IdentifiableHeading } from "../../mdast/index.js";
+import type { Section, SectionHeading } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	injectSeparator,
@@ -85,7 +85,7 @@ import {
 export function createSignatureSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	if (apiItem instanceof ApiDeclaredItem) {
 		const signatureExcerpt = apiItem.getExcerptWithModifiers();
 		if (signatureExcerpt !== "") {
@@ -103,7 +103,7 @@ export function createSignatureSection(
 			}
 
 			return {
-				type: "hierarchicalSection",
+				type: "section",
 				children: contents,
 				heading: {
 					type: "sectionHeading",
@@ -326,7 +326,7 @@ function createHeritageTypeListSpan(
 export function createSeeAlsoSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	const seeBlocks = getSeeBlocks(apiItem);
 	if (seeBlocks === undefined || seeBlocks.length === 0) {
 		return undefined;
@@ -338,7 +338,7 @@ export function createSeeAlsoSection(
 	}
 
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: contents,
 		heading: {
 			type: "sectionHeading",
@@ -365,7 +365,7 @@ export function createTypeParametersSection(
 	typeParameters: readonly TypeParameter[],
 	contextApiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection {
+): Section {
 	const typeParametersTable = createTypeParametersSummaryTable(
 		typeParameters,
 		contextApiItem,
@@ -373,7 +373,7 @@ export function createTypeParametersSection(
 	);
 
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: [typeParametersTable],
 		heading: {
 			type: "sectionHeading",
@@ -540,7 +540,7 @@ export const betaWarningSpan: Strong = {
 export function createSummarySection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	if (apiItem instanceof ApiDocumentedItem && apiItem.tsdocComment !== undefined) {
 		const sectionContents = transformTsdoc(
 			apiItem.tsdocComment.summarySection,
@@ -550,7 +550,7 @@ export function createSummarySection(
 		return sectionContents.length === 0
 			? undefined
 			: {
-					type: "hierarchicalSection",
+					type: "section",
 					children: sectionContents,
 				};
 	}
@@ -573,7 +573,7 @@ export function createSummarySection(
 export function createRemarksSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	if (
 		!(apiItem instanceof ApiDocumentedItem) ||
 		apiItem.tsdocComment?.remarksBlock === undefined
@@ -582,7 +582,7 @@ export function createRemarksSection(
 	}
 
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: transformTsdoc(apiItem.tsdocComment.remarksBlock.content, apiItem, config),
 		heading: {
 			type: "sectionHeading",
@@ -610,7 +610,7 @@ export function createThrowsSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 	headingText: string = "Throws",
-): HierarchicalSection | undefined {
+): Section | undefined {
 	const throwsBlocks = getThrowsBlocks(apiItem);
 	if (throwsBlocks === undefined || throwsBlocks.length === 0) {
 		return undefined;
@@ -622,7 +622,7 @@ export function createThrowsSection(
 	}
 
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: contents,
 		heading: {
 			type: "sectionHeading",
@@ -648,14 +648,14 @@ export function createThrowsSection(
 export function createDeprecationNoticeSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	const deprecatedBlock = getDeprecatedBlock(apiItem);
 	if (deprecatedBlock === undefined) {
 		return undefined;
 	}
 
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: [
 			{
 				type: "paragraph",
@@ -699,7 +699,7 @@ export function createExamplesSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
 	headingText: string = "Examples",
-): HierarchicalSection | undefined {
+): Section | undefined {
 	const exampleBlocks = getExampleBlocks(apiItem);
 
 	if (exampleBlocks === undefined || exampleBlocks.length === 0) {
@@ -711,7 +711,7 @@ export function createExamplesSection(
 		return createExampleSection({ apiItem, content: exampleBlocks[0] }, config);
 	}
 
-	const exampleSections: HierarchicalSection[] = [];
+	const exampleSections: Section[] = [];
 	for (const [i, exampleBlock] of exampleBlocks.entries()) {
 		const exampleNumber = i + 1; // i is 0-based, but we want our example numbers to be 1-based.
 		exampleSections.push(
@@ -720,7 +720,7 @@ export function createExamplesSection(
 	}
 
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: exampleSections,
 		heading: {
 			type: "sectionHeading",
@@ -804,12 +804,12 @@ interface ExampleProperties {
  * @param contextApiItem - The API item with which the example is associated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
  *
- * @returns The rendered {@link HierarchicalSection}.
+ * @returns The rendered {@link Section}.
  */
 function createExampleSection(
 	example: ExampleProperties,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection {
+): Section {
 	const { logger } = config;
 
 	let transformedExampleContent = transformTsdoc(example.content, example.apiItem, config);
@@ -850,7 +850,7 @@ function createExampleSection(
 
 	// Always emit the section, even if the body is empty after stripping out the title.
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: transformedExampleContent,
 		heading: {
 			type: "sectionHeading",
@@ -986,13 +986,13 @@ function stripTitleFromExampleComment<TNode extends Nodes>(
 export function createParametersSection(
 	apiFunctionLike: ApiFunctionLike,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	if (apiFunctionLike.parameters.length === 0) {
 		return undefined;
 	}
 
 	return {
-		type: "hierarchicalSection",
+		type: "section",
 		children: [
 			createParametersSummaryTable(apiFunctionLike.parameters, apiFunctionLike, config),
 		],
@@ -1020,7 +1020,7 @@ export function createParametersSection(
 export function createReturnsSection(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	const children: BlockContent[] = [];
 
 	// Generate span from `@returns` comment
@@ -1066,7 +1066,7 @@ export function createReturnsSection(
 	return children.length === 0
 		? undefined
 		: {
-				type: "hierarchicalSection",
+				type: "section",
 				children,
 				heading: {
 					type: "sectionHeading",
@@ -1083,7 +1083,7 @@ export interface ChildSectionProperties {
 	/**
 	 * Heading for the section being rendered.
 	 */
-	readonly heading: IdentifiableHeading;
+	readonly heading: SectionHeading;
 
 	/**
 	 * The API item kind of all child items.
@@ -1117,8 +1117,8 @@ export function createChildDetailsSection(
 	childItems: readonly ChildSectionProperties[],
 	config: ApiItemTransformationConfiguration,
 	createChildContent: (apiItem) => BlockContent[],
-): HierarchicalSection[] | undefined {
-	const sections: HierarchicalSection[] = [];
+): Section[] | undefined {
+	const sections: Section[] = [];
 
 	for (const childItem of childItems) {
 		// Only render contents for a section if the item kind is one that gets rendered to its parent's document
@@ -1134,7 +1134,7 @@ export function createChildDetailsSection(
 			}
 
 			sections.push({
-				type: "hierarchicalSection",
+				type: "section",
 				children: childContents,
 				heading: childItem.heading,
 			});

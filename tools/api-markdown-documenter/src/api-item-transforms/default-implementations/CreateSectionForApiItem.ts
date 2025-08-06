@@ -5,7 +5,7 @@
 
 import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import { getEffectiveReleaseLevel } from "../../utilities/index.js";
 import {
 	doesItemRequireOwnDocument,
@@ -55,10 +55,10 @@ import {
  */
 export function createSectionForApiItem(
 	apiItem: ApiItem,
-	itemSpecificContent: HierarchicalSection[] | undefined,
+	itemSpecificContent: Section[] | undefined,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection[] {
-	const sections: HierarchicalSection[] = [];
+): Section[] {
+	const sections: Section[] = [];
 
 	// Render summary comment (if any)
 	const summary = createSummarySection(apiItem, config);
@@ -76,7 +76,7 @@ export function createSectionForApiItem(
 	const releaseLevel = getEffectiveReleaseLevel(apiItem);
 	if (releaseLevel === ReleaseTag.Alpha) {
 		sections.push({
-			type: "hierarchicalSection",
+			type: "section",
 			children: [
 				{
 					type: "paragraph",
@@ -86,7 +86,7 @@ export function createSectionForApiItem(
 		});
 	} else if (releaseLevel === ReleaseTag.Beta) {
 		sections.push({
-			type: "hierarchicalSection",
+			type: "section",
 			children: [
 				{
 					type: "paragraph",
@@ -138,7 +138,7 @@ export function createSectionForApiItem(
 		? sections
 		: [
 				{
-					type: "hierarchicalSection",
+					type: "section",
 					children: sections,
 					heading: getHeadingForApiItem(apiItem, config),
 				},

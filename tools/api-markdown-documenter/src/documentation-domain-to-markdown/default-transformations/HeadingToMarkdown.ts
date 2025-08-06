@@ -11,7 +11,7 @@ import type {
 	Strong as MdastStrong,
 } from "mdast";
 
-import type { IdentifiableHeading } from "../../mdast/index.js";
+import type { SectionHeading } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -32,7 +32,7 @@ function isInHeadingRange(level: number): level is 1 | 2 | 3 | 4 | 5 | 6 {
  * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  */
 export function headingToMarkdown(
-	headingNode: IdentifiableHeading,
+	headingNode: SectionHeading,
 	context: TransformationContext,
 ): MdastBlockContent[] {
 	// Markdown only supports heading levels up to 6. If our level is beyond that, we will transform the input to simple
@@ -43,7 +43,7 @@ export function headingToMarkdown(
 }
 
 function transformAsHeading(
-	headingNode: IdentifiableHeading,
+	headingNode: SectionHeading,
 	headingLevel: 1 | 2 | 3 | 4 | 5 | 6,
 ): MdastBlockContent[] {
 	let headingText: string = headingNode.title;
@@ -65,7 +65,7 @@ function transformAsHeading(
 	return [heading];
 }
 
-function transformAsBoldText(headingNode: IdentifiableHeading): MdastBlockContent[] {
+function transformAsBoldText(headingNode: SectionHeading): MdastBlockContent[] {
 	const boldText: MdastStrong = {
 		type: "strong",
 		children: [

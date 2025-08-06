@@ -12,7 +12,7 @@ import {
 } from "@microsoft/api-extractor-model";
 
 import type { ApiDocument } from "../ApiDocument.js";
-import type { HierarchicalSection } from "../mdast/index.js";
+import type { Section } from "../mdast/index.js";
 
 import {
 	doesItemRequireOwnDocument,
@@ -196,12 +196,12 @@ function createDocumentForSingleEntryPointPackage(
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
-	const sections: HierarchicalSection[] = [];
+	const sections: Section[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
 		sections.push({
-			type: "hierarchicalSection",
+			type: "section",
 			children: [createBreadcrumbParagraph(apiPackage, config)],
 		});
 	}
@@ -242,12 +242,12 @@ function createDocumentForMultiEntryPointPackage(
 
 	logger.verbose(`Generating ${apiPackage.name} package document...`);
 
-	const sections: HierarchicalSection[] = [];
+	const sections: Section[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
 		sections.push({
-			type: "hierarchicalSection",
+			type: "section",
 			children: [createBreadcrumbParagraph(apiPackage, config)],
 		});
 	}
@@ -256,7 +256,7 @@ function createDocumentForMultiEntryPointPackage(
 	const renderedEntryPointList = createEntryPointList(apiEntryPoints, config);
 	if (renderedEntryPointList !== undefined) {
 		sections.push({
-			type: "hierarchicalSection",
+			type: "section",
 			children: [renderedEntryPointList],
 			heading: {
 				type: "sectionHeading",
@@ -278,12 +278,12 @@ function createDocumentForApiEntryPoint(
 
 	logger.verbose(`Generating ${apiEntryPoint.displayName} API entry-point document...`);
 
-	const sections: HierarchicalSection[] = [];
+	const sections: Section[] = [];
 
 	// Render breadcrumb
 	if (includeBreadcrumb) {
 		sections.push({
-			type: "hierarchicalSection",
+			type: "section",
 			children: [createBreadcrumbParagraph(apiEntryPoint, config)],
 		});
 	}

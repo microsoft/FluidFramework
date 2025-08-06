@@ -15,7 +15,7 @@ describe("Document HTML rendering tests", () => {
 			apiItem: {} as unknown as ApiItem, // Mock ApiItem for testing
 			contents: [
 				{
-					type: "hierarchicalSection",
+					type: "section",
 					children: [
 						{
 							type: "paragraph",
@@ -31,7 +31,7 @@ describe("Document HTML rendering tests", () => {
 							],
 						},
 						{
-							type: "hierarchicalSection",
+							type: "section",
 							children: [
 								{
 									type: "paragraph",

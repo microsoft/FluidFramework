@@ -5,7 +5,7 @@
 
 import { ApiItemKind, type ApiModel } from "@microsoft/api-extractor-model";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createTableWithHeading } from "../helpers/index.js";
 
@@ -15,12 +15,12 @@ import { createTableWithHeading } from "../helpers/index.js";
 export function transformApiModel(
 	apiModel: ApiModel,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection[] {
+): Section[] {
 	if (apiModel.packages.length === 0) {
 		// If no packages under model, print simple note.
 		return [
 			{
-				type: "hierarchicalSection",
+				type: "section",
 				children: [
 					{
 						type: "paragraph",

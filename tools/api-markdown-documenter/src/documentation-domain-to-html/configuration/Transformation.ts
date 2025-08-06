@@ -6,7 +6,7 @@
 import type { Nodes as HastNodes } from "hast";
 import type { Nodes } from "mdast";
 
-import type { IdentifiableHeading, HierarchicalSection } from "../../mdast/index.js";
+import type { SectionHeading, Section } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 import { headingToHtml, sectionToHtml } from "../default-transformations/index.js";
 
@@ -41,7 +41,7 @@ export interface Transformations {
  * @public
  */
 export type Transformation = (
-	node: Nodes | IdentifiableHeading,
+	node: Nodes | SectionHeading,
 	context: TransformationContext,
 ) => HastNodes;
 
@@ -49,6 +49,6 @@ export type Transformation = (
  * Default documentation node to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
-	sectionHeading: (node, context) => headingToHtml(node as IdentifiableHeading, context),
-	hierarchicalSection: (node, context) => sectionToHtml(node as HierarchicalSection, context),
+	sectionHeading: (node, context) => headingToHtml(node as SectionHeading, context),
+	section: (node, context) => sectionToHtml(node as Section, context),
 };

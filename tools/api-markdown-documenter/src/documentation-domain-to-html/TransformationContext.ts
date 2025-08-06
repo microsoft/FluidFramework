@@ -22,7 +22,7 @@ export interface TransformationContext {
 	 *
 	 * @remarks
 	 *
-	 * Will automatically increment based on {@link HierarchicalSection}s encountered, such that heading
+	 * Will automatically increment based on {@link Section}s encountered, such that heading
 	 * levels can be increased automatically based on content hierarchy.
 	 */
 	readonly headingLevel: number;

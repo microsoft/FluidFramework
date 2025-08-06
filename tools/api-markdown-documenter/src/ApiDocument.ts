@@ -5,7 +5,7 @@
 
 import type { ApiItem } from "@microsoft/api-extractor-model";
 
-import type { HierarchicalSection } from "./mdast/index.js";
+import type { Section } from "./mdast/index.js";
 
 /**
  * A document for an API item.
@@ -22,7 +22,7 @@ export interface ApiDocument {
 	/**
 	 * Document contents.
 	 */
-	readonly contents: readonly HierarchicalSection[];
+	readonly contents: readonly Section[];
 
 	/**
 	 * Path to which the resulting document should be saved.

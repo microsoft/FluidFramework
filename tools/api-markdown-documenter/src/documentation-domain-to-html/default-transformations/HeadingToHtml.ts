@@ -6,7 +6,7 @@
 import type { Element as HastElement, Nodes as HastNodes } from "hast";
 import { h } from "hastscript";
 
-import type { IdentifiableHeading } from "../../mdast/index.js";
+import type { SectionHeading } from "../../mdast/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
 
 /**
@@ -27,7 +27,7 @@ const maxHeadingLevel = 6;
  * Observes {@link RenderContext.headingLevel} to determine the heading level to use.
  */
 export function headingToHtml(
-	headingNode: IdentifiableHeading,
+	headingNode: SectionHeading,
 	context: TransformationContext,
 ): HastNodes {
 	const { headingLevel } = context;

@@ -5,7 +5,7 @@
 
 import type { ApiItem } from "@microsoft/api-extractor-model";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 
 /**
@@ -14,7 +14,7 @@ import type { ApiItemTransformationConfiguration } from "../configuration/index.
 export function transformApiItemWithoutChildren(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection[] {
+): Section[] {
 	// Items without children don't have much information to provide other than the default
 	// rendered details.
 	return config.defaultSectionLayout(apiItem, undefined, config);

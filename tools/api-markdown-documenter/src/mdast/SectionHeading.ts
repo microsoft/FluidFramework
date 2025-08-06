@@ -6,7 +6,7 @@
 import type { Node } from "mdast";
 
 /**
- * The heading of a {@link HierarchicalSection} with a dynamic level.
+ * The heading of a {@link Section} with a dynamic level.
  *
  * @remarks The level is determined by the nesting of the containing section.
  *

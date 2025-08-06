@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { type ApiItem, ApiItemKind } from "@microsoft/api-extractor-model";
 
 import type { Link } from "../Link.js";
-import type { IdentifiableHeading } from "../mdast/index.js";
+import type { SectionHeading } from "../mdast/index.js";
 import {
 	getApiItemKind,
 	getFilteredParent,
@@ -255,7 +255,7 @@ export function createQualifiedDocumentNameForApiItem(
 }
 
 /**
- * Generates a {@link IdentifiableHeading} for the specified API item.
+ * Generates a {@link SectionHeading} for the specified API item.
  *
  * @param apiItem - The API item for which the heading is being generated.
  * @param config - See {@link ApiItemTransformationConfiguration}.
@@ -265,7 +265,7 @@ export function createQualifiedDocumentNameForApiItem(
 export function getHeadingForApiItem(
 	apiItem: ApiItem,
 	config: ApiItemTransformationConfiguration,
-): IdentifiableHeading {
+): SectionHeading {
 	// Don't generate an ID for the root heading
 	const id = doesItemRequireOwnDocument(apiItem, config.hierarchy)
 		? undefined

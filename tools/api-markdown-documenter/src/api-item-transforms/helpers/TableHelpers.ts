@@ -20,7 +20,7 @@ import { toHtml } from "hast-util-to-html";
 import type { Html, PhrasingContent, Table, TableCell, TableRow } from "mdast";
 import { toHast } from "mdast-util-to-hast";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import {
 	type ApiFunctionLike,
 	type ApiModifier,
@@ -81,8 +81,8 @@ export interface TableCreationOptions {
 export function createMemberTables(
 	memberTableProperties: readonly MemberTableProperties[],
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection[] | undefined {
-	const sections: HierarchicalSection[] = [];
+): Section[] | undefined {
+	const sections: Section[] = [];
 
 	for (const member of memberTableProperties) {
 		const table = createTableWithHeading(member, config);
@@ -103,7 +103,7 @@ export function createMemberTables(
 export function createTableWithHeading(
 	memberTableProperties: MemberTableProperties,
 	config: ApiItemTransformationConfiguration,
-): HierarchicalSection | undefined {
+): Section | undefined {
 	const table = createSummaryTable(
 		memberTableProperties.items,
 		memberTableProperties.itemKind,
@@ -114,7 +114,7 @@ export function createTableWithHeading(
 	return table === undefined
 		? undefined
 		: {
-				type: "hierarchicalSection",
+				type: "section",
 				children: [table],
 				heading: {
 					type: "sectionHeading",

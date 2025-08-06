@@ -7,9 +7,9 @@ import type { BlockContent, Node } from "mdast";
 
 import type { SectionHeading } from "./SectionHeading.js";
 
-// TODO: Hierarchical sections should really be either or in terms of what kinds of children they can have.
-// Either they have `HierarchicalSection` children, or they have `BlockContent` children, but they shouldn't mix and match.
-// Block content following a hierarchical section will otherwise be considered part of preceeding section, rather than a sibling section.
+// TODO: Sections should really be either or in terms of what kinds of children they can have.
+// Either they have `Sections` children, or they have `BlockContent` children, but they shouldn't mix and match.
+// Block content following a section will otherwise be considered part of preceeding section, rather than a sibling section.
 
 /**
  * Represents a hierarchically nested section.
@@ -17,11 +17,11 @@ import type { SectionHeading } from "./SectionHeading.js";
  * @sealed
  * @public
  */
-export interface HierarchicalSection extends Node {
+export interface Section extends Node {
 	/**
 	 * `mdast` node type.
 	 */
-	type: "hierarchicalSection";
+	type: "section";
 
 	/**
 	 * Section contents.
@@ -38,16 +38,16 @@ export interface HierarchicalSection extends Node {
 }
 
 /**
- * Wraps the provided contents in a {@link HierarchicalSection}.
+ * Wraps the provided contents in a {@link Section}.
  * @param nodes - The section's child contents.
  * @param heading - Optional heading to associate with the section.
  */
-export function createHierarchicalSection({
+export function createSection({
 	children,
 	heading,
-}: { children: BlockContent[]; heading?: SectionHeading }): HierarchicalSection {
-	const section: HierarchicalSection = {
-		type: "hierarchicalSection",
+}: { children: BlockContent[]; heading?: SectionHeading }): Section {
+	const section: Section = {
+		type: "section",
 		children,
 	};
 
@@ -59,12 +59,12 @@ export function createHierarchicalSection({
 	return section;
 }
 
-// Extend the mdast to include `HierarchicalSection` in "block content" and "root content" contexts
+// Extend the mdast to include `Section` in "block content" and "root content" contexts
 declare module "mdast" {
 	interface BlockContentMap {
-		hierarchicalSection: HierarchicalSection;
+		section: Section;
 	}
 	interface RootContentMap {
-		hierarchicalSection: HierarchicalSection;
+		section: Section;
 	}
 }

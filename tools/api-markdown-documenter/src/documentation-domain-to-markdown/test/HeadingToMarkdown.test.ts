@@ -5,7 +5,7 @@
 
 import { expect } from "chai";
 
-import type { IdentifiableHeading } from "../../mdast/index.js";
+import type { SectionHeading } from "../../mdast/index.js";
 import { createTransformationContext } from "../TransformationContext.js";
 
 describe("headingToMarkdown", () => {
@@ -13,7 +13,7 @@ describe("headingToMarkdown", () => {
 		const transformationContext = createTransformationContext({ startingHeadingLevel: 2 });
 
 		it("Without ID", () => {
-			const input: IdentifiableHeading = {
+			const input: SectionHeading = {
 				type: "sectionHeading",
 				title: "Hello world!",
 			};
@@ -31,7 +31,7 @@ describe("headingToMarkdown", () => {
 		});
 
 		it("With ID", () => {
-			const input: IdentifiableHeading = {
+			const input: SectionHeading = {
 				type: "sectionHeading",
 				title: "Hello world!",
 				id: "my-heading-id",
@@ -55,7 +55,7 @@ describe("headingToMarkdown", () => {
 		const transformationContext = createTransformationContext({ startingHeadingLevel: 7 });
 
 		it("Without ID", () => {
-			const input: IdentifiableHeading = {
+			const input: SectionHeading = {
 				type: "sectionHeading",
 				title: "Hello world!",
 			};
@@ -77,7 +77,7 @@ describe("headingToMarkdown", () => {
 		});
 
 		it("With ID", () => {
-			const input: IdentifiableHeading = {
+			const input: SectionHeading = {
 				type: "sectionHeading",
 				title: "Hello world!",
 				id: "my-heading-id",

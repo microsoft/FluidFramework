@@ -53,7 +53,7 @@ export function sectionContentToMarkdown(
 	const { transformations } = context;
 
 	// If the node is not a hierarchical section, then it is Markdown "block content" and can be returned directly.
-	if (node.type !== "hierarchicalSection") {
+	if (node.type !== "section") {
 		return [node];
 	}
 

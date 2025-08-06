@@ -39,8 +39,8 @@ export {
 } from "./api-item-transforms/index.js";
 export type { ApiDocument } from "./ApiDocument.js";
 export type {
-	HierarchicalSection,
-	IdentifiableHeading,
+	Section,
+	SectionHeading,
 } from "./mdast/index.js";
 export {
 	documentToHtml,

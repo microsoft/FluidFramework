@@ -9,13 +9,13 @@
  */
 import { h } from "hastscript";
 
-import type { IdentifiableHeading } from "../../mdast/index.js";
+import type { SectionHeading } from "../../mdast/index.js";
 
 import { assertTransformation } from "./Utilities.js";
 
 describe("HeadingNode -> Html", () => {
 	it("With ID", () => {
-		const input: IdentifiableHeading = {
+		const input: SectionHeading = {
 			type: "sectionHeading",
 			title: "Foo",
 			id: "foo-id",
@@ -25,7 +25,7 @@ describe("HeadingNode -> Html", () => {
 	});
 
 	it("Without ID", () => {
-		const input: IdentifiableHeading = {
+		const input: SectionHeading = {
 			type: "sectionHeading",
 			title: "Foo",
 		};
@@ -36,7 +36,7 @@ describe("HeadingNode -> Html", () => {
 	it("Dynamic heading level (within limit)", () => {
 		// Heading levels are dynamic depending on context (depth in the document tree).
 		// Verify that the specified starting heading level in the config is respected when transforming the heading.
-		const input: IdentifiableHeading = {
+		const input: SectionHeading = {
 			type: "sectionHeading",
 			title: "Foo",
 			id: "foo-id",
@@ -49,7 +49,7 @@ describe("HeadingNode -> Html", () => {
 		// HTML supports heading levels 1-6.
 		// As a policy, if we have a heading nested deeper than that, we transform the content to bold text with an
 		// anchor tag above it.
-		const input: IdentifiableHeading = {
+		const input: SectionHeading = {
 			type: "sectionHeading",
 			title: "Foo",
 			id: "foo-id",

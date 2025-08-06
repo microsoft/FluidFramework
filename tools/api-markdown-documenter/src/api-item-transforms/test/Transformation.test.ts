@@ -19,8 +19,8 @@ import {
 import { expect } from "chai";
 
 import type { ApiDocument } from "../../ApiDocument.js";
-import type { HierarchicalSection } from "../../mdast/index.js";
-import { createHierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
+import { createSection } from "../../mdast/index.js";
 import { getHeadingForApiItem } from "../ApiItemTransformUtilities.js";
 import { apiItemToSections } from "../TransformApiItem.js";
 import { transformApiModel } from "../TransformApiModel.js";
@@ -124,9 +124,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const result = config.transformations[ApiItemKind.Variable](apiVariable, config);
 
 		const expected = [
-			createHierarchicalSection({
+			createSection({
 				children: [
-					createHierarchicalSection({
+					createSection({
 						children: [
 							{
 								type: "paragraph",
@@ -134,7 +134,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 							},
 						],
 					}),
-					createHierarchicalSection({
+					createSection({
 						children: [
 							{
 								type: "code",
@@ -170,10 +170,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 		const result = config.transformations[ApiItemKind.Function](apiFunction, config);
 
 		const expected = [
-			createHierarchicalSection({
+			createSection({
 				children: [
 					// Summary section
-					createHierarchicalSection({
+					createSection({
 						children: [
 							{
 								type: "paragraph",
@@ -183,7 +183,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					}),
 
 					// Signature section
-					createHierarchicalSection({
+					createSection({
 						children: [
 							{
 								type: "code",
@@ -191,7 +191,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								value:
 									"export declare function testFunction<TTypeParameter>(testParameter: TTypeParameter, testOptionalParameter?: TTypeParameter): TTypeParameter;",
 							},
-							createHierarchicalSection({
+							createSection({
 								children: [
 									{
 										type: "table",
@@ -239,7 +239,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					}),
 
 					// Parameters table section
-					createHierarchicalSection({
+					createSection({
 						children: [
 							{
 								type: "table",
@@ -303,7 +303,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					}),
 
 					// Returns section
-					createHierarchicalSection({
+					createSection({
 						children: [
 							{
 								type: "paragraph",
@@ -326,7 +326,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 					}),
 
 					// Throws section
-					createHierarchicalSection({
+					createSection({
 						children: [
 							{
 								type: "paragraph",
@@ -368,9 +368,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 			(childItem) => apiItemToSections(childItem, config),
 		);
 
-		const expected: HierarchicalSection[] = [
+		const expected: Section[] = [
 			// Summary section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					{
 						type: "paragraph",
@@ -380,7 +380,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			}),
 
 			// Signature section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					{
 						type: "code",
@@ -396,7 +396,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			}),
 
 			// Remarks section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					{
 						type: "paragraph",
@@ -411,7 +411,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			}),
 
 			// Properties section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					{
 						type: "table",
@@ -468,12 +468,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 			}),
 
 			// Property details section
-			createHierarchicalSection({
+			createSection({
 				children: [
-					createHierarchicalSection({
+					createSection({
 						children: [
 							// Summary section
-							createHierarchicalSection({
+							createSection({
 								children: [
 									{
 										type: "paragraph",
@@ -482,7 +482,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 							}),
 							// Signature section
-							createHierarchicalSection({
+							createSection({
 								children: [
 									{
 										type: "code",
@@ -554,9 +554,9 @@ describe("ApiItem to Documentation transformation tests", () => {
 		// - baz (@alpha)
 		// We expect docs to be generated for `foo` and `bar`, but not `baz`, since it's @alpha, and we are filtering those out per our config above.
 		// Also note that child items are listed alphabetically, so we expect `bar` before `foo`.
-		const expected: HierarchicalSection[] = [
+		const expected: Section[] = [
 			// Summary section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					{
 						type: "paragraph",
@@ -566,7 +566,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			}),
 
 			// Signature section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					{
 						type: "code",
@@ -582,7 +582,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 			}),
 
 			// Variables section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					{
 						type: "table",
@@ -671,15 +671,15 @@ describe("ApiItem to Documentation transformation tests", () => {
 			}),
 
 			// Variables details section
-			createHierarchicalSection({
+			createSection({
 				children: [
 					// Details for `bar`
-					createHierarchicalSection({
+					createSection({
 						children: [
 							// No summary docs on `bar`
 
 							// Beta warning
-							createHierarchicalSection({
+							createSection({
 								children: [
 									{
 										type: "paragraph",
@@ -688,7 +688,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 								],
 							}),
 							// Signature
-							createHierarchicalSection({
+							createSection({
 								children: [
 									{
 										type: "code",
@@ -710,12 +710,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 						},
 					}),
 					// Details for `foo`
-					createHierarchicalSection({
+					createSection({
 						children: [
 							// No summary docs on `foo`
 
 							// Signature
-							createHierarchicalSection({
+							createSection({
 								children: [
 									{
 										type: "code",
@@ -759,10 +759,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0],
 			documentPath: "test-package/index",
 			contents: [
-				createHierarchicalSection({
+				createSection({
 					children: [
 						// Breadcrumb
-						createHierarchicalSection({
+						createSection({
 							children: [
 								{
 									type: "paragraph",
@@ -787,7 +787,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 						}),
 
 						// Body
-						createHierarchicalSection({
+						createSection({
 							children: [
 								{
 									type: "list",
@@ -845,10 +845,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0].entryPoints[0],
 			documentPath: "test-package/entry-point-a-entrypoint",
 			contents: [
-				createHierarchicalSection({
+				createSection({
 					children: [
 						// Breadcrumb
-						createHierarchicalSection({
+						createSection({
 							children: [
 								{
 									type: "paragraph",
@@ -882,7 +882,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 						}),
 
 						// Variables table
-						createHierarchicalSection({
+						createSection({
 							children: [
 								{
 									type: "table",
@@ -947,12 +947,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 						}),
 
 						// Variables details
-						createHierarchicalSection({
+						createSection({
 							children: [
-								createHierarchicalSection({
+								createSection({
 									children: [
 										// Summary
-										createHierarchicalSection({
+										createSection({
 											children: [
 												{
 													type: "paragraph",
@@ -962,7 +962,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										}),
 
 										// Signature
-										createHierarchicalSection({
+										createSection({
 											children: [
 												{
 													type: "code",
@@ -997,10 +997,10 @@ describe("ApiItem to Documentation transformation tests", () => {
 			apiItem: model.packages[0].entryPoints[1],
 			documentPath: "test-package/entry-point-b-entrypoint",
 			contents: [
-				createHierarchicalSection({
+				createSection({
 					children: [
 						// Breadcrumb
-						createHierarchicalSection({
+						createSection({
 							children: [
 								{
 									type: "paragraph",
@@ -1034,7 +1034,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 						}),
 
 						// Variables table
-						createHierarchicalSection({
+						createSection({
 							children: [
 								{
 									type: "table",
@@ -1085,12 +1085,12 @@ describe("ApiItem to Documentation transformation tests", () => {
 						}),
 
 						// Variables details
-						createHierarchicalSection({
+						createSection({
 							children: [
-								createHierarchicalSection({
+								createSection({
 									children: [
 										// Summary
-										createHierarchicalSection({
+										createSection({
 											children: [
 												{
 													type: "paragraph",
@@ -1100,7 +1100,7 @@ describe("ApiItem to Documentation transformation tests", () => {
 										}),
 
 										// Signature
-										createHierarchicalSection({
+										createSection({
 											children: [
 												{
 													type: "code",

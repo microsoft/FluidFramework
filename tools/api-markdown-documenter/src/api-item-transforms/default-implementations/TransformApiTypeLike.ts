@@ -13,7 +13,7 @@ import {
 	type ApiPropertyItem,
 } from "@microsoft/api-extractor-model";
 
-import type { HierarchicalSection } from "../../mdast/index.js";
+import type { Section } from "../../mdast/index.js";
 import {
 	ApiModifier,
 	getApiItemKind,
@@ -67,9 +67,9 @@ import { createChildDetailsSection, createMemberTables } from "../helpers/index.
 export function transformApiTypeLike(
 	apiItem: ApiTypeLike,
 	config: ApiItemTransformationConfiguration,
-	generateChildContent: (apiItem: ApiItem) => HierarchicalSection[],
-): HierarchicalSection[] {
-	const sections: HierarchicalSection[] = [];
+	generateChildContent: (apiItem: ApiItem) => Section[],
+): Section[] {
+	const sections: Section[] = [];
 
 	const filteredChildren = getFilteredMembers(apiItem, config);
 	if (filteredChildren.length > 0) {
