@@ -16,7 +16,11 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { typeboxValidator } from "../../../external-utilities/index.js";
-import { ForestTypeOptimized } from "../../../shared-tree/index.js";
+import {
+	ForestTypeOptimized,
+	type SharedTreeOptions,
+	type SharedTreeOptionsInternal,
+} from "../../../shared-tree/index.js";
 import { testIdCompressor } from "../../utils.js";
 import {
 	SchemaFactory,
@@ -29,6 +33,7 @@ import { ChunkedForest } from "../../../feature-libraries/chunked-forest/chunked
 import { forestSummaryKey } from "../../../feature-libraries/forest-summary/index.js";
 import { configuredSharedTree, type ISharedTree } from "../../../treeFactory.js";
 import { expectTreesEqual } from "../../index.js";
+import { TreeCompressionStrategyExtended } from "../../../feature-libraries/index.js";
 
 const schemaFactory = new SchemaFactory("com.example");
 
@@ -259,10 +264,12 @@ describe("Forest incremental summary", () => {
 	let dataStoreRuntime1: MockFluidDataStoreRuntime;
 
 	beforeEach(() => {
-		factory = configuredSharedTree({
+		const options: SharedTreeOptionsInternal = {
 			jsonValidator: typeboxValidator,
 			forest: ForestTypeOptimized,
-		}).getFactory();
+			treeEncodeType: TreeCompressionStrategyExtended.CompressedIncremental,
+		};
+		factory = configuredSharedTree(options as SharedTreeOptions).getFactory();
 
 		dataStoreRuntime1 = new MockFluidDataStoreRuntime({
 			clientId: `test-client`,

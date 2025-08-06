@@ -206,10 +206,14 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	 */
 	private readonly encodedChunkContentsMap: Map<string, EncodedFieldBatch> = new Map();
 
+	private readonly enableIncrementalSummary: boolean;
+
 	public constructor(props: {
+		readonly enableIncrementalSummary: boolean;
 		readonly getChunkAtCursor: (cursor: ITreeCursorSynchronous) => TreeChunk;
 	}) {
 		this.getChunkAtCursor = props.getChunkAtCursor;
+		this.enableIncrementalSummary = props.enableIncrementalSummary;
 	}
 
 	/**
@@ -272,9 +276,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 		// If there is no incremental summary context, do not summarize incrementally. This happens in two scenarios:
 		// 1. When summarizing a detached container, i.e., the first ever summary.
 		// 2. When running GC, the default behavior is to call summarize on DDS without incrementalSummaryContext.
-		//
-		// TODO: Make this account for forest type and cross-client compat policy.
-		if (incrementalSummaryContext === undefined) {
+		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
 			return false;
 		}
 
@@ -382,7 +384,7 @@ export class ForestIncrementalSummaryBuilder implements IncrementalEncoderDecode
 	public completedSummary(
 		incrementalSummaryContext: IExperimentalIncrementalSummaryContext | undefined,
 	): void {
-		if (incrementalSummaryContext === undefined) {
+		if (!this.enableIncrementalSummary || incrementalSummaryContext === undefined) {
 			return;
 		}
 

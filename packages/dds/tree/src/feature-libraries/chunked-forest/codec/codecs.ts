@@ -19,7 +19,11 @@ import {
 	type TreeChunk,
 } from "../../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
+import {
+	TreeCompressionStrategy,
+	TreeCompressionStrategyExtended,
+	type TreeCompressionStrategyInternal,
+} from "../../treeCompressionUtils.js";
 
 import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
@@ -73,7 +77,7 @@ export interface IncrementalDecoder {
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
 export interface FieldBatchEncodingContext {
-	readonly encodeType: TreeCompressionStrategy;
+	readonly encodeType: TreeCompressionStrategyInternal;
 	readonly idCompressor: IIdCompressor;
 	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
@@ -133,6 +137,7 @@ export function makeFieldBatchCodec(
 				case TreeCompressionStrategy.Uncompressed:
 					encoded = uncompressedEncode(data);
 					break;
+				case TreeCompressionStrategyExtended.CompressedIncremental:
 				case TreeCompressionStrategy.Compressed:
 					// eslint-disable-next-line unicorn/prefer-ternary
 					if (context.schema !== undefined) {

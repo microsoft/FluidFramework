@@ -56,6 +56,7 @@ import {
 	makeMitigatedChangeFamily,
 	makeSchemaCodec,
 	makeTreeChunker,
+	type TreeCompressionStrategyInternal,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import/no-internal-modules
 import type { FormatV1 } from "../feature-libraries/schema-index/index.js";
@@ -582,7 +583,9 @@ export type SharedTreeOptions = Partial<CodecWriteOptions> &
 	Partial<SharedTreeFormatOptions> &
 	ForestOptions;
 
-export interface SharedTreeOptionsInternal extends SharedTreeOptions {
+export interface SharedTreeOptionsInternal
+	extends Omit<SharedTreeOptions, "treeEncodeType">,
+		Partial<SharedTreeFormatOptionsInternal> {
 	disposeForksAfterTransaction?: boolean;
 }
 /**
@@ -618,6 +621,11 @@ export interface SharedTreeFormatOptions {
 	 * This option defaults to SharedTreeFormatVersion.v2.
 	 */
 	formatVersion: SharedTreeFormatVersion[keyof SharedTreeFormatVersion];
+}
+
+export interface SharedTreeFormatOptionsInternal
+	extends Omit<SharedTreeFormatOptions, "treeEncodeType"> {
+	treeEncodeType: TreeCompressionStrategyInternal;
 }
 
 /**

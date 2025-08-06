@@ -21,3 +21,20 @@ export enum TreeCompressionStrategy {
 	 */
 	Uncompressed = 1,
 }
+
+/**
+ * This is an internal type that extends TreeCompressionStrategy. It is used to add compression
+ * strategies that are not intended for public use just yet.
+ * @internal
+ */
+export enum TreeCompressionStrategyExtended {
+	/**
+	 * Optimized for encoded size as TreeCompressionStrategy.Compressed and allows incremental encoding
+	 * of the data.
+	 */
+	CompressedIncremental = 2,
+}
+
+export type TreeCompressionStrategyInternal =
+	| TreeCompressionStrategy
+	| TreeCompressionStrategyExtended;

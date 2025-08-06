@@ -147,7 +147,7 @@ class SharedObjectFromKernel<
 		serializer: IFluidSerializer,
 		telemetryContext?: ITelemetryContext,
 		incrementalSummaryContext?: IExperimentalIncrementalSummaryContext,
-		fullTree?: boolean,
+		fullTree: boolean = false,
 	): ISummaryTreeWithStats {
 		return this.#kernel.summarizeCore(
 			serializer,

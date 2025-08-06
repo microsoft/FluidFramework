@@ -44,6 +44,7 @@ import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-fore
 import { type ForestCodec, makeForestSummarizerCodec } from "./codec.js";
 import type { Format } from "./format.js";
 import { ForestIncrementalSummaryBuilder } from "./incrementalSummaryBuilder.js";
+import { TreeCompressionStrategyExtended } from "../treeCompressionUtils.js";
 
 /**
  * The key for the blob in the summary containing the forest's contents.
@@ -64,9 +65,7 @@ export class ForestSummarizer implements Summarizable {
 
 	private readonly codec: ForestCodec;
 
-	private readonly incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder({
-		getChunkAtCursor: (cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
-	});
+	private readonly incrementalSummaryBuilder: ForestIncrementalSummaryBuilder;
 
 	/**
 	 * @param encoderContext - The schema if provided here must be mutated by the caller to keep it up to date.
@@ -81,6 +80,11 @@ export class ForestSummarizer implements Summarizable {
 	) {
 		// TODO: this should take in CodecWriteOptions, and use it to pick the write version.
 		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
+		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder({
+			enableIncrementalSummary:
+				encoderContext.encodeType === TreeCompressionStrategyExtended.CompressedIncremental,
+			getChunkAtCursor: (cursor: ITreeCursorSynchronous) => this.forest.chunkField(cursor),
+		});
 	}
 
 	/**

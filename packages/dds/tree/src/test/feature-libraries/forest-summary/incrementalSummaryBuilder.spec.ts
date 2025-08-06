@@ -84,6 +84,7 @@ describe("ForestIncrementalSummaryBuilder", () => {
 		testCursor = { getFieldLength: () => 1 } as unknown as ITreeCursorSynchronous; // Mock cursor for testing
 		const testChunk = {} as unknown as TreeChunk; // Mock chunk for testing
 		builder = new ForestIncrementalSummaryBuilder({
+			enableIncrementalSummary: true,
 			getChunkAtCursor: (cursor: ITreeCursorSynchronous) => {
 				return testChunk;
 			},
