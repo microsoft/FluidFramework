@@ -892,11 +892,6 @@ export class SharedDirectory
 				localOpMetadata: ClearLocalOpMetadata | undefined,
 			) => {
 				const subdir = this.getWorkingDirectory(op.path) as SubDirectory | undefined;
-				assert(
-					localOpMetadata === undefined ||
-						(localOpMetadata !== undefined && localOpMetadata.type === "clear"),
-					"unexpected localOpMetadata",
-				);
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
@@ -921,11 +916,6 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
-					assert(
-						localOpMetadata === undefined ||
-							(localOpMetadata !== undefined && localOpMetadata.type === "delete"),
-						"unexpected localOpMetadata",
-					);
 					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -949,11 +939,6 @@ export class SharedDirectory
 				if (subdir && !this.isSubDirectoryDeletePending(op.path)) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
-					assert(
-						localOpMetadata === undefined ||
-							(localOpMetadata !== undefined && localOpMetadata.type === "set"),
-						"unexpected localOpMetadata",
-					);
 					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
 				}
 			},
@@ -976,11 +961,6 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (parentSubdir && !this.isSubDirectoryDeletePending(op.path)) {
-					assert(
-						localOpMetadata === undefined ||
-							(localOpMetadata !== undefined && localOpMetadata.type === "createSubDir"),
-						"unexpected localOpMetadata",
-					);
 					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
@@ -1007,11 +987,6 @@ export class SharedDirectory
 				// If there is pending delete op for any subDirectory in the op.path, then don't apply the this op
 				// as we are going to delete this subDirectory.
 				if (parentSubdir && !this.isSubDirectoryDeletePending(op.path)) {
-					assert(
-						localOpMetadata === undefined ||
-							(localOpMetadata !== undefined && localOpMetadata.type === "deleteSubDir"),
-						"unexpected localOpMetadata",
-					);
 					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
 				}
 			},
