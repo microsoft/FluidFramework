@@ -6,57 +6,26 @@
 import type {
 	Nodes as MdastTree,
 	BlockContent as MdastBlockContent,
-	ListItem as MdastListItem,
 	RootContent as MdastRootContent,
-	TableCell as MdastTableCell,
-	TableRow as MdastTableRow,
 } from "mdast";
 
 import type {
-	BlockContentMap,
 	DocumentationNode,
 	SectionNode,
-	TableCellNode,
-	TableRowNode,
 	HeadingNode,
-	ListItemNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import {
-	headingToMarkdown,
-	sectionToMarkdown,
-	tableToMarkdown,
-	tableCellToMarkdown,
-	tableRowToMarkdown,
-	listToMarkdown,
-	listItemToMarkdown,
-	markdownBlockContentNodeToMarkdown,
-} from "../default-transformations/index.js";
-
-/**
- * Transformations from {@link BlockContent} to {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}s.
- *
- * @public
- */
-export type BlockContentTransformations = {
-	readonly [K in keyof BlockContentMap]: Transformation<
-		BlockContentMap[K],
-		MdastBlockContent[]
-	>;
-};
+import { headingToMarkdown, sectionToMarkdown } from "../default-transformations/index.js";
 
 /**
  * Transformations from {@link DocumentationNode}s to {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}s.
  *
  * @public
  */
-export type Transformations = BlockContentTransformations & {
+export interface Transformations {
 	readonly ["heading"]: Transformation<HeadingNode, MdastBlockContent[]>;
-	readonly ["listItem"]: Transformation<ListItemNode, [MdastListItem]>;
 	readonly ["section"]: Transformation<SectionNode, MdastRootContent[]>;
-	readonly ["tableCell"]: Transformation<TableCellNode, [MdastTableCell]>;
-	readonly ["tableRow"]: Transformation<TableRowNode, [MdastTableRow]>;
-};
+}
 
 /**
  * Transformation from a {@link DocumentationNode} to a {@link https://github.com/syntax-tree/mdast | Markdown syntax tree}.
@@ -76,11 +45,5 @@ export type Transformation<
  */
 export const defaultTransformations: Transformations = {
 	heading: headingToMarkdown,
-	list: listToMarkdown,
-	listItem: listItemToMarkdown,
-	markdownBlockContent: markdownBlockContentNodeToMarkdown,
 	section: sectionToMarkdown,
-	table: tableToMarkdown,
-	tableCell: tableCellToMarkdown,
-	tableRow: tableRowToMarkdown,
 };

@@ -33,7 +33,6 @@ import type {
 
 import type { Link } from "../Link.js";
 import type { LoggingConfiguration } from "../LoggingConfiguration.js";
-import { MarkdownBlockContentNode } from "../documentation-domain/index.js";
 
 import { resolveSymbolicLink } from "./Utilities.js";
 import type { ApiItemTransformationConfiguration } from "./configuration/index.js";
@@ -84,21 +83,7 @@ function getTsdocNodeTransformationOptions(
 }
 
 /**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link MarkdownBlockContentNode}s.
- *
- * @public
- */
-export function transformAndWrapTsdoc(
-	node: DocSection,
-	contextApiItem: ApiItem,
-	config: ApiItemTransformationConfiguration,
-): MarkdownBlockContentNode[] {
-	const contents = transformTsdoc(node, contextApiItem, config);
-	return contents.map((mdastTree) => new MarkdownBlockContentNode(mdastTree));
-}
-
-/**
- * Converts a {@link @microsoft/tsdoc#DocSection} to a list of {@link BlockContent}s.
+ * Converts a {@link @microsoft/tsdoc#DocSection} to Markdown.
  *
  * @public
  */

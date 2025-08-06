@@ -68,24 +68,133 @@ A `StatesWorkspace` allows sharing of simple data across attendees where each at
 
 #### Notifications Workspace
 
-A `NotificationsWorkspace` is similar to states workspace, but is dedicated to notification use-cases via `NotificationsManager`.
+A `NotificationsWorkspace` is similar to `StatesWorkspace`, but is dedicated to notification use-cases via `NotificationsManager`.
 
-### States
+### State objects
 
-#### Latest
+#### Latest, LatestRaw
 
-`Latest` retains the most recent atomic value each attendee has shared. Use `StateFactory.latest` to add one to `StatesWorkspace`.
+`Latest` and `LatestRaw` (unvalidated data) retain the most recent atomic value each attendee has shared.
+Use `StateFactory.latest` to add one to `StatesWorkspace`.
 
-#### LatestMap
+#### LatestMap, LatestMapRaw
 
-`LatestMap` retains the most recent atomic value each attendee has shared under arbitrary keys. Values associated with a
-key may be set to `undefined` to represent deletion. Use `StateFactory.latestMap` to add one to a `StatesWorkspace`.
+`LatestMap` and `LatestMapRaw` (unvalidated data) retain the most recent atomic value each attendee has shared under arbitrary keys (mimics `Map` data structure).
+Values associated with a key may be set to `undefined` to represent deletion.
+Use `StateFactory.latestMap` to add one to a `StatesWorkspace`.
+(`LatestMap` support is pending.)
 
 #### NotificationsManager
 
 Notifications are a special case where no data is retained during a session and all interactions appear as events that are sent and received. Notifications may be mixed into a `StatesWorkspace` for convenience. `NotificationsManager` is the only presence object permitted in a `NotificationsWorkspace`. Use `Notifications` to add one to a `NotificationsWorkspace` or `StatesWorkspace`.
 
 ## Using Presence
+
+### State object use
+
+State objects have:
+
+1. a `local` property representing local clients state data
+1. an `events` property to listen for remote and local updates
+1. several `get*` methods to access other attendees and their data
+
+#### Latest, LatestRaw use
+
+Simple assignment of new value (new object) initiates broadcast of new value to other attendees.
+
+```typescript
+function updateMyPosition(positionTracker: Latest<PointXY>, newPosition: PointXY): void {
+	positionTracker.local = newPosition;
+}
+```
+
+Updates from remote clients can be listened for using `events`.
+
+```typescript
+function startTrackingOthersPositions(positionTracker: Latest<PointXY>): (() => void) {
+	const stop = positionTracker.events.on("remoteUpdated", (update) => {
+		const pos = update.value();
+		if (pos === undefined) {
+			console.warn(`Attendee ${update.attendee.attendeeId} sent invalid position data`);
+		} else {
+			console.log(`Attendee ${update.attendee.attendeeId} now at (${pos.x}, ${pos.y})`);
+		}
+	});
+	return stop;
+}
+```
+
+Accumulated data can be enumerated using `getRemotes`.
+
+```typescript
+// Logs other attendees' current positions (includes now disconnected attendees)
+function logOthersPositions(positionTracker: Latest<PointXY>): void {
+	for (const { attendee, value } of positionTracker.getRemotes()) {
+		const validated = value();
+		const position = validated === undefined ? "<invalid>" : `(${validated.x}, ${validated.y})`;
+		console.log(`${attendee.attendeeId} ${position} [${attendee.getConnectionStatus()}]:`);
+	}
+}
+```
+
+#### LatestMap, LatestMapRaw use
+
+A change to the `local` property automatically initiates a broadcast of updates to other attendees.
+`local` is a [StateMap](https://fluidframework.com/docs/api/presence/statemap-interface) that mimics `Map` though it only supports `string | number` as property keys.
+
+```typescript
+function updateCounter(counterTracker: LatestMapRaw<number, string>, counterName: string, value: number): void {
+	counterTracker.local.set(counterName, value);
+}
+```
+
+Updates from remote clients can be listened for using `events`.
+`"remoteItemUpdated"` and `"remoteItemRemoved"` provide fine-grain updates and `"remoteUpdated"` (use not shown) notes any change but only provides complete new map.
+
+```typescript
+function startTrackingOthersCounters(counterTracker: LatestMapRaw<number, string>): (() => void) {
+	const stopUpdated = counterTracker.events.on("remoteItemUpdated", (update) => {
+		console.log(`Attendee ${update.attendee.attendeeId} updated counter ${update.key} to ${update.value}.`);
+	});
+	const stopRemoved = counterTracker.events.on("remoteItemRemoved", (update) => {
+		console.log(`Attendee ${update.attendee.attendeeId} removed counter ${update.key}.`);
+	});
+	return () => { stopUpdated(); stopRemoved(); };
+}
+```
+
+Accumulated data can be enumerated using `getRemotes`.
+
+```typescript
+// Logs other attendee's current counters (excludes now _disconnected_ attendees)
+function logOthersCounters(counterTracker: LatestMapRaw<number, string>): void {
+	const counterMap = new Map<string, { attendee: Attendee; value: number }[]>();
+	// Collect counters from all remote attendees
+	for (const { attendee, items } of counterTracker.getRemotes()) {
+		// Only collect from *connected* attendees
+		if (attendee.getConnectionStatus() === AttendeeStatus.Connected) {
+			// `items` is a simple `ReadonlyMap` of remote data
+			for (const [counterName, state] of items.entries()) {
+				let entry = counterMap.get(counterName);
+				if (!entry) {
+					entry = [];
+					counterMap.set(counterName, entry);
+				}
+				entry.push({ attendee, value: state.value });
+			}
+		}
+	}
+
+	for (const [key, items] of counterMap.entries()) {
+		console.log(`Counter ${key}:`);
+		for (const { attendee, value } of items) {
+			console.log(`  ${attendee.attendeeId}: ${value}`);
+		}
+	}
+}
+```
+
+### Setup
 
 To access Presence APIs, use `getPresence()` with any `IFluidContainer`.
 
@@ -97,14 +206,60 @@ function usePresence(container: IFluidContainer): void {
 }
 ```
 
+#### Schema Definition and Workspace
+
+```typescript
+import type { Latest, LatestMapRaw, Presence, StatesWorkspaceSchema } from "@fluidframework/presence/beta";
+import { StateFactory } from "@fluidframework/presence/beta";
+
+interface PointXY { x: number; y: number }
+
+// Basic custom type guard
+function isPointXY(value: unknown): value is PointXY {
+	return typeof value === "object" && value !== null && "x" in value && "y" in value &&
+		typeof value.x === "number" && typeof value.y === "number";
+}
+
+// A Presence workspace schema with two State objects named "position" and "counters".
+const PresenceSchemaV1 = {
+	// This `Latest<PointXY>` state defaults all values to (0, 0).
+	position: StateFactory.latest<PointXY>({
+		local: { x: 0, y: 0 },
+		validator: (v) => isPointXY(v) ? v : undefined
+	}),
+	// This `LatestMap<number, string>` state has `string` keys storing `number` values.
+	counters: StateFactory.latestMap<number, string>({ }),
+} as const satisfies StatesWorkspaceSchema;
+
+// Creates our unique workspace with the State objects declared in above schema.
+function getOurWorkspace(presence: Presence):
+	{
+		position: Latest<PointXY>;
+		counters: LatestMapRaw<number, string>;
+	} {
+	return presence.states.getWorkspace("name:PointsAndCountersV1", PresenceSchemaV1).states;
+}
+```
+
 ## Other Capabilities
 
 ### Runtime data validation
 
-Runtime data validation is not yet implemented. The StateFactory.latest and StateFactory.latestMap APIs do not yet
-accept a `validator` argument. The validator argument is reserved for future use. **Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
+Runtime data validation is partially implemented.
+The StateFactory.latest API does accept a `validator` argument but StateFactory.latestMap API does not.
+Passing a validator function is recommended to ensure data from other attendees conforms to expectations.
+The validator will be invoked on the first attempt to read a remote value (always a `.value()` call) and validator may return data conforming to schema or `undefined`.
+Whatever the result, it will be cached and returned immediately for future `.value()` calls.
+**Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
 
 ## Limitations
+
+### Data Supported
+
+Only plain old data is supported.
+If `JSON.parse(JSON.stringify(foo))` returns a deeply equal value, then that data is supported.
+Large data is not recommended and if used may exceed system capacity.
+A small image could be shared but sharing a URL to an image is recommended.
 
 ### Compatibility and Versioning
 
@@ -147,7 +302,7 @@ Notifications are fundamentally unreliable at this time as there are no built-in
 
 Presence updates are grouped together and throttled to prevent flooding the network with messages when presence values are rapidly updated. This means the presence infrastructure will not immediately broadcast updates but will broadcast them after a configurable delay.
 
-The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances, enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1) specified during configuration of a [States Workspace](#states-workspace) or [States](#states) and/or (2) updated later using the `controls` member of Workspace or States. The [States Workspace](#states-workspace) configuration is used when States do not have their own setting.
+The `allowableUpdateLatencyMs` property configures how long a local update may be delayed under normal circumstances, enabling grouping with other updates. The default `allowableUpdateLatencyMs` is **60 milliseconds** but may be (1) specified during configuration of a [States Workspace](#states-workspace) or [States](#state-objects) and/or (2) updated later using the `controls` member of Workspace or States. The [States Workspace](#states-workspace) configuration is used when States do not have their own setting.
 
 Notifications are never queued; they effectively always have an `allowableUpdateLatencyMs` of 0. However, they may be grouped with other updates that were already queued.
 

@@ -4,34 +4,18 @@
  */
 
 import type { Nodes as HastNodes } from "hast";
-import { h } from "hastscript";
 
 import type {
 	DocumentationNode,
 	HeadingNode,
 	SectionNode,
-	TableCellNode,
-	TableNode,
-	TableRowNode,
-	ListItemNode,
-	ListNode,
-	MarkdownBlockContentNode,
 } from "../../documentation-domain/index.js";
 import type { TransformationContext } from "../TransformationContext.js";
-import {
-	headingToHtml,
-	sectionToHtml,
-	tableToHtml,
-	tableCellToHtml,
-	tableRowToHtml,
-	listItemToHtml,
-	listToHtml,
-	markdownNodeToHtml,
-} from "../default-transformations/index.js";
+import { headingToHtml, sectionToHtml } from "../default-transformations/index.js";
 
 /**
  * Configuration for transforming {@link DocumentationNode}s to {@link https://github.com/syntax-tree/hast | hast},
- * specified by {@link DocumentationNode."type"}.
+ * specified by its "type".
  *
  * @remarks
  *
@@ -45,7 +29,7 @@ import {
 // eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export interface Transformations {
 	/**
-	 * Maps from a {@link DocumentationNode}'s {@link DocumentationNode."type"} to a transformation implementation
+	 * Maps from a {@link DocumentationNode}'s "type" to a transformation implementation
 	 * for that kind of node.
 	 */
 	readonly [documentationNodeKind: string]: Transformation;
@@ -64,21 +48,10 @@ export type Transformation = (
 	context: TransformationContext,
 ) => HastNodes;
 
-// Constants used in transformations below as an allocation optimization.
-const hastHorizontalRule = h("hr");
-
 /**
  * Default {@link DocumentationNode} to {@link https://github.com/syntax-tree/hast | hast} transformations.
  */
 export const defaultTransformations: Transformations = {
 	heading: (node, context) => headingToHtml(node as HeadingNode, context),
-	listItem: (node, context) => listItemToHtml(node as ListItemNode, context),
-	markdownBlockContent: (node, context) =>
-		markdownNodeToHtml(node as MarkdownBlockContentNode, context),
 	section: (node, context) => sectionToHtml(node as SectionNode, context),
-	horizontalRule: () => hastHorizontalRule,
-	list: (node, context) => listToHtml(node as ListNode, context),
-	table: (node, context) => tableToHtml(node as TableNode, context),
-	tableCell: (node, context) => tableCellToHtml(node as TableCellNode, context),
-	tableRow: (node, context) => tableRowToHtml(node as TableRowNode, context),
 };

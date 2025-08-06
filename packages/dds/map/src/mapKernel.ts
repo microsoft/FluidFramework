@@ -214,7 +214,7 @@ export class MapKernel {
 					const optimisticValue = this.getOptimisticLocalValue(key);
 					assert(
 						optimisticValue !== undefined,
-						"Should never iterate to a key with undefined optimisticValue",
+						0xbf1 /* Should never iterate to a key with undefined optimisticValue */,
 					);
 					return { value: [key, optimisticValue], done: false };
 				}
@@ -637,7 +637,7 @@ export class MapKernel {
 				pendingClear !== undefined &&
 					pendingClear.type === "clear" &&
 					pendingClear === typedLocalOpMetadata,
-				"Unexpected clear rollback",
+				0xbf2 /* Unexpected clear rollback */,
 			);
 			for (const [key] of this.internalIterator()) {
 				this.eventEmitter.emit(
@@ -658,10 +658,10 @@ export class MapKernel {
 			assert(
 				pendingEntry !== undefined &&
 					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
-				"Unexpected pending data for set/delete op",
+				0xbf3 /* Unexpected pending data for set/delete op */,
 			);
 			if (pendingEntry.type === "delete") {
-				assert(pendingEntry === typedLocalOpMetadata, "Unexpected delete rollback");
+				assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
 				this.pendingData.splice(pendingEntryIndex, 1);
 				// Only emit if rolling back the delete actually results in a value becoming visible.
 				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
@@ -676,7 +676,7 @@ export class MapKernel {
 				const pendingKeySet = pendingEntry.keySets.pop();
 				assert(
 					pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
-					"Unexpected set rollback",
+					0xbf5 /* Unexpected set rollback */,
 				);
 				if (pendingEntry.keySets.length === 0) {
 					this.pendingData.splice(pendingEntryIndex, 1);
@@ -710,7 +710,7 @@ export class MapKernel {
 						pendingClear !== undefined &&
 							pendingClear.type === "clear" &&
 							pendingClear === localOpMetadata,
-						"Got a local clear message we weren't expecting",
+						0xbf6 /* Got a local clear message we weren't expecting */,
 					);
 				} else {
 					// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
@@ -741,7 +741,7 @@ export class MapKernel {
 						pendingEntry !== undefined &&
 							pendingEntry.type === "delete" &&
 							pendingEntry === localOpMetadata,
-						"Got a local delete message we weren't expecting",
+						0xbf7 /* Got a local delete message we weren't expecting */,
 					);
 					this.pendingData.splice(pendingEntryIndex, 1);
 
@@ -779,12 +779,12 @@ export class MapKernel {
 					const pendingEntry = this.pendingData[pendingEntryIndex];
 					assert(
 						pendingEntry !== undefined && pendingEntry.type === "lifetime",
-						"Couldn't match local set message to pending lifetime",
+						0xbf8 /* Couldn't match local set message to pending lifetime */,
 					);
 					const pendingKeySet = pendingEntry.keySets.shift();
 					assert(
 						pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-						"Got a local set message we weren't expecting",
+						0xbf9 /* Got a local set message we weren't expecting */,
 					);
 					if (pendingEntry.keySets.length === 0) {
 						this.pendingData.splice(pendingEntryIndex, 1);

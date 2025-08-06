@@ -668,7 +668,7 @@ export class BlobManager {
 	 * @param metadata - op metadata containing storage and/or local IDs
 	 */
 	public reSubmit(metadata: Record<string, unknown> | undefined): void {
-		assert(isBlobMetadata(metadata), "Expected blob metadata for a BlobAttach op");
+		assert(isBlobMetadata(metadata), 0xc01 /* Expected blob metadata for a BlobAttach op */);
 		const { localId, blobId } = metadata;
 		// Any blob that we're actively trying to advance to attached state must have a
 		// pendingBlobs entry. Decline to resubmit for anything else.
@@ -682,7 +682,10 @@ export class BlobManager {
 	}
 
 	public processBlobAttachMessage(message: ISequencedMessageEnvelope, local: boolean): void {
-		assert(isBlobMetadata(message.metadata), "Expected blob metadata for a BlobAttach op");
+		assert(
+			isBlobMetadata(message.metadata),
+			0xc02 /* Expected blob metadata for a BlobAttach op */,
+		);
 		const { localId, blobId } = message.metadata;
 		const pendingEntry = this.pendingBlobs.get(localId);
 		if (pendingEntry?.abortSignal?.aborted) {
