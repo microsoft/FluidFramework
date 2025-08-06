@@ -1754,6 +1754,8 @@ describe("treeNodeApi", () => {
 
 				log.length = 0; // Clear log
 
+				// Hydrate the node to confirm hydration does not trigger events,
+				// that events registered before hydration continue to work, and that events on hydrated nodes work as expected.
 				hydrate(TestObject, testNode);
 
 				assert.deepEqual(log, []);
