@@ -6,10 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { oob, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	MockHandle,
-	validateAssertionError,
-} from "@fluidframework/test-runtime-utils/internal";
+import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeStatus } from "../../../feature-libraries/index.js";
 import {
@@ -328,11 +325,7 @@ describe("schemaFactory", () => {
 						x: schema.required(schema.number, { key: "foo" }),
 						y: schema.required(schema.number, { key: "foo" }),
 					}),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Duplicate stored key "foo" in schema "com.example.Point"/,
-					),
+				validateUsageError(/Duplicate stored key "foo" in schema "com.example.Point"/),
 			);
 		});
 
@@ -344,11 +337,10 @@ describe("schemaFactory", () => {
 						foo: schema.number,
 						bar: schema.required(schema.string, { key: "foo" }),
 					}),
-				(error: Error) =>
-					validateAssertionError(
-						error,
-						/Stored key "foo" in schema "com.example.Object" conflicts with a property key of the same name/,
-					),
+
+				validateUsageError(
+					/Stored key "foo" in schema "com.example.Object" conflicts with a property key of the same name/,
+				),
 			);
 		});
 
@@ -1296,6 +1288,8 @@ describe("schemaFactory", () => {
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 
+	// TODO: AB#44317: The error messages for rejecting insertions which would put a document out of schema due to staged types are poor, and should be improved.
+	// Many tests here include coverage for these errors.
 	describe("staged", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
@@ -1361,7 +1355,7 @@ describe("schemaFactory", () => {
 				view.initialize({ foo: 3 });
 				assert.throws(() => {
 					view.root = testObject;
-				});
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
 			});
 
 			it("can't be set", () => {
@@ -1375,7 +1369,7 @@ describe("schemaFactory", () => {
 				provider.synchronizeMessages();
 				assert.throws(() => {
 					view.root.foo = "test";
-				});
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
 			});
 		});
 
@@ -1405,7 +1399,7 @@ describe("schemaFactory", () => {
 				view.initialize({ foo: 3 });
 				assert.throws(() => {
 					view.root = testMap;
-				});
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
 			});
 
 			it("can't be set", () => {
@@ -1419,7 +1413,7 @@ describe("schemaFactory", () => {
 				provider.synchronizeMessages();
 				assert.throws(() => {
 					view.root.set("foo", "test");
-				});
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
 			});
 		});
 
@@ -1449,7 +1443,7 @@ describe("schemaFactory", () => {
 				view.initialize({ foo: 3 });
 				assert.throws(() => {
 					view.root = testRecord;
-				});
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
 			});
 
 			it("can't be set", () => {
@@ -1463,7 +1457,7 @@ describe("schemaFactory", () => {
 				provider.synchronizeMessages();
 				assert.throws(() => {
 					view.root.foo = "test";
-				});
+				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
 			});
 		});
 
