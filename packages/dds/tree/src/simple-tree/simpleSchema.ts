@@ -208,8 +208,9 @@ export interface SimpleTreeSchema {
 	 *
 	 * @remarks
 	 * The keys are the schemas' {@link TreeNodeSchemaCore.identifier | identifiers}.
-	 * If there are any {@link SchemaStaticsAlpha.staged | staged} schemas,
-	 * they will be included here along with all the non-staged schemas.
+	 *
+	 * Information about if a schema is {@link SchemaStaticsAlpha.staged | staged} or not is not available as the "Simple Schema" layer of abstraction: they are included unconditionally.
+	 * Options for filtering out staged schemas from view schema are available in {@link extractPersistedSchema}.
 	 */
 	readonly definitions: ReadonlyMap<string, SimpleNodeSchema>;
 }
