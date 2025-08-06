@@ -1811,7 +1811,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			: latestPendingEntry.type === "lifetime";
 	};
 
-	// TODO: Add separate fn for getIfDisposed
 	private readonly getOptimisticSubDirectory = (
 		subdirName: string,
 	): SubDirectory | undefined => {
@@ -1838,7 +1837,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return subdir;
 	};
 
-	// TODO: maybe merge with above
+	// TODO: Consider merging this with getOptimisticSubDirectory fn
 	private readonly getOptimisticSubDirectoryEvenIfDisposed = (
 		subdirName: string,
 	): SubDirectory | undefined => {
@@ -2543,7 +2542,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				// This ensures the subdirectory is properly restored before being exposed
 				this.undeleteSubDirectoryTree(subDirectoryToRestore);
 
-				// TODO: Do. we need this check?
 				if (isAcknowledgedOrDetached(subDirectoryToRestore.seqData)) {
 					// Since this was an ack'd subdirectory, we need to re-add it to the sequenced subdirectories
 					this.sequencedSubdirectories.set(subdirName, subDirectoryToRestore);

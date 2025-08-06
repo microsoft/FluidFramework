@@ -1109,7 +1109,7 @@ describeCompat(
 			assert.equal(subDirCreatedEventData[1], "subDirName");
 			assert.equal(undisposedEventData.length, 1);
 			assert.equal(undisposedEventData[0], "/subDirName");
-			assert.equal(disposedEventData.length, 1);
+			assert.equal(disposedEventData.length, 0);
 		});
 
 		it("Should not rollback deleting nonexistent subdirectory", () => {
@@ -1178,7 +1178,7 @@ describeCompat(
 			assert.equal(subDirCreatedEventData[2], "subDirName");
 			assert.equal(undisposedEventData.length, 1);
 			assert.equal(undisposedEventData[0], "/subDirName");
-			assert.equal(disposedEventData.length, 1);
+			assert.equal(disposedEventData.length, 0);
 
 			// verify we still get events on restored content
 			readSubdir.set("key2", "content2");
