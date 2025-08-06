@@ -228,7 +228,7 @@ class FluidImportManager {
 				const expectedPath = getPathForImportName(name, data, ExportPath.Public, this.log);
 
 				this.log.verbose(
-					`\t\tFound import named: '${fullImportSpecifierText}' (${expectedPath})`,
+					`\t\tFound import named: '${fullImportSpecifierText}' ("${expectedPath}"${expectedPath === "" ? " (public)" : ""})`,
 				);
 
 				const properImport = this.ensureFluidImport({
