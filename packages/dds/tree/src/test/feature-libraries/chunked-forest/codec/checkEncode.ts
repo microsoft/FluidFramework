@@ -34,13 +34,13 @@ import { testIdCompressor } from "../../../utils.js";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 export function checkNodeEncode(
-	shape: NodeEncoder,
+	nodeEncoder: NodeEncoder,
 	context: EncoderContext,
 	tree: JsonableTree,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [nodeEncoder.shape];
 	const cursor = cursorForJsonableTreeNode(tree);
-	shape.encodeNode(cursor, context, buffer);
+	nodeEncoder.encodeNode(cursor, context, buffer);
 
 	// Check round-trip
 	checkDecode([buffer], [[tree]]);
@@ -49,14 +49,14 @@ export function checkNodeEncode(
 }
 
 export function checkFieldEncode(
-	shape: FieldEncoder,
+	fieldEncoder: FieldEncoder,
 	context: EncoderContext,
 	tree: JsonableTree[],
 	idCompressor?: IIdCompressor,
 ): BufferFormat {
-	const buffer: BufferFormat = [shape.shape];
+	const buffer: BufferFormat = [fieldEncoder.shape];
 	const cursor = cursorForJsonableTreeField(tree);
-	shape.encodeField(cursor, context, buffer);
+	fieldEncoder.encodeField(cursor, context, buffer);
 
 	// Check round-trip
 	checkDecode([buffer], [tree], idCompressor);

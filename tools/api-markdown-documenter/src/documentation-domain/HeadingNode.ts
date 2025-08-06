@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import type { Heading } from "../Heading.js";
+import type { Node } from "mdast";
 
-import type { DocumentationNode } from "./DocumentationNode.js";
+import type { Heading } from "../Heading.js";
 
 /**
  * A document heading.
@@ -29,28 +29,8 @@ import type { DocumentationNode } from "./DocumentationNode.js";
  * @sealed
  * @public
  */
-export class HeadingNode implements DocumentationNode, Heading {
-	/**
-	 * {@inheritDoc DocumentationNode."type"}
-	 */
+export class HeadingNode implements Node, Heading {
 	public readonly type = "heading";
-
-	/**
-	 * {@inheritDoc DocumentationNode.isLiteral}
-	 */
-	public readonly isLiteral = false;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isParent}
-	 */
-	public readonly isParent = false;
-
-	/**
-	 * {@inheritDoc DocumentationNode.isEmpty}
-	 */
-	public get isEmpty(): boolean {
-		return this.title.length === 0;
-	}
 
 	public constructor(
 		/**
