@@ -223,14 +223,39 @@ function getOurWorkspace(presence: Presence):
 
 ### Runtime data validation
 
-The StateFactory.latest and .latestMap APIs accept a `validator` function property and is recommended to ensure data from other attendees conforms to expectations.
-The validator will be invoked on the first attempt to read a remote value (always a `.value()` call) and validator may return data conforming to schema or `undefined`.
-Whatever the result, it will be cached and returned immediately for future `.value()` calls.
-**Passing the `validator` argument in version 2.43.0 will result in a runtime exception.**
+The Presence API provides a simple mechanism (fully added in version 2.53.0) to validate that state data received within session from other clients matches the types declared.
 
-#### Example Setup
+When creating State objects using `StateFactory.latest` or `StateFactory.latestMap`, it is recommended that a validator function is specified.
+That function will be called on-demand at runtime to verify data from other clients is valid.
+
+When you provide a validator function, the data in a State object must be accessed via `.value()` function call instead of a directly accessing `.value` as a property.
+This is reflected in the types.
+
+:::important
+
+If no validator function is provided, then the data shared in Presence is assumed to be compatible.
+This may result in runtime errors if the data does not match the expected type.
+It is recommended to always provide a validator function to ensure that the data is valid and to prevent runtime errors.
+
+Note that here are important considerations around data compatibility that should be considered regardless of whether you provide a validator function or not.
+See [Compatibility and Versioning](#compatibility-and-versioning) for more details.
+
+:::
+
+#### Validator Requirements
+
+1. Validator functions take the form `function validator(value: unknown): ExpectedType | undefined`.
+1. Validator functions may not manipulate the given value.
+1. Validator functions are not expected to throw exceptions.
+1. When malformed data is found, a validator function may either return `undefined` or create a substitute value.
+
+The result of call to validator is returned as-is to the `.value()` call that first attempted access to remote data.
+That result is cached and will be returned to future `.value()` callers without invoking the validator.
+
+#### Example Validated Setup
 
 Custom validators can be convenient for simple types.
+See [Schema Definition and Workspace](#schema-definition-and-workspace) for example.
 For more complex types or peace of mind, consider a schema builder / validation package such as [TypeBox](https://github.com/sinclairzx81/typebox) or [Zod](https://zod.dev/).
 
 Example using TypeBox:
