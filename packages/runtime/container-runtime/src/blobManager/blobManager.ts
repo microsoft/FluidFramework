@@ -423,7 +423,8 @@ export class BlobManager {
 	): Promise<IFluidHandleInternalPayloadPending<ArrayBufferLike>> {
 		const localId = this.localBlobIdGenerator();
 		// Blobs created while the container is detached are stored in IDetachedBlobStorage.
-		// The 'IContainerStorageService.createBlob()' call below will respond with a localId.
+		// The 'IContainerStorageService.createBlob()' call below will respond with a pseudo storage ID.
+		// That pseudo storage ID will be replaced with the real storage ID at attach time.
 		const { id: detachedStorageId } = await this.storage.createBlob(blob);
 		this.setRedirection(localId, detachedStorageId);
 		return this.getBlobHandle(localId);
@@ -758,7 +759,8 @@ export class BlobManager {
 	 * The routes are GC nodes paths of format -`/<blobManagerBasePath>/<blobId>`. The blob ids are all local ids.
 	 *
 	 * Note that this does not delete the blobs from storage service immediately. Deleting the blobs from redirect table
-	 * will remove them the next summary. The service would them delete them some time in the future.
+	 * will ensure we don't create an attachment blob for them at the next summary. The service would them delete them
+	 * some time in the future.
 	 */
 	private deleteBlobsFromRedirectTable(blobRoutes: readonly string[]): void {
 		for (const route of blobRoutes) {
@@ -806,9 +808,9 @@ export class BlobManager {
 	}
 
 	/**
-	 * In detached state, this will update the redirect table by converting the pseudo storage IDs
-	 * into real storage IDs using the provided detachedStorageTable. The provided table must have
-	 * exactly the same set of pseudo storage IDs as are found in the redirect table.
+	 * Called in detached state just prior to attaching, this will update the redirect table by
+	 * converting the pseudo storage IDs into real storage IDs using the provided detachedStorageTable.
+	 * The provided table must have exactly the same set of pseudo storage IDs as are found in the redirect table.
 	 * @param detachedStorageTable - A map of pseudo storage IDs to real storage IDs.
 	 */
 	public setRedirectTable(detachedStorageTable: Map<string, string>): void {
